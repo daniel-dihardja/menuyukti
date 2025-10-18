@@ -24,61 +24,87 @@ export async function LoginForm({ className, ...props }: LoginFormProps) {
   const t = await getTranslations("login");
 
   return (
-    <div className={cn("w-screen md:w-[600px]", className)} {...props}>
-      <Card className="w-full shadow-md p-4 md:p-6">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-3xl font-bold text-foreground tracking-tight">
+    <div className={cn("w-screen md:w-[600px] p-6", className)} {...props}>
+      <Card className="w-full md:p-8 md:py-12 border">
+        <CardHeader className="space-y-3">
+          {/* Title */}
+          <CardTitle className="text-4xl text-foreground tracking-tight mb-0">
             {t("title")}
           </CardTitle>
 
           {/* ✨ Slogan */}
-          <p className="text-lg font-semibold whitespace-nowrap truncate">
+          <p className="text-xl leading-snug text-foreground/90">
             {t("slogan")}
           </p>
 
-          <CardDescription className="text-muted-foreground text-sm mt-1 max-w-prose">
+          {/* Description */}
+          {/* <CardDescription className="text-base text-muted-foreground mt-2 max-w-prose leading-relaxed">
             {t("description")}
-          </CardDescription>
+          </CardDescription> */}
         </CardHeader>
 
         <CardContent>
-          <form className="space-y-6">
+          <form className="space-y-8">
             <FieldGroup>
+              {/* Email Field */}
               <Field>
-                <FieldLabel htmlFor="email">{t("emailLabel")}</FieldLabel>
+                <FieldLabel
+                  htmlFor="email"
+                  className="text-base font-medium text-foreground"
+                >
+                  {t("emailLabel")}
+                </FieldLabel>
                 <Input
                   id="email"
                   type="email"
                   placeholder={t("emailPlaceholder")}
                   required
+                  className="text-base py-2"
                 />
               </Field>
 
+              {/* Password Field */}
               <Field>
                 <div className="flex items-center">
-                  <FieldLabel htmlFor="password">
+                  <FieldLabel
+                    htmlFor="password"
+                    className="text-base font-medium text-foreground"
+                  >
                     {t("passwordLabel")}
                   </FieldLabel>
                   <a
                     href="#"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    className="ml-auto inline-block text-sm md:text-base underline-offset-4 hover:underline text-primary"
                   >
                     {t("forgotPassword")}
                   </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  className="text-base py-2"
+                />
               </Field>
 
+              {/* Buttons */}
               <Field>
                 <Link href={routes.myuk}>
-                  <Button className="w-full">{t("loginButton")}</Button>
+                  <Button className="w-full text-base py-3">
+                    {t("loginButton")}
+                  </Button>
                 </Link>
 
-                <Button variant="outline" type="button" className="w-full mt-2">
+                <Button
+                  variant="outline"
+                  type="button"
+                  className="w-full mt-3 text-base py-3"
+                >
                   {t("loginWithGoogle")}
                 </Button>
 
-                <FieldDescription className="text-center text-sm mt-4">
+                {/* Sign up */}
+                <FieldDescription className="text-center text-base mt-6">
                   {t("signupDescription")}{" "}
                   <a href="#" className="underline hover:text-primary">
                     {t("signupLink")}
