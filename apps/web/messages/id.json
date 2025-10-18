@@ -1,0 +1,15 @@
+{
+    "login": {
+        "title": "Menuyukti",
+        "slogan": "Menu Cerdas, Kurangi Pemborosan",
+        "description": "Masukkan email Anda di bawah ini untuk masuk ke akun Anda.",
+        "emailLabel": "Email",
+        "emailPlaceholder": "m@example.com",
+        "passwordLabel": "Kata Sandi",
+        "forgotPassword": "Lupa kata sandi?",
+        "loginButton": "Masuk",
+        "loginWithGoogle": "Masuk dengan Google",
+        "signupDescription": "Belum punya akun?",
+        "signupLink": "Daftar sekarang"
+    }
+}
