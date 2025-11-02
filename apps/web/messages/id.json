@@ -11,5 +11,11 @@
         "loginWithGoogle": "Masuk dengan Google",
         "signupDescription": "Belum punya akun?",
         "signupLink": "Daftar sekarang"
+    },
+    "sidebar": {
+        "groupLabel": "Menuyukti",
+        "news": "Berita",
+        "analysis": "Analisis",
+        "documentation": "Dokumentasi"
     }
 }
