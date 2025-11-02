@@ -18,8 +18,8 @@ export function NavMain() {
     { title: t("news"), url: routes.news, icon: Newspaper },
     { title: t("import"), url: routes.import, icon: BarChart3 },
     {
-      title: t("documentation"),
-      url: routes.documentation,
+      title: t("docs"),
+      url: routes.docs,
       icon: BookOpenText,
     },
   ];

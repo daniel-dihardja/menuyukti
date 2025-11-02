@@ -15,7 +15,16 @@
     "sidebar": {
         "groupLabel": "Menuyukti",
         "news": "Berita",
-        "analysis": "Analisis",
-        "documentation": "Dokumentasi"
+        "import": "Impor",
+        "docs": "Dokumentasi"
+    },
+    "news": {
+        "title": "Berita"
+    },
+    "import": {
+        "title": "Impor"
+    },
+    "docs": {
+        "title": "Dokumentasi"
     }
 }

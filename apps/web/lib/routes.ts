@@ -1,4 +1,6 @@
 export const routes = {
   login: "/login",
-  myuk: "/myuk",
+  import: "/import",
+  docs: "/docs",
+  news: "/news",
 };
