@@ -39,13 +39,13 @@ export function NavMain() {
                 asChild
                 tooltip={item.title}
                 data-active={isActive}
-                className={`text-sm transition-colors ${
+                className={`text-sm transition-colors rounded-none ${
                   isActive
                     ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Link href={item.url} className="flex items-center gap-2">
+                <Link href={item.url} className="flex items-center">
                   <item.icon className="w-4 h-4" />
                   <span>{item.title}</span>
                 </Link>
