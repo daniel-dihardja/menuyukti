@@ -10,13 +10,18 @@ import {
 } from "@workspace/ui/components/sidebar";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { routes } from "@/lib/routes";
 
 export function NavMain() {
   const t = useTranslations("sidebar");
   const items = [
-    { title: t("news"), url: "/news", icon: Newspaper },
-    { title: t("analysis"), url: "/analysis", icon: BarChart3 },
-    { title: t("documentation"), url: "/dokumentasi", icon: BookOpenText },
+    { title: t("news"), url: routes.news, icon: Newspaper },
+    { title: t("import"), url: routes.import, icon: BarChart3 },
+    {
+      title: t("documentation"),
+      url: routes.documentation,
+      icon: BookOpenText,
+    },
   ];
 
   return (
