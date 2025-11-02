@@ -1,14 +1,14 @@
 "use client";
 
-import * as React from "react";
 import {
   Sidebar,
-  SidebarHeader,
   SidebarContent,
+  SidebarHeader,
 } from "@workspace/ui/components/sidebar";
-import { NavMain } from "./nav-main";
-import { LayoutDashboard } from "lucide-react";
+import { Leaf } from "lucide-react";
 import Link from "next/link";
+import * as React from "react";
+import { NavMain } from "./nav-main";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -20,7 +20,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             absolute left-1 top-6 flex items-center gap-2 pl-3
           "
         >
-          <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
+          <Leaf className="w-4 h-4" />
         </Link>
       </SidebarHeader>
 
