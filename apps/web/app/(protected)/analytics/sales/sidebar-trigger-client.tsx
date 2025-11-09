@@ -3,11 +3,13 @@
 import { SidebarTrigger } from "@workspace/ui/components/sidebar";
 import { Separator } from "@workspace/ui/components/separator";
 
-interface PageClientProps {
+interface SidebarTriggerClientProps {
   title: string;
 }
 
-export default function PageClient({ title }: PageClientProps) {
+export default function SidebarTriggerClient({
+  title,
+}: SidebarTriggerClientProps) {
   return (
     <div className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
       {/* Sidebar trigger (interactive) */}
