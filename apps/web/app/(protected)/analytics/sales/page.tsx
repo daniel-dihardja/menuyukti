@@ -9,10 +9,10 @@ import {
   TableRow,
 } from "@workspace/ui/components/table";
 import { Button } from "@workspace/ui/components/button";
-import PageClient from "./page-client"; // ✅ Client header component
+import PageClient from "./page-client";
 
 export default async function Page() {
-  const t = await getTranslations("import");
+  const t = await getTranslations("analytics.sales");
 
   const uploads = [
     { id: 1, name: "January_Analytics.xlsx" },

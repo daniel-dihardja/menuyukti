@@ -15,21 +15,34 @@
     "sidebar": {
         "groupLabel": "Menuyukti",
         "news": "Berita",
-        "import": "Impor",
+        "analysis": "Analisis",
+        "sales": "Sales",
+        "cogs": "COGS",
         "docs": "Dokumentasi"
     },
     "news": {
         "title": "Berita"
     },
-    "import": {
-        "title": "Impor",
-        "table": {
-            "index": "#",
-            "fileName": "Nama Berkas",
-            "action": "Tindakan",
-            "view": "Lihat"
+    "analytics": {
+        "sales": {
+            "title": "Laporan Penjualan",
+            "table": {
+                "index": "#",
+                "fileName": "Nama Berkas",
+                "action": "Tindakan",
+                "view": "Lihat"
+            },
+            "create": "Unggah Laporan Penjualan Baru"
         },
-        "create": "Buat Analitik Baru"
+        "cogs": {
+            "title": "Daftar COGS",
+            "description": "Kelola biaya bahan makanan dan data COGS untuk setiap analitik.",
+            "menuName": "Nama Menu",
+            "menuCost": "Biaya Menu",
+            "create": "Buat COGS Baru",
+            "edit": "Edit COGS",
+            "delete": "Hapus"
+        }
     },
     "docs": {
         "title": "Dokumentasi"
