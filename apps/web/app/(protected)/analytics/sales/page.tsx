@@ -9,7 +9,8 @@ import {
   TableRow,
 } from "@workspace/ui/components/table";
 import { Button } from "@workspace/ui/components/button";
-import PageClient from "./page-client";
+import SidebarTriggerClient from "./sidebar-trigger-client";
+import UploadExcelClient from "./upload-xcel-client";
 
 export default async function Page() {
   const t = await getTranslations("analytics.sales");
@@ -22,7 +23,7 @@ export default async function Page() {
   return (
     <SidebarInset>
       {/* ---------- HEADER ---------- */}
-      <PageClient title={t("title")} />
+      <SidebarTriggerClient title={t("title")} />
 
       {/* ---------- MAIN CONTENT ---------- */}
       <div className="p-4 space-y-4">
@@ -53,9 +54,9 @@ export default async function Page() {
           </Table>
         </div>
 
-        {/* ---------- ACTION BUTTON ---------- */}
+        {/* ---------- UPLOAD BUTTON ---------- */}
         <div className="flex justify-center">
-          <Button>{t("create")}</Button>
+          <UploadExcelClient label={t("create")} />
         </div>
       </div>
     </SidebarInset>
