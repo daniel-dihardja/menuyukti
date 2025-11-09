@@ -22,7 +22,14 @@
         "title": "Berita"
     },
     "import": {
-        "title": "Impor"
+        "title": "Impor",
+        "table": {
+            "index": "#",
+            "fileName": "Nama Berkas",
+            "action": "Tindakan",
+            "view": "Lihat"
+        },
+        "create": "Buat Analitik Baru"
     },
     "docs": {
         "title": "Dokumentasi"
