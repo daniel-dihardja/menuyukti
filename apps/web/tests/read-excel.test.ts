@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { readExcel } from "@/lib/excel-reader";
+import { readExcel } from "@/lib/excel/excel-reader";
 import * as XLSX from "xlsx";
 import fs from "fs/promises";
 import path from "path";
