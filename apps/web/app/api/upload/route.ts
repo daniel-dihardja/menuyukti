@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
+import crypto from "crypto";
 
 export const runtime = "nodejs";
 
@@ -23,21 +24,16 @@ export async function POST(request: Request) {
     const uploadDir = path.join(process.cwd(), "tmp");
     await fs.mkdir(uploadDir, { recursive: true });
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const buffer = Buffer.from(await file.arrayBuffer());
 
     const timestamp = Date.now();
+    const jobId = crypto.randomUUID();
     const filename = `${timestamp}-${file.name}`;
     const filePath = path.join(uploadDir, filename);
 
     await fs.writeFile(filePath, buffer);
 
-    return NextResponse.json({
-      success: true,
-      message: "File uploaded successfully.",
-      filename,
-      filePath,
-    });
+    return NextResponse.json({ jobId });
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json(

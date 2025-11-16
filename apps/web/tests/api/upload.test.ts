@@ -1,8 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import fs from "fs";
 import path from "path";
 import { POST } from "@/app/api/upload/route";
-import { NextRequest } from "next/server";
 
 function createFormRequest(filePath: string, filename: string) {
   const buffer = fs.readFileSync(filePath);
@@ -10,14 +9,22 @@ function createFormRequest(filePath: string, filename: string) {
   const formData = new FormData();
   formData.append("file", file);
 
-  return new NextRequest("http://localhost/api/upload", {
+  return new Request("http://localhost/api/upload", {
     method: "POST",
-    body: formData as any,
+    body: formData,
   });
 }
 
+beforeEach(() => {
+  const tmpDir = path.join(process.cwd(), "tmp");
+  if (!fs.existsSync(tmpDir)) return;
+  for (const file of fs.readdirSync(tmpDir)) {
+    fs.unlinkSync(path.join(tmpDir, file));
+  }
+});
+
 describe("Upload API — valid excel upload", () => {
-  it("uploads a valid .xlsx file to tmp directory", async () => {
+  it("uploads a valid .xlsx file to tmp directory and returns a jobId", async () => {
     const fixturePath = path.join(
       process.cwd(),
       "tests/fixtures/excel/esb/valid.xlsx"
@@ -27,16 +34,21 @@ describe("Upload API — valid excel upload", () => {
     const res = await POST(req);
     const data = await res.json();
 
-    expect(data.success).toBe(true);
-    expect(data.filename).toContain("valid.xlsx");
+    expect(typeof data.jobId).toBe("string");
+    expect(data.jobId.length).toBeGreaterThan(0);
 
-    const uploadedFile = data.filePath;
+    const tmpDir = path.join(process.cwd(), "tmp");
+    const files = fs.readdirSync(tmpDir);
+
+    expect(files.length).toBe(1);
+
+    const uploadedFile = path.join(tmpDir, files[0] as string);
     expect(fs.existsSync(uploadedFile)).toBe(true);
 
     try {
       fs.unlinkSync(uploadedFile);
-    } catch (err) {
-      console.warn("Cleanup warning (not fatal):", err);
+    } catch {
+      /* ignore */
     }
   });
 });
