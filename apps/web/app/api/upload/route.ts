@@ -11,14 +11,11 @@ export async function POST(request: Request) {
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+      return NextResponse.json({ error: "NO_FILE_UPLOADED" }, { status: 400 });
     }
 
     if (!file.name.endsWith(".xlsx")) {
-      return NextResponse.json(
-        { error: "Only .xlsx files are allowed" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "INVALID_FILE_TYPE" }, { status: 400 });
     }
 
     const uploadDir = path.join(process.cwd(), "tmp");
@@ -36,9 +33,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ jobId });
   } catch (error) {
     console.error("Upload error:", error);
-    return NextResponse.json(
-      { error: "Failed to upload file" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "UPLOAD_FAILED" }, { status: 500 });
   }
 }
