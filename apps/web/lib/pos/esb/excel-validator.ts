@@ -30,6 +30,18 @@ function validateA1Value(
   return [];
 }
 
+/**
+ * Validates the structure and required metadata of an ESB Excel workbook.
+ *
+ * This function performs lightweight top-level validation, ensuring:
+ * - The workbook contains at least one sheet
+ * - Cell A1 on the first sheet contains the expected ESB report title
+ *
+ * @param workbook - An XLSX workbook instance created by `XLSX.read(...)`.
+ * @returns An object containing:
+ *   - `ok: true` if validation passes
+ *   - `ok: false` and a list of `errors` if validation fails
+ */
 export function validateExcelWorkbook(
   workbook: XLSX.WorkBook
 ): ValidationResult {

@@ -16,6 +16,8 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     pool: "threads",
 
+    setupFiles: ["./tests/setup.ts"],
+
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

@@ -1,0 +1,167 @@
+import { describe, it, expect } from "vitest";
+import { normalizeExcelRows } from "@/lib/pos/esb/excel-normalizer";
+
+describe("normalizeExcelRows", () => {
+  it("normalizes keys and trims string values", () => {
+    const input = [
+      {
+        " First Name ": " Alice  ",
+        "Last   Name": "  Smith",
+        " Age ": " 30 ",
+      },
+    ];
+
+    const result = normalizeExcelRows(input);
+
+    expect(result).toEqual([
+      {
+        FirstName: "Alice",
+        LastName: "Smith",
+        Age: 30,
+      },
+    ]);
+  });
+
+  it("converts empty, space-only, dash, and 'null' values to null", () => {
+    const input = [
+      {
+        City: "",
+        Area: " ",
+        Code: "-",
+        Note: "null",
+        NoteUpper: "NULL",
+      },
+    ];
+
+    const result = normalizeExcelRows(input);
+
+    expect(result).toEqual([
+      {
+        City: null,
+        Area: null,
+        Code: null,
+        Note: null,
+        NoteUpper: null,
+      },
+    ]);
+  });
+
+  it("parses basic numeric values including floats and zero", () => {
+    const input = [
+      {
+        Qty: "10",
+        Price: "25000",
+        Discount: "0",
+        FloatValue: "12.34",
+      },
+    ];
+
+    const result = normalizeExcelRows(input);
+
+    expect(result).toEqual([
+      {
+        Qty: 10,
+        Price: 25000,
+        Discount: 0,
+        FloatValue: 12.34,
+      },
+    ]);
+  });
+
+  it("converts Excel serial dates into JavaScript Date objects", () => {
+    const input = [
+      {
+        SalesDate: "45659",
+        SalesDateIn: "45659.5",
+      },
+    ];
+
+    const result = normalizeExcelRows(input);
+
+    expect(result[0].SalesDate).toBeInstanceOf(Date);
+    expect(result[0].SalesDateIn).toBeInstanceOf(Date);
+
+    expect(result[0].SalesDate.getFullYear()).toBe(2025);
+  });
+
+  it("keeps numeric values outside Excel serial range as numbers", () => {
+    const input = [
+      {
+        SmallNumber: "123",
+        LargeNumber: "90000", // too large to be Excel date → stays number
+      },
+    ];
+
+    const result = normalizeExcelRows(input);
+
+    expect(result).toEqual([
+      {
+        SmallNumber: 123,
+        LargeNumber: 90000,
+      },
+    ]);
+  });
+
+  it("handles mixed valid, null-like, numeric, string, and date values", () => {
+    const input = [
+      {
+        Menu: "Latte",
+        MenuCode: "",
+        MenuNotes: " - ",
+        Qty: "1",
+        OrderTime: "45659.351331019",
+      },
+    ];
+
+    const result = normalizeExcelRows(input);
+
+    expect(result[0].Menu).toBe("Latte");
+    expect(result[0].MenuCode).toBeNull();
+    expect(result[0].MenuNotes).toBeNull();
+    expect(result[0].Qty).toBe(1);
+    expect(result[0].OrderTime).toBeInstanceOf(Date);
+  });
+
+  it("handles rows where some keys produce null and some produce values", () => {
+    const input = [
+      {
+        A: "123",
+        B: "null",
+        C: "Hello",
+        D: "-",
+        E: "45659", // Excel date
+      },
+    ];
+
+    const result = normalizeExcelRows(input);
+
+    expect(result[0].A).toBe(123);
+    expect(result[0].B).toBeNull();
+    expect(result[0].C).toBe("Hello");
+    expect(result[0].D).toBeNull();
+    expect(result[0].E).toBeInstanceOf(Date);
+  });
+
+  it("supports multiple rows and preserves order", () => {
+    const input = [
+      { A: "1", B: "2" },
+      { A: "3", B: "4" },
+    ];
+
+    const result = normalizeExcelRows(input);
+
+    expect(result).toEqual([
+      { A: 1, B: 2 },
+      { A: 3, B: 4 },
+    ]);
+  });
+
+  it("does not mutate the original input row", () => {
+    const input = [{ Name: " John " }];
+    const cloned = structuredClone(input);
+
+    normalizeExcelRows(input);
+
+    expect(input).toEqual(cloned);
+  });
+});

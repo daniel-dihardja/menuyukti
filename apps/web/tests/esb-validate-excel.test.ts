@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as XLSX from "xlsx";
-import { validateExcelWorkbook } from "@/lib/excel/excel-validator";
+import { validateExcelWorkbook } from "@/lib/pos/esb/excel-validator";
 
 function createWorkbookWithA1(value: string) {
   const wb = XLSX.utils.book_new();

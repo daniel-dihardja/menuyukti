@@ -7,6 +7,45 @@ export type RawExcel = {
   rows: RawRow[];
 };
 
+/**
+ * Reads an Excel file and returns:
+ *  - the workbook object (from XLSX)
+ *  - all rows as an array of raw string dictionaries
+ *
+ * HOW IT WORKS
+ * ------------
+ * 1. Reads the file as a buffer.
+ * 2. Lets XLSX parse it into a workbook object.
+ * 3. Picks the first sheet.
+ * 4. Extracts headers from the selected header row.
+ * 5. Iterates through all rows, mapping each column to its header.
+ * 6. Skips empty rows.
+ *
+ * NOTE:
+ * This function returns raw string values, exactly as they appear in Excel.
+ * The normalization (trimming, number parsing, date conversion, etc.) is done
+ * later by `normalizeExcelRows()`.
+ *
+ *
+ * BASIC USAGE:
+ * ------------
+ * import { readExcel } from "@/lib/excel/excel-reader";
+ *
+ * async function demo() {
+ *   const { rows } = await readExcel("./reports/MyFile.xlsx", 12);
+ *
+ *   console.log(rows[0]);
+ *   // Example output:
+ *   // {
+ *   //   "SalesNumber": "SSCM173578115165",
+ *   //   "BillNumber": "SCM01202501020001",
+ *   //   ...
+ *   // }
+ * }
+ *
+ * @param filePath Absolute or relative path to an .xlsx file
+ * @param headerRow The row number that contains the column headers (1-based index)
+ */
 export async function readExcel(
   filePath: string,
   headerRow = 1
