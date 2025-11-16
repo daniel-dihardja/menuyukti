@@ -77,11 +77,14 @@ describe("normalizeExcelRows", () => {
     ];
 
     const result = normalizeExcelRows(input);
+    const row = result[0];
 
-    expect(result[0].SalesDate).toBeInstanceOf(Date);
-    expect(result[0].SalesDateIn).toBeInstanceOf(Date);
+    expect(row?.SalesDate).toBeInstanceOf(Date);
+    expect(row?.SalesDateIn).toBeInstanceOf(Date);
 
-    expect(result[0].SalesDate.getFullYear()).toBe(2025);
+    if (row?.SalesDate instanceof Date) {
+      expect(row.SalesDate.getFullYear()).toBe(2025);
+    }
   });
 
   it("keeps numeric values outside Excel serial range as numbers", () => {
@@ -115,11 +118,11 @@ describe("normalizeExcelRows", () => {
 
     const result = normalizeExcelRows(input);
 
-    expect(result[0].Menu).toBe("Latte");
-    expect(result[0].MenuCode).toBeNull();
-    expect(result[0].MenuNotes).toBeNull();
-    expect(result[0].Qty).toBe(1);
-    expect(result[0].OrderTime).toBeInstanceOf(Date);
+    expect(result[0]?.Menu).toBe("Latte");
+    expect(result[0]?.MenuCode).toBeNull();
+    expect(result[0]?.MenuNotes).toBeNull();
+    expect(result[0]?.Qty).toBe(1);
+    expect(result[0]?.OrderTime).toBeInstanceOf(Date);
   });
 
   it("handles rows where some keys produce null and some produce values", () => {
