@@ -46,5 +46,10 @@
     },
     "docs": {
         "title": "Dokumentasi"
+    },
+    "upload": {
+        "NO_FILE_UPLOADED": "Silakan unggah sebuah file.",
+        "INVALID_FILE_TYPE": "Hanya file .xlsx yang diperbolehkan.",
+        "UPLOAD_FAILED": "Proses unggah gagal. Silakan coba lagi."
     }
 }
