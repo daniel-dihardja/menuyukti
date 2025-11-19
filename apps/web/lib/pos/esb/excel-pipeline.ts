@@ -5,7 +5,7 @@ import {
   type ValidationError,
 } from "@/lib/pos/esb/excel-validator";
 import { normalizeAndMapSalesRows } from "@/lib/pos/esb/excel-normalizer";
-import { NormalizedSaleItem } from "@/lib/domain/sales";
+import { NormalizedSaleItem } from "@/lib/domain/sales.types";
 
 export type EsbExcelPipelineSuccess = {
   ok: true;

@@ -1,4 +1,4 @@
-import { NormalizedSaleItem } from "@/lib/domain/sales";
+import { NormalizedSaleItem } from "@/lib/domain/sales.types";
 
 export type NormalizedValue = string | number | Date | null;
 
