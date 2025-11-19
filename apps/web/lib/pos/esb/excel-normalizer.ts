@@ -1,3 +1,5 @@
+import { NormalizedSaleItem } from "@/lib/domain/sales";
+
 export type NormalizedValue = string | number | Date | null;
 
 export type NormalizedRow = Record<string, NormalizedValue>;
@@ -56,4 +58,33 @@ export function normalizeExcelRows(
 
     return normalized;
   });
+}
+
+export function mapToNormalizedSaleItem(
+  row: NormalizedRow
+): NormalizedSaleItem {
+  return {
+    billNumber: String(row.BillNumber),
+    salesNumber: String(row.SalesNumber),
+    menuCode: row.MenuCode ? String(row.MenuCode) : undefined,
+    menuName: String(row.Menu),
+    category: String(row.MenuCategory),
+    subcategory: row.MenuCategoryDetail
+      ? String(row.MenuCategoryDetail)
+      : undefined,
+    qty: Number(row.Qty),
+    price: Number(row.Price),
+    revenue: Number(row.Total ?? row.Subtotal),
+    datetime:
+      (row.SalesDateIn as Date) ??
+      (row.OrderTime as Date) ??
+      (row.SalesDate as Date),
+    branch: String(row.Branch),
+  };
+}
+
+export function normalizeAndMapSalesRows(
+  rows: Record<string, string>[]
+): NormalizedSaleItem[] {
+  return normalizeExcelRows(rows).map(mapToNormalizedSaleItem);
 }

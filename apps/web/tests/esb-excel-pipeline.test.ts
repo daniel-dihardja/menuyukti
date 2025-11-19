@@ -12,10 +12,11 @@ async function createExcelFile(
   data: ExcelAOA,
   filename: string
 ): Promise<string> {
-  const tempDir = path.join(process.cwd(), ".vitest-tmp");
+  const tempDir = path.join(import.meta.dirname, ".vitest-tmp");
   await fs.mkdir(tempDir, { recursive: true });
 
   const filePath = path.join(tempDir, filename);
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
 
   try {
     await fs.unlink(filePath);
@@ -46,12 +47,32 @@ describe("runExcelPipeline()", () => {
     expect(result.errors[0]?.code).toBe("INVALID_A1");
   });
 
-  it("returns normalized rows when validation succeeds", async () => {
+  it("returns normalized sale items when validation succeeds", async () => {
     const filePath = await createExcelFile(
       [
         ["Sales Recapitulation Detail Report"],
-        ["ColA", "ColB"],
-        ["Value1", "123"],
+        [
+          "Bill Number",
+          "Sales Number",
+          "Menu",
+          "Menu Category",
+          "Qty",
+          "Price",
+          "Total",
+          "Branch",
+          "SalesDateIn",
+        ],
+        [
+          "B100",
+          "S100",
+          "Americano",
+          "Drink",
+          "3",
+          "20000",
+          "60000",
+          "Jakarta",
+          45659,
+        ],
       ],
       "valid.xlsx"
     );
@@ -62,9 +83,21 @@ describe("runExcelPipeline()", () => {
     if (!result.ok) throw new Error("Expected success");
 
     expect(result.rows.length).toBe(1);
-    expect(result.rows[0]).toEqual({
-      ColA: "Value1",
-      ColB: 123,
+
+    const item = result.rows[0];
+
+    expect(item).toMatchObject({
+      billNumber: "B100",
+      salesNumber: "S100",
+      menuName: "Americano",
+      category: "Drink",
+      qty: 3,
+      price: 20000,
+      revenue: 60000,
+      branch: "Jakarta",
     });
+
+    expect(item?.datetime).toBeInstanceOf(Date);
+    expect(item?.datetime.getFullYear()).toBe(2025);
   });
 });

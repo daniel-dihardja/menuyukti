@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { normalizeExcelRows } from "@/lib/pos/esb/excel-normalizer";
+import {
+  normalizeExcelRows,
+  mapToNormalizedSaleItem,
+  normalizeAndMapSalesRows,
+} from "@/lib/pos/esb/excel-normalizer";
 
 describe("normalizeExcelRows", () => {
   it("normalizes keys and trims string values", () => {
@@ -138,11 +142,11 @@ describe("normalizeExcelRows", () => {
 
     const result = normalizeExcelRows(input);
 
-    expect(result[0].A).toBe(123);
-    expect(result[0].B).toBeNull();
-    expect(result[0].C).toBe("Hello");
-    expect(result[0].D).toBeNull();
-    expect(result[0].E).toBeInstanceOf(Date);
+    expect(result[0]?.A).toBe(123);
+    expect(result[0]?.B).toBeNull();
+    expect(result[0]?.C).toBe("Hello");
+    expect(result[0]?.D).toBeNull();
+    expect(result[0]?.E).toBeInstanceOf(Date);
   });
 
   it("supports multiple rows and preserves order", () => {
@@ -166,5 +170,102 @@ describe("normalizeExcelRows", () => {
     normalizeExcelRows(input);
 
     expect(input).toEqual(cloned);
+  });
+});
+
+/**
+ * -------------------------------------------------------
+ * ADDITIONAL TESTS FOR: mapToNormalizedSaleItem
+ * -------------------------------------------------------
+ */
+
+describe("mapToNormalizedSaleItem", () => {
+  it("maps a normalized row into a NormalizedSaleItem", () => {
+    const row = {
+      BillNumber: "B001",
+      SalesNumber: "S001",
+      MenuCode: "M123",
+      Menu: "Cappuccino",
+      MenuCategory: "Drink",
+      MenuCategoryDetail: "Coffee",
+      Qty: 2,
+      Price: 30000,
+      Total: 60000,
+      SalesDateIn: new Date("2025-01-02T08:00:00Z"),
+      Branch: "Jakarta",
+    };
+
+    const item = mapToNormalizedSaleItem(row);
+
+    expect(item).toEqual({
+      billNumber: "B001",
+      salesNumber: "S001",
+      menuCode: "M123",
+      menuName: "Cappuccino",
+      category: "Drink",
+      subcategory: "Coffee",
+      qty: 2,
+      price: 30000,
+      revenue: 60000,
+      datetime: new Date("2025-01-02T08:00:00Z"),
+      branch: "Jakarta",
+    });
+  });
+
+  it("handles missing optional fields", () => {
+    const row = {
+      BillNumber: "B002",
+      SalesNumber: "S002",
+      Menu: "Latte",
+      MenuCategory: "Drink",
+      Qty: 1,
+      Price: 25000,
+      Subtotal: 25000,
+      SalesDate: new Date("2025-01-01T00:00:00Z"),
+      Branch: "Bandung",
+    };
+
+    const item = mapToNormalizedSaleItem(row);
+
+    expect(item.menuCode).toBeUndefined();
+    expect(item.subcategory).toBeUndefined();
+    expect(item.revenue).toBe(25000);
+    expect(item.datetime).toEqual(new Date("2025-01-01T00:00:00Z"));
+  });
+});
+
+/**
+ * -------------------------------------------------------
+ * ADDITIONAL TESTS FOR: normalizeAndMapSalesRows
+ * -------------------------------------------------------
+ */
+
+describe("normalizeAndMapSalesRows", () => {
+  it("normalizes and maps rows end-to-end", () => {
+    const input = [
+      {
+        " Bill Number ": " B100 ",
+        " Sales Number ": " S100 ",
+        Menu: " Americano ",
+        MenuCode: " A01 ",
+        MenuCategory: " Drink ",
+        MenuCategoryDetail: " Coffee ",
+        Qty: " 3 ",
+        Price: " 20000 ",
+        Total: " 60000 ",
+        SalesDateIn: "45659",
+        Branch: " Jakarta ",
+      },
+    ];
+
+    const [item] = normalizeAndMapSalesRows(input);
+
+    expect(item?.billNumber).toBe("B100");
+    expect(item?.salesNumber).toBe("S100");
+    expect(item?.menuName).toBe("Americano");
+    expect(item?.qty).toBe(3);
+    expect(item?.revenue).toBe(60000);
+    expect(item?.datetime).toBeInstanceOf(Date);
+    expect(item?.branch).toBe("Jakarta");
   });
 });
