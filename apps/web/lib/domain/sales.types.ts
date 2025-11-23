@@ -26,6 +26,7 @@ export type OrderItem = {
   subcategory?: string;
   qty: number;
   price: number;
+  discount?: number;
   revenue: number;
   datetime: Date;
   branch: string;

@@ -72,6 +72,20 @@ describe("normalizeExcelRows", () => {
     ]);
   });
 
+  it("preserves numeric strings with leading zeros", () => {
+    const input = [
+      {
+        BillNumber: "000123",
+        SalesNumber: "0456",
+      },
+    ];
+
+    const result = normalizeExcelRows(input);
+
+    expect(result[0]?.BillNumber).toBe("000123");
+    expect(result[0]?.SalesNumber).toBe("0456");
+  });
+
   it("converts Excel serial dates into JavaScript Date objects", () => {
     const input = [
       {
@@ -191,6 +205,7 @@ describe("mapToOrderItem", () => {
       Qty: 2,
       Price: 30000,
       Total: 60000,
+      Discount: 0,
       SalesDateIn: new Date("2025-01-02T08:00:00Z"),
       Branch: "Jakarta",
     };
@@ -207,6 +222,7 @@ describe("mapToOrderItem", () => {
       qty: 2,
       price: 30000,
       revenue: 60000,
+      discount: 0,
       datetime: new Date("2025-01-02T08:00:00Z"),
       branch: "Jakarta",
     });
@@ -253,6 +269,7 @@ describe("normalizeAndMapSalesRows", () => {
         Qty: " 3 ",
         Price: " 20000 ",
         Total: " 60000 ",
+        Discount: "0",
         SalesDateIn: "45659",
         Branch: " Jakarta ",
       },
@@ -265,6 +282,7 @@ describe("normalizeAndMapSalesRows", () => {
     expect(item?.menuName).toBe("Americano");
     expect(item?.qty).toBe(3);
     expect(item?.revenue).toBe(60000);
+    expect(item?.discount).toBe(0);
     expect(item?.datetime).toBeInstanceOf(Date);
     expect(item?.branch).toBe("Jakarta");
   });
