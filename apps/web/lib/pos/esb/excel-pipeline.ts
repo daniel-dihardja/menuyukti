@@ -4,12 +4,13 @@ import {
   type ValidationResult,
   type ValidationError,
 } from "@/lib/pos/esb/excel-validator";
+
 import { normalizeAndMapSalesRows } from "@/lib/pos/esb/excel-normalizer";
-import { NormalizedSaleItem } from "@/lib/domain/sales.types";
+import { OrderItem } from "@/lib/domain/sales.types";
 
 export type EsbExcelPipelineSuccess = {
   ok: true;
-  rows: NormalizedSaleItem[];
+  rows: OrderItem[];
 };
 
 export type EsbExcelPipelineFailure = {
@@ -25,11 +26,11 @@ export type EsbExcelPipelineResult =
  * Runs the full ESB Excel pipeline:
  * - reads the Excel file (using the given header row, default 12),
  * - validates the workbook structure,
- * - normalizes and maps all data rows into final NormalizedSaleItem objects.
+ * - normalizes and maps all data rows into final OrderItem objects.
  *
  * @param filePath - Path to the ESB Excel export (.xlsx).
  * @param headerRow - 1-based index of the header row in the sheet (defaults to 12 for ESB reports).
- * @returns An object with `ok: true` and normalized sale items on success,
+ * @returns An object with `ok: true` and normalized OrderItems on success,
  *          or `ok: false` and a list of `errors` if validation fails.
  */
 export async function runExcelPipeline(

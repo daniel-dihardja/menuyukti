@@ -1,4 +1,23 @@
-export interface NormalizedSaleItem {
+export type Analytic = {
+  name: string;
+  ordersCount: number;
+  revenueTotal: number;
+  maxOrderItems: number;
+  avgOrderItems: number;
+  minOrderItems: number;
+  minOrderRevenue: number;
+  maxOrderRevenue: number;
+  avgOrderRevenue: number;
+};
+
+export type Order = {
+  billNumber: string;
+  salesNumber: string;
+  items: OrderItem[];
+  datetime: Date;
+};
+
+export type OrderItem = {
   billNumber: string;
   salesNumber: string;
   menuCode?: string;
@@ -10,4 +29,4 @@ export interface NormalizedSaleItem {
   revenue: number;
   datetime: Date;
   branch: string;
-}
+};

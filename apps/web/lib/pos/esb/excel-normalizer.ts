@@ -1,4 +1,4 @@
-import { NormalizedSaleItem } from "@/lib/domain/sales.types";
+import { OrderItem } from "@/lib/domain/sales.types";
 
 export type NormalizedValue = string | number | Date | null;
 
@@ -37,13 +37,6 @@ function convertValue(value: string | null | undefined): NormalizedValue {
  * - converting numeric strings into numbers,
  * - converting Excel date-serial values into `Date` objects,
  * - converting empty-like values ("" | "-" | "null") into `null`.
- *
- * @param rows - The raw rows extracted from the Excel sheet.
- *               Keys are the original header names, values are raw string cell values.
- *
- * @returns An array of normalized rows, where:
- *          - keys are cleaned (no whitespace),
- *          - values are typed (`string`, `number`, `Date`, or `null`).
  */
 export function normalizeExcelRows(
   rows: Record<string, string>[]
@@ -60,9 +53,7 @@ export function normalizeExcelRows(
   });
 }
 
-export function mapToNormalizedSaleItem(
-  row: NormalizedRow
-): NormalizedSaleItem {
+export function mapToOrderItem(row: NormalizedRow): OrderItem {
   return {
     billNumber: String(row.BillNumber),
     salesNumber: String(row.SalesNumber),
@@ -85,6 +76,6 @@ export function mapToNormalizedSaleItem(
 
 export function normalizeAndMapSalesRows(
   rows: Record<string, string>[]
-): NormalizedSaleItem[] {
-  return normalizeExcelRows(rows).map(mapToNormalizedSaleItem);
+): OrderItem[] {
+  return normalizeExcelRows(rows).map(mapToOrderItem);
 }

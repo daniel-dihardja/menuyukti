@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   normalizeExcelRows,
-  mapToNormalizedSaleItem,
+  mapToOrderItem,
   normalizeAndMapSalesRows,
 } from "@/lib/pos/esb/excel-normalizer";
 
@@ -95,7 +95,7 @@ describe("normalizeExcelRows", () => {
     const input = [
       {
         SmallNumber: "123",
-        LargeNumber: "90000", // too large to be Excel date → stays number
+        LargeNumber: "90000",
       },
     ];
 
@@ -136,7 +136,7 @@ describe("normalizeExcelRows", () => {
         B: "null",
         C: "Hello",
         D: "-",
-        E: "45659", // Excel date
+        E: "45659",
       },
     ];
 
@@ -175,12 +175,12 @@ describe("normalizeExcelRows", () => {
 
 /**
  * -------------------------------------------------------
- * ADDITIONAL TESTS FOR: mapToNormalizedSaleItem
+ * TESTS FOR: mapToOrderItem
  * -------------------------------------------------------
  */
 
-describe("mapToNormalizedSaleItem", () => {
-  it("maps a normalized row into a NormalizedSaleItem", () => {
+describe("mapToOrderItem", () => {
+  it("maps a normalized row into an OrderItem", () => {
     const row = {
       BillNumber: "B001",
       SalesNumber: "S001",
@@ -195,7 +195,7 @@ describe("mapToNormalizedSaleItem", () => {
       Branch: "Jakarta",
     };
 
-    const item = mapToNormalizedSaleItem(row);
+    const item = mapToOrderItem(row);
 
     expect(item).toEqual({
       billNumber: "B001",
@@ -225,7 +225,7 @@ describe("mapToNormalizedSaleItem", () => {
       Branch: "Bandung",
     };
 
-    const item = mapToNormalizedSaleItem(row);
+    const item = mapToOrderItem(row);
 
     expect(item.menuCode).toBeUndefined();
     expect(item.subcategory).toBeUndefined();
@@ -236,7 +236,7 @@ describe("mapToNormalizedSaleItem", () => {
 
 /**
  * -------------------------------------------------------
- * ADDITIONAL TESTS FOR: normalizeAndMapSalesRows
+ * TESTS FOR: normalizeAndMapSalesRows
  * -------------------------------------------------------
  */
 
