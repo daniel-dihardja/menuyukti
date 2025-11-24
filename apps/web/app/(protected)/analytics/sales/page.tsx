@@ -27,7 +27,7 @@ export default async function Page() {
 
       {/* ---------- MAIN CONTENT ---------- */}
       <div className="p-4 space-y-4">
-        <div className="rounded-md border">
+        <div className="border">
           <Table>
             <TableHeader>
               <TableRow>

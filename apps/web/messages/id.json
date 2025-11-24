@@ -32,7 +32,7 @@
                 "action": "Tindakan",
                 "view": "Lihat"
             },
-            "create": "Unggah Laporan Penjualan Baru"
+            "create": "Upload Laporan Penjualan Baru"
         },
         "cogs": {
             "title": "Daftar COGS",
@@ -48,8 +48,8 @@
         "title": "Dokumentasi"
     },
     "upload": {
-        "NO_FILE_UPLOADED": "Silakan unggah sebuah file.",
+        "NO_FILE_UPLOADED": "Silakan upload sebuah file.",
         "INVALID_FILE_TYPE": "Hanya file .xlsx yang diperbolehkan.",
-        "UPLOAD_FAILED": "Proses unggah gagal. Silakan coba lagi."
+        "UPLOAD_FAILED": "Proses upload gagal. Silakan coba lagi."
     }
 }
