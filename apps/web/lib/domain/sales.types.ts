@@ -24,10 +24,9 @@ export type OrderItem = {
   menuName: string;
   category: string;
   subcategory?: string;
-  qty: number;
   price: number;
-  discount?: number;
-  revenue: number;
+  qty: number;
+  netTotal: number;
   datetime: Date;
   branch: string;
 };

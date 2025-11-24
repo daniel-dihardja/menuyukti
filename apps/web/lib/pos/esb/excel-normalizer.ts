@@ -13,8 +13,6 @@ function excelSerialToDate(serial: number): Date {
 
 /**
  * SAFER Excel serial date detection
- * - Only accept dates from 2000–2100
- * - Strongly reduces false positives (prices, revenues, IDs, etc.)
  */
 function isExcelDateSerial(num: number): boolean {
   if (num < 20000 || num > 50000) return false;
@@ -27,10 +25,6 @@ function isExcelDateSerial(num: number): boolean {
 
 /**
  * Normalize individual cell values
- * - empty-like → null
- * - preserve leading-zero numeric strings
- * - convert Excel dates
- * - convert safe numbers
  */
 function convertValue(value: string | null | undefined): NormalizedValue {
   if (value == null) return null;
@@ -73,25 +67,30 @@ export function normalizeExcelRows(
 }
 
 /**
- * Safely extract a Date field
+ * Extract only OrderTime as the Date
  */
-function pickDate(row: NormalizedRow, key: string): Date | null {
-  const val = row[key];
+function pickOrderTime(row: NormalizedRow): Date | null {
+  const val = row.OrderTime;
   return val instanceof Date ? val : null;
+}
+
+/**
+ * Determines if this is a real sales row:
+ * SalesNumber must be present.
+ */
+function isValidOrderRow(row: NormalizedRow): boolean {
+  return row.SalesNumber != null && row.SalesNumber !== "";
 }
 
 /**
  * Map a normalized row into an OrderItem
  */
 export function mapToOrderItem(row: NormalizedRow): OrderItem {
-  const datetime =
-    pickDate(row, "SalesDateIn") ??
-    pickDate(row, "OrderTime") ??
-    pickDate(row, "SalesDate");
+  const datetime = pickOrderTime(row);
 
   if (!datetime) {
     throw new Error(
-      `Missing datetime for row with BillNumber=${row.BillNumber}`
+      `Missing datetime (OrderTime) for row with BillNumber=${row.BillNumber}`
     );
   }
 
@@ -106,8 +105,7 @@ export function mapToOrderItem(row: NormalizedRow): OrderItem {
       : undefined,
     qty: Number(row.Qty),
     price: Number(row.Price),
-    revenue: Number(row.Total ?? row.Subtotal),
-    discount: row.Discount != null ? Number(row.Discount) : undefined,
+    netTotal: Number(row.TotalAfterBillDiscount),
     datetime,
     branch: String(row.Branch),
   };
@@ -115,9 +113,10 @@ export function mapToOrderItem(row: NormalizedRow): OrderItem {
 
 /**
  * Normalize and map all rows
+ * -- skip footer rows where SalesNumber is empty
  */
 export function normalizeAndMapSalesRows(
   rows: Record<string, string>[]
 ): OrderItem[] {
-  return normalizeExcelRows(rows).map(mapToOrderItem);
+  return normalizeExcelRows(rows).filter(isValidOrderRow).map(mapToOrderItem);
 }
