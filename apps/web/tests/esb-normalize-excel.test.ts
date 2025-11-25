@@ -85,9 +85,7 @@ describe("normalizeExcelRows()", () => {
   });
 
   it("converts Excel serial dates into JS Date objects", () => {
-    const input: Record<string, string>[] = [
-      { OrderTime: "45659" }, // Excel serial (string)
-    ];
+    const input: Record<string, string>[] = [{ OrderTime: "45659" }];
 
     const [row] = normalizeExcelRows(input);
 
@@ -101,7 +99,7 @@ describe("normalizeExcelRows()", () => {
  * ----------------------------------------------------- */
 
 describe("mapToOrderItem()", () => {
-  it("maps a normalized row into an OrderItem", () => {
+  it("maps a normalized row into an OrderItemRaw", () => {
     const row = {
       BillNumber: "B001",
       SalesNumber: "S001",
@@ -111,7 +109,6 @@ describe("mapToOrderItem()", () => {
       Qty: 2,
       Price: 30000,
       TotalAfterBillDiscount: 54000,
-      Branch: "Jakarta",
       OrderTime: new Date("2025-01-02T08:00:00Z"),
     };
 
@@ -126,7 +123,6 @@ describe("mapToOrderItem()", () => {
       qty: 2,
       price: 30000,
       netTotal: 54000,
-      branch: "Jakarta",
     });
 
     expect(item.datetime).toBeInstanceOf(Date);
@@ -141,7 +137,6 @@ describe("mapToOrderItem()", () => {
       Qty: 1,
       Price: 20000,
       TotalAfterBillDiscount: 20000,
-      Branch: "Bandung",
       OrderTime: null,
     };
 
@@ -164,7 +159,6 @@ describe("normalizeAndMapSalesRows()", () => {
         Qty: " 3 ",
         Price: " 20000 ",
         TotalAfterBillDiscount: " 54000 ",
-        Branch: " Jakarta ",
         OrderTime: "45659",
       },
     ];
@@ -179,7 +173,6 @@ describe("normalizeAndMapSalesRows()", () => {
       qty: 3,
       price: 20000,
       netTotal: 54000,
-      branch: "Jakarta",
     });
 
     expect(item?.datetime).toBeInstanceOf(Date);
@@ -187,7 +180,7 @@ describe("normalizeAndMapSalesRows()", () => {
 
   it("skips rows where SalesNumber is empty", () => {
     const input: Record<string, string>[] = [
-      { "Bill Number": "B1", "Sales Number": "", OrderTime: "" }, // still valid shape
+      { "Bill Number": "B1", "Sales Number": "", OrderTime: "" },
       { "Bill Number": "B2", "Sales Number": "S2", OrderTime: "45659" },
     ];
 

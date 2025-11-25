@@ -1,4 +1,4 @@
-import { OrderItem } from "@/lib/domain/sales.types";
+import { OrderItemRaw } from "@/lib/domain/sales.types";
 
 export type NormalizedValue = string | number | Date | null;
 export type NormalizedRow = Record<string, NormalizedValue>;
@@ -85,7 +85,7 @@ function isValidOrderRow(row: NormalizedRow): boolean {
 /**
  * Map a normalized row into an OrderItem
  */
-export function mapToOrderItem(row: NormalizedRow): OrderItem {
+export function mapToOrderItem(row: NormalizedRow): OrderItemRaw {
   const datetime = pickOrderTime(row);
 
   if (!datetime) {
@@ -107,7 +107,6 @@ export function mapToOrderItem(row: NormalizedRow): OrderItem {
     price: Number(row.Price),
     netTotal: Number(row.TotalAfterBillDiscount),
     datetime,
-    branch: String(row.Branch),
   };
 }
 
@@ -117,6 +116,6 @@ export function mapToOrderItem(row: NormalizedRow): OrderItem {
  */
 export function normalizeAndMapSalesRows(
   rows: Record<string, string>[]
-): OrderItem[] {
+): OrderItemRaw[] {
   return normalizeExcelRows(rows).filter(isValidOrderRow).map(mapToOrderItem);
 }

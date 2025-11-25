@@ -6,11 +6,11 @@ import {
 } from "@/lib/pos/esb/excel-validator";
 
 import { normalizeAndMapSalesRows } from "@/lib/pos/esb/excel-normalizer";
-import { OrderItem } from "@/lib/domain/sales.types";
+import { OrderItemRaw } from "@/lib/domain/sales.types";
 
 export type EsbExcelPipelineSuccess = {
   ok: true;
-  rows: OrderItem[];
+  rows: OrderItemRaw[];
 };
 
 export type EsbExcelPipelineFailure = {
