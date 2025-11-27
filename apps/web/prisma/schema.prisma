@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Analytic {
+  id              String  @id @default(cuid())
+  name            String
+
+  ordersCount     Int
+  revenueTotal    Float
+
+  maxOrderItems   Int
+  avgOrderItems   Float
+  minOrderItems   Int
+
+  minOrderRevenue Float
+  maxOrderRevenue Float
+  avgOrderRevenue Float
+
+  // one analytic has many orders
+  orders          Order[]
+}
+
+model Order {
+  id          String   @id @default(cuid())
+  analyticId  String?
+
+  billNumber  String
+  salesNumber String
+  datetime    DateTime
+
+  // relation back to Analytic
+  analytic    Analytic? @relation(fields: [analyticId], references: [id])
+
+  // one order has many items
+  items       OrderItem[]
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+
+  menuCode    String?
+  menuName    String
+  category    String
+  subcategory String?
+
+  price       Float
+  qty         Int
+  netTotal    Float
+
+  // relation back to Order
+  order       Order @relation(fields: [orderId], references: [id])
+}
