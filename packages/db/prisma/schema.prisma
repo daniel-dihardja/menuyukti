@@ -14,52 +14,52 @@ datasource db {
 }
 
 model Analytic {
-  id              String  @id @default(cuid())
-  name            String
+  id   String @id @default(cuid())
+  name String
 
-  ordersCount     Int
-  revenueTotal    Float
+  ordersCount  Int
+  revenueTotal Float
 
-  maxOrderItems   Int
-  avgOrderItems   Float
-  minOrderItems   Int
+  maxOrderItems Int
+  avgOrderItems Float
+  minOrderItems Int
 
   minOrderRevenue Float
   maxOrderRevenue Float
   avgOrderRevenue Float
 
   // one analytic has many orders
-  orders          Order[]
+  orders Order[]
 }
 
 model Order {
-  id          String   @id @default(cuid())
-  analyticId  String?
+  id         String  @id @default(cuid())
+  analyticId String?
 
   billNumber  String
   salesNumber String
   datetime    DateTime
 
   // relation back to Analytic
-  analytic    Analytic? @relation(fields: [analyticId], references: [id])
+  analytic Analytic? @relation(fields: [analyticId], references: [id])
 
   // one order has many items
-  items       OrderItem[]
+  items OrderItem[]
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
-  orderId     String
+  id      String @id @default(cuid())
+  orderId String
 
   menuCode    String?
   menuName    String
   category    String
   subcategory String?
 
-  price       Float
-  qty         Int
-  netTotal    Float
+  price    Float
+  qty      Int
+  netTotal Float
 
   // relation back to Order
-  order       Order @relation(fields: [orderId], references: [id])
+  order Order @relation(fields: [orderId], references: [id])
 }
