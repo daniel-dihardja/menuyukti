@@ -1,133 +1,248 @@
+import Image from "next/image";
 import { Button } from "@workspace/ui/components/button";
+import {
+  Upload,
+  BarChart3,
+  Lightbulb,
+  TrendingUp,
+  Leaf,
+  Sparkles,
+  PieChart,
+  UtensilsCrossed,
+} from "lucide-react";
 
-export default function Page() {
+export default function LandingPage() {
   return (
-    <main className="flex flex-col items-center justify-center w-full text-gray-800">
+    <div className="min-h-screen bg-background text-foreground relative pb-24 md:pb-0">
+      {/* Header */}
+      <header className="w-full sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          {/* Logo + Name */}
+          <div className="flex items-center gap-2">
+            <UtensilsCrossed className="w-5 h-5 text-primary" />
+            <h1 className="text-xl font-semibold tracking-tight">Menuyukti</h1>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
-      <section className="flex flex-col items-center justify-center min-h-svh text-center px-6 py-20 bg-gradient-to-b from-white to-green-50">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          Optimalkan Menu Anda. Kurangi Limbah. Tingkatkan Keuntungan.
-        </h1>
-        <p className="text-lg md:text-xl text-gray-600 max-w-2xl mb-8">
-          MenuYukti membantu pemilik restoran mengetahui hidangan mana yang
-          benar-benar menguntungkan — dan mana yang diam-diam mengurangi profit
-          Anda.
-        </p>
-        <Button size="lg" className="px-8 py-6 text-lg">
-          Analisis Menu Saya
-        </Button>
-        <p className="text-sm text-gray-500 mt-4">
-          Tanpa instalasi — cukup gunakan data penjualan yang sudah Anda miliki.
-        </p>
+      <section className="relative w-full min-h-[calc(100vh-4rem)] flex items-center">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <Image
+            src="/images/hero-07.png"
+            alt="Menuyukti Hero"
+            fill
+            priority
+            className="object-cover object-[50%_75%]"
+          />
+          <div className="absolute inset-0 bg-background/50" />
+        </div>
+
+        {/* Hero Content */}
+        <div className="relative max-w-6xl mx-auto px-6">
+          <h2 className="text-4xl md:text-6xl font-bold leading-tight max-w-3xl px-3 py-2 text-shadow-lg">
+            Optimalkan Menu Anda.
+            <br />
+            Kurangi Limbah.
+            <br />
+            Tingkatkan Keuntungan.
+          </h2>
+
+          {/* DESKTOP CTA Buttons */}
+          <div className="mt-8 hidden md:flex gap-4">
+            <Button size="lg" variant="default">
+              Mulai Sekarang
+            </Button>
+          </div>
+        </div>
       </section>
 
-      {/* Problem Section */}
-      <section className="w-full max-w-5xl px-6 py-20">
-        <h2 className="text-3xl font-semibold text-center mb-6">
-          Terlalu Banyak Menu? Biaya Tersembunyi?
-        </h2>
-        <p className="text-center text-gray-600 max-w-3xl mx-auto mb-10">
-          Menu yang terlalu besar sering menyebabkan pemborosan bahan, waktu
-          persiapan yang lama, dan penurunan keuntungan. Tanpa data yang jelas,
-          sulit mengetahui mana hidangan yang benar-benar laku.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="p-6 border rounded-2xl shadow-sm bg-white text-center">
-            <h3 className="font-semibold mb-2">❌ Masalah</h3>
-            <p className="text-gray-600">
-              Terlalu banyak pilihan menu, penjualan tidak konsisten, dan stok
-              berlebih — semua ini menambah biaya operasional tanpa disadari.
-            </p>
+      {/* Section 2 — Image Left, Text Right */}
+      <section className="bg-background">
+        <div className="max-w-6xl mx-auto px-6 py-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="w-full h-full overflow-hidden shadow-lg">
+            <Image
+              src="/images/analisis-03.png"
+              alt="MenuYukti section image"
+              width={800}
+              height={600}
+              className="w-full h-auto object-cover"
+            />
           </div>
-          <div className="p-6 border rounded-2xl shadow-sm bg-white text-center">
-            <h3 className="font-semibold mb-2">✅ Solusi</h3>
-            <p className="text-gray-600">
-              MenuYukti menunjukkan hidangan yang paling menguntungkan dan mana
-              yang sebaiknya dihapus — membantu Anda mengurangi limbah sekaligus
-              menjaga kepuasan pelanggan.
+
+          <div>
+            <p className="text-xl md:text-2xl leading-relaxed text-foreground/90">
+              Menuyukti membantu pemilik restoran mengetahui hidangan mana yang
+              benar-benar menguntungkan — dan mana yang diam-diam mengurangi
+              profit Anda.
             </p>
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section className="w-full bg-green-50 py-20 px-6">
-        <h2 className="text-3xl font-semibold text-center mb-10">
-          Cara Kerjanya
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {[
-            {
-              step: "1",
-              text: "Unggah data penjualan Anda (CSV atau ekspor POS)",
-            },
-            {
-              step: "2",
-              text: "MenuYukti menganalisis setiap hidangan dengan teknik menu engineering",
-            },
-            {
-              step: "3",
-              text: "Dapatkan laporan visual yang jelas: hidangan mana yang dipertahankan atau dihapus",
-            },
-          ].map((item) => (
-            <div
-              key={item.step}
-              className="flex flex-col items-center text-center p-6 bg-white rounded-2xl shadow-sm"
-            >
-              <div className="w-12 h-12 flex items-center justify-center bg-green-100 text-green-700 font-bold rounded-full mb-4">
-                {item.step}
+      {/* Section 3 — Text Left, Image Right */}
+      <section className="bg-background">
+        <div className="max-w-6xl mx-auto px-6 py-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="order-1 md:order-2 w-full h-full overflow-hidden shadow-lg">
+            <Image
+              src="/images/hero-03.png"
+              alt="Menuyukti section image"
+              width={800}
+              height={600}
+              className="w-full h-auto object-cover"
+            />
+          </div>
+
+          <div className="order-2 md:order-1">
+            <p className="text-xl md:text-2xl leading-relaxed text-foreground/90">
+              Menu yang terlalu besar sering menyebabkan pemborosan bahan, waktu
+              persiapan yang lama, dan penurunan keuntungan. Tanpa data yang
+              jelas, sulit mengetahui mana hidangan yang benar-benar laku.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 4 — Steps */}
+      <section className="bg-background py-24">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
+            Bagaimana Cara Kerjanya?
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-card p-8 text-center shadow-lg">
+              <div className="flex justify-center mb-6">
+                <Upload className="w-10 h-10 text-primary" />
               </div>
-              <p className="text-gray-700">{item.text}</p>
+              <h3 className="text-xl font-semibold mb-3">1. Upload Data</h3>
+              <p className="text-muted-foreground">
+                Upload data penjualan Anda (Excel ekspor dari POS).
+              </p>
             </div>
-          ))}
+
+            <div className="bg-card p-8 text-center shadow-lg">
+              <div className="flex justify-center mb-6">
+                <BarChart3 className="w-10 h-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">
+                2. Analisis Otomatis
+              </h3>
+              <p className="text-muted-foreground">
+                Menuyukti menganalisis setiap hidangan dengan teknik menu
+                engineering.
+              </p>
+            </div>
+
+            <div className="bg-card p-8 text-center shadow-lg">
+              <div className="flex justify-center mb-6">
+                <Lightbulb className="w-10 h-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">3. Laporan & Aksi</h3>
+              <p className="text-muted-foreground">
+                Dapatkan laporan visual yang jelas: hidangan mana yang
+                dipertahankan atau dihapus.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="w-full max-w-5xl px-6 py-20">
-        <h2 className="text-3xl font-semibold text-center mb-10">
-          Mengapa Restoran Memilih MenuYukti
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          {[
-            { icon: "💰", text: "Tingkatkan margin keuntungan" },
-            { icon: "🍽️", text: "Kurangi limbah makanan" },
-            { icon: "⚡", text: "Operasional dapur lebih efisien" },
-            { icon: "📊", text: "Wawasan berbasis data tanpa rumit" },
-          ].map((b) => (
-            <div
-              key={b.text}
-              className="p-6 bg-white border rounded-2xl shadow-sm"
-            >
-              <div className="text-3xl mb-2">{b.icon}</div>
-              <p className="font-medium">{b.text}</p>
+      {/* Section 5 — Why Choose MenuYukti */}
+      <section className="bg-background py-24">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
+            Mengapa Restoran Memilih Menuyukti
+          </h2>
+
+          <p className="text-center text-foreground/80 max-w-3xl mx-auto mb-16">
+            Kami menyediakan alat berbasis data yang membantu Anda membuat
+            keputusan menu yang lebih cerdas, menguntungkan, dan efisien.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="bg-card p-6 shadow-lg text-center">
+              <TrendingUp className="w-10 h-10 text-primary mx-auto mb-4" />
+              <p className="font-semibold text-lg">
+                Tingkatkan margin keuntungan
+              </p>
             </div>
-          ))}
+
+            <div className="bg-card p-6 shadow-lg text-center">
+              <Leaf className="w-10 h-10 text-primary mx-auto mb-4" />
+              <p className="font-semibold text-lg">Kurangi limbah makanan</p>
+            </div>
+
+            <div className="bg-card p-6 shadow-lg text-center">
+              <Sparkles className="w-10 h-10 text-primary mx-auto mb-4" />
+              <p className="font-semibold text-lg">
+                Operasional dapur lebih efisien
+              </p>
+            </div>
+
+            <div className="bg-card p-6 shadow-lg text-center">
+              <PieChart className="w-10 h-10 text-primary mx-auto mb-4" />
+              <p className="font-semibold text-lg">Wawasan berbasis data</p>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Final CTA Section */}
-      <section className="w-full bg-green-600 text-white text-center py-20 px-6">
-        <h2 className="text-4xl font-bold mb-6">
-          Pangkas Menu Anda. Kurangi Limbah. Naikkan Keuntungan.
-        </h2>
-        <p className="text-lg mb-8">
-          Dapatkan wawasan yang bisa ditindaklanjuti dari data penjualan Anda —
-          hanya dalam hitungan menit.
-        </p>
-        <Button
-          size="lg"
-          variant="secondary"
-          className="bg-white text-green-700 hover:bg-gray-100 px-8 py-6 text-lg"
-        >
-          Analisis Menu Saya Sekarang
-        </Button>
+      <section className="bg-background py-24">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+            Siap Mengurangi Pemborosan di Restoran Anda?
+          </h2>
+
+          <p className="text-foreground/80 mb-10 leading-relaxed">
+            Dapatkan analisis gratis tanpa kewajiban hari ini dan lihat potensi
+            tersembunyi dalam data Anda.
+          </p>
+
+          {/* Desktop button (mobile replaced by sticky CTA) */}
+          <Button
+            size="lg"
+            className="px-8 py-6 w-full md:w-auto hidden md:inline-flex"
+          >
+            Mulai Sekarang
+          </Button>
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="text-center py-6 text-sm text-gray-500">
-        © {new Date().getFullYear()} MenuYukti. Hak cipta dilindungi.
+      <footer className="bg-background border-t border-border py-6">
+        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-center gap-6 text-center text-sm text-foreground/80">
+          <a href="#" className="hover:text-foreground transition-colors">
+            Tentang Kami
+          </a>
+
+          <a href="#" className="hover:text-foreground transition-colors">
+            Kontak
+          </a>
+
+          <a href="#" className="hover:text-foreground transition-colors">
+            Kebijakan Privasi
+          </a>
+
+          <span className="text-foreground/60">© 2025 Menuyukti</span>
+        </div>
       </footer>
-    </main>
+
+      {/* 
+      =========================================================
+      STICKY MOBILE CTA (shown only on mobile)
+      =========================================================
+      */}
+      <div className="fixed bottom-0 left-0 w-full bg-background/90 backdrop-blur-md p-4 flex md:hidden gap-4 border-t border-border z-50">
+        <Button className="w-full" size="lg">
+          Mulai Sekarang
+        </Button>
+        <Button className="w-full" size="lg" variant="outline">
+          Pelajari Lebih Lanjut
+        </Button>
+      </div>
+    </div>
   );
 }
