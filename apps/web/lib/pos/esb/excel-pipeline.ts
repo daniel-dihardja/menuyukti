@@ -35,7 +35,7 @@ export type EsbExcelPipelineResult =
  */
 export async function runExcelPipeline(
   filePath: string,
-  headerRow = 12
+  headerRow = 12,
 ): Promise<EsbExcelPipelineResult> {
   const { workbook, rows } = await readExcel(filePath, headerRow);
 

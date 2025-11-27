@@ -52,7 +52,7 @@ function convertValue(value: string | null | undefined): NormalizedValue {
  * Normalize raw Excel rows
  */
 export function normalizeExcelRows(
-  rows: Record<string, string>[]
+  rows: Record<string, string>[],
 ): NormalizedRow[] {
   return rows.map((row) => {
     const normalized: NormalizedRow = {};
@@ -90,7 +90,7 @@ export function mapToOrderItem(row: NormalizedRow): OrderItemRaw {
 
   if (!datetime) {
     throw new Error(
-      `Missing datetime (OrderTime) for row with BillNumber=${row.BillNumber}`
+      `Missing datetime (OrderTime) for row with BillNumber=${row.BillNumber}`,
     );
   }
 
@@ -115,7 +115,7 @@ export function mapToOrderItem(row: NormalizedRow): OrderItemRaw {
  * -- skip footer rows where SalesNumber is empty
  */
 export function normalizeAndMapSalesRows(
-  rows: Record<string, string>[]
+  rows: Record<string, string>[],
 ): OrderItemRaw[] {
   return normalizeExcelRows(rows).filter(isValidOrderRow).map(mapToOrderItem);
 }

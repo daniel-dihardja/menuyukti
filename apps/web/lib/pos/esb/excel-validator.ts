@@ -13,7 +13,7 @@ export type ValidationResult = {
 
 function validateA1Value(
   sheet: XLSX.WorkSheet,
-  expectedValue = "Sales Recapitulation Detail Report"
+  expectedValue = "Sales Recapitulation Detail Report",
 ): ValidationError[] {
   const value = sheet["A1"]?.v;
 
@@ -43,7 +43,7 @@ function validateA1Value(
  *   - `ok: false` and a list of `errors` if validation fails
  */
 export function validateExcelWorkbook(
-  workbook: XLSX.WorkBook
+  workbook: XLSX.WorkBook,
 ): ValidationResult {
   const errors: ValidationError[] = [];
 

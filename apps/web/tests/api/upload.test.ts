@@ -27,7 +27,7 @@ describe("Upload API — valid excel upload", () => {
   it("uploads a valid .xlsx file to tmp directory and returns a jobId", async () => {
     const fixturePath = path.join(
       process.cwd(),
-      "tests/fixtures/excel/esb/valid.xlsx"
+      "tests/fixtures/excel/esb/valid.xlsx",
     );
 
     const req = createFormRequest(fixturePath, "valid.xlsx");

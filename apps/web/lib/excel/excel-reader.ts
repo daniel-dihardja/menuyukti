@@ -48,7 +48,7 @@ export type RawExcel = {
  */
 export async function readExcel(
   filePath: string,
-  headerRow = 1
+  headerRow = 1,
 ): Promise<RawExcel> {
   const buffer = await fs.readFile(filePath);
   const workbook = XLSX.read(buffer, { type: "buffer" });

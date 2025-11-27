@@ -52,7 +52,7 @@ export function createAnalytic(orders: Order[], name = "Summary"): Analytic {
 
   const itemsCount = orders.map((o) => o.items.length);
   const revenues = orders.map((o) =>
-    o.items.reduce((sum, it) => sum + it.netTotal, 0)
+    o.items.reduce((sum, it) => sum + it.netTotal, 0),
   );
 
   const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
