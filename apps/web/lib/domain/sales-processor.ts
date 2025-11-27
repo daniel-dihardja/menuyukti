@@ -46,6 +46,7 @@ export function createAnalytic(orders: Order[], name = "Summary"): Analytic {
       minOrderRevenue: 0,
       maxOrderRevenue: 0,
       avgOrderRevenue: 0,
+      orders: [],
     };
   }
 
@@ -69,5 +70,7 @@ export function createAnalytic(orders: Order[], name = "Summary"): Analytic {
     maxOrderRevenue: Math.max(...revenues),
     minOrderRevenue: Math.min(...revenues),
     avgOrderRevenue: avg(revenues),
+
+    orders,
   };
 }

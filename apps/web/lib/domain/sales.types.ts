@@ -8,6 +8,19 @@ export type Analytic = {
   minOrderRevenue: number;
   maxOrderRevenue: number;
   avgOrderRevenue: number;
+  orders: Order[];
+};
+
+/**
+ * Final Order domain model
+ * — groups multiple raw items
+ * — contains a single datetime
+ */
+export type Order = {
+  billNumber: string;
+  salesNumber: string;
+  datetime: Date;
+  items: OrderItem[];
 };
 
 /**
@@ -25,18 +38,6 @@ export type OrderItem = {
   price: number;
   qty: number;
   netTotal: number;
-};
-
-/**
- * Final Order domain model
- * — groups multiple raw items
- * — contains a single datetime
- */
-export type Order = {
-  billNumber: string;
-  salesNumber: string;
-  datetime: Date;
-  items: OrderItem[];
 };
 
 /**

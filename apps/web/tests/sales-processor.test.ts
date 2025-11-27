@@ -155,6 +155,8 @@ describe("createAnalytic()", () => {
       minOrderRevenue: 10000,
       avgOrderRevenue: 30000,
     });
+
+    expect(analytic.orders).toEqual(orders);
   });
 
   it("returns zeroed analytic for empty orders array", () => {
@@ -169,6 +171,7 @@ describe("createAnalytic()", () => {
       maxOrderRevenue: 0,
       minOrderRevenue: 0,
       avgOrderRevenue: 0,
+      orders: [],
     });
   });
 });
