@@ -163,13 +163,6 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="bg-card p-6 shadow-lg text-center">
-              <TrendingUp className="w-10 h-10 text-primary mx-auto mb-4" />
-              <p className="font-semibold text-lg">
-                Tingkatkan margin keuntungan
-              </p>
-            </div>
-
-            <div className="bg-card p-6 shadow-lg text-center">
               <Leaf className="w-10 h-10 text-primary mx-auto mb-4" />
               <p className="font-semibold text-lg">Kurangi limbah makanan</p>
             </div>
@@ -184,6 +177,13 @@ export default function LandingPage() {
             <div className="bg-card p-6 shadow-lg text-center">
               <PieChart className="w-10 h-10 text-primary mx-auto mb-4" />
               <p className="font-semibold text-lg">Wawasan berbasis data</p>
+            </div>
+
+            <div className="bg-card p-6 shadow-lg text-center">
+              <TrendingUp className="w-10 h-10 text-primary mx-auto mb-4" />
+              <p className="font-semibold text-lg">
+                Tingkatkan margin keuntungan
+              </p>
             </div>
           </div>
         </div>
