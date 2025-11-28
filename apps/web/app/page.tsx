@@ -73,9 +73,11 @@ export default function LandingPage() {
 
           <div>
             <p className="text-xl md:text-2xl leading-relaxed text-foreground/90">
-              Menuyukti membantu pemilik restoran mengetahui hidangan mana yang
-              benar-benar menguntungkan — dan mana yang diam-diam mengurangi
-              profit Anda.
+              Menuyukti membantu pemilik restoran mengidentifikasi{" "}
+              <strong>hidangan beban</strong> dan{" "}
+              <strong>bintang profit</strong> Anda. Dapatkan data akurat untuk
+              segera <strong>mengoptimalkan atau menghapus</strong> menu yang
+              diam-diam mengurangi profit Anda.
             </p>
           </div>
         </div>
@@ -95,9 +97,12 @@ export default function LandingPage() {
 
           <div className="order-2 md:order-1">
             <p className="text-xl md:text-2xl leading-relaxed text-foreground/90">
-              Menu yang terlalu besar sering menyebabkan pemborosan bahan, waktu
-              persiapan yang lama, dan penurunan keuntungan. Tanpa data yang
-              jelas, sulit mengetahui mana hidangan yang benar-benar laku.
+              Menu yang terlalu besar menyebabkan{" "}
+              <strong>pemborosan bahan</strong> dan{" "}
+              <strong>waktu persiapan yang lama</strong>. Masalah utamanya:
+              Tanpa data yang jelas, Anda sulit mengidentifikasi dan{" "}
+              <strong>menghapus hidangan &quot;beban&quot;</strong> yang
+              diam-diam mengerogoti efisiensi dan margin keuntungan Anda.
             </p>
           </div>
         </div>
@@ -162,6 +167,11 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="bg-card p-6 shadow-lg text-center">
+              <PieChart className="w-10 h-10 text-primary mx-auto mb-4" />
+              <p className="font-semibold text-lg">Wawasan berbasis data</p>
+            </div>
+
+            <div className="bg-card p-6 shadow-lg text-center">
               <Leaf className="w-10 h-10 text-primary mx-auto mb-4" />
               <p className="font-semibold text-lg">Kurangi limbah makanan</p>
             </div>
@@ -171,11 +181,6 @@ export default function LandingPage() {
               <p className="font-semibold text-lg">
                 Operasional dapur lebih efisien
               </p>
-            </div>
-
-            <div className="bg-card p-6 shadow-lg text-center">
-              <PieChart className="w-10 h-10 text-primary mx-auto mb-4" />
-              <p className="font-semibold text-lg">Wawasan berbasis data</p>
             </div>
 
             <div className="bg-card p-6 shadow-lg text-center">
