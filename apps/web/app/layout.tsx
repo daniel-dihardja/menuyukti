@@ -18,11 +18,11 @@ const fontMono = Geist_Mono({
 export const metadata = {
   title: "Menuyukti - Kurangi Keborosan & Limbah Makanan",
   description:
-    "Analisis cerdas untuk mengurangi keborosan dan limbah makanan yang menurunkan profit.",
+    "Analisis cerdas berbasis data untuk mengurangi keborosan dan limbah makanan yang menurunkan profit.",
   openGraph: {
     title: "Menuyukti - Kurangi Keborosan & Limbah Makanan",
     description:
-      "Analisis cerdas untuk mengurangi keborosan dan limbah makanan yang menurunkan profit.",
+      "Analisis cerdas berbasis data untuk mengurangi keborosan dan limbah makanan yang menurunkan profit.",
     url: "https://menuyukti.com",
     siteName: "Menuyukti",
     images: [
@@ -39,7 +39,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Menuyukti - Kurangi Keborosan & Limbah Makanan",
     description:
-      "Analisis cerdas untuk mengurangi keborosan dan limbah makanan yang menurunkan profit.",
+      "Analisis cerdas berbasis data untuk mengurangi keborosan dan limbah makanan yang menurunkan profit.",
     images: ["https://menuyukti.com/images/og-image.webp"],
   },
 };
