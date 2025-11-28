@@ -10,16 +10,19 @@
 :root {
   /* ------------------------------------------------------------------
      CORE BRAND COLORS
+     (Based on deep forest green from Hero Image)
      ------------------------------------------------------------------ */
 
-  /* Background: exact #1A4D2E */
-  --background: oklch(0.2015 0.0148 206);
+  /* Background: Deep, rich forest green (Near #1A4D2E but slightly darker for contrast) */
+  --background: oklch(
+    0.18 0.04 128.65
+  ); /* Darkened from 0.3838 for true dark mode */
 
-  /* Text: warm near-white */
+  /* Text: warm near-white/creamy */
   --foreground: oklch(0.992 0.008 106.5);
 
-  /* Cards & surfaces */
-  --card: oklch(0.3623 0.0395 180.53);
+  /* Cards & surfaces: Slightly lighter than background for visual separation */
+  --card: oklch(0.25 0.045 128.65); /* Used to be 0.6162, now much darker */
   --card-foreground: var(--foreground);
 
   /* Popover surfaces */
@@ -27,34 +30,36 @@
   --popover-foreground: var(--card-foreground);
 
   /* ------------------------------------------------------------------
-     PRIMARY BUTTON (UPDATED)
-     Primary = warm white, no more yellow
+     PRIMARY BUTTON
+     (Primary = warm white/cream for high contrast CTA)
      ------------------------------------------------------------------ */
 
-  /* Primary background = warm white */
+  /* Primary background = warm white/cream */
   --primary: oklch(0.943 0.021 81.8);
 
-  /* Primary text = deep green (#1A4D2E) */
+  /* Primary text = deep green (Must be dark for visibility on --primary) */
   --primary-foreground: var(--background);
 
   /* ------------------------------------------------------------------
      SECONDARY / NEUTRAL
      ------------------------------------------------------------------ */
 
-  /* Beige rice/neutral backgrounds */
-  --secondary: oklch(0.943 0.021 81.8);
-  --secondary-foreground: var(--background);
+  /* Secondary: Used for secondary actions, slightly less contrast than primary. */
+  --secondary: oklch(0.35 0.06 128.65); /* A muted mid-green */
+  --secondary-foreground: var(--foreground);
 
-  /* Muted surfaces (tags, badges) */
-  --muted: oklch(0.61 0.046 160.8);
-  --muted-foreground: oklch(0.854 0.014 162.4);
+  /* Muted surfaces (tags, badges): Slightly lighter than card/background */
+  --muted: oklch(0.35 0.06 128.65);
+  --muted-foreground: oklch(
+    0.7 0.014 162.4
+  ); /* Lighter grey/green for muted text */
 
   /* Accent (usually same as secondary for this brand) */
   --accent: var(--secondary);
   --accent-foreground: var(--secondary-foreground);
 
   /* ------------------------------------------------------------------
-     DESTRUCTIVE (Sambal Red)
+     DESTRUCTIVE (Sambal Red - Essential contrast color)
      ------------------------------------------------------------------ */
 
   --destructive: oklch(0.604 0.206 30);
@@ -64,26 +69,24 @@
      BORDERS, INPUTS, RINGS
      ------------------------------------------------------------------ */
 
-  /* Border slightly lighter than background */
-  --border: oklch(0.3985 0.0617 206);
+  /* Border: Subtle contrast against dark background/card */
+  --border: oklch(0.28 0.04 128.65); /* Slightly lighter green than card */
 
   /* Input background */
   --input: var(--card);
 
-  /* Focus ring */
-  --ring: oklch(0.755 0.091 155.6);
+  /* Focus ring: Should be primary color */
+  --ring: var(--primary);
 
   /* ------------------------------------------------------------------
      CHART COLORS (brand-aligned)
      ------------------------------------------------------------------ */
 
-  --chart-1: var(--primary); /* warm white */
-  --chart-2: oklch(0.673 0.162 144.2); /* leafy green */
-  --chart-3: oklch(0.604 0.206 30); /* sambal red */
-  --chart-4: oklch(0.661 0.103 193.3); /* teal */
-  --chart-5: oklch(
-    0.808 0.162 81.9
-  ); /* turmeric yellow (used only for charts) */
+  --chart-1: var(--primary); /* warm white/cream */
+  --chart-2: oklch(0.673 0.162 144.2); /* leafy green (Profit Up) */
+  --chart-3: var(--destructive); /* sambal red (Loss/Destructive) */
+  --chart-4: oklch(0.661 0.103 193.3); /* teal/blue accent */
+  --chart-5: oklch(0.808 0.162 81.9); /* turmeric yellow/orange */
 
   /* ------------------------------------------------------------------
      RADII
@@ -92,10 +95,10 @@
   --radius: 0.625rem;
 
   /* ------------------------------------------------------------------
-     SIDEBAR SYSTEM
+     SIDEBAR SYSTEM (Kept similar to dark base)
      ------------------------------------------------------------------ */
 
-  --sidebar: oklch(0.1279 0.0197 206); /* darker forest green */
+  --sidebar: var(--background);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
