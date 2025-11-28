@@ -14,7 +14,7 @@ import {
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground relative pb-24 md:pb-0">
-      <header className="w-full sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+      <header className="w-full sticky top-0 z-50  backdrop-blur-md border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <UtensilsCrossed className="w-5 h-5 text-primary" />
@@ -30,21 +30,19 @@ export default function LandingPage() {
             alt="Menuyukti Hero"
             fill
             priority
-            className="object-cover object-[50%_75%]"
+            className="object-cover"
           />
-          <div className="absolute inset-0 bg-background/50" />
+          <div className="absolute inset-0 bg-background/65" />
         </div>
 
-        <div className="relative max-w-6xl mx-auto px-6">
-          <h2 className="text-4xl md:text-6xl font-bold leading-tight max-w-3xl px-3 py-2 text-shadow-lg">
+        <div className="relative max-w-6xl mx-auto px-6 text-center">
+          <h2 className="text-4xl md:text-6xl font-bold leading-tight max-w-3xl px-3 py-2 mx-auto text-shadow-lg">
             Optimalkan Menu Anda.
             <br />
             Kurangi Limbah.
-            <br />
-            Tingkatkan Keuntungan.
           </h2>
 
-          <div className="mt-8 hidden md:flex gap-4">
+          <div className="mt-8 hidden md:flex w-full justify-center">
             <Button size="lg" variant="default">
               Mulai Sekarang
             </Button>
@@ -52,35 +50,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="bg-black">
-        <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="w-full h-full overflow-hidden shadow-lg rounded-xl">
-            <Image
-              src="/images/analisis-05.webp"
-              alt="MenuYukti section image"
-              width={1024}
-              height={768}
-              className="mx-auto"
-            />
-          </div>
-
-          <div>
-            <p className="text-xl md:text-2xl leading-relaxed text-foreground/90">
-              Menuyukti membantu pemilik restoran mengidentifikasi{" "}
-              <strong>hidangan beban</strong> dan{" "}
-              <strong>bintang profit</strong> Anda. Dapatkan data akurat untuk
-              segera <strong>mengoptimalkan atau menghapus</strong> menu yang
-              diam-diam mengurangi profit Anda.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-black">
+      <section className="bg-muted/70">
         <div className="max-w-6xl mx-auto px-6 py-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="order-1 md:order-2 w-full h-full overflow-hidden shadow-lg rounded-xl">
             <Image
-              src="/images/analisis-06.webp"
+              src="/images/analisis-01.webp"
               alt="Menuyukti section image"
               width={1024}
               height={768}
@@ -100,7 +74,31 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="bg-background py-24">
+      <section className="bg-muted">
+        <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="w-full h-full overflow-hidden shadow-lg rounded-xl">
+            <Image
+              src="/images/analisis-02.webp"
+              alt="MenuYukti section image"
+              width={1024}
+              height={768}
+              className="mx-auto"
+            />
+          </div>
+
+          <div>
+            <p className="text-xl md:text-2xl leading-relaxed text-foreground/90">
+              Menuyukti membantu pemilik restoran mengidentifikasi{" "}
+              <strong>hidangan beban</strong> dan{" "}
+              <strong>bintang profit</strong> Anda. Dapatkan data akurat untuk
+              segera <strong>mengoptimalkan atau menghapus</strong> menu yang
+              diam-diam mengurangi profit Anda.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-muted/70 py-24">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
             Bagaimana Cara Kerjanya?
@@ -183,7 +181,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="bg-black py-24">
+      <section className="py-24 bg-muted">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Siap Mengurangi Pemborosan di Restoran Anda?
@@ -203,7 +201,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="bg-background border-t border-border py-6">
+      <footer className="bg-card border-t border-border py-6">
         <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-center gap-6 text-center text-sm text-foreground/80">
           <a href="#" className="hover:text-foreground transition-colors">
             Tentang Kami
@@ -221,7 +219,7 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      <div className="fixed bottom-0 left-0 w-full bg-black backdrop-blur-md p-4 flex md:hidden gap-4 z-50">
+      <div className="fixed bottom-0 left-0 w-full  backdrop-blur-md p-4 flex md:hidden gap-4 z-50">
         <Button className="w-full" size="lg">
           Mulai Sekarang
         </Button>
