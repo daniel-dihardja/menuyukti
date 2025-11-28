@@ -27,7 +27,7 @@ export const metadata = {
     siteName: "Menuyukti",
     images: [
       {
-        url: "https://menuyukti.com/images/og-image.webpp",
+        url: "https://menuyukti.com/images/og-image.webp",
         width: 1200,
         height: 630,
       },
@@ -39,7 +39,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Menuyukti – Analisis Menu Cerdas",
     description: "Optimalkan menu restoran Anda dengan AI dan analisis data.",
-    images: ["https://menuyukti.com/images/og-image.webpp"],
+    images: ["https://menuyukti.com/images/og-image.webp"],
   },
 };
 
