@@ -15,6 +15,34 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 });
 
+export const metadata = {
+  title: "Menuyukti - Optimalkan Menu, Kurangi Limbah",
+  description:
+    "Menuyukti membantu restoran meningkatkan profit melalui analisis menu berbasis data.",
+  openGraph: {
+    title: "Menuyukti - Optimalkan Menu Anda dengan Analisis Cerdas",
+    description:
+      "Menuyukti membantu pemilik restoran mengetahui hidangan mana yang benar-benar menguntungkan.",
+    url: "https://menuyukti.com",
+    siteName: "Menuyukti",
+    images: [
+      {
+        url: "https://menuyukti.com/images/og-image.webpp",
+        width: 1200,
+        height: 630,
+      },
+    ],
+    type: "website",
+    locale: "id_ID",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Menuyukti – Analisis Menu Cerdas",
+    description: "Optimalkan menu restoran Anda dengan AI dan analisis data.",
+    images: ["https://menuyukti.com/images/og-image.webpp"],
+  },
+};
+
 export default async function RootLayout({
   children,
 }: Readonly<{
