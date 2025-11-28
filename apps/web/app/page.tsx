@@ -30,7 +30,7 @@ export default function LandingPage() {
         {/* Background Image */}
         <div className="absolute inset-0">
           <Image
-            src="/images/hero-07.png"
+            src="/images/hero.webp"
             alt="Menuyukti Hero"
             fill
             priority
@@ -63,11 +63,11 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 py-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="w-full h-full overflow-hidden shadow-lg">
             <Image
-              src="/images/analisis-03.png"
+              src="/images/analisis-05.webp"
               alt="MenuYukti section image"
-              width={800}
-              height={600}
-              className="w-full h-auto object-cover"
+              width={1024}
+              height={768}
+              className="mx-auto"
             />
           </div>
 
@@ -86,11 +86,10 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 py-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="order-1 md:order-2 w-full h-full overflow-hidden shadow-lg">
             <Image
-              src="/images/hero-03.png"
+              src="/images/analisis-06.webp"
               alt="Menuyukti section image"
-              width={800}
-              height={600}
-              className="w-full h-auto object-cover"
+              width={1024}
+              height={768}
             />
           </div>
 
