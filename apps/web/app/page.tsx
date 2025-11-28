@@ -59,8 +59,8 @@ export default function LandingPage() {
       </section>
 
       {/* Section 2 — Image Left, Text Right */}
-      <section className="bg-background">
-        <div className="max-w-6xl mx-auto px-6 py-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      <section className="bg-black">
+        <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="w-full h-full overflow-hidden shadow-lg">
             <Image
               src="/images/analisis-05.webp"
@@ -84,7 +84,7 @@ export default function LandingPage() {
       </section>
 
       {/* Section 3 — Text Left, Image Right */}
-      <section className="bg-background">
+      <section className="bg-black">
         <div className="max-w-6xl mx-auto px-6 py-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="order-1 md:order-2 w-full h-full overflow-hidden shadow-lg">
             <Image
@@ -194,7 +194,7 @@ export default function LandingPage() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="bg-background py-24">
+      <section className="bg-black py-24">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Siap Mengurangi Pemborosan di Restoran Anda?
@@ -239,7 +239,7 @@ export default function LandingPage() {
       STICKY MOBILE CTA (shown only on mobile)
       =========================================================
       */}
-      <div className="fixed bottom-0 left-0 w-full bg-background/90 backdrop-blur-md p-4 flex md:hidden gap-4 border-t border-border z-50">
+      <div className="fixed bottom-0 left-0 w-full bg-black backdrop-blur-md p-4 flex md:hidden gap-4 z-50">
         <Button className="w-full" size="lg">
           Mulai Sekarang
         </Button>
