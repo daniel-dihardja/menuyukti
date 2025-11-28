@@ -16,13 +16,13 @@ const fontMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Menuyukti - Optimalkan Menu, Kurangi Limbah",
+  title: "Menuyukti - Kurangi Keborosan & Limbah Makanan",
   description:
-    "Menuyukti membantu restoran meningkatkan profit melalui analisis menu berbasis data.",
+    "Analisis cerdas untuk mengurangi keborosan dan limbah makanan yang menurunkan profit.",
   openGraph: {
-    title: "Menuyukti - Optimalkan Menu Anda dengan Analisis Cerdas",
+    title: "Menuyukti - Kurangi Keborosan & Limbah Makanan",
     description:
-      "Menuyukti membantu pemilik restoran mengetahui hidangan mana yang benar-benar menguntungkan.",
+      "Analisis cerdas untuk mengurangi keborosan dan limbah makanan yang menurunkan profit.",
     url: "https://menuyukti.com",
     siteName: "Menuyukti",
     images: [
@@ -37,8 +37,9 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Menuyukti – Analisis Menu Cerdas",
-    description: "Optimalkan menu restoran Anda dengan AI dan analisis data.",
+    title: "Menuyukti - Kurangi Keborosan & Limbah Makanan",
+    description:
+      "Analisis cerdas untuk mengurangi keborosan dan limbah makanan yang menurunkan profit.",
     images: ["https://menuyukti.com/images/og-image.webp"],
   },
 };
