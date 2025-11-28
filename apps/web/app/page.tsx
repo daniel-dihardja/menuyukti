@@ -14,10 +14,8 @@ import {
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground relative pb-24 md:pb-0">
-      {/* Header */}
       <header className="w-full sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          {/* Logo + Name */}
           <div className="flex items-center gap-2">
             <UtensilsCrossed className="w-5 h-5 text-primary" />
             <h1 className="text-xl font-semibold tracking-tight">Menuyukti</h1>
@@ -25,9 +23,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
       <section className="relative w-full min-h-[calc(100vh-4rem)] flex items-center">
-        {/* Background Image */}
         <div className="absolute inset-0">
           <Image
             src="/images/hero.webp"
@@ -39,7 +35,6 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-background/50" />
         </div>
 
-        {/* Hero Content */}
         <div className="relative max-w-6xl mx-auto px-6">
           <h2 className="text-4xl md:text-6xl font-bold leading-tight max-w-3xl px-3 py-2 text-shadow-lg">
             Optimalkan Menu Anda.
@@ -49,7 +44,6 @@ export default function LandingPage() {
             Tingkatkan Keuntungan.
           </h2>
 
-          {/* DESKTOP CTA Buttons */}
           <div className="mt-8 hidden md:flex gap-4">
             <Button size="lg" variant="default">
               Mulai Sekarang
@@ -58,10 +52,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Section 2 — Image Left, Text Right */}
       <section className="bg-black">
         <div className="max-w-6xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="w-full h-full overflow-hidden shadow-lg">
+          <div className="w-full h-full overflow-hidden shadow-lg rounded-xl">
             <Image
               src="/images/analisis-05.webp"
               alt="MenuYukti section image"
@@ -83,10 +76,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Section 3 — Text Left, Image Right */}
       <section className="bg-black">
         <div className="max-w-6xl mx-auto px-6 py-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="order-1 md:order-2 w-full h-full overflow-hidden shadow-lg">
+          <div className="order-1 md:order-2 w-full h-full overflow-hidden shadow-lg rounded-xl">
             <Image
               src="/images/analisis-06.webp"
               alt="Menuyukti section image"
@@ -108,7 +100,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Section 4 — Steps */}
       <section className="bg-background py-24">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
@@ -153,7 +144,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Section 5 — Why Choose MenuYukti */}
       <section className="bg-background py-24">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
@@ -193,7 +183,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Final CTA Section */}
       <section className="bg-black py-24">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
@@ -205,7 +194,6 @@ export default function LandingPage() {
             tersembunyi dalam data Anda.
           </p>
 
-          {/* Desktop button (mobile replaced by sticky CTA) */}
           <Button
             size="lg"
             className="px-8 py-6 w-full md:w-auto hidden md:inline-flex"
@@ -215,7 +203,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-background border-t border-border py-6">
         <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-center gap-6 text-center text-sm text-foreground/80">
           <a href="#" className="hover:text-foreground transition-colors">
@@ -234,11 +221,6 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* 
-      =========================================================
-      STICKY MOBILE CTA (shown only on mobile)
-      =========================================================
-      */}
       <div className="fixed bottom-0 left-0 w-full bg-black backdrop-blur-md p-4 flex md:hidden gap-4 z-50">
         <Button className="w-full" size="lg">
           Mulai Sekarang
