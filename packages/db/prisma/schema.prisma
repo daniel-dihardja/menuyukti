@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -17,16 +14,19 @@ model Analytic {
   id   String @id @default(cuid())
   name String
 
-  ordersCount  Int
-  revenueTotal Float
+  startDate DateTime
+  endDate   DateTime
 
-  maxOrderItems Int
-  avgOrderItems Float
-  minOrderItems Int
+  ordersCount      Int
+  revenueTotal     Float
 
-  minOrderRevenue Float
-  maxOrderRevenue Float
-  avgOrderRevenue Float
+  maxOrderItems    Int
+  avgOrderItems    Float
+  minOrderItems    Int
+
+  minOrderRevenue  Float
+  maxOrderRevenue  Float
+  avgOrderRevenue  Float
 
   // one analytic has many orders
   orders Order[]
@@ -36,9 +36,9 @@ model Order {
   id         String  @id @default(cuid())
   analyticId String?
 
-  billNumber  String
-  salesNumber String
-  datetime    DateTime
+  billNumber   String
+  salesNumber  String
+  datetime     DateTime
 
   // relation back to Analytic
   analytic Analytic? @relation(fields: [analyticId], references: [id])
