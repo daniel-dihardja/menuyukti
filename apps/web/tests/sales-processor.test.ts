@@ -98,11 +98,14 @@ describe("groupOrderItems()", () => {
 
 describe("createAnalytic()", () => {
   it("computes analytics from Orders correctly", () => {
+    const d1 = new Date("2025-01-01T10:00:00Z");
+    const d2 = new Date("2025-01-02T15:30:00Z");
+
     const orders: Order[] = [
       {
         billNumber: "B1",
         salesNumber: "S1",
-        datetime: new Date(),
+        datetime: d1,
         items: [
           {
             menuCode: null,
@@ -118,7 +121,7 @@ describe("createAnalytic()", () => {
       {
         billNumber: "B2",
         salesNumber: "S2",
-        datetime: new Date(),
+        datetime: d2,
         items: [
           {
             menuCode: null,
@@ -156,6 +159,10 @@ describe("createAnalytic()", () => {
       avgOrderRevenue: 30000,
     });
 
+    // NEW: check date range computation
+    expect(analytic.startDate.toISOString()).toBe(d1.toISOString());
+    expect(analytic.endDate.toISOString()).toBe(d2.toISOString());
+
     expect(analytic.orders).toEqual(orders);
   });
 
@@ -173,5 +180,9 @@ describe("createAnalytic()", () => {
       avgOrderRevenue: 0,
       orders: [],
     });
+
+    // NEW: both dates should be epoch
+    expect(analytic.startDate.getTime()).toBe(0);
+    expect(analytic.endDate.getTime()).toBe(0);
   });
 });

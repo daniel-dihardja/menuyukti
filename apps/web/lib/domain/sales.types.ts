@@ -1,5 +1,7 @@
 export type Analytic = {
   name: string;
+  startDate: Date;
+  endDate: Date;
   ordersCount: number;
   revenueTotal: number;
   maxOrderItems: number;
@@ -10,7 +12,6 @@ export type Analytic = {
   avgOrderRevenue: number;
   orders: Order[];
 };
-
 /**
  * Final Order domain model
  * — groups multiple raw items

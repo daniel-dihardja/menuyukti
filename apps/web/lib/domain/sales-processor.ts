@@ -38,6 +38,10 @@ export function createAnalytic(orders: Order[], name = "Summary"): Analytic {
   if (count === 0) {
     return {
       name,
+
+      startDate: new Date(0),
+      endDate: new Date(0),
+
       ordersCount: 0,
       revenueTotal: 0,
       maxOrderItems: 0,
@@ -52,14 +56,22 @@ export function createAnalytic(orders: Order[], name = "Summary"): Analytic {
 
   const itemsCount = orders.map((o) => o.items.length);
   const revenues = orders.map((o) =>
-    o.items.reduce((sum, it) => sum + it.netTotal, 0),
+    o.items.reduce((sum, it) => sum + it.netTotal, 0)
   );
+
+  const timestamps = orders.map((o) => o.datetime.getTime());
+  const startDate = new Date(Math.min(...timestamps));
+  const endDate = new Date(Math.max(...timestamps));
 
   const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
   const avg = (arr: number[]) => sum(arr) / arr.length;
 
   return {
     name,
+
+    startDate,
+    endDate,
+
     ordersCount: count,
     revenueTotal: sum(revenues),
 
