@@ -1,0 +1,55 @@
+# -------------------------
+# Python build artifacts
+# -------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+# -------------------------
+# UV environments / virtualenvs
+# -------------------------
+# If you ever run `uv venv` or accidentally create one
+.venv/
+
+# -------------------------
+# UV & build files
+# -------------------------
+uv.lock
+dist/
+build/
+*.egg-info/
+src/**/*.egg-info/
+
+# -------------------------
+# Jupyter and Notebook junk
+# -------------------------
+.ipynb_checkpoints/
+
+# -------------------------
+# Editors
+# -------------------------
+.vscode/
+.idea/
+
+# -------------------------
+# OS files
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Logs and temp files
+# -------------------------
+*.log
+*.tmp
+*.bak
+
+# -------------------------
+# Coverage & test artifacts
+# -------------------------
+.coverage
+htmlcov/
+.pytest_cache/
+.cache/
