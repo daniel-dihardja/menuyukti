@@ -1,0 +1,44 @@
+# -------------------------
+# Python cache
+# -------------------------
+__pycache__/
+*.pyc
+*.pyo
+
+# -------------------------
+# Jupyter Notebook artifacts
+# -------------------------
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# -------------------------
+# UV / virtual environments
+# -------------------------
+.venv/
+uv.lock
+pyproject.toml
+.python-version
+
+# (Reasoning)
+# You do NOT want the notebooks folder to become a Python project.
+# No pyproject, no uv.lock, no .python-version should be tracked.
+# They appear if VS Code or uv init is accidentally run here.
+
+# -------------------------
+# Logs, tmp
+# -------------------------
+*.log
+*.tmp
+*.bak
+
+# -------------------------
+# Editors
+# -------------------------
+.vscode/
+.idea/
+
+# -------------------------
+# OS artifacts
+# -------------------------
+.DS_Store
+Thumbs.db
