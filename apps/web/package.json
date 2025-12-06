@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@workspace/ui": "workspace:*",
-    "@workspace/db": "workspace:*",
     "lucide-react": "^0.475.0",
     "next": "^15.4.5",
     "next-intl": "^4.3.12",
