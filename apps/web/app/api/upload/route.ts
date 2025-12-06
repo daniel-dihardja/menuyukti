@@ -1,3 +1,4 @@
+// app/api/upload/route.ts
 import { readSalesRecapExcel } from "@/lib/excel/excel-reader";
 import { NextResponse } from "next/server";
 
@@ -12,9 +13,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "NO_FILE_UPLOADED" }, { status: 400 });
     }
 
-    const rows = await readSalesRecapExcel(file);
+    const result = await readSalesRecapExcel(file);
 
-    return NextResponse.json(rows);
+    return NextResponse.json(result);
   } catch (error: unknown) {
     console.error("Upload error:", error);
 

@@ -2,8 +2,17 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@workspace/ui/components/button";
+import type { POSConfig } from "@/lib/pos";
 
-type ExcelRow = Record<string, unknown>;
+interface ExcelRow {
+  [key: string]: unknown;
+}
+
+interface UploadResponse {
+  pos: string;
+  config: POSConfig;
+  rows: ExcelRow[];
+}
 
 export default function UploadExcelClient({ label }: { label: string }) {
   const [uploading, setUploading] = useState(false);
@@ -26,7 +35,6 @@ export default function UploadExcelClient({ label }: { label: string }) {
         body: formData,
       });
 
-      // Error check using HTTP status
       if (!res.ok) {
         const errData = (await res.json().catch(() => null)) as {
           error?: string;
@@ -35,11 +43,11 @@ export default function UploadExcelClient({ label }: { label: string }) {
         throw new Error(errData?.error || "Upload failed");
       }
 
-      // Typed Excel rows
-      const rows = (await res.json()) as ExcelRow[];
+      const data = (await res.json()) as UploadResponse;
 
-      // Log Excel content
-      console.log("Parsed Excel Rows:", rows);
+      console.log("POS:", data.pos);
+      console.log("POS Config:", data.config);
+      console.log("Parsed Excel Rows:", data.rows);
 
       setMessage(`Uploaded: ${file.name}`);
     } catch (err: unknown) {

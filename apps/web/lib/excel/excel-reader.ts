@@ -1,10 +1,17 @@
 import * as XLSX from "xlsx";
+import { detectPOS, POSConfig } from "@/lib/pos";
 
-// The rows returned by XLSX.sheet_to_json
 export type ExcelRow = Record<string, unknown>;
 
-export async function readSalesRecapExcel(file: File): Promise<ExcelRow[]> {
-  // Only .xlsx allowed
+export interface ExcelParseResult {
+  pos: string;
+  config: POSConfig;
+  rows: ExcelRow[];
+}
+
+export async function readSalesRecapExcel(
+  file: File
+): Promise<ExcelParseResult> {
   if (!file.name.endsWith(".xlsx")) {
     throw new Error("INVALID_FILE_TYPE");
   }
@@ -27,18 +34,21 @@ export async function readSalesRecapExcel(file: File): Promise<ExcelRow[]> {
     throw new Error("SHEET_NOT_FOUND");
   }
 
-  // Validate A1
   const cellA1 = sheet["A1"]?.v ?? null;
-  const expectedTitle = "Sales Recapitulation Detail Report";
-
-  if (cellA1 !== expectedTitle) {
-    throw new Error(
-      `INVALID_REPORT_TYPE: expected '${expectedTitle}' but got '${cellA1}'`
-    );
+  if (!cellA1 || typeof cellA1 !== "string") {
+    throw new Error("INVALID_HEADER_CELL");
   }
 
-  // Parse rows starting from header row (row 12 = index 11)
-  const rows = XLSX.utils.sheet_to_json(sheet, { range: 11 });
+  const matchedPOS = detectPOS(cellA1);
+  if (!matchedPOS) {
+    throw new Error(`UNRECOGNIZED_POS_FORMAT: ${cellA1}`);
+  }
 
-  return rows as ExcelRow[];
+  const rows = XLSX.utils.sheet_to_json(sheet, { range: 11 }) as ExcelRow[];
+
+  return {
+    pos: matchedPOS.name,
+    config: matchedPOS,
+    rows,
+  };
 }
