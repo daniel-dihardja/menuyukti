@@ -16,11 +16,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "INVALID_FILE_TYPE" }, { status: 400 });
     }
 
-    // Convert uploaded file to a Buffer for XLSX
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Read workbook directly from memory
     const workbook = XLSX.read(buffer, {
       type: "buffer",
       cellDates: true,
@@ -38,7 +36,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "SHEET_NOT_FOUND" }, { status: 400 });
     }
 
-    // Read and validate A1
     const cellA1 = sheet["A1"]?.v ?? null;
     const expectedTitle = "Sales Recapitulation Detail Report";
 
@@ -52,10 +49,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Parse JSON starting from row 12 (index 11)
     const rows = XLSX.utils.sheet_to_json(sheet, { range: 11 });
-
-    console.log("Parsed rows:", rows);
 
     return NextResponse.json(rows);
   } catch (error) {
