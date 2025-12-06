@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 
+type ExcelRow = Record<string, unknown>;
+
 export default function UploadExcelClient({ label }: { label: string }) {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -24,22 +26,39 @@ export default function UploadExcelClient({ label }: { label: string }) {
         body: formData,
       });
 
-      const data = await res.json();
+      // Error check using HTTP status
+      if (!res.ok) {
+        const errData = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
 
-      if (!res.ok) throw new Error(data.error || "Upload failed");
+        throw new Error(errData?.error || "Upload failed");
+      }
 
-      setMessage(`✅ Uploaded: ${data.filename}`);
-    } catch (err: any) {
-      console.error(err);
-      setMessage("❌ Upload failed");
+      // Typed Excel rows
+      const rows = (await res.json()) as ExcelRow[];
+
+      // Log Excel content
+      console.log("Parsed Excel Rows:", rows);
+
+      setMessage(`Uploaded: ${file.name}`);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Upload error:", err.message);
+      } else {
+        console.error("Unknown upload error:", err);
+      }
+      setMessage("Upload failed");
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = ""; // reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   }
 
   function handleButtonClick() {
-    fileInputRef.current?.click(); // triggers the hidden file picker
+    fileInputRef.current?.click();
   }
 
   return (
@@ -59,7 +78,7 @@ export default function UploadExcelClient({ label }: { label: string }) {
       {message && (
         <p
           className={`text-sm ${
-            message.startsWith("✅") ? "text-green-600" : "text-red-600"
+            message.startsWith("Uploaded") ? "text-green-600" : "text-red-600"
           }`}
         >
           {message}

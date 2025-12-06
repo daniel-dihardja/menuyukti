@@ -22,42 +22,45 @@ export default async function Page() {
 
   return (
     <SidebarInset>
-      {/* ---------- HEADER ---------- */}
-      <SidebarTriggerClient title={t("title")} />
+      <div className="w-full">
+        {/* ---------- HEADER ---------- */}
+        <SidebarTriggerClient title={t("title")} />
 
-      {/* ---------- MAIN CONTENT ---------- */}
-      <div className="p-4 space-y-4">
-        <div className="border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[60px]">{t("table.index")}</TableHead>
-                <TableHead>{t("table.fileName")}</TableHead>
-                <TableHead className="text-right">
-                  {t("table.action")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {uploads.map((file) => (
-                <TableRow key={file.id}>
-                  <TableCell>{file.id}</TableCell>
-                  <TableCell>{file.name}</TableCell>
-                  <TableCell className="text-right">
-                    <Button size="sm" variant="outline">
-                      {t("table.view")}
-                    </Button>
-                  </TableCell>
+        {/* ---------- MAIN CONTENT ---------- */}
+        <main className="p-4 space-y-4 max-w-6xl mx-auto">
+          <div className="border w-full">
+            <Table className="w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[60px]">{t("table.index")}</TableHead>
+                  <TableHead>{t("table.fileName")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("table.action")}
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
 
-        {/* ---------- UPLOAD BUTTON ---------- */}
-        <div className="flex justify-center">
-          <UploadExcelClient label={t("create")} />
-        </div>
+              <TableBody>
+                {uploads.map((file) => (
+                  <TableRow key={file.id}>
+                    <TableCell>{file.id}</TableCell>
+                    <TableCell>{file.name}</TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" variant="outline">
+                        {t("table.view")}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* ---------- UPLOAD BUTTON ---------- */}
+          <div className="flex justify-center">
+            <UploadExcelClient label={t("create")} />
+          </div>
+        </main>
       </div>
     </SidebarInset>
   );
