@@ -1,98 +1,54 @@
 import * as XLSX from "xlsx";
-import { promises as fs } from "fs";
+import { detectPOS, POSConfig } from "@/lib/pos";
 
-export type RawRow = Record<string, string>;
-export type RawExcel = {
-  workbook: XLSX.WorkBook;
-  rows: RawRow[];
-};
+export type ExcelRow = Record<string, unknown>;
 
-/**
- * Reads an Excel file and returns:
- *  - the workbook object (from XLSX)
- *  - all rows as an array of raw string dictionaries
- *
- * HOW IT WORKS
- * ------------
- * 1. Reads the file as a buffer.
- * 2. Lets XLSX parse it into a workbook object.
- * 3. Picks the first sheet.
- * 4. Extracts headers from the selected header row.
- * 5. Iterates through all rows, mapping each column to its header.
- * 6. Skips empty rows.
- *
- * NOTE:
- * This function returns raw string values, exactly as they appear in Excel.
- * The normalization (trimming, number parsing, date conversion, etc.) is done
- * later by `normalizeExcelRows()`.
- *
- *
- * BASIC USAGE:
- * ------------
- * import { readExcel } from "@/lib/excel/excel-reader";
- *
- * async function demo() {
- *   const { rows } = await readExcel("./reports/MyFile.xlsx", 12);
- *
- *   console.log(rows[0]);
- *   // Example output:
- *   // {
- *   //   "SalesNumber": "SSCM173578115165",
- *   //   "BillNumber": "SCM01202501020001",
- *   //   ...
- *   // }
- * }
- *
- * @param filePath Absolute or relative path to an .xlsx file
- * @param headerRow The row number that contains the column headers (1-based index)
- */
-export async function readExcel(
-  filePath: string,
-  headerRow = 1,
-): Promise<RawExcel> {
-  const buffer = await fs.readFile(filePath);
-  const workbook = XLSX.read(buffer, { type: "buffer" });
+export interface ExcelParseResult {
+  pos: string;
+  config: POSConfig;
+  rows: ExcelRow[];
+}
 
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName as string];
+export async function readSalesRecapExcel(
+  file: File
+): Promise<ExcelParseResult> {
+  if (!file.name.endsWith(".xlsx")) {
+    throw new Error("INVALID_FILE_TYPE");
+  }
 
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const workbook = XLSX.read(buffer, {
+    type: "buffer",
+    cellDates: true,
+  });
+
+  const firstSheetName = workbook.SheetNames?.[0];
+  if (!firstSheetName) {
+    throw new Error("NO_SHEETS_FOUND");
+  }
+
+  const sheet = workbook.Sheets[firstSheetName];
   if (!sheet) {
-    throw new Error("Excel file has no sheets.");
+    throw new Error("SHEET_NOT_FOUND");
   }
 
-  const ref = sheet["!ref"];
-  if (!ref) throw new Error("Sheet has no data.");
-
-  const range = XLSX.utils.decode_range(ref);
-  const headers: string[] = [];
-
-  for (let c = range.s.c; c <= range.e.c; c++) {
-    const cellAddress = XLSX.utils.encode_cell({ r: headerRow - 1, c });
-    const cell = sheet[cellAddress];
-    const header = cell ? String(cell.v).trim() : `Column_${c + 1}`;
-    headers.push(header);
+  const cellA1 = sheet["A1"]?.v ?? null;
+  if (!cellA1 || typeof cellA1 !== "string") {
+    throw new Error("INVALID_HEADER_CELL");
   }
 
-  const rows: RawRow[] = [];
-
-  for (let r = headerRow; r <= range.e.r; r++) {
-    const row: RawRow = {};
-    let empty = true;
-
-    for (let c = range.s.c; c <= range.e.c; c++) {
-      const header = headers[c - range.s.c];
-      if (!header) continue;
-
-      const cellAddress = XLSX.utils.encode_cell({ r, c });
-      const cell = sheet[cellAddress];
-      const value = cell ? String(cell.v).trim() : "";
-
-      if (value) empty = false;
-      row[header] = value;
-    }
-
-    if (!empty) rows.push(row);
+  const matchedPOS = detectPOS(cellA1);
+  if (!matchedPOS) {
+    throw new Error(`UNRECOGNIZED_POS_FORMAT: ${cellA1}`);
   }
 
-  return { workbook, rows };
+  const rows = XLSX.utils.sheet_to_json(sheet, { range: 11 }) as ExcelRow[];
+
+  return {
+    pos: matchedPOS.name,
+    config: matchedPOS,
+    rows,
+  };
 }
