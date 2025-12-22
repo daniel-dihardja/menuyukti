@@ -81,7 +81,7 @@ export default async function Page() {
             </Table>
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex justify-end">
             <Button asChild>
               <Link href={routes.analytics.branchesCreate}>{t("create")}</Link>
             </Button>

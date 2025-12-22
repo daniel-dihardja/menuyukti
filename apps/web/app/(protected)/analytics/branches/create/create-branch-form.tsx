@@ -12,28 +12,40 @@ import {
 
 export function CreateBranchForm() {
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Create Branch</CardTitle>
-      </CardHeader>
+    <form className="space-y-4">
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Create Branch</CardTitle>
+        </CardHeader>
 
-      <CardContent>
-        <form className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Branch name</Label>
-            <Input id="name" name="name" placeholder="Berlin Mitte" required />
-          </div>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Branch name</Label>
+              <Input
+                id="name"
+                name="name"
+                placeholder="Berlin Mitte"
+                required
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="slug">Slug</Label>
-            <Input id="slug" name="slug" placeholder="berlin-mitte" required />
+            <div className="space-y-2">
+              <Label htmlFor="slug">Slug</Label>
+              <Input
+                id="slug"
+                name="slug"
+                placeholder="berlin-mitte"
+                required
+              />
+            </div>
           </div>
+        </CardContent>
+      </Card>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="submit">Create branch</Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+      <div className="flex justify-end">
+        <Button type="submit">Create branch</Button>
+      </div>
+    </form>
   );
 }
