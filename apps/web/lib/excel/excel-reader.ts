@@ -1,17 +1,8 @@
 import * as XLSX from "xlsx";
-import { detectPOS, POSConfig } from "@/lib/pos";
 
 export type ExcelRow = Record<string, unknown>;
 
-export interface ExcelParseResult {
-  pos: string;
-  config: POSConfig;
-  rows: ExcelRow[];
-}
-
-export async function readSalesRecapExcel(
-  file: File
-): Promise<ExcelParseResult> {
+export async function readSalesRecapExcel(file: File): Promise<ExcelRow[]> {
   if (!file.name.endsWith(".xlsx")) {
     throw new Error("INVALID_FILE_TYPE");
   }
@@ -34,21 +25,8 @@ export async function readSalesRecapExcel(
     throw new Error("SHEET_NOT_FOUND");
   }
 
-  const cellA1 = sheet["A1"]?.v ?? null;
-  if (!cellA1 || typeof cellA1 !== "string") {
-    throw new Error("INVALID_HEADER_CELL");
-  }
+  // Adjust range if needed (e.g. skip header rows)
+  const rows = XLSX.utils.sheet_to_json(sheet) as ExcelRow[];
 
-  const matchedPOS = detectPOS(cellA1);
-  if (!matchedPOS) {
-    throw new Error(`UNRECOGNIZED_POS_FORMAT: ${cellA1}`);
-  }
-
-  const rows = XLSX.utils.sheet_to_json(sheet, { range: 11 }) as ExcelRow[];
-
-  return {
-    pos: matchedPOS.name,
-    config: matchedPOS,
-    rows,
-  };
+  return rows;
 }
