@@ -3,6 +3,7 @@ export const routes = {
   news: "/news",
   analytics: {
     branches: "/analytics/branches",
+    branchesCreate: "/analytics/branches/create",
     sales: "/analytics/sales",
     cogs: "/analytics/cogs",
   },
