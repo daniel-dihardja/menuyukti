@@ -10,6 +10,16 @@ import {
 } from "@workspace/ui/components/table";
 import { Button } from "@workspace/ui/components/button";
 import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
+import Link from "next/link";
+import { routes } from "@/lib/routes";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@workspace/ui/components/breadcrumb";
 
 export default async function Page() {
   const t = await getTranslations("analytics.branches");
@@ -24,7 +34,23 @@ export default async function Page() {
       <div className="w-full">
         <SidebarTriggerClient title={t("title")} />
 
-        <main className="p-4 space-y-4 max-w-6xl mx-auto">
+        <main className="p-4 space-y-3 max-w-6xl mx-auto">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href={routes.analytics.sales}>Analytics</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+
+              <BreadcrumbSeparator />
+
+              <BreadcrumbItem>
+                <BreadcrumbPage>{t("title")}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+
           <div className="border w-full">
             <Table className="w-full">
               <TableHeader>
@@ -56,7 +82,9 @@ export default async function Page() {
           </div>
 
           <div className="flex justify-center">
-            <Button>{t("create")}</Button>
+            <Button asChild>
+              <Link href={routes.analytics.branchesCreate}>{t("create")}</Link>
+            </Button>
           </div>
         </main>
       </div>
