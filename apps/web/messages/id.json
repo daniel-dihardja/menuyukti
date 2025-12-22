@@ -16,7 +16,8 @@
         "groupLabel": "Menuyukti",
         "news": "Berita",
         "analysis": "Analisis",
-        "sales": "Sales",
+        "branches": "Cabang",
+        "sales": "Penjualan",
         "cogs": "COGS",
         "docs": "Dokumentasi"
     },
@@ -24,6 +25,17 @@
         "title": "Berita"
     },
     "analytics": {
+        "branches": {
+            "title": "Daftar Cabang",
+            "table": {
+                "index": "#",
+                "branchName": "Nama Cabang",
+                "city": "Kota",
+                "action": "Tindakan",
+                "view": "Lihat"
+            },
+            "create": "Buat Cabang Baru"
+        },
         "sales": {
             "title": "Laporan Penjualan",
             "table": {

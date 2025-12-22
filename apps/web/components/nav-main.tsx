@@ -1,6 +1,12 @@
 "use client";
 
-import { Newspaper, BarChart3, BookOpenText, ChevronRight } from "lucide-react";
+import {
+  Newspaper,
+  BarChart3,
+  BookOpenText,
+  ChevronRight,
+  Store,
+} from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -49,6 +55,28 @@ export function NavMain() {
             <Link href={routes.news} className="flex items-center gap-2">
               <Newspaper className="w-4 h-4" />
               <span>{t("news")}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        {/* ---------- Branches ---------- */}
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            tooltip={t("branches")}
+            data-active={isActive(routes.analytics.branches)}
+            className={`text-sm transition-colors rounded-none ${
+              isActive(routes.analytics.branches)
+                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Link
+              href={routes.analytics.branches}
+              className="flex items-center gap-2"
+            >
+              <Store className="w-4 h-4" />
+              <span>{t("branches")}</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
