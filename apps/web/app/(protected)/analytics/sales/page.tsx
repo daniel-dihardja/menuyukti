@@ -1,21 +1,24 @@
 import { SidebarInset } from "@workspace/ui/components/sidebar";
 import { getTranslations } from "next-intl/server";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@workspace/ui/components/table";
-import { Button } from "@workspace/ui/components/button";
-
-import UploadExcelClient from "./upload-xcel-client";
 import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
+import UploadExcelClient from "./upload-xcel-client";
+import { SalesTable } from "./sales-table";
+import { prisma } from "@/lib/prisma/client";
+
+export const runtime = "nodejs";
 
 export default async function Page() {
   const t = await getTranslations("analytics.sales");
 
+  const branches = await prisma.branch.findMany({
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      name: true,
+    },
+  });
+
+  // still mocked for now
   const uploads = [
     { id: 1, name: "January_Analytics.xlsx" },
     { id: 2, name: "February_Analytics.xlsx" },
@@ -27,33 +30,17 @@ export default async function Page() {
         <SidebarTriggerClient title={t("title")} />
 
         <main className="p-4 space-y-4 max-w-6xl mx-auto">
-          <div className="border w-full">
-            <Table className="w-full">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[60px]">{t("table.index")}</TableHead>
-                  <TableHead>{t("table.fileName")}</TableHead>
-                  <TableHead className="text-right">
-                    {t("table.action")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {uploads.map((file) => (
-                  <TableRow key={file.id}>
-                    <TableCell>{file.id}</TableCell>
-                    <TableCell>{file.name}</TableCell>
-                    <TableCell className="text-right">
-                      <Button size="sm" variant="outline">
-                        {t("table.view")}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <SalesTable
+            branches={branches}
+            uploads={uploads}
+            labels={{
+              index: t("table.index"),
+              fileName: t("table.fileName"),
+              action: t("table.action"),
+              view: t("table.view"),
+              selectBranch: "Pilih Cabang",
+            }}
+          />
 
           <div className="flex justify-center">
             <UploadExcelClient label={t("create")} />
