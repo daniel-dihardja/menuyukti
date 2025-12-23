@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
@@ -10,9 +11,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import { routes } from "@/lib/routes";
 
 export function CreateBranchForm() {
   const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +47,8 @@ export function CreateBranchForm() {
         throw new Error(data.message ?? "Failed to create branch");
       }
 
-      formRef.current.reset();
+      router.push(routes.analytics.branches);
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {

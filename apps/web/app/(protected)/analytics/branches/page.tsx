@@ -20,14 +20,21 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@workspace/ui/components/breadcrumb";
+import { prisma } from "@/lib/prisma/client";
+
+export const runtime = "nodejs";
 
 export default async function Page() {
   const t = await getTranslations("analytics.branches");
 
-  const branches = [
-    { id: "b1", name: "Berlin Mitte", city: "Berlin" },
-    { id: "b2", name: "Hamburg Hafen", city: "Hamburg" },
-  ];
+  const branches = await prisma.branch.findMany({
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+    },
+  });
 
   return (
     <SidebarInset>
@@ -57,23 +64,28 @@ export default async function Page() {
                 <TableRow>
                   <TableHead className="w-[60px]">{t("table.index")}</TableHead>
                   <TableHead>{t("table.branchName")}</TableHead>
-                  <TableHead>{t("table.city")}</TableHead>
-                  <TableHead className="text-right">
-                    {t("table.action")}
-                  </TableHead>
+                  <TableHead>Slug</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
+                {branches.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="text-center text-muted-foreground"
+                    >
+                      {t("table.empty")}
+                    </TableCell>
+                  </TableRow>
+                )}
+
                 {branches.map((branch, index) => (
                   <TableRow key={branch.id}>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{branch.name}</TableCell>
-                    <TableCell>{branch.city}</TableCell>
-                    <TableCell className="text-right">
-                      <Button size="sm" variant="outline">
-                        {t("table.view")}
-                      </Button>
+                    <TableCell className="text-muted-foreground">
+                      {branch.slug}
                     </TableCell>
                   </TableRow>
                 ))}
