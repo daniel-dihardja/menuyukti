@@ -32,7 +32,9 @@
                 "branchName": "Nama Cabang",
                 "city": "Kota",
                 "action": "Tindakan",
-                "view": "Lihat"
+                "view": "Lihat",
+                "delete": "Hapus",
+                "empty": "Belum ada cabang yang tersedia."
             },
             "create": "Buat Cabang Baru"
         },

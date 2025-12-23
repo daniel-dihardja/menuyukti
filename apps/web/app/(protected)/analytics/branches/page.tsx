@@ -1,13 +1,5 @@
 import { SidebarInset } from "@workspace/ui/components/sidebar";
 import { getTranslations } from "next-intl/server";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@workspace/ui/components/table";
 import { Button } from "@workspace/ui/components/button";
 import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
 import Link from "next/link";
@@ -21,6 +13,7 @@ import {
   BreadcrumbSeparator,
 } from "@workspace/ui/components/breadcrumb";
 import { prisma } from "@/lib/prisma/client";
+import { BranchesTable } from "./branches-table";
 
 export const runtime = "nodejs";
 
@@ -58,40 +51,13 @@ export default async function Page() {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="border w-full">
-            <Table className="w-full">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[60px]">{t("table.index")}</TableHead>
-                  <TableHead>{t("table.branchName")}</TableHead>
-                  <TableHead>Slug</TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {branches.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={3}
-                      className="text-center text-muted-foreground"
-                    >
-                      {t("table.empty")}
-                    </TableCell>
-                  </TableRow>
-                )}
-
-                {branches.map((branch, index) => (
-                  <TableRow key={branch.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{branch.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {branch.slug}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <BranchesTable
+            branches={branches}
+            indexLabel={t("table.index")}
+            branchNameLabel={t("table.branchName")}
+            actionLabel={t("table.action")}
+            emptyLabel={t("table.empty")}
+          />
 
           <div className="flex justify-end">
             <Button asChild>
