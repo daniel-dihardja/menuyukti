@@ -73,7 +73,7 @@
   --border: oklch(0.28 0.04 128.65); /* Slightly lighter green than card */
 
   /* Input background */
-  --input: var(--card);
+  --input: var(--muted);
 
   /* Focus ring: Should be primary color */
   --ring: var(--primary);
