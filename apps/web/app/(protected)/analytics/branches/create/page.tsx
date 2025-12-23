@@ -27,14 +27,6 @@ export default async function Page() {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link href={routes.analytics.sales}>Analytics</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-
-              <BreadcrumbSeparator />
-
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
                   <Link href={routes.analytics.branches}>{t("title")}</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
