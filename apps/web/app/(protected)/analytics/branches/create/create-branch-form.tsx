@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
@@ -11,8 +12,48 @@ import {
 } from "@workspace/ui/components/card";
 
 export function CreateBranchForm() {
+  const formRef = useRef<HTMLFormElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    if (!formRef.current) return;
+
+    const formData = new FormData(formRef.current);
+
+    const payload = {
+      name: formData.get("name"),
+      slug: formData.get("slug"),
+    };
+
+    try {
+      const res = await fetch("/api/branches", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message ?? "Failed to create branch");
+      }
+
+      formRef.current.reset();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
-    <form className="space-y-4">
+    <form ref={formRef} className="space-y-4" onSubmit={onSubmit}>
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Create Branch</CardTitle>
@@ -27,6 +68,7 @@ export function CreateBranchForm() {
                 name="name"
                 placeholder="Berlin Mitte"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -37,14 +79,19 @@ export function CreateBranchForm() {
                 name="slug"
                 placeholder="berlin-mitte"
                 required
+                disabled={loading}
               />
             </div>
+
+            {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
         </CardContent>
       </Card>
 
       <div className="flex justify-end">
-        <Button type="submit">Create branch</Button>
+        <Button type="submit" disabled={loading}>
+          {loading ? "Creating..." : "Create branch"}
+        </Button>
       </div>
     </form>
   );
