@@ -46,7 +46,16 @@
                 "action": "Tindakan",
                 "view": "Lihat"
             },
-            "create": "Upload Laporan Penjualan Baru"
+            "create": "Upload Laporan Penjualan Baru",
+            "noBranches": {
+                "title": "Belum ada cabang",
+                "description": "Silakan buat cabang terlebih dahulu sebelum mengunggah laporan penjualan.",
+                "cta": "Buat Cabang"
+            },
+            "noAnalytics": {
+                "title": "Belum ada laporan penjualan",
+                "description": "Upload file Excel penjualan untuk mulai menganalisis performa menu."
+            }
         },
         "cogs": {
             "title": "Daftar COGS",

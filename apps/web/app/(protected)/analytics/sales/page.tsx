@@ -3,17 +3,17 @@ import { getTranslations } from "next-intl/server";
 import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
 import UploadExcelClient from "./upload-xcel-client";
 import { SalesTable } from "./sales-table";
+import { BranchSelect } from "./branch-select";
 import { prisma } from "@/lib/prisma/client";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator,
 } from "@workspace/ui/components/breadcrumb";
+import { Button } from "@workspace/ui/components/button";
 
 export const runtime = "nodejs";
 
@@ -28,11 +28,12 @@ export default async function Page() {
     },
   });
 
+  const hasBranches = branches.length > 0;
+
   // still mocked for now
-  const uploads = [
-    { id: 1, name: "January_Analytics.xlsx" },
-    { id: 2, name: "February_Analytics.xlsx" },
-  ];
+  const uploads: { id: number; name: string }[] = [];
+
+  const hasUploads = uploads.length > 0;
 
   return (
     <SidebarInset>
@@ -48,21 +49,66 @@ export default async function Page() {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <SalesTable
-            branches={branches}
-            uploads={uploads}
-            labels={{
-              index: t("table.index"),
-              fileName: t("table.fileName"),
-              action: t("table.action"),
-              view: t("table.view"),
-              selectBranch: "Pilih Cabang",
-            }}
-          />
+          {!hasBranches ? (
+            /* ---------------------------------------------
+             * Empty state: no branches
+             * --------------------------------------------- */
+            <div className="border rounded-md p-8 text-center space-y-4">
+              <h2 className="text-lg font-medium">{t("noBranches.title")}</h2>
+              <p className="text-muted-foreground">
+                {t("noBranches.description")}
+              </p>
+              <Button asChild>
+                <Link href={routes.analytics.branchesCreate}>
+                  {t("noBranches.cta")}
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            /* ---------------------------------------------
+             * Branches exist
+             * --------------------------------------------- */
+            <>
+              {/* Branch context */}
+              <BranchSelect branches={branches} />
 
-          <div className="flex justify-center">
-            <UploadExcelClient label={t("create")} />
-          </div>
+              {!hasUploads ? (
+                /* -----------------------------------------
+                 * Empty state: no analytics uploads
+                 * ----------------------------------------- */
+                <div className="border rounded-md p-8 text-center space-y-4">
+                  <h2 className="text-lg font-medium">
+                    {t("noAnalytics.title")}
+                  </h2>
+                  <p className="text-muted-foreground">
+                    {t("noAnalytics.description")}
+                  </p>
+
+                  {/* ✅ Reuse existing upload component */}
+                  <UploadExcelClient label={t("create")} />
+                </div>
+              ) : (
+                /* -----------------------------------------
+                 * Normal state: analytics exist
+                 * ----------------------------------------- */
+                <>
+                  <SalesTable
+                    uploads={uploads}
+                    labels={{
+                      index: t("table.index"),
+                      fileName: t("table.fileName"),
+                      action: t("table.action"),
+                      view: t("table.view"),
+                    }}
+                  />
+
+                  <div className="flex justify-center">
+                    <UploadExcelClient label={t("create")} />
+                  </div>
+                </>
+              )}
+            </>
+          )}
         </main>
       </div>
     </SidebarInset>
