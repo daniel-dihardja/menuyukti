@@ -26,12 +26,60 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { routes } from "@/lib/routes";
+import { ReactNode } from "react";
+
+type NavItem = {
+  key: string;
+  labelKey: string;
+  href?: string;
+  icon?: ReactNode;
+  children?: NavItem[];
+};
+
+const NAV_ITEMS: NavItem[] = [
+  {
+    key: "news",
+    labelKey: "news",
+    href: routes.news,
+    icon: <Newspaper className="w-4 h-4" />,
+  },
+  {
+    key: "branches",
+    labelKey: "branches",
+    href: routes.analytics.branches,
+    icon: <Store className="w-4 h-4" />,
+  },
+  {
+    key: "sales",
+    labelKey: "sales",
+    icon: <BarChart3 className="w-4 h-4" />,
+    href: routes.analytics.sales,
+    // children: [
+    //   {
+    //     key: "sales",
+    //     labelKey: "sales",
+    //     href: routes.analytics.sales,
+    //   },
+    //   {
+    //     key: "cogs",
+    //     labelKey: "cogs",
+    //     href: routes.analytics.cogs,
+    //   },
+    // ],
+  },
+  {
+    key: "docs",
+    labelKey: "docs",
+    href: routes.docs,
+    icon: <BookOpenText className="w-4 h-4" />,
+  },
+];
 
 export function NavMain() {
   const t = useTranslations("sidebar");
   const pathname = usePathname();
 
-  const isActive = (url: string) => pathname.startsWith(url);
+  const isActive = (url?: string) => (url ? pathname.startsWith(url) : false);
 
   return (
     <SidebarGroup>
@@ -40,128 +88,93 @@ export function NavMain() {
       </SidebarGroupLabel>
 
       <SidebarMenu>
-        {/* ---------- News ---------- */}
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            tooltip={t("news")}
-            data-active={isActive(routes.news)}
-            className={`text-sm transition-colors rounded-none ${
-              isActive(routes.news)
-                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Link href={routes.news} className="flex items-center gap-2">
-              <Newspaper className="w-4 h-4" />
-              <span>{t("news")}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+        {NAV_ITEMS.map((item) => {
+          const active =
+            isActive(item.href) || item.children?.some((c) => isActive(c.href));
 
-        {/* ---------- Branches ---------- */}
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            tooltip={t("branches")}
-            data-active={isActive(routes.analytics.branches)}
-            className={`text-sm transition-colors rounded-none ${
-              isActive(routes.analytics.branches)
-                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Link
-              href={routes.analytics.branches}
-              className="flex items-center gap-2"
-            >
-              <Store className="w-4 h-4" />
-              <span>{t("branches")}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+          if (item.children) {
+            return (
+              <Collapsible
+                key={item.key}
+                asChild
+                defaultOpen={active}
+                className="group/collapsible"
+              >
+                <SidebarMenuItem>
+                  <div className="flex items-center">
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={t(item.labelKey)}
+                      className={`flex items-center gap-2 flex-1 ${
+                        active
+                          ? "bg-sidebar-accent/60 text-sidebar-accent-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Link
+                        href={item.href!}
+                        className="flex items-center gap-2 w-full"
+                      >
+                        {item.icon}
+                        <span>{t(item.labelKey)}</span>
+                      </Link>
+                    </SidebarMenuButton>
 
-        {/* ---------- Analysis (Collapsible parent) ---------- */}
-        <Collapsible
-          asChild
-          defaultOpen={
-            isActive(routes.analytics.sales) || isActive(routes.analytics.cogs)
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        className="px-2 text-muted-foreground hover:text-foreground"
+                        aria-label={`Toggle ${item.key}`}
+                      >
+                        <ChevronRight className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      </button>
+                    </CollapsibleTrigger>
+                  </div>
+
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {item.children.map((child) => (
+                        <SidebarMenuSubItem key={child.key}>
+                          <SidebarMenuSubButton
+                            asChild
+                            className={`transition-colors ${
+                              isActive(child.href)
+                                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            <Link href={child.href!}>
+                              <span>{t(child.labelKey)}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            );
           }
-          className="group/collapsible"
-        >
-          <SidebarMenuItem>
-            <CollapsibleTrigger asChild>
+          return (
+            <SidebarMenuItem key={item.key}>
               <SidebarMenuButton
-                tooltip={t("analysis")}
-                className={`flex items-center gap-2 ${
-                  isActive(routes.analytics.sales) ||
-                  isActive(routes.analytics.cogs)
-                    ? "bg-sidebar-accent/60 text-sidebar-accent-foreground"
-                    : ""
+                asChild
+                tooltip={t(item.labelKey)}
+                data-active={isActive(item.href)}
+                className={`text-sm transition-colors rounded-none ${
+                  isActive(item.href)
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <BarChart3 className="w-4 h-4" />
-                <span>{t("analysis")}</span>
-                <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                <Link href={item.href!} className="flex items-center gap-2">
+                  {item.icon}
+                  <span>{t(item.labelKey)}</span>
+                </Link>
               </SidebarMenuButton>
-            </CollapsibleTrigger>
-
-            <CollapsibleContent>
-              <SidebarMenuSub>
-                {/* ---------- Sales ---------- */}
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton
-                    asChild
-                    className={`transition-colors ${
-                      isActive(routes.analytics.sales)
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <Link href={routes.analytics.sales}>
-                      <span>{t("sales")}</span>
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-
-                {/* ---------- COGS ---------- */}
-                <SidebarMenuSubItem>
-                  <SidebarMenuSubButton
-                    asChild
-                    className={`transition-colors ${
-                      isActive(routes.analytics.cogs)
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <Link href={routes.analytics.cogs}>
-                      <span>{t("cogs")}</span>
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              </SidebarMenuSub>
-            </CollapsibleContent>
-          </SidebarMenuItem>
-        </Collapsible>
-
-        {/* ---------- Docs ---------- */}
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            asChild
-            tooltip={t("docs")}
-            data-active={isActive(routes.docs)}
-            className={`text-sm transition-colors rounded-none ${
-              isActive(routes.docs)
-                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Link href={routes.docs} className="flex items-center gap-2">
-              <BookOpenText className="w-4 h-4" />
-              <span>{t("docs")}</span>
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+            </SidebarMenuItem>
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );
