@@ -1,4 +1,3 @@
-import { readSalesRecapExcel } from "@/lib/excel/excel-reader";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -6,22 +5,19 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const file = formData.get("file") as File | null;
+    const file = formData.get("file");
 
-    if (!file) {
+    if (!file || !(file instanceof File)) {
       return NextResponse.json({ error: "NO_FILE_UPLOADED" }, { status: 400 });
     }
 
-    const result = await readSalesRecapExcel(file);
+    // Forward file as multipart/form-data
+    const forwardFormData = new FormData();
+    forwardFormData.append("file", file, file.name);
 
     const apiResponse = await fetch("http://localhost:8000/upload", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        data: result,
-      }),
+      body: forwardFormData,
     });
 
     if (!apiResponse.ok) {
@@ -31,10 +27,7 @@ export async function POST(request: Request) {
 
     const apiResult = await apiResponse.json();
 
-    return NextResponse.json({
-      status: "ok",
-      analytics: apiResult,
-    });
+    return NextResponse.json(apiResult);
   } catch (error: unknown) {
     console.error("Upload error:", error);
 

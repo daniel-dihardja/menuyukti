@@ -2,29 +2,42 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@workspace/ui/components/button";
-import type { POSConfig } from "@/lib/pos";
-
-interface ExcelRow {
-  [key: string]: unknown;
-}
 
 interface UploadResponse {
-  pos: string;
-  config: POSConfig;
-  rows: ExcelRow[];
+  status: "ok";
+  pos: string | null;
 }
 
-export default function UploadExcelClient({ label }: { label: string }) {
+interface UploadExcelClientProps {
+  label: string;
+  onSuccess?: () => void;
+}
+
+export default function UploadExcelClient({
+  label,
+  onSuccess,
+}: UploadExcelClientProps) {
   const [uploading, setUploading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
+  const [pos, setPos] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // basic client-side guard
+    if (!file.name.endsWith(".xlsx")) {
+      setStatus("error");
+      setMessage("Invalid file type. Please upload an .xlsx file.");
+      return;
+    }
+
     setUploading(true);
+    setStatus("idle");
     setMessage(null);
+    setPos(null);
 
     try {
       const formData = new FormData();
@@ -45,17 +58,14 @@ export default function UploadExcelClient({ label }: { label: string }) {
 
       const data = (await res.json()) as UploadResponse;
 
-      console.log("POS:", data.pos);
-      console.log("POS Config:", data.config);
-      console.log("Parsed Excel Rows:", data.rows);
-
+      setStatus("success");
       setMessage(`Uploaded: ${file.name}`);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        console.error("Upload error:", err.message);
-      } else {
-        console.error("Unknown upload error:", err);
-      }
+      setPos(data.pos);
+
+      onSuccess?.();
+    } catch (err) {
+      console.error("Upload error:", err);
+      setStatus("error");
       setMessage("Upload failed");
     } finally {
       setUploading(false);
@@ -86,10 +96,18 @@ export default function UploadExcelClient({ label }: { label: string }) {
       {message && (
         <p
           className={`text-sm ${
-            message.startsWith("Uploaded") ? "text-green-600" : "text-red-600"
+            status === "success" ? "text-green-600" : "text-red-600"
           }`}
         >
           {message}
+          {status === "success" && pos && (
+            <>
+              <br />
+              <span className="text-muted-foreground">
+                Detected POS: <strong>{pos.toUpperCase()}</strong>
+              </span>
+            </>
+          )}
         </p>
       )}
     </div>
