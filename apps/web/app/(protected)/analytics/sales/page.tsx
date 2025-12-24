@@ -69,7 +69,6 @@ export default async function Page() {
              * Branches exist
              * --------------------------------------------- */
             <>
-              {/* Branch context */}
               <BranchSelect branches={branches} />
 
               {!hasUploads ? (
@@ -84,7 +83,6 @@ export default async function Page() {
                     {t("noAnalytics.description")}
                   </p>
 
-                  {/* ✅ Reuse existing upload component */}
                   <UploadExcelClient label={t("create")} />
                 </div>
               ) : (
