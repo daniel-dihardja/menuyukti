@@ -1,15 +1,16 @@
-from fastapi import FastAPI, Body
-from pydantic import BaseModel
-from typing import Dict, Any
+from fastapi import FastAPI, UploadFile, File
+from .pos_detector import detect_pos_from_excel_bytes
 
 app = FastAPI(title="Menuyukti Analytics API")
 
 
-class AnalyticsPayload(BaseModel):
-    data: Dict[str, Any]
-
-
 @app.post("/upload")
-async def upload_data(payload: AnalyticsPayload = Body(...)):
-    print("Received analytics payload")
-    return {"status": "ok"}
+async def upload_file(file: UploadFile = File(...)):
+    contents = await file.read()
+
+    pos = detect_pos_from_excel_bytes(contents)
+
+    return {
+        "status": "ok",
+        "pos": pos,
+    }
