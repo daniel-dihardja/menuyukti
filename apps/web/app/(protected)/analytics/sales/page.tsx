@@ -4,6 +4,16 @@ import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
 import UploadExcelClient from "./upload-xcel-client";
 import { SalesTable } from "./sales-table";
 import { prisma } from "@/lib/prisma/client";
+import Link from "next/link";
+import { routes } from "@/lib/routes";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@workspace/ui/components/breadcrumb";
 
 export const runtime = "nodejs";
 
@@ -30,6 +40,15 @@ export default async function Page() {
         <SidebarTriggerClient title={t("title")} />
 
         <main className="p-4 space-y-4 max-w-6xl mx-auto">
+          {/* ✅ Breadcrumb */}
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage>{t("title")}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+
           <SalesTable
             branches={branches}
             uploads={uploads}
