@@ -40,7 +40,6 @@ export default async function Page() {
         <SidebarTriggerClient title={t("title")} />
 
         <main className="p-4 space-y-4 max-w-6xl mx-auto">
-          {/* ✅ Breadcrumb */}
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
