@@ -10,7 +10,8 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit",
-    "test": "vitest"
+    "test": "vitest",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
