@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 import { SidebarInset } from "@workspace/ui/components/sidebar";
 import { getTranslations } from "next-intl/server";
 import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
@@ -14,8 +17,6 @@ import {
   BreadcrumbPage,
 } from "@workspace/ui/components/breadcrumb";
 import { Button } from "@workspace/ui/components/button";
-
-export const runtime = "nodejs";
 
 export default async function Page() {
   const t = await getTranslations("analytics.sales");

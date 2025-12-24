@@ -1,3 +1,6 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import { SidebarInset } from "@workspace/ui/components/sidebar";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@workspace/ui/components/button";
@@ -7,15 +10,11 @@ import { routes } from "@/lib/routes";
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator,
 } from "@workspace/ui/components/breadcrumb";
 import { prisma } from "@/lib/prisma/client";
 import { BranchesTable } from "./branches-table";
-
-export const runtime = "nodejs";
 
 export default async function Page() {
   const t = await getTranslations("analytics.branches");
