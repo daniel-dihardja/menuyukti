@@ -38,3 +38,4 @@ npm-debug.log*
 
 reports/
 .vscode/*
+creds
