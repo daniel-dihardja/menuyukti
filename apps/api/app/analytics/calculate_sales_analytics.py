@@ -1,6 +1,5 @@
 import pandas as pd
-
-WEEKDAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+from .calculate_menu_heatmaps import calculate_menu_heatmaps
 
 
 def calculate_sales_analytics(df: pd.DataFrame) -> dict:
@@ -13,9 +12,7 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict:
 
     df = df.copy()
 
-    # Ensure datetime parsing
     df["order_time"] = pd.to_datetime(df["order_time"], errors="coerce")
-
     if df["order_time"].isna().any():
         raise ValueError("Invalid order_time values after parsing")
 
@@ -50,46 +47,9 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict:
     popularity.columns = ["menu", "popularity"]
 
     # -------------------------------------------------------
-    # 4. Heatmaps
+    # 4. Heatmaps (extracted)
     # -------------------------------------------------------
-    df["hour"] = df["order_time"].dt.hour
-    df["weekday"] = df["order_time"].dt.day_name().str.lower().str[:3]
-
-    heatmap_results = []
-
-    for menu_item, group in df.groupby("menu"):
-        hourly = group.groupby("hour")["qty"].sum()
-        daily_heatmap = [
-            {"hour": f"{hour:02d}", "quantity": int(hourly.get(hour, 0))}
-            for hour in range(24)
-        ]
-
-        weekly = (
-            group.assign(
-                weekday=pd.Categorical(
-                    group["weekday"], categories=WEEKDAY_ORDER, ordered=True
-                )
-            )
-            .groupby("weekday")["qty"]
-            .sum()
-        )
-
-        weekly_heatmap = [
-            {"day": day, "quantity": int(weekly.get(day, 0))} for day in WEEKDAY_ORDER
-        ]
-
-        heatmap_results.append(
-            {
-                "menu": menu_item,
-                "dailyHeatmap": daily_heatmap,
-                "weeklyHeatmap": weekly_heatmap,
-            }
-        )
-
-    heatmap_results.sort(
-        key=lambda m: sum(item["quantity"] for item in m["dailyHeatmap"]),
-        reverse=True,
-    )
+    heatmap_results = calculate_menu_heatmaps(df)
 
     # -------------------------------------------------------
     # Final Output

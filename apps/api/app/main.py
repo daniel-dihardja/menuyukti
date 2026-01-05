@@ -3,7 +3,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from .analytics.pos_detector import detect_pos_from_excel_bytes
 from .analytics.registry import NORMALIZERS
-from .analytics.analytics_calculator import calculate_sales_analytics
+from .analytics.calculate_sales_analytics import calculate_sales_analytics
 
 app = FastAPI(title="Menuyukti Analytics API")
 
