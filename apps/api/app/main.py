@@ -3,6 +3,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from .analytics.pos_detector import detect_pos_from_excel_bytes
 from .analytics.registry import NORMALIZERS
+from .analytics.analytics_calculator import calculate_sales_analytics
 
 app = FastAPI(title="Menuyukti Analytics API")
 
@@ -25,19 +26,31 @@ async def upload_file(file: UploadFile = File(...)):
             detail=f"No normalizer implemented for POS '{pos}'",
         )
 
-    # 3. Normalize + transform (single POS pipeline)
+    # 3. Normalize + transform (POS-specific pipeline)
     try:
         df = await run_in_threadpool(normalizer, contents)
-        print(df.head())
     except ValueError as e:
-        # expected validation / transformation errors
         raise HTTPException(status_code=422, detail=str(e))
     except Exception:
-        # unexpected errors
-        raise HTTPException(status_code=500, detail="Failed to process file")
+        raise HTTPException(status_code=500, detail="Failed to normalize file")
 
-    # 4. Temporary response (for verification & debugging)
+    if df.empty:
+        raise HTTPException(
+            status_code=422,
+            detail="No valid rows after normalization",
+        )
+
+    # 4. Calculate analytics (POS-agnostic)
+    try:
+        analytics = await run_in_threadpool(calculate_sales_analytics, df)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to calculate analytics")
+
+    # 5. Final response
     return {
         "status": "ok",
         "pos": pos,
+        "analytics": analytics,
     }

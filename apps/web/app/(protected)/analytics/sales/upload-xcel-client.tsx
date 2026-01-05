@@ -57,7 +57,7 @@ export default function UploadExcelClient({
       }
 
       const data = (await res.json()) as UploadResponse;
-
+      console.log("Upload response:", data);
       setStatus("success");
       setMessage(`Uploaded: ${file.name}`);
       setPos(data.pos);
