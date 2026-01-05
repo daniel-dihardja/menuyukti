@@ -1,9 +1,12 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.concurrency import run_in_threadpool
 
+from .analytics.extract_menu_items import extract_menu_items
+
 from .analytics.pos_detector import detect_pos_from_excel_bytes
 from .analytics.registry import NORMALIZERS
 from .analytics.calculate_sales_analytics import calculate_sales_analytics
+
 
 app = FastAPI(title="Menuyukti Analytics API")
 
@@ -12,9 +15,8 @@ app = FastAPI(title="Menuyukti Analytics API")
 async def upload_file(file: UploadFile = File(...)):
     contents = await file.read()
 
-    # 1. Detect POS (blocking → threadpool)
+    # 1. Detect POS
     pos = await run_in_threadpool(detect_pos_from_excel_bytes, contents)
-
     if not pos or pos == "unknown":
         raise HTTPException(status_code=422, detail="Unsupported POS")
 
@@ -26,7 +28,7 @@ async def upload_file(file: UploadFile = File(...)):
             detail=f"No normalizer implemented for POS '{pos}'",
         )
 
-    # 3. Normalize + transform (POS-specific pipeline)
+    # 3. Normalize
     try:
         df = await run_in_threadpool(normalizer, contents)
     except ValueError as e:
@@ -40,7 +42,7 @@ async def upload_file(file: UploadFile = File(...)):
             detail="No valid rows after normalization",
         )
 
-    # 4. Calculate analytics (POS-agnostic)
+    # 4. Analytics
     try:
         analytics = await run_in_threadpool(calculate_sales_analytics, df)
     except ValueError as e:
@@ -48,9 +50,13 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to calculate analytics")
 
-    # 5. Final response
+    # 5. Menu items (entities, not analytics)
+    menu_items = extract_menu_items(df)
+
+    # 6. Final response
     return {
         "status": "ok",
         "pos": pos,
+        "menu_items": menu_items,
         "analytics": analytics,
     }
