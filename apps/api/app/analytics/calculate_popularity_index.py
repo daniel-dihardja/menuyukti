@@ -21,9 +21,12 @@ def calculate_popularity_index(df: pd.DataFrame) -> List[Dict]:
     if total_qty == 0:
         raise ValueError("Total quantity is zero. Cannot calculate popularity index.")
 
-    menu_qty = df.groupby("menu")["qty"].sum().sort_values(ascending=False)
+    menu_qty = (
+        df.groupby("menu")["qty"].sum().sort_values(ascending=False).reset_index()
+    )
 
-    popularity = (menu_qty / total_qty).round(6).reset_index()
-    popularity.columns = ["menu", "popularity"]
+    menu_qty["popularity"] = (menu_qty["qty"] / total_qty).round(6)
 
-    return popularity.to_dict(orient="records")
+    menu_qty = menu_qty.rename(columns={"qty": "quantity"})
+
+    return menu_qty[["menu", "popularity", "quantity"]].to_dict(orient="records")
