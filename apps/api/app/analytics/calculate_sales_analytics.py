@@ -1,5 +1,7 @@
 import pandas as pd
+
 from .calculate_menu_heatmaps import calculate_menu_heatmaps
+from .calculate_popularity_index import calculate_popularity_index
 
 
 def calculate_sales_analytics(df: pd.DataFrame) -> dict:
@@ -39,12 +41,9 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict:
     avg_popularity_threshold = 1 / unique_menus if unique_menus else 0
 
     # -------------------------------------------------------
-    # 3. Popularity Index
+    # 3. Popularity Index (extracted)
     # -------------------------------------------------------
-    menu_qty = df.groupby("menu")["qty"].sum().sort_values(ascending=False)
-
-    popularity = (menu_qty / total_items_sold).round(6).reset_index()
-    popularity.columns = ["menu", "popularity"]
+    popularity_index = calculate_popularity_index(df)
 
     # -------------------------------------------------------
     # 4. Heatmaps (extracted)
@@ -65,7 +64,7 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict:
         "max_order_items": int(items_per_order.max()),
         "min_order_items": int(items_per_order.min()),
         "avg_popularity": float(avg_popularity_threshold),
-        "popularity_index": popularity.to_dict(orient="records"),
+        "popularity_index": popularity_index,
         "menu_heatmaps": heatmap_results,
         "period_start": period_start.isoformat(),
         "period_end": period_end.isoformat(),
