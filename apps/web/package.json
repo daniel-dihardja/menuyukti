@@ -13,7 +13,8 @@
     "test": "vitest",
     "postinstall": "prisma generate",
     "db:reset": "prisma migrate reset --force",
-    "db:init": "prisma migrate dev --name init"
+    "db:init": "prisma migrate dev --name init",
+    "db:gen": "prisma generate"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
