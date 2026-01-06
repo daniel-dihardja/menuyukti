@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface Upload {
   id: number;
@@ -24,26 +25,21 @@ interface Upload {
 
 interface SalesTableProps {
   uploads: Upload[];
-  labels: {
-    index: string;
-    fileName: string;
-    action: string;
-    delete: string;
-  };
   onDelete: (analyticsId: number) => void;
+  onCogs: (analyticsId: number) => void;
 }
 
-export function SalesTable({ uploads, labels, onDelete }: SalesTableProps) {
+export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
+  const t = useTranslations("analytics.sales.table");
+
   return (
     <div className="border w-full rounded-md">
       <Table className="w-full">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[60px]">{labels.index}</TableHead>
-            <TableHead>{labels.fileName}</TableHead>
-            <TableHead className="text-right w-[80px]">
-              {labels.action}
-            </TableHead>
+            <TableHead className="w-[60px]">{t("index")}</TableHead>
+            <TableHead>{t("fileName")}</TableHead>
+            <TableHead className="text-right w-[80px]">{t("action")}</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -61,11 +57,15 @@ export function SalesTable({ uploads, labels, onDelete }: SalesTableProps) {
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onCogs(file.id)}>
+                      {t("cogs")}
+                    </DropdownMenuItem>
+
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
                       onClick={() => onDelete(file.id)}
                     >
-                      {labels.delete}
+                      {t("delete")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
