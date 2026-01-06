@@ -5,20 +5,15 @@ import { BranchSelect } from "./branch-select";
 import { SalesTable } from "./sales-table";
 import UploadExcelClient, { UploadStatus } from "./upload-xcel-client";
 import { useUploadAnalytics } from "./use-upload-analytics";
+import { useBranchAnalytics } from "./use-branch-analytics";
 
 type Branch = {
   id: number;
   name: string;
 };
 
-type Upload = {
-  id: number;
-  name: string;
-};
-
 type Props = {
   branches: Branch[];
-  uploads: Upload[];
   labels: {
     create: string;
     noAnalytics: {
@@ -34,14 +29,21 @@ type Props = {
   };
 };
 
-export function AnalyticsSalesClient({ branches, uploads, labels }: Props) {
+export function AnalyticsSalesClient({ branches, labels }: Props) {
   const [branchId, setBranchId] = useState<number | null>(null);
 
+  // --------------------------------------------------
+  // Analytics list (branch-scoped)
+  // --------------------------------------------------
+  const { analytics: uploads, loading, refetch } = useBranchAnalytics(branchId);
+
+  // --------------------------------------------------
+  // Upload logic (refetch list on success)
+  // --------------------------------------------------
   const { uploading, status, message, pos, uploadFile } = useUploadAnalytics(
     branchId,
     () => {
-      // later: refetch uploads or router.refresh()
-      console.log("Upload successful, refresh uploads list");
+      refetch();
     }
   );
 
@@ -55,9 +57,23 @@ export function AnalyticsSalesClient({ branches, uploads, labels }: Props) {
         onChange={setBranchId}
       />
 
-      {!hasUploads ? (
+      {!branchId ? (
         /* -----------------------------------------
-         * Empty state: no analytics uploads
+         * No branch selected
+         * ----------------------------------------- */
+        <div className="border rounded-md p-8 text-center text-muted-foreground">
+          Please select a branch to view analytics.
+        </div>
+      ) : loading ? (
+        /* -----------------------------------------
+         * Loading state
+         * ----------------------------------------- */
+        <div className="border rounded-md p-8 text-center">
+          Loading analytics…
+        </div>
+      ) : !hasUploads ? (
+        /* -----------------------------------------
+         * Empty state: no analytics for branch
          * ----------------------------------------- */
         <div className="border rounded-md p-8 text-center space-y-4">
           <h2 className="text-lg font-medium">{labels.noAnalytics.title}</h2>

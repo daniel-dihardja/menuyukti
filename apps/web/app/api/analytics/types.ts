@@ -30,3 +30,9 @@ export type AnalyticsResponse = {
   analytics: AnalyticsSummary;
   menu_items: AnalyticMenuItem[];
 };
+
+export type AnalyticsListItem = {
+  id: number;
+  name: string; // sourceFile
+  uploadedAt: string; // ISO date
+};
