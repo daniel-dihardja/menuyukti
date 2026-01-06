@@ -53,8 +53,8 @@ model Analytics {
   // Global KPIs
   totalOrders     Int?
   totalItemsSold  Int?
-  totalRevenue    Decimal? @db.Decimal(10, 2)
-  avgOrderRevenue Decimal? @db.Decimal(10, 2)
+  totalRevenue    Decimal? @db.Decimal(12, 2)
+  avgOrderRevenue Decimal? @db.Decimal(12, 2)
   avgOrderItems   Decimal? @db.Decimal(10, 2)
 
   // Menu Engineering thresholds
@@ -63,8 +63,8 @@ model Analytics {
   // Other KPIs
   maxOrderItems   Int?
   minOrderItems   Int?
-  maxOrderRevenue Decimal? @db.Decimal(10, 2)
-  minOrderRevenue Decimal? @db.Decimal(10, 2)
+  maxOrderRevenue Decimal? @db.Decimal(12, 2)
+  minOrderRevenue Decimal? @db.Decimal(12, 2)
 
   // Derived analytics results (immutable snapshot)
   matrixJson             Json? @map("matrix_json")
@@ -81,7 +81,7 @@ model Analytics {
 
 //
 // --------------------------------------------------
-// Menu items (inputs scoped to analytics)
+// Menu items (aggregated facts per analytics period)
 // --------------------------------------------------
 //
 
@@ -95,11 +95,16 @@ model AnalyticsMenuItem {
   // Identity within analytics context
   menuName String @map("menu_name")
 
-  // Optional cost info (kept for future use)
+  // Immutable sales facts (per analytics snapshot)
+  quantity     Int
+  totalRevenue Decimal @db.Decimal(12, 2)
+
+  // Optional enrichment (late-bound)
   cogs Decimal? @db.Decimal(10, 2)
 
   createdAt DateTime @default(now()) @map("created_at")
 
+  @@unique([analyticsId, menuName], map: "uq_menu_item_per_analytics")
   @@index([analyticsId], map: "ix_menu_items_analytics_id")
   @@map("analytics_menu_items")
 }

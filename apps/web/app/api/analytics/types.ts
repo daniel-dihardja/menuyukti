@@ -15,15 +15,17 @@ export type AnalyticsSummary = {
 
   avg_popularity: number;
 
-  period_start: string; // ISO date string
-  period_end: string; // ISO date string
+  period_start: string;
+  period_end: string;
 
-  popularity_index: JsonValue;
-  menu_heatmaps: JsonValue;
+  popularity_index: JsonValue | null;
+  menu_heatmaps: JsonValue | null;
 };
 
 export type AnalyticMenuItem = {
   menu: string;
+  quantity: number;
+  total_revenue: number;
 };
 
 export type AnalyticsResponse = {

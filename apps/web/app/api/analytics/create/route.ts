@@ -51,6 +51,7 @@ export async function POST(request: Request) {
         data: {
           branchId: Number(branchId),
 
+          // Source metadata
           sourceFile: file.name,
 
           // Period
@@ -88,6 +89,8 @@ export async function POST(request: Request) {
           data: apiResult.menu_items.map((item) => ({
             analyticsId: analyticsRecord.id,
             menuName: item.menu,
+            quantity: item.quantity,
+            totalRevenue: item.total_revenue,
           })),
         });
       }
