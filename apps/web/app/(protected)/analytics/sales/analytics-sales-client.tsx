@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+
 import { BranchSelect } from "./branch-select";
 import { SalesTable } from "./sales-table";
-import UploadExcelClient, { UploadStatus } from "./upload-xcel-client";
+import UploadExcelClient from "./upload-xcel-client";
+
 import { useUploadAnalytics } from "./use-upload-analytics";
 import { useBranchAnalytics } from "./use-branch-analytics";
 import { useDeleteAnalytics } from "./use-delete-analytics";
@@ -15,26 +18,15 @@ type Branch = {
 
 type Props = {
   branches: Branch[];
-  labels: {
-    create: string;
-    noAnalytics: {
-      title: string;
-      description: string;
-    };
-    table: {
-      index: string;
-      fileName: string;
-      action: string;
-      delete: string;
-    };
-  };
 };
 
-export function AnalyticsSalesClient({ branches, labels }: Props) {
+export function AnalyticsSalesClient({ branches }: Props) {
+  const t = useTranslations("analytics.sales");
+
   const [branchId, setBranchId] = useState<number | null>(null);
 
   // --------------------------------------------------
-  // Analytics list (branch-scoped)
+  // Analytics list
   // --------------------------------------------------
   const { analytics: uploads, loading, refetch } = useBranchAnalytics(branchId);
 
@@ -47,7 +39,7 @@ export function AnalyticsSalesClient({ branches, labels }: Props) {
   );
 
   // --------------------------------------------------
-  // Delete logic (extracted)
+  // Delete logic
   // --------------------------------------------------
   const { deleteAnalytics } = useDeleteAnalytics({
     branchId,
@@ -66,24 +58,22 @@ export function AnalyticsSalesClient({ branches, labels }: Props) {
 
       {!branchId ? (
         <div className="border rounded-md p-8 text-center text-muted-foreground">
-          Please select a branch to view analytics.
+          {t("selectBranch")}
         </div>
       ) : loading ? (
-        <div className="border rounded-md p-8 text-center">
-          Loading analytics…
-        </div>
+        <div className="border rounded-md p-8 text-center">{t("loading")}</div>
       ) : !hasUploads ? (
         <div className="border rounded-md p-8 text-center space-y-4">
-          <h2 className="text-lg font-medium">{labels.noAnalytics.title}</h2>
+          <h2 className="text-lg font-medium">{t("noAnalytics.title")}</h2>
           <p className="text-muted-foreground">
-            {labels.noAnalytics.description}
+            {t("noAnalytics.description")}
           </p>
 
+          {/* ✅ Upload component MUST be rendered here */}
           <UploadExcelClient
-            label={labels.create}
             disabled={!branchId}
             uploading={uploading}
-            status={status as UploadStatus}
+            status={status}
             message={message}
             pos={pos}
             onFileSelected={uploadFile}
@@ -93,16 +83,17 @@ export function AnalyticsSalesClient({ branches, labels }: Props) {
         <>
           <SalesTable
             uploads={uploads}
-            labels={labels.table}
             onDelete={deleteAnalytics}
+            onCogs={(analyticsId) => {
+              console.log("Open COGS for analytics:", analyticsId);
+            }}
           />
 
           <div className="flex justify-center">
             <UploadExcelClient
-              label={labels.create}
               disabled={!branchId}
               uploading={uploading}
-              status={status as UploadStatus}
+              status={status}
               message={message}
               pos={pos}
               onFileSelected={uploadFile}

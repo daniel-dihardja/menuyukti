@@ -40,13 +40,20 @@
         },
         "sales": {
             "title": "Laporan Penjualan",
+            "selectBranch": "Silakan pilih cabang untuk melihat laporan penjualan.",
+            "loading": "Memuat laporan penjualan…",
             "table": {
                 "index": "#",
                 "fileName": "Nama Berkas",
                 "action": "Tindakan",
+                "cogs": "COGS",
                 "delete": "Hapus"
             },
-            "create": "Upload Laporan Penjualan Baru",
+            "upload": {
+                "cta": "Upload Laporan Penjualan Baru",
+                "uploading": "Mengunggah…",
+                "detectedPos": "POS terdeteksi:"
+            },
             "noBranches": {
                 "title": "Belum ada cabang",
                 "description": "Silakan buat cabang terlebih dahulu sebelum mengunggah laporan penjualan.",
@@ -54,7 +61,8 @@
             },
             "noAnalytics": {
                 "title": "Belum ada laporan penjualan",
-                "description": "Upload file Excel penjualan untuk mulai menganalisis performa menu."
+                "description": "Upload file Excel penjualan untuk mulai menganalisis performa menu.",
+                "cta": "Upload Laporan Penjualan Baru"
             }
         },
         "cogs": {

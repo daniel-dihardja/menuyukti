@@ -62,22 +62,7 @@ export default async function Page() {
             /* ---------------------------------------------
              * Interactive analytics UI
              * --------------------------------------------- */
-            <AnalyticsSalesClient
-              branches={branches}
-              labels={{
-                create: t("create"),
-                noAnalytics: {
-                  title: t("noAnalytics.title"),
-                  description: t("noAnalytics.description"),
-                },
-                table: {
-                  index: t("table.index"),
-                  fileName: t("table.fileName"),
-                  action: t("table.action"),
-                  delete: t("table.delete"),
-                },
-              }}
-            />
+            <AnalyticsSalesClient branches={branches} />
           )}
         </main>
       </div>

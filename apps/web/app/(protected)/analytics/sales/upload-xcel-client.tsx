@@ -2,12 +2,11 @@
 
 import { useRef } from "react";
 import { Button } from "@workspace/ui/components/button";
+import { useTranslations } from "next-intl";
 
 export type UploadStatus = "idle" | "success" | "error";
 
 interface UploadExcelClientProps {
-  label: string;
-
   disabled?: boolean;
   uploading?: boolean;
 
@@ -19,7 +18,6 @@ interface UploadExcelClientProps {
 }
 
 export default function UploadExcelClient({
-  label,
   disabled = false,
   uploading = false,
   status = "idle",
@@ -27,6 +25,7 @@ export default function UploadExcelClient({
   pos = null,
   onFileSelected,
 }: UploadExcelClientProps) {
+  const t = useTranslations("analytics.sales.upload");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   function openFileDialog() {
@@ -54,8 +53,12 @@ export default function UploadExcelClient({
         onChange={handleFileChange}
       />
 
-      <Button onClick={openFileDialog} disabled={disabled || uploading}>
-        {uploading ? "Uploading..." : label}
+      <Button
+        type="button" // ✅ IMPORTANT FIX
+        onClick={openFileDialog}
+        disabled={disabled || uploading}
+      >
+        {uploading ? t("uploading") : t("cta")}
       </Button>
 
       {message && (
@@ -65,11 +68,12 @@ export default function UploadExcelClient({
           }`}
         >
           {message}
+
           {status === "success" && pos && (
             <>
               <br />
               <span className="text-muted-foreground">
-                Detected POS: <strong>{pos.toUpperCase()}</strong>
+                {t("detectedPos")} <strong>{pos.toUpperCase()}</strong>
               </span>
             </>
           )}
