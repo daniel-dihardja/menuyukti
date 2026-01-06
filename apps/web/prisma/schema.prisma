@@ -95,9 +95,8 @@ model AnalyticsMenuItem {
   // Identity within analytics context
   menuName String @map("menu_name")
 
-  // Inputs (snapshotted per analytics run)
-  price Decimal  @db.Decimal(10, 2)
-  cogs  Decimal? @db.Decimal(10, 2)
+  // Optional cost info (kept for future use)
+  cogs Decimal? @db.Decimal(10, 2)
 
   createdAt DateTime @default(now()) @map("created_at")
 
