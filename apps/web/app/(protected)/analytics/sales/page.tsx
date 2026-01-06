@@ -4,9 +4,6 @@ export const runtime = "nodejs";
 import { SidebarInset } from "@workspace/ui/components/sidebar";
 import { getTranslations } from "next-intl/server";
 import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
-import UploadExcelClient from "./upload-xcel-client";
-import { SalesTable } from "./sales-table";
-import { BranchSelect } from "./branch-select";
 import { prisma } from "@/lib/prisma/client";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
@@ -17,6 +14,7 @@ import {
   BreadcrumbPage,
 } from "@workspace/ui/components/breadcrumb";
 import { Button } from "@workspace/ui/components/button";
+import { AnalyticsSalesClient } from "./analytics-sales-client";
 
 export default async function Page() {
   const t = await getTranslations("analytics.sales");
@@ -33,8 +31,6 @@ export default async function Page() {
 
   // still mocked for now
   const uploads: { id: number; name: string }[] = [];
-
-  const hasUploads = uploads.length > 0;
 
   return (
     <SidebarInset>
@@ -67,46 +63,25 @@ export default async function Page() {
             </div>
           ) : (
             /* ---------------------------------------------
-             * Branches exist
+             * Interactive analytics UI
              * --------------------------------------------- */
-            <>
-              <BranchSelect branches={branches} />
-
-              {!hasUploads ? (
-                /* -----------------------------------------
-                 * Empty state: no analytics uploads
-                 * ----------------------------------------- */
-                <div className="border rounded-md p-8 text-center space-y-4">
-                  <h2 className="text-lg font-medium">
-                    {t("noAnalytics.title")}
-                  </h2>
-                  <p className="text-muted-foreground">
-                    {t("noAnalytics.description")}
-                  </p>
-
-                  <UploadExcelClient label={t("create")} />
-                </div>
-              ) : (
-                /* -----------------------------------------
-                 * Normal state: analytics exist
-                 * ----------------------------------------- */
-                <>
-                  <SalesTable
-                    uploads={uploads}
-                    labels={{
-                      index: t("table.index"),
-                      fileName: t("table.fileName"),
-                      action: t("table.action"),
-                      view: t("table.view"),
-                    }}
-                  />
-
-                  <div className="flex justify-center">
-                    <UploadExcelClient label={t("create")} />
-                  </div>
-                </>
-              )}
-            </>
+            <AnalyticsSalesClient
+              branches={branches}
+              uploads={uploads}
+              labels={{
+                create: t("create"),
+                noAnalytics: {
+                  title: t("noAnalytics.title"),
+                  description: t("noAnalytics.description"),
+                },
+                table: {
+                  index: t("table.index"),
+                  fileName: t("table.fileName"),
+                  action: t("table.action"),
+                  view: t("table.view"),
+                },
+              }}
+            />
           )}
         </main>
       </div>

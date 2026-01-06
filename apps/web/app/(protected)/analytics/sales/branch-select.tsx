@@ -8,17 +8,34 @@ import {
   SelectValue,
 } from "@workspace/ui/components/select";
 
+type Branch = {
+  id: number;
+  name: string;
+};
+
+interface BranchSelectProps {
+  branches: Branch[];
+  value: number | null;
+  onChange: (branchId: number | null) => void;
+  placeholder?: string;
+}
+
 export function BranchSelect({
   branches,
-}: {
-  branches: { id: number; name: string }[];
-}) {
+  value,
+  onChange,
+  placeholder = "Select branch",
+}: BranchSelectProps) {
   return (
     <div className="max-w-xs">
-      <Select>
+      <Select
+        value={value !== null ? String(value) : undefined}
+        onValueChange={(val) => onChange(Number(val))}
+      >
         <SelectTrigger>
-          <SelectValue placeholder="Pilih Cabang" />
+          <SelectValue placeholder={placeholder} />
         </SelectTrigger>
+
         <SelectContent>
           {branches.map((branch) => (
             <SelectItem key={branch.id} value={String(branch.id)}>
