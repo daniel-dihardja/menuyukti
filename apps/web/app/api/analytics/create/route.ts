@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
-import { AnalyticsResponse } from "./types";
+import { AnalyticsResponse } from "../types";
 import { Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";

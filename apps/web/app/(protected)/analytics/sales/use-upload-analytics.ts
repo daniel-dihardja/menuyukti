@@ -41,7 +41,7 @@ export function useUploadAnalytics(
       formData.append("file", file);
       formData.append("branchId", String(branchId));
 
-      const res = await fetch("/api/upload", {
+      const res = await fetch("/api/analytics/create", {
         method: "POST",
         body: formData,
       });
@@ -55,6 +55,7 @@ export function useUploadAnalytics(
       }
 
       const data = (await res.json()) as UploadResponse;
+      console.log("Upload response data:", data);
 
       setStatus("success");
       setMessage(`Uploaded: ${file.name}`);
