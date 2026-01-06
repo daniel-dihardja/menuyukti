@@ -4,12 +4,11 @@ from typing import List, Dict
 
 def extract_menu_items(df: pd.DataFrame) -> List[Dict]:
     """
-    Extract unique menu items with their price,
+    Extract unique menu items,
     sorted by total quantity sold (descending).
 
     Expects df to contain:
     - menu
-    - price
     - qty
     """
     if df.empty:
@@ -20,7 +19,6 @@ def extract_menu_items(df: pd.DataFrame) -> List[Dict]:
     menu_items = (
         df.groupby("menu")
         .agg(
-            price=("price", "mean"),  # average price per item
             quantity=("qty", "sum"),  # used only for sorting
         )
         .reset_index()
