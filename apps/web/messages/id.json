@@ -44,7 +44,7 @@
                 "index": "#",
                 "fileName": "Nama Berkas",
                 "action": "Tindakan",
-                "view": "Lihat"
+                "delete": "Hapus"
             },
             "create": "Upload Laporan Penjualan Baru",
             "noBranches": {

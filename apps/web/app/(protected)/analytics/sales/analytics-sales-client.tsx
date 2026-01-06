@@ -6,6 +6,7 @@ import { SalesTable } from "./sales-table";
 import UploadExcelClient, { UploadStatus } from "./upload-xcel-client";
 import { useUploadAnalytics } from "./use-upload-analytics";
 import { useBranchAnalytics } from "./use-branch-analytics";
+import { useDeleteAnalytics } from "./use-delete-analytics";
 
 type Branch = {
   id: number;
@@ -24,7 +25,7 @@ type Props = {
       index: string;
       fileName: string;
       action: string;
-      view: string;
+      delete: string;
     };
   };
 };
@@ -38,14 +39,20 @@ export function AnalyticsSalesClient({ branches, labels }: Props) {
   const { analytics: uploads, loading, refetch } = useBranchAnalytics(branchId);
 
   // --------------------------------------------------
-  // Upload logic (refetch list on success)
+  // Upload logic
   // --------------------------------------------------
   const { uploading, status, message, pos, uploadFile } = useUploadAnalytics(
     branchId,
-    () => {
-      refetch();
-    }
+    refetch
   );
+
+  // --------------------------------------------------
+  // Delete logic (extracted)
+  // --------------------------------------------------
+  const { deleteAnalytics } = useDeleteAnalytics({
+    branchId,
+    onSuccess: refetch,
+  });
 
   const hasUploads = uploads.length > 0;
 
@@ -58,23 +65,14 @@ export function AnalyticsSalesClient({ branches, labels }: Props) {
       />
 
       {!branchId ? (
-        /* -----------------------------------------
-         * No branch selected
-         * ----------------------------------------- */
         <div className="border rounded-md p-8 text-center text-muted-foreground">
           Please select a branch to view analytics.
         </div>
       ) : loading ? (
-        /* -----------------------------------------
-         * Loading state
-         * ----------------------------------------- */
         <div className="border rounded-md p-8 text-center">
           Loading analytics…
         </div>
       ) : !hasUploads ? (
-        /* -----------------------------------------
-         * Empty state: no analytics for branch
-         * ----------------------------------------- */
         <div className="border rounded-md p-8 text-center space-y-4">
           <h2 className="text-lg font-medium">{labels.noAnalytics.title}</h2>
           <p className="text-muted-foreground">
@@ -92,11 +90,12 @@ export function AnalyticsSalesClient({ branches, labels }: Props) {
           />
         </div>
       ) : (
-        /* -----------------------------------------
-         * Normal state: analytics exist
-         * ----------------------------------------- */
         <>
-          <SalesTable uploads={uploads} labels={labels.table} />
+          <SalesTable
+            uploads={uploads}
+            labels={labels.table}
+            onDelete={deleteAnalytics}
+          />
 
           <div className="flex justify-center">
             <UploadExcelClient

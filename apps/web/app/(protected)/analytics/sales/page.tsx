@@ -74,7 +74,7 @@ export default async function Page() {
                   index: t("table.index"),
                   fileName: t("table.fileName"),
                   action: t("table.action"),
-                  view: t("table.view"),
+                  delete: t("table.delete"),
                 },
               }}
             />
