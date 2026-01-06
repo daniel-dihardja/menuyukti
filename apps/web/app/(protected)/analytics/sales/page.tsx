@@ -29,9 +29,6 @@ export default async function Page() {
 
   const hasBranches = branches.length > 0;
 
-  // still mocked for now
-  const uploads: { id: number; name: string }[] = [];
-
   return (
     <SidebarInset>
       <div className="w-full">
@@ -67,7 +64,6 @@ export default async function Page() {
              * --------------------------------------------- */
             <AnalyticsSalesClient
               branches={branches}
-              uploads={uploads}
               labels={{
                 create: t("create"),
                 noAnalytics: {
