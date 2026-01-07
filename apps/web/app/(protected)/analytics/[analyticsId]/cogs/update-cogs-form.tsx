@@ -73,6 +73,11 @@ export function UpdateCogsForm({ analyticsId, menuItems }: Props) {
 
   return (
     <form ref={formRef} className="space-y-4" onSubmit={onSubmit}>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={loading}>
+          {loading ? "Saving..." : "Save COGS"}
+        </Button>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>Edit COGS per menu item</CardTitle>
