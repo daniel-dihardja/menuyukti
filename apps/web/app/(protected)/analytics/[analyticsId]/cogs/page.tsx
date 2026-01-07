@@ -44,7 +44,7 @@ export default async function Page({ params }: PageProps) {
   // 4️⃣ Query menu items
   const rawMenuItems = await prisma.analyticsMenuItem.findMany({
     where: { analyticsId },
-    orderBy: { menuName: "asc" },
+    orderBy: { quantity: "desc" },
     select: {
       id: true,
       menuName: true,
