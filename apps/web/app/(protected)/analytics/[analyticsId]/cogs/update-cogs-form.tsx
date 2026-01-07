@@ -98,15 +98,22 @@ export function UpdateCogsForm({ analyticsId, menuItems }: Props) {
                 {item.menuName}
               </Label>
 
-              <Input
-                id={`cogs-${item.id}`}
-                name={`cogs-${item.id}`}
-                type="number"
-                step="0.01"
-                defaultValue={item.cogs ?? ""}
-                placeholder="0.00"
-                disabled={loading}
-              />
+              <div className="relative">
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                  Rp
+                </span>
+
+                <Input
+                  id={`cogs-${item.id}`}
+                  name={`cogs-${item.id}`}
+                  type="number"
+                  step="0.01"
+                  defaultValue={item.cogs ?? ""}
+                  placeholder="0.00"
+                  disabled={loading}
+                  className="pl-8 text-right tabular-nums"
+                />
+              </div>
             </div>
           ))}
 
