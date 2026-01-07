@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
@@ -12,6 +11,7 @@ import { useUploadAnalytics } from "./use-upload-analytics";
 import { useBranchAnalytics } from "./use-branch-analytics";
 import { useDeleteAnalytics } from "./use-delete-analytics";
 import { routes } from "@/lib/routes";
+import { useAnalytics } from "../use-analytics";
 
 type Branch = {
   id: number;
@@ -26,7 +26,8 @@ export function AnalyticsSalesClient({ branches }: Props) {
   const t = useTranslations("analytics.sales");
   const router = useRouter();
 
-  const [branchId, setBranchId] = useState<number | null>(null);
+  // ✅ branchId now comes from AnalyticsProvider
+  const { branchId } = useAnalytics();
 
   // --------------------------------------------------
   // Analytics list
@@ -53,11 +54,8 @@ export function AnalyticsSalesClient({ branches }: Props) {
 
   return (
     <>
-      <BranchSelect
-        branches={branches}
-        value={branchId}
-        onChange={setBranchId}
-      />
+      {/* ✅ No value / onChange anymore */}
+      <BranchSelect branches={branches} />
 
       {!branchId ? (
         <div className="border rounded-md p-8 text-center text-muted-foreground">

@@ -1,5 +1,6 @@
 import { SidebarProvider } from "@workspace/ui/components/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { AnalyticsProvider } from "./analytics/analytics-provider";
 
 export default function AdminLayout({
   children,
@@ -9,7 +10,7 @@ export default function AdminLayout({
   return (
     <SidebarProvider>
       <AppSidebar />
-      {children}
+      <AnalyticsProvider>{children}</AnalyticsProvider>
     </SidebarProvider>
   );
 }
