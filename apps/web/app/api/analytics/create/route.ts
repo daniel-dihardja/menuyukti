@@ -28,7 +28,6 @@ export async function POST(request: Request) {
     // --------------------------------------------------
     const forwardFormData = new FormData();
     forwardFormData.append("file", file, file.name);
-    forwardFormData.append("branch_id", branchId);
 
     const apiResponse = await fetch("http://localhost:8000/analyse", {
       method: "POST",
