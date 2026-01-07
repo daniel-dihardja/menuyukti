@@ -40,10 +40,16 @@ export function UpdateCogsForm({ analyticsId, menuItems }: Props) {
 
     const formData = new FormData(formRef.current);
 
-    const items = menuItems.map((item) => ({
-      id: item.id,
-      cogs: Number(formData.get(`cogs-${item.id}`)),
-    }));
+    // ✅ Correctly normalize values
+    const items = menuItems.map((item) => {
+      const raw = formData.get(`cogs-${item.id}`);
+      const value = raw === null || raw === "" ? null : Number(raw);
+
+      return {
+        id: item.id,
+        cogs: value,
+      };
+    });
 
     try {
       const res = await fetch(`/api/analytics/${analyticsId}/cogs`, {
@@ -77,24 +83,21 @@ export function UpdateCogsForm({ analyticsId, menuItems }: Props) {
             <div
               key={item.id}
               className="
-      grid grid-cols-[2.5rem_auto_8rem] items-center gap-2
-      rounded-md px-2 py-1
-      transition-colors
-      focus-within:bg-muted
-      focus-within:ring-1 focus-within:ring-primary/40
-    "
+                grid grid-cols-[2.5rem_auto_8rem] items-center gap-2
+                rounded-md px-2 py-1
+                transition-colors
+                focus-within:bg-muted
+                focus-within:ring-1 focus-within:ring-primary/40
+              "
             >
-              {/* Counter */}
               <span className="text-sm text-muted-foreground tabular-nums">
                 {index + 1}.
               </span>
 
-              {/* Label */}
               <Label htmlFor={`cogs-${item.id}`} className="truncate">
                 {item.menuName}
               </Label>
 
-              {/* Input */}
               <Input
                 id={`cogs-${item.id}`}
                 name={`cogs-${item.id}`}
