@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 
 import { BranchSelect } from "./branch-select";
 import { SalesTable } from "./sales-table";
@@ -10,6 +11,7 @@ import UploadExcelClient from "./upload-xcel-client";
 import { useUploadAnalytics } from "./use-upload-analytics";
 import { useBranchAnalytics } from "./use-branch-analytics";
 import { useDeleteAnalytics } from "./use-delete-analytics";
+import { routes } from "@/lib/routes";
 
 type Branch = {
   id: number;
@@ -22,6 +24,7 @@ type Props = {
 
 export function AnalyticsSalesClient({ branches }: Props) {
   const t = useTranslations("analytics.sales");
+  const router = useRouter();
 
   const [branchId, setBranchId] = useState<number | null>(null);
 
@@ -69,7 +72,6 @@ export function AnalyticsSalesClient({ branches }: Props) {
             {t("noAnalytics.description")}
           </p>
 
-          {/* ✅ Upload component MUST be rendered here */}
           <UploadExcelClient
             disabled={!branchId}
             uploading={uploading}
@@ -85,7 +87,7 @@ export function AnalyticsSalesClient({ branches }: Props) {
             uploads={uploads}
             onDelete={deleteAnalytics}
             onCogs={(analyticsId) => {
-              console.log("Open COGS for analytics:", analyticsId);
+              router.push(routes.analytics.cogs(String(analyticsId)));
             }}
           />
 

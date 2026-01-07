@@ -1,11 +1,15 @@
 export const routes = {
   login: "/login",
   news: "/news",
+
   analytics: {
     branches: "/analytics/branches",
     branchesCreate: "/analytics/branches/create",
     sales: "/analytics/sales",
-    cogs: "/analytics/cogs",
+
+    // only this one is scoped by analyticsId
+    cogs: (analyticsId: string) => `/analytics/${analyticsId}/cogs`,
   },
+
   docs: "/docs",
 };
