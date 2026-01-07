@@ -11,7 +11,7 @@ from .analytics.calculate_sales_analytics import calculate_sales_analytics
 app = FastAPI(title="Menuyukti Analytics API")
 
 
-@app.post("/upload")
+@app.post("/analyse")
 async def upload_file(file: UploadFile = File(...)):
     contents = await file.read()
 
