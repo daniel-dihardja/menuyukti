@@ -1,22 +1,40 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
-import { AnalyticsResponse } from "../types";
 import { Prisma } from "@prisma/client";
+import { AnalyticsResponse } from "../types";
 
 export const runtime = "nodejs";
 
+const ANALYTICS_API_URL = process.env.ANALYTICS_API_URL;
+
+if (!ANALYTICS_API_URL) {
+  throw new Error("ANALYTICS_API_URL_NOT_CONFIGURED");
+}
+
+// Optional normalization helper (recommended)
+const normalizeMenuName = (name: string) => name.trim().toLowerCase();
+
 export async function POST(request: Request) {
   try {
+    // --------------------------------------------------
+    // Parse & validate input
+    // --------------------------------------------------
     const formData = await request.formData();
 
     const file = formData.get("file");
-    const branchId = formData.get("branchId");
+    const branchIdRaw = formData.get("branchId");
 
-    if (!branchId || typeof branchId !== "string") {
+    if (!branchIdRaw || typeof branchIdRaw !== "string") {
       return NextResponse.json(
         { error: "BRANCH_ID_REQUIRED" },
         { status: 400 }
       );
+    }
+
+    const branchId = Number(branchIdRaw);
+
+    if (!Number.isInteger(branchId)) {
+      return NextResponse.json({ error: "INVALID_BRANCH_ID" }, { status: 400 });
     }
 
     if (!file || !(file instanceof File)) {
@@ -24,19 +42,53 @@ export async function POST(request: Request) {
     }
 
     // --------------------------------------------------
-    // Forward file to analytics service
+    // Validate branch existence (fail early)
+    // --------------------------------------------------
+    const branchExists = await prisma.branch.findUnique({
+      where: { id: branchId },
+      select: { id: true },
+    });
+
+    if (!branchExists) {
+      return NextResponse.json({ error: "BRANCH_NOT_FOUND" }, { status: 404 });
+    }
+
+    // --------------------------------------------------
+    // Forward file to analytics service (with timeout)
     // --------------------------------------------------
     const forwardFormData = new FormData();
     forwardFormData.append("file", file, file.name);
 
-    const apiResponse = await fetch("http://localhost:8000/analyse", {
-      method: "POST",
-      body: forwardFormData,
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
+
+    let apiResponse: Response;
+
+    try {
+      apiResponse = await fetch(`${ANALYTICS_API_URL}/analyse`, {
+        method: "POST",
+        body: forwardFormData,
+        signal: controller.signal,
+      });
+    } catch (err) {
+      if ((err as Error).name === "AbortError") {
+        return NextResponse.json(
+          { error: "ANALYTICS_SERVICE_TIMEOUT" },
+          { status: 504 }
+        );
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!apiResponse.ok) {
-      const text = await apiResponse.text();
-      throw new Error(`ANALYTICS_API_ERROR: ${text}`);
+      console.error("Analytics API error:", await apiResponse.text());
+
+      return NextResponse.json(
+        { error: "ANALYTICS_SERVICE_FAILED" },
+        { status: 502 }
+      );
     }
 
     const apiResult: AnalyticsResponse = await apiResponse.json();
@@ -46,9 +98,12 @@ export async function POST(request: Request) {
     // Persist analytics snapshot (transactional)
     // --------------------------------------------------
     await prisma.$transaction(async (tx) => {
+      // ----------------------------------------------
+      // Create analytics snapshot
+      // ----------------------------------------------
       const analyticsRecord = await tx.analytics.create({
         data: {
-          branchId: Number(branchId),
+          branchId,
 
           // Source metadata
           sourceFile: file.name,
@@ -77,12 +132,46 @@ export async function POST(request: Request) {
           maxOrderRevenue: analytics.max_order_revenue,
           minOrderRevenue: analytics.min_order_revenue,
 
-          // Derived analytics results
+          // Derived analytics
           popularityJson: analytics.popularity_index ?? Prisma.JsonNull,
           heatmapJson: analytics.menu_heatmaps ?? Prisma.JsonNull,
         },
       });
 
+      // ----------------------------------------------
+      // Load previous analytics menu item COGS
+      // ----------------------------------------------
+      const previousAnalytics = await tx.analytics.findFirst({
+        where: {
+          branchId,
+          id: { not: analyticsRecord.id },
+        },
+        orderBy: {
+          uploadedAt: "desc",
+        },
+        select: {
+          menuItems: {
+            select: {
+              menuName: true,
+              cogs: true,
+            },
+          },
+        },
+      });
+
+      const previousCogsMap = new Map<string, number>();
+
+      if (previousAnalytics) {
+        for (const item of previousAnalytics.menuItems) {
+          if (item.cogs !== null) {
+            previousCogsMap.set(normalizeMenuName(item.menuName), item.cogs);
+          }
+        }
+      }
+
+      // ----------------------------------------------
+      // Insert new menu items with inherited COGS
+      // ----------------------------------------------
       if (apiResult.menu_items.length > 0) {
         await tx.analyticsMenuItem.createMany({
           data: apiResult.menu_items.map((item) => ({
@@ -90,17 +179,21 @@ export async function POST(request: Request) {
             menuName: item.menu,
             quantity: item.quantity,
             totalRevenue: item.total_revenue,
+
+            // 👇 inherit COGS if available
+            cogs: previousCogsMap.get(normalizeMenuName(item.menu)) ?? null,
           })),
         });
       }
     });
 
+    // --------------------------------------------------
+    // Success
+    // --------------------------------------------------
     return NextResponse.json(apiResult);
   } catch (error: unknown) {
     console.error("Upload error:", error);
 
-    const message = error instanceof Error ? error.message : "UPLOAD_FAILED";
-
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ error: "UPLOAD_FAILED" }, { status: 400 });
   }
 }
