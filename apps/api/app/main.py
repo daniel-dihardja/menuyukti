@@ -1,14 +1,25 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.concurrency import run_in_threadpool
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from decimal import Decimal
+
+import pandas as pd
 
 from .analytics.extract_menu_items import extract_menu_items
-
 from .analytics.pos_detector import detect_pos_from_excel_bytes
 from .analytics.registry import NORMALIZERS
 from .analytics.calculate_sales_analytics import calculate_sales_analytics
+from .analytics.calculate_menu_engineering_matrix import (
+    calculate_menu_engineering_matrix,
+)
 
 
 app = FastAPI(title="Menuyukti Analytics API")
+
+# ==================================================
+# Existing Excel-based analytics endpoint
+# ==================================================
 
 
 @app.post("/analyse")
@@ -42,21 +53,70 @@ async def upload_file(file: UploadFile = File(...)):
             detail="No valid rows after normalization",
         )
 
-    # 4. Analytics
+    # 4. Sales analytics
     try:
         analytics = await run_in_threadpool(calculate_sales_analytics, df)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to calculate analytics")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to calculate analytics",
+        )
 
-    # 5. Menu items (entities, not analytics)
+    # 5. Menu items
     menu_items = extract_menu_items(df)
 
-    # 6. Final response
     return {
         "status": "ok",
         "pos": pos,
         "menu_items": menu_items,
         "analytics": analytics,
+    }
+
+
+# ==================================================
+# Menu Engineering Matrix endpoint
+# ==================================================
+
+
+class AnalyticsMenuItemIn(BaseModel):
+    menu_name: str = Field(..., min_length=1)
+    quantity: int = Field(..., ge=0)
+    total_revenue: Decimal = Field(..., ge=0)
+    cogs: Optional[Decimal] = Field(None, ge=0)
+
+
+class MenuItemsMatrixRequest(BaseModel):
+    items: List[AnalyticsMenuItemIn]
+
+
+@app.post("/menu-items/matrix")
+async def calculate_matrix(payload: MenuItemsMatrixRequest):
+    if not payload.items:
+        raise HTTPException(status_code=400, detail="NO_MENU_ITEMS")
+
+    df = pd.DataFrame([item.model_dump() for item in payload.items])
+
+    df.rename(columns={"menu_name": "menu"}, inplace=True)
+
+    df["quantity"] = df["quantity"].astype(int)
+    df["total_revenue"] = df["total_revenue"].astype(float)
+
+    if "cogs" in df.columns:
+        df["cogs"] = df["cogs"].astype(float)
+
+    try:
+        matrix = await run_in_threadpool(calculate_menu_engineering_matrix, df)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to calculate menu matrix",
+        )
+
+    return {
+        "status": "ok",
+        "matrix": matrix,
     }
