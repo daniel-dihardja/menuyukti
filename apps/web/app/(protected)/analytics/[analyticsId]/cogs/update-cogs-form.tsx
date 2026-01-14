@@ -17,6 +17,8 @@ type MenuItem = {
   id: number;
   menuName: string;
   cogs: number | null;
+  quantity: number;
+  totalRevenue: number;
 };
 
 type Props = {
@@ -48,6 +50,9 @@ export function UpdateCogsForm({ analyticsId, menuItems }: Props) {
       return {
         id: item.id,
         cogs: value,
+        quantity: item.quantity,
+        totalRevenue: item.totalRevenue,
+        menuName: item.menuName,
       };
     });
 

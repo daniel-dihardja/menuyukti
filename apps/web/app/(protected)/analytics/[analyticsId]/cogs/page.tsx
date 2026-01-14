@@ -49,6 +49,8 @@ export default async function Page({ params }: PageProps) {
       id: true,
       menuName: true,
       cogs: true,
+      quantity: true,
+      totalRevenue: true,
     },
   });
 
@@ -56,7 +58,9 @@ export default async function Page({ params }: PageProps) {
   const menuItems = rawMenuItems.map((item) => ({
     id: item.id,
     menuName: item.menuName,
-    cogs: item.cogs ? Number(item.cogs) : null,
+    cogs: item.cogs ? Number(item.cogs) : 0,
+    quantity: item.quantity,
+    totalRevenue: Number(item.totalRevenue),
   }));
 
   return (
