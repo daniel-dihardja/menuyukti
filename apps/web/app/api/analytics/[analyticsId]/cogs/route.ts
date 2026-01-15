@@ -109,7 +109,7 @@ export async function POST(req: Request, { params }: Params) {
     data: {
       matrixJson: matrixResult.matrix,
       // optional future extensions:
-      // matrixDistributionJson: matrixResult.matrix.distribution,
+      matrixDistributionJson: matrixResult.matrix.distribution,
       // avgPopularity: matrixResult.matrix.thresholds.avg_popularity,
     },
   });
