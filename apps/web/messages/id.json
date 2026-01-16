@@ -1,86 +1,87 @@
 {
-    "login": {
-        "title": "Menuyukti",
-        "slogan": "Menu Cerdas, Kurangi Pemborosan",
-        "description": "Masukkan email Anda di bawah ini untuk masuk ke akun Anda.",
-        "emailLabel": "Email",
-        "emailPlaceholder": "m@example.com",
-        "passwordLabel": "Kata Sandi",
-        "forgotPassword": "Lupa kata sandi?",
-        "loginButton": "Masuk",
-        "loginWithGoogle": "Masuk dengan Google",
-        "signupDescription": "Belum punya akun?",
-        "signupLink": "Daftar sekarang"
+  "login": {
+    "title": "Menuyukti",
+    "slogan": "Menu Cerdas, Kurangi Pemborosan",
+    "description": "Masukkan email Anda di bawah ini untuk masuk ke akun Anda.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "m@example.com",
+    "passwordLabel": "Kata Sandi",
+    "forgotPassword": "Lupa kata sandi?",
+    "loginButton": "Masuk",
+    "loginWithGoogle": "Masuk dengan Google",
+    "signupDescription": "Belum punya akun?",
+    "signupLink": "Daftar sekarang"
+  },
+  "sidebar": {
+    "groupLabel": "Menuyukti",
+    "news": "Berita",
+    "analysis": "Analisis",
+    "branches": "Cabang",
+    "sales": "Penjualan",
+    "cogs": "COGS",
+    "docs": "Dokumentasi"
+  },
+  "news": {
+    "title": "Berita"
+  },
+  "analytics": {
+    "branches": {
+      "title": "Daftar Cabang",
+      "table": {
+        "index": "#",
+        "branchName": "Nama Cabang",
+        "city": "Kota",
+        "action": "Tindakan",
+        "view": "Lihat",
+        "delete": "Hapus",
+        "empty": "Belum ada cabang yang tersedia."
+      },
+      "create": "Buat Cabang Baru"
     },
-    "sidebar": {
-        "groupLabel": "Menuyukti",
-        "news": "Berita",
-        "analysis": "Analisis",
-        "branches": "Cabang",
-        "sales": "Penjualan",
+    "sales": {
+      "title": "Laporan Penjualan",
+      "selectBranch": "Silakan pilih cabang untuk melihat laporan penjualan.",
+      "loading": "Memuat laporan penjualan…",
+      "table": {
+        "index": "#",
+        "fileName": "Nama Berkas",
+        "action": "Tindakan",
         "cogs": "COGS",
-        "docs": "Dokumentasi"
+        "report": "Laporan",
+        "delete": "Hapus"
+      },
+      "upload": {
+        "cta": "Upload Laporan Penjualan Baru",
+        "uploading": "Mengunggah…",
+        "detectedPos": "POS terdeteksi:"
+      },
+      "noBranches": {
+        "title": "Belum ada cabang",
+        "description": "Silakan buat cabang terlebih dahulu sebelum mengunggah laporan penjualan.",
+        "cta": "Buat Cabang"
+      },
+      "noAnalytics": {
+        "title": "Belum ada laporan penjualan",
+        "description": "Upload file Excel penjualan untuk mulai menganalisis performa menu.",
+        "cta": "Upload Laporan Penjualan Baru"
+      }
     },
-    "news": {
-        "title": "Berita"
-    },
-    "analytics": {
-        "branches": {
-            "title": "Daftar Cabang",
-            "table": {
-                "index": "#",
-                "branchName": "Nama Cabang",
-                "city": "Kota",
-                "action": "Tindakan",
-                "view": "Lihat",
-                "delete": "Hapus",
-                "empty": "Belum ada cabang yang tersedia."
-            },
-            "create": "Buat Cabang Baru"
-        },
-        "sales": {
-            "title": "Laporan Penjualan",
-            "selectBranch": "Silakan pilih cabang untuk melihat laporan penjualan.",
-            "loading": "Memuat laporan penjualan…",
-            "table": {
-                "index": "#",
-                "fileName": "Nama Berkas",
-                "action": "Tindakan",
-                "cogs": "COGS",
-                "delete": "Hapus"
-            },
-            "upload": {
-                "cta": "Upload Laporan Penjualan Baru",
-                "uploading": "Mengunggah…",
-                "detectedPos": "POS terdeteksi:"
-            },
-            "noBranches": {
-                "title": "Belum ada cabang",
-                "description": "Silakan buat cabang terlebih dahulu sebelum mengunggah laporan penjualan.",
-                "cta": "Buat Cabang"
-            },
-            "noAnalytics": {
-                "title": "Belum ada laporan penjualan",
-                "description": "Upload file Excel penjualan untuk mulai menganalisis performa menu.",
-                "cta": "Upload Laporan Penjualan Baru"
-            }
-        },
-        "cogs": {
-            "title": "COGS",
-            "description": "Kelola biaya bahan makanan dan data COGS untuk setiap analitik.",
-            "menuName": "Nama Menu",
-            "menuCost": "Biaya Menu",
-            "create": "Buat COGS Baru",
-            "edit": "Edit COGS",
-            "delete": "Hapus"
-        }
-    },
-    "docs": {
-        "title": "Dokumentasi"
-    },
-    "upload": {
-        "NO_FILE_UPLOADED": "Silakan upload sebuah file.",
-        "INVALID_FILE_TYPE": "Hanya file .xlsx yang diperbolehkan.",
-        "UPLOAD_FAILED": "Proses upload gagal. Silakan coba lagi."
+    "cogs": {
+      "title": "COGS",
+      "description": "Kelola biaya bahan makanan dan data COGS untuk setiap analitik.",
+      "menuName": "Nama Menu",
+      "menuCost": "Biaya Menu",
+      "create": "Buat COGS Baru",
+      "edit": "Edit COGS",
+      "delete": "Hapus"
     }
+  },
+  "docs": {
+    "title": "Dokumentasi"
+  },
+  "upload": {
+    "NO_FILE_UPLOADED": "Silakan upload sebuah file.",
+    "INVALID_FILE_TYPE": "Hanya file .xlsx yang diperbolehkan.",
+    "UPLOAD_FAILED": "Proses upload gagal. Silakan coba lagi."
+  }
 }
