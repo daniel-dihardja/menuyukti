@@ -28,7 +28,7 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict:
     # 1. Global Summary Metrics (raw data)
     # -------------------------------------------------------
     total_orders = df["bill_number"].nunique()
-    total_items_sold = df["qty"].sum()
+    total_items_sold = df.loc[df["price"] > 0, "qty"].sum()
     total_revenue = df["total_after_bill_discount"].sum()
 
     if total_items_sold == 0:

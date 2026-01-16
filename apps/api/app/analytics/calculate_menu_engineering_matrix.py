@@ -15,6 +15,9 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
     All percentage values are returned in the range [0, 1].
     """
 
+    # --------------------------------------------------
+    # Validation
+    # --------------------------------------------------
     required_cols = {"menu", "quantity", "total_revenue"}
     missing = required_cols - set(df.columns)
     if missing:
@@ -30,12 +33,12 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
     df["cogs"] = df.get("cogs", 0).astype(float)
 
     # --------------------------------------------------
-    # 🚨 Skip items with cogs == 0
+    # 🚨 Skip items with invalid economics
     # --------------------------------------------------
-    df = df[df["cogs"] > 0]
+    df = df[(df["cogs"] > 0) & (df["total_revenue"] > 0)]
 
     if df.empty:
-        raise ValueError("No valid menu items with cogs > 0")
+        raise ValueError("No valid menu items with cogs > 0 and revenue > 0")
 
     # --------------------------------------------------
     # Derived values
@@ -43,20 +46,17 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
     df["total_cogs"] = df["cogs"] * df["quantity"]
     df["contribution_margin"] = df["total_revenue"] - df["total_cogs"]
 
-    df["we_value"] = df.apply(
-        lambda row: (
-            row["total_cogs"] / row["total_revenue"]
-            if row["total_revenue"] > 0
-            else None
-        ),
-        axis=1,
-    )
+    df["we_value"] = df["total_cogs"] / df["total_revenue"]
 
     total_margin = df["contribution_margin"].sum()
 
-    df["contribution_margin_percentage"] = df.apply(
+    df["contribution_margin_percentage"] = (
+        df["contribution_margin"] / total_margin if total_margin > 0 else 0.0
+    )
+
+    df["margin_per_unit"] = df.apply(
         lambda row: (
-            row["contribution_margin"] / total_margin if total_margin > 0 else 0.0
+            row["contribution_margin"] / row["quantity"] if row["quantity"] > 0 else 0.0
         ),
         axis=1,
     )
@@ -68,7 +68,7 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
     avg_margin = df["contribution_margin"].mean()
 
     # --------------------------------------------------
-    # Classification
+    # Classification (Menu Engineering Matrix)
     # --------------------------------------------------
     def classify(row):
         popular = row["quantity"] >= avg_popularity
@@ -83,6 +83,27 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
         return "low_end"
 
     df["category"] = df.apply(classify, axis=1)
+
+    # --------------------------------------------------
+    # Action recommendation (decision intelligence)
+    # --------------------------------------------------
+    def recommend_action(row):
+        if (
+            row["category"] == "low_end"
+            and row["contribution_margin_percentage"] < 0.005  # < 0.5%
+            and row["quantity"] < avg_popularity
+        ):
+            return "remove"
+
+        if row["category"] == "low_end" and row["margin_per_unit"] >= avg_margin:
+            return "reprice"
+
+        if row["category"] == "puzzle":
+            return "promote"
+
+        return "keep"
+
+    df["action"] = df.apply(recommend_action, axis=1)
 
     # --------------------------------------------------
     # Distribution (category-level aggregation)
@@ -130,10 +151,10 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
                 "contribution_margin_percentage": round(
                     row["contribution_margin_percentage"], 4
                 ),
-                "we_value": (
-                    round(row["we_value"], 4) if row["we_value"] is not None else None
-                ),
+                "margin_per_unit": round(row["margin_per_unit"], 2),
+                "we_value": round(row["we_value"], 4),
                 "category": row["category"],
+                "action": row["action"],
             }
             for _, row in df.sort_values("quantity", ascending=False).iterrows()
         ],
