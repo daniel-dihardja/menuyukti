@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -17,6 +18,7 @@ import {
 } from "@workspace/ui/components/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { routes } from "@/lib/routes";
 
 interface Upload {
   id: number;
@@ -57,6 +59,13 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent align="end">
+                    {/* 👉 Report link */}
+                    <DropdownMenuItem asChild>
+                      <Link href={routes.analytics.report(file.id)}>
+                        {t("report")}
+                      </Link>
+                    </DropdownMenuItem>
+
                     <DropdownMenuItem onClick={() => onCogs(file.id)}>
                       {t("cogs")}
                     </DropdownMenuItem>

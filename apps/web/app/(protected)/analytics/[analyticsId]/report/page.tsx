@@ -17,16 +17,32 @@ import {
   BreadcrumbSeparator,
 } from "@workspace/ui/components/breadcrumb";
 
+import { MatrixCategoryTable } from "./matrix-category-table";
+
 type PageProps = {
-  params: Promise<{
-    analyticsId?: string;
-  }>;
+  params: Promise<{ analyticsId?: string }>;
 };
 
 type MatrixDistributionItem = {
   category: "star" | "plow_horse" | "puzzle" | "low_end";
   count: number;
   percentage: number;
+  margin_contribution_percentage: number;
+};
+
+type MatrixItem = {
+  menu: string;
+  category: "star" | "plow_horse" | "puzzle" | "low_end";
+  quantity: number;
+  total_revenue: number;
+  cogs: number;
+  contribution_margin: number;
+  contribution_margin_percentage: number;
+};
+
+type MatrixJson = {
+  items: MatrixItem[];
+  distribution: MatrixDistributionItem[];
 };
 
 export default async function Page({ params }: PageProps) {
@@ -47,64 +63,69 @@ export default async function Page({ params }: PageProps) {
   const analytics = await prisma.analytics.findUnique({
     where: { id: analyticsId },
     select: {
+      sourceFile: true,
       periodStart: true,
       periodEnd: true,
       totalOrders: true,
       totalItemsSold: true,
       avgOrderRevenue: true,
       avgOrderItems: true,
+      matrixJson: true,
       matrixDistributionJson: true,
     },
   });
 
-  if (!analytics) notFound();
+  if (!analytics?.matrixJson) notFound();
+
+  const matrix = analytics.matrixJson as MatrixJson;
+  const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
 
   // --------------------------------------------------
   // Formatting helpers
   // --------------------------------------------------
   const locale = "id-ID";
-  const currency = "IDR";
 
   const currencyFormatter = new Intl.NumberFormat(locale, {
     style: "currency",
-    currency,
+    currency: "IDR",
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+  });
+
+  const dateFormatter = new Intl.DateTimeFormat("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   });
 
   const startDate = analytics.periodStart
-    ? analytics.periodStart.toLocaleDateString(locale)
+    ? dateFormatter.format(analytics.periodStart)
     : "—";
 
   const endDate = analytics.periodEnd
-    ? analytics.periodEnd.toLocaleDateString(locale)
+    ? dateFormatter.format(analytics.periodEnd)
     : "—";
 
-  const totalOrders =
-    typeof analytics.totalOrders === "number"
-      ? analytics.totalOrders.toLocaleString(locale)
-      : "—";
+  // --------------------------------------------------
+  // Matrix helpers
+  // --------------------------------------------------
+  const itemsByCategory = {
+    star: matrix.items.filter((i) => i.category === "star"),
+    plow_horse: matrix.items.filter((i) => i.category === "plow_horse"),
+    puzzle: matrix.items.filter((i) => i.category === "puzzle"),
+    low_end: matrix.items.filter((i) => i.category === "low_end"),
+  };
 
-  const totalItemsSold =
-    typeof analytics.totalItemsSold === "number"
-      ? analytics.totalItemsSold.toLocaleString(locale)
-      : "—";
+  Object.values(itemsByCategory).forEach((items) =>
+    items.sort((a, b) => b.quantity - a.quantity)
+  );
 
-  const avgOrderRevenue =
-    analytics.avgOrderRevenue !== null
-      ? currencyFormatter.format(Number(analytics.avgOrderRevenue))
-      : "—";
+  const distribution =
+    (analytics.matrixDistributionJson as MatrixDistributionItem[]) ??
+    matrix.distribution ??
+    [];
 
-  const avgOrderItems =
-    analytics.avgOrderItems !== null
-      ? Number(analytics.avgOrderItems).toFixed(2)
-      : "—";
-
-  const distribution: MatrixDistributionItem[] =
-    (analytics.matrixDistributionJson as MatrixDistributionItem[]) ?? [];
-
-  const byCategory = (category: MatrixDistributionItem["category"]) =>
-    distribution.find((d) => d.category === category);
+  const byCategory = (cat: MatrixDistributionItem["category"]) =>
+    distribution.find((d) => d.category === cat);
 
   // --------------------------------------------------
   // UI
@@ -114,7 +135,7 @@ export default async function Page({ params }: PageProps) {
       <div className="w-full">
         <SidebarTriggerClient title="Report" />
 
-        <main className="p-4 space-y-6 max-w-6xl mx-auto">
+        <main className="p-4 space-y-10 max-w-6xl mx-auto">
           {/* Breadcrumb */}
           <Breadcrumb>
             <BreadcrumbList>
@@ -123,15 +144,17 @@ export default async function Page({ params }: PageProps) {
                   <Link href={routes.analytics.sales}>{t("title")}</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
+
               <BreadcrumbSeparator />
+
               <BreadcrumbItem>
-                <BreadcrumbPage>Report</BreadcrumbPage>
+                <BreadcrumbPage>{analyticsName}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
 
           {/* ---------------------------------------------
-           * KPI cards (existing)
+           * KPI CARDS
            * --------------------------------------------- */}
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Period */}
@@ -139,11 +162,11 @@ export default async function Page({ params }: PageProps) {
               <p className="text-sm text-muted-foreground">Period</p>
               <div className="text-sm">
                 <div>
-                  <span className="text-muted-foreground">Start Date:</span>{" "}
+                  <span className="text-muted-foreground">Start:</span>{" "}
                   <span className="font-medium">{startDate}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">End Date:</span>{" "}
+                  <span className="text-muted-foreground">End:</span>{" "}
                   <span className="font-medium">{endDate}</span>
                 </div>
               </div>
@@ -154,14 +177,16 @@ export default async function Page({ params }: PageProps) {
               <p className="text-sm text-muted-foreground">Orders & Items</p>
               <div className="text-sm">
                 <div>
-                  <span className="text-muted-foreground">Total Orders:</span>{" "}
-                  <span className="font-medium">{totalOrders}</span>
+                  <span className="text-muted-foreground">Orders:</span>{" "}
+                  <span className="font-medium">
+                    {analytics.totalOrders?.toLocaleString(locale) ?? "—"}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">
-                    Total Items Sold:
-                  </span>{" "}
-                  <span className="font-medium">{totalItemsSold}</span>
+                  <span className="text-muted-foreground">Items Sold:</span>{" "}
+                  <span className="font-medium">
+                    {analytics.totalItemsSold?.toLocaleString(locale) ?? "—"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -171,23 +196,27 @@ export default async function Page({ params }: PageProps) {
               <p className="text-sm text-muted-foreground">Averages</p>
               <div className="text-sm">
                 <div>
-                  <span className="text-muted-foreground">
-                    Avg Order Revenue:
-                  </span>{" "}
-                  <span className="font-medium">{avgOrderRevenue}</span>
+                  <span className="text-muted-foreground">Avg Revenue:</span>{" "}
+                  <span className="font-medium">
+                    {analytics.avgOrderRevenue
+                      ? currencyFormatter.format(
+                          Number(analytics.avgOrderRevenue)
+                        )
+                      : "—"}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">
-                    Avg Order Items:
-                  </span>{" "}
-                  <span className="font-medium">{avgOrderItems}</span>
+                  <span className="text-muted-foreground">Avg Items:</span>{" "}
+                  <span className="font-medium">
+                    {analytics.avgOrderItems?.toFixed(2) ?? "—"}
+                  </span>
                 </div>
               </div>
             </div>
           </section>
 
           {/* ---------------------------------------------
-           * Matrix Distribution KPIs
+           * MATRIX DISTRIBUTION KPIs
            * --------------------------------------------- */}
           <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
@@ -203,9 +232,7 @@ export default async function Page({ params }: PageProps) {
                   <div className="text-sm">
                     <div>
                       <span className="text-muted-foreground">Items:</span>{" "}
-                      <span className="font-medium">
-                        {item ? item.count : "—"}
-                      </span>
+                      <span className="font-medium">{item?.count ?? "—"}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Share:</span>{" "}
@@ -213,11 +240,41 @@ export default async function Page({ params }: PageProps) {
                         {item ? `${(item.percentage * 100).toFixed(1)}%` : "—"}
                       </span>
                     </div>
+                    <div>
+                      <span className="text-muted-foreground">Margin:</span>{" "}
+                      <span className="font-medium">
+                        {item
+                          ? `${(
+                              item.margin_contribution_percentage * 100
+                            ).toFixed(1)}%`
+                          : "—"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </section>
+
+          {/* ---------------------------------------------
+           * MATRIX TABLES
+           * --------------------------------------------- */}
+          {(
+            [
+              ["star", "Stars"],
+              ["plow_horse", "Plow Horses"],
+              ["puzzle", "Puzzles"],
+              ["low_end", "Low End"],
+            ] as const
+          ).map(([key, label]) => (
+            <MatrixCategoryTable
+              key={key}
+              title={label}
+              items={itemsByCategory[key]}
+              locale={locale}
+              currency="IDR"
+            />
+          ))}
         </main>
       </div>
     </SidebarInset>

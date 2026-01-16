@@ -9,6 +9,7 @@ export const routes = {
 
     // only this one is scoped by analyticsId
     cogs: (analyticsId: string) => `/analytics/${analyticsId}/cogs`,
+    report: (analyticsId: string) => `/analytics/${analyticsId}/report`,
   },
 
   docs: "/docs",
