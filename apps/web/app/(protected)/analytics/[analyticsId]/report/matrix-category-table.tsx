@@ -2,6 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { Badge } from "@workspace/ui/components/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@workspace/ui/components/table";
 
 type Action = "remove" | "reprice" | "promote" | "keep";
 
@@ -83,8 +91,7 @@ export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
   const SortIndicator = ({ col }: { col: SortKey }) =>
     col === sortKey ? (sortDir === "asc" ? " ▲" : " ▼") : null;
 
-  const th =
-    "px-3 py-2 cursor-pointer select-none whitespace-nowrap text-right";
+  const th = "cursor-pointer select-none whitespace-nowrap text-right";
   const thLeft = `${th} text-left`;
 
   const actionVariant = (action: Action) => {
@@ -107,77 +114,80 @@ export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
       <h2 className="text-lg font-semibold">{title}</h2>
 
       <div className="border rounded-md overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted">
-            <tr>
-              <th className={thLeft} onClick={() => toggleSort("menu")}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className={thLeft} onClick={() => toggleSort("menu")}>
                 Menu <SortIndicator col="menu" />
-              </th>
+              </TableHead>
 
-              <th className={th} onClick={() => toggleSort("quantity")}>
+              <TableHead className={th} onClick={() => toggleSort("quantity")}>
                 Qty <SortIndicator col="quantity" />
-              </th>
+              </TableHead>
 
-              <th className={th} onClick={() => toggleSort("total_revenue")}>
+              <TableHead
+                className={th}
+                onClick={() => toggleSort("total_revenue")}
+              >
                 Revenue <SortIndicator col="total_revenue" />
-              </th>
+              </TableHead>
 
-              <th className={th} onClick={() => toggleSort("cogs")}>
+              <TableHead className={th} onClick={() => toggleSort("cogs")}>
                 COGS <SortIndicator col="cogs" />
-              </th>
+              </TableHead>
 
-              <th
+              <TableHead
                 className={th}
                 onClick={() => toggleSort("contribution_margin")}
               >
                 Margin <SortIndicator col="contribution_margin" />
-              </th>
+              </TableHead>
 
-              <th
+              <TableHead
                 className={th}
                 onClick={() => toggleSort("contribution_margin_percentage")}
               >
                 % <SortIndicator col="contribution_margin_percentage" />
-              </th>
+              </TableHead>
 
               {hasActions && (
-                <th
-                  className={`${th} text-center`}
+                <TableHead
+                  className="cursor-pointer text-center"
                   onClick={() => toggleSort("action")}
                 >
                   Action <SortIndicator col="action" />
-                </th>
+                </TableHead>
               )}
-            </tr>
-          </thead>
+            </TableRow>
+          </TableHeader>
 
-          <tbody>
+          <TableBody>
             {sortedItems.map((item) => (
-              <tr key={item.menu} className="border-t hover:bg-muted/50">
-                <td className="px-3 py-2">{item.menu}</td>
+              <TableRow key={item.menu}>
+                <TableCell className="font-medium">{item.menu}</TableCell>
 
-                <td className="px-3 py-2 text-right">
+                <TableCell className="text-right">
                   {item.quantity.toLocaleString(locale)}
-                </td>
+                </TableCell>
 
-                <td className="px-3 py-2 text-right">
+                <TableCell className="text-right">
                   {currencyFormatter.format(item.total_revenue)}
-                </td>
+                </TableCell>
 
-                <td className="px-3 py-2 text-right">
+                <TableCell className="text-right">
                   {currencyFormatter.format(item.cogs)}
-                </td>
+                </TableCell>
 
-                <td className="px-3 py-2 text-right">
+                <TableCell className="text-right">
                   {currencyFormatter.format(item.contribution_margin)}
-                </td>
+                </TableCell>
 
-                <td className="px-3 py-2 text-right">
+                <TableCell className="text-right">
                   {(item.contribution_margin_percentage * 100).toFixed(1)}%
-                </td>
+                </TableCell>
 
                 {hasActions && (
-                  <td className="px-3 py-2 text-center">
+                  <TableCell className="text-center">
                     {item.action ? (
                       <Badge variant={actionVariant(item.action)}>
                         {item.action.toUpperCase()}
@@ -185,12 +195,12 @@ export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
                     ) : (
                       "—"
                     )}
-                  </td>
+                  </TableCell>
                 )}
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </section>
   );
