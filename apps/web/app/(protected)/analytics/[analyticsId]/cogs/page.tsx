@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 import { SidebarInset } from "@workspace/ui/components/sidebar";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -25,23 +28,32 @@ type PageProps = {
 export default async function Page({ params }: PageProps) {
   const t = await getTranslations("analytics");
 
-  // ✅ UNWRAP params (this is the key fix)
+  // --------------------------------------------------
+  // Params
+  // --------------------------------------------------
   const { analyticsId: analyticsIdParam } = await params;
+  if (!analyticsIdParam) notFound();
 
-  // 1️⃣ Validate param existence
-  if (!analyticsIdParam) {
-    notFound();
-  }
-
-  // 2️⃣ Parse analyticsId
   const analyticsId = Number(analyticsIdParam);
+  if (!Number.isInteger(analyticsId)) notFound();
 
-  // 3️⃣ Validate parse result
-  if (!Number.isInteger(analyticsId)) {
-    notFound();
-  }
+  // --------------------------------------------------
+  // Fetch analytics (for breadcrumb name)
+  // --------------------------------------------------
+  const analytics = await prisma.analytics.findUnique({
+    where: { id: analyticsId },
+    select: {
+      sourceFile: true,
+    },
+  });
 
-  // 4️⃣ Query menu items
+  if (!analytics) notFound();
+
+  const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
+
+  // --------------------------------------------------
+  // Fetch menu items
+  // --------------------------------------------------
   const rawMenuItems = await prisma.analyticsMenuItem.findMany({
     where: { analyticsId },
     orderBy: { quantity: "desc" },
@@ -54,7 +66,6 @@ export default async function Page({ params }: PageProps) {
     },
   });
 
-  // 5️⃣ Convert Prisma.Decimal → number
   const menuItems = rawMenuItems.map((item) => ({
     id: item.id,
     menuName: item.menuName,
@@ -63,12 +74,16 @@ export default async function Page({ params }: PageProps) {
     totalRevenue: Number(item.totalRevenue),
   }));
 
+  // --------------------------------------------------
+  // UI
+  // --------------------------------------------------
   return (
     <SidebarInset>
       <div className="w-full">
         <SidebarTriggerClient title={t("cogs.edit")} />
 
         <main className="mx-auto max-w-6xl p-4 space-y-3">
+          {/* Breadcrumb */}
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -80,7 +95,13 @@ export default async function Page({ params }: PageProps) {
               <BreadcrumbSeparator />
 
               <BreadcrumbItem>
-                <BreadcrumbPage>{t("cogs.edit")}</BreadcrumbPage>
+                <BreadcrumbPage>{analyticsName}</BreadcrumbPage>
+              </BreadcrumbItem>
+
+              <BreadcrumbSeparator />
+
+              <BreadcrumbItem>
+                <BreadcrumbPage>{t("cogs.title")}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>

@@ -48,7 +48,8 @@
         "action": "Tindakan",
         "cogs": "COGS",
         "report": "Laporan",
-        "delete": "Hapus"
+        "delete": "Hapus",
+        "matrix": "Matrix"
       },
       "upload": {
         "cta": "Upload Laporan Penjualan Baru",

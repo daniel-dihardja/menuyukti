@@ -59,10 +59,13 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent align="end">
-                    {/* 👉 Report link */}
                     <DropdownMenuItem asChild>
-                      <Link href={routes.analytics.report(file.id)}>
-                        {t("report")}
+                      <Link
+                        href={routes.analytics.matrix(
+                          file.id as unknown as string
+                        )}
+                      >
+                        {t("matrix")}
                       </Link>
                     </DropdownMenuItem>
 
