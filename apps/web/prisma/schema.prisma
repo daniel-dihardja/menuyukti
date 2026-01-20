@@ -54,6 +54,9 @@ model Analytics {
   totalOrders     Int?
   totalItemsSold  Int?
   totalRevenue    Decimal? @db.Decimal(12, 2)
+  totalCogs       Decimal? @db.Decimal(12, 2)  // Σ(cogs × quantity)
+  totalProfit     Decimal? @db.Decimal(12, 2)  // NEW — totalRevenue − totalCogs
+  totalMargin     Decimal? @db.Decimal(6, 4)   // (totalRevenue − totalCogs) ÷ totalRevenue
   avgOrderRevenue Decimal? @db.Decimal(12, 2)
   avgOrderItems   Decimal? @db.Decimal(10, 2)
 
@@ -78,6 +81,9 @@ model Analytics {
   @@index([branchId], map: "ix_analytics_branch_id")
   @@map("analytics")
 }
+
+
+
 
 //
 // --------------------------------------------------
