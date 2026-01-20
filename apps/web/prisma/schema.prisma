@@ -22,7 +22,8 @@ model Branch {
   slug      String   @unique
   createdAt DateTime @default(now()) @map("created_at")
 
-  analytics Analytics[]
+  analytics  Analytics[]
+  fixedCosts FixedCost[]   // NEW
 
   @@map("branches")
 }
@@ -55,7 +56,7 @@ model Analytics {
   totalItemsSold  Int?
   totalRevenue    Decimal? @db.Decimal(12, 2)
   totalCogs       Decimal? @db.Decimal(12, 2)  // Σ(cogs × quantity)
-  totalProfit     Decimal? @db.Decimal(12, 2)  // NEW — totalRevenue − totalCogs
+  totalProfit     Decimal? @db.Decimal(12, 2)  // totalRevenue − totalCogs
   totalMargin     Decimal? @db.Decimal(6, 4)   // (totalRevenue − totalCogs) ÷ totalRevenue
   avgOrderRevenue Decimal? @db.Decimal(12, 2)
   avgOrderItems   Decimal? @db.Decimal(10, 2)
@@ -82,8 +83,37 @@ model Analytics {
   @@map("analytics")
 }
 
+//
+// --------------------------------------------------
+// Fixed costs (branch-scoped, mutable input data)
+// --------------------------------------------------
+//
 
+model FixedCost {
+  id Int @id @default(autoincrement())
 
+  // Scope
+  branchId Int    @map("branch_id")
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  // Identity
+  name String
+
+  // Economics
+  amount Decimal @db.Decimal(12, 2)   // monthly (or chosen period)
+
+  // Optional metadata
+  category String?                   // e.g. "rent", "salaries", "utilities"
+  notes    String?
+
+  // Lifecycle
+  isActive Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt      @map("updated_at")
+
+  @@index([branchId], map: "ix_fixed_costs_branch_id")
+  @@map("fixed_costs")
+}
 
 //
 // --------------------------------------------------
