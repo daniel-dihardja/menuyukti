@@ -15,7 +15,7 @@ export async function POST(req: Request, { params }: Params) {
   if (!Number.isInteger(analyticsId)) {
     return NextResponse.json(
       { message: "Invalid analytics id" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -30,13 +30,13 @@ export async function POST(req: Request, { params }: Params) {
   const updates = body.items.filter(
     (item: any) =>
       Number.isInteger(item.id) &&
-      (typeof item.cogs === "number" || item.cogs === null)
+      (typeof item.cogs === "number" || item.cogs === null),
   );
 
   if (updates.length === 0) {
     return NextResponse.json(
       { message: "No valid items to update" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -51,8 +51,8 @@ export async function POST(req: Request, { params }: Params) {
         data: {
           cogs: item.cogs,
         },
-      })
-    )
+      }),
+    ),
   );
 
   // 5️⃣ Fetch all menu items for matrix calculation
@@ -69,7 +69,7 @@ export async function POST(req: Request, { params }: Params) {
   if (menuItems.length === 0) {
     return NextResponse.json(
       { message: "No menu items found" },
-      { status: 404 }
+      { status: 404 },
     );
   }
 
@@ -90,14 +90,14 @@ export async function POST(req: Request, { params }: Params) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(matrixPayload),
-    }
+    },
   );
 
   if (!res.ok) {
     const error = await res.json();
     return NextResponse.json(
       { message: "Matrix calculation failed", detail: error },
-      { status: res.status }
+      { status: res.status },
     );
   }
 
@@ -110,6 +110,11 @@ export async function POST(req: Request, { params }: Params) {
       matrixJson: matrixResult.matrix,
       // optional future extensions:
       matrixDistributionJson: matrixResult.matrix.distribution,
+      totalCogs: matrixResult.matrix.thresholds.total_cogs,
+      // totalMargin: matrixResult.matrix.thresholds.total_margin,
+      totalProfit: matrixResult.matrix.thresholds.total_profit,
+      // avgContributionMargin:
+      // matrixResult.matrix.thresholds.avg_contribution_margin,
       // avgPopularity: matrixResult.matrix.thresholds.avg_popularity,
     },
   });

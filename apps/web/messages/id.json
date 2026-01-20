@@ -49,7 +49,8 @@
         "cogs": "COGS",
         "report": "Laporan",
         "delete": "Hapus",
-        "matrix": "Matrix"
+        "matrix": "Matrix",
+        "finance": "Keuangan"
       },
       "upload": {
         "cta": "Upload Laporan Penjualan Baru",

@@ -59,6 +59,7 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent align="end">
+                    {/* Matrix */}
                     <DropdownMenuItem asChild>
                       <Link
                         href={routes.analytics.matrix(
@@ -69,10 +70,23 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                       </Link>
                     </DropdownMenuItem>
 
+                    {/* Finance */}
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={routes.analytics.finance(
+                          file.id as unknown as string
+                        )}
+                      >
+                        {t("finance")}
+                      </Link>
+                    </DropdownMenuItem>
+
+                    {/* COGS */}
                     <DropdownMenuItem onClick={() => onCogs(file.id)}>
                       {t("cogs")}
                     </DropdownMenuItem>
 
+                    {/* Delete */}
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
                       onClick={() => onDelete(file.id)}
