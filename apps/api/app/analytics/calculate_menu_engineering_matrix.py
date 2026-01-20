@@ -11,7 +11,7 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
     - total_revenue (float)
     - cogs (float | NaN)
 
-    Items with cogs == 0 are skipped.
+    Items with cogs == 0 are skipped for matrix logic.
     All percentage values are returned in the range [0, 1].
     """
 
@@ -33,7 +33,21 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
     df["cogs"] = df.get("cogs", 0).astype(float)
 
     # --------------------------------------------------
-    # 🚨 Skip items with invalid economics
+    # Derived values (for TOTAL KPIs — before filtering)
+    # --------------------------------------------------
+    df["total_cogs"] = df["cogs"] * df["quantity"]
+    df["contribution_margin"] = df["total_revenue"] - df["total_cogs"]
+
+    total_revenue_all = df["total_revenue"].sum()
+    total_cogs_all = df["total_cogs"].sum()
+    total_profit_all = total_revenue_all - total_cogs_all
+
+    total_margin_ratio = (
+        total_profit_all / total_revenue_all if total_revenue_all > 0 else 0.0
+    )
+
+    # --------------------------------------------------
+    # 🚨 Filter only for matrix logic
     # --------------------------------------------------
     df = df[(df["cogs"] > 0) & (df["total_revenue"] > 0)]
 
@@ -41,17 +55,16 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
         raise ValueError("No valid menu items with cogs > 0 and revenue > 0")
 
     # --------------------------------------------------
-    # Derived values
+    # Matrix-specific derived values
     # --------------------------------------------------
-    df["total_cogs"] = df["cogs"] * df["quantity"]
-    df["contribution_margin"] = df["total_revenue"] - df["total_cogs"]
-
     df["we_value"] = df["total_cogs"] / df["total_revenue"]
 
-    total_margin = df["contribution_margin"].sum()
+    total_margin_matrix = df["contribution_margin"].sum()
 
     df["contribution_margin_percentage"] = (
-        df["contribution_margin"] / total_margin if total_margin > 0 else 0.0
+        df["contribution_margin"] / total_margin_matrix
+        if total_margin_matrix > 0
+        else 0.0
     )
 
     df["margin_per_unit"] = df.apply(
@@ -121,7 +134,9 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
                 "count": int(count),
                 "percentage": count / total_items if total_items > 0 else 0.0,
                 "margin_contribution_percentage": (
-                    category_margin / total_margin if total_margin > 0 else 0.0
+                    category_margin / total_margin_matrix
+                    if total_margin_matrix > 0
+                    else 0.0
                 ),
             }
         )
@@ -138,6 +153,12 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
         "thresholds": {
             "avg_popularity": round(avg_popularity, 2),
             "avg_contribution_margin": round(avg_margin, 2),
+            # Snapshot-level KPIs (aligned with Prisma Analytics)
+            "total_cogs": round(total_cogs_all, 2),  # Σ(cogs × quantity)
+            "total_profit": round(
+                total_profit_all, 2
+            ),  # NEW — totalRevenue − totalCogs
+            "total_margin": round(total_margin_ratio, 4),  # (revenue − cogs) / revenue
         },
         "distribution": distribution,
         "items": [
