@@ -12,7 +12,7 @@ members = [
 [[package]]
 name = "analytics"
 version = "0.1.0"
-source = { editable = "packages/analytics" }
+source = { virtual = "packages/analytics" }
 dependencies = [
     { name = "matplotlib" },
     { name = "openpyxl" },
@@ -695,11 +695,11 @@ source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
-    { name = "analytics" },
     { name = "ipykernel" },
     { name = "openpyxl" },
     { name = "pandas" },
     { name = "psycopg", extra = ["binary"] },
+    { name = "python-dotenv" },
     { name = "sqlalchemy" },
 ]
 
@@ -707,11 +707,11 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "analytics", editable = "packages/analytics" },
     { name = "ipykernel", specifier = ">=7.1.0" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.13" },
+    { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "sqlalchemy", specifier = ">=2.0.44" },
 ]
 
