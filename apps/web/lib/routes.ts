@@ -7,10 +7,22 @@ export const routes = {
     branchesCreate: "/analytics/branches/create",
     sales: "/analytics/sales",
 
-    // only this one is scoped by analyticsId
-    cogs: (analyticsId: string) => `/analytics/${analyticsId}/cogs`,
-    matrix: (analyticsId: string) => `/analytics/${analyticsId}/matrix`,
-    finance: (analyticsId: string) => `/analytics/${analyticsId}/finance`,
+    matrix: (analyticsId: string | number) =>
+      `/analytics/${analyticsId}/matrix`,
+
+    finance: (analyticsId: string | number) =>
+      `/analytics/${analyticsId}/finance`,
+
+    cogs: (analyticsId: string | number) => `/analytics/${analyticsId}/cogs`,
+  },
+
+  branches: {
+    list: "/branches",
+
+    detail: (branchId: string | number) => `/branches/${branchId}`,
+
+    fixedCosts: (branchId: string | number) =>
+      `/analytics/branches/${branchId}/fixed-cost`,
   },
 
   docs: "/docs",

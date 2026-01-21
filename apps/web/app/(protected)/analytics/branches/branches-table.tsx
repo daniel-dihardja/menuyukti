@@ -15,7 +15,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
-import { MoreHorizontal, Trash } from "lucide-react";
+import { MoreHorizontal, Trash, Settings } from "lucide-react";
+import Link from "next/link";
+
+import { routes } from "@/lib/routes";
 
 interface Branch {
   id: number;
@@ -82,6 +85,18 @@ export function BranchesTable({
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent align="end">
+                    {/* Fixed Costs */}
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={routes.branches.fixedCosts(branch.id)}
+                        className="flex items-center"
+                      >
+                        <Settings className="mr-2 h-4 w-4" />
+                        Fixed Costs
+                      </Link>
+                    </DropdownMenuItem>
+
+                    {/* Delete */}
                     <DropdownMenuItem
                       onClick={() => {
                         // TODO: wire delete logic

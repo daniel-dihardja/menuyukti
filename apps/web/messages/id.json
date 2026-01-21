@@ -19,6 +19,7 @@
     "branches": "Cabang",
     "sales": "Penjualan",
     "cogs": "COGS",
+    "fixedCosts": "Biaya Tetap",
     "docs": "Dokumentasi"
   },
   "news": {
@@ -76,6 +77,35 @@
       "create": "Buat COGS Baru",
       "edit": "Edit COGS",
       "delete": "Hapus"
+    }
+  },
+  "branches": {
+    "fixedCosts": {
+      "title": "Biaya Tetap",
+      "description": "Kelola biaya tetap untuk cabang ini.",
+      "breadcrumbs": {
+        "branches": "Cabang",
+        "fixedCosts": "Biaya Tetap"
+      },
+      "table": {
+        "name": "Nama",
+        "amount": "Jumlah",
+        "category": "Kategori",
+        "notes": "Catatan",
+        "active": "Aktif",
+        "actions": "Tindakan",
+        "empty": "Belum ada biaya tetap."
+      },
+      "form": {
+        "addTitle": "Tambah Biaya Tetap",
+        "namePlaceholder": "Nama biaya (mis. Sewa)",
+        "amountPlaceholder": "Jumlah",
+        "categoryPlaceholder": "Kategori (mis. Gaji)",
+        "notesPlaceholder": "Catatan",
+        "addButton": "Tambah",
+        "saveButton": "Simpan",
+        "deleteButton": "Hapus"
+      }
     }
   },
   "docs": {
