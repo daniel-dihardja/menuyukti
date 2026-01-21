@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Newspaper,
-  BarChart3,
-  BookOpenText,
-  ChevronRight,
-  Store,
-} from "lucide-react";
+import { BarChart3, BookOpenText, ChevronRight, Store } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -37,12 +31,12 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  {
-    key: "news",
-    labelKey: "news",
-    href: routes.news,
-    icon: <Newspaper className="w-4 h-4" />,
-  },
+  // {
+  //   key: "news",
+  //   labelKey: "news",
+  //   href: routes.news,
+  //   icon: <Newspaper className="w-4 h-4" />,
+  // },
   {
     key: "branches",
     labelKey: "branches",
