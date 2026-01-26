@@ -63,10 +63,21 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                     <DropdownMenuItem asChild>
                       <Link
                         href={routes.analytics.matrix(
-                          file.id as unknown as string
+                          file.id as unknown as string,
                         )}
                       >
                         {t("matrix")}
+                      </Link>
+                    </DropdownMenuItem>
+
+                    {/* Heatmap */}
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={routes.analytics.heatmap(
+                          file.id as unknown as string,
+                        )}
+                      >
+                        {t("heatmap")}
                       </Link>
                     </DropdownMenuItem>
 
@@ -74,7 +85,7 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                     <DropdownMenuItem asChild>
                       <Link
                         href={routes.analytics.finance(
-                          file.id as unknown as string
+                          file.id as unknown as string,
                         )}
                       >
                         {t("finance")}

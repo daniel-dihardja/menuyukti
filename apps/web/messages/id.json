@@ -51,7 +51,8 @@
         "report": "Laporan",
         "delete": "Hapus",
         "matrix": "Matrix",
-        "finance": "Keuangan"
+        "finance": "Keuangan",
+        "heatmap": "Heatmap"
       },
       "upload": {
         "cta": "Upload Laporan Penjualan Baru",
