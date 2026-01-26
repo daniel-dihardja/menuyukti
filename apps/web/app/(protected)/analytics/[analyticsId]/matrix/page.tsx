@@ -116,7 +116,7 @@ export default async function Page({ params }: PageProps) {
   };
 
   Object.values(itemsByCategory).forEach((items) =>
-    items.sort((a, b) => b.quantity - a.quantity)
+    items.sort((a, b) => b.quantity - a.quantity),
   );
 
   const distribution =
@@ -217,7 +217,7 @@ export default async function Page({ params }: PageProps) {
                     <span className="font-medium">
                       {analytics.avgOrderRevenue
                         ? currencyFormatter.format(
-                            Number(analytics.avgOrderRevenue)
+                            Number(analytics.avgOrderRevenue),
                           )
                         : "—"}
                     </span>
