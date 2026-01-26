@@ -8,6 +8,7 @@ import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -17,13 +18,22 @@ import {
   BreadcrumbSeparator,
 } from "@workspace/ui/components/breadcrumb";
 
-// Server-safe adapters ONLY
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@workspace/ui/components/tabs";
+
+// Server-safe adapters
 import {
   adaptDailyHeatmapMatrix,
+  adaptWeeklyHeatmapMatrix,
   type DailyHeatmapInput,
+  type WeeklyHeatmapInput,
 } from "./heatmap.adapters";
 
-// Client UI component ONLY
+// Client UI component
 import { HeatmapMatrix } from "./heatmap-matrix";
 
 type PageProps = {
@@ -43,7 +53,7 @@ export default async function Page({ params }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound();
 
   // --------------------------------------------------
-  // Fetch analytics snapshot (breadcrumb + heatmap)
+  // Fetch analytics snapshot
   // --------------------------------------------------
   const analytics = await prisma.analytics.findUnique({
     where: { id: analyticsId },
@@ -60,7 +70,8 @@ export default async function Page({ params }: PageProps) {
   // --------------------------------------------------
   // Parse + validate heatmap_json
   // --------------------------------------------------
-  let heatmapItems: DailyHeatmapInput[] = [];
+  let dailyItems: DailyHeatmapInput[] = [];
+  let weeklyItems: WeeklyHeatmapInput[] = [];
 
   try {
     const raw = analytics.heatmapJson as unknown;
@@ -69,35 +80,33 @@ export default async function Page({ params }: PageProps) {
       throw new Error("heatmap_json is not an array");
     }
 
-    heatmapItems = raw.filter(
+    dailyItems = raw.filter(
       (item: any): item is DailyHeatmapInput =>
-        typeof item?.menu === "string" &&
-        Array.isArray(item?.dailyHeatmap) &&
-        item.dailyHeatmap.every(
-          (h: any) =>
-            typeof h?.hour === "string" && typeof h?.quantity === "number",
-        ),
+        typeof item?.menu === "string" && Array.isArray(item?.dailyHeatmap),
+    );
+
+    weeklyItems = raw.filter(
+      (item: any): item is WeeklyHeatmapInput =>
+        typeof item?.menu === "string" && Array.isArray(item?.weeklyHeatmap),
     );
   } catch (err) {
     console.error("Invalid heatmap_json:", err);
     notFound();
   }
 
-  if (heatmapItems.length === 0) {
+  if (!dailyItems.length && !weeklyItems.length) {
     notFound();
   }
 
   // --------------------------------------------------
-  // Dynamic hour window (UI-ready)
+  // Daily window (UI-ready)
   // --------------------------------------------------
   const START_HOUR = 8;
   const END_HOUR = 18;
 
-  const { rows, columnLabels } = adaptDailyHeatmapMatrix(
-    heatmapItems,
-    START_HOUR,
-    END_HOUR,
-  );
+  const daily = adaptDailyHeatmapMatrix(dailyItems, START_HOUR, END_HOUR);
+
+  const weekly = adaptWeeklyHeatmapMatrix(weeklyItems);
 
   // --------------------------------------------------
   // UI
@@ -135,22 +144,39 @@ export default async function Page({ params }: PageProps) {
           <header className="space-y-1">
             <h1 className="text-2xl font-semibold">Menu Sales Heatmap</h1>
             <p className="text-sm text-muted-foreground">
-              Sales volume by hour and menu item ({START_HOUR}:00 – {END_HOUR}
-              :00)
+              Visualize sales volume by menu and time
             </p>
           </header>
 
           {/* ---------------------------------------------
-           * HEATMAP MATRIX (client component)
+           * HEATMAP TABS
            * --------------------------------------------- */}
-          <section className="space-y-4">
-            <HeatmapMatrix
-              title="Hourly Sales Heatmap"
-              rows={rows}
-              columnLabels={columnLabels}
-              color="blue"
-            />
-          </section>
+          <Tabs defaultValue="daily" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="daily">Daily</TabsTrigger>
+              <TabsTrigger value="weekly">Weekly</TabsTrigger>
+            </TabsList>
+
+            {/* DAILY */}
+            <TabsContent value="daily">
+              <HeatmapMatrix
+                title={`Hourly Sales (${START_HOUR}:00 – ${END_HOUR}:00)`}
+                rows={daily.rows}
+                columnLabels={daily.columnLabels}
+                color="blue"
+              />
+            </TabsContent>
+
+            {/* WEEKLY */}
+            <TabsContent value="weekly">
+              <HeatmapMatrix
+                title="Weekly Sales"
+                rows={weekly.rows}
+                columnLabels={weekly.columnLabels}
+                color="green"
+              />
+            </TabsContent>
+          </Tabs>
         </main>
       </div>
     </SidebarInset>
