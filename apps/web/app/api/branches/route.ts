@@ -21,7 +21,7 @@ export async function POST(req: Request) {
           message: "Invalid input",
           issues: error.issues,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       {
         message: "Failed to create branch",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
