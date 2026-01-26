@@ -26,7 +26,7 @@ export function HeatmapMatrix({
   title,
   rows,
   columnLabels,
-  color = "blue",
+  color = "green",
 }: Props) {
   const [sort, setSort] = useState<SortState>(null);
 
@@ -48,15 +48,15 @@ export function HeatmapMatrix({
   const handleSort = (columnIndex: number) => {
     setSort((prev) => {
       if (!prev || prev.columnIndex !== columnIndex) {
-        return { columnIndex, direction: "desc" }; // first click: DESC
+        return { columnIndex, direction: "desc" };
       }
       if (prev.direction === "desc") return { columnIndex, direction: "asc" };
-      return null; // third click: reset
+      return null;
     });
   };
 
   /* ---------------------------------------------
-   * Color scaling (based on visible rows only)
+   * Color scaling
    * --------------------------------------------- */
   const allValues = sortedRows.flatMap((r) => r.values);
   const min = Math.min(...allValues);
@@ -72,16 +72,10 @@ export function HeatmapMatrix({
     return `rgba(59, 130, 246, ${alpha})`;
   };
 
-  /* ---------------------------------------------
-   * Shared constants
-   * --------------------------------------------- */
   const MENU_COL_WIDTH = 220;
 
-  /* ---------------------------------------------
-   * UI
-   * --------------------------------------------- */
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {title && <h3 className="text-sm font-medium">{title}</h3>}
 
       <div className="overflow-auto border rounded-md">
@@ -113,7 +107,6 @@ export function HeatmapMatrix({
                   type="button"
                 >
                   <span>{label}</span>
-
                   {isActive && sort?.direction === "desc" && (
                     <ChevronDown className="w-3 h-3 opacity-70" />
                   )}
@@ -134,21 +127,23 @@ export function HeatmapMatrix({
                 gridTemplateColumns: `${MENU_COL_WIDTH}px repeat(${columnLabels.length}, minmax(28px, 1fr))`,
               }}
             >
-              {/* Menu name (left col) */}
               <div className="p-2 border-r text-sm font-medium truncate">
                 {row.label}
               </div>
 
-              {/* Heat cells */}
               {row.values.map((value, i) => {
                 const t = getIntensity(value);
                 const bg = getColor(t);
+                const isDark = t > 0.75;
 
                 return (
                   <div
                     key={i}
                     className="relative border-r last:border-r-0 h-10 flex items-center justify-center text-[11px] font-medium"
-                    style={{ backgroundColor: bg }}
+                    style={{
+                      backgroundColor: bg,
+                      color: isDark ? "#fff" : undefined,
+                    }}
                     title={`${row.label} @ ${columnLabels[i]} → ${value}`}
                   >
                     {value > 0 ? value : ""}
@@ -160,10 +155,10 @@ export function HeatmapMatrix({
         </div>
 
         {/* ==================================================
-            MOBILE STACKED ( < md )
+            MOBILE STACKED (< md)
            ================================================== */}
-        <div className="md:hidden">
-          {/* Optional: show column labels once on top (nice UX) */}
+        <div className="md:hidden space-y-4">
+          {/* Column labels */}
           <div
             className="grid bg-muted/40 border-b text-xs font-medium"
             style={{
@@ -181,13 +176,16 @@ export function HeatmapMatrix({
           </div>
 
           {sortedRows.map((row) => (
-            <div key={row.key} className="border-b last:border-b-0">
-              {/* Menu name above */}
-              <div className="px-3 py-2 text-sm font-semibold border-b bg-background">
+            <div key={row.key} className="overflow-hidden">
+              {/* Menu label ABOVE heatmap */}
+              <div className="px-2 mt-2 text-sm font-semibold bg-muted/20">
                 {row.label}
               </div>
 
-              {/* Heat cells grid */}
+              {/* Padding between label & heatmap */}
+              <div className="h-2 bg-background" />
+
+              {/* Heat cells */}
               <div
                 className="grid"
                 style={{
@@ -197,12 +195,16 @@ export function HeatmapMatrix({
                 {row.values.map((value, i) => {
                   const t = getIntensity(value);
                   const bg = getColor(t);
+                  const isDark = t > 0.75;
 
                   return (
                     <div
                       key={i}
                       className="relative border-r last:border-r-0 h-10 flex items-center justify-center text-[11px] font-medium"
-                      style={{ backgroundColor: bg }}
+                      style={{
+                        backgroundColor: bg,
+                        color: isDark ? "#fff" : undefined,
+                      }}
                       title={`${row.label} @ ${columnLabels[i]} → ${value}`}
                     >
                       {value > 0 ? value : ""}
@@ -215,7 +217,7 @@ export function HeatmapMatrix({
         </div>
       </div>
 
-      {/* Sort hint (desktop) */}
+      {/* Sort hint */}
       <p className="hidden md:block text-xs text-muted-foreground">
         Click a column header to sort. Click again to toggle ASC/DESC. Click a
         third time to reset.

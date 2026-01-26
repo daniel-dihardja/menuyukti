@@ -163,7 +163,7 @@ export default async function Page({ params }: PageProps) {
                 title={`Hourly Sales (${START_HOUR}:00 – ${END_HOUR}:00)`}
                 rows={daily.rows}
                 columnLabels={daily.columnLabels}
-                color="blue"
+                color="green"
               />
             </TabsContent>
 
@@ -173,7 +173,7 @@ export default async function Page({ params }: PageProps) {
                 title="Weekly Sales"
                 rows={weekly.rows}
                 columnLabels={weekly.columnLabels}
-                color="green"
+                color="blue"
               />
             </TabsContent>
           </Tabs>
