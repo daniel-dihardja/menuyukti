@@ -1,12 +1,19 @@
 "use client";
 
 import clsx from "clsx";
+import { useMemo, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export type HeatmapMatrixRow = {
   key: string;
   label: string;
   values: number[];
 };
+
+type SortState = {
+  columnIndex: number;
+  direction: "asc" | "desc";
+} | null;
 
 type Props = {
   title?: string;
@@ -21,7 +28,42 @@ export function HeatmapMatrix({
   columnLabels,
   color = "blue",
 }: Props) {
-  const allValues = rows.flatMap((r) => r.values);
+  const [sort, setSort] = useState<SortState>(null);
+
+  /* ---------------------------------------------
+   * Sorting logic
+   * --------------------------------------------- */
+  const sortedRows = useMemo(() => {
+    if (!sort) return rows;
+
+    const { columnIndex, direction } = sort;
+
+    return [...rows].sort((a, b) => {
+      const aVal = a.values[columnIndex] ?? 0;
+      const bVal = b.values[columnIndex] ?? 0;
+
+      return direction === "asc" ? aVal - bVal : bVal - aVal;
+    });
+  }, [rows, sort]);
+
+  const handleSort = (columnIndex: number) => {
+    setSort((prev) => {
+      if (!prev || prev.columnIndex !== columnIndex) {
+        return { columnIndex, direction: "desc" }; // default first click: DESC
+      }
+
+      if (prev.direction === "desc") {
+        return { columnIndex, direction: "asc" };
+      }
+
+      return null; // third click resets sorting
+    });
+  };
+
+  /* ---------------------------------------------
+   * Color scaling (based on visible rows only)
+   * --------------------------------------------- */
+  const allValues = sortedRows.flatMap((r) => r.values);
   const min = Math.min(...allValues);
   const max = Math.max(...allValues);
   const range = max - min || 1;
@@ -35,11 +77,15 @@ export function HeatmapMatrix({
     return `rgba(59, 130, 246, ${alpha})`;
   };
 
+  /* ---------------------------------------------
+   * UI
+   * --------------------------------------------- */
   return (
     <div className="space-y-2">
       {title && <h3 className="text-sm font-medium">{title}</h3>}
 
       <div className="overflow-auto border rounded-md">
+        {/* Header row */}
         <div
           className="grid bg-muted/40 border-b text-xs font-medium"
           style={{
@@ -47,14 +93,36 @@ export function HeatmapMatrix({
           }}
         >
           <div className="p-2 border-r">Menu</div>
-          {columnLabels.map((label) => (
-            <div key={label} className="p-2 text-center border-r">
-              {label}
-            </div>
-          ))}
+
+          {columnLabels.map((label, i) => {
+            const isActive = sort?.columnIndex === i;
+
+            return (
+              <button
+                key={label}
+                onClick={() => handleSort(i)}
+                className={clsx(
+                  "p-2 border-r flex items-center justify-center gap-1 hover:bg-muted transition-colors",
+                  isActive && "bg-muted",
+                )}
+                title="Click to sort"
+              >
+                <span>{label}</span>
+
+                {isActive && sort?.direction === "desc" && (
+                  <ChevronDown className="w-3 h-3 opacity-70" />
+                )}
+
+                {isActive && sort?.direction === "asc" && (
+                  <ChevronUp className="w-3 h-3 opacity-70" />
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {rows.map((row) => (
+        {/* Data rows */}
+        {sortedRows.map((row) => (
           <div
             key={row.key}
             className="grid border-b last:border-b-0"
@@ -62,10 +130,12 @@ export function HeatmapMatrix({
               gridTemplateColumns: `220px repeat(${columnLabels.length}, minmax(28px, 1fr))`,
             }}
           >
+            {/* Menu name */}
             <div className="p-2 border-r text-sm font-medium truncate">
               {row.label}
             </div>
 
+            {/* Heat cells */}
             {row.values.map((value, i) => {
               const t = getIntensity(value);
               const bg = getColor(t);
@@ -84,6 +154,12 @@ export function HeatmapMatrix({
           </div>
         ))}
       </div>
+
+      {/* Sort hint */}
+      <p className="text-xs text-muted-foreground">
+        Click a column header to sort. Click again to toggle ASC/DESC. Click a
+        third time to reset.
+      </p>
     </div>
   );
 }
