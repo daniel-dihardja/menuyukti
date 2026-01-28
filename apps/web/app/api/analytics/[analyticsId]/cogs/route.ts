@@ -64,6 +64,7 @@ export async function POST(req: Request, { params }: Params) {
       totalRevenue: true,
       cogs: true,
       menuCategory: true,
+      menuCategoryDetail: true,
     },
   });
 
@@ -82,6 +83,7 @@ export async function POST(req: Request, { params }: Params) {
       total_revenue: Number(item.totalRevenue),
       cogs: item.cogs !== null ? Number(item.cogs) : null,
       menu_category: item.menuCategory,
+      menu_category_detail: item.menuCategoryDetail,
     })),
   };
 

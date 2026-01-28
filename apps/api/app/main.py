@@ -86,6 +86,7 @@ class AnalyticsMenuItemIn(BaseModel):
     total_revenue: Decimal = Field(..., ge=0)
     cogs: Optional[Decimal] = Field(None, ge=0)
     menu_category: Optional[str] = None
+    menu_category_detail: Optional[str] = None
 
 
 class MenuItemsMatrixRequest(BaseModel):

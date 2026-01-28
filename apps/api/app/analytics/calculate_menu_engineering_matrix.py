@@ -176,9 +176,8 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
                 "we_value": round(row["we_value"], 4),
                 "category": row["category"],
                 "action": row["action"],
-                "menu_category": (
-                    row.get("menu_category") if "menu_category" in row else None
-                ),
+                "menu_category": row["menu_category"],
+                "menu_category_detail": row["menu_category_detail"],
             }
             for _, row in df.sort_values("quantity", ascending=False).iterrows()
         ],

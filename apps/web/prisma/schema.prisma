@@ -125,22 +125,30 @@ model AnalyticsMenuItem {
   id Int @id @default(autoincrement())
 
   // Scope
-  analyticsId Int       @map("analytics_id")
+  analyticsId Int @map("analytics_id")
   analytics   Analytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
 
   // Identity within analytics context
   menuName String @map("menu_name")
 
-  // Immutable sales facts (per analytics snapshot)
+  // Menu categorization
+  menuCategory       String? @map("menu_category")
+  menuCategoryDetail String? @map("menu_category_detail")
+
+  // Immutable sales facts
   quantity     Int
   totalRevenue Decimal @db.Decimal(12, 2)
 
-  // Optional enrichment (late-bound)
+  // Optional enrichment
   cogs Decimal? @db.Decimal(10, 2)
 
   createdAt DateTime @default(now()) @map("created_at")
 
   @@unique([analyticsId, menuName], map: "uq_menu_item_per_analytics")
   @@index([analyticsId], map: "ix_menu_items_analytics_id")
+  @@index([menuCategory], map: "ix_menu_items_menu_category")
+
   @@map("analytics_menu_items")
 }
+
+
