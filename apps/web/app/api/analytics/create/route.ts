@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     if (!branchIdRaw || typeof branchIdRaw !== "string") {
       return NextResponse.json(
         { error: "BRANCH_ID_REQUIRED" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       if ((err as Error).name === "AbortError") {
         return NextResponse.json(
           { error: "ANALYTICS_SERVICE_TIMEOUT" },
-          { status: 504 }
+          { status: 504 },
         );
       }
       throw err;
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json(
         { error: "ANALYTICS_SERVICE_FAILED" },
-        { status: 502 }
+        { status: 502 },
       );
     }
 
@@ -164,7 +164,10 @@ export async function POST(request: Request) {
       if (previousAnalytics) {
         for (const item of previousAnalytics.menuItems) {
           if (item.cogs !== null) {
-            previousCogsMap.set(normalizeMenuName(item.menuName), item.cogs);
+            previousCogsMap.set(
+              normalizeMenuName(item.menuName),
+              Number(item.cogs),
+            );
           }
         }
       }
@@ -177,6 +180,8 @@ export async function POST(request: Request) {
           data: apiResult.menu_items.map((item) => ({
             analyticsId: analyticsRecord.id,
             menuName: item.menu,
+            menuCategory: item.menu_category,
+            menuCategoryDetail: item.menu_category_detail,
             quantity: item.quantity,
             totalRevenue: item.total_revenue,
 

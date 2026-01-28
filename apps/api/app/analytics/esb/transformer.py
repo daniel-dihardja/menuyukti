@@ -8,6 +8,8 @@ REQUIRED_COLUMNS = [
     "price",
     "total_after_bill_discount",
     "order_time",
+    "menu_category",
+    "menu_category_detail",
 ]
 
 

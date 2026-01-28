@@ -26,6 +26,8 @@ export type AnalyticMenuItem = {
   menu: string;
   quantity: number;
   total_revenue: number;
+  menu_category: string | null;
+  menu_category_detail: string | null;
 };
 
 export type AnalyticsResponse = {

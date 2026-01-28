@@ -63,6 +63,7 @@ export default async function Page({ params }: PageProps) {
       cogs: true,
       quantity: true,
       totalRevenue: true,
+      menuCategory: true,
     },
   });
 
@@ -72,6 +73,7 @@ export default async function Page({ params }: PageProps) {
     cogs: item.cogs ? Number(item.cogs) : 0,
     quantity: item.quantity,
     totalRevenue: Number(item.totalRevenue),
+    menuCategory: item.menuCategory,
   }));
 
   // --------------------------------------------------

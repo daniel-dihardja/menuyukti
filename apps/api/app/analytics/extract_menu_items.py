@@ -44,6 +44,8 @@ def extract_menu_items(df: pd.DataFrame) -> List[Dict]:
         .agg(
             quantity=("qty", "sum"),
             total_revenue=("revenue", "sum"),
+            menu_category=("menu_category", "first"),
+            menu_category_detail=("menu_category_detail", "first"),
         )
         .sort_values("quantity", ascending=False)
     )

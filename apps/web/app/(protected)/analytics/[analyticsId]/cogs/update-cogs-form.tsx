@@ -19,6 +19,7 @@ type MenuItem = {
   cogs: number | null;
   quantity: number;
   totalRevenue: number;
+  menuCategory: string | null;
 };
 
 type Props = {
