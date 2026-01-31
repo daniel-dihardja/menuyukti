@@ -59,41 +59,6 @@ export default async function Page() {
           </header>
 
           {/* ---------------------------------------------
-           * PRIMARY CTA
-           * --------------------------------------------- */}
-          {hasBranches && (
-            <Card className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-muted/30 border-dashed">
-              <div>
-                <h2 className="text-base font-medium">Upload a Sales Report</h2>
-                <p className="text-sm text-muted-foreground">
-                  Excel (.xlsx). We’ll analyze it instantly.
-                </p>
-              </div>
-
-              <Button asChild size="lg">
-                <Link href={routes.analytics.sales}>Upload Report</Link>
-              </Button>
-            </Card>
-          )}
-
-          {/* ---------------------------------------------
-           * MICRO BENEFITS (compact)
-           * --------------------------------------------- */}
-          {hasBranches && (
-            <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                "Find bestsellers & hidden underperformers",
-                "Spot peak hours & weekly trends",
-                "Get AI marketing recommendations",
-              ].map((text) => (
-                <Card key={text} className="p-3 text-sm text-muted-foreground">
-                  {text}
-                </Card>
-              ))}
-            </section>
-          )}
-
-          {/* ---------------------------------------------
            * MAIN CONTENT
            * --------------------------------------------- */}
           {!hasBranches ? (
@@ -110,11 +75,6 @@ export default async function Page() {
             </Card>
           ) : (
             <section className="space-y-3">
-              <h2 className="text-lg font-semibold">Your Sales Intelligence</h2>
-              <p className="text-sm text-muted-foreground">
-                Select a branch and explore insights from your uploaded reports.
-              </p>
-
               <AnalyticsSalesClient branches={branches} />
             </section>
           )}

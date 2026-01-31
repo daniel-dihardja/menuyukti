@@ -39,7 +39,7 @@ export function AnalyticsSalesClient({ branches }: Props) {
   // --------------------------------------------------
   const { uploading, status, message, pos, uploadFile } = useUploadAnalytics(
     branchId,
-    refetch
+    refetch,
   );
 
   // --------------------------------------------------
