@@ -48,11 +48,19 @@ export default async function Page({ params }: PageProps) {
     where: { id: analyticsId },
     select: {
       sourceFile: true,
-
-      // Context
       branchId: true,
 
-      // Snapshot KPIs
+      // Period
+      periodStart: true,
+      periodEnd: true,
+
+      // Sales KPIs
+      totalOrders: true,
+      totalItemsSold: true,
+      avgOrderRevenue: true,
+      avgOrderItems: true,
+
+      // Finance KPIs
       totalRevenue: true,
       totalCogs: true,
       totalProfit: true,
@@ -90,30 +98,80 @@ export default async function Page({ params }: PageProps) {
   const totalRevenue = Number(analytics.totalRevenue ?? 0);
   const totalCogs = Number(analytics.totalCogs ?? 0);
   const totalProfit = Number(analytics.totalProfit ?? 0);
-
   const netProfit = totalProfit - totalFixedCosts;
 
   // --------------------------------------------------
   // Formatting helpers
   // --------------------------------------------------
   const locale = "id-ID";
+
   const currencyFormatter = new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "IDR",
     minimumFractionDigits: 0,
   });
 
+  const dateFormatter = new Intl.DateTimeFormat("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
   const fmt = (value: number) => currencyFormatter.format(value);
+
+  const startDate = analytics.periodStart
+    ? dateFormatter.format(analytics.periodStart)
+    : "—";
+
+  const endDate = analytics.periodEnd
+    ? dateFormatter.format(analytics.periodEnd)
+    : "—";
 
   // --------------------------------------------------
   // UI
   // --------------------------------------------------
   return (
     <SidebarInset>
-      <div className="w-full">
-        <SidebarTriggerClient title="Finance Report" />
+      {/* --------------------------------------------------
+          Print CSS (reliable isolation)
+         -------------------------------------------------- */}
+      <style>{`
+        @media print {
+          .no-print {
+            display: none !important;
+          }
 
-        <main className="p-4 space-y-8 max-w-6xl mx-auto">
+          .printable-area {
+            display: block !important;
+          }
+
+          body {
+            margin: 0;
+            font-size: 12pt;
+            line-height: 1.4;
+          }
+
+          table {
+            border-collapse: collapse;
+            page-break-inside: avoid;
+          }
+
+          tr {
+            page-break-inside: avoid;
+          }
+        }
+      `}</style>
+
+      <div className="w-full">
+        {/* Sidebar + trigger hidden in print */}
+        <div className="no-print">
+          <SidebarTriggerClient title="Finance Report" />
+        </div>
+
+        {/* --------------------------------------------------
+            Only this block prints
+           -------------------------------------------------- */}
+        <main className="p-4 space-y-10 max-w-6xl mx-auto printable-area">
           {/* Breadcrumb */}
           <Breadcrumb>
             <BreadcrumbList>
@@ -147,10 +205,86 @@ export default async function Page({ params }: PageProps) {
           </header>
 
           {/* ---------------------------------------------
+           * KPI OVERVIEW (copied semantics from Matrix)
+           * --------------------------------------------- */}
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold">Period & Sales Overview</h2>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Period */}
+              <div className="border rounded-md p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">Period</p>
+                <div className="text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Start:</span>{" "}
+                    <span className="font-medium">{startDate}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">End:</span>{" "}
+                    <span className="font-medium">{endDate}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Orders */}
+              <div className="border rounded-md p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">Orders</p>
+                <div className="text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Total:</span>{" "}
+                    <span className="font-medium">
+                      {analytics.totalOrders?.toLocaleString(locale) ?? "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Items Sold */}
+              <div className="border rounded-md p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">Items Sold</p>
+                <div className="text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Total:</span>{" "}
+                    <span className="font-medium">
+                      {analytics.totalItemsSold?.toLocaleString(locale) ?? "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Avg Revenue / Order */}
+              <div className="border rounded-md p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Avg Revenue / Order
+                </p>
+                <div className="text-sm">
+                  <span className="font-medium">
+                    {analytics.avgOrderRevenue
+                      ? fmt(Number(analytics.avgOrderRevenue))
+                      : "—"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Avg Items / Order */}
+              <div className="border rounded-md p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Avg Items / Order
+                </p>
+                <div className="text-sm">
+                  <span className="font-medium">
+                    {analytics.avgOrderItems?.toFixed(2) ?? "—"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ---------------------------------------------
            * PROFIT CALCULATION TABLE
            * --------------------------------------------- */}
-          <section className="border rounded-md p-6">
-            <h2 className="text-lg font-semibold mb-4">Profit Calculation</h2>
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold">Profit Calculation</h2>
 
             <div className="overflow-hidden rounded-md border">
               <Table>
@@ -201,14 +335,6 @@ export default async function Page({ params }: PageProps) {
                 </TableBody>
               </Table>
             </div>
-          </section>
-
-          {/* Content container */}
-          <section className="border rounded-md p-6 min-h-[120px]">
-            <p className="text-sm text-muted-foreground">
-              Fixed costs are now pulled from branch configuration and applied
-              live to the analytics snapshot.
-            </p>
           </section>
         </main>
       </div>
