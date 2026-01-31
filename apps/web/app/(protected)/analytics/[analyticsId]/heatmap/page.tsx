@@ -170,10 +170,10 @@ export default async function Page({ params }: PageProps) {
             {/* WEEKLY */}
             <TabsContent value="weekly">
               <HeatmapMatrix
-                title="Weekly Sales"
+                title="Weekly Sales (Mon–Fri)"
                 rows={weekly.rows}
                 columnLabels={weekly.columnLabels}
-                color="blue"
+                color="green"
               />
             </TabsContent>
           </Tabs>
