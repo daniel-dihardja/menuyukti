@@ -53,6 +53,8 @@ def calculate_menu_heatmaps(df: pd.DataFrame) -> List[Dict]:
         heatmap_results.append(
             {
                 "menu": menu_item,
+                "menuCategory": group["menu_category"],
+                "menuCategoryDetail": group["menu_category_detail"],
                 "dailyHeatmap": daily_heatmap,
                 "weeklyHeatmap": weekly_heatmap,
             }
