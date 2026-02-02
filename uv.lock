@@ -97,7 +97,7 @@ wheels = [
 [[package]]
 name = "api"
 version = "0.1.0"
-source = { virtual = "apps/api" }
+source = { editable = "apps/api" }
 dependencies = [
     { name = "fastapi" },
     { name = "openpyxl" },
@@ -1168,6 +1168,10 @@ wheels = [
 name = "menuyukti-workspace"
 version = "0.1.0"
 source = { virtual = "." }
+dependencies = [
+    { name = "agent" },
+    { name = "api" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -1181,6 +1185,10 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [
+    { name = "agent", editable = "apps/agents" },
+    { name = "api", editable = "apps/api" },
+]
 
 [package.metadata.requires-dev]
 dev = [
