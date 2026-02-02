@@ -2,7 +2,7 @@
 
 ## Start FastAPI in dev mode
 dev:
-	cd ../.. && uvicorn apps.api.app.main:app --reload
+	cd ../.. && uv run uvicorn apps.api.app.main:app --reload
 
 
 ## Sync workspace dependencies (from repo root)
