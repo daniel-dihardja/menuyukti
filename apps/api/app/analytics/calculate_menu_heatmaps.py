@@ -12,7 +12,10 @@ def calculate_menu_heatmaps(df: pd.DataFrame) -> List[Dict]:
     - menu
     - qty
     - order_time (datetime)
+    - menu_category
+    - menu_category_detail
     """
+
     if df.empty:
         return []
 
@@ -23,7 +26,31 @@ def calculate_menu_heatmaps(df: pd.DataFrame) -> List[Dict]:
 
     heatmap_results = []
 
-    for menu_item, group in df.groupby("menu"):
+    for menu_item, group in df.groupby("menu", sort=False):
+
+        # -------------------------------------------------
+        # SAFELY EXTRACT SINGLE CATEGORY VALUES
+        # -------------------------------------------------
+        # We assume a menu item belongs to ONE category.
+        # If multiple appear, the data pipeline is broken.
+        menu_category_values = group["menu_category"].dropna().unique()
+        menu_category_detail_values = group["menu_category_detail"].dropna().unique()
+
+        if len(menu_category_values) > 1:
+            raise ValueError(
+                f"Menu '{menu_item}' has multiple categories: {menu_category_values}"
+            )
+
+        if len(menu_category_detail_values) > 1:
+            raise ValueError(
+                f"Menu '{menu_item}' has multiple category details: {menu_category_detail_values}"
+            )
+
+        menu_category = menu_category_values[0] if len(menu_category_values) else None
+        menu_category_detail = (
+            menu_category_detail_values[0] if len(menu_category_detail_values) else None
+        )
+
         # -------- Daily (hourly) heatmap --------
         hourly_qty = group.groupby("hour")["qty"].sum()
 
@@ -53,8 +80,8 @@ def calculate_menu_heatmaps(df: pd.DataFrame) -> List[Dict]:
         heatmap_results.append(
             {
                 "menu": menu_item,
-                "menuCategory": group["menu_category"],
-                "menuCategoryDetail": group["menu_category_detail"],
+                "menuCategory": menu_category,
+                "menuCategoryDetail": menu_category_detail,
                 "dailyHeatmap": daily_heatmap,
                 "weeklyHeatmap": weekly_heatmap,
             }
