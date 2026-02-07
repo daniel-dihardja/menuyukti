@@ -26,13 +26,13 @@ The system follows a layered cognition model:
 
 ```
 Reality
- -> Interpretation (Primitives)
- -> Identity (Roles)
- -> Awareness (Signals)
- -> Decision
- -> Opportunity (PromotionCandidate)
- -> Allocation (Scheduler)
- -> Execution (Agent / UI)
+ → Interpretation (Primitives)
+ → Identity (Roles)
+ → Awareness (Signals)
+ → Decision
+ → Opportunity (PromotionCandidate)
+ → Allocation (Scheduler)
+ → Execution (Agent / UI)
 ```
 
 Each layer has a single responsibility.
@@ -121,11 +121,11 @@ When customers are influenceable.
 
 ```
 Raw Data
- -> build_promotion_candidates()
- -> PromotionCandidate list
- -> PromotionScheduler
- -> Weekly Schedule
- -> Optional AI Agent
+ → build_promotion_candidates()
+ → PromotionCandidate list
+ → PromotionScheduler
+ → Weekly Schedule
+ → Optional AI Agent
 ```
 
 ---
@@ -275,13 +275,13 @@ Agents must ONLY receive:
 Correct usage:
 
 ```
-ScheduledPost -> Agent -> Caption
+ScheduledPost → Agent → Caption
 ```
 
 Wrong usage:
 
 ```
-Agent -> primitives -> roles -> signals -> guess
+Agent → primitives → roles → signals → guess
 ```
 
 Agents translate intent into language.  
