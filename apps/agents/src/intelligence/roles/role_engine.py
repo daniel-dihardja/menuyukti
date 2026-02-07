@@ -1,6 +1,6 @@
 from typing import Set
 
-from apps.agents.src.intelligence.roles.role_types import RoleType
+from intelligence.roles.role_types import RoleType
 from intelligence.enrichment.enriched_menu_item import EnrichedMenuItem
 
 

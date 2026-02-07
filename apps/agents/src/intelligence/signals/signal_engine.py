@@ -1,8 +1,8 @@
 from typing import Set, Callable, List
 
 from intelligence.enrichment.enriched_menu_item import EnrichedMenuItem
-from apps.agents.src.intelligence.roles.role_types import RoleType
-from apps.agents.src.intelligence.signals.signal_types import (
+from intelligence.roles.role_types import RoleType
+from intelligence.signals.signal_types import (
     SignalType,
 )
 

@@ -1,5 +1,3 @@
-# intelligence/types/promotion_decision.py
-
 from enum import Enum
 
 

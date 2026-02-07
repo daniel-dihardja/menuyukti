@@ -2,13 +2,13 @@ from typing import Set
 
 from intelligence.enrichment.enriched_menu_item import EnrichedMenuItem
 from intelligence.roles.role_types import RoleType
-from apps.agents.src.intelligence.signals.signal_types import (
+from intelligence.signals.signal_types import (
     SignalType,
     RISK_SIGNALS,
     PROMOTION_SIGNALS,
     CONSTRAINT_SIGNALS,
 )
-from apps.agents.src.intelligence.decisions.promotion_decision_types import (
+from intelligence.decisions.promotion_decision_types import (
     PromotionDecision,
 )
 

@@ -1,14 +1,12 @@
-# intelligence/decisions/promotion_candidate.py
-
 from pydantic import BaseModel, Field
 from typing import FrozenSet
 from datetime import time
 from enum import Enum
 
 from intelligence.enrichment.enriched_menu_item import EnrichedMenuItem
-from apps.agents.src.intelligence.roles.role_types import RoleType
-from apps.agents.src.intelligence.signals.signal_types import SignalType
-from apps.agents.src.intelligence.decisions.promotion_decision_types import (
+from intelligence.roles.role_types import RoleType
+from intelligence.signals.signal_types import SignalType
+from intelligence.decisions.promotion_decision_types import (
     PromotionDecision,
 )
 
