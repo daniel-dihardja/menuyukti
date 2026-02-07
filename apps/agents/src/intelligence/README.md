@@ -74,11 +74,17 @@ The intelligence engine consumes three deterministic datasets.
 Typical fields:
 
 - menu
-- quantity
-- margin_per_unit
-- contribution_margin_percentage
 - menu_category
 - menu_category_detail
+- category (`star`, `puzzle`, `plow_horse`, `low_end`)
+- action (`keep`, `reprice`, `promote`, `remove`)
+- quantity
+- total_revenue
+- total_cogs
+- margin_per_unit
+- contribution_margin
+- contribution_margin_percentage
+- we_value
 
 Meaning:  
 Where profit is actually created.
@@ -87,12 +93,11 @@ Where profit is actually created.
 
 ### 2. Matrix Distribution (Portfolio Structure)
 
-Typical insights:
+Matrix distribution is a list of `CategoryDistribution` entries:
 
-- star profit share
-- low-end share
-- diversification
-- profit concentration
+- category (`star`, `puzzle`, `plow_horse`, `low_end`)
+- item_share
+- margin_share
 
 Meaning:  
 How resilient or fragile the menu is as a system.
@@ -103,10 +108,9 @@ How resilient or fragile the menu is as a system.
 
 Typical insights:
 
-- peak hour
-- demand concentration
-- weekday vs weekend demand
-- dead hours
+- daily_heatmap (list of hourly demand)
+- weekly_heatmap (list of weekday demand)
+- reporting_period (e.g., `2025-02`)
 
 Meaning:  
 When customers are influenceable.
@@ -157,6 +161,8 @@ At this point you already have:
 - structural intelligence (portfolio)
 - ranked promotion opportunities (candidates)
 
+Note: menu items without a matching heatmap are skipped (behavioral data is required).
+
 ---
 
 ## PromotionCandidate Explained
@@ -166,8 +172,8 @@ A PromotionCandidate is a pre-approved opportunity.
 It already contains:
 
 - menu identity
-- promotion decision
-- priority
+- promotion decision (`promote`, `consider`, `do_not_promote`)
+- priority (`critical`, `high`, `medium`, `low`)
 - economic importance
 - recommended post time
 - expected outcome
@@ -212,30 +218,33 @@ weekly_schedule = scheduler.build_weekly_schedule(candidates)
 [
   ScheduledPost(
     day="mon",
-    time=09:15,
+    time="09:15:00",
     menu="Es Kopi Susu Aren",
     menu_category="DRINK",
-    priority="CRITICAL",
+    priority="critical",
     expected_behavior="drive incremental revenue",
-    reason="high-margin growth lever with predictable demand"
+    reason="high-margin growth lever with predictable demand",
+    source_candidate="Es Kopi Susu Aren"
   ),
   ScheduledPost(
     day="wed",
-    time=10:15,
+    time="10:15:00",
     menu="Ice Vanilla Latte",
     menu_category="DRINK",
-    priority="HIGH",
+    priority="high",
     expected_behavior="accelerate cashflow",
-    reason="strong weekday routine demand"
+    reason="strong weekday routine demand",
+    source_candidate="Ice Vanilla Latte"
   ),
   ScheduledPost(
     day="fri",
-    time=14:15,
+    time="14:15:00",
     menu="Bun Smoked Beef",
     menu_category="FOOD",
-    priority="HIGH",
+    priority="high",
     expected_behavior="increase customer traffic",
-    reason="popular item with pricing leverage"
+    reason="popular item with pricing leverage",
+    source_candidate="Bun Smoked Beef"
   )
 ]
 ```
