@@ -1,0 +1,120 @@
+{
+  "login": {
+    "title": "Menuyukti",
+    "slogan": "Smart Menus, Less Waste",
+    "description": "Enter your email below to log in to your account.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "m@example.com",
+    "passwordLabel": "Password",
+    "forgotPassword": "Forgot password?",
+    "loginButton": "Log In",
+    "loginWithGoogle": "Log in with Google",
+    "signupDescription": "Don’t have an account?",
+    "signupLink": "Sign up now"
+  },
+  "sidebar": {
+    "groupLabel": "Menuyukti",
+    "news": "News",
+    "analysis": "Analysis",
+    "branches": "Branches",
+    "sales": "Sales",
+    "cogs": "COGS",
+    "fixedCosts": "Fixed Costs",
+    "docs": "Documentation"
+  },
+  "news": {
+    "title": "News"
+  },
+  "analytics": {
+    "branches": {
+      "title": "Branch List",
+      "table": {
+        "index": "#",
+        "branchName": "Branch Name",
+        "city": "City",
+        "action": "Actions",
+        "view": "View",
+        "delete": "Delete",
+        "empty": "No branches available yet."
+      },
+      "create": "Create New Branch"
+    },
+    "sales": {
+      "title": "Sales Reports",
+      "selectBranch": "Please select a branch to view sales reports.",
+      "loading": "Loading sales reports…",
+      "table": {
+        "index": "#",
+        "fileName": "File Name",
+        "action": "Actions",
+        "cogs": "COGS",
+        "report": "Report",
+        "delete": "Delete",
+        "matrix": "Matrix",
+        "finance": "Finance",
+        "heatmap": "Heatmap"
+      },
+      "upload": {
+        "cta": "Upload New Sales Report",
+        "uploading": "Uploading…",
+        "detectedPos": "Detected POS:"
+      },
+      "noBranches": {
+        "title": "No branches yet",
+        "description": "Please create a branch before uploading sales reports.",
+        "cta": "Create Branch"
+      },
+      "noAnalytics": {
+        "title": "No sales reports yet",
+        "description": "Upload an Excel sales file to start analyzing menu performance.",
+        "cta": "Upload New Sales Report"
+      }
+    },
+    "cogs": {
+      "title": "COGS",
+      "description": "Manage ingredient costs and COGS data for each analytics snapshot.",
+      "menuName": "Menu Name",
+      "menuCost": "Menu Cost",
+      "create": "Create New COGS",
+      "edit": "Edit COGS",
+      "delete": "Delete"
+    }
+  },
+  "branches": {
+    "fixedCosts": {
+      "title": "Fixed Costs",
+      "description": "Manage fixed costs for this branch.",
+      "breadcrumbs": {
+        "branches": "Branches",
+        "fixedCosts": "Fixed Costs"
+      },
+      "table": {
+        "name": "Name",
+        "amount": "Amount",
+        "category": "Category",
+        "notes": "Notes",
+        "active": "Active",
+        "actions": "Actions",
+        "empty": "No fixed costs yet."
+      },
+      "form": {
+        "addTitle": "Add Fixed Cost",
+        "namePlaceholder": "Cost name (e.g. Rent)",
+        "amountPlaceholder": "Amount",
+        "categoryPlaceholder": "Category (e.g. Salaries)",
+        "notesPlaceholder": "Notes",
+        "addButton": "Add",
+        "saveButton": "Save",
+        "deleteButton": "Delete"
+      }
+    }
+  },
+  "docs": {
+    "title": "Documentation"
+  },
+  "upload": {
+    "NO_FILE_UPLOADED": "Please upload a file.",
+    "INVALID_FILE_TYPE": "Only .xlsx files are allowed.",
+    "UPLOAD_FAILED": "Upload failed. Please try again."
+  }
+}
