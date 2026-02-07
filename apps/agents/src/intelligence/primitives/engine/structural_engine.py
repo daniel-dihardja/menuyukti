@@ -29,7 +29,7 @@ def compute_structural_primitives(
     puzzle = categories.get("puzzle", None)
     plow = categories.get("plow_horse", None)
 
-    star_profit_share = star_margin.margin_share if star_margin else 0.0
+    star_margin_share = star_margin.margin_share if star_margin else 0.0
     low_end_share = low.item_share if low else 0.0
     puzzle_profit_share = puzzle.margin_share if puzzle else 0.0
     plow_profit_share = plow.margin_share if plow else 0.0
@@ -43,7 +43,7 @@ def compute_structural_primitives(
     # 70% profit from stars → VERY risky
     # -------------------------------------------------
 
-    profit_concentration = star_profit_share
+    profit_concentration = star_margin_share
 
     # -------------------------------------------------
     # Diversification Score
@@ -77,7 +77,7 @@ def compute_structural_primitives(
     return StructuralPrimitives(
         profit_concentration=profit_concentration,
         diversification_score=diversification_score,
-        star_profit_share=star_profit_share,
+        star_margin_share=star_margin_share,
         low_end_share=low_end_share,
         puzzle_profit_share=puzzle_profit_share,
         structural_health=structural_health,

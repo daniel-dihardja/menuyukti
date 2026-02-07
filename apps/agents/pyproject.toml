@@ -24,10 +24,25 @@ requires = ["setuptools>=73.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["langgraph.templates.agent", "agent"]
+packages = [
+    "langgraph.templates.agent",
+    "agent",
+    "agent.nodes",
+    "intelligence",
+    "intelligence.allocation",
+    "intelligence.decisions",
+    "intelligence.enrichment",
+    "intelligence.models",
+    "intelligence.pipeline",
+    "intelligence.primitives",
+    "intelligence.primitives.engine",
+    "intelligence.roles",
+    "intelligence.signals",
+]
 [tool.setuptools.package-dir]
 "langgraph.templates.agent" = "src/agent"
 "agent" = "src/agent"
+"intelligence" = "src/intelligence"
 
 
 [tool.setuptools.package-data]

@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 from pydantic import BaseModel
 from intelligence.models.matrix_item import MatrixItem
 from intelligence.models.heatmap import MenuHeatmap
 
 from intelligence.primitives.economic_primitives import EconomicPrimitives
 from intelligence.primitives.behavioral_primitives import BehavioralPrimitives
-from intelligence.enrichment.enriched_menu_item import EnrichedMenuItem
 
 
 class EnrichedMenuItem(BaseModel):
@@ -29,6 +30,7 @@ class EnrichedMenuItem(BaseModel):
     class Config:
         frozen = True
 
+    @staticmethod
     def enrich_menu_item(
         matrix_item: MatrixItem,
         heatmap: MenuHeatmap,
