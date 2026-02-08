@@ -20,7 +20,11 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict:
     # -------------------------------------------------------
     # Parse & validate order_time
     # -------------------------------------------------------
-    df["order_time"] = pd.to_datetime(df["order_time"], errors="coerce")
+    df["order_time"] = pd.to_datetime(
+        df["order_time"],
+        errors="coerce",
+        format="mixed",
+    )
     if df["order_time"].isna().any():
         raise ValueError("Invalid order_time values after parsing")
 

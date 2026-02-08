@@ -1,0 +1,42 @@
+[
+  {
+    "menu": "Star",
+    "quantity": 100,
+    "total_revenue": 1000.0,
+    "cogs": 3.0,
+    "menu_category": "DRINK",
+    "menu_category_detail": "COFFEE"
+  },
+  {
+    "menu": "Plow",
+    "quantity": 100,
+    "total_revenue": 600.0,
+    "cogs": 5.0,
+    "menu_category": "FOOD",
+    "menu_category_detail": "SANDWICH"
+  },
+  {
+    "menu": "Puzzle",
+    "quantity": 40,
+    "total_revenue": 700.0,
+    "cogs": 2.0,
+    "menu_category": "DRINK",
+    "menu_category_detail": "SPECIAL"
+  },
+  {
+    "menu": "Low",
+    "quantity": 30,
+    "total_revenue": 150.0,
+    "cogs": 4.0,
+    "menu_category": "FOOD",
+    "menu_category_detail": "SNACK"
+  },
+  {
+    "menu": "Freebie",
+    "quantity": 10,
+    "total_revenue": 0.0,
+    "cogs": 0.0,
+    "menu_category": "FOOD",
+    "menu_category_detail": "PROMO"
+  }
+]

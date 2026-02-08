@@ -1,0 +1,52 @@
+[
+  {
+    "bill_number": "B1",
+    "menu": "Latte",
+    "qty": 2,
+    "price": 10.0,
+    "total_after_bill_discount": 20.0,
+    "order_time": "2025-02-01 10:00:00",
+    "menu_category": "DRINK",
+    "menu_category_detail": "COFFEE"
+  },
+  {
+    "bill_number": "B1",
+    "menu": "Bagel",
+    "qty": 1,
+    "price": 5.0,
+    "total_after_bill_discount": 20.0,
+    "order_time": "2025-02-01 10:00:00",
+    "menu_category": "FOOD",
+    "menu_category_detail": "PASTRY"
+  },
+  {
+    "bill_number": "B2",
+    "menu": "Latte",
+    "qty": 1,
+    "price": 10.0,
+    "total_after_bill_discount": 10.0,
+    "order_time": "2025-02-02 12:00:00",
+    "menu_category": "DRINK",
+    "menu_category_detail": "COFFEE"
+  },
+  {
+    "bill_number": "B3",
+    "menu": "Tea",
+    "qty": 3,
+    "price": 0.0,
+    "total_after_bill_discount": 0.0,
+    "order_time": "2025-02-03 09:00:00",
+    "menu_category": "DRINK",
+    "menu_category_detail": "TEA"
+  },
+  {
+    "bill_number": "B4",
+    "menu": "Muffin",
+    "qty": 1,
+    "price": 4.0,
+    "total_after_bill_discount": -5.0,
+    "order_time": "2025-02-04 09:00:00",
+    "menu_category": "FOOD",
+    "menu_category_detail": "BAKERY"
+  }
+]
