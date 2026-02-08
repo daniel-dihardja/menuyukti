@@ -14,7 +14,7 @@ export function useDeleteAnalytics({
     if (!branchId) return;
 
     const confirmed = confirm(
-      "Are you sure you want to delete this analytics?"
+      "Are you sure you want to delete this analytics?",
     );
     if (!confirmed) return;
 

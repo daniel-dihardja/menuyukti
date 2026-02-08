@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     if (!branchId) {
       return NextResponse.json(
         { error: "BRANCH_ID_REQUIRED" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     console.error("Fetch analytics error:", error);
     return NextResponse.json(
       { error: "FETCH_ANALYTICS_FAILED" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

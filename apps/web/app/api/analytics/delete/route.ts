@@ -17,7 +17,7 @@ export async function DELETE(request: Request) {
     if (!analyticsId || !branchId) {
       return NextResponse.json(
         { error: "ANALYTICS_ID_AND_BRANCH_ID_REQUIRED" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -35,7 +35,7 @@ export async function DELETE(request: Request) {
     if (!analytics) {
       return NextResponse.json(
         { error: "ANALYTICS_NOT_FOUND_FOR_BRANCH" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -55,7 +55,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json(
       { error: "DELETE_ANALYTICS_FAILED" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

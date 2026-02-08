@@ -53,7 +53,7 @@ export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
         currency,
         minimumFractionDigits: 0,
       }),
-    [locale, currency]
+    [locale, currency],
   );
 
   if (!items.length) return null;

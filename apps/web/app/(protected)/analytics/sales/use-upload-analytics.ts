@@ -11,7 +11,7 @@ export type UploadStatus = "idle" | "success" | "error";
 
 export function useUploadAnalytics(
   branchId: number | null,
-  onSuccess?: () => void
+  onSuccess?: () => void,
 ) {
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState<UploadStatus>("idle");

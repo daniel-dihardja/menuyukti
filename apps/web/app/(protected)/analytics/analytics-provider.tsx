@@ -8,7 +8,7 @@ type AnalyticsContextValue = {
 };
 
 export const AnalyticsContext = createContext<AnalyticsContextValue | null>(
-  null
+  null,
 );
 
 type AnalyticsProviderProps = {
