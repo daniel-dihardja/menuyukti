@@ -1,9 +1,9 @@
 from datetime import time
 
-from intelligence.decisions.promotion_candidate import PromotionCandidate
-from intelligence.decisions.promotion_decision_types import PromotionDecision
-from intelligence.decisions.promotion_candidate import PromotionPriority
-from intelligence.allocation.promotion_scheduler import PromotionScheduler
+from app.intelligence.decisions.promotion_candidate import PromotionCandidate
+from app.intelligence.decisions.promotion_decision_types import PromotionDecision
+from app.intelligence.decisions.promotion_candidate import PromotionPriority
+from app.intelligence.allocation.promotion_scheduler import PromotionScheduler
 
 
 def _candidate(menu: str, category: str, decision: PromotionDecision, priority: PromotionPriority, weight: float):

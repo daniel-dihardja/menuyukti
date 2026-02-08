@@ -1,7 +1,7 @@
 import pytest
 
-from intelligence.models.heatmap import MenuHeatmap, HourlyDemand, WeeklyDemand
-from intelligence.primitives.engine.behavioral_engine import compute_behavioral_primitives
+from app.intelligence.models.heatmap import MenuHeatmap, HourlyDemand, WeeklyDemand
+from app.intelligence.primitives.engine.behavioral_engine import compute_behavioral_primitives
 
 
 def test_compute_behavioral_primitives():

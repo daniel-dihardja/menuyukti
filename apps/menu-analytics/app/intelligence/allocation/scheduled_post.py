@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from datetime import time
 from typing import Optional
 
-from intelligence.decisions.promotion_priority_types import PromotionPriority
+from app.intelligence.decisions.promotion_priority_types import PromotionPriority
 
 
 class ScheduledPost(BaseModel):

@@ -1,7 +1,7 @@
 from typing import Set
 
-from intelligence.roles.role_types import RoleType
-from intelligence.enrichment.enriched_menu_item import EnrichedMenuItem
+from app.intelligence.roles.role_types import RoleType
+from app.intelligence.enrichment.enriched_menu_item import EnrichedMenuItem
 
 
 # ---------------------------------------------------------

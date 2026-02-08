@@ -1,9 +1,9 @@
 from typing import List
 from datetime import time
 
-from intelligence.decisions.promotion_candidate import PromotionCandidate
-from intelligence.decisions.promotion_decision_types import PromotionDecision
-from intelligence.allocation.scheduled_post import ScheduledPost
+from app.intelligence.decisions.promotion_candidate import PromotionCandidate
+from app.intelligence.decisions.promotion_decision_types import PromotionDecision
+from app.intelligence.allocation.scheduled_post import ScheduledPost
 
 
 DEFAULT_POST_DAYS = ["mon", "wed", "fri"]

@@ -1,24 +1,24 @@
 from typing import Dict, List, Tuple
 
-from intelligence.models.matrix_item import MatrixItem
-from intelligence.models.heatmap import MenuHeatmap
-from intelligence.models.matrix_distribution import MatrixDistribution
+from app.intelligence.models.matrix_item import MatrixItem
+from app.intelligence.models.heatmap import MenuHeatmap
+from app.intelligence.models.matrix_distribution import MatrixDistribution
 
-from intelligence.primitives.engine.economic_engine import compute_economic_primitives
-from intelligence.primitives.engine.behavioral_engine import (
+from app.intelligence.primitives.engine.economic_engine import compute_economic_primitives
+from app.intelligence.primitives.engine.behavioral_engine import (
     compute_behavioral_primitives,
 )
-from intelligence.primitives.engine.structural_engine import (
+from app.intelligence.primitives.engine.structural_engine import (
     compute_structural_primitives,
 )
 
-from intelligence.enrichment.enriched_menu_item import EnrichedMenuItem
-from intelligence.enrichment.enriched_portfolio import EnrichedPortfolio
+from app.intelligence.enrichment.enriched_menu_item import EnrichedMenuItem
+from app.intelligence.enrichment.enriched_portfolio import EnrichedPortfolio
 
-from intelligence.roles.role_engine import assign_roles
-from intelligence.signals.signal_engine import detect_signals
-from intelligence.decisions.promotion_engine import promotion_decision
-from intelligence.decisions.promotion_candidate import PromotionCandidate
+from app.intelligence.roles.role_engine import assign_roles
+from app.intelligence.signals.signal_engine import detect_signals
+from app.intelligence.decisions.promotion_engine import promotion_decision
+from app.intelligence.decisions.promotion_candidate import PromotionCandidate
 
 
 def _index_heatmaps_by_menu(

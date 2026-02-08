@@ -1,12 +1,12 @@
-from intelligence.enrichment.enriched_menu_item import EnrichedMenuItem
-from intelligence.models.matrix_item import MatrixItem
-from intelligence.models.heatmap import MenuHeatmap, HourlyDemand, WeeklyDemand
-from intelligence.primitives.economic_primitives import EconomicPrimitives
-from intelligence.primitives.behavioral_primitives import BehavioralPrimitives
-from intelligence.roles.role_types import RoleType
-from intelligence.signals.signal_types import SignalType
-from intelligence.decisions.promotion_engine import promotion_decision
-from intelligence.decisions.promotion_decision_types import PromotionDecision
+from app.intelligence.enrichment.enriched_menu_item import EnrichedMenuItem
+from app.intelligence.models.matrix_item import MatrixItem
+from app.intelligence.models.heatmap import MenuHeatmap, HourlyDemand, WeeklyDemand
+from app.intelligence.primitives.economic_primitives import EconomicPrimitives
+from app.intelligence.primitives.behavioral_primitives import BehavioralPrimitives
+from app.intelligence.roles.role_types import RoleType
+from app.intelligence.signals.signal_types import SignalType
+from app.intelligence.decisions.promotion_engine import promotion_decision
+from app.intelligence.decisions.promotion_decision_types import PromotionDecision
 
 
 def _dummy_item() -> EnrichedMenuItem:

@@ -1,8 +1,8 @@
 from statistics import median
 from typing import List
 
-from intelligence.models.matrix_item import MatrixItem
-from intelligence.primitives.economic_primitives import EconomicPrimitives
+from app.intelligence.models.matrix_item import MatrixItem
+from app.intelligence.primitives.economic_primitives import EconomicPrimitives
 
 
 def compute_economic_primitives(

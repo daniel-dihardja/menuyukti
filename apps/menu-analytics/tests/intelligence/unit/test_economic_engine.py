@@ -1,7 +1,7 @@
 import pytest
 
-from intelligence.models.matrix_item import MatrixItem
-from intelligence.primitives.engine.economic_engine import compute_economic_primitives
+from app.intelligence.models.matrix_item import MatrixItem
+from app.intelligence.primitives.engine.economic_engine import compute_economic_primitives
 
 
 def test_compute_economic_primitives_normalized():

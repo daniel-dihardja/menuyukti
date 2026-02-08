@@ -1,10 +1,10 @@
-from intelligence.enrichment.enriched_menu_item import EnrichedMenuItem
-from intelligence.models.matrix_item import MatrixItem
-from intelligence.models.heatmap import MenuHeatmap, HourlyDemand, WeeklyDemand
-from intelligence.primitives.economic_primitives import EconomicPrimitives
-from intelligence.primitives.behavioral_primitives import BehavioralPrimitives
-from intelligence.roles.role_engine import assign_roles
-from intelligence.roles.role_types import RoleType
+from app.intelligence.enrichment.enriched_menu_item import EnrichedMenuItem
+from app.intelligence.models.matrix_item import MatrixItem
+from app.intelligence.models.heatmap import MenuHeatmap, HourlyDemand, WeeklyDemand
+from app.intelligence.primitives.economic_primitives import EconomicPrimitives
+from app.intelligence.primitives.behavioral_primitives import BehavioralPrimitives
+from app.intelligence.roles.role_engine import assign_roles
+from app.intelligence.roles.role_types import RoleType
 
 
 def test_assign_roles_growth_lever_and_anchor():

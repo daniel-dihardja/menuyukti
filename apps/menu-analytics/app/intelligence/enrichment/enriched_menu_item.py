@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
-from intelligence.models.matrix_item import MatrixItem
-from intelligence.models.heatmap import MenuHeatmap
+from app.intelligence.models.matrix_item import MatrixItem
+from app.intelligence.models.heatmap import MenuHeatmap
 
-from intelligence.primitives.economic_primitives import EconomicPrimitives
-from intelligence.primitives.behavioral_primitives import BehavioralPrimitives
+from app.intelligence.primitives.economic_primitives import EconomicPrimitives
+from app.intelligence.primitives.behavioral_primitives import BehavioralPrimitives
 
 
 class EnrichedMenuItem(BaseModel):

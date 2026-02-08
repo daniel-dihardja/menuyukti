@@ -1,5 +1,5 @@
-from intelligence.models.heatmap import MenuHeatmap
-from intelligence.primitives.behavioral_primitives import BehavioralPrimitives
+from app.intelligence.models.heatmap import MenuHeatmap
+from app.intelligence.primitives.behavioral_primitives import BehavioralPrimitives
 
 
 def compute_behavioral_primitives(

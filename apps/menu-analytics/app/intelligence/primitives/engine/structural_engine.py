@@ -1,5 +1,5 @@
-from intelligence.models.matrix_distribution import MatrixDistribution
-from intelligence.primitives.structural_primitives import StructuralPrimitives
+from app.intelligence.models.matrix_distribution import MatrixDistribution
+from app.intelligence.primitives.structural_primitives import StructuralPrimitives
 
 
 def compute_structural_primitives(

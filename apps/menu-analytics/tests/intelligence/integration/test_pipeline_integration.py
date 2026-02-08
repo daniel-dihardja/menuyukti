@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
 
-from intelligence.models.matrix_item import MatrixItem
-from intelligence.models.heatmap import MenuHeatmap
-from intelligence.models.matrix_distribution import MatrixDistribution
-from intelligence.pipeline.pipeline import build_promotion_candidates
-from intelligence.allocation.promotion_scheduler import PromotionScheduler
+from app.intelligence.models.matrix_item import MatrixItem
+from app.intelligence.models.heatmap import MenuHeatmap
+from app.intelligence.models.matrix_distribution import MatrixDistribution
+from app.intelligence.pipeline.pipeline import build_promotion_candidates
+from app.intelligence.allocation.promotion_scheduler import PromotionScheduler
 
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "intelligence"

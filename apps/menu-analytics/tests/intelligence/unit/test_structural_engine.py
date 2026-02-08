@@ -1,7 +1,7 @@
 import pytest
 
-from intelligence.models.matrix_distribution import MatrixDistribution, CategoryDistribution
-from intelligence.primitives.engine.structural_engine import compute_structural_primitives
+from app.intelligence.models.matrix_distribution import MatrixDistribution, CategoryDistribution
+from app.intelligence.primitives.engine.structural_engine import compute_structural_primitives
 
 
 def test_compute_structural_primitives():
