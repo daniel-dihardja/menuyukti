@@ -6,13 +6,18 @@ from decimal import Decimal
 
 import pandas as pd
 
-from .analytics.extract_menu_items import extract_menu_items
-from .analytics.pos_detector import detect_pos_from_excel_bytes
-from .analytics.registry import NORMALIZERS
-from .analytics.calculate_sales_analytics import calculate_sales_analytics
-from .analytics.calculate_menu_engineering_matrix import (
+from app.analytics.extract_menu_items import extract_menu_items
+from app.analytics.pos_detector import detect_pos_from_excel_bytes
+from app.analytics.registry import NORMALIZERS
+from app.analytics.calculate_sales_analytics import calculate_sales_analytics
+from app.analytics.calculate_menu_engineering_matrix import (
     calculate_menu_engineering_matrix,
 )
+from intelligence.pipeline.pipeline import build_promotion_candidates
+from intelligence.allocation.promotion_scheduler import PromotionScheduler
+from intelligence.models.matrix_item import MatrixItem
+from intelligence.models.heatmap import MenuHeatmap
+from intelligence.models.matrix_distribution import MatrixDistribution
 
 
 app = FastAPI(title="Menuyukti Analytics API")
@@ -121,4 +126,42 @@ async def calculate_matrix(payload: MenuItemsMatrixRequest):
     return {
         "status": "ok",
         "matrix": matrix,
+    }
+
+
+# ==================================================
+# Intelligence pipeline endpoint
+# ==================================================
+
+
+class IntelligencePipelineRequest(BaseModel):
+    matrix_items: List[MatrixItem]
+    heatmaps: List[MenuHeatmap]
+    distribution: MatrixDistribution
+
+
+@app.post("/intelligence/pipeline")
+async def run_intelligence_pipeline(payload: IntelligencePipelineRequest):
+    if not payload.matrix_items:
+        raise HTTPException(status_code=400, detail="NO_MATRIX_ITEMS")
+
+    if not payload.heatmaps:
+        raise HTTPException(status_code=400, detail="NO_HEATMAPS")
+
+    portfolio, candidates = build_promotion_candidates(
+        matrix_items=payload.matrix_items,
+        heatmaps=payload.heatmaps,
+        distribution=payload.distribution,
+    )
+
+    scheduler = PromotionScheduler()
+    schedule = scheduler.build_weekly_schedule(candidates)
+
+    return {
+        "status": "ok",
+        "insights": {
+            "portfolio": portfolio.model_dump(),
+            "candidates": [c.model_dump() for c in candidates],
+            "schedule": [s.model_dump() for s in schedule],
+        },
     }

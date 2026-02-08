@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
+import { Prisma } from "@prisma/client";
 
 type Params = {
   params: Promise<{
@@ -75,6 +76,14 @@ export async function POST(req: Request, { params }: Params) {
     );
   }
 
+  const ANALYTICS_API_URL = process.env.ANALYTICS_API_URL;
+  if (!ANALYTICS_API_URL) {
+    return NextResponse.json(
+      { message: "ANALYTICS_API_URL_NOT_CONFIGURED" },
+      { status: 500 },
+    );
+  }
+
   // 6️⃣ Shape payload for analytics API
   const matrixPayload = {
     items: menuItems.map((item) => ({
@@ -107,7 +116,96 @@ export async function POST(req: Request, { params }: Params) {
 
   const matrixResult = await res.json();
 
-  // 8️⃣ Persist matrix snapshot on Analytics
+  // 8️⃣ Build intelligence payload from matrix + heatmaps
+  const analyticsRecord = await prisma.analytics.findUnique({
+    where: { id: analyticsId },
+    select: {
+      heatmapJson: true,
+      periodStart: true,
+      periodEnd: true,
+    },
+  });
+
+  let insights: unknown = null;
+
+  if (analyticsRecord?.heatmapJson) {
+    const reportingPeriod =
+      analyticsRecord.periodStart && analyticsRecord.periodEnd
+        ? `${analyticsRecord.periodStart.toISOString().slice(0, 10)}..${analyticsRecord.periodEnd
+            .toISOString()
+            .slice(0, 10)}`
+        : "unknown";
+
+    const heatmapsRaw = analyticsRecord.heatmapJson as Array<{
+      menu: string;
+      menuCategory?: string | null;
+      menuCategoryDetail?: string | null;
+      dailyHeatmap?: Array<{ hour: string | number; quantity: number }>;
+      weeklyHeatmap?: Array<{ day: string; quantity: number }>;
+    }>;
+
+    const heatmapsPayload = heatmapsRaw.map((item) => ({
+      menu: item.menu,
+      menu_category: item.menuCategory ?? null,
+      menu_category_detail: item.menuCategoryDetail ?? null,
+      daily_heatmap: (item.dailyHeatmap ?? []).map((h) => ({
+        hour: Number(h.hour),
+        quantity: h.quantity,
+      })),
+      weekly_heatmap: (item.weeklyHeatmap ?? []).map((w) => ({
+        day: w.day,
+        quantity: w.quantity,
+      })),
+      reporting_period: reportingPeriod,
+    }));
+
+    const distributionPayload = {
+      categories: (matrixResult.matrix.distribution ?? []).map(
+        (item: {
+          category: string;
+          count: number;
+          percentage: number;
+          margin_contribution_percentage: number;
+        }) => ({
+          category: item.category,
+          item_count: item.count,
+          item_share: item.percentage,
+          margin_share: item.margin_contribution_percentage,
+        }),
+      ),
+    };
+
+    const intelligencePayload = {
+      matrix_items: matrixResult.matrix.items ?? [],
+      heatmaps: heatmapsPayload,
+      distribution: distributionPayload,
+    };
+
+    try {
+      const intelligenceRes = await fetch(
+        `${ANALYTICS_API_URL}/intelligence/pipeline`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(intelligencePayload),
+        },
+      );
+
+      if (intelligenceRes.ok) {
+        const intelligenceJson = await intelligenceRes.json();
+        insights = intelligenceJson.insights ?? null;
+      } else {
+        console.error(
+          "Intelligence pipeline error:",
+          await intelligenceRes.text(),
+        );
+      }
+    } catch (error) {
+      console.error("Intelligence pipeline request failed:", error);
+    }
+  }
+
+  // 9️⃣ Persist matrix snapshot on Analytics
   await prisma.analytics.update({
     where: { id: analyticsId },
     data: {
@@ -117,15 +215,17 @@ export async function POST(req: Request, { params }: Params) {
       totalCogs: matrixResult.matrix.thresholds.total_cogs,
       // totalMargin: matrixResult.matrix.thresholds.total_margin,
       totalProfit: matrixResult.matrix.thresholds.total_profit,
+      insightsJson: insights ? insights : Prisma.JsonNull,
       // avgContributionMargin:
       // matrixResult.matrix.thresholds.avg_contribution_margin,
       // avgPopularity: matrixResult.matrix.thresholds.avg_popularity,
     },
   });
 
-  // 9️⃣ Return updated matrix
+  // 🔟 Return updated matrix
   return NextResponse.json({
     success: true,
     matrix: matrixResult.matrix,
+    insights,
   });
 }

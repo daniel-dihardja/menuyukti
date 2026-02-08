@@ -1,7 +1,7 @@
 import pandas as pd
 
-from .calculate_menu_heatmaps import calculate_menu_heatmaps
-from .calculate_popularity_index import calculate_popularity_index
+from app.analytics.calculate_menu_heatmaps import calculate_menu_heatmaps
+from app.analytics.calculate_popularity_index import calculate_popularity_index
 
 
 def calculate_sales_analytics(df: pd.DataFrame) -> dict:
