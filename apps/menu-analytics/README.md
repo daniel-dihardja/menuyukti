@@ -31,6 +31,6 @@ This service is the deterministic analytics layer for Menuyukti. It ingests POS 
 ## Run Tests
 
 ```bash
-cd apps/api
+cd apps/menu-analytics
 uv run pytest
 ```

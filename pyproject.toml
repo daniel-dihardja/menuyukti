@@ -4,18 +4,18 @@ version = "0.1.0"
 requires-python = ">=3.12"
 
 dependencies = [
-  "api",
+  "menu-analytics",
   "agent",
 ]
 
 [tool.uv.workspace]
 members = [
-  "apps/api",
+  "apps/menu-analytics",
   "apps/agents",
 ]
 
 [tool.uv.sources]
-api = { workspace = true }
+menu-analytics = { workspace = true }
 agent = { workspace = true }
 
 [dependency-groups]
