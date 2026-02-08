@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from intelligence.models.matrix_item import MatrixItem
 from intelligence.models.heatmap import MenuHeatmap
 
@@ -9,6 +9,7 @@ from intelligence.primitives.behavioral_primitives import BehavioralPrimitives
 
 
 class EnrichedMenuItem(BaseModel):
+    model_config = ConfigDict(frozen=True)
     """
     Decision-ready representation of a menu item.
 
@@ -26,9 +27,6 @@ class EnrichedMenuItem(BaseModel):
 
     economic: EconomicPrimitives
     behavioral: BehavioralPrimitives
-
-    class Config:
-        frozen = True
 
     @staticmethod
     def enrich_menu_item(

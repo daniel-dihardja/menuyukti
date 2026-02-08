@@ -1,9 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from intelligence.models.matrix_distribution import MatrixDistribution
 from intelligence.primitives.structural_primitives import StructuralPrimitives
 
 
 class EnrichedPortfolio(BaseModel):
+    model_config = ConfigDict(frozen=True)
     """
     Structural economic snapshot of the restaurant.
 
@@ -16,6 +17,3 @@ class EnrichedPortfolio(BaseModel):
 
     distribution: MatrixDistribution
     structural: StructuralPrimitives
-
-    class Config:
-        frozen = True
