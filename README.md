@@ -1,9 +1,9 @@
 # Menuyukti
 
-Menuyukti is a menu analytics + promotion intelligence platform. The repo contains:
+Menuyukti is a menu analytics + promotion decision platform. The repo contains:
 
 - `apps/web`: Next.js web app (UI + API routes)
-- `apps/menu-analytics`: FastAPI service for deterministic analytics and intelligence
+- `apps/menu-analytics`: FastAPI service for deterministic analytics and decisioning
 - `apps/agents`: agent runtime and supporting utilities
 
 ## Key Capabilities
@@ -11,7 +11,7 @@ Menuyukti is a menu analytics + promotion intelligence platform. The repo contai
 - POS file ingestion and normalization
 - Sales analytics (KPIs, popularity index, heatmaps)
 - Menu engineering matrix computation
-- Deterministic promotion intelligence pipeline
+- Deterministic promotion decision pipeline
 - Optional weekly schedule generation
 
 ## Development

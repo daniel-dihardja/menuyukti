@@ -98,7 +98,7 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
     df["category"] = df.apply(classify, axis=1)
 
     # --------------------------------------------------
-    # Action recommendation (decision intelligence)
+    # Action recommendation (decision decision)
     # --------------------------------------------------
     def recommend_action(row):
         if (

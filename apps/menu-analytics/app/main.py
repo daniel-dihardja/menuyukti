@@ -13,11 +13,11 @@ from app.analytics.calculate_sales_analytics import calculate_sales_analytics
 from app.analytics.calculate_menu_engineering_matrix import (
     calculate_menu_engineering_matrix,
 )
-from app.intelligence.pipeline.pipeline import build_promotion_candidates
-from app.intelligence.allocation.promotion_scheduler import PromotionScheduler
-from app.intelligence.models.matrix_item import MatrixItem
-from app.intelligence.models.heatmap import MenuHeatmap
-from app.intelligence.models.matrix_distribution import MatrixDistribution
+from app.decision.pipeline.pipeline import build_promotion_candidates
+from app.decision.allocation.promotion_scheduler import PromotionScheduler
+from app.decision.models.matrix_item import MatrixItem
+from app.decision.models.heatmap import MenuHeatmap
+from app.decision.models.matrix_distribution import MatrixDistribution
 
 
 app = FastAPI(title="Menuyukti Analytics API")
@@ -134,14 +134,14 @@ async def calculate_matrix(payload: MenuItemsMatrixRequest):
 # ==================================================
 
 
-class IntelligencePipelineRequest(BaseModel):
+class DecisionPipelineRequest(BaseModel):
     matrix_items: List[MatrixItem]
     heatmaps: List[MenuHeatmap]
     distribution: MatrixDistribution
 
 
-@app.post("/intelligence/pipeline")
-async def run_intelligence_pipeline(payload: IntelligencePipelineRequest):
+@app.post("/decision/pipeline")
+async def run_decision_pipeline(payload: DecisionPipelineRequest):
     if not payload.matrix_items:
         raise HTTPException(status_code=400, detail="NO_MATRIX_ITEMS")
 

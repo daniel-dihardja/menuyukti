@@ -116,7 +116,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const matrixResult = await res.json();
 
-  // 8️⃣ Build intelligence payload from matrix + heatmaps
+  // 8️⃣ Build decision payload from matrix + heatmaps
   const analyticsRecord = await prisma.analytics.findUnique({
     where: { id: analyticsId },
     select: {
@@ -175,33 +175,33 @@ export async function POST(req: Request, { params }: Params) {
       ),
     };
 
-    const intelligencePayload = {
+    const decisionPayload = {
       matrix_items: matrixResult.matrix.items ?? [],
       heatmaps: heatmapsPayload,
       distribution: distributionPayload,
     };
 
     try {
-      const intelligenceRes = await fetch(
-        `${ANALYTICS_API_URL}/intelligence/pipeline`,
+      const decisionRes = await fetch(
+        `${ANALYTICS_API_URL}/decision/pipeline`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(intelligencePayload),
+          body: JSON.stringify(decisionPayload),
         },
       );
 
-      if (intelligenceRes.ok) {
-        const intelligenceJson = await intelligenceRes.json();
-        insights = intelligenceJson.insights ?? null;
+      if (decisionRes.ok) {
+        const decisionJson = await decisionRes.json();
+        insights = decisionJson.insights ?? null;
       } else {
         console.error(
-          "Intelligence pipeline error:",
-          await intelligenceRes.text(),
+          "Decision pipeline error:",
+          await decisionRes.text(),
         );
       }
     } catch (error) {
-      console.error("Intelligence pipeline request failed:", error);
+      console.error("Decision pipeline request failed:", error);
     }
   }
 
