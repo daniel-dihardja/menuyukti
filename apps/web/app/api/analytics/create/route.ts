@@ -5,17 +5,18 @@ import { AnalyticsResponse } from "../types";
 
 export const runtime = "nodejs";
 
-const ANALYTICS_API_URL = process.env.ANALYTICS_API_URL;
-
-if (!ANALYTICS_API_URL) {
-  throw new Error("ANALYTICS_API_URL_NOT_CONFIGURED");
-}
-
 // Optional normalization helper (recommended)
 const normalizeMenuName = (name: string) => name.trim().toLowerCase();
 
 export async function POST(request: Request) {
   try {
+    const ANALYTICS_API_URL = process.env.ANALYTICS_API_URL;
+    if (!ANALYTICS_API_URL) {
+      return NextResponse.json(
+        { error: "ANALYTICS_API_URL_NOT_CONFIGURED" },
+        { status: 500 },
+      );
+    }
     // --------------------------------------------------
     // Parse & validate input
     // --------------------------------------------------
