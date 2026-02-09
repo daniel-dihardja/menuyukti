@@ -5,7 +5,7 @@ This document describes the agent roadmap for Menuyukti.
 ## Phase 1 (Instagram‑Only)
 
 1. **Content Agent**
-   Generates Instagram captions, hashtags, CTA, and a visual brief from an action candidate.
+   Generates Instagram captions, hashtags, CTA, and a visual brief from a decision candidate.
 
 2. **Calendar Agent**
    Turns the weekly schedule into a coherent content plan (themes, spacing, and variety).

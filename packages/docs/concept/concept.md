@@ -22,7 +22,7 @@ We’ll introduce them as optional recommendations after Instagram outputs are r
 
 ## Why This Ordering
 
-Instagram recommendations are easier to validate, require less coordination, and map directly to the analytics + action pipeline.
+Instagram recommendations are easier to validate, require less coordination, and map directly to the analytics + decision pipeline.
 
 Promos/combos come later because they require:
 - pricing discipline
