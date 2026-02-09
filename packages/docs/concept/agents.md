@@ -2,6 +2,117 @@
 
 This document describes the agent roadmap for Menuyukti.
 
+## Agent Data Contract (v1)
+
+This contract defines how agents exchange structured data.
+
+### Core Inputs (shared across agents)
+
+```json
+{
+  "restaurant": {
+    "name": "string",
+    "location": "string",
+    "cuisine": "string",
+    "price_tier": "low|mid|high",
+    "brand_notes": "string|null"
+  },
+  "analytics": {
+    "period_start": "YYYY-MM-DD",
+    "period_end": "YYYY-MM-DD",
+    "top_items": [
+      {"menu": "string", "quantity": "number", "category": "string"}
+    ],
+    "peak_hours": [10, 12, 19],
+    "weekday_bias": "weekday|weekend|balanced"
+  },
+  "action_candidates": [
+    {
+      "menu": "string",
+      "action": "promote|consider|do_not_promote",
+      "priority": "critical|high|medium|low",
+      "recommended_post_time": "HH:MM:SS",
+      "reason": "string",
+      "expected_behavior": "string"
+    }
+  ]
+}
+```
+
+### Audience Agent Output
+
+```json
+{
+  "audience_profile": {
+    "primary_segment": "string",
+    "secondary_segment": "string|null",
+    "age_range": "string",
+    "lifestyle": ["string"],
+    "price_sensitivity": "low|mid|high",
+    "motivations": ["convenience", "taste", "value", "social"],
+    "occasions": ["weekday lunch", "after work", "weekend treat"]
+  }
+}
+```
+
+### Brand Voice Agent Output
+
+```json
+{
+  "brand_voice": {
+    "tone": ["friendly", "confident", "warm"],
+    "style": ["short sentences", "local slang", "light emojis?"],
+    "do_use": ["signature item names", "local references"],
+    "avoid": ["hard sell", "discount jargon"],
+    "cta_templates": [
+      "Drop by for {menu}",
+      "Try {menu} today",
+      "Your next favorite: {menu}"
+    ],
+    "hashtags": ["#cityeats", "#coffeelover"]
+  }
+}
+```
+
+### Content Agent Input
+
+```json
+{
+  "candidate": {
+    "menu": "string",
+    "action": "promote|consider|do_not_promote",
+    "priority": "critical|high|medium|low",
+    "recommended_post_time": "HH:MM:SS",
+    "reason": "string",
+    "expected_behavior": "string"
+  },
+  "audience_profile": { },
+  "brand_voice": { },
+  "constraints": {
+    "max_length": 2200,
+    "language": "id|en",
+    "include_hashtags": true
+  }
+}
+```
+
+### Content Agent Output
+
+```json
+{
+  "caption": "string",
+  "hashtags": ["#..."],
+  "cta": "string",
+  "visual_brief": "string",
+  "posting_time": "HH:MM:SS"
+}
+```
+
+Notes:
+- Agents should be pure functions of their inputs.
+- Store outputs in `insightsJson` for traceability.
+- Version this contract (e.g., `contract_version: "v1"`).
+
 ## Phase 1 (Instagram‑Only)
 
 1. **Content Agent**
