@@ -5,13 +5,6 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 from app.marketing_engine.core.inputs import CoreInputs
-from app.marketing_engine.shared.engines.behavioral_engine import (
-    compute_behavioral_primitives,
-)
-from app.marketing_engine.shared.engines.economic_engine import compute_economic_primitives
-from app.marketing_engine.shared.engines.structural_engine import (
-    compute_structural_primitives,
-)
 from app.marketing_engine.shared.primitives.behavioral_primitives import BehavioralPrimitives
 from app.marketing_engine.shared.primitives.economic_primitives import EconomicPrimitives
 from app.marketing_engine.shared.primitives.structural_primitives import StructuralPrimitives
@@ -31,6 +24,17 @@ def build_shared_primitives(core: CoreInputs) -> SharedPrimitives:
     """
     Compute shared primitives once from core inputs.
     """
+
+    # Local imports to avoid circular dependencies during package init.
+    from app.marketing_engine.shared.engines.behavioral_engine import (
+        compute_behavioral_primitives,
+    )
+    from app.marketing_engine.shared.engines.economic_engine import (
+        compute_economic_primitives,
+    )
+    from app.marketing_engine.shared.engines.structural_engine import (
+        compute_structural_primitives,
+    )
 
     structural = compute_structural_primitives(core.distribution)
 
