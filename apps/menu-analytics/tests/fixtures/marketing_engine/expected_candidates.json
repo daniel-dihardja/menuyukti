@@ -1,0 +1,16 @@
+[
+  {
+    "menu": "Alpha",
+    "decision": "promote",
+    "priority": "critical",
+    "recommended_post_time": "11:15:00",
+    "economic_weight": 120.0
+  },
+  {
+    "menu": "Beta",
+    "decision": "consider",
+    "priority": "medium",
+    "recommended_post_time": "07:15:00",
+    "economic_weight": 72.0
+  }
+]

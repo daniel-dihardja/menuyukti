@@ -13,11 +13,11 @@ from app.analytics.calculate_sales_analytics import calculate_sales_analytics
 from app.analytics.calculate_menu_engineering_matrix import (
     calculate_menu_engineering_matrix,
 )
-from app.decision.pipeline.pipeline import build_promotion_candidates
-from app.decision.allocation.promotion_scheduler import PromotionScheduler
-from app.decision.models.matrix_item import MatrixItem
-from app.decision.models.heatmap import MenuHeatmap
-from app.decision.models.matrix_distribution import MatrixDistribution
+from app.marketing_engine.decision.pipeline.pipeline import build_promotion_candidates
+from app.marketing_engine.decision.allocation.promotion_scheduler import PromotionScheduler
+from app.marketing_engine.core.models.matrix_item import MatrixItem
+from app.marketing_engine.core.models.heatmap import MenuHeatmap
+from app.marketing_engine.core.models.matrix_distribution import MatrixDistribution
 
 
 app = FastAPI(title="Menuyukti Analytics API")

@@ -1,0 +1,118 @@
+[
+  {
+    "menu": "Alpha",
+    "menu_category": "DRINK",
+    "menu_category_detail": "COFFEE",
+    "daily_heatmap": [
+      {
+        "hour": 8,
+        "quantity": 10
+      },
+      {
+        "hour": 9,
+        "quantity": 15
+      },
+      {
+        "hour": 10,
+        "quantity": 25
+      },
+      {
+        "hour": 11,
+        "quantity": 20
+      },
+      {
+        "hour": 12,
+        "quantity": 30
+      }
+    ],
+    "weekly_heatmap": [
+      {
+        "day": "mon",
+        "quantity": 30
+      },
+      {
+        "day": "tue",
+        "quantity": 25
+      },
+      {
+        "day": "wed",
+        "quantity": 20
+      },
+      {
+        "day": "thu",
+        "quantity": 10
+      },
+      {
+        "day": "fri",
+        "quantity": 10
+      },
+      {
+        "day": "sat",
+        "quantity": 3
+      },
+      {
+        "day": "sun",
+        "quantity": 2
+      }
+    ],
+    "reporting_period": "2025-02"
+  },
+  {
+    "menu": "Beta",
+    "menu_category": "FOOD",
+    "menu_category_detail": "SANDWICH",
+    "daily_heatmap": [
+      {
+        "hour": 8,
+        "quantity": 20
+      },
+      {
+        "hour": 9,
+        "quantity": 20
+      },
+      {
+        "hour": 10,
+        "quantity": 20
+      },
+      {
+        "hour": 11,
+        "quantity": 20
+      },
+      {
+        "hour": 12,
+        "quantity": 20
+      }
+    ],
+    "weekly_heatmap": [
+      {
+        "day": "mon",
+        "quantity": 20
+      },
+      {
+        "day": "tue",
+        "quantity": 20
+      },
+      {
+        "day": "wed",
+        "quantity": 20
+      },
+      {
+        "day": "thu",
+        "quantity": 20
+      },
+      {
+        "day": "fri",
+        "quantity": 10
+      },
+      {
+        "day": "sat",
+        "quantity": 5
+      },
+      {
+        "day": "sun",
+        "quantity": 5
+      }
+    ],
+    "reporting_period": "2025-02"
+  }
+]
