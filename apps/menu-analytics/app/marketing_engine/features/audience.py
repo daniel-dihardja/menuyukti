@@ -3,6 +3,7 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 from app.marketing_engine.core.inputs import CoreInputs
+from app.marketing_engine.features import register_provider
 from app.marketing_engine.shared.primitives import SharedPrimitives
 
 
@@ -71,3 +72,17 @@ def build_audience_features(
         peak_hours=peak_hours,
         weekday_bias=weekday_bias,
     )
+
+
+class AudienceFeatureProvider:
+    name = "audience"
+
+    def build(
+        self,
+        core: CoreInputs,
+        shared: SharedPrimitives | None = None,
+    ) -> AudienceFeatures:
+        return build_audience_features(core, shared)
+
+
+register_provider(AudienceFeatureProvider())
