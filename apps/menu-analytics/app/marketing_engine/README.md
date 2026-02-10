@@ -31,7 +31,7 @@ from app.marketing_engine.pipeline import build_promotion_candidates
 from app.marketing_engine.decision.allocation.promotion_scheduler import PromotionScheduler
 ```
 
-## Example Usage
+## Example Usage (Step-by-Step)
 
 ```python
 from app.marketing_engine.core.inputs import CoreInputs
@@ -41,6 +41,7 @@ from app.marketing_engine.pipeline import build_promotion_candidates
 from app.marketing_engine.decision.allocation.promotion_scheduler import PromotionScheduler
 
 # 1) Build core inputs from your validated data
+# These are the canonical, validated inputs that all downstream layers rely on.
 core = CoreInputs(
     matrix_items=matrix_items,
     heatmaps=heatmaps,
@@ -48,14 +49,16 @@ core = CoreInputs(
 )
 
 # 2) Shared primitives (optional but useful across agents)
+# Compute reusable facts such as economic strength, behavioral peaks, and portfolio health.
 shared = build_shared_primitives(core)
 
 # 3) Feature system (agent-specific)
-# Loads built-in providers into the registry.
+# Load built-in providers into the registry and request the audience feature set.
 load_default_providers()
 audience_features = build_features("audience", core, shared)
 
 # 4) Decision pipeline + scheduler (for posting calendar)
+# Convert raw inputs into ranked promotion candidates, then schedule into a weekly plan.
 portfolio, candidates = build_promotion_candidates(
     matrix_items=core.matrix_items,
     heatmaps=core.heatmaps,
@@ -65,6 +68,19 @@ portfolio, candidates = build_promotion_candidates(
 scheduler = PromotionScheduler()
 weekly_schedule = scheduler.build_weekly_schedule(candidates)
 ```
+
+### Example Output (What You Get)
+
+After Step 3 you have a structured `AudienceFeatures` object:
+
+- `top_items`: top-selling menu items (used to choose what to highlight)
+- `peak_hours`: best hours to post (used for timing)
+- `weekday_bias`: whether the business skews weekday or weekend
+
+After Step 4 you have:
+
+- `candidates`: ranked promotion opportunities with reasons and priority
+- `weekly_schedule`: a deterministic weekly Instagram posting plan
 
 ## Features Concept
 
