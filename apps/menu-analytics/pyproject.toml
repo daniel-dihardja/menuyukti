@@ -32,7 +32,6 @@ packages = [
     "app.marketing_engine.decision.allocation",
     "app.marketing_engine.decision.decisions",
     "app.marketing_engine.decision.enrichment",
-    "app.marketing_engine.decision.pipeline",
     "app.marketing_engine.decision.roles",
     "app.marketing_engine.decision.signals",
 ]

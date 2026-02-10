@@ -147,7 +147,7 @@ All inputs should already be validated.
 ### Step 2 — Run the Pipeline
 
 ```python
-from app.decision.pipeline.pipeline import build_promotion_candidates
+from app.marketing_engine.pipeline import build_promotion_candidates
 
 portfolio, candidates = build_promotion_candidates(
     matrix_items=matrix_items,
