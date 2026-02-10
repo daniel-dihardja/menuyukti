@@ -51,6 +51,7 @@ core = CoreInputs(
 shared = build_shared_primitives(core)
 
 # 3) Feature system (agent-specific)
+# Loads built-in providers into the registry.
 load_default_providers()
 audience_features = build_features("audience", core, shared)
 
@@ -74,6 +75,24 @@ Think of them as “views” over the core data:
 - **core inputs** = raw, validated data
 - **shared primitives** = common derived facts (reused across agents)
 - **features** = agent-specific transformations for a particular task
+
+### Provider Loading
+
+By default the registry is empty. Call `load_default_providers()` to import
+the built-in feature modules so their registration side-effects run:
+
+```python
+from app.marketing_engine.features import load_default_providers
+
+load_default_providers()
+```
+
+This keeps startup light and avoids importing every feature unless needed.
+
+### Registry
+
+The registry is a simple in-memory map of `provider_name -> provider_instance`.
+It lets the engine request features by name without hard-coding imports.
 
 This keeps the engine modular:
 

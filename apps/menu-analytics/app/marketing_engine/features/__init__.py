@@ -46,5 +46,7 @@ def build_features(
 
 
 def load_default_providers() -> None:
-    # Import modules with registration side-effects.
+    # Import built-in feature modules so their register_provider(...)
+    # side-effects run and populate the registry. This keeps the registry
+    # empty by default and avoids importing every feature unless requested.
     from app.marketing_engine.features import audience as _audience  # noqa: F401
