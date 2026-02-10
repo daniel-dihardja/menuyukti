@@ -7,12 +7,6 @@ import { Button } from "@workspace/ui/components/button";
 import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@workspace/ui/components/breadcrumb";
 import { prisma } from "@/lib/prisma/client";
 import { BranchesTable } from "./branches-table";
 
@@ -31,16 +25,12 @@ export default async function Page() {
   return (
     <SidebarInset>
       <div className="w-full">
-        <SidebarTriggerClient title={t("title")} />
+        <SidebarTriggerClient
+          title={t("title")}
+          breadcrumbs={[{ label: t("title") }]}
+        />
 
         <main className="p-4 space-y-3 max-w-6xl mx-auto">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbPage>{t("title")}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
 
           <BranchesTable
             branches={branches}

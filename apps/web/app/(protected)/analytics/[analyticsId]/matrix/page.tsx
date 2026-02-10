@@ -8,14 +8,6 @@ import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@workspace/ui/components/breadcrumb";
 
 import { MatrixCategoryTable } from "./matrix-category-table";
 
@@ -133,31 +125,16 @@ export default async function Page({ params }: PageProps) {
   return (
     <SidebarInset>
       <div className="w-full">
-        <SidebarTriggerClient title="Menu Engineering Report" />
+        <SidebarTriggerClient
+          title="Menu Engineering Report"
+          breadcrumbs={[
+            { label: t("title"), href: routes.analytics.sales },
+            { label: analyticsName },
+            { label: "Matrix" },
+          ]}
+        />
 
         <main className="p-4 space-y-12 max-w-6xl mx-auto">
-          {/* Breadcrumb */}
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link href={routes.analytics.sales}>{t("title")}</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-
-              <BreadcrumbSeparator />
-
-              <BreadcrumbItem>
-                <BreadcrumbPage>{analyticsName}</BreadcrumbPage>
-              </BreadcrumbItem>
-
-              <BreadcrumbSeparator />
-
-              <BreadcrumbItem>
-                <BreadcrumbPage>Matrix</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
 
           {/* Page headline */}
           <header className="space-y-1">

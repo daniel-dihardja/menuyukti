@@ -8,14 +8,6 @@ import { notFound } from "next/navigation";
 
 import { UpdateCogsForm } from "./update-cogs-form";
 import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@workspace/ui/components/breadcrumb";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 
@@ -27,6 +19,7 @@ type PageProps = {
 
 export default async function Page({ params }: PageProps) {
   const t = await getTranslations("analytics");
+  const tSales = await getTranslations("analytics.sales");
 
   // --------------------------------------------------
   // Params
@@ -38,7 +31,7 @@ export default async function Page({ params }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound();
 
   // --------------------------------------------------
-  // Fetch analytics (for breadcrumb name)
+  // Fetch analytics (for display name)
   // --------------------------------------------------
   const analytics = await prisma.analytics.findUnique({
     where: { id: analyticsId },
@@ -82,31 +75,16 @@ export default async function Page({ params }: PageProps) {
   return (
     <SidebarInset>
       <div className="w-full">
-        <SidebarTriggerClient title={t("cogs.edit")} />
+        <SidebarTriggerClient
+          title={t("cogs.edit")}
+          breadcrumbs={[
+            { label: tSales("title"), href: routes.analytics.sales },
+            { label: analyticsName },
+            { label: t("cogs.title") },
+          ]}
+        />
 
         <main className="mx-auto max-w-6xl p-4 space-y-3">
-          {/* Breadcrumb */}
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link href={routes.analytics.sales}>{t("sales.title")}</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-
-              <BreadcrumbSeparator />
-
-              <BreadcrumbItem>
-                <BreadcrumbPage>{analyticsName}</BreadcrumbPage>
-              </BreadcrumbItem>
-
-              <BreadcrumbSeparator />
-
-              <BreadcrumbItem>
-                <BreadcrumbPage>{t("cogs.title")}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
 
           <UpdateCogsForm analyticsId={analyticsId} menuItems={menuItems} />
         </main>

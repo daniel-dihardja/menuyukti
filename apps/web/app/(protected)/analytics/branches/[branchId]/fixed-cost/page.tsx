@@ -7,14 +7,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@workspace/ui/components/breadcrumb";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 
@@ -39,7 +31,7 @@ export default async function Page({ params }: PageProps) {
   if (!Number.isInteger(branchId)) notFound();
 
   // --------------------------------------------------
-  // Fetch branch (for breadcrumb + scope validation)
+  // Fetch branch (for display name + scope validation)
   // --------------------------------------------------
   const branch = await prisma.branch.findUnique({
     where: { id: branchId },
@@ -85,33 +77,16 @@ export default async function Page({ params }: PageProps) {
   return (
     <SidebarInset>
       <div className="w-full">
-        <SidebarTriggerClient title={t("title")} />
+        <SidebarTriggerClient
+          title={t("title")}
+          breadcrumbs={[
+            { label: t("breadcrumbs.branches"), href: routes.analytics.branches },
+            { label: branch.name },
+            { label: t("breadcrumbs.fixedCosts") },
+          ]}
+        />
 
         <main className="mx-auto max-w-6xl p-4 space-y-3">
-          {/* Breadcrumb */}
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link href={routes.analytics.branches}>
-                    {t("breadcrumbs.branches")}
-                  </Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-
-              <BreadcrumbSeparator />
-
-              <BreadcrumbItem>
-                <BreadcrumbPage>{branch.name}</BreadcrumbPage>
-              </BreadcrumbItem>
-
-              <BreadcrumbSeparator />
-
-              <BreadcrumbItem>
-                <BreadcrumbPage>{t("breadcrumbs.fixedCosts")}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
 
           {/* Fixed Cost Editor */}
           <FixedCostForm branchId={branch.id} fixedCosts={fixedCosts} />

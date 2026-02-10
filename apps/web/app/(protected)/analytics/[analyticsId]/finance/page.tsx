@@ -9,14 +9,6 @@ import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@workspace/ui/components/breadcrumb";
-import {
   Table,
   TableBody,
   TableCell,
@@ -165,35 +157,20 @@ export default async function Page({ params }: PageProps) {
       <div className="w-full">
         {/* Sidebar + trigger hidden in print */}
         <div className="no-print">
-          <SidebarTriggerClient title="Finance Report" />
+          <SidebarTriggerClient
+            title="Finance Report"
+            breadcrumbs={[
+              { label: t("title"), href: routes.analytics.sales },
+              { label: analyticsName },
+              { label: "Finance" },
+            ]}
+          />
         </div>
 
         {/* --------------------------------------------------
             Only this block prints
            -------------------------------------------------- */}
         <main className="p-4 space-y-10 max-w-6xl mx-auto printable-area">
-          {/* Breadcrumb */}
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link href={routes.analytics.sales}>{t("title")}</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-
-              <BreadcrumbSeparator />
-
-              <BreadcrumbItem>
-                <BreadcrumbPage>{analyticsName}</BreadcrumbPage>
-              </BreadcrumbItem>
-
-              <BreadcrumbSeparator />
-
-              <BreadcrumbItem>
-                <BreadcrumbPage>Finance</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
 
           {/* Page headline */}
           <header className="space-y-1">

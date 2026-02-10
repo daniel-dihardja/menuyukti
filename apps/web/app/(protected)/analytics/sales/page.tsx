@@ -7,12 +7,6 @@ import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
 import { prisma } from "@/lib/prisma/client";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@workspace/ui/components/breadcrumb";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
 import { AnalyticsSalesClient } from "./analytics-sales-client";
@@ -33,18 +27,12 @@ export default async function Page() {
   return (
     <SidebarInset>
       <div className="w-full">
-        <SidebarTriggerClient title={t("title")} />
+        <SidebarTriggerClient
+          title={t("title")}
+          breadcrumbs={[{ label: t("title") }]}
+        />
 
         <main className="p-4 space-y-6 max-w-6xl mx-auto">
-          {/* Breadcrumb */}
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbPage>{t("title")}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-
           {/* ---------------------------------------------
            * HERO HEADER (short + benefit-driven)
            * --------------------------------------------- */}
