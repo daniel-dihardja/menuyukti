@@ -11,7 +11,7 @@ import { useAnalytics } from "../analytics/use-analytics";
 import { useBranchAnalytics } from "../analytics/sales/use-branch-analytics";
 import { BranchSelect } from "../analytics/sales/branch-select";
 import { useEffect } from "react";
-import { Label } from "@workspace/ui/components/label";
+import { Field, FieldLabel } from "@workspace/ui/components/field";
 
 type Branch = {
   id: number;
@@ -35,7 +35,7 @@ export function AgentFilters({ branches }: Props) {
   }, [analyticsId, analytics, branchId, setAnalyticsId]);
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
       <BranchSelect
         branches={branches}
         placeholder="Select branch"
@@ -43,8 +43,8 @@ export function AgentFilters({ branches }: Props) {
         label="Branch"
       />
 
-      <div className="max-w-xs space-y-2">
-        <Label htmlFor="agent-analytics-select">Analytics report</Label>
+      <Field className="max-w-xs space-y-2">
+        <FieldLabel htmlFor="agent-analytics-select">Analytics report</FieldLabel>
         <Select
           value={analyticsId !== null ? String(analyticsId) : undefined}
           onValueChange={(val) => setAnalyticsId(val ? Number(val) : null)}
@@ -73,7 +73,7 @@ export function AgentFilters({ branches }: Props) {
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </Field>
     </div>
   );
 }
