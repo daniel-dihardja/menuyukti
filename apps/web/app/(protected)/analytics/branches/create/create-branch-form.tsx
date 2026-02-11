@@ -118,7 +118,11 @@ export function CreateBranchForm() {
               </Select>
             </div>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && (
+              <p className="text-sm text-destructive" role="alert" aria-live="assertive">
+                {error}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

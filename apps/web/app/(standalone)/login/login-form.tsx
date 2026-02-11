@@ -83,11 +83,11 @@ export async function LoginForm({ className, ...props }: LoginFormProps) {
 
               {/* Buttons */}
               <Field>
-                <Link href={routes.news}>
-                  <Button className="w-full text-base py-3">
+                <Button asChild className="w-full text-base py-3">
+                  <Link href={routes.news}>
                     {t("loginButton")}
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
 
                 <Button
                   variant="outline"

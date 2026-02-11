@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Checkbox } from "@workspace/ui/components/checkbox";
+import { Label } from "@workspace/ui/components/label";
 import {
   Table,
   TableBody,
@@ -151,7 +152,11 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+        <div
+          className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
+          role="alert"
+          aria-live="assertive"
+        >
           {error}
         </div>
       )}
@@ -187,7 +192,11 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
             {items.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
+                  <Label htmlFor={`fixed-cost-name-${item.id}`} className="sr-only">
+                    Name for {item.name || `fixed cost ${item.id}`}
+                  </Label>
                   <Input
+                    id={`fixed-cost-name-${item.id}`}
                     value={item.name}
                     onChange={(e) =>
                       updateItem(item.id, { name: e.target.value })
@@ -197,10 +206,20 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
 
                 <TableCell>
                   <div className="relative">
-                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                    <span
+                      className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground"
+                      aria-hidden="true"
+                    >
                       {currencyCode}
                     </span>
+                    <Label
+                      htmlFor={`fixed-cost-amount-${item.id}`}
+                      className="sr-only"
+                    >
+                      Amount for {item.name || `fixed cost ${item.id}`}
+                    </Label>
                     <Input
+                      id={`fixed-cost-amount-${item.id}`}
                       type="number"
                       min="0"
                       step="0.01"
@@ -216,7 +235,14 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
                 </TableCell>
 
                 <TableCell>
+                  <Label
+                    htmlFor={`fixed-cost-category-${item.id}`}
+                    className="sr-only"
+                  >
+                    Category for {item.name || `fixed cost ${item.id}`}
+                  </Label>
                   <Input
+                    id={`fixed-cost-category-${item.id}`}
                     value={item.category}
                     onChange={(e) =>
                       updateItem(item.id, {
@@ -227,7 +253,11 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
                 </TableCell>
 
                 <TableCell>
+                  <Label htmlFor={`fixed-cost-notes-${item.id}`} className="sr-only">
+                    Notes for {item.name || `fixed cost ${item.id}`}
+                  </Label>
                   <Input
+                    id={`fixed-cost-notes-${item.id}`}
                     value={item.notes}
                     onChange={(e) =>
                       updateItem(item.id, { notes: e.target.value })
@@ -236,7 +266,11 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
                 </TableCell>
 
                 <TableCell>
+                  <Label htmlFor={`fixed-cost-active-${item.id}`} className="sr-only">
+                    Active status for {item.name || `fixed cost ${item.id}`}
+                  </Label>
                   <Checkbox
+                    id={`fixed-cost-active-${item.id}`}
                     checked={item.isActive}
                     onCheckedChange={(checked) =>
                       updateItem(item.id, {
@@ -248,6 +282,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
 
                 <TableCell className="text-right space-x-2">
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     disabled={isSaving}
@@ -257,6 +292,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
                   </Button>
 
                   <Button
+                    type="button"
                     variant="destructive"
                     size="sm"
                     disabled={isSaving}
@@ -276,7 +312,11 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
         <h3 className="text-md font-semibold mb-3">Add Fixed Cost</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <Label htmlFor="new-fixed-cost-name" className="sr-only">
+            New fixed cost name
+          </Label>
           <Input
+            id="new-fixed-cost-name"
             placeholder="Name"
             value={newItem.name}
             onChange={(e) =>
@@ -288,10 +328,17 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
           />
 
           <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+            <span
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground"
+              aria-hidden="true"
+            >
               {currencyCode}
             </span>
+            <Label htmlFor="new-fixed-cost-amount" className="sr-only">
+              New fixed cost amount
+            </Label>
             <Input
+              id="new-fixed-cost-amount"
               type="number"
               min="0"
               step="0.01"
@@ -307,7 +354,11 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
             />
           </div>
 
+          <Label htmlFor="new-fixed-cost-category" className="sr-only">
+            New fixed cost category
+          </Label>
           <Input
+            id="new-fixed-cost-category"
             placeholder="Category"
             value={newItem.category}
             onChange={(e) =>
@@ -318,7 +369,11 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
             }
           />
 
+          <Label htmlFor="new-fixed-cost-notes" className="sr-only">
+            New fixed cost notes
+          </Label>
           <Input
+            id="new-fixed-cost-notes"
             placeholder="Notes"
             value={newItem.notes}
             onChange={(e) =>
@@ -329,7 +384,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
             }
           />
 
-          <Button disabled={isSaving} onClick={createItem}>
+          <Button type="button" disabled={isSaving} onClick={createItem}>
             Add
           </Button>
         </div>

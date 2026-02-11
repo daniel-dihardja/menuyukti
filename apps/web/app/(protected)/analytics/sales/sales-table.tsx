@@ -103,6 +103,7 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                 <div className="flex items-center gap-2">
                   {editingId === file.id ? (
                     <Input
+                      aria-label={`Analytics name for ${file.name}`}
                       value={draftName}
                       onChange={(event) => setDraftName(event.target.value)}
                       onKeyDown={(event) => {

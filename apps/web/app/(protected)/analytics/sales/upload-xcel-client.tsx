@@ -27,6 +27,7 @@ export default function UploadExcelClient({
 }: UploadExcelClientProps) {
   const t = useTranslations("analytics.sales.upload");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputId = "analytics-upload-xlsx";
 
   function openFileDialog() {
     fileInputRef.current?.click();
@@ -45,7 +46,11 @@ export default function UploadExcelClient({
 
   return (
     <div className="flex flex-col items-center gap-2">
+      <label htmlFor={fileInputId} className="sr-only">
+        Upload analytics Excel file
+      </label>
       <input
+        id={fileInputId}
         ref={fileInputRef}
         type="file"
         accept=".xlsx"
@@ -63,6 +68,8 @@ export default function UploadExcelClient({
 
       {message && (
         <p
+          role="status"
+          aria-live={status === "error" ? "assertive" : "polite"}
           className={`text-sm ${
             status === "success" ? "text-green-600" : "text-red-600"
           }`}
