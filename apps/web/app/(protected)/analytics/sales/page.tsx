@@ -33,22 +33,6 @@ export default async function Page() {
         />
 
         <main className="p-4 space-y-6 max-w-6xl mx-auto">
-          {/* ---------------------------------------------
-           * HERO HEADER (short + benefit-driven)
-           * --------------------------------------------- */}
-          <header className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Turn Sales Reports into Marketing Insights
-            </h1>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              Upload your restaurant sales data and get AI-powered insights on
-              menu performance, customer behavior, and growth opportunities.
-            </p>
-          </header>
-
-          {/* ---------------------------------------------
-           * MAIN CONTENT
-           * --------------------------------------------- */}
           {!hasBranches ? (
             <Card className="p-8 text-center space-y-4">
               <h2 className="text-lg font-medium">{t("noBranches.title")}</h2>

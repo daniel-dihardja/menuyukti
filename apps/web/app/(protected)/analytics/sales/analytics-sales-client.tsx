@@ -54,6 +54,27 @@ export function AnalyticsSalesClient({ branches }: Props) {
 
   return (
     <>
+      <header className="space-y-3">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Turn Sales Reports into Marketing Insights
+          </h1>
+          <p className="text-sm text-muted-foreground max-w-2xl">
+            Upload your restaurant sales data and get AI-powered insights on
+            menu performance, customer behavior, and growth opportunities.
+          </p>
+        </div>
+
+        <UploadExcelClient
+          disabled={!branchId}
+          uploading={uploading}
+          status={status}
+          message={message}
+          pos={pos}
+          onFileSelected={uploadFile}
+        />
+      </header>
+
       {/* ✅ No value / onChange anymore */}
       <BranchSelect branches={branches} />
 
@@ -69,37 +90,15 @@ export function AnalyticsSalesClient({ branches }: Props) {
           <p className="text-muted-foreground">
             {t("noAnalytics.description")}
           </p>
-
-          <UploadExcelClient
-            disabled={!branchId}
-            uploading={uploading}
-            status={status}
-            message={message}
-            pos={pos}
-            onFileSelected={uploadFile}
-          />
         </div>
       ) : (
-        <>
-          <SalesTable
-            uploads={uploads}
-            onDelete={deleteAnalytics}
-            onCogs={(analyticsId) => {
-              router.push(routes.analytics.cogs(String(analyticsId)));
-            }}
-          />
-
-          <div className="flex justify-center">
-            <UploadExcelClient
-              disabled={!branchId}
-              uploading={uploading}
-              status={status}
-              message={message}
-              pos={pos}
-              onFileSelected={uploadFile}
-            />
-          </div>
-        </>
+        <SalesTable
+          uploads={uploads}
+          onDelete={deleteAnalytics}
+          onCogs={(analyticsId) => {
+            router.push(routes.analytics.cogs(String(analyticsId)));
+          }}
+        />
       )}
     </>
   );
