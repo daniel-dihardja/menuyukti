@@ -50,6 +50,7 @@
       "title": "Sales Reports",
       "description": "Upload and manage sales report snapshots for each branch to power analytics features.",
       "branchLabel": "Branch",
+      "branchPlaceholder": "Select a branch",
       "branchDescription": "Select a branch to load and manage its sales reports.",
       "selectBranch": "Please select a branch to view sales reports.",
       "loading": "Loading sales reports…",

@@ -68,7 +68,7 @@ export function AnalyticsSalesClient({ branches }: Props) {
           branches={branches}
           id="sales-branch-select"
           label={t("branchLabel")}
-          description={t("branchDescription")}
+          placeholder={branches.length > 1 ? t("branchPlaceholder") : undefined}
         />
 
         <UploadExcelClient
