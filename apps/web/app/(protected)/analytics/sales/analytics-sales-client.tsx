@@ -63,7 +63,14 @@ export function AnalyticsSalesClient({ branches }: Props) {
 
   return (
     <>
-      <div>
+      <div className="space-y-3">
+        <BranchSelect
+          branches={branches}
+          id="sales-branch-select"
+          label={t("branchLabel")}
+          description={t("branchDescription")}
+        />
+
         <UploadExcelClient
           disabled={!branchId}
           uploading={uploading}
@@ -74,22 +81,14 @@ export function AnalyticsSalesClient({ branches }: Props) {
         />
       </div>
 
-      {/* ✅ No value / onChange anymore */}
-      <BranchSelect
-        branches={branches}
-        id="sales-branch-select"
-        label={t("branchLabel")}
-        description={t("branchDescription")}
-      />
-
       {!branchId ? (
-        <div className="border rounded-md p-8 text-center text-muted-foreground">
+        <div className="border rounded-md p-8 text-left text-muted-foreground">
           {t("selectBranch")}
         </div>
       ) : loading ? (
-        <div className="border rounded-md p-8 text-center">{t("loading")}</div>
+        <div className="border rounded-md p-8 text-left">{t("loading")}</div>
       ) : !hasUploads ? (
-        <div className="border rounded-md p-8 text-center space-y-4">
+        <div className="border rounded-md p-8 text-left space-y-4">
           <h2 className="text-lg font-medium">{t("noAnalytics.title")}</h2>
           <p className="text-muted-foreground">
             {t("noAnalytics.description")}
