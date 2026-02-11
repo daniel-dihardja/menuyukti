@@ -62,24 +62,27 @@ export function AnalyticsSalesClient({ branches }: Props) {
   const hasUploads = uploads.length > 0;
 
   return (
-    <>
-      <div className="space-y-3">
+    <div className="space-y-6">
+      <section className="space-y-4">
         <BranchSelect
           branches={branches}
           id="sales-branch-select"
           label={t("branchLabel")}
           placeholder={branches.length > 1 ? t("branchPlaceholder") : undefined}
+          className="w-full max-w-none"
         />
 
-        <UploadExcelClient
-          disabled={!branchId}
-          uploading={uploading}
-          status={status}
-          message={message}
-          pos={pos}
-          onFileSelected={uploadFile}
-        />
-      </div>
+        <div className="pt-1">
+          <UploadExcelClient
+            disabled={!branchId}
+            uploading={uploading}
+            status={status}
+            message={message}
+            pos={pos}
+            onFileSelected={uploadFile}
+          />
+        </div>
+      </section>
 
       {!branchId ? (
         <div className="border rounded-md p-8 text-left text-muted-foreground">
@@ -103,6 +106,6 @@ export function AnalyticsSalesClient({ branches }: Props) {
           }}
         />
       )}
-    </>
+    </div>
   );
 }
