@@ -27,7 +27,7 @@ export default async function Page() {
       <PageHeading title={t("title")} description={t("description")} />
 
       <div className="flex justify-start">
-        <Button asChild>
+        <Button asChild className="w-full sm:w-auto">
           <Link href={routes.analytics.branchesCreate}>{t("create")}</Link>
         </Button>
       </div>
