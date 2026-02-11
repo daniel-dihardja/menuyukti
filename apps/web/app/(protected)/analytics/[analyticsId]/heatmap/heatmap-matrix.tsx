@@ -3,6 +3,14 @@
 import clsx from "clsx";
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@workspace/ui/components/table";
 
 export type HeatmapMatrixRow = {
   key: string;
@@ -72,135 +80,58 @@ export function HeatmapMatrix({
     return `rgba(59, 130, 246, ${alpha})`;
   };
 
-  const MENU_COL_WIDTH = 220;
-
   return (
     <div className="space-y-3">
       {title && <h3 className="text-sm font-medium">{title}</h3>}
 
-      <div className="overflow-auto border rounded-md">
-        {/* ==================================================
-            DESKTOP TABLE (md+)
-           ================================================== */}
-        <div className="hidden md:block">
-          {/* Header row */}
-          <div
-            className="grid bg-muted/40 border-b text-xs font-medium"
-            style={{
-              gridTemplateColumns: `${MENU_COL_WIDTH}px repeat(${columnLabels.length}, minmax(28px, 1fr))`,
-            }}
-          >
-            <div className="p-2 border-r">Menu</div>
-
-            {columnLabels.map((label, i) => {
-              const isActive = sort?.columnIndex === i;
-
-              return (
-                <button
-                  key={label}
-                  onClick={() => handleSort(i)}
-                  className={clsx(
-                    "p-2 border-r last:border-r-0 flex items-center justify-center gap-1 hover:bg-muted transition-colors",
-                    isActive && "bg-muted",
-                  )}
-                  title="Click to sort"
-                  type="button"
-                >
-                  <span>{label}</span>
-                  {isActive && sort?.direction === "desc" && (
-                    <ChevronDown className="w-3 h-3 opacity-70" />
-                  )}
-                  {isActive && sort?.direction === "asc" && (
-                    <ChevronUp className="w-3 h-3 opacity-70" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Data rows */}
-          {sortedRows.map((row) => (
-            <div
-              key={row.key}
-              className="grid border-b last:border-b-0"
-              style={{
-                gridTemplateColumns: `${MENU_COL_WIDTH}px repeat(${columnLabels.length}, minmax(28px, 1fr))`,
-              }}
-            >
-              <div className="p-2 border-r text-sm font-medium truncate">
-                {row.label}
-              </div>
-
-              {row.values.map((value, i) => {
-                const t = getIntensity(value);
-                const bg = getColor(t);
-                const isDark = t > 0.75;
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableHead className="min-w-[220px]">Menu</TableHead>
+              {columnLabels.map((label, i) => {
+                const isActive = sort?.columnIndex === i;
 
                 return (
-                  <div
-                    key={i}
-                    className="relative border-r last:border-r-0 h-10 flex items-center justify-center text-[11px] font-medium"
-                    style={{
-                      backgroundColor: bg,
-                      color: isDark ? "#fff" : undefined,
-                    }}
-                    title={`${row.label} @ ${columnLabels[i]} → ${value}`}
-                  >
-                    {value > 0 ? value : ""}
-                  </div>
+                  <TableHead key={label} className="p-0 text-center">
+                    <button
+                      onClick={() => handleSort(i)}
+                      className={clsx(
+                        "h-10 w-full px-2 flex items-center justify-center gap-1 hover:bg-muted transition-colors",
+                        isActive && "bg-muted",
+                      )}
+                      title="Click to sort"
+                      type="button"
+                    >
+                      <span>{label}</span>
+                      {isActive && sort?.direction === "desc" && (
+                        <ChevronDown className="w-3 h-3 opacity-70" />
+                      )}
+                      {isActive && sort?.direction === "asc" && (
+                        <ChevronUp className="w-3 h-3 opacity-70" />
+                      )}
+                    </button>
+                  </TableHead>
                 );
               })}
-            </div>
-          ))}
-        </div>
+            </TableRow>
+          </TableHeader>
 
-        {/* ==================================================
-            MOBILE STACKED (< md)
-           ================================================== */}
-        <div className="md:hidden space-y-4">
-          {/* Column labels */}
-          <div
-            className="grid bg-muted/40 border-b text-xs font-medium"
-            style={{
-              gridTemplateColumns: `repeat(${columnLabels.length}, minmax(28px, 1fr))`,
-            }}
-          >
-            {columnLabels.map((label) => (
-              <div
-                key={label}
-                className="p-2 text-center border-r last:border-r-0"
-              >
-                {label}
-              </div>
-            ))}
-          </div>
-
-          {sortedRows.map((row) => (
-            <div key={row.key} className="overflow-hidden">
-              {/* Menu label ABOVE heatmap */}
-              <div className="px-2 mt-2 text-sm font-semibold bg-muted/20">
-                {row.label}
-              </div>
-
-              {/* Padding between label & heatmap */}
-              <div className="h-2 bg-background" />
-
-              {/* Heat cells */}
-              <div
-                className="grid"
-                style={{
-                  gridTemplateColumns: `repeat(${columnLabels.length}, minmax(28px, 1fr))`,
-                }}
-              >
+          <TableBody>
+            {sortedRows.map((row) => (
+              <TableRow key={row.key}>
+                <TableCell className="max-w-[220px] text-sm font-medium truncate">
+                  {row.label}
+                </TableCell>
                 {row.values.map((value, i) => {
                   const t = getIntensity(value);
                   const bg = getColor(t);
                   const isDark = t > 0.75;
 
                   return (
-                    <div
+                    <TableCell
                       key={i}
-                      className="relative border-r last:border-r-0 h-10 flex items-center justify-center text-[11px] font-medium"
+                      className="h-10 text-center text-[11px] font-medium"
                       style={{
                         backgroundColor: bg,
                         color: isDark ? "#fff" : undefined,
@@ -208,17 +139,16 @@ export function HeatmapMatrix({
                       title={`${row.label} @ ${columnLabels[i]} → ${value}`}
                     >
                       {value > 0 ? value : ""}
-                    </div>
+                    </TableCell>
                   );
                 })}
-              </div>
-            </div>
-          ))}
-        </div>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
-      {/* Sort hint */}
-      <p className="hidden md:block text-xs text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         Click a column header to sort. Click again to toggle ASC/DESC. Click a
         third time to reset.
       </p>

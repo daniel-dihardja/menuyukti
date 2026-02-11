@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 import { SidebarInset } from "@workspace/ui/components/sidebar";
+import { Button } from "@workspace/ui/components/button";
 import { getTranslations } from "next-intl/server";
 import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
 import Link from "next/link";
@@ -73,11 +74,43 @@ export default async function Page({ params }: PageProps) {
     },
   });
 
-  if (!analytics?.matrixJson) notFound();
+  if (!analytics) notFound();
 
-  const matrix = analytics.matrixJson as MatrixJson;
   const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
+  const matrix = analytics.matrixJson as MatrixJson | null;
   const currencyCode = analytics.branch?.currencyCode ?? "IDR";
+
+  if (!matrix) {
+    return (
+      <SidebarInset>
+        <div className="w-full">
+          <SidebarTriggerClient
+            title="Menu Engineering Report"
+            breadcrumbs={[
+              { label: t("title"), href: routes.analytics.sales },
+              { label: analyticsName },
+              { label: "Matrix" },
+            ]}
+          />
+
+          <main className="p-4 max-w-3xl mx-auto">
+            <section className="border rounded-md p-6 space-y-3">
+              <h1 className="text-2xl font-semibold">Menu Engineering Matrix</h1>
+              <p className="text-sm text-muted-foreground">
+                Matrix data is not available yet for this analytics file.
+                Please update COGS first to generate matrix results.
+              </p>
+              <Button asChild>
+                <Link href={routes.analytics.cogs(analyticsId)}>
+                  Go to COGS setup
+                </Link>
+              </Button>
+            </section>
+          </main>
+        </div>
+      </SidebarInset>
+    );
+  }
 
   // --------------------------------------------------
   // Formatting helpers
