@@ -37,12 +37,22 @@ export default async function Page({ params }: PageProps) {
     where: { id: analyticsId },
     select: {
       sourceFile: true,
+      branchId: true,
     },
   });
 
   if (!analytics) notFound();
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
+
+  const analyticsOptions = await prisma.analytics.findMany({
+    where: { branchId: analytics.branchId },
+    orderBy: { uploadedAt: "desc" },
+    select: {
+      id: true,
+      sourceFile: true,
+    },
+  });
 
   // --------------------------------------------------
   // Fetch menu items
@@ -86,7 +96,14 @@ export default async function Page({ params }: PageProps) {
 
         <main className="mx-auto max-w-6xl p-4 space-y-3">
 
-          <UpdateCogsForm analyticsId={analyticsId} menuItems={menuItems} />
+          <UpdateCogsForm
+            analyticsId={analyticsId}
+            menuItems={menuItems}
+            analyticsOptions={analyticsOptions.map((item) => ({
+              id: item.id,
+              name: item.sourceFile ?? `Analytics #${item.id}`,
+            }))}
+          />
         </main>
       </div>
     </SidebarInset>

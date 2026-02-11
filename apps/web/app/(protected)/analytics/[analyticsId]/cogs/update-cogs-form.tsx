@@ -1,11 +1,18 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
 import {
   Card,
   CardContent,
@@ -25,28 +32,45 @@ type MenuItem = {
 type Props = {
   analyticsId: number;
   menuItems: MenuItem[];
+  analyticsOptions: Array<{ id: number; name: string }>;
 };
 
-export function UpdateCogsForm({ analyticsId, menuItems }: Props) {
-  const formRef = useRef<HTMLFormElement>(null);
+export function UpdateCogsForm({
+  analyticsId,
+  menuItems,
+  analyticsOptions,
+}: Props) {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [importId, setImportId] = useState<number | null>(() => {
+    const first = analyticsOptions.find((item) => item.id !== analyticsId);
+    return first?.id ?? null;
+  });
+  const [importing, setImporting] = useState(false);
+  const [cogsValues, setCogsValues] = useState<Record<number, string>>(() => {
+    const initial: Record<number, string> = {};
+    for (const item of menuItems) {
+      initial[item.id] = item.cogs === null ? "" : String(item.cogs);
+    }
+    return initial;
+  });
+
+  const options = useMemo(
+    () => analyticsOptions.filter((item) => item.id !== analyticsId),
+    [analyticsId, analyticsOptions],
+  );
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    if (!formRef.current) return;
-
-    const formData = new FormData(formRef.current);
-
     // ✅ Correctly normalize values
     const items = menuItems.map((item) => {
-      const raw = formData.get(`cogs-${item.id}`);
-      const value = raw === null || raw === "" ? null : Number(raw);
+      const raw = cogsValues[item.id] ?? "";
+      const value = raw === "" ? null : Number(raw);
 
       return {
         id: item.id,
@@ -78,12 +102,87 @@ export function UpdateCogsForm({ analyticsId, menuItems }: Props) {
   }
 
   return (
-    <form ref={formRef} className="space-y-4" onSubmit={onSubmit}>
-      <div className="flex justify-end">
+    <form className="space-y-4" onSubmit={onSubmit}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="space-y-2">
+            <Label htmlFor="import-analytics-select">
+              Import COGS from analytics
+            </Label>
+            <Select
+              value={importId !== null ? String(importId) : undefined}
+              onValueChange={(val) => setImportId(val ? Number(val) : null)}
+              disabled={options.length === 0 || loading || importing}
+            >
+              <SelectTrigger id="import-analytics-select" className="w-[260px]">
+                <SelectValue
+                  placeholder={
+                    options.length === 0
+                      ? "No other analytics available"
+                      : "Select analytics"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((option) => (
+                  <SelectItem key={option.id} value={String(option.id)}>
+                    {option.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={!importId || importing || loading}
+            onClick={async () => {
+              if (!importId) return;
+              setImporting(true);
+              setError(null);
+              try {
+                const res = await fetch(`/api/analytics/${importId}/cogs`);
+                if (!res.ok) {
+                  throw new Error("Failed to load COGS from analytics");
+                }
+                const data = (await res.json()) as {
+                  items: Array<{ menuName: string; cogs: number | null }>;
+                };
+
+                const cogsByName = new Map(
+                  data.items.map((item) => [
+                    item.menuName.toLowerCase(),
+                    item.cogs,
+                  ]),
+                );
+
+                setCogsValues((prev) => {
+                  const next = { ...prev };
+                  for (const item of menuItems) {
+                    const value = cogsByName.get(item.menuName.toLowerCase());
+                    if (value !== undefined && value !== null) {
+                      next[item.id] = String(value);
+                    }
+                  }
+                  return next;
+                });
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Unknown error");
+              } finally {
+                setImporting(false);
+              }
+            }}
+          >
+            {importing ? "Importing..." : "Import"}
+          </Button>
+        </div>
+
         <Button type="submit" disabled={loading}>
           {loading ? "Saving..." : "Save COGS"}
         </Button>
       </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Edit COGS per menu item</CardTitle>
@@ -119,7 +218,13 @@ export function UpdateCogsForm({ analyticsId, menuItems }: Props) {
                   name={`cogs-${item.id}`}
                   type="number"
                   step="0.01"
-                  defaultValue={item.cogs ?? ""}
+                  value={cogsValues[item.id] ?? ""}
+                  onChange={(event) =>
+                    setCogsValues((prev) => ({
+                      ...prev,
+                      [item.id]: event.target.value,
+                    }))
+                  }
                   placeholder="0.00"
                   disabled={loading}
                   className="pl-8 text-right tabular-nums"

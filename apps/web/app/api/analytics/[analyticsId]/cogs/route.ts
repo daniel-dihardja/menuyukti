@@ -229,3 +229,31 @@ export async function POST(req: Request, { params }: Params) {
     insights,
   });
 }
+
+export async function GET(_req: Request, { params }: Params) {
+  const { analyticsId: analyticsIdParam } = await params;
+  const analyticsId = Number(analyticsIdParam);
+
+  if (!Number.isInteger(analyticsId)) {
+    return NextResponse.json(
+      { message: "Invalid analytics id" },
+      { status: 400 },
+    );
+  }
+
+  const menuItems = await prisma.analyticsMenuItem.findMany({
+    where: { analyticsId },
+    select: {
+      menuName: true,
+      cogs: true,
+    },
+  });
+
+  return NextResponse.json({
+    analyticsId,
+    items: menuItems.map((item) => ({
+      menuName: item.menuName,
+      cogs: item.cogs !== null ? Number(item.cogs) : null,
+    })),
+  });
+}
