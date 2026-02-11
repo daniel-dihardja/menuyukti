@@ -105,83 +105,82 @@ export function UpdateCogsForm({
 
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="space-y-2">
-            <Label htmlFor="import-analytics-select">
-              Import COGS from analytics
-            </Label>
-            <Select
-              value={importId !== null ? String(importId) : undefined}
-              onValueChange={(val) => setImportId(val ? Number(val) : null)}
-              disabled={options.length === 0 || loading || importing}
-            >
-              <SelectTrigger id="import-analytics-select" className="w-[260px]">
-                <SelectValue
-                  placeholder={
-                    options.length === 0
-                      ? "No other analytics available"
-                      : "Select analytics"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {options.map((option) => (
-                  <SelectItem key={option.id} value={String(option.id)}>
-                    {option.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <section className="space-y-1">
+        <h1 className="text-2xl font-semibold">COGS Editor</h1>
+        <p className="text-sm text-muted-foreground">
+          Update cost of goods sold per menu item. You can import COGS values
+          from another analytics file in the same branch.
+        </p>
+      </section>
 
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={!importId || importing || loading}
-            onClick={async () => {
-              if (!importId) return;
-              setImporting(true);
-              setError(null);
-              try {
-                const res = await fetch(`/api/analytics/${importId}/cogs`);
-                if (!res.ok) {
-                  throw new Error("Failed to load COGS from analytics");
-                }
-                const data = (await res.json()) as {
-                  items: Array<{ menuName: string; cogs: number | null }>;
-                };
-
-                const cogsByName = new Map(
-                  data.items.map((item) => [
-                    item.menuName.toLowerCase(),
-                    item.cogs,
-                  ]),
-                );
-
-                setCogsValues((prev) => {
-                  const next = { ...prev };
-                  for (const item of menuItems) {
-                    const value = cogsByName.get(item.menuName.toLowerCase());
-                    if (value !== undefined && value !== null) {
-                      next[item.id] = String(value);
-                    }
-                  }
-                  return next;
-                });
-              } catch (err) {
-                setError(err instanceof Error ? err.message : "Unknown error");
-              } finally {
-                setImporting(false);
-              }
-            }}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="space-y-2">
+          <Label htmlFor="import-analytics-select">
+            Import COGS from analytics
+          </Label>
+          <Select
+            value={importId !== null ? String(importId) : undefined}
+            onValueChange={(val) => setImportId(val ? Number(val) : null)}
+            disabled={options.length === 0 || loading || importing}
           >
-            {importing ? "Importing..." : "Import"}
-          </Button>
+            <SelectTrigger id="import-analytics-select" className="w-[260px]">
+              <SelectValue
+                placeholder={
+                  options.length === 0
+                    ? "No other analytics available"
+                    : "Select analytics"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((option) => (
+                <SelectItem key={option.id} value={String(option.id)}>
+                  {option.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <Button type="submit" disabled={loading}>
-          {loading ? "Saving..." : "Save COGS"}
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={!importId || importing || loading}
+          onClick={async () => {
+            if (!importId) return;
+            setImporting(true);
+            setError(null);
+            try {
+              const res = await fetch(`/api/analytics/${importId}/cogs`);
+              if (!res.ok) {
+                throw new Error("Failed to load COGS from analytics");
+              }
+              const data = (await res.json()) as {
+                items: Array<{ menuName: string; cogs: number | null }>;
+              };
+
+              const cogsByName = new Map(
+                data.items.map((item) => [item.menuName.toLowerCase(), item.cogs]),
+              );
+
+              setCogsValues((prev) => {
+                const next = { ...prev };
+                for (const item of menuItems) {
+                  const value = cogsByName.get(item.menuName.toLowerCase());
+                  if (value !== undefined && value !== null) {
+                    next[item.id] = String(value);
+                  }
+                }
+                return next;
+              });
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Unknown error");
+            } finally {
+              setImporting(false);
+            }
+          }}
+        >
+          {importing ? "Importing..." : "Import"}
         </Button>
       </div>
 
