@@ -12,12 +12,20 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { routes } from "@/lib/routes";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
 
 export function CreateBranchForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currencyCode, setCurrencyCode] = useState("IDR");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,6 +39,7 @@ export function CreateBranchForm() {
     const payload = {
       name: formData.get("name"),
       slug: formData.get("slug"),
+      currencyCode,
     };
 
     try {
@@ -85,6 +94,28 @@ export function CreateBranchForm() {
                 required
                 disabled={loading}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="currencyCode">Currency</Label>
+              <Select
+                value={currencyCode}
+                onValueChange={setCurrencyCode}
+                disabled={loading}
+              >
+                <SelectTrigger id="currencyCode">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="IDR">IDR – Indonesian Rupiah</SelectItem>
+                  <SelectItem value="USD">USD – US Dollar</SelectItem>
+                  <SelectItem value="EUR">EUR – Euro</SelectItem>
+                  <SelectItem value="GBP">GBP – British Pound</SelectItem>
+                  <SelectItem value="SGD">SGD – Singapore Dollar</SelectItem>
+                  <SelectItem value="AUD">AUD – Australian Dollar</SelectItem>
+                  <SelectItem value="JPY">JPY – Japanese Yen</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {error && <p className="text-sm text-destructive">{error}</p>}

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
+import { formatCurrency, getCurrencyLocale } from "@/lib/currency";
 
 import { MatrixCategoryTable } from "./matrix-category-table";
 
@@ -56,6 +57,11 @@ export default async function Page({ params }: PageProps) {
     where: { id: analyticsId },
     select: {
       sourceFile: true,
+      branch: {
+        select: {
+          currencyCode: true,
+        },
+      },
       periodStart: true,
       periodEnd: true,
       totalOrders: true,
@@ -71,17 +77,12 @@ export default async function Page({ params }: PageProps) {
 
   const matrix = analytics.matrixJson as MatrixJson;
   const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
+  const currencyCode = analytics.branch?.currencyCode ?? "IDR";
 
   // --------------------------------------------------
   // Formatting helpers
   // --------------------------------------------------
-  const locale = "id-ID";
-
-  const currencyFormatter = new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  });
+  const locale = getCurrencyLocale(currencyCode);
 
   const dateFormatter = new Intl.DateTimeFormat("de-DE", {
     day: "2-digit",
@@ -96,6 +97,9 @@ export default async function Page({ params }: PageProps) {
   const endDate = analytics.periodEnd
     ? dateFormatter.format(analytics.periodEnd)
     : "—";
+
+  const fmtCurrency = (value: number) =>
+    formatCurrency(value, currencyCode, locale);
 
   // --------------------------------------------------
   // Matrix helpers
@@ -193,9 +197,7 @@ export default async function Page({ params }: PageProps) {
                     <span className="text-muted-foreground">Avg Revenue:</span>{" "}
                     <span className="font-medium">
                       {analytics.avgOrderRevenue
-                        ? currencyFormatter.format(
-                            Number(analytics.avgOrderRevenue),
-                          )
+                        ? fmtCurrency(Number(analytics.avgOrderRevenue))
                         : "—"}
                     </span>
                   </div>
@@ -280,7 +282,7 @@ export default async function Page({ params }: PageProps) {
                 title={label}
                 items={itemsByCategory[key]}
                 locale={locale}
-                currency="IDR"
+                currency={currencyCode}
               />
             ))}
           </section>

@@ -20,6 +20,7 @@ model Branch {
   id        Int      @id @default(autoincrement())
   name      String
   slug      String   @unique
+  currencyCode String @default("IDR") @map("currency_code")
   createdAt DateTime @default(now()) @map("created_at")
 
   analytics  Analytics[]
@@ -150,5 +151,4 @@ model AnalyticsMenuItem {
 
   @@map("analytics_menu_items")
 }
-
 

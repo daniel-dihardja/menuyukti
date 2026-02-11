@@ -39,6 +39,7 @@ export default async function Page({ params }: PageProps) {
       id: true,
       name: true,
       slug: true,
+      currencyCode: true,
     },
   });
 
@@ -89,7 +90,11 @@ export default async function Page({ params }: PageProps) {
         <main className="mx-auto max-w-6xl p-4 space-y-3">
 
           {/* Fixed Cost Editor */}
-          <FixedCostForm branchId={branch.id} fixedCosts={fixedCosts} />
+          <FixedCostForm
+            branchId={branch.id}
+            fixedCosts={fixedCosts}
+            currencyCode={branch.currencyCode ?? "IDR"}
+          />
         </main>
       </div>
     </SidebarInset>

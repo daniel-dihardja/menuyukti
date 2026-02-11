@@ -38,12 +38,18 @@ export default async function Page({ params }: PageProps) {
     select: {
       sourceFile: true,
       branchId: true,
+      branch: {
+        select: {
+          currencyCode: true,
+        },
+      },
     },
   });
 
   if (!analytics) notFound();
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
+  const currencyCode = analytics.branch?.currencyCode ?? "IDR";
 
   const analyticsOptions = await prisma.analytics.findMany({
     where: { branchId: analytics.branchId },
@@ -103,6 +109,7 @@ export default async function Page({ params }: PageProps) {
               id: item.id,
               name: item.sourceFile ?? `Analytics #${item.id}`,
             }))}
+            currencyCode={currencyCode}
           />
         </main>
       </div>

@@ -33,12 +33,14 @@ type Props = {
   analyticsId: number;
   menuItems: MenuItem[];
   analyticsOptions: Array<{ id: number; name: string }>;
+  currencyCode: string;
 };
 
 export function UpdateCogsForm({
   analyticsId,
   menuItems,
   analyticsOptions,
+  currencyCode,
 }: Props) {
   const router = useRouter();
 
@@ -210,7 +212,7 @@ export function UpdateCogsForm({
 
               <div className="relative">
                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                  Rp
+                  {currencyCode}
                 </span>
 
                 <Input

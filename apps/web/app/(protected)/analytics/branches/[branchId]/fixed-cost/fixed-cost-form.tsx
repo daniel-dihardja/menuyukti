@@ -27,9 +27,10 @@ type FixedCost = {
 type Props = {
   branchId: number;
   fixedCosts: FixedCost[];
+  currencyCode: string;
 };
 
-export function FixedCostForm({ branchId, fixedCosts }: Props) {
+export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
   const [items, setItems] = useState<FixedCost[]>(fixedCosts);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -195,17 +196,23 @@ export function FixedCostForm({ branchId, fixedCosts }: Props) {
                 </TableCell>
 
                 <TableCell>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={item.amount}
-                    onChange={(e) =>
-                      updateItem(item.id, {
-                        amount: Number(e.target.value),
-                      })
-                    }
-                  />
+                  <div className="relative">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                      {currencyCode}
+                    </span>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.amount}
+                      onChange={(e) =>
+                        updateItem(item.id, {
+                          amount: Number(e.target.value),
+                        })
+                      }
+                      className="pl-10"
+                    />
+                  </div>
                 </TableCell>
 
                 <TableCell>
@@ -280,19 +287,25 @@ export function FixedCostForm({ branchId, fixedCosts }: Props) {
             }
           />
 
-          <Input
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="Amount"
-            value={newItem.amount}
-            onChange={(e) =>
-              setNewItem((prev) => ({
-                ...prev,
-                amount: e.target.value,
-              }))
-            }
-          />
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+              {currencyCode}
+            </span>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Amount"
+              value={newItem.amount}
+              onChange={(e) =>
+                setNewItem((prev) => ({
+                  ...prev,
+                  amount: e.target.value,
+                }))
+              }
+              className="pl-10"
+            />
+          </div>
 
           <Input
             placeholder="Category"

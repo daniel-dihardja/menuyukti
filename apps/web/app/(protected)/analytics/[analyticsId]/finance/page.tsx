@@ -8,6 +8,7 @@ import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
+import { formatCurrency, getCurrencyLocale } from "@/lib/currency";
 import {
   Table,
   TableBody,
@@ -41,6 +42,11 @@ export default async function Page({ params }: PageProps) {
     select: {
       sourceFile: true,
       branchId: true,
+      branch: {
+        select: {
+          currencyCode: true,
+        },
+      },
 
       // Period
       periodStart: true,
@@ -62,6 +68,7 @@ export default async function Page({ params }: PageProps) {
   if (!analytics) notFound();
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
+  const currencyCode = analytics.branch?.currencyCode ?? "IDR";
 
   // --------------------------------------------------
   // Fetch branch fixed costs (REAL)
@@ -95,13 +102,7 @@ export default async function Page({ params }: PageProps) {
   // --------------------------------------------------
   // Formatting helpers
   // --------------------------------------------------
-  const locale = "id-ID";
-
-  const currencyFormatter = new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  });
+  const locale = getCurrencyLocale(currencyCode);
 
   const dateFormatter = new Intl.DateTimeFormat("de-DE", {
     day: "2-digit",
@@ -109,7 +110,7 @@ export default async function Page({ params }: PageProps) {
     year: "numeric",
   });
 
-  const fmt = (value: number) => currencyFormatter.format(value);
+  const fmt = (value: number) => formatCurrency(value, currencyCode, locale);
 
   const startDate = analytics.periodStart
     ? dateFormatter.format(analytics.periodStart)
