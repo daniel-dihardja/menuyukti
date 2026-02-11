@@ -55,7 +55,6 @@ export function useUploadAnalytics(
       }
 
       const data = (await res.json()) as UploadResponse;
-      console.log("Upload response data:", data);
 
       setStatus("success");
       setMessage(`Uploaded: ${file.name}`);

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@workspace/ui/components/button";
 import {
   Upload,
@@ -203,17 +204,20 @@ export default function LandingPage() {
 
       <footer className="bg-card border-t border-border py-6">
         <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-center gap-6 text-center text-sm text-foreground/80">
-          <a href="#" className="hover:text-foreground transition-colors">
+          <Link href="/docs" className="hover:text-foreground transition-colors">
             Tentang Kami
-          </a>
+          </Link>
 
-          <a href="#" className="hover:text-foreground transition-colors">
+          <a
+            href="mailto:hello@menuyukti.com"
+            className="hover:text-foreground transition-colors"
+          >
             Kontak
           </a>
 
-          <a href="#" className="hover:text-foreground transition-colors">
+          <Link href="/docs" className="hover:text-foreground transition-colors">
             Kebijakan Privasi
-          </a>
+          </Link>
 
           <span className="text-foreground/60">© 2025 Menuyukti</span>
         </div>

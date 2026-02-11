@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
-import { MoreHorizontal, Trash, Settings } from "lucide-react";
+import { MoreHorizontal, Settings } from "lucide-react";
 import Link from "next/link";
 
 import { routes } from "@/lib/routes";
@@ -96,16 +96,6 @@ export function BranchesTable({
                       </Link>
                     </DropdownMenuItem>
 
-                    {/* Delete */}
-                    <DropdownMenuItem
-                      onClick={() => {
-                        // TODO: wire delete logic
-                        console.log("Delete branch", branch.id);
-                      }}
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>

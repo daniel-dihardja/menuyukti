@@ -42,8 +42,6 @@ export default async function Page({ params }: PageProps) {
     },
   });
 
-  console.log("branch:", branch);
-
   if (!branch) notFound();
 
   // --------------------------------------------------
