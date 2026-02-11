@@ -1,0 +1,44 @@
+[
+  {
+    "id": "audience",
+    "name": "Audience",
+    "description": "Identifies peak hours, top items, and weekday bias to shape your Instagram tone.",
+    "status": "ready",
+    "inputs": [
+      "matrix items",
+      "heatmaps",
+      "distribution"
+    ],
+    "outputs": [
+      "top_items",
+      "peak_hours",
+      "weekday_bias"
+    ]
+  },
+  {
+    "id": "scheduler",
+    "name": "Scheduler",
+    "description": "Builds a deterministic weekly posting plan based on promotion candidates.",
+    "status": "ready",
+    "inputs": [
+      "promotion candidates"
+    ],
+    "outputs": [
+      "weekly schedule"
+    ]
+  },
+  {
+    "id": "promotion",
+    "name": "Promotion",
+    "description": "Finds high-impact menu items to highlight and explains why they matter.",
+    "status": "draft",
+    "inputs": [
+      "matrix items",
+      "heatmaps",
+      "distribution"
+    ],
+    "outputs": [
+      "promotion candidates"
+    ]
+  }
+]

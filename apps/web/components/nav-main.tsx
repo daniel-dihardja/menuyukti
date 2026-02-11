@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, BookOpenText, ChevronRight, Store } from "lucide-react";
+import { BarChart3, BookOpenText, Bot, ChevronRight, Store } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -60,6 +60,12 @@ const NAV_ITEMS: NavItem[] = [
     //     href: routes.analytics.cogs,
     //   },
     // ],
+  },
+  {
+    key: "agents",
+    labelKey: "agents",
+    href: routes.agents.list,
+    icon: <Bot className="w-4 h-4" />,
   },
   {
     key: "docs",

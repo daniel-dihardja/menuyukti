@@ -18,9 +18,14 @@
     "analysis": "Analysis",
     "branches": "Branches",
     "sales": "Sales",
+    "agents": "Agents",
     "cogs": "COGS",
     "fixedCosts": "Fixed Costs",
     "docs": "Documentation"
+  },
+  "agents": {
+    "title": "Agents",
+    "description": "Marketing agents that transform sales data into actionable insights."
   },
   "news": {
     "title": "News"
