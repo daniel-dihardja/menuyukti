@@ -17,10 +17,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
-import { Check, Pencil, MoreHorizontal } from "lucide-react";
+import { Check, Loader2, Pencil, MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { routes } from "@/lib/routes";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Upload {
   id: number;
@@ -39,6 +39,7 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draftName, setDraftName] = useState("");
   const [savingId, setSavingId] = useState<number | null>(null);
+  const saveButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     setRows(uploads);
@@ -112,7 +113,14 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                           cancelEdit();
                         }
                       }}
+                      onBlur={(event) => {
+                        if (event.relatedTarget === saveButtonRef.current) {
+                          return;
+                        }
+                        cancelEdit();
+                      }}
                       className="h-8 max-w-xs"
+                      disabled={savingId === file.id}
                       autoFocus
                     />
                   ) : (
@@ -128,8 +136,13 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                       onClick={() => void saveName(file)}
                       disabled={savingId === file.id}
                       aria-label="Save analytics name"
+                      ref={saveButtonRef}
                     >
-                      <Check className="h-4 w-4" />
+                      {savingId === file.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )}
                     </Button>
                   ) : (
                     <Button
