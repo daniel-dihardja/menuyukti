@@ -10,15 +10,17 @@ import {
   TableRow,
 } from "@workspace/ui/components/table";
 import { Button } from "@workspace/ui/components/button";
+import { Input } from "@workspace/ui/components/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { Check, Pencil, MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { routes } from "@/lib/routes";
+import { useEffect, useState } from "react";
 
 interface Upload {
   id: number;
@@ -33,6 +35,53 @@ interface SalesTableProps {
 
 export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
   const t = useTranslations("analytics.sales.table");
+  const [rows, setRows] = useState<Upload[]>(uploads);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [draftName, setDraftName] = useState("");
+  const [savingId, setSavingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    setRows(uploads);
+  }, [uploads]);
+
+  const startEdit = (file: Upload) => {
+    setEditingId(file.id);
+    setDraftName(file.name);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setDraftName("");
+  };
+
+  const saveName = async (file: Upload) => {
+    const nextName = draftName.trim();
+    if (!nextName) return;
+
+    setSavingId(file.id);
+    try {
+      const res = await fetch(`/api/analytics/${file.id}/rename`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nextName }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to rename analytics");
+      }
+
+      setRows((prev) =>
+        prev.map((row) =>
+          row.id === file.id ? { ...row, name: nextName } : row,
+        ),
+      );
+      cancelEdit();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   return (
     <div className="border w-full rounded-md">
@@ -46,10 +95,56 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
         </TableHeader>
 
         <TableBody>
-          {uploads.map((file, index) => (
+          {rows.map((file, index) => (
             <TableRow key={file.id}>
               <TableCell>{index + 1}</TableCell>
-              <TableCell>{file.name}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  {editingId === file.id ? (
+                    <Input
+                      value={draftName}
+                      onChange={(event) => setDraftName(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          void saveName(file);
+                        }
+                        if (event.key === "Escape") {
+                          cancelEdit();
+                        }
+                      }}
+                      className="h-8 max-w-xs"
+                      autoFocus
+                    />
+                  ) : (
+                    <span>{file.name}</span>
+                  )}
+
+                  {editingId === file.id ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => void saveName(file)}
+                      disabled={savingId === file.id}
+                      aria-label="Save analytics name"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => startEdit(file)}
+                      aria-label="Edit analytics name"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
