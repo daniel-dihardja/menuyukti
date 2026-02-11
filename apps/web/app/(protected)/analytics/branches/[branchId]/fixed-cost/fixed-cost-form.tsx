@@ -311,7 +311,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
       <Card className="p-4">
         <h3 className="text-md font-semibold mb-3">Add Fixed Cost</h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <Label htmlFor="new-fixed-cost-name" className="sr-only">
             New fixed cost name
           </Label>
@@ -384,6 +384,9 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
             }
           />
 
+        </div>
+
+        <div className="mt-4 flex justify-end">
           <Button type="button" disabled={isSaving} onClick={createItem}>
             Add
           </Button>
