@@ -121,7 +121,7 @@ export function UpdateCogsForm({
               onValueChange={(val) => setImportId(val ? Number(val) : null)}
               disabled={loading || importing}
             >
-              <SelectTrigger id="import-analytics-select" className="w-[260px]">
+              <SelectTrigger id="import-analytics-select" className="w-full sm:w-[260px]">
                 <SelectValue placeholder={t("import.placeholder")} />
               </SelectTrigger>
               <SelectContent>
@@ -187,20 +187,22 @@ export function UpdateCogsForm({
             <div
               key={item.id}
               className="
-                grid grid-cols-[2.5rem_auto_8rem] items-center gap-2
-                rounded-md px-2 py-1
+                rounded-md px-2 py-2
                 transition-colors
                 focus-within:bg-muted
                 focus-within:ring-1 focus-within:ring-primary/40
+                sm:grid sm:grid-cols-[minmax(0,1fr)_8rem] sm:items-center sm:gap-2
               "
             >
-              <span className="text-sm text-muted-foreground tabular-nums">
-                {index + 1}.
-              </span>
+              <div className="mb-2 flex min-w-0 items-center gap-2 sm:mb-0">
+                <span className="text-sm text-muted-foreground tabular-nums">
+                  {index + 1}.
+                </span>
 
-              <Label htmlFor={`cogs-${item.id}`} className="truncate">
-                {item.menuName}
-              </Label>
+                <Label htmlFor={`cogs-${item.id}`} className="truncate">
+                  {item.menuName}
+                </Label>
+              </div>
 
               <div className="relative">
                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -221,7 +223,7 @@ export function UpdateCogsForm({
                   }
                   placeholder="0.00"
                   disabled={loading}
-                  className="pl-8 text-right tabular-nums"
+                  className="w-full pl-8 text-right tabular-nums"
                 />
               </div>
             </div>
@@ -236,7 +238,7 @@ export function UpdateCogsForm({
       </Card>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading} className="w-full sm:w-auto">
           {loading ? t("actions.saving") : t("actions.save")}
         </Button>
       </div>
