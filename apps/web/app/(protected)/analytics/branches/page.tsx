@@ -26,6 +26,12 @@ export default async function Page() {
     <AnalyticsPageShell title={t("title")} breadcrumbs={[{ label: t("title") }]}>
       <PageHeading title={t("title")} description={t("description")} />
 
+      <div className="flex justify-start">
+        <Button asChild>
+          <Link href={routes.analytics.branchesCreate}>{t("create")}</Link>
+        </Button>
+      </div>
+
       <BranchesTable
         branches={branches}
         indexLabel={t("table.index")}
@@ -33,12 +39,6 @@ export default async function Page() {
         actionLabel={t("table.action")}
         emptyLabel={t("table.empty")}
       />
-
-      <div className="flex justify-end">
-        <Button asChild>
-          <Link href={routes.analytics.branchesCreate}>{t("create")}</Link>
-        </Button>
-      </div>
     </AnalyticsPageShell>
   );
 }
