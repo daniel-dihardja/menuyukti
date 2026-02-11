@@ -45,7 +45,7 @@ export default function UploadExcelClient({
   }
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-start gap-2">
       <label htmlFor={fileInputId} className="sr-only">
         Upload analytics Excel file
       </label>
@@ -70,7 +70,7 @@ export default function UploadExcelClient({
         <p
           role="status"
           aria-live={status === "error" ? "assertive" : "polite"}
-          className={`text-sm ${
+          className={`text-left text-sm ${
             status === "success" ? "text-green-600" : "text-red-600"
           }`}
         >
