@@ -31,7 +31,8 @@ type PageProps = {
 };
 
 export default async function Page({ params }: PageProps) {
-  const t = await getTranslations("analytics.sales");
+  const tSales = await getTranslations("analytics.sales");
+  const tHeatmap = await getTranslations("analytics.heatmap");
 
   // --------------------------------------------------
   // Params
@@ -103,27 +104,30 @@ export default async function Page({ params }: PageProps) {
   // --------------------------------------------------
   return (
     <AnalyticsPageShell
-      title="Heatmaps"
+      title={tHeatmap("reportTitle")}
       breadcrumbs={[
-        { label: t("title"), href: routes.analytics.sales },
+        { label: tSales("title"), href: routes.analytics.sales },
         { label: analyticsName },
-        { label: "Heatmaps" },
+        { label: tHeatmap("breadcrumb") },
       ]}
     >
       <PageHeading
-        title="Menu Sales Heatmap"
-        description="Visualize sales volume by menu and time"
+        title={tHeatmap("heading")}
+        description={tHeatmap("description")}
       />
 
       <Tabs defaultValue="daily" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="daily">Daily</TabsTrigger>
-          <TabsTrigger value="weekly">Weekly</TabsTrigger>
+          <TabsTrigger value="daily">{tHeatmap("tabs.daily")}</TabsTrigger>
+          <TabsTrigger value="weekly">{tHeatmap("tabs.weekly")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="daily">
           <HeatmapMatrix
-            title={`Hourly Sales (${START_HOUR}:00 – ${END_HOUR}:00)`}
+            title={tHeatmap("dailyTitle", {
+              startHour: START_HOUR,
+              endHour: END_HOUR,
+            })}
             rows={daily.rows}
             columnLabels={daily.columnLabels}
             color="green"
@@ -132,7 +136,7 @@ export default async function Page({ params }: PageProps) {
 
         <TabsContent value="weekly">
           <HeatmapMatrix
-            title="Weekly Sales (Mon–Fri)"
+            title={tHeatmap("weeklyTitle")}
             rows={weekly.rows}
             columnLabels={weekly.columnLabels}
             color="green"

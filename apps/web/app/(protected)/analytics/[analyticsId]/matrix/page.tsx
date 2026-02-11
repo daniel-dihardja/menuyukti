@@ -40,7 +40,8 @@ type MatrixJson = {
 };
 
 export default async function Page({ params }: PageProps) {
-  const t = await getTranslations("analytics.sales");
+  const tSales = await getTranslations("analytics.sales");
+  const tMatrix = await getTranslations("analytics.matrix");
 
   // --------------------------------------------------
   // Params
@@ -83,20 +84,22 @@ export default async function Page({ params }: PageProps) {
   if (!matrix) {
     return (
       <AnalyticsPageShell
-        title="Menu Engineering Report"
+        title={tMatrix("reportTitle")}
         breadcrumbs={[
-          { label: t("title"), href: routes.analytics.sales },
+          { label: tSales("title"), href: routes.analytics.sales },
           { label: analyticsName },
-          { label: "Matrix" },
+          { label: tMatrix("breadcrumb") },
         ]}
       >
         <section className="border rounded-md p-6 space-y-3">
           <PageHeading
-            title="Menu Engineering Matrix"
-            description="Matrix data is not available yet for this analytics file. Please update COGS first to generate matrix results."
+            title={tMatrix("heading")}
+            description={tMatrix("empty.description")}
           />
           <Button asChild>
-            <Link href={routes.analytics.cogs(analyticsId)}>Go to COGS setup</Link>
+            <Link href={routes.analytics.cogs(analyticsId)}>
+              {tMatrix("empty.cta")}
+            </Link>
           </Button>
         </section>
       </AnalyticsPageShell>
@@ -152,35 +155,35 @@ export default async function Page({ params }: PageProps) {
   // --------------------------------------------------
   return (
     <AnalyticsPageShell
-      title="Menu Engineering Report"
+      title={tMatrix("reportTitle")}
       breadcrumbs={[
-        { label: t("title"), href: routes.analytics.sales },
+        { label: tSales("title"), href: routes.analytics.sales },
         { label: analyticsName },
-        { label: "Matrix" },
+        { label: tMatrix("breadcrumb") },
       ]}
     >
       <PageHeading
-        title="Menu Engineering Matrix"
-        description="Performance overview and optimization insights per menu item"
+        title={tMatrix("heading")}
+        description={tMatrix("description")}
       />
 
           {/* ---------------------------------------------
            * KPI OVERVIEW
            * --------------------------------------------- */}
           <section className="space-y-4">
-            <h2 className="text-xl font-semibold">Sales Overview</h2>
+            <h2 className="text-xl font-semibold">{tMatrix("overview.title")}</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Period */}
               <div className="border rounded-md p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">Period</p>
+                <p className="text-sm text-muted-foreground">{tMatrix("overview.period.title")}</p>
                 <div className="text-sm">
                   <div>
-                    <span className="text-muted-foreground">Start:</span>{" "}
+                    <span className="text-muted-foreground">{tMatrix("overview.period.start")}</span>{" "}
                     <span className="font-medium">{startDate}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">End:</span>{" "}
+                    <span className="text-muted-foreground">{tMatrix("overview.period.end")}</span>{" "}
                     <span className="font-medium">{endDate}</span>
                   </div>
                 </div>
@@ -188,16 +191,16 @@ export default async function Page({ params }: PageProps) {
 
               {/* Orders & Items */}
               <div className="border rounded-md p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">Orders & Items</p>
+                <p className="text-sm text-muted-foreground">{tMatrix("overview.ordersAndItems.title")}</p>
                 <div className="text-sm">
                   <div>
-                    <span className="text-muted-foreground">Orders:</span>{" "}
+                    <span className="text-muted-foreground">{tMatrix("overview.ordersAndItems.orders")}</span>{" "}
                     <span className="font-medium">
                       {analytics.totalOrders?.toLocaleString(locale) ?? "—"}
                     </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Items Sold:</span>{" "}
+                    <span className="text-muted-foreground">{tMatrix("overview.ordersAndItems.itemsSold")}</span>{" "}
                     <span className="font-medium">
                       {analytics.totalItemsSold?.toLocaleString(locale) ?? "—"}
                     </span>
@@ -207,10 +210,10 @@ export default async function Page({ params }: PageProps) {
 
               {/* Averages */}
               <div className="border rounded-md p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">Averages</p>
+                <p className="text-sm text-muted-foreground">{tMatrix("overview.averages.title")}</p>
                 <div className="text-sm">
                   <div>
-                    <span className="text-muted-foreground">Avg Revenue:</span>{" "}
+                    <span className="text-muted-foreground">{tMatrix("overview.averages.avgRevenue")}</span>{" "}
                     <span className="font-medium">
                       {analytics.avgOrderRevenue
                         ? fmtCurrency(Number(analytics.avgOrderRevenue))
@@ -218,7 +221,7 @@ export default async function Page({ params }: PageProps) {
                     </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Avg Items:</span>{" "}
+                    <span className="text-muted-foreground">{tMatrix("overview.averages.avgItems")}</span>{" "}
                     <span className="font-medium">
                       {analytics.avgOrderItems?.toFixed(2) ?? "—"}
                     </span>
@@ -233,15 +236,15 @@ export default async function Page({ params }: PageProps) {
            * --------------------------------------------- */}
           <section className="space-y-4">
             <h2 className="text-xl font-semibold">
-              Menu Performance Distribution
+              {tMatrix("distribution.title")}
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { key: "star", label: "Stars" },
-                { key: "plow_horse", label: "Plow Horses" },
-                { key: "puzzle", label: "Puzzles" },
-                { key: "low_end", label: "Low End" },
+                { key: "star", label: tMatrix("categories.star") },
+                { key: "plow_horse", label: tMatrix("categories.plow_horse") },
+                { key: "puzzle", label: tMatrix("categories.puzzle") },
+                { key: "low_end", label: tMatrix("categories.low_end") },
               ].map(({ key, label }) => {
                 const item = byCategory(key as any);
                 return (
@@ -249,13 +252,13 @@ export default async function Page({ params }: PageProps) {
                     <p className="text-sm text-muted-foreground">{label}</p>
                     <div className="text-sm">
                       <div>
-                        <span className="text-muted-foreground">Items:</span>{" "}
+                        <span className="text-muted-foreground">{tMatrix("distribution.items")}</span>{" "}
                         <span className="font-medium">
                           {item?.count ?? "—"}
                         </span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Share:</span>{" "}
+                        <span className="text-muted-foreground">{tMatrix("distribution.share")}</span>{" "}
                         <span className="font-medium">
                           {item
                             ? `${(item.percentage * 100).toFixed(1)}%`
@@ -263,7 +266,7 @@ export default async function Page({ params }: PageProps) {
                         </span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Margin:</span>{" "}
+                        <span className="text-muted-foreground">{tMatrix("distribution.margin")}</span>{" "}
                         <span className="font-medium">
                           {item
                             ? `${(
@@ -283,14 +286,14 @@ export default async function Page({ params }: PageProps) {
            * MATRIX DETAILS
            * --------------------------------------------- */}
           <section className="space-y-6">
-            <h2 className="text-xl font-semibold">Menu Item Analysis</h2>
+            <h2 className="text-xl font-semibold">{tMatrix("analysis.title")}</h2>
 
             {(
               [
-                ["star", "Stars"],
-                ["plow_horse", "Plow Horses"],
-                ["puzzle", "Puzzles"],
-                ["low_end", "Low End"],
+                ["star", tMatrix("categories.star")],
+                ["plow_horse", tMatrix("categories.plow_horse")],
+                ["puzzle", tMatrix("categories.puzzle")],
+                ["low_end", tMatrix("categories.low_end")],
               ] as const
             ).map(([key, label]) => (
               <MatrixCategoryTable

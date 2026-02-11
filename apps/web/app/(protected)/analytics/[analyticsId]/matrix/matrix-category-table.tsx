@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Badge } from "@workspace/ui/components/badge";
 import {
   Table,
@@ -43,6 +44,7 @@ type Props = {
 };
 
 export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
+  const t = useTranslations("analytics.matrix.table");
   const [sortKey, setSortKey] = useState<SortKey>("quantity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
@@ -118,36 +120,36 @@ export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead className={thLeft} onClick={() => toggleSort("menu")}>
-                Menu <SortIndicator col="menu" />
+                {t("menu")} <SortIndicator col="menu" />
               </TableHead>
 
               <TableHead className={th} onClick={() => toggleSort("quantity")}>
-                Qty <SortIndicator col="quantity" />
+                {t("qty")} <SortIndicator col="quantity" />
               </TableHead>
 
               <TableHead
                 className={th}
                 onClick={() => toggleSort("total_revenue")}
               >
-                Revenue <SortIndicator col="total_revenue" />
+                {t("revenue")} <SortIndicator col="total_revenue" />
               </TableHead>
 
               <TableHead className={th} onClick={() => toggleSort("cogs")}>
-                COGS <SortIndicator col="cogs" />
+                {t("cogs")} <SortIndicator col="cogs" />
               </TableHead>
 
               <TableHead
                 className={th}
                 onClick={() => toggleSort("contribution_margin")}
               >
-                Margin <SortIndicator col="contribution_margin" />
+                {t("margin")} <SortIndicator col="contribution_margin" />
               </TableHead>
 
               <TableHead
                 className={th}
                 onClick={() => toggleSort("contribution_margin_percentage")}
               >
-                % <SortIndicator col="contribution_margin_percentage" />
+                {t("percentage")} <SortIndicator col="contribution_margin_percentage" />
               </TableHead>
 
               {hasActions && (
@@ -155,7 +157,7 @@ export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
                   className="cursor-pointer text-center"
                   onClick={() => toggleSort("action")}
                 >
-                  Action <SortIndicator col="action" />
+                  {t("action")} <SortIndicator col="action" />
                 </TableHead>
               )}
             </TableRow>
@@ -190,7 +192,7 @@ export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
                   <TableCell className="text-center">
                     {item.action ? (
                       <Badge variant={actionVariant(item.action)}>
-                        {item.action.toUpperCase()}
+                        {t(`actions.${item.action}`)}
                       </Badge>
                     ) : (
                       "—"

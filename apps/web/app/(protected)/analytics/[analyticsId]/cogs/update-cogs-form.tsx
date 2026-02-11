@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
@@ -43,6 +44,7 @@ export function UpdateCogsForm({
   currencyCode,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations("analytics.cogsForm");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,12 +94,12 @@ export function UpdateCogsForm({
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message ?? "Failed to update COGS");
+        throw new Error(data.message ?? t("errors.updateFailed"));
       }
 
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : t("errors.unknown"));
     } finally {
       setLoading(false);
     }
@@ -106,17 +108,16 @@ export function UpdateCogsForm({
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
       <section className="space-y-1">
-        <h1 className="text-2xl font-semibold">COGS Editor</h1>
+        <h1 className="text-2xl font-semibold">{t("heading")}</h1>
         <p className="text-sm text-muted-foreground">
-          Update cost of goods sold per menu item. You can import COGS values
-          from another analytics file in the same branch.
+          {t("description")}
         </p>
       </section>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="space-y-2">
           <Label htmlFor="import-analytics-select">
-            Import COGS from analytics
+            {t("import.label")}
           </Label>
           <Select
             value={importId !== null ? String(importId) : undefined}
@@ -127,8 +128,8 @@ export function UpdateCogsForm({
               <SelectValue
                 placeholder={
                   options.length === 0
-                    ? "No other analytics available"
-                    : "Select analytics"
+                    ? t("import.noOptions")
+                    : t("import.placeholder")
                 }
               />
             </SelectTrigger>
@@ -151,10 +152,10 @@ export function UpdateCogsForm({
             setImporting(true);
             setError(null);
             try {
-              const res = await fetch(`/api/analytics/${importId}/cogs`);
-              if (!res.ok) {
-                throw new Error("Failed to load COGS from analytics");
-              }
+                const res = await fetch(`/api/analytics/${importId}/cogs`);
+                if (!res.ok) {
+                  throw new Error(t("errors.loadImportFailed"));
+                }
               const data = (await res.json()) as {
                 items: Array<{ menuName: string; cogs: number | null }>;
               };
@@ -174,19 +175,19 @@ export function UpdateCogsForm({
                 return next;
               });
             } catch (err) {
-              setError(err instanceof Error ? err.message : "Unknown error");
+              setError(err instanceof Error ? err.message : t("errors.unknown"));
             } finally {
               setImporting(false);
             }
           }}
         >
-          {importing ? "Importing..." : "Import"}
+          {importing ? t("import.importing") : t("import.action")}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Edit COGS per menu item</CardTitle>
+          <CardTitle>{t("table.title")}</CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -244,7 +245,7 @@ export function UpdateCogsForm({
 
       <div className="flex justify-end">
         <Button type="submit" disabled={loading}>
-          {loading ? "Saving..." : "Save COGS"}
+          {loading ? t("actions.saving") : t("actions.save")}
         </Button>
       </div>
     </form>

@@ -23,7 +23,8 @@ type PageProps = {
 };
 
 export default async function Page({ params }: PageProps) {
-  const t = await getTranslations("analytics.sales");
+  const tSales = await getTranslations("analytics.sales");
+  const tFinance = await getTranslations("analytics.finance");
 
   // --------------------------------------------------
   // Params
@@ -125,11 +126,11 @@ export default async function Page({ params }: PageProps) {
   // --------------------------------------------------
   return (
     <AnalyticsPageShell
-      title="Finance Report"
+      title={tFinance("reportTitle")}
       breadcrumbs={[
-        { label: t("title"), href: routes.analytics.sales },
+        { label: tSales("title"), href: routes.analytics.sales },
         { label: analyticsName },
-        { label: "Finance" },
+        { label: tFinance("breadcrumb") },
       ]}
       triggerWrapperClassName="no-print"
       mainClassName="printable-area"
@@ -163,27 +164,27 @@ export default async function Page({ params }: PageProps) {
       }
     >
       <PageHeading
-        title="Finance Summary"
-        description="Profit calculation based on analytics snapshot and branch fixed costs"
+        title={tFinance("heading")}
+        description={tFinance("description")}
       />
 
           {/* ---------------------------------------------
            * KPI OVERVIEW (copied semantics from Matrix)
            * --------------------------------------------- */}
           <section className="space-y-4">
-            <h2 className="text-xl font-semibold">Period & Sales Overview</h2>
+            <h2 className="text-xl font-semibold">{tFinance("overview.title")}</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Period */}
               <div className="border rounded-md p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">Period</p>
+                <p className="text-sm text-muted-foreground">{tFinance("overview.period.title")}</p>
                 <div className="text-sm">
                   <div>
-                    <span className="text-muted-foreground">Start:</span>{" "}
+                    <span className="text-muted-foreground">{tFinance("overview.period.start")}</span>{" "}
                     <span className="font-medium">{startDate}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">End:</span>{" "}
+                    <span className="text-muted-foreground">{tFinance("overview.period.end")}</span>{" "}
                     <span className="font-medium">{endDate}</span>
                   </div>
                 </div>
@@ -191,10 +192,10 @@ export default async function Page({ params }: PageProps) {
 
               {/* Orders */}
               <div className="border rounded-md p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">Orders</p>
+                <p className="text-sm text-muted-foreground">{tFinance("overview.orders.title")}</p>
                 <div className="text-sm">
                   <div>
-                    <span className="text-muted-foreground">Total:</span>{" "}
+                    <span className="text-muted-foreground">{tFinance("overview.orders.total")}</span>{" "}
                     <span className="font-medium">
                       {analytics.totalOrders?.toLocaleString(locale) ?? "—"}
                     </span>
@@ -204,10 +205,10 @@ export default async function Page({ params }: PageProps) {
 
               {/* Items Sold */}
               <div className="border rounded-md p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">Items Sold</p>
+                <p className="text-sm text-muted-foreground">{tFinance("overview.itemsSold.title")}</p>
                 <div className="text-sm">
                   <div>
-                    <span className="text-muted-foreground">Total:</span>{" "}
+                    <span className="text-muted-foreground">{tFinance("overview.itemsSold.total")}</span>{" "}
                     <span className="font-medium">
                       {analytics.totalItemsSold?.toLocaleString(locale) ?? "—"}
                     </span>
@@ -218,7 +219,7 @@ export default async function Page({ params }: PageProps) {
               {/* Avg Revenue / Order */}
               <div className="border rounded-md p-4 space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  Avg Revenue / Order
+                  {tFinance("overview.avgRevenuePerOrder")}
                 </p>
                 <div className="text-sm">
                   <span className="font-medium">
@@ -232,7 +233,7 @@ export default async function Page({ params }: PageProps) {
               {/* Avg Items / Order */}
               <div className="border rounded-md p-4 space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  Avg Items / Order
+                  {tFinance("overview.avgItemsPerOrder")}
                 </p>
                 <div className="text-sm">
                   <span className="font-medium">
@@ -247,34 +248,34 @@ export default async function Page({ params }: PageProps) {
            * PROFIT CALCULATION TABLE
            * --------------------------------------------- */}
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold">Profit Calculation</h2>
+            <h2 className="text-lg font-semibold">{tFinance("profit.title")}</h2>
 
             <div className="overflow-hidden rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Metric</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>{tFinance("profit.table.metric")}</TableHead>
+                    <TableHead className="text-right">{tFinance("profit.table.amount")}</TableHead>
                   </TableRow>
                 </TableHeader>
 
                 <TableBody>
                   <TableRow>
-                    <TableCell>Total Revenue</TableCell>
+                    <TableCell>{tFinance("profit.table.totalRevenue")}</TableCell>
                     <TableCell className="text-right">
                       {fmt(totalRevenue)}
                     </TableCell>
                   </TableRow>
 
                   <TableRow>
-                    <TableCell>Total COGS</TableCell>
+                    <TableCell>{tFinance("profit.table.totalCogs")}</TableCell>
                     <TableCell className="text-right">
                       {fmt(totalCogs)}
                     </TableCell>
                   </TableRow>
 
                   <TableRow>
-                    <TableCell>Total Profit</TableCell>
+                    <TableCell>{tFinance("profit.table.totalProfit")}</TableCell>
                     <TableCell className="text-right">
                       {fmt(totalProfit)}
                     </TableCell>
@@ -290,7 +291,7 @@ export default async function Page({ params }: PageProps) {
                   ))}
 
                   <TableRow className="font-semibold">
-                    <TableCell>Net Profit</TableCell>
+                    <TableCell>{tFinance("profit.table.netProfit")}</TableCell>
                     <TableCell className="text-right">
                       {fmt(netProfit)}
                     </TableCell>

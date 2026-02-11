@@ -88,6 +88,134 @@
       "create": "Create New COGS",
       "edit": "Edit COGS",
       "delete": "Delete"
+    },
+    "cogsForm": {
+      "heading": "COGS Editor",
+      "description": "Update cost of goods sold per menu item. You can import COGS values from another analytics file in the same branch.",
+      "import": {
+        "label": "Import COGS from analytics",
+        "placeholder": "Select analytics",
+        "noOptions": "No other analytics available",
+        "action": "Import",
+        "importing": "Importing..."
+      },
+      "table": {
+        "title": "Edit COGS per menu item"
+      },
+      "actions": {
+        "save": "Save COGS",
+        "saving": "Saving..."
+      },
+      "errors": {
+        "updateFailed": "Failed to update COGS",
+        "loadImportFailed": "Failed to load COGS from analytics",
+        "unknown": "Unknown error"
+      }
+    },
+    "heatmap": {
+      "reportTitle": "Heatmaps",
+      "breadcrumb": "Heatmaps",
+      "heading": "Menu Sales Heatmap",
+      "description": "Visualize sales volume by menu and time",
+      "tabs": {
+        "daily": "Daily",
+        "weekly": "Weekly"
+      },
+      "dailyTitle": "Hourly Sales ({startHour}:00 – {endHour}:00)",
+      "weeklyTitle": "Weekly Sales (Mon–Fri)"
+    },
+    "finance": {
+      "reportTitle": "Finance Report",
+      "breadcrumb": "Finance",
+      "heading": "Finance Summary",
+      "description": "Profit calculation based on analytics snapshot and branch fixed costs",
+      "overview": {
+        "title": "Period & Sales Overview",
+        "period": {
+          "title": "Period",
+          "start": "Start:",
+          "end": "End:"
+        },
+        "orders": {
+          "title": "Orders",
+          "total": "Total:"
+        },
+        "itemsSold": {
+          "title": "Items Sold",
+          "total": "Total:"
+        },
+        "avgRevenuePerOrder": "Avg Revenue / Order",
+        "avgItemsPerOrder": "Avg Items / Order"
+      },
+      "profit": {
+        "title": "Profit Calculation",
+        "table": {
+          "metric": "Metric",
+          "amount": "Amount",
+          "totalRevenue": "Total Revenue",
+          "totalCogs": "Total COGS",
+          "totalProfit": "Total Profit",
+          "netProfit": "Net Profit"
+        }
+      }
+    },
+    "matrix": {
+      "reportTitle": "Menu Engineering Report",
+      "breadcrumb": "Matrix",
+      "heading": "Menu Engineering Matrix",
+      "description": "Performance overview and optimization insights per menu item",
+      "empty": {
+        "description": "Matrix data is not available yet for this analytics file. Please update COGS first to generate matrix results.",
+        "cta": "Go to COGS setup"
+      },
+      "overview": {
+        "title": "Sales Overview",
+        "period": {
+          "title": "Period",
+          "start": "Start:",
+          "end": "End:"
+        },
+        "ordersAndItems": {
+          "title": "Orders & Items",
+          "orders": "Orders:",
+          "itemsSold": "Items Sold:"
+        },
+        "averages": {
+          "title": "Averages",
+          "avgRevenue": "Avg Revenue:",
+          "avgItems": "Avg Items:"
+        }
+      },
+      "distribution": {
+        "title": "Menu Performance Distribution",
+        "items": "Items:",
+        "share": "Share:",
+        "margin": "Margin:"
+      },
+      "analysis": {
+        "title": "Menu Item Analysis"
+      },
+      "categories": {
+        "star": "Stars",
+        "plow_horse": "Plow Horses",
+        "puzzle": "Puzzles",
+        "low_end": "Low End"
+      },
+      "table": {
+        "menu": "Menu",
+        "qty": "Qty",
+        "revenue": "Revenue",
+        "cogs": "COGS",
+        "margin": "Margin",
+        "percentage": "%",
+        "action": "Action",
+        "actions": {
+          "remove": "REMOVE",
+          "reprice": "REPRICE",
+          "promote": "PROMOTE",
+          "keep": "KEEP"
+        }
+      }
     }
   },
   "branches": {
