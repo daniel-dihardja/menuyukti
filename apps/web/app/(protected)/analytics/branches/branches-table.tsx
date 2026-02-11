@@ -23,7 +23,6 @@ import { routes } from "@/lib/routes";
 interface Branch {
   id: number;
   name: string;
-  slug: string;
 }
 
 interface BranchesTableProps {
@@ -48,7 +47,6 @@ export function BranchesTable({
           <TableRow>
             <TableHead className="w-[60px]">{indexLabel}</TableHead>
             <TableHead>{branchNameLabel}</TableHead>
-            <TableHead>Slug</TableHead>
             <TableHead className="w-[60px] text-right">{actionLabel}</TableHead>
           </TableRow>
         </TableHeader>
@@ -57,7 +55,7 @@ export function BranchesTable({
           {branches.length === 0 && (
             <TableRow>
               <TableCell
-                colSpan={4}
+                colSpan={3}
                 className="text-center text-muted-foreground"
               >
                 {emptyLabel}
@@ -69,9 +67,6 @@ export function BranchesTable({
             <TableRow key={branch.id}>
               <TableCell>{index + 1}</TableCell>
               <TableCell>{branch.name}</TableCell>
-              <TableCell className="text-muted-foreground">
-                {branch.slug}
-              </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

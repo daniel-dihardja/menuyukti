@@ -18,7 +18,6 @@ export default async function Page() {
     select: {
       id: true,
       name: true,
-      slug: true,
     },
   });
 
