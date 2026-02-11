@@ -34,6 +34,7 @@
     "branches": {
       "title": "Branch List",
       "description": "Manage your branch locations and configure branch-level settings before uploading sales reports.",
+      "createDescription": "Create a new branch to organize analytics, fixed costs, and sales reports by location.",
       "table": {
         "index": "#",
         "branchName": "Branch Name",
@@ -47,6 +48,7 @@
     },
     "sales": {
       "title": "Sales Reports",
+      "description": "Upload and manage sales report snapshots for each branch to power analytics features.",
       "selectBranch": "Please select a branch to view sales reports.",
       "loading": "Loading sales reports…",
       "table": {

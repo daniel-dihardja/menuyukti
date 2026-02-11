@@ -22,10 +22,10 @@ export default async function Page() {
         />
 
         <main className="mx-auto max-w-6xl p-4 space-y-6">
-          <div className="space-y-2">
+          <header className="space-y-1">
             <h1 className="text-2xl font-semibold">{t("title")}</h1>
             <p className="text-sm text-muted-foreground">{t("description")}</p>
-          </div>
+          </header>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {agents.map((agent) => (

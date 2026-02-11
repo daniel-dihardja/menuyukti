@@ -1,15 +1,15 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-import { SidebarInset } from "@workspace/ui/components/sidebar";
 import { Button } from "@workspace/ui/components/button";
 import { getTranslations } from "next-intl/server";
-import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
 import { formatCurrency, getCurrencyLocale } from "@/lib/currency";
+import { AnalyticsPageShell } from "@/components/analytics-page-shell";
+import { PageHeading } from "@/components/page-heading";
 
 import { MatrixCategoryTable } from "./matrix-category-table";
 
@@ -82,33 +82,24 @@ export default async function Page({ params }: PageProps) {
 
   if (!matrix) {
     return (
-      <SidebarInset>
-        <div className="w-full">
-          <SidebarTriggerClient
-            title="Menu Engineering Report"
-            breadcrumbs={[
-              { label: t("title"), href: routes.analytics.sales },
-              { label: analyticsName },
-              { label: "Matrix" },
-            ]}
+      <AnalyticsPageShell
+        title="Menu Engineering Report"
+        breadcrumbs={[
+          { label: t("title"), href: routes.analytics.sales },
+          { label: analyticsName },
+          { label: "Matrix" },
+        ]}
+      >
+        <section className="border rounded-md p-6 space-y-3">
+          <PageHeading
+            title="Menu Engineering Matrix"
+            description="Matrix data is not available yet for this analytics file. Please update COGS first to generate matrix results."
           />
-
-          <main className="p-4 max-w-3xl mx-auto">
-            <section className="border rounded-md p-6 space-y-3">
-              <h1 className="text-2xl font-semibold">Menu Engineering Matrix</h1>
-              <p className="text-sm text-muted-foreground">
-                Matrix data is not available yet for this analytics file.
-                Please update COGS first to generate matrix results.
-              </p>
-              <Button asChild>
-                <Link href={routes.analytics.cogs(analyticsId)}>
-                  Go to COGS setup
-                </Link>
-              </Button>
-            </section>
-          </main>
-        </div>
-      </SidebarInset>
+          <Button asChild>
+            <Link href={routes.analytics.cogs(analyticsId)}>Go to COGS setup</Link>
+          </Button>
+        </section>
+      </AnalyticsPageShell>
     );
   }
 
@@ -160,26 +151,18 @@ export default async function Page({ params }: PageProps) {
   // UI
   // --------------------------------------------------
   return (
-    <SidebarInset>
-      <div className="w-full">
-        <SidebarTriggerClient
-          title="Menu Engineering Report"
-          breadcrumbs={[
-            { label: t("title"), href: routes.analytics.sales },
-            { label: analyticsName },
-            { label: "Matrix" },
-          ]}
-        />
-
-        <main className="p-4 space-y-12 max-w-6xl mx-auto">
-
-          {/* Page headline */}
-          <header className="space-y-1">
-            <h1 className="text-2xl font-semibold">Menu Engineering Matrix</h1>
-            <p className="text-sm text-muted-foreground">
-              Performance overview and optimization insights per menu item
-            </p>
-          </header>
+    <AnalyticsPageShell
+      title="Menu Engineering Report"
+      breadcrumbs={[
+        { label: t("title"), href: routes.analytics.sales },
+        { label: analyticsName },
+        { label: "Matrix" },
+      ]}
+    >
+      <PageHeading
+        title="Menu Engineering Matrix"
+        description="Performance overview and optimization insights per menu item"
+      />
 
           {/* ---------------------------------------------
            * KPI OVERVIEW
@@ -319,8 +302,6 @@ export default async function Page({ params }: PageProps) {
               />
             ))}
           </section>
-        </main>
-      </div>
-    </SidebarInset>
+    </AnalyticsPageShell>
   );
 }

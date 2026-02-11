@@ -48,13 +48,13 @@ export default async function Page({ params }: PageProps) {
         />
 
         <main className="mx-auto max-w-4xl p-4 space-y-6">
-          <div className="space-y-2">
+          <header className="space-y-1">
             <Badge variant="secondary" className="w-fit capitalize">
               {agent.status}
             </Badge>
             <h1 className="text-2xl font-semibold">{agent.name}</h1>
             <p className="text-sm text-muted-foreground">{agent.description}</p>
-          </div>
+          </header>
 
           <AgentFilters branches={branches} />
 

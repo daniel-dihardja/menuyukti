@@ -1,13 +1,12 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-import { SidebarInset } from "@workspace/ui/components/sidebar";
 import { getTranslations } from "next-intl/server";
-import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
-import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
+import { AnalyticsPageShell } from "@/components/analytics-page-shell";
+import { PageHeading } from "@/components/page-heading";
 
 import {
   Tabs,
@@ -103,58 +102,43 @@ export default async function Page({ params }: PageProps) {
   // UI
   // --------------------------------------------------
   return (
-    <SidebarInset>
-      <div className="w-full">
-        <SidebarTriggerClient
-          title="Heatmaps"
-          breadcrumbs={[
-            { label: t("title"), href: routes.analytics.sales },
-            { label: analyticsName },
-            { label: "Heatmaps" },
-          ]}
-        />
+    <AnalyticsPageShell
+      title="Heatmaps"
+      breadcrumbs={[
+        { label: t("title"), href: routes.analytics.sales },
+        { label: analyticsName },
+        { label: "Heatmaps" },
+      ]}
+    >
+      <PageHeading
+        title="Menu Sales Heatmap"
+        description="Visualize sales volume by menu and time"
+      />
 
-        <main className="p-4 max-w-7xl mx-auto space-y-8">
+      <Tabs defaultValue="daily" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="daily">Daily</TabsTrigger>
+          <TabsTrigger value="weekly">Weekly</TabsTrigger>
+        </TabsList>
 
-          {/* Page headline */}
-          <header className="space-y-1">
-            <h1 className="text-2xl font-semibold">Menu Sales Heatmap</h1>
-            <p className="text-sm text-muted-foreground">
-              Visualize sales volume by menu and time
-            </p>
-          </header>
+        <TabsContent value="daily">
+          <HeatmapMatrix
+            title={`Hourly Sales (${START_HOUR}:00 – ${END_HOUR}:00)`}
+            rows={daily.rows}
+            columnLabels={daily.columnLabels}
+            color="green"
+          />
+        </TabsContent>
 
-          {/* ---------------------------------------------
-           * HEATMAP TABS
-           * --------------------------------------------- */}
-          <Tabs defaultValue="daily" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="daily">Daily</TabsTrigger>
-              <TabsTrigger value="weekly">Weekly</TabsTrigger>
-            </TabsList>
-
-            {/* DAILY */}
-            <TabsContent value="daily">
-              <HeatmapMatrix
-                title={`Hourly Sales (${START_HOUR}:00 – ${END_HOUR}:00)`}
-                rows={daily.rows}
-                columnLabels={daily.columnLabels}
-                color="green"
-              />
-            </TabsContent>
-
-            {/* WEEKLY */}
-            <TabsContent value="weekly">
-              <HeatmapMatrix
-                title="Weekly Sales (Mon–Fri)"
-                rows={weekly.rows}
-                columnLabels={weekly.columnLabels}
-                color="green"
-              />
-            </TabsContent>
-          </Tabs>
-        </main>
-      </div>
-    </SidebarInset>
+        <TabsContent value="weekly">
+          <HeatmapMatrix
+            title="Weekly Sales (Mon–Fri)"
+            rows={weekly.rows}
+            columnLabels={weekly.columnLabels}
+            color="green"
+          />
+        </TabsContent>
+      </Tabs>
+    </AnalyticsPageShell>
   );
 }

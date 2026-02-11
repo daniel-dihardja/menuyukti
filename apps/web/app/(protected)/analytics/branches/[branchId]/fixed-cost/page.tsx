@@ -1,14 +1,13 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-import { SidebarInset } from "@workspace/ui/components/sidebar";
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
+import { AnalyticsPageShell } from "@/components/analytics-page-shell";
+import { PageHeading } from "@/components/page-heading";
 
 import { FixedCostForm } from "./fixed-cost-form";
 
@@ -76,27 +75,21 @@ export default async function Page({ params }: PageProps) {
   // UI
   // --------------------------------------------------
   return (
-    <SidebarInset>
-      <div className="w-full">
-        <SidebarTriggerClient
-          title={t("title")}
-          breadcrumbs={[
-            { label: t("breadcrumbs.branches"), href: routes.analytics.branches },
-            { label: branch.name },
-            { label: t("breadcrumbs.fixedCosts") },
-          ]}
-        />
+    <AnalyticsPageShell
+      title={t("title")}
+      breadcrumbs={[
+        { label: t("breadcrumbs.branches"), href: routes.analytics.branches },
+        { label: branch.name },
+        { label: t("breadcrumbs.fixedCosts") },
+      ]}
+    >
+      <PageHeading title={t("title")} description={t("description")} />
 
-        <main className="mx-auto max-w-6xl p-4 space-y-3">
-
-          {/* Fixed Cost Editor */}
-          <FixedCostForm
-            branchId={branch.id}
-            fixedCosts={fixedCosts}
-            currencyCode={branch.currencyCode ?? "IDR"}
-          />
-        </main>
-      </div>
-    </SidebarInset>
+      <FixedCostForm
+        branchId={branch.id}
+        fixedCosts={fixedCosts}
+        currencyCode={branch.currencyCode ?? "IDR"}
+      />
+    </AnalyticsPageShell>
   );
 }

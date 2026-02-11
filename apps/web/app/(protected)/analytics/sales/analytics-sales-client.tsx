@@ -54,17 +54,7 @@ export function AnalyticsSalesClient({ branches }: Props) {
 
   return (
     <>
-      <header className="space-y-3">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Turn Sales Reports into Marketing Insights
-          </h1>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            Upload your restaurant sales data and get AI-powered insights on
-            menu performance, customer behavior, and growth opportunities.
-          </p>
-        </div>
-
+      <div>
         <UploadExcelClient
           disabled={!branchId}
           uploading={uploading}
@@ -73,7 +63,7 @@ export function AnalyticsSalesClient({ branches }: Props) {
           pos={pos}
           onFileSelected={uploadFile}
         />
-      </header>
+      </div>
 
       {/* ✅ No value / onChange anymore */}
       <BranchSelect branches={branches} />

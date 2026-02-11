@@ -1,14 +1,14 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-import { SidebarInset } from "@workspace/ui/components/sidebar";
 import { getTranslations } from "next-intl/server";
-import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
 import { formatCurrency, getCurrencyLocale } from "@/lib/currency";
+import { AnalyticsPageShell } from "@/components/analytics-page-shell";
+import { PageHeading } from "@/components/page-heading";
 import {
   Table,
   TableBody,
@@ -124,63 +124,48 @@ export default async function Page({ params }: PageProps) {
   // UI
   // --------------------------------------------------
   return (
-    <SidebarInset>
-      {/* --------------------------------------------------
-          Print CSS (reliable isolation)
-         -------------------------------------------------- */}
-      <style>{`
-        @media print {
-          .no-print {
-            display: none !important;
+    <AnalyticsPageShell
+      title="Finance Report"
+      breadcrumbs={[
+        { label: t("title"), href: routes.analytics.sales },
+        { label: analyticsName },
+        { label: "Finance" },
+      ]}
+      triggerWrapperClassName="no-print"
+      mainClassName="printable-area"
+      beforeContent={
+        <style>{`
+          @media print {
+            .no-print {
+              display: none !important;
+            }
+
+            .printable-area {
+              display: block !important;
+            }
+
+            body {
+              margin: 0;
+              font-size: 12pt;
+              line-height: 1.4;
+            }
+
+            table {
+              border-collapse: collapse;
+              page-break-inside: avoid;
+            }
+
+            tr {
+              page-break-inside: avoid;
+            }
           }
-
-          .printable-area {
-            display: block !important;
-          }
-
-          body {
-            margin: 0;
-            font-size: 12pt;
-            line-height: 1.4;
-          }
-
-          table {
-            border-collapse: collapse;
-            page-break-inside: avoid;
-          }
-
-          tr {
-            page-break-inside: avoid;
-          }
-        }
-      `}</style>
-
-      <div className="w-full">
-        {/* Sidebar + trigger hidden in print */}
-        <div className="no-print">
-          <SidebarTriggerClient
-            title="Finance Report"
-            breadcrumbs={[
-              { label: t("title"), href: routes.analytics.sales },
-              { label: analyticsName },
-              { label: "Finance" },
-            ]}
-          />
-        </div>
-
-        {/* --------------------------------------------------
-            Only this block prints
-           -------------------------------------------------- */}
-        <main className="p-4 space-y-10 max-w-6xl mx-auto printable-area">
-
-          {/* Page headline */}
-          <header className="space-y-1">
-            <h1 className="text-2xl font-semibold">Finance Summary</h1>
-            <p className="text-sm text-muted-foreground">
-              Profit calculation based on analytics snapshot and branch fixed
-              costs
-            </p>
-          </header>
+        `}</style>
+      }
+    >
+      <PageHeading
+        title="Finance Summary"
+        description="Profit calculation based on analytics snapshot and branch fixed costs"
+      />
 
           {/* ---------------------------------------------
            * KPI OVERVIEW (copied semantics from Matrix)
@@ -314,8 +299,6 @@ export default async function Page({ params }: PageProps) {
               </Table>
             </div>
           </section>
-        </main>
-      </div>
-    </SidebarInset>
+    </AnalyticsPageShell>
   );
 }

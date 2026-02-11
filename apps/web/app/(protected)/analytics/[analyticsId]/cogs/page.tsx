@@ -1,15 +1,13 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-import { SidebarInset } from "@workspace/ui/components/sidebar";
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { UpdateCogsForm } from "./update-cogs-form";
-import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
+import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 
 type PageProps = {
   params: Promise<{
@@ -89,30 +87,23 @@ export default async function Page({ params }: PageProps) {
   // UI
   // --------------------------------------------------
   return (
-    <SidebarInset>
-      <div className="w-full">
-        <SidebarTriggerClient
-          title={t("cogs.edit")}
-          breadcrumbs={[
-            { label: tSales("title"), href: routes.analytics.sales },
-            { label: analyticsName },
-            { label: t("cogs.title") },
-          ]}
-        />
-
-        <main className="mx-auto max-w-6xl p-4 space-y-3">
-
-          <UpdateCogsForm
-            analyticsId={analyticsId}
-            menuItems={menuItems}
-            analyticsOptions={analyticsOptions.map((item) => ({
-              id: item.id,
-              name: item.sourceFile ?? `Analytics #${item.id}`,
-            }))}
-            currencyCode={currencyCode}
-          />
-        </main>
-      </div>
-    </SidebarInset>
+    <AnalyticsPageShell
+      title={t("cogs.edit")}
+      breadcrumbs={[
+        { label: tSales("title"), href: routes.analytics.sales },
+        { label: analyticsName },
+        { label: t("cogs.title") },
+      ]}
+    >
+      <UpdateCogsForm
+        analyticsId={analyticsId}
+        menuItems={menuItems}
+        analyticsOptions={analyticsOptions.map((item) => ({
+          id: item.id,
+          name: item.sourceFile ?? `Analytics #${item.id}`,
+        }))}
+        currencyCode={currencyCode}
+      />
+    </AnalyticsPageShell>
   );
 }
