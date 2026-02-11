@@ -13,6 +13,8 @@ import { notFound } from "next/navigation";
 import { routes } from "@/lib/routes";
 import Link from "next/link";
 import agents from "@/lib/agents.json";
+import { prisma } from "@/lib/prisma/client";
+import { AgentFilters } from "../agent-filters";
 
 type PageProps = {
   params: Promise<{ agentId?: string }>;
@@ -24,6 +26,14 @@ export default async function Page({ params }: PageProps) {
 
   const agent = agents.find((item) => item.id === agentId);
   if (!agent) notFound();
+
+  const branches = await prisma.branch.findMany({
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      name: true,
+    },
+  });
 
   return (
     <SidebarInset>
@@ -44,6 +54,8 @@ export default async function Page({ params }: PageProps) {
             <h1 className="text-2xl font-semibold">{agent.name}</h1>
             <p className="text-sm text-muted-foreground">{agent.description}</p>
           </div>
+
+          <AgentFilters branches={branches} />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Card>

@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
+import { Label } from "@workspace/ui/components/label";
 import { useAnalytics } from "../use-analytics";
 
 type Branch = {
@@ -17,21 +18,27 @@ type Branch = {
 interface BranchSelectProps {
   branches: Branch[];
   placeholder?: string;
+  id?: string;
+  label?: string;
 }
 
 export function BranchSelect({
   branches,
   placeholder = "Select branch",
+  id,
+  label,
 }: BranchSelectProps) {
   const { branchId, setBranchId } = useAnalytics();
+  const selectId = id ?? "branch-select";
 
   return (
-    <div className="max-w-xs">
+    <div className="max-w-xs space-y-2">
+      {label ? <Label htmlFor={selectId}>{label}</Label> : null}
       <Select
         value={branchId !== null ? String(branchId) : undefined}
         onValueChange={(val) => setBranchId(val ? Number(val) : null)}
       >
-        <SelectTrigger>
+        <SelectTrigger id={selectId} aria-label={label ?? placeholder}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
 
