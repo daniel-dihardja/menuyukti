@@ -12,6 +12,7 @@ import {
   FieldDescription,
   FieldLabel,
 } from "@workspace/ui/components/field";
+import { cn } from "@workspace/ui/lib/utils";
 import { useAnalytics } from "../use-analytics";
 
 type Branch = {
@@ -25,6 +26,7 @@ interface BranchSelectProps {
   id?: string;
   label?: string;
   description?: string;
+  className?: string;
 }
 
 export function BranchSelect({
@@ -33,13 +35,14 @@ export function BranchSelect({
   id,
   label,
   description,
+  className,
 }: BranchSelectProps) {
   const { branchId, setBranchId } = useAnalytics();
   const selectId = id ?? "branch-select";
   const descriptionId = description ? `${selectId}-description` : undefined;
 
   return (
-    <Field className="max-w-xs space-y-2">
+    <Field className={cn("max-w-xs space-y-2", className)}>
       {label ? <FieldLabel htmlFor={selectId}>{label}</FieldLabel> : null}
       <Select
         value={branchId !== null ? String(branchId) : undefined}

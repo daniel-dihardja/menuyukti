@@ -69,7 +69,7 @@ export function AnalyticsSalesClient({ branches }: Props) {
           id="sales-branch-select"
           label={t("branchLabel")}
           placeholder={branches.length > 1 ? t("branchPlaceholder") : undefined}
-          className="w-full max-w-none"
+          className="w-full max-w-none sm:max-w-xs"
         />
 
         <div className="pt-1">

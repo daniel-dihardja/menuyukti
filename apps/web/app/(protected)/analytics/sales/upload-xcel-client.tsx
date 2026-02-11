@@ -45,7 +45,7 @@ export default function UploadExcelClient({
   }
 
   return (
-    <div className="flex flex-col items-start gap-2">
+    <div className="flex w-full flex-col items-start gap-2">
       <label htmlFor={fileInputId} className="sr-only">
         Upload analytics Excel file
       </label>
@@ -62,6 +62,7 @@ export default function UploadExcelClient({
         type="button" // ✅ IMPORTANT FIX
         onClick={openFileDialog}
         disabled={disabled || uploading}
+        className="w-full sm:w-auto"
       >
         {uploading ? t("uploading") : t("cta")}
       </Button>
