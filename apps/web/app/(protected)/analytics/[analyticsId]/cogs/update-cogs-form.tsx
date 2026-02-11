@@ -187,7 +187,7 @@ export function UpdateCogsForm({
             <div
               key={item.id}
               className="
-                rounded-md px-2 py-2
+                px-2 py-2
                 transition-colors
                 focus-within:bg-muted
                 focus-within:ring-1 focus-within:ring-primary/40
