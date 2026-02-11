@@ -4,6 +4,7 @@ export const runtime = "nodejs";
 import { SidebarInset } from "@workspace/ui/components/sidebar";
 import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import { Badge } from "@workspace/ui/components/badge";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { getTranslations } from "next-intl/server";
@@ -37,9 +38,9 @@ export default async function Page() {
                   <CardHeader className="space-y-1">
                     <CardTitle className="flex items-center justify-between">
                       <span>{agent.name}</span>
-                      <span className="text-xs font-normal text-muted-foreground">
+                      <Badge variant="secondary" className="capitalize">
                         {agent.status}
-                      </span>
+                      </Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="text-sm text-muted-foreground">

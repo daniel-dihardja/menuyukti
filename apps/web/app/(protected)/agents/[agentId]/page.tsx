@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import { Badge } from "@workspace/ui/components/badge";
 import { notFound } from "next/navigation";
 import { routes } from "@/lib/routes";
 import Link from "next/link";
@@ -48,9 +49,9 @@ export default async function Page({ params }: PageProps) {
 
         <main className="mx-auto max-w-4xl p-4 space-y-6">
           <div className="space-y-2">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">
+            <Badge variant="secondary" className="w-fit capitalize">
               {agent.status}
-            </div>
+            </Badge>
             <h1 className="text-2xl font-semibold">{agent.name}</h1>
             <p className="text-sm text-muted-foreground">{agent.description}</p>
           </div>
