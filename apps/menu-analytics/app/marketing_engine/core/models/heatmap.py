@@ -57,11 +57,11 @@ class WeeklyDemand(BaseModel):
 #
 # This model becomes the foundation for:
 #
-# ✔ promotion timing
-# ✔ campaign scheduling
-# ✔ daypart marketing
-# ✔ dead-hour activation
-# ✔ routine detection
+# promotion timing
+# campaign scheduling
+# daypart marketing
+# dead-hour activation
+# routine detection
 #
 # Think of this as:
 #     'Behavioral twin of the product'

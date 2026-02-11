@@ -31,7 +31,7 @@ export async function LoginForm({ className, ...props }: LoginFormProps) {
             {t("title")}
           </CardTitle>
 
-          {/* ✨ Slogan */}
+          {/* Slogan */}
           <p className="text-xl leading-snug text-foreground/90">
             {t("slogan")}
           </p>

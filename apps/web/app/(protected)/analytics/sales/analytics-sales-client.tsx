@@ -27,7 +27,7 @@ export function AnalyticsSalesClient({ branches }: Props) {
   const t = useTranslations("analytics.sales");
   const router = useRouter();
 
-  // ✅ branchId now comes from AnalyticsProvider
+  // branchId now comes from AnalyticsProvider
   const { branchId, setBranchId } = useAnalytics();
 
   useEffect(() => {

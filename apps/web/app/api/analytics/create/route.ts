@@ -186,7 +186,7 @@ export async function POST(request: Request) {
             quantity: item.quantity,
             totalRevenue: item.total_revenue,
 
-            // 👇 inherit COGS if available
+            // inherit COGS if available
             cogs: previousCogsMap.get(normalizeMenuName(item.menu)) ?? null,
           })),
         });

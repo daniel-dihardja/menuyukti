@@ -47,7 +47,7 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
     )
 
     # --------------------------------------------------
-    # 🚨 Filter only for matrix logic
+    # Filter only for matrix logic
     # --------------------------------------------------
     df = df[(df["cogs"] > 0) & (df["total_revenue"] > 0)]
 

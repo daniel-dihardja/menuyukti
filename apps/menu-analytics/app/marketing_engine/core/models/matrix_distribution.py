@@ -57,10 +57,10 @@ class CategoryDistribution(BaseModel):
 #
 # Future agents that benefit heavily from this:
 #
-# ✔ Promotion agents
-# ✔ Risk agents
-# ✔ Executive briefing agents
-# ✔ Menu optimization agents
+# Promotion agents
+# Risk agents
+# Executive briefing agents
+# Menu optimization agents
 #
 # Treat this model as STRATEGIC infrastructure.
 # ---------------------------------------------------------

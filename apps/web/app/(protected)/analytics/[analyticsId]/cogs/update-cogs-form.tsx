@@ -74,7 +74,7 @@ export function UpdateCogsForm({
     setError(null);
     setLoading(true);
 
-    // ✅ Correctly normalize values
+    // Correctly normalize values
     const items = menuItems.map((item) => {
       const raw = cogsValues[item.id] ?? "";
       const value = parseCurrencyInput(raw, currencyCode, locale);

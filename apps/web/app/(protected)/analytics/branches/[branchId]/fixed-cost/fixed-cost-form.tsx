@@ -140,7 +140,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
         throw new Error("Failed to create fixed cost");
       }
 
-      // 🔥 FIX: unwrap API response
+      // unwrap API response
       const data = await res.json();
       const created: FixedCost = {
         ...data.fixedCost,
