@@ -111,7 +111,7 @@ export function CreateBranchForm() {
                 onValueChange={setCurrencyCode}
                 disabled={loading}
               >
-                <SelectTrigger id="currencyCode">
+                <SelectTrigger id="currencyCode" className="w-full">
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent>
@@ -136,8 +136,8 @@ export function CreateBranchForm() {
       </Card>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={loading}>
-          {loading ? "Creating..." : "Create branch"}
+        <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+          {loading ? "Creating..." : "Create Branch"}
         </Button>
       </div>
     </form>
