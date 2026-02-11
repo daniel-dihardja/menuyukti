@@ -25,8 +25,8 @@ type FixedCost = {
   id: number;
   name: string;
   amount: number;
-  category: string;
-  notes: string;
+  category: string | null;
+  notes: string | null;
   isActive: boolean;
 };
 
@@ -38,7 +38,13 @@ type Props = {
 
 export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
   const locale = getCurrencyLocale(currencyCode);
-  const [items, setItems] = useState<FixedCost[]>(fixedCosts);
+  const [items, setItems] = useState<FixedCost[]>(() =>
+    fixedCosts.map((item) => ({
+      ...item,
+      category: item.category ?? "",
+      notes: item.notes ?? "",
+    })),
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeAmountId, setActiveAmountId] = useState<number | null>(null);
@@ -136,7 +142,11 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
 
       // 🔥 FIX: unwrap API response
       const data = await res.json();
-      const created: FixedCost = data.fixedCost;
+      const created: FixedCost = {
+        ...data.fixedCost,
+        category: data.fixedCost.category ?? "",
+        notes: data.fixedCost.notes ?? "",
+      };
 
       setItems((prev) => [...prev, created]);
       setAmountDrafts((prev) => ({ ...prev, [created.id]: String(created.amount) }));
@@ -342,7 +352,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
                 <Label htmlFor={`fixed-cost-category-mobile-${item.id}`}>Category</Label>
                 <Input
                   id={`fixed-cost-category-mobile-${item.id}`}
-                  value={item.category}
+                  value={item.category ?? ""}
                   onChange={(e) =>
                     updateItem(item.id, {
                       category: e.target.value,
@@ -355,7 +365,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
                 <Label htmlFor={`fixed-cost-notes-mobile-${item.id}`}>Notes</Label>
                 <Input
                   id={`fixed-cost-notes-mobile-${item.id}`}
-                  value={item.notes}
+                  value={item.notes ?? ""}
                   onChange={(e) => updateItem(item.id, { notes: e.target.value })}
                 />
               </div>
@@ -485,7 +495,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
                     </Label>
                     <Input
                       id={`fixed-cost-category-${item.id}`}
-                      value={item.category}
+                      value={item.category ?? ""}
                       onChange={(e) =>
                         updateItem(item.id, {
                           category: e.target.value,
@@ -500,7 +510,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
                     </Label>
                     <Input
                       id={`fixed-cost-notes-${item.id}`}
-                      value={item.notes}
+                      value={item.notes ?? ""}
                       onChange={(e) =>
                         updateItem(item.id, { notes: e.target.value })
                       }
