@@ -31,6 +31,12 @@ export default async function Page() {
         />
 
         <main className="p-4 space-y-3 max-w-6xl mx-auto">
+          <header className="space-y-1">
+            <h1 className="text-2xl font-semibold">{t("title")}</h1>
+            <p className="text-sm text-muted-foreground">
+              {t("description")}
+            </p>
+          </header>
 
           <BranchesTable
             branches={branches}

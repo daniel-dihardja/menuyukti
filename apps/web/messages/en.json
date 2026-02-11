@@ -33,6 +33,7 @@
   "analytics": {
     "branches": {
       "title": "Branch List",
+      "description": "Manage your branch locations and configure branch-level settings before uploading sales reports.",
       "table": {
         "index": "#",
         "branchName": "Branch Name",
