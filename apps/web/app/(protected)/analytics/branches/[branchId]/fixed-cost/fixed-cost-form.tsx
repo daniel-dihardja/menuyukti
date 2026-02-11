@@ -15,6 +15,11 @@ import {
   TableRow,
 } from "@workspace/ui/components/table";
 import { Card } from "@workspace/ui/components/card";
+import {
+  formatCurrencyInput,
+  getCurrencyLocale,
+  parseCurrencyInput,
+} from "@/lib/currency";
 
 type FixedCost = {
   id: number;
@@ -32,9 +37,14 @@ type Props = {
 };
 
 export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
+  const locale = getCurrencyLocale(currencyCode);
   const [items, setItems] = useState<FixedCost[]>(fixedCosts);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeAmountId, setActiveAmountId] = useState<number | null>(null);
+  const [amountDrafts, setAmountDrafts] = useState<Record<number, string>>(() =>
+    Object.fromEntries(fixedCosts.map((item) => [item.id, String(item.amount)])),
+  );
 
   const [newItem, setNewItem] = useState({
     name: "",
@@ -59,6 +69,18 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
     try {
       setIsSaving(true);
       setError(null);
+      const parsedAmount = parseCurrencyInput(
+        amountDrafts[item.id] ?? "",
+        currencyCode,
+        locale,
+      );
+
+      if (parsedAmount === null || parsedAmount <= 0) {
+        setError("Amount must be a positive number.");
+        return;
+      }
+
+      updateItem(item.id, { amount: parsedAmount });
 
       const res = await fetch(
         `/api/branches/${branchId}/fixed-costs/${item.id}`,
@@ -67,7 +89,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: item.name,
-            amount: item.amount,
+            amount: parsedAmount,
             category: item.category || null,
             notes: item.notes || null,
             isActive: item.isActive,
@@ -90,9 +112,9 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
       setIsSaving(true);
       setError(null);
 
-      const amount = Number(newItem.amount);
+      const amount = parseCurrencyInput(newItem.amount, currencyCode, locale);
 
-      if (!newItem.name || !amount || amount <= 0) {
+      if (!newItem.name || amount === null || amount <= 0) {
         setError("Name and a positive amount are required.");
         return;
       }
@@ -117,6 +139,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
       const created: FixedCost = data.fixedCost;
 
       setItems((prev) => [...prev, created]);
+      setAmountDrafts((prev) => ({ ...prev, [created.id]: String(created.amount) }));
       setNewItem({ name: "", amount: "", category: "", notes: "" });
     } catch (err) {
       setError("Failed to add fixed cost. Please try again.");
@@ -139,6 +162,11 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
       }
 
       setItems((prev) => prev.filter((item) => item.id !== id));
+      setAmountDrafts((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     } catch (err) {
       setError("Failed to delete fixed cost. Please try again.");
     } finally {
@@ -149,6 +177,12 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
   // --------------------------------------------------
   // UI
   // --------------------------------------------------
+  const formatDisplayAmount = (raw: string) => {
+    const parsed = parseCurrencyInput(raw, currencyCode, locale);
+    if (parsed === null) return "";
+    return formatCurrencyInput(parsed, currencyCode, locale);
+  };
+
   return (
     <div className="space-y-6">
       {error && (
@@ -220,16 +254,26 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
                     </Label>
                     <Input
                       id={`fixed-cost-amount-${item.id}`}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.amount}
-                      onChange={(e) =>
-                        updateItem(item.id, {
-                          amount: Number(e.target.value),
-                        })
+                      type="text"
+                      inputMode="decimal"
+                      value={
+                        activeAmountId === item.id
+                          ? (amountDrafts[item.id] ?? "")
+                          : formatDisplayAmount(amountDrafts[item.id] ?? "")
                       }
-                      className="pl-10"
+                      onChange={(e) =>
+                        setAmountDrafts((prev) => ({
+                          ...prev,
+                          [item.id]: e.target.value,
+                        }))
+                      }
+                      onFocus={() => setActiveAmountId(item.id)}
+                      onBlur={() =>
+                        setActiveAmountId((prev) =>
+                          prev === item.id ? null : prev,
+                        )
+                      }
+                      className="pl-10 text-right tabular-nums"
                     />
                   </div>
                 </TableCell>
@@ -339,9 +383,8 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
             </Label>
             <Input
               id="new-fixed-cost-amount"
-              type="number"
-              min="0"
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               placeholder="Amount"
               value={newItem.amount}
               onChange={(e) =>
@@ -350,7 +393,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
                   amount: e.target.value,
                 }))
               }
-              className="pl-10"
+              className="pl-10 text-right tabular-nums"
             />
           </div>
 
