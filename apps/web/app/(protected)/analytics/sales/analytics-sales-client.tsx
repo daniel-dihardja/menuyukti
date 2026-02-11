@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
@@ -27,7 +28,15 @@ export function AnalyticsSalesClient({ branches }: Props) {
   const router = useRouter();
 
   // ✅ branchId now comes from AnalyticsProvider
-  const { branchId } = useAnalytics();
+  const { branchId, setBranchId } = useAnalytics();
+
+  useEffect(() => {
+    if (branchId !== null) return;
+    if (branches.length !== 1) return;
+    const [onlyBranch] = branches;
+    if (!onlyBranch) return;
+    setBranchId(onlyBranch.id);
+  }, [branchId, branches, setBranchId]);
 
   // --------------------------------------------------
   // Analytics list
