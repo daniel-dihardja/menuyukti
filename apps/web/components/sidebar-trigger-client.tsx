@@ -70,7 +70,7 @@ export function SidebarTriggerClient({
 
           <Breadcrumb className="block md:hidden min-w-0">
             <BreadcrumbList className="flex-nowrap overflow-hidden">
-              {firstItem ? (
+              {firstItem && items.length > 1 ? (
                 <>
                   <BreadcrumbItem className="min-w-0">
                     {firstItem.href ? (
@@ -88,7 +88,7 @@ export function SidebarTriggerClient({
                       </BreadcrumbPage>
                     )}
                   </BreadcrumbItem>
-                  {items.length > 1 ? <BreadcrumbSeparator /> : null}
+                  <BreadcrumbSeparator />
                 </>
               ) : null}
 
