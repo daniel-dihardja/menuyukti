@@ -3,6 +3,14 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig = {
   transpilePackages: ["@workspace/ui"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+      },
+    ],
+  },
 };
 
 const withNextIntl = createNextIntlPlugin();

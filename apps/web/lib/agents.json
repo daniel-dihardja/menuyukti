@@ -2,6 +2,7 @@
   {
     "id": "audience",
     "name": "Audience",
+    "imageUrl": "https://picsum.photos/seed/agent-audience/800/450",
     "description": "Identifies peak hours, top items, and weekday bias to shape your Instagram tone.",
     "status": "ready",
     "inputs": [
@@ -18,6 +19,7 @@
   {
     "id": "scheduler",
     "name": "Scheduler",
+    "imageUrl": "https://picsum.photos/seed/agent-scheduler/800/450",
     "description": "Builds a deterministic weekly posting plan based on promotion candidates.",
     "status": "ready",
     "inputs": [
@@ -30,6 +32,7 @@
   {
     "id": "promotion",
     "name": "Promotion",
+    "imageUrl": "https://picsum.photos/seed/agent-promotion/800/450",
     "description": "Finds high-impact menu items to highlight and explains why they matter.",
     "status": "draft",
     "inputs": [
