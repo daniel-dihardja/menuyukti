@@ -50,7 +50,10 @@ export default async function Page({ params }: PageProps) {
   const currencyCode = analytics.branch?.currencyCode ?? "IDR";
 
   const analyticsOptions = await prisma.analytics.findMany({
-    where: { branchId: analytics.branchId },
+    where: {
+      branchId: analytics.branchId,
+      id: { not: analyticsId },
+    },
     orderBy: { uploadedAt: "desc" },
     select: {
       id: true,

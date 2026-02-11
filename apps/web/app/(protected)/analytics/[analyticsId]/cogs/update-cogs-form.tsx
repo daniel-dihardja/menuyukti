@@ -49,8 +49,7 @@ export function UpdateCogsForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [importId, setImportId] = useState<number | null>(() => {
-    const first = analyticsOptions.find((item) => item.id !== analyticsId);
-    return first?.id ?? null;
+    return analyticsOptions[0]?.id ?? null;
   });
   const [importing, setImporting] = useState(false);
   const [cogsValues, setCogsValues] = useState<Record<number, string>>(() => {
@@ -61,10 +60,7 @@ export function UpdateCogsForm({
     return initial;
   });
 
-  const options = useMemo(
-    () => analyticsOptions.filter((item) => item.id !== analyticsId),
-    [analyticsId, analyticsOptions],
-  );
+  const options = useMemo(() => analyticsOptions, [analyticsOptions]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -114,76 +110,72 @@ export function UpdateCogsForm({
         </p>
       </section>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+      {options.length > 0 && (
         <div className="space-y-2">
           <Label htmlFor="import-analytics-select">
             {t("import.label")}
           </Label>
-          <Select
-            value={importId !== null ? String(importId) : undefined}
-            onValueChange={(val) => setImportId(val ? Number(val) : null)}
-            disabled={options.length === 0 || loading || importing}
-          >
-            <SelectTrigger id="import-analytics-select" className="w-[260px]">
-              <SelectValue
-                placeholder={
-                  options.length === 0
-                    ? t("import.noOptions")
-                    : t("import.placeholder")
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <Select
+              value={importId !== null ? String(importId) : undefined}
+              onValueChange={(val) => setImportId(val ? Number(val) : null)}
+              disabled={loading || importing}
+            >
+              <SelectTrigger id="import-analytics-select" className="w-[260px]">
+                <SelectValue placeholder={t("import.placeholder")} />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((option) => (
+                  <SelectItem key={option.id} value={String(option.id)}>
+                    {option.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!importId || importing || loading}
+              onClick={async () => {
+                if (!importId) return;
+                setImporting(true);
+                setError(null);
+                try {
+                    const res = await fetch(`/api/analytics/${importId}/cogs`);
+                    if (!res.ok) {
+                      throw new Error(t("errors.loadImportFailed"));
+                    }
+                  const data = (await res.json()) as {
+                    items: Array<{ menuName: string; cogs: number | null }>;
+                  };
+
+                  const cogsByName = new Map(
+                    data.items.map((item) => [item.menuName.toLowerCase(), item.cogs]),
+                  );
+
+                  setCogsValues((prev) => {
+                    const next = { ...prev };
+                    for (const item of menuItems) {
+                      const value = cogsByName.get(item.menuName.toLowerCase());
+                      if (value !== undefined && value !== null) {
+                        next[item.id] = String(value);
+                      }
+                    }
+                    return next;
+                  });
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : t("errors.unknown"));
+                } finally {
+                  setImporting(false);
                 }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((option) => (
-                <SelectItem key={option.id} value={String(option.id)}>
-                  {option.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              }}
+            >
+              {importing ? t("import.importing") : t("import.action")}
+            </Button>
+          </div>
         </div>
-
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={!importId || importing || loading}
-          onClick={async () => {
-            if (!importId) return;
-            setImporting(true);
-            setError(null);
-            try {
-                const res = await fetch(`/api/analytics/${importId}/cogs`);
-                if (!res.ok) {
-                  throw new Error(t("errors.loadImportFailed"));
-                }
-              const data = (await res.json()) as {
-                items: Array<{ menuName: string; cogs: number | null }>;
-              };
-
-              const cogsByName = new Map(
-                data.items.map((item) => [item.menuName.toLowerCase(), item.cogs]),
-              );
-
-              setCogsValues((prev) => {
-                const next = { ...prev };
-                for (const item of menuItems) {
-                  const value = cogsByName.get(item.menuName.toLowerCase());
-                  if (value !== undefined && value !== null) {
-                    next[item.id] = String(value);
-                  }
-                }
-                return next;
-              });
-            } catch (err) {
-              setError(err instanceof Error ? err.message : t("errors.unknown"));
-            } finally {
-              setImporting(false);
-            }
-          }}
-        >
-          {importing ? t("import.importing") : t("import.action")}
-        </Button>
-      </div>
+      )}
 
       <Card>
         <CardHeader>
