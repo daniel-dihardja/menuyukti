@@ -7,7 +7,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
-import { Label } from "@workspace/ui/components/label";
+import {
+  Field,
+  FieldDescription,
+  FieldLabel,
+} from "@workspace/ui/components/field";
 import { useAnalytics } from "../use-analytics";
 
 type Branch = {
@@ -20,6 +24,7 @@ interface BranchSelectProps {
   placeholder?: string;
   id?: string;
   label?: string;
+  description?: string;
 }
 
 export function BranchSelect({
@@ -27,18 +32,24 @@ export function BranchSelect({
   placeholder = "Select branch",
   id,
   label,
+  description,
 }: BranchSelectProps) {
   const { branchId, setBranchId } = useAnalytics();
   const selectId = id ?? "branch-select";
+  const descriptionId = description ? `${selectId}-description` : undefined;
 
   return (
-    <div className="max-w-xs space-y-2">
-      {label ? <Label htmlFor={selectId}>{label}</Label> : null}
+    <Field className="max-w-xs space-y-2">
+      {label ? <FieldLabel htmlFor={selectId}>{label}</FieldLabel> : null}
       <Select
         value={branchId !== null ? String(branchId) : undefined}
         onValueChange={(val) => setBranchId(val ? Number(val) : null)}
       >
-        <SelectTrigger id={selectId} aria-label={label ?? placeholder}>
+        <SelectTrigger
+          id={selectId}
+          aria-label={label ?? placeholder}
+          aria-describedby={descriptionId}
+        >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
 
@@ -50,6 +61,9 @@ export function BranchSelect({
           ))}
         </SelectContent>
       </Select>
-    </div>
+      {description ? (
+        <FieldDescription id={descriptionId}>{description}</FieldDescription>
+      ) : null}
+    </Field>
   );
 }

@@ -66,7 +66,12 @@ export function AnalyticsSalesClient({ branches }: Props) {
       </div>
 
       {/* ✅ No value / onChange anymore */}
-      <BranchSelect branches={branches} />
+      <BranchSelect
+        branches={branches}
+        id="sales-branch-select"
+        label={t("branchLabel")}
+        description={t("branchDescription")}
+      />
 
       {!branchId ? (
         <div className="border rounded-md p-8 text-center text-muted-foreground">
