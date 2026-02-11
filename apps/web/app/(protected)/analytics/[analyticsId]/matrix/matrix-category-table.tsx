@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@workspace/ui/components/badge";
+import { formatCurrencyWithCode } from "@/lib/currency";
 import {
   Table,
   TableBody,
@@ -47,16 +48,6 @@ export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
   const t = useTranslations("analytics.matrix.table");
   const [sortKey, setSortKey] = useState<SortKey>("quantity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-
-  const currencyFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(locale, {
-        style: "currency",
-        currency,
-        minimumFractionDigits: 0,
-      }),
-    [locale, currency],
-  );
 
   if (!items.length) return null;
 
@@ -173,15 +164,15 @@ export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
                 </TableCell>
 
                 <TableCell className="text-right">
-                  {currencyFormatter.format(item.total_revenue)}
+                  {formatCurrencyWithCode(item.total_revenue, currency, locale)}
                 </TableCell>
 
                 <TableCell className="text-right">
-                  {currencyFormatter.format(item.cogs)}
+                  {formatCurrencyWithCode(item.cogs, currency, locale)}
                 </TableCell>
 
                 <TableCell className="text-right">
-                  {currencyFormatter.format(item.contribution_margin)}
+                  {formatCurrencyWithCode(item.contribution_margin, currency, locale)}
                 </TableCell>
 
                 <TableCell className="text-right">

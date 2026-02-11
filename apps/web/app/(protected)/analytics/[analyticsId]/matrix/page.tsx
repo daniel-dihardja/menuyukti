@@ -7,7 +7,7 @@ import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
-import { formatCurrency, getCurrencyLocale } from "@/lib/currency";
+import { formatCurrencyWithCode, getCurrencyLocale } from "@/lib/currency";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
 
@@ -126,7 +126,7 @@ export default async function Page({ params }: PageProps) {
     : "—";
 
   const fmtCurrency = (value: number) =>
-    formatCurrency(value, currencyCode, locale);
+    formatCurrencyWithCode(value, currencyCode, locale);
 
   // --------------------------------------------------
   // Matrix helpers

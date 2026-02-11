@@ -20,6 +20,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import {
+  formatCurrencyInput,
+  getCurrencyLocale,
+  parseCurrencyInput,
+} from "@/lib/currency";
 
 type MenuItem = {
   id: number;
@@ -45,6 +50,7 @@ export function UpdateCogsForm({
 }: Props) {
   const router = useRouter();
   const t = useTranslations("analytics.cogsForm");
+  const locale = getCurrencyLocale(currencyCode);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +65,7 @@ export function UpdateCogsForm({
     }
     return initial;
   });
+  const [activeInputId, setActiveInputId] = useState<number | null>(null);
 
   const options = useMemo(() => analyticsOptions, [analyticsOptions]);
 
@@ -70,7 +77,7 @@ export function UpdateCogsForm({
     // ✅ Correctly normalize values
     const items = menuItems.map((item) => {
       const raw = cogsValues[item.id] ?? "";
-      const value = raw === "" ? null : Number(raw);
+      const value = parseCurrencyInput(raw, currencyCode, locale);
 
       return {
         id: item.id,
@@ -99,6 +106,12 @@ export function UpdateCogsForm({
     } finally {
       setLoading(false);
     }
+  }
+
+  function formatDisplayValue(raw: string) {
+    const parsed = parseCurrencyInput(raw, currencyCode, locale);
+    if (parsed === null) return "";
+    return formatCurrencyInput(parsed, currencyCode, locale);
   }
 
   return (
@@ -212,15 +225,21 @@ export function UpdateCogsForm({
                 <Input
                   id={`cogs-${item.id}`}
                   name={`cogs-${item.id}`}
-                  type="number"
-                  step="0.01"
-                  value={cogsValues[item.id] ?? ""}
+                  type="text"
+                  inputMode="decimal"
+                  value={
+                    activeInputId === item.id
+                      ? (cogsValues[item.id] ?? "")
+                      : formatDisplayValue(cogsValues[item.id] ?? "")
+                  }
                   onChange={(event) =>
                     setCogsValues((prev) => ({
                       ...prev,
                       [item.id]: event.target.value,
                     }))
                   }
+                  onFocus={() => setActiveInputId(item.id)}
+                  onBlur={() => setActiveInputId((prev) => (prev === item.id ? null : prev))}
                   placeholder="0.00"
                   disabled={loading}
                   className="w-full pl-8 text-right tabular-nums"

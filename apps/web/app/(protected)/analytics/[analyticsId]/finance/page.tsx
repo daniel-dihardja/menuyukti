@@ -6,7 +6,7 @@ import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
-import { formatCurrency, getCurrencyLocale } from "@/lib/currency";
+import { formatCurrencyWithCode, getCurrencyLocale } from "@/lib/currency";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
 import {
@@ -111,7 +111,8 @@ export default async function Page({ params }: PageProps) {
     year: "numeric",
   });
 
-  const fmt = (value: number) => formatCurrency(value, currencyCode, locale);
+  const fmt = (value: number) =>
+    formatCurrencyWithCode(value, currencyCode, locale);
 
   const startDate = analytics.periodStart
     ? dateFormatter.format(analytics.periodStart)
