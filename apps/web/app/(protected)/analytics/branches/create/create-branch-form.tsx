@@ -26,6 +26,9 @@ export function CreateBranchForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currencyCode, setCurrencyCode] = useState("IDR");
+  const [branchName, setBranchName] = useState("");
+
+  const slug = branchName.trim().toLowerCase().replace(/\s+/g, "-");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -82,6 +85,8 @@ export function CreateBranchForm() {
                 placeholder="Berlin Mitte"
                 required
                 disabled={loading}
+                value={branchName}
+                onChange={(e) => setBranchName(e.target.value)}
               />
             </div>
 
@@ -92,6 +97,9 @@ export function CreateBranchForm() {
                 name="slug"
                 placeholder="berlin-mitte"
                 required
+                value={slug}
+                readOnly
+                aria-readonly="true"
                 disabled={loading}
               />
             </div>
