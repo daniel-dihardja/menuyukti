@@ -81,7 +81,10 @@ After Step 3 you have a structured `AudienceFeatures` object:
 - `top_items`: top-selling menu items (used to choose what to highlight)
 - `peak_hours`: best hours to post (used for timing)
 - `weekday_bias`: whether the business skews weekday or weekend
-- plus optional order/revenue context when `core.sales_summary` is provided
+- `daypart_profile` and `weekday_profile`: normalized demand distributions
+- `party_size_signal` and `social_dining_score`: audience context signals from basket depth
+- `avg_order_items`, `avg_order_revenue`, `top_item_revenue_share_ratio`: spend/context signals
+- `popularity_index_coverage`, `primary_category`, `analysis_window_days`, `intent_hints`: helper features for downstream agents
 
 After Step 4 you have:
 

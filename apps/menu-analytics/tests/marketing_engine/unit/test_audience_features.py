@@ -8,6 +8,9 @@ from app.marketing_engine.core.models.matrix_distribution import (
     MatrixDistribution,
     CategoryDistribution,
 )
+from app.marketing_engine.core.models.sales_analytics_summary import (
+    SalesAnalyticsSummary,
+)
 from app.marketing_engine.features.audience import build_audience_features
 
 
@@ -34,6 +37,15 @@ def test_build_audience_features():
     assert features.top_items[0] == "Beta"
     assert features.peak_hours
     assert features.weekday_bias in {"weekday", "weekend", "balanced"}
+    assert set(features.daypart_profile.keys()) == {
+        "morning",
+        "lunch",
+        "afternoon",
+        "evening",
+    }
+    assert "mon" in features.weekday_profile
+    assert features.party_size_signal in {"mostly_solo", "mostly_pair", "group_heavy"}
+    assert isinstance(features.social_dining_score, float)
 
 
 def test_build_audience_features_top_items_order():
@@ -177,3 +189,39 @@ def test_build_audience_features_peak_hours_and_weekday_bias():
 
     assert features.peak_hours[0] == 12
     assert features.weekday_bias == "weekend"
+
+
+def test_build_audience_features_uses_sales_summary_when_available():
+    matrix_items = [MatrixItem(**i) for i in _load_json("matrix_items.json")]
+    heatmaps = [MenuHeatmap(**h) for h in _load_json("heatmaps.json")]
+    distribution = MatrixDistribution(**_load_json("distribution.json"))
+    sales_summary = SalesAnalyticsSummary(
+        total_orders=100,
+        total_items_sold=240,
+        total_revenue=3500000.0,
+        avg_order_revenue=35000.0,
+        max_order_revenue=125000.0,
+        min_order_revenue=8000.0,
+        avg_order_items=2.9,
+        max_order_items=8,
+        min_order_items=1,
+        avg_popularity=0.41,
+        popularity_index=[{"menu": "Latte"}],
+        period_start="2026-01-01",
+        period_end="2026-01-31",
+    )
+
+    core = CoreInputs(
+        matrix_items=matrix_items,
+        heatmaps=heatmaps,
+        distribution=distribution,
+        sales_summary=sales_summary,
+    )
+
+    features = build_audience_features(core)
+
+    assert features.avg_order_items == 2.9
+    assert features.avg_order_revenue == 35000.0
+    assert features.party_size_signal == "group_heavy"
+    assert features.popularity_index_coverage == 1
+    assert features.analysis_window_days == 31
