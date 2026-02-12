@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
-import { Prisma } from "@prisma/client";
 
 type Params = {
   params: Promise<{
@@ -116,96 +115,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const matrixResult = await res.json();
 
-  // 8️⃣ Build decision payload from matrix + heatmaps
-  const analyticsRecord = await prisma.analytics.findUnique({
-    where: { id: analyticsId },
-    select: {
-      heatmapJson: true,
-      periodStart: true,
-      periodEnd: true,
-    },
-  });
-
-  let insights: unknown = null;
-
-  if (analyticsRecord?.heatmapJson) {
-    const reportingPeriod =
-      analyticsRecord.periodStart && analyticsRecord.periodEnd
-        ? `${analyticsRecord.periodStart.toISOString().slice(0, 10)}..${analyticsRecord.periodEnd
-            .toISOString()
-            .slice(0, 10)}`
-        : "unknown";
-
-    const heatmapsRaw = analyticsRecord.heatmapJson as Array<{
-      menu: string;
-      menuCategory?: string | null;
-      menuCategoryDetail?: string | null;
-      dailyHeatmap?: Array<{ hour: string | number; quantity: number }>;
-      weeklyHeatmap?: Array<{ day: string; quantity: number }>;
-    }>;
-
-    const heatmapsPayload = heatmapsRaw.map((item) => ({
-      menu: item.menu,
-      menu_category: item.menuCategory ?? null,
-      menu_category_detail: item.menuCategoryDetail ?? null,
-      daily_heatmap: (item.dailyHeatmap ?? []).map((h) => ({
-        hour: Number(h.hour),
-        quantity: h.quantity,
-      })),
-      weekly_heatmap: (item.weeklyHeatmap ?? []).map((w) => ({
-        day: w.day,
-        quantity: w.quantity,
-      })),
-      reporting_period: reportingPeriod,
-    }));
-
-    const distributionPayload = {
-      categories: (matrixResult.matrix.distribution ?? []).map(
-        (item: {
-          category: string;
-          count: number;
-          percentage: number;
-          margin_contribution_percentage: number;
-        }) => ({
-          category: item.category,
-          item_count: item.count,
-          item_share: item.percentage,
-          margin_share: item.margin_contribution_percentage,
-        }),
-      ),
-    };
-
-    const decisionPayload = {
-      matrix_items: matrixResult.matrix.items ?? [],
-      heatmaps: heatmapsPayload,
-      distribution: distributionPayload,
-    };
-
-    try {
-      const decisionRes = await fetch(
-        `${ANALYTICS_API_URL}/decision/pipeline`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(decisionPayload),
-        },
-      );
-
-      if (decisionRes.ok) {
-        const decisionJson = await decisionRes.json();
-        insights = decisionJson.insights ?? null;
-      } else {
-        console.error(
-          "Decision pipeline error:",
-          await decisionRes.text(),
-        );
-      }
-    } catch (error) {
-      console.error("Decision pipeline request failed:", error);
-    }
-  }
-
-  // 9️⃣ Persist matrix snapshot on Analytics
+  // 8️⃣ Persist matrix snapshot on Analytics
   await prisma.analytics.update({
     where: { id: analyticsId },
     data: {
@@ -215,7 +125,6 @@ export async function POST(req: Request, { params }: Params) {
       totalCogs: matrixResult.matrix.thresholds.total_cogs,
       // totalMargin: matrixResult.matrix.thresholds.total_margin,
       totalProfit: matrixResult.matrix.thresholds.total_profit,
-      insightsJson: insights ? insights : Prisma.JsonNull,
       // avgContributionMargin:
       // matrixResult.matrix.thresholds.avg_contribution_margin,
       // avgPopularity: matrixResult.matrix.thresholds.avg_popularity,
@@ -226,7 +135,6 @@ export async function POST(req: Request, { params }: Params) {
   return NextResponse.json({
     success: true,
     matrix: matrixResult.matrix,
-    insights,
   });
 }
 
