@@ -17,7 +17,8 @@
       "env": [
         "DATABASE_URL",
         "NODE_ENV",
-        "ANALYTICS_API_URL"
+        "ANALYTICS_API_URL",
+        "AGENTS_API_URL"
       ]
     },
     "lint": {

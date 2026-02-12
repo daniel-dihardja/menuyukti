@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@workspace/ui/components/button";
+import { useAnalytics } from "@/app/(protected)/analytics/use-analytics";
 import {
   Card,
   CardContent,
@@ -11,26 +12,65 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 
+type AudienceOutputs = {
+  top_items: string[];
+  peak_hours: string[];
+  weekday_bias: string;
+  audience_intent_clusters: string[];
+  daypart_demand_distribution: string;
+  weekday_demand_distribution: string;
+  party_size_signal: string;
+  social_dining_probability: string;
+  audience_mix_summary: string;
+  popularity_index_summary: string;
+  analysis_window: string;
+  top_item_revenue_share: string;
+  category_mix: string;
+};
+
 export function AudienceAgentRunner() {
   const t = useTranslations("agents.detail.audienceRunner");
+  const { analyticsId } = useAnalytics();
   const outputRegionId = "audience-agent-output";
   const [running, setRunning] = useState(false);
   const [hasRun, setHasRun] = useState(false);
-  const topItems = [
-    t("output.mock.topItems.item1"),
-    t("output.mock.topItems.item2"),
-    t("output.mock.topItems.item3"),
-  ];
-  const peakHours = [
-    t("output.mock.peakHours.slot1"),
-    t("output.mock.peakHours.slot2"),
-  ];
+  const [error, setError] = useState<string | null>(null);
+  const [outputs, setOutputs] = useState<AudienceOutputs | null>(null);
 
   const runAgent = async () => {
+    if (analyticsId === null) {
+      setError("Select an analytics report first.");
+      return;
+    }
+
     setRunning(true);
-    await new Promise((resolve) => setTimeout(resolve, 700));
-    setHasRun(true);
-    setRunning(false);
+    setError(null);
+    try {
+      const res = await fetch("/api/agents/audience", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ analyticsId }),
+      });
+
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        throw new Error(body.error ?? "Failed to run audience agent");
+      }
+
+      const body = (await res.json()) as { outputs?: AudienceOutputs };
+      setOutputs(body.outputs ?? null);
+      setHasRun(true);
+    } catch (err) {
+      setHasRun(false);
+      setOutputs(null);
+      setError((err as Error).message);
+    } finally {
+      setRunning(false);
+    }
   };
 
   return (
@@ -63,7 +103,9 @@ export function AudienceAgentRunner() {
         >
           <h3 className="font-semibold">{t("output.title")}</h3>
 
-          {!hasRun ? (
+          {error ? (
+            <p className="text-destructive">{error}</p>
+          ) : !hasRun || !outputs ? (
             <p className="text-muted-foreground">
               {t("output.empty")}
             </p>
@@ -73,79 +115,79 @@ export function AudienceAgentRunner() {
                 <span className="font-medium text-foreground">
                   {t("output.topItemsLabel")}{" "}
                 </span>
-                {topItems.join(", ")}
+                {outputs.top_items.join(", ")}
               </p>
               <p>
                 <span className="font-medium text-foreground">
                   {t("output.peakHoursLabel")}{" "}
                 </span>
-                {peakHours.join(", ")}
+                {outputs.peak_hours.join(", ")}
               </p>
               <p>
                 <span className="font-medium text-foreground">
                   {t("output.weekdayBiasLabel")}{" "}
                 </span>
-                {t("output.weekdayBiasValue")}
+                {outputs.weekday_bias}
               </p>
               <p>
                 <span className="font-medium text-foreground">
                   {t("output.audienceIntentLabel")}{" "}
                 </span>
-                {t("output.audienceIntentValue")}
+                {outputs.audience_intent_clusters.join(", ")}
               </p>
               <p>
                 <span className="font-medium text-foreground">
                   {t("output.daypartDistributionLabel")}{" "}
                 </span>
-                {t("output.daypartDistributionValue")}
+                {outputs.daypart_demand_distribution}
               </p>
               <p>
                 <span className="font-medium text-foreground">
                   {t("output.weekdayDistributionLabel")}{" "}
                 </span>
-                {t("output.weekdayDistributionValue")}
+                {outputs.weekday_demand_distribution}
               </p>
               <p>
                 <span className="font-medium text-foreground">
                   {t("output.partySizeSignalLabel")}{" "}
                 </span>
-                {t("output.partySizeSignalValue")}
+                {outputs.party_size_signal}
               </p>
               <p>
                 <span className="font-medium text-foreground">
                   {t("output.socialDiningProbabilityLabel")}{" "}
                 </span>
-                {t("output.socialDiningProbabilityValue")}
+                {outputs.social_dining_probability}
               </p>
               <p>
                 <span className="font-medium text-foreground">
                   {t("output.audienceMixSummaryLabel")}{" "}
                 </span>
-                {t("output.audienceMixSummaryValue")}
+                {outputs.audience_mix_summary}
               </p>
               <p>
                 <span className="font-medium text-foreground">
                   {t("output.popularityIndexSummaryLabel")}{" "}
                 </span>
-                {t("output.popularityIndexSummaryValue")}
+                {outputs.popularity_index_summary}
               </p>
               <p>
                 <span className="font-medium text-foreground">
                   {t("output.analysisWindowLabel")}{" "}
                 </span>
-                {t("output.analysisWindowValue")}
+                {outputs.analysis_window}
               </p>
               <p>
                 <span className="font-medium text-foreground">
                   {t("output.topItemRevenueShareLabel")}{" "}
                 </span>
-                {t("output.topItemRevenueShareValue")}
+                {outputs.top_item_revenue_share}
               </p>
               <p>
                 <span className="font-medium text-foreground">
                   {t("output.categoryMixLabel")}{" "}
                 </span>
-                {t("output.categoryMixValue")}
+                {outputs.category_mix}
               </p>
             </div>
           )}
