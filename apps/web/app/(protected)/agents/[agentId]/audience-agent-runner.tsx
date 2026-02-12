@@ -74,6 +74,36 @@ export function AudienceAgentRunner() {
                 </span>
                 {t("output.weekdayBiasValue")}
               </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.toneByDaypartLabel")}{" "}
+                </span>
+                {t("output.toneByDaypartValue")}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.audienceIntentLabel")}{" "}
+                </span>
+                {t("output.audienceIntentValue")}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.priceSensitivityLabel")}{" "}
+                </span>
+                {t("output.priceSensitivityValue")}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.promotionWindowLabel")}{" "}
+                </span>
+                {t("output.promotionWindowValue")}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.ctaIntensityLabel")}{" "}
+                </span>
+                {t("output.ctaIntensityValue")}
+              </p>
             </div>
           )}
         </div>

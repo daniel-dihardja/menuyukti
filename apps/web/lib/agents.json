@@ -3,7 +3,7 @@
     "id": "audience",
     "name": "Audience",
     "imageUrl": "https://picsum.photos/seed/agent-audience/800/450",
-    "description": "Identifies peak hours, top items, and weekday bias to shape your Instagram tone.",
+    "description": "Identifies audience patterns from sales behavior (top items, peak hours, weekday bias, and party-size signals) to guide voice, tone, and campaign strategy.",
     "status": "ready",
     "inputs": [
       "matrix items",
@@ -13,7 +13,22 @@
     "outputs": [
       "top_items",
       "peak_hours",
-      "weekday_bias"
+      "weekday_bias",
+      "tone_by_daypart",
+      "audience_intent_clusters",
+      "price_sensitivity_signal",
+      "promotion_receptiveness_window",
+      "cta_intensity_score",
+      "party_size_signal",
+      "social_dining_probability",
+      "bundle_opportunity_score",
+      "upsell_headroom",
+      "copy_strategy_hint",
+      "cta_type_recommendation",
+      "menu_pairing_priority",
+      "campaign_format_bias",
+      "time_window_party_shift",
+      "audience_mix_summary"
     ]
   }
 ]

@@ -64,6 +64,16 @@
           "peakHoursLabel": "Peak hours:",
           "weekdayBiasLabel": "Weekday bias:",
           "weekdayBiasValue": "Weekend-heavy demand with strongest uplift on Saturday",
+          "toneByDaypartLabel": "Tone by daypart:",
+          "toneByDaypartValue": "Energetic at lunch, relaxed in late afternoon, social and upbeat in early evening.",
+          "audienceIntentLabel": "Audience intent:",
+          "audienceIntentValue": "Fast lunch decision, after-work treat, and weekend social sharing.",
+          "priceSensitivityLabel": "Price sensitivity:",
+          "priceSensitivityValue": "Medium on weekdays, lower on weekend evenings for premium drinks.",
+          "promotionWindowLabel": "Promotion window:",
+          "promotionWindowValue": "Best response for CTA-heavy messaging between 10:30–12:30 and 17:00–19:00.",
+          "ctaIntensityLabel": "CTA intensity:",
+          "ctaIntensityValue": "Use strong urgency at midday, softer inspiration-oriented CTAs in the evening.",
           "mock": {
             "topItems": {
               "item1": "Iced Latte",
