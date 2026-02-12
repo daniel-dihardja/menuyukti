@@ -14,7 +14,7 @@ resolution-markers = [
 members = [
     "agent",
     "marketing-engine",
-    "menu-analytics",
+    "analytics",
     "menuyukti-workspace",
 ]
 
@@ -1162,9 +1162,9 @@ wheels = [
 ]
 
 [[package]]
-name = "menu-analytics"
+name = "analytics"
 version = "0.1.0"
-source = { editable = "apps/menu-analytics" }
+source = { editable = "apps/analytics" }
 dependencies = [
     { name = "fastapi" },
     { name = "marketing-engine" },
@@ -1191,7 +1191,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "agent" },
     { name = "marketing-engine" },
-    { name = "menu-analytics" },
+    { name = "analytics" },
 ]
 
 [package.dev-dependencies]
@@ -1210,7 +1210,7 @@ dev = [
 requires-dist = [
     { name = "agent", editable = "apps/agents" },
     { name = "marketing-engine", editable = "packages/marketing-engine" },
-    { name = "menu-analytics", editable = "apps/menu-analytics" },
+    { name = "analytics", editable = "apps/analytics" },
 ]
 
 [package.metadata.requires-dev]

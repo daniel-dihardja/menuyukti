@@ -3,7 +3,7 @@
 Menuyukti is a menu analytics + promotion decision platform. The repo contains:
 
 - `apps/web`: Next.js web app (UI + API routes)
-- `apps/menu-analytics`: FastAPI service for deterministic analytics and decisioning
+- `apps/analytics`: FastAPI service for deterministic analytics and decisioning
 - `apps/agents`: agent runtime and supporting utilities
 
 ## Key Capabilities
@@ -32,14 +32,14 @@ pnpm dev
 ### Menu analytics service
 
 ```bash
-cd apps/menu-analytics
+cd apps/analytics
 make dev
 ```
 
 ### Run tests
 
 ```bash
-cd apps/menu-analytics
+cd apps/analytics
 uv run pytest
 ```
 

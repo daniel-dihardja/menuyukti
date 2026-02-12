@@ -9,7 +9,9 @@ import pandas as pd
 from marketing_engine.core.analytics.extract_menu_items import extract_menu_items
 from marketing_engine.core.analytics.pos_detector import detect_pos_from_excel_bytes
 from marketing_engine.core.analytics.registry import NORMALIZERS
-from marketing_engine.core.analytics.calculate_sales_analytics import calculate_sales_analytics
+from marketing_engine.core.analytics.calculate_sales_analytics import (
+    calculate_sales_analytics,
+)
 from marketing_engine.core.analytics.calculate_menu_engineering_matrix import (
     calculate_menu_engineering_matrix,
 )
