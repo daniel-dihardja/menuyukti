@@ -16,7 +16,7 @@ It is intentionally deterministic where possible, and keeps agent logic thin and
 
 ## Typical Flow
 
-1. Build `CoreInputs` from matrix items, distribution, and heatmaps.
+1. Build `CoreInputs` from matrix items, distribution, heatmaps, and optional sales summary metrics.
 2. Generate shared primitives if needed.
 3. Use feature providers (e.g. audience) for agent-specific data.
 4. Use the decision pipeline and scheduler when you need post scheduling.
@@ -25,6 +25,7 @@ It is intentionally deterministic where possible, and keeps agent logic thin and
 
 ```python
 from app.marketing_engine.core.inputs import CoreInputs
+from app.marketing_engine.core.models.sales_analytics_summary import SalesAnalyticsSummary
 from app.marketing_engine.shared.primitives import build_shared_primitives
 from app.marketing_engine.features import load_default_providers, build_features
 from app.marketing_engine.pipeline import build_promotion_candidates
@@ -35,6 +36,7 @@ from app.marketing_engine.decision.allocation.promotion_scheduler import Promoti
 
 ```python
 from app.marketing_engine.core.inputs import CoreInputs
+from app.marketing_engine.core.models.sales_analytics_summary import SalesAnalyticsSummary
 from app.marketing_engine.shared.primitives import build_shared_primitives
 from app.marketing_engine.features import load_default_providers, build_features
 from app.marketing_engine.pipeline import build_promotion_candidates
@@ -42,10 +44,13 @@ from app.marketing_engine.decision.allocation.promotion_scheduler import Promoti
 
 # 1) Build core inputs from your validated data
 # These are the canonical, validated inputs that all downstream layers rely on.
+# If you already have `calculate_sales_analytics` output, pass it as sales_summary.
+sales_summary = SalesAnalyticsSummary(**sales_analytics_payload)
 core = CoreInputs(
     matrix_items=matrix_items,
     heatmaps=heatmaps,
     distribution=distribution,
+    sales_summary=sales_summary,  # optional but recommended for audience agents
 )
 
 # 2) Shared primitives (optional but useful across agents)
@@ -76,6 +81,7 @@ After Step 3 you have a structured `AudienceFeatures` object:
 - `top_items`: top-selling menu items (used to choose what to highlight)
 - `peak_hours`: best hours to post (used for timing)
 - `weekday_bias`: whether the business skews weekday or weekend
+- plus optional order/revenue context when `core.sales_summary` is provided
 
 After Step 4 you have:
 
@@ -88,7 +94,7 @@ Features are **agent-specific, derived datasets** built from the same core input
 
 Think of them as “views” over the core data:
 
-- **core inputs** = raw, validated data
+- **core inputs** = raw, validated data (matrix/heatmap/distribution + optional sales summary)
 - **shared primitives** = common derived facts (reused across agents)
 - **features** = agent-specific transformations for a particular task
 
