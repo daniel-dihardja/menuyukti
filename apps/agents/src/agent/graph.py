@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from langgraph.graph import StateGraph
 from langgraph.runtime import Runtime
@@ -17,22 +17,13 @@ class State:
     title: str = "example"
 
 
-def process_input(
-    state: State,
-    my_configurable_param: Optional[str] = None,
-) -> Dict[str, Any]:
+async def call_model(state: State, runtime: Runtime[Context]) -> Dict[str, Any]:
+    my_configurable_param = (runtime.context or {}).get("my_configurable_param")
     return {
         "title": (
             "output from process_input. " f"Configured with {my_configurable_param}"
         )
     }
-
-
-async def call_model(state: State, runtime: Runtime[Context]) -> Dict[str, Any]:
-    return process_input(
-        state=state,
-        my_configurable_param=(runtime.context or {}).get("my_configurable_param"),
-    )
 
 
 graph = (
