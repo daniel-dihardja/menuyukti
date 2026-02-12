@@ -54,6 +54,32 @@ class State(TypedDict):
     title: NotRequired[str]
 
 
+AUDIENCE_CONFIG = {
+    "top_items_limit": 3,
+    "peak_hours_limit": 3,
+    "daypart_hour_cutoffs": {
+        "morning_end_hour": 11,
+        "lunch_end_hour": 14,
+        "afternoon_end_hour": 17,
+    },
+    "party_size_thresholds": {
+        "solo_max_avg_items": 1.8,
+        "pair_max_avg_items": 2.8,
+    },
+    "social_dining_scores": {
+        "solo": 0.3,
+        "pair": 0.6,
+        "group": 0.85,
+    },
+    "social_dining_probability_thresholds": {
+        "low_max_score": 0.4,
+        "medium_max_score": 0.75,
+    },
+    "category_mix_limit": 4,
+    "audience_intent_clusters_limit": 3,
+}
+
+
 def _format_percentage(part: float, total: float) -> str:
     if total <= 0:
         return "0%"
@@ -80,7 +106,10 @@ def _derive_features(core_input: dict[str, Any]) -> AudienceFeatures:
         key=lambda item: float(item.get("quantity", 0)),
         reverse=True,
     )
-    top_items = [str(item.get("menu", "")).strip() for item in sorted_items[:3]]
+    top_items = [
+        str(item.get("menu", "")).strip()
+        for item in sorted_items[: AUDIENCE_CONFIG["top_items_limit"]]
+    ]
     top_items = [item for item in top_items if item]
     if not top_items:
         top_items = ["No top items available"]
@@ -95,18 +124,20 @@ def _derive_features(core_input: dict[str, Any]) -> AudienceFeatures:
 
     peak_hours = [
         f"{hour:02d}:00"
-        for hour, _ in sorted(hourly_counts.items(), key=lambda kv: kv[1], reverse=True)[:3]
+        for hour, _ in sorted(
+            hourly_counts.items(), key=lambda kv: kv[1], reverse=True
+        )[: AUDIENCE_CONFIG["peak_hours_limit"]]
     ]
     if not peak_hours:
         peak_hours = ["No peak-hour data"]
 
     daypart_totals = {"morning": 0.0, "lunch": 0.0, "afternoon": 0.0, "evening": 0.0}
     for hour, qty in hourly_counts.items():
-        if hour < 11:
+        if hour < AUDIENCE_CONFIG["daypart_hour_cutoffs"]["morning_end_hour"]:
             daypart_totals["morning"] += qty
-        elif hour < 14:
+        elif hour < AUDIENCE_CONFIG["daypart_hour_cutoffs"]["lunch_end_hour"]:
             daypart_totals["lunch"] += qty
-        elif hour < 17:
+        elif hour < AUDIENCE_CONFIG["daypart_hour_cutoffs"]["afternoon_end_hour"]:
             daypart_totals["afternoon"] += qty
         else:
             daypart_totals["evening"] += qty
@@ -142,22 +173,25 @@ def _derive_features(core_input: dict[str, Any]) -> AudienceFeatures:
 
     # Party-size and social signal
     avg_order_items = float(sales_summary.get("avg_order_items", 0) or 0)
-    if avg_order_items < 1.8:
+    if avg_order_items < AUDIENCE_CONFIG["party_size_thresholds"]["solo_max_avg_items"]:
         party_size_signal = "mostly solo orders"
-        social_dining_score = 0.3
-    elif avg_order_items < 2.8:
+        social_dining_score = AUDIENCE_CONFIG["social_dining_scores"]["solo"]
+    elif avg_order_items < AUDIENCE_CONFIG["party_size_thresholds"]["pair_max_avg_items"]:
         party_size_signal = "mostly pair orders"
-        social_dining_score = 0.6
+        social_dining_score = AUDIENCE_CONFIG["social_dining_scores"]["pair"]
     else:
         party_size_signal = "group-heavy orders"
-        social_dining_score = 0.85
+        social_dining_score = AUDIENCE_CONFIG["social_dining_scores"]["group"]
 
     popularity_index = sales_summary.get("popularity_index", []) or []
     popularity_index_coverage = len(popularity_index) if isinstance(popularity_index, list) else 0
 
     # Top-item revenue share
     total_revenue = sum(float(item.get("total_revenue", 0) or 0) for item in matrix_items)
-    top_revenue = sum(float(item.get("total_revenue", 0) or 0) for item in sorted_items[:3])
+    top_revenue = sum(
+        float(item.get("total_revenue", 0) or 0)
+        for item in sorted_items[: AUDIENCE_CONFIG["top_items_limit"]]
+    )
     top_item_revenue_share_ratio = (top_revenue / total_revenue) if total_revenue > 0 else 0.0
 
     # Category mix + primary category
@@ -234,9 +268,11 @@ def _build_outputs(core_input: dict[str, Any], features: AudienceFeatures) -> Au
 
     social_dining_probability = (
         "low"
-        if features["social_dining_score"] < 0.4
+        if features["social_dining_score"]
+        < AUDIENCE_CONFIG["social_dining_probability_thresholds"]["low_max_score"]
         else "medium"
-        if features["social_dining_score"] < 0.75
+        if features["social_dining_score"]
+        < AUDIENCE_CONFIG["social_dining_probability_thresholds"]["medium_max_score"]
         else "high"
     )
 
@@ -264,7 +300,10 @@ def _build_outputs(core_input: dict[str, Any], features: AudienceFeatures) -> Au
     total_qty = sum(category_qty.values())
     sorted_category_mix = sorted(category_qty.items(), key=lambda kv: kv[1], reverse=True)
     category_mix = ", ".join(
-        [f"{name} {_format_percentage(qty, total_qty)}" for name, qty in sorted_category_mix[:4]]
+        [
+            f"{name} {_format_percentage(qty, total_qty)}"
+            for name, qty in sorted_category_mix[: AUDIENCE_CONFIG["category_mix_limit"]]
+        ]
     )
     if not category_mix:
         category_mix = "Category mix unavailable"
@@ -280,7 +319,9 @@ def _build_outputs(core_input: dict[str, Any], features: AudienceFeatures) -> Au
         "weekday_bias": features["weekday_bias"],
         "daypart_demand_distribution": daypart_demand_distribution,
         "weekday_demand_distribution": weekday_demand_distribution,
-        "audience_intent_clusters": features["intent_hints"][:3],
+        "audience_intent_clusters": features["intent_hints"][
+            : AUDIENCE_CONFIG["audience_intent_clusters_limit"]
+        ],
         "party_size_signal": features["party_size_signal"],
         "social_dining_probability": social_dining_probability,
         "audience_mix_summary": audience_mix_summary,
