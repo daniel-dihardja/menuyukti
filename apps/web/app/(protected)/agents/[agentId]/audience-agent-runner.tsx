@@ -13,6 +13,7 @@ import {
 
 export function AudienceAgentRunner() {
   const t = useTranslations("agents.detail.audienceRunner");
+  const outputRegionId = "audience-agent-output";
   const [running, setRunning] = useState(false);
   const [hasRun, setHasRun] = useState(false);
   const topItems = [
@@ -42,12 +43,24 @@ export function AudienceAgentRunner() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex justify-start">
-          <Button type="button" disabled={running} onClick={runAgent}>
+          <Button
+            type="button"
+            disabled={running}
+            onClick={runAgent}
+            aria-controls={outputRegionId}
+            aria-busy={running}
+          >
             {running ? t("actions.running") : t("actions.run")}
           </Button>
         </div>
 
-        <div className="space-y-3 border p-4 text-sm">
+        <div
+          id={outputRegionId}
+          className="space-y-3 border p-4 text-sm"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-busy={running}
+        >
           <h3 className="font-semibold">{t("output.title")}</h3>
 
           {!hasRun ? (

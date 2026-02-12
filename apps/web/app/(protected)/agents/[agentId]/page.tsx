@@ -128,12 +128,12 @@ export default async function Page({ params }: PageProps) {
                           AUDIENCE_OUTPUT_COVERAGE[item] === "covered" ? (
                             <CheckCircle2
                               className="h-3.5 w-3.5 shrink-0 text-emerald-600"
-                              aria-label={tDetail("outputsStatus.covered")}
+                              aria-hidden="true"
                             />
                           ) : (
                             <CircleAlert
                               className="h-3.5 w-3.5 shrink-0 text-amber-600"
-                              aria-label={tDetail("outputsStatus.missing")}
+                              aria-hidden="true"
                             />
                           )
                         ) : null}
