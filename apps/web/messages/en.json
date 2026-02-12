@@ -31,10 +31,6 @@
         "inputs": "Inputs",
         "outputs": "Outputs"
       },
-      "outputsStatus": {
-        "covered": "Covered by core input",
-        "missing": "Needs additional data"
-      },
       "outputHelp": {
         "open": "Show output details",
         "items": {
