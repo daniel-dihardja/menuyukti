@@ -23,26 +23,10 @@ import agents from "@/lib/agents.json";
 import { prisma } from "@/lib/prisma/client";
 import { AgentFilters } from "../agent-filters";
 import { AudienceAgentRunner } from "./audience-agent-runner";
-import { CheckCircle2, ChevronLeft, CircleAlert, CircleHelp } from "lucide-react";
+import { ChevronLeft, CircleHelp } from "lucide-react";
 
 type PageProps = {
   params: Promise<{ agentId?: string }>;
-};
-
-const AUDIENCE_OUTPUT_COVERAGE: Record<string, "covered" | "missing"> = {
-  top_items: "covered",
-  peak_hours: "covered",
-  weekday_bias: "covered",
-  daypart_demand_distribution: "covered",
-  weekday_demand_distribution: "covered",
-  audience_intent_clusters: "covered",
-  party_size_signal: "covered",
-  social_dining_probability: "covered",
-  audience_mix_summary: "covered",
-  analysis_window: "covered",
-  popularity_index_summary: "covered",
-  top_item_revenue_share: "covered",
-  category_mix: "covered",
 };
 
 function formatOutputLabel(output: string) {
@@ -137,22 +121,6 @@ export default async function Page({ params }: PageProps) {
                               {tDetail(`outputHelp.items.${item}`)}
                             </TooltipContent>
                           </Tooltip>
-                          {AUDIENCE_OUTPUT_COVERAGE[item] === "covered" ? (
-                            <CheckCircle2
-                              className="h-3.5 w-3.5 shrink-0 text-emerald-600"
-                              aria-hidden="true"
-                            />
-                          ) : (
-                            <CircleAlert
-                              className="h-3.5 w-3.5 shrink-0 text-amber-600"
-                              aria-hidden="true"
-                            />
-                          )}
-                          <span className="sr-only">
-                            {AUDIENCE_OUTPUT_COVERAGE[item] === "covered"
-                              ? tDetail("outputsStatus.covered")
-                              : tDetail("outputsStatus.missing")}
-                          </span>
                         </span>
                       ) : null}
                     </li>
