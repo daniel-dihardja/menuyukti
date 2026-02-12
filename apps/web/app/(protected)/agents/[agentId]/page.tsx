@@ -10,6 +10,11 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip";
 import { notFound } from "next/navigation";
 import { routes } from "@/lib/routes";
 import Link from "next/link";
@@ -18,7 +23,7 @@ import agents from "@/lib/agents.json";
 import { prisma } from "@/lib/prisma/client";
 import { AgentFilters } from "../agent-filters";
 import { AudienceAgentRunner } from "./audience-agent-runner";
-import { CheckCircle2, ChevronLeft, CircleAlert } from "lucide-react";
+import { CheckCircle2, ChevronLeft, CircleAlert, CircleHelp } from "lucide-react";
 
 type PageProps = {
   params: Promise<{ agentId?: string }>;
@@ -122,10 +127,24 @@ export default async function Page({ params }: PageProps) {
                 <ul className="list-disc pl-4 space-y-1">
                   {agent.outputs.map((item) => (
                     <li key={item}>
-                      <div className="inline-flex items-center gap-1.5">
-                        <span>{formatOutputLabel(item)}</span>
-                        {agent.id === "audience" ? (
-                          AUDIENCE_OUTPUT_COVERAGE[item] === "covered" ? (
+                      <span>{formatOutputLabel(item)}</span>
+                      {agent.id === "audience" ? (
+                        <span className="ml-1 inline-flex items-center gap-1.5 whitespace-nowrap align-middle">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className="inline-flex items-center text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                aria-label={tDetail("outputHelp.open")}
+                              >
+                                <CircleHelp className="h-3.5 w-3.5 shrink-0" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-64">
+                              {tDetail(`outputHelp.items.${item}`)}
+                            </TooltipContent>
+                          </Tooltip>
+                          {AUDIENCE_OUTPUT_COVERAGE[item] === "covered" ? (
                             <CheckCircle2
                               className="h-3.5 w-3.5 shrink-0 text-emerald-600"
                               aria-hidden="true"
@@ -135,16 +154,14 @@ export default async function Page({ params }: PageProps) {
                               className="h-3.5 w-3.5 shrink-0 text-amber-600"
                               aria-hidden="true"
                             />
-                          )
-                        ) : null}
-                        {agent.id === "audience" ? (
+                          )}
                           <span className="sr-only">
                             {AUDIENCE_OUTPUT_COVERAGE[item] === "covered"
                               ? tDetail("outputsStatus.covered")
                               : tDetail("outputsStatus.missing")}
                           </span>
-                        ) : null}
-                      </div>
+                        </span>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

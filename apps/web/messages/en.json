@@ -35,6 +35,31 @@
         "covered": "Covered by core input",
         "missing": "Needs additional data"
       },
+      "outputHelp": {
+        "open": "Show output details",
+        "items": {
+          "top_items": "The menu items with the highest demand or strongest performance in the selected analysis context.",
+          "peak_hours": "The hourly windows where demand is highest and audience attention is most concentrated.",
+          "weekday_bias": "A directional signal showing whether demand is stronger on weekdays or weekends.",
+          "audience_intent_clusters": "Behavior-based groupings of customer intent, such as quick purchase, treat, or social occasion.",
+          "price_sensitivity_signal": "An estimate of how strongly demand may change when prices or perceived value shift.",
+          "promotion_response_window_signal": "Time windows where promotions are likely to receive higher engagement or conversion.",
+          "party_size_signal": "A derived indicator of likely order context (solo, pair, or group) from basket behavior.",
+          "social_dining_probability": "An estimate of how likely orders are associated with shared or social consumption.",
+          "time_window_party_shift": "How likely the inferred party-size pattern changes across different time windows.",
+          "audience_mix_summary": "A concise summary of dominant audience behavior segments in the selected dataset.",
+          "analysis_window": "The effective time range of data used to compute the audience outputs.",
+          "sample_size": "The number of usable observations behind the current audience analysis.",
+          "confidence_score": "A high-level reliability estimate for derived audience signals.",
+          "data_coverage": "How complete and representative the input data is for the selected period.",
+          "anomaly_flags": "Detected unusual demand patterns that may reduce comparability with normal behavior.",
+          "daypart_demand_distribution": "Relative demand split across dayparts (morning, lunch, afternoon, evening).",
+          "weekday_demand_distribution": "Relative demand split across days of the week.",
+          "top_item_revenue_share": "The share of total revenue contributed by top-performing menu items.",
+          "top_item_stability": "How consistently top items remain top performers across multiple time slices.",
+          "category_mix": "The relative demand or revenue contribution of each menu category."
+        }
+      },
       "status": {
         "ready": "Ready",
         "draft": "Draft"
