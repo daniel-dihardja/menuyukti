@@ -18,11 +18,38 @@ import agents from "@/lib/agents.json";
 import { prisma } from "@/lib/prisma/client";
 import { AgentFilters } from "../agent-filters";
 import { AudienceAgentRunner } from "./audience-agent-runner";
-import { ChevronLeft } from "lucide-react";
+import { CheckCircle2, ChevronLeft, CircleAlert } from "lucide-react";
 
 type PageProps = {
   params: Promise<{ agentId?: string }>;
 };
+
+const AUDIENCE_OUTPUT_COVERAGE: Record<string, "covered" | "missing"> = {
+  top_items: "covered",
+  peak_hours: "covered",
+  weekday_bias: "covered",
+  audience_intent_clusters: "covered",
+  price_sensitivity_signal: "missing",
+  promotion_response_window_signal: "missing",
+  party_size_signal: "covered",
+  social_dining_probability: "covered",
+  time_window_party_shift: "missing",
+  audience_mix_summary: "covered",
+  analysis_window: "covered",
+  sample_size: "missing",
+  confidence_score: "missing",
+  data_coverage: "missing",
+  anomaly_flags: "missing",
+  daypart_demand_distribution: "covered",
+  weekday_demand_distribution: "covered",
+  top_item_revenue_share: "covered",
+  top_item_stability: "missing",
+  category_mix: "covered",
+};
+
+function formatOutputLabel(output: string) {
+  return output.replaceAll("_", " ");
+}
 
 export default async function Page({ params }: PageProps) {
   const t = await getTranslations("agents");
@@ -94,7 +121,31 @@ export default async function Page({ params }: PageProps) {
               <CardContent className="text-sm text-muted-foreground">
                 <ul className="list-disc pl-4 space-y-1">
                   {agent.outputs.map((item) => (
-                    <li key={item}>{item}</li>
+                    <li key={item}>
+                      <div className="inline-flex items-center gap-1.5">
+                        <span>{formatOutputLabel(item)}</span>
+                        {agent.id === "audience" ? (
+                          AUDIENCE_OUTPUT_COVERAGE[item] === "covered" ? (
+                            <CheckCircle2
+                              className="h-3.5 w-3.5 shrink-0 text-emerald-600"
+                              aria-label={tDetail("outputsStatus.covered")}
+                            />
+                          ) : (
+                            <CircleAlert
+                              className="h-3.5 w-3.5 shrink-0 text-amber-600"
+                              aria-label={tDetail("outputsStatus.missing")}
+                            />
+                          )
+                        ) : null}
+                        {agent.id === "audience" ? (
+                          <span className="sr-only">
+                            {AUDIENCE_OUTPUT_COVERAGE[item] === "covered"
+                              ? tDetail("outputsStatus.covered")
+                              : tDetail("outputsStatus.missing")}
+                          </span>
+                        ) : null}
+                      </div>
+                    </li>
                   ))}
                 </ul>
               </CardContent>

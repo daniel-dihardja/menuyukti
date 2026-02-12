@@ -31,6 +31,10 @@
         "inputs": "Inputs",
         "outputs": "Outputs"
       },
+      "outputsStatus": {
+        "covered": "Covered by core input",
+        "missing": "Needs additional data"
+      },
       "status": {
         "ready": "Ready",
         "draft": "Draft"
