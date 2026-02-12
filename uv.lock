@@ -13,6 +13,7 @@ resolution-markers = [
 [manifest]
 members = [
     "agent",
+    "marketing-engine",
     "menu-analytics",
     "menuyukti-workspace",
 ]
@@ -1132,6 +1133,23 @@ wheels = [
 ]
 
 [[package]]
+name = "marketing-engine"
+version = "0.1.0"
+source = { editable = "packages/marketing-engine" }
+dependencies = [
+    { name = "openpyxl" },
+    { name = "pandas" },
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "openpyxl", specifier = ">=3.1.5" },
+    { name = "pandas", specifier = ">=2.3.3" },
+    { name = "pydantic", specifier = ">=2.10.0" },
+]
+
+[[package]]
 name = "matplotlib-inline"
 version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1149,6 +1167,7 @@ version = "0.1.0"
 source = { editable = "apps/menu-analytics" }
 dependencies = [
     { name = "fastapi" },
+    { name = "marketing-engine" },
     { name = "openpyxl" },
     { name = "pandas" },
     { name = "python-multipart" },
@@ -1158,6 +1177,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.124.4" },
+    { name = "marketing-engine", editable = "packages/marketing-engine" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "python-multipart", specifier = ">=0.0.21" },
@@ -1170,6 +1190,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "agent" },
+    { name = "marketing-engine" },
     { name = "menu-analytics" },
 ]
 
@@ -1188,6 +1209,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "agent", editable = "apps/agents" },
+    { name = "marketing-engine", editable = "packages/marketing-engine" },
     { name = "menu-analytics", editable = "apps/menu-analytics" },
 ]
 

@@ -23,10 +23,11 @@ This service is the deterministic analytics layer for Menuyukti. It ingests POS 
 
 ## Key Modules
 
-- `app/analytics/pos_detector.py` — POS detection
-- `app/analytics/esb/normalizer.py` — ESB Excel normalization
-- `app/analytics/calculate_sales_analytics.py` — summary analytics + heatmaps + popularity
-- `app/analytics/calculate_menu_engineering_matrix.py` — menu engineering outputs
+- `app/main.py` — API entrypoint and route handlers
+- `marketing_engine.core.analytics.pos_detector` — POS detection
+- `marketing_engine.core.analytics.esb.normalizer` — ESB Excel normalization
+- `marketing_engine.core.analytics.calculate_sales_analytics` — summary analytics + heatmaps + popularity
+- `marketing_engine.core.analytics.calculate_menu_engineering_matrix` — menu engineering outputs
 
 ## Run Tests
 

@@ -6,18 +6,18 @@ from decimal import Decimal
 
 import pandas as pd
 
-from app.analytics.extract_menu_items import extract_menu_items
-from app.analytics.pos_detector import detect_pos_from_excel_bytes
-from app.analytics.registry import NORMALIZERS
-from app.analytics.calculate_sales_analytics import calculate_sales_analytics
-from app.analytics.calculate_menu_engineering_matrix import (
+from marketing_engine.core.analytics.extract_menu_items import extract_menu_items
+from marketing_engine.core.analytics.pos_detector import detect_pos_from_excel_bytes
+from marketing_engine.core.analytics.registry import NORMALIZERS
+from marketing_engine.core.analytics.calculate_sales_analytics import calculate_sales_analytics
+from marketing_engine.core.analytics.calculate_menu_engineering_matrix import (
     calculate_menu_engineering_matrix,
 )
-from app.marketing_engine.pipeline import build_promotion_candidates
-from app.marketing_engine.decision.allocation.promotion_scheduler import PromotionScheduler
-from app.marketing_engine.core.models.matrix_item import MatrixItem
-from app.marketing_engine.core.models.heatmap import MenuHeatmap
-from app.marketing_engine.core.models.matrix_distribution import MatrixDistribution
+from marketing_engine.pipeline import build_promotion_candidates
+from marketing_engine.decision.allocation.promotion_scheduler import PromotionScheduler
+from marketing_engine.core.models.matrix_item import MatrixItem
+from marketing_engine.core.models.heatmap import MenuHeatmap
+from marketing_engine.core.models.matrix_distribution import MatrixDistribution
 
 
 app = FastAPI(title="Menuyukti Analytics API")
