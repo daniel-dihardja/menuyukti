@@ -125,66 +125,6 @@ export function AudienceAgentRunner() {
               </p>
               <p>
                 <span className="font-medium text-foreground">
-                  {t("output.totalOrdersLabel")}{" "}
-                </span>
-                {t("output.totalOrdersValue")}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">
-                  {t("output.totalItemsSoldLabel")}{" "}
-                </span>
-                {t("output.totalItemsSoldValue")}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">
-                  {t("output.totalRevenueLabel")}{" "}
-                </span>
-                {t("output.totalRevenueValue")}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">
-                  {t("output.avgOrderRevenueLabel")}{" "}
-                </span>
-                {t("output.avgOrderRevenueValue")}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">
-                  {t("output.maxOrderRevenueLabel")}{" "}
-                </span>
-                {t("output.maxOrderRevenueValue")}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">
-                  {t("output.minOrderRevenueLabel")}{" "}
-                </span>
-                {t("output.minOrderRevenueValue")}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">
-                  {t("output.avgOrderItemsLabel")}{" "}
-                </span>
-                {t("output.avgOrderItemsValue")}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">
-                  {t("output.maxOrderItemsLabel")}{" "}
-                </span>
-                {t("output.maxOrderItemsValue")}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">
-                  {t("output.minOrderItemsLabel")}{" "}
-                </span>
-                {t("output.minOrderItemsValue")}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">
-                  {t("output.avgPopularityThresholdLabel")}{" "}
-                </span>
-                {t("output.avgPopularityThresholdValue")}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">
                   {t("output.popularityIndexSummaryLabel")}{" "}
                 </span>
                 {t("output.popularityIndexSummaryValue")}
