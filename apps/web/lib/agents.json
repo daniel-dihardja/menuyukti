@@ -14,21 +14,23 @@
       "top_items",
       "peak_hours",
       "weekday_bias",
-      "tone_by_daypart",
       "audience_intent_clusters",
       "price_sensitivity_signal",
-      "promotion_receptiveness_window",
-      "cta_intensity_score",
+      "promotion_response_window_signal",
       "party_size_signal",
       "social_dining_probability",
-      "bundle_opportunity_score",
-      "upsell_headroom",
-      "copy_strategy_hint",
-      "cta_type_recommendation",
-      "menu_pairing_priority",
-      "campaign_format_bias",
       "time_window_party_shift",
-      "audience_mix_summary"
+      "audience_mix_summary",
+      "analysis_window",
+      "sample_size",
+      "confidence_score",
+      "data_coverage",
+      "anomaly_flags",
+      "daypart_demand_distribution",
+      "weekday_demand_distribution",
+      "top_item_revenue_share",
+      "top_item_stability",
+      "category_mix"
     ]
   }
 ]

@@ -76,12 +76,6 @@ export function AudienceAgentRunner() {
               </p>
               <p>
                 <span className="font-medium text-foreground">
-                  {t("output.toneByDaypartLabel")}{" "}
-                </span>
-                {t("output.toneByDaypartValue")}
-              </p>
-              <p>
-                <span className="font-medium text-foreground">
                   {t("output.audienceIntentLabel")}{" "}
                 </span>
                 {t("output.audienceIntentValue")}
@@ -94,15 +88,69 @@ export function AudienceAgentRunner() {
               </p>
               <p>
                 <span className="font-medium text-foreground">
-                  {t("output.promotionWindowLabel")}{" "}
+                  {t("output.promotionResponseWindowLabel")}{" "}
                 </span>
-                {t("output.promotionWindowValue")}
+                {t("output.promotionResponseWindowValue")}
               </p>
               <p>
                 <span className="font-medium text-foreground">
-                  {t("output.ctaIntensityLabel")}{" "}
+                  {t("output.analysisWindowLabel")}{" "}
                 </span>
-                {t("output.ctaIntensityValue")}
+                {t("output.analysisWindowValue")}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.sampleSizeLabel")}{" "}
+                </span>
+                {t("output.sampleSizeValue")}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.confidenceScoreLabel")}{" "}
+                </span>
+                {t("output.confidenceScoreValue")}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.dataCoverageLabel")}{" "}
+                </span>
+                {t("output.dataCoverageValue")}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.anomalyFlagsLabel")}{" "}
+                </span>
+                {t("output.anomalyFlagsValue")}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.daypartDistributionLabel")}{" "}
+                </span>
+                {t("output.daypartDistributionValue")}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.weekdayDistributionLabel")}{" "}
+                </span>
+                {t("output.weekdayDistributionValue")}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.topItemRevenueShareLabel")}{" "}
+                </span>
+                {t("output.topItemRevenueShareValue")}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.topItemStabilityLabel")}{" "}
+                </span>
+                {t("output.topItemStabilityValue")}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.categoryMixLabel")}{" "}
+                </span>
+                {t("output.categoryMixValue")}
               </p>
             </div>
           )}
