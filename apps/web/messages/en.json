@@ -25,7 +25,59 @@
   },
   "agents": {
     "title": "Agents",
-    "description": "Marketing agents that transform sales data into actionable insights."
+    "description": "Marketing agents that transform sales data into actionable insights.",
+    "detail": {
+      "cards": {
+        "inputs": "Inputs",
+        "outputs": "Outputs"
+      },
+      "status": {
+        "ready": "Ready",
+        "draft": "Draft"
+      },
+      "backToAgents": "Back to Agents",
+      "filters": {
+        "branch": {
+          "label": "Branch",
+          "placeholder": "Select branch"
+        },
+        "report": {
+          "label": "Analytics report",
+          "placeholder": {
+            "selectBranchFirst": "Select branch first",
+            "loading": "Loading reports…",
+            "select": "Select report"
+          }
+        }
+      },
+      "audienceRunner": {
+        "title": "Agent Runner",
+        "description": "Run the Audience agent and preview mocked output.",
+        "actions": {
+          "run": "Run Agent",
+          "running": "Running..."
+        },
+        "output": {
+          "title": "Agent Output",
+          "empty": "No output yet. Click \"Run Agent\" to generate mocked results.",
+          "topItemsLabel": "Top items:",
+          "peakHoursLabel": "Peak hours:",
+          "weekdayBiasLabel": "Weekday bias:",
+          "weekdayBiasValue": "Weekend-heavy demand with strongest uplift on Saturday",
+          "mock": {
+            "topItems": {
+              "item1": "Iced Latte",
+              "item2": "Croissant",
+              "item3": "Matcha Latte"
+            },
+            "peakHours": {
+              "slot1": "11:00 - 13:00",
+              "slot2": "17:00 - 19:00"
+            }
+          }
+        }
+      }
+    }
   },
   "news": {
     "title": "News"

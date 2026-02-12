@@ -15,33 +15,5 @@
       "peak_hours",
       "weekday_bias"
     ]
-  },
-  {
-    "id": "scheduler",
-    "name": "Scheduler",
-    "imageUrl": "https://picsum.photos/seed/agent-scheduler/800/450",
-    "description": "Builds a deterministic weekly posting plan based on promotion candidates.",
-    "status": "ready",
-    "inputs": [
-      "promotion candidates"
-    ],
-    "outputs": [
-      "weekly schedule"
-    ]
-  },
-  {
-    "id": "promotion",
-    "name": "Promotion",
-    "imageUrl": "https://picsum.photos/seed/agent-promotion/800/450",
-    "description": "Finds high-impact menu items to highlight and explains why they matter.",
-    "status": "draft",
-    "inputs": [
-      "matrix items",
-      "heatmaps",
-      "distribution"
-    ],
-    "outputs": [
-      "promotion candidates"
-    ]
   }
 ]

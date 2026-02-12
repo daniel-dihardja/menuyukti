@@ -12,6 +12,7 @@ import { useBranchAnalytics } from "../analytics/sales/use-branch-analytics";
 import { BranchSelect } from "../analytics/sales/branch-select";
 import { useEffect } from "react";
 import { Field, FieldLabel } from "@workspace/ui/components/field";
+import { useTranslations } from "next-intl";
 
 type Branch = {
   id: number;
@@ -23,6 +24,7 @@ type Props = {
 };
 
 export function AgentFilters({ branches }: Props) {
+  const t = useTranslations("agents.detail.filters");
   const { analyticsId, setAnalyticsId, branchId } = useAnalytics();
   const { analytics, loading } = useBranchAnalytics(branchId);
 
@@ -38,13 +40,15 @@ export function AgentFilters({ branches }: Props) {
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
       <BranchSelect
         branches={branches}
-        placeholder="Select branch"
+        placeholder={t("branch.placeholder")}
         id="agent-branch-select"
-        label="Branch"
+        label={t("branch.label")}
       />
 
       <Field className="max-w-xs space-y-2">
-        <FieldLabel htmlFor="agent-analytics-select">Analytics report</FieldLabel>
+        <FieldLabel htmlFor="agent-analytics-select">
+          {t("report.label")}
+        </FieldLabel>
         <Select
           value={analyticsId !== null ? String(analyticsId) : undefined}
           onValueChange={(val) => setAnalyticsId(val ? Number(val) : null)}
@@ -52,15 +56,15 @@ export function AgentFilters({ branches }: Props) {
         >
           <SelectTrigger
             id="agent-analytics-select"
-            aria-label="Analytics report"
+            aria-label={t("report.label")}
           >
             <SelectValue
               placeholder={
                 !branchId
-                  ? "Select branch first"
+                  ? t("report.placeholder.selectBranchFirst")
                   : loading
-                    ? "Loading reports…"
-                    : "Select report"
+                    ? t("report.placeholder.loading")
+                    : t("report.placeholder.select")
               }
             />
           </SelectTrigger>

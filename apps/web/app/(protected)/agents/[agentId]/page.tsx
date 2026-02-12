@@ -13,20 +13,31 @@ import { Badge } from "@workspace/ui/components/badge";
 import { notFound } from "next/navigation";
 import { routes } from "@/lib/routes";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import agents from "@/lib/agents.json";
 import { prisma } from "@/lib/prisma/client";
 import { AgentFilters } from "../agent-filters";
+import { AudienceAgentRunner } from "./audience-agent-runner";
+import { ChevronLeft } from "lucide-react";
 
 type PageProps = {
   params: Promise<{ agentId?: string }>;
 };
 
 export default async function Page({ params }: PageProps) {
+  const t = await getTranslations("agents");
+  const tDetail = await getTranslations("agents.detail");
   const { agentId } = await params;
   if (!agentId) notFound();
 
   const agent = agents.find((item) => item.id === agentId);
   if (!agent) notFound();
+  const statusLabel =
+    agent.status === "ready"
+      ? tDetail("status.ready")
+      : agent.status === "draft"
+        ? tDetail("status.draft")
+        : agent.status;
 
   const branches = await prisma.branch.findMany({
     orderBy: { createdAt: "asc" },
@@ -42,26 +53,30 @@ export default async function Page({ params }: PageProps) {
         <SidebarTriggerClient
           title={agent.name}
           breadcrumbs={[
-            { label: "Agents", href: routes.agents.list },
+            { label: t("title"), href: routes.agents.list },
             { label: agent.name },
           ]}
         />
 
         <main className="mx-auto max-w-4xl p-4 space-y-6">
           <header className="space-y-1">
-            <Badge variant="secondary" className="w-fit capitalize">
-              {agent.status}
-            </Badge>
-            <h1 className="text-2xl font-semibold">{agent.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-semibold">{agent.name}</h1>
+              <Badge variant="secondary" className="capitalize">
+                {statusLabel}
+              </Badge>
+            </div>
             <p className="text-sm text-muted-foreground">{agent.description}</p>
           </header>
 
           <AgentFilters branches={branches} />
 
+          {agent.id === "audience" ? <AudienceAgentRunner /> : null}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Inputs</CardTitle>
+                <CardTitle>{tDetail("cards.inputs")}</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
                 <ul className="list-disc pl-4 space-y-1">
@@ -74,7 +89,7 @@ export default async function Page({ params }: PageProps) {
 
             <Card>
               <CardHeader>
-                <CardTitle>Outputs</CardTitle>
+                <CardTitle>{tDetail("cards.outputs")}</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
                 <ul className="list-disc pl-4 space-y-1">
@@ -87,8 +102,9 @@ export default async function Page({ params }: PageProps) {
           </div>
 
           <div className="text-sm text-muted-foreground">
-            <Link href={routes.agents.list} className="underline">
-              Back to Agents
+            <Link href={routes.agents.list} className="inline-flex items-center gap-1 underline">
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+              {tDetail("backToAgents")}
             </Link>
           </div>
         </main>
