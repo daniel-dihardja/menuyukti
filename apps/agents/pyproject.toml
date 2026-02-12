@@ -29,7 +29,6 @@ build-backend = "setuptools.build_meta"
 packages = [
     "langgraph.templates.agent",
     "agent",
-    "agent.nodes",
 ]
 [tool.setuptools.package-dir]
 "langgraph.templates.agent" = "src/agent"

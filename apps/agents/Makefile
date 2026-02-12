@@ -1,10 +1,11 @@
-.PHONY: all format lint test tests test_watch integration_tests docker_tests help extended_tests
+.PHONY: all format lint test tests test_watch integration_tests docker_tests help extended_tests serve_api
 
 # Default target executed when no arguments are given to make.
 all: help
 
 # Define a variable for the test file path.
 TEST_FILE ?= tests/unit_tests/
+AGENTS_API_PORT ?= 8001
 
 test:
 	uv run python -m pytest $(TEST_FILE)
@@ -20,6 +21,9 @@ test_profile:
 
 extended_tests:
 	uv run python -m pytest --only-extended $(TEST_FILE)
+
+serve_api:
+	uv run uvicorn agent.api:app --reload --port $(AGENTS_API_PORT)
 
 
 ######################
@@ -64,4 +68,4 @@ help:
 	@echo 'tests                        - run unit tests'
 	@echo 'test TEST_FILE=<test_file>   - run all tests in file'
 	@echo 'test_watch                   - run unit tests in watch mode'
-
+	@echo 'serve_api                    - run FastAPI on AGENTS_API_PORT (default: 8001)'
