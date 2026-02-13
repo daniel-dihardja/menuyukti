@@ -6,9 +6,9 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const branchId = searchParams.get("branchId");
+    const locationId = searchParams.get("locationId");
 
-    if (!branchId) {
+    if (!locationId) {
       return NextResponse.json(
         { error: "BRANCH_ID_REQUIRED" },
         { status: 400 },
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
     const analytics = await prisma.analytics.findMany({
       where: {
-        locationId: Number(branchId),
+        locationId: Number(locationId),
       },
       orderBy: {
         uploadedAt: "desc",

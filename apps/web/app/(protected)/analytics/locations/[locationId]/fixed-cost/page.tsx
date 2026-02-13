@@ -26,14 +26,14 @@ export default async function Page({ params }: PageProps) {
   const { locationId: locationIdParam } = await params;
   if (!locationIdParam) notFound();
 
-  const branchId = Number(locationIdParam);
-  if (!Number.isInteger(branchId)) notFound();
+  const locationId = Number(locationIdParam);
+  if (!Number.isInteger(locationId)) notFound();
 
   // --------------------------------------------------
   // Fetch branch (for display name + scope validation)
   // --------------------------------------------------
   const branch = await prisma.location.findUnique({
-    where: { id: branchId },
+    where: { id: locationId },
     select: {
       id: true,
       name: true,
@@ -48,7 +48,7 @@ export default async function Page({ params }: PageProps) {
   // Fetch fixed costs for branch
   // --------------------------------------------------
   const rawFixedCosts = await prisma.fixedCost.findMany({
-    where: { locationId: branchId },
+    where: { locationId: locationId },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,
@@ -84,7 +84,7 @@ export default async function Page({ params }: PageProps) {
       <PageHeading title={t("title")} description={t("description")} />
 
       <FixedCostForm
-        branchId={branch.id}
+        locationId={branch.id}
         fixedCosts={fixedCosts}
         currencyCode={branch.currencyCode ?? "IDR"}
       />

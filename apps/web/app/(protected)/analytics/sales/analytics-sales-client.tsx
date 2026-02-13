@@ -27,27 +27,27 @@ export function AnalyticsSalesClient({ branches }: Props) {
   const t = useTranslations("analytics.sales");
   const router = useRouter();
 
-  // branchId now comes from AnalyticsProvider
-  const { branchId, setBranchId } = useAnalytics();
+  // locationId now comes from AnalyticsProvider
+  const { locationId, setLocationId } = useAnalytics();
 
   useEffect(() => {
-    if (branchId !== null) return;
+    if (locationId !== null) return;
     if (branches.length !== 1) return;
     const [onlyBranch] = branches;
     if (!onlyBranch) return;
-    setBranchId(onlyBranch.id);
-  }, [branchId, branches, setBranchId]);
+    setLocationId(onlyBranch.id);
+  }, [locationId, branches, setLocationId]);
 
   // --------------------------------------------------
   // Analytics list
   // --------------------------------------------------
-  const { analytics: uploads, loading, refetch } = useLocationAnalytics(branchId);
+  const { analytics: uploads, loading, refetch } = useLocationAnalytics(locationId);
 
   // --------------------------------------------------
   // Upload logic
   // --------------------------------------------------
   const { uploading, status, message, pos, uploadFile } = useUploadAnalytics(
-    branchId,
+    locationId,
     refetch,
   );
 
@@ -55,7 +55,7 @@ export function AnalyticsSalesClient({ branches }: Props) {
   // Delete logic
   // --------------------------------------------------
   const { deleteAnalytics } = useDeleteAnalytics({
-    branchId,
+    locationId,
     onSuccess: refetch,
   });
 
@@ -74,7 +74,7 @@ export function AnalyticsSalesClient({ branches }: Props) {
 
         <div className="pt-1">
           <UploadExcelClient
-            disabled={!branchId}
+            disabled={!locationId}
             uploading={uploading}
             status={status}
             message={message}
@@ -84,7 +84,7 @@ export function AnalyticsSalesClient({ branches }: Props) {
         </div>
       </section>
 
-      {!branchId ? (
+      {!locationId ? (
         <div className="border rounded-md p-8 text-left text-muted-foreground">
           {t("selectBranch")}
         </div>

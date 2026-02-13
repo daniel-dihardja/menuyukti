@@ -31,12 +31,12 @@ type FixedCost = {
 };
 
 type Props = {
-  branchId: number;
+  locationId: number;
   fixedCosts: FixedCost[];
   currencyCode: string;
 };
 
-export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
+export function FixedCostForm({ locationId, fixedCosts, currencyCode }: Props) {
   const locale = getCurrencyLocale(currencyCode);
   const [items, setItems] = useState<FixedCost[]>(() =>
     fixedCosts.map((item) => ({
@@ -89,7 +89,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
       updateItem(item.id, { amount: parsedAmount });
 
       const res = await fetch(
-        `/api/locations/${branchId}/fixed-costs/${item.id}`,
+        `/api/locations/${locationId}/fixed-costs/${item.id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -125,7 +125,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
         return;
       }
 
-      const res = await fetch(`/api/locations/${branchId}/fixed-costs`, {
+      const res = await fetch(`/api/locations/${locationId}/fixed-costs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -163,7 +163,7 @@ export function FixedCostForm({ branchId, fixedCosts, currencyCode }: Props) {
       setIsSaving(true);
       setError(null);
 
-      const res = await fetch(`/api/locations/${branchId}/fixed-costs/${id}`, {
+      const res = await fetch(`/api/locations/${locationId}/fixed-costs/${id}`, {
         method: "DELETE",
       });
 

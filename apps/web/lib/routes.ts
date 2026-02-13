@@ -27,10 +27,10 @@ export const routes = {
   branches: {
     list: "/locations",
 
-    detail: (branchId: string | number) => `/locations/${branchId}`,
+    detail: (locationId: string | number) => `/locations/${locationId}`,
 
-    fixedCosts: (branchId: string | number) =>
-      `/analytics/locations/${branchId}/fixed-cost`,
+    fixedCosts: (locationId: string | number) =>
+      `/analytics/locations/${locationId}/fixed-cost`,
   },
 
   docs: "/docs",

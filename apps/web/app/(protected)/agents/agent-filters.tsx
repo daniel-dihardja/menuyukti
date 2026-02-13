@@ -25,16 +25,16 @@ type Props = {
 
 export function AgentFilters({ branches }: Props) {
   const t = useTranslations("agents.detail.filters");
-  const { analyticsId, setAnalyticsId, branchId } = useAnalytics();
-  const { analytics, loading } = useLocationAnalytics(branchId);
+  const { analyticsId, setAnalyticsId, locationId } = useAnalytics();
+  const { analytics, loading } = useLocationAnalytics(locationId);
 
   useEffect(() => {
-    if (!branchId) return;
+    if (!locationId) return;
     if (analyticsId !== null) return;
     const [first] = analytics;
     if (!first) return;
     setAnalyticsId(first.id);
-  }, [analyticsId, analytics, branchId, setAnalyticsId]);
+  }, [analyticsId, analytics, locationId, setAnalyticsId]);
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
@@ -52,7 +52,7 @@ export function AgentFilters({ branches }: Props) {
         <Select
           value={analyticsId !== null ? String(analyticsId) : undefined}
           onValueChange={(val) => setAnalyticsId(val ? Number(val) : null)}
-          disabled={!branchId || loading}
+          disabled={!locationId || loading}
         >
           <SelectTrigger
             id="agent-analytics-select"
@@ -60,7 +60,7 @@ export function AgentFilters({ branches }: Props) {
           >
             <SelectValue
               placeholder={
-                !branchId
+                !locationId
                   ? t("report.placeholder.selectBranchFirst")
                   : loading
                     ? t("report.placeholder.loading")

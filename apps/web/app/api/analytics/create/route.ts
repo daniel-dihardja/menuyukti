@@ -23,18 +23,18 @@ export async function POST(request: Request) {
     const formData = await request.formData();
 
     const file = formData.get("file");
-    const branchIdRaw = formData.get("branchId");
+    const locationIdRaw = formData.get("locationId");
 
-    if (!branchIdRaw || typeof branchIdRaw !== "string") {
+    if (!locationIdRaw || typeof locationIdRaw !== "string") {
       return NextResponse.json(
         { error: "BRANCH_ID_REQUIRED" },
         { status: 400 },
       );
     }
 
-    const branchId = Number(branchIdRaw);
+    const locationId = Number(locationIdRaw);
 
-    if (!Number.isInteger(branchId)) {
+    if (!Number.isInteger(locationId)) {
       return NextResponse.json({ error: "INVALID_BRANCH_ID" }, { status: 400 });
     }
 
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     // Validate branch existence (fail early)
     // --------------------------------------------------
     const branchExists = await prisma.location.findUnique({
-      where: { id: branchId },
+      where: { id: locationId },
       select: { id: true },
     });
 
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       // ----------------------------------------------
       const analyticsRecord = await tx.analytics.create({
         data: {
-          locationId: branchId,
+          locationId: locationId,
 
           // Source metadata
           sourceFile: file.name,
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
       // ----------------------------------------------
       const previousAnalytics = await tx.analytics.findFirst({
         where: {
-          locationId: branchId,
+          locationId: locationId,
           id: { not: analyticsRecord.id },
         },
         orderBy: {

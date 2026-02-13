@@ -3,19 +3,19 @@
 import { AnalyticsListItem } from "@/app/api/analytics/types";
 import { useCallback, useEffect, useState } from "react";
 
-export function useLocationAnalytics(branchId: number | null) {
+export function useLocationAnalytics(locationId: number | null) {
   const [analytics, setAnalytics] = useState<AnalyticsListItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchAnalytics = useCallback(async () => {
-    if (!branchId) {
+    if (!locationId) {
       setAnalytics([]);
       return;
     }
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/analytics/list?branchId=${branchId}`);
+      const res = await fetch(`/api/analytics/list?locationId=${locationId}`);
 
       if (!res.ok) {
         throw new Error("Failed to load analytics");
@@ -29,7 +29,7 @@ export function useLocationAnalytics(branchId: number | null) {
     } finally {
       setLoading(false);
     }
-  }, [branchId]);
+  }, [locationId]);
 
   // Auto-fetch when branch changes
   useEffect(() => {

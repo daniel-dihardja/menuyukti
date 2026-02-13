@@ -10,7 +10,7 @@ interface UploadResponse {
 export type UploadStatus = "idle" | "success" | "error";
 
 export function useUploadAnalytics(
-  branchId: number | null,
+  locationId: number | null,
   onSuccess?: () => void,
 ) {
   const [uploading, setUploading] = useState(false);
@@ -19,7 +19,7 @@ export function useUploadAnalytics(
   const [pos, setPos] = useState<string | null>(null);
 
   async function uploadFile(file: File) {
-    if (!branchId) {
+    if (!locationId) {
       setStatus("error");
       setMessage("Please select a location first.");
       return;
@@ -39,7 +39,7 @@ export function useUploadAnalytics(
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("branchId", String(branchId));
+      formData.append("locationId", String(locationId));
 
       const res = await fetch("/api/analytics/create", {
         method: "POST",

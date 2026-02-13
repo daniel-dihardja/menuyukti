@@ -5,16 +5,16 @@ export const runtime = "nodejs";
 
 type DeleteAnalyticsPayload = {
   analyticsId: number;
-  branchId: number;
+  locationId: number;
 };
 
 export async function DELETE(request: Request) {
   try {
     const body = (await request.json()) as Partial<DeleteAnalyticsPayload>;
 
-    const { analyticsId, branchId } = body;
+    const { analyticsId, locationId } = body;
 
-    if (!analyticsId || !branchId) {
+    if (!analyticsId || !locationId) {
       return NextResponse.json(
         { error: "ANALYTICS_ID_AND_BRANCH_ID_REQUIRED" },
         { status: 400 },
@@ -27,7 +27,7 @@ export async function DELETE(request: Request) {
     const analytics = await prisma.analytics.findFirst({
       where: {
         id: analyticsId,
-        locationId: branchId,
+        locationId: locationId,
       },
       select: { id: true },
     });

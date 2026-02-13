@@ -13,15 +13,15 @@ export async function PATCH(req: NextRequest, context: Context) {
     // --------------------------------------------------
     // Await params (Next.js 15+ requirement)
     // --------------------------------------------------
-    const { locationId: branchIdParam, fixedCostId: fixedCostIdParam } =
+    const { locationId: locationIdParam, fixedCostId: fixedCostIdParam } =
       await context.params;
 
-    const branchId = Number(branchIdParam);
+    const locationId = Number(locationIdParam);
     const fixedCostId = Number(fixedCostIdParam);
 
-    if (!Number.isInteger(branchId) || !Number.isInteger(fixedCostId)) {
+    if (!Number.isInteger(locationId) || !Number.isInteger(fixedCostId)) {
       return NextResponse.json(
-        { error: "Invalid branchId or fixedCostId" },
+        { error: "Invalid locationId or fixedCostId" },
         { status: 400 },
       );
     }
@@ -73,7 +73,7 @@ export async function PATCH(req: NextRequest, context: Context) {
     const existing = await prisma.fixedCost.findFirst({
       where: {
         id: fixedCostId,
-        locationId: branchId,
+        locationId: locationId,
       },
       select: { id: true },
     });
@@ -137,15 +137,15 @@ export async function DELETE(req: NextRequest, context: Context) {
     // --------------------------------------------------
     // Await params (Next.js 15+ requirement)
     // --------------------------------------------------
-    const { locationId: branchIdParam, fixedCostId: fixedCostIdParam } =
+    const { locationId: locationIdParam, fixedCostId: fixedCostIdParam } =
       await context.params;
 
-    const branchId = Number(branchIdParam);
+    const locationId = Number(locationIdParam);
     const fixedCostId = Number(fixedCostIdParam);
 
-    if (!Number.isInteger(branchId) || !Number.isInteger(fixedCostId)) {
+    if (!Number.isInteger(locationId) || !Number.isInteger(fixedCostId)) {
       return NextResponse.json(
-        { error: "Invalid branchId or fixedCostId" },
+        { error: "Invalid locationId or fixedCostId" },
         { status: 400 },
       );
     }
@@ -156,7 +156,7 @@ export async function DELETE(req: NextRequest, context: Context) {
     const existing = await prisma.fixedCost.findFirst({
       where: {
         id: fixedCostId,
-        locationId: branchId,
+        locationId: locationId,
       },
       select: { id: true },
     });

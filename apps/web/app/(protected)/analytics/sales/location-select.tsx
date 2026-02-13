@@ -37,7 +37,7 @@ export function LocationSelect({
   description,
   className,
 }: LocationSelectProps) {
-  const { branchId, setBranchId } = useAnalytics();
+  const { locationId, setLocationId } = useAnalytics();
   const selectId = id ?? "location-select";
   const descriptionId = description ? `${selectId}-description` : undefined;
 
@@ -45,8 +45,8 @@ export function LocationSelect({
     <Field className={cn("max-w-xs space-y-2", className)}>
       {label ? <FieldLabel htmlFor={selectId}>{label}</FieldLabel> : null}
       <Select
-        value={branchId !== null ? String(branchId) : undefined}
-        onValueChange={(val) => setBranchId(val ? Number(val) : null)}
+        value={locationId !== null ? String(locationId) : undefined}
+        onValueChange={(val) => setLocationId(val ? Number(val) : null)}
       >
         <SelectTrigger
           id={selectId}

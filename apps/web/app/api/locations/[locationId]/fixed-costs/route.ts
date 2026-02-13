@@ -12,11 +12,11 @@ export async function POST(req: NextRequest, context: Context) {
     // --------------------------------------------------
     // Await params (Next.js 15+ requirement)
     // --------------------------------------------------
-    const { locationId: branchIdParam } = await context.params;
+    const { locationId: locationIdParam } = await context.params;
 
-    const branchId = Number(branchIdParam);
-    if (!Number.isInteger(branchId)) {
-      return NextResponse.json({ error: "Invalid branchId" }, { status: 400 });
+    const locationId = Number(locationIdParam);
+    if (!Number.isInteger(locationId)) {
+      return NextResponse.json({ error: "Invalid locationId" }, { status: 400 });
     }
 
     // --------------------------------------------------
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest, context: Context) {
     // Ensure branch exists
     // --------------------------------------------------
     const branchExists = await prisma.location.findUnique({
-      where: { id: branchId },
+      where: { id: locationId },
       select: { id: true },
     });
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest, context: Context) {
     // --------------------------------------------------
     const fixedCost = await prisma.fixedCost.create({
       data: {
-        locationId: branchId,
+        locationId: locationId,
         name: name.trim(),
         amount,
         category: category?.trim() || null,

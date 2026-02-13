@@ -2,16 +2,16 @@
 "use client";
 
 type UseDeleteAnalyticsArgs = {
-  branchId: number | null;
+  locationId: number | null;
   onSuccess: () => void;
 };
 
 export function useDeleteAnalytics({
-  branchId,
+  locationId,
   onSuccess,
 }: UseDeleteAnalyticsArgs) {
   async function deleteAnalytics(analyticsId: number) {
-    if (!branchId) return;
+    if (!locationId) return;
 
     const confirmed = confirm(
       "Are you sure you want to delete this analytics?",
@@ -24,7 +24,7 @@ export function useDeleteAnalytics({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           analyticsId,
-          branchId,
+          locationId,
         }),
       });
 
