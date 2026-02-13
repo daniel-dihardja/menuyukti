@@ -1,6 +1,6 @@
 # Menuyukti
 
-Menuyukti is an AI restaurant marketing SaaS for restaurant marketers and agencies. It turns POS and sales data into campaign-ready insights, menu promotion priorities, and AI-generated Instagram post schedules with content. The repo contains:
+Menuyukti is an AI restaurant marketing SaaS for restaurant marketers and agencies. It turns POS and sales data into campaign-ready insights, AI-generated Instagram post schedules with content, and analytics that measure the real impact of social posts. The repo contains:
 
 - `apps/web`: Next.js web app (UI + API routes)
 - `apps/analytics`: FastAPI service for deterministic analytics and decisioning
@@ -13,6 +13,7 @@ Menuyukti is an AI restaurant marketing SaaS for restaurant marketers and agenci
 - Menu engineering matrix computation
 - Marketing insights derived from sales performance
 - Agentic AI workflows for campaign planning and Instagram post scheduling with content
+- Social post impact analytics tied back to sales performance
 
 ## Development
 

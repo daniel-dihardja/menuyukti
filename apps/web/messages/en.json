@@ -20,7 +20,7 @@
       "ctaPrimary": "Get Started"
     },
     "problem": "Restaurant marketers and agencies still rely on gut feel to decide what to promote. That leads to missed demand signals, wasted budget, and underperforming campaigns.",
-    "solution": "Menuyukti turns sales data into marketing intelligence and AI workflows that create Instagram schedules with post concepts and copy.",
+    "solution": "Menuyukti turns sales data into marketing intelligence and AI workflows that create Instagram schedules with post concepts and copy, then measures the real impact of those posts.",
     "how": {
       "title": "How it works",
       "steps": {
@@ -40,10 +40,10 @@
     },
     "why": {
       "title": "Why restaurant marketers choose Menuyukti",
-      "subtitle": "Data-backed insights plus AI automation to produce Instagram content faster.",
+      "subtitle": "Data-backed insights, AI automation, and post-impact analytics in one place.",
       "cards": {
         "insights": "Data-backed marketing insights",
-        "waste": "Smarter promo decisions",
+        "waste": "Measure post impact",
         "ops": "AI-generated Instagram schedules",
         "margin": "Stronger marketing ROI"
       }
