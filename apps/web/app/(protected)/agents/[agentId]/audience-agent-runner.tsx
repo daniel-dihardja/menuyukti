@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@workspace/ui/components/button";
 import { useAnalytics } from "@/app/(protected)/analytics/use-analytics";
@@ -33,9 +33,51 @@ export function AudienceAgentRunner() {
   const { analyticsId } = useAnalytics();
   const outputRegionId = "audience-agent-output";
   const [running, setRunning] = useState(false);
-  const [hasRun, setHasRun] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [outputs, setOutputs] = useState<AudienceOutputs | null>(null);
+
+  useEffect(() => {
+    if (analyticsId === null) {
+      setOutputs(null);
+      setError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const loadOutputs = async () => {
+      setError(null);
+      try {
+        const res = await fetch(
+          `/api/agents/audience?analyticsId=${analyticsId}`,
+          {
+            method: "GET",
+            signal: controller.signal,
+          },
+        );
+
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as {
+            error?: string;
+          };
+          throw new Error(body.error ?? "Failed to load audience output");
+        }
+
+        const body = (await res.json()) as { outputs?: AudienceOutputs | null };
+        setOutputs(body.outputs ?? null);
+      } catch (err) {
+        if ((err as Error).name === "AbortError") {
+          return;
+        }
+        setOutputs(null);
+        setError((err as Error).message);
+      }
+    };
+
+    void loadOutputs();
+
+    return () => controller.abort();
+  }, [analyticsId]);
 
   const runAgent = async () => {
     if (analyticsId === null) {
@@ -43,6 +85,7 @@ export function AudienceAgentRunner() {
       return;
     }
 
+    const forceRerun = Boolean(outputs);
     setRunning(true);
     setError(null);
     try {
@@ -51,7 +94,7 @@ export function AudienceAgentRunner() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ analyticsId }),
+        body: JSON.stringify({ analyticsId, forceRerun }),
       });
 
       if (!res.ok) {
@@ -63,10 +106,7 @@ export function AudienceAgentRunner() {
 
       const body = (await res.json()) as { outputs?: AudienceOutputs };
       setOutputs(body.outputs ?? null);
-      setHasRun(true);
     } catch (err) {
-      setHasRun(false);
-      setOutputs(null);
       setError((err as Error).message);
     } finally {
       setRunning(false);
@@ -90,7 +130,11 @@ export function AudienceAgentRunner() {
             aria-controls={outputRegionId}
             aria-busy={running}
           >
-            {running ? t("actions.running") : t("actions.run")}
+            {running
+              ? t("actions.running")
+              : outputs
+                ? t("actions.rerun")
+                : t("actions.run")}
           </Button>
         </div>
 
@@ -103,9 +147,8 @@ export function AudienceAgentRunner() {
         >
           <h3 className="font-semibold">{t("output.title")}</h3>
 
-          {error ? (
-            <p className="text-destructive">{error}</p>
-          ) : !hasRun || !outputs ? (
+          {error ? <p className="text-destructive">{error}</p> : null}
+          {!outputs ? (
             <p className="text-muted-foreground">
               {t("output.empty")}
             </p>

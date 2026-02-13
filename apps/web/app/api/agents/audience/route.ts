@@ -5,6 +5,7 @@ export const runtime = "nodejs";
 
 type InvokeAudiencePayload = {
   analyticsId?: number;
+  forceRerun?: boolean;
 };
 
 function toNumber(value: unknown): number {
@@ -42,6 +43,51 @@ function normalizeHeatmaps(raw: unknown): Array<Record<string, unknown>> {
   });
 }
 
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const analyticsId = Number(searchParams.get("analyticsId"));
+
+    if (!Number.isInteger(analyticsId)) {
+      return NextResponse.json(
+        { error: "INVALID_ANALYTICS_ID" },
+        { status: 400 },
+      );
+    }
+
+    const analytics = await prisma.analytics.findUnique({
+      where: { id: analyticsId },
+      select: { branchId: true },
+    });
+
+    if (!analytics) {
+      return NextResponse.json(
+        { error: "ANALYTICS_NOT_FOUND" },
+        { status: 404 },
+      );
+    }
+
+    const cached = await prisma.agentOutput.findUnique({
+      where: {
+        agentId_branchId_analyticsId: {
+          agentId: "audience",
+          branchId: analytics.branchId,
+          analyticsId,
+        },
+      },
+      select: { outputs: true },
+    });
+
+    return NextResponse.json({ outputs: cached?.outputs ?? null });
+  } catch (error) {
+    console.error("Audience agent output lookup failed:", error);
+    return NextResponse.json(
+      { error: "AUDIENCE_AGENT_LOOKUP_FAILED" },
+      { status: 500 },
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const AGENTS_API_URL = process.env.AGENTS_API_URL;
@@ -54,6 +100,7 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as InvokeAudiencePayload;
     const analyticsId = Number(body?.analyticsId);
+    const forceRerun = body?.forceRerun === true;
 
     if (!Number.isInteger(analyticsId)) {
       return NextResponse.json(
@@ -85,19 +132,29 @@ export async function POST(request: Request) {
       );
     }
 
-    const cached = await prisma.agentOutput.findUnique({
-      where: {
-        agentId_branchId_analyticsId: {
+    if (forceRerun) {
+      await prisma.agentOutput.deleteMany({
+        where: {
           agentId: "audience",
           branchId: analytics.branchId,
           analyticsId,
         },
-      },
-      select: { outputs: true },
-    });
+      });
+    } else {
+      const cached = await prisma.agentOutput.findUnique({
+        where: {
+          agentId_branchId_analyticsId: {
+            agentId: "audience",
+            branchId: analytics.branchId,
+            analyticsId,
+          },
+        },
+        select: { outputs: true },
+      });
 
-    if (cached?.outputs) {
-      return NextResponse.json({ outputs: cached.outputs });
+      if (cached?.outputs) {
+        return NextResponse.json({ outputs: cached.outputs });
+      }
     }
 
     const matrixFromSnapshot =

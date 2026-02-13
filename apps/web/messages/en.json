@@ -133,6 +133,7 @@
         "description": "Run the Audience agent and preview mocked output.",
         "actions": {
           "run": "Run Agent",
+          "rerun": "Re-run Agent",
           "running": "Running..."
         },
         "output": {
@@ -180,6 +181,7 @@
         "description": "Run the Tone agent and review generated output.",
         "actions": {
           "run": "Run Agent",
+          "rerun": "Re-run Agent",
           "running": "Running..."
         },
         "output": {
