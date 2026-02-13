@@ -12,6 +12,58 @@
     "signupDescription": "Don’t have an account?",
     "signupLink": "Sign up now"
   },
+  "landing": {
+    "brand": "Menuyukti",
+    "hero": {
+      "headline": "Restaurant marketing SaaS for marketers and agencies",
+      "subtitle": "An agentic AI system that turns sales data into Instagram schedules with post concepts and copy.",
+      "ctaPrimary": "Get Started"
+    },
+    "problem": "Restaurant marketers and agencies still rely on gut feel to decide what to promote. That leads to missed demand signals, wasted budget, and underperforming campaigns.",
+    "solution": "Menuyukti turns sales data into marketing intelligence and AI workflows that create Instagram schedules with post concepts and copy.",
+    "how": {
+      "title": "How it works",
+      "steps": {
+        "upload": {
+          "title": "1. Upload sales data",
+          "description": "Import POS exports or Excel sales reports in minutes."
+        },
+        "analyze": {
+          "title": "2. Automatic marketing insights",
+          "description": "Menuyukti converts sales performance into marketing insights you can act on."
+        },
+        "act": {
+          "title": "3. Campaign-ready actions",
+          "description": "AI turns those insights into Instagram schedules with post concepts and copy."
+        }
+      }
+    },
+    "why": {
+      "title": "Why restaurant marketers choose Menuyukti",
+      "subtitle": "Data-backed insights plus AI automation to produce Instagram content faster.",
+      "cards": {
+        "insights": "Data-backed marketing insights",
+        "waste": "Smarter promo decisions",
+        "ops": "AI-generated Instagram schedules",
+        "margin": "Stronger marketing ROI"
+      }
+    },
+    "cta": {
+      "title": "Ready to market smarter?",
+      "description": "Get a free analysis and see which menu items to promote plus Instagram post schedules with content.",
+      "primary": "Get Started"
+    },
+    "footer": {
+      "about": "About",
+      "contact": "Contact",
+      "privacy": "Privacy Policy",
+      "copyright": "© 2025 Menuyukti"
+    },
+    "mobileCta": {
+      "primary": "Get Started",
+      "secondary": "Learn More"
+    }
+  },
   "sidebar": {
     "groupLabel": "Menuyukti",
     "news": "News",
