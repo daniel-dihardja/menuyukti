@@ -141,9 +141,10 @@ export function ToneAgentRunner() {
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex justify-start gap-2">
+        <div className="flex flex-col justify-start gap-2 sm:flex-row">
           <Button
             type="button"
+            className="w-full sm:w-auto"
             disabled={running || clearing}
             onClick={runAgent}
             aria-controls={outputRegionId}
@@ -159,6 +160,7 @@ export function ToneAgentRunner() {
             <Button
               type="button"
               variant="outline"
+              className="w-full sm:w-auto"
               disabled={running || clearing}
               onClick={clearOutput}
               aria-controls={outputRegionId}
