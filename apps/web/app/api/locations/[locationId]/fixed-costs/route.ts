@@ -55,7 +55,7 @@ export async function POST(req: NextRequest, context: Context) {
     // --------------------------------------------------
     // Ensure branch exists
     // --------------------------------------------------
-    const branchExists = await prisma.branch.findUnique({
+    const branchExists = await prisma.location.findUnique({
       where: { id: branchId },
       select: { id: true },
     });
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest, context: Context) {
     // --------------------------------------------------
     const fixedCost = await prisma.fixedCost.create({
       data: {
-        branchId,
+        locationId: branchId,
         name: name.trim(),
         amount,
         category: category?.trim() || null,

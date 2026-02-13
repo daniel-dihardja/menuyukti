@@ -27,7 +27,7 @@ export async function DELETE(request: Request) {
     const analytics = await prisma.analytics.findFirst({
       where: {
         id: analyticsId,
-        branchId,
+        locationId: branchId,
       },
       select: { id: true },
     });

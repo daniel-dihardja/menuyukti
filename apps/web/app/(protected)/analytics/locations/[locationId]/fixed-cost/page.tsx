@@ -32,7 +32,7 @@ export default async function Page({ params }: PageProps) {
   // --------------------------------------------------
   // Fetch branch (for display name + scope validation)
   // --------------------------------------------------
-  const branch = await prisma.branch.findUnique({
+  const branch = await prisma.location.findUnique({
     where: { id: branchId },
     select: {
       id: true,
@@ -48,7 +48,7 @@ export default async function Page({ params }: PageProps) {
   // Fetch fixed costs for branch
   // --------------------------------------------------
   const rawFixedCosts = await prisma.fixedCost.findMany({
-    where: { branchId },
+    where: { locationId: branchId },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,

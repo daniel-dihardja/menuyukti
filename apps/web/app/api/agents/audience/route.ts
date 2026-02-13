@@ -57,7 +57,7 @@ export async function GET(request: Request) {
 
     const analytics = await prisma.analytics.findUnique({
       where: { id: analyticsId },
-      select: { branchId: true },
+      select: { locationId: true },
     });
 
     if (!analytics) {
@@ -69,9 +69,9 @@ export async function GET(request: Request) {
 
     const cached = await prisma.agentOutput.findUnique({
       where: {
-        agentId_branchId_analyticsId: {
+        agentId_locationId_analyticsId: {
           agentId: "audience",
-          branchId: analytics.branchId,
+          locationId: analytics.locationId,
           analyticsId,
         },
       },
@@ -102,7 +102,7 @@ export async function DELETE(request: Request) {
 
     const analytics = await prisma.analytics.findUnique({
       where: { id: analyticsId },
-      select: { branchId: true },
+      select: { locationId: true },
     });
 
     if (!analytics) {
@@ -115,7 +115,7 @@ export async function DELETE(request: Request) {
     await prisma.agentOutput.deleteMany({
       where: {
         agentId: "audience",
-        branchId: analytics.branchId,
+        locationId: analytics.locationId,
         analyticsId,
       },
     });
@@ -178,16 +178,16 @@ export async function POST(request: Request) {
       await prisma.agentOutput.deleteMany({
         where: {
           agentId: "audience",
-          branchId: analytics.branchId,
+          locationId: analytics.locationId,
           analyticsId,
         },
       });
     } else {
       const cached = await prisma.agentOutput.findUnique({
         where: {
-          agentId_branchId_analyticsId: {
+          agentId_locationId_analyticsId: {
             agentId: "audience",
-            branchId: analytics.branchId,
+            locationId: analytics.locationId,
             analyticsId,
           },
         },
@@ -279,16 +279,16 @@ export async function POST(request: Request) {
     if (result?.outputs) {
       await prisma.agentOutput.upsert({
         where: {
-          agentId_branchId_analyticsId: {
+          agentId_locationId_analyticsId: {
             agentId: "audience",
-            branchId: analytics.branchId,
+            locationId: analytics.locationId,
             analyticsId,
           },
         },
         update: { outputs: result.outputs },
         create: {
           agentId: "audience",
-          branchId: analytics.branchId,
+          locationId: analytics.locationId,
           analyticsId,
           outputs: result.outputs,
         },

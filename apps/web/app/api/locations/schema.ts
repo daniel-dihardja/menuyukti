@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const createBranchSchema = z.object({
+export const createLocationSchema = z.object({
   name: z.string().min(1, "Name is required"),
   slug: z
     .string()
@@ -12,4 +12,4 @@ export const createBranchSchema = z.object({
     .default("IDR"),
 });
 
-export type CreateBranchInput = z.infer<typeof createBranchSchema>;
+export type CreateLocationInput = z.infer<typeof createLocationSchema>;

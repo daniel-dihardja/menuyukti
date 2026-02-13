@@ -59,7 +59,7 @@ export default async function Page({ params }: PageProps) {
     where: { id: analyticsId },
     select: {
       sourceFile: true,
-      branch: {
+      location: {
         select: {
           currencyCode: true,
         },
@@ -79,7 +79,7 @@ export default async function Page({ params }: PageProps) {
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
   const matrix = analytics.matrixJson as MatrixJson | null;
-  const currencyCode = analytics.branch?.currencyCode ?? "IDR";
+  const currencyCode = analytics.location?.currencyCode ?? "IDR";
 
   if (!matrix) {
     return (

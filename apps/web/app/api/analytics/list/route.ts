@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
     const analytics = await prisma.analytics.findMany({
       where: {
-        branchId: Number(branchId),
+        locationId: Number(branchId),
       },
       orderBy: {
         uploadedAt: "desc",

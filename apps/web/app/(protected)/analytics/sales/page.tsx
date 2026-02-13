@@ -14,7 +14,7 @@ import { PageHeading } from "@/components/page-heading";
 export default async function Page() {
   const t = await getTranslations("analytics.sales");
 
-  const branches = await prisma.branch.findMany({
+  const branches = await prisma.location.findMany({
     orderBy: { createdAt: "asc" },
     select: {
       id: true,

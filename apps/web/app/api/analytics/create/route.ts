@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     // --------------------------------------------------
     // Validate branch existence (fail early)
     // --------------------------------------------------
-    const branchExists = await prisma.branch.findUnique({
+    const branchExists = await prisma.location.findUnique({
       where: { id: branchId },
       select: { id: true },
     });
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
       // ----------------------------------------------
       const analyticsRecord = await tx.analytics.create({
         data: {
-          branchId,
+          locationId: branchId,
 
           // Source metadata
           sourceFile: file.name,
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
       // ----------------------------------------------
       const previousAnalytics = await tx.analytics.findFirst({
         where: {
-          branchId,
+          locationId: branchId,
           id: { not: analyticsRecord.id },
         },
         orderBy: {

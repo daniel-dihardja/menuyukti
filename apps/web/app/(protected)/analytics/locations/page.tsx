@@ -13,7 +13,7 @@ import { PageHeading } from "@/components/page-heading";
 export default async function Page() {
   const t = await getTranslations("analytics.branches");
 
-  const branches = await prisma.branch.findMany({
+  const branches = await prisma.location.findMany({
     orderBy: { createdAt: "desc" },
     select: {
       id: true,

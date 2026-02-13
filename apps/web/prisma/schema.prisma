@@ -12,18 +12,18 @@ datasource db {
 
 //
 // --------------------------------------------------
-// Branch (lightweight context / namespace)
+// Location (lightweight context / namespace)
 // --------------------------------------------------
 //
 
-model Branch {
+model Location {
   id        Int      @id @default(autoincrement())
   name      String
   slug      String   @unique
   currencyCode String @default("IDR") @map("currency_code")
   createdAt DateTime @default(now()) @map("created_at")
 
-  analytics  Analytics[]
+  analytics    Analytics[]
   fixedCosts FixedCost[]   // NEW
   agentOutputs AgentOutput[]
 
@@ -40,8 +40,8 @@ model Analytics {
   id Int @id @default(autoincrement())
 
   // Context
-  branchId Int    @map("branch_id")
-  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  locationId Int      @map("branch_id")
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Restrict)
 
   // Timing
   uploadedAt DateTime @default(now()) @map("uploaded_at")
@@ -82,7 +82,7 @@ model Analytics {
   menuItems AnalyticsMenuItem[]
   agentOutputs AgentOutput[]
 
-  @@index([branchId], map: "ix_analytics_branch_id")
+  @@index([locationId], map: "ix_analytics_branch_id")
   @@map("analytics")
 }
 
@@ -97,8 +97,8 @@ model AgentOutput {
 
   agentId String @map("agent_id")
 
-  branchId Int @map("branch_id")
-  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  locationId Int      @map("branch_id")
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
 
   analyticsId Int @map("analytics_id")
   analytics   Analytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
@@ -108,14 +108,14 @@ model AgentOutput {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@unique([agentId, branchId, analyticsId], map: "uq_agent_output_key")
-  @@index([branchId, analyticsId, agentId], map: "ix_agent_output_lookup")
+  @@unique([agentId, locationId, analyticsId], map: "uq_agent_output_key")
+  @@index([locationId, analyticsId, agentId], map: "ix_agent_output_lookup")
   @@map("agent_outputs")
 }
 
 //
 // --------------------------------------------------
-// Fixed costs (branch-scoped, mutable input data)
+// Fixed costs (location-scoped, mutable input data)
 // --------------------------------------------------
 //
 
@@ -123,8 +123,8 @@ model FixedCost {
   id Int @id @default(autoincrement())
 
   // Scope
-  branchId Int    @map("branch_id")
-  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  locationId Int      @map("branch_id")
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
 
   // Identity
   name String
@@ -141,7 +141,7 @@ model FixedCost {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt      @map("updated_at")
 
-  @@index([branchId], map: "ix_fixed_costs_branch_id")
+  @@index([locationId], map: "ix_fixed_costs_branch_id")
   @@map("fixed_costs")
 }
 

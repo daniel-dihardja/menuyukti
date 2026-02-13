@@ -49,7 +49,7 @@ export default async function Page({ params }: PageProps) {
         ? tDetail("status.draft")
         : agent.status;
 
-  const branches = await prisma.branch.findMany({
+  const branches = await prisma.location.findMany({
     orderBy: { createdAt: "asc" },
     select: {
       id: true,

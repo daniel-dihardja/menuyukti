@@ -35,8 +35,8 @@ export default async function Page({ params }: PageProps) {
     where: { id: analyticsId },
     select: {
       sourceFile: true,
-      branchId: true,
-      branch: {
+      locationId: true,
+      location: {
         select: {
           currencyCode: true,
         },
@@ -47,11 +47,11 @@ export default async function Page({ params }: PageProps) {
   if (!analytics) notFound();
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
-  const currencyCode = analytics.branch?.currencyCode ?? "IDR";
+  const currencyCode = analytics.location?.currencyCode ?? "IDR";
 
   const analyticsOptions = await prisma.analytics.findMany({
     where: {
-      branchId: analytics.branchId,
+      locationId: analytics.locationId,
       id: { not: analyticsId },
     },
     orderBy: { uploadedAt: "desc" },

@@ -73,7 +73,7 @@ export async function PATCH(req: NextRequest, context: Context) {
     const existing = await prisma.fixedCost.findFirst({
       where: {
         id: fixedCostId,
-        branchId,
+        locationId: branchId,
       },
       select: { id: true },
     });
@@ -156,7 +156,7 @@ export async function DELETE(req: NextRequest, context: Context) {
     const existing = await prisma.fixedCost.findFirst({
       where: {
         id: fixedCostId,
-        branchId,
+        locationId: branchId,
       },
       select: { id: true },
     });
