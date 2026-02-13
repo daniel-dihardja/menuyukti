@@ -103,7 +103,10 @@
           "language_guidelines": "Rules for language choice, tone, and readability for your audience.",
           "caption_style": "Recommended structure and style for Instagram captions.",
           "hashtag_style": "Guidelines for hashtag selection, volume, and mix.",
-          "content_dos_donts": "Content do's and don'ts to keep posts on-brand and effective."
+          "content_dos_donts": "Content do's and don'ts to keep posts on-brand and effective.",
+          "post_concepts": "Short concepts or themes to shape upcoming Instagram posts.",
+          "cta_phrases": "Suggested call-to-action phrases aligned with the audience.",
+          "emoji_guidelines": "Emoji usage guidance to match tone without overusing."
         }
       },
       "status": {
@@ -174,7 +177,7 @@
       },
       "toneRunner": {
         "title": "Agent Runner",
-        "description": "Run the Tone agent and preview mocked output.",
+        "description": "Run the Tone agent and review generated output.",
         "actions": {
           "run": "Run Agent",
           "running": "Running..."
@@ -187,11 +190,9 @@
           "captionStyleLabel": "Caption style:",
           "hashtagStyleLabel": "Hashtag style:",
           "contentDosDontsLabel": "Content do's & don'ts:",
-          "toneProfileValue": "Warm, modern, and appetite-forward with short, punchy sentences.",
-          "languageGuidelinesValue": "Use Bahasa + light English mix, friendly and confident; avoid jargon; keep lines under 90 chars.",
-          "captionStyleValue": "Hook + menu highlight + social proof + CTA. Emojis sparingly.",
-          "hashtagStyleValue": "3-5 branded + 3-5 local foodie tags. Keep under 10 total.",
-          "contentDosDontsValue": "Do spotlight top sellers and limited offers; don't overuse discounts or post long paragraphs."
+          "postConceptsLabel": "Post concepts:",
+          "ctaPhrasesLabel": "CTA phrases:",
+          "emojiGuidelinesLabel": "Emoji guidelines:"
         }
       }
     }

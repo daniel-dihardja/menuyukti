@@ -18,6 +18,9 @@ type ToneOutputs = {
   caption_style: string;
   hashtag_style: string;
   content_dos_donts: string;
+  post_concepts: string;
+  cta_phrases: string;
+  emoji_guidelines: string;
 };
 
 export function ToneAgentRunner() {
@@ -128,6 +131,24 @@ export function ToneAgentRunner() {
                   {t("output.contentDosDontsLabel")} {" "}
                 </span>
                 {outputs.content_dos_donts}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.postConceptsLabel")} {" "}
+                </span>
+                {outputs.post_concepts}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.ctaPhrasesLabel")} {" "}
+                </span>
+                {outputs.cta_phrases}
+              </p>
+              <p>
+                <span className="font-medium text-foreground">
+                  {t("output.emojiGuidelinesLabel")} {" "}
+                </span>
+                {outputs.emoji_guidelines}
               </p>
             </div>
           )}

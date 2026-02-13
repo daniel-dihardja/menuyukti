@@ -49,4 +49,10 @@ uv run pytest
 The web app expects:
 
 - `ANALYTICS_API_URL` — base URL of the menu‑analytics service
+- `AGENTS_API_URL` — base URL of the agents service
 - `DATABASE_URL` — database connection string
+
+The agents service expects:
+
+- `OPENAI_API_KEY` — OpenAI API key for tone generation
+- `OPENAI_TONE_MODEL` — optional model override (defaults to `gpt-4o-mini`)
