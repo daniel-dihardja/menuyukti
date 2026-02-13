@@ -40,6 +40,19 @@ CREATE TABLE "analytics" (
 );
 
 -- CreateTable
+CREATE TABLE "agent_outputs" (
+    "id" SERIAL NOT NULL,
+    "agent_id" TEXT NOT NULL,
+    "branch_id" INTEGER NOT NULL,
+    "analytics_id" INTEGER NOT NULL,
+    "outputs" JSONB NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "agent_outputs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "fixed_costs" (
     "id" SERIAL NOT NULL,
     "branch_id" INTEGER NOT NULL,
@@ -76,6 +89,12 @@ CREATE UNIQUE INDEX "branches_slug_key" ON "branches"("slug");
 CREATE INDEX "ix_analytics_branch_id" ON "analytics"("branch_id");
 
 -- CreateIndex
+CREATE INDEX "ix_agent_output_lookup" ON "agent_outputs"("branch_id", "analytics_id", "agent_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "uq_agent_output_key" ON "agent_outputs"("agent_id", "branch_id", "analytics_id");
+
+-- CreateIndex
 CREATE INDEX "ix_fixed_costs_branch_id" ON "fixed_costs"("branch_id");
 
 -- CreateIndex
@@ -89,6 +108,12 @@ CREATE UNIQUE INDEX "uq_menu_item_per_analytics" ON "analytics_menu_items"("anal
 
 -- AddForeignKey
 ALTER TABLE "analytics" ADD CONSTRAINT "analytics_branch_id_fkey" FOREIGN KEY ("branch_id") REFERENCES "branches"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "agent_outputs" ADD CONSTRAINT "agent_outputs_branch_id_fkey" FOREIGN KEY ("branch_id") REFERENCES "branches"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "agent_outputs" ADD CONSTRAINT "agent_outputs_analytics_id_fkey" FOREIGN KEY ("analytics_id") REFERENCES "analytics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "fixed_costs" ADD CONSTRAINT "fixed_costs_branch_id_fkey" FOREIGN KEY ("branch_id") REFERENCES "branches"("id") ON DELETE CASCADE ON UPDATE CASCADE;

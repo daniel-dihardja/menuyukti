@@ -25,6 +25,7 @@ model Branch {
 
   analytics  Analytics[]
   fixedCosts FixedCost[]   // NEW
+  agentOutputs AgentOutput[]
 
   @@map("branches")
 }
@@ -79,9 +80,37 @@ model Analytics {
   insightsJson           Json? @map("insights_json")
 
   menuItems AnalyticsMenuItem[]
+  agentOutputs AgentOutput[]
 
   @@index([branchId], map: "ix_analytics_branch_id")
   @@map("analytics")
+}
+
+//
+// --------------------------------------------------
+// Agent outputs (cached per analytics snapshot)
+// --------------------------------------------------
+//
+
+model AgentOutput {
+  id Int @id @default(autoincrement())
+
+  agentId String @map("agent_id")
+
+  branchId Int @map("branch_id")
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  analyticsId Int @map("analytics_id")
+  analytics   Analytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
+
+  outputs Json
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([agentId, branchId, analyticsId], map: "uq_agent_output_key")
+  @@index([branchId, analyticsId, agentId], map: "ix_agent_output_lookup")
+  @@map("agent_outputs")
 }
 
 //
@@ -151,4 +180,3 @@ model AnalyticsMenuItem {
 
   @@map("analytics_menu_items")
 }
-

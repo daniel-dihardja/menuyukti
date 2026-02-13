@@ -85,6 +85,21 @@ export async function POST(request: Request) {
       );
     }
 
+    const cached = await prisma.agentOutput.findUnique({
+      where: {
+        agentId_branchId_analyticsId: {
+          agentId: "audience",
+          branchId: analytics.branchId,
+          analyticsId,
+        },
+      },
+      select: { outputs: true },
+    });
+
+    if (cached?.outputs) {
+      return NextResponse.json({ outputs: cached.outputs });
+    }
+
     const matrixFromSnapshot =
       (
         analytics.matrixJson as {
@@ -161,6 +176,26 @@ export async function POST(request: Request) {
     }
 
     const result = await invokeResponse.json();
+
+    if (result?.outputs) {
+      await prisma.agentOutput.upsert({
+        where: {
+          agentId_branchId_analyticsId: {
+            agentId: "audience",
+            branchId: analytics.branchId,
+            analyticsId,
+          },
+        },
+        update: { outputs: result.outputs },
+        create: {
+          agentId: "audience",
+          branchId: analytics.branchId,
+          analyticsId,
+          outputs: result.outputs,
+        },
+      });
+    }
+
     return NextResponse.json(result);
   } catch (error) {
     console.error("Audience agent invocation failed:", error);
