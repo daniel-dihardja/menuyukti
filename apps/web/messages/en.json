@@ -68,12 +68,12 @@
     "groupLabel": "Menuyukti",
     "news": "News",
     "analysis": "Analysis",
-    "branches": "Branches",
-    "sales": "Sales",
+    "branches": "Locations",
+    "sales": "Reports",
     "agents": "Agents",
     "cogs": "COGS",
     "fixedCosts": "Fixed Costs",
-    "docs": "Documentation"
+    "docs": "Docs"
   },
   "agents": {
     "title": "Agents",
@@ -116,13 +116,13 @@
       "backToAgents": "Back to Agents",
       "filters": {
         "branch": {
-          "label": "Branch",
-          "placeholder": "Select branch"
+          "label": "Location",
+          "placeholder": "Select location"
         },
         "report": {
           "label": "Analytics report",
           "placeholder": {
-            "selectBranchFirst": "Select branch first",
+            "selectBranchFirst": "Select location first",
             "loading": "Loading reports…",
             "select": "Select report"
           }
@@ -208,27 +208,27 @@
   },
   "analytics": {
     "branches": {
-      "title": "Branch List",
-      "description": "Manage your branch locations and configure branch-level settings before uploading sales reports.",
-      "createDescription": "Create a new branch to organize analytics, fixed costs, and sales reports by location.",
+      "title": "Location List",
+      "description": "Manage your locations and configure location-level settings before uploading sales reports.",
+      "createDescription": "Create a new location to organize analytics, fixed costs, and sales reports by location.",
       "table": {
         "index": "#",
-        "branchName": "Branch Name",
+        "branchName": "Location Name",
         "city": "City",
         "action": "Actions",
         "view": "View",
         "delete": "Delete",
-        "empty": "No branches available yet."
+        "empty": "No locations available yet."
       },
-      "create": "Create New Branch"
+      "create": "Create New Location"
     },
     "sales": {
       "title": "Sales Reports",
-      "description": "Upload and manage sales report snapshots for each branch to power analytics features.",
-      "branchLabel": "Branch",
-      "branchPlaceholder": "Select a branch",
-      "branchDescription": "Select a branch to load and manage its sales reports.",
-      "selectBranch": "Please select a branch to view sales reports.",
+      "description": "Upload and manage sales report snapshots for each location to power analytics features.",
+      "branchLabel": "Location",
+      "branchPlaceholder": "Select a location",
+      "branchDescription": "Select a location to load and manage its sales reports.",
+      "selectBranch": "Please select a location to view sales reports.",
       "loading": "Loading sales reports…",
       "table": {
         "index": "#",
@@ -247,9 +247,9 @@
         "detectedPos": "Detected POS:"
       },
       "noBranches": {
-        "title": "No branches yet",
-        "description": "Please create a branch before uploading sales reports.",
-        "cta": "Create Branch"
+        "title": "No locations yet",
+        "description": "Please create a location before uploading sales reports.",
+        "cta": "Create Location"
       },
       "noAnalytics": {
         "title": "No sales reports yet",
@@ -268,7 +268,7 @@
     },
     "cogsForm": {
       "heading": "COGS Editor",
-      "description": "Update cost of goods sold per menu item. You can import COGS values from another analytics file in the same branch.",
+      "description": "Update cost of goods sold per menu item. You can import COGS values from another analytics file in the same location.",
       "import": {
         "label": "Import COGS from analytics",
         "placeholder": "Select analytics",
@@ -305,7 +305,7 @@
       "reportTitle": "Finance Report",
       "breadcrumb": "Finance",
       "heading": "Finance Summary",
-      "description": "Profit calculation based on analytics snapshot and branch fixed costs",
+      "description": "Profit calculation based on analytics snapshot and location fixed costs",
       "overview": {
         "title": "Period & Sales Overview",
         "period": {
@@ -398,9 +398,9 @@
   "branches": {
     "fixedCosts": {
       "title": "Fixed Costs",
-      "description": "Manage fixed costs for this branch.",
+      "description": "Manage fixed costs for this location.",
       "breadcrumbs": {
-        "branches": "Branches",
+        "branches": "Locations",
         "fixedCosts": "Fixed Costs"
       },
       "table": {

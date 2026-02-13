@@ -56,7 +56,7 @@ export function CreateBranchForm() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.message ?? "Failed to create branch");
+        throw new Error(data.message ?? "Failed to create location");
       }
 
       router.push(routes.analytics.branches);
@@ -72,13 +72,13 @@ export function CreateBranchForm() {
     <form ref={formRef} className="space-y-4" onSubmit={onSubmit}>
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Create Branch</CardTitle>
+          <CardTitle>Create Location</CardTitle>
         </CardHeader>
 
         <CardContent>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Branch name</Label>
+              <Label htmlFor="name">Location name</Label>
               <Input
                 id="name"
                 name="name"
@@ -137,7 +137,7 @@ export function CreateBranchForm() {
 
       <div className="flex justify-end">
         <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-          {loading ? "Creating..." : "Create Branch"}
+          {loading ? "Creating..." : "Create Location"}
         </Button>
       </div>
     </form>

@@ -31,7 +31,7 @@ interface BranchSelectProps {
 
 export function BranchSelect({
   branches,
-  placeholder = "Select branch",
+  placeholder = "Select location",
   id,
   label,
   description,

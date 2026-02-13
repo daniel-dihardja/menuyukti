@@ -21,7 +21,7 @@ export function useUploadAnalytics(
   async function uploadFile(file: File) {
     if (!branchId) {
       setStatus("error");
-      setMessage("Please select a branch first.");
+      setMessage("Please select a location first.");
       return;
     }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, BookOpenText, Bot, ChevronRight, Store } from "lucide-react";
+import { BookOpenText, Bot, ChevronRight, FileUp, MapPin } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -41,12 +41,12 @@ const NAV_ITEMS: NavItem[] = [
     key: "branches",
     labelKey: "branches",
     href: routes.analytics.branches,
-    icon: <Store className="w-4 h-4" />,
+    icon: <MapPin className="w-4 h-4" />,
   },
   {
     key: "sales",
     labelKey: "sales",
-    icon: <BarChart3 className="w-4 h-4" />,
+    icon: <FileUp className="w-4 h-4" />,
     href: routes.analytics.sales,
     // children: [
     //   {
