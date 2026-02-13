@@ -7,10 +7,10 @@ from langchain_openai import ChatOpenAI
 import logging
 from langgraph.graph import StateGraph
 from langgraph.runtime import Runtime
-from marketing_engine.features.audience import derive_audience_features_from_core_input
 from pydantic import BaseModel, Field
 from typing_extensions import NotRequired, TypedDict
 
+from agent.graph import graph as audience_graph
 
 class ToneOutputs(TypedDict):
     tone_profile: str
@@ -34,21 +34,20 @@ class ToneOutputsModel(BaseModel):
     emoji_guidelines: str = Field(..., min_length=1)
 
 
-class AudienceFeatures(TypedDict):
+class AudienceOutputs(TypedDict):
     top_items: list[str]
     peak_hours: list[str]
     weekday_bias: str
-    daypart_profile: dict[str, float]
-    weekday_profile: dict[str, float]
+    daypart_demand_distribution: str
+    weekday_demand_distribution: str
+    audience_intent_clusters: list[str]
     party_size_signal: str
-    social_dining_score: float
-    avg_order_items: float
-    avg_order_revenue: float
-    top_item_revenue_share_ratio: float
-    popularity_index_coverage: int
-    primary_category: str
-    analysis_window_days: NotRequired[int]
-    intent_hints: list[str]
+    social_dining_probability: str
+    audience_mix_summary: str
+    analysis_window: str
+    popularity_index_summary: str
+    top_item_revenue_share: str
+    category_mix: str
 
 
 class Context(TypedDict):
@@ -59,43 +58,44 @@ class Context(TypedDict):
 
 class State(TypedDict):
     core_input: NotRequired[dict[str, Any]]
-    audience_features: NotRequired[AudienceFeatures]
+    audience_outputs: NotRequired[AudienceOutputs]
     outputs: NotRequired[ToneOutputs]
     title: NotRequired[str]
 
 logger = logging.getLogger(__name__)
 
 
-def _format_tone_profile(features: AudienceFeatures) -> str:
-    weekday_bias = features.get("weekday_bias", "balanced")
-    party_size_signal = features.get("party_size_signal", "mixed parties")
+def _format_tone_profile(outputs: AudienceOutputs) -> str:
+    weekday_bias = outputs.get("weekday_bias", "balanced")
+    party_size_signal = outputs.get("party_size_signal", "mixed parties")
     return (
         f"{weekday_bias.title()} energy with a {party_size_signal} feel. "
         "Warm, modern, and appetite-forward."
     )
 
 
-def _build_outputs(features: AudienceFeatures) -> ToneOutputs:
-    primary_category = features.get("primary_category") or "signature items"
-    intent_hints = features.get("intent_hints", [])
-    intent_focus = intent_hints[0] if intent_hints else "everyday cravings"
+def _build_outputs(outputs: AudienceOutputs | None) -> ToneOutputs:
+    audience = outputs or {}
+    top_items = audience.get("top_items") or []
+    top_item_focus = top_items[0] if top_items else "signature items"
+    weekday_bias = audience.get("weekday_bias", "balanced")
 
     return {
-        "tone_profile": _format_tone_profile(features),
+        "tone_profile": _format_tone_profile(audience),
         "language_guidelines": (
             "Use Bahasa with light English. Keep sentences short, friendly, "
             "and confident. Avoid jargon."
         ),
         "caption_style": (
-            f"Hook + {primary_category} highlight + social proof + CTA. "
-            f"Emphasize {intent_focus}."
+            f"Hook + {top_item_focus} highlight + social proof + CTA. "
+            f"Emphasize {weekday_bias} demand moments."
         ),
         "hashtag_style": (
             "3-5 branded tags, 3-5 local foodie tags, and 1-2 category tags. "
             "Keep under 10 total."
         ),
         "content_dos_donts": (
-            f"Do spotlight top sellers and {primary_category}. "
+            f"Do spotlight top sellers like {top_item_focus}. "
             "Don't overuse discounts or long paragraphs."
         ),
         "post_concepts": (
@@ -121,21 +121,18 @@ def _get_model_name() -> str:
     return os.getenv("OPENAI_TONE_MODEL") or "gpt-4o-mini"
 
 
-def _build_llm_prompt(features: AudienceFeatures) -> str:
+def _build_llm_prompt(outputs: AudienceOutputs | None) -> str:
+    audience_context = outputs or {}
     return (
         "You are a restaurant marketing strategist. "
         "Generate Instagram tone guidance and content planning outputs. "
         "Keep each value concise (1-2 sentences) except post_concepts and "
         "cta_phrases which should be short lists in a single string. "
-        f"Context: weekday_bias={features.get('weekday_bias')}, "
-        f"party_size_signal={features.get('party_size_signal')}, "
-        f"primary_category={features.get('primary_category')}, "
-        f"intent_hints={features.get('intent_hints')}, "
-        f"top_items={features.get('top_items')}."
+        f"Audience outputs: {audience_context}."
     )
 
 
-async def _build_llm_outputs(features: AudienceFeatures) -> ToneOutputs:
+async def _build_llm_outputs(outputs: AudienceOutputs | None) -> ToneOutputs:
     model = _get_model_name()
     logger.info(
         "tone_agent_llm_call_start",
@@ -146,32 +143,43 @@ async def _build_llm_outputs(features: AudienceFeatures) -> ToneOutputs:
     )
     llm = ChatOpenAI(model=model, temperature=0.2, timeout=20)
     structured_llm = llm.with_structured_output(ToneOutputsModel)
-    prompt = _build_llm_prompt(features)
+    prompt = _build_llm_prompt(outputs)
     response = await structured_llm.ainvoke(prompt)
     logger.info("tone_agent_llm_call_success")
     data = response.model_dump()
     return cast(ToneOutputs, data)
 
 
-async def run_tone_agent(state: State, runtime: Runtime[Context]) -> dict[str, Any]:
+async def run_audience_dependency(
+    state: State, runtime: Runtime[Context]
+) -> dict[str, Any]:
     core_input = state.get("core_input", {})
-    audience_features = cast(
-        AudienceFeatures, derive_audience_features_from_core_input(core_input)
+    audience_result = await audience_graph.ainvoke(
+        {"core_input": core_input}, config={"context": runtime.context}
+    )
+    return {
+        "audience_outputs": audience_result.get("outputs", {}),
+    }
+
+
+async def run_tone_agent(state: State, runtime: Runtime[Context]) -> dict[str, Any]:
+    audience_outputs = cast(
+        AudienceOutputs, state.get("audience_outputs", {}) or {}
     )
     if _llm_enabled():
         try:
-            outputs = await _build_llm_outputs(audience_features)
+            outputs = await _build_llm_outputs(audience_outputs)
         except Exception:
             logger.exception("tone_agent_llm_call_failed")
             if _llm_required():
                 raise
-            outputs = _build_outputs(audience_features)
+            outputs = _build_outputs(audience_outputs)
     else:
-        outputs = _build_outputs(audience_features)
+        outputs = _build_outputs(audience_outputs)
     analytics_id = (runtime.context or {}).get("analytics_id")
 
     return {
-        "audience_features": audience_features,
+        "audience_outputs": audience_outputs,
         "outputs": outputs,
         "title": (
             f"tone-agent-{analytics_id}" if analytics_id is not None else "tone-agent"
@@ -181,7 +189,9 @@ async def run_tone_agent(state: State, runtime: Runtime[Context]) -> dict[str, A
 
 graph = (
     StateGraph(State, context_schema=Context)
+    .add_node("run_audience_dependency", run_audience_dependency)
     .add_node("run_tone_agent", run_tone_agent)
-    .add_edge("__start__", "run_tone_agent")
+    .add_edge("__start__", "run_audience_dependency")
+    .add_edge("run_audience_dependency", "run_tone_agent")
     .compile(name="ToneAgentGraph")
 )
