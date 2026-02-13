@@ -32,7 +32,7 @@
     "name": "Tone",
     "imageUrl": "https://picsum.photos/seed/agent-tone/800/450",
     "description": "Defines tone and language specs for Instagram posts and reels based on audience insights.",
-    "status": "draft",
+    "status": "ready",
     "inputs": [
       "audience_mix_summary",
       "audience_intent_clusters",
