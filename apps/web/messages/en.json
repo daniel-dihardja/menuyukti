@@ -98,7 +98,12 @@
           "analysis_window": "The effective time range of data used to compute the audience outputs.",
           "popularity_index_summary": "A summary of item popularity scores used to detect preference concentration.",
           "top_item_revenue_share": "The share of total revenue contributed by top-performing menu items.",
-          "category_mix": "The relative demand or revenue contribution of each menu category."
+          "category_mix": "The relative demand or revenue contribution of each menu category.",
+          "tone_profile": "The overall voice and personality to apply across Instagram posts and reels.",
+          "language_guidelines": "Rules for language choice, tone, and readability for your audience.",
+          "caption_style": "Recommended structure and style for Instagram captions.",
+          "hashtag_style": "Guidelines for hashtag selection, volume, and mix.",
+          "content_dos_donts": "Content do's and don'ts to keep posts on-brand and effective."
         }
       },
       "status": {
@@ -165,6 +170,28 @@
               "slot2": "17:00 - 19:00"
             }
           }
+        }
+      },
+      "toneRunner": {
+        "title": "Agent Runner",
+        "description": "Run the Tone agent and preview mocked output.",
+        "actions": {
+          "run": "Run Agent",
+          "running": "Running..."
+        },
+        "output": {
+          "title": "Agent Output",
+          "empty": "No output yet. Click \"Run Agent\" to generate mocked results.",
+          "toneProfileLabel": "Tone profile:",
+          "languageGuidelinesLabel": "Language guidelines:",
+          "captionStyleLabel": "Caption style:",
+          "hashtagStyleLabel": "Hashtag style:",
+          "contentDosDontsLabel": "Content do's & don'ts:",
+          "toneProfileValue": "Warm, modern, and appetite-forward with short, punchy sentences.",
+          "languageGuidelinesValue": "Use Bahasa + light English mix, friendly and confident; avoid jargon; keep lines under 90 chars.",
+          "captionStyleValue": "Hook + menu highlight + social proof + CTA. Emojis sparingly.",
+          "hashtagStyleValue": "3-5 branded + 3-5 local foodie tags. Keep under 10 total.",
+          "contentDosDontsValue": "Do spotlight top sellers and limited offers; don't overuse discounts or post long paragraphs."
         }
       }
     }

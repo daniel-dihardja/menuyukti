@@ -23,6 +23,7 @@ import agents from "@/lib/agents.json";
 import { prisma } from "@/lib/prisma/client";
 import { AgentFilters } from "../agent-filters";
 import { AudienceAgentRunner } from "./audience-agent-runner";
+import { ToneAgentRunner } from "./tone-agent-runner";
 import { ChevronLeft, CircleHelp } from "lucide-react";
 
 type PageProps = {
@@ -81,6 +82,7 @@ export default async function Page({ params }: PageProps) {
           <AgentFilters branches={branches} />
 
           {agent.id === "audience" ? <AudienceAgentRunner /> : null}
+          {agent.id === "tone" ? <ToneAgentRunner /> : null}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Card>
@@ -105,7 +107,7 @@ export default async function Page({ params }: PageProps) {
                   {agent.outputs.map((item) => (
                     <li key={item}>
                       <span>{formatOutputLabel(item)}</span>
-                      {agent.id === "audience" ? (
+                      {agent.id === "audience" || agent.id === "tone" ? (
                         <span className="ml-1 inline-flex items-center gap-1.5 whitespace-nowrap align-middle">
                           <Tooltip>
                             <TooltipTrigger asChild>
