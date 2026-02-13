@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma/client";
 
 type Context = {
   params: Promise<{
-    branchId: string;
+    locationId: string;
     fixedCostId: string;
   }>;
 };
@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest, context: Context) {
     // --------------------------------------------------
     // Await params (Next.js 15+ requirement)
     // --------------------------------------------------
-    const { branchId: branchIdParam, fixedCostId: fixedCostIdParam } =
+    const { locationId: branchIdParam, fixedCostId: fixedCostIdParam } =
       await context.params;
 
     const branchId = Number(branchIdParam);
@@ -137,7 +137,7 @@ export async function DELETE(req: NextRequest, context: Context) {
     // --------------------------------------------------
     // Await params (Next.js 15+ requirement)
     // --------------------------------------------------
-    const { branchId: branchIdParam, fixedCostId: fixedCostIdParam } =
+    const { locationId: branchIdParam, fixedCostId: fixedCostIdParam } =
       await context.params;
 
     const branchId = Number(branchIdParam);

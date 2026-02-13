@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 
-import { CreateBranchForm } from "./create-branch-form";
+import { CreateLocationForm } from "./create-location-form";
 import { routes } from "@/lib/routes";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
@@ -17,7 +17,7 @@ export default async function Page() {
       ]}
     >
       <PageHeading title={t("create")} description={t("createDescription")} />
-      <CreateBranchForm />
+      <CreateLocationForm />
     </AnalyticsPageShell>
   );
 }

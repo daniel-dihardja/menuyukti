@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@workspace/ui/components/select";
 
-export function CreateBranchForm() {
+export function CreateLocationForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -46,7 +46,7 @@ export function CreateBranchForm() {
     };
 
     try {
-      const res = await fetch("/api/branches", {
+      const res = await fetch("/api/locations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

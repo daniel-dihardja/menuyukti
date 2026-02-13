@@ -4,12 +4,12 @@ import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
-import { BranchSelect } from "./branch-select";
+import { LocationSelect } from "./location-select";
 import { SalesTable } from "./sales-table";
 import UploadExcelClient from "./upload-xcel-client";
 
 import { useUploadAnalytics } from "./use-upload-analytics";
-import { useBranchAnalytics } from "./use-branch-analytics";
+import { useLocationAnalytics } from "./use-location-analytics";
 import { useDeleteAnalytics } from "./use-delete-analytics";
 import { routes } from "@/lib/routes";
 import { useAnalytics } from "../use-analytics";
@@ -41,7 +41,7 @@ export function AnalyticsSalesClient({ branches }: Props) {
   // --------------------------------------------------
   // Analytics list
   // --------------------------------------------------
-  const { analytics: uploads, loading, refetch } = useBranchAnalytics(branchId);
+  const { analytics: uploads, loading, refetch } = useLocationAnalytics(branchId);
 
   // --------------------------------------------------
   // Upload logic
@@ -64,9 +64,9 @@ export function AnalyticsSalesClient({ branches }: Props) {
   return (
     <div className="space-y-6">
       <section className="space-y-4">
-        <BranchSelect
+        <LocationSelect
           branches={branches}
-          id="sales-branch-select"
+          id="sales-location-select"
           label={t("branchLabel")}
           placeholder={branches.length > 1 ? t("branchPlaceholder") : undefined}
           className="w-full max-w-none sm:max-w-xs"

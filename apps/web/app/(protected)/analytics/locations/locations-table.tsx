@@ -25,7 +25,7 @@ interface Branch {
   name: string;
 }
 
-interface BranchesTableProps {
+interface LocationsTableProps {
   branches: Branch[];
   emptyLabel: string;
   indexLabel: string;
@@ -33,13 +33,13 @@ interface BranchesTableProps {
   actionLabel: string;
 }
 
-export function BranchesTable({
+export function LocationsTable({
   branches,
   emptyLabel,
   indexLabel,
   branchNameLabel,
   actionLabel,
-}: BranchesTableProps) {
+}: LocationsTableProps) {
   return (
     <div className="border w-full">
       <Table className="w-full">

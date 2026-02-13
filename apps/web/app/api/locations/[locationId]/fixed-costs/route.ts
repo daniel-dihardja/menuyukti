@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma/client";
 
 type Context = {
   params: Promise<{
-    branchId: string;
+    locationId: string;
   }>;
 };
 
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest, context: Context) {
     // --------------------------------------------------
     // Await params (Next.js 15+ requirement)
     // --------------------------------------------------
-    const { branchId: branchIdParam } = await context.params;
+    const { locationId: branchIdParam } = await context.params;
 
     const branchId = Number(branchIdParam);
     if (!Number.isInteger(branchId)) {

@@ -3,7 +3,7 @@
 import { AnalyticsListItem } from "@/app/api/analytics/types";
 import { useCallback, useEffect, useState } from "react";
 
-export function useBranchAnalytics(branchId: number | null) {
+export function useLocationAnalytics(branchId: number | null) {
   const [analytics, setAnalytics] = useState<AnalyticsListItem[]>([]);
   const [loading, setLoading] = useState(false);
 

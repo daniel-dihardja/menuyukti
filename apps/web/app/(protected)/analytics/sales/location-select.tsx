@@ -20,7 +20,7 @@ type Branch = {
   name: string;
 };
 
-interface BranchSelectProps {
+interface LocationSelectProps {
   branches: Branch[];
   placeholder?: string;
   id?: string;
@@ -29,16 +29,16 @@ interface BranchSelectProps {
   className?: string;
 }
 
-export function BranchSelect({
+export function LocationSelect({
   branches,
   placeholder = "Select location",
   id,
   label,
   description,
   className,
-}: BranchSelectProps) {
+}: LocationSelectProps) {
   const { branchId, setBranchId } = useAnalytics();
-  const selectId = id ?? "branch-select";
+  const selectId = id ?? "location-select";
   const descriptionId = description ? `${selectId}-description` : undefined;
 
   return (

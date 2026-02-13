@@ -6,7 +6,7 @@ import { Button } from "@workspace/ui/components/button";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
-import { BranchesTable } from "./branches-table";
+import { LocationsTable } from "./locations-table";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
 
@@ -31,7 +31,7 @@ export default async function Page() {
         </Button>
       </div>
 
-      <BranchesTable
+      <LocationsTable
         branches={branches}
         indexLabel={t("table.index")}
         branchNameLabel={t("table.branchName")}

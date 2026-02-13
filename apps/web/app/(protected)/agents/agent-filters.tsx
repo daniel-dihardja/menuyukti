@@ -8,8 +8,8 @@ import {
   SelectValue,
 } from "@workspace/ui/components/select";
 import { useAnalytics } from "../analytics/use-analytics";
-import { useBranchAnalytics } from "../analytics/sales/use-branch-analytics";
-import { BranchSelect } from "../analytics/sales/branch-select";
+import { useLocationAnalytics } from "../analytics/sales/use-location-analytics";
+import { LocationSelect } from "../analytics/sales/location-select";
 import { useEffect } from "react";
 import { Field, FieldLabel } from "@workspace/ui/components/field";
 import { useTranslations } from "next-intl";
@@ -26,7 +26,7 @@ type Props = {
 export function AgentFilters({ branches }: Props) {
   const t = useTranslations("agents.detail.filters");
   const { analyticsId, setAnalyticsId, branchId } = useAnalytics();
-  const { analytics, loading } = useBranchAnalytics(branchId);
+  const { analytics, loading } = useLocationAnalytics(branchId);
 
   useEffect(() => {
     if (!branchId) return;
@@ -38,10 +38,10 @@ export function AgentFilters({ branches }: Props) {
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-      <BranchSelect
+      <LocationSelect
         branches={branches}
         placeholder={t("branch.placeholder")}
-        id="agent-branch-select"
+        id="agent-location-select"
         label={t("branch.label")}
       />
 

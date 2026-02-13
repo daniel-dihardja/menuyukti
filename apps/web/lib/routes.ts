@@ -3,8 +3,8 @@ export const routes = {
   news: "/news",
 
   analytics: {
-    branches: "/analytics/branches",
-    branchesCreate: "/analytics/branches/create",
+    branches: "/analytics/locations",
+    branchesCreate: "/analytics/locations/create",
     sales: "/analytics/sales",
 
     matrix: (analyticsId: string | number) =>
@@ -25,12 +25,12 @@ export const routes = {
   },
 
   branches: {
-    list: "/branches",
+    list: "/locations",
 
-    detail: (branchId: string | number) => `/branches/${branchId}`,
+    detail: (branchId: string | number) => `/locations/${branchId}`,
 
     fixedCosts: (branchId: string | number) =>
-      `/analytics/branches/${branchId}/fixed-cost`,
+      `/analytics/locations/${branchId}/fixed-cost`,
   },
 
   docs: "/docs",

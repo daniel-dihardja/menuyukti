@@ -13,7 +13,7 @@ import { FixedCostForm } from "./fixed-cost-form";
 
 type PageProps = {
   params: Promise<{
-    branchId?: string;
+    locationId?: string;
   }>;
 };
 
@@ -23,10 +23,10 @@ export default async function Page({ params }: PageProps) {
   // --------------------------------------------------
   // Params
   // --------------------------------------------------
-  const { branchId: branchIdParam } = await params;
-  if (!branchIdParam) notFound();
+  const { locationId: locationIdParam } = await params;
+  if (!locationIdParam) notFound();
 
-  const branchId = Number(branchIdParam);
+  const branchId = Number(locationIdParam);
   if (!Number.isInteger(branchId)) notFound();
 
   // --------------------------------------------------
