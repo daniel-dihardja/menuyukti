@@ -117,11 +117,11 @@ export default async function Page({ params }: PageProps) {
       />
 
       <Tabs defaultValue="daily" className="space-y-4">
-        <TabsList className="w-full grid grid-cols-2 sm:inline-flex sm:w-auto">
-          <TabsTrigger value="daily" className="w-full">
+        <TabsList className="w-full grid grid-cols-2 justify-start sm:inline-flex sm:w-fit">
+          <TabsTrigger value="daily" className="w-full flex-1 sm:w-auto sm:flex-none">
             {tHeatmap("tabs.daily")}
           </TabsTrigger>
-          <TabsTrigger value="weekly" className="w-full">
+          <TabsTrigger value="weekly" className="w-full flex-1 sm:w-auto sm:flex-none">
             {tHeatmap("tabs.weekly")}
           </TabsTrigger>
         </TabsList>

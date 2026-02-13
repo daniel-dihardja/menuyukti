@@ -44,7 +44,12 @@ type Props = {
   currency: string;
 };
 
-export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
+export function MatrixCategoryTable({
+  title,
+  items,
+  locale,
+  currency,
+}: Props) {
   const t = useTranslations("analytics.matrix.table");
   const [sortKey, setSortKey] = useState<SortKey>("quantity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -84,7 +89,8 @@ export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
   const SortIndicator = ({ col }: { col: SortKey }) =>
     col === sortKey ? (sortDir === "asc" ? " ▲" : " ▼") : null;
 
-  const th = "cursor-pointer select-none whitespace-nowrap text-right";
+  const th =
+    "cursor-pointer select-none whitespace-nowrap text-right px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground";
   const thLeft = `${th} text-left`;
 
   const actionVariant = (action: Action) => {
@@ -106,10 +112,10 @@ export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
     <section className="space-y-3">
       <h2 className="text-lg font-semibold">{title}</h2>
 
-      <div className="border rounded-md overflow-hidden">
+      <div className="overflow-hidden border shadow-sm bg-card">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead className={thLeft} onClick={() => toggleSort("menu")}>
                 {t("menu")} <SortIndicator col="menu" />
               </TableHead>
@@ -156,31 +162,31 @@ export function MatrixCategoryTable({ title, items, locale, currency }: Props) {
 
           <TableBody>
             {sortedItems.map((item) => (
-              <TableRow key={item.menu}>
-                <TableCell className="font-medium">{item.menu}</TableCell>
+              <TableRow key={item.menu} className="hover:bg-muted/30">
+                <TableCell className="px-3 py-2 font-medium">{item.menu}</TableCell>
 
-                <TableCell className="text-right">
+                <TableCell className="px-3 py-2 text-right">
                   {item.quantity.toLocaleString(locale)}
                 </TableCell>
 
-                <TableCell className="text-right">
+                <TableCell className="px-3 py-2 text-right">
                   {formatCurrencyWithCode(item.total_revenue, currency, locale)}
                 </TableCell>
 
-                <TableCell className="text-right">
+                <TableCell className="px-3 py-2 text-right">
                   {formatCurrencyWithCode(item.cogs, currency, locale)}
                 </TableCell>
 
-                <TableCell className="text-right">
+                <TableCell className="px-3 py-2 text-right">
                   {formatCurrencyWithCode(item.contribution_margin, currency, locale)}
                 </TableCell>
 
-                <TableCell className="text-right">
+                <TableCell className="px-3 py-2 text-right">
                   {(item.contribution_margin_percentage * 100).toFixed(1)}%
                 </TableCell>
 
                 {hasActions && (
-                  <TableCell className="text-center">
+                  <TableCell className="px-3 py-2 text-center">
                     {item.action ? (
                       <Badge variant={actionVariant(item.action)}>
                         {t(`actions.${item.action}`)}

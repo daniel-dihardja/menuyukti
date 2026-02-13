@@ -150,6 +150,13 @@ export default async function Page({ params }: PageProps) {
   const byCategory = (cat: MatrixDistributionItem["category"]) =>
     distribution.find((d) => d.category === cat);
 
+  const categoryOrder = [
+    "star",
+    "plow_horse",
+    "puzzle",
+    "low_end",
+  ] as const;
+
   // --------------------------------------------------
   // UI
   // --------------------------------------------------
@@ -175,7 +182,7 @@ export default async function Page({ params }: PageProps) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Period */}
-              <div className="border rounded-md p-4 space-y-2">
+              <div className="border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-border">
                 <p className="text-sm text-muted-foreground">{tMatrix("overview.period.title")}</p>
                 <div className="text-sm">
                   <div>
@@ -190,7 +197,7 @@ export default async function Page({ params }: PageProps) {
               </div>
 
               {/* Orders & Items */}
-              <div className="border rounded-md p-4 space-y-2">
+              <div className="border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-border">
                 <p className="text-sm text-muted-foreground">{tMatrix("overview.ordersAndItems.title")}</p>
                 <div className="text-sm">
                   <div>
@@ -209,7 +216,7 @@ export default async function Page({ params }: PageProps) {
               </div>
 
               {/* Averages */}
-              <div className="border rounded-md p-4 space-y-2">
+              <div className="border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-border">
                 <p className="text-sm text-muted-foreground">{tMatrix("overview.averages.title")}</p>
                 <div className="text-sm">
                   <div>
@@ -240,16 +247,17 @@ export default async function Page({ params }: PageProps) {
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { key: "star", label: tMatrix("categories.star") },
-                { key: "plow_horse", label: tMatrix("categories.plow_horse") },
-                { key: "puzzle", label: tMatrix("categories.puzzle") },
-                { key: "low_end", label: tMatrix("categories.low_end") },
-              ].map(({ key, label }) => {
-                const item = byCategory(key as any);
+              {categoryOrder.map((key) => {
+                const label = tMatrix(`categories.${key}`);
+                const item = byCategory(key);
+                const share = item ? Math.max(item.percentage * 100, 0) : 0;
+
                 return (
-                  <div key={key} className="border rounded-md p-4 space-y-2">
-                    <p className="text-sm text-muted-foreground">{label}</p>
+                  <div key={key} className="border p-4 shadow-sm bg-card">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">{label}</p>
+                    </div>
+
                     <div className="text-sm">
                       <div>
                         <span className="text-muted-foreground">{tMatrix("distribution.items")}</span>{" "}
@@ -261,7 +269,7 @@ export default async function Page({ params }: PageProps) {
                         <span className="text-muted-foreground">{tMatrix("distribution.share")}</span>{" "}
                         <span className="font-medium">
                           {item
-                            ? `${(item.percentage * 100).toFixed(1)}%`
+                            ? `${share.toFixed(1)}%`
                             : "—"}
                         </span>
                       </div>
@@ -276,6 +284,13 @@ export default async function Page({ params }: PageProps) {
                         </span>
                       </div>
                     </div>
+
+                    <div className="mt-3 h-2 overflow-hidden bg-muted/60">
+                      <div
+                        className="h-full bg-foreground/30"
+                        style={{ width: `${Math.min(share, 100)}%` }}
+                      />
+                    </div>
                   </div>
                 );
               })}
@@ -288,17 +303,10 @@ export default async function Page({ params }: PageProps) {
           <section className="space-y-6">
             <h2 className="text-xl font-semibold">{tMatrix("analysis.title")}</h2>
 
-            {(
-              [
-                ["star", tMatrix("categories.star")],
-                ["plow_horse", tMatrix("categories.plow_horse")],
-                ["puzzle", tMatrix("categories.puzzle")],
-                ["low_end", tMatrix("categories.low_end")],
-              ] as const
-            ).map(([key, label]) => (
+            {categoryOrder.map((key) => (
               <MatrixCategoryTable
                 key={key}
-                title={label}
+                title={tMatrix(`categories.${key}`)}
                 items={itemsByCategory[key]}
                 locale={locale}
                 currency={currencyCode}
