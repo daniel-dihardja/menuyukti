@@ -134,11 +134,13 @@
         "actions": {
           "run": "Run Agent",
           "rerun": "Re-run Agent",
+          "clear": "Clear Output",
+          "clearing": "Clearing...",
           "running": "Running..."
         },
         "output": {
           "title": "Agent Output",
-          "empty": "No output yet. Click \"Run Agent\" to generate mocked results.",
+          "empty": "No output yet. Click \"Run Agent\" to generate outputs.",
           "topItemsLabel": "Top items:",
           "peakHoursLabel": "Peak hours:",
           "weekdayBiasLabel": "Weekday bias:",
@@ -182,11 +184,13 @@
         "actions": {
           "run": "Run Agent",
           "rerun": "Re-run Agent",
+          "clear": "Clear Output",
+          "clearing": "Clearing...",
           "running": "Running..."
         },
         "output": {
           "title": "Agent Output",
-          "empty": "No output yet. Click \"Run Agent\" to generate mocked results.",
+          "empty": "No output yet. Click \"Run Agent\" to generate outputs.",
           "toneProfileLabel": "Tone profile:",
           "languageGuidelinesLabel": "Language guidelines:",
           "captionStyleLabel": "Caption style:",

@@ -88,6 +88,48 @@ export async function GET(request: Request) {
   }
 }
 
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const analyticsId = Number(searchParams.get("analyticsId"));
+
+    if (!Number.isInteger(analyticsId)) {
+      return NextResponse.json(
+        { error: "INVALID_ANALYTICS_ID" },
+        { status: 400 },
+      );
+    }
+
+    const analytics = await prisma.analytics.findUnique({
+      where: { id: analyticsId },
+      select: { branchId: true },
+    });
+
+    if (!analytics) {
+      return NextResponse.json(
+        { error: "ANALYTICS_NOT_FOUND" },
+        { status: 404 },
+      );
+    }
+
+    await prisma.agentOutput.deleteMany({
+      where: {
+        agentId: "tone",
+        branchId: analytics.branchId,
+        analyticsId,
+      },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Tone agent output clear failed:", error);
+    return NextResponse.json(
+      { error: "TONE_AGENT_CLEAR_FAILED" },
+      { status: 500 },
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const AGENTS_API_URL = process.env.AGENTS_API_URL;

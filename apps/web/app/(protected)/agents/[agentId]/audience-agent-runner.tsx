@@ -33,6 +33,7 @@ export function AudienceAgentRunner() {
   const { analyticsId } = useAnalytics();
   const outputRegionId = "audience-agent-output";
   const [running, setRunning] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [outputs, setOutputs] = useState<AudienceOutputs | null>(null);
 
@@ -113,6 +114,34 @@ export function AudienceAgentRunner() {
     }
   };
 
+  const clearOutput = async () => {
+    if (analyticsId === null) {
+      setError("Select an analytics report first.");
+      return;
+    }
+
+    setClearing(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/agents/audience?analyticsId=${analyticsId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        throw new Error(body.error ?? "Failed to clear audience output");
+      }
+
+      setOutputs(null);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setClearing(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="space-y-2">
@@ -122,10 +151,10 @@ export function AudienceAgentRunner() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex justify-start">
+        <div className="flex justify-start gap-2">
           <Button
             type="button"
-            disabled={running}
+            disabled={running || clearing}
             onClick={runAgent}
             aria-controls={outputRegionId}
             aria-busy={running}
@@ -136,6 +165,18 @@ export function AudienceAgentRunner() {
                 ? t("actions.rerun")
                 : t("actions.run")}
           </Button>
+          {outputs ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={running || clearing}
+              onClick={clearOutput}
+              aria-controls={outputRegionId}
+              aria-busy={clearing}
+            >
+              {clearing ? t("actions.clearing") : t("actions.clear")}
+            </Button>
+          ) : null}
         </div>
 
         <div
