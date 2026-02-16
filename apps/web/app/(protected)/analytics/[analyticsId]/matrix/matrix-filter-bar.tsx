@@ -168,11 +168,19 @@ export function MatrixFilterBar({ filters }: Props) {
         )}
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+      <form
+        className="space-y-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          applyFilters();
+        }}
+      >
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1.5 lg:col-span-2">
           <Label htmlFor="matrix-filter-search">Search menu item</Label>
           <Input
             id="matrix-filter-search"
+            aria-label="Search menu item"
             value={q}
             onChange={(event) => setQ(event.target.value)}
             placeholder="e.g. burger, coffee, pasta"
@@ -183,6 +191,7 @@ export function MatrixFilterBar({ filters }: Props) {
           <Label htmlFor="matrix-filter-margin-min">Margin % min (0-1)</Label>
           <Input
             id="matrix-filter-margin-min"
+            aria-label="Minimum margin percentage"
             inputMode="decimal"
             value={marginMin}
             onChange={(event) => setMarginMin(event.target.value)}
@@ -194,6 +203,7 @@ export function MatrixFilterBar({ filters }: Props) {
           <Label htmlFor="matrix-filter-margin-max">Margin % max (0-1)</Label>
           <Input
             id="matrix-filter-margin-max"
+            aria-label="Maximum margin percentage"
             inputMode="decimal"
             value={marginMax}
             onChange={(event) => setMarginMax(event.target.value)}
@@ -205,6 +215,7 @@ export function MatrixFilterBar({ filters }: Props) {
           <Label htmlFor="matrix-filter-qty-min">Units sold min</Label>
           <Input
             id="matrix-filter-qty-min"
+            aria-label="Minimum units sold"
             inputMode="numeric"
             value={qtyMin}
             onChange={(event) => setQtyMin(event.target.value)}
@@ -216,6 +227,7 @@ export function MatrixFilterBar({ filters }: Props) {
           <Label htmlFor="matrix-filter-qty-max">Units sold max</Label>
           <Input
             id="matrix-filter-qty-max"
+            aria-label="Maximum units sold"
             inputMode="numeric"
             value={qtyMax}
             onChange={(event) => setQtyMax(event.target.value)}
@@ -227,6 +239,7 @@ export function MatrixFilterBar({ filters }: Props) {
           <Label htmlFor="matrix-filter-sort">Sort by</Label>
           <select
             id="matrix-filter-sort"
+            aria-label="Sort matrix table by"
             className="h-9 w-full rounded-md border bg-background px-3 text-sm shadow-sm"
             value={sort}
             onChange={(event) => setSort(event.target.value as MatrixFilterState["sort"])}
@@ -243,6 +256,7 @@ export function MatrixFilterBar({ filters }: Props) {
           <Label htmlFor="matrix-filter-order">Order</Label>
           <select
             id="matrix-filter-order"
+            aria-label="Sort direction"
             className="h-9 w-full rounded-md border bg-background px-3 text-sm shadow-sm"
             value={order}
             onChange={(event) => setOrder(event.target.value as MatrixFilterState["order"])}
@@ -266,6 +280,7 @@ export function MatrixFilterBar({ filters }: Props) {
                 type="button"
                 variant={isActive ? "default" : "outline"}
                 size="sm"
+                aria-pressed={isActive}
                 title={preset.description}
                 onClick={() => applyPreset(preset.key)}
               >
@@ -289,6 +304,7 @@ export function MatrixFilterBar({ filters }: Props) {
                 type="button"
                 variant={active ? "default" : "outline"}
                 size="sm"
+                aria-pressed={active}
                 onClick={() => toggleCategory(option.value)}
               >
                 {option.label}
@@ -311,6 +327,7 @@ export function MatrixFilterBar({ filters }: Props) {
                 type="button"
                 variant={active ? "default" : "outline"}
                 size="sm"
+                aria-pressed={active}
                 onClick={() => toggleAction(option.value)}
               >
                 {option.label}
@@ -324,10 +341,11 @@ export function MatrixFilterBar({ filters }: Props) {
         <Button type="button" variant="outline" onClick={resetFilters}>
           Reset
         </Button>
-        <Button type="button" onClick={applyFilters}>
+        <Button type="submit">
           Apply Filters
         </Button>
       </div>
+      </form>
     </section>
   );
 }

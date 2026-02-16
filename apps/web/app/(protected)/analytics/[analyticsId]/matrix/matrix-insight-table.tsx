@@ -123,6 +123,9 @@ export function MatrixInsightTable({ items, locale, currency }: Props) {
   return (
     <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
       <Table>
+        <caption className="sr-only">
+          Menu engineering matrix table with category and recommendation actions.
+        </caption>
         <TableHeader>
           <TableRow className="bg-muted/40 hover:bg-muted/40">
             <TableHead className={thLeftClassName} onClick={() => toggleSort("menuItem")}>
@@ -189,6 +192,7 @@ export function MatrixInsightTable({ items, locale, currency }: Props) {
                       <Badge
                         variant={actionVariant(item.action)}
                         className="cursor-help tracking-wide"
+                        aria-label={`${tTable(`actions.${item.action}`)}. ${item.actionReason}`}
                       >
                         {tTable(`actions.${item.action}`)}
                       </Badge>
