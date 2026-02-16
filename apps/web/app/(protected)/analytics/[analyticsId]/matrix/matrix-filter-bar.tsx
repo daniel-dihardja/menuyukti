@@ -11,6 +11,10 @@ import {
   type MatrixFilterState,
   serializeMatrixFilterState,
 } from "@/lib/analytics/matrix-filter-state";
+import {
+  getMatrixFilterPresets,
+  type MatrixPresetKey,
+} from "@/lib/analytics/matrix-filter-presets";
 import type { MatrixAction, MatrixCategory } from "@/lib/analytics/matrix-row-contract";
 
 type Props = {
@@ -58,6 +62,9 @@ export function MatrixFilterBar({ filters }: Props) {
   );
   const [sort, setSort] = useState(filters.sort);
   const [order, setOrder] = useState(filters.order);
+  const [activePreset, setActivePreset] = useState<MatrixPresetKey | null>(null);
+
+  const presetDefinitions = useMemo(() => getMatrixFilterPresets(), []);
 
   const hasActiveFilters = useMemo(
     () =>
@@ -101,6 +108,31 @@ export function MatrixFilterBar({ filters }: Props) {
     });
 
     const query = searchParams.toString();
+    setActivePreset(null);
+    router.push(query ? `${pathname}?${query}` : pathname);
+  };
+
+  const applyPreset = (preset: MatrixPresetKey) => {
+    const definition = presetDefinitions.find((item) => item.key === preset);
+    if (!definition) return;
+
+    setQ(definition.state.q);
+    setCategories(definition.state.categories);
+    setActions(definition.state.actions);
+    setMarginMin(
+      definition.state.marginMin === null ? "" : String(definition.state.marginMin),
+    );
+    setMarginMax(
+      definition.state.marginMax === null ? "" : String(definition.state.marginMax),
+    );
+    setQtyMin(definition.state.qtyMin === null ? "" : String(definition.state.qtyMin));
+    setQtyMax(definition.state.qtyMax === null ? "" : String(definition.state.qtyMax));
+    setSort(definition.state.sort);
+    setOrder(definition.state.order);
+    setActivePreset(preset);
+
+    const searchParams = serializeMatrixFilterState(definition.state);
+    const query = searchParams.toString();
     router.push(query ? `${pathname}?${query}` : pathname);
   };
 
@@ -114,6 +146,7 @@ export function MatrixFilterBar({ filters }: Props) {
     setQtyMax("");
     setSort(DEFAULT_MATRIX_FILTER_STATE.sort);
     setOrder(DEFAULT_MATRIX_FILTER_STATE.order);
+    setActivePreset(null);
     router.push(pathname);
   };
 
@@ -217,6 +250,29 @@ export function MatrixFilterBar({ filters }: Props) {
             <option value="desc">Descending</option>
             <option value="asc">Ascending</option>
           </select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Smart Presets
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {presetDefinitions.map((preset) => {
+            const isActive = activePreset === preset.key;
+            return (
+              <Button
+                key={preset.key}
+                type="button"
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                title={preset.description}
+                onClick={() => applyPreset(preset.key)}
+              >
+                {preset.label}
+              </Button>
+            );
+          })}
         </div>
       </div>
 
