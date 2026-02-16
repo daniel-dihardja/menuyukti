@@ -207,7 +207,7 @@ Legend:
 - `Implemented`: Daypart mart read endpoint.
 - `Implemented`: Accessibility baseline improvements for matrix filters/table.
 - `Implemented`: CSV export endpoint for analyst matrix/pair/combo datasets with stable columns and metadata.
-- `Partial`: Pair/combo analysis now has a dedicated GUI route and navigation entry; advanced interaction layers are in progress.
+- `Implemented`: Pair/combo analysis now has a dedicated GUI route with filter bar, KPI cards, ranked tables, explainability sheet, and secondary export actions.
 - `Implemented`: Pair/combo GUI URL-based filter bar with typed state parsing/serialization and shareable query context.
 
 ### 11.3 Marketer (Instagram) Capabilities
@@ -277,5 +277,6 @@ Legend:
 | 24 | E2E matrix filter/preset path | Implemented | Dedicated matrix journey e2e exists with artifacts. |
 | 25 | Full release-gate E2E suite (marketer + analyst) | Implemented | Dedicated release-gate script validates marketer matrix journey and analyst export workflow with artifacts. |
 | 33 | Release-gate E2E script wiring | Implemented | `test:e2e:release-gate` script and required env variables are wired for deterministic execution. |
-| 34 | Pair/combo GUI route and navigation | Partial | `/analytics/{analyticsId}/pairs` page shell and sales-action navigation entry are implemented. |
+| 34 | Pair/combo GUI route and navigation | Implemented | `/analytics/{analyticsId}/pairs` is fully wired from sales actions with analytics context and trust metadata. |
 | 35 | Pair/combo URL filter bar | Implemented | Typed filter state utility and GUI filter bar are implemented with apply/reset and shareable URL state. |
+| 36 | Pair/combo insight UI and explainability | Implemented | KPI cards, ranked pair/combo tables, explainability sheet, and secondary export actions are available in GUI. |
