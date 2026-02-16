@@ -2,6 +2,7 @@ import pandas as pd
 
 from marketing_engine.core.analytics.calculate_menu_heatmaps import calculate_menu_heatmaps
 from marketing_engine.core.analytics.calculate_popularity_index import calculate_popularity_index
+from marketing_engine.core.contracts.metadata import build_metadata_v1
 
 
 def calculate_sales_analytics(df: pd.DataFrame) -> dict:
@@ -81,6 +82,7 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict:
     # Final Output
     # -------------------------------------------------------
     return {
+        "metadata": build_metadata_v1(source_system="esb"),
         # Raw totals
         "total_orders": int(total_orders),
         "total_items_sold": int(total_items_sold),
@@ -94,6 +96,7 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict:
         "min_order_items": int(items_per_order_valid.min()),
         # Other analytics
         "avg_popularity": float(avg_popularity_threshold),
+        "avg_popularity_threshold": float(avg_popularity_threshold),
         "popularity_index": popularity_index,
         "menu_heatmaps": heatmap_results,
         # Period

@@ -6,6 +6,7 @@ from marketing_engine.core.contracts.adapters import (
     to_core_matrix_item,
     to_core_sales_summary,
 )
+from marketing_engine.core.contracts.metadata import build_metadata_v1
 from marketing_engine.core.contracts.v1 import (
     CategoryDistributionV1,
     ContractMetadataV1,
@@ -30,4 +31,5 @@ __all__ = [
     "to_core_heatmap",
     "to_core_distribution",
     "to_core_sales_summary",
+    "build_metadata_v1",
 ]

@@ -29,8 +29,11 @@ def test_calculate_sales_analytics_basic():
     assert result["max_order_items"] == 3
     assert result["min_order_items"] == 1
     assert result["avg_popularity"] == 0.25
+    assert result["avg_popularity_threshold"] == 0.25
     assert result["period_start"] == "2025-02-01"
     assert result["period_end"] == "2025-02-04"
+    assert result["metadata"]["schema_version"] == "v1"
+    assert result["metadata"]["source_system"] == "esb"
     assert isinstance(result["popularity_index"], list)
     assert isinstance(result["menu_heatmaps"], list)
 

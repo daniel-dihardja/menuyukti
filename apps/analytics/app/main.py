@@ -21,6 +21,7 @@ from marketing_engine.core.models.matrix_item import MatrixItem
 from marketing_engine.core.models.heatmap import MenuHeatmap
 from marketing_engine.core.models.matrix_distribution import MatrixDistribution
 from marketing_engine.core.contracts import (
+    build_metadata_v1,
     to_core_distribution,
     to_core_heatmap,
     to_core_matrix_item,
@@ -81,6 +82,7 @@ async def upload_file(file: UploadFile = File(...)):
 
     return {
         "status": "ok",
+        "metadata": build_metadata_v1(source_system=pos),
         "pos": pos,
         "menu_items": menu_items,
         "analytics": analytics,
@@ -132,6 +134,7 @@ async def calculate_matrix(payload: MenuItemsMatrixRequest):
 
     return {
         "status": "ok",
+        "metadata": build_metadata_v1(source_system="api"),
         "matrix": matrix,
     }
 
@@ -175,6 +178,7 @@ async def run_decision_pipeline(payload: DecisionPipelineRequest):
 
     return {
         "status": "ok",
+        "metadata": build_metadata_v1(source_system="api"),
         "insights": {
             "portfolio": portfolio.model_dump(),
             "candidates": [c.model_dump() for c in candidates],
