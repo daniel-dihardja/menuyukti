@@ -179,6 +179,17 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                       </Link>
                     </DropdownMenuItem>
 
+                    {/* Pairs */}
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={routes.analytics.pairs(
+                          file.id as unknown as string,
+                        )}
+                      >
+                        {t("pairs")}
+                      </Link>
+                    </DropdownMenuItem>
+
                     {/* Heatmap */}
                     <DropdownMenuItem asChild>
                       <Link

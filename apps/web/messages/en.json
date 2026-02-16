@@ -238,6 +238,7 @@
         "report": "Report",
         "delete": "Delete",
         "matrix": "Matrix",
+        "pairs": "Pairs",
         "finance": "Finance",
         "heatmap": "Heatmap"
       },

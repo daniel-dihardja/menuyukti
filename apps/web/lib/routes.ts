@@ -9,6 +9,8 @@ export const routes = {
 
     matrix: (analyticsId: string | number) =>
       `/analytics/${analyticsId}/matrix`,
+    pairs: (analyticsId: string | number) =>
+      `/analytics/${analyticsId}/pairs`,
 
     finance: (analyticsId: string | number) =>
       `/analytics/${analyticsId}/finance`,
