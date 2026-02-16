@@ -12,6 +12,7 @@ import { formatCurrencyWithCode, getCurrencyLocale } from "@/lib/currency";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
 import { parseMatrixFilterState } from "@/lib/analytics/matrix-filter-state";
+import { applyMatrixFilterState } from "@/lib/analytics/matrix-filter-engine";
 import {
   type DecisionGradeMatrixRow,
   toDecisionGradeMatrixRows,
@@ -166,34 +167,7 @@ export default async function Page({ params, searchParams }: PageProps) {
   // Matrix helpers
   // --------------------------------------------------
   const matrixRows = toDecisionGradeMatrixRows(matrix);
-  const filteredRows = matrixRows.filter((row) => {
-    const menuMatches = filters.q
-      ? row.menuItem.toLowerCase().includes(filters.q.toLowerCase())
-      : true;
-    const categoryMatches =
-      filters.categories.length === 0 || filters.categories.includes(row.category);
-    const actionMatches =
-      filters.actions.length === 0 ||
-      (row.action !== null && filters.actions.includes(row.action));
-    const marginMinMatches =
-      filters.marginMin === null || row.marginPct >= filters.marginMin;
-    const marginMaxMatches =
-      filters.marginMax === null || row.marginPct <= filters.marginMax;
-    const qtyMinMatches =
-      filters.qtyMin === null || row.unitsSold >= filters.qtyMin;
-    const qtyMaxMatches =
-      filters.qtyMax === null || row.unitsSold <= filters.qtyMax;
-
-    return (
-      menuMatches &&
-      categoryMatches &&
-      actionMatches &&
-      marginMinMatches &&
-      marginMaxMatches &&
-      qtyMinMatches &&
-      qtyMaxMatches
-    );
-  });
+  const filteredRows = applyMatrixFilterState(matrixRows, filters);
   const itemsByCategory = {
     star: filteredRows.filter((i) => i.category === "star"),
     plow_horse: filteredRows.filter((i) => i.category === "plow_horse"),
