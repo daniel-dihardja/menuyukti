@@ -20,6 +20,7 @@ const toDateOrNull = (value: unknown): Date | null => {
   const dt = new Date(String(value));
   return Number.isNaN(dt.getTime()) ? null : dt;
 };
+const absDiff = (a: number, b: number): number => Math.abs(a - b);
 
 export async function POST(request: Request) {
   try {
@@ -621,6 +622,77 @@ export async function POST(request: Request) {
             cogs = EXCLUDED.cogs,
             margin = EXCLUDED.margin
         `;
+
+        const warehouseAggRows = await tx.$queryRaw<
+          Array<{
+            total_orders: string | number;
+            total_items_sold: string | number;
+            total_revenue: string | number;
+          }>
+        >`
+          SELECT
+            COUNT(DISTINCT foi.bill_number) AS total_orders,
+            COALESCE(SUM(foi.qty), 0) AS total_items_sold,
+            COALESCE(SUM(foi.net_revenue), 0) AS total_revenue
+          FROM warehouse.fact_order_item foi
+          WHERE foi.pipeline_run_id = CAST(${pipelineRunId} AS UUID)
+            AND foi.location_key = ${locationKey}
+        `;
+
+        const warehouseAgg = warehouseAggRows[0] ?? {
+          total_orders: 0,
+          total_items_sold: 0,
+          total_revenue: 0,
+        };
+        const reconciliations = [
+          {
+            metric_name: "total_orders",
+            legacy_value: Number(analytics.total_orders ?? 0),
+            warehouse_value: Number(warehouseAgg.total_orders ?? 0),
+            threshold_value: 0,
+          },
+          {
+            metric_name: "total_items_sold",
+            legacy_value: Number(analytics.total_items_sold ?? 0),
+            warehouse_value: Number(warehouseAgg.total_items_sold ?? 0),
+            threshold_value: 0.000001,
+          },
+          {
+            metric_name: "total_revenue",
+            legacy_value: Number(analytics.total_revenue ?? 0),
+            warehouse_value: Number(warehouseAgg.total_revenue ?? 0),
+            threshold_value: 0.01,
+          },
+        ];
+
+        for (const item of reconciliations) {
+          const delta = absDiff(item.legacy_value, item.warehouse_value);
+          const withinThreshold = delta <= item.threshold_value;
+          await tx.$executeRaw`
+            INSERT INTO warehouse.pipeline_reconciliation_report
+              (
+                pipeline_run_id,
+                location_key,
+                metric_name,
+                legacy_value,
+                warehouse_value,
+                delta,
+                within_threshold,
+                threshold_value
+              )
+            VALUES
+              (
+                CAST(${pipelineRunId} AS UUID),
+                ${locationKey},
+                ${item.metric_name},
+                ${item.legacy_value},
+                ${item.warehouse_value},
+                ${delta},
+                ${withinThreshold},
+                ${item.threshold_value}
+              )
+          `;
+        }
       }
     });
 
