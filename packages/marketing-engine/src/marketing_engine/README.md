@@ -9,17 +9,14 @@ It is intentionally deterministic where possible, and keeps agent logic thin and
 ## Package Structure
 
 - `core/`: Input models and core data wiring.
-- `shared/`: Shared primitives and primitive engines used across features/decisions.
+- `shared/`: Shared primitives and primitive engines used across features.
 - `features/`: Agent-specific feature builders (plugin-style registry).
-- `decision/`: Deterministic promotion decisions and scheduling logic.
-- `pipeline.py`: High-level entry point to build promotion candidates.
 
 ## Typical Flow
 
 1. Build `CoreInputs` from matrix items, distribution, heatmaps, and optional sales summary metrics.
 2. Generate shared primitives if needed.
 3. Use feature providers (e.g. audience) for agent-specific data.
-4. Use the decision pipeline and scheduler when you need post scheduling.
 
 ## Key Entry Points
 
@@ -28,8 +25,6 @@ from app.marketing_engine.core.inputs import CoreInputs
 from app.marketing_engine.core.models.sales_analytics_summary import SalesAnalyticsSummary
 from app.marketing_engine.shared.primitives import build_shared_primitives
 from app.marketing_engine.features import load_default_providers, build_features
-from app.marketing_engine.pipeline import build_promotion_candidates
-from app.marketing_engine.decision.allocation.promotion_scheduler import PromotionScheduler
 ```
 
 ## Example Usage (Step-by-Step)
@@ -39,8 +34,6 @@ from app.marketing_engine.core.inputs import CoreInputs
 from app.marketing_engine.core.models.sales_analytics_summary import SalesAnalyticsSummary
 from app.marketing_engine.shared.primitives import build_shared_primitives
 from app.marketing_engine.features import load_default_providers, build_features
-from app.marketing_engine.pipeline import build_promotion_candidates
-from app.marketing_engine.decision.allocation.promotion_scheduler import PromotionScheduler
 
 # 1) Build core inputs from your validated data
 # These are the canonical, validated inputs that all downstream layers rely on.
@@ -61,17 +54,6 @@ shared = build_shared_primitives(core)
 # Load built-in providers into the registry and request the audience feature set.
 load_default_providers()
 audience_features = build_features("audience", core, shared)
-
-# 4) Decision pipeline + scheduler (for posting calendar)
-# Convert raw inputs into ranked promotion candidates, then schedule into a weekly plan.
-portfolio, candidates = build_promotion_candidates(
-    matrix_items=core.matrix_items,
-    heatmaps=core.heatmaps,
-    distribution=core.distribution,
-)
-
-scheduler = PromotionScheduler()
-weekly_schedule = scheduler.build_weekly_schedule(candidates)
 ```
 
 ### Example Output (What You Get)
@@ -85,11 +67,6 @@ After Step 3 you have a structured `AudienceFeatures` object:
 - `party_size_signal` and `social_dining_score`: audience context signals from basket depth
 - `avg_order_items`, `avg_order_revenue`, `top_item_revenue_share_ratio`: spend/context signals
 - `popularity_index_coverage`, `primary_category`, `analysis_window_days`, `intent_hints`: helper features for downstream agents
-
-After Step 4 you have:
-
-- `candidates`: ranked promotion opportunities with reasons and priority
-- `weekly_schedule`: a deterministic weekly Instagram posting plan
 
 ## Features Concept
 
@@ -128,4 +105,4 @@ This keeps the engine modular:
 ## Notes
 
 - Feature providers are registered via `load_default_providers()` or by importing their module directly.
-- The decision layer is optional if you only need audience or content insights.
+- This package now focuses on canonical analytics + feature generation.

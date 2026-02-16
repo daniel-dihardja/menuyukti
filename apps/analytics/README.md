@@ -1,6 +1,6 @@
 # Menuyukti Analytics API
 
-This service is the deterministic analytics layer for Menuyukti. It ingests POS exports (currently ESB Excel), normalizes the data, and produces structured analytics used by the app and downstream decision components.
+This service is the deterministic analytics layer for Menuyukti. It ingests POS exports (currently ESB Excel), normalizes the data, and produces structured analytics used by the app and downstream feature components.
 
 ## What This API Does
 
