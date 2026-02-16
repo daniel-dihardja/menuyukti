@@ -214,7 +214,7 @@ Legend:
 - `Implemented`: Instagram campaign and post identity model with branch scope and publish-window query indexes.
 - `Implemented`: Deterministic post-to-promoted-menu mapping model and idempotent mapping upsert API.
 - `Partial`: Weekly posting schedule and campaign planning loop are not fully productized in current app UX.
-- `Not Yet`: Instagram attribution model (post/campaign to sales lift) is not implemented.
+- `Partial`: Baseline before/after Instagram attribution mart and read API exist; full productized attribution workflow and UX are still pending.
 
 ### 11.4 Menu Analyst Capabilities
 - `Implemented`: Low-margin/high-volume style decisioning via matrix filters and presets.
@@ -255,7 +255,7 @@ Legend:
 | 13 | COGS completeness workflow for analysts | Partial | COGS update flow exists; completeness dashboards/export still limited. |
 | 14 | Marketer action workflow (`promote/improve/remove`) | Implemented | Action-oriented matrix UX and presets are available. |
 | 15 | Instagram weekly post scheduling workflow | Partial | Foundations exist, but full scheduling UX/workflow is not fully productized. |
-| 16 | Instagram attribution (post/campaign -> sales lift) | Not Yet | No end-to-end attribution model or outputs yet. |
+| 16 | Instagram attribution (post/campaign -> sales lift) | Partial | Baseline pre/post attribution mart and read API endpoint implemented; confidence tuning and full UX integration still pending. |
 | 26 | Instagram campaign/post identity data model | Implemented | Canonical `instagram_campaigns` and `instagram_posts` with branch scope, identity fields, and publish-time indexes. |
 | 27 | Post-to-promoted-menu mapping model + upsert API | Implemented | Canonical mapping table with idempotent write path and dedupe by normalized menu name. |
 | 17 | Pair-menu analysis (support/confidence/lift) | Not Yet | Co-purchase pair fact/mart and scoring not implemented yet. |
