@@ -9,21 +9,18 @@ It is intentionally deterministic where possible, and keeps agent logic thin and
 ## Package Structure
 
 - `core/`: Input models and core data wiring.
-- `shared/`: Shared primitives and primitive engines used across features.
 - `features/`: Agent-specific feature builders (plugin-style registry).
 
 ## Typical Flow
 
 1. Build `CoreInputs` from matrix items, distribution, heatmaps, and optional sales summary metrics.
-2. Generate shared primitives if needed.
-3. Use feature providers (e.g. audience) for agent-specific data.
+2. Use feature providers (e.g. audience) for agent-specific data.
 
 ## Key Entry Points
 
 ```python
 from app.marketing_engine.core.inputs import CoreInputs
 from app.marketing_engine.core.models.sales_analytics_summary import SalesAnalyticsSummary
-from app.marketing_engine.shared.primitives import build_shared_primitives
 from app.marketing_engine.features import load_default_providers, build_features
 ```
 
@@ -32,7 +29,6 @@ from app.marketing_engine.features import load_default_providers, build_features
 ```python
 from app.marketing_engine.core.inputs import CoreInputs
 from app.marketing_engine.core.models.sales_analytics_summary import SalesAnalyticsSummary
-from app.marketing_engine.shared.primitives import build_shared_primitives
 from app.marketing_engine.features import load_default_providers, build_features
 
 # 1) Build core inputs from your validated data
@@ -46,14 +42,10 @@ core = CoreInputs(
     sales_summary=sales_summary,  # optional but recommended for audience agents
 )
 
-# 2) Shared primitives (optional but useful across agents)
-# Compute reusable facts such as economic strength, behavioral peaks, and portfolio health.
-shared = build_shared_primitives(core)
-
-# 3) Feature system (agent-specific)
+# 2) Feature system (agent-specific)
 # Load built-in providers into the registry and request the audience feature set.
 load_default_providers()
-audience_features = build_features("audience", core, shared)
+audience_features = build_features("audience", core)
 ```
 
 ### Example Output (What You Get)
@@ -75,7 +67,6 @@ Features are **agent-specific, derived datasets** built from the same core input
 Think of them as “views” over the core data:
 
 - **core inputs** = raw, validated data (matrix/heatmap/distribution + optional sales summary)
-- **shared primitives** = common derived facts (reused across agents)
 - **features** = agent-specific transformations for a particular task
 
 ### Provider Loading

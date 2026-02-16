@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Any, Protocol
 
 from pydantic import BaseModel
 
 from marketing_engine.core.inputs import CoreInputs
-from marketing_engine.shared.primitives import SharedPrimitives
 
 
 class FeatureProvider(Protocol):
@@ -16,7 +15,7 @@ class FeatureProvider(Protocol):
     def build(
         self,
         core: CoreInputs,
-        shared: SharedPrimitives | None = None,
+        shared: Any | None = None,
     ) -> BaseModel:
         ...
 
@@ -40,7 +39,7 @@ def available_providers() -> list[str]:
 def build_features(
     name: str,
     core: CoreInputs,
-    shared: SharedPrimitives | None = None,
+    shared: Any | None = None,
 ) -> BaseModel:
     return get_provider(name).build(core, shared)
 

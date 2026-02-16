@@ -7,7 +7,6 @@ from pydantic import BaseModel
 
 from marketing_engine.core.inputs import CoreInputs
 from marketing_engine.features import register_provider
-from marketing_engine.shared.primitives import SharedPrimitives
 
 
 class AudienceFeatures(BaseModel):
@@ -227,7 +226,7 @@ def derive_audience_features_from_core_input(
 
 def build_audience_features(
     core: CoreInputs,
-    shared: SharedPrimitives | None = None,
+    shared: object | None = None,
 ) -> AudienceFeatures:
     """
     Build audience-oriented features from core inputs.
@@ -374,7 +373,7 @@ class AudienceFeatureProvider:
     def build(
         self,
         core: CoreInputs,
-        shared: SharedPrimitives | None = None,
+        shared: object | None = None,
     ) -> AudienceFeatures:
         return build_audience_features(core, shared)
 
