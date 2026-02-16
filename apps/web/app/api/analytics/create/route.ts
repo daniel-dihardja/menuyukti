@@ -21,6 +21,32 @@ const toDateOrNull = (value: unknown): Date | null => {
   return Number.isNaN(dt.getTime()) ? null : dt;
 };
 const absDiff = (a: number, b: number): number => Math.abs(a - b);
+const requiredFieldRejectionReason = (
+  row: Record<string, unknown>,
+): string | null => {
+  const checks: Array<{ key: string; valid: boolean }> = [
+    { key: "bill_number", valid: String(row.bill_number ?? "").trim().length > 0 },
+    { key: "menu", valid: String(row.menu ?? "").trim().length > 0 },
+    { key: "qty", valid: toFiniteNumber(row.qty) !== null },
+    { key: "price", valid: toFiniteNumber(row.price) !== null },
+    {
+      key: "total_after_bill_discount",
+      valid: toFiniteNumber(row.total_after_bill_discount) !== null,
+    },
+    { key: "order_time", valid: toDateOrNull(row.order_time) !== null },
+    {
+      key: "menu_category",
+      valid: String(row.menu_category ?? "").trim().length > 0,
+    },
+    {
+      key: "menu_category_detail",
+      valid: String(row.menu_category_detail ?? "").trim().length > 0,
+    },
+  ];
+
+  const failed = checks.find((item) => !item.valid);
+  return failed ? `missing_required_field:${failed.key}` : null;
+};
 
 const failJob = async (jobId: string, message: string) => {
   await prisma.etlJob.update({
@@ -118,13 +144,31 @@ async function processUploadJob(params: {
     const rejectedRows = Array.isArray(apiResult.staging?.rejected_rows)
       ? apiResult.staging.rejected_rows
       : [];
-    const inputRows = rawRows.length + rejectedRows.length;
-    const rejectRate = inputRows > 0 ? rejectedRows.length / inputRows : 0;
+
+    const requiredFieldRejectedRows = rawRows
+      .map((row) => (row ?? {}) as Record<string, unknown>)
+      .map((row) => ({
+        row_data: row,
+        rejection_reason: requiredFieldRejectionReason(row),
+      }))
+      .filter(
+        (
+          row,
+        ): row is {
+          row_data: Record<string, unknown>;
+          rejection_reason: string;
+        } => row.rejection_reason !== null,
+      );
+
+    const combinedRejectedRows = [...rejectedRows, ...requiredFieldRejectedRows];
+    const inputRows = rawRows.length + combinedRejectedRows.length;
+    const rejectRate =
+      inputRows > 0 ? combinedRejectedRows.length / inputRows : 0;
     const qualityGatePassed = rejectRate <= 0.4;
 
     if (!qualityGatePassed) {
       throw new Error(
-        `QUALITY_GATE_FAILED: input_rows=${inputRows}, rejected_rows=${rejectedRows.length}, reject_rate=${rejectRate}`,
+        `QUALITY_GATE_FAILED: input_rows=${inputRows}, rejected_rows=${combinedRejectedRows.length}, reject_rate=${rejectRate}`,
       );
     }
 
@@ -279,7 +323,7 @@ async function processUploadJob(params: {
         }
 
         const rejectedBatch: Prisma.StgPosRejectedCreateManyInput[] = [];
-        for (const rejected of rejectedRows) {
+        for (const rejected of combinedRejectedRows) {
           const rowData = rejected?.row_data ?? {};
           const serialized = JSON.stringify(rowData);
           const rowHash = createHash("sha256").update(serialized).digest("hex");
@@ -683,7 +727,7 @@ async function processUploadJob(params: {
               CAST(${pipelineRunId} AS UUID),
               ${inputRows},
               ${rawRows.length},
-              ${rejectedRows.length},
+              ${combinedRejectedRows.length},
               ${rejectRate},
               ${loadDurationMs},
               ${qualityGatePassed}
