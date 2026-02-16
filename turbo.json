@@ -1,6 +1,10 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": [
+    "E2E_BASE_URL",
+    "E2E_UPLOAD_FILE"
+  ],
   "tasks": {
     "build": {
       "dependsOn": [

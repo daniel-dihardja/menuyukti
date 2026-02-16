@@ -45,6 +45,7 @@ __pycache__/
 reports/
 .vscode/*
 creds
+apps/web/e2e-artifacts/
 
 notebooks/*
 # Python caches

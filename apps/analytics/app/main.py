@@ -3,6 +3,7 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 from typing import Any, List, Optional
 from decimal import Decimal
+import math
 
 import pandas as pd
 
@@ -32,6 +33,35 @@ from marketing_engine.core.contracts import (
 
 
 app = FastAPI(title="Menuyukti Analytics API")
+
+
+def sanitize_json_payload(value: Any) -> Any:
+    # JSON spec does not allow NaN/Inf; normalize all payload values recursively.
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+
+    if isinstance(value, Decimal):
+        return float(value) if value.is_finite() else None
+
+    if isinstance(value, dict):
+        return {key: sanitize_json_payload(item) for key, item in value.items()}
+
+    if isinstance(value, list):
+        return [sanitize_json_payload(item) for item in value]
+
+    if hasattr(value, "item") and callable(value.item):
+        try:
+            return sanitize_json_payload(value.item())
+        except Exception:
+            return value
+
+    try:
+        if pd.isna(value):
+            return None
+    except Exception:
+        pass
+
+    return value
 
 # ==================================================
 # Existing Excel-based analytics endpoint
@@ -99,7 +129,7 @@ async def upload_file(file: UploadFile = File(...)):
             for _, row in rejected_df.iterrows()
         ]
 
-    return {
+    payload = {
         "status": "ok",
         "metadata": build_metadata_v1(source_system=pos),
         "pos": pos,
@@ -110,6 +140,7 @@ async def upload_file(file: UploadFile = File(...)):
             "rejected_rows": rejected_rows,
         },
     }
+    return sanitize_json_payload(payload)
 
 
 # ==================================================

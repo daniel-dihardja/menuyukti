@@ -11,6 +11,7 @@
     "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
+    "test:e2e:sales": "tsx e2e/analytics-sales-upload.e2e.ts",
     "postinstall": "prisma generate",
     "db:reset": "prisma migrate reset --force",
     "db:init": "prisma migrate dev --name init",

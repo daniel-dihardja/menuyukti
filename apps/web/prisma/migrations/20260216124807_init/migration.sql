@@ -66,7 +66,7 @@ CREATE TABLE "fixed_costs" (
     "amount" DECIMAL(12,2) NOT NULL,
     "category" TEXT,
     "notes" TEXT,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
