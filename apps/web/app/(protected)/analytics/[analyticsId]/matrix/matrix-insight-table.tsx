@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
 import {
   Tooltip,
   TooltipContent,
@@ -76,6 +77,8 @@ export function MatrixInsightTable({ items, locale, currency }: Props) {
   const tCategories = useTranslations("analytics.matrix.categories");
   const [sortKey, setSortKey] = useState<SortKey>("unitsSold");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [pageSize, setPageSize] = useState(50);
+  const [page, setPage] = useState(1);
 
   const sortedItems = useMemo(() => {
     const sorted = [...items].sort((a, b) => {
@@ -112,6 +115,14 @@ export function MatrixInsightTable({ items, locale, currency }: Props) {
     "cursor-pointer select-none whitespace-nowrap text-right px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground";
   const thLeftClassName = `${thClassName} text-left`;
 
+  const totalItems = sortedItems.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * pageSize;
+  const pagedItems = sortedItems.slice(pageStart, pageStart + pageSize);
+  const fromIndex = totalItems === 0 ? 0 : pageStart + 1;
+  const toIndex = Math.min(totalItems, pageStart + pageSize);
+
   if (!items.length) {
     return (
       <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
@@ -121,8 +132,34 @@ export function MatrixInsightTable({ items, locale, currency }: Props) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
-      <Table>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        <p className="text-muted-foreground">
+          Showing {fromIndex}-{toIndex} of {totalItems} items
+        </p>
+        <div className="flex items-center gap-2">
+          <label htmlFor="matrix-page-size" className="text-muted-foreground">
+            Rows
+          </label>
+          <select
+            id="matrix-page-size"
+            className="h-9 rounded-md border bg-background px-2 text-sm"
+            value={pageSize}
+            onChange={(event) => {
+              const next = Number(event.target.value);
+              setPageSize(next);
+              setPage(1);
+            }}
+          >
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+        <Table>
         <caption className="sr-only">
           Menu engineering matrix table with category and recommendation actions.
         </caption>
@@ -156,7 +193,7 @@ export function MatrixInsightTable({ items, locale, currency }: Props) {
         </TableHeader>
 
         <TableBody>
-          {sortedItems.map((item) => (
+          {pagedItems.map((item) => (
             <TableRow
               key={`${item.category}-${item.menuItem}`}
               className="hover:bg-muted/20 odd:bg-background even:bg-muted/10"
@@ -210,6 +247,31 @@ export function MatrixInsightTable({ items, locale, currency }: Props) {
           ))}
         </TableBody>
       </Table>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setPage((current) => Math.max(1, current - 1))}
+          disabled={safePage <= 1}
+        >
+          Previous
+        </Button>
+        <span className="text-sm text-muted-foreground">
+          Page {safePage} of {totalPages}
+        </span>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+          disabled={safePage >= totalPages}
+        >
+          Next
+        </Button>
+      </div>
     </div>
   );
 }
