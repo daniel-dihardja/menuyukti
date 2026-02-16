@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     // --------------------------------------------------
     const branchExists = await prisma.location.findUnique({
       where: { id: locationId },
-      select: { id: true },
+      select: { id: true, name: true, currencyCode: true },
     });
 
     if (!branchExists) {
@@ -147,6 +147,29 @@ export async function POST(request: Request) {
         ON CONFLICT (pipeline_run_id) DO NOTHING
       `;
 
+      const dimLocationRows = await tx.$queryRaw<Array<{ location_key: number }>>`
+        INSERT INTO warehouse.dim_location
+          (operational_location_id, location_name, currency_code, is_active, updated_at)
+        VALUES
+          (${locationId}, ${branchExists.name}, ${branchExists.currencyCode}, TRUE, NOW())
+        ON CONFLICT (operational_location_id)
+        DO UPDATE SET
+          location_name = EXCLUDED.location_name,
+          currency_code = EXCLUDED.currency_code,
+          is_active = TRUE,
+          updated_at = NOW()
+        RETURNING location_key
+      `;
+      const locationKey = dimLocationRows[0]?.location_key;
+
+      await tx.$executeRaw`
+        INSERT INTO warehouse.dim_pos_source
+          (source_system)
+        VALUES
+          (${sourceSystem})
+        ON CONFLICT (source_system) DO NOTHING
+      `;
+
       for (const row of rawRows) {
         const safeRow = (row ?? {}) as Record<string, unknown>;
         const serialized = JSON.stringify(safeRow);
@@ -224,6 +247,37 @@ export async function POST(request: Request) {
               ${ingestedAtUtc}
             )
           ON CONFLICT (pipeline_run_id, row_hash) DO NOTHING
+        `;
+
+        const businessDate = new Date(
+          Date.UTC(
+            orderTime.getUTCFullYear(),
+            orderTime.getUTCMonth(),
+            orderTime.getUTCDate(),
+          ),
+        );
+        const dateKey = Number(
+          `${businessDate.getUTCFullYear()}${String(
+            businessDate.getUTCMonth() + 1,
+          ).padStart(2, "0")}${String(businessDate.getUTCDate()).padStart(2, "0")}`,
+        );
+        const weekdayIso = businessDate.getUTCDay() === 0 ? 7 : businessDate.getUTCDay();
+        const isWeekend = weekdayIso >= 6;
+
+        await tx.$executeRaw`
+          INSERT INTO warehouse.dim_date
+            (date_key, full_date, day_of_month, month_of_year, year_number, weekday_iso, is_weekend)
+          VALUES
+            (
+              ${dateKey},
+              ${businessDate},
+              ${businessDate.getUTCDate()},
+              ${businessDate.getUTCMonth() + 1},
+              ${businessDate.getUTCFullYear()},
+              ${weekdayIso},
+              ${isWeekend}
+            )
+          ON CONFLICT (date_key) DO NOTHING
         `;
       }
 
@@ -348,6 +402,106 @@ export async function POST(request: Request) {
             cogs: previousCogsMap.get(normalizeMenuName(item.menu)) ?? null,
           })),
         });
+      }
+
+      if (locationKey && apiResult.menu_items.length > 0) {
+        const validFrom = analytics.period_start
+          ? new Date(analytics.period_start)
+          : new Date();
+        for (const item of apiResult.menu_items) {
+          const menuName = String(item.menu ?? "").trim();
+          if (!menuName) continue;
+
+          const menuNameNorm = normalizeMenuName(menuName);
+          const menuCategory = item.menu_category ?? null;
+          const menuCategoryDetail = item.menu_category_detail ?? null;
+
+          const currentRows = await tx.$queryRaw<
+            Array<{
+              menu_item_key: number;
+              menu_category: string | null;
+              menu_category_detail: string | null;
+              menu_name: string;
+            }>
+          >`
+            SELECT menu_item_key, menu_category, menu_category_detail, menu_name
+            FROM warehouse.dim_menu_item
+            WHERE location_key = ${locationKey}
+              AND menu_name_norm = ${menuNameNorm}
+              AND is_current = TRUE
+            LIMIT 1
+          `;
+
+          const current = currentRows[0];
+          if (!current) {
+            await tx.$executeRaw`
+              INSERT INTO warehouse.dim_menu_item
+                (
+                  location_key,
+                  menu_name,
+                  menu_name_norm,
+                  menu_category,
+                  menu_category_detail,
+                  valid_from,
+                  valid_to,
+                  is_current
+                )
+              VALUES
+                (
+                  ${locationKey},
+                  ${menuName},
+                  ${menuNameNorm},
+                  ${menuCategory},
+                  ${menuCategoryDetail},
+                  ${validFrom},
+                  NULL,
+                  TRUE
+                )
+              ON CONFLICT (location_key, menu_name_norm, is_current) DO NOTHING
+            `;
+            continue;
+          }
+
+          const changed =
+            current.menu_name !== menuName ||
+            current.menu_category !== menuCategory ||
+            current.menu_category_detail !== menuCategoryDetail;
+
+          if (changed) {
+            await tx.$executeRaw`
+              UPDATE warehouse.dim_menu_item
+              SET is_current = FALSE,
+                  valid_to = ${validFrom},
+                  updated_at = NOW()
+              WHERE menu_item_key = ${current.menu_item_key}
+            `;
+
+            await tx.$executeRaw`
+              INSERT INTO warehouse.dim_menu_item
+                (
+                  location_key,
+                  menu_name,
+                  menu_name_norm,
+                  menu_category,
+                  menu_category_detail,
+                  valid_from,
+                  valid_to,
+                  is_current
+                )
+              VALUES
+                (
+                  ${locationKey},
+                  ${menuName},
+                  ${menuNameNorm},
+                  ${menuCategory},
+                  ${menuCategoryDetail},
+                  ${validFrom},
+                  NULL,
+                  TRUE
+                )
+            `;
+          }
+        }
       }
     });
 
