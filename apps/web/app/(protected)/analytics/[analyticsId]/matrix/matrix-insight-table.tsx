@@ -15,6 +15,7 @@ import {
   type MatrixAction,
   type MatrixCategory,
 } from "@/lib/analytics/matrix-row-contract";
+import { emitMatrixTelemetryEvent } from "@/lib/analytics/matrix-telemetry";
 import {
   Table,
   TableBody,
@@ -40,6 +41,7 @@ type Props = {
   items: DecisionGradeMatrixRow[];
   locale: string;
   currency: string;
+  analyticsId: number;
 };
 
 const CATEGORY_BADGE_VARIANT: Record<MatrixCategory, "default" | "secondary" | "outline"> = {
@@ -71,7 +73,7 @@ function actionVariant(action: MatrixAction): "default" | "secondary" | "destruc
   }
 }
 
-export function MatrixInsightTable({ items, locale, currency }: Props) {
+export function MatrixInsightTable({ items, locale, currency, analyticsId }: Props) {
   const tMatrix = useTranslations("analytics.matrix");
   const tTable = useTranslations("analytics.matrix.table");
   const tCategories = useTranslations("analytics.matrix.categories");
@@ -224,7 +226,20 @@ export function MatrixInsightTable({ items, locale, currency }: Props) {
               </TableCell>
               <TableCell className="px-3 py-2 text-center">
                 {item.action ? (
-                  <Tooltip>
+                  <Tooltip
+                    onOpenChange={(open) => {
+                      if (!open) return;
+                      emitMatrixTelemetryEvent({
+                        eventName: "matrix_action_reason_opened",
+                        analyticsId,
+                        properties: {
+                          category: item.category,
+                          action: item.action,
+                          reason_code: item.reasonCode ?? "unknown",
+                        },
+                      });
+                    }}
+                  >
                     <TooltipTrigger asChild>
                       <Badge
                         variant={actionVariant(item.action)}

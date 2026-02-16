@@ -16,9 +16,11 @@ import {
   type MatrixPresetKey,
 } from "@/lib/analytics/matrix-filter-presets";
 import type { MatrixAction, MatrixCategory } from "@/lib/analytics/matrix-row-contract";
+import { emitMatrixTelemetryEvent } from "@/lib/analytics/matrix-telemetry";
 
 type Props = {
   filters: MatrixFilterState;
+  analyticsId: number;
 };
 
 const CATEGORY_OPTIONS: Array<{ value: MatrixCategory; label: string }> = [
@@ -41,7 +43,7 @@ function parseNumber(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export function MatrixFilterBar({ filters }: Props) {
+export function MatrixFilterBar({ filters, analyticsId }: Props) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -95,7 +97,7 @@ export function MatrixFilterBar({ filters }: Props) {
   };
 
   const applyFilters = () => {
-    const searchParams = serializeMatrixFilterState({
+    const nextState = {
       q: q.trim(),
       categories,
       actions,
@@ -105,11 +107,26 @@ export function MatrixFilterBar({ filters }: Props) {
       qtyMax: parseNumber(qtyMax),
       sort,
       order,
-    });
+    };
+    const searchParams = serializeMatrixFilterState(nextState);
 
     const query = searchParams.toString();
     setActivePreset(null);
     router.push(query ? `${pathname}?${query}` : pathname);
+    emitMatrixTelemetryEvent({
+      eventName: "matrix_filter_changed",
+      analyticsId,
+      properties: {
+        has_query: nextState.q.length > 0,
+        category_count: nextState.categories.length,
+        action_count: nextState.actions.length,
+        has_margin_range:
+          nextState.marginMin !== null || nextState.marginMax !== null,
+        has_qty_range: nextState.qtyMin !== null || nextState.qtyMax !== null,
+        sort: nextState.sort,
+        order: nextState.order,
+      },
+    });
   };
 
   const applyPreset = (preset: MatrixPresetKey) => {
@@ -134,6 +151,13 @@ export function MatrixFilterBar({ filters }: Props) {
     const searchParams = serializeMatrixFilterState(definition.state);
     const query = searchParams.toString();
     router.push(query ? `${pathname}?${query}` : pathname);
+    emitMatrixTelemetryEvent({
+      eventName: "matrix_preset_used",
+      analyticsId,
+      properties: {
+        preset_key: definition.key,
+      },
+    });
   };
 
   const resetFilters = () => {
@@ -148,6 +172,10 @@ export function MatrixFilterBar({ filters }: Props) {
     setOrder(DEFAULT_MATRIX_FILTER_STATE.order);
     setActivePreset(null);
     router.push(pathname);
+    emitMatrixTelemetryEvent({
+      eventName: "matrix_reset_clicked",
+      analyticsId,
+    });
   };
 
   return (

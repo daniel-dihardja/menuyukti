@@ -207,7 +207,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         <Badge variant="outline">{tMatrix("actions.remove")}</Badge>
       </div>
       <div className="mb-8">
-        <MatrixFilterBar filters={filters} />
+        <MatrixFilterBar filters={filters} analyticsId={analyticsId} />
       </div>
 
           {/* ---------------------------------------------
@@ -377,6 +377,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               items={filteredRows}
               locale={locale}
               currency={currencyCode}
+              analyticsId={analyticsId}
             />
           </section>
     </AnalyticsPageShell>
