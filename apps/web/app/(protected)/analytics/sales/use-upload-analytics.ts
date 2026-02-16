@@ -3,8 +3,16 @@
 import { useState } from "react";
 
 interface UploadResponse {
-  status: "ok";
-  pos: string | null;
+  status: "accepted" | "ok";
+  pos?: string | null;
+  jobId?: string;
+}
+
+interface JobStatusResponse {
+  id: string;
+  status: "queued" | "running" | "succeeded" | "failed";
+  error_message: string | null;
+  analytics_id: number | null;
 }
 
 export type UploadStatus = "idle" | "success" | "error";
@@ -17,6 +25,27 @@ export function useUploadAnalytics(
   const [status, setStatus] = useState<UploadStatus>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [pos, setPos] = useState<string | null>(null);
+
+  async function pollJobUntilDone(jobId: string) {
+    for (let attempt = 0; attempt < 120; attempt += 1) {
+      const res = await fetch(`/api/etl/jobs/${jobId}`);
+      if (!res.ok) {
+        throw new Error("JOB_STATUS_LOOKUP_FAILED");
+      }
+
+      const job = (await res.json()) as JobStatusResponse;
+      if (job.status === "failed") {
+        throw new Error(job.error_message || "UPLOAD_JOB_FAILED");
+      }
+      if (job.status === "succeeded") {
+        return job;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+
+    throw new Error("UPLOAD_JOB_TIMEOUT");
+  }
 
   async function uploadFile(file: File) {
     if (!locationId) {
@@ -56,9 +85,14 @@ export function useUploadAnalytics(
 
       const data = (await res.json()) as UploadResponse;
 
+      if (data.status === "accepted" && data.jobId) {
+        setMessage(`Upload accepted: ${file.name}. Processing...`);
+        await pollJobUntilDone(data.jobId);
+      }
+
       setStatus("success");
       setMessage(`Uploaded: ${file.name}`);
-      setPos(data.pos);
+      setPos(data.pos ?? null);
 
       onSuccess?.();
     } catch (err) {

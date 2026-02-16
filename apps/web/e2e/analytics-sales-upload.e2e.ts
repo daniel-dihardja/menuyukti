@@ -16,6 +16,17 @@ async function waitForStatusMessage(page: import("playwright").Page) {
   return (await status.textContent())?.trim() ?? "";
 }
 
+async function waitForUploadOutcome(page: import("playwright").Page) {
+  const started = Date.now();
+  while (Date.now() - started < 240_000) {
+    const message = await waitForStatusMessage(page);
+    if (/uploaded|success/i.test(message)) return message;
+    if (/failed|error|timeout|not configured/i.test(message)) return message;
+    await page.waitForTimeout(1000);
+  }
+  throw new Error("Timed out waiting for upload outcome status message");
+}
+
 async function run() {
   if (!fs.existsSync(uploadPath)) {
     throw new Error(`Upload file not found: ${uploadPath}`);
@@ -78,7 +89,7 @@ async function run() {
   await page.setInputFiles("#analytics-upload-xlsx", uploadPath);
   await uploadPromise;
 
-  const statusMessage = await waitForStatusMessage(page);
+  const statusMessage = await waitForUploadOutcome(page);
   const screenshotPath = path.join(artifactsDir, "analytics-sales-final.png");
   await page.screenshot({ path: screenshotPath, fullPage: true });
   const video = page.video();
@@ -91,7 +102,8 @@ async function run() {
   console.log(`[e2e] upload-response-body: ${responsePreview}`);
 
   const passed =
-    /uploaded|success/i.test(statusMessage) && uploadResponseStatus === 200;
+    /uploaded|success/i.test(statusMessage) &&
+    (uploadResponseStatus === 200 || uploadResponseStatus === 202);
   await context.close();
   const videoPath = video ? await video.path() : null;
   await browser.close();
