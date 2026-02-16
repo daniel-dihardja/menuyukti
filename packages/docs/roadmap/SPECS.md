@@ -235,7 +235,7 @@ Legend:
 
 ### 11.7 E2E Validation
 - `Implemented`: E2E upload journey (with artifacts) and matrix filter journey (with artifacts).
-- `Partial`: Full release-gate E2E coverage for all marketer and analyst workflows remains incomplete.
+- `Implemented`: Release-gate E2E script covers marketer preset/recommendation flow and analyst CSV export flow with artifacts.
 
 ### 11.8 Minimal Release Feature Table
 
@@ -273,4 +273,5 @@ Legend:
 | 22 | Audit trail for recommendation-affecting actions | Not Yet | Not fully implemented as a complete audit system. |
 | 23 | E2E upload -> analytics path | Implemented | Playwright e2e with artifact capture exists. |
 | 24 | E2E matrix filter/preset path | Implemented | Dedicated matrix journey e2e exists with artifacts. |
-| 25 | Full release-gate E2E suite (marketer + analyst) | Partial | Core flows covered, full release matrix still incomplete. |
+| 25 | Full release-gate E2E suite (marketer + analyst) | Implemented | Dedicated release-gate script validates marketer matrix journey and analyst export workflow with artifacts. |
+| 33 | Release-gate E2E script wiring | Implemented | `test:e2e:release-gate` script and required env variables are wired for deterministic execution. |

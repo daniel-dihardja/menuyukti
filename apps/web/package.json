@@ -16,7 +16,8 @@
     "db:reset": "prisma migrate reset --force",
     "db:init": "prisma migrate dev --name init",
     "db:gen": "prisma generate",
-    "test:e2e:matrix": "tsx e2e/analytics-matrix-filter-journey.e2e.ts"
+    "test:e2e:matrix": "tsx e2e/analytics-matrix-filter-journey.e2e.ts",
+    "test:e2e:release-gate": "tsx e2e/release-gate-marketer-analyst.e2e.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

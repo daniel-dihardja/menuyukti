@@ -4,7 +4,8 @@
   "globalEnv": [
     "E2E_BASE_URL",
     "E2E_UPLOAD_FILE",
-    "E2E_ANALYTICS_ID"
+    "E2E_ANALYTICS_ID",
+    "E2E_LOCATION_ID"
   ],
   "tasks": {
     "build": {
