@@ -212,6 +212,7 @@ Legend:
 - `Implemented`: Recommendation-centric matrix workflow (`promote`, `improve/reprice`, `remove`, `keep`).
 - `Implemented`: Agent invocation path for audience/tone and cached outputs.
 - `Implemented`: Instagram campaign and post identity model with branch scope and publish-window query indexes.
+- `Implemented`: Deterministic post-to-promoted-menu mapping model and idempotent mapping upsert API.
 - `Partial`: Weekly posting schedule and campaign planning loop are not fully productized in current app UX.
 - `Not Yet`: Instagram attribution model (post/campaign to sales lift) is not implemented.
 
@@ -256,6 +257,7 @@ Legend:
 | 15 | Instagram weekly post scheduling workflow | Partial | Foundations exist, but full scheduling UX/workflow is not fully productized. |
 | 16 | Instagram attribution (post/campaign -> sales lift) | Not Yet | No end-to-end attribution model or outputs yet. |
 | 26 | Instagram campaign/post identity data model | Implemented | Canonical `instagram_campaigns` and `instagram_posts` with branch scope, identity fields, and publish-time indexes. |
+| 27 | Post-to-promoted-menu mapping model + upsert API | Implemented | Canonical mapping table with idempotent write path and dedupe by normalized menu name. |
 | 17 | Pair-menu analysis (support/confidence/lift) | Not Yet | Co-purchase pair fact/mart and scoring not implemented yet. |
 | 18 | Combo recommendation engine | Not Yet | Margin-aware combo ranking not implemented yet. |
 | 19 | Agent architecture using structured feature inputs | Implemented | Agents invoke with structured `core_input` and derived features. |

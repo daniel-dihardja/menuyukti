@@ -31,3 +31,22 @@ export type InstagramPostIdentity = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type InstagramPostPromotedItem = {
+  id: number;
+  locationId: number;
+  instagramPostId: number;
+  canonicalMenuName: string;
+  canonicalMenuNameNorm: string;
+  source: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type UpsertInstagramPostPromotedItemsRequest = {
+  locationId: number;
+  instagramPostId: number;
+  promotedItems: Array<{
+    canonicalMenuName: string;
+  }>;
+};

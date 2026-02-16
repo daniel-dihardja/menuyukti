@@ -32,6 +32,7 @@ model Location {
   anomalyEvents AnomalyEvent[]
   instagramCampaigns InstagramCampaign[]
   instagramPosts InstagramPost[]
+  instagramPostPromotedItems InstagramPostPromotedItem[]
 
   @@map("branches")
   @@schema("public")
@@ -128,11 +129,36 @@ model InstagramPost {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  promotedItems InstagramPostPromotedItem[]
+
   @@index([locationId, publishedAt], map: "ix_instagram_post_branch_published_at")
   @@index([platformPostId], map: "ix_instagram_post_platform_post_id")
   @@index([campaignId], map: "ix_instagram_post_campaign_id")
   @@unique([locationId, platform, platformPostId], map: "uq_instagram_post_branch_platform_external")
   @@map("instagram_posts")
+  @@schema("public")
+}
+
+model InstagramPostPromotedItem {
+  id Int @id @default(autoincrement())
+
+  locationId Int      @map("branch_id")
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  instagramPostId Int           @map("instagram_post_id")
+  instagramPost   InstagramPost @relation(fields: [instagramPostId], references: [id], onDelete: Cascade)
+
+  canonicalMenuName     String @map("canonical_menu_name")
+  canonicalMenuNameNorm String @map("canonical_menu_name_norm")
+  source                String @default("manual")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([instagramPostId, canonicalMenuNameNorm], map: "uq_instagram_post_promoted_item_post_menu_norm")
+  @@index([locationId, canonicalMenuNameNorm], map: "ix_instagram_post_promoted_item_branch_menu_norm")
+  @@index([instagramPostId], map: "ix_instagram_post_promoted_item_post_id")
+  @@map("instagram_post_promoted_items")
   @@schema("public")
 }
 
