@@ -18,6 +18,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@workspace/ui/components/sheet";
+import {
+  SortableTableHead,
+  useSortableColumns,
+} from "@/components/sortable-table";
 
 type PairInsightRow = {
   kind: "pair";
@@ -65,7 +69,6 @@ type ComboSortKey =
   | "marginScore"
   | "opportunityScore"
   | "confidence";
-type SortOrder = "asc" | "desc";
 
 function pct(value: number): string {
   return `${(value * 100).toFixed(2)}%`;
@@ -99,10 +102,16 @@ function explainability(row: InsightRow): string[] {
 
 export function PairsInsightPanels({ pairs, combos }: Props) {
   const [selected, setSelected] = useState<InsightRow | null>(null);
-  const [pairSortKey, setPairSortKey] = useState<PairSortKey>("score");
-  const [pairSortOrder, setPairSortOrder] = useState<SortOrder>("desc");
-  const [comboSortKey, setComboSortKey] = useState<ComboSortKey>("opportunityScore");
-  const [comboSortOrder, setComboSortOrder] = useState<SortOrder>("desc");
+  const {
+    sortKey: pairSortKey,
+    sortDirection: pairSortOrder,
+    toggleSort: togglePairSort,
+  } = useSortableColumns<PairSortKey>("score");
+  const {
+    sortKey: comboSortKey,
+    sortDirection: comboSortOrder,
+    toggleSort: toggleComboSort,
+  } = useSortableColumns<ComboSortKey>("opportunityScore");
 
   const topPairs = useMemo(() => {
     const sorted = [...pairs].sort((a, b) => {
@@ -146,7 +155,7 @@ export function PairsInsightPanels({ pairs, combos }: Props) {
       return a.pairKey.localeCompare(b.pairKey);
     });
 
-    return sorted.slice(0, 25);
+    return sorted;
   }, [pairSortKey, pairSortOrder, pairs]);
 
   const topCombos = useMemo(() => {
@@ -191,29 +200,8 @@ export function PairsInsightPanels({ pairs, combos }: Props) {
       return a.pairKey.localeCompare(b.pairKey);
     });
 
-    return sorted.slice(0, 25);
+    return sorted;
   }, [comboSortKey, comboSortOrder, combos]);
-
-  const togglePairSort = (key: PairSortKey) => {
-    if (pairSortKey === key) {
-      setPairSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setPairSortKey(key);
-    setPairSortOrder("desc");
-  };
-
-  const toggleComboSort = (key: ComboSortKey) => {
-    if (comboSortKey === key) {
-      setComboSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setComboSortKey(key);
-    setComboSortOrder("desc");
-  };
-
-  const sortIndicator = (active: boolean, order: SortOrder): string =>
-    active ? (order === "asc" ? "↑" : "↓") : "↕";
 
   return (
     <div className="space-y-8">
@@ -226,39 +214,56 @@ export function PairsInsightPanels({ pairs, combos }: Props) {
         <div className="border border-border/70 bg-card p-0 shadow-sm">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <button type="button" onClick={() => togglePairSort("pair")}>
-                    Pair {sortIndicator(pairSortKey === "pair", pairSortOrder)}
-                  </button>
+              <TableRow className="bg-muted/40 hover:bg-muted/40">
+                <SortableTableHead
+                  align="left"
+                  active={pairSortKey === "pair"}
+                  direction={pairSortOrder}
+                  onToggle={() => togglePairSort("pair")}
+                >
+                  Pair
+                </SortableTableHead>
+                <SortableTableHead
+                  active={pairSortKey === "orders"}
+                  direction={pairSortOrder}
+                  onToggle={() => togglePairSort("orders")}
+                >
+                  Orders
+                </SortableTableHead>
+                <SortableTableHead
+                  active={pairSortKey === "support"}
+                  direction={pairSortOrder}
+                  onToggle={() => togglePairSort("support")}
+                >
+                  Support
+                </SortableTableHead>
+                <SortableTableHead
+                  active={pairSortKey === "confidence"}
+                  direction={pairSortOrder}
+                  onToggle={() => togglePairSort("confidence")}
+                >
+                  Confidence
+                </SortableTableHead>
+                <SortableTableHead
+                  active={pairSortKey === "lift"}
+                  direction={pairSortOrder}
+                  onToggle={() => togglePairSort("lift")}
+                >
+                  Lift
+                </SortableTableHead>
+                <SortableTableHead
+                  active={pairSortKey === "score"}
+                  direction={pairSortOrder}
+                  onToggle={() => togglePairSort("score")}
+                >
+                  Score
+                </SortableTableHead>
+                <TableHead className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Quality
                 </TableHead>
-                <TableHead className="text-right">
-                  <button type="button" onClick={() => togglePairSort("orders")}>
-                    Orders {sortIndicator(pairSortKey === "orders", pairSortOrder)}
-                  </button>
+                <TableHead className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Details
                 </TableHead>
-                <TableHead className="text-right">
-                  <button type="button" onClick={() => togglePairSort("support")}>
-                    Support {sortIndicator(pairSortKey === "support", pairSortOrder)}
-                  </button>
-                </TableHead>
-                <TableHead className="text-right">
-                  <button type="button" onClick={() => togglePairSort("confidence")}>
-                    Confidence {sortIndicator(pairSortKey === "confidence", pairSortOrder)}
-                  </button>
-                </TableHead>
-                <TableHead className="text-right">
-                  <button type="button" onClick={() => togglePairSort("lift")}>
-                    Lift {sortIndicator(pairSortKey === "lift", pairSortOrder)}
-                  </button>
-                </TableHead>
-                <TableHead className="text-right">
-                  <button type="button" onClick={() => togglePairSort("score")}>
-                    Score {sortIndicator(pairSortKey === "score", pairSortOrder)}
-                  </button>
-                </TableHead>
-                <TableHead className="text-right">Quality</TableHead>
-                <TableHead className="text-right">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -298,39 +303,53 @@ export function PairsInsightPanels({ pairs, combos }: Props) {
         <div className="border border-border/70 bg-card p-0 shadow-sm">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <button type="button" onClick={() => toggleComboSort("combo")}>
-                    Combo Candidate {sortIndicator(comboSortKey === "combo", comboSortOrder)}
-                  </button>
+              <TableRow className="bg-muted/40 hover:bg-muted/40">
+                <SortableTableHead
+                  align="left"
+                  active={comboSortKey === "combo"}
+                  direction={comboSortOrder}
+                  onToggle={() => toggleComboSort("combo")}
+                >
+                  Combo Candidate
+                </SortableTableHead>
+                <SortableTableHead
+                  active={comboSortKey === "orders"}
+                  direction={comboSortOrder}
+                  onToggle={() => toggleComboSort("orders")}
+                >
+                  Orders
+                </SortableTableHead>
+                <SortableTableHead
+                  active={comboSortKey === "lift"}
+                  direction={comboSortOrder}
+                  onToggle={() => toggleComboSort("lift")}
+                >
+                  Lift
+                </SortableTableHead>
+                <SortableTableHead
+                  active={comboSortKey === "marginScore"}
+                  direction={comboSortOrder}
+                  onToggle={() => toggleComboSort("marginScore")}
+                >
+                  Margin Score
+                </SortableTableHead>
+                <SortableTableHead
+                  active={comboSortKey === "opportunityScore"}
+                  direction={comboSortOrder}
+                  onToggle={() => toggleComboSort("opportunityScore")}
+                >
+                  Opportunity Score
+                </SortableTableHead>
+                <SortableTableHead
+                  active={comboSortKey === "confidence"}
+                  direction={comboSortOrder}
+                  onToggle={() => toggleComboSort("confidence")}
+                >
+                  Confidence
+                </SortableTableHead>
+                <TableHead className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Details
                 </TableHead>
-                <TableHead className="text-right">
-                  <button type="button" onClick={() => toggleComboSort("orders")}>
-                    Orders {sortIndicator(comboSortKey === "orders", comboSortOrder)}
-                  </button>
-                </TableHead>
-                <TableHead className="text-right">
-                  <button type="button" onClick={() => toggleComboSort("lift")}>
-                    Lift {sortIndicator(comboSortKey === "lift", comboSortOrder)}
-                  </button>
-                </TableHead>
-                <TableHead className="text-right">
-                  <button type="button" onClick={() => toggleComboSort("marginScore")}>
-                    Margin Score {sortIndicator(comboSortKey === "marginScore", comboSortOrder)}
-                  </button>
-                </TableHead>
-                <TableHead className="text-right">
-                  <button type="button" onClick={() => toggleComboSort("opportunityScore")}>
-                    Opportunity Score{" "}
-                    {sortIndicator(comboSortKey === "opportunityScore", comboSortOrder)}
-                  </button>
-                </TableHead>
-                <TableHead className="text-right">
-                  <button type="button" onClick={() => toggleComboSort("confidence")}>
-                    Confidence {sortIndicator(comboSortKey === "confidence", comboSortOrder)}
-                  </button>
-                </TableHead>
-                <TableHead className="text-right">Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

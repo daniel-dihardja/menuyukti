@@ -158,7 +158,24 @@ export function PairsFilterBar({ filters }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="pair-filter-min-confidence">Min confidence (0-1)</Label>
+            <Label htmlFor="pair-filter-min-confidence" className="flex items-center gap-1.5">
+              Min confidence (0-1)
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Min confidence help"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={6} className="max-w-xs">
+                  Minimum conditional probability threshold for the pair.
+                  Example: 0.20 means at least 20% chance item B appears when item A appears.
+                </TooltipContent>
+              </Tooltip>
+            </Label>
             <Input
               id="pair-filter-min-confidence"
               inputMode="decimal"
@@ -178,7 +195,24 @@ export function PairsFilterBar({ filters }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="pair-filter-sort">Sort by</Label>
+            <Label htmlFor="pair-filter-sort" className="flex items-center gap-1.5">
+              Sort by
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Sort by help"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={6} className="max-w-xs">
+                  Combo Score: overall candidate quality. Lift: non-random pairing strength.
+                  Pair Orders: shared volume. Support: basket share. Confidence: conditional likelihood.
+                </TooltipContent>
+              </Tooltip>
+            </Label>
             <Select
               value={sort}
               onValueChange={(value) => setSort(value as PairFilterState["sort"])}
@@ -211,17 +245,6 @@ export function PairsFilterBar({ filters }: Props) {
               </SelectContent>
             </Select>
           </div>
-        </div>
-
-        <div className="border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
-          <p className="font-semibold uppercase tracking-wide text-[11px] text-foreground">
-            Sort By Guide
-          </p>
-          <p><span className="font-medium text-foreground">Combo Score:</span> best overall candidate balancing association and value potential.</p>
-          <p><span className="font-medium text-foreground">Lift:</span> strongest non-random menu pairing signal.</p>
-          <p><span className="font-medium text-foreground">Pair Orders:</span> most frequent pair by shared order count.</p>
-          <p><span className="font-medium text-foreground">Support:</span> share of total baskets containing the pair.</p>
-          <p><span className="font-medium text-foreground">Confidence:</span> conditional likelihood of one item when the other appears.</p>
         </div>
 
         <div className="flex flex-wrap gap-2">

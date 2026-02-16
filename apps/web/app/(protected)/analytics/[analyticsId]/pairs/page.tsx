@@ -56,6 +56,19 @@ function toNumber(value: unknown): number {
     const parsed = Number(value);
     if (Number.isFinite(parsed)) return parsed;
   }
+  if (value && typeof value === "object") {
+    const maybeToNumber = (value as { toNumber?: () => unknown }).toNumber;
+    if (typeof maybeToNumber === "function") {
+      const parsed = Number(maybeToNumber.call(value));
+      if (Number.isFinite(parsed)) return parsed;
+    }
+
+    const maybeToString = (value as { toString?: () => string }).toString;
+    if (typeof maybeToString === "function") {
+      const parsed = Number(maybeToString.call(value));
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
   return 0;
 }
 

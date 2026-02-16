@@ -19,6 +19,10 @@ import {
 } from "@workspace/ui/components/tooltip";
 import { formatCurrencyWithCode } from "@/lib/currency";
 import {
+  SortableTableHead,
+  useSortableColumns,
+} from "@/components/sortable-table";
+import {
   type DecisionGradeMatrixRow,
   type MatrixAction,
   type MatrixCategory,
@@ -85,8 +89,8 @@ export function MatrixInsightTable({ items, locale, currency, analyticsId }: Pro
   const tMatrix = useTranslations("analytics.matrix");
   const tTable = useTranslations("analytics.matrix.table");
   const tCategories = useTranslations("analytics.matrix.categories");
-  const [sortKey, setSortKey] = useState<SortKey>("unitsSold");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const { sortKey, sortDirection: sortDir, toggleSort } =
+    useSortableColumns<SortKey>("unitsSold");
   const [pageSize, setPageSize] = useState(50);
   const [page, setPage] = useState(1);
 
@@ -108,22 +112,6 @@ export function MatrixInsightTable({ items, locale, currency, analyticsId }: Pro
 
     return sortDir === "asc" ? sorted : sorted.reverse();
   }, [items, sortKey, sortDir, locale]);
-
-  const toggleSort = (key: SortKey) => {
-    if (key === sortKey) {
-      setSortDir((value) => (value === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortKey(key);
-    setSortDir("desc");
-  };
-
-  const SortIndicator = ({ col }: { col: SortKey }) =>
-    col === sortKey ? (sortDir === "asc" ? " ▲" : " ▼") : null;
-
-  const thClassName =
-    "cursor-pointer select-none whitespace-nowrap text-right px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground";
-  const thLeftClassName = `${thClassName} text-left`;
 
   const totalItems = sortedItems.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -182,30 +170,65 @@ export function MatrixInsightTable({ items, locale, currency, analyticsId }: Pro
         </caption>
         <TableHeader>
           <TableRow className="bg-muted/40 hover:bg-muted/40">
-            <TableHead className={thLeftClassName} onClick={() => toggleSort("menuItem")}>
-              {tTable("menu")} <SortIndicator col="menuItem" />
-            </TableHead>
-            <TableHead className={thLeftClassName} onClick={() => toggleSort("category")}>
-              {tTable("category")} <SortIndicator col="category" />
-            </TableHead>
-            <TableHead className={thClassName} onClick={() => toggleSort("unitsSold")}>
-              {tTable("qty")} <SortIndicator col="unitsSold" />
-            </TableHead>
-            <TableHead className={thClassName} onClick={() => toggleSort("revenue")}>
-              {tTable("revenue")} <SortIndicator col="revenue" />
-            </TableHead>
-            <TableHead className={thClassName} onClick={() => toggleSort("cogs")}>
-              {tTable("cogs")} <SortIndicator col="cogs" />
-            </TableHead>
-            <TableHead className={thClassName} onClick={() => toggleSort("contributionMargin")}>
-              {tTable("margin")} <SortIndicator col="contributionMargin" />
-            </TableHead>
-            <TableHead className={thClassName} onClick={() => toggleSort("marginPct")}>
-              {tTable("percentage")} <SortIndicator col="marginPct" />
-            </TableHead>
-            <TableHead className="cursor-pointer text-center" onClick={() => toggleSort("action")}>
-              {tTable("action")} <SortIndicator col="action" />
-            </TableHead>
+            <SortableTableHead
+              align="left"
+              active={sortKey === "menuItem"}
+              direction={sortDir}
+              onToggle={() => toggleSort("menuItem")}
+            >
+              {tTable("menu")}
+            </SortableTableHead>
+            <SortableTableHead
+              align="left"
+              active={sortKey === "category"}
+              direction={sortDir}
+              onToggle={() => toggleSort("category")}
+            >
+              {tTable("category")}
+            </SortableTableHead>
+            <SortableTableHead
+              active={sortKey === "unitsSold"}
+              direction={sortDir}
+              onToggle={() => toggleSort("unitsSold")}
+            >
+              {tTable("qty")}
+            </SortableTableHead>
+            <SortableTableHead
+              active={sortKey === "revenue"}
+              direction={sortDir}
+              onToggle={() => toggleSort("revenue")}
+            >
+              {tTable("revenue")}
+            </SortableTableHead>
+            <SortableTableHead
+              active={sortKey === "cogs"}
+              direction={sortDir}
+              onToggle={() => toggleSort("cogs")}
+            >
+              {tTable("cogs")}
+            </SortableTableHead>
+            <SortableTableHead
+              active={sortKey === "contributionMargin"}
+              direction={sortDir}
+              onToggle={() => toggleSort("contributionMargin")}
+            >
+              {tTable("margin")}
+            </SortableTableHead>
+            <SortableTableHead
+              active={sortKey === "marginPct"}
+              direction={sortDir}
+              onToggle={() => toggleSort("marginPct")}
+            >
+              {tTable("percentage")}
+            </SortableTableHead>
+            <SortableTableHead
+              align="center"
+              active={sortKey === "action"}
+              direction={sortDir}
+              onToggle={() => toggleSort("action")}
+            >
+              {tTable("action")}
+            </SortableTableHead>
           </TableRow>
         </TableHeader>
 
