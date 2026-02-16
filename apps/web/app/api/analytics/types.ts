@@ -1,5 +1,13 @@
 import type { JsonValue } from "@/lib/json";
 
+export type PipelineMetadata = {
+  schema_version: string;
+  source_system: string;
+  pipeline_run_id: string;
+  ingested_at_utc: string;
+  quality_status: string;
+};
+
 export type AnalyticsSummary = {
   total_orders: number;
   total_items_sold: number;
@@ -31,6 +39,7 @@ export type AnalyticMenuItem = {
 };
 
 export type AnalyticsResponse = {
+  metadata?: PipelineMetadata;
   analytics: AnalyticsSummary;
   menu_items: AnalyticMenuItem[];
 };

@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { Prisma } from "@prisma/client";
 import { AnalyticsResponse } from "../types";
+import { randomUUID } from "crypto";
 
 export const runtime = "nodejs";
 
 // Optional normalization helper (recommended)
 const normalizeMenuName = (name: string) => name.trim().toLowerCase();
+const UUID_V4_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function POST(request: Request) {
   try {
@@ -94,11 +97,40 @@ export async function POST(request: Request) {
 
     const apiResult: AnalyticsResponse = await apiResponse.json();
     const analytics = apiResult.analytics;
+    const metadata = apiResult.metadata;
+    const pipelineRunId =
+      metadata?.pipeline_run_id && UUID_V4_RE.test(metadata.pipeline_run_id)
+        ? metadata.pipeline_run_id
+        : randomUUID();
+    const schemaVersion = metadata?.schema_version ?? "v1";
+    const sourceSystem = metadata?.source_system ?? "unknown";
+    const qualityStatus = metadata?.quality_status ?? "warning";
+    const ingestedAt = metadata?.ingested_at_utc
+      ? new Date(metadata.ingested_at_utc)
+      : new Date();
+    const ingestedAtUtc = Number.isNaN(ingestedAt.getTime())
+      ? new Date()
+      : ingestedAt;
 
     // --------------------------------------------------
     // Persist analytics snapshot (transactional)
     // --------------------------------------------------
     await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`
+        INSERT INTO warehouse.dim_pipeline_run
+          (pipeline_run_id, schema_version, source_system, source_file, ingested_at_utc, quality_status)
+        VALUES
+          (
+            CAST(${pipelineRunId} AS UUID),
+            ${schemaVersion},
+            ${sourceSystem},
+            ${file.name},
+            ${ingestedAtUtc},
+            ${qualityStatus}
+          )
+        ON CONFLICT (pipeline_run_id) DO NOTHING
+      `;
+
       // ----------------------------------------------
       // Create analytics snapshot
       // ----------------------------------------------
