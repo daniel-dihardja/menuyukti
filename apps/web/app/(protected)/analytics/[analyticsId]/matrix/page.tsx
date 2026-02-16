@@ -80,6 +80,39 @@ export default async function Page({ params }: PageProps) {
 
   if (!analytics) notFound();
 
+  const etlJob = await prisma.etlJob.findFirst({
+    where: {
+      analyticsId,
+      status: "succeeded",
+      pipelineRunId: { not: null },
+    },
+    orderBy: { finishedAt: "desc" },
+    select: { pipelineRunId: true },
+  });
+
+  const pipelineRunRows = etlJob?.pipelineRunId
+    ? await prisma.$queryRaw<Array<{ ingested_at_utc: Date; quality_status: string }>>`
+        SELECT ingested_at_utc, quality_status
+        FROM warehouse.dim_pipeline_run
+        WHERE pipeline_run_id = CAST(${etlJob.pipelineRunId} AS UUID)
+        LIMIT 1
+      `
+    : [];
+  const pipelineRun = pipelineRunRows[0];
+  const freshnessSlaMinutes = Number(
+    process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440",
+  );
+  const dataFreshnessMinutes = pipelineRun
+    ? Math.max(
+        0,
+        Math.floor(
+          (Date.now() - new Date(pipelineRun.ingested_at_utc).getTime()) / 60_000,
+        ),
+      )
+    : null;
+  const isStale =
+    dataFreshnessMinutes !== null && dataFreshnessMinutes > freshnessSlaMinutes;
+
   const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
   const matrix = analytics.matrixJson as MatrixJson | null;
   const currencyCode = analytics.location?.currencyCode ?? "IDR";
@@ -237,6 +270,38 @@ export default async function Page({ params }: PageProps) {
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* Pipeline metadata */}
+              <div className="border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-border">
+                <p className="text-sm text-muted-foreground">Pipeline</p>
+                <div className="text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Run:</span>{" "}
+                    <span className="font-medium">
+                      {etlJob?.pipelineRunId ?? "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Quality:</span>{" "}
+                    <span className="font-medium">
+                      {pipelineRun?.quality_status ?? "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Freshness:</span>{" "}
+                    <span className="font-medium">
+                      {dataFreshnessMinutes !== null
+                        ? `${dataFreshnessMinutes} min`
+                        : "—"}
+                    </span>
+                  </div>
+                </div>
+                {isStale && (
+                  <p className="text-xs text-amber-600 mt-2">
+                    Data freshness SLA exceeded
+                  </p>
+                )}
               </div>
             </div>
           </section>
