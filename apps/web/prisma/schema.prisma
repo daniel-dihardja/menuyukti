@@ -8,6 +8,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["public", "staging", "warehouse", "marts"]
 }
 
 //
@@ -28,6 +29,7 @@ model Location {
   agentOutputs AgentOutput[]
 
   @@map("branches")
+  @@schema("public")
 }
 
 //
@@ -84,6 +86,7 @@ model Analytics {
 
   @@index([locationId], map: "ix_analytics_branch_id")
   @@map("analytics")
+  @@schema("public")
 }
 
 //
@@ -111,6 +114,7 @@ model AgentOutput {
   @@unique([agentId, locationId, analyticsId], map: "uq_agent_output_key")
   @@index([locationId, analyticsId, agentId], map: "ix_agent_output_lookup")
   @@map("agent_outputs")
+  @@schema("public")
 }
 
 //
@@ -143,6 +147,7 @@ model FixedCost {
 
   @@index([locationId], map: "ix_fixed_costs_branch_id")
   @@map("fixed_costs")
+  @@schema("public")
 }
 
 //
@@ -179,4 +184,243 @@ model AnalyticsMenuItem {
   @@index([menuCategory], map: "ix_menu_items_menu_category")
 
   @@map("analytics_menu_items")
+  @@schema("public")
+}
+
+//
+// --------------------------------------------------
+// Staging layer (ETL raw/clean/rejected)
+// --------------------------------------------------
+//
+
+model StgPosRaw {
+  id            BigInt   @id @default(autoincrement())
+  pipelineRunId String   @db.Uuid @map("pipeline_run_id")
+  sourceSystem  String   @map("source_system")
+  sourceFile    String?  @map("source_file")
+  rowHash       String   @map("row_hash")
+  rowData       Json     @map("row_data")
+  ingestedAtUtc DateTime @db.Timestamptz(6) @map("ingested_at_utc")
+  createdAt     DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  @@unique([pipelineRunId, rowHash])
+  @@index([pipelineRunId], map: "ix_stg_pos_raw_pipeline_run_id")
+  @@map("stg_pos_raw")
+  @@schema("staging")
+}
+
+model StgPosRejected {
+  id              BigInt   @id @default(autoincrement())
+  pipelineRunId   String   @db.Uuid @map("pipeline_run_id")
+  sourceSystem    String   @map("source_system")
+  sourceFile      String?  @map("source_file")
+  rowHash         String   @map("row_hash")
+  rowData         Json     @map("row_data")
+  rejectionReason String   @map("rejection_reason")
+  ingestedAtUtc   DateTime @db.Timestamptz(6) @map("ingested_at_utc")
+  createdAt       DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  @@unique([pipelineRunId, rowHash])
+  @@index([pipelineRunId], map: "ix_stg_pos_rejected_pipeline_run_id")
+  @@map("stg_pos_rejected")
+  @@schema("staging")
+}
+
+model StgPosClean {
+  id                     BigInt   @id @default(autoincrement())
+  pipelineRunId          String   @db.Uuid @map("pipeline_run_id")
+  sourceSystem           String   @map("source_system")
+  sourceFile             String?  @map("source_file")
+  rowHash                String   @map("row_hash")
+  billNumber             String   @map("bill_number")
+  menu                   String
+  qty                    Decimal  @db.Decimal(12, 3)
+  price                  Decimal  @db.Decimal(14, 4)
+  totalAfterBillDiscount Decimal  @db.Decimal(14, 4) @map("total_after_bill_discount")
+  orderTime              DateTime @db.Timestamptz(6) @map("order_time")
+  menuCategory           String   @map("menu_category")
+  menuCategoryDetail     String   @map("menu_category_detail")
+  ingestedAtUtc          DateTime @db.Timestamptz(6) @map("ingested_at_utc")
+  createdAt              DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  @@unique([pipelineRunId, rowHash])
+  @@index([pipelineRunId], map: "ix_stg_pos_clean_pipeline_run_id")
+  @@index([orderTime], map: "ix_stg_pos_clean_order_time")
+  @@map("stg_pos_clean")
+  @@schema("staging")
+}
+
+//
+// --------------------------------------------------
+// Warehouse layer (dimensions/facts/quality)
+// --------------------------------------------------
+//
+
+model DimPipelineRun {
+  pipelineRunId String   @id @db.Uuid @map("pipeline_run_id")
+  schemaVersion String   @map("schema_version")
+  sourceSystem  String   @map("source_system")
+  sourceFile    String?  @map("source_file")
+  ingestedAtUtc DateTime @db.Timestamptz(6) @map("ingested_at_utc")
+  qualityStatus String   @map("quality_status")
+  createdAt     DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  @@index([ingestedAtUtc], map: "ix_dim_pipeline_run_ingested_at")
+  @@index([sourceSystem], map: "ix_dim_pipeline_run_source_system")
+  @@map("dim_pipeline_run")
+  @@schema("warehouse")
+}
+
+model DimDate {
+  dateKey      Int      @id @map("date_key")
+  fullDate     DateTime @db.Date @map("full_date")
+  dayOfMonth   Int      @map("day_of_month")
+  monthOfYear  Int      @map("month_of_year")
+  yearNumber   Int      @map("year_number")
+  weekdayIso   Int      @map("weekday_iso")
+  isWeekend    Boolean  @map("is_weekend")
+
+  @@unique([fullDate])
+  @@map("dim_date")
+  @@schema("warehouse")
+}
+
+model DimLocation {
+  locationKey            BigInt   @id @default(autoincrement()) @map("location_key")
+  operationalLocationId  Int      @unique @map("operational_location_id")
+  locationName           String   @map("location_name")
+  currencyCode           String   @map("currency_code")
+  isActive               Boolean  @default(true) @map("is_active")
+  createdAt              DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt              DateTime @default(now()) @db.Timestamptz(6) @map("updated_at")
+
+  @@map("dim_location")
+  @@schema("warehouse")
+}
+
+model DimPosSource {
+  posSourceKey BigInt   @id @default(autoincrement()) @map("pos_source_key")
+  sourceSystem String   @unique @map("source_system")
+  createdAt    DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  @@map("dim_pos_source")
+  @@schema("warehouse")
+}
+
+model DimMenuItem {
+  menuItemKey         BigInt   @id @default(autoincrement()) @map("menu_item_key")
+  locationKey         BigInt   @map("location_key")
+  menuName            String   @map("menu_name")
+  menuNameNorm        String   @map("menu_name_norm")
+  menuCategory        String?  @map("menu_category")
+  menuCategoryDetail  String?  @map("menu_category_detail")
+  validFrom           DateTime @db.Date @map("valid_from")
+  validTo             DateTime? @db.Date @map("valid_to")
+  isCurrent           Boolean  @default(true) @map("is_current")
+  createdAt           DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt           DateTime @default(now()) @db.Timestamptz(6) @map("updated_at")
+
+  @@unique([locationKey, menuNameNorm, isCurrent])
+  @@index([locationKey], map: "ix_dim_menu_item_location_key")
+  @@index([menuNameNorm], map: "ix_dim_menu_item_name_norm")
+  @@map("dim_menu_item")
+  @@schema("warehouse")
+}
+
+model FactOrderItem {
+  id           BigInt   @id @default(autoincrement())
+  pipelineRunId String  @db.Uuid @map("pipeline_run_id")
+  dateKey      Int      @map("date_key")
+  locationKey  BigInt   @map("location_key")
+  menuItemKey  BigInt   @map("menu_item_key")
+  posSourceKey BigInt   @map("pos_source_key")
+  billNumber   String   @map("bill_number")
+  lineNumber   Int?     @map("line_number")
+  qty          Decimal  @db.Decimal(12, 3)
+  grossRevenue Decimal  @db.Decimal(14, 4) @map("gross_revenue")
+  netRevenue   Decimal  @db.Decimal(14, 4) @map("net_revenue")
+  discount     Decimal  @db.Decimal(14, 4)
+  cogs         Decimal? @db.Decimal(14, 4)
+  margin       Decimal? @db.Decimal(14, 4)
+  orderTime    DateTime @db.Timestamptz(6) @map("order_time")
+  rowHash      String   @map("row_hash")
+  createdAt    DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  @@unique([pipelineRunId, rowHash])
+  @@index([dateKey], map: "ix_fact_order_item_date_key")
+  @@index([locationKey], map: "ix_fact_order_item_location_key")
+  @@index([menuItemKey], map: "ix_fact_order_item_menu_item_key")
+  @@index([pipelineRunId], map: "ix_fact_order_item_pipeline_run_id")
+  @@index([locationKey, dateKey, menuItemKey], map: "ix_fact_order_item_loc_date_menu")
+  @@map("fact_order_item")
+  @@schema("warehouse")
+}
+
+model FactMenuHourly {
+  id           BigInt   @id @default(autoincrement())
+  pipelineRunId String  @db.Uuid @map("pipeline_run_id")
+  dateKey      Int      @map("date_key")
+  locationKey  BigInt   @map("location_key")
+  menuItemKey  BigInt   @map("menu_item_key")
+  hourOfDay    Int      @map("hour_of_day")
+  qty          Decimal  @db.Decimal(12, 3)
+  netRevenue   Decimal  @db.Decimal(14, 4) @map("net_revenue")
+  createdAt    DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  @@unique([pipelineRunId, dateKey, locationKey, menuItemKey, hourOfDay])
+  @@index([pipelineRunId], map: "ix_fact_menu_hourly_pipeline")
+  @@index([locationKey, dateKey, hourOfDay], map: "ix_fact_menu_hourly_loc_date_hour")
+  @@map("fact_menu_hourly")
+  @@schema("warehouse")
+}
+
+model FactMenuDaily {
+  id           BigInt   @id @default(autoincrement())
+  pipelineRunId String  @db.Uuid @map("pipeline_run_id")
+  dateKey      Int      @map("date_key")
+  locationKey  BigInt   @map("location_key")
+  menuItemKey  BigInt   @map("menu_item_key")
+  qty          Decimal  @db.Decimal(12, 3)
+  netRevenue   Decimal  @db.Decimal(14, 4) @map("net_revenue")
+  cogs         Decimal? @db.Decimal(14, 4)
+  margin       Decimal? @db.Decimal(14, 4)
+  createdAt    DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  @@unique([pipelineRunId, dateKey, locationKey, menuItemKey])
+  @@index([pipelineRunId], map: "ix_fact_menu_daily_pipeline")
+  @@index([locationKey, dateKey, menuItemKey], map: "ix_fact_menu_daily_loc_date_menu")
+  @@map("fact_menu_daily")
+  @@schema("warehouse")
+}
+
+model PipelineReconciliationReport {
+  id              BigInt   @id @default(autoincrement())
+  pipelineRunId   String   @db.Uuid @map("pipeline_run_id")
+  locationKey     BigInt   @map("location_key")
+  metricName      String   @map("metric_name")
+  legacyValue     Decimal  @db.Decimal(18, 6) @map("legacy_value")
+  warehouseValue  Decimal  @db.Decimal(18, 6) @map("warehouse_value")
+  delta           Decimal  @db.Decimal(18, 6)
+  withinThreshold Boolean  @map("within_threshold")
+  thresholdValue  Decimal  @db.Decimal(18, 6) @map("threshold_value")
+  createdAt       DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  @@index([pipelineRunId, metricName], map: "ix_pipeline_reco_run_metric")
+  @@map("pipeline_reconciliation_report")
+  @@schema("warehouse")
+}
+
+model PipelineRunMetrics {
+  id                BigInt   @id @default(autoincrement())
+  pipelineRunId     String   @unique @db.Uuid @map("pipeline_run_id")
+  inputRows         Int      @map("input_rows")
+  validRows         Int      @map("valid_rows")
+  rejectedRows      Int      @map("rejected_rows")
+  rejectRate        Decimal  @db.Decimal(10, 6) @map("reject_rate")
+  loadDurationMs    Int      @map("load_duration_ms")
+  qualityGatePassed Boolean  @map("quality_gate_passed")
+  createdAt         DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  @@map("pipeline_run_metrics")
+  @@schema("warehouse")
 }
