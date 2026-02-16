@@ -57,6 +57,16 @@ type Props = {
   combos: ComboInsightRow[];
 };
 
+type PairSortKey = "pair" | "orders" | "support" | "confidence" | "lift" | "score";
+type ComboSortKey =
+  | "combo"
+  | "orders"
+  | "lift"
+  | "marginScore"
+  | "opportunityScore"
+  | "confidence";
+type SortOrder = "asc" | "desc";
+
 function pct(value: number): string {
   return `${(value * 100).toFixed(2)}%`;
 }
@@ -89,8 +99,121 @@ function explainability(row: InsightRow): string[] {
 
 export function PairsInsightPanels({ pairs, combos }: Props) {
   const [selected, setSelected] = useState<InsightRow | null>(null);
-  const topPairs = useMemo(() => pairs.slice(0, 25), [pairs]);
-  const topCombos = useMemo(() => combos.slice(0, 25), [combos]);
+  const [pairSortKey, setPairSortKey] = useState<PairSortKey>("score");
+  const [pairSortOrder, setPairSortOrder] = useState<SortOrder>("desc");
+  const [comboSortKey, setComboSortKey] = useState<ComboSortKey>("opportunityScore");
+  const [comboSortOrder, setComboSortOrder] = useState<SortOrder>("desc");
+
+  const topPairs = useMemo(() => {
+    const sorted = [...pairs].sort((a, b) => {
+      const confidenceA = (a.confidenceAtoB + a.confidenceBtoA) / 2;
+      const confidenceB = (b.confidenceAtoB + b.confidenceBtoA) / 2;
+      const liftA = (a.liftAtoB + a.liftBtoA) / 2;
+      const liftB = (b.liftAtoB + b.liftBtoA) / 2;
+
+      const valueA =
+        pairSortKey === "pair"
+          ? `${a.menuA} + ${a.menuB}`
+          : pairSortKey === "orders"
+            ? a.pairOrders
+            : pairSortKey === "support"
+              ? a.support
+              : pairSortKey === "confidence"
+                ? confidenceA
+                : pairSortKey === "lift"
+                  ? liftA
+                  : a.score;
+      const valueB =
+        pairSortKey === "pair"
+          ? `${b.menuA} + ${b.menuB}`
+          : pairSortKey === "orders"
+            ? b.pairOrders
+            : pairSortKey === "support"
+              ? b.support
+              : pairSortKey === "confidence"
+                ? confidenceB
+                : pairSortKey === "lift"
+                  ? liftB
+                  : b.score;
+
+      if (typeof valueA === "string" && typeof valueB === "string") {
+        const diff = valueA.localeCompare(valueB);
+        return pairSortOrder === "asc" ? diff : -diff;
+      }
+
+      const diff = Number(valueA) - Number(valueB);
+      if (diff !== 0) return pairSortOrder === "asc" ? diff : -diff;
+      return a.pairKey.localeCompare(b.pairKey);
+    });
+
+    return sorted.slice(0, 25);
+  }, [pairSortKey, pairSortOrder, pairs]);
+
+  const topCombos = useMemo(() => {
+    const sorted = [...combos].sort((a, b) => {
+      const confidenceA = (a.confidenceAtoB + a.confidenceBtoA) / 2;
+      const confidenceB = (b.confidenceAtoB + b.confidenceBtoA) / 2;
+      const liftA = (a.liftAtoB + a.liftBtoA) / 2;
+      const liftB = (b.liftAtoB + b.liftBtoA) / 2;
+
+      const valueA =
+        comboSortKey === "combo"
+          ? `${a.menuA} + ${a.menuB}`
+          : comboSortKey === "orders"
+            ? a.pairOrders
+            : comboSortKey === "lift"
+              ? liftA
+              : comboSortKey === "marginScore"
+                ? a.marginScore
+                : comboSortKey === "opportunityScore"
+                  ? a.score
+                  : confidenceA;
+      const valueB =
+        comboSortKey === "combo"
+          ? `${b.menuA} + ${b.menuB}`
+          : comboSortKey === "orders"
+            ? b.pairOrders
+            : comboSortKey === "lift"
+              ? liftB
+              : comboSortKey === "marginScore"
+                ? b.marginScore
+                : comboSortKey === "opportunityScore"
+                  ? b.score
+                  : confidenceB;
+
+      if (typeof valueA === "string" && typeof valueB === "string") {
+        const diff = valueA.localeCompare(valueB);
+        return comboSortOrder === "asc" ? diff : -diff;
+      }
+
+      const diff = Number(valueA) - Number(valueB);
+      if (diff !== 0) return comboSortOrder === "asc" ? diff : -diff;
+      return a.pairKey.localeCompare(b.pairKey);
+    });
+
+    return sorted.slice(0, 25);
+  }, [comboSortKey, comboSortOrder, combos]);
+
+  const togglePairSort = (key: PairSortKey) => {
+    if (pairSortKey === key) {
+      setPairSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setPairSortKey(key);
+    setPairSortOrder("desc");
+  };
+
+  const toggleComboSort = (key: ComboSortKey) => {
+    if (comboSortKey === key) {
+      setComboSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setComboSortKey(key);
+    setComboSortOrder("desc");
+  };
+
+  const sortIndicator = (active: boolean, order: SortOrder): string =>
+    active ? (order === "asc" ? "↑" : "↓") : "↕";
 
   return (
     <div className="space-y-8">
@@ -104,12 +227,36 @@ export function PairsInsightPanels({ pairs, combos }: Props) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Pair</TableHead>
-                <TableHead className="text-right">Orders</TableHead>
-                <TableHead className="text-right">Support</TableHead>
-                <TableHead className="text-right">Confidence</TableHead>
-                <TableHead className="text-right">Lift</TableHead>
-                <TableHead className="text-right">Score</TableHead>
+                <TableHead>
+                  <button type="button" onClick={() => togglePairSort("pair")}>
+                    Pair {sortIndicator(pairSortKey === "pair", pairSortOrder)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button type="button" onClick={() => togglePairSort("orders")}>
+                    Orders {sortIndicator(pairSortKey === "orders", pairSortOrder)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button type="button" onClick={() => togglePairSort("support")}>
+                    Support {sortIndicator(pairSortKey === "support", pairSortOrder)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button type="button" onClick={() => togglePairSort("confidence")}>
+                    Confidence {sortIndicator(pairSortKey === "confidence", pairSortOrder)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button type="button" onClick={() => togglePairSort("lift")}>
+                    Lift {sortIndicator(pairSortKey === "lift", pairSortOrder)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button type="button" onClick={() => togglePairSort("score")}>
+                    Score {sortIndicator(pairSortKey === "score", pairSortOrder)}
+                  </button>
+                </TableHead>
                 <TableHead className="text-right">Quality</TableHead>
                 <TableHead className="text-right">Details</TableHead>
               </TableRow>
@@ -152,12 +299,37 @@ export function PairsInsightPanels({ pairs, combos }: Props) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Combo Candidate</TableHead>
-                <TableHead className="text-right">Orders</TableHead>
-                <TableHead className="text-right">Lift</TableHead>
-                <TableHead className="text-right">Margin Score</TableHead>
-                <TableHead className="text-right">Opportunity Score</TableHead>
-                <TableHead className="text-right">Confidence</TableHead>
+                <TableHead>
+                  <button type="button" onClick={() => toggleComboSort("combo")}>
+                    Combo Candidate {sortIndicator(comboSortKey === "combo", comboSortOrder)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button type="button" onClick={() => toggleComboSort("orders")}>
+                    Orders {sortIndicator(comboSortKey === "orders", comboSortOrder)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button type="button" onClick={() => toggleComboSort("lift")}>
+                    Lift {sortIndicator(comboSortKey === "lift", comboSortOrder)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button type="button" onClick={() => toggleComboSort("marginScore")}>
+                    Margin Score {sortIndicator(comboSortKey === "marginScore", comboSortOrder)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button type="button" onClick={() => toggleComboSort("opportunityScore")}>
+                    Opportunity Score{" "}
+                    {sortIndicator(comboSortKey === "opportunityScore", comboSortOrder)}
+                  </button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <button type="button" onClick={() => toggleComboSort("confidence")}>
+                    Confidence {sortIndicator(comboSortKey === "confidence", comboSortOrder)}
+                  </button>
+                </TableHead>
                 <TableHead className="text-right">Details</TableHead>
               </TableRow>
             </TableHeader>

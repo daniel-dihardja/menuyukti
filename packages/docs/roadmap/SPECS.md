@@ -209,6 +209,7 @@ Legend:
 - `Implemented`: CSV export endpoint for analyst matrix/pair/combo datasets with stable columns and metadata.
 - `Implemented`: Pair/combo analysis now has a dedicated GUI route with filter bar, KPI cards, ranked tables, explainability sheet, and secondary export actions.
 - `Implemented`: Pair/combo GUI URL-based filter bar with typed state parsing/serialization and shareable query context.
+- `Implemented`: Pair/combo tables support interactive column sorting directly in GUI.
 
 ### 11.3 Marketer (Instagram) Capabilities
 - `Implemented`: Recommendation-centric matrix workflow (`promote`, `improve/reprice`, `remove`, `keep`).
@@ -282,3 +283,4 @@ Legend:
 | 34 | Pair/combo GUI route and navigation | Implemented | `/analytics/{analyticsId}/pairs` is fully wired from sales actions with analytics context and trust metadata. |
 | 35 | Pair/combo URL filter bar | Implemented | Typed filter state utility and GUI filter bar are implemented with apply/reset and shareable URL state. |
 | 36 | Pair/combo insight UI and explainability | Implemented | KPI cards, ranked pair/combo tables, explainability sheet, and secondary export actions are available in GUI. |
+| 38 | Interactive sortable columns for pair/combo tables | Implemented | Users can sort key columns directly from table headers with visible sort direction indicators. |
