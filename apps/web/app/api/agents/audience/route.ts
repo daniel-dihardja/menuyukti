@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
+import { useWarehouseReadPath } from "@/lib/warehouse-read-path";
 
 export const runtime = "nodejs";
 
@@ -215,8 +216,12 @@ export async function POST(request: Request) {
       cogs: item.cogs !== null ? Number(item.cogs) : 0,
     }));
 
-    const matrixItems =
-      matrixItemsFromMenuItems.length > 0
+    const warehouseReadPathEnabled = useWarehouseReadPath();
+    const matrixItems = warehouseReadPathEnabled
+      ? matrixFromSnapshot.length > 0
+        ? matrixFromSnapshot
+        : matrixItemsFromMenuItems
+      : matrixItemsFromMenuItems.length > 0
         ? matrixItemsFromMenuItems
         : matrixFromSnapshot;
 
