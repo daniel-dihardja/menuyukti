@@ -151,10 +151,10 @@ export function MatrixFilterBar({ filters }: Props) {
   };
 
   return (
-    <section className="rounded-lg border bg-card p-4 space-y-4">
+    <section className="rounded-lg border bg-card/95 p-4 space-y-4 shadow-sm ring-1 ring-border/40">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Matrix Filter Bar
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -227,7 +227,7 @@ export function MatrixFilterBar({ filters }: Props) {
           <Label htmlFor="matrix-filter-sort">Sort by</Label>
           <select
             id="matrix-filter-sort"
-            className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+            className="h-9 w-full rounded-md border bg-background px-3 text-sm shadow-sm"
             value={sort}
             onChange={(event) => setSort(event.target.value as MatrixFilterState["sort"])}
           >
@@ -243,7 +243,7 @@ export function MatrixFilterBar({ filters }: Props) {
           <Label htmlFor="matrix-filter-order">Order</Label>
           <select
             id="matrix-filter-order"
-            className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+            className="h-9 w-full rounded-md border bg-background px-3 text-sm shadow-sm"
             value={order}
             onChange={(event) => setOrder(event.target.value as MatrixFilterState["order"])}
           >

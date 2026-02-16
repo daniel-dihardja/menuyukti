@@ -198,7 +198,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         title={tMatrix("heading")}
         description={tMatrix("description")}
       />
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <div className="mb-5 flex flex-wrap items-center gap-2">
         <span className="text-sm text-muted-foreground">
           {tMatrix("actionsLabel")}
         </span>
@@ -206,7 +206,9 @@ export default async function Page({ params, searchParams }: PageProps) {
         <Badge variant="secondary">{tMatrix("actions.improve")}</Badge>
         <Badge variant="outline">{tMatrix("actions.remove")}</Badge>
       </div>
-      <MatrixFilterBar filters={filters} />
+      <div className="mb-8">
+        <MatrixFilterBar filters={filters} />
+      </div>
 
           {/* ---------------------------------------------
            * KPI OVERVIEW

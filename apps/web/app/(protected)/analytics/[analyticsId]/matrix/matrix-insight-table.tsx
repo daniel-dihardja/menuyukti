@@ -48,6 +48,13 @@ const CATEGORY_BADGE_VARIANT: Record<MatrixCategory, "default" | "secondary" | "
   low_end: "outline",
 };
 
+const CATEGORY_BADGE_CLASS: Record<MatrixCategory, string> = {
+  star: "bg-emerald-600 text-white border-transparent",
+  plow_horse: "bg-amber-500 text-black border-transparent",
+  puzzle: "bg-sky-100 text-sky-800 border-sky-300",
+  low_end: "bg-rose-100 text-rose-700 border-rose-300",
+};
+
 function actionVariant(action: MatrixAction): "default" | "secondary" | "destructive" | "outline" {
   switch (action) {
     case "remove":
@@ -114,7 +121,7 @@ export function MatrixInsightTable({ items, locale, currency }: Props) {
   }
 
   return (
-    <div className="overflow-hidden rounded-md border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/40 hover:bg-muted/40">
@@ -147,10 +154,16 @@ export function MatrixInsightTable({ items, locale, currency }: Props) {
 
         <TableBody>
           {sortedItems.map((item) => (
-            <TableRow key={`${item.category}-${item.menuItem}`} className="hover:bg-muted/30">
+            <TableRow
+              key={`${item.category}-${item.menuItem}`}
+              className="hover:bg-muted/20 odd:bg-background even:bg-muted/10"
+            >
               <TableCell className="px-3 py-2 font-medium">{item.menuItem}</TableCell>
               <TableCell className="px-3 py-2">
-                <Badge variant={CATEGORY_BADGE_VARIANT[item.category]}>
+                <Badge
+                  variant={CATEGORY_BADGE_VARIANT[item.category]}
+                  className={CATEGORY_BADGE_CLASS[item.category]}
+                >
                   {tCategories(item.category)}
                 </Badge>
               </TableCell>
@@ -173,7 +186,10 @@ export function MatrixInsightTable({ items, locale, currency }: Props) {
                 {item.action ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Badge variant={actionVariant(item.action)} className="cursor-help">
+                      <Badge
+                        variant={actionVariant(item.action)}
+                        className="cursor-help tracking-wide"
+                      >
                         {tTable(`actions.${item.action}`)}
                       </Badge>
                     </TooltipTrigger>
