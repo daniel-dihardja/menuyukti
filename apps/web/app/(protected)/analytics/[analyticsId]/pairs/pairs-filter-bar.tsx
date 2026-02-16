@@ -213,6 +213,17 @@ export function PairsFilterBar({ filters }: Props) {
           </div>
         </div>
 
+        <div className="border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
+          <p className="font-semibold uppercase tracking-wide text-[11px] text-foreground">
+            Sort By Guide
+          </p>
+          <p><span className="font-medium text-foreground">Combo Score:</span> best overall candidate balancing association and value potential.</p>
+          <p><span className="font-medium text-foreground">Lift:</span> strongest non-random menu pairing signal.</p>
+          <p><span className="font-medium text-foreground">Pair Orders:</span> most frequent pair by shared order count.</p>
+          <p><span className="font-medium text-foreground">Support:</span> share of total baskets containing the pair.</p>
+          <p><span className="font-medium text-foreground">Confidence:</span> conditional likelihood of one item when the other appears.</p>
+        </div>
+
         <div className="flex flex-wrap gap-2">
           <Button type="submit">Apply Filters</Button>
           <Button type="button" variant="outline" onClick={resetFilters}>
