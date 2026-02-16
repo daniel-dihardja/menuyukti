@@ -515,6 +515,28 @@ model FactOrderItem {
   @@schema("warehouse")
 }
 
+model FactOrderBasketPair {
+  id            BigInt   @id @default(autoincrement())
+  pipelineRunId String   @db.Uuid @map("pipeline_run_id")
+  dateKey       Int      @map("date_key")
+  locationKey   BigInt   @map("location_key")
+  billNumber    String   @map("bill_number")
+  menuItemAKey  BigInt   @map("menu_item_a_key")
+  menuItemBKey  BigInt   @map("menu_item_b_key")
+  pairQty       Decimal  @db.Decimal(12, 3) @map("pair_qty")
+  pairCount     Int      @default(1) @map("pair_count")
+  orderTime     DateTime @db.Timestamptz(6) @map("order_time")
+  createdAt     DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  @@unique([pipelineRunId, billNumber, menuItemAKey, menuItemBKey], map: "uq_fact_order_basket_pair_row")
+  @@index([pipelineRunId], map: "ix_fact_order_basket_pair_pipeline")
+  @@index([dateKey], map: "ix_fact_order_basket_pair_date_key")
+  @@index([locationKey], map: "ix_fact_order_basket_pair_location_key")
+  @@index([locationKey, dateKey, menuItemAKey, menuItemBKey], map: "ix_fact_order_basket_pair_loc_date_pair")
+  @@map("fact_order_basket_pair")
+  @@schema("warehouse")
+}
+
 model FactMenuHourly {
   id           BigInt   @id @default(autoincrement())
   pipelineRunId String  @db.Uuid @map("pipeline_run_id")

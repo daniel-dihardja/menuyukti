@@ -218,6 +218,7 @@ Legend:
 
 ### 11.4 Menu Analyst Capabilities
 - `Implemented`: Low-margin/high-volume style decisioning via matrix filters and presets.
+- `Implemented`: Deterministic warehouse basket-pair fact table and idempotent per-run refresh SQL function.
 - `Partial`: Cost/price control support exists via COGS update flows, but analyst export/reporting is still limited.
 - `Not Yet`: Pair-menu/co-purchase analytics (support/confidence/lift) and combo opportunity engine are not implemented.
 
@@ -258,7 +259,8 @@ Legend:
 | 16 | Instagram attribution (post/campaign -> sales lift) | Partial | Baseline pre/post attribution mart and read API endpoint implemented; confidence tuning and full UX integration still pending. |
 | 26 | Instagram campaign/post identity data model | Implemented | Canonical `instagram_campaigns` and `instagram_posts` with branch scope, identity fields, and publish-time indexes. |
 | 27 | Post-to-promoted-menu mapping model + upsert API | Implemented | Canonical mapping table with idempotent write path and dedupe by normalized menu name. |
-| 17 | Pair-menu analysis (support/confidence/lift) | Not Yet | Co-purchase pair fact/mart and scoring not implemented yet. |
+| 17 | Pair-menu analysis (support/confidence/lift) | Partial | Basket-pair fact foundation is implemented; support/confidence/lift mart and scoring endpoint are pending. |
+| 28 | Order basket pair fact + idempotent refresh SQL | Implemented | `warehouse.fact_order_basket_pair` and `warehouse.refresh_fact_order_basket_pair(run_id)` added for deterministic co-purchase base data. |
 | 18 | Combo recommendation engine | Not Yet | Margin-aware combo ranking not implemented yet. |
 | 19 | Agent architecture using structured feature inputs | Implemented | Agents invoke with structured `core_input` and derived features. |
 | 20 | Agent guardrails for low-quality/fresh data | Partial | ETL/UI guards exist; agent-level enforcement is not consistently applied. |
