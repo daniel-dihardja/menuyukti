@@ -23,6 +23,7 @@ def calculate_menu_heatmaps(df: pd.DataFrame) -> List[Dict]:
 
     df["hour"] = df["order_time"].dt.hour
     df["weekday"] = df["order_time"].dt.day_name().str.lower().str[:3]
+    reporting_period = df["order_time"].min().strftime("%Y-%m")
 
     heatmap_results = []
 
@@ -55,7 +56,7 @@ def calculate_menu_heatmaps(df: pd.DataFrame) -> List[Dict]:
         hourly_qty = group.groupby("hour")["qty"].sum()
 
         daily_heatmap = [
-            {"hour": f"{hour:02d}", "quantity": int(hourly_qty.get(hour, 0))}
+            {"hour": hour, "quantity": int(hourly_qty.get(hour, 0))}
             for hour in range(24)
         ]
 
@@ -80,16 +81,17 @@ def calculate_menu_heatmaps(df: pd.DataFrame) -> List[Dict]:
         heatmap_results.append(
             {
                 "menu": menu_item,
-                "menuCategory": menu_category,
-                "menuCategoryDetail": menu_category_detail,
-                "dailyHeatmap": daily_heatmap,
-                "weeklyHeatmap": weekly_heatmap,
+                "menu_category": menu_category,
+                "menu_category_detail": menu_category_detail,
+                "daily_heatmap": daily_heatmap,
+                "weekly_heatmap": weekly_heatmap,
+                "reporting_period": reporting_period,
             }
         )
 
     # Sort menus by total daily quantity (descending)
     heatmap_results.sort(
-        key=lambda m: sum(item["quantity"] for item in m["dailyHeatmap"]),
+        key=lambda m: sum(item["quantity"] for item in m["daily_heatmap"]),
         reverse=True,
     )
 

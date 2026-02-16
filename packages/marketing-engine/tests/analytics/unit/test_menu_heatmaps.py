@@ -25,10 +25,12 @@ def test_calculate_menu_heatmaps_shape_and_sort():
     assert result[1]["menu"] == "Tea"
 
     latte = next(r for r in result if r["menu"] == "Latte")
-    assert len(latte["dailyHeatmap"]) == 24
-    assert len(latte["weeklyHeatmap"]) == 7
-    assert latte["menuCategory"] == "DRINK"
-    assert latte["menuCategoryDetail"] == "COFFEE"
+    assert len(latte["daily_heatmap"]) == 24
+    assert len(latte["weekly_heatmap"]) == 7
+    assert latte["menu_category"] == "DRINK"
+    assert latte["menu_category_detail"] == "COFFEE"
+    assert latte["reporting_period"] == "2025-02"
+    assert isinstance(latte["daily_heatmap"][0]["hour"], int)
 
 
 def test_calculate_menu_heatmaps_multiple_categories_error():
