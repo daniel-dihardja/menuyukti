@@ -11,6 +11,15 @@ export const runtime = "nodejs";
 const normalizeMenuName = (name: string) => name.trim().toLowerCase();
 const UUID_V4_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const toFiniteNumber = (value: unknown): number | null => {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+};
+const toDateOrNull = (value: unknown): Date | null => {
+  if (!value) return null;
+  const dt = new Date(String(value));
+  return Number.isNaN(dt.getTime()) ? null : dt;
+};
 
 export async function POST(request: Request) {
   try {
@@ -139,7 +148,8 @@ export async function POST(request: Request) {
       `;
 
       for (const row of rawRows) {
-        const serialized = JSON.stringify(row ?? {});
+        const safeRow = (row ?? {}) as Record<string, unknown>;
+        const serialized = JSON.stringify(safeRow);
         const rowHash = createHash("sha256").update(serialized).digest("hex");
         await tx.$executeRaw`
           INSERT INTO staging.stg_pos_raw
@@ -151,6 +161,66 @@ export async function POST(request: Request) {
               ${file.name},
               ${rowHash},
               CAST(${serialized} AS JSONB),
+              ${ingestedAtUtc}
+            )
+          ON CONFLICT (pipeline_run_id, row_hash) DO NOTHING
+        `;
+
+        const billNumber = String(safeRow.bill_number ?? "").trim();
+        const menu = String(safeRow.menu ?? "").trim();
+        const qty = toFiniteNumber(safeRow.qty);
+        const price = toFiniteNumber(safeRow.price);
+        const totalAfterDiscount = toFiniteNumber(
+          safeRow.total_after_bill_discount,
+        );
+        const orderTime = toDateOrNull(safeRow.order_time);
+        const menuCategory = String(safeRow.menu_category ?? "").trim();
+        const menuCategoryDetail = String(safeRow.menu_category_detail ?? "").trim();
+
+        if (
+          !billNumber ||
+          !menu ||
+          qty === null ||
+          price === null ||
+          totalAfterDiscount === null ||
+          !orderTime ||
+          !menuCategory ||
+          !menuCategoryDetail
+        ) {
+          continue;
+        }
+
+        await tx.$executeRaw`
+          INSERT INTO staging.stg_pos_clean
+            (
+              pipeline_run_id,
+              source_system,
+              source_file,
+              row_hash,
+              bill_number,
+              menu,
+              qty,
+              price,
+              total_after_bill_discount,
+              order_time,
+              menu_category,
+              menu_category_detail,
+              ingested_at_utc
+            )
+          VALUES
+            (
+              CAST(${pipelineRunId} AS UUID),
+              ${sourceSystem},
+              ${file.name},
+              ${rowHash},
+              ${billNumber},
+              ${menu},
+              ${qty},
+              ${price},
+              ${totalAfterDiscount},
+              ${orderTime},
+              ${menuCategory},
+              ${menuCategoryDetail},
               ${ingestedAtUtc}
             )
           ON CONFLICT (pipeline_run_id, row_hash) DO NOTHING
