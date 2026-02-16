@@ -750,18 +750,51 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "BRANCH_NOT_FOUND" }, { status: 404 });
     }
 
-    const job = await prisma.etlJob.create({
-      data: {
-        locationId,
-        sourceFile: file.name,
-        status: "queued",
-      },
-      select: {
-        id: true,
-      },
-    });
-
     const fileBytes = Buffer.from(await file.arrayBuffer());
+    const fileHash = createHash("sha256").update(fileBytes).digest("hex");
+    const idempotencyKey = createHash("sha256")
+      .update(`location:${locationId}:file:${fileHash}`)
+      .digest("hex");
+
+    let job: { id: string };
+    try {
+      job = await prisma.etlJob.create({
+        data: {
+          locationId,
+          sourceFile: file.name,
+          fileHash,
+          idempotencyKey,
+          status: "queued",
+        },
+        select: {
+          id: true,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        const existingJob = await prisma.etlJob.findFirst({
+          where: { idempotencyKey },
+          select: { id: true, status: true },
+        });
+
+        if (existingJob) {
+          return NextResponse.json(
+            {
+              status: "duplicate",
+              duplicate: true,
+              jobId: existingJob.id,
+              jobStatus: existingJob.status,
+            },
+            { status: 200 },
+          );
+        }
+      }
+
+      throw error;
+    }
 
     void processUploadJob({
       jobId: job.id,

@@ -101,6 +101,8 @@ model EtlJob {
   analytics   Analytics? @relation(fields: [analyticsId], references: [id], onDelete: SetNull)
 
   sourceFile    String? @map("source_file")
+  fileHash      String? @map("file_hash")
+  idempotencyKey String? @unique(map: "uq_etl_jobs_idempotency_key") @map("idempotency_key")
   status        String  @default("queued")
   errorMessage  String? @map("error_message")
   pipelineRunId String? @db.Uuid @map("pipeline_run_id")

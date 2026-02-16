@@ -3,9 +3,10 @@
 import { useState } from "react";
 
 interface UploadResponse {
-  status: "accepted" | "ok";
+  status: "accepted" | "duplicate" | "ok";
   pos?: string | null;
   jobId?: string;
+  duplicate?: boolean;
 }
 
 interface JobStatusResponse {
@@ -85,7 +86,7 @@ export function useUploadAnalytics(
 
       const data = (await res.json()) as UploadResponse;
 
-      if (data.status === "accepted" && data.jobId) {
+      if ((data.status === "accepted" || data.status === "duplicate") && data.jobId) {
         setMessage(`Upload accepted: ${file.name}. Processing...`);
         await pollJobUntilDone(data.jobId);
       }
