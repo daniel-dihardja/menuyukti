@@ -394,6 +394,7 @@
         "margin": "Margin",
         "percentage": "%",
         "action": "Action",
+        "actionReasonLabel": "Why this action",
         "actions": {
           "remove": "REMOVE",
           "reprice": "REPRICE",

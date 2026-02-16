@@ -3,6 +3,11 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@workspace/ui/components/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip";
 import { formatCurrencyWithCode } from "@/lib/currency";
 import {
   type DecisionGradeMatrixRow,
@@ -166,9 +171,17 @@ export function MatrixInsightTable({ items, locale, currency }: Props) {
               </TableCell>
               <TableCell className="px-3 py-2 text-center">
                 {item.action ? (
-                  <Badge variant={actionVariant(item.action)}>
-                    {tTable(`actions.${item.action}`)}
-                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge variant={actionVariant(item.action)} className="cursor-help">
+                        {tTable(`actions.${item.action}`)}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
+                      <p className="font-semibold">{tTable("actionReasonLabel")}</p>
+                      <p>{item.actionReason}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 ) : (
                   "—"
                 )}
