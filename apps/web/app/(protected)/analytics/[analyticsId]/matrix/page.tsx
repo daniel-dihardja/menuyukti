@@ -19,9 +19,12 @@ type PageProps = {
 
 type MatrixDistributionItem = {
   category: "star" | "plow_horse" | "puzzle" | "low_end";
-  count: number;
-  percentage: number;
-  margin_contribution_percentage: number;
+  item_count?: number;
+  item_share?: number;
+  margin_share?: number;
+  count?: number;
+  percentage?: number;
+  margin_contribution_percentage?: number;
 };
 
 type MatrixItem = {
@@ -250,7 +253,8 @@ export default async function Page({ params }: PageProps) {
               {categoryOrder.map((key) => {
                 const label = tMatrix(`categories.${key}`);
                 const item = byCategory(key);
-                const share = item ? Math.max(item.percentage * 100, 0) : 0;
+                const itemShare = item?.item_share ?? item?.percentage ?? 0;
+                const share = Math.max(itemShare * 100, 0);
 
                 return (
                   <div key={key} className="border p-4 shadow-sm bg-card">
@@ -262,7 +266,7 @@ export default async function Page({ params }: PageProps) {
                       <div>
                         <span className="text-muted-foreground">{tMatrix("distribution.items")}</span>{" "}
                         <span className="font-medium">
-                          {item?.count ?? "—"}
+                          {item?.item_count ?? item?.count ?? "—"}
                         </span>
                       </div>
                       <div>
@@ -278,7 +282,9 @@ export default async function Page({ params }: PageProps) {
                         <span className="font-medium">
                           {item
                             ? `${(
-                                item.margin_contribution_percentage * 100
+                                (item.margin_share ??
+                                  item.margin_contribution_percentage ??
+                                  0) * 100
                               ).toFixed(1)}%`
                             : "—"}
                         </span>

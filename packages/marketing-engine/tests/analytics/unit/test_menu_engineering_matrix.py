@@ -29,8 +29,8 @@ def test_calculate_menu_engineering_matrix_categories_and_filters():
     assert items["Puzzle"]["category"] == "puzzle"
     assert items["Low"]["category"] == "low_end"
 
-    percentages = [d["percentage"] for d in result["distribution"]]
-    assert sum(percentages) == pytest.approx(1.0)
+    item_shares = [d["item_share"] for d in result["distribution"]]
+    assert sum(item_shares) == pytest.approx(1.0)
 
 
 def test_calculate_menu_engineering_matrix_missing_cols():

@@ -131,9 +131,9 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
         distribution.append(
             {
                 "category": category,
-                "count": int(count),
-                "percentage": count / total_items if total_items > 0 else 0.0,
-                "margin_contribution_percentage": (
+                "item_count": int(count),
+                "item_share": count / total_items if total_items > 0 else 0.0,
+                "margin_share": (
                     category_margin / total_margin_matrix
                     if total_margin_matrix > 0
                     else 0.0
@@ -142,7 +142,7 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
         )
 
     distribution.sort(
-        key=lambda x: x["margin_contribution_percentage"],
+        key=lambda x: x["margin_share"],
         reverse=True,
     )
 
