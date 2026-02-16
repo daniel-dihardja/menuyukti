@@ -10,13 +10,18 @@ import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
 import { prisma } from "@/lib/prisma/client";
 import { routes } from "@/lib/routes";
+import { parsePairFilterState } from "@/lib/analytics/pair-filter-state";
+
+import { PairsFilterBar } from "./pairs-filter-bar";
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function PairsPage({ params }: PageProps) {
+export default async function PairsPage({ params, searchParams }: PageProps) {
   const tSales = await getTranslations("analytics.sales");
+  const filters = parsePairFilterState(await searchParams);
 
   const { analyticsId: analyticsIdParam } = await params;
   if (!analyticsIdParam) notFound();
@@ -123,6 +128,10 @@ export default async function PairsPage({ params }: PageProps) {
           </Link>
         </div>
       </section>
+
+      <div className="mt-6">
+        <PairsFilterBar filters={filters} />
+      </div>
     </AnalyticsPageShell>
   );
 }

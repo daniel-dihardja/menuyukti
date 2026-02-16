@@ -208,6 +208,7 @@ Legend:
 - `Implemented`: Accessibility baseline improvements for matrix filters/table.
 - `Implemented`: CSV export endpoint for analyst matrix/pair/combo datasets with stable columns and metadata.
 - `Partial`: Pair/combo analysis now has a dedicated GUI route and navigation entry; advanced interaction layers are in progress.
+- `Implemented`: Pair/combo GUI URL-based filter bar with typed state parsing/serialization and shareable query context.
 
 ### 11.3 Marketer (Instagram) Capabilities
 - `Implemented`: Recommendation-centric matrix workflow (`promote`, `improve/reprice`, `remove`, `keep`).
@@ -277,3 +278,4 @@ Legend:
 | 25 | Full release-gate E2E suite (marketer + analyst) | Implemented | Dedicated release-gate script validates marketer matrix journey and analyst export workflow with artifacts. |
 | 33 | Release-gate E2E script wiring | Implemented | `test:e2e:release-gate` script and required env variables are wired for deterministic execution. |
 | 34 | Pair/combo GUI route and navigation | Partial | `/analytics/{analyticsId}/pairs` page shell and sales-action navigation entry are implemented. |
+| 35 | Pair/combo URL filter bar | Implemented | Typed filter state utility and GUI filter bar are implemented with apply/reset and shareable URL state. |
