@@ -26,6 +26,21 @@ export async function POST(req: Request, { params }: Params) {
     );
   }
 
+  const analyticsContext = await prisma.analytics.findUnique({
+    where: { id: analyticsId },
+    select: {
+      id: true,
+      locationId: true,
+    },
+  });
+
+  if (!analyticsContext) {
+    return NextResponse.json(
+      { message: "Analytics not found" },
+      { status: 404 },
+    );
+  }
+
   // 2️⃣ Parse body
   const body = await req.json();
 
@@ -176,10 +191,137 @@ export async function POST(req: Request, { params }: Params) {
     },
   });
 
+  const latestSucceededEtlJob = await prisma.etlJob.findFirst({
+    where: {
+      analyticsId,
+      status: "succeeded",
+      pipelineRunId: { not: null },
+    },
+    orderBy: {
+      finishedAt: "desc",
+    },
+    select: {
+      pipelineRunId: true,
+    },
+  });
+
+  let warehouseBackfill = {
+    pipelineRunId: null as string | null,
+    updatedOrderRows: 0,
+    aggregatedDailyRows: 0,
+  };
+
+  if (latestSucceededEtlJob?.pipelineRunId) {
+    const pipelineRunId = latestSucceededEtlJob.pipelineRunId;
+
+    await prisma.$transaction(async (tx) => {
+      const updateRows = await tx.$queryRaw<Array<{ updated_rows: bigint | number }>>`
+        WITH location_base AS (
+          SELECT location_key
+          FROM warehouse.dim_location
+          WHERE operational_location_id = ${analyticsContext.locationId}
+          LIMIT 1
+        ),
+        menu_cogs AS (
+          SELECT
+            dmi.menu_item_key,
+            ami.cogs::NUMERIC(14, 4) AS cogs_per_unit
+          FROM public.analytics_menu_items ami
+          CROSS JOIN location_base lb
+          LEFT JOIN public.menu_alias ma
+            ON ma.branch_id = ${analyticsContext.locationId}
+           AND ma.alias_name_norm = lower(trim(ami.menu_name))
+          INNER JOIN warehouse.dim_menu_item dmi
+            ON dmi.location_key = lb.location_key
+           AND dmi.menu_name_norm = COALESCE(ma.canonical_menu_name_norm, lower(trim(ami.menu_name)))
+           AND dmi.is_current = TRUE
+          WHERE ami.analytics_id = ${analyticsId}
+            AND ami.cogs IS NOT NULL
+        ),
+        menu_cogs_dedup AS (
+          SELECT
+            menu_item_key,
+            MAX(cogs_per_unit) AS cogs_per_unit
+          FROM menu_cogs
+          GROUP BY menu_item_key
+        ),
+        updated AS (
+          UPDATE warehouse.fact_order_item foi
+             SET cogs = ROUND((mcd.cogs_per_unit * foi.qty)::NUMERIC, 4),
+                 margin = ROUND((foi.net_revenue - (mcd.cogs_per_unit * foi.qty))::NUMERIC, 4)
+            FROM menu_cogs_dedup mcd
+            CROSS JOIN location_base lb
+           WHERE foi.pipeline_run_id = CAST(${pipelineRunId} AS UUID)
+             AND foi.location_key = lb.location_key
+             AND foi.menu_item_key = mcd.menu_item_key
+          RETURNING 1
+        )
+        SELECT COUNT(*)::BIGINT AS updated_rows
+        FROM updated
+      `;
+
+      const dailyRows = await tx.$queryRaw<Array<{ aggregated_rows: bigint | number }>>`
+        WITH location_base AS (
+          SELECT location_key
+          FROM warehouse.dim_location
+          WHERE operational_location_id = ${analyticsContext.locationId}
+          LIMIT 1
+        ),
+        upserted AS (
+          INSERT INTO warehouse.fact_menu_daily
+            (
+              pipeline_run_id,
+              date_key,
+              location_key,
+              menu_item_key,
+              qty,
+              net_revenue,
+              cogs,
+              margin
+            )
+          SELECT
+            foi.pipeline_run_id,
+            foi.date_key,
+            foi.location_key,
+            foi.menu_item_key,
+            SUM(foi.qty) AS qty,
+            SUM(foi.net_revenue) AS net_revenue,
+            SUM(foi.cogs) AS cogs,
+            SUM(foi.margin) AS margin
+          FROM warehouse.fact_order_item foi
+          CROSS JOIN location_base lb
+          WHERE foi.pipeline_run_id = CAST(${pipelineRunId} AS UUID)
+            AND foi.location_key = lb.location_key
+          GROUP BY
+            foi.pipeline_run_id,
+            foi.date_key,
+            foi.location_key,
+            foi.menu_item_key
+          ON CONFLICT (pipeline_run_id, date_key, location_key, menu_item_key)
+          DO UPDATE SET
+            qty = EXCLUDED.qty,
+            net_revenue = EXCLUDED.net_revenue,
+            cogs = EXCLUDED.cogs,
+            margin = EXCLUDED.margin
+          RETURNING 1
+        )
+        SELECT COUNT(*)::BIGINT AS aggregated_rows
+        FROM upserted
+      `;
+
+      warehouseBackfill = {
+        pipelineRunId,
+        updatedOrderRows: Number(updateRows[0]?.updated_rows ?? 0),
+        aggregatedDailyRows: Number(dailyRows[0]?.aggregated_rows ?? 0),
+      };
+    });
+  }
+
   // Return updated matrix
   return NextResponse.json({
     success: true,
     matrix: enrichedMatrix,
+    warehouseBackfill,
   });
 }
 

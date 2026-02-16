@@ -825,6 +825,28 @@ async function processUploadJob(params: {
               margin = EXCLUDED.margin
           `;
 
+          // Keep pair/combo marts up-to-date immediately after upload.
+          // The function is migration-provisioned; guard existence to avoid
+          // breaking uploads in partially migrated environments.
+          const pairRefreshFnRows = await tx.$queryRaw<Array<{ exists: boolean }>>`
+            SELECT EXISTS (
+              SELECT 1
+              FROM pg_proc p
+              INNER JOIN pg_namespace n
+                ON n.oid = p.pronamespace
+              WHERE n.nspname = 'warehouse'
+                AND p.proname = 'refresh_fact_order_basket_pair'
+            ) AS exists
+          `;
+
+          if (pairRefreshFnRows[0]?.exists) {
+            await tx.$queryRaw<Array<{ inserted_rows: string | number }>>`
+              SELECT warehouse.refresh_fact_order_basket_pair(
+                CAST(${pipelineRunId} AS UUID)
+              ) AS inserted_rows
+            `;
+          }
+
           const warehouseAggRows = await tx.$queryRaw<
             Array<{
               total_orders: string | number;
