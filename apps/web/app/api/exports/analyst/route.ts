@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma/client";
 import { parseMatrixFilterState } from "@/lib/analytics/matrix-filter-state";
 import { applyMatrixFilterState } from "@/lib/analytics/matrix-filter-engine";
 import { toDecisionGradeMatrixRows } from "@/lib/analytics/matrix-row-contract";
+import { parsePairTypeFilter } from "@/lib/analytics/pair-type";
 import { toCsv } from "@/lib/export/csv";
 
 type ExportDataset = "matrix" | "pairs" | "combos";
@@ -113,6 +114,7 @@ export async function GET(req: Request) {
 
     const fromParam = searchParams.get("from");
     const toParam = searchParams.get("to");
+    const pairType = parsePairTypeFilter(searchParams.get("pairType"));
     const from = fromParam ? new Date(fromParam) : null;
     const to = toParam ? new Date(toParam) : null;
 
@@ -141,6 +143,7 @@ export async function GET(req: Request) {
           confidence_b_to_a: string | number;
           lift_a_to_b: string | number;
           lift_b_to_a: string | number;
+          pair_type: string;
           is_noisy: boolean;
         }>
       >`
@@ -159,6 +162,7 @@ export async function GET(req: Request) {
             b.item_a_orders,
             b.item_b_orders,
             b.total_orders,
+            b.pair_type,
             dd.full_date
           FROM marts.vw_pair_metrics_daily_base b
           INNER JOIN location_base lb ON lb.location_key = b.location_key
@@ -171,6 +175,7 @@ export async function GET(req: Request) {
             location_key,
             menu_item_a_key,
             menu_item_b_key,
+            pair_type,
             SUM(pair_orders)::NUMERIC(18, 6) AS pair_orders,
             SUM(pair_qty)::NUMERIC(18, 6) AS pair_qty,
             SUM(item_a_orders)::NUMERIC(18, 6) AS item_a_orders,
@@ -180,7 +185,8 @@ export async function GET(req: Request) {
           GROUP BY
             location_key,
             menu_item_a_key,
-            menu_item_b_key
+            menu_item_b_key,
+            pair_type
         )
         SELECT
           ${locationId} AS location_id,
@@ -199,11 +205,13 @@ export async function GET(req: Request) {
             WHEN a.total_orders = 0 OR a.item_a_orders = 0 OR a.item_b_orders = 0 THEN 0
             ELSE (a.pair_orders / a.item_b_orders) / (a.item_a_orders / a.total_orders)
           END AS lift_b_to_a,
+          a.pair_type,
           (a.pair_orders < ${minSampleSize}) AS is_noisy
         FROM agg a
         INNER JOIN warehouse.dim_menu_item ma ON ma.menu_item_key = a.menu_item_a_key
         INNER JOIN warehouse.dim_menu_item mb ON mb.menu_item_key = a.menu_item_b_key
         WHERE a.pair_orders >= ${minSampleSize}
+          AND (${pairType}::text = 'all' OR a.pair_type = ${pairType}::text)
         ORDER BY lift_a_to_b DESC, a.pair_orders DESC
       `;
 
@@ -222,6 +230,7 @@ export async function GET(req: Request) {
         confidence_b_to_a: row.confidence_b_to_a,
         lift_a_to_b: row.lift_a_to_b,
         lift_b_to_a: row.lift_b_to_a,
+        pair_type: row.pair_type,
         is_noisy: row.is_noisy,
       }));
 
@@ -240,6 +249,7 @@ export async function GET(req: Request) {
         "confidence_b_to_a",
         "lift_a_to_b",
         "lift_b_to_a",
+        "pair_type",
         "is_noisy",
       ]);
 
@@ -267,10 +277,14 @@ export async function GET(req: Request) {
         avg_margin_per_unit_b: string | number;
         pair_strength_score: string | number;
         margin_score: string | number;
+        base_combo_opportunity_score: string | number;
+        pair_type_boost_factor: string | number;
+        pair_type_boost_applied: boolean;
         combo_opportunity_score: string | number;
         first_seen_date: Date | null;
         last_seen_date: Date | null;
         confidence_level: string;
+        pair_type: string;
       }>
     >`
       SELECT
@@ -288,15 +302,20 @@ export async function GET(req: Request) {
         avg_margin_per_unit_b,
         pair_strength_score,
         margin_score,
+        base_combo_opportunity_score,
+        pair_type_boost_factor,
+        pair_type_boost_applied,
         combo_opportunity_score,
         first_seen_date,
         last_seen_date,
-        confidence_level
+        confidence_level,
+        pair_type
       FROM marts.vw_combo_opportunity_candidates
       WHERE location_id = ${locationId}
         AND pair_orders >= ${minPairOrders}
         AND (${from}::date IS NULL OR last_seen_date >= ${from}::date)
         AND (${to}::date IS NULL OR first_seen_date < ${to}::date)
+        AND (${pairType}::text = 'all' OR pair_type = ${pairType}::text)
       ORDER BY combo_opportunity_score DESC, pair_orders DESC
     `;
 
@@ -319,10 +338,14 @@ export async function GET(req: Request) {
       avg_margin_per_unit_b: row.avg_margin_per_unit_b,
       pair_strength_score: row.pair_strength_score,
       margin_score: row.margin_score,
+      base_combo_opportunity_score: row.base_combo_opportunity_score,
+      pair_type_boost_factor: row.pair_type_boost_factor,
+      pair_type_boost_applied: row.pair_type_boost_applied,
       combo_opportunity_score: row.combo_opportunity_score,
       first_seen_date: row.first_seen_date,
       last_seen_date: row.last_seen_date,
       confidence_level: row.confidence_level,
+      pair_type: row.pair_type,
     }));
 
     const csv = toCsv(exportRows, [
@@ -344,10 +367,14 @@ export async function GET(req: Request) {
       "avg_margin_per_unit_b",
       "pair_strength_score",
       "margin_score",
+      "base_combo_opportunity_score",
+      "pair_type_boost_factor",
+      "pair_type_boost_applied",
       "combo_opportunity_score",
       "first_seen_date",
       "last_seen_date",
       "confidence_level",
+      "pair_type",
     ]);
 
     return csvResponse(`analyst-combos-location-${locationId}.csv`, csv);

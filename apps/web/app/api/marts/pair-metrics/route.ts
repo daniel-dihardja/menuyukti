@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
+import { parsePairTypeFilter } from "@/lib/analytics/pair-type";
 
 export async function GET(req: Request) {
   try {
@@ -9,6 +10,7 @@ export async function GET(req: Request) {
     const toParam = searchParams.get("to");
     const minSampleSizeParam = searchParams.get("minSampleSize");
     const limitParam = searchParams.get("limit");
+    const pairType = parsePairTypeFilter(searchParams.get("pairType"));
 
     if (!locationIdParam) {
       return NextResponse.json({ error: "MISSING_LOCATION_ID" }, { status: 400 });
@@ -57,6 +59,7 @@ export async function GET(req: Request) {
         confidence_b_to_a: string;
         lift_a_to_b: string;
         lift_b_to_a: string;
+        pair_type: string;
         min_sample_size: number;
         is_noisy: boolean;
       }>
@@ -77,6 +80,7 @@ export async function GET(req: Request) {
           b.item_a_orders,
           b.item_b_orders,
           b.total_orders,
+          b.pair_type,
           dd.full_date
         FROM marts.vw_pair_metrics_daily_base b
         INNER JOIN location_base lb
@@ -91,6 +95,7 @@ export async function GET(req: Request) {
           location_key,
           menu_item_a_key,
           menu_item_b_key,
+          pair_type,
           SUM(pair_orders)::NUMERIC(18, 6) AS pair_orders,
           SUM(pair_qty)::NUMERIC(18, 6) AS pair_qty,
           SUM(item_a_orders)::NUMERIC(18, 6) AS item_a_orders,
@@ -100,7 +105,8 @@ export async function GET(req: Request) {
         GROUP BY
           location_key,
           menu_item_a_key,
-          menu_item_b_key
+          menu_item_b_key,
+          pair_type
       )
       SELECT
         a.location_key,
@@ -133,6 +139,7 @@ export async function GET(req: Request) {
           WHEN a.total_orders = 0 OR a.item_a_orders = 0 OR a.item_b_orders = 0 THEN 0
           ELSE (a.pair_orders / a.item_b_orders) / (a.item_a_orders / a.total_orders)
         END AS lift_b_to_a,
+        a.pair_type,
         ${minSampleSize} AS min_sample_size,
         (a.pair_orders < ${minSampleSize}) AS is_noisy
       FROM agg a
@@ -140,6 +147,7 @@ export async function GET(req: Request) {
         ON ma.menu_item_key = a.menu_item_a_key
       INNER JOIN warehouse.dim_menu_item mb
         ON mb.menu_item_key = a.menu_item_b_key
+      WHERE (${pairType}::text = 'all' OR a.pair_type = ${pairType}::text)
       ORDER BY
         is_noisy ASC,
         lift_a_to_b DESC,

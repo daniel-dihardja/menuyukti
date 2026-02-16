@@ -24,6 +24,7 @@ import {
   type PairFilterState,
   serializePairFilterState,
 } from "@/lib/analytics/pair-filter-state";
+import { pairTypeLabel } from "@/lib/analytics/pair-type";
 
 type Props = {
   filters: PairFilterState;
@@ -40,6 +41,7 @@ export function PairsFilterBar({ filters }: Props) {
   const pathname = usePathname();
 
   const [q, setQ] = useState(filters.q);
+  const [pairType, setPairType] = useState(filters.pairType);
   const [minSampleSize, setMinSampleSize] = useState(String(filters.minSampleSize));
   const [minLift, setMinLift] = useState(String(filters.minLift));
   const [minConfidence, setMinConfidence] = useState(String(filters.minConfidence));
@@ -50,6 +52,7 @@ export function PairsFilterBar({ filters }: Props) {
   const applyFilters = () => {
     const nextState: PairFilterState = {
       q: q.trim(),
+      pairType,
       minSampleSize: Math.max(1, Math.round(parseNumber(minSampleSize, DEFAULT_PAIR_FILTER_STATE.minSampleSize))),
       minLift: Math.max(0, parseNumber(minLift, DEFAULT_PAIR_FILTER_STATE.minLift)),
       minConfidence: Math.max(0, Math.min(1, parseNumber(minConfidence, DEFAULT_PAIR_FILTER_STATE.minConfidence))),
@@ -65,6 +68,7 @@ export function PairsFilterBar({ filters }: Props) {
 
   const resetFilters = () => {
     setQ("");
+    setPairType(DEFAULT_PAIR_FILTER_STATE.pairType);
     setMinSampleSize(String(DEFAULT_PAIR_FILTER_STATE.minSampleSize));
     setMinLift(String(DEFAULT_PAIR_FILTER_STATE.minLift));
     setMinConfidence(String(DEFAULT_PAIR_FILTER_STATE.minConfidence));
@@ -101,6 +105,25 @@ export function PairsFilterBar({ filters }: Props) {
               onChange={(event) => setQ(event.target.value)}
               placeholder="e.g. burger, iced tea"
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="pair-filter-pair-type">Pair type</Label>
+            <Select
+              value={pairType}
+              onValueChange={(value) => setPairType(value as PairFilterState["pairType"])}
+            >
+              <SelectTrigger id="pair-filter-pair-type" className="w-full rounded-none shadow-sm">
+                <SelectValue placeholder="Pair type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Pair Types</SelectItem>
+                <SelectItem value="food_drink">{pairTypeLabel("food_drink")}</SelectItem>
+                <SelectItem value="food_food">{pairTypeLabel("food_food")}</SelectItem>
+                <SelectItem value="drink_drink">{pairTypeLabel("drink_drink")}</SelectItem>
+                <SelectItem value="unknown">{pairTypeLabel("unknown")}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">

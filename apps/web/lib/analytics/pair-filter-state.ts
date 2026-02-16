@@ -1,3 +1,5 @@
+import { parsePairTypeFilter, type PairTypeFilter } from "@/lib/analytics/pair-type";
+
 type SearchParamsRecord = Record<string, string | string[] | undefined>;
 
 export type PairSortKey =
@@ -11,6 +13,7 @@ export type PairSortOrder = "asc" | "desc";
 
 export type PairFilterState = {
   q: string;
+  pairType: PairTypeFilter;
   minSampleSize: number;
   minLift: number;
   minConfidence: number;
@@ -21,6 +24,7 @@ export type PairFilterState = {
 
 export const DEFAULT_PAIR_FILTER_STATE: PairFilterState = {
   q: "",
+  pairType: "all",
   minSampleSize: 5,
   minLift: 1,
   minConfidence: 0,
@@ -87,6 +91,7 @@ export function parsePairFilterState(
 
   return {
     q: (searchParams.get("q") ?? "").trim().slice(0, 100),
+    pairType: parsePairTypeFilter(searchParams.get("pairType")),
     minSampleSize: clamp(
       Math.round(
         parseNumber(
@@ -128,6 +133,9 @@ export function serializePairFilterState(state: PairFilterState): URLSearchParam
   const searchParams = new URLSearchParams();
 
   if (state.q) searchParams.set("q", state.q);
+  if (state.pairType !== DEFAULT_PAIR_FILTER_STATE.pairType) {
+    searchParams.set("pairType", state.pairType);
+  }
   if (state.minSampleSize !== DEFAULT_PAIR_FILTER_STATE.minSampleSize) {
     searchParams.set("minSampleSize", String(state.minSampleSize));
   }

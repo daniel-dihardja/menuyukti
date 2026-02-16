@@ -10,6 +10,7 @@ import Link from "next/link";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
 import { parsePairFilterState, serializePairFilterState } from "@/lib/analytics/pair-filter-state";
+import type { PairType } from "@/lib/analytics/pair-type";
 import { prisma } from "@/lib/prisma/client";
 import { routes } from "@/lib/routes";
 
@@ -33,6 +34,7 @@ type PairRow = {
   liftBtoA: number;
   score: number;
   isNoisy: boolean;
+  pairType: PairType;
 };
 
 type ComboRow = {
@@ -48,6 +50,10 @@ type ComboRow = {
   score: number;
   marginScore: number;
   confidenceLevel: string;
+  pairType: PairType;
+  pairTypeBoostFactor: number;
+  pairTypeBoostApplied: boolean;
+  baseScore: number;
 };
 
 function toNumber(value: unknown): number {
@@ -177,6 +183,7 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
       lift_a_to_b: string | number;
       lift_b_to_a: string | number;
       is_noisy: boolean;
+      pair_type: PairType;
     }>
   >`
     WITH location_base AS (
@@ -194,6 +201,7 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
         b.item_a_orders,
         b.item_b_orders,
         b.total_orders,
+        b.pair_type,
         ma.menu_name AS menu_item_a_name,
         mb.menu_name AS menu_item_b_name
       FROM marts.vw_pair_metrics_daily_base b
@@ -206,12 +214,13 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
       SELECT
         menu_item_a_name,
         menu_item_b_name,
+        pair_type,
         SUM(pair_orders)::NUMERIC(18, 6) AS pair_orders,
         SUM(item_a_orders)::NUMERIC(18, 6) AS item_a_orders,
         SUM(item_b_orders)::NUMERIC(18, 6) AS item_b_orders,
         SUM(total_orders)::NUMERIC(18, 6) AS total_orders
       FROM filtered
-      GROUP BY menu_item_a_name, menu_item_b_name
+      GROUP BY menu_item_a_name, menu_item_b_name, pair_type
     )
     SELECT
       menu_item_a_name,
@@ -228,9 +237,11 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
         WHEN total_orders = 0 OR item_a_orders = 0 OR item_b_orders = 0 THEN 0
         ELSE (pair_orders / item_b_orders) / (item_a_orders / total_orders)
       END AS lift_b_to_a,
-      (pair_orders < ${filters.minSampleSize}) AS is_noisy
+      (pair_orders < ${filters.minSampleSize}) AS is_noisy,
+      pair_type
     FROM agg
     WHERE pair_orders >= ${filters.minSampleSize}
+      AND (${filters.pairType}::text = 'all' OR pair_type = ${filters.pairType}::text)
     ORDER BY pair_orders DESC
     LIMIT ${Math.max(filters.limit, 200)}
   `;
@@ -248,6 +259,10 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
       margin_score: string | number;
       combo_opportunity_score: string | number;
       confidence_level: string;
+      pair_type: PairType;
+      pair_type_boost_factor: string | number;
+      pair_type_boost_applied: boolean;
+      base_combo_opportunity_score: string | number;
     }>
   >`
     SELECT
@@ -260,12 +275,17 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
       lift_a_to_b,
       lift_b_to_a,
       margin_score,
+      base_combo_opportunity_score,
+      pair_type_boost_factor,
+      pair_type_boost_applied,
       combo_opportunity_score,
-      confidence_level
+      confidence_level,
+      pair_type
     FROM marts.vw_combo_opportunity_candidates
     WHERE location_id = ${analytics.locationId}
       AND pair_orders >= ${filters.minSampleSize}
       AND (${filters.q} = '' OR menu_item_a_name ILIKE ${searchLike} OR menu_item_b_name ILIKE ${searchLike})
+      AND (${filters.pairType}::text = 'all' OR pair_type = ${filters.pairType}::text)
     ORDER BY combo_opportunity_score DESC
     LIMIT ${Math.max(filters.limit, 200)}
   `;
@@ -291,6 +311,7 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
         liftBtoA,
         score,
         isNoisy: Boolean(row.is_noisy),
+        pairType: row.pair_type,
       };
     })
     .filter((row) => {
@@ -313,6 +334,10 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
       score: toNumber(row.combo_opportunity_score),
       marginScore: toNumber(row.margin_score),
       confidenceLevel: row.confidence_level,
+      pairType: row.pair_type,
+      pairTypeBoostFactor: toNumber(row.pair_type_boost_factor),
+      pairTypeBoostApplied: Boolean(row.pair_type_boost_applied),
+      baseScore: toNumber(row.base_combo_opportunity_score),
     }))
     .filter((row) => {
       const confidenceAvg = (row.confidenceAtoB + row.confidenceBtoA) / 2;

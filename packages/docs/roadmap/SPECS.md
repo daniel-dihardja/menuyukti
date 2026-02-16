@@ -211,7 +211,9 @@ Legend:
 - `Implemented`: Pair/combo GUI URL-based filter bar with typed state parsing/serialization and shareable query context.
 - `Implemented`: Pair/combo tables support interactive column sorting directly in GUI.
 - `Implemented`: Pair filter controls include in-context tooltips for Min sample size and Min lift.
-- `Implemented`: Pair filter panel includes practical guidance for all Sort By options.
+- `Implemented`: Pair filter controls include tooltips for Min sample size, Min lift, Min confidence, and Sort by options.
+- `Implemented`: Pair/combo marts, APIs, exports, and GUI now support deterministic `pair_type` classification (`food_drink`, `food_food`, `drink_drink`, `unknown`).
+- `Implemented`: Combo scoring includes deterministic `food_drink` boost with explainable fields (`base_combo_opportunity_score`, `pair_type_boost_factor`, `pair_type_boost_applied`).
 
 ### 11.3 Marketer (Instagram) Capabilities
 - `Implemented`: Recommendation-centric matrix workflow (`promote`, `improve/reprice`, `remove`, `keep`).
@@ -226,6 +228,7 @@ Legend:
 - `Implemented`: Deterministic warehouse basket-pair fact table and idempotent per-run refresh SQL function.
 - `Implemented`: Pair metrics mart and API with support, confidence, lift, minimum sample threshold, and noise flag.
 - `Implemented`: Margin-aware combo opportunity scoring mart and ranked API for top-N analyst candidates.
+- `Implemented`: Pair-type-aware analyst workflow: pair type filtering, pair type badges, and explainability of pair-type score adjustment.
 - `Partial`: Cost/price control support exists via COGS update flows, but analyst export/reporting is still limited.
 
 ### 11.5 Agentic Architecture
@@ -287,4 +290,8 @@ Legend:
 | 36 | Pair/combo insight UI and explainability | Implemented | KPI cards, ranked pair/combo tables, explainability sheet, and secondary export actions are available in GUI. |
 | 38 | Interactive sortable columns for pair/combo tables | Implemented | Users can sort key columns directly from table headers with visible sort direction indicators. |
 | 39 | Pair filter threshold tooltips | Implemented | In-context tooltips explain Min sample size and Min lift behavior and practical usage. |
-| 40 | Pair Sort By option guide | Implemented | GUI includes concise usage guidance for Combo Score, Lift, Pair Orders, Support, and Confidence sorting modes. |
+| 40 | Pair filter explanatory tooltips | Implemented | GUI now surfaces targeted tooltips for Min sample size, Min lift, Min confidence, and Sort by behavior. |
+| 41 | Pair type taxonomy and contract | Implemented | Deterministic pair type contract (`food_drink`, `food_food`, `drink_drink`, `unknown`) is documented and applied across marts/APIs/UI. |
+| 42 | Pair-type-aware combo scoring | Implemented | Combo scoring includes `food_drink` boost and explicit explainability fields for base score and boost factor. |
+| 43 | Pair type UI filtering and badges | Implemented | Pair/combo GUI supports `pairType` URL filter and visible pair type badges in both tables. |
+| 44 | Pair-type-aware API/export coverage | Implemented | Pair/combo marts APIs and analyst CSV exports include pair type and pair-type boost metadata. |

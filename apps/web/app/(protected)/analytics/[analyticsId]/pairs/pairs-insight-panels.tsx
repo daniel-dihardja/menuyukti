@@ -22,6 +22,7 @@ import {
   SortableTableHead,
   useSortableColumns,
 } from "@/components/sortable-table";
+import { pairTypeLabel, type PairType } from "@/lib/analytics/pair-type";
 
 type PairInsightRow = {
   kind: "pair";
@@ -36,6 +37,7 @@ type PairInsightRow = {
   liftBtoA: number;
   score: number;
   isNoisy: boolean;
+  pairType: PairType;
 };
 
 type ComboInsightRow = {
@@ -52,6 +54,10 @@ type ComboInsightRow = {
   score: number;
   marginScore: number;
   confidenceLevel: string;
+  pairType: PairType;
+  pairTypeBoostFactor: number;
+  pairTypeBoostApplied: boolean;
+  baseScore: number;
 };
 
 type InsightRow = PairInsightRow | ComboInsightRow;
@@ -78,6 +84,13 @@ function num(value: number): string {
   return value.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
+function pairTypeBadgeClass(pairType: PairType): string {
+  if (pairType === "food_drink") return "bg-emerald-100 text-emerald-800 border-emerald-300";
+  if (pairType === "food_food") return "bg-amber-100 text-amber-800 border-amber-300";
+  if (pairType === "drink_drink") return "bg-sky-100 text-sky-800 border-sky-300";
+  return "bg-muted text-muted-foreground border-border";
+}
+
 function explainability(row: InsightRow): string[] {
   const lines = [
     `Pair volume: ${row.pairOrders} shared orders.`,
@@ -88,11 +101,21 @@ function explainability(row: InsightRow): string[] {
 
   if (row.kind === "pair") {
     lines.push(`Composite strength score: ${num(row.score)}.`);
+    lines.push(`Pair type: ${pairTypeLabel(row.pairType)}.`);
     if (row.isNoisy) {
       lines.push("This pair is marked as noisy due to low sample size.");
     }
   } else {
+    lines.push(`Pair type: ${pairTypeLabel(row.pairType)}.`);
     lines.push(`Combo opportunity score: ${num(row.score)}.`);
+    lines.push(`Base score (before pair-type boost): ${num(row.baseScore)}.`);
+    if (row.pairTypeBoostApplied) {
+      lines.push(
+        `Pair-type boost applied (${num((row.pairTypeBoostFactor - 1) * 100)}% uplift).`,
+      );
+    } else {
+      lines.push("No pair-type boost applied.");
+    }
     lines.push(`Margin contribution score: ${num(row.marginScore)}.`);
     lines.push(`Confidence level: ${row.confidenceLevel}.`);
   }
@@ -258,6 +281,9 @@ export function PairsInsightPanels({ pairs, combos }: Props) {
                 >
                   Score
                 </SortableTableHead>
+                <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Pair Type
+                </TableHead>
                 <TableHead className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Quality
                 </TableHead>
@@ -275,6 +301,11 @@ export function PairsInsightPanels({ pairs, combos }: Props) {
                   <TableCell className="text-right">{pct((row.confidenceAtoB + row.confidenceBtoA) / 2)}</TableCell>
                   <TableCell className="text-right">{num((row.liftAtoB + row.liftBtoA) / 2)}</TableCell>
                   <TableCell className="text-right">{num(row.score)}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={pairTypeBadgeClass(row.pairType)}>
+                      {pairTypeLabel(row.pairType)}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-right">
                     {row.isNoisy ? (
                       <Badge variant="secondary">Noisy</Badge>
@@ -347,6 +378,9 @@ export function PairsInsightPanels({ pairs, combos }: Props) {
                 >
                   Confidence
                 </SortableTableHead>
+                <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Pair Type
+                </TableHead>
                 <TableHead className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Details
                 </TableHead>
@@ -363,6 +397,11 @@ export function PairsInsightPanels({ pairs, combos }: Props) {
                   <TableCell className="text-right">
                     <Badge variant={row.confidenceLevel === "high" ? "default" : "secondary"}>
                       {row.confidenceLevel}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={pairTypeBadgeClass(row.pairType)}>
+                      {pairTypeLabel(row.pairType)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">

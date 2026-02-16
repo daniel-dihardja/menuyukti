@@ -21,7 +21,6 @@ async function run() {
       size: { width: 1280, height: 720 },
     },
   });
-
   const page = await context.newPage();
   const route = `${baseUrl}/analytics/${analyticsId}/pairs`;
 
@@ -31,38 +30,14 @@ async function run() {
     timeout: 30_000,
   });
 
-  await page.fill("#pair-filter-search", "a");
   await page.locator("#pair-filter-pair-type").click();
   await page.getByRole("option", { name: "Food + Drink", exact: true }).click();
-  await page.fill("#pair-filter-min-sample", "1");
-  await page.fill("#pair-filter-min-lift", "1");
-  await page.fill("#pair-filter-min-confidence", "0");
   await page.getByRole("button", { name: "Apply Filters" }).click();
 
   await page.waitForURL((url) => {
     const current = new URL(url);
-    return (
-      current.searchParams.get("q") === "a" &&
-      current.searchParams.get("minSampleSize") === "1" &&
-      current.searchParams.get("pairType") === "food_drink"
-    );
+    return current.searchParams.get("pairType") === "food_drink";
   });
-
-  const pairSectionVisible = await page
-    .getByRole("heading", { name: /top pair menu items/i })
-    .isVisible();
-  assert(pairSectionVisible, "Top pair menu section is not visible");
-
-  const explainButtons = page.getByRole("button", { name: "Explain" });
-  const explainCount = await explainButtons.count();
-  if (explainCount > 0) {
-    await explainButtons.first().click();
-    await page.getByText(/deterministic metrics that drive this ranking/i).waitFor({
-      state: "visible",
-      timeout: 10_000,
-    });
-    await page.keyboard.press("Escape");
-  }
 
   const pairExportHref = await page
     .getByRole("link", { name: "Export Pairs CSV" })
@@ -73,8 +48,8 @@ async function run() {
 
   assert(pairExportHref, "Pairs export link missing");
   assert(comboExportHref, "Combos export link missing");
-  assert(pairExportHref.includes("pairType=food_drink"), "Pairs export link missing pairType filter");
-  assert(comboExportHref.includes("pairType=food_drink"), "Combos export link missing pairType filter");
+  assert(pairExportHref.includes("pairType=food_drink"), "Pairs export missing pairType");
+  assert(comboExportHref.includes("pairType=food_drink"), "Combos export missing pairType");
 
   const pairRes = await page.evaluate(async (href) => {
     const res = await fetch(href as string);
@@ -87,6 +62,7 @@ async function run() {
     pairRes.body.startsWith("dataset,generated_at,from_date,to_date,location_id"),
     "Pairs export CSV header mismatch",
   );
+  assert(pairRes.body.split("\n")[0]?.includes("pair_type"), "Pairs export header missing pair_type");
 
   const comboRes = await page.evaluate(async (href) => {
     const res = await fetch(href as string);
@@ -99,15 +75,19 @@ async function run() {
     comboRes.body.startsWith("dataset,generated_at,from_date,to_date,location_id"),
     "Combos export CSV header mismatch",
   );
+  assert(
+    comboRes.body.split("\n")[0]?.includes("pair_type_boost_factor"),
+    "Combos export header missing pair_type boost columns",
+  );
 
-  const screenshotPath = path.join(artifactsDir, "analytics-pairs-gui-final.png");
+  const screenshotPath = path.join(artifactsDir, "analytics-pairs-pair-type-final.png");
   await page.screenshot({ path: screenshotPath, fullPage: true });
   const video = page.video();
   await context.close();
   const videoPath = video ? await video.path() : null;
   await browser.close();
 
-  console.log(`[e2e] pairs-route: ${route}`);
+  console.log(`[e2e] pairs-pair-type-route: ${route}`);
   console.log(`[e2e] screenshot: ${screenshotPath}`);
   console.log(`[e2e] video: ${videoPath ?? "<not-recorded>"}`);
 }

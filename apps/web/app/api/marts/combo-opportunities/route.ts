@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
+import { parsePairTypeFilter } from "@/lib/analytics/pair-type";
 
 export async function GET(req: Request) {
   try {
@@ -7,6 +8,7 @@ export async function GET(req: Request) {
     const locationIdParam = searchParams.get("locationId");
     const minPairOrdersParam = searchParams.get("minPairOrders");
     const limitParam = searchParams.get("limit");
+    const pairType = parsePairTypeFilter(searchParams.get("pairType"));
 
     if (!locationIdParam) {
       return NextResponse.json({ error: "MISSING_LOCATION_ID" }, { status: 400 });
@@ -45,10 +47,14 @@ export async function GET(req: Request) {
         avg_margin_per_unit_b: string;
         pair_strength_score: string;
         margin_score: string;
+        base_combo_opportunity_score: string;
+        pair_type_boost_factor: string;
+        pair_type_boost_applied: boolean;
         combo_opportunity_score: string;
         first_seen_date: Date;
         last_seen_date: Date;
         confidence_level: string;
+        pair_type: string;
         is_noisy: boolean;
       }>
     >`
@@ -69,14 +75,19 @@ export async function GET(req: Request) {
         avg_margin_per_unit_b,
         pair_strength_score,
         margin_score,
+        base_combo_opportunity_score,
+        pair_type_boost_factor,
+        pair_type_boost_applied,
         combo_opportunity_score,
         first_seen_date,
         last_seen_date,
         confidence_level,
+        pair_type,
         (pair_orders < ${minPairOrders}) AS is_noisy
       FROM marts.vw_combo_opportunity_candidates
       WHERE location_id = ${locationId}
         AND pair_orders >= ${minPairOrders}
+        AND (${pairType}::text = 'all' OR pair_type = ${pairType}::text)
       ORDER BY combo_opportunity_score DESC, pair_orders DESC
       LIMIT ${limit}
     `;
