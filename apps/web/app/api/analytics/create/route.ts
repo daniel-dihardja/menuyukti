@@ -552,6 +552,75 @@ export async function POST(request: Request) {
           WHERE sc.pipeline_run_id = CAST(${pipelineRunId} AS UUID)
           ON CONFLICT (pipeline_run_id, row_hash) DO NOTHING
         `;
+
+        await tx.$executeRaw`
+          INSERT INTO warehouse.fact_menu_hourly
+            (
+              pipeline_run_id,
+              date_key,
+              location_key,
+              menu_item_key,
+              hour_of_day,
+              qty,
+              net_revenue
+            )
+          SELECT
+            foi.pipeline_run_id,
+            foi.date_key,
+            foi.location_key,
+            foi.menu_item_key,
+            EXTRACT(HOUR FROM (foi.order_time AT TIME ZONE 'UTC'))::INT AS hour_of_day,
+            SUM(foi.qty) AS qty,
+            SUM(foi.net_revenue) AS net_revenue
+          FROM warehouse.fact_order_item foi
+          WHERE foi.pipeline_run_id = CAST(${pipelineRunId} AS UUID)
+          GROUP BY
+            foi.pipeline_run_id,
+            foi.date_key,
+            foi.location_key,
+            foi.menu_item_key,
+            EXTRACT(HOUR FROM (foi.order_time AT TIME ZONE 'UTC'))::INT
+          ON CONFLICT (pipeline_run_id, date_key, location_key, menu_item_key, hour_of_day)
+          DO UPDATE SET
+            qty = EXCLUDED.qty,
+            net_revenue = EXCLUDED.net_revenue
+        `;
+
+        await tx.$executeRaw`
+          INSERT INTO warehouse.fact_menu_daily
+            (
+              pipeline_run_id,
+              date_key,
+              location_key,
+              menu_item_key,
+              qty,
+              net_revenue,
+              cogs,
+              margin
+            )
+          SELECT
+            foi.pipeline_run_id,
+            foi.date_key,
+            foi.location_key,
+            foi.menu_item_key,
+            SUM(foi.qty) AS qty,
+            SUM(foi.net_revenue) AS net_revenue,
+            SUM(foi.cogs) AS cogs,
+            SUM(foi.margin) AS margin
+          FROM warehouse.fact_order_item foi
+          WHERE foi.pipeline_run_id = CAST(${pipelineRunId} AS UUID)
+          GROUP BY
+            foi.pipeline_run_id,
+            foi.date_key,
+            foi.location_key,
+            foi.menu_item_key
+          ON CONFLICT (pipeline_run_id, date_key, location_key, menu_item_key)
+          DO UPDATE SET
+            qty = EXCLUDED.qty,
+            net_revenue = EXCLUDED.net_revenue,
+            cogs = EXCLUDED.cogs,
+            margin = EXCLUDED.margin
+        `;
       }
     });
 
