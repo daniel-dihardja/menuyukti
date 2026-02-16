@@ -238,6 +238,7 @@ Legend:
 ### 11.7 E2E Validation
 - `Implemented`: E2E upload journey (with artifacts) and matrix filter journey (with artifacts).
 - `Implemented`: Release-gate E2E script covers marketer preset/recommendation flow and analyst CSV export flow with artifacts.
+- `Implemented`: Pair/combo GUI E2E journey validates filter application, explainability UI, and export link behavior.
 
 ### 11.8 Minimal Release Feature Table
 
@@ -277,6 +278,7 @@ Legend:
 | 24 | E2E matrix filter/preset path | Implemented | Dedicated matrix journey e2e exists with artifacts. |
 | 25 | Full release-gate E2E suite (marketer + analyst) | Implemented | Dedicated release-gate script validates marketer matrix journey and analyst export workflow with artifacts. |
 | 33 | Release-gate E2E script wiring | Implemented | `test:e2e:release-gate` script and required env variables are wired for deterministic execution. |
+| 37 | Pair/combo GUI E2E coverage | Implemented | `test:e2e:pairs` validates pair page filters, explainability interaction, and CSV export link responses. |
 | 34 | Pair/combo GUI route and navigation | Implemented | `/analytics/{analyticsId}/pairs` is fully wired from sales actions with analytics context and trust metadata. |
 | 35 | Pair/combo URL filter bar | Implemented | Typed filter state utility and GUI filter bar are implemented with apply/reset and shareable URL state. |
 | 36 | Pair/combo insight UI and explainability | Implemented | KPI cards, ranked pair/combo tables, explainability sheet, and secondary export actions are available in GUI. |
