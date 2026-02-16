@@ -210,6 +210,7 @@ Legend:
 - `Implemented`: Pair/combo analysis now has a dedicated GUI route with filter bar, KPI cards, ranked tables, explainability sheet, and secondary export actions.
 - `Implemented`: Pair/combo GUI URL-based filter bar with typed state parsing/serialization and shareable query context.
 - `Implemented`: Pair/combo tables support interactive column sorting directly in GUI.
+- `Implemented`: Pair filter controls include in-context tooltips for Min sample size and Min lift.
 
 ### 11.3 Marketer (Instagram) Capabilities
 - `Implemented`: Recommendation-centric matrix workflow (`promote`, `improve/reprice`, `remove`, `keep`).
@@ -284,3 +285,4 @@ Legend:
 | 35 | Pair/combo URL filter bar | Implemented | Typed filter state utility and GUI filter bar are implemented with apply/reset and shareable URL state. |
 | 36 | Pair/combo insight UI and explainability | Implemented | KPI cards, ranked pair/combo tables, explainability sheet, and secondary export actions are available in GUI. |
 | 38 | Interactive sortable columns for pair/combo tables | Implemented | Users can sort key columns directly from table headers with visible sort direction indicators. |
+| 39 | Pair filter threshold tooltips | Implemented | In-context tooltips explain Min sample size and Min lift behavior and practical usage. |

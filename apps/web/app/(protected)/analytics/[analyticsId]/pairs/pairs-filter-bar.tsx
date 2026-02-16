@@ -2,9 +2,15 @@
 
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { Info } from "lucide-react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip";
 import {
   Select,
   SelectContent,
@@ -98,7 +104,24 @@ export function PairsFilterBar({ filters }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="pair-filter-min-sample">Min sample size</Label>
+            <Label htmlFor="pair-filter-min-sample" className="flex items-center gap-1.5">
+              Min sample size
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Min sample size help"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={6} className="max-w-xs">
+                  Minimum number of shared orders required before a pair is shown.
+                  Increase this to reduce noisy low-volume pairs.
+                </TooltipContent>
+              </Tooltip>
+            </Label>
             <Input
               id="pair-filter-min-sample"
               inputMode="numeric"
@@ -108,7 +131,24 @@ export function PairsFilterBar({ filters }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="pair-filter-min-lift">Min lift</Label>
+            <Label htmlFor="pair-filter-min-lift" className="flex items-center gap-1.5">
+              Min lift
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Min lift help"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={6} className="max-w-xs">
+                  Lift above 1 means the pair appears together more often than random chance.
+                  Start at 1.0, then increase for stricter association quality.
+                </TooltipContent>
+              </Tooltip>
+            </Label>
             <Input
               id="pair-filter-min-lift"
               inputMode="decimal"
