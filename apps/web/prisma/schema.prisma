@@ -29,8 +29,35 @@ model Location {
   agentOutputs AgentOutput[]
   etlJobs      EtlJob[]
   menuAliases  MenuAlias[]
+  anomalyEvents AnomalyEvent[]
 
   @@map("branches")
+  @@schema("public")
+}
+
+model AnomalyEvent {
+  id Int @id @default(autoincrement())
+
+  locationId Int      @map("branch_id")
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  analyticsId Int?      @map("analytics_id")
+  analytics   Analytics? @relation(fields: [analyticsId], references: [id], onDelete: SetNull)
+
+  pipelineRunId String? @db.Uuid @map("pipeline_run_id")
+  anomalyType   String  @map("anomaly_type")
+  metricName    String  @map("metric_name")
+  previousValue Decimal? @db.Decimal(18, 6) @map("previous_value")
+  currentValue  Decimal? @db.Decimal(18, 6) @map("current_value")
+  deltaValue    Decimal? @db.Decimal(18, 6) @map("delta_value")
+  severity      String
+  metadata      Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([locationId, createdAt], map: "ix_anomaly_event_branch_created_at")
+  @@index([pipelineRunId], map: "ix_anomaly_event_pipeline_run_id")
+  @@map("anomaly_events")
   @@schema("public")
 }
 
@@ -106,6 +133,7 @@ model Analytics {
   menuItems AnalyticsMenuItem[]
   agentOutputs AgentOutput[]
   etlJobs      EtlJob[]
+  anomalyEvents AnomalyEvent[]
 
   @@index([locationId], map: "ix_analytics_branch_id")
   @@map("analytics")

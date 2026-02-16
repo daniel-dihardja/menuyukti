@@ -21,6 +21,67 @@ const toDateOrNull = (value: unknown): Date | null => {
   return Number.isNaN(dt.getTime()) ? null : dt;
 };
 const absDiff = (a: number, b: number): number => Math.abs(a - b);
+const toNumberSafe = (value: unknown): number | null => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+};
+const calculateTopItemRevenueShare = (
+  items: Array<{ total_revenue?: number | null; totalRevenue?: number | null }>,
+): number | null => {
+  if (!items.length) return null;
+  const revenues = items
+    .map((item) => toNumberSafe(item.total_revenue ?? item.totalRevenue ?? null) ?? 0)
+    .filter((n) => n > 0);
+  if (!revenues.length) return null;
+  const total = revenues.reduce((sum, n) => sum + n, 0);
+  if (total <= 0) return null;
+  const top = Math.max(...revenues);
+  return top / total;
+};
+const calculateCategoryMixShift = (
+  previous: Array<{ menuCategory?: string | null; totalRevenue?: unknown }>,
+  current: Array<{ menu_category?: string | null; total_revenue?: unknown }>,
+): number | null => {
+  const toMap = (
+    rows: Array<{ key: string | null; value: unknown }>,
+  ): Map<string, number> => {
+    const out = new Map<string, number>();
+    let total = 0;
+    for (const row of rows) {
+      const key = (row.key ?? "uncategorized").trim() || "uncategorized";
+      const value = toNumberSafe(row.value) ?? 0;
+      if (value <= 0) continue;
+      total += value;
+      out.set(key, (out.get(key) ?? 0) + value);
+    }
+    if (total <= 0) return new Map();
+    for (const [k, v] of out) out.set(k, v / total);
+    return out;
+  };
+
+  const prevMap = toMap(
+    previous.map((item) => ({
+      key: item.menuCategory ?? null,
+      value: item.totalRevenue,
+    })),
+  );
+  const currMap = toMap(
+    current.map((item) => ({
+      key: item.menu_category ?? null,
+      value: item.total_revenue,
+    })),
+  );
+  if (!prevMap.size || !currMap.size) return null;
+
+  const categories = new Set([...prevMap.keys(), ...currMap.keys()]);
+  let maxShift = 0;
+  for (const category of categories) {
+    const prev = prevMap.get(category) ?? 0;
+    const curr = currMap.get(category) ?? 0;
+    maxShift = Math.max(maxShift, Math.abs(curr - prev));
+  }
+  return maxShift;
+};
 const requiredFieldRejectionReason = (
   row: Record<string, unknown>,
 ): string | null => {
@@ -385,23 +446,27 @@ async function processUploadJob(params: {
 
         createdAnalyticsId = analyticsRecord.id;
 
-        const previousAnalytics = await tx.analytics.findFirst({
-          where: {
-            locationId: params.locationId,
-            id: { not: analyticsRecord.id },
-          },
+      const previousAnalytics = await tx.analytics.findFirst({
+        where: {
+          locationId: params.locationId,
+          id: { not: analyticsRecord.id },
+        },
           orderBy: {
             uploadedAt: "desc",
           },
-          select: {
-            menuItems: {
-              select: {
-                menuName: true,
-                cogs: true,
-              },
+        select: {
+          totalRevenue: true,
+          avgOrderRevenue: true,
+          menuItems: {
+            select: {
+              menuName: true,
+              cogs: true,
+              totalRevenue: true,
+              menuCategory: true,
             },
           },
-        });
+        },
+      });
 
         const previousCogsMap = new Map<string, number>();
 
@@ -428,6 +493,100 @@ async function processUploadJob(params: {
               cogs: previousCogsMap.get(normalizeMenuName(item.menu)) ?? null,
             })),
           });
+        }
+
+        if (previousAnalytics) {
+          const anomalies: Prisma.AnomalyEventCreateManyInput[] = [];
+
+          const prevTopShare = calculateTopItemRevenueShare(
+            previousAnalytics.menuItems.map((item) => ({
+              totalRevenue: Number(item.totalRevenue ?? 0),
+            })),
+          );
+          const currTopShare = calculateTopItemRevenueShare(
+            apiResult.menu_items.map((item) => ({
+              total_revenue: Number(item.total_revenue ?? 0),
+            })),
+          );
+          if (prevTopShare !== null && currTopShare !== null) {
+            const delta = currTopShare - prevTopShare;
+            if (Math.abs(delta) >= 0.15) {
+              anomalies.push({
+                locationId: params.locationId,
+                analyticsId: analyticsRecord.id,
+                pipelineRunId,
+                anomalyType: "kpi_shift",
+                metricName: "top_item_revenue_share",
+                previousValue: prevTopShare,
+                currentValue: currTopShare,
+                deltaValue: delta,
+                severity: Math.abs(delta) >= 0.25 ? "high" : "medium",
+                metadata: {
+                  threshold: 0.15,
+                } as Prisma.InputJsonValue,
+              });
+            }
+          }
+
+          const prevAvgOrderRevenue = toNumberSafe(previousAnalytics.avgOrderRevenue);
+          const currAvgOrderRevenue = toNumberSafe(analytics.avg_order_revenue);
+          if (
+            prevAvgOrderRevenue !== null &&
+            prevAvgOrderRevenue > 0 &&
+            currAvgOrderRevenue !== null
+          ) {
+            const drop = (prevAvgOrderRevenue - currAvgOrderRevenue) / prevAvgOrderRevenue;
+            if (drop >= 0.3) {
+              anomalies.push({
+                locationId: params.locationId,
+                analyticsId: analyticsRecord.id,
+                pipelineRunId,
+                anomalyType: "kpi_drop",
+                metricName: "avg_order_revenue",
+                previousValue: prevAvgOrderRevenue,
+                currentValue: currAvgOrderRevenue,
+                deltaValue: currAvgOrderRevenue - prevAvgOrderRevenue,
+                severity: drop >= 0.5 ? "high" : "medium",
+                metadata: {
+                  drop_ratio: drop,
+                  threshold: 0.3,
+                } as Prisma.InputJsonValue,
+              });
+            }
+          }
+
+          const mixShift = calculateCategoryMixShift(
+            previousAnalytics.menuItems.map((item) => ({
+              menuCategory: item.menuCategory,
+              totalRevenue: Number(item.totalRevenue ?? 0),
+            })),
+            apiResult.menu_items.map((item) => ({
+              menu_category: item.menu_category ?? null,
+              total_revenue: Number(item.total_revenue ?? 0),
+            })),
+          );
+          if (mixShift !== null && mixShift >= 0.2) {
+            anomalies.push({
+              locationId: params.locationId,
+              analyticsId: analyticsRecord.id,
+              pipelineRunId,
+              anomalyType: "mix_shift",
+              metricName: "category_mix_max_delta",
+              previousValue: 0,
+              currentValue: mixShift,
+              deltaValue: mixShift,
+              severity: mixShift >= 0.3 ? "high" : "medium",
+              metadata: {
+                threshold: 0.2,
+              } as Prisma.InputJsonValue,
+            });
+          }
+
+          if (anomalies.length > 0) {
+            await tx.anomalyEvent.createMany({
+              data: anomalies,
+            });
+          }
         }
 
         const aliasRows = await tx.menuAlias.findMany({
