@@ -2,7 +2,9 @@
 
 ## What This Feature Is About
 
-This feature identifies products frequently bought together, scores combo opportunities, and exports decision-ready tables.
+This feature identifies products frequently bought together, ranks combo opportunities, and provides export-ready analyst data.
+The main user workflow is the GUI page:
+- `/analytics/{analyticsId}/pairs`
 
 ## Pair Metrics Explained
 
@@ -12,7 +14,10 @@ This feature identifies products frequently bought together, scores combo opport
 
 ## Combo Opportunity Scoring
 
-Menuyukti ranks candidate combos using pair strength and margin-aware signals.
+Menuyukti ranks candidate combos using:
+- pair strength (`support`, `confidence`, `lift`)
+- margin contribution (`margin_score`)
+- pair-type adjustment (food+drink receives a campaign-readiness boost)
 
 ## Pair Type Strategy (Food + Drink Priority)
 
@@ -31,13 +36,28 @@ Combo ranking includes a deterministic pair-type adjustment:
 - `Food + Drink` receives a ranking boost for campaign readiness.
 - Explainability output shows whether the pair-type boost was applied.
 
+## What You See In The GUI
+
+- **Top Pair Menu Items** table:
+  - Pair, Orders, Support, Confidence, Lift, Score, Pair Type, Quality
+- **Top Combo Opportunities** table:
+  - Candidate pair, Orders, Lift, Margin Score, Opportunity Score, Confidence, Pair Type
+- **Explain** drawer:
+  - Base score
+  - Pair-type boost applied/not applied
+  - Final combo opportunity score
+
 ## How To Use
 
-1. Load pair metrics (`/api/marts/pair-metrics`) with location/date filters.
-2. Review top lift pairs with acceptable sample size.
-3. Load combo opportunities (`/api/marts/combo-opportunities`) to rank monetizable bundles.
-4. Use `pairType` filter (`food_drink`, `food_food`, `drink_drink`, `unknown`) to focus analysis.
-4. Export for weekly planning via `/api/exports/analyst`:
+1. Open `/analytics/{analyticsId}/pairs`.
+2. Set thresholds:
+   - `Min sample size`: start from 5-10 to reduce noise.
+   - `Min lift`: start from 1.0 to keep non-random associations.
+   - `Min confidence`: start from 0.1-0.2 for practical attachment behavior.
+3. Set `Pair type`:
+   - choose `food_drink` for marketer upsell campaigns.
+4. Review top rows and open **Explain** for rationale.
+5. Export for weekly planning via `/api/exports/analyst`:
    - `dataset=matrix`
    - `dataset=pairs`
    - `dataset=combos`
@@ -47,6 +67,7 @@ Combo ranking includes a deterministic pair-type adjustment:
 - Pair `Burger + Iced Tea` has high support and lift.
 - Pair type is `Food + Drink`, so combo score can include pair-type boost.
 - Team creates a lunchtime bundle promotion and tracks results next cycle.
+- Analyst keeps a second view for `food_food` to monitor cross-sell without drink dependency.
 
 ## Why It Delivers Real Value
 
