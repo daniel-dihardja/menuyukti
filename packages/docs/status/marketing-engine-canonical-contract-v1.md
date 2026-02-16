@@ -19,6 +19,12 @@ This contract is for:
   - business periods use `date` (`YYYY-MM-DD`)
   - metadata timestamps use UTC `datetime` (`YYYY-MM-DDTHH:MM:SSZ`)
 
+## Version Status
+
+- Status: **FROZEN**
+- Freeze date: **February 16, 2026**
+- Rule: contract-breaking changes must bump schema version and include migration notes.
+
 ## Metadata Envelope (Required For Canonical Payloads)
 
 All canonical payloads should include:
