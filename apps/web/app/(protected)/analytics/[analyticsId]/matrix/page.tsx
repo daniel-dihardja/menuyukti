@@ -19,6 +19,7 @@ import {
 } from "@/lib/analytics/matrix-row-contract";
 
 import { MatrixCategoryTable } from "./matrix-category-table";
+import { MatrixFilterBar } from "./matrix-filter-bar";
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>;
@@ -218,6 +219,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         <Badge variant="secondary">{tMatrix("actions.improve")}</Badge>
         <Badge variant="outline">{tMatrix("actions.remove")}</Badge>
       </div>
+      <MatrixFilterBar filters={filters} />
 
           {/* ---------------------------------------------
            * KPI OVERVIEW
@@ -392,6 +394,12 @@ export default async function Page({ params, searchParams }: PageProps) {
                 currency={currencyCode}
               />
             ))}
+
+            {filteredRows.length === 0 && (
+              <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
+                No menu items match the current filters. Adjust or reset filters to continue.
+              </div>
+            )}
           </section>
     </AnalyticsPageShell>
   );
