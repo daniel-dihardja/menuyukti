@@ -13,13 +13,10 @@ import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
 import { parseMatrixFilterState } from "@/lib/analytics/matrix-filter-state";
 import { applyMatrixFilterState } from "@/lib/analytics/matrix-filter-engine";
-import {
-  type DecisionGradeMatrixRow,
-  toDecisionGradeMatrixRows,
-} from "@/lib/analytics/matrix-row-contract";
+import { toDecisionGradeMatrixRows } from "@/lib/analytics/matrix-row-contract";
 
-import { MatrixCategoryTable } from "./matrix-category-table";
 import { MatrixFilterBar } from "./matrix-filter-bar";
+import { MatrixInsightTable } from "./matrix-insight-table";
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>;
@@ -169,16 +166,6 @@ export default async function Page({ params, searchParams }: PageProps) {
   // --------------------------------------------------
   const matrixRows = toDecisionGradeMatrixRows(matrix);
   const filteredRows = applyMatrixFilterState(matrixRows, filters);
-  const itemsByCategory = {
-    star: filteredRows.filter((i) => i.category === "star"),
-    plow_horse: filteredRows.filter((i) => i.category === "plow_horse"),
-    puzzle: filteredRows.filter((i) => i.category === "puzzle"),
-    low_end: filteredRows.filter((i) => i.category === "low_end"),
-  };
-
-  Object.values(itemsByCategory).forEach((items: DecisionGradeMatrixRow[]) => {
-    items.sort((a, b) => b.unitsSold - a.unitsSold);
-  });
 
   const distribution =
     (analytics.matrixDistributionJson as MatrixDistributionItem[]) ??
@@ -384,22 +371,11 @@ export default async function Page({ params, searchParams }: PageProps) {
            * --------------------------------------------- */}
           <section className="space-y-6">
             <h2 className="text-xl font-semibold">{tMatrix("analysis.title")}</h2>
-
-            {categoryOrder.map((key) => (
-              <MatrixCategoryTable
-                key={key}
-                title={tMatrix(`categories.${key}`)}
-                items={itemsByCategory[key]}
-                locale={locale}
-                currency={currencyCode}
-              />
-            ))}
-
-            {filteredRows.length === 0 && (
-              <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
-                No menu items match the current filters. Adjust or reset filters to continue.
-              </div>
-            )}
+            <MatrixInsightTable
+              items={filteredRows}
+              locale={locale}
+              currency={currencyCode}
+            />
           </section>
     </AnalyticsPageShell>
   );

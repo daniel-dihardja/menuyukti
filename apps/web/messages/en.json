@@ -378,6 +378,7 @@
       "analysis": {
         "title": "Menu Item Analysis"
       },
+      "emptyFiltered": "No menu items match the current filters. Adjust or reset filters to continue.",
       "categories": {
         "star": "Stars",
         "plow_horse": "Plow Horses",
@@ -386,6 +387,7 @@
       },
       "table": {
         "menu": "Menu",
+        "category": "Category",
         "qty": "Qty",
         "revenue": "Revenue",
         "cogs": "COGS",
