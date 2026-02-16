@@ -30,6 +30,8 @@ model Location {
   etlJobs      EtlJob[]
   menuAliases  MenuAlias[]
   anomalyEvents AnomalyEvent[]
+  instagramCampaigns InstagramCampaign[]
+  instagramPosts InstagramPost[]
 
   @@map("branches")
   @@schema("public")
@@ -78,6 +80,59 @@ model MenuAlias {
   @@unique([locationId, aliasNameNorm], map: "uq_menu_alias_branch_alias_norm")
   @@index([locationId, canonicalMenuNameNorm], map: "ix_menu_alias_branch_canonical_norm")
   @@map("menu_alias")
+  @@schema("public")
+}
+
+model InstagramCampaign {
+  id Int @id @default(autoincrement())
+
+  locationId Int      @map("branch_id")
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  externalCampaignId String? @map("external_campaign_id")
+  name               String
+  platform           String  @default("instagram")
+  objective          String?
+  status             String  @default("draft")
+  startsAt           DateTime? @map("starts_at")
+  endsAt             DateTime? @map("ends_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  posts InstagramPost[]
+
+  @@index([locationId, startsAt], map: "ix_instagram_campaign_branch_starts_at")
+  @@index([externalCampaignId], map: "ix_instagram_campaign_external_id")
+  @@unique([locationId, platform, externalCampaignId], map: "uq_instagram_campaign_branch_platform_external")
+  @@map("instagram_campaigns")
+  @@schema("public")
+}
+
+model InstagramPost {
+  id Int @id @default(autoincrement())
+
+  locationId Int      @map("branch_id")
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  campaignId Int?                @map("campaign_id")
+  campaign   InstagramCampaign?  @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  platform       String  @default("instagram")
+  platformPostId String? @map("platform_post_id")
+  status         String  @default("draft")
+  mediaType      String? @map("media_type")
+  caption        String?
+  publishedAt    DateTime? @map("published_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([locationId, publishedAt], map: "ix_instagram_post_branch_published_at")
+  @@index([platformPostId], map: "ix_instagram_post_platform_post_id")
+  @@index([campaignId], map: "ix_instagram_post_campaign_id")
+  @@unique([locationId, platform, platformPostId], map: "uq_instagram_post_branch_platform_external")
+  @@map("instagram_posts")
   @@schema("public")
 }
 
