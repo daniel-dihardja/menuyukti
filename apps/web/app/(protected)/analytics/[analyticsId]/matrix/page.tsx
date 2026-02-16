@@ -11,6 +11,7 @@ import { notFound } from "next/navigation";
 import { formatCurrencyWithCode, getCurrencyLocale } from "@/lib/currency";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
+import { parseMatrixFilterState } from "@/lib/analytics/matrix-filter-state";
 import {
   type DecisionGradeMatrixRow,
   toDecisionGradeMatrixRows,
@@ -20,6 +21,7 @@ import { MatrixCategoryTable } from "./matrix-category-table";
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 type MatrixDistributionItem = {
@@ -37,7 +39,7 @@ type MatrixJson = {
   distribution: MatrixDistributionItem[];
 };
 
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params, searchParams }: PageProps) {
   const tSales = await getTranslations("analytics.sales");
   const tMatrix = await getTranslations("analytics.matrix");
 
@@ -45,6 +47,7 @@ export default async function Page({ params }: PageProps) {
   // Params
   // --------------------------------------------------
   const { analyticsId: analyticsIdParam } = await params;
+  const filters = parseMatrixFilterState(await searchParams);
   if (!analyticsIdParam) notFound();
 
   const analyticsId = Number(analyticsIdParam);
@@ -163,11 +166,39 @@ export default async function Page({ params }: PageProps) {
   // Matrix helpers
   // --------------------------------------------------
   const matrixRows = toDecisionGradeMatrixRows(matrix);
+  const filteredRows = matrixRows.filter((row) => {
+    const menuMatches = filters.q
+      ? row.menuItem.toLowerCase().includes(filters.q.toLowerCase())
+      : true;
+    const categoryMatches =
+      filters.categories.length === 0 || filters.categories.includes(row.category);
+    const actionMatches =
+      filters.actions.length === 0 ||
+      (row.action !== null && filters.actions.includes(row.action));
+    const marginMinMatches =
+      filters.marginMin === null || row.marginPct >= filters.marginMin;
+    const marginMaxMatches =
+      filters.marginMax === null || row.marginPct <= filters.marginMax;
+    const qtyMinMatches =
+      filters.qtyMin === null || row.unitsSold >= filters.qtyMin;
+    const qtyMaxMatches =
+      filters.qtyMax === null || row.unitsSold <= filters.qtyMax;
+
+    return (
+      menuMatches &&
+      categoryMatches &&
+      actionMatches &&
+      marginMinMatches &&
+      marginMaxMatches &&
+      qtyMinMatches &&
+      qtyMaxMatches
+    );
+  });
   const itemsByCategory = {
-    star: matrixRows.filter((i) => i.category === "star"),
-    plow_horse: matrixRows.filter((i) => i.category === "plow_horse"),
-    puzzle: matrixRows.filter((i) => i.category === "puzzle"),
-    low_end: matrixRows.filter((i) => i.category === "low_end"),
+    star: filteredRows.filter((i) => i.category === "star"),
+    plow_horse: filteredRows.filter((i) => i.category === "plow_horse"),
+    puzzle: filteredRows.filter((i) => i.category === "puzzle"),
+    low_end: filteredRows.filter((i) => i.category === "low_end"),
   };
 
   Object.values(itemsByCategory).forEach((items: DecisionGradeMatrixRow[]) => {
