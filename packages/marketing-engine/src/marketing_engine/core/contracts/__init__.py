@@ -1,5 +1,11 @@
 """Canonical contract models for marketing engine payloads."""
 
+from marketing_engine.core.contracts.adapters import (
+    to_core_distribution,
+    to_core_heatmap,
+    to_core_matrix_item,
+    to_core_sales_summary,
+)
 from marketing_engine.core.contracts.v1 import (
     CategoryDistributionV1,
     ContractMetadataV1,
@@ -20,4 +26,8 @@ __all__ = [
     "MatrixDistributionV1",
     "MatrixItemV1",
     "SalesAnalyticsSummaryV1",
+    "to_core_matrix_item",
+    "to_core_heatmap",
+    "to_core_distribution",
+    "to_core_sales_summary",
 ]

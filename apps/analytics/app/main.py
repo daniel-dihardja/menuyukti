@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Any, List, Optional
 from decimal import Decimal
 
 import pandas as pd
@@ -20,6 +20,11 @@ from marketing_engine.decision.allocation.promotion_scheduler import PromotionSc
 from marketing_engine.core.models.matrix_item import MatrixItem
 from marketing_engine.core.models.heatmap import MenuHeatmap
 from marketing_engine.core.models.matrix_distribution import MatrixDistribution
+from marketing_engine.core.contracts import (
+    to_core_distribution,
+    to_core_heatmap,
+    to_core_matrix_item,
+)
 
 
 app = FastAPI(title="Menuyukti Analytics API")
@@ -137,9 +142,9 @@ async def calculate_matrix(payload: MenuItemsMatrixRequest):
 
 
 class DecisionPipelineRequest(BaseModel):
-    matrix_items: List[MatrixItem]
-    heatmaps: List[MenuHeatmap]
-    distribution: MatrixDistribution
+    matrix_items: List[dict[str, Any]]
+    heatmaps: List[dict[str, Any]]
+    distribution: dict[str, Any]
 
 
 @app.post("/decision/pipeline")
@@ -150,10 +155,19 @@ async def run_decision_pipeline(payload: DecisionPipelineRequest):
     if not payload.heatmaps:
         raise HTTPException(status_code=400, detail="NO_HEATMAPS")
 
+    try:
+        matrix_items: list[MatrixItem] = [
+            to_core_matrix_item(item) for item in payload.matrix_items
+        ]
+        heatmaps: list[MenuHeatmap] = [to_core_heatmap(hm) for hm in payload.heatmaps]
+        distribution: MatrixDistribution = to_core_distribution(payload.distribution)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"INVALID_PIPELINE_PAYLOAD: {e}")
+
     portfolio, candidates = build_promotion_candidates(
-        matrix_items=payload.matrix_items,
-        heatmaps=payload.heatmaps,
-        distribution=payload.distribution,
+        matrix_items=matrix_items,
+        heatmaps=heatmaps,
+        distribution=distribution,
     )
 
     scheduler = PromotionScheduler()
