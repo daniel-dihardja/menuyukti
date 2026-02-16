@@ -503,6 +503,56 @@ export async function POST(request: Request) {
           }
         }
       }
+
+      if (locationKey) {
+        await tx.$executeRaw`
+          INSERT INTO warehouse.fact_order_item
+            (
+              pipeline_run_id,
+              date_key,
+              location_key,
+              menu_item_key,
+              pos_source_key,
+              bill_number,
+              line_number,
+              qty,
+              gross_revenue,
+              net_revenue,
+              discount,
+              cogs,
+              margin,
+              order_time,
+              row_hash
+            )
+          SELECT
+            CAST(${pipelineRunId} AS UUID),
+            dd.date_key,
+            ${locationKey},
+            dmi.menu_item_key,
+            dps.pos_source_key,
+            sc.bill_number,
+            NULL,
+            sc.qty,
+            (sc.price * sc.qty) AS gross_revenue,
+            sc.total_after_bill_discount AS net_revenue,
+            ((sc.price * sc.qty) - sc.total_after_bill_discount) AS discount,
+            NULL,
+            NULL,
+            sc.order_time,
+            sc.row_hash
+          FROM staging.stg_pos_clean sc
+          INNER JOIN warehouse.dim_date dd
+            ON dd.full_date = (sc.order_time AT TIME ZONE 'UTC')::date
+          INNER JOIN warehouse.dim_pos_source dps
+            ON dps.source_system = ${sourceSystem}
+          INNER JOIN warehouse.dim_menu_item dmi
+            ON dmi.location_key = ${locationKey}
+           AND dmi.menu_name_norm = lower(trim(sc.menu))
+           AND dmi.is_current = TRUE
+          WHERE sc.pipeline_run_id = CAST(${pipelineRunId} AS UUID)
+          ON CONFLICT (pipeline_run_id, row_hash) DO NOTHING
+        `;
+      }
     });
 
     // --------------------------------------------------
