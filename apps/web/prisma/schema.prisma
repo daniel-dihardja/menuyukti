@@ -28,8 +28,29 @@ model Location {
   fixedCosts FixedCost[]   // NEW
   agentOutputs AgentOutput[]
   etlJobs      EtlJob[]
+  menuAliases  MenuAlias[]
 
   @@map("branches")
+  @@schema("public")
+}
+
+model MenuAlias {
+  id Int @id @default(autoincrement())
+
+  locationId Int      @map("branch_id")
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  aliasName             String @map("alias_name")
+  aliasNameNorm         String @map("alias_name_norm")
+  canonicalMenuName     String @map("canonical_menu_name")
+  canonicalMenuNameNorm String @map("canonical_menu_name_norm")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([locationId, aliasNameNorm], map: "uq_menu_alias_branch_alias_norm")
+  @@index([locationId, canonicalMenuNameNorm], map: "ix_menu_alias_branch_canonical_norm")
+  @@map("menu_alias")
   @@schema("public")
 }
 

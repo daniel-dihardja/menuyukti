@@ -430,15 +430,30 @@ async function processUploadJob(params: {
           });
         }
 
+        const aliasRows = await tx.menuAlias.findMany({
+          where: { locationId: params.locationId },
+          select: {
+            aliasNameNorm: true,
+            canonicalMenuName: true,
+            canonicalMenuNameNorm: true,
+          },
+        });
+        const aliasMap = new Map(
+          aliasRows.map((row) => [row.aliasNameNorm, row]),
+        );
+
         if (locationKey && apiResult.menu_items.length > 0) {
           const validFrom = analytics.period_start
             ? new Date(analytics.period_start)
             : new Date();
           for (const item of apiResult.menu_items) {
-            const menuName = String(item.menu ?? "").trim();
-            if (!menuName) continue;
+            const sourceMenuName = String(item.menu ?? "").trim();
+            if (!sourceMenuName) continue;
 
-            const menuNameNorm = normalizeMenuName(menuName);
+            const sourceMenuNameNorm = normalizeMenuName(sourceMenuName);
+            const alias = aliasMap.get(sourceMenuNameNorm);
+            const menuName = alias?.canonicalMenuName ?? sourceMenuName;
+            const menuNameNorm = alias?.canonicalMenuNameNorm ?? sourceMenuNameNorm;
             const menuCategory = item.menu_category ?? null;
             const menuCategoryDetail = item.menu_category_detail ?? null;
 
@@ -569,11 +584,14 @@ async function processUploadJob(params: {
             FROM staging.stg_pos_clean sc
             INNER JOIN warehouse.dim_date dd
               ON dd.full_date = (sc.order_time AT TIME ZONE 'UTC')::date
-            INNER JOIN warehouse.dim_pos_source dps
-              ON dps.source_system = ${sourceSystem}
-            INNER JOIN warehouse.dim_menu_item dmi
-              ON dmi.location_key = ${locationKey}
-            AND dmi.menu_name_norm = lower(trim(sc.menu))
+          INNER JOIN warehouse.dim_pos_source dps
+            ON dps.source_system = ${sourceSystem}
+          LEFT JOIN public.menu_alias ma
+            ON ma.branch_id = ${params.locationId}
+           AND ma.alias_name_norm = lower(trim(sc.menu))
+          INNER JOIN warehouse.dim_menu_item dmi
+            ON dmi.location_key = ${locationKey}
+            AND dmi.menu_name_norm = COALESCE(ma.canonical_menu_name_norm, lower(trim(sc.menu)))
             AND dmi.is_current = TRUE
             WHERE sc.pipeline_run_id = CAST(${pipelineRunId} AS UUID)
             ON CONFLICT (pipeline_run_id, row_hash) DO NOTHING
