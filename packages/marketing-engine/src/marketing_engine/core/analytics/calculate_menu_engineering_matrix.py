@@ -67,11 +67,9 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
         else 0.0
     )
 
-    df["margin_per_unit"] = df.apply(
-        lambda row: (
-            row["contribution_margin"] / row["quantity"] if row["quantity"] > 0 else 0.0
-        ),
-        axis=1,
+    df["margin_per_unit"] = (
+        df["contribution_margin"].where(df["quantity"] > 0, 0.0)
+        / df["quantity"].where(df["quantity"] > 0, 1.0)
     )
 
     # --------------------------------------------------
@@ -83,40 +81,31 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
     # --------------------------------------------------
     # Classification (Menu Engineering Matrix)
     # --------------------------------------------------
-    def classify(row):
-        popular = row["quantity"] >= avg_popularity
-        profitable = row["contribution_margin"] >= avg_margin
-
-        if popular and profitable:
-            return "star"
-        if popular and not profitable:
-            return "plow_horse"
-        if not popular and profitable:
-            return "puzzle"
-        return "low_end"
-
-    df["category"] = df.apply(classify, axis=1)
+    popular = df["quantity"] >= avg_popularity
+    profitable = df["contribution_margin"] >= avg_margin
+    df["category"] = "low_end"
+    df.loc[popular & profitable, "category"] = "star"
+    df.loc[popular & ~profitable, "category"] = "plow_horse"
+    df.loc[~popular & profitable, "category"] = "puzzle"
 
     # --------------------------------------------------
     # Action recommendation (decision decision)
     # --------------------------------------------------
-    def recommend_action(row):
-        if (
-            row["category"] == "low_end"
-            and row["contribution_margin_percentage"] < 0.005  # < 0.5%
-            and row["quantity"] < avg_popularity
-        ):
-            return "remove"
-
-        if row["category"] == "low_end" and row["margin_per_unit"] >= avg_margin:
-            return "reprice"
-
-        if row["category"] == "puzzle":
-            return "promote"
-
-        return "keep"
-
-    df["action"] = df.apply(recommend_action, axis=1)
+    df["action"] = "keep"
+    remove_mask = (
+        (df["category"] == "low_end")
+        & (df["contribution_margin_percentage"] < 0.005)
+        & (df["quantity"] < avg_popularity)
+    )
+    reprice_mask = (
+        (df["category"] == "low_end")
+        & (df["margin_per_unit"] >= avg_margin)
+        & ~remove_mask
+    )
+    promote_mask = (df["category"] == "puzzle") & ~remove_mask & ~reprice_mask
+    df.loc[promote_mask, "action"] = "promote"
+    df.loc[reprice_mask, "action"] = "reprice"
+    df.loc[remove_mask, "action"] = "remove"
 
     # --------------------------------------------------
     # Distribution (category-level aggregation)
