@@ -5,6 +5,10 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@workspace/ui/components/badge";
 import { formatCurrencyWithCode } from "@/lib/currency";
 import {
+  type DecisionGradeMatrixRow,
+  type MatrixAction,
+} from "@/lib/analytics/matrix-row-contract";
+import {
   Table,
   TableBody,
   TableCell,
@@ -13,33 +17,20 @@ import {
   TableRow,
 } from "@workspace/ui/components/table";
 
-type Action = "remove" | "reprice" | "promote" | "keep";
-
-type MatrixItem = {
-  menu: string;
-  category: "star" | "plow_horse" | "puzzle" | "low_end";
-  quantity: number;
-  total_revenue: number;
-  cogs: number;
-  contribution_margin: number;
-  contribution_margin_percentage: number;
-  action?: Action;
-};
-
 type SortKey = keyof Pick<
-  MatrixItem,
-  | "menu"
-  | "quantity"
-  | "total_revenue"
+  DecisionGradeMatrixRow,
+  | "menuItem"
+  | "unitsSold"
+  | "revenue"
   | "cogs"
-  | "contribution_margin"
-  | "contribution_margin_percentage"
+  | "contributionMargin"
+  | "marginPct"
   | "action"
 >;
 
 type Props = {
   title: string;
-  items: MatrixItem[];
+  items: DecisionGradeMatrixRow[];
   locale: string;
   currency: string;
 };
@@ -51,7 +42,7 @@ export function MatrixCategoryTable({
   currency,
 }: Props) {
   const t = useTranslations("analytics.matrix.table");
-  const [sortKey, setSortKey] = useState<SortKey>("quantity");
+  const [sortKey, setSortKey] = useState<SortKey>("unitsSold");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   if (!items.length) return null;
@@ -93,7 +84,7 @@ export function MatrixCategoryTable({
     "cursor-pointer select-none whitespace-nowrap text-right px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground";
   const thLeft = `${th} text-left`;
 
-  const actionVariant = (action: Action) => {
+  const actionVariant = (action: MatrixAction) => {
     switch (action) {
       case "remove":
         return "destructive";
@@ -116,19 +107,19 @@ export function MatrixCategoryTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className={thLeft} onClick={() => toggleSort("menu")}>
-                {t("menu")} <SortIndicator col="menu" />
+              <TableHead className={thLeft} onClick={() => toggleSort("menuItem")}>
+                {t("menu")} <SortIndicator col="menuItem" />
               </TableHead>
 
-              <TableHead className={th} onClick={() => toggleSort("quantity")}>
-                {t("qty")} <SortIndicator col="quantity" />
+              <TableHead className={th} onClick={() => toggleSort("unitsSold")}>
+                {t("qty")} <SortIndicator col="unitsSold" />
               </TableHead>
 
               <TableHead
                 className={th}
-                onClick={() => toggleSort("total_revenue")}
+                onClick={() => toggleSort("revenue")}
               >
-                {t("revenue")} <SortIndicator col="total_revenue" />
+                {t("revenue")} <SortIndicator col="revenue" />
               </TableHead>
 
               <TableHead className={th} onClick={() => toggleSort("cogs")}>
@@ -137,16 +128,16 @@ export function MatrixCategoryTable({
 
               <TableHead
                 className={th}
-                onClick={() => toggleSort("contribution_margin")}
+                onClick={() => toggleSort("contributionMargin")}
               >
-                {t("margin")} <SortIndicator col="contribution_margin" />
+                {t("margin")} <SortIndicator col="contributionMargin" />
               </TableHead>
 
               <TableHead
                 className={th}
-                onClick={() => toggleSort("contribution_margin_percentage")}
+                onClick={() => toggleSort("marginPct")}
               >
-                {t("percentage")} <SortIndicator col="contribution_margin_percentage" />
+                {t("percentage")} <SortIndicator col="marginPct" />
               </TableHead>
 
               {hasActions && (
@@ -162,27 +153,29 @@ export function MatrixCategoryTable({
 
           <TableBody>
             {sortedItems.map((item) => (
-              <TableRow key={item.menu} className="hover:bg-muted/30">
-                <TableCell className="px-3 py-2 font-medium">{item.menu}</TableCell>
+              <TableRow key={item.menuItem} className="hover:bg-muted/30">
+                <TableCell className="px-3 py-2 font-medium">{item.menuItem}</TableCell>
 
                 <TableCell className="px-3 py-2 text-right">
-                  {item.quantity.toLocaleString(locale)}
+                  {item.unitsSold.toLocaleString(locale)}
                 </TableCell>
 
                 <TableCell className="px-3 py-2 text-right">
-                  {formatCurrencyWithCode(item.total_revenue, currency, locale)}
+                  {formatCurrencyWithCode(item.revenue, currency, locale)}
                 </TableCell>
 
                 <TableCell className="px-3 py-2 text-right">
-                  {formatCurrencyWithCode(item.cogs, currency, locale)}
+                  {item.cogs === null
+                    ? "—"
+                    : formatCurrencyWithCode(item.cogs, currency, locale)}
                 </TableCell>
 
                 <TableCell className="px-3 py-2 text-right">
-                  {formatCurrencyWithCode(item.contribution_margin, currency, locale)}
+                  {formatCurrencyWithCode(item.contributionMargin, currency, locale)}
                 </TableCell>
 
                 <TableCell className="px-3 py-2 text-right">
-                  {(item.contribution_margin_percentage * 100).toFixed(1)}%
+                  {(item.marginPct * 100).toFixed(1)}%
                 </TableCell>
 
                 {hasActions && (

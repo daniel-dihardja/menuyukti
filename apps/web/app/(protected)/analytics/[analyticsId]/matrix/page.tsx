@@ -11,6 +11,10 @@ import { notFound } from "next/navigation";
 import { formatCurrencyWithCode, getCurrencyLocale } from "@/lib/currency";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
+import {
+  type DecisionGradeMatrixRow,
+  toDecisionGradeMatrixRows,
+} from "@/lib/analytics/matrix-row-contract";
 
 import { MatrixCategoryTable } from "./matrix-category-table";
 
@@ -28,18 +32,8 @@ type MatrixDistributionItem = {
   margin_contribution_percentage?: number;
 };
 
-type MatrixItem = {
-  menu: string;
-  category: "star" | "plow_horse" | "puzzle" | "low_end";
-  quantity: number;
-  total_revenue: number;
-  cogs: number;
-  contribution_margin: number;
-  contribution_margin_percentage: number;
-};
-
 type MatrixJson = {
-  items: MatrixItem[];
+  items: unknown[];
   distribution: MatrixDistributionItem[];
 };
 
@@ -168,16 +162,17 @@ export default async function Page({ params }: PageProps) {
   // --------------------------------------------------
   // Matrix helpers
   // --------------------------------------------------
+  const matrixRows = toDecisionGradeMatrixRows(matrix);
   const itemsByCategory = {
-    star: matrix.items.filter((i) => i.category === "star"),
-    plow_horse: matrix.items.filter((i) => i.category === "plow_horse"),
-    puzzle: matrix.items.filter((i) => i.category === "puzzle"),
-    low_end: matrix.items.filter((i) => i.category === "low_end"),
+    star: matrixRows.filter((i) => i.category === "star"),
+    plow_horse: matrixRows.filter((i) => i.category === "plow_horse"),
+    puzzle: matrixRows.filter((i) => i.category === "puzzle"),
+    low_end: matrixRows.filter((i) => i.category === "low_end"),
   };
 
-  Object.values(itemsByCategory).forEach((items) =>
-    items.sort((a, b) => b.quantity - a.quantity),
-  );
+  Object.values(itemsByCategory).forEach((items: DecisionGradeMatrixRow[]) => {
+    items.sort((a, b) => b.unitsSold - a.unitsSold);
+  });
 
   const distribution =
     (analytics.matrixDistributionJson as MatrixDistributionItem[]) ??
