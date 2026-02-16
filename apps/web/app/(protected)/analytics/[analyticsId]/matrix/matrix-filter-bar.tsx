@@ -7,6 +7,13 @@ import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { Badge } from "@workspace/ui/components/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
+import {
   DEFAULT_MATRIX_FILTER_STATE,
   type MatrixFilterState,
   serializeMatrixFilterState,
@@ -179,7 +186,7 @@ export function MatrixFilterBar({ filters, analyticsId }: Props) {
   };
 
   return (
-    <section className="rounded-lg border bg-card/95 p-4 space-y-4 shadow-sm ring-1 ring-border/40">
+    <section className="border bg-card/95 p-4 space-y-4 shadow-sm ring-1 ring-border/40">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
@@ -263,36 +270,48 @@ export function MatrixFilterBar({ filters, analyticsId }: Props) {
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="matrix-filter-sort">Sort by</Label>
-          <select
-            id="matrix-filter-sort"
-            aria-label="Sort matrix table by"
-            className="h-9 w-full rounded-md border bg-background px-3 text-sm shadow-sm"
-            value={sort}
-            onChange={(event) => setSort(event.target.value as MatrixFilterState["sort"])}
-          >
-            <option value="unitsSold">Units Sold</option>
-            <option value="revenue">Revenue</option>
-            <option value="contributionMargin">Margin</option>
-            <option value="marginPct">Margin %</option>
-            <option value="menuItem">Menu Item</option>
-          </select>
-        </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="matrix-filter-sort">Sort by</Label>
+            <Select
+              value={sort}
+              onValueChange={(value) => setSort(value as MatrixFilterState["sort"])}
+            >
+              <SelectTrigger
+                id="matrix-filter-sort"
+                aria-label="Sort matrix table by"
+                className="w-full rounded-none shadow-sm"
+              >
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unitsSold">Units Sold</SelectItem>
+                <SelectItem value="revenue">Revenue</SelectItem>
+                <SelectItem value="contributionMargin">Margin</SelectItem>
+                <SelectItem value="marginPct">Margin %</SelectItem>
+                <SelectItem value="menuItem">Menu Item</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="matrix-filter-order">Order</Label>
-          <select
-            id="matrix-filter-order"
-            aria-label="Sort direction"
-            className="h-9 w-full rounded-md border bg-background px-3 text-sm shadow-sm"
-            value={order}
-            onChange={(event) => setOrder(event.target.value as MatrixFilterState["order"])}
-          >
-            <option value="desc">Descending</option>
-            <option value="asc">Ascending</option>
-          </select>
-        </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="matrix-filter-order">Order</Label>
+            <Select
+              value={order}
+              onValueChange={(value) => setOrder(value as MatrixFilterState["order"])}
+            >
+              <SelectTrigger
+                id="matrix-filter-order"
+                aria-label="Sort direction"
+                className="w-full rounded-none shadow-sm"
+              >
+                <SelectValue placeholder="Order" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="desc">Descending</SelectItem>
+                <SelectItem value="asc">Ascending</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
       </div>
 
       <div className="space-y-2">

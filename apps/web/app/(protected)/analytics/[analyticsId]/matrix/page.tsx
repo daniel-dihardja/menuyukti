@@ -204,7 +204,7 @@ export default async function Page({ params, searchParams }: PageProps) {
         </span>
         <Badge variant="default">{tMatrix("actions.promote")}</Badge>
         <Badge variant="secondary">{tMatrix("actions.improve")}</Badge>
-        <Badge variant="outline">{tMatrix("actions.remove")}</Badge>
+        <Badge variant="destructive">{tMatrix("actions.remove")}</Badge>
       </div>
       <div className="mb-8">
         <MatrixFilterBar filters={filters} analyticsId={analyticsId} />

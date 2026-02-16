@@ -4,6 +4,14 @@ import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
+import { Label } from "@workspace/ui/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
 import {
   Tooltip,
   TooltipContent,
@@ -140,23 +148,30 @@ export function MatrixInsightTable({ items, locale, currency, analyticsId }: Pro
           Showing {fromIndex}-{toIndex} of {totalItems} items
         </p>
         <div className="flex items-center gap-2">
-          <label htmlFor="matrix-page-size" className="text-muted-foreground">
+          <Label htmlFor="matrix-page-size" className="text-muted-foreground">
             Rows
-          </label>
-          <select
-            id="matrix-page-size"
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-            value={pageSize}
-            onChange={(event) => {
-              const next = Number(event.target.value);
+          </Label>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(value) => {
+              const next = Number(value);
               setPageSize(next);
               setPage(1);
             }}
           >
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
+            <SelectTrigger
+              id="matrix-page-size"
+              className="w-20 rounded-none"
+              aria-label="Rows per page"
+            >
+              <SelectValue placeholder="Rows" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
