@@ -183,3 +183,83 @@ A release is production-ready only if:
 2. Data quality gate behavior is enforced in UI and APIs.
 3. Marketer workflow and analyst workflow each pass end-to-end validation.
 4. Recommendation outputs remain traceable to deterministic feature inputs.
+
+---
+
+## 11. Current Implementation Status (As of 2026-02-16)
+
+Legend:
+- `Implemented`: Delivered and observable in code/runtime.
+- `Partial`: Implemented in part, but still missing key completion criteria.
+- `Not Yet`: Not implemented yet.
+
+### 11.1 Data Engineering and ETL
+- `Implemented`: Release SLI/SLO contract and metric definitions documented.
+- `Implemented`: Async upload ingestion with job queue/status API, idempotency key, and duplicate detection.
+- `Implemented`: Layered schemas (`staging`, `warehouse`, `marts`) and core warehouse facts/dimensions.
+- `Implemented`: Rejection logging with reason codes and quality gate threshold policy.
+- `Implemented`: Pipeline run metadata, run metrics, and reconciliation table.
+- `Partial`: Retry/replay/backfill operational workflow is not fully defined as productized runbook/automation.
+
+### 11.2 Core Analytics and UI
+- `Implemented`: Unified matrix table with robust filter bar, URL-based filter state, and presets.
+- `Implemented`: Action explainability reasons and matrix freshness/quality visibility on matrix page.
+- `Implemented`: Daypart mart read endpoint.
+- `Implemented`: Accessibility baseline improvements for matrix filters/table.
+- `Not Yet`: CSV export flow for analyst workflows is not present.
+
+### 11.3 Marketer (Instagram) Capabilities
+- `Implemented`: Recommendation-centric matrix workflow (`promote`, `improve/reprice`, `remove`, `keep`).
+- `Implemented`: Agent invocation path for audience/tone and cached outputs.
+- `Partial`: Weekly posting schedule and campaign planning loop are not fully productized in current app UX.
+- `Not Yet`: Instagram attribution model (post/campaign to sales lift) is not implemented.
+
+### 11.4 Menu Analyst Capabilities
+- `Implemented`: Low-margin/high-volume style decisioning via matrix filters and presets.
+- `Partial`: Cost/price control support exists via COGS update flows, but analyst export/reporting is still limited.
+- `Not Yet`: Pair-menu/co-purchase analytics (support/confidence/lift) and combo opportunity engine are not implemented.
+
+### 11.5 Agentic Architecture
+- `Implemented`: Agents consume structured `core_input` payloads, with deterministic feature derivation in marketing-engine features.
+- `Partial`: Guardrails based on quality/freshness are present in ETL and matrix UI, but not consistently enforced in all agent invocation paths.
+- `Partial`: Versioned contracts exist for analytics/marketing-engine, but agent I/O contract governance can be tightened further.
+
+### 11.6 Security, Tenancy, and Governance
+- `Partial`: Location/branch scoping exists in data model and routes.
+- `Not Yet`: Full RBAC and explicit tenant-boundary enforcement are not yet implemented as formal authz controls.
+- `Not Yet`: End-to-end audit trail for all recommendation-affecting actions is incomplete.
+
+### 11.7 E2E Validation
+- `Implemented`: E2E upload journey (with artifacts) and matrix filter journey (with artifacts).
+- `Partial`: Full release-gate E2E coverage for all marketer and analyst workflows remains incomplete.
+
+### 11.8 Minimal Release Feature Table
+
+| # | Minimal Release Feature | Status | Notes |
+|---|---|---|---|
+| 0 | Release SLI/SLO metrics contract | Implemented | Contract documented with formulas, owners, and thresholds. |
+| 1 | Async upload ingestion job (`queued/running/succeeded/failed`) | Implemented | Job queue + polling endpoint exists. |
+| 2 | Idempotent ingestion and duplicate detection | Implemented | File-hash + idempotency key in ETL job flow. |
+| 3 | POS normalization with rejection reasons | Implemented | Rejection rows and required-field reason codes are persisted. |
+| 4 | Quality gate on ingestion | Implemented | Reject-rate threshold policy enforced. |
+| 5 | Layered data model (`staging/warehouse/marts`) | Implemented | Prisma schemas and ETL loads are in place. |
+| 6 | Pipeline run lineage + metrics + reconciliation | Implemented | Pipeline run table, metrics table, reconciliation report table exist. |
+| 7 | Menu engineering matrix (revenue/COGS/margin/actions) | Implemented | Matrix and action reasoning available. |
+| 8 | Matrix explainability in UI | Implemented | Action reason tooltip and canonical reason fields are present. |
+| 9 | Unified matrix table with filters + presets | Implemented | Single table, filter bar, URL state, presets delivered. |
+| 10 | Freshness + quality visibility on decision page | Implemented | Matrix page shows run, quality, freshness, stale warning. |
+| 11 | Daypart analytics endpoint | Implemented | Daypart mart API route exists. |
+| 12 | Menu alias mapping for canonicalization | Implemented | Alias table and ETL join logic are present. |
+| 13 | COGS completeness workflow for analysts | Partial | COGS update flow exists; completeness dashboards/export still limited. |
+| 14 | Marketer action workflow (`promote/improve/remove`) | Implemented | Action-oriented matrix UX and presets are available. |
+| 15 | Instagram weekly post scheduling workflow | Partial | Foundations exist, but full scheduling UX/workflow is not fully productized. |
+| 16 | Instagram attribution (post/campaign -> sales lift) | Not Yet | No end-to-end attribution model or outputs yet. |
+| 17 | Pair-menu analysis (support/confidence/lift) | Not Yet | Co-purchase pair fact/mart and scoring not implemented yet. |
+| 18 | Combo recommendation engine | Not Yet | Margin-aware combo ranking not implemented yet. |
+| 19 | Agent architecture using structured feature inputs | Implemented | Agents invoke with structured `core_input` and derived features. |
+| 20 | Agent guardrails for low-quality/fresh data | Partial | ETL/UI guards exist; agent-level enforcement is not consistently applied. |
+| 21 | RBAC and explicit tenant authz controls | Not Yet | Location scoping exists, formal RBAC not yet implemented. |
+| 22 | Audit trail for recommendation-affecting actions | Not Yet | Not fully implemented as a complete audit system. |
+| 23 | E2E upload -> analytics path | Implemented | Playwright e2e with artifact capture exists. |
+| 24 | E2E matrix filter/preset path | Implemented | Dedicated matrix journey e2e exists with artifacts. |
+| 25 | Full release-gate E2E suite (marketer + analyst) | Partial | Core flows covered, full release matrix still incomplete. |
