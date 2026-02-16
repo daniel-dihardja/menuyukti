@@ -48,11 +48,15 @@ const requiredFieldRejectionReason = (
   return failed ? `missing_required_field:${failed.key}` : null;
 };
 
-const failJob = async (jobId: string, message: string) => {
+const failJob = async (
+  jobId: string,
+  message: string,
+  status: "failed" | "failed_quality_gate" = "failed",
+) => {
   await prisma.etlJob.update({
     where: { id: jobId },
     data: {
-      status: "failed",
+      status,
       errorMessage: message.slice(0, 1024),
       finishedAt: new Date(),
     },
@@ -164,11 +168,17 @@ async function processUploadJob(params: {
     const inputRows = rawRows.length + combinedRejectedRows.length;
     const rejectRate =
       inputRows > 0 ? combinedRejectedRows.length / inputRows : 0;
-    const qualityGatePassed = rejectRate <= 0.4;
+    const qualityGateMaxRejectRate = Number(
+      process.env.QUALITY_GATE_MAX_REJECT_RATE ?? "0.4",
+    );
+    const threshold = Number.isFinite(qualityGateMaxRejectRate)
+      ? qualityGateMaxRejectRate
+      : 0.4;
+    const qualityGatePassed = rejectRate <= threshold;
 
     if (!qualityGatePassed) {
       throw new Error(
-        `QUALITY_GATE_FAILED: input_rows=${inputRows}, rejected_rows=${combinedRejectedRows.length}, reject_rate=${rejectRate}`,
+        `QUALITY_GATE_FAILED: input_rows=${inputRows}, rejected_rows=${combinedRejectedRows.length}, reject_rate=${rejectRate}, threshold=${threshold}`,
       );
     }
 
@@ -757,7 +767,10 @@ async function processUploadJob(params: {
   } catch (error: unknown) {
     console.error("Upload job failed:", error);
     const message = error instanceof Error ? error.message : "UPLOAD_FAILED";
-    await failJob(params.jobId, message);
+    const status = message.startsWith("QUALITY_GATE_FAILED")
+      ? "failed_quality_gate"
+      : "failed";
+    await failJob(params.jobId, message, status);
   }
 }
 
