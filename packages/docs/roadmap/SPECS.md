@@ -225,7 +225,7 @@ Legend:
 
 ### 11.5 Agentic Architecture
 - `Implemented`: Agents consume structured `core_input` payloads, with deterministic feature derivation in marketing-engine features.
-- `Partial`: Guardrails based on quality/freshness are present in ETL and matrix UI, but not consistently enforced in all agent invocation paths.
+- `Implemented`: Guardrails based on quality/freshness are enforced in agent invocation routes with machine-readable readiness status.
 - `Partial`: Versioned contracts exist for analytics/marketing-engine, but agent I/O contract governance can be tightened further.
 
 ### 11.6 Security, Tenancy, and Governance
@@ -267,7 +267,8 @@ Legend:
 | 30 | Margin-aware combo opportunity mart + API | Implemented | `marts.vw_combo_opportunity_candidates` and `/api/marts/combo-opportunities` provide ranked combo candidates with score breakdown. |
 | 31 | Analyst CSV export (matrix/pairs/combos) | Implemented | `/api/exports/analyst` exports filtered datasets with stable columns and generation metadata. |
 | 19 | Agent architecture using structured feature inputs | Implemented | Agents invoke with structured `core_input` and derived features. |
-| 20 | Agent guardrails for low-quality/fresh data | Partial | ETL/UI guards exist; agent-level enforcement is not consistently applied. |
+| 20 | Agent guardrails for low-quality/fresh data | Implemented | Agent invocation routes enforce readiness policy and return structured guardrail status. |
+| 32 | Agent data-readiness guardrail utility integration | Implemented | Shared readiness helper integrated in audience/tone routes with block/downgrade behavior. |
 | 21 | RBAC and explicit tenant authz controls | Not Yet | Location scoping exists, formal RBAC not yet implemented. |
 | 22 | Audit trail for recommendation-affecting actions | Not Yet | Not fully implemented as a complete audit system. |
 | 23 | E2E upload -> analytics path | Implemented | Playwright e2e with artifact capture exists. |

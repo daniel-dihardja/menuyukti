@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { useWarehouseReadPath } from "@/lib/warehouse-read-path";
+import { evaluateAgentDataReadiness } from "@/lib/agents/data-readiness";
 
 export const runtime = "nodejs";
 
@@ -175,6 +176,17 @@ export async function POST(request: Request) {
       );
     }
 
+    const readiness = await evaluateAgentDataReadiness(analyticsId);
+    if (readiness.level === "blocked") {
+      return NextResponse.json(
+        {
+          error: "AGENT_DATA_NOT_READY",
+          guardrail: readiness,
+        },
+        { status: 412 },
+      );
+    }
+
     if (forceRerun) {
       await prisma.agentOutput.deleteMany({
         where: {
@@ -196,7 +208,7 @@ export async function POST(request: Request) {
       });
 
       if (cached?.outputs) {
-        return NextResponse.json({ outputs: cached.outputs });
+        return NextResponse.json({ outputs: cached.outputs, guardrail: readiness });
       }
     }
 
@@ -229,6 +241,7 @@ export async function POST(request: Request) {
       matrix_items: matrixItems,
       heatmaps: normalizeHeatmaps(analytics.heatmapJson),
       distribution: analytics.matrixDistributionJson ?? {},
+      data_readiness: readiness,
       sales_summary: {
         total_orders: analytics.totalOrders ?? 0,
         total_items_sold: analytics.totalItemsSold ?? 0,
@@ -300,7 +313,7 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, guardrail: readiness });
   } catch (error) {
     console.error("Audience agent invocation failed:", error);
     return NextResponse.json(
