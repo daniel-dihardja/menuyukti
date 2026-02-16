@@ -94,3 +94,8 @@ The package is now materially closer to production-ready ETL contracts. Major co
 ## Summary
 
 This doc started as a pre-refactor gap assessment and is now updated to reflect current implementation status. The schema layer is substantially stronger and governed, with remaining work focused on identity strategy, observability, and performance hardening.
+
+## Related Playbook
+
+- Matrix decision playbook for operators:
+  - `packages/docs/status/matrix-marketer-analyst-playbook.md`
