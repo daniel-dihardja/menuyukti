@@ -25,6 +25,7 @@ const absDiff = (a: number, b: number): number => Math.abs(a - b);
 
 export async function POST(request: Request) {
   try {
+    const pipelineStart = Date.now();
     const ANALYTICS_API_URL = process.env.ANALYTICS_API_URL;
     if (!ANALYTICS_API_URL) {
       return NextResponse.json(
@@ -129,6 +130,23 @@ export async function POST(request: Request) {
     const rejectedRows = Array.isArray(apiResult.staging?.rejected_rows)
       ? apiResult.staging.rejected_rows
       : [];
+    const inputRows = rawRows.length + rejectedRows.length;
+    const rejectRate = inputRows > 0 ? rejectedRows.length / inputRows : 0;
+    const qualityGatePassed = rejectRate <= 0.4;
+
+    if (!qualityGatePassed) {
+      return NextResponse.json(
+        {
+          error: "QUALITY_GATE_FAILED",
+          details: {
+            input_rows: inputRows,
+            rejected_rows: rejectedRows.length,
+            reject_rate: rejectRate,
+          },
+        },
+        { status: 422 },
+      );
+    }
 
     // --------------------------------------------------
     // Persist analytics snapshot (transactional)
@@ -699,6 +717,38 @@ export async function POST(request: Request) {
           `;
         }
       }
+
+      const loadDurationMs = Date.now() - pipelineStart;
+      await tx.$executeRaw`
+        INSERT INTO warehouse.pipeline_run_metrics
+          (
+            pipeline_run_id,
+            input_rows,
+            valid_rows,
+            rejected_rows,
+            reject_rate,
+            load_duration_ms,
+            quality_gate_passed
+          )
+        VALUES
+          (
+            CAST(${pipelineRunId} AS UUID),
+            ${inputRows},
+            ${rawRows.length},
+            ${rejectedRows.length},
+            ${rejectRate},
+            ${loadDurationMs},
+            ${qualityGatePassed}
+          )
+        ON CONFLICT (pipeline_run_id)
+        DO UPDATE SET
+          input_rows = EXCLUDED.input_rows,
+          valid_rows = EXCLUDED.valid_rows,
+          rejected_rows = EXCLUDED.rejected_rows,
+          reject_rate = EXCLUDED.reject_rate,
+          load_duration_ms = EXCLUDED.load_duration_ms,
+          quality_gate_passed = EXCLUDED.quality_gate_passed
+      `;
     });
 
     // --------------------------------------------------
