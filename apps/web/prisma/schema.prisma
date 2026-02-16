@@ -27,6 +27,7 @@ model Location {
   analytics    Analytics[]
   fixedCosts FixedCost[]   // NEW
   agentOutputs AgentOutput[]
+  etlJobs      EtlJob[]
 
   @@map("branches")
   @@schema("public")
@@ -83,9 +84,35 @@ model Analytics {
 
   menuItems AnalyticsMenuItem[]
   agentOutputs AgentOutput[]
+  etlJobs      EtlJob[]
 
   @@index([locationId], map: "ix_analytics_branch_id")
   @@map("analytics")
+  @@schema("public")
+}
+
+model EtlJob {
+  id String @id @default(cuid())
+
+  locationId Int      @map("branch_id")
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  analyticsId Int?      @map("analytics_id")
+  analytics   Analytics? @relation(fields: [analyticsId], references: [id], onDelete: SetNull)
+
+  sourceFile    String? @map("source_file")
+  status        String  @default("queued")
+  errorMessage  String? @map("error_message")
+  pipelineRunId String? @db.Uuid @map("pipeline_run_id")
+
+  startedAt  DateTime? @map("started_at")
+  finishedAt DateTime? @map("finished_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@index([locationId, status], map: "ix_etl_jobs_branch_status")
+  @@index([analyticsId], map: "ix_etl_jobs_analytics_id")
+  @@map("etl_jobs")
   @@schema("public")
 }
 
