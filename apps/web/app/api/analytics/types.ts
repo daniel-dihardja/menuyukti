@@ -42,6 +42,13 @@ export type AnalyticsResponse = {
   metadata?: PipelineMetadata;
   analytics: AnalyticsSummary;
   menu_items: AnalyticMenuItem[];
+  staging?: {
+    raw_rows?: JsonValue[];
+    rejected_rows?: Array<{
+      row_data: JsonValue;
+      rejection_reason: string;
+    }>;
+  };
 };
 
 export type AnalyticsListItem = {

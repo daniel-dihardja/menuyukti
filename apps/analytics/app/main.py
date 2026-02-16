@@ -9,6 +9,9 @@ import pandas as pd
 from marketing_engine.core.analytics.extract_menu_items import extract_menu_items
 from marketing_engine.core.analytics.pos_detector import detect_pos_from_excel_bytes
 from marketing_engine.core.analytics.registry import NORMALIZERS
+from marketing_engine.core.analytics.esb.normalizer import (
+    normalize_esb_excel_with_rejections,
+)
 from marketing_engine.core.analytics.calculate_sales_analytics import (
     calculate_sales_analytics,
 )
@@ -54,7 +57,14 @@ async def upload_file(file: UploadFile = File(...)):
 
     # 3. Normalize
     try:
-        df = await run_in_threadpool(normalizer, contents)
+        rejected_df = pd.DataFrame()
+        if pos == "esb":
+            df, rejected_df = await run_in_threadpool(
+                normalize_esb_excel_with_rejections,
+                contents,
+            )
+        else:
+            df = await run_in_threadpool(normalizer, contents)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception:
@@ -79,6 +89,15 @@ async def upload_file(file: UploadFile = File(...)):
 
     # 5. Menu items
     menu_items = extract_menu_items(df)
+    rejected_rows = []
+    if not rejected_df.empty:
+        rejected_rows = [
+            {
+                "row_data": row.drop(labels=["rejection_reason"]).to_dict(),
+                "rejection_reason": str(row["rejection_reason"]),
+            }
+            for _, row in rejected_df.iterrows()
+        ]
 
     return {
         "status": "ok",
@@ -86,6 +105,10 @@ async def upload_file(file: UploadFile = File(...)):
         "pos": pos,
         "menu_items": menu_items,
         "analytics": analytics,
+        "staging": {
+            "raw_rows": df.to_dict(orient="records"),
+            "rejected_rows": rejected_rows,
+        },
     }
 
 

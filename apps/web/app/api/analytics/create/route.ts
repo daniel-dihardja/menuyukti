@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma/client";
 import { Prisma } from "@prisma/client";
 import { AnalyticsResponse } from "../types";
 import { randomUUID } from "crypto";
+import { createHash } from "crypto";
 
 export const runtime = "nodejs";
 
@@ -111,6 +112,12 @@ export async function POST(request: Request) {
     const ingestedAtUtc = Number.isNaN(ingestedAt.getTime())
       ? new Date()
       : ingestedAt;
+    const rawRows = Array.isArray(apiResult.staging?.raw_rows)
+      ? apiResult.staging.raw_rows
+      : [];
+    const rejectedRows = Array.isArray(apiResult.staging?.rejected_rows)
+      ? apiResult.staging.rejected_rows
+      : [];
 
     // --------------------------------------------------
     // Persist analytics snapshot (transactional)
@@ -130,6 +137,55 @@ export async function POST(request: Request) {
           )
         ON CONFLICT (pipeline_run_id) DO NOTHING
       `;
+
+      for (const row of rawRows) {
+        const serialized = JSON.stringify(row ?? {});
+        const rowHash = createHash("sha256").update(serialized).digest("hex");
+        await tx.$executeRaw`
+          INSERT INTO staging.stg_pos_raw
+            (pipeline_run_id, source_system, source_file, row_hash, row_data, ingested_at_utc)
+          VALUES
+            (
+              CAST(${pipelineRunId} AS UUID),
+              ${sourceSystem},
+              ${file.name},
+              ${rowHash},
+              CAST(${serialized} AS JSONB),
+              ${ingestedAtUtc}
+            )
+          ON CONFLICT (pipeline_run_id, row_hash) DO NOTHING
+        `;
+      }
+
+      for (const rejected of rejectedRows) {
+        const rowData = rejected?.row_data ?? {};
+        const serialized = JSON.stringify(rowData);
+        const rowHash = createHash("sha256").update(serialized).digest("hex");
+        const reason = rejected?.rejection_reason ?? "unknown";
+        await tx.$executeRaw`
+          INSERT INTO staging.stg_pos_rejected
+            (
+              pipeline_run_id,
+              source_system,
+              source_file,
+              row_hash,
+              row_data,
+              rejection_reason,
+              ingested_at_utc
+            )
+          VALUES
+            (
+              CAST(${pipelineRunId} AS UUID),
+              ${sourceSystem},
+              ${file.name},
+              ${rowHash},
+              CAST(${serialized} AS JSONB),
+              ${reason},
+              ${ingestedAtUtc}
+            )
+          ON CONFLICT (pipeline_run_id, row_hash) DO NOTHING
+        `;
+      }
 
       // ----------------------------------------------
       // Create analytics snapshot
