@@ -73,12 +73,14 @@ export default async function Page({ params }: PageProps) {
 
     dailyItems = raw.filter(
       (item: any): item is DailyHeatmapInput =>
-        typeof item?.menu === "string" && Array.isArray(item?.dailyHeatmap),
+        typeof item?.menu === "string" &&
+        (Array.isArray(item?.dailyHeatmap) || Array.isArray(item?.daily_heatmap)),
     );
 
     weeklyItems = raw.filter(
       (item: any): item is WeeklyHeatmapInput =>
-        typeof item?.menu === "string" && Array.isArray(item?.weeklyHeatmap),
+        typeof item?.menu === "string" &&
+        (Array.isArray(item?.weeklyHeatmap) || Array.isArray(item?.weekly_heatmap)),
     );
   } catch (err) {
     console.error("Invalid heatmap_json:", err);

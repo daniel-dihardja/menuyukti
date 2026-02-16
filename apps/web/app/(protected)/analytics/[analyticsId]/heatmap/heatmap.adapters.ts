@@ -4,12 +4,14 @@
 
 export type DailyHeatmapInput = {
   menu: string;
-  dailyHeatmap: { hour: string; quantity: number }[];
+  dailyHeatmap?: { hour: string | number; quantity: number }[];
+  daily_heatmap?: { hour: string | number; quantity: number }[];
 };
 
 export type WeeklyHeatmapInput = {
   menu: string;
-  weeklyHeatmap: { day: string; quantity: number }[];
+  weeklyHeatmap?: { day: string; quantity: number }[];
+  weekly_heatmap?: { day: string; quantity: number }[];
 };
 
 /* ==================================================
@@ -42,8 +44,9 @@ export function adaptDailyHeatmapMatrix(
   );
 
   const rows: HeatmapMatrixRow[] = items.map((item) => {
+    const dailyRows = item.dailyHeatmap ?? item.daily_heatmap ?? [];
     const byHour: Record<string, number> = Object.fromEntries(
-      item.dailyHeatmap.map((h) => [h.hour, h.quantity]),
+      dailyRows.map((h) => [String(h.hour).padStart(2, "0"), h.quantity]),
     );
 
     return {
@@ -78,8 +81,9 @@ export function adaptWeeklyHeatmapMatrix(
   };
 
   const rows: HeatmapMatrixRow[] = items.map((item) => {
+    const weeklyRows = item.weeklyHeatmap ?? item.weekly_heatmap ?? [];
     const byDay: Record<string, number> = Object.fromEntries(
-      item.weeklyHeatmap.map((d) => [d.day, d.quantity]),
+      weeklyRows.map((d) => [d.day, d.quantity]),
     );
 
     return {
