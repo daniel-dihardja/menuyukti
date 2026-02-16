@@ -340,7 +340,13 @@
       "reportTitle": "Menu Engineering Report",
       "breadcrumb": "Matrix",
       "heading": "Menu Engineering Matrix",
-      "description": "Performance overview and optimization insights per menu item",
+      "description": "See which menu items to promote, improve, or retire with clear sales and profitability signals for restaurant marketers and menu analysts.",
+      "actionsLabel": "Recommended actions:",
+      "actions": {
+        "promote": "Promote",
+        "improve": "Improve",
+        "remove": "Remove"
+      },
       "empty": {
         "description": "Matrix data is not available yet for this analytics file. Please update COGS first to generate matrix results.",
         "cta": "Go to COGS setup"

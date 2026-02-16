@@ -54,11 +54,28 @@ export function parseCurrencyInput(
 
   const resolvedLocale = locale ?? getCurrencyLocale(currency);
   const { group, decimal } = getNumberSeparators(resolvedLocale);
+  const cleaned = trimmed.replace(/[^0-9,.\-]/g, "");
+  if (!cleaned || cleaned === "-" || cleaned === "." || cleaned === ",") {
+    return null;
+  }
 
-  const normalized = trimmed
-    .replaceAll(group, "")
-    .replaceAll(decimal, ".")
-    .replace(/[^0-9.-]/g, "");
+  const lastDot = cleaned.lastIndexOf(".");
+  const lastComma = cleaned.lastIndexOf(",");
+
+  let normalized = cleaned;
+  if (lastDot !== -1 || lastComma !== -1) {
+    // Infer decimal separator by the rightmost punctuation.
+    const inferredDecimal = lastDot > lastComma ? "." : ",";
+    const inferredGroup = inferredDecimal === "." ? "," : ".";
+    normalized = normalized
+      .replaceAll(inferredGroup, "")
+      .replaceAll(inferredDecimal, ".");
+  } else {
+    // No punctuation; keep locale cleanup behavior for completeness.
+    normalized = normalized.replaceAll(group, "").replaceAll(decimal, ".");
+  }
+
+  normalized = normalized.replace(/[^0-9.-]/g, "");
 
   if (!normalized || normalized === "-" || normalized === ".") return null;
 

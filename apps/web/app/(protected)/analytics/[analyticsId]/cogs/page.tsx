@@ -80,7 +80,7 @@ export default async function Page({ params }: PageProps) {
   const menuItems = rawMenuItems.map((item) => ({
     id: item.id,
     menuName: item.menuName,
-    cogs: item.cogs ? Number(item.cogs) : 0,
+    cogs: item.cogs !== null ? Number(item.cogs) : null,
     quantity: item.quantity,
     totalRevenue: Number(item.totalRevenue),
     menuCategory: item.menuCategory,

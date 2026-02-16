@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 import { Button } from "@workspace/ui/components/button";
+import { Badge } from "@workspace/ui/components/badge";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
@@ -209,6 +210,14 @@ export default async function Page({ params }: PageProps) {
         title={tMatrix("heading")}
         description={tMatrix("description")}
       />
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="text-sm text-muted-foreground">
+          {tMatrix("actionsLabel")}
+        </span>
+        <Badge variant="default">{tMatrix("actions.promote")}</Badge>
+        <Badge variant="secondary">{tMatrix("actions.improve")}</Badge>
+        <Badge variant="outline">{tMatrix("actions.remove")}</Badge>
+      </div>
 
           {/* ---------------------------------------------
            * KPI OVERVIEW
