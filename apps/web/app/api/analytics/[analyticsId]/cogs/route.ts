@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 
+const reasonByCategory: Record<string, string> = {
+  star: "high_popularity_high_margin",
+  plow_horse: "high_popularity_low_margin",
+  puzzle: "low_popularity_high_margin",
+  low_end: "low_popularity_low_margin",
+};
+
 type Params = {
   params: Promise<{
     analyticsId: string;
@@ -114,14 +121,52 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   const matrixResult = await res.json();
+  const thresholds = matrixResult.matrix?.thresholds ?? {};
+  const enrichedMatrixItems = Array.isArray(matrixResult.matrix?.items)
+    ? matrixResult.matrix.items.map((item: any) => {
+        const popularityScore =
+          typeof item.popularity_index === "number"
+            ? item.popularity_index
+            : typeof item.popularity === "number"
+              ? item.popularity
+              : null;
+        const marginScore =
+          typeof item.contribution_margin_percentage === "number"
+            ? item.contribution_margin_percentage
+            : typeof item.margin_percentage === "number"
+              ? item.margin_percentage
+              : null;
+        const reasonCode =
+          reasonByCategory[String(item.category)] ?? "unclassified";
+
+        return {
+          ...item,
+          popularity_score: popularityScore,
+          margin_score: marginScore,
+          thresholds_used: {
+            avg_popularity:
+              thresholds.avg_popularity ?? thresholds.avg_popularity_threshold ?? null,
+            avg_contribution_margin:
+              thresholds.avg_contribution_margin ??
+              thresholds.avg_contribution_margin_percentage ??
+              null,
+          },
+          reason_code: reasonCode,
+        };
+      })
+    : [];
+  const enrichedMatrix = {
+    ...matrixResult.matrix,
+    items: enrichedMatrixItems,
+  };
 
   // 8️⃣ Persist matrix snapshot on Analytics
   await prisma.analytics.update({
     where: { id: analyticsId },
     data: {
-      matrixJson: matrixResult.matrix,
+      matrixJson: enrichedMatrix,
       // optional future extensions:
-      matrixDistributionJson: matrixResult.matrix.distribution,
+      matrixDistributionJson: enrichedMatrix.distribution,
       totalCogs: matrixResult.matrix.thresholds.total_cogs,
       // totalMargin: matrixResult.matrix.thresholds.total_margin,
       totalProfit: matrixResult.matrix.thresholds.total_profit,
@@ -134,7 +179,7 @@ export async function POST(req: Request, { params }: Params) {
   // Return updated matrix
   return NextResponse.json({
     success: true,
-    matrix: matrixResult.matrix,
+    matrix: enrichedMatrix,
   });
 }
 
