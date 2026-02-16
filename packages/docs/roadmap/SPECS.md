@@ -220,8 +220,8 @@ Legend:
 - `Implemented`: Low-margin/high-volume style decisioning via matrix filters and presets.
 - `Implemented`: Deterministic warehouse basket-pair fact table and idempotent per-run refresh SQL function.
 - `Implemented`: Pair metrics mart and API with support, confidence, lift, minimum sample threshold, and noise flag.
+- `Implemented`: Margin-aware combo opportunity scoring mart and ranked API for top-N analyst candidates.
 - `Partial`: Cost/price control support exists via COGS update flows, but analyst export/reporting is still limited.
-- `Partial`: Combo opportunity engine is not implemented yet.
 
 ### 11.5 Agentic Architecture
 - `Implemented`: Agents consume structured `core_input` payloads, with deterministic feature derivation in marketing-engine features.
@@ -263,7 +263,8 @@ Legend:
 | 17 | Pair-menu analysis (support/confidence/lift) | Implemented | Pair metrics mart and API deliver support/confidence/lift with configurable sample threshold and noise flag. |
 | 28 | Order basket pair fact + idempotent refresh SQL | Implemented | `warehouse.fact_order_basket_pair` and `warehouse.refresh_fact_order_basket_pair(run_id)` added for deterministic co-purchase base data. |
 | 29 | Pair metrics mart + analyst API endpoint | Implemented | `marts.vw_pair_metrics_daily_base` and `/api/marts/pair-metrics` endpoint provide branch/date-filtered pair signals. |
-| 18 | Combo recommendation engine | Not Yet | Margin-aware combo ranking not implemented yet. |
+| 18 | Combo recommendation engine | Implemented | Margin-aware combo opportunity mart and ranked API endpoint are implemented. |
+| 30 | Margin-aware combo opportunity mart + API | Implemented | `marts.vw_combo_opportunity_candidates` and `/api/marts/combo-opportunities` provide ranked combo candidates with score breakdown. |
 | 19 | Agent architecture using structured feature inputs | Implemented | Agents invoke with structured `core_input` and derived features. |
 | 20 | Agent guardrails for low-quality/fresh data | Partial | ETL/UI guards exist; agent-level enforcement is not consistently applied. |
 | 21 | RBAC and explicit tenant authz controls | Not Yet | Location scoping exists, formal RBAC not yet implemented. |
