@@ -11,6 +11,7 @@ export const runtime = "nodejs";
 const normalizeMenuName = (name: string) => name.trim().toLowerCase();
 const UUID_V4_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const legacyJsonWritesEnabled = process.env.LEGACY_JSON_WRITES_ENABLED !== "0";
 const toFiniteNumber = (value: unknown): number | null => {
   const num = Number(value);
   return Number.isFinite(num) ? num : null;
@@ -347,8 +348,12 @@ export async function POST(request: Request) {
           minOrderRevenue: analytics.min_order_revenue,
 
           // Derived analytics
-          popularityJson: analytics.popularity_index ?? Prisma.JsonNull,
-          heatmapJson: analytics.menu_heatmaps ?? Prisma.JsonNull,
+          popularityJson: legacyJsonWritesEnabled
+            ? analytics.popularity_index ?? Prisma.JsonNull
+            : Prisma.JsonNull,
+          heatmapJson: legacyJsonWritesEnabled
+            ? analytics.menu_heatmaps ?? Prisma.JsonNull
+            : Prisma.JsonNull,
         },
       });
 
