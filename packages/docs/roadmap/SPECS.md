@@ -206,7 +206,7 @@ Legend:
 - `Implemented`: Action explainability reasons and matrix freshness/quality visibility on matrix page.
 - `Implemented`: Daypart mart read endpoint.
 - `Implemented`: Accessibility baseline improvements for matrix filters/table.
-- `Not Yet`: CSV export flow for analyst workflows is not present.
+- `Implemented`: CSV export endpoint for analyst matrix/pair/combo datasets with stable columns and metadata.
 
 ### 11.3 Marketer (Instagram) Capabilities
 - `Implemented`: Recommendation-centric matrix workflow (`promote`, `improve/reprice`, `remove`, `keep`).
@@ -265,6 +265,7 @@ Legend:
 | 29 | Pair metrics mart + analyst API endpoint | Implemented | `marts.vw_pair_metrics_daily_base` and `/api/marts/pair-metrics` endpoint provide branch/date-filtered pair signals. |
 | 18 | Combo recommendation engine | Implemented | Margin-aware combo opportunity mart and ranked API endpoint are implemented. |
 | 30 | Margin-aware combo opportunity mart + API | Implemented | `marts.vw_combo_opportunity_candidates` and `/api/marts/combo-opportunities` provide ranked combo candidates with score breakdown. |
+| 31 | Analyst CSV export (matrix/pairs/combos) | Implemented | `/api/exports/analyst` exports filtered datasets with stable columns and generation metadata. |
 | 19 | Agent architecture using structured feature inputs | Implemented | Agents invoke with structured `core_input` and derived features. |
 | 20 | Agent guardrails for low-quality/fresh data | Partial | ETL/UI guards exist; agent-level enforcement is not consistently applied. |
 | 21 | RBAC and explicit tenant authz controls | Not Yet | Location scoping exists, formal RBAC not yet implemented. |
