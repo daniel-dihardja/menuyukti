@@ -440,6 +440,46 @@ export function SchedulerClient({
     setMessage("Composer draft applied to schedule entries.");
   };
 
+  const exportComposerPackage = () => {
+    if (!composerDraft) return;
+    const selectedCaption =
+      composerDraft.captionVariants[composerDraft.selectedVariant] ?? composerDraft.captionVariants[0] ?? "";
+    const payload = {
+      metadata: {
+        analyticsId,
+        locationId,
+        generatedAt: new Date().toISOString(),
+        status: "draft",
+      },
+      content: {
+        menuItem: composerDraft.menuItem,
+        offerType: composerDraft.offerType,
+        daypart: composerDraft.daypart,
+        scheduledFor: toIsoOrNull(composerDraft.scheduledFor),
+        caption: selectedCaption,
+        callToAction: composerDraft.cta,
+        hashtags: composerDraft.hashtagsText
+          .split(",")
+          .map((part) => part.trim())
+          .filter(Boolean),
+      },
+      rationale: composerDraft.rationale,
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = `instagram-post-package-${composerDraft.menuItem
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40)}.json`;
+    link.click();
+    URL.revokeObjectURL(href);
+    setMessage("Composer package exported.");
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -785,6 +825,9 @@ export function SchedulerClient({
             <div className="flex gap-2">
               <Button type="button" onClick={applyComposerToSchedule}>
                 Apply To Schedule
+              </Button>
+              <Button type="button" variant="secondary" onClick={exportComposerPackage}>
+                Export Package
               </Button>
               <Button type="button" variant="outline" onClick={() => setComposerDraft(null)}>
                 Close Composer
