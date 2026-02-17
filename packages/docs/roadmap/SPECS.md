@@ -82,7 +82,7 @@ Items not listed above are not release-blocking for MVP, but may remain importan
 
 ### 2.5 Operations and Reliability
 - Pipeline run tracking: `run_id`, status, duration, row counts, rejection counts.
-- Retry policy for transient failures and replay/backfill capability with productized API + operations UI.
+- Deterministic stale-run detection and failure signaling for internal ETL runner lifecycle.
 - SLA checks for stale/failed runs.
 - Reconciliation checks for key KPIs (orders, revenue, item counts).
 
@@ -234,10 +234,9 @@ Legend:
 - `Implemented`: Layered schemas (`staging`, `warehouse`, `marts`) and core warehouse facts/dimensions.
 - `Implemented`: Rejection logging with reason codes and quality gate threshold policy.
 - `Implemented`: Pipeline run metadata, run metrics, and reconciliation table.
-- `Implemented`: Retry/replay/backfill operational workflow is productized with API actions, safety guards, operations UI/status tracking, and runbook documentation.
 - `Implemented`: Dedicated ETL run-history list API supports succeeded/failed/queued/running views with deterministic filters and cursor pagination.
-- `Implemented`: Operation queue runner endpoint now claims queued jobs, transitions status lifecycle (`queued` -> `running` -> terminal), and resolves stale queued jobs automatically.
-- `Partial`: Action handlers are not yet complete for all operation types (`retry` and `backfill` currently fail-fast with explicit runner reason codes).
+- `Implemented`: Operation queue runner internals claim queued jobs, transition lifecycle (`queued` -> `running` -> terminal), and resolve stale queued/running jobs for core ETL reliability.
+- `Not Yet`: End-user retry/replay/backfill operations workflow is intentionally de-scoped from MVP release surface.
 
 ### 11.2 Core Analytics and UI
 - `Implemented`: Unified matrix table with robust filter bar, URL-based filter state, and presets.
@@ -252,8 +251,7 @@ Legend:
 - `Implemented`: CSV export endpoint for analyst matrix/pair/combo/heatmap/attribution datasets with stable columns and metadata.
 - `Implemented`: COGS page includes completeness KPI cards and prioritized missing/invalid watchlist for analyst remediation.
 - `Implemented`: Matrix and matrix export include deterministic COGS readiness state/reasons based on coverage thresholds.
-- `Implemented`: Operations workflow UI route (`/analytics/operations`) supports triggering retry/replay/backfill actions and status tracking.
-- `Implemented`: Operations UI includes ETL run-history observability table with status/date/location/search filters, pagination, and run-level detail view.
+- `Implemented`: ETL run-history observability remains available via dedicated API contract (`/api/etl/runs`) for internal monitoring/reporting workflows.
 - `Implemented`: Pair/combo analysis now has a dedicated GUI route with filter bar, KPI cards, ranked tables, explainability sheet, and secondary export actions.
 - `Implemented`: Pair/combo GUI URL-based filter bar with typed state parsing/serialization and shareable query context.
 - `Implemented`: Pair/combo tables support interactive column sorting directly in GUI.
@@ -297,13 +295,9 @@ Legend:
 - `Implemented`: Dedicated heatmap improvement E2E coverage validates filters, persona insight surfaces, and export behavior.
 - `Implemented`: Dedicated attribution E2E workflow validates page load, confidence threshold URL state, and export behavior.
 - `Implemented`: Dedicated COGS completeness E2E validates KPI/watchlist visibility and matrix export completeness/readiness columns.
-- `Implemented`: Dedicated recovery operations E2E validates operations page availability, API listing, and guardrail rejection behavior.
-- `Implemented`: Recovery operations E2E and release-gate checks validate ETL run-history visibility, status filtering, and shortcut trigger wiring.
-- `Implemented`: Recovery E2E and release-gate smoke validate operation-runner endpoint availability and queued-operation consumption path.
 - `Implemented`: User manual chapters cover released heatmap, pair/combo, agent guardrail, and scheduler workflows with operational guidance.
 - `Implemented`: User manual includes attribution workflow and confidence-tuning guidance.
 - `Implemented`: User manual covers COGS completeness KPIs, watchlist usage, and readiness interpretation.
-- `Implemented`: User manual and runbook include retry/replay/backfill recovery workflow guidance.
 
 ### 11.8 Minimal Release Feature Table
 
@@ -337,9 +331,9 @@ Legend:
 | 25 | Heatmap export contract + release-e2e + manual coverage | Implemented | Heatmap CSV export contract is documented; E2E and manual content are updated to release state. |
 | 26 | Instagram attribution workflow (UI + confidence policy + scheduler linkage) | Implemented | Attribution overview UI, deterministic confidence tuning, and scheduler drill-through outcomes are implemented. |
 | 27 | Attribution export contract + release-e2e + manual coverage | Implemented | Attribution dataset export contract, E2E coverage, and manual updates are implemented. |
-| 28 | Retry/replay/backfill operations workflow + runbook + validation | Implemented | API actions, safety/idempotency guards, operations UI/status tracking, E2E checks, and runbook/manual updates are implemented. |
-| 29 | ETL run-history observability (API contract + UI filters + detail/shortcuts) | Implemented | `/api/etl/runs` plus operations run-history UI, shortcut actions, and release validation are implemented. |
-| 30 | ETL operation queue runner lifecycle and stale queue recovery | Implemented | Runner API claims queued operation jobs, updates lifecycle state, and auto-resolves stale queued records. |
+| 28 | Retry/replay/backfill operations workflow + runbook + validation | Not Yet | Intentionally de-scoped from current MVP release surface; internal APIs are disabled for MVP mode. |
+| 29 | ETL run-history observability (API contract + UI filters + detail/shortcuts) | Partial | `/api/etl/runs` API contract and filters are implemented; operations UI/shortcuts are removed from MVP surface. |
+| 30 | ETL operation queue runner lifecycle and stale queue recovery | Implemented | Internal runner lifecycle and stale queue/running guardrails remain implemented for reliability hardening. |
 
 ### 11.9 Open Features Backlog (All `Partial` + `Not Yet`, Not Release-Blocking for MVP)
 
@@ -349,4 +343,4 @@ Legend:
 | H6 | Tenant-boundary enforcement hardening beyond current scoping | Partial | Location/branch scoping exists in model/routes; formalized explicit tenant-boundary authz controls remain incomplete. |
 | H7 | Full RBAC and explicit tenant authz controls | Not Yet | Location scoping exists; formal RBAC remains pending. |
 | H8 | End-to-end audit trail for recommendation-affecting actions | Not Yet | Not fully implemented as a complete audit system. |
-| H9 | Full retry/backfill runner handler execution parity | Partial | Runner infrastructure is shipped, but `retry` and `backfill` handlers are not fully executable yet. |
+| H9 | Full retry/backfill runner handler execution parity | Not Yet | End-user operation handlers are de-scoped from MVP and remain a post-MVP capability. |
