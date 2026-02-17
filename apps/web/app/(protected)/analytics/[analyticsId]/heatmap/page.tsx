@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
+import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import { Badge } from "@workspace/ui/components/badge";
 
 import {
   Tabs,
@@ -25,6 +27,12 @@ import {
 
 // Client UI component
 import { HeatmapMatrix } from "./heatmap-matrix";
+import {
+  avgDemandPerRow,
+  deriveHeatmapAnalystInsights,
+  deriveHeatmapMarketerInsights,
+  formatPct,
+} from "@/lib/analytics/heatmap-insights";
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>;
@@ -100,6 +108,14 @@ export default async function Page({ params }: PageProps) {
   const daily = adaptDailyHeatmapMatrix(dailyItems, START_HOUR, END_HOUR);
 
   const weekly = adaptWeeklyHeatmapMatrix(weeklyItems);
+  const marketerInsights = deriveHeatmapMarketerInsights(daily.rows, daily.columnLabels);
+  const analystInsights = deriveHeatmapAnalystInsights(
+    daily.rows,
+    daily.columnLabels,
+    weekly.rows,
+    weekly.columnLabels,
+  );
+  const avgRowDemand = avgDemandPerRow(daily.rows);
 
   // --------------------------------------------------
   // UI
@@ -117,6 +133,44 @@ export default async function Page({ params }: PageProps) {
         title={tHeatmap("heading")}
         description={tHeatmap("description")}
       />
+      <section className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Marketer Focus</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="default">Peak: {marketerInsights.peakWindow?.label ?? "—"}</Badge>
+              <Badge variant="secondary">Weak: {marketerInsights.weakWindow?.label ?? "—"}</Badge>
+            </div>
+            <p className="text-muted-foreground">
+              Peak volume: {marketerInsights.peakWindow?.totalQty ?? 0} orders.
+              Menu focus: {marketerInsights.menuFocusAtPeak?.menu ?? "—"}.
+            </p>
+            <p>{marketerInsights.suggestedAction}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Analyst Focus</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">
+                Underperforming: {analystInsights.underperformingWindow?.label ?? "—"}
+              </Badge>
+              <Badge variant="outline">Bias: {analystInsights.weekdayWeekendBias}</Badge>
+            </div>
+            <p className="text-muted-foreground">
+              Concentration risk: {analystInsights.concentrationRisk?.menu ?? "—"} (
+              {analystInsights.concentrationRisk ? formatPct(analystInsights.concentrationRisk.share) : "0.0%"})
+              . Avg demand per menu row: {avgRowDemand.toFixed(1)}.
+            </p>
+            <p>{analystInsights.suggestedAction}</p>
+          </CardContent>
+        </Card>
+      </section>
 
       <Tabs defaultValue="daily" className="space-y-4">
         <TabsList className="w-full grid grid-cols-2 justify-start sm:inline-flex sm:w-fit">
