@@ -138,6 +138,49 @@ async function run() {
     console.log("[e2e] replay-shortcut: skipped (no run with pipeline id available)");
   }
 
+  const runnerResult = await page.evaluate(
+    async ({ locationId, baseUrl }) => {
+      const res = await fetch(`${baseUrl}/api/etl/operations/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          locationId: Number(locationId),
+          limit: 5,
+        }),
+      });
+      return {
+        ok: res.ok,
+        status: res.status,
+        body: await res.text(),
+      };
+    },
+    { locationId, baseUrl },
+  );
+  assert(runnerResult.ok, `Operations runner failed (${runnerResult.status}): ${runnerResult.body}`);
+
+  const queuedReplayResult = await page.evaluate(
+    async ({ locationId, baseUrl }) => {
+      const res = await fetch(
+        `${baseUrl}/api/etl/operations?locationId=${encodeURIComponent(locationId)}&action=replay&status=queued&limit=20`,
+      );
+      const body = await res.json().catch(() => null);
+      return {
+        ok: res.ok,
+        status: res.status,
+        operations: Array.isArray(body?.operations) ? body.operations : [],
+      };
+    },
+    { locationId, baseUrl },
+  );
+  assert(queuedReplayResult.ok, `Queued replay check failed (${queuedReplayResult.status})`);
+  const nowMs = Date.now();
+  const staleQueuedReplayCount = queuedReplayResult.operations.filter((op: { createdAt?: string }) => {
+    const createdAtMs = Date.parse(op.createdAt ?? "");
+    if (!Number.isFinite(createdAtMs)) return false;
+    return nowMs - createdAtMs > 5 * 60_000;
+  }).length;
+  assert(staleQueuedReplayCount === 0, `Found ${staleQueuedReplayCount} stale queued replay operation(s)`);
+
   const screenshotPath = path.join(artifactsDir, "analytics-recovery-operations-final.png");
   await page.screenshot({ path: screenshotPath, fullPage: true });
   const video = page.video();
@@ -149,6 +192,7 @@ async function run() {
   console.log(`[e2e] list-status: ${listResult.status}`);
   console.log(`[e2e] runs-list-status: ${runsResult.status}`);
   console.log(`[e2e] failed-runs-filter-status: ${failedRunsFilterResult.status}`);
+  console.log(`[e2e] runner-status: ${runnerResult.status}`);
   console.log(`[e2e] guardrail-status: ${invalidBackfillResult.status}`);
   console.log(`[e2e] screenshot: ${screenshotPath}`);
   console.log(`[e2e] video: ${videoPath ?? "<not-recorded>"}`);
