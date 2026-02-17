@@ -78,10 +78,11 @@ Items not listed above are not release-blocking for MVP, but may remain importan
 - Versioned contracts (`v1`, `v1.x`) for API payloads and marts.
 - Backward-compatibility policy and deprecation window documented.
 - Required vs optional fields explicitly defined per contract.
+- ETL run-history API contract documented (`packages/docs/ETL_RUNS_LIST_API_CONTRACT.md`).
 
 ### 2.5 Operations and Reliability
 - Pipeline run tracking: `run_id`, status, duration, row counts, rejection counts.
-- Retry policy for transient failures and replay/backfill capability (MVP accepts documented/manual operations while productized automation is pending).
+- Retry policy for transient failures and replay/backfill capability with productized API + operations UI.
 - SLA checks for stale/failed runs.
 - Reconciliation checks for key KPIs (orders, revenue, item counts).
 
@@ -234,6 +235,7 @@ Legend:
 - `Implemented`: Rejection logging with reason codes and quality gate threshold policy.
 - `Implemented`: Pipeline run metadata, run metrics, and reconciliation table.
 - `Implemented`: Retry/replay/backfill operational workflow is productized with API actions, safety guards, operations UI/status tracking, and runbook documentation.
+- `Implemented`: Dedicated ETL run-history list API supports succeeded/failed/queued/running views with deterministic filters and cursor pagination.
 
 ### 11.2 Core Analytics and UI
 - `Implemented`: Unified matrix table with robust filter bar, URL-based filter state, and presets.
@@ -249,6 +251,7 @@ Legend:
 - `Implemented`: COGS page includes completeness KPI cards and prioritized missing/invalid watchlist for analyst remediation.
 - `Implemented`: Matrix and matrix export include deterministic COGS readiness state/reasons based on coverage thresholds.
 - `Implemented`: Operations workflow UI route (`/analytics/operations`) supports triggering retry/replay/backfill actions and status tracking.
+- `Implemented`: Operations UI includes ETL run-history observability table with status/date/location/search filters, pagination, and run-level detail view.
 - `Implemented`: Pair/combo analysis now has a dedicated GUI route with filter bar, KPI cards, ranked tables, explainability sheet, and secondary export actions.
 - `Implemented`: Pair/combo GUI URL-based filter bar with typed state parsing/serialization and shareable query context.
 - `Implemented`: Pair/combo tables support interactive column sorting directly in GUI.
@@ -293,6 +296,7 @@ Legend:
 - `Implemented`: Dedicated attribution E2E workflow validates page load, confidence threshold URL state, and export behavior.
 - `Implemented`: Dedicated COGS completeness E2E validates KPI/watchlist visibility and matrix export completeness/readiness columns.
 - `Implemented`: Dedicated recovery operations E2E validates operations page availability, API listing, and guardrail rejection behavior.
+- `Implemented`: Recovery operations E2E and release-gate checks validate ETL run-history visibility, status filtering, and shortcut trigger wiring.
 - `Implemented`: User manual chapters cover released heatmap, pair/combo, agent guardrail, and scheduler workflows with operational guidance.
 - `Implemented`: User manual includes attribution workflow and confidence-tuning guidance.
 - `Implemented`: User manual covers COGS completeness KPIs, watchlist usage, and readiness interpretation.
@@ -331,6 +335,7 @@ Legend:
 | 26 | Instagram attribution workflow (UI + confidence policy + scheduler linkage) | Implemented | Attribution overview UI, deterministic confidence tuning, and scheduler drill-through outcomes are implemented. |
 | 27 | Attribution export contract + release-e2e + manual coverage | Implemented | Attribution dataset export contract, E2E coverage, and manual updates are implemented. |
 | 28 | Retry/replay/backfill operations workflow + runbook + validation | Implemented | API actions, safety/idempotency guards, operations UI/status tracking, E2E checks, and runbook/manual updates are implemented. |
+| 29 | ETL run-history observability (API contract + UI filters + detail/shortcuts) | Implemented | `/api/etl/runs` plus operations run-history UI, shortcut actions, and release validation are implemented. |
 
 ### 11.9 Open Features Backlog (All `Partial` + `Not Yet`, Not Release-Blocking for MVP)
 

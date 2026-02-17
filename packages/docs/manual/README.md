@@ -17,7 +17,7 @@ This manual explains the ship-ready features that already deliver practical valu
 - Use agents + guardrails (`06`) for assisted content and controlled automation under data-readiness policy.
 - Use weekly scheduler (`07`) to operationalize Instagram plans with trust/readiness controls and draft-to-final workflow.
 - Use attribution overview (`08`) to measure post outcomes with confidence tuning and exportable reporting context.
-- Use recovery operations (`09`) to safely retry/replay/backfill ETL workflows when failures or stale windows occur.
+- Use recovery operations (`09`) to monitor ETL run history and safely retry/replay/backfill workflows when failures or stale windows occur.
 
 ## Suggested Learning Path
 
@@ -41,4 +41,4 @@ This manual explains the ship-ready features that already deliver practical valu
 6. [Audience/Tone Agent Outputs and Guardrails](./06-agents-and-data-readiness-guardrails.md)
 7. [Weekly Scheduler and Trust Guardrails](./07-weekly-scheduler-and-trust-guardrails.md)
 8. [Instagram Attribution Overview and Confidence Tuning](./08-instagram-attribution-overview-and-confidence.md)
-9. [Pipeline Recovery Operations (Retry, Replay, Backfill)](./09-pipeline-recovery-operations.md)
+9. [Pipeline Recovery Operations and ETL Run History Observability](./09-pipeline-recovery-operations.md)

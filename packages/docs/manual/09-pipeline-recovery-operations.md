@@ -3,6 +3,7 @@
 ## What This Feature Is About
 
 This workflow lets operators trigger and monitor ETL recovery actions when data pipelines fail or coverage becomes stale.
+It also provides ETL run-history observability so operators can review succeeded and failed runs in one place.
 
 Main page:
 - `/analytics/operations`
@@ -15,6 +16,15 @@ Use it whenever matrix/heatmap/scheduler/attribution pages are impacted by faile
 - `retry`: re-attempt a failed pipeline run.
 - `replay`: re-run a known pipeline run context.
 - `backfill`: reprocess a bounded date window.
+
+## ETL Run History Panel
+
+The same page includes an **ETL Run History** table that lists:
+- `queued`, `running`, `succeeded`, and `failed` runs together.
+- Pipeline run id, start/finish timestamps, duration, source, and error summary.
+- Quality hints (for example: operation-triggered run, missing pipeline id, failure-needs-recovery).
+
+Use this panel before triggering recovery so the team has a shared, evidence-based view of current ETL state.
 
 ## When To Use Each Action
 
@@ -39,15 +49,25 @@ Use it whenever matrix/heatmap/scheduler/attribution pages are impacted by faile
 5. Queue operation.
 6. Monitor status table (`queued`, `running`, `succeeded`, `failed`).
 
+## Run History Filters and Pagination
+
+Use filters to narrow triage quickly:
+- Location selector.
+- Status selector.
+- Date window (`fromDate`, `toDate`).
+- Search by pipeline run id or source text.
+
+For larger histories, use **Load more** to continue using cursor-based pagination while keeping deterministic ordering.
+
 ## Step-by-Step Examples
 
 ### Example A: Retry Failed Run
 
-1. Find failed `pipelineRunId` in operation/observability context.
-2. Select action `retry`.
-3. Enter the failed `pipelineRunId`.
-4. Add reason: "Recover failed nightly ingestion".
-5. Queue operation and monitor until `succeeded`.
+1. Open ETL Run History and filter status to `failed`.
+2. Open run details and verify error context and identifiers.
+3. Click `Retry` shortcut directly from the failed run row (or queue `retry` manually).
+4. Confirm the request is queued (or deduped).
+5. Monitor status until `succeeded`.
 6. Re-check matrix and scheduler readiness/freshness.
 
 Expected result:
@@ -65,6 +85,14 @@ Expected result:
 Expected result:
 - missing/stale range is regenerated.
 - downstream insights use refreshed range coverage.
+
+### Example C: Replay From Run History
+
+1. Find a run with a valid pipeline run id in ETL Run History.
+2. Open row details to confirm context.
+3. Click `Replay` shortcut from the row.
+4. Verify the operation appears in Operation Status.
+5. Validate affected analytics pages after completion.
 
 ## Safety and Guardrails
 
@@ -91,10 +119,13 @@ Expected result:
    - confirm data window coverage for recent posts.
 4. Heatmap page:
    - confirm expected date/daypart visibility.
+5. Operations page:
+   - confirm ETL Run History reflects updated run states/timestamps.
 
 ## Why It Delivers Real Value
 
 - Faster recovery from failed/stale pipeline states.
+- Faster diagnosis because successful and failed runs are visible in one workflow.
 - Consistent, controlled operations behavior without ad-hoc scripts.
 - Better trust continuity for matrix, heatmap, scheduler, and attribution decisions.
 
@@ -104,7 +135,9 @@ Expected result:
   - restore campaign decision pages quickly when freshness degrades.
   - reduce delays in weekly Instagram planning caused by pipeline incidents.
   - maintain confidence signals before executing promotions.
+  - distinguish quickly between true outages vs temporary lag by checking recent succeeded runs.
 - Menu analysts:
   - recover profitability/margin decision views without manual data patching.
   - ensure pair/combo/attribution analysis uses complete and current windows.
   - keep weekly reporting cadence stable after pipeline failures.
+  - justify reruns with run-history evidence before finalizing weekly action lists.
