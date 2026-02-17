@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
@@ -74,6 +74,8 @@ export function OperationsClient({ locations }: Props) {
   const [runsMessage, setRunsMessage] = useState("");
   const [runsNextCursor, setRunsNextCursor] = useState<string | null>(null);
   const [runsHasMore, setRunsHasMore] = useState(false);
+  const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
+  const [runActionLoadingId, setRunActionLoadingId] = useState<string | null>(null);
 
   const runFilterLocationLabel = useMemo(() => {
     if (runFilterLocationId === "all") return "all locations";
@@ -152,6 +154,40 @@ export function OperationsClient({ locations }: Props) {
     void fetchRuns();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runStatusFilter, runFromDateFilter, runToDateFilter, runSearchFilter, runFilterLocationId]);
+
+  const queueRunShortcut = async (shortcutAction: "retry" | "replay", run: EtlRunRecord) => {
+    if (!run.pipelineRunId) {
+      setRunsMessage("Cannot trigger shortcut: selected run does not include pipelineRunId.");
+      return;
+    }
+    setRunActionLoadingId(run.id);
+    setRunsMessage("");
+    try {
+      const res = await fetch("/api/etl/operations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: shortcutAction,
+          locationId: run.locationId,
+          pipelineRunId: run.pipelineRunId,
+          reason: `run-history-shortcut:${shortcutAction}:${run.id}`,
+        }),
+      });
+      const data = (await res.json()) as { error?: string; message?: string; deduped?: boolean };
+      if (!res.ok) throw new Error(data.message ?? data.error ?? "Failed to queue operation shortcut");
+
+      setRunsMessage(
+        data.deduped
+          ? `${shortcutAction} request reused existing idempotent operation.`
+          : `${shortcutAction} request queued.`,
+      );
+      await Promise.all([fetchOperations(), fetchRuns()]);
+    } catch (error) {
+      setRunsMessage(error instanceof Error ? error.message : "Failed to queue operation shortcut");
+    } finally {
+      setRunActionLoadingId(null);
+    }
+  };
 
   const submit = async () => {
     if (!canSubmit) return;
@@ -414,36 +450,97 @@ export function OperationsClient({ locations }: Props) {
                   <TableHead>Source</TableHead>
                   <TableHead>Error summary</TableHead>
                   <TableHead>Quality hints</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {runs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-sm text-muted-foreground">
+                    <TableCell colSpan={9} className="text-sm text-muted-foreground">
                       No ETL runs found for these filters.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  runs.map((run) => (
-                    <TableRow key={run.id}>
-                      <TableCell>
-                        <Badge variant={statusBadgeVariant(run.status)}>{run.status}</Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">{run.pipelineRunId ?? "—"}</TableCell>
-                      <TableCell>{run.startedAt ? new Date(run.startedAt).toLocaleString() : "—"}</TableCell>
-                      <TableCell>{run.finishedAt ? new Date(run.finishedAt).toLocaleString() : "—"}</TableCell>
-                      <TableCell>{run.durationMs == null ? "—" : `${Math.round(run.durationMs / 1000)}s`}</TableCell>
-                      <TableCell className="max-w-[22rem] truncate text-xs text-muted-foreground">
-                        {run.sourceFile ?? "—"}
-                      </TableCell>
-                      <TableCell className="max-w-[20rem] text-xs text-muted-foreground">
-                        {run.errorSummary ?? "—"}
-                      </TableCell>
-                      <TableCell className="max-w-[18rem] text-xs text-muted-foreground">
-                        {run.qualityHints.length > 0 ? run.qualityHints.join(", ") : "—"}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  runs.map((run) => {
+                    const isExpanded = expandedRunId === run.id;
+                    const disableRetry = run.status !== "failed" || !run.pipelineRunId;
+                    const disableReplay = !run.pipelineRunId;
+                    return (
+                      <Fragment key={run.id}>
+                        <TableRow>
+                          <TableCell>
+                            <Badge variant={statusBadgeVariant(run.status)}>{run.status}</Badge>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">{run.pipelineRunId ?? "—"}</TableCell>
+                          <TableCell>{run.startedAt ? new Date(run.startedAt).toLocaleString() : "—"}</TableCell>
+                          <TableCell>{run.finishedAt ? new Date(run.finishedAt).toLocaleString() : "—"}</TableCell>
+                          <TableCell>
+                            {run.durationMs == null ? "—" : `${Math.round(run.durationMs / 1000)}s`}
+                          </TableCell>
+                          <TableCell className="max-w-[22rem] truncate text-xs text-muted-foreground">
+                            {run.sourceFile ?? "—"}
+                          </TableCell>
+                          <TableCell className="max-w-[20rem] text-xs text-muted-foreground">
+                            {run.errorSummary ?? "—"}
+                          </TableCell>
+                          <TableCell className="max-w-[18rem] text-xs text-muted-foreground">
+                            {run.qualityHints.length > 0 ? run.qualityHints.join(", ") : "—"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setExpandedRunId(isExpanded ? null : run.id)}
+                              >
+                                {isExpanded ? "Hide" : "Details"}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => void queueRunShortcut("retry", run)}
+                                disabled={disableRetry || runActionLoadingId === run.id}
+                              >
+                                Retry
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => void queueRunShortcut("replay", run)}
+                                disabled={disableReplay || runActionLoadingId === run.id}
+                              >
+                                Replay
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                        {isExpanded ? (
+                          <TableRow key={`${run.id}-detail`}>
+                            <TableCell colSpan={9} className="bg-muted/20 text-xs">
+                              <div className="space-y-1">
+                                <p>
+                                  <span className="font-medium">Run id:</span>{" "}
+                                  <span className="font-mono">{run.id}</span>
+                                </p>
+                                <p>
+                                  <span className="font-medium">Created:</span>{" "}
+                                  {new Date(run.createdAt).toLocaleString()}
+                                </p>
+                                <p>
+                                  <span className="font-medium">Analytics id:</span>{" "}
+                                  {run.analyticsId ?? "—"}
+                                </p>
+                                <p>
+                                  <span className="font-medium">Error message:</span>{" "}
+                                  {run.errorMessage ?? "—"}
+                                </p>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : null}
+                      </Fragment>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
