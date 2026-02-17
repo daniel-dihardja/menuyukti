@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { UpdateCogsForm } from "./update-cogs-form";
+import { summarizeCogsCompleteness } from "@/lib/analytics/cogs-completeness";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
@@ -85,6 +86,7 @@ export default async function Page({ params }: PageProps) {
     totalRevenue: Number(item.totalRevenue),
     menuCategory: item.menuCategory,
   }));
+  const cogsCompleteness = summarizeCogsCompleteness(menuItems);
 
   // --------------------------------------------------
   // UI
@@ -101,6 +103,7 @@ export default async function Page({ params }: PageProps) {
       <UpdateCogsForm
         analyticsId={analyticsId}
         menuItems={menuItems}
+        cogsCompleteness={cogsCompleteness}
         analyticsOptions={analyticsOptions.map((item) => ({
           id: item.id,
           name: item.sourceFile ?? `Analytics #${item.id}`,

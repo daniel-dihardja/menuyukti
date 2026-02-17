@@ -272,6 +272,19 @@
     "cogsForm": {
       "heading": "COGS Editor",
       "description": "Update cost of goods sold per menu item. You can import COGS values from another analytics file in the same location.",
+      "completeness": {
+        "title": "COGS Completeness",
+        "kpi": {
+          "totalItems": "Total menu items",
+          "validItems": "Items with valid COGS",
+          "itemCoverage": "Item coverage",
+          "revenueCoverage": "Revenue coverage"
+        },
+        "watchlist": {
+          "title": "Priority missing/invalid COGS watchlist",
+          "empty": "All menu items currently have valid COGS values."
+        }
+      },
       "import": {
         "label": "Import COGS from analytics",
         "placeholder": "Select analytics",
