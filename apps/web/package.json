@@ -31,7 +31,8 @@
     "test:e2e:ai:sales": "tsx e2e/ai-explorer/run-mission.ts --mission=apps/web/e2e/ai-explorer/missions/sales.json",
     "test:e2e:ai:pairs": "tsx e2e/ai-explorer/run-mission.ts --mission=apps/web/e2e/ai-explorer/missions/pairs.json",
     "test:e2e:ai:scheduler": "tsx e2e/ai-explorer/run-mission.ts --mission=apps/web/e2e/ai-explorer/missions/scheduler.json",
-    "test:e2e:ai:attribution": "tsx e2e/ai-explorer/run-mission.ts --mission=apps/web/e2e/ai-explorer/missions/attribution.json"
+    "test:e2e:ai:attribution": "tsx e2e/ai-explorer/run-mission.ts --mission=apps/web/e2e/ai-explorer/missions/attribution.json",
+    "test:e2e:ai:autofix": "tsx e2e/ai-explorer/auto-fix.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
