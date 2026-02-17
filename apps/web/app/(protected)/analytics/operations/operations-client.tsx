@@ -223,6 +223,35 @@ export function OperationsClient({ locations }: Props) {
     }
   };
 
+  const runQueuedOperations = async () => {
+    if (!locationId) return;
+    setLoading(true);
+    setMessage("");
+    try {
+      const res = await fetch("/api/etl/operations/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          locationId: Number(locationId),
+          limit: 5,
+        }),
+      });
+      const data = (await res.json()) as { processedCount?: number; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to run queued operations");
+
+      setMessage(
+        data.processedCount && data.processedCount > 0
+          ? `Processed ${data.processedCount} queued operation(s).`
+          : "No queued operation found for this location.",
+      );
+      await Promise.all([fetchOperations(), fetchRuns()]);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Failed to run queued operations");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="space-y-6">
       <Card>
@@ -304,6 +333,9 @@ export function OperationsClient({ locations }: Props) {
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" onClick={submit} disabled={!canSubmit || loading}>
               {loading ? "Submitting..." : "Queue operation"}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => void runQueuedOperations()} disabled={loading}>
+              {loading ? "Running..." : "Run queued now"}
             </Button>
             <Button type="button" variant="outline" onClick={() => void fetchOperations()} disabled={polling}>
               {polling ? "Refreshing..." : "Refresh status"}
