@@ -93,6 +93,18 @@ type EntryDraft = {
   status: "draft" | "scheduled" | "published" | "cancelled";
 };
 
+type ComposerDraft = {
+  menuItem: string;
+  daypart: "morning" | "lunch" | "afternoon" | "evening";
+  offerType: "combo_offer" | "happy_hour" | "hero_item";
+  scheduledFor: string;
+  rationale: string;
+  captionVariants: string[];
+  selectedVariant: number;
+  cta: string;
+  hashtagsText: string;
+};
+
 type Props = {
   analyticsId: number;
   locationId: number;
@@ -134,6 +146,13 @@ function daypartToHour(daypart: string): number {
   if (daypart === "lunch") return 12;
   if (daypart === "afternoon") return 16;
   return 19;
+}
+
+function normalizeComposerDaypart(value: string): ComposerDraft["daypart"] {
+  if (value === "morning" || value === "lunch" || value === "afternoon" || value === "evening") {
+    return value;
+  }
+  return "lunch";
 }
 
 function addDays(baseYmd: string, days: number, hour: number): string {
@@ -203,6 +222,18 @@ function HelpLabel({
   );
 }
 
+function buildCaptionVariants(
+  menuItem: string,
+  offerType: "combo_offer" | "happy_hour" | "hero_item",
+  daypart: "morning" | "lunch" | "afternoon" | "evening",
+): string[] {
+  const offerLabel = offerType.replaceAll("_", " ");
+  return [
+    `${daypart.toUpperCase()} pick: ${menuItem}. Try our ${offerLabel} today and bring a friend.`,
+    `${menuItem} is trending this ${daypart}. Limited ${offerLabel} available this week.`,
+  ];
+}
+
 export function SchedulerClient({
   analyticsId,
   locationId,
@@ -224,6 +255,7 @@ export function SchedulerClient({
   const [suggestions, setSuggestions] = useState<WeeklySuggestion[]>(initialSuggestions);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [suggestionsError, setSuggestionsError] = useState<string>("");
+  const [composerDraft, setComposerDraft] = useState<ComposerDraft | null>(null);
   const [entries, setEntries] = useState<EntryDraft[]>(
     initialSchedule?.entries.map(normalizeEntry) ?? [],
   );
@@ -340,19 +372,66 @@ export function SchedulerClient({
   };
 
   const addFromSuggestion = (suggestion: WeeklySuggestion) => {
+    setComposerDraft({
+      menuItem: suggestion.menuItem,
+      daypart: suggestion.suggestedDaypart,
+      offerType: suggestion.offerType,
+      scheduledFor: toLocalDateTimeInput(suggestion.suggestedFor),
+      rationale: suggestion.rationale,
+      captionVariants: buildCaptionVariants(
+        suggestion.menuItem,
+        suggestion.offerType,
+        suggestion.suggestedDaypart,
+      ),
+      selectedVariant: 0,
+      cta: "Book now and mention this post.",
+      hashtagsText: "#menuyukti #restaurantmarketing",
+    });
+  };
+
+  const openComposerFromRecommendation = (recommendation: Recommendation) => {
+    const offerType = recommendation.action === "promote" ? "combo_offer" : "happy_hour";
+    const daypart = normalizeComposerDaypart(recommendation.suggestedDaypart);
+    setComposerDraft({
+      menuItem: recommendation.menuItem,
+      daypart,
+      offerType,
+      scheduledFor: addDays(weekStartDate, entries.length % 7, daypartToHour(recommendation.suggestedDaypart)),
+      rationale: recommendation.actionReason,
+      captionVariants: buildCaptionVariants(
+        recommendation.menuItem,
+        offerType,
+        daypart,
+      ),
+      selectedVariant: 0,
+      cta: "Save your spot for this offer today.",
+      hashtagsText: "#menuyukti #foodpromo",
+    });
+  };
+
+  const applyComposerToSchedule = () => {
+    if (!composerDraft) return;
+    const selectedCaption =
+      composerDraft.captionVariants[composerDraft.selectedVariant] ?? composerDraft.captionVariants[0] ?? "";
+    const hashtags = composerDraft.hashtagsText
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .join(" ");
     setEntries((prev) => [
       ...prev,
       {
-        canonicalMenuName: suggestion.menuItem,
-        scheduledForLocal: toLocalDateTimeInput(suggestion.suggestedFor),
-        daypart: suggestion.suggestedDaypart,
+        canonicalMenuName: composerDraft.menuItem,
+        scheduledForLocal: composerDraft.scheduledFor,
+        daypart: composerDraft.daypart,
         instagramCampaignId: "",
         instagramPostId: "",
-        confidence: suggestion.confidence,
-        rationale: suggestion.rationale,
+        confidence: "medium",
+        rationale: `${composerDraft.rationale} | ${selectedCaption} ${composerDraft.cta} ${hashtags}`.trim(),
         status: "draft",
       },
     ]);
+    setMessage("Composer draft applied to schedule entries.");
   };
 
   useEffect(() => {
@@ -596,6 +675,119 @@ export function SchedulerClient({
         </CardContent>
       </Card>
 
+      {composerDraft ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Post Composer</CardTitle>
+            <CardDescription>
+              Prefilled copy from weekly suggestions. Edit before applying to schedule.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label>Menu</Label>
+                <Input
+                  value={composerDraft.menuItem}
+                  onChange={(event) =>
+                    setComposerDraft((prev) => (prev ? { ...prev, menuItem: event.target.value } : prev))
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Daypart</Label>
+                <Select
+                  value={composerDraft.daypart}
+                  onValueChange={(value) =>
+                    setComposerDraft((prev) =>
+                      prev ? { ...prev, daypart: value as ComposerDraft["daypart"] } : prev,
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="morning">Morning</SelectItem>
+                    <SelectItem value="lunch">Lunch</SelectItem>
+                    <SelectItem value="afternoon">Afternoon</SelectItem>
+                    <SelectItem value="evening">Evening</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Scheduled for</Label>
+                <Input
+                  type="datetime-local"
+                  value={composerDraft.scheduledFor}
+                  onChange={(event) =>
+                    setComposerDraft((prev) => (prev ? { ...prev, scheduledFor: event.target.value } : prev))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Caption variant</Label>
+              <Select
+                value={String(composerDraft.selectedVariant)}
+                onValueChange={(value) =>
+                  setComposerDraft((prev) =>
+                    prev ? { ...prev, selectedVariant: Number(value) || 0 } : prev,
+                  )
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {composerDraft.captionVariants.map((caption, idx) => (
+                    <SelectItem key={`${idx}-${caption.slice(0, 10)}`} value={String(idx)}>
+                      Variant {idx + 1}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {composerDraft.captionVariants[composerDraft.selectedVariant] ?? ""}
+              </p>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>CTA</Label>
+                <Input
+                  value={composerDraft.cta}
+                  onChange={(event) =>
+                    setComposerDraft((prev) => (prev ? { ...prev, cta: event.target.value } : prev))
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Hashtags (comma separated)</Label>
+                <Input
+                  value={composerDraft.hashtagsText}
+                  onChange={(event) =>
+                    setComposerDraft((prev) =>
+                      prev ? { ...prev, hashtagsText: event.target.value } : prev,
+                    )
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="button" onClick={applyComposerToSchedule}>
+                Apply To Schedule
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setComposerDraft(null)}>
+                Close Composer
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Recommendation Candidates</CardTitle>
@@ -632,8 +824,8 @@ export function SchedulerClient({
                     </p>
                     <p className="text-xs text-muted-foreground">{recommendation.actionReason}</p>
                   </div>
-                  <Button type="button" size="sm" onClick={() => addFromRecommendation(recommendation)}>
-                    Add
+                  <Button type="button" size="sm" onClick={() => openComposerFromRecommendation(recommendation)}>
+                    Generate Post
                   </Button>
                 </div>
               ))
