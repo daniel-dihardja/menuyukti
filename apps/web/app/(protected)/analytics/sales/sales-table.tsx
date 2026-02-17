@@ -15,6 +15,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
 import { Badge } from "@workspace/ui/components/badge";
@@ -23,10 +24,23 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@workspace/ui/components/tooltip";
-import { Check, Loader2, Pencil, MoreHorizontal } from "lucide-react";
+import {
+  BarChart3,
+  CalendarClock,
+  Check,
+  Coins,
+  Flame,
+  HandCoins,
+  Link2,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Table2,
+  Trash2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { routes } from "@/lib/routes";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
   evaluateSalesDropdownReadiness,
   SALES_DROPDOWN_ACTION_ORDER,
@@ -143,7 +157,16 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
     readiness: SalesActionReadiness,
   ) => (
     <div className="flex w-full items-center justify-between gap-3">
-      <span>{actionLabel(action)}</span>
+      <div className="flex items-center gap-2">
+        {action === "matrix" ? <Table2 className="h-4 w-4" /> : null}
+        {action === "cogs" ? <Coins className="h-4 w-4" /> : null}
+        {action === "heatmap" ? <Flame className="h-4 w-4" /> : null}
+        {action === "pairs" ? <Link2 className="h-4 w-4" /> : null}
+        {action === "scheduler" ? <CalendarClock className="h-4 w-4" /> : null}
+        {action === "attribution" ? <BarChart3 className="h-4 w-4" /> : null}
+        {action === "finance" ? <HandCoins className="h-4 w-4" /> : null}
+        <span>{actionLabel(action)}</span>
+      </div>
       <Badge variant={statusBadgeVariant(readiness.status)} className="h-5 px-1.5 text-[10px] uppercase">
         {readinessLabel(readiness.status)}
       </Badge>
@@ -240,6 +263,7 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
 
                   <DropdownMenuContent align="end">
                     {SALES_DROPDOWN_ACTION_ORDER.map((action) => {
+                      const withSetupSeparator = action === "cogs";
                       const readiness = readinessByAction[action];
                       const disabled = isActionDisabled(readiness.status);
                       const body = renderActionText(action, readiness);
@@ -258,17 +282,20 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
 
                       if (action === "cogs") {
                         return (
-                          <DropdownMenuItem
-                            key={action}
-                            onClick={() => onCogs(file.id)}
-                            onSelect={(event) => {
-                              if (disabled) event.preventDefault();
-                            }}
-                            aria-disabled={disabled}
-                            className={disabled ? "opacity-60" : undefined}
-                          >
-                            {content}
-                          </DropdownMenuItem>
+                          <Fragment key={action}>
+                            {withSetupSeparator ? <DropdownMenuSeparator /> : null}
+                            <DropdownMenuItem
+                              onClick={() => onCogs(file.id)}
+                              onSelect={(event) => {
+                                if (disabled) event.preventDefault();
+                              }}
+                              aria-disabled={disabled}
+                              className={disabled ? "opacity-60" : undefined}
+                            >
+                              {content}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </Fragment>
                         );
                       }
 
@@ -300,10 +327,12 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                     })}
 
                     {/* Delete */}
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
                       onClick={() => onDelete(file.id)}
                     >
+                      <Trash2 className="h-4 w-4" />
                       {t("delete")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
