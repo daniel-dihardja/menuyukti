@@ -6,6 +6,8 @@ import { getTranslations } from "next-intl/server";
 import { Badge } from "@workspace/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Button } from "@workspace/ui/components/button";
+import { Input } from "@workspace/ui/components/input";
+import { Label } from "@workspace/ui/components/label";
 import Link from "next/link";
 import {
   Table,
@@ -24,6 +26,10 @@ import {
   summarizeAttribution,
   type InstagramAttributionRow,
 } from "@/lib/analytics/instagram-attribution";
+import {
+  evaluateAttributionConfidence,
+  parseConfidenceConfig,
+} from "@/lib/analytics/instagram-attribution-confidence";
 import { prisma } from "@/lib/prisma/client";
 import { routes } from "@/lib/routes";
 
@@ -75,6 +81,16 @@ function renderConfidenceBadge(confidence: string) {
   return <Badge variant="destructive">{confidence}</Badge>;
 }
 
+function reasonLabel(reason: string): string {
+  if (reason === "low_pre_active_days") return "Low pre-window active days";
+  if (reason === "low_post_active_days") return "Low post-window active days";
+  if (reason === "low_coverage_ratio") return "Low coverage ratio";
+  if (reason === "quality_failed") return "Quality failed";
+  if (reason === "freshness_stale") return "Freshness stale";
+  if (reason === "quality_warn") return "Quality warning";
+  return reason;
+}
+
 function buildFromToLabel(from: Date | null, to: Date | null): string {
   if (from && to) return `${formatDate(from)} -> ${formatDate(to)}`;
   if (from) return `${formatDate(from)} -> now`;
@@ -82,7 +98,15 @@ function buildFromToLabel(from: Date | null, to: Date | null): string {
   return "All available";
 }
 
-function AttributionTable({ rows }: { rows: InstagramAttributionRow[] }) {
+type AttributionRowWithConfidence = {
+  row: InstagramAttributionRow;
+  tunedConfidence: string;
+  sourceConfidence: string;
+  confidenceReasons: string[];
+  coverageRatio: number;
+};
+
+function AttributionTable({ rows }: { rows: AttributionRowWithConfidence[] }) {
   return (
     <div className="overflow-x-auto rounded-md border">
       <Table>
@@ -101,7 +125,7 @@ function AttributionTable({ rows }: { rows: InstagramAttributionRow[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((row) => (
+          {rows.map(({ row, tunedConfidence, sourceConfidence, confidenceReasons, coverageRatio }) => (
             <TableRow key={`${row.instagramPostId}-${row.canonicalMenuName}-${row.publishedAt.toISOString()}`}>
               <TableCell>{formatDate(row.publishedAt)}</TableCell>
               <TableCell>#{row.instagramPostId}</TableCell>
@@ -111,8 +135,23 @@ function AttributionTable({ rows }: { rows: InstagramAttributionRow[] }) {
               <TableCell className="text-right">{row.postQty.toFixed(1)}</TableCell>
               <TableCell className="text-right">{formatSignedNumber(row.deltaQty)}</TableCell>
               <TableCell className="text-right">{formatCurrency(row.deltaRevenue)}</TableCell>
-              <TableCell>{renderConfidenceBadge(row.confidenceLevel)}</TableCell>
-              <TableCell className="text-right">{row.attributionWindowDays}</TableCell>
+              <TableCell>
+                <div className="space-y-1">
+                  {renderConfidenceBadge(tunedConfidence)}
+                  {tunedConfidence !== sourceConfidence ? (
+                    <p className="text-xs text-muted-foreground">Source: {sourceConfidence}</p>
+                  ) : null}
+                  {confidenceReasons.length > 0 ? (
+                    <p className="max-w-60 text-xs text-muted-foreground">
+                      {confidenceReasons.join(", ")}
+                    </p>
+                  ) : null}
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                {row.attributionWindowDays}
+                <p className="text-xs text-muted-foreground">{Math.round(coverageRatio * 100)}%</p>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -144,11 +183,40 @@ export default async function AttributionPage({ params, searchParams }: PageProp
   if (!analytics) notFound();
 
   const query = await searchParams;
+  const confidenceParamsEntries: string[][] = Object.entries(query).flatMap(([key, value]) =>
+    Array.isArray(value) ? value.map((v) => [key, v]) : value ? [[key, value]] : [],
+  );
+  const confidenceConfig = parseConfidenceConfig(new URLSearchParams(confidenceParamsEntries));
   const from = parseDateParam(query.from) ?? analytics.periodStart;
   const to = parseDateParam(query.to) ?? analytics.periodEnd;
   const limit = parseLimit(query.limit);
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analytics.id}`;
+
+  const etlJob = await prisma.etlJob.findFirst({
+    where: {
+      analyticsId,
+      status: "succeeded",
+      pipelineRunId: { not: null },
+    },
+    orderBy: { finishedAt: "desc" },
+    select: { pipelineRunId: true },
+  });
+  const pipelineRunRows = etlJob?.pipelineRunId
+    ? await prisma.$queryRaw<Array<{ ingested_at_utc: Date; quality_status: string }>>`
+        SELECT ingested_at_utc, quality_status
+        FROM warehouse.dim_pipeline_run
+        WHERE pipeline_run_id = CAST(${etlJob.pipelineRunId} AS UUID)
+        LIMIT 1
+      `
+    : [];
+  const pipelineRun = pipelineRunRows[0];
+  const freshnessSlaMinutes = Number(process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440");
+  const freshnessMinutes = pipelineRun
+    ? Math.max(0, Math.floor((Date.now() - new Date(pipelineRun.ingested_at_utc).getTime()) / 60_000))
+    : null;
+  const isStale = freshnessMinutes !== null && freshnessMinutes > freshnessSlaMinutes;
+  const qualityStatus = pipelineRun?.quality_status ?? null;
 
   let rows: InstagramAttributionRow[] = [];
   let loadError: string | null = null;
@@ -165,6 +233,23 @@ export default async function AttributionPage({ params, searchParams }: PageProp
   }
 
   const overview = summarizeAttribution(rows);
+  const rowsWithConfidence: AttributionRowWithConfidence[] = rows.map((row) => {
+    const tuned = evaluateAttributionConfidence(
+      row,
+      confidenceConfig,
+      {
+        qualityStatus,
+        isStale,
+      },
+    );
+    return {
+      row,
+      tunedConfidence: tuned.confidence,
+      sourceConfidence: tuned.sourceConfidence,
+      confidenceReasons: tuned.reasons.map(reasonLabel),
+      coverageRatio: tuned.coverageRatio,
+    };
+  });
   const viewState = resolveAttributionViewState(rows, loadError);
 
   return (
@@ -184,10 +269,55 @@ export default async function AttributionPage({ params, searchParams }: PageProp
       <section className="flex flex-wrap items-center gap-2">
         <Badge variant="outline">Window: {buildFromToLabel(from ?? null, to ?? null)}</Badge>
         <Badge variant="outline">Rows: {overview.totalRows}</Badge>
+        <Badge variant="outline">Quality: {qualityStatus ?? "unknown"}</Badge>
+        {freshnessMinutes !== null ? (
+          <Badge variant={isStale ? "destructive" : "secondary"}>Freshness: {freshnessMinutes}m</Badge>
+        ) : null}
         <Button asChild size="sm" variant="outline" className="ml-auto">
           <Link href={routes.analytics.scheduler(analyticsId)}>Go to Scheduler</Link>
         </Button>
       </section>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Confidence Tuning</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="grid gap-3 md:grid-cols-3" method="GET">
+            <div className="space-y-1">
+              <Label htmlFor="minActiveDays">Min active days</Label>
+              <Input
+                id="minActiveDays"
+                name="minActiveDays"
+                type="number"
+                min={1}
+                max={7}
+                defaultValue={String(confidenceConfig.minActiveDays)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="minCoverageRatio">Min coverage ratio</Label>
+              <Input
+                id="minCoverageRatio"
+                name="minCoverageRatio"
+                type="number"
+                min={0.1}
+                max={1}
+                step={0.01}
+                defaultValue={String(confidenceConfig.minCoverageRatio)}
+              />
+            </div>
+            <div className="flex items-end">
+              <Button type="submit" variant="outline">
+                Apply confidence thresholds
+              </Button>
+            </div>
+            {typeof query.from === "string" ? <input type="hidden" name="from" value={query.from} /> : null}
+            {typeof query.to === "string" ? <input type="hidden" name="to" value={query.to} /> : null}
+            {typeof query.limit === "string" ? <input type="hidden" name="limit" value={query.limit} /> : null}
+          </form>
+        </CardContent>
+      </Card>
 
       <section className="grid gap-3 md:grid-cols-4">
         <Card>
@@ -238,7 +368,7 @@ export default async function AttributionPage({ params, searchParams }: PageProp
           </CardContent>
         </Card>
       ) : (
-        <AttributionTable rows={rows} />
+        <AttributionTable rows={rowsWithConfidence} />
       )}
     </AnalyticsPageShell>
   );

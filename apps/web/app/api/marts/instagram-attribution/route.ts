@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { loadInstagramAttribution } from "@/lib/analytics/instagram-attribution";
+import {
+  evaluateAttributionConfidence,
+  parseConfidenceConfig,
+} from "@/lib/analytics/instagram-attribution-confidence";
 
 export async function GET(req: Request) {
   try {
@@ -8,6 +12,8 @@ export async function GET(req: Request) {
     const fromParam = searchParams.get("from");
     const toParam = searchParams.get("to");
     const limitParam = searchParams.get("limit");
+    const qualityStatus = searchParams.get("qualityStatus");
+    const isStale = searchParams.get("isStale") === "true";
 
     if (!locationIdParam) {
       return NextResponse.json({ error: "MISSING_LOCATION_ID" }, { status: 400 });
@@ -41,7 +47,26 @@ export async function GET(req: Request) {
       limit,
     });
 
-    return NextResponse.json({ items: rows });
+    const confidenceConfig = parseConfidenceConfig(searchParams);
+
+    const items = rows.map((row) => {
+      const confidence = evaluateAttributionConfidence(
+        row,
+        confidenceConfig,
+        { qualityStatus, isStale },
+      );
+
+      return {
+        ...row,
+        confidence: confidence.confidence,
+        sourceConfidence: confidence.sourceConfidence,
+        confidenceDowngraded: confidence.downgraded,
+        confidenceReasons: confidence.reasons,
+        coverageRatio: confidence.coverageRatio,
+      };
+    });
+
+    return NextResponse.json({ items });
   } catch (error) {
     console.error("Load instagram attribution mart error:", error);
     return NextResponse.json({ error: "INTERNAL_SERVER_ERROR" }, { status: 500 });
