@@ -22,6 +22,9 @@ It is designed to:
 - Web app can run locally (`http://127.0.0.1:3000` by default).
 - Seeded data exists for mission routes (default templates use `analyticsId=1`).
 - Dependencies are installed in workspace.
+- LLM provider env vars for planner mode:
+  - `OPENAI_API_KEY`
+  - `AI_EXPLORER_MODEL` (optional, default: `gpt-4.1-mini`)
 
 ## Core Building Blocks
 
