@@ -4,6 +4,12 @@ import { Prisma } from "@prisma/client";
 import { AnalyticsResponse } from "../types";
 import { randomUUID } from "crypto";
 import { createHash } from "crypto";
+import { ETL_JOB_STATUS } from "@/lib/etl/pipeline-contract";
+import {
+  createLineageForEtlJob,
+  markLineageRunningForEtlJob,
+  markLineageTerminalForEtlJob,
+} from "@/lib/etl/pipeline-lineage";
 
 export const runtime = "nodejs";
 
@@ -114,13 +120,22 @@ const failJob = async (
   message: string,
   status: "failed" | "failed_quality_gate" = "failed",
 ) => {
-  await prisma.etlJob.update({
-    where: { id: jobId },
-    data: {
-      status,
+  await prisma.$transaction(async (tx) => {
+    await tx.etlJob.update({
+      where: { id: jobId },
+      data: {
+        status,
+        errorMessage: message.slice(0, 1024),
+        finishedAt: new Date(),
+      },
+    });
+    await markLineageTerminalForEtlJob(tx, {
+      etlJobId: jobId,
+      stage: "upload_ingest",
+      status: ETL_JOB_STATUS.FAILED,
+      errorCode: status === "failed_quality_gate" ? "QUALITY_GATE_FAILED" : "UPLOAD_FAILED",
       errorMessage: message.slice(0, 1024),
-      finishedAt: new Date(),
-    },
+    });
   });
 };
 
@@ -139,6 +154,10 @@ async function processUploadJob(params: {
         status: "running",
         startedAt: new Date(),
       },
+    });
+    await markLineageRunningForEtlJob(prisma, {
+      etlJobId: params.jobId,
+      stage: "upload_ingest",
     });
 
     const ANALYTICS_API_URL = process.env.ANALYTICS_API_URL;
@@ -954,14 +973,28 @@ async function processUploadJob(params: {
       { maxWait: 10_000, timeout: 180_000 },
     );
 
-    await prisma.etlJob.update({
-      where: { id: params.jobId },
-      data: {
-        status: "succeeded",
-        analyticsId: createdAnalyticsId,
+    await prisma.$transaction(async (tx) => {
+      await tx.etlJob.update({
+        where: { id: params.jobId },
+        data: {
+          status: "succeeded",
+          analyticsId: createdAnalyticsId,
+          pipelineRunId,
+          finishedAt: new Date(),
+        },
+      });
+      await markLineageTerminalForEtlJob(tx, {
+        etlJobId: params.jobId,
+        stage: "upload_ingest",
+        status: ETL_JOB_STATUS.SUCCEEDED,
         pipelineRunId,
-        finishedAt: new Date(),
-      },
+        analyticsId: createdAnalyticsId,
+        outputRef: {
+          pipelineRunId,
+          analyticsId: createdAnalyticsId,
+          sourceFile: params.fileName,
+        },
+      });
     });
   } catch (error: unknown) {
     console.error("Upload job failed:", error);
@@ -1014,17 +1047,33 @@ export async function POST(request: Request) {
 
     let job: { id: string };
     try {
-      job = await prisma.etlJob.create({
-        data: {
+      job = await prisma.$transaction(async (tx) => {
+        const created = await tx.etlJob.create({
+          data: {
+            locationId,
+            sourceFile: file.name,
+            fileHash,
+            idempotencyKey,
+            status: "queued",
+          },
+          select: {
+            id: true,
+          },
+        });
+        await createLineageForEtlJob(tx, {
+          etlJobId: created.id,
           locationId,
-          sourceFile: file.name,
-          fileHash,
-          idempotencyKey,
-          status: "queued",
-        },
-        select: {
-          id: true,
-        },
+          trigger: "upload_complete",
+          source: "upload",
+          actor: "api:analytics_create",
+          stage: "upload_ingest",
+          inputRef: {
+            fileName: file.name,
+            fileHash,
+            idempotencyKey,
+          },
+        });
+        return created;
       });
     } catch (error) {
       if (

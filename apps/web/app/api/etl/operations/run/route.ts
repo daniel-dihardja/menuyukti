@@ -4,6 +4,11 @@ import {
   ETL_JOB_STATUS,
   ETL_STAGE_ERROR_CODE,
 } from "@/lib/etl/pipeline-contract";
+import {
+  createLineageForEtlJob,
+  markLineageRunningForEtlJob,
+  markLineageTerminalForEtlJob,
+} from "@/lib/etl/pipeline-lineage";
 
 type OperationAction = "retry" | "replay" | "backfill";
 const STALE_QUEUE_ERROR = ETL_STAGE_ERROR_CODE.STALE_QUEUED_OPERATION_TIMEOUT;
@@ -46,6 +51,22 @@ function parseOperationSourceFile(raw: string | null): {
   return { isOperation: true, action, meta };
 }
 
+async function ensureLineageExists(job: OperationJob): Promise<void> {
+  await createLineageForEtlJob(prisma, {
+    etlJobId: job.id,
+    locationId: job.locationId,
+    pipelineRunId: job.pipelineRunId,
+    trigger: "manual_operation",
+    source: "runner",
+    actor: "api:etl_operations_run",
+    stage: "matrix_materialization",
+    inputRef: {
+      pipelineRunId: job.pipelineRunId,
+      sourceFile: job.sourceFile,
+    },
+  });
+}
+
 async function claimNextQueuedOperation(locationId: number | null): Promise<OperationJob | null> {
   const candidate = await prisma.etlJob.findFirst({
     where: {
@@ -73,48 +94,81 @@ async function claimNextQueuedOperation(locationId: number | null): Promise<Oper
     },
   });
   if (claimed.count === 0) return null;
+
+  await markLineageRunningForEtlJob(prisma, {
+    etlJobId: candidate.id,
+    stage: "matrix_materialization",
+  });
   return { ...candidate, status: ETL_JOB_STATUS.RUNNING };
+}
+
+async function markFailed(jobId: string, message: string) {
+  await prisma.$transaction(async (tx) => {
+    await tx.etlJob.update({
+      where: { id: jobId },
+      data: {
+        status: ETL_JOB_STATUS.FAILED,
+        errorMessage: message.slice(0, 1024),
+        finishedAt: new Date(),
+      },
+    });
+    await markLineageTerminalForEtlJob(tx, {
+      etlJobId: jobId,
+      stage: "matrix_materialization",
+      status: ETL_JOB_STATUS.FAILED,
+      errorCode: message.split(":")[0] ?? ETL_STAGE_ERROR_CODE.RUNNER_OPERATION_EXECUTION_FAILED,
+      errorMessage: message.slice(0, 1024),
+    });
+  });
+}
+
+async function markSucceeded(jobId: string) {
+  await prisma.$transaction(async (tx) => {
+    await tx.etlJob.update({
+      where: { id: jobId },
+      data: {
+        status: ETL_JOB_STATUS.SUCCEEDED,
+        errorMessage: null,
+        finishedAt: new Date(),
+      },
+    });
+
+    const etlJob = await tx.etlJob.findUnique({
+      where: { id: jobId },
+      select: { pipelineRunId: true, analyticsId: true },
+    });
+
+    await markLineageTerminalForEtlJob(tx, {
+      etlJobId: jobId,
+      stage: "matrix_materialization",
+      status: ETL_JOB_STATUS.SUCCEEDED,
+      pipelineRunId: etlJob?.pipelineRunId ?? null,
+      analyticsId: etlJob?.analyticsId ?? null,
+      outputRef: {
+        pipelineRunId: etlJob?.pipelineRunId ?? null,
+        analyticsId: etlJob?.analyticsId ?? null,
+      },
+    });
+  });
 }
 
 async function resolveStaleQueuedOperations(locationId: number | null): Promise<number> {
   const staleMinutes = resolveQueueStaleMinutes();
   const cutoff = new Date(Date.now() - staleMinutes * 60_000);
-  const result = await prisma.etlJob.updateMany({
+  const staleJobs = await prisma.etlJob.findMany({
     where: {
       status: ETL_JOB_STATUS.QUEUED,
       sourceFile: { startsWith: "operation:" },
       createdAt: { lt: cutoff },
       ...(locationId == null ? {} : { locationId }),
     },
-    data: {
-      status: ETL_JOB_STATUS.FAILED,
-      errorMessage: `${STALE_QUEUE_ERROR}:${staleMinutes}m`,
-      finishedAt: new Date(),
-    },
+    select: { id: true },
   });
-  return result.count;
-}
 
-async function markFailed(jobId: string, message: string) {
-  await prisma.etlJob.update({
-    where: { id: jobId },
-    data: {
-      status: ETL_JOB_STATUS.FAILED,
-      errorMessage: message.slice(0, 1024),
-      finishedAt: new Date(),
-    },
-  });
-}
-
-async function markSucceeded(jobId: string) {
-  await prisma.etlJob.update({
-    where: { id: jobId },
-    data: {
-      status: ETL_JOB_STATUS.SUCCEEDED,
-      errorMessage: null,
-      finishedAt: new Date(),
-    },
-  });
+  for (const staleJob of staleJobs) {
+    await markFailed(staleJob.id, `${STALE_QUEUE_ERROR}:${staleMinutes}m`);
+  }
+  return staleJobs.length;
 }
 
 async function executeReplay(job: OperationJob, meta: Record<string, string>) {
@@ -154,6 +208,7 @@ async function executeReplay(job: OperationJob, meta: Record<string, string>) {
 }
 
 async function executeClaimedOperation(job: OperationJob): Promise<{ action: string; status: string; error?: string }> {
+  await ensureLineageExists(job);
   const parsed = parseOperationSourceFile(job.sourceFile);
   if (!parsed.isOperation || !parsed.action) {
     const message = ETL_STAGE_ERROR_CODE.RUNNER_INVALID_OPERATION_SOURCE_FILE;

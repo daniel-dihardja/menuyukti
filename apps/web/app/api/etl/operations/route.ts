@@ -6,6 +6,7 @@ import {
   ETL_JOB_STATUS,
   ETL_STAGE_ERROR_CODE,
 } from "@/lib/etl/pipeline-contract";
+import { createLineageForEtlJob } from "@/lib/etl/pipeline-lineage";
 
 type OperationAction = "retry" | "replay" | "backfill";
 
@@ -377,27 +378,48 @@ export async function POST(req: Request) {
       requestId: randomUUID().slice(0, 8),
     });
 
-    const job = await prisma.etlJob.create({
-      data: {
+    const job = await prisma.$transaction(async (tx) => {
+      const created = await tx.etlJob.create({
+        data: {
+          locationId,
+          analyticsId,
+          sourceFile,
+          fileHash: null,
+          idempotencyKey,
+          status: ETL_JOB_STATUS.QUEUED,
+          errorMessage: body.reason?.slice(0, 500) ?? null,
+          pipelineRunId: pipelineRunId || null,
+        },
+        select: {
+          id: true,
+          status: true,
+          locationId: true,
+          sourceFile: true,
+          pipelineRunId: true,
+          idempotencyKey: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      await createLineageForEtlJob(tx, {
+        etlJobId: created.id,
         locationId,
         analyticsId,
-        sourceFile,
-        fileHash: null,
-        idempotencyKey,
-        status: ETL_JOB_STATUS.QUEUED,
-        errorMessage: body.reason?.slice(0, 500) ?? null,
         pipelineRunId: pipelineRunId || null,
-      },
-      select: {
-        id: true,
-        status: true,
-        locationId: true,
-        sourceFile: true,
-        pipelineRunId: true,
-        idempotencyKey: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+        trigger: "manual_operation",
+        source: action,
+        actor: "api:etl_operations",
+        stage: "matrix_materialization",
+        inputRef: {
+          pipelineRunId: pipelineRunId || null,
+          fromDate: fromDateRaw || null,
+          toDate: toDateRaw || null,
+          idempotencyKey,
+        },
+      });
+
+      return created;
     });
 
     const parsed = parseOperationSourceFile(job.sourceFile);
