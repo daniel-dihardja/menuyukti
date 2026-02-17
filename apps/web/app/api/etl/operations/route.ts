@@ -28,6 +28,12 @@ function daysBetweenInclusive(from: Date, to: Date): number {
   return Math.floor(ms / 86_400_000) + 1;
 }
 
+function resolveBackfillMaxDays(): number {
+  const parsed = Number(process.env.ETL_BACKFILL_MAX_DAYS ?? "31");
+  if (!Number.isFinite(parsed) || parsed < 1) return 31;
+  return Math.floor(parsed);
+}
+
 function buildOperationSourceFile(action: OperationAction, payload: Record<string, string>): string {
   const parts = Object.entries(payload)
     .filter(([, value]) => value !== "")
@@ -95,6 +101,18 @@ async function findExistingByIdempotencyKey(idempotencyKey: string) {
       errorMessage: true,
     },
   });
+}
+
+async function hasActiveOperationConflict(locationId: number): Promise<boolean> {
+  const active = await prisma.etlJob.findFirst({
+    where: {
+      locationId,
+      status: { in: ["queued", "running"] },
+      sourceFile: { startsWith: "operation:" },
+    },
+    select: { id: true },
+  });
+  return Boolean(active);
 }
 
 export async function GET(req: Request) {
@@ -228,9 +246,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "INVALID_DATE_RANGE_ORDER" }, { status: 400 });
       }
       const rangeDays = daysBetweenInclusive(fromDate, toDate);
-      if (rangeDays > 31) {
+      const maxDays = resolveBackfillMaxDays();
+      if (rangeDays > maxDays) {
         return NextResponse.json(
-          { error: "BACKFILL_RANGE_TOO_LARGE", maxDays: 31 },
+          { error: "BACKFILL_RANGE_TOO_LARGE", maxDays },
           { status: 400 },
         );
       }
@@ -273,20 +292,47 @@ export async function POST(req: Request) {
       );
     }
 
-    let analyticsId: number | null = null;
-    if (pipelineRunId) {
-      const sourceJob = await prisma.etlJob.findFirst({
-        where: {
-          pipelineRunId,
-          locationId,
-        },
-        orderBy: { createdAt: "desc" },
-        select: {
-          analyticsId: true,
-        },
-      });
-      analyticsId = sourceJob?.analyticsId ?? null;
+    const sourceJob = pipelineRunId
+      ? await prisma.etlJob.findFirst({
+          where: {
+            pipelineRunId,
+            locationId,
+          },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            status: true,
+            analyticsId: true,
+          },
+        })
+      : null;
+
+    if (pipelineRunId && !sourceJob) {
+      return NextResponse.json(
+        { error: "SOURCE_PIPELINE_RUN_NOT_FOUND" },
+        { status: 404 },
+      );
     }
+
+    if (action === "retry" && sourceJob && sourceJob.status !== "failed") {
+      return NextResponse.json(
+        { error: "RETRY_REQUIRES_FAILED_SOURCE_RUN" },
+        { status: 409 },
+      );
+    }
+
+    const hasConflict = await hasActiveOperationConflict(locationId);
+    if (hasConflict) {
+      return NextResponse.json(
+        {
+          error: "OPERATION_CONFLICT_ACTIVE_RUN",
+          message: "Another retry/replay/backfill operation is already queued or running for this location.",
+        },
+        { status: 409 },
+      );
+    }
+
+    const analyticsId = sourceJob?.analyticsId ?? null;
 
     const sourceFile = buildOperationSourceFile(action, {
       pipelineRunId,
