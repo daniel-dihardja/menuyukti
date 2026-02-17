@@ -5,6 +5,76 @@ import type {
   UpsertInstagramWeeklyScheduleRequest,
 } from "@/app/api/instagram/types";
 
+function hasSchedulerDelegates(): boolean {
+  const client = prisma as unknown as Record<string, unknown>;
+  return Boolean(client.instagramWeeklySchedule) && Boolean(client.instagramWeeklyScheduleEntry);
+}
+
+function isMissingSchedulerStorageError(error: unknown): boolean {
+  const maybe = error as {
+    code?: string;
+    meta?: { code?: string; message?: string };
+    message?: string;
+  };
+
+  const message = String(maybe?.meta?.message ?? maybe?.message ?? "");
+  const isPrismaRawQueryError = maybe?.code === "P2010";
+  const isMissingRelationCode = maybe?.meta?.code === "42P01";
+  const referencesSchedulerTable =
+    message.includes("instagram_weekly_schedules") ||
+    message.includes("instagram_weekly_schedule_entries");
+
+  return (isPrismaRawQueryError && isMissingRelationCode) || referencesSchedulerTable;
+}
+
+type SchedulerStorageReadiness = {
+  delegateReady: boolean;
+  tablesReady: boolean;
+};
+
+async function getSchedulerStorageReadiness(): Promise<SchedulerStorageReadiness> {
+  const delegateReady = hasSchedulerDelegates();
+  try {
+    const rows = await prisma.$queryRaw<
+      Array<{
+        schedules: string | null;
+        entries: string | null;
+      }>
+    >`
+      SELECT
+        to_regclass('public.instagram_weekly_schedules')::text AS schedules,
+        to_regclass('public.instagram_weekly_schedule_entries')::text AS entries
+    `;
+
+    const result = rows[0];
+    return {
+      delegateReady,
+      tablesReady: Boolean(result?.schedules) && Boolean(result?.entries),
+    };
+  } catch (error) {
+    if (isMissingSchedulerStorageError(error)) {
+      return {
+        delegateReady,
+        tablesReady: false,
+      };
+    }
+    throw error;
+  }
+}
+
+function schedulerStorageNotReadyResponse(readiness: SchedulerStorageReadiness) {
+  return NextResponse.json(
+    {
+      error: "SCHEDULER_STORAGE_NOT_READY",
+      message:
+        "Instagram weekly scheduler tables or Prisma delegates are not available. Run database migrations and Prisma generate before using scheduler save APIs.",
+      readiness,
+      actions: ["pnpm -C apps/web run db:init", "pnpm -C apps/web run db:gen"],
+    },
+    { status: 503 },
+  );
+}
+
 function normalizeMenuName(name: string): string {
   return name.trim().replace(/\s+/g, " ").toLowerCase();
 }
@@ -331,6 +401,11 @@ async function persistEntries(
 
 export async function GET(req: NextRequest) {
   try {
+    const readiness = await getSchedulerStorageReadiness();
+    if (!readiness.delegateReady || !readiness.tablesReady) {
+      return schedulerStorageNotReadyResponse(readiness);
+    }
+
     const locationId = Number(req.nextUrl.searchParams.get("locationId"));
     const weekStartDateRaw = req.nextUrl.searchParams.get("weekStartDate");
 
@@ -363,6 +438,12 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ schedules, guardrail }, { status: 200 });
   } catch (error) {
+    if (isMissingSchedulerStorageError(error)) {
+      return schedulerStorageNotReadyResponse({
+        delegateReady: hasSchedulerDelegates(),
+        tablesReady: false,
+      });
+    }
     console.error("List Instagram weekly schedules error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -370,6 +451,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const readiness = await getSchedulerStorageReadiness();
+    if (!readiness.delegateReady || !readiness.tablesReady) {
+      return schedulerStorageNotReadyResponse(readiness);
+    }
+
     const body = (await req.json()) as Partial<UpsertInstagramWeeklyScheduleRequest>;
     const locationId = Number(body.locationId);
 
@@ -454,6 +540,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ schedule: scheduleWithEntries, guardrail }, { status: 200 });
   } catch (error) {
+    if (isMissingSchedulerStorageError(error)) {
+      return schedulerStorageNotReadyResponse({
+        delegateReady: hasSchedulerDelegates(),
+        tablesReady: false,
+      });
+    }
     console.error("Upsert Instagram weekly schedule error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -461,6 +553,11 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    const readiness = await getSchedulerStorageReadiness();
+    if (!readiness.delegateReady || !readiness.tablesReady) {
+      return schedulerStorageNotReadyResponse(readiness);
+    }
+
     const body = (await req.json()) as Partial<UpdateInstagramWeeklyScheduleRequest> & { scheduleId?: number };
     const scheduleId = Number(body.scheduleId);
     const locationId = Number(body.locationId);
@@ -536,6 +633,12 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ schedule, guardrail }, { status: 200 });
   } catch (error) {
+    if (isMissingSchedulerStorageError(error)) {
+      return schedulerStorageNotReadyResponse({
+        delegateReady: hasSchedulerDelegates(),
+        tablesReady: false,
+      });
+    }
     console.error("Update Instagram weekly schedule error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
