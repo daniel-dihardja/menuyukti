@@ -7,12 +7,18 @@ Define the minimum set of capabilities required to deliver measurable value for:
 
 Menuyukti is a data-engineering-first product. Therefore, value must come from deterministic, trustworthy analytics before any AI narration.
 
+This document reflects the current release state and defines what is required for a **minimum valuable product (MVP) release** today.
+
 ---
 
 ## 1. Product Success Metrics (Minimum)
 
+MVP value must be demonstrated for both primary personas:
+- Restaurant marketers receive actionable Instagram marketing decisions from trustworthy analytics.
+- Menu analysts receive decision-grade profitability and mix insights from trustworthy analytics.
+
 ### 1.1 Marketer Outcomes
-- Time-to-first-weekly Instagram plan: <= 15 minutes from upload.
+- Time-to-first marketer decision package (matrix + presets + recommended actions): <= 15 minutes from upload.
 - At least one data-backed promotion candidate per branch/week when quality is `passed`.
 - Shareable decision views adopted by marketing team (URL-based filter state).
 
@@ -24,6 +30,22 @@ Menuyukti is a data-engineering-first product. Therefore, value must come from d
 ### 1.3 Platform Outcomes
 - Decisions shown in UI must be traceable to deterministic features and run metadata.
 - No recommendation should be shown as confident when quality/freshness is below threshold.
+
+---
+
+## 1A. MVP Release Baseline (Gate-Critical)
+
+For a minimum valuable release, all items below are required and release-blocking:
+- Upload -> ETL -> marts path with idempotency, rejection logging, and pipeline run lineage.
+- Decision-grade matrix workflow with explainable actions, freshness/quality visibility, filter presets, and URL state.
+- Marketer value path: branch/daypart promotion candidates and confidence-aware rationale suitable for Instagram planning.
+- Analyst workflow with pair metrics, combo opportunities, and CSV export.
+- Analyst value path: profitability, margin, and mix decisions are explainable and exportable for weekly review.
+- Agent invocation with structured feature inputs and data-readiness guardrails.
+- Release-gate E2E coverage for marketer and analyst critical paths, including failure artifacts.
+- SLI/SLO contract defined and quality-gate behavior enforced in UI/API behavior.
+
+Items not listed above are not release-blocking for MVP, but may remain important for post-MVP hardening and scale.
 
 ---
 
@@ -56,7 +78,7 @@ Menuyukti is a data-engineering-first product. Therefore, value must come from d
 
 ### 2.5 Operations and Reliability
 - Pipeline run tracking: `run_id`, status, duration, row counts, rejection counts.
-- Retry policy for transient failures and replay/backfill capability.
+- Retry policy for transient failures and replay/backfill capability (MVP accepts documented/manual operations while productized automation is pending).
 - SLA checks for stale/failed runs.
 - Reconciliation checks for key KPIs (orders, revenue, item counts).
 
@@ -96,7 +118,7 @@ Menuyukti is a data-engineering-first product. Therefore, value must come from d
 - Item-level rationale and confidence indicator for each recommendation.
 
 ### 5.2 Content Execution Support
-- Post brief scaffold per recommended item:
+- Post brief scaffold per recommended item (minimum contract-level support):
   - angle/hook
   - offer suggestion
   - CTA direction
@@ -105,8 +127,10 @@ Menuyukti is a data-engineering-first product. Therefore, value must come from d
 
 ### 5.3 Instagram Attribution (Minimum)
 - Track campaign/post identifier and promoted item mapping.
-- Compute basic before/after sales signal by item and daypart window.
-- Mark attribution confidence as low when sample size/coverage is insufficient.
+- Baseline before/after sales signal by item and daypart window is available via API/mart.
+- Attribution confidence must be downgradeable when sample size/coverage is insufficient.
+
+Note: Full end-user scheduling UX and full attribution UX are not release-blocking for MVP.
 
 ---
 
@@ -156,10 +180,12 @@ Menuyukti is a data-engineering-first product. Therefore, value must come from d
 
 ## 9. Security, Tenancy, and Governance Minimum Requirements
 
-- Branch/company-level data isolation (multi-tenant safety).
-- Role-based access control for sensitive analytics actions.
-- Audit trail for uploads, recalculations, and recommendation-affecting edits.
+- Branch/location-level data isolation in data model and route scoping.
 - Privacy-safe telemetry payloads (no raw sensitive data leakage).
+
+Post-MVP hardening targets (important, but not MVP release-blocking):
+- Full role-based access control for sensitive analytics actions.
+- End-to-end audit trail for uploads, recalculations, and recommendation-affecting edits.
 
 ---
 
@@ -179,14 +205,18 @@ Menuyukti is a data-engineering-first product. Therefore, value must come from d
 ## Release Gate (Minimum)
 
 A release is production-ready only if:
-1. SLOs are met for the defined window.
+1. MVP Release Baseline (Section 1A) is satisfied.
 2. Data quality gate behavior is enforced in UI and APIs.
 3. Marketer workflow and analyst workflow each pass end-to-end validation.
-4. Recommendation outputs remain traceable to deterministic feature inputs.
+4. Marketer and analyst workflows each show explicit persona value in acceptance checks:
+   - marketer: actionable Instagram recommendation outputs with rationale/confidence
+   - analyst: decision-grade data outputs for profitability/mix optimization
+5. Recommendation outputs remain traceable to deterministic feature inputs.
+6. Defined SLOs are either met for the evaluation window, or have explicit temporary waiver documented with owner, expiry date, and mitigation.
 
 ---
 
-## 11. Current Implementation Status (As of 2026-02-16)
+## 11. Current Implementation Status (As of 2026-02-17)
 
 Legend:
 - `Implemented`: Delivered and observable in code/runtime.
@@ -248,7 +278,7 @@ Legend:
 
 ### 11.8 Minimal Release Feature Table
 
-| # | Minimal Release Feature | Status | Notes |
+| # | MVP Release-Critical Feature | Status | Notes |
 |---|---|---|---|
 | 0 | Release SLI/SLO metrics contract | Implemented | Contract documented with formulas, owners, and thresholds. |
 | 1 | Async upload ingestion job (`queued/running/succeeded/failed`) | Implemented | Job queue + polling endpoint exists. |
@@ -263,35 +293,25 @@ Legend:
 | 10 | Freshness + quality visibility on decision page | Implemented | Matrix page shows run, quality, freshness, stale warning. |
 | 11 | Daypart analytics endpoint | Implemented | Daypart mart API route exists. |
 | 12 | Menu alias mapping for canonicalization | Implemented | Alias table and ETL join logic are present. |
-| 13 | COGS completeness workflow for analysts | Partial | COGS update flow exists; completeness dashboards/export still limited. |
+| 13 | COGS coverage support for analysts (MVP level) | Implemented | COGS update flow exists and supports matrix profitability decisions; deeper completeness reporting remains post-MVP hardening. |
 | 14 | Marketer action workflow (`promote/improve/remove`) | Implemented | Action-oriented matrix UX and presets are available. |
-| 15 | Instagram weekly post scheduling workflow | Partial | Foundations exist, but full scheduling UX/workflow is not fully productized. |
-| 16 | Instagram attribution (post/campaign -> sales lift) | Partial | Baseline pre/post attribution mart and read API endpoint implemented; confidence tuning and full UX integration still pending. |
-| 26 | Instagram campaign/post identity data model | Implemented | Canonical `instagram_campaigns` and `instagram_posts` with branch scope, identity fields, and publish-time indexes. |
-| 27 | Post-to-promoted-menu mapping model + upsert API | Implemented | Canonical mapping table with idempotent write path and dedupe by normalized menu name. |
+| 15 | Instagram campaign/post identity data model | Implemented | Canonical `instagram_campaigns` and `instagram_posts` with branch scope, identity fields, and publish-time indexes. |
+| 16 | Post-to-promoted-menu mapping model + upsert API | Implemented | Canonical mapping table with idempotent write path and dedupe by normalized menu name. |
 | 17 | Pair-menu analysis (support/confidence/lift) | Implemented | Pair metrics mart and API deliver support/confidence/lift with configurable sample threshold and noise flag. |
-| 28 | Order basket pair fact + idempotent refresh SQL | Implemented | `warehouse.fact_order_basket_pair` and `warehouse.refresh_fact_order_basket_pair(run_id)` added for deterministic co-purchase base data. |
-| 29 | Pair metrics mart + analyst API endpoint | Implemented | `marts.vw_pair_metrics_daily_base` and `/api/marts/pair-metrics` endpoint provide branch/date-filtered pair signals. |
 | 18 | Combo recommendation engine | Implemented | Margin-aware combo opportunity mart and ranked API endpoint are implemented. |
-| 30 | Margin-aware combo opportunity mart + API | Implemented | `marts.vw_combo_opportunity_candidates` and `/api/marts/combo-opportunities` provide ranked combo candidates with score breakdown. |
-| 31 | Analyst CSV export (matrix/pairs/combos) | Implemented | `/api/exports/analyst` exports filtered datasets with stable columns and generation metadata. |
-| 19 | Agent architecture using structured feature inputs | Implemented | Agents invoke with structured `core_input` and derived features. |
-| 20 | Agent guardrails for low-quality/fresh data | Implemented | Agent invocation routes enforce readiness policy and return structured guardrail status. |
-| 32 | Agent data-readiness guardrail utility integration | Implemented | Shared readiness helper integrated in audience/tone routes with block/downgrade behavior. |
-| 21 | RBAC and explicit tenant authz controls | Not Yet | Location scoping exists, formal RBAC not yet implemented. |
-| 22 | Audit trail for recommendation-affecting actions | Not Yet | Not fully implemented as a complete audit system. |
-| 23 | E2E upload -> analytics path | Implemented | Playwright e2e with artifact capture exists. |
-| 24 | E2E matrix filter/preset path | Implemented | Dedicated matrix journey e2e exists with artifacts. |
-| 25 | Full release-gate E2E suite (marketer + analyst) | Implemented | Dedicated release-gate script validates marketer matrix journey and analyst export workflow with artifacts. |
-| 33 | Release-gate E2E script wiring | Implemented | `test:e2e:release-gate` script and required env variables are wired for deterministic execution. |
-| 37 | Pair/combo GUI E2E coverage | Implemented | `test:e2e:pairs` validates pair page filters, explainability interaction, and CSV export link responses. |
-| 34 | Pair/combo GUI route and navigation | Implemented | `/analytics/{analyticsId}/pairs` is fully wired from sales actions with analytics context and trust metadata. |
-| 35 | Pair/combo URL filter bar | Implemented | Typed filter state utility and GUI filter bar are implemented with apply/reset and shareable URL state. |
-| 36 | Pair/combo insight UI and explainability | Implemented | KPI cards, ranked pair/combo tables, explainability sheet, and secondary export actions are available in GUI. |
-| 38 | Interactive sortable columns for pair/combo tables | Implemented | Users can sort key columns directly from table headers with visible sort direction indicators. |
-| 39 | Pair filter threshold tooltips | Implemented | In-context tooltips explain Min sample size and Min lift behavior and practical usage. |
-| 40 | Pair filter explanatory tooltips | Implemented | GUI now surfaces targeted tooltips for Min sample size, Min lift, Min confidence, and Sort by behavior. |
-| 41 | Pair type taxonomy and contract | Implemented | Deterministic pair type contract (`food_drink`, `food_food`, `drink_drink`, `unknown`) is documented and applied across marts/APIs/UI. |
-| 42 | Pair-type-aware combo scoring | Implemented | Combo scoring includes `food_drink` boost and explicit explainability fields for base score and boost factor. |
-| 43 | Pair type UI filtering and badges | Implemented | Pair/combo GUI supports `pairType` URL filter and visible pair type badges in both tables. |
-| 44 | Pair-type-aware API/export coverage | Implemented | Pair/combo marts APIs and analyst CSV exports include pair type and pair-type boost metadata. |
+| 19 | Analyst CSV export (matrix/pairs/combos) | Implemented | `/api/exports/analyst` exports filtered datasets with stable columns and generation metadata. |
+| 20 | Agent architecture using structured feature inputs + guardrails | Implemented | Agents invoke with structured `core_input`; readiness helper enforces block/downgrade behavior. |
+| 21 | E2E upload -> analytics + release-gate workflows | Implemented | Upload, matrix, release-gate, and pair/combo e2e suites are wired with artifact capture. |
+
+### 11.9 Open Features Backlog (All `Partial` + `Not Yet`, Not Release-Blocking for MVP)
+
+| # | Post-MVP Capability | Status | Notes |
+|---|---|---|---|
+| H1 | Productized Instagram weekly scheduling UX/workflow | Partial | Foundations exist, but full workflow is not yet productized in app UX. |
+| H2 | Full Instagram attribution UX + confidence tuning | Partial | Baseline pre/post attribution mart and read API exist; full workflow integration is pending. |
+| H3 | Productized retry/replay/backfill runbooks/automation | Partial | Operational workflow exists but is not fully automated/productized. |
+| H4 | Analyst cost/price completeness reporting hardening | Partial | COGS update flow exists, but richer analyst completeness reporting/export coverage remains limited. |
+| H5 | Agent I/O contract governance hardening | Partial | Versioned contracts exist, but tighter governance for agent input/output schemas remains pending. |
+| H6 | Tenant-boundary enforcement hardening beyond current scoping | Partial | Location/branch scoping exists in model/routes; formalized explicit tenant-boundary authz controls remain incomplete. |
+| H7 | Full RBAC and explicit tenant authz controls | Not Yet | Location scoping exists; formal RBAC remains pending. |
+| H8 | End-to-end audit trail for recommendation-affecting actions | Not Yet | Not fully implemented as a complete audit system. |
