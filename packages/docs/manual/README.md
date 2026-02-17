@@ -12,7 +12,7 @@ This manual explains the ship-ready features that already deliver practical valu
 
 - Start with upload (`01`) to understand the required workflow order.
 - Continue with matrix and filters (`02`, `03`) to learn daily decision making.
-- Use daypart + COGS (`04`) to improve timing and margin accuracy.
+- Use daypart heatmaps + COGS (`04`) to improve timing and margin accuracy with trust-aware signals.
 - Use pair/combo + export (`05`) for deeper analyst workflows, pair-type strategy (`food+drink`), and reporting.
 - Use agents + guardrails (`06`) for assisted content and controlled automation.
 - Use weekly scheduler (`07`) to operationalize Instagram plans with trust/readiness controls.

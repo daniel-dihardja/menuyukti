@@ -10,9 +10,17 @@ This combines three critical reliability layers:
 
 ## How To Use
 
-1. Review daypart trends from marts-backed analytics endpoints/pages.
-2. Open `/analytics/{analyticsId}/cogs` and fill missing or inaccurate COGS.
-3. On decision pages, verify:
+1. Open `/analytics/{analyticsId}/heatmap` and review:
+   - marketer focus (peak/weak windows + menu focus)
+   - analyst focus (underperforming windows + concentration risk + bias)
+2. Apply heatmap filters:
+   - menu search
+   - top rows
+   - weekday/weekend segmentation
+   - sort by total demand or selected window
+3. Export filtered heatmap context when needed via **Export Heatmap CSV**.
+4. Open `/analytics/{analyticsId}/cogs` and fill missing or inaccurate COGS.
+5. On decision pages, verify:
    - quality status (`passed`, `warn`, `failed`)
    - freshness age vs SLA
 
@@ -30,3 +38,8 @@ This combines three critical reliability layers:
 ## Decision Rule
 
 If quality is `warn/failed` or freshness is stale, treat recommendations as lower confidence and rerun ingestion when possible.
+
+## Practical Notes
+
+- Heatmap insights are deterministic aggregates, not predictions.
+- If readiness is `blocked`, do not finalize campaign timing decisions from this snapshot.

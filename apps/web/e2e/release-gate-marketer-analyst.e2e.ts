@@ -86,6 +86,30 @@ async function run() {
     "Matrix export is missing expected header columns",
   );
 
+  const heatmapUrl = `${baseUrl}/analytics/${analyticsId}/heatmap`;
+  await page.goto(heatmapUrl, { waitUntil: "domcontentloaded" });
+  await page.getByRole("heading", { name: /menu sales heatmap/i }).waitFor({
+    state: "visible",
+    timeout: 30_000,
+  });
+  await page.getByRole("heading", { name: /marketer focus/i }).waitFor({
+    state: "visible",
+    timeout: 10_000,
+  });
+  await page.getByText(/readiness:/i).first().waitFor({
+    state: "visible",
+    timeout: 10_000,
+  });
+  const heatmapExportHref = await page
+    .getByRole("link", { name: "Export Heatmap CSV" })
+    .getAttribute("href");
+  assert(heatmapExportHref, "Heatmap export link missing");
+  const heatmapCsv = await fetchCsv(page, `${baseUrl}${heatmapExportHref}`);
+  assert(
+    heatmapCsv.startsWith("dataset,generated_at,analytics_id,location_id"),
+    "Heatmap export is missing expected header columns",
+  );
+
   const schedulerUrl = `${baseUrl}/analytics/${analyticsId}/scheduler`;
   await page.goto(schedulerUrl, { waitUntil: "domcontentloaded" });
   await page.getByRole("heading", { name: /instagram weekly scheduler/i }).waitFor({
