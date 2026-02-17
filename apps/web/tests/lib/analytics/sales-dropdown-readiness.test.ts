@@ -33,7 +33,7 @@ describe("sales dropdown readiness", () => {
     expect(readiness.finance.status).toBe("ready");
   });
 
-  it("marks scheduler and attribution as needs_attribution_data when attribution is missing", () => {
+  it("marks attribution as needs_attribution_data when attribution is missing", () => {
     const signals = {
       hasCoreData: true,
       hasCogsData: true,
@@ -42,7 +42,7 @@ describe("sales dropdown readiness", () => {
 
     const readiness = evaluateSalesDropdownReadiness(signals);
 
-    expect(readiness.scheduler.status).toBe("needs_attribution_data");
+    expect(readiness.scheduler.status).toBe("ready");
     expect(readiness.attribution.status).toBe("needs_attribution_data");
   });
 

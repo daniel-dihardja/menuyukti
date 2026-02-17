@@ -108,15 +108,14 @@ export function evaluateSalesActionReadiness(
     action === "matrix" ||
     action === "heatmap" ||
     action === "pairs" ||
-    action === "finance" ||
-    action === "scheduler"
+    action === "finance"
   ) {
     if (!signals.hasCogsData) {
       return readiness(action, "needs_cogs", "missing_cogs");
     }
   }
 
-  if (action === "scheduler" || action === "attribution") {
+  if (action === "attribution") {
     if (!signals.hasAttributionData) {
       return readiness(action, "needs_attribution_data", "missing_attribution_data");
     }

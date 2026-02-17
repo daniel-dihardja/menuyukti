@@ -122,10 +122,18 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
     return "outline";
   };
 
-  const isActionDisabled = (status: SalesActionReadinessStatus): boolean =>
-    status === "needs_cogs" ||
-    status === "needs_attribution_data" ||
-    status === "blocked";
+  const isActionDisabled = (
+    action: SalesDropdownAction,
+    status: SalesActionReadinessStatus,
+  ): boolean => {
+    // Scheduler must always be accessible; readiness remains visible via badge/tooltip.
+    if (action === "scheduler") return false;
+    return (
+      status === "needs_cogs" ||
+      status === "needs_attribution_data" ||
+      status === "blocked"
+    );
+  };
 
   const readinessLabel = (status: SalesActionReadinessStatus): string =>
     t(`readiness.badges.${status}`);
@@ -265,7 +273,7 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                     {SALES_DROPDOWN_ACTION_ORDER.map((action) => {
                       const withSetupSeparator = action === "cogs";
                       const readiness = readinessByAction[action];
-                      const disabled = isActionDisabled(readiness.status);
+                      const disabled = isActionDisabled(action, readiness.status);
                       const body = renderActionText(action, readiness);
                       const content = readiness.reasonMessage ? (
                         <Tooltip>
