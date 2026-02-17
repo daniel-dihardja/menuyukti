@@ -73,6 +73,39 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
 
+  const etlJob = await prisma.etlJob.findFirst({
+    where: {
+      analyticsId,
+      status: "succeeded",
+      pipelineRunId: { not: null },
+    },
+    orderBy: { finishedAt: "desc" },
+    select: { pipelineRunId: true },
+  });
+
+  const pipelineRunRows = etlJob?.pipelineRunId
+    ? await prisma.$queryRaw<Array<{ ingested_at_utc: Date; quality_status: string }>>`
+        SELECT ingested_at_utc, quality_status
+        FROM warehouse.dim_pipeline_run
+        WHERE pipeline_run_id = CAST(${etlJob.pipelineRunId} AS UUID)
+        LIMIT 1
+      `
+    : [];
+  const pipelineRun = pipelineRunRows[0];
+
+  const freshnessSlaMinutes = Number(process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440");
+  const freshnessMinutes = pipelineRun
+    ? Math.max(
+        0,
+        Math.floor((Date.now() - new Date(pipelineRun.ingested_at_utc).getTime()) / 60_000),
+      )
+    : null;
+  const isStale = freshnessMinutes !== null && freshnessMinutes > freshnessSlaMinutes;
+
+  const qualityStatus = String(pipelineRun?.quality_status ?? "").toLowerCase() || "unknown";
+  const readiness: "ready" | "degraded" | "blocked" =
+    qualityStatus === "failed" ? "blocked" : qualityStatus === "warn" || isStale ? "degraded" : "ready";
+
   // --------------------------------------------------
   // Parse + validate heatmap_json
   // --------------------------------------------------
@@ -128,6 +161,20 @@ export default async function Page({ params, searchParams }: PageProps) {
     segmentedWeekly.labels,
   );
   const avgRowDemand = avgDemandPerRow(filteredDailyRows);
+  const confidenceLabel =
+    readiness === "ready" ? "high" : readiness === "degraded" ? "medium" : "blocked";
+  const marketerAction =
+    readiness === "blocked"
+      ? "Heatmap timing guidance is blocked due to data readiness. Re-run ingestion and resolve quality before execution."
+      : readiness === "degraded"
+        ? `Use with caution: ${marketerInsights.suggestedAction}`
+        : marketerInsights.suggestedAction;
+  const analystAction =
+    readiness === "blocked"
+      ? "Analyst optimization guidance is blocked due to readiness policy. Fix freshness/quality before decisions."
+      : readiness === "degraded"
+        ? `Use with caution: ${analystInsights.suggestedAction}`
+        : analystInsights.suggestedAction;
 
   // --------------------------------------------------
   // UI
@@ -145,6 +192,16 @@ export default async function Page({ params, searchParams }: PageProps) {
         title={tHeatmap("heading")}
         description={tHeatmap("description")}
       />
+      <section className="flex flex-wrap items-center gap-2">
+        <Badge variant={readiness === "blocked" ? "destructive" : readiness === "degraded" ? "secondary" : "default"}>
+          readiness: {readiness}
+        </Badge>
+        <Badge variant="outline">quality: {qualityStatus}</Badge>
+        {freshnessMinutes !== null ? (
+          <Badge variant={isStale ? "destructive" : "secondary"}>freshness: {freshnessMinutes}m</Badge>
+        ) : null}
+        <Badge variant="outline">confidence: {confidenceLabel}</Badge>
+      </section>
       <section className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="pb-3">
@@ -159,7 +216,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               Peak volume: {marketerInsights.peakWindow?.totalQty ?? 0} orders.
               Menu focus: {marketerInsights.menuFocusAtPeak?.menu ?? "—"}.
             </p>
-            <p>{marketerInsights.suggestedAction}</p>
+            <p>{marketerAction}</p>
           </CardContent>
         </Card>
 
@@ -179,7 +236,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               {analystInsights.concentrationRisk ? formatPct(analystInsights.concentrationRisk.share) : "0.0%"})
               . Avg demand per menu row: {avgRowDemand.toFixed(1)}.
             </p>
-            <p>{analystInsights.suggestedAction}</p>
+            <p>{analystAction}</p>
           </CardContent>
         </Card>
       </section>
