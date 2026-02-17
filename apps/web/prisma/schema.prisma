@@ -37,6 +37,7 @@ model Location {
   instagramPostPromotedItems InstagramPostPromotedItem[]
   instagramWeeklySchedules InstagramWeeklySchedule[]
   instagramWeeklyScheduleEntries InstagramWeeklyScheduleEntry[]
+  instagramSchedulePostDrafts InstagramSchedulePostDraft[]
 
   @@map("branches")
   @@schema("public")
@@ -183,6 +184,7 @@ model InstagramWeeklySchedule {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   entries InstagramWeeklyScheduleEntry[]
+  postDrafts InstagramSchedulePostDraft[]
 
   @@unique([locationId, weekStartDate], map: "uq_instagram_weekly_schedule_branch_week_start")
   @@index([locationId, weekStartDate], map: "ix_instagram_weekly_schedule_branch_week_start")
@@ -216,12 +218,74 @@ model InstagramWeeklyScheduleEntry {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  postDraft InstagramSchedulePostDraft?
+
   @@unique([scheduleId, canonicalMenuNameNorm, scheduledFor], map: "uq_instagram_weekly_schedule_entry_key")
   @@index([locationId, scheduledFor], map: "ix_instagram_weekly_schedule_entry_branch_scheduled_for")
   @@index([scheduleId, scheduledFor], map: "ix_instagram_weekly_schedule_entry_schedule_scheduled_for")
   @@index([instagramCampaignId], map: "ix_instagram_weekly_schedule_entry_campaign_id")
   @@index([instagramPostId], map: "ix_instagram_weekly_schedule_entry_post_id")
   @@map("instagram_weekly_schedule_entries")
+  @@schema("public")
+}
+
+model InstagramSchedulePostDraft {
+  id Int @id @default(autoincrement())
+
+  locationId Int      @map("branch_id")
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  analyticsId Int?      @map("analytics_id")
+  analytics   Analytics? @relation(fields: [analyticsId], references: [id], onDelete: SetNull)
+
+  scheduleId Int                     @map("schedule_id")
+  schedule   InstagramWeeklySchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  scheduleEntryId Int                          @unique(map: "uq_instagram_schedule_post_draft_schedule_entry_id") @map("schedule_entry_id")
+  scheduleEntry   InstagramWeeklyScheduleEntry @relation(fields: [scheduleEntryId], references: [id], onDelete: Cascade)
+
+  status               String @default("draft")
+  campaignObjective    String? @map("campaign_objective")
+  offerType            String? @map("offer_type")
+  caption              String
+  callToAction         String? @map("call_to_action")
+  hashtagsJson         Json?   @map("hashtags_json")
+  suggestedPublishAt   DateTime? @map("suggested_publish_at")
+  generationInputJson  Json?   @map("generation_input_json")
+  generationOutputJson Json?   @map("generation_output_json")
+  sourceSignalsJson    Json?   @map("source_signals_json")
+  version              Int     @default(1)
+  approvedAt           DateTime? @map("approved_at")
+  publishedAt          DateTime? @map("published_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  statusHistory InstagramSchedulePostDraftHistory[]
+
+  @@index([locationId, status], map: "ix_instagram_schedule_post_draft_branch_status")
+  @@index([scheduleId], map: "ix_instagram_schedule_post_draft_schedule_id")
+  @@index([analyticsId], map: "ix_instagram_schedule_post_draft_analytics_id")
+  @@map("instagram_schedule_post_drafts")
+  @@schema("public")
+}
+
+model InstagramSchedulePostDraftHistory {
+  id Int @id @default(autoincrement())
+
+  draftId Int                       @map("draft_id")
+  draft   InstagramSchedulePostDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  fromStatus String? @map("from_status")
+  toStatus   String  @map("to_status")
+  actor      String?
+  reason     String?
+  metadata   Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([draftId, createdAt], map: "ix_instagram_schedule_post_draft_history_draft_created_at")
+  @@map("instagram_schedule_post_draft_history")
   @@schema("public")
 }
 
@@ -279,6 +343,7 @@ model Analytics {
   etlJobs      EtlJob[]
   etlPipelineRuns EtlPipelineRun[]
   anomalyEvents AnomalyEvent[]
+  instagramSchedulePostDrafts InstagramSchedulePostDraft[]
 
   @@index([locationId], map: "ix_analytics_branch_id")
   @@map("analytics")

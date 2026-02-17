@@ -18,4 +18,6 @@ export const SEED_TABLES: SeedTable[] = [
   { schema: "public", table: "instagram_post_promoted_items" },
   { schema: "public", table: "instagram_weekly_schedules" },
   { schema: "public", table: "instagram_weekly_schedule_entries" },
+  { schema: "public", table: "instagram_schedule_post_drafts" },
+  { schema: "public", table: "instagram_schedule_post_draft_history" },
 ];
