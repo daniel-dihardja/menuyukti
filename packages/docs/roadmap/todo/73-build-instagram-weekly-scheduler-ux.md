@@ -3,6 +3,7 @@
 ## Story Metadata
 - Created Date: 2026-02-17
 - Status: `todo`
+- Parent: none
 
 ## Goal
 Ship a marketer-facing weekly calendar workflow that turns recommendation outputs into a practical posting plan.

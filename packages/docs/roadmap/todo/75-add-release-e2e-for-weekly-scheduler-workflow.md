@@ -3,6 +3,7 @@
 ## Story Metadata
 - Created Date: 2026-02-17
 - Status: `todo`
+- Parent: 73
 
 ## Goal
 Add deterministic E2E coverage for the weekly scheduler path from recommendation to saved schedule.

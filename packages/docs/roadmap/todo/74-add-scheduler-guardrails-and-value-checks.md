@@ -3,6 +3,7 @@
 ## Story Metadata
 - Created Date: 2026-02-17
 - Status: `todo`
+- Parent: 73
 
 ## Goal
 Enforce deterministic guardrails in scheduling so low-trust data cannot be presented as high-confidence marketer guidance.
