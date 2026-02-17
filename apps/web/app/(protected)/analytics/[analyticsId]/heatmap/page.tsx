@@ -241,6 +241,25 @@ export default async function Page({ params, searchParams }: PageProps) {
         </Card>
       </section>
 
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Method Notes</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>
+            Daily heatmaps aggregate menu quantities by hour bucket. Weekly heatmaps aggregate by weekday bucket.
+            Insights shown above are deterministic transforms of these bucketed totals.
+          </p>
+          <p>
+            Interpretation guidance: marketers should prioritize peak windows and avoid low windows for campaign posts;
+            analysts should use bias and concentration signals to validate operational and profitability decisions.
+          </p>
+          <p>
+            Confidence is constrained by readiness. If quality is degraded or freshness is stale, action language should be treated as lower-trust.
+          </p>
+        </CardContent>
+      </Card>
+
       <HeatmapFilterBar filters={filters} sortWindows={daily.columnLabels} />
 
       <Tabs defaultValue="daily" className="space-y-4">

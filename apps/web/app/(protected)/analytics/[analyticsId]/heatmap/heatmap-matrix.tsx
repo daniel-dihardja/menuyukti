@@ -148,6 +148,28 @@ export function HeatmapMatrix({
         </Table>
       </div>
 
+      <div className="border rounded-md p-3 bg-muted/20 space-y-2">
+        <p className="text-xs font-medium">Explainability</p>
+        <p className="text-xs text-muted-foreground">
+          Cell intensity reflects relative quantity for this view. Values are deterministic bucket counts
+          by hour/day, not model predictions.
+        </p>
+        <ul className="list-disc pl-4 text-xs text-muted-foreground space-y-1">
+          <li title="Window with highest aggregated demand in the selected view.">
+            Peak window: highest total quantity bucket.
+          </li>
+          <li title="Window with the lowest aggregated demand in the selected view.">
+            Low window: lowest total quantity bucket.
+          </li>
+          <li title="Relative concentration of demand in one menu item compared with all visible rows.">
+            Concentration risk: over-dependence on a single menu item.
+          </li>
+          <li title="Confidence should be downgraded when quality is warn/failed or freshness is stale.">
+            Confidence is policy-aware and should follow readiness metadata.
+          </li>
+        </ul>
+      </div>
+
       <p className="text-xs text-muted-foreground">
         Click a column header to sort. Click again to toggle ASC/DESC. Click a
         third time to reset.
