@@ -63,4 +63,27 @@ describe("buildWeeklyInstagramSuggestions", () => {
 
     expect(suggestions).toEqual([]);
   });
+
+  it("falls back to matrix actions when heatmap is missing", () => {
+    const suggestions = buildWeeklyInstagramSuggestions({
+      heatmapJson: null,
+      matrixJson: {
+        items: [
+          {
+            menu: "Combo Rice",
+            quantity: 70,
+            total_revenue: 600,
+            contribution_margin: 320,
+            contribution_margin_percentage: 0.53,
+            action: "promote",
+          },
+        ],
+      },
+      weekStartDate: new Date("2026-02-16T00:00:00.000Z"),
+    });
+
+    expect(suggestions).toHaveLength(1);
+    expect(suggestions[0]?.menuItem).toBe("Combo Rice");
+    expect(suggestions[0]?.sourceSignals.matrixAction).toBe("promote");
+  });
 });

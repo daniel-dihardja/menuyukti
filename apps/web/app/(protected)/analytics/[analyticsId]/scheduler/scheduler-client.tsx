@@ -801,8 +801,9 @@ export function SchedulerClient({
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1.5">
-                <Label>CTA</Label>
+                <Label htmlFor="composer-cta">CTA</Label>
                 <Input
+                  id="composer-cta"
                   value={composerDraft.cta}
                   onChange={(event) =>
                     setComposerDraft((prev) => (prev ? { ...prev, cta: event.target.value } : prev))
@@ -810,8 +811,9 @@ export function SchedulerClient({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Hashtags (comma separated)</Label>
+                <Label htmlFor="composer-hashtags">Hashtags (comma separated)</Label>
                 <Input
+                  id="composer-hashtags"
                   value={composerDraft.hashtagsText}
                   onChange={(event) =>
                     setComposerDraft((prev) =>

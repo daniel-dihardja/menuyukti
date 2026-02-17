@@ -24,6 +24,7 @@
     "test:e2e:pairs": "tsx e2e/analytics-pairs-gui.e2e.ts",
     "test:e2e:heatmap": "tsx e2e/analytics-heatmap-improvements.e2e.ts",
     "test:e2e:scheduler": "tsx e2e/analytics-scheduler-workflow.e2e.ts",
+    "test:e2e:scheduler:post-generation": "tsx e2e/analytics-scheduler-post-generation.e2e.ts",
     "test:e2e:attribution": "tsx e2e/analytics-attribution-workflow.e2e.ts",
     "test:e2e:agents:audience": "tsx e2e/analytics-agents-audience-workflow.e2e.ts",
     "test:e2e:agents:tone": "tsx e2e/analytics-agents-tone-workflow.e2e.ts",

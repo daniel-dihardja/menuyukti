@@ -173,11 +173,36 @@ export function buildWeeklyInstagramSuggestions(input: {
 }): InstagramWeeklySuggestion[] {
   const limit = Math.max(1, Math.min(24, input.limit ?? 7));
   const heatmapSummaries = summarizeHeatmapByMenu(input.heatmapJson);
-  if (heatmapSummaries.length === 0) return [];
+  const matrixRows = toDecisionGradeMatrixRows(input.matrixJson);
+  const matrixByMenu = new Map(matrixRows.map((row) => [normalizeMenuName(row.menuItem), row]));
 
-  const matrixByMenu = new Map(
-    toDecisionGradeMatrixRows(input.matrixJson).map((row) => [normalizeMenuName(row.menuItem), row]),
-  );
+  if (heatmapSummaries.length === 0) {
+    return matrixRows
+      .filter((row) => row.action === "promote" || row.action === "reprice")
+      .sort((a, b) => b.unitsSold - a.unitsSold || b.revenue - a.revenue)
+      .slice(0, limit)
+      .map((row, index) => {
+        const rank = index + 1;
+        const action: MatrixAction = row.action ?? "none";
+        const daypart: "morning" | "lunch" | "afternoon" | "evening" = "lunch";
+        return {
+          rank,
+          menuItem: row.menuItem,
+          canonicalMenuNameNorm: normalizeMenuName(row.menuItem),
+          suggestedFor: computeSuggestedFor(input.weekStartDate, index, daypart),
+          suggestedDaypart: daypart,
+          offerType: offerTypeFromMatrixAction(action),
+          rationale: `Heatmap slots unavailable. Fallback to matrix action ${action} for ${row.menuItem}.`,
+          confidence: row.marginPct >= 0.4 ? "high" : row.marginPct >= 0.2 ? "medium" : "low",
+          sourceSignals: {
+            heatmapTotalQty: 0,
+            heatmapDaypartQty: 0,
+            matrixAction: action,
+            matrixMarginPct: row.marginPct,
+          },
+        };
+      });
+  }
 
   return heatmapSummaries
     .map((summary) => {
