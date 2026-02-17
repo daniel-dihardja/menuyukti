@@ -11,6 +11,8 @@ export const routes = {
       `/analytics/${analyticsId}/matrix`,
     pairs: (analyticsId: string | number) =>
       `/analytics/${analyticsId}/pairs`,
+    scheduler: (analyticsId: string | number) =>
+      `/analytics/${analyticsId}/scheduler`,
 
     finance: (analyticsId: string | number) =>
       `/analytics/${analyticsId}/finance`,

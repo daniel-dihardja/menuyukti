@@ -190,6 +190,17 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                       </Link>
                     </DropdownMenuItem>
 
+                    {/* Scheduler */}
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={routes.analytics.scheduler(
+                          file.id as unknown as string,
+                        )}
+                      >
+                        {t("scheduler")}
+                      </Link>
+                    </DropdownMenuItem>
+
                     {/* Heatmap */}
                     <DropdownMenuItem asChild>
                       <Link

@@ -239,6 +239,7 @@
         "delete": "Delete",
         "matrix": "Matrix",
         "pairs": "Pairs",
+        "scheduler": "Scheduler",
         "finance": "Finance",
         "heatmap": "Heatmap"
       },
