@@ -55,4 +55,11 @@ export type AnalyticsListItem = {
   id: number;
   name: string; // sourceFile
   uploadedAt: string; // ISO date
+  readinessSignals: {
+    hasCoreData: boolean;
+    hasCogsData: boolean;
+    hasAttributionData: boolean;
+    hasDegradedDependency: boolean;
+    hasBlockedDependency: boolean;
+  };
 };

@@ -243,7 +243,16 @@
         "scheduler": "Scheduler",
         "operations": "Operations",
         "finance": "Finance",
-        "heatmap": "Heatmap"
+        "heatmap": "Heatmap",
+        "readiness": {
+          "badges": {
+            "ready": "Ready",
+            "needs_cogs": "Needs COGS",
+            "needs_attribution_data": "Needs Attribution",
+            "degraded": "Degraded",
+            "blocked": "Blocked"
+          }
+        }
       },
       "upload": {
         "cta": "Upload New Sales Report",

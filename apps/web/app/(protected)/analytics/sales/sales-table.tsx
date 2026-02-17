@@ -17,14 +17,29 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
+import { Badge } from "@workspace/ui/components/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip";
 import { Check, Loader2, Pencil, MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { routes } from "@/lib/routes";
 import { useEffect, useRef, useState } from "react";
+import {
+  evaluateSalesDropdownReadiness,
+  SALES_DROPDOWN_ACTION_ORDER,
+  type SalesActionReadiness,
+  type SalesActionReadinessStatus,
+  type SalesDropdownAction,
+  type SalesDropdownReadinessSignals,
+} from "@/lib/analytics/sales-dropdown-readiness";
 
 interface Upload {
   id: number;
   name: string;
+  readinessSignals: SalesDropdownReadinessSignals;
 }
 
 interface SalesTableProps {
@@ -84,6 +99,57 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
     }
   };
 
+  const statusBadgeVariant = (
+    status: SalesActionReadinessStatus,
+  ): "default" | "secondary" | "destructive" | "outline" => {
+    if (status === "ready") return "default";
+    if (status === "degraded") return "secondary";
+    if (status === "blocked") return "destructive";
+    return "outline";
+  };
+
+  const isActionDisabled = (status: SalesActionReadinessStatus): boolean =>
+    status === "needs_cogs" ||
+    status === "needs_attribution_data" ||
+    status === "blocked";
+
+  const readinessLabel = (status: SalesActionReadinessStatus): string =>
+    t(`readiness.badges.${status}`);
+
+  const actionLabel = (action: SalesDropdownAction): string => {
+    if (action === "cogs") return t("cogs");
+    if (action === "matrix") return t("matrix");
+    if (action === "heatmap") return t("heatmap");
+    if (action === "pairs") return t("pairs");
+    if (action === "scheduler") return t("scheduler");
+    if (action === "attribution") return t("attribution");
+    return t("finance");
+  };
+
+  const actionHref = (
+    action: Exclude<SalesDropdownAction, "cogs">,
+    analyticsId: number,
+  ): string => {
+    if (action === "matrix") return routes.analytics.matrix(analyticsId);
+    if (action === "heatmap") return routes.analytics.heatmap(analyticsId);
+    if (action === "pairs") return routes.analytics.pairs(analyticsId);
+    if (action === "scheduler") return routes.analytics.scheduler(analyticsId);
+    if (action === "attribution") return routes.analytics.attribution(analyticsId);
+    return routes.analytics.finance(analyticsId);
+  };
+
+  const renderActionText = (
+    action: SalesDropdownAction,
+    readiness: SalesActionReadiness,
+  ) => (
+    <div className="flex w-full items-center justify-between gap-3">
+      <span>{actionLabel(action)}</span>
+      <Badge variant={statusBadgeVariant(readiness.status)} className="h-5 px-1.5 text-[10px] uppercase">
+        {readinessLabel(readiness.status)}
+      </Badge>
+    </div>
+  );
+
   return (
     <div className="border w-full">
       <Table className="w-full">
@@ -96,7 +162,12 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
         </TableHeader>
 
         <TableBody>
-          {rows.map((file, index) => (
+          {rows.map((file, index) => {
+            const readinessByAction = evaluateSalesDropdownReadiness(
+              file.readinessSignals,
+            );
+
+            return (
             <TableRow key={file.id}>
               <TableCell>{index + 1}</TableCell>
               <TableCell>
@@ -168,76 +239,65 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent align="end">
-                    {/* Matrix */}
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.matrix(
-                          file.id as unknown as string,
-                        )}
-                      >
-                        {t("matrix")}
-                      </Link>
-                    </DropdownMenuItem>
+                    {SALES_DROPDOWN_ACTION_ORDER.map((action) => {
+                      const readiness = readinessByAction[action];
+                      const disabled = isActionDisabled(readiness.status);
+                      const body = renderActionText(action, readiness);
+                      const content = readiness.reasonMessage ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="w-full">{body}</div>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" sideOffset={8} className="max-w-xs">
+                            {readiness.reasonMessage}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        body
+                      );
 
-                    {/* Pairs */}
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.pairs(
-                          file.id as unknown as string,
-                        )}
-                      >
-                        {t("pairs")}
-                      </Link>
-                    </DropdownMenuItem>
+                      if (action === "cogs") {
+                        return (
+                          <DropdownMenuItem
+                            key={action}
+                            onClick={() => onCogs(file.id)}
+                            onSelect={(event) => {
+                              if (disabled) event.preventDefault();
+                            }}
+                            aria-disabled={disabled}
+                            className={disabled ? "opacity-60" : undefined}
+                          >
+                            {content}
+                          </DropdownMenuItem>
+                        );
+                      }
 
-                    {/* Scheduler */}
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.scheduler(
-                          file.id as unknown as string,
-                        )}
-                      >
-                        {t("scheduler")}
-                      </Link>
-                    </DropdownMenuItem>
+                      if (disabled) {
+                        return (
+                          <DropdownMenuItem
+                            key={action}
+                            onSelect={(event) => event.preventDefault()}
+                            aria-disabled
+                            className="opacity-60"
+                          >
+                            {content}
+                          </DropdownMenuItem>
+                        );
+                      }
 
-                    {/* Attribution */}
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.attribution(
-                          file.id as unknown as string,
-                        )}
-                      >
-                        {t("attribution")}
-                      </Link>
-                    </DropdownMenuItem>
-
-                    {/* Heatmap */}
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.heatmap(
-                          file.id as unknown as string,
-                        )}
-                      >
-                        {t("heatmap")}
-                      </Link>
-                    </DropdownMenuItem>
-
-                    {/* Finance */}
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.finance(
-                          file.id as unknown as string,
-                        )}
-                      >
-                        {t("finance")}
-                      </Link>
-                    </DropdownMenuItem>
-
-                    {/* COGS */}
-                    <DropdownMenuItem onClick={() => onCogs(file.id)}>
-                      {t("cogs")}
-                    </DropdownMenuItem>
+                      return (
+                        <DropdownMenuItem key={action} asChild>
+                          <Link
+                            href={actionHref(
+                              action as Exclude<SalesDropdownAction, "cogs">,
+                              file.id,
+                            )}
+                          >
+                            {content}
+                          </Link>
+                        </DropdownMenuItem>
+                      );
+                    })}
 
                     {/* Delete */}
                     <DropdownMenuItem
@@ -250,7 +310,8 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                 </DropdownMenu>
               </TableCell>
             </TableRow>
-          ))}
+          );
+          })}
         </TableBody>
       </Table>
     </div>
