@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://menuyukti.dev/schemas/ai-explorer/mission.v1.json",
+  "title": "AI Explorer Mission",
+  "type": "object",
+  "required": ["schemaVersion", "id", "title", "baseUrl", "focusAreas", "guardrails", "scenarios"],
+  "properties": {
+    "schemaVersion": { "const": "v1" },
+    "id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "baseUrl": { "type": "string", "format": "uri" },
+    "persona": { "enum": ["marketer", "analyst", "operator", "mixed"], "default": "mixed" },
+    "focusAreas": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": [
+          "navigation",
+          "runtime_errors",
+          "data_visibility",
+          "ux_clarity",
+          "layout_overflow",
+          "accessibility_basics"
+        ]
+      }
+    },
+    "guardrails": {
+      "type": "object",
+      "required": ["maxSteps", "stepTimeoutMs", "maxDurationMs", "allowDestructiveActions", "allowedDomains"],
+      "properties": {
+        "maxSteps": { "type": "integer", "minimum": 1, "maximum": 300, "default": 120 },
+        "stepTimeoutMs": { "type": "integer", "minimum": 250, "maximum": 120000, "default": 10000 },
+        "maxDurationMs": { "type": "integer", "minimum": 1000, "maximum": 3600000, "default": 300000 },
+        "allowDestructiveActions": { "type": "boolean", "default": false },
+        "allowedDomains": { "type": "array", "items": { "type": "string", "minLength": 1 }, "default": ["127.0.0.1", "localhost"] }
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "route", "objective", "actions"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "route": { "type": "string", "minLength": 1 },
+          "objective": { "type": "string", "minLength": 1 },
+          "actions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "oneOf": [
+                { "type": "object", "required": ["type", "url"], "properties": { "type": { "const": "goto" }, "url": { "type": "string", "format": "uri" } } },
+                { "type": "object", "required": ["type", "selector"], "properties": { "type": { "const": "click" }, "selector": { "type": "string", "minLength": 1 } } },
+                { "type": "object", "required": ["type", "selector", "value"], "properties": { "type": { "const": "fill" }, "selector": { "type": "string", "minLength": 1 }, "value": { "type": "string" } } },
+                { "type": "object", "required": ["type", "key"], "properties": { "type": { "const": "press" }, "key": { "type": "string", "minLength": 1 } } },
+                { "type": "object", "required": ["type", "selector"], "properties": { "type": { "const": "waitFor" }, "selector": { "type": "string", "minLength": 1 } } },
+                { "type": "object", "required": ["type", "name"], "properties": { "type": { "const": "screenshot" }, "name": { "type": "string", "minLength": 1 }, "fullPage": { "type": "boolean" } } },
+                { "type": "object", "required": ["type", "text"], "properties": { "type": { "const": "note" }, "text": { "type": "string", "minLength": 1 } } }
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
