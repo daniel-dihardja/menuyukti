@@ -6,7 +6,6 @@ export const routes = {
     branches: "/analytics/locations",
     branchesCreate: "/analytics/locations/create",
     sales: "/analytics/sales",
-    operations: "/analytics/operations",
 
     matrix: (analyticsId: string | number) =>
       `/analytics/${analyticsId}/matrix`,

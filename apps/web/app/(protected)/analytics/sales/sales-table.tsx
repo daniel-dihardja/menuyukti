@@ -212,13 +212,6 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                       </Link>
                     </DropdownMenuItem>
 
-                    {/* Operations */}
-                    <DropdownMenuItem asChild>
-                      <Link href={routes.analytics.operations}>
-                        {t("operations")}
-                      </Link>
-                    </DropdownMenuItem>
-
                     {/* Heatmap */}
                     <DropdownMenuItem asChild>
                       <Link
