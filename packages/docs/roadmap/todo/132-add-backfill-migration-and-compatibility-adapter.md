@@ -24,3 +24,6 @@ Migrate existing job records and keep backward compatibility while rolling out s
 ## Deliverables
 - Migration/backfill utility.
 - Compatibility adapter layer.
+
+## Dependencies
+- Story 127: lineage schema/tables exist and are migration-ready.

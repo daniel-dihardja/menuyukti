@@ -27,3 +27,6 @@ Implement deterministic idempotency keys per stage and recompute only affected d
 ## Deliverables
 - Idempotency key utilities and storage integration.
 - Dependency-trigger logic for partial recompute.
+
+## Dependencies
+- Story 128: shared stage runner/claim abstraction is in place.

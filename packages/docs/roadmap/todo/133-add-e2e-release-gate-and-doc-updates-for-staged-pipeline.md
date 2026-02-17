@@ -27,3 +27,6 @@ Validate staged pipeline behavior end-to-end and align docs/specs to release sta
 ## Deliverables
 - Updated tests/scripts.
 - Manual/spec updates for staged pipeline.
+
+## Dependencies
+- Stories 128-132: staged runner, idempotency, read-path, observability, and compatibility changes are implemented.

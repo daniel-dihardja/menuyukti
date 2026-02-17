@@ -27,3 +27,6 @@ Add stage-level operational visibility and stale-job protection.
 ## Deliverables
 - Observability fields/queries.
 - Guardrail policy implementation and status messaging.
+
+## Dependencies
+- Story 128: stage runner lifecycle events are centralized.

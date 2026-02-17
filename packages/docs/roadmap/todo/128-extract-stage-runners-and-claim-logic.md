@@ -27,3 +27,7 @@ Refactor execution into reusable stage runners with atomic claim semantics.
 ## Deliverables
 - Runner core service.
 - Stage handler wiring.
+
+## Dependencies
+- Story 126: stage/state contract is the runner lifecycle source of truth.
+- Story 127: run + stage lineage model is available for runner writes.

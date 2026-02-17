@@ -18,9 +18,10 @@ Refactor the current upload + COGS-triggered recompute flow into a single staged
 - Deliver incrementally with backward-compatible rollout.
 
 ## Acceptance Criteria
-- Child stories 126-133 are completed.
+- Foundational stories 126-127 are completed.
+- Remaining child stories 128-133 are completed.
 - Upload and COGS scenarios are orchestrated via shared stage lifecycle.
 - Operations visibility and recovery become deterministic.
 
 ## Deliverables
-- Parent epic for staged pipeline refactor.
+- Parent epic tracking for staged pipeline refactor stories 126-133.

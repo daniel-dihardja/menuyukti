@@ -24,3 +24,6 @@ Serve analytics pages from latest successful stage outputs, not latest attempted
 ## Deliverables
 - Read-path resolver updates.
 - Integration updates for affected pages/APIs.
+
+## Dependencies
+- Story 129: stage outputs and idempotent recompute semantics are stable.
