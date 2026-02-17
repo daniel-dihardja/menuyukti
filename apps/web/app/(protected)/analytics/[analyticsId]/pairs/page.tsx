@@ -13,6 +13,10 @@ import { parsePairFilterState, serializePairFilterState } from "@/lib/analytics/
 import type { PairType } from "@/lib/analytics/pair-type";
 import { prisma } from "@/lib/prisma/client";
 import { routes } from "@/lib/routes";
+import {
+  loadPipelineFreshnessMetadata,
+  resolveAnalyticsMaterialization,
+} from "@/lib/etl/latest-valid-materialization";
 
 import { PairsFilterBar } from "./pairs-filter-bar";
 import { PairsInsightPanels } from "./pairs-insight-panels";
@@ -122,8 +126,14 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
   const analyticsId = Number(analyticsIdParam);
   if (!Number.isInteger(analyticsId)) notFound();
 
+  const materialization = await resolveAnalyticsMaterialization({
+    analyticsId,
+    requiredField: "matrixJson",
+  });
+  if (!materialization) notFound();
+
   const analytics = await prisma.analytics.findUnique({
-    where: { id: analyticsId },
+    where: { id: materialization.resolvedAnalyticsId },
     select: {
       id: true,
       sourceFile: true,
@@ -137,158 +147,147 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
   });
 
   if (!analytics) notFound();
+  const analyticsData = analytics;
 
-  const etlJob = await prisma.etlJob.findFirst({
-    where: {
-      analyticsId,
-      status: "succeeded",
-      pipelineRunId: { not: null },
-    },
-    orderBy: { finishedAt: "desc" },
-    select: { pipelineRunId: true },
-  });
-
-  const pipelineRunRows = etlJob?.pipelineRunId
-    ? await prisma.$queryRaw<Array<{ ingested_at_utc: Date; quality_status: string }>>`
-        SELECT ingested_at_utc, quality_status
-        FROM warehouse.dim_pipeline_run
-        WHERE pipeline_run_id = CAST(${etlJob.pipelineRunId} AS UUID)
-        LIMIT 1
-      `
-    : [];
-
-  const pipelineRun = pipelineRunRows[0];
-  const freshnessSlaMinutes = Number(
-    process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440",
-  );
-  const freshnessMinutes = pipelineRun
-    ? Math.max(
-        0,
-        Math.floor(
-          (Date.now() - new Date(pipelineRun.ingested_at_utc).getTime()) / 60_000,
-        ),
-      )
-    : null;
+  const metadata = await loadPipelineFreshnessMetadata(analytics.id);
+  const freshnessSlaMinutes = Number(process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440");
+  const freshnessMinutes = metadata.freshnessMinutes;
 
   const searchLike = `%${filters.q.replace(/%/g, "").replace(/_/g, "").trim()}%`;
 
-  const pairRowsRaw = await prisma.$queryRaw<
-    Array<{
-      menu_item_a_name: string;
-      menu_item_b_name: string;
-      pair_orders: string | number;
-      support: string | number;
-      confidence_a_to_b: string | number;
-      confidence_b_to_a: string | number;
-      lift_a_to_b: string | number;
-      lift_b_to_a: string | number;
-      is_noisy: boolean;
-      pair_type: PairType;
-    }>
-  >`
-    WITH location_base AS (
-      SELECT d.location_key
-      FROM warehouse.dim_location d
-      WHERE d.operational_location_id = ${analytics.locationId}
-    ),
-    filtered AS (
-      SELECT
-        b.location_key,
-        b.menu_item_a_key,
-        b.menu_item_b_key,
-        b.pair_orders,
-        b.pair_qty,
-        b.item_a_orders,
-        b.item_b_orders,
-        b.total_orders,
-        b.pair_type,
-        ma.menu_name AS menu_item_a_name,
-        mb.menu_name AS menu_item_b_name
-      FROM marts.vw_pair_metrics_daily_base b
-      INNER JOIN location_base lb ON lb.location_key = b.location_key
-      INNER JOIN warehouse.dim_menu_item ma ON ma.menu_item_key = b.menu_item_a_key
-      INNER JOIN warehouse.dim_menu_item mb ON mb.menu_item_key = b.menu_item_b_key
-      WHERE (${filters.q} = '' OR ma.menu_name ILIKE ${searchLike} OR mb.menu_name ILIKE ${searchLike})
-    ),
-    agg AS (
+  async function loadPairRows(minSampleSize: number) {
+    return prisma.$queryRaw<
+      Array<{
+        menu_item_a_name: string;
+        menu_item_b_name: string;
+        pair_orders: string | number;
+        support: string | number;
+        confidence_a_to_b: string | number;
+        confidence_b_to_a: string | number;
+        lift_a_to_b: string | number;
+        lift_b_to_a: string | number;
+        is_noisy: boolean;
+        pair_type: PairType;
+      }>
+    >`
+      WITH location_base AS (
+        SELECT d.location_key
+        FROM warehouse.dim_location d
+        WHERE d.operational_location_id = ${analyticsData.locationId}
+      ),
+      filtered AS (
+        SELECT
+          b.location_key,
+          b.menu_item_a_key,
+          b.menu_item_b_key,
+          b.pair_orders,
+          b.pair_qty,
+          b.item_a_orders,
+          b.item_b_orders,
+          b.total_orders,
+          b.pair_type,
+          ma.menu_name AS menu_item_a_name,
+          mb.menu_name AS menu_item_b_name
+        FROM marts.vw_pair_metrics_daily_base b
+        INNER JOIN location_base lb ON lb.location_key = b.location_key
+        INNER JOIN warehouse.dim_menu_item ma ON ma.menu_item_key = b.menu_item_a_key
+        INNER JOIN warehouse.dim_menu_item mb ON mb.menu_item_key = b.menu_item_b_key
+        WHERE (${filters.q} = '' OR ma.menu_name ILIKE ${searchLike} OR mb.menu_name ILIKE ${searchLike})
+      ),
+      agg AS (
+        SELECT
+          menu_item_a_name,
+          menu_item_b_name,
+          pair_type,
+          SUM(pair_orders)::NUMERIC(18, 6) AS pair_orders,
+          SUM(item_a_orders)::NUMERIC(18, 6) AS item_a_orders,
+          SUM(item_b_orders)::NUMERIC(18, 6) AS item_b_orders,
+          SUM(total_orders)::NUMERIC(18, 6) AS total_orders
+        FROM filtered
+        GROUP BY menu_item_a_name, menu_item_b_name, pair_type
+      )
       SELECT
         menu_item_a_name,
         menu_item_b_name,
-        pair_type,
-        SUM(pair_orders)::NUMERIC(18, 6) AS pair_orders,
-        SUM(item_a_orders)::NUMERIC(18, 6) AS item_a_orders,
-        SUM(item_b_orders)::NUMERIC(18, 6) AS item_b_orders,
-        SUM(total_orders)::NUMERIC(18, 6) AS total_orders
-      FROM filtered
-      GROUP BY menu_item_a_name, menu_item_b_name, pair_type
-    )
-    SELECT
-      menu_item_a_name,
-      menu_item_b_name,
-      pair_orders,
-      CASE WHEN total_orders = 0 THEN 0 ELSE pair_orders / total_orders END AS support,
-      CASE WHEN item_a_orders = 0 THEN 0 ELSE pair_orders / item_a_orders END AS confidence_a_to_b,
-      CASE WHEN item_b_orders = 0 THEN 0 ELSE pair_orders / item_b_orders END AS confidence_b_to_a,
-      CASE
-        WHEN total_orders = 0 OR item_a_orders = 0 OR item_b_orders = 0 THEN 0
-        ELSE (pair_orders / item_a_orders) / (item_b_orders / total_orders)
-      END AS lift_a_to_b,
-      CASE
-        WHEN total_orders = 0 OR item_a_orders = 0 OR item_b_orders = 0 THEN 0
-        ELSE (pair_orders / item_b_orders) / (item_a_orders / total_orders)
-      END AS lift_b_to_a,
-      (pair_orders < ${filters.minSampleSize}) AS is_noisy,
-      pair_type
-    FROM agg
-    WHERE pair_orders >= ${filters.minSampleSize}
-      AND (${filters.pairType}::text = 'all' OR pair_type = ${filters.pairType}::text)
-    ORDER BY pair_orders DESC
-    LIMIT ${Math.max(filters.limit, 200)}
-  `;
+        pair_orders,
+        CASE WHEN total_orders = 0 THEN 0 ELSE pair_orders / total_orders END AS support,
+        CASE WHEN item_a_orders = 0 THEN 0 ELSE pair_orders / item_a_orders END AS confidence_a_to_b,
+        CASE WHEN item_b_orders = 0 THEN 0 ELSE pair_orders / item_b_orders END AS confidence_b_to_a,
+        CASE
+          WHEN total_orders = 0 OR item_a_orders = 0 OR item_b_orders = 0 THEN 0
+          ELSE (pair_orders / item_a_orders) / (item_b_orders / total_orders)
+        END AS lift_a_to_b,
+        CASE
+          WHEN total_orders = 0 OR item_a_orders = 0 OR item_b_orders = 0 THEN 0
+          ELSE (pair_orders / item_b_orders) / (item_a_orders / total_orders)
+        END AS lift_b_to_a,
+        (pair_orders < ${minSampleSize}) AS is_noisy,
+        pair_type
+      FROM agg
+      WHERE pair_orders >= ${minSampleSize}
+        AND (${filters.pairType}::text = 'all' OR pair_type = ${filters.pairType}::text)
+      ORDER BY pair_orders DESC
+      LIMIT ${Math.max(filters.limit, 200)}
+    `;
+  }
 
-  const comboRowsRaw = await prisma.$queryRaw<
-    Array<{
-      menu_item_a_name: string;
-      menu_item_b_name: string;
-      pair_orders: string | number;
-      support: string | number;
-      confidence_a_to_b: string | number;
-      confidence_b_to_a: string | number;
-      lift_a_to_b: string | number;
-      lift_b_to_a: string | number;
-      margin_score: string | number;
-      combo_opportunity_score: string | number;
-      confidence_level: string;
-      pair_type: PairType;
-      pair_type_boost_factor: string | number;
-      pair_type_boost_applied: boolean;
-      base_combo_opportunity_score: string | number;
-    }>
-  >`
-    SELECT
-      menu_item_a_name,
-      menu_item_b_name,
-      pair_orders,
-      support,
-      confidence_a_to_b,
-      confidence_b_to_a,
-      lift_a_to_b,
-      lift_b_to_a,
-      margin_score,
-      base_combo_opportunity_score,
-      pair_type_boost_factor,
-      pair_type_boost_applied,
-      combo_opportunity_score,
-      confidence_level,
-      pair_type
-    FROM marts.vw_combo_opportunity_candidates
-    WHERE location_id = ${analytics.locationId}
-      AND pair_orders >= ${filters.minSampleSize}
-      AND (${filters.q} = '' OR menu_item_a_name ILIKE ${searchLike} OR menu_item_b_name ILIKE ${searchLike})
-      AND (${filters.pairType}::text = 'all' OR pair_type = ${filters.pairType}::text)
-    ORDER BY combo_opportunity_score DESC
-    LIMIT ${Math.max(filters.limit, 200)}
-  `;
+  async function loadComboRows(minSampleSize: number) {
+    return prisma.$queryRaw<
+      Array<{
+        menu_item_a_name: string;
+        menu_item_b_name: string;
+        pair_orders: string | number;
+        support: string | number;
+        confidence_a_to_b: string | number;
+        confidence_b_to_a: string | number;
+        lift_a_to_b: string | number;
+        lift_b_to_a: string | number;
+        margin_score: string | number;
+        combo_opportunity_score: string | number;
+        confidence_level: string;
+        pair_type: PairType;
+        pair_type_boost_factor: string | number;
+        pair_type_boost_applied: boolean;
+        base_combo_opportunity_score: string | number;
+      }>
+    >`
+      SELECT
+        menu_item_a_name,
+        menu_item_b_name,
+        pair_orders,
+        support,
+        confidence_a_to_b,
+        confidence_b_to_a,
+        lift_a_to_b,
+        lift_b_to_a,
+        margin_score,
+        base_combo_opportunity_score,
+        pair_type_boost_factor,
+        pair_type_boost_applied,
+        combo_opportunity_score,
+        confidence_level,
+        pair_type
+      FROM marts.vw_combo_opportunity_candidates
+      WHERE location_id = ${analyticsData.locationId}
+        AND pair_orders >= ${minSampleSize}
+        AND (${filters.q} = '' OR menu_item_a_name ILIKE ${searchLike} OR menu_item_b_name ILIKE ${searchLike})
+        AND (${filters.pairType}::text = 'all' OR pair_type = ${filters.pairType}::text)
+      ORDER BY combo_opportunity_score DESC
+      LIMIT ${Math.max(filters.limit, 200)}
+    `;
+  }
+
+  let effectiveMinSampleSize = filters.minSampleSize;
+  let fallbackMinSampleApplied = false;
+
+  let pairRowsRaw = await loadPairRows(effectiveMinSampleSize);
+  let comboRowsRaw = await loadComboRows(effectiveMinSampleSize);
+  if (pairRowsRaw.length === 0 && comboRowsRaw.length === 0 && effectiveMinSampleSize > 1) {
+    effectiveMinSampleSize = 1;
+    fallbackMinSampleApplied = true;
+    pairRowsRaw = await loadPairRows(effectiveMinSampleSize);
+    comboRowsRaw = await loadComboRows(effectiveMinSampleSize);
+  }
 
   const pairs: PairRow[] = pairRowsRaw
     .map((row) => {
@@ -352,10 +351,10 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
   const highestVolume = [...sortedPairs].sort((a, b) => b.pairOrders - a.pairOrders)[0] ?? null;
   const bestCombo = [...sortedCombos].sort((a, b) => b.score - a.score)[0] ?? null;
 
-  const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
+  const analyticsName = analyticsData.sourceFile ?? `Analytics #${analyticsData.id}`;
   const filterQuery = serializePairFilterState(filters).toString();
-  const pairExportHref = `/api/exports/analyst?dataset=pairs&locationId=${analytics.locationId}&${filterQuery}`;
-  const comboExportHref = `/api/exports/analyst?dataset=combos&locationId=${analytics.locationId}&${filterQuery}`;
+  const pairExportHref = `/api/exports/analyst?dataset=pairs&locationId=${analyticsData.locationId}&${filterQuery}`;
+  const comboExportHref = `/api/exports/analyst?dataset=combos&locationId=${analyticsData.locationId}&${filterQuery}`;
 
   return (
     <AnalyticsPageShell
@@ -372,15 +371,23 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
       />
 
       <div className="mb-6 flex flex-wrap gap-2">
-        <Badge variant="outline">Location #{analytics.locationId}</Badge>
-        <Badge variant="outline">Orders: {analytics.totalOrders ?? "—"}</Badge>
-        <Badge variant="outline">Items: {analytics.totalItemsSold ?? "—"}</Badge>
-        <Badge variant="outline">
-          Quality: {pipelineRun?.quality_status ?? "unknown"}
-        </Badge>
+        <Badge variant="outline">Location #{analyticsData.locationId}</Badge>
+        <Badge variant="outline">Orders: {analyticsData.totalOrders ?? "—"}</Badge>
+        <Badge variant="outline">Items: {analyticsData.totalItemsSold ?? "—"}</Badge>
+        <Badge variant="outline">Quality: {metadata.qualityStatus ?? "unknown"}</Badge>
         <Badge variant={freshnessMinutes !== null && freshnessMinutes <= freshnessSlaMinutes ? "secondary" : "destructive"}>
           Freshness: {freshnessMinutes !== null ? `${freshnessMinutes} min` : "unknown"}
         </Badge>
+        {materialization.fallbackApplied ? (
+          <Badge variant="secondary">
+            using latest valid materialization (#{materialization.resolvedAnalyticsId})
+          </Badge>
+        ) : null}
+        {fallbackMinSampleApplied ? (
+          <Badge variant="secondary">
+            no rows at sample {">="} {filters.minSampleSize}; showing {">="} {effectiveMinSampleSize}
+          </Badge>
+        ) : null}
       </div>
 
       <div className="mb-6">
