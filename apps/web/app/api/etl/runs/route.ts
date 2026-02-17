@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma/client";
+import { ETL_JOB_STATUSES } from "@/lib/etl/pipeline-contract";
 import {
   buildQualityHints,
   buildRunCursor,
@@ -55,7 +56,7 @@ export async function GET(req: Request) {
     const statuses = normalizeRunStatusFilter(statusParams);
     if (statuses.some((status) => !isKnownRunStatus(status))) {
       return NextResponse.json(
-        { error: "INVALID_STATUS", expected: ["queued", "running", "succeeded", "failed"] },
+        { error: "INVALID_STATUS", expected: ETL_JOB_STATUSES },
         { status: 400 },
       );
     }

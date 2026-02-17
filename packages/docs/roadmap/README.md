@@ -111,3 +111,26 @@ Use this workflow to keep local data aligned with a known Neon snapshot.
 - Do not run export against unintended production environments.
 - Seed export is allowlist-based (`apps/web/prisma/seed/seed-tables.ts`).
 - Keep sensitive/non-required tables out of the allowlist.
+
+## Staged Pipeline Contract (Story 126)
+
+The pipeline contract is codified in `apps/web/lib/etl/pipeline-contract.ts`.
+
+- Stages:
+  - `upload_ingest`
+  - `cogs_enrichment`
+  - `matrix_materialization`
+- Stage dependencies:
+  - `upload_ingest` has no dependencies.
+  - `cogs_enrichment` depends on `upload_ingest`.
+  - `matrix_materialization` depends on both `upload_ingest` and `cogs_enrichment`.
+- Triggers:
+  - `upload_complete`
+  - `cogs_saved`
+  - `manual_operation`
+- Job status state machine:
+  - `queued -> running -> succeeded|failed`
+  - `queued -> failed` (timeout or guardrail failure)
+- Stage error codes and retryability are centralized in:
+  - `ETL_STAGE_ERROR_CODE`
+  - `ETL_STAGE_ERROR_CLASSIFICATION`

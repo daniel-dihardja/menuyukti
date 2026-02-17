@@ -1,6 +1,11 @@
 import { createHash, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
+import {
+  ETL_ACTIVE_JOB_STATUSES,
+  ETL_JOB_STATUS,
+  ETL_STAGE_ERROR_CODE,
+} from "@/lib/etl/pipeline-contract";
 
 type OperationAction = "retry" | "replay" | "backfill";
 
@@ -16,7 +21,7 @@ type OperationRequest = {
 
 const PIPELINE_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const STALE_QUEUE_ERROR = "STALE_QUEUED_OPERATION_TIMEOUT";
+const STALE_QUEUE_ERROR = ETL_STAGE_ERROR_CODE.STALE_QUEUED_OPERATION_TIMEOUT;
 
 function parseDate(raw: string | undefined): Date | null {
   if (!raw) return null;
@@ -114,7 +119,7 @@ async function hasActiveOperationConflict(locationId: number): Promise<boolean> 
   const active = await prisma.etlJob.findFirst({
     where: {
       locationId,
-      status: { in: ["queued", "running"] },
+      status: { in: [...ETL_ACTIVE_JOB_STATUSES] },
       sourceFile: { startsWith: "operation:" },
     },
     select: { id: true },
@@ -128,12 +133,12 @@ async function resolveStaleQueuedOperations(locationId: number): Promise<number>
   const result = await prisma.etlJob.updateMany({
     where: {
       locationId,
-      status: "queued",
+      status: ETL_JOB_STATUS.QUEUED,
       sourceFile: { startsWith: "operation:" },
       createdAt: { lt: cutoff },
     },
     data: {
-      status: "failed",
+      status: ETL_JOB_STATUS.FAILED,
       errorMessage: `${STALE_QUEUE_ERROR}:${staleMinutes}m`,
       finishedAt: new Date(),
     },
@@ -340,7 +345,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (action === "retry" && sourceJob && sourceJob.status !== "failed") {
+    if (action === "retry" && sourceJob && sourceJob.status !== ETL_JOB_STATUS.FAILED) {
       return NextResponse.json(
         { error: "RETRY_REQUIRES_FAILED_SOURCE_RUN" },
         { status: 409 },
@@ -379,7 +384,7 @@ export async function POST(req: Request) {
         sourceFile,
         fileHash: null,
         idempotencyKey,
-        status: "queued",
+        status: ETL_JOB_STATUS.QUEUED,
         errorMessage: body.reason?.slice(0, 500) ?? null,
         pipelineRunId: pipelineRunId || null,
       },

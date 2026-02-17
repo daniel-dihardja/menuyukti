@@ -1,6 +1,13 @@
-export const ETL_RUN_STATUSES = ["queued", "running", "succeeded", "failed"] as const;
+import {
+  ETL_JOB_STATUS,
+  ETL_JOB_STATUSES,
+  isKnownEtlJobStatus,
+  type EtlJobStatus,
+} from "@/lib/etl/pipeline-contract";
 
-export type EtlRunStatus = (typeof ETL_RUN_STATUSES)[number];
+export const ETL_RUN_STATUSES = ETL_JOB_STATUSES;
+
+export type EtlRunStatus = EtlJobStatus;
 
 export type EtlRunQualityHint =
   | "operation_trigger"
@@ -67,7 +74,7 @@ export function normalizeRunStatusFilter(rawValues: string[]): string[] {
 }
 
 export function isKnownRunStatus(status: string): status is EtlRunStatus {
-  return (ETL_RUN_STATUSES as readonly string[]).includes(status);
+  return isKnownEtlJobStatus(status);
 }
 
 export function toRunSourceKind(sourceFile: string | null): "operation" | "ingestion" | "unknown" {
@@ -99,13 +106,16 @@ export function buildQualityHints(input: {
   const hints: EtlRunQualityHint[] = [];
   if (input.sourceFile?.startsWith("operation:")) hints.push("operation_trigger");
   if (!input.pipelineRunId) hints.push("missing_pipeline_run_id");
-  if ((input.status === "queued" || input.status === "running") && !input.startedAt) {
+  if (
+    (input.status === ETL_JOB_STATUS.QUEUED || input.status === ETL_JOB_STATUS.RUNNING) &&
+    !input.startedAt
+  ) {
     hints.push("pending_start");
   }
-  if (input.status === "running" && !input.finishedAt) {
+  if (input.status === ETL_JOB_STATUS.RUNNING && !input.finishedAt) {
     hints.push("missing_finish_time");
   }
-  if (input.status === "failed") {
+  if (input.status === ETL_JOB_STATUS.FAILED) {
     hints.push("failure_needs_recovery");
   }
   return hints;
