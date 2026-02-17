@@ -302,9 +302,6 @@ Legend:
 - `Implemented`: User manual chapters cover released heatmap, pair/combo, agent guardrail, and scheduler workflows with operational guidance.
 - `Implemented`: User manual includes attribution workflow and confidence-tuning guidance.
 - `Implemented`: User manual covers COGS completeness KPIs, watchlist usage, and readiness interpretation.
-- `Implemented`: AI exploratory testing contracts, Playwright adapter, mission runner, and findings summary artifacts are available for autonomous route exploration.
-- `Implemented`: Reference autonomous missions are available for sales, pairs, scheduler, and attribution routes.
-- `Implemented`: CI workflow template exists for scheduled/manual AI exploratory runs with artifact upload policy.
 
 ### 11.8 Minimal Release Feature Table
 
@@ -342,8 +339,7 @@ Legend:
 | 29 | ETL run-history observability (API contract + UI filters + detail/shortcuts) | Partial | `/api/etl/runs` API contract and filters are implemented; operations UI/shortcuts are removed from MVP surface. |
 | 30 | ETL operation queue runner lifecycle and stale queue recovery | Implemented | Internal runner lifecycle and stale queue/running guardrails remain implemented for reliability hardening. |
 | 31 | Sales action readiness flow (`/analytics/sales` dropdown badges + gating + reason tooltips) | Implemented | Actions are ordered by workflow and guarded by deterministic dependency statuses for COGS and attribution prerequisites. |
-| 32 | AI + Playwright autonomous exploratory testing workflow | Implemented | Mission/findings contracts, adapter/runner/reporter, reference missions, guarded auto-fix plan mode, CI workflow template, and operator docs are available. |
-| 33 | Staged pipeline compatibility/backfill rollout utilities | Implemented | Legacy ETL jobs can be backfilled into staged lineage tables; compatibility toggle keeps API behavior stable during rollout. |
+| 32 | Staged pipeline compatibility/backfill rollout utilities | Implemented | Legacy ETL jobs can be backfilled into staged lineage tables; compatibility toggle keeps API behavior stable during rollout. |
 
 ### 11.9 Open Features Backlog (All `Partial` + `Not Yet`, Not Release-Blocking for MVP)
 
