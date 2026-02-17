@@ -233,7 +233,7 @@ Legend:
 - `Implemented`: Layered schemas (`staging`, `warehouse`, `marts`) and core warehouse facts/dimensions.
 - `Implemented`: Rejection logging with reason codes and quality gate threshold policy.
 - `Implemented`: Pipeline run metadata, run metrics, and reconciliation table.
-- `Partial`: Retry/replay/backfill operational workflow is not fully defined as productized runbook/automation.
+- `Implemented`: Retry/replay/backfill operational workflow is productized with API actions, safety guards, operations UI/status tracking, and runbook documentation.
 
 ### 11.2 Core Analytics and UI
 - `Implemented`: Unified matrix table with robust filter bar, URL-based filter state, and presets.
@@ -248,6 +248,7 @@ Legend:
 - `Implemented`: CSV export endpoint for analyst matrix/pair/combo/heatmap/attribution datasets with stable columns and metadata.
 - `Implemented`: COGS page includes completeness KPI cards and prioritized missing/invalid watchlist for analyst remediation.
 - `Implemented`: Matrix and matrix export include deterministic COGS readiness state/reasons based on coverage thresholds.
+- `Implemented`: Operations workflow UI route (`/analytics/operations`) supports triggering retry/replay/backfill actions and status tracking.
 - `Implemented`: Pair/combo analysis now has a dedicated GUI route with filter bar, KPI cards, ranked tables, explainability sheet, and secondary export actions.
 - `Implemented`: Pair/combo GUI URL-based filter bar with typed state parsing/serialization and shareable query context.
 - `Implemented`: Pair/combo tables support interactive column sorting directly in GUI.
@@ -291,9 +292,11 @@ Legend:
 - `Implemented`: Dedicated heatmap improvement E2E coverage validates filters, persona insight surfaces, and export behavior.
 - `Implemented`: Dedicated attribution E2E workflow validates page load, confidence threshold URL state, and export behavior.
 - `Implemented`: Dedicated COGS completeness E2E validates KPI/watchlist visibility and matrix export completeness/readiness columns.
+- `Implemented`: Dedicated recovery operations E2E validates operations page availability, API listing, and guardrail rejection behavior.
 - `Implemented`: User manual chapters cover released heatmap, pair/combo, agent guardrail, and scheduler workflows with operational guidance.
 - `Implemented`: User manual includes attribution workflow and confidence-tuning guidance.
 - `Implemented`: User manual covers COGS completeness KPIs, watchlist usage, and readiness interpretation.
+- `Implemented`: User manual and runbook include retry/replay/backfill recovery workflow guidance.
 
 ### 11.8 Minimal Release Feature Table
 
@@ -327,12 +330,12 @@ Legend:
 | 25 | Heatmap export contract + release-e2e + manual coverage | Implemented | Heatmap CSV export contract is documented; E2E and manual content are updated to release state. |
 | 26 | Instagram attribution workflow (UI + confidence policy + scheduler linkage) | Implemented | Attribution overview UI, deterministic confidence tuning, and scheduler drill-through outcomes are implemented. |
 | 27 | Attribution export contract + release-e2e + manual coverage | Implemented | Attribution dataset export contract, E2E coverage, and manual updates are implemented. |
+| 28 | Retry/replay/backfill operations workflow + runbook + validation | Implemented | API actions, safety/idempotency guards, operations UI/status tracking, E2E checks, and runbook/manual updates are implemented. |
 
 ### 11.9 Open Features Backlog (All `Partial` + `Not Yet`, Not Release-Blocking for MVP)
 
 | # | Post-MVP Capability | Status | Notes |
 |---|---|---|---|
-| H3 | Productized retry/replay/backfill runbooks/automation | Partial | Operational workflow exists but is not fully automated/productized. |
 | H5 | Agent I/O contract governance hardening | Partial | Versioned contracts exist, but tighter governance for agent input/output schemas remains pending. |
 | H6 | Tenant-boundary enforcement hardening beyond current scoping | Partial | Location/branch scoping exists in model/routes; formalized explicit tenant-boundary authz controls remain incomplete. |
 | H7 | Full RBAC and explicit tenant authz controls | Not Yet | Location scoping exists; formal RBAC remains pending. |
