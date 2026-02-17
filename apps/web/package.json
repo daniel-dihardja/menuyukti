@@ -18,6 +18,7 @@
     "db:gen": "prisma generate",
     "db:seed": "prisma db seed",
     "db:seed:export": "node --import tsx scripts/export-neon-seed-sql.ts",
+    "db:seed:smoke": "node --import tsx scripts/seed-smoke-check.ts",
     "test:e2e:matrix": "tsx e2e/analytics-matrix-filter-journey.e2e.ts",
     "test:e2e:pairs": "tsx e2e/analytics-pairs-gui.e2e.ts",
     "test:e2e:heatmap": "tsx e2e/analytics-heatmap-improvements.e2e.ts",
