@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 import { createHash } from "crypto";
 import { createLineageForEtlJob } from "@/lib/etl/pipeline-lineage";
 import { markStageJobRunning, markStageJobTerminal } from "@/lib/etl/stage-runner";
+import { buildUploadStageIdempotencyKey } from "@/lib/etl/stage-idempotency";
 
 export const runtime = "nodejs";
 
@@ -1002,9 +1003,10 @@ export async function POST(request: Request) {
 
     const fileBytes = Buffer.from(await file.arrayBuffer());
     const fileHash = createHash("sha256").update(fileBytes).digest("hex");
-    const idempotencyKey = createHash("sha256")
-      .update(`location:${locationId}:file:${fileHash}`)
-      .digest("hex");
+    const idempotencyKey = buildUploadStageIdempotencyKey({
+      locationId,
+      fileHash,
+    });
 
     let job: { id: string };
     try {

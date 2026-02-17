@@ -7,6 +7,7 @@ import {
   ETL_STAGE_ERROR_CODE,
 } from "@/lib/etl/pipeline-contract";
 import { createLineageForEtlJob } from "@/lib/etl/pipeline-lineage";
+import { buildMatrixStageIdempotencyKey } from "@/lib/etl/stage-idempotency";
 
 type OperationAction = "retry" | "replay" | "backfill";
 
@@ -78,24 +79,6 @@ function parseOperationSourceFile(raw: string | null): {
   }
 
   return { isOperation: true, action, meta };
-}
-
-function makeDeterministicIdempotencyKey(input: {
-  action: OperationAction;
-  locationId: number;
-  pipelineRunId?: string;
-  fromDate?: string;
-  toDate?: string;
-}): string {
-  const normalized = JSON.stringify({
-    action: input.action,
-    locationId: input.locationId,
-    pipelineRunId: input.pipelineRunId ?? null,
-    fromDate: input.fromDate ?? null,
-    toDate: input.toDate ?? null,
-  });
-  const digest = createHash("sha256").update(normalized).digest("hex");
-  return `op-${digest.slice(0, 32)}`;
 }
 
 async function findExistingByIdempotencyKey(idempotencyKey: string) {
@@ -291,13 +274,13 @@ export async function POST(req: Request) {
     const idempotencyKey =
       suppliedIdempotencyKey.length > 0
         ? suppliedIdempotencyKey.slice(0, 128)
-        : makeDeterministicIdempotencyKey({
+        : buildMatrixStageIdempotencyKey({
             action,
             locationId,
             pipelineRunId: pipelineRunId || undefined,
             fromDate: fromDateRaw || undefined,
             toDate: toDateRaw || undefined,
-          });
+          }).slice(0, 128);
 
     const existing = await findExistingByIdempotencyKey(idempotencyKey);
     if (existing) {

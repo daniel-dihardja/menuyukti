@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
+import { createLineageForEtlJob } from "@/lib/etl/pipeline-lineage";
+import { markStageJobRunning, markStageJobTerminal } from "@/lib/etl/stage-runner";
+import {
+  buildCogsStageIdempotencyKey,
+  buildCogsVersionHash,
+} from "@/lib/etl/stage-idempotency";
 
 const reasonByCategory: Record<string, string> = {
   star: "high_popularity_high_margin",
@@ -53,7 +59,7 @@ export async function POST(req: Request, { params }: Params) {
     (item: any) =>
       Number.isInteger(item.id) &&
       (typeof item.cogs === "number" || item.cogs === null),
-  );
+  ) as Array<{ id: number; cogs: number | null }>;
 
   if (updates.length === 0) {
     return NextResponse.json(
@@ -62,20 +68,113 @@ export async function POST(req: Request, { params }: Params) {
     );
   }
 
-  // 4️⃣ Update COGS transactionally
-  await prisma.$transaction(
-    updates.map((item: { id: number; cogs: number | null }) =>
-      prisma.analyticsMenuItem.updateMany({
-        where: {
-          id: item.id,
-          analyticsId,
-        },
-        data: {
-          cogs: item.cogs,
-        },
-      }),
-    ),
-  );
+  const normalizedUpdates = updates.map((item) => ({
+    id: Number(item.id),
+    cogs: item.cogs == null ? null : Number(item.cogs),
+  }));
+  const cogsVersionHash = buildCogsVersionHash(normalizedUpdates);
+
+  const latestSucceededEtlJob = await prisma.etlJob.findFirst({
+    where: {
+      analyticsId,
+      status: "succeeded",
+      pipelineRunId: { not: null },
+    },
+    orderBy: {
+      finishedAt: "desc",
+    },
+    select: {
+      pipelineRunId: true,
+    },
+  });
+
+  const cogsStageIdempotencyKey = buildCogsStageIdempotencyKey({
+    analyticsId,
+    pipelineRunId: latestSucceededEtlJob?.pipelineRunId ?? null,
+    cogsVersionHash,
+  });
+
+  const existingCogsStageJob = await prisma.etlJob.findFirst({
+    where: {
+      idempotencyKey: cogsStageIdempotencyKey,
+      sourceFile: { startsWith: "cogs_enrichment:" },
+      status: { in: ["queued", "running", "succeeded"] },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      id: true,
+      status: true,
+    },
+  });
+
+  if (existingCogsStageJob) {
+    const analytics = await prisma.analytics.findUnique({
+      where: { id: analyticsId },
+      select: { matrixJson: true },
+    });
+    return NextResponse.json({
+      success: true,
+      deduped: true,
+      idempotencyKey: cogsStageIdempotencyKey,
+      jobId: existingCogsStageJob.id,
+      jobStatus: existingCogsStageJob.status,
+      matrix: analytics?.matrixJson ?? null,
+    });
+  }
+
+  const cogsStageJob = await prisma.$transaction(async (tx) => {
+    const created = await tx.etlJob.create({
+      data: {
+        locationId: analyticsContext.locationId,
+        analyticsId,
+        sourceFile: `cogs_enrichment:analyticsId=${analyticsId}|cogsVersionHash=${cogsVersionHash}`.slice(
+          0,
+          255,
+        ),
+        idempotencyKey: cogsStageIdempotencyKey,
+        status: "queued",
+      },
+      select: { id: true },
+    });
+
+    await createLineageForEtlJob(tx, {
+      etlJobId: created.id,
+      locationId: analyticsContext.locationId,
+      analyticsId,
+      pipelineRunId: latestSucceededEtlJob?.pipelineRunId ?? null,
+      trigger: "cogs_saved",
+      source: "cogs",
+      actor: "api:cogs_update",
+      stage: "cogs_enrichment",
+      inputRef: {
+        analyticsId,
+        cogsVersionHash,
+        updatesCount: normalizedUpdates.length,
+      },
+    });
+
+    return created;
+  });
+
+  await markStageJobRunning(cogsStageJob.id, "cogs_enrichment");
+
+  try {
+    // 4️⃣ Update COGS transactionally
+    await prisma.$transaction(
+      updates.map((item: { id: number; cogs: number | null }) =>
+        prisma.analyticsMenuItem.updateMany({
+          where: {
+            id: item.id,
+            analyticsId,
+          },
+          data: {
+            cogs: item.cogs,
+          },
+        }),
+      ),
+    );
 
   // 5️⃣ Fetch all menu items for matrix calculation
   const menuItems = await prisma.analyticsMenuItem.findMany({
@@ -191,31 +290,17 @@ export async function POST(req: Request, { params }: Params) {
     },
   });
 
-  const latestSucceededEtlJob = await prisma.etlJob.findFirst({
-    where: {
-      analyticsId,
-      status: "succeeded",
-      pipelineRunId: { not: null },
-    },
-    orderBy: {
-      finishedAt: "desc",
-    },
-    select: {
-      pipelineRunId: true,
-    },
-  });
+    let warehouseBackfill = {
+      pipelineRunId: null as string | null,
+      updatedOrderRows: 0,
+      aggregatedDailyRows: 0,
+    };
 
-  let warehouseBackfill = {
-    pipelineRunId: null as string | null,
-    updatedOrderRows: 0,
-    aggregatedDailyRows: 0,
-  };
+    if (latestSucceededEtlJob?.pipelineRunId) {
+      const pipelineRunId = latestSucceededEtlJob.pipelineRunId;
 
-  if (latestSucceededEtlJob?.pipelineRunId) {
-    const pipelineRunId = latestSucceededEtlJob.pipelineRunId;
-
-    await prisma.$transaction(async (tx) => {
-      const updateRows = await tx.$queryRaw<Array<{ updated_rows: bigint | number }>>`
+      await prisma.$transaction(async (tx) => {
+        const updateRows = await tx.$queryRaw<Array<{ updated_rows: bigint | number }>>`
         WITH location_base AS (
           SELECT location_key
           FROM warehouse.dim_location
@@ -260,7 +345,7 @@ export async function POST(req: Request, { params }: Params) {
         FROM updated
       `;
 
-      const dailyRows = await tx.$queryRaw<Array<{ aggregated_rows: bigint | number }>>`
+        const dailyRows = await tx.$queryRaw<Array<{ aggregated_rows: bigint | number }>>`
         WITH location_base AS (
           SELECT location_key
           FROM warehouse.dim_location
@@ -309,20 +394,51 @@ export async function POST(req: Request, { params }: Params) {
         FROM upserted
       `;
 
-      warehouseBackfill = {
-        pipelineRunId,
-        updatedOrderRows: Number(updateRows[0]?.updated_rows ?? 0),
-        aggregatedDailyRows: Number(dailyRows[0]?.aggregated_rows ?? 0),
-      };
-    });
-  }
+        warehouseBackfill = {
+          pipelineRunId,
+          updatedOrderRows: Number(updateRows[0]?.updated_rows ?? 0),
+          aggregatedDailyRows: Number(dailyRows[0]?.aggregated_rows ?? 0),
+        };
+      });
+    }
 
-  // Return updated matrix
-  return NextResponse.json({
-    success: true,
-    matrix: enrichedMatrix,
-    warehouseBackfill,
-  });
+    await markStageJobTerminal(cogsStageJob.id, "cogs_enrichment", {
+      status: "succeeded",
+      pipelineRunId: latestSucceededEtlJob?.pipelineRunId ?? null,
+      analyticsId,
+      outputRef: {
+        analyticsId,
+        cogsVersionHash,
+        warehouseBackfill,
+      },
+    });
+
+    // Return updated matrix
+    return NextResponse.json({
+      success: true,
+      matrix: enrichedMatrix,
+      warehouseBackfill,
+      cogsStage: {
+        idempotencyKey: cogsStageIdempotencyKey,
+        jobId: cogsStageJob.id,
+      },
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "COGS_ENRICHMENT_FAILED";
+    await markStageJobTerminal(cogsStageJob.id, "cogs_enrichment", {
+      status: "failed",
+      errorCode: "COGS_ENRICHMENT_FAILED",
+      errorMessage: message,
+      pipelineRunId: latestSucceededEtlJob?.pipelineRunId ?? null,
+      analyticsId,
+    });
+
+    return NextResponse.json(
+      { message: "COGS_UPDATE_FAILED", detail: message },
+      { status: 500 },
+    );
+  }
 }
 
 export async function GET(_req: Request, { params }: Params) {
