@@ -85,7 +85,7 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
   };
 
   return (
-    <div className="border w-full rounded-md">
+    <div className="border w-full">
       <Table className="w-full">
         <TableHeader>
           <TableRow>
