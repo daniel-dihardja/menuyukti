@@ -391,7 +391,7 @@ export function SchedulerClient({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0">
               <HelpLabel
                 htmlFor="scheduler-week-start"
                 label="Week start"
@@ -416,7 +416,7 @@ export function SchedulerClient({
                 label="Schedule status"
                 help="Readiness, quality, and freshness indicate whether schedules are trusted, downgraded, or blocked."
               />
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="secondary">{scheduleStatus}</Badge>
                 <Badge
                   variant={
@@ -439,9 +439,16 @@ export function SchedulerClient({
                 ) : null}
               </div>
               {guardrail.reasons.length > 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  guardrail reasons: {guardrail.reasons.join(", ")}
-                </p>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">guardrail reasons</p>
+                  <div className="flex flex-wrap gap-1">
+                    {guardrail.reasons.map((reason) => (
+                      <Badge key={reason} variant="outline" className="max-w-full break-all">
+                        {reason}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
               ) : null}
             </div>
           </div>
