@@ -86,6 +86,26 @@ async function run() {
     "Matrix export is missing expected header columns",
   );
 
+  const schedulerUrl = `${baseUrl}/analytics/${analyticsId}/scheduler`;
+  await page.goto(schedulerUrl, { waitUntil: "domcontentloaded" });
+  await page.getByRole("heading", { name: /instagram weekly scheduler/i }).waitFor({
+    state: "visible",
+    timeout: 30_000,
+  });
+  await page.getByRole("button", { name: "Add Blank Entry" }).click();
+  const schedulerFirstRow = page.locator("table tbody tr").first();
+  await schedulerFirstRow.waitFor({ state: "visible", timeout: 10_000 });
+  await schedulerFirstRow.locator("input").first().fill("Release Gate Scheduler Item");
+  await page.getByRole("button", { name: "Save Draft" }).click();
+  await page.getByText(/schedule saved|SCHEDULER_BLOCKED_BY_READINESS/i).first().waitFor({
+    state: "visible",
+    timeout: 20_000,
+  });
+  await page.getByText(/readiness:/i).first().waitFor({
+    state: "visible",
+    timeout: 10_000,
+  });
+
   const pairsExportUrl = new URL(`${baseUrl}/api/exports/analyst`);
   pairsExportUrl.searchParams.set("dataset", "pairs");
   pairsExportUrl.searchParams.set("locationId", locationId);
