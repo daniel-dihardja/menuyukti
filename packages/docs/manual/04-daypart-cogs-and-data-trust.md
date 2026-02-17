@@ -29,9 +29,23 @@ This page is designed to answer two questions quickly:
    - sort by total demand or selected window
 3. Export filtered heatmap context when needed via **Export Heatmap CSV**.
 4. Open `/analytics/{analyticsId}/cogs` and fill missing or inaccurate COGS.
+   - review COGS completeness KPI cards (item coverage and revenue coverage)
+   - prioritize updates from the missing/invalid COGS watchlist
 5. On decision pages, verify:
    - quality status (`passed`, `warn`, `failed`)
    - freshness age vs SLA
+
+## COGS Completeness Features You Should Use
+
+- KPI cards:
+  - total menu items
+  - valid COGS items
+  - item coverage %
+  - revenue coverage %
+- Priority watchlist:
+  - lists missing/invalid COGS items by highest revenue impact first.
+- Matrix readiness context:
+  - matrix/export now includes COGS readiness (`ready`, `degraded`, `blocked`) based on coverage thresholds.
 
 ## Heatmap Features You Should Use
 
@@ -76,3 +90,4 @@ If quality is `warn/failed` or freshness is stale, treat recommendations as lowe
 - Heatmap insights are deterministic aggregates, not predictions.
 - If readiness is `blocked`, do not finalize campaign timing decisions from this snapshot.
 - Exported heatmap CSV should be treated as a snapshot for that filter/time context.
+- Treat `degraded/blocked` COGS readiness as a signal to fix cost coverage before pricing/margin actions.

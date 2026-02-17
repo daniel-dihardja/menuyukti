@@ -246,6 +246,8 @@ Legend:
 - `Implemented`: Heatmap CSV export action is available from GUI and uses a documented contract.
 - `Implemented`: Accessibility baseline improvements for matrix filters/table.
 - `Implemented`: CSV export endpoint for analyst matrix/pair/combo/heatmap/attribution datasets with stable columns and metadata.
+- `Implemented`: COGS page includes completeness KPI cards and prioritized missing/invalid watchlist for analyst remediation.
+- `Implemented`: Matrix and matrix export include deterministic COGS readiness state/reasons based on coverage thresholds.
 - `Implemented`: Pair/combo analysis now has a dedicated GUI route with filter bar, KPI cards, ranked tables, explainability sheet, and secondary export actions.
 - `Implemented`: Pair/combo GUI URL-based filter bar with typed state parsing/serialization and shareable query context.
 - `Implemented`: Pair/combo tables support interactive column sorting directly in GUI.
@@ -269,7 +271,7 @@ Legend:
 - `Implemented`: Pair metrics mart and API with support, confidence, lift, minimum sample threshold, and noise flag.
 - `Implemented`: Margin-aware combo opportunity scoring mart and ranked API for top-N analyst candidates.
 - `Implemented`: Pair-type-aware analyst workflow: pair type filtering, pair type badges, and explainability of pair-type score adjustment.
-- `Partial`: Cost/price control support exists via COGS update flows, but analyst export/reporting is still limited.
+- `Implemented`: Cost/price completeness workflow includes COGS coverage KPIs, impact-prioritized watchlist, matrix export completeness fields, and readiness policy visibility.
 
 ### 11.5 Agentic Architecture
 - `Implemented`: Agents consume structured `core_input` payloads, with deterministic feature derivation in marketing-engine features.
@@ -288,8 +290,10 @@ Legend:
 - `Implemented`: Dedicated scheduler E2E journey validates weekly planner interactions, trust-state visibility, and draft-save outcomes.
 - `Implemented`: Dedicated heatmap improvement E2E coverage validates filters, persona insight surfaces, and export behavior.
 - `Implemented`: Dedicated attribution E2E workflow validates page load, confidence threshold URL state, and export behavior.
+- `Implemented`: Dedicated COGS completeness E2E validates KPI/watchlist visibility and matrix export completeness/readiness columns.
 - `Implemented`: User manual chapters cover released heatmap, pair/combo, agent guardrail, and scheduler workflows with operational guidance.
 - `Implemented`: User manual includes attribution workflow and confidence-tuning guidance.
+- `Implemented`: User manual covers COGS completeness KPIs, watchlist usage, and readiness interpretation.
 
 ### 11.8 Minimal Release Feature Table
 
@@ -308,7 +312,7 @@ Legend:
 | 10 | Freshness + quality visibility on decision page | Implemented | Matrix page shows run, quality, freshness, stale warning. |
 | 11 | Daypart analytics endpoint | Implemented | Daypart mart API route exists. |
 | 12 | Menu alias mapping for canonicalization | Implemented | Alias table and ETL join logic are present. |
-| 13 | COGS coverage support for analysts (MVP level) | Implemented | COGS update flow exists and supports matrix profitability decisions; deeper completeness reporting remains post-MVP hardening. |
+| 13 | COGS coverage support for analysts (MVP level) | Implemented | COGS update flow includes completeness KPI cards, prioritized watchlist, matrix export completeness fields, and readiness signals for analyst decisions. |
 | 14 | Marketer action workflow (`promote/improve/remove`) | Implemented | Action-oriented matrix UX and presets are available. |
 | 15 | Instagram campaign/post identity data model | Implemented | Canonical `instagram_campaigns` and `instagram_posts` with branch scope, identity fields, and publish-time indexes. |
 | 16 | Post-to-promoted-menu mapping model + upsert API | Implemented | Canonical mapping table with idempotent write path and dedupe by normalized menu name. |
@@ -329,7 +333,6 @@ Legend:
 | # | Post-MVP Capability | Status | Notes |
 |---|---|---|---|
 | H3 | Productized retry/replay/backfill runbooks/automation | Partial | Operational workflow exists but is not fully automated/productized. |
-| H4 | Analyst cost/price completeness reporting hardening | Partial | COGS update flow exists, but richer analyst completeness reporting/export coverage remains limited. |
 | H5 | Agent I/O contract governance hardening | Partial | Versioned contracts exist, but tighter governance for agent input/output schemas remains pending. |
 | H6 | Tenant-boundary enforcement hardening beyond current scoping | Partial | Location/branch scoping exists in model/routes; formalized explicit tenant-boundary authz controls remain incomplete. |
 | H7 | Full RBAC and explicit tenant authz controls | Not Yet | Location scoping exists; formal RBAC remains pending. |
