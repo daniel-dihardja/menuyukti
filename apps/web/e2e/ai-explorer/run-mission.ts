@@ -9,6 +9,7 @@ import {
   type Mission,
   type MissionAction,
 } from "./contracts";
+import { writeReportArtifacts } from "./reporter";
 
 type CliOptions = {
   missionPath: string;
@@ -193,7 +194,7 @@ async function run() {
     });
 
     fs.writeFileSync(path.join(artifactsDir, "action-log.json"), JSON.stringify(actionLog, null, 2));
-    fs.writeFileSync(path.join(artifactsDir, "findings.json"), JSON.stringify(report, null, 2));
+    const reportPaths = writeReportArtifacts(artifactsDir, report);
 
     if (videoPath) {
       fs.writeFileSync(path.join(artifactsDir, "video-path.txt"), `${videoPath}\n`);
@@ -201,7 +202,8 @@ async function run() {
 
     console.log(`[ai-explorer] runId: ${runId}`);
     console.log(`[ai-explorer] mission: ${options.missionPath}`);
-    console.log(`[ai-explorer] findings: ${path.join(artifactsDir, "findings.json")}`);
+    console.log(`[ai-explorer] findings: ${reportPaths.jsonPath}`);
+    console.log(`[ai-explorer] summary: ${reportPaths.markdownPath}`);
     console.log(`[ai-explorer] action-log: ${path.join(artifactsDir, "action-log.json")}`);
     console.log(`[ai-explorer] video: ${videoPath ?? "<not-recorded>"}`);
   }
