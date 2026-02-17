@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Info } from "lucide-react";
@@ -33,6 +33,23 @@ type Recommendation = {
   actionReason: string;
   suggestedDaypart: string;
   confidence: "high" | "medium" | "low";
+};
+
+type WeeklySuggestion = {
+  rank: number;
+  menuItem: string;
+  canonicalMenuNameNorm: string;
+  suggestedFor: string;
+  suggestedDaypart: "morning" | "lunch" | "afternoon" | "evening";
+  offerType: "combo_offer" | "happy_hour" | "hero_item";
+  rationale: string;
+  confidence: "high" | "medium" | "low";
+  sourceSignals: {
+    heatmapTotalQty: number;
+    heatmapDaypartQty: number;
+    matrixAction: "promote" | "reprice" | "keep" | "remove" | "none";
+    matrixMarginPct: number | null;
+  };
 };
 
 type EntryDto = {
@@ -82,6 +99,7 @@ type Props = {
   weekStartDate: string;
   weekEndDate: string;
   recommendations: Recommendation[];
+  initialSuggestions: WeeklySuggestion[];
   qualityStatus: string | null;
   freshnessMinutes: number | null;
   isStale: boolean;
@@ -191,6 +209,7 @@ export function SchedulerClient({
   weekStartDate,
   weekEndDate,
   recommendations,
+  initialSuggestions,
   qualityStatus,
   freshnessMinutes,
   isStale,
@@ -202,6 +221,9 @@ export function SchedulerClient({
 
   const [scheduleId, setScheduleId] = useState<number | null>(initialSchedule?.id ?? null);
   const [scheduleStatus, setScheduleStatus] = useState<string>(initialSchedule?.status ?? "draft");
+  const [suggestions, setSuggestions] = useState<WeeklySuggestion[]>(initialSuggestions);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsError, setSuggestionsError] = useState<string>("");
   const [entries, setEntries] = useState<EntryDraft[]>(
     initialSchedule?.entries.map(normalizeEntry) ?? [],
   );
@@ -316,6 +338,57 @@ export function SchedulerClient({
       },
     ]);
   };
+
+  const addFromSuggestion = (suggestion: WeeklySuggestion) => {
+    setEntries((prev) => [
+      ...prev,
+      {
+        canonicalMenuName: suggestion.menuItem,
+        scheduledForLocal: toLocalDateTimeInput(suggestion.suggestedFor),
+        daypart: suggestion.suggestedDaypart,
+        instagramCampaignId: "",
+        instagramPostId: "",
+        confidence: suggestion.confidence,
+        rationale: suggestion.rationale,
+        status: "draft",
+      },
+    ]);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSuggestions = async () => {
+      setSuggestionsLoading(true);
+      setSuggestionsError("");
+      try {
+        const response = await fetch(
+          `/api/instagram/suggestions?analyticsId=${encodeURIComponent(String(analyticsId))}&weekStart=${encodeURIComponent(weekStartDate)}`,
+        );
+        const data = (await response.json()) as { suggestions?: WeeklySuggestion[]; error?: string };
+        if (!response.ok) {
+          throw new Error(data.error ?? "FAILED_TO_LOAD_WEEKLY_SUGGESTIONS");
+        }
+        if (!cancelled) {
+          setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSuggestionsError(error instanceof Error ? error.message : "FAILED_TO_LOAD_WEEKLY_SUGGESTIONS");
+          setSuggestions([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setSuggestionsLoading(false);
+        }
+      }
+    };
+
+    void loadSuggestions();
+    return () => {
+      cancelled = true;
+    };
+  }, [analyticsId, weekStartDate]);
 
   const saveDraft = async (): Promise<ScheduleDto | null> => {
     setSaving(true);
@@ -471,6 +544,54 @@ export function SchedulerClient({
                 </div>
               ) : null}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Weekly Heatmap Suggestions</CardTitle>
+          <CardDescription>
+            Data-driven weekly post ideas generated from sales heatmap demand windows.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {suggestionsLoading ? (
+            <p className="text-sm text-muted-foreground">Loading weekly suggestions...</p>
+          ) : null}
+          {suggestionsError ? (
+            <p className="text-sm text-destructive">{suggestionsError}</p>
+          ) : null}
+          {!suggestionsLoading && !suggestionsError && suggestions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No weekly heatmap-based suggestions are available for this week.
+            </p>
+          ) : null}
+          <div className="grid gap-2 md:grid-cols-2">
+            {suggestions.map((suggestion) => (
+              <div key={`${suggestion.rank}-${suggestion.canonicalMenuNameNorm}`} className="border p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="font-medium">{suggestion.menuItem}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {suggestion.suggestedDaypart} | {suggestion.offerType.replaceAll("_", " ")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{suggestion.rationale}</p>
+                  </div>
+                  <Badge variant={confidenceBadgeVariant(suggestion.confidence)}>
+                    {suggestion.confidence}
+                  </Badge>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    heatmap qty: {suggestion.sourceSignals.heatmapTotalQty.toFixed(0)}
+                  </p>
+                  <Button type="button" size="sm" onClick={() => addFromSuggestion(suggestion)}>
+                    Use Suggestion
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

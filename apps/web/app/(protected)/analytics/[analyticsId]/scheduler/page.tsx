@@ -6,8 +6,10 @@ import { getTranslations } from "next-intl/server";
 
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
+import type { InstagramWeeklyPostSuggestion } from "@/app/api/instagram/types";
 import { evaluateAttributionConfidence } from "@/lib/analytics/instagram-attribution-confidence";
 import { loadInstagramAttribution } from "@/lib/analytics/instagram-attribution";
+import { buildWeeklyInstagramSuggestions } from "@/lib/analytics/instagram-weekly-suggestions";
 import { toDecisionGradeMatrixRows } from "@/lib/analytics/matrix-row-contract";
 import { prisma } from "@/lib/prisma/client";
 import { routes } from "@/lib/routes";
@@ -245,6 +247,11 @@ export default async function SchedulerPage({ params, searchParams }: PageProps)
   const weekEndDate = endOfWeek(weekStartDate);
 
   const recommendations = buildRecommendations(analytics.matrixJson, analytics.heatmapJson);
+  const weeklySuggestions: InstagramWeeklyPostSuggestion[] = buildWeeklyInstagramSuggestions({
+    heatmapJson: analytics.heatmapJson,
+    matrixJson: analytics.matrixJson,
+    weekStartDate,
+  });
 
   const schedule = await loadWeeklySchedule(analytics.locationId, weekStartDate);
 
@@ -323,6 +330,7 @@ export default async function SchedulerPage({ params, searchParams }: PageProps)
         weekStartDate={dateToYmd(weekStartDate)}
         weekEndDate={dateToYmd(weekEndDate)}
         recommendations={recommendations}
+        initialSuggestions={weeklySuggestions}
         qualityStatus={qualityStatus}
         freshnessMinutes={freshnessMinutes}
         isStale={isStale}
