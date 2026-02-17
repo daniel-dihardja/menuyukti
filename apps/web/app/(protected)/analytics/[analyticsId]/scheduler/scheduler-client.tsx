@@ -26,6 +26,7 @@ import {
   TableRow,
 } from "@workspace/ui/components/table";
 import { routes } from "@/lib/routes";
+import { generateDeterministicPostCopy } from "@/lib/instagram/post-copy-generator";
 
 type Recommendation = {
   menuItem: string;
@@ -222,18 +223,6 @@ function HelpLabel({
   );
 }
 
-function buildCaptionVariants(
-  menuItem: string,
-  offerType: "combo_offer" | "happy_hour" | "hero_item",
-  daypart: "morning" | "lunch" | "afternoon" | "evening",
-): string[] {
-  const offerLabel = offerType.replaceAll("_", " ");
-  return [
-    `${daypart.toUpperCase()} pick: ${menuItem}. Try our ${offerLabel} today and bring a friend.`,
-    `${menuItem} is trending this ${daypart}. Limited ${offerLabel} available this week.`,
-  ];
-}
-
 export function SchedulerClient({
   analyticsId,
   locationId,
@@ -372,40 +361,42 @@ export function SchedulerClient({
   };
 
   const addFromSuggestion = (suggestion: WeeklySuggestion) => {
+    const postCopy = generateDeterministicPostCopy({
+      menuItem: suggestion.menuItem,
+      offerType: suggestion.offerType,
+      daypart: suggestion.suggestedDaypart,
+    });
     setComposerDraft({
       menuItem: suggestion.menuItem,
       daypart: suggestion.suggestedDaypart,
       offerType: suggestion.offerType,
       scheduledFor: toLocalDateTimeInput(suggestion.suggestedFor),
       rationale: suggestion.rationale,
-      captionVariants: buildCaptionVariants(
-        suggestion.menuItem,
-        suggestion.offerType,
-        suggestion.suggestedDaypart,
-      ),
+      captionVariants: [...postCopy.captionVariants],
       selectedVariant: 0,
-      cta: "Book now and mention this post.",
-      hashtagsText: "#menuyukti #restaurantmarketing",
+      cta: postCopy.cta,
+      hashtagsText: postCopy.hashtags.join(", "),
     });
   };
 
   const openComposerFromRecommendation = (recommendation: Recommendation) => {
     const offerType = recommendation.action === "promote" ? "combo_offer" : "happy_hour";
     const daypart = normalizeComposerDaypart(recommendation.suggestedDaypart);
+    const postCopy = generateDeterministicPostCopy({
+      menuItem: recommendation.menuItem,
+      offerType,
+      daypart,
+    });
     setComposerDraft({
       menuItem: recommendation.menuItem,
       daypart,
       offerType,
       scheduledFor: addDays(weekStartDate, entries.length % 7, daypartToHour(recommendation.suggestedDaypart)),
       rationale: recommendation.actionReason,
-      captionVariants: buildCaptionVariants(
-        recommendation.menuItem,
-        offerType,
-        daypart,
-      ),
+      captionVariants: [...postCopy.captionVariants],
       selectedVariant: 0,
-      cta: "Save your spot for this offer today.",
-      hashtagsText: "#menuyukti #foodpromo",
+      cta: postCopy.cta,
+      hashtagsText: postCopy.hashtags.join(", "),
     });
   };
 
