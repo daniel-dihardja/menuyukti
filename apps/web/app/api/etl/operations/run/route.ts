@@ -23,6 +23,16 @@ function resolveRunningStaleMinutes(): number {
 }
 
 export async function POST(req: Request) {
+  if (process.env.MVP_ENABLE_OPERATIONS_FEATURE !== "1") {
+    return NextResponse.json(
+      {
+        error: "OPERATIONS_FEATURE_REMOVED_FROM_MVP",
+        message:
+          "Retry/replay/backfill operations are not part of current MVP scope.",
+      },
+      { status: 410 },
+    );
+  }
   try {
     const body = (await req.json().catch(() => ({}))) as {
       locationId?: number;
