@@ -264,6 +264,8 @@ Legend:
 - `Implemented`: Pair/combo marts, APIs, exports, and GUI now support deterministic `pair_type` classification (`food_drink`, `food_food`, `drink_drink`, `unknown`).
 - `Implemented`: Combo scoring includes deterministic `food_drink` boost with explainable fields (`base_combo_opportunity_score`, `pair_type_boost_factor`, `pair_type_boost_applied`).
 - `Implemented`: Weekly scheduler GUI route (`/analytics/{analyticsId}/scheduler`) supports week-scoped planning, recommendation-to-schedule flow, editable entries, and save/finalize actions.
+- `Implemented`: Scheduler includes weekly heatmap suggestion rail with `Use Suggestion` action and deterministic fallback behavior when heatmap signals are unavailable.
+- `Implemented`: Scheduler includes prefilled Post Composer with editable caption variants, CTA/hashtags inputs, and apply-to-schedule flow.
 
 ### 11.3 Marketer (Instagram) Capabilities
 - `Implemented`: Recommendation-centric matrix workflow (`promote`, `improve/reprice`, `remove`, `keep`).
@@ -271,6 +273,7 @@ Legend:
 - `Implemented`: Instagram campaign and post identity model with branch scope and publish-window query indexes.
 - `Implemented`: Deterministic post-to-promoted-menu mapping model and idempotent mapping upsert API.
 - `Implemented`: Weekly posting schedule and campaign planning loop are productized with persisted weekly schedules, entry-level editing, and readiness-aware trust states.
+- `Implemented`: Instagram post generation from scheduler is productized with deterministic copy generation, draft guardrails, lifecycle APIs, and manual publish-package export.
 - `Implemented`: Instagram attribution workflow is productized with overview UX, confidence policy/tuning, scheduler drill-through, and analyst export coverage.
 - `Implemented`: Attribution KPI and delta revenue currency formatting is location-driven (`branches.currency_code`) with deterministic fallback when metadata is missing.
 
@@ -297,6 +300,7 @@ Legend:
 - `Implemented`: Release-gate E2E script covers marketer preset/recommendation flow, scheduler workflow, and analyst CSV export flow with artifacts.
 - `Implemented`: Pair/combo GUI E2E journey validates filter application, explainability UI, and export link behavior.
 - `Implemented`: Dedicated scheduler E2E journey validates weekly planner interactions, trust-state visibility, and draft-save outcomes.
+- `Implemented`: Dedicated scheduler post-generation E2E journey validates suggestion-to-composer, apply-to-schedule, and save-draft flow.
 - `Implemented`: Dedicated heatmap improvement E2E coverage validates filters, persona insight surfaces, and export behavior.
 - `Implemented`: Dedicated attribution E2E workflow validates page load, confidence threshold URL state, and export behavior.
 - `Implemented`: Dedicated COGS completeness E2E validates KPI/watchlist visibility and matrix export completeness/readiness columns.
@@ -347,6 +351,7 @@ Legend:
 | 32 | Staged pipeline compatibility/backfill rollout utilities | Implemented | Legacy ETL jobs can be backfilled into staged lineage tables; compatibility toggle keeps API behavior stable during rollout. |
 | 33 | Cold-start E2E full lifecycle runner (service bootstrap + DB lifecycle + suite execution + reset) | Implemented | `test:e2e:full` and `test:e2e:full:smoke` automate service orchestration, DB setup/cleanup, and deterministic suite execution with runner logs. |
 | 34 | MVP CI release gate for full lifecycle E2E + seed determinism smoke | Implemented | CI workflow enforces `test:e2e:full`; runner executes `db:seed:smoke` before suites and keeps artifacts/reports for diagnostics. |
+| 35 | Scheduler-to-post generation workflow (suggestions, composer, draft lifecycle, export, E2E) | Implemented | Weekly heatmap/matrix suggestions, prefilled composer, deterministic copy + guardrails, draft lifecycle/export APIs, and release E2E coverage are implemented. |
 
 ### 11.9 Open Features Backlog (All `Partial` + `Not Yet`, Not Release-Blocking for MVP)
 
