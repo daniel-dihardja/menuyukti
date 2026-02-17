@@ -236,6 +236,8 @@ Legend:
 - `Implemented`: Pipeline run metadata, run metrics, and reconciliation table.
 - `Implemented`: Retry/replay/backfill operational workflow is productized with API actions, safety guards, operations UI/status tracking, and runbook documentation.
 - `Implemented`: Dedicated ETL run-history list API supports succeeded/failed/queued/running views with deterministic filters and cursor pagination.
+- `Implemented`: Operation queue runner endpoint now claims queued jobs, transitions status lifecycle (`queued` -> `running` -> terminal), and resolves stale queued jobs automatically.
+- `Partial`: Action handlers are not yet complete for all operation types (`retry` and `backfill` currently fail-fast with explicit runner reason codes).
 
 ### 11.2 Core Analytics and UI
 - `Implemented`: Unified matrix table with robust filter bar, URL-based filter state, and presets.
@@ -297,6 +299,7 @@ Legend:
 - `Implemented`: Dedicated COGS completeness E2E validates KPI/watchlist visibility and matrix export completeness/readiness columns.
 - `Implemented`: Dedicated recovery operations E2E validates operations page availability, API listing, and guardrail rejection behavior.
 - `Implemented`: Recovery operations E2E and release-gate checks validate ETL run-history visibility, status filtering, and shortcut trigger wiring.
+- `Implemented`: Recovery E2E and release-gate smoke validate operation-runner endpoint availability and queued-operation consumption path.
 - `Implemented`: User manual chapters cover released heatmap, pair/combo, agent guardrail, and scheduler workflows with operational guidance.
 - `Implemented`: User manual includes attribution workflow and confidence-tuning guidance.
 - `Implemented`: User manual covers COGS completeness KPIs, watchlist usage, and readiness interpretation.
@@ -336,6 +339,7 @@ Legend:
 | 27 | Attribution export contract + release-e2e + manual coverage | Implemented | Attribution dataset export contract, E2E coverage, and manual updates are implemented. |
 | 28 | Retry/replay/backfill operations workflow + runbook + validation | Implemented | API actions, safety/idempotency guards, operations UI/status tracking, E2E checks, and runbook/manual updates are implemented. |
 | 29 | ETL run-history observability (API contract + UI filters + detail/shortcuts) | Implemented | `/api/etl/runs` plus operations run-history UI, shortcut actions, and release validation are implemented. |
+| 30 | ETL operation queue runner lifecycle and stale queue recovery | Implemented | Runner API claims queued operation jobs, updates lifecycle state, and auto-resolves stale queued records. |
 
 ### 11.9 Open Features Backlog (All `Partial` + `Not Yet`, Not Release-Blocking for MVP)
 
@@ -345,3 +349,4 @@ Legend:
 | H6 | Tenant-boundary enforcement hardening beyond current scoping | Partial | Location/branch scoping exists in model/routes; formalized explicit tenant-boundary authz controls remain incomplete. |
 | H7 | Full RBAC and explicit tenant authz controls | Not Yet | Location scoping exists; formal RBAC remains pending. |
 | H8 | End-to-end audit trail for recommendation-affecting actions | Not Yet | Not fully implemented as a complete audit system. |
+| H9 | Full retry/backfill runner handler execution parity | Partial | Runner infrastructure is shipped, but `retry` and `backfill` handlers are not fully executable yet. |

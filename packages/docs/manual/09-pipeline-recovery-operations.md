@@ -49,6 +49,20 @@ Use this panel before triggering recovery so the team has a shared, evidence-bas
 5. Queue operation.
 6. Monitor status table (`queued`, `running`, `succeeded`, `failed`).
 
+## Queue Execution
+
+- Use **Run queued now** on the operations page to trigger queue consumption for the selected location.
+- Runner lifecycle:
+  - claim oldest queued operation
+  - move to `running`
+  - execute handler
+  - finish as `succeeded` or `failed`
+- Stale queued operations are auto-resolved to failed with timeout reason so new requests are not blocked forever.
+
+Current handler scope:
+- `replay`: executable via runner path.
+- `retry` and `backfill`: currently fail fast with explicit `RUNNER_OPERATION_HANDLER_NOT_IMPLEMENTED:*` reason until full handlers are productized.
+
 ## Run History Filters and Pagination
 
 Use filters to narrow triage quickly:
