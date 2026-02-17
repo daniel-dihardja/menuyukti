@@ -57,6 +57,19 @@ Override suite list:
 E2E_SUITE_LIST="test:e2e:matrix,test:e2e:pairs" pnpm -C apps/web run test:e2e:full
 ```
 
+## Release Gate Playbook (MVP)
+
+Run this exact sequence for MVP release validation:
+
+1. `pnpm -C apps/web run test:e2e:full`
+2. Read `apps/web/e2e-artifacts/runner-reports/coverage-latest.json`
+3. Require:
+   - `scenarioCoveragePct = 100`
+   - `passRatePct = 100`
+   - process exit code `0`
+
+If any condition fails, release is blocked.
+
 ## Output and Logs
 
 - E2E screenshots/videos: `apps/web/e2e-artifacts/`
@@ -64,6 +77,21 @@ E2E_SUITE_LIST="test:e2e:matrix,test:e2e:pairs" pnpm -C apps/web run test:e2e:fu
   - `apps/web/e2e-artifacts/runner-logs/analytics.log`
   - `apps/web/e2e-artifacts/runner-logs/agents.log`
   - `apps/web/e2e-artifacts/runner-logs/web.log`
+  - `apps/web/e2e-artifacts/runner-reports/coverage-latest.json`
+
+## Failure Recovery
+
+Common failure classes and actions:
+
+1. Service readiness timeout:
+   - Check runner logs in `runner-logs/`.
+   - Re-run after verifying local ports (`3000`, `8000`, `8001`) are free.
+2. Seed smoke failure (`db:seed:smoke`):
+   - Regenerate/validate `prisma/seed/export/current_seed.sql`.
+   - Re-run `db:seed` and `db:seed:smoke` manually.
+3. Suite assertion failure:
+   - Review screenshot/video + failed suite output.
+   - Fix app/test deterministically, then re-run full gate.
 
 ## Operational Notes (Current Shared DB Mode)
 

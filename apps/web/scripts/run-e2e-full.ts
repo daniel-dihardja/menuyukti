@@ -271,6 +271,7 @@ async function run() {
     await runCommand("db:gen", "pnpm", ["-C", "apps/web", "run", "db:gen"], repoRoot, env);
     await runCommand("db:init", "pnpm", ["-C", "apps/web", "run", "db:init"], repoRoot, env);
     await runCommand("db:seed", "pnpm", ["-C", "apps/web", "run", "db:seed"], repoRoot, env);
+    await runCommand("db:seed:smoke", "pnpm", ["-C", "apps/web", "run", "db:seed:smoke"], repoRoot, env);
 
     const suites = getSuites();
     console.log(`[e2e:full] running suites (${suites.length}): ${suites.join(", ")}`);
@@ -358,6 +359,12 @@ async function run() {
     console.log(`  pass rate: ${report.passRatePct}%`);
     console.log(`  report: ${reportPath}`);
     console.log(`  latest: ${latestPath}`);
+    if (report.failedCount > 0) {
+      console.error("[e2e:full] failed suites:");
+      for (const failed of report.failedSuites) {
+        console.error(`  - ${failed.suite}: ${failed.error ?? "unknown error"}`);
+      }
+    }
   }
 }
 
