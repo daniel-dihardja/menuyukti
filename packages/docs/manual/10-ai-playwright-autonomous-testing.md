@@ -8,6 +8,7 @@ It is designed to:
 - discover UX issues and runtime defects beyond deterministic assertions,
 - produce reproducible evidence (screenshots, action logs, error logs),
 - generate triage-friendly reports,
+- propose feature suggestions based on repeated friction patterns,
 - optionally prepare guarded auto-fix plans.
 
 ## Why It Brings Value
@@ -55,6 +56,45 @@ pnpm -C apps/web run test:e2e:ai:sales
 - `e2e-artifacts/ai-explorer/<runId>/action-log.json`
 - `e2e-artifacts/ai-explorer/<runId>/screenshots/*`
 
+## Step-by-Step Tutorial (Agent Run + Expected Output)
+
+1. Start the app server:
+```bash
+pnpm -C apps/web dev
+```
+Expected:
+- Next.js dev server starts on `http://127.0.0.1:3000`.
+
+2. Run one AI explorer mission (example: pairs):
+```bash
+pnpm -C apps/web run test:e2e:ai:pairs
+```
+Expected terminal output includes:
+- `[ai-explorer] runId: ...`
+- `[ai-explorer] mission: .../pairs.json`
+- `[ai-explorer] findings: .../findings.json`
+- `[ai-explorer] summary: .../findings-summary.md`
+- `[ai-explorer] action-log: .../action-log.json`
+
+3. Open generated artifacts for review:
+- `findings-summary.md`: human triage view.
+- `findings.json`: structured payload for automation.
+- `action-log.json`: step-by-step execution trace.
+- `screenshots/`: visual evidence of UI states.
+
+4. (Optional) Run guarded auto-fix planning:
+```bash
+pnpm -C apps/web run test:e2e:ai:autofix -- --findings=e2e-artifacts/ai-explorer/<runId>/findings.json --enable=true
+```
+Expected:
+- `autofix-plan.md` with candidate safe fixes + validation status.
+- `autofix-plan.json` with machine-readable plan payload.
+
+5. Convert findings into engineering work:
+- Create bug stories for `critical/high`.
+- Group repeated `medium/low` friction into UX improvements.
+- Track feature suggestions separately as product enhancement candidates.
+
 ## Running Different Mission Templates
 
 - Sales:
@@ -100,6 +140,27 @@ Key fields to tune:
   - `medium`: notable degradation with workaround
   - `low`: polish issue
   - `info`: observation
+
+## Feature Suggestion Output
+
+Besides bugs, the AI workflow should also produce feature suggestions when it detects repeated user friction or missing workflow affordances.
+
+Recommended rule:
+- Add a feature suggestion when the same friction appears in multiple routes or multiple missions.
+
+How to store suggestions:
+- Add as `info` findings with clear label (for example: `Feature Suggestion: ...`).
+- Include:
+  - user pain pattern,
+  - affected route(s),
+  - expected product value,
+  - suggested implementation direction.
+
+Example suggestion themes:
+- missing contextual help/tooltips,
+- unclear entry-point ordering,
+- low-visibility CTA for key next steps,
+- absent export/filter shortcuts for analyst workflows.
 
 ## Optional Auto-Fix Plan Mode
 

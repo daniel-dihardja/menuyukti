@@ -60,6 +60,20 @@ Every non-info finding must include:
 3. Console/network evidence when runtime-related.
 4. Confidence score and rationale.
 
+## Feature Suggestion Policy
+
+The AI explorer is expected to output feature suggestions in addition to defects.
+
+Guidelines:
+- Represent feature suggestions as `info` findings.
+- Prefix title with `Feature Suggestion:`.
+- Include:
+  - pain pattern observed,
+  - affected route(s),
+  - expected value for marketer/analyst/operator workflow,
+  - suggested implementation direction.
+- Prefer suggestions only when friction is repeated across multiple missions or routes.
+
 ## Contract Versioning Policy
 
 - Current: `v1`.
