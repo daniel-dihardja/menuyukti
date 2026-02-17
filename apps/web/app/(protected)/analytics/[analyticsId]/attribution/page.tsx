@@ -33,6 +33,7 @@ import {
 import { formatCurrency as formatCurrencyValue } from "@/lib/currency";
 import { prisma } from "@/lib/prisma/client";
 import { routes } from "@/lib/routes";
+import { loadPipelineFreshnessMetadata } from "@/lib/etl/latest-valid-materialization";
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>;
@@ -210,30 +211,10 @@ export default async function AttributionPage({ params, searchParams }: PageProp
   const analyticsName = analytics.sourceFile ?? `Analytics #${analytics.id}`;
   const currencyCode = analytics.location?.currencyCode ?? "IDR";
 
-  const etlJob = await prisma.etlJob.findFirst({
-    where: {
-      analyticsId,
-      status: "succeeded",
-      pipelineRunId: { not: null },
-    },
-    orderBy: { finishedAt: "desc" },
-    select: { pipelineRunId: true },
-  });
-  const pipelineRunRows = etlJob?.pipelineRunId
-    ? await prisma.$queryRaw<Array<{ ingested_at_utc: Date; quality_status: string }>>`
-        SELECT ingested_at_utc, quality_status
-        FROM warehouse.dim_pipeline_run
-        WHERE pipeline_run_id = CAST(${etlJob.pipelineRunId} AS UUID)
-        LIMIT 1
-      `
-    : [];
-  const pipelineRun = pipelineRunRows[0];
-  const freshnessSlaMinutes = Number(process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440");
-  const freshnessMinutes = pipelineRun
-    ? Math.max(0, Math.floor((Date.now() - new Date(pipelineRun.ingested_at_utc).getTime()) / 60_000))
-    : null;
-  const isStale = freshnessMinutes !== null && freshnessMinutes > freshnessSlaMinutes;
-  const qualityStatus = pipelineRun?.quality_status ?? null;
+  const metadata = await loadPipelineFreshnessMetadata(analytics.id);
+  const freshnessMinutes = metadata.freshnessMinutes;
+  const isStale = Boolean(metadata.stale);
+  const qualityStatus = metadata.qualityStatus;
 
   let rows: InstagramAttributionRow[] = [];
   let loadError: string | null = null;

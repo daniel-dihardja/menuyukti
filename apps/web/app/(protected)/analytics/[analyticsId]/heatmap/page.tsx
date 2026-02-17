@@ -42,6 +42,10 @@ import {
   parseHeatmapFilterState,
   serializeHeatmapFilterState,
 } from "@/lib/analytics/heatmap-filter-state";
+import {
+  loadPipelineFreshnessMetadata,
+  resolveAnalyticsMaterialization,
+} from "@/lib/etl/latest-valid-materialization";
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>;
@@ -64,9 +68,16 @@ export default async function Page({ params, searchParams }: PageProps) {
   // --------------------------------------------------
   // Fetch analytics snapshot
   // --------------------------------------------------
+  const materialization = await resolveAnalyticsMaterialization({
+    analyticsId,
+    requiredField: "heatmapJson",
+  });
+  if (!materialization) notFound();
+
   const analytics = await prisma.analytics.findUnique({
-    where: { id: analyticsId },
+    where: { id: materialization.resolvedAnalyticsId },
     select: {
+      id: true,
       sourceFile: true,
       heatmapJson: true,
     },
@@ -74,38 +85,11 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   if (!analytics) notFound();
 
-  const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
-
-  const etlJob = await prisma.etlJob.findFirst({
-    where: {
-      analyticsId,
-      status: "succeeded",
-      pipelineRunId: { not: null },
-    },
-    orderBy: { finishedAt: "desc" },
-    select: { pipelineRunId: true },
-  });
-
-  const pipelineRunRows = etlJob?.pipelineRunId
-    ? await prisma.$queryRaw<Array<{ ingested_at_utc: Date; quality_status: string }>>`
-        SELECT ingested_at_utc, quality_status
-        FROM warehouse.dim_pipeline_run
-        WHERE pipeline_run_id = CAST(${etlJob.pipelineRunId} AS UUID)
-        LIMIT 1
-      `
-    : [];
-  const pipelineRun = pipelineRunRows[0];
-
-  const freshnessSlaMinutes = Number(process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440");
-  const freshnessMinutes = pipelineRun
-    ? Math.max(
-        0,
-        Math.floor((Date.now() - new Date(pipelineRun.ingested_at_utc).getTime()) / 60_000),
-      )
-    : null;
-  const isStale = freshnessMinutes !== null && freshnessMinutes > freshnessSlaMinutes;
-
-  const qualityStatus = String(pipelineRun?.quality_status ?? "").toLowerCase() || "unknown";
+  const analyticsName = analytics.sourceFile ?? `Analytics #${analytics.id}`;
+  const metadata = await loadPipelineFreshnessMetadata(analytics.id);
+  const freshnessMinutes = metadata.freshnessMinutes;
+  const isStale = Boolean(metadata.stale);
+  const qualityStatus = String(metadata.qualityStatus ?? "").toLowerCase() || "unknown";
   const readiness: "ready" | "degraded" | "blocked" =
     qualityStatus === "failed" ? "blocked" : qualityStatus === "warn" || isStale ? "degraded" : "ready";
 
@@ -205,6 +189,11 @@ export default async function Page({ params, searchParams }: PageProps) {
         description={tHeatmap("description")}
       />
       <section className="flex flex-wrap items-center gap-2">
+        {materialization.fallbackApplied ? (
+          <Badge variant="secondary">
+            using latest valid materialization (#{materialization.resolvedAnalyticsId})
+          </Badge>
+        ) : null}
         <Badge variant={readiness === "blocked" ? "destructive" : readiness === "degraded" ? "secondary" : "default"}>
           readiness: {readiness}
         </Badge>

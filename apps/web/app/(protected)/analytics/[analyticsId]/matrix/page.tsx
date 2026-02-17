@@ -16,6 +16,10 @@ import { applyMatrixFilterState } from "@/lib/analytics/matrix-filter-engine";
 import { toDecisionGradeMatrixRows } from "@/lib/analytics/matrix-row-contract";
 import { summarizeCogsCoverage } from "@/lib/analytics/cogs-completeness";
 import { evaluateCogsReadiness } from "@/lib/analytics/cogs-readiness";
+import {
+  loadPipelineFreshnessMetadata,
+  resolveAnalyticsMaterialization,
+} from "@/lib/etl/latest-valid-materialization";
 
 import { MatrixFilterBar } from "./matrix-filter-bar";
 import { MatrixInsightTable } from "./matrix-insight-table";
@@ -57,9 +61,16 @@ export default async function Page({ params, searchParams }: PageProps) {
   // --------------------------------------------------
   // Fetch analytics snapshot
   // --------------------------------------------------
+  const materialization = await resolveAnalyticsMaterialization({
+    analyticsId,
+    requiredField: "matrixJson",
+  });
+  if (!materialization) notFound();
+
   const analytics = await prisma.analytics.findUnique({
-    where: { id: analyticsId },
+    where: { id: materialization.resolvedAnalyticsId },
     select: {
+      id: true,
       sourceFile: true,
       location: {
         select: {
@@ -79,40 +90,12 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   if (!analytics) notFound();
 
-  const etlJob = await prisma.etlJob.findFirst({
-    where: {
-      analyticsId,
-      status: "succeeded",
-      pipelineRunId: { not: null },
-    },
-    orderBy: { finishedAt: "desc" },
-    select: { pipelineRunId: true },
-  });
+  const metadata = await loadPipelineFreshnessMetadata(analytics.id);
+  const freshnessSlaMinutes = Number(process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440");
+  const dataFreshnessMinutes = metadata.freshnessMinutes;
+  const isStale = Boolean(metadata.stale);
 
-  const pipelineRunRows = etlJob?.pipelineRunId
-    ? await prisma.$queryRaw<Array<{ ingested_at_utc: Date; quality_status: string }>>`
-        SELECT ingested_at_utc, quality_status
-        FROM warehouse.dim_pipeline_run
-        WHERE pipeline_run_id = CAST(${etlJob.pipelineRunId} AS UUID)
-        LIMIT 1
-      `
-    : [];
-  const pipelineRun = pipelineRunRows[0];
-  const freshnessSlaMinutes = Number(
-    process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440",
-  );
-  const dataFreshnessMinutes = pipelineRun
-    ? Math.max(
-        0,
-        Math.floor(
-          (Date.now() - new Date(pipelineRun.ingested_at_utc).getTime()) / 60_000,
-        ),
-      )
-    : null;
-  const isStale =
-    dataFreshnessMinutes !== null && dataFreshnessMinutes > freshnessSlaMinutes;
-
-  const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
+  const analyticsName = analytics.sourceFile ?? `Analytics #${analytics.id}`;
   const matrix = analytics.matrixJson as MatrixJson | null;
   const currencyCode = analytics.location?.currencyCode ?? "IDR";
 
@@ -211,6 +194,11 @@ export default async function Page({ params, searchParams }: PageProps) {
         <span className="text-sm text-muted-foreground">
           {tMatrix("actionsLabel")}
         </span>
+        {materialization.fallbackApplied ? (
+          <Badge variant="secondary">
+            using latest valid materialization (#{materialization.resolvedAnalyticsId})
+          </Badge>
+        ) : null}
         <Badge variant="default">{tMatrix("actions.promote")}</Badge>
         <Badge variant="secondary">{tMatrix("actions.improve")}</Badge>
         <Badge variant="destructive">{tMatrix("actions.remove")}</Badge>
@@ -288,13 +276,13 @@ export default async function Page({ params, searchParams }: PageProps) {
                   <div>
                     <span className="text-muted-foreground">Run:</span>{" "}
                     <span className="font-medium">
-                      {etlJob?.pipelineRunId ?? "—"}
+                      {metadata.pipelineRunId ?? "—"}
                     </span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Quality:</span>{" "}
                     <span className="font-medium">
-                      {pipelineRun?.quality_status ?? "—"}
+                      {metadata.qualityStatus ?? "—"}
                     </span>
                   </div>
                   <div>

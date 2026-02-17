@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma/client";
+import {
+  loadPipelineFreshnessMetadata,
+  resolveAnalyticsMaterialization,
+} from "@/lib/etl/latest-valid-materialization";
 
 type Params = {
   params: Promise<{
@@ -15,23 +18,21 @@ export async function GET(_req: Request, { params }: Params) {
     return NextResponse.json({ error: "INVALID_ANALYTICS_ID" }, { status: 400 });
   }
 
-  const job = await prisma.etlJob.findFirst({
-    where: {
-      analyticsId,
-      status: "succeeded",
-      pipelineRunId: { not: null },
-    },
-    orderBy: { finishedAt: "desc" },
-    select: {
-      pipelineRunId: true,
-      finishedAt: true,
-    },
+  const materialization = await resolveAnalyticsMaterialization({
+    analyticsId,
+    requiredField: "matrixJson",
   });
+  if (!materialization) {
+    return NextResponse.json({ error: "ANALYTICS_NOT_FOUND" }, { status: 404 });
+  }
 
-  if (!job?.pipelineRunId) {
+  const metadata = await loadPipelineFreshnessMetadata(materialization.resolvedAnalyticsId);
+  if (!metadata.pipelineRunId) {
     return NextResponse.json(
       {
-        analytics_id: analyticsId,
+        requested_analytics_id: analyticsId,
+        analytics_id: materialization.resolvedAnalyticsId,
+        materialization_fallback: materialization.fallbackApplied,
         pipeline_run_id: null,
         ingested_at_utc: null,
         quality_status: null,
@@ -42,45 +43,14 @@ export async function GET(_req: Request, { params }: Params) {
     );
   }
 
-  const runRows = await prisma.$queryRaw<
-    Array<{ ingested_at_utc: Date; quality_status: string }>
-  >`
-    SELECT ingested_at_utc, quality_status
-    FROM warehouse.dim_pipeline_run
-    WHERE pipeline_run_id = CAST(${job.pipelineRunId} AS UUID)
-    LIMIT 1
-  `;
-
-  const run = runRows[0];
-  if (!run) {
-    return NextResponse.json(
-      {
-        analytics_id: analyticsId,
-        pipeline_run_id: job.pipelineRunId,
-        ingested_at_utc: null,
-        quality_status: null,
-        data_freshness_minutes: null,
-        stale: null,
-      },
-      { status: 200 },
-    );
-  }
-
-  const freshnessMinutes = Math.max(
-    0,
-    Math.floor((Date.now() - new Date(run.ingested_at_utc).getTime()) / 60_000),
-  );
-  const freshnessSlaMinutes = Number(
-    process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440",
-  );
-  const stale = freshnessMinutes > freshnessSlaMinutes;
-
   return NextResponse.json({
-    analytics_id: analyticsId,
-    pipeline_run_id: job.pipelineRunId,
-    ingested_at_utc: new Date(run.ingested_at_utc).toISOString(),
-    quality_status: run.quality_status,
-    data_freshness_minutes: freshnessMinutes,
-    stale,
+    requested_analytics_id: analyticsId,
+    analytics_id: materialization.resolvedAnalyticsId,
+    materialization_fallback: materialization.fallbackApplied,
+    pipeline_run_id: metadata.pipelineRunId,
+    ingested_at_utc: metadata.ingestedAtUtc,
+    quality_status: metadata.qualityStatus,
+    data_freshness_minutes: metadata.freshnessMinutes,
+    stale: metadata.stale,
   });
 }
