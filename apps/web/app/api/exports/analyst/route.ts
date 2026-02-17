@@ -9,6 +9,7 @@ import { parseMatrixFilterState } from "@/lib/analytics/matrix-filter-state";
 import { applyMatrixFilterState } from "@/lib/analytics/matrix-filter-engine";
 import { toDecisionGradeMatrixRows } from "@/lib/analytics/matrix-row-contract";
 import { parsePairTypeFilter } from "@/lib/analytics/pair-type";
+import { cogsIssue, summarizeCogsCoverage } from "@/lib/analytics/cogs-completeness";
 import {
   applyHeatmapFilterState,
   applyWeeklySegment,
@@ -335,6 +336,12 @@ export async function GET(req: Request) {
       const rows = toDecisionGradeMatrixRows(analytics.matrixJson);
       const filters = parseMatrixFilterState(searchParams);
       const filteredRows = applyMatrixFilterState(rows, filters);
+      const cogsCoverage = summarizeCogsCoverage(
+        filteredRows.map((row) => ({
+          cogs: row.cogs,
+          revenue: row.revenue,
+        })),
+      );
 
       const exportRows = filteredRows.map((row) => ({
         dataset,
@@ -354,6 +361,10 @@ export async function GET(req: Request) {
         margin_pct: row.marginPct,
         popularity_score: row.popularityScore,
         margin_score: row.marginScore,
+        has_valid_cogs: cogsIssue(row.cogs) === "none",
+        cogs_issue: cogsIssue(row.cogs),
+        cogs_item_coverage_ratio: cogsCoverage.itemCoverageRatio,
+        cogs_revenue_coverage_ratio: cogsCoverage.revenueCoverageRatio,
       }));
 
       const csv = toCsv(exportRows, [
@@ -374,6 +385,10 @@ export async function GET(req: Request) {
         "margin_pct",
         "popularity_score",
         "margin_score",
+        "has_valid_cogs",
+        "cogs_issue",
+        "cogs_item_coverage_ratio",
+        "cogs_revenue_coverage_ratio",
       ]);
 
       return csvResponse(`analyst-matrix-${analytics.id}.csv`, csv);

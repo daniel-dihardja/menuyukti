@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { summarizeCogsCompleteness } from "@/lib/analytics/cogs-completeness";
+import {
+  cogsIssue,
+  summarizeCogsCompleteness,
+  summarizeCogsCoverage,
+} from "@/lib/analytics/cogs-completeness";
 
 describe("summarizeCogsCompleteness", () => {
   it("computes ratios and prioritizes missing/invalid items by impact", () => {
@@ -51,5 +55,26 @@ describe("summarizeCogsCompleteness", () => {
     expect(summary.itemCompletenessRatio).toBe(0);
     expect(summary.revenueCoverageRatio).toBe(0);
     expect(summary.prioritizedMissing).toEqual([]);
+  });
+
+  it("computes cogs issue labels", () => {
+    expect(cogsIssue(null)).toBe("missing");
+    expect(cogsIssue(0)).toBe("invalid");
+    expect(cogsIssue(1.5)).toBe("none");
+  });
+
+  it("computes cogs coverage summary for matrix-like rows", () => {
+    const summary = summarizeCogsCoverage([
+      { cogs: 20, revenue: 300 },
+      { cogs: null, revenue: 150 },
+      { cogs: 0, revenue: 100 },
+    ]);
+
+    expect(summary.totalItems).toBe(3);
+    expect(summary.validCogsItems).toBe(1);
+    expect(summary.itemCoverageRatio).toBeCloseTo(1 / 3);
+    expect(summary.totalRevenue).toBe(550);
+    expect(summary.coveredRevenue).toBe(300);
+    expect(summary.revenueCoverageRatio).toBeCloseTo(300 / 550);
   });
 });
