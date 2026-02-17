@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma/client";
 import { ETL_JOB_STATUSES } from "@/lib/etl/pipeline-contract";
+import { isStageLineageCompatEnabled } from "@/lib/etl/lineage-compat";
 import {
   buildQualityHints,
   buildRunCursor,
@@ -43,6 +44,7 @@ function parseDate(raw: string | null, endOfDay: boolean): Date | null {
 
 export async function GET(req: Request) {
   try {
+    const lineageCompatEnabled = isStageLineageCompatEnabled();
     const url = new URL(req.url);
 
     const locationIdRaw = url.searchParams.get("locationId");
@@ -184,6 +186,14 @@ export async function GET(req: Request) {
         search,
       },
     };
+
+    // Backward-compat toggle remains available for gradual staged-pipeline rollout.
+    if (!lineageCompatEnabled) {
+      response.runs = response.runs.map((run) => ({
+        ...run,
+        qualityHints: Array.from(new Set([...run.qualityHints, "missing_pipeline_run_id"])),
+      }));
+    }
 
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
