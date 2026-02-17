@@ -26,7 +26,12 @@
     "test:e2e:attribution": "tsx e2e/analytics-attribution-workflow.e2e.ts",
     "test:e2e:cogs": "tsx e2e/analytics-cogs-completeness.e2e.ts",
     "test:e2e:pairs:pair-type": "tsx e2e/analytics-pairs-pair-type.e2e.ts",
-    "test:e2e:release-gate": "tsx e2e/release-gate-marketer-analyst.e2e.ts"
+    "test:e2e:release-gate": "tsx e2e/release-gate-marketer-analyst.e2e.ts",
+    "test:e2e:ai": "tsx e2e/ai-explorer/run-mission.ts",
+    "test:e2e:ai:sales": "tsx e2e/ai-explorer/run-mission.ts --mission=apps/web/e2e/ai-explorer/missions/sales.json",
+    "test:e2e:ai:pairs": "tsx e2e/ai-explorer/run-mission.ts --mission=apps/web/e2e/ai-explorer/missions/pairs.json",
+    "test:e2e:ai:scheduler": "tsx e2e/ai-explorer/run-mission.ts --mission=apps/web/e2e/ai-explorer/missions/scheduler.json",
+    "test:e2e:ai:attribution": "tsx e2e/ai-explorer/run-mission.ts --mission=apps/web/e2e/ai-explorer/missions/attribution.json"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

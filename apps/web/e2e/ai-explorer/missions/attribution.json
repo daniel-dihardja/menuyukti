@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "v1",
+  "id": "attribution-route-exploration",
+  "title": "Attribution Route Exploration",
+  "baseUrl": "http://127.0.0.1:3000",
+  "persona": "analyst",
+  "focusAreas": ["data_visibility", "ux_clarity", "runtime_errors"],
+  "guardrails": {
+    "maxSteps": 40,
+    "stepTimeoutMs": 10000,
+    "maxDurationMs": 180000,
+    "allowDestructiveActions": false,
+    "allowedDomains": ["127.0.0.1", "localhost"]
+  },
+  "scenarios": [
+    {
+      "id": "attribution-main",
+      "name": "Open attribution page and capture overview state",
+      "route": "/analytics/1/attribution",
+      "objective": "Verify attribution KPI/table blocks render and confidence controls are visible.",
+      "actions": [
+        { "type": "goto", "url": "http://127.0.0.1:3000/analytics/1/attribution" },
+        { "type": "waitFor", "selector": "h1" },
+        { "type": "screenshot", "name": "attribution-overview", "fullPage": true }
+      ]
+    }
+  ]
+}

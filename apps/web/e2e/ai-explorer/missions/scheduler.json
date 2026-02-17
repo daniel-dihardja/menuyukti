@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "v1",
+  "id": "scheduler-route-exploration",
+  "title": "Scheduler Route Exploration",
+  "baseUrl": "http://127.0.0.1:3000",
+  "persona": "marketer",
+  "focusAreas": ["navigation", "ux_clarity", "runtime_errors"],
+  "guardrails": {
+    "maxSteps": 40,
+    "stepTimeoutMs": 10000,
+    "maxDurationMs": 180000,
+    "allowDestructiveActions": false,
+    "allowedDomains": ["127.0.0.1", "localhost"]
+  },
+  "scenarios": [
+    {
+      "id": "scheduler-main",
+      "name": "Open scheduler page and verify trust/status surface",
+      "route": "/analytics/1/scheduler",
+      "objective": "Validate scheduler loading, status badges, and planning table visibility.",
+      "actions": [
+        { "type": "goto", "url": "http://127.0.0.1:3000/analytics/1/scheduler" },
+        { "type": "waitFor", "selector": "h1" },
+        { "type": "screenshot", "name": "scheduler-overview", "fullPage": true }
+      ]
+    }
+  ]
+}
