@@ -30,6 +30,7 @@ import {
   evaluateAttributionConfidence,
   parseConfidenceConfig,
 } from "@/lib/analytics/instagram-attribution-confidence";
+import { formatCurrency as formatCurrencyValue } from "@/lib/currency";
 import { prisma } from "@/lib/prisma/client";
 import { routes } from "@/lib/routes";
 
@@ -64,12 +65,8 @@ function formatDate(value: Date): string {
   }).format(value);
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(value);
+function formatCurrency(value: number, currencyCode: string): string {
+  return formatCurrencyValue(value, currencyCode);
 }
 
 function formatSignedNumber(value: number): string {
@@ -112,7 +109,13 @@ type AttributionRowWithConfidence = {
   coverageRatio: number;
 };
 
-function AttributionTable({ rows }: { rows: AttributionRowWithConfidence[] }) {
+function AttributionTable({
+  rows,
+  currencyCode,
+}: {
+  rows: AttributionRowWithConfidence[];
+  currencyCode: string;
+}) {
   return (
     <div className="overflow-x-auto rounded-md border">
       <Table>
@@ -140,7 +143,7 @@ function AttributionTable({ rows }: { rows: AttributionRowWithConfidence[] }) {
               <TableCell className="text-right">{row.preQty.toFixed(1)}</TableCell>
               <TableCell className="text-right">{row.postQty.toFixed(1)}</TableCell>
               <TableCell className="text-right">{formatSignedNumber(row.deltaQty)}</TableCell>
-              <TableCell className="text-right">{formatCurrency(row.deltaRevenue)}</TableCell>
+              <TableCell className="text-right">{formatCurrency(row.deltaRevenue, currencyCode)}</TableCell>
               <TableCell>
                 <div className="space-y-1">
                   {renderConfidenceBadge(tunedConfidence)}
@@ -183,6 +186,11 @@ export default async function AttributionPage({ params, searchParams }: PageProp
       locationId: true,
       periodStart: true,
       periodEnd: true,
+      location: {
+        select: {
+          currencyCode: true,
+        },
+      },
     },
   });
 
@@ -200,6 +208,7 @@ export default async function AttributionPage({ params, searchParams }: PageProp
   const menuFilter = typeof query.menu === "string" ? query.menu.trim().toLowerCase() : "";
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analytics.id}`;
+  const currencyCode = analytics.location?.currencyCode ?? "IDR";
 
   const etlJob = await prisma.etlJob.findFirst({
     where: {
@@ -358,7 +367,9 @@ export default async function AttributionPage({ params, searchParams }: PageProp
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Avg Delta Revenue</CardTitle>
           </CardHeader>
-          <CardContent className="text-2xl font-semibold">{formatCurrency(overview.avgDeltaRevenue)}</CardContent>
+          <CardContent className="text-2xl font-semibold">
+            {formatCurrency(overview.avgDeltaRevenue, currencyCode)}
+          </CardContent>
         </Card>
       </section>
 
@@ -384,7 +395,7 @@ export default async function AttributionPage({ params, searchParams }: PageProp
           </CardContent>
         </Card>
       ) : (
-        <AttributionTable rows={rowsWithConfidence} />
+        <AttributionTable rows={rowsWithConfidence} currencyCode={currencyCode} />
       )}
     </AnalyticsPageShell>
   );
