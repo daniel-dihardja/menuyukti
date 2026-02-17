@@ -132,6 +132,7 @@ Items not listed above are not release-blocking for MVP, but may remain importan
 - Track campaign/post identifier and promoted item mapping.
 - Baseline before/after sales signal by item and daypart window is available via API/mart.
 - Attribution confidence must be downgradeable when sample size/coverage is insufficient.
+- Current release includes attribution overview UX, confidence tuning controls, scheduler drill-through, and analyst export support.
 
 Note: Full end-user attribution UX is not release-blocking for MVP.
 
@@ -244,7 +245,7 @@ Legend:
 - `Implemented`: Heatmap method notes/explainability panel clarifies deterministic interpretation boundaries.
 - `Implemented`: Heatmap CSV export action is available from GUI and uses a documented contract.
 - `Implemented`: Accessibility baseline improvements for matrix filters/table.
-- `Implemented`: CSV export endpoint for analyst matrix/pair/combo datasets with stable columns and metadata.
+- `Implemented`: CSV export endpoint for analyst matrix/pair/combo/heatmap/attribution datasets with stable columns and metadata.
 - `Implemented`: Pair/combo analysis now has a dedicated GUI route with filter bar, KPI cards, ranked tables, explainability sheet, and secondary export actions.
 - `Implemented`: Pair/combo GUI URL-based filter bar with typed state parsing/serialization and shareable query context.
 - `Implemented`: Pair/combo tables support interactive column sorting directly in GUI.
@@ -313,7 +314,7 @@ Legend:
 | 16 | Post-to-promoted-menu mapping model + upsert API | Implemented | Canonical mapping table with idempotent write path and dedupe by normalized menu name. |
 | 17 | Pair-menu analysis (support/confidence/lift) | Implemented | Pair metrics mart and API deliver support/confidence/lift with configurable sample threshold and noise flag. |
 | 18 | Combo recommendation engine | Implemented | Margin-aware combo opportunity mart and ranked API endpoint are implemented. |
-| 19 | Analyst CSV export (matrix/pairs/combos) | Implemented | `/api/exports/analyst` exports filtered datasets with stable columns and generation metadata. |
+| 19 | Analyst CSV export (matrix/pairs/combos/heatmap/attribution) | Implemented | `/api/exports/analyst` exports filtered datasets with stable columns, confidence/trust metadata, and generation context. |
 | 20 | Agent architecture using structured feature inputs + guardrails | Implemented | Agents invoke with structured `core_input`; readiness helper enforces block/downgrade behavior. |
 | 21 | E2E upload -> analytics + release-gate workflows | Implemented | Upload, matrix, release-gate, and pair/combo e2e suites are wired with artifact capture. |
 | 22 | Instagram weekly scheduler workflow (model/API/UI + readiness policy) | Implemented | Week-scoped schedule persistence, editable planner UI, confidence/rationale fields, and readiness-based block/downgrade behavior are implemented. |
