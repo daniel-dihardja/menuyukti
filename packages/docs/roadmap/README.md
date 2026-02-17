@@ -22,3 +22,66 @@ This guide defines how implementation work must be executed in this project.
 - `todo/`: Open stories that are ready to be implemented.
 - `complete/`: Completed stories kept for historical reference.
 - `SPECS.md`: Current MVP/release specification and open-feature tracking.
+
+## Markdown Story Spec
+
+Every story file in `todo/` and `complete/` should follow this structure:
+
+1. Title:
+   - `# Story <id>: <short title>`
+2. `## Story Metadata` with:
+   - `Created Date: YYYY-MM-DD` (required)
+   - `Status: \`todo\` | \`in_progress\` | \`complete\`` (required)
+   - `Completed Date: YYYY-MM-DD` (required only when `Status` is `complete`)
+   - `Parent: <epic-or-story-id>` (optional, for grouping)
+3. `## Goal` (required)
+4. `## Why This Matters` (required)
+5. `## Scope` (required)
+6. `## Acceptance Criteria` (required)
+7. `## Deliverables` (required)
+
+Optional sections:
+- `## Data Engineering Requirements`
+- `## Dependencies`
+- `## Notes`
+
+## Story Grouping
+
+Story grouping is supported via metadata:
+
+- Use `Parent` to link a story to a higher-level story/epic.
+- Suggested format:
+  - Parent epic story: `Parent: none` (or omit field)
+  - Child story: `Parent: 73` (or other story/epic ID)
+
+Recommendation:
+- Keep grouping lightweight with `Parent` (as you suggested).
+- If needed later, add `Type: epic|story|task` in metadata, but this is optional for now.
+
+## Story Template
+
+```md
+# Story <id>: <short title>
+
+## Story Metadata
+- Created Date: YYYY-MM-DD
+- Status: `todo`
+- Parent: <id-or-none>
+
+## Goal
+<one clear outcome>
+
+## Why This Matters
+- <business/technical impact>
+
+## Scope
+- <in scope>
+- <in scope>
+
+## Acceptance Criteria
+- <verifiable outcome>
+- <verifiable outcome>
+
+## Deliverables
+- <artifact/code/docs/tests>
+```
