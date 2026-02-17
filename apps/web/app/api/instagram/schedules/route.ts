@@ -53,6 +53,15 @@ type NormalizedEntry = {
   status: "draft" | "scheduled" | "published" | "cancelled";
 };
 
+type SchedulingGuardrail = {
+  readiness: "ready" | "degraded" | "blocked";
+  qualityStatus: string | null;
+  freshnessMinutes: number | null;
+  isStale: boolean;
+  reasons: string[];
+  actions: string[];
+};
+
 function normalizeEntries(entriesRaw: unknown): { entries: NormalizedEntry[]; invalid: boolean } {
   const entriesInput = Array.isArray(entriesRaw) ? entriesRaw : [];
 
@@ -109,6 +118,110 @@ function normalizeEntries(entriesRaw: unknown): { entries: NormalizedEntry[]; in
   }
 
   return { entries: normalized, invalid: false };
+}
+
+async function getSchedulingGuardrail(locationId: number): Promise<SchedulingGuardrail> {
+  const freshnessSlaMinutes = Number(process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440");
+  const latestSuccessfulJob = await prisma.etlJob.findFirst({
+    where: {
+      locationId,
+      status: "succeeded",
+      pipelineRunId: { not: null },
+    },
+    orderBy: { finishedAt: "desc" },
+    select: { pipelineRunId: true },
+  });
+
+  if (!latestSuccessfulJob?.pipelineRunId) {
+    return {
+      readiness: "degraded",
+      qualityStatus: null,
+      freshnessMinutes: null,
+      isStale: false,
+      reasons: ["missing_pipeline_run"],
+      actions: ["downgrade_confidence"],
+    };
+  }
+
+  const runRows = await prisma.$queryRaw<Array<{ ingested_at_utc: Date; quality_status: string }>>`
+    SELECT ingested_at_utc, quality_status
+    FROM warehouse.dim_pipeline_run
+    WHERE pipeline_run_id = CAST(${latestSuccessfulJob.pipelineRunId} AS UUID)
+    LIMIT 1
+  `;
+
+  const run = runRows[0];
+  if (!run) {
+    return {
+      readiness: "degraded",
+      qualityStatus: null,
+      freshnessMinutes: null,
+      isStale: false,
+      reasons: ["missing_pipeline_metadata"],
+      actions: ["downgrade_confidence"],
+    };
+  }
+
+  const freshnessMinutes = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(run.ingested_at_utc).getTime()) / 60_000),
+  );
+  const isStale = freshnessMinutes > freshnessSlaMinutes;
+  const qualityStatus = String(run.quality_status ?? "").toLowerCase() || null;
+
+  if (qualityStatus === "failed") {
+    return {
+      readiness: "blocked",
+      qualityStatus,
+      freshnessMinutes,
+      isStale,
+      reasons: ["quality_failed"],
+      actions: ["block_generation", "set_confidence_blocked"],
+    };
+  }
+
+  if (qualityStatus === "warn" || isStale) {
+    const reasons: string[] = [];
+    if (qualityStatus === "warn") reasons.push("quality_warn");
+    if (isStale) reasons.push("freshness_stale");
+
+    return {
+      readiness: "degraded",
+      qualityStatus,
+      freshnessMinutes,
+      isStale,
+      reasons,
+      actions: ["downgrade_confidence"],
+    };
+  }
+
+  return {
+    readiness: "ready",
+    qualityStatus,
+    freshnessMinutes,
+    isStale,
+    reasons: [],
+    actions: [],
+  };
+}
+
+function applyEntryGuardrails(entries: NormalizedEntry[], guardrail: SchedulingGuardrail): NormalizedEntry[] {
+  return entries.map((entry) => {
+    const fallbackRationale = `Scheduled with ${entry.daypart ?? "daypart"} slot from deterministic recommendation workflow.`;
+    let confidence = entry.confidence;
+
+    if (guardrail.readiness === "blocked") {
+      confidence = "blocked";
+    } else if (guardrail.readiness === "degraded" && confidence === "high") {
+      confidence = "medium";
+    }
+
+    return {
+      ...entry,
+      confidence,
+      rationale: entry.rationale ?? fallbackRationale,
+    };
+  });
 }
 
 async function validateReferenceOwnership(locationId: number, entries: NormalizedEntry[]): Promise<boolean> {
@@ -246,8 +359,9 @@ export async function GET(req: NextRequest) {
       orderBy: { weekStartDate: "desc" },
       take: weekStartDate ? 1 : 12,
     });
+    const guardrail = await getSchedulingGuardrail(locationId);
 
-    return NextResponse.json({ schedules }, { status: 200 });
+    return NextResponse.json({ schedules, guardrail }, { status: 200 });
   } catch (error) {
     console.error("List Instagram weekly schedules error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -291,6 +405,20 @@ export async function POST(req: NextRequest) {
 
     const status = normalizeScheduleStatus(body.status) ?? "draft";
     const replaceEntries = body.replaceEntries === true;
+    const source = String(body.source ?? "manual");
+    const guardrail = await getSchedulingGuardrail(locationId);
+
+    if (guardrail.readiness === "blocked" && entries.length > 0 && source.startsWith("scheduler")) {
+      return NextResponse.json(
+        {
+          error: "SCHEDULER_BLOCKED_BY_READINESS",
+          guardrail,
+        },
+        { status: 409 },
+      );
+    }
+
+    const entriesWithGuardrails = applyEntryGuardrails(entries, guardrail);
 
     const schedule = await prisma.instagramWeeklySchedule.upsert({
       where: {
@@ -304,16 +432,16 @@ export async function POST(req: NextRequest) {
         weekStartDate: weekRange.weekStartDate,
         weekEndDate: weekRange.weekEndDate,
         status,
-        source: String(body.source ?? "manual"),
+        source,
       },
       update: {
         weekEndDate: weekRange.weekEndDate,
         status,
-        source: String(body.source ?? "manual"),
+        source,
       },
     });
 
-    await persistEntries(schedule.id, locationId, entries, replaceEntries);
+    await persistEntries(schedule.id, locationId, entriesWithGuardrails, replaceEntries);
 
     const scheduleWithEntries = await prisma.instagramWeeklySchedule.findUnique({
       where: { id: schedule.id },
@@ -324,7 +452,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ schedule: scheduleWithEntries }, { status: 200 });
+    return NextResponse.json({ schedule: scheduleWithEntries, guardrail }, { status: 200 });
   } catch (error) {
     console.error("Upsert Instagram weekly schedule error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -370,6 +498,20 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
+    const guardrail = await getSchedulingGuardrail(locationId);
+    if (guardrail.readiness === "blocked" && entries.length > 0) {
+      const finalizing = req.nextUrl.searchParams.get("action") === "finalize";
+      if (finalizing) {
+        return NextResponse.json(
+          {
+            error: "SCHEDULER_FINALIZE_BLOCKED_BY_READINESS",
+            guardrail,
+          },
+          { status: 409 },
+        );
+      }
+    }
+
     await prisma.instagramWeeklySchedule.update({
       where: { id: scheduleId },
       data: {
@@ -378,8 +520,9 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
-    if (entries.length > 0 || body.replaceEntries === true) {
-      await persistEntries(scheduleId, locationId, entries, body.replaceEntries === true);
+    const entriesWithGuardrails = applyEntryGuardrails(entries, guardrail);
+    if (entriesWithGuardrails.length > 0 || body.replaceEntries === true) {
+      await persistEntries(scheduleId, locationId, entriesWithGuardrails, body.replaceEntries === true);
     }
 
     const schedule = await prisma.instagramWeeklySchedule.findUnique({
@@ -391,7 +534,7 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ schedule }, { status: 200 });
+    return NextResponse.json({ schedule, guardrail }, { status: 200 });
   } catch (error) {
     console.error("Update Instagram weekly schedule error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

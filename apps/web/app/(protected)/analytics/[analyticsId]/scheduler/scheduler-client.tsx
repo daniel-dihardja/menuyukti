@@ -51,6 +51,15 @@ type ScheduleDto = {
   entries: EntryDto[];
 };
 
+type GuardrailDto = {
+  readiness: "ready" | "degraded" | "blocked";
+  qualityStatus: string | null;
+  freshnessMinutes: number | null;
+  isStale: boolean;
+  reasons: string[];
+  actions: string[];
+};
+
 type EntryDraft = {
   id?: number;
   canonicalMenuName: string;
@@ -161,6 +170,19 @@ export function SchedulerClient({
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "scheduled" | "published" | "cancelled">("all");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string>("");
+  const [guardrail, setGuardrail] = useState<GuardrailDto>({
+    readiness:
+      qualityStatus === "failed"
+        ? "blocked"
+        : isStale || qualityStatus === "warn"
+          ? "degraded"
+          : "ready",
+    qualityStatus,
+    freshnessMinutes,
+    isStale,
+    reasons: [],
+    actions: [],
+  });
 
   const applyScheduleResponse = (schedule: ScheduleDto | null | undefined) => {
     if (!schedule) return;
@@ -265,12 +287,17 @@ export function SchedulerClient({
         }),
       });
 
-      const data = (await response.json()) as { schedule?: ScheduleDto; error?: string };
+      const data = (await response.json()) as {
+        schedule?: ScheduleDto;
+        guardrail?: GuardrailDto;
+        error?: string;
+      };
       if (!response.ok) {
         throw new Error(data.error ?? "Failed to save schedule");
       }
 
       applyScheduleResponse(data.schedule);
+      if (data.guardrail) setGuardrail(data.guardrail);
       setMessage("Schedule saved.");
       return data.schedule ?? null;
     } catch (error) {
@@ -302,11 +329,16 @@ export function SchedulerClient({
           entries: payloadEntries,
         }),
       });
-      const data = (await response.json()) as { schedule?: ScheduleDto; error?: string };
+      const data = (await response.json()) as {
+        schedule?: ScheduleDto;
+        guardrail?: GuardrailDto;
+        error?: string;
+      };
       if (!response.ok) {
         throw new Error(data.error ?? "Failed to finalize schedule");
       }
       applyScheduleResponse(data.schedule);
+      if (data.guardrail) setGuardrail(data.guardrail);
       setMessage("Schedule finalized.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Failed to finalize schedule");
@@ -348,13 +380,31 @@ export function SchedulerClient({
               <Label>Schedule status</Label>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">{scheduleStatus}</Badge>
-                {qualityStatus ? <Badge variant="outline">quality: {qualityStatus}</Badge> : null}
-                {freshnessMinutes !== null ? (
-                  <Badge variant={isStale ? "destructive" : "secondary"}>
-                    freshness: {freshnessMinutes}m
+                <Badge
+                  variant={
+                    guardrail.readiness === "blocked"
+                      ? "destructive"
+                      : guardrail.readiness === "degraded"
+                        ? "secondary"
+                        : "default"
+                  }
+                >
+                  readiness: {guardrail.readiness}
+                </Badge>
+                {guardrail.qualityStatus ? (
+                  <Badge variant="outline">quality: {guardrail.qualityStatus}</Badge>
+                ) : null}
+                {guardrail.freshnessMinutes !== null ? (
+                  <Badge variant={guardrail.isStale ? "destructive" : "secondary"}>
+                    freshness: {guardrail.freshnessMinutes}m
                   </Badge>
                 ) : null}
               </div>
+              {guardrail.reasons.length > 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  guardrail reasons: {guardrail.reasons.join(", ")}
+                </p>
+              ) : null}
             </div>
           </div>
         </CardContent>
