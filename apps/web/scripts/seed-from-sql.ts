@@ -28,6 +28,51 @@ function parseInsertTarget(statement: string): string | null {
   return match[1].replace(/\s+/g, "");
 }
 
+async function syncSerialSequences() {
+  for (const table of SEED_TABLES) {
+    const qualifiedTable = qualifyTable(table.schema, table.table);
+    const schemaTableLiteral = `${table.schema}.${table.table}`.replace(/'/g, "''");
+    const idColumnRows = await prisma.$queryRawUnsafe<Array<{ data_type: string }>>(
+      `
+      SELECT data_type
+      FROM information_schema.columns
+      WHERE table_schema = '${table.schema.replace(/'/g, "''")}'
+        AND table_name = '${table.table.replace(/'/g, "''")}'
+        AND column_name = 'id'
+      LIMIT 1
+      `,
+    );
+    const idDataType = idColumnRows[0]?.data_type;
+    if (!idDataType || !["smallint", "integer", "bigint"].includes(idDataType)) {
+      continue;
+    }
+
+    const sequenceRows = await prisma.$queryRawUnsafe<
+      Array<{ sequence_name: string | null; max_id: string | number | null }>
+    >(
+      `
+      SELECT
+        pg_get_serial_sequence('${schemaTableLiteral}', 'id') AS sequence_name,
+        (SELECT MAX(id)::BIGINT FROM ${qualifiedTable}) AS max_id
+      `,
+    );
+
+    const sequenceName = sequenceRows[0]?.sequence_name;
+    const maxId = Number(sequenceRows[0]?.max_id ?? 0);
+    if (!sequenceName) continue;
+
+    if (Number.isFinite(maxId) && maxId > 0) {
+      await prisma.$executeRawUnsafe(
+        `SELECT setval('${sequenceName.replace(/'/g, "''")}', ${maxId}, true)`,
+      );
+    } else {
+      await prisma.$executeRawUnsafe(
+        `SELECT setval('${sequenceName.replace(/'/g, "''")}', 1, false)`,
+      );
+    }
+  }
+}
+
 async function run() {
   if (!fs.existsSync(SQL_FILE_PATH)) {
     console.error(`[seed] SQL seed file not found: ${SQL_FILE_PATH}`);
@@ -63,6 +108,7 @@ async function run() {
       }
     }
 
+    await syncSerialSequences();
     await prisma.$executeRawUnsafe("COMMIT");
     if (statements.length === 0) {
       console.log(`[seed] No statements found in ${SQL_FILE_PATH}. Applied truncate only.`);

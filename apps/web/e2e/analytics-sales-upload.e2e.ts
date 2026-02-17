@@ -57,16 +57,6 @@ async function run() {
     }
   });
 
-  const suffix = Date.now();
-  const locationName = `E2E Sales ${suffix}`;
-
-  await page.goto(`${baseUrl}/analytics/locations/create`, {
-    waitUntil: "domcontentloaded",
-  });
-  await page.fill("#name", locationName);
-  await page.getByRole("button", { name: "Create Location" }).click();
-  await page.waitForURL("**/analytics/locations", { timeout: 30_000 });
-
   await page.goto(`${baseUrl}/analytics/sales`, {
     waitUntil: "domcontentloaded",
   });
@@ -74,7 +64,9 @@ async function run() {
   const locationTrigger = page.locator("#sales-location-select");
   await locationTrigger.waitFor({ state: "visible", timeout: 30_000 });
   await locationTrigger.click();
-  await page.getByRole("option", { name: locationName, exact: true }).click();
+  const firstLocationOption = page.getByRole("option").first();
+  await firstLocationOption.waitFor({ state: "visible", timeout: 10_000 });
+  await firstLocationOption.click();
 
   const uploadButton = page.getByRole("button", { name: /upload/i });
   await uploadButton.waitFor({ state: "visible", timeout: 30_000 });

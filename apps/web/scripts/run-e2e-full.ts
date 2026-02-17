@@ -9,9 +9,30 @@ type ServiceProcess = {
   logPath: string;
 };
 
+type SuiteResult = {
+  suite: string;
+  status: "passed" | "failed";
+  error?: string;
+};
+
+type CoverageReport = {
+  generatedAt: string;
+  plannedSuites: string[];
+  executedSuites: string[];
+  passedSuites: string[];
+  failedSuites: Array<{ suite: string; error?: string }>;
+  plannedCount: number;
+  executedCount: number;
+  passedCount: number;
+  failedCount: number;
+  scenarioCoveragePct: number;
+  passRatePct: number;
+};
+
 const repoRoot = path.resolve(process.cwd(), "..", "..");
 const webRoot = path.resolve(repoRoot, "apps/web");
 const logDir = path.resolve(webRoot, "e2e-artifacts", "runner-logs");
+const reportDir = path.resolve(webRoot, "e2e-artifacts", "runner-reports");
 
 const DEFAULT_E2E_SUITES = [
   "test:e2e:sales",
@@ -190,6 +211,8 @@ async function run() {
 
   const services: ServiceProcess[] = [];
   let resetAfterRunFailed = false;
+  const suiteResults: SuiteResult[] = [];
+  const plannedSuites = [...DEFAULT_E2E_SUITES];
 
   try {
     services.push(
@@ -251,10 +274,26 @@ async function run() {
     const suites = getSuites();
     console.log(`[e2e:full] running suites (${suites.length}): ${suites.join(", ")}`);
     for (const suite of suites) {
-      await runCommand(suite, "pnpm", ["-C", "apps/web", "run", suite], repoRoot, env);
+      try {
+        await runCommand(suite, "pnpm", ["-C", "apps/web", "run", suite], repoRoot, env);
+        suiteResults.push({ suite, status: "passed" });
+      } catch (error) {
+        suiteResults.push({
+          suite,
+          status: "failed",
+          error: error instanceof Error ? error.message : String(error),
+        });
+        console.error(`[e2e:full] suite failed but continuing: ${suite}`);
+      }
     }
 
-    console.log("[e2e:full] all suites passed");
+    const failedCount = suiteResults.filter((item) => item.status === "failed").length;
+    if (failedCount === 0) {
+      console.log("[e2e:full] all suites passed");
+    } else {
+      console.error(`[e2e:full] suites completed with failures: ${failedCount}/${suiteResults.length}`);
+      process.exitCode = 1;
+    }
   } catch (error) {
     console.error("[e2e:full] failed:", error);
     process.exitCode = 1;
@@ -276,6 +315,48 @@ async function run() {
     if (resetAfterRunFailed) {
       console.error("[e2e:full] run ended with DB reset failure. Check logs and DB state before next run.");
     }
+
+    const report: CoverageReport = {
+      generatedAt: new Date().toISOString(),
+      plannedSuites,
+      executedSuites: suiteResults.map((item) => item.suite),
+      passedSuites: suiteResults.filter((item) => item.status === "passed").map((item) => item.suite),
+      failedSuites: suiteResults
+        .filter((item) => item.status === "failed")
+        .map((item) => ({ suite: item.suite, error: item.error })),
+      plannedCount: plannedSuites.length,
+      executedCount: suiteResults.length,
+      passedCount: suiteResults.filter((item) => item.status === "passed").length,
+      failedCount: suiteResults.filter((item) => item.status === "failed").length,
+      scenarioCoveragePct:
+        plannedSuites.length === 0 ? 0 : Number(((suiteResults.length / plannedSuites.length) * 100).toFixed(2)),
+      passRatePct:
+        suiteResults.length === 0
+          ? 0
+          : Number(
+              (
+                (suiteResults.filter((item) => item.status === "passed").length / suiteResults.length) *
+                100
+              ).toFixed(2),
+            ),
+    };
+
+    fs.mkdirSync(reportDir, { recursive: true });
+    const timestamp = report.generatedAt.replace(/[:.]/g, "-");
+    const reportPath = path.resolve(reportDir, `coverage-${timestamp}.json`);
+    const latestPath = path.resolve(reportDir, "coverage-latest.json");
+    fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+    fs.writeFileSync(latestPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+
+    console.log("[e2e:full] coverage summary:");
+    console.log(`  planned: ${report.plannedCount}`);
+    console.log(`  executed: ${report.executedCount}`);
+    console.log(`  passed: ${report.passedCount}`);
+    console.log(`  failed: ${report.failedCount}`);
+    console.log(`  scenario coverage: ${report.scenarioCoveragePct}%`);
+    console.log(`  pass rate: ${report.passRatePct}%`);
+    console.log(`  report: ${reportPath}`);
+    console.log(`  latest: ${latestPath}`);
   }
 }
 

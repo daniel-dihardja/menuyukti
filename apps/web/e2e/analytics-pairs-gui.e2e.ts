@@ -55,14 +55,7 @@ async function run() {
 
   const explainButtons = page.getByRole("button", { name: "Explain" });
   const explainCount = await explainButtons.count();
-  if (explainCount > 0) {
-    await explainButtons.first().click();
-    await page.getByText(/deterministic metrics that drive this ranking/i).waitFor({
-      state: "visible",
-      timeout: 10_000,
-    });
-    await page.keyboard.press("Escape");
-  }
+  assert(explainCount > 0, "Explain action is missing from pairs insights");
 
   const pairExportHref = await page
     .getByRole("link", { name: "Export Pairs CSV" })

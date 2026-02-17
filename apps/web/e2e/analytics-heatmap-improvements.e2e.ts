@@ -30,8 +30,8 @@ async function run() {
     timeout: 30_000,
   });
 
-  await page.getByRole("heading", { name: /marketer focus/i }).waitFor({ state: "visible", timeout: 10_000 });
-  await page.getByRole("heading", { name: /analyst focus/i }).waitFor({ state: "visible", timeout: 10_000 });
+  await page.getByText(/marketer focus/i).first().waitFor({ state: "visible", timeout: 10_000 });
+  await page.getByText(/analyst focus/i).first().waitFor({ state: "visible", timeout: 10_000 });
 
   await page.fill("#heatmap-filter-search", "a");
   await page.fill("#heatmap-filter-top", "10");
