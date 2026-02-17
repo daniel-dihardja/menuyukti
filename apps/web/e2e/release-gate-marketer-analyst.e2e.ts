@@ -193,6 +193,24 @@ async function run() {
     `ETL operations list failed (${operationsListResult.status}): ${operationsListResult.body}`,
   );
 
+  const runsListResult = await page.evaluate(
+    async ({ baseUrl, locationId }) => {
+      const res = await fetch(
+        `${baseUrl}/api/etl/runs?locationId=${encodeURIComponent(locationId)}&limit=5`,
+      );
+      return {
+        ok: res.ok,
+        status: res.status,
+        body: await res.text(),
+      };
+    },
+    { baseUrl, locationId },
+  );
+  assert(
+    runsListResult.ok,
+    `ETL run-history list failed (${runsListResult.status}): ${runsListResult.body}`,
+  );
+
   const screenshotPath = path.join(artifactsDir, "release-gate-marketer-analyst-final.png");
   await page.screenshot({ path: screenshotPath, fullPage: true });
   const video = page.video();

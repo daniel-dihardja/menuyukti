@@ -51,6 +51,51 @@ async function run() {
   );
   assert(listResult.ok, `Operations list failed (${listResult.status}): ${listResult.body}`);
 
+  await page.getByText(/etl run history/i).first().waitFor({
+    state: "visible",
+    timeout: 10_000,
+  });
+  await page.getByText(/quality hints/i).first().waitFor({
+    state: "visible",
+    timeout: 10_000,
+  });
+
+  const runsResult = await page.evaluate(
+    async ({ locationId, baseUrl }) => {
+      const res = await fetch(`${baseUrl}/api/etl/runs?locationId=${encodeURIComponent(locationId)}&limit=10`);
+      return {
+        ok: res.ok,
+        status: res.status,
+        body: await res.text(),
+      };
+    },
+    { locationId, baseUrl },
+  );
+  assert(runsResult.ok, `Run history list failed (${runsResult.status}): ${runsResult.body}`);
+
+  const failedRunsFilterResult = await page.evaluate(
+    async ({ locationId, baseUrl }) => {
+      const res = await fetch(
+        `${baseUrl}/api/etl/runs?locationId=${encodeURIComponent(locationId)}&status=failed&limit=5`,
+      );
+      const body = await res.json().catch(() => null);
+      return {
+        ok: res.ok,
+        status: res.status,
+        body,
+      };
+    },
+    { locationId, baseUrl },
+  );
+  assert(
+    failedRunsFilterResult.ok && Array.isArray(failedRunsFilterResult.body?.runs),
+    `Failed-status run filter failed (${failedRunsFilterResult.status}): ${JSON.stringify(failedRunsFilterResult.body)}`,
+  );
+  const allFailed = (failedRunsFilterResult.body?.runs ?? []).every(
+    (run: { status?: string }) => run.status === "failed",
+  );
+  assert(allFailed, "Status filter returned non-failed run");
+
   const invalidBackfillResult = await page.evaluate(
     async ({ locationId, baseUrl }) => {
       const res = await fetch(`${baseUrl}/api/etl/operations`, {
@@ -78,6 +123,21 @@ async function run() {
     `Expected guardrail status for oversized/conflicting backfill, got ${invalidBackfillResult.status}: ${invalidBackfillResult.body}`,
   );
 
+  const replayButton = page.locator("button:has-text('Replay'):not([disabled])");
+  const replayCount = await replayButton.count();
+  if (replayCount > 0) {
+    await replayButton.first().click();
+    await page
+      .getByText(/replay request queued|replay request reused existing idempotent operation|SOURCE_PIPELINE_RUN_NOT_FOUND|OPERATION_CONFLICT_ACTIVE_RUN|RETRY_REQUIRES_FAILED_SOURCE_RUN/i)
+      .first()
+      .waitFor({
+        state: "visible",
+        timeout: 15_000,
+      });
+  } else {
+    console.log("[e2e] replay-shortcut: skipped (no run with pipeline id available)");
+  }
+
   const screenshotPath = path.join(artifactsDir, "analytics-recovery-operations-final.png");
   await page.screenshot({ path: screenshotPath, fullPage: true });
   const video = page.video();
@@ -87,6 +147,8 @@ async function run() {
 
   console.log(`[e2e] operations-url: ${operationsUrl}`);
   console.log(`[e2e] list-status: ${listResult.status}`);
+  console.log(`[e2e] runs-list-status: ${runsResult.status}`);
+  console.log(`[e2e] failed-runs-filter-status: ${failedRunsFilterResult.status}`);
   console.log(`[e2e] guardrail-status: ${invalidBackfillResult.status}`);
   console.log(`[e2e] screenshot: ${screenshotPath}`);
   console.log(`[e2e] video: ${videoPath ?? "<not-recorded>"}`);
