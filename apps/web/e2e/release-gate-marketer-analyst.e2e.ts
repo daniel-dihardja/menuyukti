@@ -202,6 +202,26 @@ async function run() {
     runsListResult.ok,
     `ETL run-history list failed (${runsListResult.status}): ${runsListResult.body}`,
   );
+  const runsPayload = JSON.parse(runsListResult.body) as {
+    runs?: Array<{
+      id: string;
+      status: string;
+      sourceKind: string;
+      pipelineRunId: string | null;
+    }>;
+  };
+  assert(Array.isArray(runsPayload.runs), "ETL run-history payload missing runs array");
+  assert((runsPayload.runs?.length ?? 0) > 0, "ETL run-history returned zero runs");
+  assert(
+    (runsPayload.runs ?? []).every((run) =>
+      run.sourceKind === "ingestion" || run.sourceKind === "operation" || run.sourceKind === "unknown",
+    ),
+    "ETL run-history contains invalid sourceKind values",
+  );
+  assert(
+    (runsPayload.runs ?? []).some((run) => run.pipelineRunId !== null),
+    "Expected at least one ETL run with pipelineRunId for staged lineage visibility",
+  );
 
   const screenshotPath = path.join(artifactsDir, "release-gate-marketer-analyst-final.png");
   await page.screenshot({ path: screenshotPath, fullPage: true });

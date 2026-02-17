@@ -14,6 +14,14 @@ This chapter is retained for historical reference only.
 - ETL run-history API contract (`/api/etl/runs`) for internal observability use.
 - Internal staged runner reliability guardrails (stale queued/running protection) as system internals.
 
+## Staged Lineage Compatibility Notes
+
+- Staged lineage compatibility is enabled by default and can be toggled with `ETL_STAGE_LINEAGE_COMPAT_ENABLED`.
+- Legacy ETL jobs can be backfilled into staged lineage tables using:
+  - `pnpm -C apps/web run db:backfill:etl-lineage`
+- Backfill uses `dry-run` mode by default.
+- To write lineage records, run with `ETL_LINEAGE_BACKFILL_WRITE=1`.
+
 ## Why This Was De-Scoped
 
 - Source upload files are not persisted for full ingest replay in the current product shape.

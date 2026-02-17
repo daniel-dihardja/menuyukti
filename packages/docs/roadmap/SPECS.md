@@ -238,6 +238,7 @@ Legend:
 - `Implemented`: Dedicated ETL run-history list API supports succeeded/failed/queued/running views with deterministic filters and cursor pagination.
 - `Implemented`: Operation queue runner internals claim queued jobs, transition lifecycle (`queued` -> `running` -> terminal), and resolve stale queued/running jobs for core ETL reliability.
 - `Not Yet`: End-user retry/replay/backfill operations workflow is intentionally de-scoped from MVP release surface.
+- `Implemented`: Lineage compatibility adapter + legacy backfill utility are available for staged pipeline rollout continuity.
 
 ### 11.2 Core Analytics and UI
 - `Implemented`: Unified matrix table with robust filter bar, URL-based filter state, and presets.
@@ -342,6 +343,7 @@ Legend:
 | 30 | ETL operation queue runner lifecycle and stale queue recovery | Implemented | Internal runner lifecycle and stale queue/running guardrails remain implemented for reliability hardening. |
 | 31 | Sales action readiness flow (`/analytics/sales` dropdown badges + gating + reason tooltips) | Implemented | Actions are ordered by workflow and guarded by deterministic dependency statuses for COGS and attribution prerequisites. |
 | 32 | AI + Playwright autonomous exploratory testing workflow | Implemented | Mission/findings contracts, adapter/runner/reporter, reference missions, guarded auto-fix plan mode, CI workflow template, and operator docs are available. |
+| 33 | Staged pipeline compatibility/backfill rollout utilities | Implemented | Legacy ETL jobs can be backfilled into staged lineage tables; compatibility toggle keeps API behavior stable during rollout. |
 
 ### 11.9 Open Features Backlog (All `Partial` + `Not Yet`, Not Release-Blocking for MVP)
 
