@@ -43,6 +43,7 @@ const DEFAULT_E2E_SUITES = [
   "test:e2e:cogs",
   "test:e2e:scheduler",
   "test:e2e:attribution",
+  "test:e2e:agents:audience",
   "test:e2e:release-gate",
 ];
 
