@@ -27,6 +27,7 @@ import {
 } from "@workspace/ui/components/table";
 import { routes } from "@/lib/routes";
 import { generateDeterministicPostCopy } from "@/lib/instagram/post-copy-generator";
+import { validatePostDraftGuardrails } from "@/lib/instagram/post-draft-guardrails";
 
 type Recommendation = {
   menuItem: string;
@@ -404,6 +405,20 @@ export function SchedulerClient({
     if (!composerDraft) return;
     const selectedCaption =
       composerDraft.captionVariants[composerDraft.selectedVariant] ?? composerDraft.captionVariants[0] ?? "";
+    const guardrail = validatePostDraftGuardrails({
+      caption: selectedCaption,
+      cta: composerDraft.cta,
+      hashtagsRaw: composerDraft.hashtagsText,
+    });
+    if (guardrail.readiness === "blocked") {
+      setMessage(
+        `Composer blocked: ${guardrail.issues.map((issue) => issue.code).join(", ")}`,
+      );
+      return;
+    }
+    if (guardrail.readiness === "warning") {
+      setMessage(`Composer warnings: ${guardrail.issues.map((issue) => issue.code).join(", ")}`);
+    }
     const hashtags = composerDraft.hashtagsText
       .split(",")
       .map((part) => part.trim())
