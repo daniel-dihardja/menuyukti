@@ -208,19 +208,19 @@ export function UpdateCogsForm({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-4">
-            <div className="rounded-md border p-3">
+            <div className="border p-3">
               <p className="text-xs text-muted-foreground">{t("completeness.kpi.totalItems")}</p>
               <p className="text-xl font-semibold">{cogsCompleteness.totalItems}</p>
             </div>
-            <div className="rounded-md border p-3">
+            <div className="border p-3">
               <p className="text-xs text-muted-foreground">{t("completeness.kpi.validItems")}</p>
               <p className="text-xl font-semibold">{cogsCompleteness.validCogsItems}</p>
             </div>
-            <div className="rounded-md border p-3">
+            <div className="border p-3">
               <p className="text-xs text-muted-foreground">{t("completeness.kpi.itemCoverage")}</p>
               <p className="text-xl font-semibold">{pct(cogsCompleteness.itemCompletenessRatio)}</p>
             </div>
-            <div className="rounded-md border p-3">
+            <div className="border p-3">
               <p className="text-xs text-muted-foreground">{t("completeness.kpi.revenueCoverage")}</p>
               <p className="text-xl font-semibold">{pct(cogsCompleteness.revenueCoverageRatio)}</p>
             </div>
@@ -235,7 +235,7 @@ export function UpdateCogsForm({
                 {cogsCompleteness.prioritizedMissing.map((item, index) => (
                   <div
                     key={item.id}
-                    className="grid gap-2 rounded-md border px-3 py-2 text-sm md:grid-cols-[2rem_minmax(0,1fr)_6rem_8rem_7rem]"
+                    className="grid gap-2 border px-3 py-2 text-sm md:grid-cols-[2rem_minmax(0,1fr)_6rem_8rem_7rem]"
                   >
                     <span className="text-muted-foreground">{index + 1}.</span>
                     <span className="truncate">{item.menuName}</span>

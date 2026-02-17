@@ -502,7 +502,7 @@ export function SchedulerClient({
               recommendations.map((recommendation) => (
                 <div
                   key={`${recommendation.menuItem}-${recommendation.action}`}
-                  className="border rounded-md p-3 flex items-start justify-between gap-3"
+                  className="border p-3 flex items-start justify-between gap-3"
                 >
                   <div className="space-y-1">
                     <p className="font-medium">{recommendation.menuItem}</p>
@@ -571,7 +571,7 @@ export function SchedulerClient({
             </div>
           </div>
 
-          <div className="overflow-x-auto border rounded-md">
+          <div className="overflow-x-auto border">
             <Table>
               <TableHeader>
                 <TableRow>
