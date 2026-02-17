@@ -8,6 +8,15 @@ This combines three critical reliability layers:
 - COGS management for accurate margin computation.
 - Freshness/quality status to judge whether data is safe to act on.
 
+This page is designed to answer two questions quickly:
+- Marketer: "When should I promote which items this week?"
+- Analyst: "How much can I trust this recommendation and where is the margin risk?"
+
+## Where To Find It
+
+- Daypart heatmap: `/analytics/{analyticsId}/heatmap`
+- COGS management: `/analytics/{analyticsId}/cogs`
+
 ## How To Use
 
 1. Open `/analytics/{analyticsId}/heatmap` and review:
@@ -24,11 +33,34 @@ This combines three critical reliability layers:
    - quality status (`passed`, `warn`, `failed`)
    - freshness age vs SLA
 
+## Heatmap Features You Should Use
+
+- Persona insights:
+  - marketer card highlights high-opportunity daypart windows and top candidates.
+  - analyst card highlights concentration risk, weak windows, and optimization signals.
+- Trust and confidence signals:
+  - readiness badges and confidence cues show whether recommendations are safe to execute.
+- Explainability and method notes:
+  - each recommendation is paired with deterministic reason context.
+  - method notes clarify that heatmap metrics are aggregate observations, not forecasts.
+- Segmentation controls:
+  - weekday/weekend segmentation helps align promotions with real customer behavior.
+  - top-row and search filters reduce noise for large menus.
+
+## How To Read Trust Status
+
+- `passed` + fresh data:
+  - safe default for weekly execution.
+- `warn` or stale:
+  - use as planning input, but keep decisions review-based.
+- `failed`:
+  - treat outputs as unreliable, fix data quality first.
+
 ## Example
 
-- Lunch window has highest demand for combo candidates.
-- You schedule Instagram content 11:00-13:00 instead of evening.
-- You update missing COGS for two top sellers and margin recommendations become more accurate.
+- Lunch window has strongest demand for bundle candidates.
+- You schedule Instagram content in the lunch slot rather than evening.
+- You update missing COGS for top sellers and margin-based action quality improves.
 
 ## Why It Delivers Real Value
 
@@ -43,3 +75,4 @@ If quality is `warn/failed` or freshness is stale, treat recommendations as lowe
 
 - Heatmap insights are deterministic aggregates, not predictions.
 - If readiness is `blocked`, do not finalize campaign timing decisions from this snapshot.
+- Exported heatmap CSV should be treated as a snapshot for that filter/time context.

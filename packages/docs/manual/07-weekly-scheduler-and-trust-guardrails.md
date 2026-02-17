@@ -10,6 +10,8 @@ The scheduler is built for:
 - restaurant marketers: execute weekly Instagram actions from data-backed recommendations.
 - menu analysts: verify confidence, rationale, and readiness before campaign decisions are finalized.
 
+It is the bridge from "analytics insight" to "execution plan".
+
 ## End-To-End Flow
 
 1. Start from matrix recommendations (`promote` / `reprice`).
@@ -18,6 +20,17 @@ The scheduler is built for:
 4. Add recommendation items (or blank manual entries) to schedule rows.
 5. Set posting slot, daypart, and optional campaign/post linkage.
 6. Save draft or finalize the weekly schedule.
+
+## Core UI Areas
+
+- Schedule status card:
+  - current planner state and readiness context.
+- Recommendation picker:
+  - add prioritized items from matrix-style signals.
+- Entry table:
+  - edit slots, confidence, and rationale per row.
+- Action bar:
+  - save draft and finalize controls.
 
 Related deterministic data links:
 - Recommendation source: matrix action + action reason.
@@ -36,6 +49,13 @@ Related deterministic data links:
 - `status` (`draft`, `scheduled`, `published`, `cancelled`)
 - `rationale` (deterministic reason snapshot)
 
+## Confidence Usage Guidelines
+
+- `high`: only when quality/freshness conditions are healthy.
+- `medium`: acceptable for normal planning where some uncertainty exists.
+- `low`: use for exploratory or manually added rows.
+- `blocked`: data conditions are too weak for trusted execution.
+
 ## Trust and Guardrail Behavior
 
 Scheduler readiness is computed from:
@@ -52,6 +72,14 @@ Policy examples:
 - No entry should remain `high` confidence under degraded readiness.
 - Under blocked readiness, schedule confidence is forced toward blocked policy behavior.
 - Finalization can be rejected when readiness is blocked.
+
+## Suggested Weekly Operating Cadence
+
+1. Generate and review recommendations early in the week.
+2. Build draft schedule with rationale and campaign links.
+3. Validate trust state (`ready` preferred) before finalization.
+4. Finalize only after analyst and marketer review of confidence levels.
+5. Re-open and adjust rows if readiness degrades after new uploads.
 
 ## Recovery Actions for Low-Readiness Scenarios
 

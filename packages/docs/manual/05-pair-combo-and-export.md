@@ -6,11 +6,20 @@ This feature identifies products frequently bought together, ranks combo opportu
 The main user workflow is the GUI page:
 - `/analytics/{analyticsId}/pairs`
 
+It supports two decision modes:
+- Marketer mode: find campaign-ready bundles (especially `food_drink`) for Instagram offers.
+- Analyst mode: validate statistical strength and margin impact before rollout.
+
 ## Pair Metrics Explained
 
 - `support`: how often pair A+B appears across all orders.
 - `confidence`: probability of B given A (and vice versa).
 - `lift`: strength of association vs random chance.
+
+Practical interpretation:
+- high `support` + high `lift` usually indicates stable and meaningful demand coupling.
+- high `confidence` with low `support` can be directional but weak; review sample size.
+- `lift` near `1.0` suggests limited incremental association.
 
 ## Combo Opportunity Scoring
 
@@ -47,6 +56,19 @@ Combo ranking includes a deterministic pair-type adjustment:
   - Pair-type boost applied/not applied
   - Final combo opportunity score
 
+## Filter and Sort Guidance
+
+- `Min sample size`:
+  - increase for conservative strategy.
+  - decrease for exploratory discovery.
+- `Min lift`:
+  - use >= `1.0` to avoid random/no-association pairs.
+- `Min confidence`:
+  - use >= `0.1` for early screening; tighten for production decisions.
+- `Sort by`:
+  - choose opportunity score for campaign prioritization.
+  - choose lift when validating association strength first.
+
 ## How To Use
 
 1. Open `/analytics/{analyticsId}/pairs`.
@@ -61,6 +83,12 @@ Combo ranking includes a deterministic pair-type adjustment:
    - `dataset=matrix`
    - `dataset=pairs`
    - `dataset=combos`
+
+## Export Workflow
+
+- Export only after applying final filter thresholds.
+- Keep a weekly versioned file (e.g. `week-2026-07-pairs.csv`) for trend comparison.
+- Share filtered URLs together with CSV files to preserve decision context.
 
 ## Example
 
@@ -77,3 +105,4 @@ Combo ranking includes a deterministic pair-type adjustment:
 ## Good Practice
 
 Ignore very low sample-size pairs (or mark as exploratory) to avoid overfitting decisions to noise.
+Use `food_drink` as primary marketer workflow, then review other pair types for analyst-only opportunities.

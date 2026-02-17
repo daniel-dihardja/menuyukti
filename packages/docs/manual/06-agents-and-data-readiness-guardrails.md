@@ -4,17 +4,31 @@
 
 Agents generate audience and tone outputs from structured analytics features, not raw spreadsheet rows. Guardrails ensure the system does not produce high-trust outputs when data conditions are unsafe.
 
+This means agent output quality is anchored to deterministic data signals first, then language generation.
+
 ## What The Guardrail Checks
 
 - Pipeline quality status
 - Data freshness age (minutes) vs SLA threshold
 - Availability of valid pipeline run metadata
 
+## Why This Matters Operationally
+
+- Marketers avoid publishing campaigns based on stale or failed snapshots.
+- Analysts can require readiness evidence before accepting AI-assisted plans.
+- Teams share one trust policy across matrix, heatmap, and scheduler workflows.
+
 ## Possible Readiness States
 
 - `ready`: safe to use normally.
 - `warn`: output allowed but should be treated as lower confidence.
 - `blocked`: output request is rejected until data conditions improve.
+
+## Recommended Team Policy
+
+- `ready`: output can move into normal review and scheduling.
+- `warn`: output can be drafted, but final publish should require human confirmation.
+- `blocked`: do not proceed; trigger data recovery first.
 
 ## How To Use
 
@@ -39,3 +53,4 @@ Agents generate audience and tone outputs from structured analytics features, no
 ## Recommendation
 
 Treat guardrail state as mandatory context in every agent-driven workflow or decision meeting.
+Log decisions made under `warn` explicitly, so teams can audit risk tradeoffs later.

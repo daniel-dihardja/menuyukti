@@ -11,11 +11,23 @@ This manual explains the ship-ready features that already deliver practical valu
 ## How To Read This Manual
 
 - Start with upload (`01`) to understand the required workflow order.
-- Continue with matrix and filters (`02`, `03`) to learn daily decision making.
-- Use daypart heatmaps + COGS (`04`) to improve timing and margin accuracy with trust-aware signals.
-- Use pair/combo + export (`05`) for deeper analyst workflows, pair-type strategy (`food+drink`), and reporting.
-- Use agents + guardrails (`06`) for assisted content and controlled automation.
-- Use weekly scheduler (`07`) to operationalize Instagram plans with trust/readiness controls.
+- Continue with matrix and filters (`02`, `03`) to learn daily decision making and team collaboration.
+- Use daypart heatmaps + COGS (`04`) to improve timing and margin accuracy with trust-aware signals and explainability.
+- Use pair/combo + export (`05`) for deeper analyst workflows, pair-type strategy (`food+drink`), and reporting loops.
+- Use agents + guardrails (`06`) for assisted content and controlled automation under data-readiness policy.
+- Use weekly scheduler (`07`) to operationalize Instagram plans with trust/readiness controls and draft-to-final workflow.
+
+## Suggested Learning Path
+
+- Marketer path: `01` -> `02` -> `03` -> `04` -> `07` -> `06`
+- Analyst path: `01` -> `02` -> `03` -> `04` -> `05` -> `06`
+- Operator path: `01` -> `04` -> `06` -> `07`
+
+## Documentation Scope
+
+- This manual documents currently released behavior.
+- It focuses on deterministic analytics-first features that drive real decisions.
+- It intentionally excludes experimental or unreleased capabilities.
 
 ## Manual Index
 

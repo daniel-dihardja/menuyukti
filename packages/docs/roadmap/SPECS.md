@@ -238,6 +238,11 @@ Legend:
 - `Implemented`: Unified matrix table with robust filter bar, URL-based filter state, and presets.
 - `Implemented`: Action explainability reasons and matrix freshness/quality visibility on matrix page.
 - `Implemented`: Daypart mart read endpoint.
+- `Implemented`: Heatmap page now includes persona-oriented insight cards (marketer/analyst) with action-oriented summaries.
+- `Implemented`: Heatmap trust/readiness and confidence-aware messaging is visible for execution decisions.
+- `Implemented`: Heatmap filtering/segmentation controls support menu search, top rows, weekday/weekend context, and URL-shareable filter state.
+- `Implemented`: Heatmap method notes/explainability panel clarifies deterministic interpretation boundaries.
+- `Implemented`: Heatmap CSV export action is available from GUI and uses a documented contract.
 - `Implemented`: Accessibility baseline improvements for matrix filters/table.
 - `Implemented`: CSV export endpoint for analyst matrix/pair/combo datasets with stable columns and metadata.
 - `Implemented`: Pair/combo analysis now has a dedicated GUI route with filter bar, KPI cards, ranked tables, explainability sheet, and secondary export actions.
@@ -280,6 +285,8 @@ Legend:
 - `Implemented`: Release-gate E2E script covers marketer preset/recommendation flow, scheduler workflow, and analyst CSV export flow with artifacts.
 - `Implemented`: Pair/combo GUI E2E journey validates filter application, explainability UI, and export link behavior.
 - `Implemented`: Dedicated scheduler E2E journey validates weekly planner interactions, trust-state visibility, and draft-save outcomes.
+- `Implemented`: Dedicated heatmap improvement E2E coverage validates filters, persona insight surfaces, and export behavior.
+- `Implemented`: User manual chapters cover released heatmap, pair/combo, agent guardrail, and scheduler workflows with operational guidance.
 
 ### 11.8 Minimal Release Feature Table
 
@@ -309,6 +316,8 @@ Legend:
 | 21 | E2E upload -> analytics + release-gate workflows | Implemented | Upload, matrix, release-gate, and pair/combo e2e suites are wired with artifact capture. |
 | 22 | Instagram weekly scheduler workflow (model/API/UI + readiness policy) | Implemented | Week-scoped schedule persistence, editable planner UI, confidence/rationale fields, and readiness-based block/downgrade behavior are implemented. |
 | 23 | Scheduler E2E + release-gate integration | Implemented | Dedicated scheduler E2E and release-gate coverage validate draft-save and trust-state visibility behavior. |
+| 24 | Heatmap persona insights/trust/explainability/filtering workflow | Implemented | Heatmap GUI includes persona cards, trust signals, explainability notes, segmentation controls, and shareable filter state. |
+| 25 | Heatmap export contract + release-e2e + manual coverage | Implemented | Heatmap CSV export contract is documented; E2E and manual content are updated to release state. |
 
 ### 11.9 Open Features Backlog (All `Partial` + `Not Yet`, Not Release-Blocking for MVP)
 
