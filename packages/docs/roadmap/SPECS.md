@@ -260,7 +260,7 @@ Legend:
 - `Implemented`: Instagram campaign and post identity model with branch scope and publish-window query indexes.
 - `Implemented`: Deterministic post-to-promoted-menu mapping model and idempotent mapping upsert API.
 - `Implemented`: Weekly posting schedule and campaign planning loop are productized with persisted weekly schedules, entry-level editing, and readiness-aware trust states.
-- `Partial`: Baseline before/after Instagram attribution mart and read API exist; full productized attribution workflow and UX are still pending.
+- `Implemented`: Instagram attribution workflow is productized with overview UX, confidence policy/tuning, scheduler drill-through, and analyst export coverage.
 
 ### 11.4 Menu Analyst Capabilities
 - `Implemented`: Low-margin/high-volume style decisioning via matrix filters and presets.
@@ -286,7 +286,9 @@ Legend:
 - `Implemented`: Pair/combo GUI E2E journey validates filter application, explainability UI, and export link behavior.
 - `Implemented`: Dedicated scheduler E2E journey validates weekly planner interactions, trust-state visibility, and draft-save outcomes.
 - `Implemented`: Dedicated heatmap improvement E2E coverage validates filters, persona insight surfaces, and export behavior.
+- `Implemented`: Dedicated attribution E2E workflow validates page load, confidence threshold URL state, and export behavior.
 - `Implemented`: User manual chapters cover released heatmap, pair/combo, agent guardrail, and scheduler workflows with operational guidance.
+- `Implemented`: User manual includes attribution workflow and confidence-tuning guidance.
 
 ### 11.8 Minimal Release Feature Table
 
@@ -318,12 +320,13 @@ Legend:
 | 23 | Scheduler E2E + release-gate integration | Implemented | Dedicated scheduler E2E and release-gate coverage validate draft-save and trust-state visibility behavior. |
 | 24 | Heatmap persona insights/trust/explainability/filtering workflow | Implemented | Heatmap GUI includes persona cards, trust signals, explainability notes, segmentation controls, and shareable filter state. |
 | 25 | Heatmap export contract + release-e2e + manual coverage | Implemented | Heatmap CSV export contract is documented; E2E and manual content are updated to release state. |
+| 26 | Instagram attribution workflow (UI + confidence policy + scheduler linkage) | Implemented | Attribution overview UI, deterministic confidence tuning, and scheduler drill-through outcomes are implemented. |
+| 27 | Attribution export contract + release-e2e + manual coverage | Implemented | Attribution dataset export contract, E2E coverage, and manual updates are implemented. |
 
 ### 11.9 Open Features Backlog (All `Partial` + `Not Yet`, Not Release-Blocking for MVP)
 
 | # | Post-MVP Capability | Status | Notes |
 |---|---|---|---|
-| H2 | Full Instagram attribution UX + confidence tuning | Partial | Baseline pre/post attribution mart and read API exist; full workflow integration is pending. |
 | H3 | Productized retry/replay/backfill runbooks/automation | Partial | Operational workflow exists but is not fully automated/productized. |
 | H4 | Analyst cost/price completeness reporting hardening | Partial | COGS update flow exists, but richer analyst completeness reporting/export coverage remains limited. |
 | H5 | Agent I/O contract governance hardening | Partial | Versioned contracts exist, but tighter governance for agent input/output schemas remains pending. |

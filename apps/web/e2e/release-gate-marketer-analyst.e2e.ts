@@ -130,6 +130,27 @@ async function run() {
     timeout: 10_000,
   });
 
+  const attributionUrl = `${baseUrl}/analytics/${analyticsId}/attribution`;
+  await page.goto(attributionUrl, { waitUntil: "domcontentloaded" });
+  await page.getByRole("heading", { name: /instagram attribution overview/i }).waitFor({
+    state: "visible",
+    timeout: 30_000,
+  });
+  await page.getByRole("button", { name: /apply confidence thresholds/i }).waitFor({
+    state: "visible",
+    timeout: 10_000,
+  });
+
+  const attributionExportUrl = new URL(`${baseUrl}/api/exports/analyst`);
+  attributionExportUrl.searchParams.set("dataset", "attribution");
+  attributionExportUrl.searchParams.set("analyticsId", analyticsId);
+  attributionExportUrl.searchParams.set("limit", "50");
+  const attributionCsv = await fetchCsv(page, attributionExportUrl.toString());
+  assert(
+    attributionCsv.startsWith("dataset,generated_at,analytics_id,location_id"),
+    "Attribution export is missing expected header columns",
+  );
+
   const pairsExportUrl = new URL(`${baseUrl}/api/exports/analyst`);
   pairsExportUrl.searchParams.set("dataset", "pairs");
   pairsExportUrl.searchParams.set("locationId", locationId);
@@ -159,6 +180,7 @@ async function run() {
 
   console.log(`[e2e] matrix-url: ${matrixUrl}`);
   console.log(`[e2e] matrix-export-bytes: ${matrixCsv.length}`);
+  console.log(`[e2e] attribution-export-bytes: ${attributionCsv.length}`);
   console.log(`[e2e] pairs-export-bytes: ${pairsCsv.length}`);
   console.log(`[e2e] combos-export-bytes: ${combosCsv.length}`);
   console.log(`[e2e] screenshot: ${screenshotPath}`);

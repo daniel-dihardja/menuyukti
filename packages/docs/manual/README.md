@@ -16,12 +16,13 @@ This manual explains the ship-ready features that already deliver practical valu
 - Use pair/combo + export (`05`) for deeper analyst workflows, pair-type strategy (`food+drink`), and reporting loops.
 - Use agents + guardrails (`06`) for assisted content and controlled automation under data-readiness policy.
 - Use weekly scheduler (`07`) to operationalize Instagram plans with trust/readiness controls and draft-to-final workflow.
+- Use attribution overview (`08`) to measure post outcomes with confidence tuning and exportable reporting context.
 
 ## Suggested Learning Path
 
-- Marketer path: `01` -> `02` -> `03` -> `04` -> `07` -> `06`
-- Analyst path: `01` -> `02` -> `03` -> `04` -> `05` -> `06`
-- Operator path: `01` -> `04` -> `06` -> `07`
+- Marketer path: `01` -> `02` -> `03` -> `04` -> `07` -> `08` -> `06`
+- Analyst path: `01` -> `02` -> `03` -> `04` -> `05` -> `08` -> `06`
+- Operator path: `01` -> `04` -> `08` -> `06` -> `07`
 
 ## Documentation Scope
 
@@ -38,3 +39,4 @@ This manual explains the ship-ready features that already deliver practical valu
 5. [Pair Metrics, Combo Opportunities, and CSV Export](./05-pair-combo-and-export.md)
 6. [Audience/Tone Agent Outputs and Guardrails](./06-agents-and-data-readiness-guardrails.md)
 7. [Weekly Scheduler and Trust Guardrails](./07-weekly-scheduler-and-trust-guardrails.md)
+8. [Instagram Attribution Overview and Confidence Tuning](./08-instagram-attribution-overview-and-confidence.md)
