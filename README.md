@@ -30,6 +30,31 @@ cd apps/web
 pnpm dev
 ```
 
+### Web DB reset and seed
+
+```bash
+pnpm -C apps/web run db:gen
+pnpm -C apps/web run db:init
+pnpm -C apps/web run db:seed
+```
+
+Full reset flow:
+
+```bash
+pnpm -C apps/web run db:reset
+```
+
+`db:reset` already applies migrations and runs seed automatically.
+
+### Export current Neon data snapshot for seed
+
+```bash
+pnpm -C apps/web run db:seed:export
+```
+
+SQL export output:
+- `apps/web/prisma/seed/export/current_seed.sql`
+
 ### Menu analytics service
 
 ```bash

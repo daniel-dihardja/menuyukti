@@ -85,3 +85,29 @@ Recommendation:
 ## Deliverables
 - <artifact/code/docs/tests>
 ```
+
+## DB Seed Workflow (Neon Snapshot)
+
+Use this workflow to keep local data aligned with a known Neon snapshot.
+
+### Canonical Commands
+
+- Schema update path:
+  - `pnpm -C apps/web run db:gen`
+  - `pnpm -C apps/web run db:init`
+  - `pnpm -C apps/web run db:seed`
+- Full reset path:
+  - `pnpm -C apps/web run db:reset`
+  - Note: `db:reset` already runs Prisma seed automatically.
+
+### Export Current Neon Data to SQL
+
+- `pnpm -C apps/web run db:seed:export`
+- Output file: `apps/web/prisma/seed/export/current_seed.sql`
+
+### Guardrails
+
+- Always verify `DATABASE_URL` target before export/seed.
+- Do not run export against unintended production environments.
+- Seed export is allowlist-based (`apps/web/prisma/seed/seed-tables.ts`).
+- Keep sensitive/non-required tables out of the allowlist.
