@@ -270,6 +270,7 @@ Legend:
 - `Implemented`: Deterministic post-to-promoted-menu mapping model and idempotent mapping upsert API.
 - `Implemented`: Weekly posting schedule and campaign planning loop are productized with persisted weekly schedules, entry-level editing, and readiness-aware trust states.
 - `Implemented`: Instagram attribution workflow is productized with overview UX, confidence policy/tuning, scheduler drill-through, and analyst export coverage.
+- `Implemented`: Attribution KPI and delta revenue currency formatting is location-driven (`branches.currency_code`) with deterministic fallback when metadata is missing.
 
 ### 11.4 Menu Analyst Capabilities
 - `Implemented`: Low-margin/high-volume style decisioning via matrix filters and presets.
@@ -334,7 +335,7 @@ Legend:
 | 23 | Scheduler E2E + release-gate integration | Implemented | Dedicated scheduler E2E and release-gate coverage validate draft-save and trust-state visibility behavior. |
 | 24 | Heatmap persona insights/trust/explainability/filtering workflow | Implemented | Heatmap GUI includes persona cards, trust signals, explainability notes, segmentation controls, and shareable filter state. |
 | 25 | Heatmap export contract + release-e2e + manual coverage | Implemented | Heatmap CSV export contract is documented; E2E and manual content are updated to release state. |
-| 26 | Instagram attribution workflow (UI + confidence policy + scheduler linkage) | Implemented | Attribution overview UI, deterministic confidence tuning, and scheduler drill-through outcomes are implemented. |
+| 26 | Instagram attribution workflow (UI + confidence policy + scheduler linkage) | Implemented | Attribution overview UI, deterministic confidence tuning, scheduler drill-through outcomes, and location-driven currency rendering are implemented. |
 | 27 | Attribution export contract + release-e2e + manual coverage | Implemented | Attribution dataset export contract, E2E coverage, and manual updates are implemented. |
 | 28 | Retry/replay/backfill operations workflow + runbook + validation | Not Yet | Intentionally de-scoped from current MVP release surface; internal APIs are disabled for MVP mode. |
 | 29 | ETL run-history observability (API contract + UI filters + detail/shortcuts) | Partial | `/api/etl/runs` API contract and filters are implemented; operations UI/shortcuts are removed from MVP surface. |

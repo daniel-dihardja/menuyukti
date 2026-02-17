@@ -17,6 +17,10 @@ It helps teams answer:
   - promoted items
   - positive revenue rows
   - average delta revenue
+- Currency behavior:
+  - money KPIs and `delta revenue` values follow the branch/location currency from DB (`branches.currency_code`)
+  - no hardcoded `$` symbol is used for attribution money values
+  - if currency metadata is missing/empty, fallback currency is `IDR`
 - Attribution outcome table:
   - post and campaign identity
   - promoted menu item
