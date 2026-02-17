@@ -133,7 +133,7 @@ Items not listed above are not release-blocking for MVP, but may remain importan
 - Baseline before/after sales signal by item and daypart window is available via API/mart.
 - Attribution confidence must be downgradeable when sample size/coverage is insufficient.
 
-Note: Full end-user scheduling UX and full attribution UX are not release-blocking for MVP.
+Note: Full end-user attribution UX is not release-blocking for MVP.
 
 ---
 
@@ -247,13 +247,14 @@ Legend:
 - `Implemented`: Pair filter controls include tooltips for Min sample size, Min lift, Min confidence, and Sort by options.
 - `Implemented`: Pair/combo marts, APIs, exports, and GUI now support deterministic `pair_type` classification (`food_drink`, `food_food`, `drink_drink`, `unknown`).
 - `Implemented`: Combo scoring includes deterministic `food_drink` boost with explainable fields (`base_combo_opportunity_score`, `pair_type_boost_factor`, `pair_type_boost_applied`).
+- `Implemented`: Weekly scheduler GUI route (`/analytics/{analyticsId}/scheduler`) supports week-scoped planning, recommendation-to-schedule flow, editable entries, and save/finalize actions.
 
 ### 11.3 Marketer (Instagram) Capabilities
 - `Implemented`: Recommendation-centric matrix workflow (`promote`, `improve/reprice`, `remove`, `keep`).
 - `Implemented`: Agent invocation path for audience/tone and cached outputs.
 - `Implemented`: Instagram campaign and post identity model with branch scope and publish-window query indexes.
 - `Implemented`: Deterministic post-to-promoted-menu mapping model and idempotent mapping upsert API.
-- `Partial`: Weekly posting schedule and campaign planning loop are not fully productized in current app UX.
+- `Implemented`: Weekly posting schedule and campaign planning loop are productized with persisted weekly schedules, entry-level editing, and readiness-aware trust states.
 - `Partial`: Baseline before/after Instagram attribution mart and read API exist; full productized attribution workflow and UX are still pending.
 
 ### 11.4 Menu Analyst Capabilities
@@ -276,8 +277,9 @@ Legend:
 
 ### 11.7 E2E Validation
 - `Implemented`: E2E upload journey (with artifacts) and matrix filter journey (with artifacts).
-- `Implemented`: Release-gate E2E script covers marketer preset/recommendation flow and analyst CSV export flow with artifacts.
+- `Implemented`: Release-gate E2E script covers marketer preset/recommendation flow, scheduler workflow, and analyst CSV export flow with artifacts.
 - `Implemented`: Pair/combo GUI E2E journey validates filter application, explainability UI, and export link behavior.
+- `Implemented`: Dedicated scheduler E2E journey validates weekly planner interactions, trust-state visibility, and draft-save outcomes.
 
 ### 11.8 Minimal Release Feature Table
 
@@ -305,12 +307,13 @@ Legend:
 | 19 | Analyst CSV export (matrix/pairs/combos) | Implemented | `/api/exports/analyst` exports filtered datasets with stable columns and generation metadata. |
 | 20 | Agent architecture using structured feature inputs + guardrails | Implemented | Agents invoke with structured `core_input`; readiness helper enforces block/downgrade behavior. |
 | 21 | E2E upload -> analytics + release-gate workflows | Implemented | Upload, matrix, release-gate, and pair/combo e2e suites are wired with artifact capture. |
+| 22 | Instagram weekly scheduler workflow (model/API/UI + readiness policy) | Implemented | Week-scoped schedule persistence, editable planner UI, confidence/rationale fields, and readiness-based block/downgrade behavior are implemented. |
+| 23 | Scheduler E2E + release-gate integration | Implemented | Dedicated scheduler E2E and release-gate coverage validate draft-save and trust-state visibility behavior. |
 
 ### 11.9 Open Features Backlog (All `Partial` + `Not Yet`, Not Release-Blocking for MVP)
 
 | # | Post-MVP Capability | Status | Notes |
 |---|---|---|---|
-| H1 | Productized Instagram weekly scheduling UX/workflow | Partial | Foundations exist, but full workflow is not yet productized in app UX. |
 | H2 | Full Instagram attribution UX + confidence tuning | Partial | Baseline pre/post attribution mart and read API exist; full workflow integration is pending. |
 | H3 | Productized retry/replay/backfill runbooks/automation | Partial | Operational workflow exists but is not fully automated/productized. |
 | H4 | Analyst cost/price completeness reporting hardening | Partial | COGS update flow exists, but richer analyst completeness reporting/export coverage remains limited. |
