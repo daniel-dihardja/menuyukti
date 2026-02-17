@@ -1,157 +1,27 @@
-# 09. Pipeline Recovery Operations (Retry, Replay, Backfill)
+# 09. Pipeline Recovery Operations (Archived / Non-MVP)
 
-## What This Feature Is About
+## Status
 
-This workflow lets operators trigger and monitor ETL recovery actions when data pipelines fail or coverage becomes stale.
-It also provides ETL run-history observability so operators can review succeeded and failed runs in one place.
+This chapter is retained for historical reference only.
 
-Main page:
-- `/analytics/operations`
+- The operations feature (`/analytics/operations`) is intentionally **de-scoped from the current MVP release**.
+- End-user `retry` / `replay` / `backfill` controls are not part of the current shipped MVP surface.
 
-This feature is designed to restore trustworthy analytics outputs without ad-hoc scripts.
-Use it whenever matrix/heatmap/scheduler/attribution pages are impacted by failed or stale pipeline states.
+## What Is Still Available
 
-## Supported Actions
+- Core upload -> analytics pipeline flow.
+- COGS update -> downstream matrix refresh flow.
+- ETL run-history API contract (`/api/etl/runs`) for internal observability use.
+- Internal staged runner reliability guardrails (stale queued/running protection) as system internals.
 
-- `retry`: re-attempt a failed pipeline run.
-- `replay`: re-run a known pipeline run context.
-- `backfill`: reprocess a bounded date window.
+## Why This Was De-Scoped
 
-## ETL Run History Panel
+- Source upload files are not persisted for full ingest replay in the current product shape.
+- Exposing recovery controls without full source replay value creates user confusion.
+- MVP prioritizes direct marketer and menu-analyst decision workflows.
 
-The same page includes an **ETL Run History** table that lists:
-- `queued`, `running`, `succeeded`, and `failed` runs together.
-- Pipeline run id, start/finish timestamps, duration, source, and error summary.
-- Quality hints (for example: operation-triggered run, missing pipeline id, failure-needs-recovery).
+## Reintroduction Criteria (Post-MVP)
 
-Use this panel before triggering recovery so the team has a shared, evidence-based view of current ETL state.
-
-## When To Use Each Action
-
-- Use `retry` when:
-  - a run failed due to transient processing/runtime issues.
-  - you want the same run context to be attempted again.
-- Use `replay` when:
-  - a run may have succeeded, but downstream interpretation changed and you need controlled reprocessing.
-  - you need deterministic rerun of a specific pipeline run id.
-- Use `backfill` when:
-  - a date range is stale or missing and must be regenerated.
-  - you need to restore coverage for a specific operational window.
-
-## How To Use
-
-1. Open `/analytics/operations`.
-2. Select location.
-3. Choose action:
-   - `retry`/`replay`: provide `pipelineRunId`.
-   - `backfill`: provide `fromDate` and `toDate`.
-4. Optionally provide reason context.
-5. Queue operation.
-6. Monitor status table (`queued`, `running`, `succeeded`, `failed`).
-
-## Queue Execution
-
-- Use **Run queued now** on the operations page to trigger queue consumption for the selected location.
-- Runner lifecycle:
-  - claim oldest queued operation
-  - move to `running`
-  - execute handler
-  - finish as `succeeded` or `failed`
-- Stale queued operations are auto-resolved to failed with timeout reason so new requests are not blocked forever.
-
-Current handler scope:
-- `replay`: executable via runner path.
-- `retry` and `backfill`: currently fail fast with explicit `RUNNER_OPERATION_HANDLER_NOT_IMPLEMENTED:*` reason until full handlers are productized.
-
-## Run History Filters and Pagination
-
-Use filters to narrow triage quickly:
-- Location selector.
-- Status selector.
-- Date window (`fromDate`, `toDate`).
-- Search by pipeline run id or source text.
-
-For larger histories, use **Load more** to continue using cursor-based pagination while keeping deterministic ordering.
-
-## Step-by-Step Examples
-
-### Example A: Retry Failed Run
-
-1. Open ETL Run History and filter status to `failed`.
-2. Open run details and verify error context and identifiers.
-3. Click `Retry` shortcut directly from the failed run row (or queue `retry` manually).
-4. Confirm the request is queued (or deduped).
-5. Monitor status until `succeeded`.
-6. Re-check matrix and scheduler readiness/freshness.
-
-Expected result:
-- failed source run is re-attempted.
-- blocked/degraded trust states may recover after successful completion.
-
-### Example B: Backfill Stale Week
-
-1. Select action `backfill`.
-2. Set `fromDate=2026-02-01`, `toDate=2026-02-07` (example).
-3. Add reason: "Restore stale weekly coverage".
-4. Queue operation and monitor status.
-5. Re-open heatmap and attribution pages for the same location.
-
-Expected result:
-- missing/stale range is regenerated.
-- downstream insights use refreshed range coverage.
-
-### Example C: Replay From Run History
-
-1. Find a run with a valid pipeline run id in ETL Run History.
-2. Open row details to confirm context.
-3. Click `Replay` shortcut from the row.
-4. Verify the operation appears in Operation Status.
-5. Validate affected analytics pages after completion.
-
-## Safety and Guardrails
-
-- Duplicate/idempotent requests are deduped by idempotency key.
-- Active operation conflicts are blocked per location.
-- `retry` only allows failed source runs.
-- Backfill range is capped (`ETL_BACKFILL_MAX_DAYS`, default `31`).
-
-## How To Interpret Operation Status
-
-- `queued`: accepted and waiting to run.
-- `running`: currently executing recovery.
-- `succeeded`: operation completed; validate downstream pages.
-- `failed`: operation failed; inspect error and choose retry/replay/backfill next step.
-
-## Post-Operation Validation Checklist
-
-1. Matrix page:
-   - confirm freshness and quality status.
-   - verify key decision rows are present.
-2. Scheduler page:
-   - confirm readiness state and confidence behavior.
-3. Attribution page:
-   - confirm data window coverage for recent posts.
-4. Heatmap page:
-   - confirm expected date/daypart visibility.
-5. Operations page:
-   - confirm ETL Run History reflects updated run states/timestamps.
-
-## Why It Delivers Real Value
-
-- Faster recovery from failed/stale pipeline states.
-- Faster diagnosis because successful and failed runs are visible in one workflow.
-- Consistent, controlled operations behavior without ad-hoc scripts.
-- Better trust continuity for matrix, heatmap, scheduler, and attribution decisions.
-
-## Persona Value
-
-- Restaurant marketers:
-  - restore campaign decision pages quickly when freshness degrades.
-  - reduce delays in weekly Instagram planning caused by pipeline incidents.
-  - maintain confidence signals before executing promotions.
-  - distinguish quickly between true outages vs temporary lag by checking recent succeeded runs.
-- Menu analysts:
-  - recover profitability/margin decision views without manual data patching.
-  - ensure pair/combo/attribution analysis uses complete and current windows.
-  - keep weekly reporting cadence stable after pipeline failures.
-  - justify reruns with run-history evidence before finalizing weekly action lists.
+- Persisted source artifacts or equivalent immutable input snapshots.
+- Fully executable and validated replay/retry/backfill handlers.
+- Updated UX/runbook/tests/specs aligned to the restored feature surface.
