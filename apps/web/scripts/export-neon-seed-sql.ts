@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { PrismaClient } from "@prisma/client";
 import { SEED_TABLES, type SeedTable } from "../prisma/seed/seed-tables";
+import { prisma } from "../lib/prisma/client";
 
 const OUTPUT_SQL_PATH = path.resolve(process.cwd(), "prisma/seed/export/current_seed.sql");
 
@@ -14,24 +14,38 @@ function quoteLiteral(value: unknown): string {
   if (typeof value === "number") return Number.isFinite(value) ? String(value) : "NULL";
   if (typeof value === "bigint") return `${value}::bigint`;
   if (typeof value === "boolean") return value ? "TRUE" : "FALSE";
+  if (value instanceof String) return `'${value.toString().replace(/'/g, "''")}'`;
+  if (value instanceof Number) {
+    const numberValue = Number(value.valueOf());
+    return Number.isFinite(numberValue) ? String(numberValue) : "NULL";
+  }
   if (value instanceof Date) return `'${value.toISOString().replace(/'/g, "''")}'`;
   if (Buffer.isBuffer(value)) return `'\\\\x${value.toString("hex")}'::bytea`;
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    // Prisma Decimal (decimal.js) instances
+    ((value as { constructor?: { name?: string } }).constructor?.name ?? "").startsWith("Decimal") &&
+    typeof (value as { toString: () => string }).toString === "function"
+  ) {
+    return `'${(value as { toString: () => string }).toString().replace(/'/g, "''")}'::numeric`;
+  }
   if (Array.isArray(value) || (typeof value === "object" && value !== null)) {
     return `'${JSON.stringify(value).replace(/'/g, "''")}'::jsonb`;
   }
   return `'${String(value).replace(/'/g, "''")}'`;
 }
 
-async function tableExists(prisma: PrismaClient, table: SeedTable): Promise<boolean> {
+async function tableExists(table: SeedTable): Promise<boolean> {
   const rows = await prisma.$queryRaw<Array<{ regclass: string | null }>>`
     SELECT to_regclass(${`${table.schema}.${table.table}`})::text AS regclass
   `;
   return rows[0]?.regclass != null;
 }
 
-async function getColumns(prisma: PrismaClient, table: SeedTable): Promise<string[]> {
+async function getColumns(table: SeedTable): Promise<string[]> {
   const rows = await prisma.$queryRaw<Array<{ column_name: string }>>`
-    SELECT column_name
+    SELECT column_name::text AS column_name
     FROM information_schema.columns
     WHERE table_schema = ${table.schema}
       AND table_name = ${table.table}
@@ -40,9 +54,9 @@ async function getColumns(prisma: PrismaClient, table: SeedTable): Promise<strin
   return rows.map((row) => row.column_name);
 }
 
-async function getPrimaryKeyColumns(prisma: PrismaClient, table: SeedTable): Promise<string[]> {
+async function getPrimaryKeyColumns(table: SeedTable): Promise<string[]> {
   const rows = await prisma.$queryRaw<Array<{ attname: string }>>`
-    SELECT attribute.attname
+    SELECT attribute.attname::text AS attname
     FROM pg_index idx
     JOIN pg_class cls
       ON cls.oid = idx.indrelid
@@ -67,11 +81,11 @@ function buildSelectSql(table: SeedTable, columns: string[], orderColumns: strin
   return `SELECT ${selectColumns} FROM ${quoteIdent(table.schema)}.${quoteIdent(table.table)} ORDER BY ${orderBy}`;
 }
 
-async function exportTable(prisma: PrismaClient, table: SeedTable): Promise<{ sql: string[]; count: number }> {
-  const columns = await getColumns(prisma, table);
+async function exportTable(table: SeedTable): Promise<{ sql: string[]; count: number }> {
+  const columns = await getColumns(table);
   if (columns.length === 0) return { sql: [], count: 0 };
 
-  const primaryKeyColumns = await getPrimaryKeyColumns(prisma, table);
+  const primaryKeyColumns = await getPrimaryKeyColumns(table);
   const orderColumns = primaryKeyColumns.length > 0 ? primaryKeyColumns : columns;
   const rows = await prisma.$queryRawUnsafe<Record<string, unknown>[]>(
     buildSelectSql(table, columns, orderColumns),
@@ -93,7 +107,6 @@ async function run() {
     process.exit(1);
   }
 
-  const prisma = new PrismaClient();
   const lines: string[] = [];
   let exportedRows = 0;
 
@@ -104,13 +117,13 @@ async function run() {
     lines.push("");
 
     for (const table of SEED_TABLES) {
-      const exists = await tableExists(prisma, table);
+      const exists = await tableExists(table);
       if (!exists) {
         lines.push(`-- skipped missing table: ${table.schema}.${table.table}`);
         continue;
       }
 
-      const { sql, count } = await exportTable(prisma, table);
+      const { sql, count } = await exportTable(table);
       exportedRows += count;
       lines.push(`-- table: ${table.schema}.${table.table} (${count} rows)`);
       lines.push(...sql);

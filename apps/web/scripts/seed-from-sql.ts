@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { PrismaClient } from "@prisma/client";
 import { SEED_TABLES } from "../prisma/seed/seed-tables";
+import { prisma } from "../lib/prisma/client";
 
 const SQL_FILE_PATH = path.resolve(process.cwd(), "prisma/seed/export/current_seed.sql");
 
@@ -39,7 +39,6 @@ async function run() {
   const statements = splitStatements(sql);
   const insertCounts = new Map<string, number>();
 
-  const prisma = new PrismaClient();
   try {
     const truncateTargets = [...SEED_TABLES]
       .reverse()

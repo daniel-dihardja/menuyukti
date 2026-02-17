@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../lib/prisma/client";
 
 const PACKAGE_JSON_PATH = path.resolve(process.cwd(), "package.json");
 const PRISMA_CONFIG_PATH = path.resolve(process.cwd(), "prisma.config.ts");
@@ -45,7 +45,6 @@ async function validateRowCounts(targets: InsertTarget[]) {
     return;
   }
 
-  const prisma = new PrismaClient();
   try {
     for (const target of targets) {
       const qualified = `${quoteIdent(target.schema)}.${quoteIdent(target.table)}`;
