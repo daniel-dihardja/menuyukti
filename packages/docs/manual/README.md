@@ -17,7 +17,7 @@ This manual explains the ship-ready features that already deliver practical valu
 - Use agents + guardrails (`06`) for assisted content and controlled automation under data-readiness policy.
 - Use weekly scheduler (`07`) to operationalize Instagram plans with trust/readiness controls and draft-to-final workflow.
 - Use attribution overview (`08`) to measure post outcomes with confidence tuning and exportable reporting context.
-- Use E2E full lifecycle runner (`11`) to execute cold-start release validation with automated setup/teardown.
+- Use E2E full lifecycle runner (`11`) to execute cold-start release validation with automated setup/teardown (report-only artifacts by default).
 
 ## Suggested Learning Path
 
