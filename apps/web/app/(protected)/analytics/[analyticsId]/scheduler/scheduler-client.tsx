@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { Info } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@workspace/ui/components/tooltip";
 import {
   Select,
   SelectContent,
@@ -145,6 +147,32 @@ function confidenceBadgeVariant(confidence: string): "default" | "secondary" | "
   if (confidence === "high") return "default";
   if (confidence === "blocked") return "destructive";
   return "secondary";
+}
+
+function HelpLabel({
+  htmlFor,
+  label,
+  help,
+}: {
+  htmlFor?: string;
+  label: string;
+  help: string;
+}) {
+  return (
+    <Label htmlFor={htmlFor} className="flex items-center gap-1.5">
+      {label}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button type="button" aria-label={`${label} help`} className="text-muted-foreground hover:text-foreground">
+            <Info className="h-3.5 w-3.5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent sideOffset={6} className="max-w-xs">
+          {help}
+        </TooltipContent>
+      </Tooltip>
+    </Label>
+  );
 }
 
 export function SchedulerClient({
@@ -364,7 +392,11 @@ export function SchedulerClient({
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-1.5">
-              <Label htmlFor="scheduler-week-start">Week start</Label>
+              <HelpLabel
+                htmlFor="scheduler-week-start"
+                label="Week start"
+                help="Controls scheduler URL state and selects which Monday-Sunday plan you are editing."
+              />
               <Input
                 id="scheduler-week-start"
                 type="date"
@@ -373,11 +405,17 @@ export function SchedulerClient({
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Week end</Label>
+              <HelpLabel
+                label="Week end"
+                help="Automatically derived from week start (7-day planning window)."
+              />
               <Input value={weekEndDate} disabled />
             </div>
             <div className="space-y-1.5">
-              <Label>Schedule status</Label>
+              <HelpLabel
+                label="Schedule status"
+                help="Readiness, quality, and freshness indicate whether schedules are trusted, downgraded, or blocked."
+              />
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">{scheduleStatus}</Badge>
                 <Badge
@@ -466,7 +504,11 @@ export function SchedulerClient({
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-3">
             <div className="space-y-1.5">
-              <Label htmlFor="scheduler-search">Filter by menu</Label>
+              <HelpLabel
+                htmlFor="scheduler-search"
+                label="Filter by menu"
+                help="Find entries by menu item name to speed up edits in larger weekly plans."
+              />
               <Input
                 id="scheduler-search"
                 placeholder="Search menu item"
@@ -475,7 +517,11 @@ export function SchedulerClient({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="scheduler-status-filter">Filter by status</Label>
+              <HelpLabel
+                htmlFor="scheduler-status-filter"
+                label="Filter by status"
+                help="Narrow the table to draft, scheduled, published, or cancelled entries."
+              />
               <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as typeof statusFilter)}>
                 <SelectTrigger id="scheduler-status-filter">
                   <SelectValue />
@@ -490,7 +536,10 @@ export function SchedulerClient({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Rows</Label>
+              <HelpLabel
+                label="Rows"
+                help="Count of currently visible entries after menu and status filters are applied."
+              />
               <Input value={String(filteredEntries.length)} disabled />
             </div>
           </div>
@@ -499,14 +548,70 @@ export function SchedulerClient({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Menu</TableHead>
+                  <TableHead>
+                    <span className="inline-flex items-center gap-1">
+                      Menu
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" aria-label="Menu help" className="text-muted-foreground hover:text-foreground">
+                            <Info className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent sideOffset={6} className="max-w-xs">
+                          Canonical menu item targeted by this post slot.
+                        </TooltipContent>
+                      </Tooltip>
+                    </span>
+                  </TableHead>
                   <TableHead>Scheduled At</TableHead>
                   <TableHead>Daypart</TableHead>
-                  <TableHead>Campaign ID</TableHead>
-                  <TableHead>Post ID</TableHead>
+                  <TableHead>
+                    <span className="inline-flex items-center gap-1">
+                      Campaign ID
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" aria-label="Campaign ID help" className="text-muted-foreground hover:text-foreground">
+                            <Info className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent sideOffset={6} className="max-w-xs">
+                          Optional link to an Instagram campaign identity for attribution and governance.
+                        </TooltipContent>
+                      </Tooltip>
+                    </span>
+                  </TableHead>
+                  <TableHead>
+                    <span className="inline-flex items-center gap-1">
+                      Post ID
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" aria-label="Post ID help" className="text-muted-foreground hover:text-foreground">
+                            <Info className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent sideOffset={6} className="max-w-xs">
+                          Optional link to a specific Instagram post identity when already known.
+                        </TooltipContent>
+                      </Tooltip>
+                    </span>
+                  </TableHead>
                   <TableHead>Confidence</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Rationale</TableHead>
+                  <TableHead>
+                    <span className="inline-flex items-center gap-1">
+                      Rationale
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" aria-label="Rationale help" className="text-muted-foreground hover:text-foreground">
+                            <Info className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent sideOffset={6} className="max-w-xs">
+                          Short reason captured at scheduling time to preserve explainability.
+                        </TooltipContent>
+                      </Tooltip>
+                    </span>
+                  </TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
