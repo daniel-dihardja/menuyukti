@@ -16,6 +16,7 @@ type OperationRequest = {
 
 const PIPELINE_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const STALE_QUEUE_ERROR = "STALE_QUEUED_OPERATION_TIMEOUT";
 
 function parseDate(raw: string | undefined): Date | null {
   if (!raw) return null;
@@ -31,6 +32,12 @@ function daysBetweenInclusive(from: Date, to: Date): number {
 function resolveBackfillMaxDays(): number {
   const parsed = Number(process.env.ETL_BACKFILL_MAX_DAYS ?? "31");
   if (!Number.isFinite(parsed) || parsed < 1) return 31;
+  return Math.floor(parsed);
+}
+
+function resolveQueueStaleMinutes(): number {
+  const parsed = Number(process.env.ETL_OPERATION_QUEUE_STALE_MINUTES ?? "30");
+  if (!Number.isFinite(parsed) || parsed < 1) return 30;
   return Math.floor(parsed);
 }
 
@@ -113,6 +120,25 @@ async function hasActiveOperationConflict(locationId: number): Promise<boolean> 
     select: { id: true },
   });
   return Boolean(active);
+}
+
+async function resolveStaleQueuedOperations(locationId: number): Promise<number> {
+  const staleMinutes = resolveQueueStaleMinutes();
+  const cutoff = new Date(Date.now() - staleMinutes * 60_000);
+  const result = await prisma.etlJob.updateMany({
+    where: {
+      locationId,
+      status: "queued",
+      sourceFile: { startsWith: "operation:" },
+      createdAt: { lt: cutoff },
+    },
+    data: {
+      status: "failed",
+      errorMessage: `${STALE_QUEUE_ERROR}:${staleMinutes}m`,
+      finishedAt: new Date(),
+    },
+  });
+  return result.count;
 }
 
 export async function GET(req: Request) {
@@ -321,12 +347,16 @@ export async function POST(req: Request) {
       );
     }
 
+    const staleResolvedCount = await resolveStaleQueuedOperations(locationId);
     const hasConflict = await hasActiveOperationConflict(locationId);
     if (hasConflict) {
       return NextResponse.json(
         {
           error: "OPERATION_CONFLICT_ACTIVE_RUN",
-          message: "Another retry/replay/backfill operation is already queued or running for this location.",
+          message:
+            staleResolvedCount > 0
+              ? `Resolved ${staleResolvedCount} stale queued operation(s), but another active operation is still queued/running for this location.`
+              : "Another retry/replay/backfill operation is already queued or running for this location.",
         },
         { status: 409 },
       );

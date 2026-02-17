@@ -236,13 +236,21 @@ export function OperationsClient({ locations }: Props) {
           limit: 5,
         }),
       });
-      const data = (await res.json()) as { processedCount?: number; error?: string };
+      const data = (await res.json()) as {
+        processedCount?: number;
+        staleResolvedCount?: number;
+        error?: string;
+      };
       if (!res.ok) throw new Error(data.error ?? "Failed to run queued operations");
 
+      const staleMessage =
+        data.staleResolvedCount && data.staleResolvedCount > 0
+          ? ` Resolved ${data.staleResolvedCount} stale queued operation(s).`
+          : "";
       setMessage(
         data.processedCount && data.processedCount > 0
-          ? `Processed ${data.processedCount} queued operation(s).`
-          : "No queued operation found for this location.",
+          ? `Processed ${data.processedCount} queued operation(s).${staleMessage}`
+          : `No queued operation found for this location.${staleMessage}`,
       );
       await Promise.all([fetchOperations(), fetchRuns()]);
     } catch (error) {

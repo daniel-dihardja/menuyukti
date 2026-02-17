@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 
 type OperationAction = "retry" | "replay" | "backfill";
+const STALE_QUEUE_ERROR = "STALE_QUEUED_OPERATION_TIMEOUT";
+
+function resolveQueueStaleMinutes(): number {
+  const parsed = Number(process.env.ETL_OPERATION_QUEUE_STALE_MINUTES ?? "30");
+  if (!Number.isFinite(parsed) || parsed < 1) return 30;
+  return Math.floor(parsed);
+}
 
 type OperationJob = {
   id: string;
@@ -63,6 +70,25 @@ async function claimNextQueuedOperation(locationId: number | null): Promise<Oper
   });
   if (claimed.count === 0) return null;
   return { ...candidate, status: "running" };
+}
+
+async function resolveStaleQueuedOperations(locationId: number | null): Promise<number> {
+  const staleMinutes = resolveQueueStaleMinutes();
+  const cutoff = new Date(Date.now() - staleMinutes * 60_000);
+  const result = await prisma.etlJob.updateMany({
+    where: {
+      status: "queued",
+      sourceFile: { startsWith: "operation:" },
+      createdAt: { lt: cutoff },
+      ...(locationId == null ? {} : { locationId }),
+    },
+    data: {
+      status: "failed",
+      errorMessage: `${STALE_QUEUE_ERROR}:${staleMinutes}m`,
+      finishedAt: new Date(),
+    },
+  });
+  return result.count;
 }
 
 async function markFailed(jobId: string, message: string) {
@@ -168,6 +194,7 @@ export async function POST(req: Request) {
     const parsedLimit = Number(body.limit ?? 1);
     const limit = Number.isInteger(parsedLimit) ? Math.max(1, Math.min(parsedLimit, 20)) : 1;
 
+    const staleResolvedCount = await resolveStaleQueuedOperations(locationId);
     const processed: Array<{ id: string; action: string; status: string; error?: string }> = [];
     for (let idx = 0; idx < limit; idx += 1) {
       const job = await claimNextQueuedOperation(locationId);
@@ -183,6 +210,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
+        staleResolvedCount,
         processedCount: processed.length,
         processed,
       },
