@@ -46,6 +46,26 @@ pnpm -C apps/web run db:reset
 
 `db:reset` already applies migrations and runs seed automatically.
 
+### Start all services (recommended)
+
+From the project root:
+
+```bash
+pnpm run dev:all
+```
+
+This command will:
+- run web DB lifecycle (`db:reset`, `db:gen`, `db:init`, `db:seed`)
+- start analytics service on `127.0.0.1:8000`
+- start agents service on `127.0.0.1:8001`
+- start web app on `127.0.0.1:3000`
+
+You can skip DB steps if needed:
+
+```bash
+RUN_DB_RESET=0 RUN_DB_GEN=0 RUN_DB_INIT=0 RUN_DB_SEED=0 pnpm run dev:all
+```
+
 ### Export current Neon data snapshot for seed
 
 ```bash
