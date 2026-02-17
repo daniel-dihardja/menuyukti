@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 import { Info } from "lucide-react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
@@ -24,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table";
+import { routes } from "@/lib/routes";
 
 type Recommendation = {
   menuItem: string;
@@ -83,6 +85,14 @@ type Props = {
   qualityStatus: string | null;
   freshnessMinutes: number | null;
   isStale: boolean;
+  attributionOutcomes: Array<{
+    instagramPostId: number;
+    canonicalMenuNameNorm: string;
+    deltaRevenue: number;
+    deltaQty: number;
+    confidence: "high" | "medium" | "low" | "blocked";
+    reasons: string[];
+  }>;
   initialSchedule: ScheduleDto | null;
 };
 
@@ -184,6 +194,7 @@ export function SchedulerClient({
   qualityStatus,
   freshnessMinutes,
   isStale,
+  attributionOutcomes,
   initialSchedule,
 }: Props) {
   const router = useRouter();
@@ -252,6 +263,15 @@ export function SchedulerClient({
       return byQuery && byStatus;
     });
   }, [entries, query, statusFilter]);
+
+  const attributionByPostMenu = useMemo(() => {
+    return new Map(
+      attributionOutcomes.map((outcome) => [
+        `${outcome.instagramPostId}::${outcome.canonicalMenuNameNorm}`,
+        outcome,
+      ]),
+    );
+  }, [attributionOutcomes]);
 
   const setEntry = (index: number, updater: (entry: EntryDraft) => EntryDraft) => {
     setEntries((prev) => prev.map((entry, i) => (i === index ? updater(entry) : entry)));
@@ -604,6 +624,7 @@ export function SchedulerClient({
                   </TableHead>
                   <TableHead>Confidence</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Attribution</TableHead>
                   <TableHead>
                     <span className="inline-flex items-center gap-1">
                       Rationale
@@ -661,6 +682,45 @@ export function SchedulerClient({
                             <SelectItem value="evening">Evening</SelectItem>
                           </SelectContent>
                         </Select>
+                      </TableCell>
+                      <TableCell>
+                        {entry.instagramPostId.trim() ? (
+                          (() => {
+                            const lookupKey = `${Number(entry.instagramPostId)}::${entry.canonicalMenuName
+                              .trim()
+                              .toLowerCase()}`;
+                            const outcome = attributionByPostMenu.get(lookupKey);
+                            if (!outcome) {
+                              return <span className="text-xs text-muted-foreground">No observed outcome yet</span>;
+                            }
+                            return (
+                              <div className="space-y-1">
+                                <Badge variant={confidenceBadgeVariant(outcome.confidence)}>
+                                  {outcome.confidence}
+                                </Badge>
+                                <p className="text-xs text-muted-foreground">
+                                  Δ qty {outcome.deltaQty.toFixed(1)} | Δ rev {outcome.deltaRevenue.toFixed(2)}
+                                </p>
+                                {outcome.reasons.length > 0 ? (
+                                  <p className="max-w-48 text-xs text-muted-foreground">
+                                    {outcome.reasons.join(", ")}
+                                  </p>
+                                ) : null}
+                                <Button asChild type="button" variant="ghost" size="sm" className="h-7 px-2">
+                                  <Link
+                                    href={`${routes.analytics.attribution(analyticsId)}?postId=${encodeURIComponent(
+                                      entry.instagramPostId,
+                                    )}&menu=${encodeURIComponent(entry.canonicalMenuName)}`}
+                                  >
+                                    View attribution
+                                  </Link>
+                                </Button>
+                              </div>
+                            );
+                          })()
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Link post id to view attribution</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Input

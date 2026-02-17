@@ -6,6 +6,8 @@ import { getTranslations } from "next-intl/server";
 
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
+import { evaluateAttributionConfidence } from "@/lib/analytics/instagram-attribution-confidence";
+import { loadInstagramAttribution } from "@/lib/analytics/instagram-attribution";
 import { toDecisionGradeMatrixRows } from "@/lib/analytics/matrix-row-contract";
 import { prisma } from "@/lib/prisma/client";
 import { routes } from "@/lib/routes";
@@ -44,6 +46,15 @@ type ScheduleRecord = {
   source: string;
 };
 
+type AttributionSummary = {
+  instagramPostId: number;
+  canonicalMenuNameNorm: string;
+  deltaRevenue: number;
+  deltaQty: number;
+  confidence: "high" | "medium" | "low" | "blocked";
+  reasons: string[];
+};
+
 function isMissingSchedulerRelation(error: unknown): boolean {
   const maybe = error as {
     code?: string;
@@ -77,6 +88,10 @@ function endOfWeek(weekStart: Date): Date {
   const d = new Date(weekStart);
   d.setUTCDate(d.getUTCDate() + 6);
   return d;
+}
+
+function normalizeMenuName(value: string): string {
+  return value.trim().toLowerCase();
 }
 
 function parseWeekStart(raw: string | string[] | undefined, fallbackDate: Date): Date {
@@ -258,6 +273,33 @@ export default async function SchedulerPage({ params, searchParams }: PageProps)
     ? Math.max(0, Math.floor((Date.now() - new Date(pipelineRun.ingested_at_utc).getTime()) / 60_000))
     : null;
   const isStale = freshnessMinutes !== null && freshnessMinutes > freshnessSlaMinutes;
+  const qualityStatus = pipelineRun?.quality_status ?? null;
+
+  const attributionRows = await loadInstagramAttribution({
+    locationId: analytics.locationId,
+    from: null,
+    to: null,
+    limit: 1200,
+  }).catch(() => []);
+
+  const attributionByPostMenu = new Map<string, AttributionSummary>();
+  for (const row of attributionRows) {
+    const key = `${row.instagramPostId}::${normalizeMenuName(row.canonicalMenuName)}`;
+    if (attributionByPostMenu.has(key)) continue;
+    const confidenceResult = evaluateAttributionConfidence(
+      row,
+      {},
+      { qualityStatus, isStale },
+    );
+    attributionByPostMenu.set(key, {
+      instagramPostId: row.instagramPostId,
+      canonicalMenuNameNorm: normalizeMenuName(row.canonicalMenuName),
+      deltaRevenue: row.deltaRevenue,
+      deltaQty: row.deltaQty,
+      confidence: confidenceResult.confidence,
+      reasons: confidenceResult.reasons,
+    });
+  }
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
 
@@ -281,9 +323,10 @@ export default async function SchedulerPage({ params, searchParams }: PageProps)
         weekStartDate={dateToYmd(weekStartDate)}
         weekEndDate={dateToYmd(weekEndDate)}
         recommendations={recommendations}
-        qualityStatus={pipelineRun?.quality_status ?? null}
+        qualityStatus={qualityStatus}
         freshnessMinutes={freshnessMinutes}
         isStale={isStale}
+        attributionOutcomes={Array.from(attributionByPostMenu.values())}
         initialSchedule={
           schedule
             ? {

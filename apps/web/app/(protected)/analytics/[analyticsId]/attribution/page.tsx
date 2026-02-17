@@ -52,6 +52,12 @@ function parseLimit(value: string | string[] | undefined): number {
   return Math.min(parsed, 2000);
 }
 
+function parsePostId(value: string | string[] | undefined): number | null {
+  if (typeof value !== "string") return null;
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
 function formatDate(value: Date): string {
   return new Intl.DateTimeFormat("en-US", {
     dateStyle: "medium",
@@ -190,6 +196,8 @@ export default async function AttributionPage({ params, searchParams }: PageProp
   const from = parseDateParam(query.from) ?? analytics.periodStart;
   const to = parseDateParam(query.to) ?? analytics.periodEnd;
   const limit = parseLimit(query.limit);
+  const postIdFilter = parsePostId(query.postId);
+  const menuFilter = typeof query.menu === "string" ? query.menu.trim().toLowerCase() : "";
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analytics.id}`;
 
@@ -232,8 +240,14 @@ export default async function AttributionPage({ params, searchParams }: PageProp
     loadError = "Unable to load attribution data right now. Please verify the attribution mart and retry.";
   }
 
-  const overview = summarizeAttribution(rows);
-  const rowsWithConfidence: AttributionRowWithConfidence[] = rows.map((row) => {
+  const filteredRows = rows.filter((row) => {
+    const byPost = postIdFilter == null || row.instagramPostId === postIdFilter;
+    const byMenu = !menuFilter || row.canonicalMenuName.toLowerCase() === menuFilter;
+    return byPost && byMenu;
+  });
+
+  const overview = summarizeAttribution(filteredRows);
+  const rowsWithConfidence: AttributionRowWithConfidence[] = filteredRows.map((row) => {
     const tuned = evaluateAttributionConfidence(
       row,
       confidenceConfig,
@@ -250,7 +264,7 @@ export default async function AttributionPage({ params, searchParams }: PageProp
       coverageRatio: tuned.coverageRatio,
     };
   });
-  const viewState = resolveAttributionViewState(rows, loadError);
+  const viewState = resolveAttributionViewState(filteredRows, loadError);
 
   return (
     <AnalyticsPageShell
@@ -269,6 +283,8 @@ export default async function AttributionPage({ params, searchParams }: PageProp
       <section className="flex flex-wrap items-center gap-2">
         <Badge variant="outline">Window: {buildFromToLabel(from ?? null, to ?? null)}</Badge>
         <Badge variant="outline">Rows: {overview.totalRows}</Badge>
+        {postIdFilter != null ? <Badge variant="outline">Post: #{postIdFilter}</Badge> : null}
+        {menuFilter ? <Badge variant="outline">Menu: {menuFilter}</Badge> : null}
         <Badge variant="outline">Quality: {qualityStatus ?? "unknown"}</Badge>
         {freshnessMinutes !== null ? (
           <Badge variant={isStale ? "destructive" : "secondary"}>Freshness: {freshnessMinutes}m</Badge>
