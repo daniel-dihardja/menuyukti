@@ -9,6 +9,8 @@ import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
+import { Button } from "@workspace/ui/components/button";
+import Link from "next/link";
 
 import {
   Tabs,
@@ -38,6 +40,7 @@ import {
   applyHeatmapFilterState,
   applyWeeklySegment,
   parseHeatmapFilterState,
+  serializeHeatmapFilterState,
 } from "@/lib/analytics/heatmap-filter-state";
 
 type PageProps = {
@@ -152,6 +155,10 @@ export default async function Page({ params, searchParams }: PageProps) {
   const filteredDailyRows = applyHeatmapFilterState(daily.rows, daily.columnLabels, filters);
   const segmentedWeekly = applyWeeklySegment(weekly.rows, weekly.columnLabels, filters.segment);
   const filteredWeeklyRows = applyHeatmapFilterState(segmentedWeekly.rows, segmentedWeekly.labels, filters);
+  const heatmapExportParams = serializeHeatmapFilterState(filters);
+  heatmapExportParams.set("dataset", "heatmap");
+  heatmapExportParams.set("analyticsId", String(analyticsId));
+  const heatmapExportHref = `/api/exports/analyst?${heatmapExportParams.toString()}`;
 
   const marketerInsights = deriveHeatmapMarketerInsights(filteredDailyRows, daily.columnLabels);
   const analystInsights = deriveHeatmapAnalystInsights(
@@ -201,6 +208,9 @@ export default async function Page({ params, searchParams }: PageProps) {
           <Badge variant={isStale ? "destructive" : "secondary"}>freshness: {freshnessMinutes}m</Badge>
         ) : null}
         <Badge variant="outline">confidence: {confidenceLabel}</Badge>
+        <Button asChild variant="outline" size="sm" className="ml-auto">
+          <Link href={heatmapExportHref}>Export Heatmap CSV</Link>
+        </Button>
       </section>
       <section className="grid gap-4 md:grid-cols-2">
         <Card>

@@ -4,9 +4,20 @@ import { parseMatrixFilterState } from "@/lib/analytics/matrix-filter-state";
 import { applyMatrixFilterState } from "@/lib/analytics/matrix-filter-engine";
 import { toDecisionGradeMatrixRows } from "@/lib/analytics/matrix-row-contract";
 import { parsePairTypeFilter } from "@/lib/analytics/pair-type";
+import {
+  applyHeatmapFilterState,
+  applyWeeklySegment,
+  parseHeatmapFilterState,
+} from "@/lib/analytics/heatmap-filter-state";
+import {
+  adaptDailyHeatmapMatrix,
+  adaptWeeklyHeatmapMatrix,
+  type DailyHeatmapInput,
+  type WeeklyHeatmapInput,
+} from "@/app/(protected)/analytics/[analyticsId]/heatmap/heatmap.adapters";
 import { toCsv } from "@/lib/export/csv";
 
-type ExportDataset = "matrix" | "pairs" | "combos";
+type ExportDataset = "matrix" | "pairs" | "combos" | "heatmap";
 
 function csvResponse(filename: string, csv: string): NextResponse {
   return new NextResponse(csv, {
@@ -20,7 +31,7 @@ function csvResponse(filename: string, csv: string): NextResponse {
 }
 
 function parseDataset(raw: string | null): ExportDataset | null {
-  if (raw === "matrix" || raw === "pairs" || raw === "combos") return raw;
+  if (raw === "matrix" || raw === "pairs" || raw === "combos" || raw === "heatmap") return raw;
   return null;
 }
 
@@ -32,12 +43,159 @@ export async function GET(req: Request) {
     const dataset = parseDataset(searchParams.get("dataset"));
     if (!dataset) {
       return NextResponse.json(
-        { error: "INVALID_DATASET", expected: ["matrix", "pairs", "combos"] },
+        { error: "INVALID_DATASET", expected: ["matrix", "pairs", "combos", "heatmap"] },
         { status: 400 },
       );
     }
 
     const generatedAt = new Date().toISOString();
+
+    if (dataset === "heatmap") {
+      const analyticsId = Number(searchParams.get("analyticsId"));
+      if (!Number.isInteger(analyticsId)) {
+        return NextResponse.json({ error: "INVALID_ANALYTICS_ID" }, { status: 400 });
+      }
+
+      const analytics = await prisma.analytics.findUnique({
+        where: { id: analyticsId },
+        select: {
+          id: true,
+          locationId: true,
+          periodStart: true,
+          periodEnd: true,
+          heatmapJson: true,
+        },
+      });
+
+      if (!analytics || !analytics.heatmapJson || !Array.isArray(analytics.heatmapJson)) {
+        return NextResponse.json({ error: "HEATMAP_NOT_FOUND" }, { status: 404 });
+      }
+
+      const dailyItems = (analytics.heatmapJson as unknown[]).filter(
+        (item: any): item is DailyHeatmapInput =>
+          typeof item?.menu === "string" &&
+          (Array.isArray(item?.dailyHeatmap) || Array.isArray(item?.daily_heatmap)),
+      );
+      const weeklyItems = (analytics.heatmapJson as unknown[]).filter(
+        (item: any): item is WeeklyHeatmapInput =>
+          typeof item?.menu === "string" &&
+          (Array.isArray(item?.weeklyHeatmap) || Array.isArray(item?.weekly_heatmap)),
+      );
+
+      const daily = adaptDailyHeatmapMatrix(dailyItems, 8, 18);
+      const weekly = adaptWeeklyHeatmapMatrix(weeklyItems);
+      const filters = parseHeatmapFilterState(Object.fromEntries(searchParams.entries()));
+      const filteredDailyRows = applyHeatmapFilterState(daily.rows, daily.columnLabels, filters);
+      const segmentedWeekly = applyWeeklySegment(weekly.rows, weekly.columnLabels, filters.segment);
+      const filteredWeeklyRows = applyHeatmapFilterState(segmentedWeekly.rows, segmentedWeekly.labels, filters);
+
+      const etlJob = await prisma.etlJob.findFirst({
+        where: {
+          analyticsId,
+          status: "succeeded",
+          pipelineRunId: { not: null },
+        },
+        orderBy: { finishedAt: "desc" },
+        select: { pipelineRunId: true },
+      });
+      const pipelineRunRows = etlJob?.pipelineRunId
+        ? await prisma.$queryRaw<Array<{ ingested_at_utc: Date; quality_status: string }>>`
+            SELECT ingested_at_utc, quality_status
+            FROM warehouse.dim_pipeline_run
+            WHERE pipeline_run_id = CAST(${etlJob.pipelineRunId} AS UUID)
+            LIMIT 1
+          `
+        : [];
+
+      const freshnessSlaMinutes = Number(process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440");
+      const pipelineRun = pipelineRunRows[0];
+      const freshnessMinutes = pipelineRun
+        ? Math.max(
+            0,
+            Math.floor((Date.now() - new Date(pipelineRun.ingested_at_utc).getTime()) / 60_000),
+          )
+        : null;
+      const isStale = freshnessMinutes !== null && freshnessMinutes > freshnessSlaMinutes;
+      const qualityStatus = String(pipelineRun?.quality_status ?? "").toLowerCase() || "unknown";
+      const readiness =
+        qualityStatus === "failed"
+          ? "blocked"
+          : qualityStatus === "warn" || isStale
+            ? "degraded"
+            : "ready";
+
+      const dailyRows = filteredDailyRows.flatMap((row) =>
+        row.values.map((value, index) => ({
+          dataset,
+          generated_at: generatedAt,
+          analytics_id: analytics.id,
+          location_id: analytics.locationId,
+          period_start: analytics.periodStart,
+          period_end: analytics.periodEnd,
+          grain: "daily",
+          menu_item: row.label,
+          window_label: daily.columnLabels[index] ?? `slot-${index + 1}`,
+          quantity: value,
+          readiness,
+          quality_status: qualityStatus,
+          freshness_minutes: freshnessMinutes,
+          segment: filters.segment,
+          q: filters.q,
+          top: filters.top,
+          sort: filters.sort,
+          sort_window: filters.sortWindow,
+          order: filters.order,
+        })),
+      );
+
+      const weeklyRows = filteredWeeklyRows.flatMap((row) =>
+        row.values.map((value, index) => ({
+          dataset,
+          generated_at: generatedAt,
+          analytics_id: analytics.id,
+          location_id: analytics.locationId,
+          period_start: analytics.periodStart,
+          period_end: analytics.periodEnd,
+          grain: "weekly",
+          menu_item: row.label,
+          window_label: segmentedWeekly.labels[index] ?? `slot-${index + 1}`,
+          quantity: value,
+          readiness,
+          quality_status: qualityStatus,
+          freshness_minutes: freshnessMinutes,
+          segment: filters.segment,
+          q: filters.q,
+          top: filters.top,
+          sort: filters.sort,
+          sort_window: filters.sortWindow,
+          order: filters.order,
+        })),
+      );
+
+      const csv = toCsv([...dailyRows, ...weeklyRows], [
+        "dataset",
+        "generated_at",
+        "analytics_id",
+        "location_id",
+        "period_start",
+        "period_end",
+        "grain",
+        "menu_item",
+        "window_label",
+        "quantity",
+        "readiness",
+        "quality_status",
+        "freshness_minutes",
+        "segment",
+        "q",
+        "top",
+        "sort",
+        "sort_window",
+        "order",
+      ]);
+
+      return csvResponse(`analyst-heatmap-${analytics.id}.csv`, csv);
+    }
 
     if (dataset === "matrix") {
       const analyticsId = Number(searchParams.get("analyticsId"));
