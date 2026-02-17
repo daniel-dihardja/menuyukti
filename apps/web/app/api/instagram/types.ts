@@ -123,3 +123,20 @@ export type UpdateInstagramWeeklyScheduleRequest = {
     status?: InstagramWeeklyScheduleEntryStatus;
   }>;
 };
+
+export type InstagramWeeklyPostSuggestion = {
+  rank: number;
+  menuItem: string;
+  canonicalMenuNameNorm: string;
+  suggestedFor: string;
+  suggestedDaypart: "morning" | "lunch" | "afternoon" | "evening";
+  offerType: "combo_offer" | "happy_hour" | "hero_item";
+  rationale: string;
+  confidence: "high" | "medium" | "low";
+  sourceSignals: {
+    heatmapTotalQty: number;
+    heatmapDaypartQty: number;
+    matrixAction: "promote" | "reprice" | "keep" | "remove" | "none";
+    matrixMarginPct: number | null;
+  };
+};
