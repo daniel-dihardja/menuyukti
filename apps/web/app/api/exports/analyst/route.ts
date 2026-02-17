@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
+import { loadInstagramAttribution } from "@/lib/analytics/instagram-attribution";
+import {
+  evaluateAttributionConfidence,
+  parseConfidenceConfig,
+} from "@/lib/analytics/instagram-attribution-confidence";
 import { parseMatrixFilterState } from "@/lib/analytics/matrix-filter-state";
 import { applyMatrixFilterState } from "@/lib/analytics/matrix-filter-engine";
 import { toDecisionGradeMatrixRows } from "@/lib/analytics/matrix-row-contract";
@@ -15,9 +20,10 @@ import {
   type DailyHeatmapInput,
   type WeeklyHeatmapInput,
 } from "@/app/(protected)/analytics/[analyticsId]/heatmap/heatmap.adapters";
+import { ATTRIBUTION_EXPORT_COLUMNS, buildAttributionExportRows } from "@/lib/export/attribution-export";
 import { toCsv } from "@/lib/export/csv";
 
-type ExportDataset = "matrix" | "pairs" | "combos" | "heatmap";
+type ExportDataset = "matrix" | "pairs" | "combos" | "heatmap" | "attribution";
 
 function csvResponse(filename: string, csv: string): NextResponse {
   return new NextResponse(csv, {
@@ -31,7 +37,7 @@ function csvResponse(filename: string, csv: string): NextResponse {
 }
 
 function parseDataset(raw: string | null): ExportDataset | null {
-  if (raw === "matrix" || raw === "pairs" || raw === "combos" || raw === "heatmap") return raw;
+  if (raw === "matrix" || raw === "pairs" || raw === "combos" || raw === "heatmap" || raw === "attribution") return raw;
   return null;
 }
 
@@ -43,12 +49,120 @@ export async function GET(req: Request) {
     const dataset = parseDataset(searchParams.get("dataset"));
     if (!dataset) {
       return NextResponse.json(
-        { error: "INVALID_DATASET", expected: ["matrix", "pairs", "combos", "heatmap"] },
+        { error: "INVALID_DATASET", expected: ["matrix", "pairs", "combos", "heatmap", "attribution"] },
         { status: 400 },
       );
     }
 
     const generatedAt = new Date().toISOString();
+
+    if (dataset === "attribution") {
+      const analyticsId = Number(searchParams.get("analyticsId"));
+      if (!Number.isInteger(analyticsId)) {
+        return NextResponse.json({ error: "INVALID_ANALYTICS_ID" }, { status: 400 });
+      }
+
+      const fromParam = searchParams.get("from");
+      const toParam = searchParams.get("to");
+      const from = fromParam ? new Date(fromParam) : null;
+      const to = toParam ? new Date(toParam) : null;
+      if (fromParam && Number.isNaN(from?.getTime())) {
+        return NextResponse.json({ error: "INVALID_FROM_DATE" }, { status: 400 });
+      }
+      if (toParam && Number.isNaN(to?.getTime())) {
+        return NextResponse.json({ error: "INVALID_TO_DATE" }, { status: 400 });
+      }
+
+      const limit = Number(searchParams.get("limit") ?? "500");
+      if (!Number.isInteger(limit) || limit <= 0 || limit > 2000) {
+        return NextResponse.json({ error: "INVALID_LIMIT" }, { status: 400 });
+      }
+
+      const analytics = await prisma.analytics.findUnique({
+        where: { id: analyticsId },
+        select: {
+          id: true,
+          locationId: true,
+          periodStart: true,
+          periodEnd: true,
+        },
+      });
+      if (!analytics) {
+        return NextResponse.json({ error: "ANALYTICS_NOT_FOUND" }, { status: 404 });
+      }
+
+      const etlJob = await prisma.etlJob.findFirst({
+        where: {
+          analyticsId,
+          status: "succeeded",
+          pipelineRunId: { not: null },
+        },
+        orderBy: { finishedAt: "desc" },
+        select: { pipelineRunId: true },
+      });
+      const pipelineRunRows = etlJob?.pipelineRunId
+        ? await prisma.$queryRaw<Array<{ ingested_at_utc: Date; quality_status: string }>>`
+            SELECT ingested_at_utc, quality_status
+            FROM warehouse.dim_pipeline_run
+            WHERE pipeline_run_id = CAST(${etlJob.pipelineRunId} AS UUID)
+            LIMIT 1
+          `
+        : [];
+      const pipelineRun = pipelineRunRows[0];
+      const freshnessSlaMinutes = Number(process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440");
+      const freshnessMinutes = pipelineRun
+        ? Math.max(
+            0,
+            Math.floor((Date.now() - new Date(pipelineRun.ingested_at_utc).getTime()) / 60_000),
+          )
+        : null;
+      const isStale = freshnessMinutes !== null && freshnessMinutes > freshnessSlaMinutes;
+      const qualityStatus = pipelineRun?.quality_status ?? null;
+
+      const confidenceConfig = parseConfidenceConfig(searchParams);
+
+      const rows = await loadInstagramAttribution({
+        locationId: analytics.locationId,
+        from,
+        to,
+        limit,
+      });
+
+      const confidenceByKey = new Map(
+        rows.map((row) => {
+          const key = `${row.instagramPostId}::${row.canonicalMenuName.trim().toLowerCase()}`;
+          const confidence = evaluateAttributionConfidence(
+            row,
+            confidenceConfig,
+            { qualityStatus, isStale },
+          );
+          return [key, confidence] as const;
+        }),
+      );
+
+      const exportRows = buildAttributionExportRows(
+        rows,
+        {
+          generatedAt,
+          analyticsId: analytics.id,
+          locationId: analytics.locationId,
+          periodStart: analytics.periodStart,
+          periodEnd: analytics.periodEnd,
+          qualityStatus,
+          freshnessMinutes,
+          isStale,
+          minActiveDays: confidenceConfig.minActiveDays,
+          minCoverageRatio: confidenceConfig.minCoverageRatio,
+          from,
+          to,
+          limit,
+        },
+        confidenceByKey,
+      );
+
+      const csv = toCsv(exportRows, [...ATTRIBUTION_EXPORT_COLUMNS]);
+      return csvResponse(`analyst-attribution-${analytics.id}.csv`, csv);
+    }
 
     if (dataset === "heatmap") {
       const analyticsId = Number(searchParams.get("analyticsId"));
