@@ -6,6 +6,9 @@ Define the minimum set of capabilities required to deliver measurable value for:
 - menu analysts (profitability, pricing, and combo optimization)
 
 Menuyukti is a data-engineering-first product. Therefore, value must come from deterministic, trustworthy analytics before any AI narration.
+Menuyukti is a data engineering application that serves two primary value paths:
+- Restaurant marketers who need focused Instagram marketing decisions.
+- Menu analysts who need data-driven menu improvement and marketing decisions (for example: combo offers, happy hour strategies, and item-level promote/improve/remove actions).
 
 This document reflects the current release state and defines what is required for a **minimum valuable product (MVP) release** today.
 
