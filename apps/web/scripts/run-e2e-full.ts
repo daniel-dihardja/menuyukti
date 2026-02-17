@@ -31,6 +31,7 @@ type CoverageReport = {
 
 const repoRoot = path.resolve(process.cwd(), "..", "..");
 const webRoot = path.resolve(repoRoot, "apps/web");
+const artifactsRoot = path.resolve(webRoot, "e2e-artifacts");
 const logDir = path.resolve(webRoot, "e2e-artifacts", "runner-logs");
 const reportDir = path.resolve(webRoot, "e2e-artifacts", "runner-reports");
 
@@ -188,6 +189,24 @@ function joinUrl(base: string, suffix: string): string {
   return `${base.replace(/\/+$/g, "")}${suffix}`;
 }
 
+function resetArtifactsDirectory() {
+  fs.rmSync(artifactsRoot, { recursive: true, force: true });
+  fs.mkdirSync(artifactsRoot, { recursive: true });
+}
+
+function keepOnlyCoverageReports() {
+  if (!fs.existsSync(artifactsRoot)) return;
+  const entries = fs.readdirSync(artifactsRoot);
+  for (const entry of entries) {
+    if (entry === "runner-reports") continue;
+    fs.rmSync(path.resolve(artifactsRoot, entry), { recursive: true, force: true });
+  }
+}
+
+function isReportOnlyEnabled(): boolean {
+  return process.env.E2E_REPORT_ONLY !== "0";
+}
+
 async function stopService(service: ServiceProcess) {
   if (service.process.exitCode !== null) return;
   service.process.kill("SIGTERM");
@@ -206,6 +225,7 @@ async function run() {
     UV_CACHE_DIR: process.env.UV_CACHE_DIR ?? "/tmp/uv-cache",
   };
 
+  resetArtifactsDirectory();
   fs.mkdirSync(logDir, { recursive: true });
   console.log(`[e2e:full] logs: ${logDir}`);
   console.log(`[e2e:full] using DATABASE_URL host guard with pattern: ${process.env.E2E_DB_FORBIDDEN_PATTERN ?? "(prod|production)"}`);
@@ -364,6 +384,10 @@ async function run() {
       for (const failed of report.failedSuites) {
         console.error(`  - ${failed.suite}: ${failed.error ?? "unknown error"}`);
       }
+    }
+    if (isReportOnlyEnabled()) {
+      keepOnlyCoverageReports();
+      console.log("[e2e:full] report-only mode active: removed screenshots/videos/logs; kept runner-reports only.");
     }
   }
 }
