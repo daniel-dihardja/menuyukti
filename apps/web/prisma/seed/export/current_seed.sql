@@ -1,0 +1,3 @@
+-- Generated SQL seed snapshot.
+-- Story 111 baseline placeholder.
+-- Use export script (Story 112) to refresh with real Neon data.
