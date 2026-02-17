@@ -89,6 +89,7 @@ async function run() {
     endedAt: string;
   }> = [];
   const findings: Finding[] = [];
+  let latestPlannerContext: unknown = null;
   let stepCount = 0;
   const startedAt = Date.now();
 
@@ -141,6 +142,8 @@ async function run() {
             suggestedFix: "Validate selector stability and route readiness before executing action.",
           });
         }
+
+        latestPlannerContext = await adapter.buildPlannerContext().catch(() => null);
       }
     }
   } finally {
@@ -194,6 +197,12 @@ async function run() {
     });
 
     fs.writeFileSync(path.join(artifactsDir, "action-log.json"), JSON.stringify(actionLog, null, 2));
+    if (latestPlannerContext) {
+      fs.writeFileSync(
+        path.join(artifactsDir, "latest-planner-context.json"),
+        JSON.stringify(latestPlannerContext, null, 2),
+      );
+    }
     const reportPaths = writeReportArtifacts(artifactsDir, report);
 
     if (videoPath) {

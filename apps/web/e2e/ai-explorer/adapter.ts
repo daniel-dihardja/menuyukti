@@ -2,6 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 import type { MissionAction } from "./contracts";
+import { buildPerceptionPayload } from "./perception";
+import type { PlannerContext } from "./planner-contracts";
 
 export type AdapterConfig = {
   runId: string;
@@ -32,6 +34,7 @@ export class PlaywrightAdapter {
   private page: Page | null = null;
   private readonly config: AdapterConfig;
   private readonly signals: RuntimeSignal = { consoleErrors: [], networkErrors: [] };
+  private lastScreenshotPath: string | null = null;
 
   constructor(config: AdapterConfig) {
     this.config = config;
@@ -115,6 +118,7 @@ export class PlaywrightAdapter {
         });
 
         const endedAt = new Date().toISOString();
+        this.lastScreenshotPath = screenshotPath;
         return {
           ok: true,
           action,
@@ -152,6 +156,14 @@ export class PlaywrightAdapter {
       result = await this.executeOnce(action);
     }
     return result;
+  }
+
+  async buildPlannerContext(): Promise<PlannerContext> {
+    return buildPerceptionPayload({
+      page: this.getPageOrThrow(),
+      runtimeSignals: this.getSignals(),
+      screenshotPath: this.lastScreenshotPath,
+    });
   }
 
   async close(): Promise<{ videoPath: string | null }> {
