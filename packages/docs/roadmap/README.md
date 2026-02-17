@@ -134,3 +134,24 @@ The pipeline contract is codified in `apps/web/lib/etl/pipeline-contract.ts`.
 - Stage error codes and retryability are centralized in:
   - `ETL_STAGE_ERROR_CODE`
   - `ETL_STAGE_ERROR_CLASSIFICATION`
+
+## E2E Full Lifecycle Runner (Story 151)
+
+Use these commands for cold-start E2E runs where services are down before execution:
+
+- Smoke validation:
+  - `pnpm -C apps/web run test:e2e:full:smoke`
+- Full suite:
+  - `pnpm -C apps/web run test:e2e:full`
+
+Runner behavior:
+- Starts `analytics`, `agents`, and `web`.
+- Applies pre-test DB lifecycle (`db:reset`, `db:gen`, `db:init`, `db:seed`).
+- Runs selected E2E suites.
+- Applies post-test `db:reset`.
+- Stops all services and writes logs to:
+  - `apps/web/e2e-artifacts/runner-logs/`
+
+Shared DB guardrails:
+- Configure from `apps/web/.env.e2e` (template: `.env.e2e.example`).
+- Default forbidden DB pattern: `(prod|production)`.

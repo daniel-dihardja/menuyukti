@@ -17,12 +17,14 @@ This manual explains the ship-ready features that already deliver practical valu
 - Use agents + guardrails (`06`) for assisted content and controlled automation under data-readiness policy.
 - Use weekly scheduler (`07`) to operationalize Instagram plans with trust/readiness controls and draft-to-final workflow.
 - Use attribution overview (`08`) to measure post outcomes with confidence tuning and exportable reporting context.
+- Use E2E full lifecycle runner (`11`) to execute cold-start release validation with automated setup/teardown.
 
 ## Suggested Learning Path
 
 - Marketer path: `01` -> `02` -> `03` -> `04` -> `07` -> `08` -> `06`
 - Analyst path: `01` -> `02` -> `03` -> `04` -> `05` -> `08` -> `06`
 - Operator path: `01` -> `04` -> `08` -> `06` -> `07`
+- Quality/release path: `11` -> `02` -> `05` -> `08`
 
 ## Documentation Scope
 
@@ -41,3 +43,5 @@ This manual explains the ship-ready features that already deliver practical valu
 7. [Weekly Scheduler and Trust Guardrails](./07-weekly-scheduler-and-trust-guardrails.md)
 8. [Instagram Attribution Overview and Confidence Tuning](./08-instagram-attribution-overview-and-confidence.md)
 9. [Pipeline Recovery Operations](./09-pipeline-recovery-operations.md)
+10. [AI Playwright Autonomous Testing](./10-ai-playwright-autonomous-testing.md)
+11. [E2E Full Lifecycle Runner (Cold Start)](./11-e2e-full-lifecycle-runner.md)

@@ -205,6 +205,7 @@ Post-MVP hardening targets (important, but not MVP release-blocking):
   - freshness/quality badge visibility
 - Stable selectors and reproducible fixtures.
 - Failure artifacts (screenshot/video/log) for debugging.
+- Cold-start E2E lifecycle runner can bootstrap required services, run DB setup/seed, execute suites, and reset DB post-run.
 
 ---
 
@@ -299,9 +300,11 @@ Legend:
 - `Implemented`: Dedicated heatmap improvement E2E coverage validates filters, persona insight surfaces, and export behavior.
 - `Implemented`: Dedicated attribution E2E workflow validates page load, confidence threshold URL state, and export behavior.
 - `Implemented`: Dedicated COGS completeness E2E validates KPI/watchlist visibility and matrix export completeness/readiness columns.
+- `Implemented`: E2E full lifecycle runner starts analytics/agents/web from down state, runs deterministic DB setup (`reset/gen/init/seed`), executes selected suites, then applies post-run DB reset.
 - `Implemented`: User manual chapters cover released heatmap, pair/combo, agent guardrail, and scheduler workflows with operational guidance.
 - `Implemented`: User manual includes attribution workflow and confidence-tuning guidance.
 - `Implemented`: User manual covers COGS completeness KPIs, watchlist usage, and readiness interpretation.
+- `Implemented`: User manual includes cold-start E2E full lifecycle runner setup/guardrails/commands.
 
 ### 11.8 Minimal Release Feature Table
 
@@ -340,6 +343,7 @@ Legend:
 | 30 | ETL operation queue runner lifecycle and stale queue recovery | Implemented | Internal runner lifecycle and stale queue/running guardrails remain implemented for reliability hardening. |
 | 31 | Sales action readiness flow (`/analytics/sales` dropdown badges + gating + reason tooltips) | Implemented | Actions are ordered by workflow and guarded by deterministic dependency statuses for COGS and attribution prerequisites. |
 | 32 | Staged pipeline compatibility/backfill rollout utilities | Implemented | Legacy ETL jobs can be backfilled into staged lineage tables; compatibility toggle keeps API behavior stable during rollout. |
+| 33 | Cold-start E2E full lifecycle runner (service bootstrap + DB lifecycle + suite execution + reset) | Implemented | `test:e2e:full` and `test:e2e:full:smoke` automate service orchestration, DB setup/cleanup, and deterministic suite execution with runner logs. |
 
 ### 11.9 Open Features Backlog (All `Partial` + `Not Yet`, Not Release-Blocking for MVP)
 
