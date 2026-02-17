@@ -15,6 +15,7 @@ This manual explains the ship-ready features that already deliver practical valu
 - Use daypart + COGS (`04`) to improve timing and margin accuracy.
 - Use pair/combo + export (`05`) for deeper analyst workflows, pair-type strategy (`food+drink`), and reporting.
 - Use agents + guardrails (`06`) for assisted content and controlled automation.
+- Use weekly scheduler (`07`) to operationalize Instagram plans with trust/readiness controls.
 
 ## Manual Index
 
@@ -24,3 +25,4 @@ This manual explains the ship-ready features that already deliver practical valu
 4. [Daypart Insights, COGS, and Data Trust Signals](./04-daypart-cogs-and-data-trust.md)
 5. [Pair Metrics, Combo Opportunities, and CSV Export](./05-pair-combo-and-export.md)
 6. [Audience/Tone Agent Outputs and Guardrails](./06-agents-and-data-readiness-guardrails.md)
+7. [Weekly Scheduler and Trust Guardrails](./07-weekly-scheduler-and-trust-guardrails.md)
