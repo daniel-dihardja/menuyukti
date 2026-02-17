@@ -21,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table";
+import type { EtlRunRecord, EtlRunsListResponse } from "@/lib/etl/run-history";
 
 type OperationAction = "retry" | "replay" | "backfill";
 
@@ -61,6 +62,24 @@ export function OperationsClient({ locations }: Props) {
   const [message, setMessage] = useState("");
   const [operations, setOperations] = useState<OperationRecord[]>([]);
   const [polling, setPolling] = useState(false);
+  const [runStatusFilter, setRunStatusFilter] = useState<string>("all");
+  const [runFromDateFilter, setRunFromDateFilter] = useState("");
+  const [runToDateFilter, setRunToDateFilter] = useState("");
+  const [runSearchFilter, setRunSearchFilter] = useState("");
+  const [runFilterLocationId, setRunFilterLocationId] = useState<string>(
+    locations[0]?.id ? String(locations[0].id) : "all",
+  );
+  const [runs, setRuns] = useState<EtlRunRecord[]>([]);
+  const [runsLoading, setRunsLoading] = useState(false);
+  const [runsMessage, setRunsMessage] = useState("");
+  const [runsNextCursor, setRunsNextCursor] = useState<string | null>(null);
+  const [runsHasMore, setRunsHasMore] = useState(false);
+
+  const runFilterLocationLabel = useMemo(() => {
+    if (runFilterLocationId === "all") return "all locations";
+    const location = locations.find((item) => String(item.id) === runFilterLocationId);
+    return location?.name ?? `location ${runFilterLocationId}`;
+  }, [locations, runFilterLocationId]);
 
   const canSubmit = useMemo(() => {
     if (!locationId) return false;
@@ -96,6 +115,43 @@ export function OperationsClient({ locations }: Props) {
     return () => window.clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationId]);
+
+  const fetchRuns = async (cursor?: string) => {
+    setRunsLoading(true);
+    setRunsMessage("");
+    try {
+      const params = new URLSearchParams();
+      params.set("limit", "25");
+      if (runFilterLocationId !== "all") params.set("locationId", runFilterLocationId);
+      if (runStatusFilter !== "all") params.set("status", runStatusFilter);
+      if (runFromDateFilter) params.set("fromDate", runFromDateFilter);
+      if (runToDateFilter) params.set("toDate", runToDateFilter);
+      if (runSearchFilter.trim()) params.set("search", runSearchFilter.trim());
+      if (cursor) params.set("cursor", cursor);
+
+      const res = await fetch(`/api/etl/runs?${params.toString()}`);
+      const data = (await res.json()) as EtlRunsListResponse & { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Failed to load ETL runs");
+
+      setRuns((prev) => (cursor ? prev.concat(data.runs ?? []) : (data.runs ?? [])));
+      setRunsHasMore(Boolean(data.page?.hasMore));
+      setRunsNextCursor(data.page?.nextCursor ?? null);
+    } catch (error) {
+      setRunsMessage(error instanceof Error ? error.message : "Failed to load ETL runs");
+      if (!cursor) {
+        setRuns([]);
+        setRunsHasMore(false);
+        setRunsNextCursor(null);
+      }
+    } finally {
+      setRunsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void fetchRuns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runStatusFilter, runFromDateFilter, runToDateFilter, runSearchFilter, runFilterLocationId]);
 
   const submit = async () => {
     if (!canSubmit) return;
@@ -266,6 +322,143 @@ export function OperationsClient({ locations }: Props) {
               </TableBody>
             </Table>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>ETL Run History</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+            <div className="space-y-1.5">
+              <Label htmlFor="run-location">Location</Label>
+              <Select value={runFilterLocationId} onValueChange={setRunFilterLocationId}>
+                <SelectTrigger id="run-location">
+                  <SelectValue placeholder="All locations" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All locations</SelectItem>
+                  {locations.map((item) => (
+                    <SelectItem key={item.id} value={String(item.id)}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="run-status">Status</Label>
+              <Select value={runStatusFilter} onValueChange={setRunStatusFilter}>
+                <SelectTrigger id="run-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="queued">queued</SelectItem>
+                  <SelectItem value="running">running</SelectItem>
+                  <SelectItem value="succeeded">succeeded</SelectItem>
+                  <SelectItem value="failed">failed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="run-from-date">From date</Label>
+              <Input
+                id="run-from-date"
+                type="date"
+                value={runFromDateFilter}
+                onChange={(event) => setRunFromDateFilter(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="run-to-date">To date</Label>
+              <Input
+                id="run-to-date"
+                type="date"
+                value={runToDateFilter}
+                onChange={(event) => setRunToDateFilter(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="run-search">Search pipeline/source</Label>
+              <Input
+                id="run-search"
+                value={runSearchFilter}
+                onChange={(event) => setRunSearchFilter(event.target.value)}
+                placeholder="pipeline uuid or source text"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <Button type="button" variant="outline" onClick={() => void fetchRuns()} disabled={runsLoading}>
+              {runsLoading ? "Refreshing..." : "Refresh run history"}
+            </Button>
+            <span>
+              Showing {runs.length} run(s) for {runFilterLocationLabel}.
+            </span>
+          </div>
+
+          {runsMessage ? <p className="text-sm text-destructive">{runsMessage}</p> : null}
+
+          <div className="overflow-x-auto border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Pipeline run</TableHead>
+                  <TableHead>Started</TableHead>
+                  <TableHead>Finished</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Error summary</TableHead>
+                  <TableHead>Quality hints</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {runs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-sm text-muted-foreground">
+                      No ETL runs found for these filters.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  runs.map((run) => (
+                    <TableRow key={run.id}>
+                      <TableCell>
+                        <Badge variant={statusBadgeVariant(run.status)}>{run.status}</Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">{run.pipelineRunId ?? "—"}</TableCell>
+                      <TableCell>{run.startedAt ? new Date(run.startedAt).toLocaleString() : "—"}</TableCell>
+                      <TableCell>{run.finishedAt ? new Date(run.finishedAt).toLocaleString() : "—"}</TableCell>
+                      <TableCell>{run.durationMs == null ? "—" : `${Math.round(run.durationMs / 1000)}s`}</TableCell>
+                      <TableCell className="max-w-[22rem] truncate text-xs text-muted-foreground">
+                        {run.sourceFile ?? "—"}
+                      </TableCell>
+                      <TableCell className="max-w-[20rem] text-xs text-muted-foreground">
+                        {run.errorSummary ?? "—"}
+                      </TableCell>
+                      <TableCell className="max-w-[18rem] text-xs text-muted-foreground">
+                        {run.qualityHints.length > 0 ? run.qualityHints.join(", ") : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {runsHasMore ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void fetchRuns(runsNextCursor ?? undefined)}
+              disabled={runsLoading || !runsNextCursor}
+            >
+              {runsLoading ? "Loading..." : "Load more"}
+            </Button>
+          ) : null}
         </CardContent>
       </Card>
     </section>
