@@ -27,18 +27,25 @@ import {
 
 // Client UI component
 import { HeatmapMatrix } from "./heatmap-matrix";
+import { HeatmapFilterBar } from "./heatmap-filter-bar";
 import {
   avgDemandPerRow,
   deriveHeatmapAnalystInsights,
   deriveHeatmapMarketerInsights,
   formatPct,
 } from "@/lib/analytics/heatmap-insights";
+import {
+  applyHeatmapFilterState,
+  applyWeeklySegment,
+  parseHeatmapFilterState,
+} from "@/lib/analytics/heatmap-filter-state";
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params, searchParams }: PageProps) {
   const tSales = await getTranslations("analytics.sales");
   const tHeatmap = await getTranslations("analytics.heatmap");
 
@@ -108,14 +115,19 @@ export default async function Page({ params }: PageProps) {
   const daily = adaptDailyHeatmapMatrix(dailyItems, START_HOUR, END_HOUR);
 
   const weekly = adaptWeeklyHeatmapMatrix(weeklyItems);
-  const marketerInsights = deriveHeatmapMarketerInsights(daily.rows, daily.columnLabels);
+  const filters = parseHeatmapFilterState(await searchParams);
+  const filteredDailyRows = applyHeatmapFilterState(daily.rows, daily.columnLabels, filters);
+  const segmentedWeekly = applyWeeklySegment(weekly.rows, weekly.columnLabels, filters.segment);
+  const filteredWeeklyRows = applyHeatmapFilterState(segmentedWeekly.rows, segmentedWeekly.labels, filters);
+
+  const marketerInsights = deriveHeatmapMarketerInsights(filteredDailyRows, daily.columnLabels);
   const analystInsights = deriveHeatmapAnalystInsights(
-    daily.rows,
+    filteredDailyRows,
     daily.columnLabels,
-    weekly.rows,
-    weekly.columnLabels,
+    filteredWeeklyRows,
+    segmentedWeekly.labels,
   );
-  const avgRowDemand = avgDemandPerRow(daily.rows);
+  const avgRowDemand = avgDemandPerRow(filteredDailyRows);
 
   // --------------------------------------------------
   // UI
@@ -172,6 +184,8 @@ export default async function Page({ params }: PageProps) {
         </Card>
       </section>
 
+      <HeatmapFilterBar filters={filters} sortWindows={daily.columnLabels} />
+
       <Tabs defaultValue="daily" className="space-y-4">
         <TabsList className="w-full grid grid-cols-2 justify-start sm:inline-flex sm:w-fit">
           <TabsTrigger value="daily" className="w-full flex-1 sm:w-auto sm:flex-none">
@@ -188,7 +202,7 @@ export default async function Page({ params }: PageProps) {
               startHour: START_HOUR,
               endHour: END_HOUR,
             })}
-            rows={daily.rows}
+            rows={filteredDailyRows}
             columnLabels={daily.columnLabels}
             color="green"
           />
@@ -197,8 +211,8 @@ export default async function Page({ params }: PageProps) {
         <TabsContent value="weekly">
           <HeatmapMatrix
             title={tHeatmap("weeklyTitle")}
-            rows={weekly.rows}
-            columnLabels={weekly.columnLabels}
+            rows={filteredWeeklyRows}
+            columnLabels={segmentedWeekly.labels}
             color="green"
           />
         </TabsContent>
