@@ -24,6 +24,7 @@ type OperationRequest = {
 const PIPELINE_UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const STALE_QUEUE_ERROR = ETL_STAGE_ERROR_CODE.STALE_QUEUED_OPERATION_TIMEOUT;
+const STALE_RUNNING_ERROR = ETL_STAGE_ERROR_CODE.STALE_RUNNING_OPERATION_TIMEOUT;
 
 function parseDate(raw: string | undefined): Date | null {
   if (!raw) return null;
@@ -45,6 +46,16 @@ function resolveBackfillMaxDays(): number {
 function resolveQueueStaleMinutes(): number {
   const parsed = Number(process.env.ETL_OPERATION_QUEUE_STALE_MINUTES ?? "30");
   if (!Number.isFinite(parsed) || parsed < 1) return 30;
+  return Math.floor(parsed);
+}
+
+function resolveRunningStaleMinutes(): number {
+  const parsed = Number(
+    process.env.ETL_OPERATION_RUNNING_STALE_MINUTES ??
+      process.env.ETL_OPERATION_QUEUE_STALE_MINUTES ??
+      "60",
+  );
+  if (!Number.isFinite(parsed) || parsed < 1) return 60;
   return Math.floor(parsed);
 }
 
@@ -130,6 +141,25 @@ async function resolveStaleQueuedOperations(locationId: number): Promise<number>
   return result.count;
 }
 
+async function resolveStaleRunningOperations(locationId: number): Promise<number> {
+  const staleMinutes = resolveRunningStaleMinutes();
+  const cutoff = new Date(Date.now() - staleMinutes * 60_000);
+  const result = await prisma.etlJob.updateMany({
+    where: {
+      locationId,
+      status: ETL_JOB_STATUS.RUNNING,
+      sourceFile: { startsWith: "operation:" },
+      startedAt: { lt: cutoff },
+    },
+    data: {
+      status: ETL_JOB_STATUS.FAILED,
+      errorMessage: `${STALE_RUNNING_ERROR}:${staleMinutes}m`,
+      finishedAt: new Date(),
+    },
+  });
+  return result.count;
+}
+
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
@@ -205,7 +235,53 @@ export async function GET(req: Request) {
       .filter((item): item is NonNullable<typeof item> => item !== null)
       .filter((item) => (action ? item.action === action : true));
 
-    return NextResponse.json({ operations }, { status: 200 });
+    const oldestQueued = await prisma.etlJob.findFirst({
+      where: {
+        sourceFile: { startsWith: "operation:" },
+        status: ETL_JOB_STATUS.QUEUED,
+        ...(locationId != null ? { locationId } : {}),
+      },
+      orderBy: { createdAt: "asc" },
+      select: { createdAt: true },
+    });
+    const queueLagMinutes = oldestQueued
+      ? Math.max(0, Math.floor((Date.now() - oldestQueued.createdAt.getTime()) / 60_000))
+      : 0;
+
+    const stageSummaryRows =
+      locationId == null
+        ? await prisma.$queryRaw<
+            Array<{ stage: string; status: string; count: bigint | number }>
+          >`
+            SELECT stage, status, COUNT(*)::BIGINT AS count
+            FROM public.etl_pipeline_stage_executions
+            WHERE stage = 'matrix_materialization'
+            GROUP BY stage, status
+          `
+        : await prisma.$queryRaw<
+            Array<{ stage: string; status: string; count: bigint | number }>
+          >`
+            SELECT stage, status, COUNT(*)::BIGINT AS count
+            FROM public.etl_pipeline_stage_executions
+            WHERE stage = 'matrix_materialization'
+              AND branch_id = ${locationId}
+            GROUP BY stage, status
+          `;
+
+    return NextResponse.json(
+      {
+        operations,
+        observability: {
+          queueLagMinutes,
+          stageSummary: stageSummaryRows.map((row) => ({
+            stage: row.stage,
+            status: row.status,
+            count: Number(row.count ?? 0),
+          })),
+        },
+      },
+      { status: 200 },
+    );
   } catch (error) {
     console.error("List ETL operations error:", error);
     return NextResponse.json({ error: "INTERNAL_SERVER_ERROR" }, { status: 500 });
@@ -337,14 +413,15 @@ export async function POST(req: Request) {
     }
 
     const staleResolvedCount = await resolveStaleQueuedOperations(locationId);
+    const staleRunningResolvedCount = await resolveStaleRunningOperations(locationId);
     const hasConflict = await hasActiveOperationConflict(locationId);
     if (hasConflict) {
       return NextResponse.json(
         {
           error: "OPERATION_CONFLICT_ACTIVE_RUN",
           message:
-            staleResolvedCount > 0
-              ? `Resolved ${staleResolvedCount} stale queued operation(s), but another active operation is still queued/running for this location.`
+            staleResolvedCount > 0 || staleRunningResolvedCount > 0
+              ? `Resolved stale queued/running operation(s) (${staleResolvedCount + staleRunningResolvedCount}), but another active operation is still queued/running for this location.`
               : "Another retry/replay/backfill operation is already queued or running for this location.",
         },
         { status: 409 },

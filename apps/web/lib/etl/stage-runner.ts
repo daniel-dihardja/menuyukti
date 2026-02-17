@@ -41,6 +41,13 @@ type ResolveStaleQueuedStageJobsParams = {
   staleMinutes: number;
 };
 
+type ResolveStaleRunningStageJobsParams = {
+  stage: EtlPipelineStage;
+  sourcePrefix: string;
+  locationId: number | null;
+  staleMinutes: number;
+};
+
 async function claimNextQueuedStageJob(
   stage: EtlPipelineStage,
   sourcePrefix: string,
@@ -148,6 +155,31 @@ export async function resolveStaleQueuedStageJobs(
       status: "failed",
       errorCode: ETL_STAGE_ERROR_CODE.STALE_QUEUED_OPERATION_TIMEOUT,
       errorMessage: `${ETL_STAGE_ERROR_CODE.STALE_QUEUED_OPERATION_TIMEOUT}:${params.staleMinutes}m`,
+    });
+  }
+
+  return staleJobs.length;
+}
+
+export async function resolveStaleRunningStageJobs(
+  params: ResolveStaleRunningStageJobsParams,
+): Promise<number> {
+  const cutoff = new Date(Date.now() - params.staleMinutes * 60_000);
+  const staleJobs = await prisma.etlJob.findMany({
+    where: {
+      status: ETL_JOB_STATUS.RUNNING,
+      sourceFile: { startsWith: params.sourcePrefix },
+      startedAt: { lt: cutoff },
+      ...(params.locationId == null ? {} : { locationId: params.locationId }),
+    },
+    select: { id: true },
+  });
+
+  for (const staleJob of staleJobs) {
+    await markStageJobTerminal(staleJob.id, params.stage, {
+      status: "failed",
+      errorCode: ETL_STAGE_ERROR_CODE.STALE_RUNNING_OPERATION_TIMEOUT,
+      errorMessage: `${ETL_STAGE_ERROR_CODE.STALE_RUNNING_OPERATION_TIMEOUT}:${params.staleMinutes}m`,
     });
   }
 

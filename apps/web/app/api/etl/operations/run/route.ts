@@ -1,10 +1,24 @@
 import { NextResponse } from "next/server";
 import { executeMatrixMaterializationStageJob } from "@/lib/etl/stage-handlers/matrix-materialization";
-import { runQueuedStageJobs, resolveStaleQueuedStageJobs } from "@/lib/etl/stage-runner";
+import {
+  runQueuedStageJobs,
+  resolveStaleQueuedStageJobs,
+  resolveStaleRunningStageJobs,
+} from "@/lib/etl/stage-runner";
 
 function resolveQueueStaleMinutes(): number {
   const parsed = Number(process.env.ETL_OPERATION_QUEUE_STALE_MINUTES ?? "30");
   if (!Number.isFinite(parsed) || parsed < 1) return 30;
+  return Math.floor(parsed);
+}
+
+function resolveRunningStaleMinutes(): number {
+  const parsed = Number(
+    process.env.ETL_OPERATION_RUNNING_STALE_MINUTES ??
+      process.env.ETL_OPERATION_QUEUE_STALE_MINUTES ??
+      "60",
+  );
+  if (!Number.isFinite(parsed) || parsed < 1) return 60;
   return Math.floor(parsed);
 }
 
@@ -29,6 +43,12 @@ export async function POST(req: Request) {
       locationId,
       staleMinutes: resolveQueueStaleMinutes(),
     });
+    const staleRunningResolvedCount = await resolveStaleRunningStageJobs({
+      stage: "matrix_materialization",
+      sourcePrefix: "operation:",
+      locationId,
+      staleMinutes: resolveRunningStaleMinutes(),
+    });
 
     const { processed } = await runQueuedStageJobs({
       stage: "matrix_materialization",
@@ -41,6 +61,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         staleResolvedCount,
+        staleRunningResolvedCount,
         processedCount: processed.length,
         processed: processed.map((item) => ({
           id: item.id,
