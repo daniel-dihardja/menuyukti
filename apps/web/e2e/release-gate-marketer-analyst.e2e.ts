@@ -175,6 +175,24 @@ async function run() {
     "Combos export is missing expected header columns",
   );
 
+  const operationsListResult = await page.evaluate(
+    async ({ baseUrl, locationId }) => {
+      const res = await fetch(
+        `${baseUrl}/api/etl/operations?locationId=${encodeURIComponent(locationId)}&limit=5`,
+      );
+      return {
+        ok: res.ok,
+        status: res.status,
+        body: await res.text(),
+      };
+    },
+    { baseUrl, locationId },
+  );
+  assert(
+    operationsListResult.ok,
+    `ETL operations list failed (${operationsListResult.status}): ${operationsListResult.body}`,
+  );
+
   const screenshotPath = path.join(artifactsDir, "release-gate-marketer-analyst-final.png");
   await page.screenshot({ path: screenshotPath, fullPage: true });
   const video = page.video();

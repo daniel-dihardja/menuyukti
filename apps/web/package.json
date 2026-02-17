@@ -22,6 +22,7 @@
     "test:e2e:scheduler": "tsx e2e/analytics-scheduler-workflow.e2e.ts",
     "test:e2e:attribution": "tsx e2e/analytics-attribution-workflow.e2e.ts",
     "test:e2e:cogs": "tsx e2e/analytics-cogs-completeness.e2e.ts",
+    "test:e2e:recovery": "tsx e2e/analytics-recovery-operations.e2e.ts",
     "test:e2e:pairs:pair-type": "tsx e2e/analytics-pairs-pair-type.e2e.ts",
     "test:e2e:release-gate": "tsx e2e/release-gate-marketer-analyst.e2e.ts"
   },
