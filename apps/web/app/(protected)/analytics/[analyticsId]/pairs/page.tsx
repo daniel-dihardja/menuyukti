@@ -5,6 +5,12 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip";
+import { CircleHelp } from "lucide-react";
 import Link from "next/link";
 
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
@@ -59,6 +65,34 @@ type ComboRow = {
   pairTypeBoostApplied: boolean;
   baseScore: number;
 };
+
+function KpiLabelWithTooltip({
+  label,
+  tooltip,
+}: {
+  label: string;
+  tooltip: string;
+}) {
+  return (
+    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+      <span>{label}</span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label={`Explain ${label}`}
+            className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground/80 hover:text-foreground"
+          >
+            <CircleHelp className="h-3.5 w-3.5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent sideOffset={6} className="max-w-xs">
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
 
 function toNumber(value: unknown): number {
   if (typeof value === "number") return value;
@@ -396,7 +430,10 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
 
       <section className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="border border-border/70 bg-card p-4 shadow-sm">
-          <p className="text-sm text-muted-foreground">Top Lift Pair</p>
+          <KpiLabelWithTooltip
+            label="Top Lift Pair"
+            tooltip="Pair with the strongest average lift versus expected co-occurrence baseline. Higher lift indicates a stronger affinity signal."
+          />
           <p className="mt-2 text-base font-semibold">
             {strongestLift ? `${strongestLift.menuA} + ${strongestLift.menuB}` : "—"}
           </p>
@@ -408,7 +445,10 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
         </div>
 
         <div className="border border-border/70 bg-card p-4 shadow-sm">
-          <p className="text-sm text-muted-foreground">Highest Volume Pair</p>
+          <KpiLabelWithTooltip
+            label="Highest Volume Pair"
+            tooltip="Pair with the largest number of shared orders in the selected filtered window. Use this to identify scale and campaign reach."
+          />
           <p className="mt-2 text-base font-semibold">
             {highestVolume ? `${highestVolume.menuA} + ${highestVolume.menuB}` : "—"}
           </p>
@@ -418,7 +458,10 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
         </div>
 
         <div className="border border-border/70 bg-card p-4 shadow-sm">
-          <p className="text-sm text-muted-foreground">Best Combo Opportunity</p>
+          <KpiLabelWithTooltip
+            label="Best Combo Opportunity"
+            tooltip="Pair with the highest combo opportunity score, combining demand strength and margin-aware opportunity into one ranking signal."
+          />
           <p className="mt-2 text-base font-semibold">
             {bestCombo ? `${bestCombo.menuA} + ${bestCombo.menuB}` : "—"}
           </p>
