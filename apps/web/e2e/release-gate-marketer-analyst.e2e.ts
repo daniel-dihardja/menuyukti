@@ -85,6 +85,10 @@ async function run() {
     matrixCsv.startsWith("dataset,generated_at,analytics_id,location_id"),
     "Matrix export is missing expected header columns",
   );
+  assert(
+    matrixCsv.includes("has_valid_cogs,cogs_issue,cogs_item_coverage_ratio,cogs_revenue_coverage_ratio,cogs_readiness,cogs_readiness_reasons"),
+    "Matrix export is missing COGS completeness/readiness columns",
+  );
 
   const heatmapUrl = `${baseUrl}/analytics/${analyticsId}/heatmap`;
   await page.goto(heatmapUrl, { waitUntil: "domcontentloaded" });
