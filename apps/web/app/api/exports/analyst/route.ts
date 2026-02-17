@@ -10,6 +10,7 @@ import { applyMatrixFilterState } from "@/lib/analytics/matrix-filter-engine";
 import { toDecisionGradeMatrixRows } from "@/lib/analytics/matrix-row-contract";
 import { parsePairTypeFilter } from "@/lib/analytics/pair-type";
 import { cogsIssue, summarizeCogsCoverage } from "@/lib/analytics/cogs-completeness";
+import { evaluateCogsReadiness } from "@/lib/analytics/cogs-readiness";
 import {
   applyHeatmapFilterState,
   applyWeeklySegment,
@@ -342,6 +343,7 @@ export async function GET(req: Request) {
           revenue: row.revenue,
         })),
       );
+      const cogsReadiness = evaluateCogsReadiness(cogsCoverage);
 
       const exportRows = filteredRows.map((row) => ({
         dataset,
@@ -365,6 +367,8 @@ export async function GET(req: Request) {
         cogs_issue: cogsIssue(row.cogs),
         cogs_item_coverage_ratio: cogsCoverage.itemCoverageRatio,
         cogs_revenue_coverage_ratio: cogsCoverage.revenueCoverageRatio,
+        cogs_readiness: cogsReadiness.readiness,
+        cogs_readiness_reasons: cogsReadiness.reasons.join("|"),
       }));
 
       const csv = toCsv(exportRows, [
@@ -389,6 +393,8 @@ export async function GET(req: Request) {
         "cogs_issue",
         "cogs_item_coverage_ratio",
         "cogs_revenue_coverage_ratio",
+        "cogs_readiness",
+        "cogs_readiness_reasons",
       ]);
 
       return csvResponse(`analyst-matrix-${analytics.id}.csv`, csv);

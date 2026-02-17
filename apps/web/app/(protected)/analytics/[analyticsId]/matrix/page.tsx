@@ -14,6 +14,8 @@ import { PageHeading } from "@/components/page-heading";
 import { parseMatrixFilterState } from "@/lib/analytics/matrix-filter-state";
 import { applyMatrixFilterState } from "@/lib/analytics/matrix-filter-engine";
 import { toDecisionGradeMatrixRows } from "@/lib/analytics/matrix-row-contract";
+import { summarizeCogsCoverage } from "@/lib/analytics/cogs-completeness";
+import { evaluateCogsReadiness } from "@/lib/analytics/cogs-readiness";
 
 import { MatrixFilterBar } from "./matrix-filter-bar";
 import { MatrixInsightTable } from "./matrix-insight-table";
@@ -166,6 +168,13 @@ export default async function Page({ params, searchParams }: PageProps) {
   // --------------------------------------------------
   const matrixRows = toDecisionGradeMatrixRows(matrix);
   const filteredRows = applyMatrixFilterState(matrixRows, filters);
+  const cogsCoverage = summarizeCogsCoverage(
+    matrixRows.map((row) => ({
+      cogs: row.cogs,
+      revenue: row.revenue,
+    })),
+  );
+  const cogsReadiness = evaluateCogsReadiness(cogsCoverage);
 
   const distribution =
     (analytics.matrixDistributionJson as MatrixDistributionItem[]) ??
@@ -302,6 +311,34 @@ export default async function Page({ params, searchParams }: PageProps) {
                     Data freshness SLA exceeded
                   </p>
                 )}
+              </div>
+
+              <div className="border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-border">
+                <p className="text-sm text-muted-foreground">COGS readiness</p>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  <Badge
+                    variant={
+                      cogsReadiness.readiness === "blocked"
+                        ? "destructive"
+                        : cogsReadiness.readiness === "degraded"
+                          ? "secondary"
+                          : "default"
+                    }
+                  >
+                    {cogsReadiness.readiness}
+                  </Badge>
+                  <Badge variant="outline">
+                    item coverage: {(cogsCoverage.itemCoverageRatio * 100).toFixed(1)}%
+                  </Badge>
+                  <Badge variant="outline">
+                    revenue coverage: {(cogsCoverage.revenueCoverageRatio * 100).toFixed(1)}%
+                  </Badge>
+                </div>
+                {cogsReadiness.reasons.length > 0 ? (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {cogsReadiness.reasons.join(", ")}
+                  </p>
+                ) : null}
               </div>
             </div>
           </section>

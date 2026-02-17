@@ -20,6 +20,12 @@ Define stable CSV fields for matrix analyst exports, including COGS completeness
   - valid-COGS item count / filtered export item count.
 - `cogs_revenue_coverage_ratio` (`0..1`)
   - revenue from valid-COGS rows / total filtered export revenue.
+- `cogs_readiness` (`ready|degraded|blocked`)
+  - deterministic analyst trust state from COGS coverage thresholds.
+- `cogs_readiness_reasons` (`|`-separated reason codes)
+  - supported reason codes:
+    - `low_cogs_item_coverage`
+    - `low_cogs_revenue_coverage`
 
 ## Compatibility Notes
 
