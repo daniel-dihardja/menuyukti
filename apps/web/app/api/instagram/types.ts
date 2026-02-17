@@ -50,3 +50,76 @@ export type UpsertInstagramPostPromotedItemsRequest = {
     canonicalMenuName: string;
   }>;
 };
+
+export type InstagramWeeklyScheduleStatus = "draft" | "scheduled" | "finalized" | "cancelled";
+
+export type InstagramWeeklyScheduleEntryStatus = "draft" | "scheduled" | "published" | "cancelled";
+
+export type InstagramWeeklyScheduleEntryConfidence = "high" | "medium" | "low" | "blocked";
+
+export type InstagramWeeklyScheduleEntry = {
+  id: number;
+  scheduleId: number;
+  locationId: number;
+  instagramCampaignId: number | null;
+  instagramPostId: number | null;
+  canonicalMenuName: string;
+  canonicalMenuNameNorm: string;
+  scheduledFor: string;
+  daypart: string | null;
+  confidence: InstagramWeeklyScheduleEntryConfidence;
+  rationale: string | null;
+  status: InstagramWeeklyScheduleEntryStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type InstagramWeeklySchedule = {
+  id: number;
+  locationId: number;
+  weekStartDate: string;
+  weekEndDate: string;
+  status: InstagramWeeklyScheduleStatus;
+  source: string;
+  createdAt: string;
+  updatedAt: string;
+  entries: InstagramWeeklyScheduleEntry[];
+};
+
+export type UpsertInstagramWeeklyScheduleRequest = {
+  locationId: number;
+  weekStartDate: string;
+  weekEndDate?: string;
+  status?: InstagramWeeklyScheduleStatus;
+  source?: string;
+  replaceEntries?: boolean;
+  entries?: Array<{
+    id?: number;
+    instagramCampaignId?: number | null;
+    instagramPostId?: number | null;
+    canonicalMenuName: string;
+    scheduledFor: string;
+    daypart?: string | null;
+    confidence?: InstagramWeeklyScheduleEntryConfidence;
+    rationale?: string | null;
+    status?: InstagramWeeklyScheduleEntryStatus;
+  }>;
+};
+
+export type UpdateInstagramWeeklyScheduleRequest = {
+  locationId: number;
+  status?: InstagramWeeklyScheduleStatus;
+  source?: string;
+  replaceEntries?: boolean;
+  entries?: Array<{
+    id?: number;
+    instagramCampaignId?: number | null;
+    instagramPostId?: number | null;
+    canonicalMenuName: string;
+    scheduledFor: string;
+    daypart?: string | null;
+    confidence?: InstagramWeeklyScheduleEntryConfidence;
+    rationale?: string | null;
+    status?: InstagramWeeklyScheduleEntryStatus;
+  }>;
+};
