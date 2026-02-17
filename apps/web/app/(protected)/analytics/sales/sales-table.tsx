@@ -201,6 +201,17 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                       </Link>
                     </DropdownMenuItem>
 
+                    {/* Attribution */}
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={routes.analytics.attribution(
+                          file.id as unknown as string,
+                        )}
+                      >
+                        {t("attribution")}
+                      </Link>
+                    </DropdownMenuItem>
+
                     {/* Heatmap */}
                     <DropdownMenuItem asChild>
                       <Link

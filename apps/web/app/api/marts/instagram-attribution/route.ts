@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma/client";
+import { loadInstagramAttribution } from "@/lib/analytics/instagram-attribution";
 
 export async function GET(req: Request) {
   try {
@@ -34,54 +34,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "INVALID_LIMIT" }, { status: 400 });
     }
 
-    const rows = await prisma.$queryRaw<
-      Array<{
-        instagram_post_id: number;
-        campaign_id: number | null;
-        location_id: number;
-        published_at: Date;
-        canonical_menu_name: string;
-        pre_qty: string | number;
-        post_qty: string | number;
-        delta_qty: string | number;
-        pre_revenue: string | number;
-        post_revenue: string | number;
-        delta_revenue: string | number;
-        pre_margin: string | number;
-        post_margin: string | number;
-        delta_margin: string | number;
-        pre_active_days: number;
-        post_active_days: number;
-        confidence_level: string;
-        attribution_window_days: number;
-      }>
-    >`
-      SELECT
-        instagram_post_id,
-        campaign_id,
-        location_id,
-        published_at,
-        canonical_menu_name,
-        pre_qty,
-        post_qty,
-        delta_qty,
-        pre_revenue,
-        post_revenue,
-        delta_revenue,
-        pre_margin,
-        post_margin,
-        delta_margin,
-        pre_active_days,
-        post_active_days,
-        confidence_level,
-        attribution_window_days
-      FROM marts.vw_instagram_item_attribution_pre_post
-      WHERE location_id = ${locationId}
-        AND (${from}::timestamptz IS NULL OR published_at >= ${from}::timestamptz)
-        AND (${to}::timestamptz IS NULL OR published_at < ${to}::timestamptz)
-      ORDER BY published_at DESC, instagram_post_id DESC, canonical_menu_name ASC
-      LIMIT ${limit}
-    `;
+    const rows = await loadInstagramAttribution({
+      locationId,
+      from,
+      to,
+      limit,
+    });
 
     return NextResponse.json({ items: rows });
   } catch (error) {
