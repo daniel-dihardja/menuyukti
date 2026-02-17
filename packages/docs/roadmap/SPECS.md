@@ -164,6 +164,7 @@ Note: Full end-user attribution UX is not release-blocking for MVP.
 ## 7. UI/UX Minimum Requirements
 
 - Unified matrix table with robust filter bar and presets.
+- Readiness-aware action menu in `/analytics/sales` with ordered workflow entry, badges, and dependency explanations.
 - Presets for marketer and analyst workflows.
 - Clear empty states and recovery actions.
 - Quality/freshness badges visible on all decision pages.
@@ -240,6 +241,7 @@ Legend:
 
 ### 11.2 Core Analytics and UI
 - `Implemented`: Unified matrix table with robust filter bar, URL-based filter state, and presets.
+- `Implemented`: Sales snapshot action dropdown now uses deterministic readiness statuses, badges, and dependency tooltips (`needs_cogs`, `needs_attribution_data`, `degraded`, `blocked`) in workflow order.
 - `Implemented`: Action explainability reasons and matrix freshness/quality visibility on matrix page.
 - `Implemented`: Daypart mart read endpoint.
 - `Implemented`: Heatmap page now includes persona-oriented insight cards (marketer/analyst) with action-oriented summaries.
@@ -334,6 +336,7 @@ Legend:
 | 28 | Retry/replay/backfill operations workflow + runbook + validation | Not Yet | Intentionally de-scoped from current MVP release surface; internal APIs are disabled for MVP mode. |
 | 29 | ETL run-history observability (API contract + UI filters + detail/shortcuts) | Partial | `/api/etl/runs` API contract and filters are implemented; operations UI/shortcuts are removed from MVP surface. |
 | 30 | ETL operation queue runner lifecycle and stale queue recovery | Implemented | Internal runner lifecycle and stale queue/running guardrails remain implemented for reliability hardening. |
+| 31 | Sales action readiness flow (`/analytics/sales` dropdown badges + gating + reason tooltips) | Implemented | Actions are ordered by workflow and guarded by deterministic dependency statuses for COGS and attribution prerequisites. |
 
 ### 11.9 Open Features Backlog (All `Partial` + `Not Yet`, Not Release-Blocking for MVP)
 
