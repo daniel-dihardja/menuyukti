@@ -3,6 +3,7 @@ import type { HeatmapMatrixRow } from "@/app/(protected)/analytics/[analyticsId]
 export type HeatmapSegment = "all" | "weekday" | "weekend";
 export type HeatmapSort = "total" | "window";
 export type HeatmapOrder = "asc" | "desc";
+export type HeatmapDensity = "comfortable" | "compact";
 
 export type HeatmapFilterState = {
   q: string;
@@ -11,6 +12,7 @@ export type HeatmapFilterState = {
   sort: HeatmapSort;
   sortWindow: string;
   order: HeatmapOrder;
+  density: HeatmapDensity;
 };
 
 export const DEFAULT_HEATMAP_FILTER_STATE: HeatmapFilterState = {
@@ -20,6 +22,7 @@ export const DEFAULT_HEATMAP_FILTER_STATE: HeatmapFilterState = {
   sort: "total",
   sortWindow: "",
   order: "desc",
+  density: "comfortable",
 };
 
 function toNumber(value: string | null, fallback: number): number {
@@ -52,6 +55,8 @@ export function parseHeatmapFilterState(
   const order: HeatmapOrder = orderRaw === "asc" ? "asc" : DEFAULT_HEATMAP_FILTER_STATE.order;
 
   const sortWindow = firstValue(searchParams.sortWindow) ?? DEFAULT_HEATMAP_FILTER_STATE.sortWindow;
+  const densityRaw = firstValue(searchParams.density);
+  const density: HeatmapDensity = densityRaw === "compact" ? "compact" : DEFAULT_HEATMAP_FILTER_STATE.density;
 
   return {
     q,
@@ -60,6 +65,7 @@ export function parseHeatmapFilterState(
     sort,
     sortWindow,
     order,
+    density,
   };
 }
 
@@ -71,6 +77,7 @@ export function serializeHeatmapFilterState(state: HeatmapFilterState): URLSearc
   if (state.sort !== DEFAULT_HEATMAP_FILTER_STATE.sort) params.set("sort", state.sort);
   if (state.sortWindow) params.set("sortWindow", state.sortWindow);
   if (state.order !== DEFAULT_HEATMAP_FILTER_STATE.order) params.set("order", state.order);
+  if (state.density !== DEFAULT_HEATMAP_FILTER_STATE.density) params.set("density", state.density);
   return params;
 }
 

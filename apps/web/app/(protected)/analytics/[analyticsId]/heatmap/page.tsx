@@ -155,19 +155,24 @@ export default async function Page({ params, searchParams }: PageProps) {
   const filteredDailyRows = applyHeatmapFilterState(daily.rows, daily.columnLabels, filters);
   const segmentedWeekly = applyWeeklySegment(weekly.rows, weekly.columnLabels, filters.segment);
   const filteredWeeklyRows = applyHeatmapFilterState(segmentedWeekly.rows, segmentedWeekly.labels, filters);
+  const MAX_RENDER_ROWS = 120;
+  const dailyRowsForRender = filteredDailyRows.slice(0, MAX_RENDER_ROWS);
+  const weeklyRowsForRender = filteredWeeklyRows.slice(0, MAX_RENDER_ROWS);
+  const isDailyTrimmed = filteredDailyRows.length > MAX_RENDER_ROWS;
+  const isWeeklyTrimmed = filteredWeeklyRows.length > MAX_RENDER_ROWS;
   const heatmapExportParams = serializeHeatmapFilterState(filters);
   heatmapExportParams.set("dataset", "heatmap");
   heatmapExportParams.set("analyticsId", String(analyticsId));
   const heatmapExportHref = `/api/exports/analyst?${heatmapExportParams.toString()}`;
 
-  const marketerInsights = deriveHeatmapMarketerInsights(filteredDailyRows, daily.columnLabels);
+  const marketerInsights = deriveHeatmapMarketerInsights(dailyRowsForRender, daily.columnLabels);
   const analystInsights = deriveHeatmapAnalystInsights(
-    filteredDailyRows,
+    dailyRowsForRender,
     daily.columnLabels,
-    filteredWeeklyRows,
+    weeklyRowsForRender,
     segmentedWeekly.labels,
   );
-  const avgRowDemand = avgDemandPerRow(filteredDailyRows);
+  const avgRowDemand = avgDemandPerRow(dailyRowsForRender);
   const confidenceLabel =
     readiness === "ready" ? "high" : readiness === "degraded" ? "medium" : "blocked";
   const marketerAction =
@@ -271,6 +276,12 @@ export default async function Page({ params, searchParams }: PageProps) {
       </Card>
 
       <HeatmapFilterBar filters={filters} sortWindows={daily.columnLabels} />
+      {(isDailyTrimmed || isWeeklyTrimmed) ? (
+        <p className="text-xs text-muted-foreground">
+          Large dataset safeguard active: rendering limited to first {MAX_RENDER_ROWS} rows after filters.
+          Refine filters/top-N for more focused analysis.
+        </p>
+      ) : null}
 
       <Tabs defaultValue="daily" className="space-y-4">
         <TabsList className="w-full grid grid-cols-2 justify-start sm:inline-flex sm:w-fit">
@@ -288,18 +299,20 @@ export default async function Page({ params, searchParams }: PageProps) {
               startHour: START_HOUR,
               endHour: END_HOUR,
             })}
-            rows={filteredDailyRows}
+            rows={dailyRowsForRender}
             columnLabels={daily.columnLabels}
             color="green"
+            density={filters.density}
           />
         </TabsContent>
 
         <TabsContent value="weekly">
           <HeatmapMatrix
             title={tHeatmap("weeklyTitle")}
-            rows={filteredWeeklyRows}
+            rows={weeklyRowsForRender}
             columnLabels={segmentedWeekly.labels}
             color="green"
+            density={filters.density}
           />
         </TabsContent>
       </Tabs>

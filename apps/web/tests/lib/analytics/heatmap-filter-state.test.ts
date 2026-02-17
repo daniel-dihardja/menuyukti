@@ -29,6 +29,7 @@ describe("heatmap filter state", () => {
       sort: "window",
       sortWindow: "09:00",
       order: "asc",
+      density: "compact",
     });
     expect(parsed).toEqual({
       q: "latte",
@@ -37,12 +38,14 @@ describe("heatmap filter state", () => {
       sort: "window",
       sortWindow: "09:00",
       order: "asc",
+      density: "compact",
     });
 
     const serialized = serializeHeatmapFilterState(parsed);
     expect(serialized.get("q")).toBe("latte");
     expect(serialized.get("segment")).toBe("weekday");
     expect(serialized.get("sortWindow")).toBe("09:00");
+    expect(serialized.get("density")).toBe("compact");
   });
 
   it("applies search + top + sorting", () => {

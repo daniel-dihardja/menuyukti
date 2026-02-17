@@ -33,6 +33,7 @@ export function HeatmapFilterBar({ filters, sortWindows }: Props) {
   const [sort, setSort] = useState(filters.sort);
   const [sortWindow, setSortWindow] = useState(filters.sortWindow);
   const [order, setOrder] = useState(filters.order);
+  const [density, setDensity] = useState(filters.density);
 
   const apply = () => {
     const next: HeatmapFilterState = {
@@ -42,6 +43,7 @@ export function HeatmapFilterBar({ filters, sortWindows }: Props) {
       sort,
       sortWindow: sort === "window" ? sortWindow : "",
       order,
+      density,
     };
 
     const query = serializeHeatmapFilterState(next).toString();
@@ -55,6 +57,7 @@ export function HeatmapFilterBar({ filters, sortWindows }: Props) {
     setSort(DEFAULT_HEATMAP_FILTER_STATE.sort);
     setSortWindow(DEFAULT_HEATMAP_FILTER_STATE.sortWindow);
     setOrder(DEFAULT_HEATMAP_FILTER_STATE.order);
+    setDensity(DEFAULT_HEATMAP_FILTER_STATE.density);
     router.push(pathname);
   };
 
@@ -149,6 +152,19 @@ export function HeatmapFilterBar({ filters, sortWindows }: Props) {
               <SelectContent>
                 <SelectItem value="desc">Descending</SelectItem>
                 <SelectItem value="asc">Ascending</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="heatmap-filter-density">Density</Label>
+            <Select value={density} onValueChange={(value) => setDensity(value as HeatmapFilterState["density"])}>
+              <SelectTrigger id="heatmap-filter-density">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="comfortable">Comfortable</SelectItem>
+                <SelectItem value="compact">Compact</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -28,6 +28,7 @@ type Props = {
   rows: HeatmapMatrixRow[];
   columnLabels: string[];
   color?: "red" | "green" | "blue";
+  density?: "comfortable" | "compact";
 };
 
 export function HeatmapMatrix({
@@ -35,6 +36,7 @@ export function HeatmapMatrix({
   rows,
   columnLabels,
   color = "green",
+  density = "comfortable",
 }: Props) {
   const [sort, setSort] = useState<SortState>(null);
 
@@ -85,10 +87,11 @@ export function HeatmapMatrix({
       {title && <h3 className="text-sm font-medium">{title}</h3>}
 
       <div className="border rounded-md">
-        <Table>
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="min-w-[220px]">Menu</TableHead>
+              <TableHead className="min-w-[220px] sticky left-0 z-10 bg-muted/40">Menu</TableHead>
               {columnLabels.map((label, i) => {
                 const isActive = sort?.columnIndex === i;
 
@@ -120,7 +123,7 @@ export function HeatmapMatrix({
           <TableBody>
             {sortedRows.map((row) => (
               <TableRow key={row.key}>
-                <TableCell className="max-w-[220px] text-sm font-medium truncate">
+                <TableCell className="max-w-[220px] text-sm font-medium truncate sticky left-0 z-10 bg-background">
                   {row.label}
                 </TableCell>
                 {row.values.map((value, i) => {
@@ -131,7 +134,10 @@ export function HeatmapMatrix({
                   return (
                     <TableCell
                       key={i}
-                      className="h-10 text-center text-[11px] font-medium"
+                      className={clsx(
+                        "text-center text-[11px] font-medium",
+                        density === "compact" ? "h-8" : "h-10",
+                      )}
                       style={{
                         backgroundColor: bg,
                         color: isDark ? "#fff" : undefined,
@@ -145,7 +151,8 @@ export function HeatmapMatrix({
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
       </div>
 
       <div className="border rounded-md p-3 bg-muted/20 space-y-2">
