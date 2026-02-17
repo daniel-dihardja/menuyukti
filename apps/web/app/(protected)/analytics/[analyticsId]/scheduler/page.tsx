@@ -25,6 +25,42 @@ type Recommendation = {
   confidence: "high" | "medium" | "low";
 };
 
+type ScheduleEntryRecord = {
+  id: number;
+  instagram_campaign_id: number | null;
+  instagram_post_id: number | null;
+  canonical_menu_name: string;
+  canonical_menu_name_norm: string;
+  scheduled_for: Date;
+  daypart: string | null;
+  confidence: string;
+  rationale: string | null;
+  status: string;
+};
+
+type ScheduleRecord = {
+  id: number;
+  status: string;
+  source: string;
+};
+
+function isMissingSchedulerRelation(error: unknown): boolean {
+  const maybe = error as {
+    code?: string;
+    meta?: { code?: string; message?: string };
+    message?: string;
+  };
+
+  const message = String(maybe?.meta?.message ?? maybe?.message ?? "");
+  const isPrismaRawQueryError = maybe?.code === "P2010";
+  const isMissingRelationCode = maybe?.meta?.code === "42P01";
+  const referencesSchedulerTable =
+    message.includes("instagram_weekly_schedules") ||
+    message.includes("instagram_weekly_schedule_entries");
+
+  return (isPrismaRawQueryError && isMissingRelationCode) || referencesSchedulerTable;
+}
+
 function dateToYmd(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
@@ -121,6 +157,51 @@ function buildRecommendations(matrixJson: unknown, heatmapJson: unknown): Recomm
     });
 }
 
+async function loadWeeklySchedule(
+  locationId: number,
+  weekStartDate: Date,
+): Promise<{ id: number; status: string; source: string; entries: ScheduleEntryRecord[] } | null> {
+  try {
+    const scheduleRows = await prisma.$queryRaw<ScheduleRecord[]>`
+      SELECT id, status, source
+      FROM public.instagram_weekly_schedules
+      WHERE branch_id = ${locationId}
+        AND week_start_date = ${weekStartDate}::date
+      LIMIT 1
+    `;
+
+    const schedule = scheduleRows[0];
+    if (!schedule) return null;
+
+    const entryRows = await prisma.$queryRaw<ScheduleEntryRecord[]>`
+      SELECT
+        id,
+        instagram_campaign_id,
+        instagram_post_id,
+        canonical_menu_name,
+        canonical_menu_name_norm,
+        scheduled_for,
+        daypart,
+        confidence,
+        rationale,
+        status
+      FROM public.instagram_weekly_schedule_entries
+      WHERE schedule_id = ${schedule.id}
+      ORDER BY scheduled_for ASC
+    `;
+
+    return {
+      ...schedule,
+      entries: entryRows,
+    };
+  } catch (error) {
+    if (isMissingSchedulerRelation(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export default async function SchedulerPage({ params, searchParams }: PageProps) {
   const tSales = await getTranslations("analytics.sales");
 
@@ -150,19 +231,7 @@ export default async function SchedulerPage({ params, searchParams }: PageProps)
 
   const recommendations = buildRecommendations(analytics.matrixJson, analytics.heatmapJson);
 
-  const schedule = await prisma.instagramWeeklySchedule.findUnique({
-    where: {
-      locationId_weekStartDate: {
-        locationId: analytics.locationId,
-        weekStartDate,
-      },
-    },
-    include: {
-      entries: {
-        orderBy: { scheduledFor: "asc" },
-      },
-    },
-  });
+  const schedule = await loadWeeklySchedule(analytics.locationId, weekStartDate);
 
   const etlJob = await prisma.etlJob.findFirst({
     where: {
@@ -223,11 +292,11 @@ export default async function SchedulerPage({ params, searchParams }: PageProps)
                 source: schedule.source,
                 entries: schedule.entries.map((entry) => ({
                   id: entry.id,
-                  instagramCampaignId: entry.instagramCampaignId,
-                  instagramPostId: entry.instagramPostId,
-                  canonicalMenuName: entry.canonicalMenuName,
-                  canonicalMenuNameNorm: entry.canonicalMenuNameNorm,
-                  scheduledFor: entry.scheduledFor.toISOString(),
+                  instagramCampaignId: entry.instagram_campaign_id,
+                  instagramPostId: entry.instagram_post_id,
+                  canonicalMenuName: entry.canonical_menu_name,
+                  canonicalMenuNameNorm: entry.canonical_menu_name_norm,
+                  scheduledFor: new Date(entry.scheduled_for).toISOString(),
                   daypart: entry.daypart,
                   confidence: entry.confidence,
                   rationale: entry.rationale,
