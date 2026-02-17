@@ -49,6 +49,17 @@ async function run() {
     timeout: 30_000,
   });
 
+  const avgDeltaRevenueCard = page
+    .locator('[data-slot="card"]')
+    .filter({ hasText: "Avg Delta Revenue" })
+    .first();
+  await avgDeltaRevenueCard.waitFor({ state: "visible", timeout: 10_000 });
+  const avgDeltaRevenueText = await avgDeltaRevenueCard.textContent();
+  assert(
+    !(avgDeltaRevenueText ?? "").includes("$"),
+    "Avg Delta Revenue must not render a hardcoded '$' currency symbol",
+  );
+
   await page.locator('input[name="minActiveDays"]').fill("3");
   await page.locator('input[name="minCoverageRatio"]').fill("0.75");
   await page.getByRole("button", { name: /apply confidence thresholds/i }).click();

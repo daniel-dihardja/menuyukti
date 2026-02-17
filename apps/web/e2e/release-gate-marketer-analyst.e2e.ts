@@ -140,6 +140,16 @@ async function run() {
     state: "visible",
     timeout: 30_000,
   });
+  const avgDeltaRevenueCard = page
+    .locator('[data-slot="card"]')
+    .filter({ hasText: "Avg Delta Revenue" })
+    .first();
+  await avgDeltaRevenueCard.waitFor({ state: "visible", timeout: 10_000 });
+  const avgDeltaRevenueText = await avgDeltaRevenueCard.textContent();
+  assert(
+    !(avgDeltaRevenueText ?? "").includes("$"),
+    "Attribution Avg Delta Revenue must not use hardcoded '$' symbol",
+  );
   await page.getByRole("button", { name: /apply confidence thresholds/i }).waitFor({
     state: "visible",
     timeout: 10_000,
