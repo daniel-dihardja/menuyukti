@@ -21,8 +21,11 @@ def calculate_popularity_index(df: pd.DataFrame) -> List[Dict]:
     if total_qty == 0:
         raise ValueError("Total quantity is zero. Cannot calculate popularity index.")
 
+    # Deterministic tie-break: when popularity is equal, sort by menu name.
     menu_qty = (
-        df.groupby("menu")["qty"].sum().sort_values(ascending=False).reset_index()
+        df.groupby("menu", as_index=False)["qty"].sum()
+        .sort_values(by=["qty", "menu"], ascending=[False, True], kind="mergesort")
+        .reset_index(drop=True)
     )
 
     menu_qty["popularity"] = (menu_qty["qty"] / total_qty).round(6)

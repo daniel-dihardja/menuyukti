@@ -130,9 +130,16 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
             }
         )
 
+    # Deterministic tie-break for distribution:
+    # 1) higher margin_share
+    # 2) higher item_share
+    # 3) alphabetical category
     distribution.sort(
-        key=lambda x: x["margin_share"],
-        reverse=True,
+        key=lambda item: (
+            -item["margin_share"],
+            -item["item_share"],
+            item["category"],
+        ),
     )
 
     # --------------------------------------------------
@@ -168,6 +175,10 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
                 "menu_category": row["menu_category"],
                 "menu_category_detail": row["menu_category_detail"],
             }
-            for _, row in df.sort_values("quantity", ascending=False).iterrows()
+            for _, row in df.sort_values(
+                by=["quantity", "total_revenue", "menu"],
+                ascending=[False, False, True],
+                kind="mergesort",
+            ).iterrows()
         ],
     }

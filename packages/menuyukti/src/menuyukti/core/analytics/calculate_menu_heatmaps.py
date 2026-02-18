@@ -89,10 +89,14 @@ def calculate_menu_heatmaps(df: pd.DataFrame) -> List[Dict]:
             }
         )
 
-    # Sort menus by total daily quantity (descending)
+    # Deterministic tie-break:
+    # 1) higher total demand first
+    # 2) alphabetical menu name when totals tie
     heatmap_results.sort(
-        key=lambda m: sum(item["quantity"] for item in m["daily_heatmap"]),
-        reverse=True,
+        key=lambda menu_payload: (
+            -sum(item["quantity"] for item in menu_payload["daily_heatmap"]),
+            menu_payload["menu"],
+        ),
     )
 
     return heatmap_results

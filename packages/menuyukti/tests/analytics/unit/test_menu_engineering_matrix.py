@@ -38,3 +38,29 @@ def test_calculate_menu_engineering_matrix_missing_cols():
 
     with pytest.raises(ValueError):
         calculate_menu_engineering_matrix(df)
+
+
+def test_calculate_menu_engineering_matrix_items_tie_break_stable():
+    df = pd.DataFrame(
+        [
+            {
+                "menu": "Beta",
+                "menu_category": "DRINK",
+                "menu_category_detail": "COFFEE",
+                "quantity": 10,
+                "total_revenue": 100.0,
+                "cogs": 2.0,
+            },
+            {
+                "menu": "Alpha",
+                "menu_category": "DRINK",
+                "menu_category_detail": "COFFEE",
+                "quantity": 10,
+                "total_revenue": 100.0,
+                "cogs": 2.0,
+            },
+        ]
+    )
+
+    result = calculate_menu_engineering_matrix(df)
+    assert [item["menu"] for item in result["items"]] == ["Alpha", "Beta"]

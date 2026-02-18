@@ -55,3 +55,27 @@ def test_calculate_menu_heatmaps_multiple_categories_error():
 
     with pytest.raises(ValueError):
         calculate_menu_heatmaps(df)
+
+
+def test_calculate_menu_heatmaps_tie_break_by_menu_name():
+    df = pd.DataFrame(
+        [
+            {
+                "menu": "Beta",
+                "qty": 2,
+                "order_time": pd.Timestamp("2025-02-01 10:00:00"),
+                "menu_category": "DRINK",
+                "menu_category_detail": "COFFEE",
+            },
+            {
+                "menu": "Alpha",
+                "qty": 2,
+                "order_time": pd.Timestamp("2025-02-01 11:00:00"),
+                "menu_category": "DRINK",
+                "menu_category_detail": "COFFEE",
+            },
+        ]
+    )
+
+    result = calculate_menu_heatmaps(df)
+    assert [entry["menu"] for entry in result] == ["Alpha", "Beta"]

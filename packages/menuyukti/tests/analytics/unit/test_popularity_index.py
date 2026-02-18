@@ -43,3 +43,16 @@ def test_calculate_popularity_index_zero_total():
 
     with pytest.raises(ValueError):
         calculate_popularity_index(df)
+
+
+def test_calculate_popularity_index_tie_break_by_menu_name():
+    df = pd.DataFrame(
+        [
+            {"menu": "Beta", "qty": 5},
+            {"menu": "Alpha", "qty": 5},
+            {"menu": "Gamma", "qty": 1},
+        ]
+    )
+
+    result = calculate_popularity_index(df)
+    assert [entry["menu"] for entry in result] == ["Alpha", "Beta", "Gamma"]
