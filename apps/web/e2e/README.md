@@ -138,6 +138,12 @@ Run LLM runtime availability validation for Agent Studio API surfaces:
 pnpm -C apps/web run test:e2e:agents:llm-runtime
 ```
 
+Run mechanical mode validation with LLM disabled (trust status + run history/comparison continuity):
+
+```bash
+pnpm -C apps/web run test:e2e:agents:llm-disabled-mode
+```
+
 Run LLM evaluation harness surfaced-state validation:
 
 ```bash

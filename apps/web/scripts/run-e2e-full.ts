@@ -47,6 +47,7 @@ const DEFAULT_E2E_SUITES = [
   "test:e2e:attribution",
   "test:e2e:agents:legacy-decommission",
   "test:e2e:agents:llm-runtime",
+  "test:e2e:agents:llm-disabled-mode",
   "test:e2e:agents:llm-evaluation-harness",
   "test:e2e:agents:prompt-tuning-loop",
   "test:e2e:agents:prompt-model-visibility",

@@ -150,26 +150,113 @@ def test_llm_provider_failure_falls_back_to_deterministic(monkeypatch: pytest.Mo
     assert body["llm"]["error_code"] == "LLM_PROVIDER_ERROR"
 
 
-def test_llm_disabled_mode_keeps_agent_available(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize(
+    ("endpoint", "payload", "required_field"),
+    [
+        (
+            "/agents/strategist/weekly-plan",
+            {
+                "contract_version": "v1",
+                "analytics_id": 1,
+                "location_id": 1,
+                "week_start_date": "2026-02-18",
+                "readiness": "ready",
+                "suggestions": [],
+            },
+            "plan",
+        ),
+        (
+            "/agents/profit-intelligence/action-board",
+            {
+                "contract_version": "v1",
+                "analytics_id": 1,
+                "location_id": 1,
+                "readiness": "ready",
+                "cogs_readiness": "ready",
+                "candidates": [],
+                "combo_signals": [],
+            },
+            "board",
+        ),
+        (
+            "/agents/consensus/debate",
+            {
+                "contract_version": "v1",
+                "analytics_id": 1,
+                "location_id": 1,
+                "readiness": "ready",
+                "mode": "conservative",
+                "candidates": [],
+            },
+            "consensus",
+        ),
+        (
+            "/agents/simulation/what-if",
+            {
+                "contract_version": "v1",
+                "analytics_id": 1,
+                "location_id": 1,
+                "readiness": "ready",
+                "baseline": {"weekly_posts": 4, "avg_margin_pct": 0.3, "avg_revenue_per_post": 100},
+                "scenarios": [],
+            },
+            "simulation",
+        ),
+        (
+            "/agents/memory/context",
+            {
+                "contract_version": "v1",
+                "location_id": 1,
+                "analytics_id": 1,
+                "events": [],
+            },
+            "memory_context",
+        ),
+        (
+            "/agents/rerank/recommendations",
+            {
+                "contract_version": "v1",
+                "policy_version": "as10-v1",
+                "min_signal_count": 1,
+                "baseline": [],
+                "priors": [],
+            },
+            "recommendations",
+        ),
+        (
+            "/agents/learning/release-loop/evaluate",
+            {
+                "contract_version": "v1",
+                "stage": "shadow",
+                "candidate_policy_version": "v2",
+                "baseline_policy_version": "v1",
+                "metrics": {
+                    "shadow_quality_score": 0.8,
+                    "shadow_contract_pass_rate": 0.99,
+                    "canary_error_rate": 0.01,
+                    "canary_regression_rate": 0.02,
+                },
+            },
+            "release_decision",
+        ),
+    ],
+)
+def test_llm_disabled_mode_keeps_agent_available(
+    endpoint: str,
+    payload: dict,
+    required_field: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("AGENTS_LLM_ENABLED", "0")
     monkeypatch.setenv("AGENTS_LLM_PROVIDER", "mock")
     monkeypatch.delenv("AGENTS_LLM_MOCK_BEHAVIOR", raising=False)
 
-    response = client.post(
-        "/agents/profit-intelligence/action-board",
-        json={
-            "contract_version": "v1",
-            "analytics_id": 20,
-            "location_id": 3,
-            "readiness": "ready",
-            "cogs_readiness": "ready",
-            "candidates": [],
-            "combo_signals": [],
-        },
-    )
+    response = client.post(endpoint, json=payload)
     assert response.status_code == 200
     body = response.json()
     assert body["llm"]["status"] == "disabled"
+    assert body["run"]["llm_status"] == "disabled"
+    assert required_field in body
 
 
 def test_llm_schema_invalid_triggers_fallback(monkeypatch: pytest.MonkeyPatch) -> None:

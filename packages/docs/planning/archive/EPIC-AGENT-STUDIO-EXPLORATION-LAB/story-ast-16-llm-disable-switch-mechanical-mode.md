@@ -2,7 +2,7 @@
 
 ## Story Metadata
 - Created Date: 2026-02-18
-- Status: `todo`
+- Status: `done`
 - Parent: EPIC-AGENT-STUDIO-EXPLORATION-LAB
 
 ## Goal
@@ -37,3 +37,30 @@ Allow disabling live LLM calls globally via runtime config/env var so the app ca
 - Mechanical-mode contract/trust marker in responses.
 - Integration tests for enabled vs disabled behavior.
 - Story E2E suite and evidence.
+
+## Implementation Notes
+- Verified existing runtime switch path:
+  - `apps/agents/src/agent/llm_runtime.py` (`AGENTS_LLM_ENABLED`)
+- Expanded disabled-mode integration coverage to all in-scope Phase 1 endpoints:
+  - `apps/agents/tests/integration_tests/test_llm_runtime_integration.py`
+- Added story-specific mechanical-mode E2E (LLM disabled) that validates:
+  - trust panel `llm: disabled`
+  - run history continuity
+  - run comparison continuity
+  - `apps/web/e2e/agent-llm-disabled-mechanical-mode.e2e.ts`
+- Added script wiring and suite inclusion:
+  - `apps/web/package.json` -> `test:e2e:agents:llm-disabled-mode`
+  - `apps/web/scripts/run-e2e-shared-services.ts`
+  - `apps/web/scripts/run-e2e-full.ts`
+- Added E2E documentation entry:
+  - `apps/web/e2e/README.md`
+
+## Test Evidence
+- Agents integration tests passed:
+  - `uv run --project apps/agents pytest apps/agents/tests/integration_tests/test_llm_runtime_integration.py`
+- Story E2E passed:
+  - `pnpm -C apps/web run test:e2e:agents:llm-disabled-mode`
+
+## Unit Test Notes
+- No new isolated unit-level logic was introduced in AST-16.
+- Coverage was added at integration/E2E layers where mechanical-mode behavior is validated end-to-end.
