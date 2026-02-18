@@ -93,3 +93,18 @@ matrix_envelope = to_menu_matrix_envelope_v1(matrix_payload, source_system="api"
   - `uv run --project packages/menuyukti --group dev mypy src/menuyukti`
 - Run package unit and contract tests:
   - `uv run --project packages/menuyukti --group dev pytest tests/unit tests/analytics/unit tests/analytics/contract`
+
+## Performance Guardrails (ME-08)
+
+- Generate/refresh baseline report:
+  - `uv run --project packages/menuyukti --group dev python scripts/perf_guardrails.py --mode report`
+- Check current runtime against baseline:
+  - `uv run --project packages/menuyukti --group dev python scripts/perf_guardrails.py --mode check`
+
+Artifacts:
+- Baseline file: `packages/menuyukti/perf/baseline_v1.json`
+- Guardrail script: `packages/menuyukti/scripts/perf_guardrails.py`
+
+Current benchmark coverage:
+- `calculate_sales_analytics` on representative fixture-expanded dataset.
+- `calculate_menu_engineering_matrix` on representative fixture-expanded dataset.
