@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { useWarehouseReadPath } from "@/lib/warehouse-read-path";
 import { evaluateAgentDataReadiness } from "@/lib/agents/data-readiness";
+import type { PrismaJsonInput } from "@/lib/json";
+import {
+  buildEnvelopeFromResult,
+  normalizeStoredEnvelope,
+  toLegacyOutputs,
+} from "@/lib/agents/output-compat";
 
 export const runtime = "nodejs";
 
@@ -77,10 +83,22 @@ export async function GET(request: Request) {
           analyticsId,
         },
       },
-      select: { outputs: true },
+      select: {
+        outputs: true,
+        outputEnvelopeJson: true,
+        contractVersion: true,
+        runId: true,
+        modelName: true,
+        runStatus: true,
+        inputHash: true,
+        outputHash: true,
+        tokenUsageJson: true,
+      },
     });
 
-    return NextResponse.json({ outputs: cached?.outputs ?? null });
+    if (!cached) return NextResponse.json({ outputs: null });
+    const envelope = normalizeStoredEnvelope(cached);
+    return NextResponse.json({ outputs: toLegacyOutputs(envelope) });
   } catch (error) {
     console.error("Audience agent output lookup failed:", error);
     return NextResponse.json(
@@ -204,11 +222,24 @@ export async function POST(request: Request) {
             analyticsId,
           },
         },
-        select: { outputs: true },
+        select: {
+          outputs: true,
+          outputEnvelopeJson: true,
+          contractVersion: true,
+          runId: true,
+          modelName: true,
+          runStatus: true,
+          inputHash: true,
+          outputHash: true,
+          tokenUsageJson: true,
+        },
       });
 
-      if (cached?.outputs) {
-        return NextResponse.json({ outputs: cached.outputs, guardrail: readiness });
+      if (cached) {
+        const envelope = normalizeStoredEnvelope(cached);
+        if (envelope.outputs) {
+          return NextResponse.json({ outputs: toLegacyOutputs(envelope), guardrail: readiness });
+        }
       }
     }
 
@@ -295,6 +326,14 @@ export async function POST(request: Request) {
     const result = await invokeResponse.json();
 
     if (result?.outputs) {
+      const envelope = buildEnvelopeFromResult(
+        typeof result === "object" && result !== null ? (result as Record<string, unknown>) : {},
+      );
+      const legacyOutputs = toLegacyOutputs(envelope) as PrismaJsonInput;
+      const tokenUsageJson = envelope.run.tokenUsage
+        ? (envelope.run.tokenUsage as PrismaJsonInput)
+        : undefined;
+      const outputEnvelopeJson = envelope as unknown as PrismaJsonInput;
       await prisma.agentOutput.upsert({
         where: {
           agentId_locationId_analyticsId: {
@@ -303,12 +342,30 @@ export async function POST(request: Request) {
             analyticsId,
           },
         },
-        update: { outputs: result.outputs },
+        update: {
+          outputs: legacyOutputs,
+          contractVersion: envelope.contractVersion,
+          runId: envelope.run.runId,
+          modelName: envelope.run.model,
+          runStatus: envelope.run.status,
+          inputHash: envelope.run.inputHash,
+          outputHash: envelope.run.outputHash,
+          tokenUsageJson,
+          outputEnvelopeJson,
+        },
         create: {
           agentId: "audience",
           locationId: analytics.locationId,
           analyticsId,
-          outputs: result.outputs,
+          outputs: legacyOutputs,
+          contractVersion: envelope.contractVersion,
+          runId: envelope.run.runId,
+          modelName: envelope.run.model,
+          runStatus: envelope.run.status,
+          inputHash: envelope.run.inputHash,
+          outputHash: envelope.run.outputHash,
+          tokenUsageJson,
+          outputEnvelopeJson,
         },
       });
     }

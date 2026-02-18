@@ -468,12 +468,21 @@ model AgentOutput {
   analytics   Analytics @relation(fields: [analyticsId], references: [id], onDelete: Cascade)
 
   outputs Json
+  contractVersion String @default("v1") @map("contract_version")
+  runId           String? @map("run_id")
+  modelName       String? @map("model_name")
+  runStatus       String? @map("run_status")
+  inputHash       String? @map("input_hash")
+  outputHash      String? @map("output_hash")
+  tokenUsageJson  Json?   @map("token_usage_json")
+  outputEnvelopeJson Json? @map("output_envelope_json")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([agentId, locationId, analyticsId], map: "uq_agent_output_key")
   @@index([locationId, analyticsId, agentId], map: "ix_agent_output_lookup")
+  @@index([runId], map: "ix_agent_output_run_id")
   @@map("agent_outputs")
   @@schema("public")
 }

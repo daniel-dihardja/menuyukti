@@ -18,6 +18,7 @@
     "db:gen": "prisma generate",
     "db:seed": "prisma db seed",
     "db:backfill:etl-lineage": "node --env-file=.env --import tsx scripts/backfill-etl-lineage.ts",
+    "db:backfill:agent-output-compat": "node --env-file=.env --import tsx scripts/backfill-agent-output-compat.ts",
     "db:seed:export": "node --env-file=.env --import tsx scripts/export-neon-seed-sql.ts",
     "db:seed:smoke": "node --env-file=.env --import tsx scripts/seed-smoke-check.ts",
     "test:e2e:matrix": "tsx e2e/analytics-matrix-filter-journey.e2e.ts",
