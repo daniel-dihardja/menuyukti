@@ -335,9 +335,9 @@ Legend:
 - `Implemented`: Cost/price completeness workflow includes COGS coverage KPIs, impact-prioritized watchlist, matrix export completeness fields, and readiness policy visibility.
 
 ### 11.5 Agentic Architecture
-- `Implemented`: Agents consume structured `core_input` payloads, with deterministic feature derivation in marketing-engine features.
+- `Implemented`: Agents consume structured `core_input` payloads, with deterministic feature derivation in menuyukti features.
 - `Implemented`: Guardrails based on quality/freshness are enforced in agent invocation routes with machine-readable readiness status.
-- `Partial`: Versioned contracts exist for analytics/marketing-engine, but agent I/O contract governance can be tightened further.
+- `Partial`: Versioned contracts exist for analytics/menuyukti, but agent I/O contract governance can be tightened further.
 
 ### 11.6 Security, Tenancy, and Governance
 - `Partial`: Location/branch scoping exists in data model and routes.

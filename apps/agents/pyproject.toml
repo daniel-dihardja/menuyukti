@@ -13,7 +13,7 @@ dependencies = [
     "langchain>=1.2.7",
     "langchain-openai>=1.1.7",
     "langgraph>=1.0.0",
-    "marketing-engine",
+    "menuyukti",
     "python-dotenv>=1.0.1",
     "uvicorn[standard]>=0.38.0",
 ]

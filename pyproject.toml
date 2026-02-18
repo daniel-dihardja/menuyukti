@@ -6,20 +6,20 @@ requires-python = ">=3.12"
 dependencies = [
   "analytics",
   "agent",
-  "marketing-engine",
+  "menuyukti",
 ]
 
 [tool.uv.workspace]
 members = [
   "apps/analytics",
   "apps/agents",
-  "packages/marketing-engine",
+  "packages/menuyukti",
 ]
 
 [tool.uv.sources]
 analytics = { workspace = true }
 agent = { workspace = true }
-marketing-engine = { workspace = true }
+menuyukti = { workspace = true }
 
 [dependency-groups]
 dev = [

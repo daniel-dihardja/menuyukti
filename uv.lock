@@ -14,7 +14,7 @@ resolution-markers = [
 members = [
     "agent",
     "analytics",
-    "marketing-engine",
+    "menuyukti",
     "menuyukti-workspace",
 ]
 
@@ -27,7 +27,7 @@ dependencies = [
     { name = "langchain" },
     { name = "langchain-openai" },
     { name = "langgraph" },
-    { name = "marketing-engine" },
+    { name = "menuyukti" },
     { name = "python-dotenv" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -53,7 +53,7 @@ requires-dist = [
     { name = "langchain", specifier = ">=1.2.7" },
     { name = "langchain-openai", specifier = ">=1.1.7" },
     { name = "langgraph", specifier = ">=1.0.0" },
-    { name = "marketing-engine", editable = "packages/marketing-engine" },
+    { name = "menuyukti", editable = "packages/menuyukti" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.11.1" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6.1" },
@@ -76,7 +76,7 @@ version = "0.1.0"
 source = { editable = "apps/analytics" }
 dependencies = [
     { name = "fastapi" },
-    { name = "marketing-engine" },
+    { name = "menuyukti" },
     { name = "openpyxl" },
     { name = "pandas" },
     { name = "python-multipart" },
@@ -86,7 +86,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.124.4" },
-    { name = "marketing-engine", editable = "packages/marketing-engine" },
+    { name = "menuyukti", editable = "packages/menuyukti" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "python-multipart", specifier = ">=0.0.21" },
@@ -1158,9 +1158,9 @@ wheels = [
 ]
 
 [[package]]
-name = "marketing-engine"
+name = "menuyukti"
 version = "0.1.0"
-source = { editable = "packages/marketing-engine" }
+source = { editable = "packages/menuyukti" }
 dependencies = [
     { name = "openpyxl" },
     { name = "pandas" },
@@ -1193,7 +1193,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "agent" },
     { name = "analytics" },
-    { name = "marketing-engine" },
+    { name = "menuyukti" },
 ]
 
 [package.dev-dependencies]
@@ -1212,7 +1212,7 @@ dev = [
 requires-dist = [
     { name = "agent", editable = "apps/agents" },
     { name = "analytics", editable = "apps/analytics" },
-    { name = "marketing-engine", editable = "packages/marketing-engine" },
+    { name = "menuyukti", editable = "packages/menuyukti" },
 ]
 
 [package.metadata.requires-dev]

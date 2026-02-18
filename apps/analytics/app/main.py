@@ -7,19 +7,19 @@ import math
 
 import pandas as pd
 
-from marketing_engine.core.analytics.extract_menu_items import extract_menu_items
-from marketing_engine.core.analytics.pos_detector import detect_pos_from_excel_bytes
-from marketing_engine.core.analytics.registry import NORMALIZERS
-from marketing_engine.core.analytics.esb.normalizer import (
+from menuyukti.core.analytics.extract_menu_items import extract_menu_items
+from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
+from menuyukti.core.analytics.registry import NORMALIZERS
+from menuyukti.core.analytics.esb.normalizer import (
     normalize_esb_excel_with_rejections,
 )
-from marketing_engine.core.analytics.calculate_sales_analytics import (
+from menuyukti.core.analytics.calculate_sales_analytics import (
     calculate_sales_analytics,
 )
-from marketing_engine.core.analytics.calculate_menu_engineering_matrix import (
+from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
     calculate_menu_engineering_matrix,
 )
-from marketing_engine.core.contracts import (
+from menuyukti.core.contracts import (
     build_metadata_v1,
 )
 
