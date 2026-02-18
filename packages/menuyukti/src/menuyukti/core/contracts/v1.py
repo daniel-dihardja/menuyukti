@@ -118,3 +118,48 @@ class SalesAnalyticsSummaryV1(BaseModel):
 
     period_start: date
     period_end: date
+
+
+class SalesAnalyticsPayloadV1(BaseModel):
+    total_orders: int
+    total_items_sold: int
+    total_revenue: float
+
+    avg_order_revenue: float
+    max_order_revenue: float
+    min_order_revenue: float
+
+    avg_order_items: float
+    max_order_items: int
+    min_order_items: int
+
+    avg_popularity_threshold: float = Field(
+        validation_alias=AliasChoices("avg_popularity_threshold", "avg_popularity"),
+        serialization_alias="avg_popularity_threshold",
+    )
+    popularity_index: list[dict[str, Any]] = Field(default_factory=list)
+    menu_heatmaps: list[MenuHeatmapV1] = Field(default_factory=list)
+
+    period_start: date
+    period_end: date
+
+
+class MatrixThresholdsV1(BaseModel):
+    avg_popularity: float
+    avg_contribution_margin: float
+    total_cogs: float
+    total_profit: float
+    total_margin: float
+
+
+class MenuMatrixPayloadV1(BaseModel):
+    thresholds: MatrixThresholdsV1
+    distribution: list[CategoryDistributionV1] = Field(default_factory=list)
+    items: list[MatrixItemV1] = Field(default_factory=list)
+
+
+class ContractEnvelopeV1(BaseModel):
+    contract_version: Literal["v1"] = "v1"
+    contract_type: Literal["sales_analytics", "menu_matrix"]
+    metadata: ContractMetadataV1
+    payload: SalesAnalyticsPayloadV1 | MenuMatrixPayloadV1

@@ -7,7 +7,12 @@ from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
     calculate_menu_engineering_matrix,
 )
 from menuyukti.core.analytics.calculate_sales_analytics import calculate_sales_analytics
-from menuyukti.core.contracts.adapters import to_core_distribution, to_core_heatmap
+from menuyukti.core.contracts.adapters import (
+    to_core_distribution,
+    to_core_heatmap,
+    to_menu_matrix_envelope_v1,
+    to_sales_analytics_envelope_v1,
+)
 
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "analytics"
@@ -88,3 +93,25 @@ def test_legacy_distribution_payload_still_compatible():
     model = to_core_distribution(legacy_payload)
     assert model.categories[0].item_count == 3
     assert model.categories[0].margin_share == 0.7
+
+
+def test_sales_analytics_envelope_v1_compatibility():
+    df = pd.DataFrame(_load_sales_rows())
+    result = calculate_sales_analytics(df)
+    envelope = to_sales_analytics_envelope_v1(result)
+
+    assert envelope.contract_version == "v1"
+    assert envelope.contract_type == "sales_analytics"
+    assert envelope.metadata.schema_version == "v1"
+    assert envelope.payload.total_orders > 0
+
+
+def test_menu_matrix_envelope_v1_compatibility():
+    df = pd.DataFrame(_load_matrix_rows())
+    result = calculate_menu_engineering_matrix(df)
+    envelope = to_menu_matrix_envelope_v1(result, source_system="matrix")
+
+    assert envelope.contract_version == "v1"
+    assert envelope.contract_type == "menu_matrix"
+    assert envelope.metadata.schema_version == "v1"
+    assert isinstance(envelope.payload.items, list)

@@ -4,11 +4,16 @@ from datetime import date
 from typing import Any
 
 from menuyukti.core.contracts.v1 import (
+    ContractEnvelopeV1,
+    ContractMetadataV1,
     MatrixDistributionV1,
+    MenuMatrixPayloadV1,
     MatrixItemV1,
     MenuHeatmapV1,
+    SalesAnalyticsPayloadV1,
     SalesAnalyticsSummaryV1,
 )
+from menuyukti.core.contracts.metadata import build_metadata_v1
 from menuyukti.core.models.heatmap import HourlyDemand, MenuHeatmap, WeeklyDemand
 from menuyukti.core.models.matrix_distribution import (
     CategoryDistribution,
@@ -82,4 +87,30 @@ def to_core_sales_summary(payload: dict[str, Any]) -> SalesAnalyticsSummary:
         popularity_index=canonical.popularity_index,
         period_start=canonical.period_start.isoformat(),
         period_end=canonical.period_end.isoformat(),
+    )
+
+
+def to_sales_analytics_envelope_v1(payload: dict[str, Any]) -> ContractEnvelopeV1:
+    metadata = ContractMetadataV1(**payload.get("metadata", {}))
+    domain_payload = SalesAnalyticsPayloadV1(**{key: value for key, value in payload.items() if key != "metadata"})
+    return ContractEnvelopeV1(
+        contract_type="sales_analytics",
+        metadata=metadata,
+        payload=domain_payload,
+    )
+
+
+def to_menu_matrix_envelope_v1(
+    payload: dict[str, Any],
+    *,
+    metadata: dict[str, Any] | None = None,
+    source_system: str = "api",
+) -> ContractEnvelopeV1:
+    resolved_metadata = metadata if metadata is not None else build_metadata_v1(source_system=source_system)
+    envelope_metadata = ContractMetadataV1(**resolved_metadata)
+    domain_payload = MenuMatrixPayloadV1(**payload)
+    return ContractEnvelopeV1(
+        contract_type="menu_matrix",
+        metadata=envelope_metadata,
+        payload=domain_payload,
     )

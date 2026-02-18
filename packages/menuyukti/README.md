@@ -45,7 +45,11 @@ Normalization behavior:
 ```python
 from menuyukti.core.inputs import CoreInputs
 from menuyukti.core.models.sales_analytics_summary import SalesAnalyticsSummary
-from menuyukti.core.contracts.adapters import to_core_heatmap
+from menuyukti.core.contracts.adapters import (
+    to_core_heatmap,
+    to_sales_analytics_envelope_v1,
+    to_menu_matrix_envelope_v1,
+)
 ```
 
 ## Example Usage (Step-by-Step)
@@ -71,9 +75,14 @@ legacy_distribution_payload = {
     "categories": [{"category": "star", "count": 3, "percentage": 0.5, "margin_contribution_percentage": 0.7}]
 }
 distribution_model = to_core_distribution(legacy_distribution_payload)
+
+# 3) Contract-safe, versioned envelope for downstream consumers
+sales_envelope = to_sales_analytics_envelope_v1(sales_analytics_payload)
+matrix_envelope = to_menu_matrix_envelope_v1(matrix_payload, source_system="api")
 ```
 
 ## Notes
 
 - This package now focuses on canonical analytics models, transforms, and contract adapters.
 - Audience-specific implementation was decommissioned as part of ME-03 cleanup.
+- `ContractEnvelopeV1` (`contract_version`, `contract_type`, `metadata`, `payload`) is the stable envelope for machine consumers.

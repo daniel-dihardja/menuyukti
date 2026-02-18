@@ -1,4 +1,6 @@
 from menuyukti.core.contracts.adapters import (
+    to_menu_matrix_envelope_v1,
+    to_sales_analytics_envelope_v1,
     to_core_distribution,
     to_core_heatmap,
     to_core_matrix_item,
@@ -58,3 +60,50 @@ def test_to_core_matrix_item_round_trip():
     model = to_core_matrix_item(payload)
     assert model.menu == "Latte"
     assert model.total_revenue == 100.0
+
+
+def test_to_sales_analytics_envelope_v1():
+    payload = {
+        "metadata": {
+            "schema_version": "v1",
+            "source_system": "esb",
+            "pipeline_run_id": "run-1",
+            "ingested_at_utc": "2026-02-18T00:00:00Z",
+            "quality_status": "passed",
+        },
+        "total_orders": 1,
+        "total_items_sold": 2,
+        "total_revenue": 30.0,
+        "avg_order_revenue": 30.0,
+        "max_order_revenue": 30.0,
+        "min_order_revenue": 30.0,
+        "avg_order_items": 2.0,
+        "max_order_items": 2,
+        "min_order_items": 2,
+        "avg_popularity_threshold": 1.0,
+        "popularity_index": [],
+        "menu_heatmaps": [],
+        "period_start": "2025-02-01",
+        "period_end": "2025-02-01",
+    }
+    envelope = to_sales_analytics_envelope_v1(payload)
+    assert envelope.contract_type == "sales_analytics"
+    assert envelope.metadata.schema_version == "v1"
+    assert envelope.payload.total_orders == 1
+
+
+def test_to_menu_matrix_envelope_v1():
+    payload = {
+        "thresholds": {
+            "avg_popularity": 10.0,
+            "avg_contribution_margin": 5.0,
+            "total_cogs": 100.0,
+            "total_profit": 80.0,
+            "total_margin": 0.44,
+        },
+        "distribution": [],
+        "items": [],
+    }
+    envelope = to_menu_matrix_envelope_v1(payload, source_system="api")
+    assert envelope.contract_type == "menu_matrix"
+    assert envelope.metadata.schema_version == "v1"

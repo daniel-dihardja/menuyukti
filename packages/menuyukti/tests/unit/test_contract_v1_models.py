@@ -1,8 +1,11 @@
 from datetime import date
 
 from menuyukti.core.contracts.v1 import (
+    ContractEnvelopeV1,
     MatrixDistributionV1,
+    MenuMatrixPayloadV1,
     MenuHeatmapV1,
+    SalesAnalyticsPayloadV1,
     SalesAnalyticsSummaryV1,
 )
 
@@ -60,3 +63,50 @@ def test_sales_summary_v1_accepts_avg_popularity_alias():
     model = SalesAnalyticsSummaryV1(**payload)
     assert model.avg_popularity_threshold == 0.4
     assert model.period_start == date(2025, 2, 1)
+
+
+def test_sales_analytics_payload_v1_shape():
+    payload = SalesAnalyticsPayloadV1(
+        total_orders=10,
+        total_items_sold=20,
+        total_revenue=200.0,
+        avg_order_revenue=20.0,
+        max_order_revenue=30.0,
+        min_order_revenue=10.0,
+        avg_order_items=2.0,
+        max_order_items=3,
+        min_order_items=1,
+        avg_popularity_threshold=0.5,
+        popularity_index=[],
+        menu_heatmaps=[],
+        period_start="2025-02-01",
+        period_end="2025-02-28",
+    )
+    assert payload.period_start == date(2025, 2, 1)
+
+
+def test_contract_envelope_v1_typed_payload():
+    payload = MenuMatrixPayloadV1(
+        thresholds={
+            "avg_popularity": 10.0,
+            "avg_contribution_margin": 5.0,
+            "total_cogs": 100.0,
+            "total_profit": 80.0,
+            "total_margin": 0.44,
+        },
+        distribution=[],
+        items=[],
+    )
+    envelope = ContractEnvelopeV1(
+        contract_type="menu_matrix",
+        metadata={
+            "schema_version": "v1",
+            "source_system": "api",
+            "pipeline_run_id": "run-1",
+            "ingested_at_utc": "2026-02-18T00:00:00Z",
+            "quality_status": "passed",
+        },
+        payload=payload,
+    )
+    assert envelope.contract_version == "v1"
+    assert envelope.contract_type == "menu_matrix"
