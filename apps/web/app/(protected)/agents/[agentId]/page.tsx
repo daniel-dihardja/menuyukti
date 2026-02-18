@@ -44,6 +44,7 @@ export default async function Page({ params }: PageProps) {
 
   const agent = agentDefinitions.find((item) => item.id === agentId);
   if (!agent) notFound();
+  const isReady = agent.status === "ready";
   const statusLabel =
     agent.status === "ready"
       ? tDetail("status.ready")
@@ -83,13 +84,26 @@ export default async function Page({ params }: PageProps) {
 
           <AgentFilters branches={branches} />
 
-          {agent.id === "marketer-strategist" ? <StrategistRunner /> : null}
-          {agent.id === "menu-profit-intelligence" ? <ProfitIntelligenceRunner /> : null}
-          {agent.id === "multi-agent-consensus" ? <ConsensusRunner /> : null}
-          {agent.id === "what-if-simulation" ? <SimulationRunner /> : null}
-          {agent.id === "agent-memory-tracker" ? <MemoryRunner /> : null}
-          {agent.id === "feedback-reranker" ? <RerankerRunner /> : null}
-          {agent.id === "learning-release-loop" ? <ReleaseLoopRunner /> : null}
+          {isReady ? (
+            <>
+              {agent.id === "marketer-strategist" ? <StrategistRunner /> : null}
+              {agent.id === "menu-profit-intelligence" ? <ProfitIntelligenceRunner /> : null}
+              {agent.id === "multi-agent-consensus" ? <ConsensusRunner /> : null}
+              {agent.id === "what-if-simulation" ? <SimulationRunner /> : null}
+              {agent.id === "agent-memory-tracker" ? <MemoryRunner /> : null}
+              {agent.id === "feedback-reranker" ? <RerankerRunner /> : null}
+              {agent.id === "learning-release-loop" ? <ReleaseLoopRunner /> : null}
+            </>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Coming Soon</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                This agent is listed in Agent Studio but is not released yet.
+              </CardContent>
+            </Card>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Card>

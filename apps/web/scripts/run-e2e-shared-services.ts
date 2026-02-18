@@ -36,6 +36,7 @@ const DEFAULT_SUITES = [
   "test:e2e:agents:learning",
   "test:e2e:agents:reranking",
   "test:e2e:agents:learning-release-loop",
+  "test:e2e:agents:studio-overview-sandbox",
   "test:e2e:api:contracts",
   "test:e2e:release-gate",
 ] as const;
@@ -62,6 +63,7 @@ const SERVICES_BY_SUITE: Record<string, ServiceName[]> = {
   "test:e2e:agents:learning": ["web", "agents"],
   "test:e2e:agents:reranking": ["web", "agents"],
   "test:e2e:agents:learning-release-loop": ["web", "agents"],
+  "test:e2e:agents:studio-overview-sandbox": ["web", "agents"],
   "test:e2e:api:contracts": ["web", "analytics", "agents"],
   "test:e2e:release-gate": ["web", "analytics", "agents"],
 };

@@ -38,13 +38,14 @@ export default async function Page() {
           </header>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {agentDefinitions.map((agent) => (
-              <Link
-                key={agent.id}
-                href={routes.agents.detail(agent.id)}
-                className="group"
-              >
-                <Card className="h-full gap-0 py-0 transition-colors group-hover:border-foreground/30">
+            {agentDefinitions.map((agent) => {
+              const isReady = agent.status === "ready";
+              const card = (
+                <Card
+                  className={`h-full gap-0 py-0 transition-colors ${
+                    isReady ? "group-hover:border-foreground/30" : "opacity-80"
+                  }`}
+                >
                   <div className="relative aspect-[16/9] w-full overflow-hidden border-b bg-muted">
                     <Image
                       src={agent.imageUrl}
@@ -66,23 +67,36 @@ export default async function Page() {
                     {agent.description}
                   </CardContent>
                   <CardFooter className="px-5 pb-5 pt-0">
-                    <span className="inline-flex items-center gap-1 text-sm font-medium text-foreground/90 transition-colors group-hover:text-foreground">
-                      Open Agent
-                      <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-foreground/90">
+                      {isReady ? "Open Agent" : "Coming Soon"}
+                      {isReady ? <ChevronRight className="h-4 w-4" aria-hidden="true" /> : null}
                     </span>
                   </CardFooter>
                 </Card>
-              </Link>
-            ))}
+              );
+
+              if (!isReady) {
+                return (
+                  <div key={agent.id} className="group" aria-disabled="true">
+                    {card}
+                  </div>
+                );
+              }
+
+              return (
+                <Link key={agent.id} href={routes.agents.detail(agent.id)} className="group">
+                  {card}
+                </Link>
+              );
+            })}
           </div>
           {agentDefinitions.length === 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle>Legacy agents retired</CardTitle>
+                <CardTitle>No agents available yet</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
-                Audience and tone agents were decommissioned. New AI agent workflows are being
-                prepared and will be released in upcoming iterations.
+                Agent workflows are being prepared and will be released in upcoming iterations.
               </CardContent>
             </Card>
           ) : null}

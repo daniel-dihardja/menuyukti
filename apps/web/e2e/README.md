@@ -120,6 +120,12 @@ Run learning release-loop gate validation (web + agents services):
 pnpm -C apps/web run test:e2e:agents:learning-release-loop
 ```
 
+Run Agent Studio overview grid + per-agent sandbox validation:
+
+```bash
+pnpm -C apps/web run test:e2e:agents:studio-overview-sandbox
+```
+
 Run seed-validation suite without starting app/agent services:
 
 ```bash
