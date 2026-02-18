@@ -169,6 +169,7 @@ Out of scope:
 
 Must Ship in this epic:
 - AS-00, AS-01, AS-02, AS-03, AS-04, AS-07, AS-08
+- AS-12 (Agent Studio overview and per-agent testable surfaces)
 - Minimum learning foundation: AS-09 (capture only) + AS-10 (re-ranking v1)
 - End-to-end marketer workflow:
   - recommendation -> scheduler -> post draft package -> attribution feedback read
@@ -358,6 +359,7 @@ Analyst JTBD:
 10. Story AS-09: Learning Data Model and Outcome Signal Capture
 11. Story AS-10: Recommendation Re-Ranking from Outcome Feedback
 12. Story AS-11: Safe Learning Release Loop (Shadow -> Canary -> Rollout)
+13. Story AS-12: Agent Studio Overview Grid and Per-Agent Output Sandbox
 
 ### Story AS-00 Scope (Transition Story)
 - remove/deprecate audience/tone agent entry points from product surface

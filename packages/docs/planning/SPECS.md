@@ -460,6 +460,7 @@ Primary reference:
 - AS-09: Learning Data Model and Outcome Signal Capture
 - AS-10: Recommendation Re-Ranking from Outcome Feedback
 - AS-11: Safe Learning Release Loop (Shadow -> Canary -> Rollout)
+- AS-12: Agent Studio Overview Grid and Per-Agent Output Sandbox
 
 Transition note:
 - AS-00 is required before new agent implementation to remove legacy audience/tone agent surface and prevent architecture drift during the rebuild.
