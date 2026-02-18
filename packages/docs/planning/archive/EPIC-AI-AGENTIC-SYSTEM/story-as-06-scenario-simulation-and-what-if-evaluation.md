@@ -2,7 +2,7 @@
 
 ## Story Metadata
 - Created Date: 2026-02-18
-- Status: `todo`
+- Status: `done`
 - Parent: EPIC-AI-AGENTIC-SYSTEM
 
 ## Goal
@@ -32,3 +32,19 @@ Provide scenario-based simulation for comparing campaign/menu strategies before 
 - Scenario result schema and ranking logic.
 - Docs and tests for simulation behavior.
 
+## Implementation Notes
+- Added agents app endpoint: `POST /agents/simulation/what-if`.
+- Added web orchestration endpoint: `GET /api/agents/simulation`.
+- Simulation input contract includes cadence, focus, bundle, and constraint penalties.
+- Output now returns ranked scenarios, explicit assumptions, confidence bands, and winner rationale.
+- Added mode support (`conservative` / `aggressive`) to tune baseline/scenario behavior.
+- Added `what-if-simulation` agent with dedicated Agent Studio runner.
+- Persisted simulation outputs to `agent_outputs` (`agent_id=what-if-simulation`).
+
+## Test Evidence
+- Agents integration tests:
+  - `uv run --project apps/agents pytest apps/agents/tests/integration_tests/test_simulation_agent.py apps/agents/tests/integration_tests/test_consensus_agent.py apps/agents/tests/integration_tests/test_profit_intelligence_agent.py apps/agents/tests/integration_tests/test_strategist_agent.py apps/agents/tests/integration_tests/test_api.py`
+- Type check:
+  - `pnpm -C apps/web run typecheck`
+- Story E2E:
+  - `pnpm -C apps/web run test:e2e:agents:simulation`

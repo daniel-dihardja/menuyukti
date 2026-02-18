@@ -60,5 +60,26 @@
       "readiness",
       "evidence"
     ]
+  },
+  {
+    "id": "what-if-simulation",
+    "name": "What-If Simulation Studio",
+    "imageUrl": "/images/placeholder.svg",
+    "description": "Compares scenario outcomes with assumptions and confidence bands before execution.",
+    "status": "ready",
+    "inputs": [
+      "Analytics matrix context",
+      "Scenario assumptions",
+      "Cadence and focus multipliers",
+      "Constraint penalties"
+    ],
+    "outputs": [
+      "ranked_scenarios",
+      "projected_revenue_margin",
+      "confidence_bands",
+      "scenario_winner",
+      "readiness",
+      "evidence"
+    ]
   }
 ]

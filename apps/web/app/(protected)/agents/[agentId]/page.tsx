@@ -22,6 +22,7 @@ import { ChevronLeft } from "lucide-react";
 import { StrategistRunner } from "./strategist-runner";
 import { ProfitIntelligenceRunner } from "./profit-intelligence-runner";
 import { ConsensusRunner } from "./consensus-runner";
+import { SimulationRunner } from "./simulation-runner";
 
 type PageProps = {
   params: Promise<{ agentId?: string }>;
@@ -82,6 +83,7 @@ export default async function Page({ params }: PageProps) {
           {agent.id === "marketer-strategist" ? <StrategistRunner /> : null}
           {agent.id === "menu-profit-intelligence" ? <ProfitIntelligenceRunner /> : null}
           {agent.id === "multi-agent-consensus" ? <ConsensusRunner /> : null}
+          {agent.id === "what-if-simulation" ? <SimulationRunner /> : null}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Card>

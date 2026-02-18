@@ -11,6 +11,7 @@ from agent.tool_contract import (
 )
 from agent.consensus import DebateConsensusRequest, run_consensus
 from agent.profit_intelligence import ProfitIntelligenceRequest, generate_action_board
+from agent.simulation import WhatIfSimulationRequest, run_what_if_simulation
 from agent.strategist import StrategistWeeklyPlanRequest, generate_weekly_plan
 
 load_dotenv()
@@ -69,3 +70,8 @@ async def profit_intelligence_action_board(payload: ProfitIntelligenceRequest):
 @app.post("/agents/consensus/debate", response_model=None)
 async def consensus_debate(payload: DebateConsensusRequest):
     return run_consensus(payload)
+
+
+@app.post("/agents/simulation/what-if", response_model=None)
+async def what_if_simulation(payload: WhatIfSimulationRequest):
+    return run_what_if_simulation(payload)
