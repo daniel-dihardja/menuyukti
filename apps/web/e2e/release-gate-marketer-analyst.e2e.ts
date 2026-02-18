@@ -123,8 +123,16 @@ async function run() {
     state: "visible",
     timeout: 30_000,
   });
-  await page.getByRole("button", { name: "Add Blank Entry" }).click();
-  const schedulerFirstRow = page.locator("table tbody tr").first();
+  const addBlankButton = page.getByRole("button", { name: "Add Blank Entry" });
+  const schedulerRows = page.locator("table tbody tr");
+  let schedulerRowCount = await schedulerRows.count();
+  for (let attempt = 0; attempt < 5 && schedulerRowCount === 0; attempt += 1) {
+    await addBlankButton.click();
+    await page.waitForTimeout(400);
+    schedulerRowCount = await schedulerRows.count();
+  }
+  assert(schedulerRowCount > 0, "Scheduler row did not appear after Add Blank Entry");
+  const schedulerFirstRow = schedulerRows.first();
   await schedulerFirstRow.waitFor({ state: "visible", timeout: 10_000 });
   await schedulerFirstRow.locator("input").first().fill("Release Gate Scheduler Item");
   await page.getByRole("button", { name: "Save Draft" }).click();

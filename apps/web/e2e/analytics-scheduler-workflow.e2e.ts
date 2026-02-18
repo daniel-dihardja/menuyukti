@@ -34,9 +34,17 @@ async function run() {
     timeout: 30_000,
   });
 
-  await page.getByRole("button", { name: "Add Blank Entry" }).click();
+  const addBlankButton = page.getByRole("button", { name: "Add Blank Entry" });
+  const rowLocator = page.locator("table tbody tr");
+  let rowCount = await rowLocator.count();
+  for (let attempt = 0; attempt < 5 && rowCount === 0; attempt += 1) {
+    await addBlankButton.click();
+    await page.waitForTimeout(400);
+    rowCount = await rowLocator.count();
+  }
+  assert(rowCount > 0, "Scheduler row did not appear after Add Blank Entry");
 
-  const firstRow = page.locator("table tbody tr").first();
+  const firstRow = rowLocator.first();
   await firstRow.waitFor({ state: "visible", timeout: 10_000 });
 
   const menuInput = firstRow.locator("input").first();

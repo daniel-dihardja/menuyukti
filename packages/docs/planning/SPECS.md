@@ -354,6 +354,9 @@ Legend:
 - `Implemented`: Dedicated COGS completeness E2E validates KPI/watchlist visibility and matrix export completeness/readiness columns.
 - `Implemented`: E2E full lifecycle runner starts analytics/agents/web from down state, runs deterministic DB setup (`reset/gen/init/seed`), executes selected suites, then applies post-run DB reset.
 - `Implemented`: Seed determinism smoke check (`db:seed:smoke`) is wired into the full lifecycle E2E gate before suite execution.
+- `Implemented`: Per-suite E2E runner enforces service lifecycle for single-suite execution (starts missing services, runs suite, stops what it started).
+- `Implemented`: Shared-service E2E batch runner supports multi-suite execution with one service lifecycle (start once, run many suites, stop once).
+- `Implemented`: E2E data initialization policy is automated per suite (`reuse`/`seed`/`reset-seed`) with env override controls.
 - `Implemented`: MVP release gate CI workflow runs `test:e2e:full` and preserves runner artifacts for failure recovery.
 - `Implemented`: User manual chapters cover released heatmap, pair/combo, agent guardrail, and scheduler workflows with operational guidance.
 - `Implemented`: User manual includes attribution workflow and confidence-tuning guidance.
