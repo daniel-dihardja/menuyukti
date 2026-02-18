@@ -40,11 +40,47 @@ Run LLM evaluation harness (mock mode):
 uv run --project apps/agents python apps/agents/scripts/run_llm_evaluation_harness.py --mode mock --fail-on-fail
 ```
 
+What this does:
+- Executes a fixed scenario set against the selected agents.
+- Uses mocked LLM behavior (`--mode mock`) so results are deterministic and CI-safe.
+- Validates contract shape, trust metadata, and pass/fail outcomes per scenario.
+- Writes a report JSON to:
+  - `apps/agents/eval-artifacts/llm-evaluation-latest.json`
+- Exits with non-zero when any scenario fails (because of `--fail-on-fail`).
+
+Example scenario:
+- You changed `marketer-strategist` prompt mapping and want to ensure no regression.
+- Run:
+  - `uv run --project apps/agents python apps/agents/scripts/run_llm_evaluation_harness.py --mode mock --agent marketer-strategist --fail-on-fail`
+- Expected result:
+  - console summary like `total=... passed=... failed=0`
+  - report contains per-scenario verdicts and failure reasons (if any)
+  - if `failed > 0`, command exits with code `1` (useful for CI gating)
+
 Run isolated prompt tuning loop (mock mode) and write latest report:
 
 ```bash
 uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_loop.py --mode mock --fail-on-unapproved
 ```
+
+What this does:
+- Runs isolated prompt checks per agent (no multi-agent orchestration).
+- Scores candidate prompt versions and decides which versions are approved.
+- Writes a tuning report JSON to:
+  - `apps/agents/eval-artifacts/prompt-tuning-loop-latest.json`
+- With `--fail-on-unapproved`, exits non-zero if any targeted agent has no approved prompt version.
+- Optional:
+  - add `--write-freeze-map` to persist approved versions into freeze-map config for release use.
+
+Example scenario:
+- You updated prompt versions for `menu-profit-intelligence` and `what-if-simulation`.
+- Run:
+  - `uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_loop.py --mode mock --agent menu-profit-intelligence --agent what-if-simulation --fail-on-unapproved --write-freeze-map`
+- Expected result:
+  - report lists each targeted agent and approval status
+  - `approved_prompt_versions` contains approved versions only
+  - if one agent has no approved candidate, command exits with code `1`
+  - if both pass, freeze-map is written and can be used as release baseline
 
 ## Current Endpoints
 
