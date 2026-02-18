@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
@@ -97,6 +97,12 @@ class MatrixItemV1(BaseModel):
     we_value: float
 
 
+class PopularityIndexRowV1(BaseModel):
+    menu: str
+    popularity: float = Field(ge=0, le=1)
+    quantity: int = Field(ge=0)
+
+
 class SalesAnalyticsSummaryV1(BaseModel):
     total_orders: int
     total_items_sold: int
@@ -114,7 +120,7 @@ class SalesAnalyticsSummaryV1(BaseModel):
         validation_alias=AliasChoices("avg_popularity_threshold", "avg_popularity"),
         serialization_alias="avg_popularity_threshold",
     )
-    popularity_index: list[dict[str, Any]] = Field(default_factory=list)
+    popularity_index: list[PopularityIndexRowV1] = Field(default_factory=list)
 
     period_start: date
     period_end: date
@@ -137,7 +143,7 @@ class SalesAnalyticsPayloadV1(BaseModel):
         validation_alias=AliasChoices("avg_popularity_threshold", "avg_popularity"),
         serialization_alias="avg_popularity_threshold",
     )
-    popularity_index: list[dict[str, Any]] = Field(default_factory=list)
+    popularity_index: list[PopularityIndexRowV1] = Field(default_factory=list)
     menu_heatmaps: list[MenuHeatmapV1] = Field(default_factory=list)
 
     period_start: date

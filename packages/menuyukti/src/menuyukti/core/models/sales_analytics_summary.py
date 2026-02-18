@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-from typing import Any
-
 from pydantic import AliasChoices, BaseModel, Field
+
+
+class PopularityIndexRow(BaseModel):
+    menu: str
+    popularity: float = Field(ge=0, le=1)
+    quantity: int = Field(ge=0)
 
 
 class SalesAnalyticsSummary(BaseModel):
@@ -29,7 +33,7 @@ class SalesAnalyticsSummary(BaseModel):
         validation_alias=AliasChoices("avg_popularity_threshold", "avg_popularity"),
         serialization_alias="avg_popularity_threshold",
     )
-    popularity_index: list[dict[str, Any]] = Field(default_factory=list)
+    popularity_index: list[PopularityIndexRow] = Field(default_factory=list)
 
     period_start: str
     period_end: str

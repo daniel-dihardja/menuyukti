@@ -1,8 +1,15 @@
+from typing import TypedDict
+
 import pandas as pd
-from typing import List, Dict
 
 
-def calculate_popularity_index(df: pd.DataFrame) -> List[Dict]:
+class PopularityIndexRow(TypedDict):
+    menu: str
+    popularity: float
+    quantity: int
+
+
+def calculate_popularity_index(df: pd.DataFrame) -> list[PopularityIndexRow]:
     """
     Calculate popularity index per menu item.
 

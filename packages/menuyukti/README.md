@@ -86,3 +86,10 @@ matrix_envelope = to_menu_matrix_envelope_v1(matrix_payload, source_system="api"
 - This package now focuses on canonical analytics models, transforms, and contract adapters.
 - Audience-specific implementation was decommissioned as part of ME-03 cleanup.
 - `ContractEnvelopeV1` (`contract_version`, `contract_type`, `metadata`, `payload`) is the stable envelope for machine consumers.
+
+## Type Safety and Tests
+
+- Run strict package type checks:
+  - `uv run --project packages/menuyukti --group dev mypy src/menuyukti`
+- Run package unit and contract tests:
+  - `uv run --project packages/menuyukti --group dev pytest tests/unit tests/analytics/unit tests/analytics/contract`

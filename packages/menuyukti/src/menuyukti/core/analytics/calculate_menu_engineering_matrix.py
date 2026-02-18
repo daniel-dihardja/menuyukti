@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict:
+def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict[str, object]:
     """
     Calculate Menu Engineering Matrix from menu items.
 

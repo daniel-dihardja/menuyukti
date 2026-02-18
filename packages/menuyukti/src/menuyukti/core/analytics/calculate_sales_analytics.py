@@ -5,7 +5,7 @@ from menuyukti.core.analytics.calculate_popularity_index import calculate_popula
 from menuyukti.core.contracts.metadata import build_metadata_v1
 
 
-def calculate_sales_analytics(df: pd.DataFrame) -> dict:
+def calculate_sales_analytics(df: pd.DataFrame) -> dict[str, object]:
     """
     Calculate summary sales analytics, popularity index,
     and hourly/weekly heatmaps for each menu item.

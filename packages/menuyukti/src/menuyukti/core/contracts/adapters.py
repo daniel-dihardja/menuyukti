@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import date
-from typing import Any
 
 from menuyukti.core.contracts.v1 import (
     ContractEnvelopeV1,
@@ -20,7 +20,12 @@ from menuyukti.core.models.matrix_distribution import (
     MatrixDistribution,
 )
 from menuyukti.core.models.matrix_item import MatrixItem
-from menuyukti.core.models.sales_analytics_summary import SalesAnalyticsSummary
+from menuyukti.core.models.sales_analytics_summary import (
+    PopularityIndexRow,
+    SalesAnalyticsSummary,
+)
+
+JsonMapping = Mapping[str, object]
 
 
 def _format_reporting_period(period_start: date | None) -> str:
@@ -29,16 +34,22 @@ def _format_reporting_period(period_start: date | None) -> str:
     return period_start.strftime("%Y-%m")
 
 
-def to_core_matrix_item(payload: dict[str, Any]) -> MatrixItem:
-    canonical = MatrixItemV1(**payload)
+def _as_mapping(payload: object, *, field_name: str) -> JsonMapping:
+    if isinstance(payload, Mapping):
+        return payload
+    raise TypeError(f"{field_name} must be a mapping")
+
+
+def to_core_matrix_item(payload: JsonMapping) -> MatrixItem:
+    canonical = MatrixItemV1.model_validate(payload)
     return MatrixItem(**canonical.model_dump())
 
 
 def to_core_heatmap(
-    payload: dict[str, Any],
+    payload: JsonMapping,
     period_start: date | None = None,
 ) -> MenuHeatmap:
-    canonical = MenuHeatmapV1(**payload)
+    canonical = MenuHeatmapV1.model_validate(payload)
     reporting_period = canonical.reporting_period or _format_reporting_period(period_start)
     return MenuHeatmap(
         menu=canonical.menu,
@@ -56,8 +67,8 @@ def to_core_heatmap(
     )
 
 
-def to_core_distribution(payload: dict[str, Any]) -> MatrixDistribution:
-    canonical = MatrixDistributionV1(**payload)
+def to_core_distribution(payload: JsonMapping) -> MatrixDistribution:
+    canonical = MatrixDistributionV1.model_validate(payload)
     return MatrixDistribution(
         categories=[
             CategoryDistribution(
@@ -71,8 +82,8 @@ def to_core_distribution(payload: dict[str, Any]) -> MatrixDistribution:
     )
 
 
-def to_core_sales_summary(payload: dict[str, Any]) -> SalesAnalyticsSummary:
-    canonical = SalesAnalyticsSummaryV1(**payload)
+def to_core_sales_summary(payload: JsonMapping) -> SalesAnalyticsSummary:
+    canonical = SalesAnalyticsSummaryV1.model_validate(payload)
     return SalesAnalyticsSummary(
         total_orders=canonical.total_orders,
         total_items_sold=canonical.total_items_sold,
@@ -84,15 +95,25 @@ def to_core_sales_summary(payload: dict[str, Any]) -> SalesAnalyticsSummary:
         max_order_items=canonical.max_order_items,
         min_order_items=canonical.min_order_items,
         avg_popularity_threshold=canonical.avg_popularity_threshold,
-        popularity_index=canonical.popularity_index,
+        popularity_index=[
+            PopularityIndexRow(**row.model_dump())
+            for row in canonical.popularity_index
+        ],
         period_start=canonical.period_start.isoformat(),
         period_end=canonical.period_end.isoformat(),
     )
 
 
-def to_sales_analytics_envelope_v1(payload: dict[str, Any]) -> ContractEnvelopeV1:
-    metadata = ContractMetadataV1(**payload.get("metadata", {}))
-    domain_payload = SalesAnalyticsPayloadV1(**{key: value for key, value in payload.items() if key != "metadata"})
+def to_sales_analytics_envelope_v1(payload: JsonMapping) -> ContractEnvelopeV1:
+    raw_metadata = _as_mapping(payload.get("metadata", {}), field_name="metadata")
+    metadata = ContractMetadataV1.model_validate(raw_metadata)
+    domain_payload = SalesAnalyticsPayloadV1.model_validate(
+        {
+            key: value
+            for key, value in payload.items()
+            if key != "metadata"
+        }
+    )
     return ContractEnvelopeV1(
         contract_type="sales_analytics",
         metadata=metadata,
@@ -101,14 +122,14 @@ def to_sales_analytics_envelope_v1(payload: dict[str, Any]) -> ContractEnvelopeV
 
 
 def to_menu_matrix_envelope_v1(
-    payload: dict[str, Any],
+    payload: JsonMapping,
     *,
-    metadata: dict[str, Any] | None = None,
+    metadata: Mapping[str, str] | None = None,
     source_system: str = "api",
 ) -> ContractEnvelopeV1:
     resolved_metadata = metadata if metadata is not None else build_metadata_v1(source_system=source_system)
-    envelope_metadata = ContractMetadataV1(**resolved_metadata)
-    domain_payload = MenuMatrixPayloadV1(**payload)
+    envelope_metadata = ContractMetadataV1.model_validate(resolved_metadata)
+    domain_payload = MenuMatrixPayloadV1.model_validate(payload)
     return ContractEnvelopeV1(
         contract_type="menu_matrix",
         metadata=envelope_metadata,

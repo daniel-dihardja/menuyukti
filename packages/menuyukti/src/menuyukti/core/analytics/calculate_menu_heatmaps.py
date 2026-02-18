@@ -1,10 +1,32 @@
+from typing import Literal, TypedDict, cast
+
 import pandas as pd
-from typing import List, Dict
 
 WEEKDAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
+Weekday = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
-def calculate_menu_heatmaps(df: pd.DataFrame) -> List[Dict]:
+
+class DailyHeatmapRow(TypedDict):
+    hour: int
+    quantity: int
+
+
+class WeeklyHeatmapRow(TypedDict):
+    day: Weekday
+    quantity: int
+
+
+class MenuHeatmapPayload(TypedDict):
+    menu: str
+    menu_category: str | None
+    menu_category_detail: str | None
+    daily_heatmap: list[DailyHeatmapRow]
+    weekly_heatmap: list[WeeklyHeatmapRow]
+    reporting_period: str
+
+
+def calculate_menu_heatmaps(df: pd.DataFrame) -> list[MenuHeatmapPayload]:
     """
     Calculate daily (hourly) and weekly heatmaps per menu item.
 
@@ -25,7 +47,7 @@ def calculate_menu_heatmaps(df: pd.DataFrame) -> List[Dict]:
     df["weekday"] = df["order_time"].dt.day_name().str.lower().str[:3]
     reporting_period = df["order_time"].min().strftime("%Y-%m")
 
-    heatmap_results = []
+    heatmap_results: list[MenuHeatmapPayload] = []
 
     for menu_item, group in df.groupby("menu", sort=False):
 
@@ -55,7 +77,7 @@ def calculate_menu_heatmaps(df: pd.DataFrame) -> List[Dict]:
         # -------- Daily (hourly) heatmap --------
         hourly_qty = group.groupby("hour")["qty"].sum()
 
-        daily_heatmap = [
+        daily_heatmap: list[DailyHeatmapRow] = [
             {"hour": hour, "quantity": int(hourly_qty.get(hour, 0))}
             for hour in range(24)
         ]
@@ -73,8 +95,8 @@ def calculate_menu_heatmaps(df: pd.DataFrame) -> List[Dict]:
             .sum()
         )
 
-        weekly_heatmap = [
-            {"day": day, "quantity": int(weekly_qty.get(day, 0))}
+        weekly_heatmap: list[WeeklyHeatmapRow] = [
+            {"day": cast(Weekday, day), "quantity": int(weekly_qty.get(day, 0))}
             for day in WEEKDAY_ORDER
         ]
 

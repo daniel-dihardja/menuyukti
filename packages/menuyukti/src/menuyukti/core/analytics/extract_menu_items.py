@@ -1,8 +1,17 @@
+from typing import TypedDict
+
 import pandas as pd
-from typing import List, Dict
 
 
-def extract_menu_items(df: pd.DataFrame) -> List[Dict]:
+class ExtractedMenuItem(TypedDict):
+    menu: str
+    quantity: int
+    total_revenue: float
+    menu_category: str
+    menu_category_detail: str
+
+
+def extract_menu_items(df: pd.DataFrame) -> list[ExtractedMenuItem]:
     """
     Extract aggregated menu item facts for analytics.
 
