@@ -20,6 +20,7 @@ This manual explains the ship-ready features that already deliver practical valu
 - Use attribution overview (`08`) to measure post outcomes with confidence tuning and exportable reporting context.
 - Use scheduler post generation (`10`) to convert weekly heatmap suggestions into editable Instagram post drafts and export-ready publish packages.
 - Use E2E validation runners (`11`) for cold-start release gates, shared-service multi-suite runs, and per-suite auto data initialization.
+- Use the LLM evaluation harness (`13`) to gate prompt/model changes with pass/fail evidence before release.
 
 ## Suggested Learning Path
 
@@ -28,6 +29,7 @@ This manual explains the ship-ready features that already deliver practical valu
 - Surface-orientation path: `12` -> `02` -> `04` -> `06` -> `07`
 - Operator path: `01` -> `04` -> `08` -> `06` -> `07`
 - Quality/release path: `11` -> `02` -> `05` -> `08`
+- LLM quality-gate path: `13` -> `11` -> `06`
 
 ## Documentation Scope
 
@@ -49,3 +51,4 @@ This manual explains the ship-ready features that already deliver practical valu
 10. [Instagram Post Generation From Scheduler](./10-instagram-post-generation-from-scheduler.md)
 11. [E2E Validation Runners (Full, Batch, Per-Suite)](./11-e2e-full-lifecycle-runner.md)
 12. [Agent Studio vs Analytics Pages (Dropdown)](./12-agent-studio-vs-analytics-pages.md)
+13. [Agent LLM Evaluation Harness](./13-agent-llm-evaluation-harness.md)

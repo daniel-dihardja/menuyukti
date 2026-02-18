@@ -28,6 +28,12 @@ Run one test file:
 uv run --project apps/agents pytest apps/agents/tests/integration_tests/test_api.py
 ```
 
+Run LLM evaluation harness (mock mode):
+
+```bash
+uv run --project apps/agents python apps/agents/scripts/run_llm_evaluation_harness.py --mode mock --fail-on-fail
+```
+
 ## Current Endpoints
 
 General contract/policy:

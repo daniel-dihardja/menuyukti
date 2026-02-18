@@ -17,6 +17,7 @@ from agent.rerank import RerankRequest, rerank_recommendations
 from agent.release_loop import ReleaseLoopRequest, evaluate_release_loop
 from agent.simulation import WhatIfSimulationRequest, run_what_if_simulation
 from agent.strategist import StrategistWeeklyPlanRequest, generate_weekly_plan
+from agent.evaluation_harness import EvaluationHarnessRequest, run_evaluation_harness
 
 load_dotenv()
 
@@ -99,3 +100,8 @@ async def rerank_recommendation_list(payload: RerankRequest):
 @app.post("/agents/learning/release-loop/evaluate", response_model=None)
 async def learning_release_loop(payload: ReleaseLoopRequest):
     return evaluate_release_loop(payload)
+
+
+@app.post("/agents/evaluation/harness", response_model=None)
+async def evaluation_harness(payload: EvaluationHarnessRequest):
+    return run_evaluation_harness(payload)

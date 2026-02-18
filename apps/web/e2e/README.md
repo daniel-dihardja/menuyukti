@@ -138,6 +138,12 @@ Run LLM runtime availability validation for Agent Studio API surfaces:
 pnpm -C apps/web run test:e2e:agents:llm-runtime
 ```
 
+Run LLM evaluation harness surfaced-state validation:
+
+```bash
+pnpm -C apps/web run test:e2e:agents:llm-evaluation-harness
+```
+
 Run prompt/model metadata visibility validation in Agent Studio UI:
 
 ```bash
