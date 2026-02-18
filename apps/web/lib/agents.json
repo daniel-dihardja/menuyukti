@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "id": "marketer-strategist",
+    "name": "Instagram Growth Strategist",
+    "imageUrl": "/images/placeholder.svg",
+    "description": "Builds weekly Instagram campaign priorities from matrix and heatmap signals.",
+    "status": "ready",
+    "inputs": [
+      "Analytics snapshot",
+      "Matrix signals",
+      "Heatmap signals",
+      "Pipeline readiness metadata"
+    ],
+    "outputs": [
+      "weekly_priorities",
+      "scheduler_handoff_recommendations",
+      "confidence",
+      "readiness",
+      "evidence"
+    ]
+  }
+]

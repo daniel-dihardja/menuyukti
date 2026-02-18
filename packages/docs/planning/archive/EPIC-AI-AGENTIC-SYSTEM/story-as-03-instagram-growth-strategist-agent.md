@@ -2,7 +2,7 @@
 
 ## Story Metadata
 - Created Date: 2026-02-18
-- Status: `todo`
+- Status: `done`
 - Parent: EPIC-AI-AGENTIC-SYSTEM
 
 ## Goal
@@ -32,3 +32,14 @@ Ship the marketer-facing strategist agent that produces weekly Instagram plans w
 - Scheduler handoff integration.
 - E2E and contract test updates.
 
+## Implementation Notes
+- Added agents app strategist endpoint: `POST /agents/strategist/weekly-plan`.
+- Added web API integration endpoint: `GET /api/agents/strategist`.
+- Added strategist agent card and runner UI in Agent Studio (`/agents/marketer-strategist`).
+- Persisted strategist output snapshots into `agent_outputs` (`agent_id=marketer-strategist`).
+
+## Test Evidence
+- Agents integration tests:
+  - `uv run --project apps/agents pytest apps/agents/tests/integration_tests/test_strategist_agent.py apps/agents/tests/integration_tests/test_tool_contract_policy.py apps/agents/tests/integration_tests/test_api.py`
+- Story E2E test:
+  - `pnpm -C apps/web run test:e2e:agents:strategist`

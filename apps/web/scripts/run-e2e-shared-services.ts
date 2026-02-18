@@ -27,6 +27,7 @@ const DEFAULT_SUITES = [
   "test:e2e:attribution",
   "test:e2e:agents:legacy-decommission",
   "test:e2e:agents:tool-contract-policy",
+  "test:e2e:agents:strategist",
   "test:e2e:api:contracts",
   "test:e2e:release-gate",
 ] as const;
@@ -44,6 +45,7 @@ const SERVICES_BY_SUITE: Record<string, ServiceName[]> = {
   "test:e2e:attribution": ["web", "analytics"],
   "test:e2e:agents:legacy-decommission": ["web"],
   "test:e2e:agents:tool-contract-policy": ["agents"],
+  "test:e2e:agents:strategist": ["web", "agents"],
   "test:e2e:api:contracts": ["web", "analytics", "agents"],
   "test:e2e:release-gate": ["web", "analytics", "agents"],
 };

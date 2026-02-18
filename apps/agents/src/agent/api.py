@@ -9,6 +9,7 @@ from agent.tool_contract import (
     evaluate_runtime_policy,
     validate_tool_payload,
 )
+from agent.strategist import StrategistWeeklyPlanRequest, generate_weekly_plan
 
 load_dotenv()
 
@@ -51,3 +52,8 @@ async def invoke_tool(payload: ToolInvokeRequest):
         "persona": payload.persona,
         "workflow_stage": payload.workflow_stage,
     }
+
+
+@app.post("/agents/strategist/weekly-plan", response_model=None)
+async def strategist_weekly_plan(payload: StrategistWeeklyPlanRequest):
+    return generate_weekly_plan(payload)
