@@ -318,7 +318,7 @@ Legend:
 
 ### 11.3 Marketer (Instagram) Capabilities
 - `Implemented`: Recommendation-centric matrix workflow (`promote`, `improve/reprice`, `remove`, `keep`).
-- `Implemented`: Agent invocation path for audience/tone and cached outputs.
+- `Implemented`: Legacy audience/tone agent routes were decommissioned for the new AI-agentic rebuild; dedicated decommission checks enforce `404` on retired endpoints.
 - `Implemented`: Instagram campaign and post identity model with branch scope and publish-window query indexes.
 - `Implemented`: Deterministic post-to-promoted-menu mapping model and idempotent mapping upsert API.
 - `Implemented`: Weekly posting schedule and campaign planning loop are productized with persisted weekly schedules, entry-level editing, and readiness-aware trust states.

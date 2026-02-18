@@ -10,21 +10,15 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@workspace/ui/components/tooltip";
 import { notFound } from "next/navigation";
 import { routes } from "@/lib/routes";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import agents from "@/lib/agents.json";
+import type { AgentDefinition } from "@/lib/agent-definitions";
 import { prisma } from "@/lib/prisma/client";
 import { AgentFilters } from "../agent-filters";
-import { AudienceAgentRunner } from "./audience-agent-runner";
-import { ToneAgentRunner } from "./tone-agent-runner";
-import { ChevronLeft, CircleHelp } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 
 type PageProps = {
   params: Promise<{ agentId?: string }>;
@@ -37,10 +31,11 @@ function formatOutputLabel(output: string) {
 export default async function Page({ params }: PageProps) {
   const t = await getTranslations("agents");
   const tDetail = await getTranslations("agents.detail");
+  const agentDefinitions = agents as AgentDefinition[];
   const { agentId } = await params;
   if (!agentId) notFound();
 
-  const agent = agents.find((item) => item.id === agentId);
+  const agent = agentDefinitions.find((item) => item.id === agentId);
   if (!agent) notFound();
   const statusLabel =
     agent.status === "ready"
@@ -81,9 +76,6 @@ export default async function Page({ params }: PageProps) {
 
           <AgentFilters branches={branches} />
 
-          {agent.id === "audience" ? <AudienceAgentRunner /> : null}
-          {agent.id === "tone" ? <ToneAgentRunner /> : null}
-
           <div className="grid gap-4 sm:grid-cols-2">
             <Card>
               <CardHeader>
@@ -107,24 +99,6 @@ export default async function Page({ params }: PageProps) {
                   {agent.outputs.map((item) => (
                     <li key={item}>
                       <span>{formatOutputLabel(item)}</span>
-                      {agent.id === "audience" || agent.id === "tone" ? (
-                        <span className="ml-1 inline-flex items-center gap-1.5 whitespace-nowrap align-middle">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                type="button"
-                                className="inline-flex items-center text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                aria-label={tDetail("outputHelp.open")}
-                              >
-                                <CircleHelp className="h-3.5 w-3.5 shrink-0" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-64">
-                              {tDetail(`outputHelp.items.${item}`)}
-                            </TooltipContent>
-                          </Tooltip>
-                        </span>
-                      ) : null}
                     </li>
                   ))}
                 </ul>

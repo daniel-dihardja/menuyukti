@@ -2,9 +2,9 @@
 
 ## What This Feature Is About
 
-Agents generate audience and tone outputs from structured analytics features, not raw spreadsheet rows. Guardrails ensure the system does not produce high-trust outputs when data conditions are unsafe.
+Legacy `audience` and `tone` agent routes have been retired as part of the AI-agentic rebuild. Guardrail policy remains a core requirement for all upcoming agent workflows.
 
-This means agent output quality is anchored to deterministic data signals first, then language generation.
+This means future agent output quality must stay anchored to deterministic data signals first, then language generation.
 
 ## What The Guardrail Checks
 
@@ -32,18 +32,17 @@ This means agent output quality is anchored to deterministic data signals first,
 
 ## How To Use
 
-1. Open the agents screen and select location + analytics report.
-2. Run `audience` or `tone` agent.
-3. Check guardrail/readiness response:
+1. Use matrix/heatmap/scheduler workflows as primary decision surfaces during transition.
+2. For any upcoming agent route, check guardrail/readiness response:
    - if `ready`: proceed.
    - if `warn`: proceed with caution and annotate review.
    - if `blocked`: refresh data pipeline first.
 
 ## Example
 
-- Fresh upload completed with quality `passed` -> agent returns `ready`.
-- Data is older than freshness SLA -> agent returns `warn`.
-- Quality is `failed` -> agent returns `blocked` and no trusted output.
+- Fresh upload completed with quality `passed` -> agent route should return `ready`.
+- Data is older than freshness SLA -> agent route should return `warn`.
+- Quality is `failed` -> agent route should return `blocked` and no trusted output.
 
 ## Why It Delivers Real Value
 

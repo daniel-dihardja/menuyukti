@@ -50,7 +50,7 @@ async function fetchJson(
   init?: RequestInit,
 ): Promise<{ status: number; body: Record<string, unknown> }> {
   const response = await fetch(input, init);
-  const body = (await response.json()) as Record<string, unknown>;
+  const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   return { status: response.status, body };
 }
 
@@ -102,26 +102,11 @@ async function run() {
       );
     }
 
-    const audienceGet = await fetchJson(`${baseUrl}/api/agents/audience?analyticsId=${analytics.id}`);
-    assert(audienceGet.status === 200, `audience GET failed status=${audienceGet.status}`);
-    assertContractShape(audienceGet.body, "agent:audience");
+    const audienceRemoved = await fetchJson(`${baseUrl}/api/agents/audience?analyticsId=${analytics.id}`);
+    assert(audienceRemoved.status === 404, `audience legacy route expected 404, got ${audienceRemoved.status}`);
 
-    const toneGet = await fetchJson(`${baseUrl}/api/agents/tone?analyticsId=${analytics.id}`);
-    assert(toneGet.status === 200, `tone GET failed status=${toneGet.status}`);
-    assertContractShape(toneGet.body, "agent:tone");
-
-    if (process.env.AGENTS_API_URL) {
-      const audiencePost = await fetchJson(`${baseUrl}/api/agents/audience`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ analyticsId: analytics.id, forceRerun: true }),
-      });
-      assert(
-        audiencePost.status === 200 || audiencePost.status === 412,
-        `audience POST unexpected status=${audiencePost.status}`,
-      );
-      assertContractShape(audiencePost.body, "agent:audience");
-    }
+    const toneRemoved = await fetchJson(`${baseUrl}/api/agents/tone?analyticsId=${analytics.id}`);
+    assert(toneRemoved.status === 404, `tone legacy route expected 404, got ${toneRemoved.status}`);
   } finally {
     await prisma.$disconnect();
   }

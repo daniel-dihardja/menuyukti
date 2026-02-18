@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpenText, Bot, ChevronRight, FileUp, MapPin } from "lucide-react";
+import { BookOpenText, ChevronRight, FileUp, MapPin } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -60,12 +60,6 @@ const NAV_ITEMS: NavItem[] = [
     //     href: routes.analytics.cogs,
     //   },
     // ],
-  },
-  {
-    key: "agents",
-    labelKey: "agents",
-    href: routes.agents.list,
-    icon: <Bot className="w-4 h-4" />,
   },
   {
     key: "docs",

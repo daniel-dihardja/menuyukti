@@ -40,7 +40,7 @@ This manual explains the ship-ready features that already deliver practical valu
 3. [Filters, Presets, and Shareable Views](./03-filters-presets-and-shareable-views.md)
 4. [Daypart Insights, COGS, and Data Trust Signals](./04-daypart-cogs-and-data-trust.md)
 5. [Pair Metrics, Combo Opportunities, and CSV Export](./05-pair-combo-and-export.md)
-6. [Audience/Tone Agent Outputs and Guardrails](./06-agents-and-data-readiness-guardrails.md)
+6. [Agent Guardrails and Legacy Transition](./06-agents-and-data-readiness-guardrails.md)
 7. [Weekly Scheduler and Trust Guardrails](./07-weekly-scheduler-and-trust-guardrails.md)
 8. [Instagram Attribution Overview and Confidence Tuning](./08-instagram-attribution-overview-and-confidence.md)
 9. [Pipeline Recovery Operations](./09-pipeline-recovery-operations.md)

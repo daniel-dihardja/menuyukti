@@ -16,10 +16,12 @@ import Image from "next/image";
 import { routes } from "@/lib/routes";
 import { getTranslations } from "next-intl/server";
 import agents from "@/lib/agents.json";
+import type { AgentDefinition } from "@/lib/agent-definitions";
 import { ChevronRight } from "lucide-react";
 
 export default async function Page() {
   const t = await getTranslations("agents");
+  const agentDefinitions = agents as AgentDefinition[];
 
   return (
     <SidebarInset>
@@ -36,7 +38,7 @@ export default async function Page() {
           </header>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {agents.map((agent) => (
+            {agentDefinitions.map((agent) => (
               <Link
                 key={agent.id}
                 href={routes.agents.detail(agent.id)}
@@ -73,6 +75,17 @@ export default async function Page() {
               </Link>
             ))}
           </div>
+          {agentDefinitions.length === 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Legacy agents retired</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                Audience and tone agents were decommissioned. New AI agent workflows are being
+                prepared and will be released in upcoming iterations.
+              </CardContent>
+            </Card>
+          ) : null}
         </main>
       </div>
     </SidebarInset>

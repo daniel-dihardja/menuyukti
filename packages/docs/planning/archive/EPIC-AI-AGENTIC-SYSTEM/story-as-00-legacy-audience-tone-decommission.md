@@ -2,7 +2,8 @@
 
 ## Story Metadata
 - Created Date: 2026-02-18
-- Status: `todo`
+- Status: `complete`
+- Completed Date: 2026-02-18
 - Parent: EPIC-AI-AGENTIC-SYSTEM
 
 ## Goal
@@ -31,3 +32,17 @@ Remove legacy audience/tone agent surfaces safely before implementing the new co
 - Compatibility notes for removed legacy paths.
 - Regression test updates and passing evidence.
 
+## Notes
+- Implemented decommission changes:
+  - removed legacy audience/tone API routes
+  - removed audience/tone UI runners and nav entry
+  - added dedicated decommission E2E: `test:e2e:agents:legacy-decommission`
+  - updated shared/full E2E runner suite lists to replace legacy audience/tone suites
+  - updated manual/spec docs to reflect retirement state
+- Verification run:
+  - `pnpm -C apps/web run typecheck` (passed)
+  - `pnpm -C apps/web run test:e2e:agents:legacy-decommission` (passed)
+  - `pnpm -C apps/web run test:e2e:scheduler` (passed)
+  - `pnpm -C apps/web run test:e2e:scheduler:post-generation` (passed)
+- Additional observation:
+  - `test:e2e:release-gate` currently fails on scheduler save-status assertion timeout in this environment and appears unrelated to the audience/tone decommission changes.

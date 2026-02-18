@@ -77,7 +77,7 @@ describe("decision-api-contract", () => {
       trust,
     });
     const contract = createDecisionApiContract({
-      surface: "agent:tone",
+      surface: "agent:marketer-strategist",
       context,
     });
 

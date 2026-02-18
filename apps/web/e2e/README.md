@@ -102,6 +102,12 @@ Use existing DB state (fast local loop):
 E2E_DATA_POLICY=reuse pnpm -C apps/web run test:e2e:pairs
 ```
 
+Run legacy agent decommission validation (no analytics/agents services required):
+
+```bash
+pnpm -C apps/web run test:e2e:agents:legacy-decommission
+```
+
 Run seed-validation suite without starting app/agent services:
 
 ```bash
