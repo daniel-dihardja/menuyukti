@@ -1,8 +1,14 @@
-# 11. E2E Full Lifecycle Runner (Cold Start)
+# 11. E2E Validation Runners (Full, Batch, Per-Suite)
 
 ## What This Feature Does
 
-The E2E full lifecycle runner executes a complete test workflow from a cold start:
+The E2E runners support three modes:
+
+1. Full lifecycle cold-start gate (`test:e2e:full`)
+2. Shared-service multi-suite batch (`test:e2e:batch`)
+3. Per-suite runner (`test:e2e:*`)
+
+Full lifecycle mode executes a complete workflow from a cold start:
 
 1. Starts required services (`analytics`, `agents`, `web`).
 2. Runs DB lifecycle setup (`db:reset`, `db:gen`, `db:init`, `db:seed`).
@@ -14,6 +20,7 @@ The E2E full lifecycle runner executes a complete test workflow from a cold star
 
 - Keeps E2E runs deterministic for release checks.
 - Removes manual "start services first" setup drift.
+- Ensures services are started/stopped automatically for per-suite and multi-suite runs.
 - Protects the current shared DB with explicit safety guardrails.
 
 ## Required Setup
@@ -51,6 +58,24 @@ Full run (all configured suites):
 pnpm -C apps/web run test:e2e:full
 ```
 
+Shared-service batch run (start services once, run many suites, stop once):
+
+```bash
+pnpm -C apps/web run test:e2e:batch
+```
+
+Shared-service smoke preset:
+
+```bash
+pnpm -C apps/web run test:e2e:batch:smoke
+```
+
+Single-suite run (per-suite lifecycle):
+
+```bash
+pnpm -C apps/web run test:e2e:matrix
+```
+
 Default artifact mode:
 - `E2E_REPORT_ONLY` is enabled by default.
 - Runner keeps only coverage reports after each run.
@@ -66,6 +91,32 @@ Override suite list:
 ```bash
 E2E_SUITE_LIST="test:e2e:matrix,test:e2e:pairs" pnpm -C apps/web run test:e2e:full
 ```
+
+## Automatic Data Initialization Policy
+
+Each E2E suite resolves its data policy in this order:
+
+1. `E2E_DATA_POLICY_<TEST_ID>`
+2. `E2E_DATA_POLICY`
+3. suite default in code
+
+Supported policies:
+
+- `reuse`: no DB mutation, use current state
+- `seed`: run `db:seed` (+ `db:seed:smoke` by default)
+- `reset-seed`: run `db:reset`, then `db:seed` (+ smoke check)
+
+Examples:
+
+```bash
+E2E_DATA_POLICY=reset-seed pnpm -C apps/web run test:e2e:matrix
+E2E_DATA_POLICY_API_CONTRACTS=reset-seed pnpm -C apps/web run test:e2e:api:contracts
+E2E_DATA_POLICY=reuse pnpm -C apps/web run test:e2e:pairs
+```
+
+Legacy compatibility:
+
+- `E2E_REFRESH_DB=1` is still supported by API contract E2E and maps to `reset-seed` when no policy is set.
 
 ## Release Gate Playbook (MVP)
 
@@ -111,5 +162,6 @@ Common failure classes and actions:
 ## Operational Notes (Current Shared DB Mode)
 
 - This is a transition setup using the current DB, not a dedicated E2E database yet.
-- Runner always resets DB before and after suites to minimize state leakage.
+- Full lifecycle runner resets DB before and after suites to minimize state leakage.
+- Batch/per-suite runners follow suite data policies (`reuse`/`seed`/`reset-seed`) and service requirements automatically.
 - Avoid running this flow while other users depend on the same DB state.
