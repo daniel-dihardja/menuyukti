@@ -126,7 +126,7 @@ To keep MVP execution focused and avoid over-engineering, release scope is inten
 - Versioned contracts (`v1`, `v1.x`) for API payloads and marts.
 - Backward-compatibility policy and deprecation window documented.
 - Required vs optional fields explicitly defined per contract.
-- ETL run-history API contract documented (`packages/docs/ETL_RUNS_LIST_API_CONTRACT.md`).
+- ETL run-history API contract documented (`packages/docs/contracts/ETL_RUNS_LIST_API_CONTRACT.md`).
 
 ### 2.5 Operations and Reliability
 - Pipeline run tracking: `run_id`, status, duration, row counts, rejection counts.
