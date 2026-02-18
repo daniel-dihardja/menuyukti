@@ -7,6 +7,10 @@ import {
   listReleaseLoopRecords,
   type ReleaseLoopAuditRecord,
 } from "@/lib/agents/release-loop-repository";
+import {
+  createDecisionApiContract,
+  createDecisionContext,
+} from "@/lib/contracts/decision-api-contract";
 
 function parsePositiveInt(raw: string | null): number | null {
   if (!raw) return null;
@@ -19,14 +23,65 @@ export async function GET(request: NextRequest) {
   const locationId = parsePositiveInt(request.nextUrl.searchParams.get("locationId"));
   const analyticsId = parsePositiveInt(request.nextUrl.searchParams.get("analyticsId"));
   if (!locationId) {
-    return NextResponse.json({ error: "INVALID_LOCATION_ID" }, { status: 400 });
+    const context = createDecisionContext({
+      persona: "analyst",
+      trust: { qualityStatus: "failed", reasons: ["invalid_location_id"] },
+    });
+    return NextResponse.json(
+      {
+        error: "INVALID_LOCATION_ID",
+        contract: createDecisionApiContract({
+          surface: "agent:learning-release-loop",
+          context,
+          readiness: "blocked",
+          confidence: "blocked",
+        }),
+      },
+      { status: 400 },
+    );
   }
   const records = await listReleaseLoopRecords(prisma, {
     locationId,
     analyticsId: analyticsId ?? undefined,
     limit: parsePositiveInt(request.nextUrl.searchParams.get("limit")) ?? 30,
   });
-  return NextResponse.json({ locationId, analyticsId: analyticsId ?? null, records });
+  const latest = records[0] ?? null;
+  const latestNonAdvance = latest?.decision !== "advance";
+  const context = createDecisionContext({
+    persona: "analyst",
+    locationId,
+    analyticsId: analyticsId ?? null,
+    trust: {
+      qualityStatus: records.length === 0 || latestNonAdvance ? "warn" : "passed",
+      reasons:
+        records.length === 0
+          ? ["no_release_records"]
+          : latestNonAdvance
+            ? [`latest_decision_${latest?.decision ?? "hold"}`]
+            : [],
+    },
+  });
+
+  return NextResponse.json({
+    locationId,
+    analyticsId: analyticsId ?? null,
+    records,
+    contract: createDecisionApiContract({
+      surface: "agent:learning-release-loop",
+      context,
+      readiness: records.length === 0 || latestNonAdvance ? "degraded" : "ready",
+      confidence: records.length === 0 || latestNonAdvance ? "medium" : "high",
+      evidence: [
+        {
+          source: "derived_runtime",
+          entity: "agent.release_loop",
+          metric: "record_count",
+          value: records.length,
+          key: { locationId, analyticsId: analyticsId ?? null },
+        },
+      ],
+    }),
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -47,7 +102,22 @@ export async function POST(request: NextRequest) {
     typeof body.baselinePolicyVersion !== "string" ||
     body.baselinePolicyVersion.trim() === ""
   ) {
-    return NextResponse.json({ error: "INVALID_RELEASE_LOOP_PAYLOAD" }, { status: 400 });
+    const context = createDecisionContext({
+      persona: "analyst",
+      trust: { qualityStatus: "failed", reasons: ["invalid_release_loop_payload"] },
+    });
+    return NextResponse.json(
+      {
+        error: "INVALID_RELEASE_LOOP_PAYLOAD",
+        contract: createDecisionApiContract({
+          surface: "agent:learning-release-loop",
+          context,
+          readiness: "blocked",
+          confidence: "blocked",
+        }),
+      },
+      { status: 400 },
+    );
   }
 
   const locationId = body.locationId as number;
@@ -98,7 +168,24 @@ export async function POST(request: NextRequest) {
     }),
   });
   if (!response.ok) {
-    return NextResponse.json({ error: "AGENTS_SERVICE_UNAVAILABLE" }, { status: 503 });
+    const context = createDecisionContext({
+      persona: "analyst",
+      locationId,
+      analyticsId,
+      trust: { qualityStatus: "failed", reasons: ["agents_service_unavailable"] },
+    });
+    return NextResponse.json(
+      {
+        error: "AGENTS_SERVICE_UNAVAILABLE",
+        contract: createDecisionApiContract({
+          surface: "agent:learning-release-loop",
+          context,
+          readiness: "blocked",
+          confidence: "blocked",
+        }),
+      },
+      { status: 503 },
+    );
   }
   const decisionPayload = (await response.json()) as {
     release_decision?: {
@@ -130,8 +217,33 @@ export async function POST(request: NextRequest) {
     record,
   });
 
+  const context = createDecisionContext({
+    persona: "analyst",
+    locationId,
+    analyticsId,
+    trust: {
+      qualityStatus: record.decision === "advance" ? "passed" : "warn",
+      reasons: record.reasons,
+    },
+  });
+
   return NextResponse.json({
     record,
     decision: decisionPayload.release_decision ?? null,
+    contract: createDecisionApiContract({
+      surface: "agent:learning-release-loop",
+      context,
+      readiness: record.decision === "advance" ? "ready" : "degraded",
+      confidence: record.decision === "advance" ? "high" : "medium",
+      evidence: [
+        {
+          source: "derived_runtime",
+          entity: "agent.release_loop",
+          metric: "decision",
+          value: record.decision,
+          key: { locationId, analyticsId, stage: record.stage },
+        },
+      ],
+    }),
   });
 }

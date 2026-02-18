@@ -5,6 +5,10 @@ import {
   appendRecommendationMemory,
   listRecentRecommendationMemory,
 } from "@/lib/agents/memory-repository";
+import {
+  createDecisionApiContract,
+  createDecisionContext,
+} from "@/lib/contracts/decision-api-contract";
 
 function parsePositiveInt(raw: string | null): number | null {
   if (!raw) return null;
@@ -18,7 +22,22 @@ export async function GET(request: NextRequest) {
   const limit = parsePositiveInt(request.nextUrl.searchParams.get("limit")) ?? 20;
 
   if (!locationId) {
-    return NextResponse.json({ error: "INVALID_LOCATION_ID" }, { status: 400 });
+    const context = createDecisionContext({
+      persona: "analyst",
+      trust: { qualityStatus: "failed", reasons: ["invalid_location_id"] },
+    });
+    return NextResponse.json(
+      {
+        error: "INVALID_LOCATION_ID",
+        contract: createDecisionApiContract({
+          surface: "agent:memory-context",
+          context,
+          readiness: "blocked",
+          confidence: "blocked",
+        }),
+      },
+      { status: 400 },
+    );
   }
 
   const events = await listRecentRecommendationMemory(prisma, {
@@ -55,11 +74,35 @@ export async function GET(request: NextRequest) {
     memoryContext = null;
   }
 
+  const context = createDecisionContext({
+    persona: "analyst",
+    locationId,
+    trust: {
+      qualityStatus: events.length === 0 ? "warn" : "passed",
+      reasons: events.length === 0 ? ["no_memory_events"] : [],
+    },
+  });
+
   return NextResponse.json({
     locationId,
     count: events.length,
     events,
     memoryContext,
+    contract: createDecisionApiContract({
+      surface: "agent:memory-context",
+      context,
+      readiness: events.length === 0 ? "degraded" : "ready",
+      confidence: events.length === 0 ? "medium" : "high",
+      evidence: [
+        {
+          source: "derived_runtime",
+          entity: "agent.memory_store",
+          metric: "event_count",
+          value: events.length,
+          key: { locationId },
+        },
+      ],
+    }),
   });
 }
 
@@ -85,7 +128,22 @@ export async function POST(request: NextRequest) {
     body.sourceAgentId.trim() === "" ||
     (body.state !== "accepted" && body.state !== "rejected")
   ) {
-    return NextResponse.json({ error: "INVALID_MEMORY_PAYLOAD" }, { status: 400 });
+    const context = createDecisionContext({
+      persona: "analyst",
+      trust: { qualityStatus: "failed", reasons: ["invalid_memory_payload"] },
+    });
+    return NextResponse.json(
+      {
+        error: "INVALID_MEMORY_PAYLOAD",
+        contract: createDecisionApiContract({
+          surface: "agent:memory-context",
+          context,
+          readiness: "blocked",
+          confidence: "blocked",
+        }),
+      },
+      { status: 400 },
+    );
   }
   const locationId = body.locationId as number;
   const analyticsId = body.analyticsId as number;
@@ -102,5 +160,29 @@ export async function POST(request: NextRequest) {
     outcomeScore: typeof body.outcomeScore === "number" ? body.outcomeScore : null,
   });
 
-  return NextResponse.json({ event });
+  const context = createDecisionContext({
+    persona: "analyst",
+    locationId,
+    analyticsId,
+    trust: { qualityStatus: "passed", reasons: [] },
+  });
+
+  return NextResponse.json({
+    event,
+    contract: createDecisionApiContract({
+      surface: "agent:memory-context",
+      context,
+      readiness: "ready",
+      confidence: "high",
+      evidence: [
+        {
+          source: "derived_runtime",
+          entity: "agent.memory_store",
+          metric: "event_version",
+          value: event.version,
+          key: { locationId, analyticsId, recommendationId: event.recommendationId },
+        },
+      ],
+    }),
+  });
 }

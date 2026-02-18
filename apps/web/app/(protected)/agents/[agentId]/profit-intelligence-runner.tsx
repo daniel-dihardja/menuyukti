@@ -4,9 +4,11 @@ import { useMemo, useState } from "react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import type { DecisionApiContractDto } from "@/lib/contracts/decision-api-contract";
 import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
+import { OutputTrustPanel } from "./output-trust-panel";
 
 type Recommendation = {
   rank: number;
@@ -20,7 +22,7 @@ type Recommendation = {
 };
 
 type ProfitIntelligenceResponse = {
-  contract?: { readiness?: string };
+  contract?: DecisionApiContractDto;
   profitIntelligence?: {
     status?: string;
     board?: {
@@ -59,6 +61,7 @@ export function ProfitIntelligenceRunner() {
       const response = await fetch(`/api/agents/profit-intelligence?analyticsId=${targetAnalyticsId}`);
       const body = (await response.json().catch(() => ({}))) as ProfitIntelligenceResponse;
       if (!response.ok) {
+        setPayload(body);
         throw new Error((body as { error?: string }).error ?? "FAILED_TO_RUN_PROFIT_INTELLIGENCE");
       }
       setPayload(body);
@@ -100,11 +103,6 @@ export function ProfitIntelligenceRunner() {
           >
             selected context: {contextState.status}
           </Badge>
-          {payload?.contract?.readiness ? (
-            <Badge variant={payload.contract.readiness === "blocked" ? "destructive" : "secondary"}>
-              readiness: {payload.contract.readiness}
-            </Badge>
-          ) : null}
           {payload?.contextCoverage?.cogsReadiness ? (
             <Badge variant="secondary">cogs: {payload.contextCoverage.cogsReadiness}</Badge>
           ) : null}
@@ -153,6 +151,7 @@ export function ProfitIntelligenceRunner() {
             ) : null}
           </div>
         ) : null}
+        <OutputTrustPanel contract={payload?.contract} />
       </CardContent>
     </Card>
   );

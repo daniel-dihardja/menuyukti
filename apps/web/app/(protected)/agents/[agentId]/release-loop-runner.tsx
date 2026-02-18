@@ -5,9 +5,11 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
+import type { DecisionApiContractDto } from "@/lib/contracts/decision-api-contract";
 import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
+import { OutputTrustPanel } from "./output-trust-panel";
 
 type Stage = "shadow" | "canary" | "rollout";
 
@@ -23,6 +25,8 @@ type RecordDto = {
 };
 
 type ReleaseLoopPayload = {
+  contract?: DecisionApiContractDto;
+  records?: RecordDto[];
   record?: RecordDto;
   decision?: {
     decision?: string;
@@ -38,6 +42,7 @@ export function ReleaseLoopRunner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [records, setRecords] = useState<RecordDto[]>([]);
+  const [contract, setContract] = useState<DecisionApiContractDto | null>(null);
 
   const latest = useMemo(() => records[0] ?? null, [records]);
   const contextState = resolveSelectedContextState({ locationId, analyticsId });
@@ -47,9 +52,10 @@ export function ReleaseLoopRunner() {
     const response = await fetch(
       `/api/agents/learning/release-loop?locationId=${targetContext.locationId}${targetContext.analyticsId ? `&analyticsId=${targetContext.analyticsId}` : ""}`,
     );
-    const body = (await response.json().catch(() => ({}))) as { records?: RecordDto[] };
-    if (!response.ok) throw new Error((body as { error?: string }).error ?? "FAILED_TO_LOAD_RELEASE_LOOP");
+    const body = (await response.json().catch(() => ({}))) as ReleaseLoopPayload & { error?: string };
+    if (!response.ok) throw new Error(body.error ?? "FAILED_TO_LOAD_RELEASE_LOOP");
     setRecords(Array.isArray(body.records) ? body.records : []);
+    setContract(body.contract ?? null);
   }
 
   async function run(targetContext: { locationId: number | null; analyticsId: number | null } = { locationId, analyticsId }) {
@@ -70,7 +76,11 @@ export function ReleaseLoopRunner() {
         }),
       });
       const body = (await response.json().catch(() => ({}))) as ReleaseLoopPayload & { error?: string };
-      if (!response.ok) throw new Error(body.error ?? "FAILED_TO_RUN_RELEASE_LOOP");
+      if (!response.ok) {
+        setContract(body.contract ?? null);
+        throw new Error(body.error ?? "FAILED_TO_RUN_RELEASE_LOOP");
+      }
+      setContract(body.contract ?? null);
       await refresh(targetContext);
       if (body.decision?.decision === "rollback") {
         setError(
@@ -160,6 +170,11 @@ export function ReleaseLoopRunner() {
             ) : null}
           </div>
         ) : null}
+        <OutputTrustPanel
+          contract={contract}
+          guardrailState={latest?.decision ?? null}
+          fallbackUsed={latest?.decision === "rollback"}
+        />
       </CardContent>
     </Card>
   );

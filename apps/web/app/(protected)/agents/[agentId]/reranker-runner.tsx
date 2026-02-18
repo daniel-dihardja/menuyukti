@@ -4,9 +4,11 @@ import { useMemo, useState } from "react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import type { DecisionApiContractDto } from "@/lib/contracts/decision-api-contract";
 import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
+import { OutputTrustPanel } from "./output-trust-panel";
 
 type RerankedRecommendation = {
   recommendation_id: string;
@@ -24,6 +26,7 @@ type RerankedRecommendation = {
 };
 
 type RerankedPayload = {
+  contract?: DecisionApiContractDto;
   reranked?: {
     policy_version?: string;
     fallback_to_baseline?: boolean;
@@ -48,7 +51,10 @@ export function RerankerRunner() {
     try {
       const response = await fetch(`/api/agents/profit-intelligence/reranked?analyticsId=${targetAnalyticsId}`);
       const body = (await response.json().catch(() => ({}))) as RerankedPayload & { error?: string };
-      if (!response.ok) throw new Error(body.error ?? "FAILED_TO_RUN_RERANK");
+      if (!response.ok) {
+        setPayload(body);
+        throw new Error(body.error ?? "FAILED_TO_RUN_RERANK");
+      }
       setPayload(body);
     } catch (err) {
       setPayload(null);
@@ -126,6 +132,11 @@ export function RerankerRunner() {
         ) : payload ? (
           <p className="text-sm text-muted-foreground">No reranked recommendations.</p>
         ) : null}
+        <OutputTrustPanel
+          contract={payload?.contract}
+          fallbackUsed={Boolean(payload?.reranked?.fallback_to_baseline)}
+          guardrailState={payload?.reranked?.fallback_to_baseline ? "degraded" : null}
+        />
       </CardContent>
     </Card>
   );

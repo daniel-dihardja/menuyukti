@@ -138,6 +138,12 @@ Run selected-context runner validation across all ready agents:
 pnpm -C apps/web run test:e2e:agents:selected-context
 ```
 
+Run output-trust-panel validation (ready/degraded trust states):
+
+```bash
+pnpm -C apps/web run test:e2e:agents:output-trust-panel
+```
+
 Run learning release-loop gate validation (web + agents services):
 
 ```bash

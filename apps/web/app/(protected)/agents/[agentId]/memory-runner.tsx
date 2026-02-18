@@ -4,9 +4,11 @@ import { useMemo, useState } from "react";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import type { DecisionApiContractDto } from "@/lib/contracts/decision-api-contract";
 import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
+import { OutputTrustPanel } from "./output-trust-panel";
 
 type MemoryEvent = {
   id: string;
@@ -19,6 +21,7 @@ type MemoryEvent = {
 };
 
 type MemoryPayload = {
+  contract?: DecisionApiContractDto;
   count: number;
   events: MemoryEvent[];
   memoryContext?: {
@@ -47,6 +50,7 @@ export function MemoryRunner() {
       const response = await fetch(`/api/agents/memory?locationId=${targetLocationId}&limit=20`);
       const body = (await response.json().catch(() => ({}))) as MemoryPayload;
       if (!response.ok) {
+        setPayload(body);
         throw new Error((body as { error?: string }).error ?? "FAILED_TO_LOAD_MEMORY");
       }
       setPayload(body);
@@ -161,6 +165,7 @@ export function MemoryRunner() {
         ) : payload ? (
           <p className="text-sm text-muted-foreground">No memory events yet.</p>
         ) : null}
+        <OutputTrustPanel contract={payload?.contract} />
       </CardContent>
     </Card>
   );

@@ -5,9 +5,11 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
+import type { DecisionApiContractDto } from "@/lib/contracts/decision-api-contract";
 import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
+import { OutputTrustPanel } from "./output-trust-panel";
 
 type Mode = "conservative" | "aggressive";
 
@@ -22,7 +24,7 @@ type ConsensusRecommendation = {
 };
 
 type ConsensusResponse = {
-  contract?: { readiness?: string };
+  contract?: DecisionApiContractDto;
   consensus?: {
     status?: string;
     consensus?: {
@@ -52,6 +54,7 @@ export function ConsensusRunner() {
       const response = await fetch(`/api/agents/consensus?analyticsId=${targetAnalyticsId}&mode=${mode}`);
       const body = (await response.json().catch(() => ({}))) as ConsensusResponse;
       if (!response.ok) {
+        setPayload(body);
         throw new Error((body as { error?: string }).error ?? "FAILED_TO_RUN_CONSENSUS");
       }
       setPayload(body);
@@ -113,11 +116,6 @@ export function ConsensusRunner() {
           >
             selected context: {contextState.status}
           </Badge>
-          {payload?.contract?.readiness ? (
-            <Badge variant={payload.contract.readiness === "blocked" ? "destructive" : "secondary"}>
-              readiness: {payload.contract.readiness}
-            </Badge>
-          ) : null}
         </div>
         {contextState.status !== "ready" ? (
           <p className="text-xs text-muted-foreground">{contextState.reason}</p>
@@ -162,6 +160,7 @@ export function ConsensusRunner() {
             disagreement: {result.disagreement_reasons.join(", ")}
           </div>
         ) : null}
+        <OutputTrustPanel contract={payload?.contract} />
       </CardContent>
     </Card>
   );

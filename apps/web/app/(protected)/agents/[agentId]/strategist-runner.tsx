@@ -4,9 +4,11 @@ import { useMemo, useState } from "react";
 import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import type { DecisionApiContractDto } from "@/lib/contracts/decision-api-contract";
 import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
+import { OutputTrustPanel } from "./output-trust-panel";
 
 type StrategistPriority = {
   rank: number;
@@ -19,7 +21,7 @@ type StrategistPriority = {
 };
 
 type StrategistResponse = {
-  contract?: { readiness?: string; confidence?: string };
+  contract?: DecisionApiContractDto;
   strategist?: {
     status?: string;
     reason_code?: string;
@@ -49,6 +51,7 @@ export function StrategistRunner() {
       });
       const body = (await response.json().catch(() => ({}))) as StrategistResponse;
       if (!response.ok) {
+        setPayload(body);
         throw new Error((body as { error?: string }).error ?? "FAILED_TO_RUN_STRATEGIST");
       }
       setPayload(body);
@@ -88,11 +91,6 @@ export function StrategistRunner() {
           >
             selected context: {contextState.status}
           </Badge>
-          {payload?.contract?.readiness ? (
-            <Badge variant={payload.contract.readiness === "blocked" ? "destructive" : "secondary"}>
-              readiness: {payload.contract.readiness}
-            </Badge>
-          ) : null}
         </div>
         {contextState.status !== "ready" ? (
           <p className="text-xs text-muted-foreground">{contextState.reason}</p>
@@ -126,6 +124,7 @@ export function StrategistRunner() {
         ) : payload ? (
           <p className="text-sm text-muted-foreground">No actionable weekly priorities returned.</p>
         ) : null}
+        <OutputTrustPanel contract={payload?.contract} />
       </CardContent>
     </Card>
   );
