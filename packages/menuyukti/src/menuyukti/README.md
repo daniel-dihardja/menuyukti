@@ -16,6 +16,29 @@ It is intentionally deterministic where possible, and keeps agent logic thin and
 1. Build `CoreInputs` from matrix items, distribution, heatmaps, and optional sales summary metrics.
 2. Use feature providers (e.g. audience) for agent-specific data.
 
+## Core Input Contract (ME-01)
+
+`CoreInputs` is now a strict canonical contract:
+
+- `matrix_items`: required, non-empty
+- `heatmaps`: required, non-empty
+- `distribution`: required, no duplicate category entries
+- `sales_summary`: optional (`None` by default)
+- extra/unknown fields are rejected
+
+Validation behavior:
+
+- every matrix item must have a matching heatmap menu
+- distribution categories must be unique (`star`, `puzzle`, `plow_horse`, `low_end`)
+- invalid payloads raise code-prefixed errors (for example:
+  `CORE_INPUT_HEATMAP_MISSING_FOR_MATRIX_ITEM`,
+  `CORE_INPUT_DISTRIBUTION_DUPLICATE_CATEGORY`)
+
+Normalization behavior:
+
+- `matrix_items`, `heatmaps`, and `distribution.categories` are sorted deterministically
+- equivalent input payloads produce stable serialized ordering between runs
+
 ## Key Entry Points
 
 ```python

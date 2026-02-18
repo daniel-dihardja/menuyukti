@@ -1,10 +1,12 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from menuyukti.core.inputs import CoreInputs
 from menuyukti.core.models.matrix_item import MatrixItem
 from menuyukti.core.models.heatmap import MenuHeatmap
-from menuyukti.core.models.matrix_distribution import MatrixDistribution
+from menuyukti.core.models.matrix_distribution import CategoryDistribution, MatrixDistribution
 from menuyukti.core.models.sales_analytics_summary import SalesAnalyticsSummary
 
 
@@ -29,6 +31,7 @@ def test_core_inputs_model():
     assert len(core.matrix_items) == 2
     assert len(core.heatmaps) == 2
     assert core.distribution.categories
+    assert core.sales_summary is None
 
 
 def test_core_inputs_model_with_sales_summary_alias_support():
@@ -60,3 +63,71 @@ def test_core_inputs_model_with_sales_summary_alias_support():
 
     assert core.sales_summary is not None
     assert core.sales_summary.avg_popularity_threshold == 0.41
+
+
+def test_core_inputs_rejects_empty_matrix_items():
+    heatmaps = [MenuHeatmap(**h) for h in _load_json("heatmaps.json")]
+    distribution = MatrixDistribution(**_load_json("distribution.json"))
+
+    with pytest.raises(ValueError) as exc:
+        CoreInputs(matrix_items=[], heatmaps=heatmaps, distribution=distribution)
+
+    assert "at least 1 item" in str(exc.value)
+
+
+def test_core_inputs_rejects_unknown_heatmap_menu():
+    matrix_items = [MatrixItem(**i) for i in _load_json("matrix_items.json")]
+    heatmaps = [MenuHeatmap(**h) for h in _load_json("heatmaps.json")]
+    distribution = MatrixDistribution(**_load_json("distribution.json"))
+    rogue_heatmap = {
+        "menu": "Rogue Menu",
+        "menu_category": "DRINK",
+        "menu_category_detail": "SPECIAL",
+        "daily_heatmap": [],
+        "weekly_heatmap": [],
+        "reporting_period": "2026-01",
+    }
+    heatmaps.append(MenuHeatmap(**rogue_heatmap))
+
+    with pytest.raises(ValueError) as exc:
+        CoreInputs(
+            matrix_items=matrix_items,
+            heatmaps=heatmaps,
+            distribution=distribution,
+        )
+
+    assert "CORE_INPUT_HEATMAP_MENU_UNKNOWN" in str(exc.value)
+
+
+def test_core_inputs_rejects_duplicate_distribution_category():
+    matrix_items = [MatrixItem(**i) for i in _load_json("matrix_items.json")]
+    heatmaps = [MenuHeatmap(**h) for h in _load_json("heatmaps.json")]
+    distribution = MatrixDistribution(
+        categories=[
+            CategoryDistribution(category="star", item_count=1, item_share=0.5, margin_share=0.6),
+            CategoryDistribution(category="star", item_count=1, item_share=0.5, margin_share=0.4),
+        ]
+    )
+
+    with pytest.raises(ValueError) as exc:
+        CoreInputs(matrix_items=matrix_items, heatmaps=heatmaps, distribution=distribution)
+
+    assert "CORE_INPUT_DISTRIBUTION_DUPLICATE_CATEGORY" in str(exc.value)
+
+
+def test_core_inputs_sorts_deterministically():
+    matrix_items = [MatrixItem(**i) for i in _load_json("matrix_items.json")]
+    heatmaps = [MenuHeatmap(**h) for h in _load_json("heatmaps.json")]
+    distribution = MatrixDistribution(**_load_json("distribution.json"))
+
+    core = CoreInputs(
+        matrix_items=list(reversed(matrix_items)),
+        heatmaps=list(reversed(heatmaps)),
+        distribution=MatrixDistribution(categories=list(reversed(distribution.categories))),
+    )
+
+    assert [item.menu for item in core.matrix_items] == sorted([item.menu for item in matrix_items], key=str.lower)
+    assert [item.menu for item in core.heatmaps] == sorted([item.menu for item in heatmaps], key=str.lower)
+    assert [item.category for item in core.distribution.categories] == sorted(
+        [item.category for item in distribution.categories]
+    )
