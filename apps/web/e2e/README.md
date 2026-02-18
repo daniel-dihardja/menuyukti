@@ -168,6 +168,18 @@ Run Agent Studio overview grid + per-agent sandbox validation:
 pnpm -C apps/web run test:e2e:agents:studio-overview-sandbox
 ```
 
+Run release validation gate (blocking sequence: agents integration -> mandatory web E2E):
+
+```bash
+pnpm -C apps/web run test:e2e:release:validate
+```
+
+Run release validation gate wiring test (dry-run + simulated failure artifact validation):
+
+```bash
+pnpm -C apps/web run test:e2e:agents:validation-gate
+```
+
 Run seed-validation suite without starting app/agent services:
 
 ```bash
@@ -178,6 +190,25 @@ E2E_REQUIRED_SERVICES=none pnpm -C apps/web run test:e2e:seed
 
 - Browser/API E2E tests also verify API reachability before running.
 - `seed-creation.e2e.ts` already contains seed-specific validation logic.
+
+## Release Gate Manifest + Failure Artifacts
+
+- Manifest source of truth: `apps/web/e2e/mandatory-suites.json`
+- Gate runner: `apps/web/scripts/run-release-validation-gate.ts`
+- Latest gate report: `apps/web/e2e-artifacts/runner-reports/release-validation-gate-latest.json`
+- Per-step logs: `apps/web/e2e-artifacts/gate-logs/*.log`
+
+Gate behavior:
+
+1. Runs `agents-integration` phase first.
+2. Only when integration passes, runs mandatory `web-e2e` suites.
+3. Stops immediately on first blocking phase failure.
+4. Writes machine-readable report + per-step logs for debugging.
+
+Dry-run utilities (for CI wiring checks):
+
+- `E2E_GATE_DRY_RUN=1` to skip live suite execution.
+- `E2E_GATE_SIMULATE_FAILURE=<phase-or-step-id>` to force a failure and validate reporting.
 
 ## Sandbox mode guidance (to avoid hanging tests)
 

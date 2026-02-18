@@ -157,44 +157,44 @@ Why:
 7. **AST-07: Comparison View (Single Session)**
 - Compare two runs of the same agent for changed assumptions/context.
 
-8. **AST-08: Validation and E2E Gate**
-- Add dedicated E2E suites and release checks for Agent Studio flows.
-
-9. **AST-09: LLM Runtime Integration per Agent**
-- Implement model invocation for each released agent with provider abstraction and retries/timeouts.
-
-10. **AST-10: Prompt and Model Contract Versioning**
+8. **AST-10: Prompt and Model Contract Versioning**
 - Define prompt/input/output contracts and versioning per agent (`v1` baseline).
 - Deliver prompt templates for each released agent with strict output schema requirements.
 
-11. **AST-11: LLM Guardrails and Fallback**
-- Add structured fallback mode when model/provider fails or confidence is below threshold.
-
-12. **AST-12: LLM Evaluation Harness**
-- Add integration tests and E2E checks validating LLM response shape, trust metadata, and deterministic fallbacks.
-
-13. **AST-13: Mocked-Input Integration Test Baseline per Agent**
+9. **AST-13: Mocked-Input Integration Test Baseline per Agent**
 - For each released agent, implement integration tests that mock all required inputs and validate:
   - contract-compliant output shape
   - trust metadata fields
   - fallback/degraded behavior under controlled failure scenarios
 
-14. **AST-14: Phase-2 Handoff Readiness Checklist**
-- Prepare and enforce a readiness checklist for the next epic (no multi-agent implementation in this epic):
-  - all targeted single agents are LLM-enabled
-  - mocked-input integration tests pass per agent
-  - per-agent run surfaces are stable in Agent Studio
-  - rollout flag + fallback policy are documented
+10. **AST-09: LLM Runtime Integration per Agent**
+- Implement model invocation for each released agent with provider abstraction and retries/timeouts.
 
-15. **AST-15: Prompt Tuning Loop per Agent (Isolated)**
+11. **AST-11: LLM Guardrails and Fallback**
+- Add structured fallback mode when model/provider fails or confidence is below threshold.
+
+12. **AST-16: LLM Disable Switch (Mechanical Test Mode)**
+- Add runtime config/env flag (for example `AGENTS_LLM_ENABLED=false`) to disable live LLM calls globally and run deterministic mechanical mode for regression and UI testing.
+
+13. **AST-12: LLM Evaluation Harness**
+- Add integration tests and E2E checks validating LLM response shape, trust metadata, and deterministic fallbacks.
+
+14. **AST-15: Prompt Tuning Loop per Agent (Isolated)**
 - Iteratively tune each agent prompt using mocked-input integration scenarios until acceptance thresholds are met for:
   - schema compliance
   - actionability/readability
   - trust metadata completeness
   - fallback correctness
 
-16. **AST-16: LLM Disable Switch (Mechanical Test Mode)**
-- Add runtime config/env flag (for example `AGENTS_LLM_ENABLED=false`) to disable live LLM calls globally and run deterministic mechanical mode for regression and UI testing.
+15. **AST-08: Validation and E2E Gate**
+- Add dedicated E2E suites and release checks for Agent Studio flows.
+
+16. **AST-14: Phase-2 Handoff Readiness Checklist**
+- Prepare and enforce a readiness checklist for the next epic (no multi-agent implementation in this epic):
+  - all targeted single agents are LLM-enabled
+  - mocked-input integration tests pass per agent
+  - per-agent run surfaces are stable in Agent Studio
+  - rollout flag + fallback policy are documented
 
 ## Acceptance Criteria
 

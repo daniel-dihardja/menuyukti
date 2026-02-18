@@ -1,0 +1,39 @@
+{
+  "version": "v1",
+  "phases": [
+    {
+      "id": "agents-integration",
+      "description": "Agents integration tests must pass before web E2E suites run.",
+      "blocking": true,
+      "commands": [
+        {
+          "id": "agents-integration-tests",
+          "command": "uv",
+          "args": [
+            "run",
+            "--project",
+            "apps/agents",
+            "pytest",
+            "apps/agents/tests/integration_tests"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "web-e2e",
+      "description": "Mandatory Agent Studio E2E suites for release gates.",
+      "blocking": true,
+      "suites": [
+        "test:e2e:agents:tool-contract-policy",
+        "test:e2e:agents:card-standard",
+        "test:e2e:agents:contract-panels",
+        "test:e2e:agents:sample-context",
+        "test:e2e:agents:selected-context",
+        "test:e2e:agents:output-trust-panel",
+        "test:e2e:agents:run-history",
+        "test:e2e:agents:run-comparison",
+        "test:e2e:agents:release-gate"
+      ]
+    }
+  ]
+}
