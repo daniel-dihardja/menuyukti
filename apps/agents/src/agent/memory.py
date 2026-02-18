@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from agent.llm_runtime import build_run_metadata, execute_llm_step
+from agent.llm_runtime import build_run_metadata, execute_llm_step, resolve_agent_status
 from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
 
@@ -65,11 +65,17 @@ def build_memory_context(payload: MemoryContextRequest) -> dict:
     if llm_signal in {"stable", "caution"}:
         continuity_signal = llm_signal
 
+    status, reason_code = resolve_agent_status(
+        base_status="accepted",
+        base_reason_code="ALLOWED",
+        llm=llm,
+    )
+
     return {
         "contract_version": payload.contract_version,
         "agent_id": agent_id,
-        "status": "accepted",
-        "reason_code": "ALLOWED",
+        "status": status,
+        "reason_code": reason_code,
         "run": build_run_metadata(run_id=run_id, runtime=runtime, llm=llm),
         "memory_context": {
             "location_id": payload.location_id,

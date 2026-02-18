@@ -122,6 +122,8 @@ Agents service environment:
 - Required:
   - `AGENTS_LLM_ENABLED` — `true|false` to enable live provider runtime.
   - `AGENTS_LLM_PROVIDER` — `mock|openai`.
+- Optional guardrail mode:
+  - `AGENTS_LLM_FAILURE_MODE` — `fallback|blocked` (default `fallback`).
 - Required when `AGENTS_LLM_PROVIDER=openai`:
   - `OPENAI_API_KEY`.
 - Optional per-agent overrides:

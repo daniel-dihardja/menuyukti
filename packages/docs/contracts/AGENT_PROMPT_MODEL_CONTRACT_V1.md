@@ -44,6 +44,26 @@ During LLM execution:
 3. if validation fails, classify as `LLM_SCHEMA_INVALID`
 4. apply deterministic fallback path
 
+## Guardrail Reason-Code Catalog (v1)
+
+LLM/runtime failure codes:
+
+- `LLM_TIMEOUT`
+- `LLM_SCHEMA_INVALID`
+- `LLM_PROVIDER_ERROR`
+- `LLM_FALLBACK_USED`
+- `LLM_GUARDRAIL_BLOCKED`
+
+Data/readiness codes (agent-level):
+
+- `DATA_READINESS_BLOCKED`
+- `DATA_READINESS_DEGRADED`
+
+Behavior:
+
+- `AGENTS_LLM_FAILURE_MODE=fallback`: keep structured payload and set LLM status to `fallback`.
+- `AGENTS_LLM_FAILURE_MODE=blocked`: keep structured payload and set agent status to `blocked` with `LLM_GUARDRAIL_BLOCKED`.
+
 ## Phase 1 Agent Mapping (v1-draft)
 
 - `marketer-strategist` -> `gpt-4o-mini` / `v1-draft`

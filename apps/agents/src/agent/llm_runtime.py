@@ -10,6 +10,15 @@ from langchain_openai import ChatOpenAI
 
 from agent.runtime_config import AgentRuntimeConfig
 
+LLM_ERROR_TIMEOUT = "LLM_TIMEOUT"
+LLM_ERROR_SCHEMA_INVALID = "LLM_SCHEMA_INVALID"
+LLM_ERROR_PROVIDER = "LLM_PROVIDER_ERROR"
+LLM_ERROR_GUARDRAIL_BLOCKED = "LLM_GUARDRAIL_BLOCKED"
+LLM_ERROR_FALLBACK_USED = "LLM_FALLBACK_USED"
+
+LLM_FAILURE_MODE_FALLBACK = "fallback"
+LLM_FAILURE_MODE_BLOCKED = "blocked"
+
 
 class LlmProvider(Protocol):
     def invoke_json(
@@ -129,6 +138,13 @@ def get_llm_provider_name() -> str:
     return (os.getenv("AGENTS_LLM_PROVIDER") or "mock").strip().lower()
 
 
+def get_llm_failure_mode() -> str:
+    raw = (os.getenv("AGENTS_LLM_FAILURE_MODE") or LLM_FAILURE_MODE_FALLBACK).strip().lower()
+    if raw == LLM_FAILURE_MODE_BLOCKED:
+        return LLM_FAILURE_MODE_BLOCKED
+    return LLM_FAILURE_MODE_FALLBACK
+
+
 def _build_provider(provider_name: str) -> LlmProvider:
     if provider_name == "openai":
         return OpenAiLlmProvider()
@@ -189,16 +205,30 @@ def execute_llm_step(
                 attempts=attempts,
             )
         except TimeoutError as error:
-            last_error_code = "LLM_TIMEOUT"
+            last_error_code = LLM_ERROR_TIMEOUT
             last_error_message = str(error)
         except ValueError as error:
-            last_error_code = "LLM_SCHEMA_INVALID"
+            last_error_code = LLM_ERROR_SCHEMA_INVALID
             last_error_message = str(error)
         except Exception as error:  # noqa: BLE001
-            last_error_code = "LLM_PROVIDER_ERROR"
+            last_error_code = LLM_ERROR_PROVIDER
             last_error_message = str(error)
 
     elapsed_ms = int((time.perf_counter() - started) * 1000)
+    if get_llm_failure_mode() == LLM_FAILURE_MODE_BLOCKED:
+        return LlmExecutionResult(
+            status="blocked",
+            provider=provider_name,
+            mode="deterministic",
+            prompt_version=runtime.prompt_version,
+            model_id=runtime.model_id,
+            latency_ms=elapsed_ms,
+            output=None,
+            error_code=last_error_code or LLM_ERROR_GUARDRAIL_BLOCKED,
+            error_message=last_error_message,
+            attempts=attempts,
+        )
+
     return LlmExecutionResult(
         status="fallback",
         provider=provider_name,
@@ -240,3 +270,16 @@ def build_skipped_llm_result(*, runtime: AgentRuntimeConfig, reason_code: str) -
         error_code=reason_code,
         attempts=0,
     )
+
+
+def resolve_agent_status(
+    *,
+    base_status: str,
+    base_reason_code: str,
+    llm: LlmExecutionResult,
+) -> tuple[str, str]:
+    if llm.status == "blocked":
+        return ("blocked", LLM_ERROR_GUARDRAIL_BLOCKED)
+    if llm.status == "fallback" and base_status == "accepted":
+        return ("degraded", LLM_ERROR_FALLBACK_USED)
+    return (base_status, base_reason_code)

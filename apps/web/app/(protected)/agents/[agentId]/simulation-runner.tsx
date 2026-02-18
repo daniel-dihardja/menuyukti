@@ -70,6 +70,8 @@ export function SimulationRunner() {
     const winner = next?.simulation?.simulation?.winner?.name ?? "none";
     const scenarioCount = next?.simulation?.simulation?.ranked_scenarios?.length ?? 0;
     const status = next?.simulation?.status ?? "unknown";
+    const llmStatus = next?.simulation?.run?.llm_status ?? null;
+    const fallbackUsed = llmStatus === "fallback";
     setSessionRuns((current) => [
       {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -77,8 +79,8 @@ export function SimulationRunner() {
         status,
         readiness: next.contract?.readiness ?? null,
         confidence: next.contract?.confidence ?? null,
-        fallbackUsed: false,
-        guardrailState: next.contract?.readiness ?? null,
+        fallbackUsed,
+        guardrailState: status !== "unknown" ? status : next.contract?.readiness ?? null,
         fields: [
           { label: "mode", value: mode },
           { label: "winner", value: winner },
@@ -190,7 +192,12 @@ export function SimulationRunner() {
         ) : payload ? (
           <p className="text-sm text-muted-foreground">No scenarios were returned.</p>
         ) : null}
-        <OutputTrustPanel contract={payload?.contract} runMetadata={payload?.simulation?.run ?? null} />
+        <OutputTrustPanel
+          contract={payload?.contract}
+          fallbackUsed={payload?.simulation?.run?.llm_status === "fallback"}
+          guardrailState={payload?.simulation?.status ?? null}
+          runMetadata={payload?.simulation?.run ?? null}
+        />
         <AgentRunHistoryPanel
           storageAgentId="what-if-simulation"
           locationId={locationId}

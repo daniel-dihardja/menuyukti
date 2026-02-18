@@ -56,6 +56,8 @@ export function StrategistRunner() {
   function appendSessionRun(next: StrategistResponse) {
     const prioritiesCount = next?.strategist?.plan?.priorities?.length ?? 0;
     const status = next?.strategist?.status ?? "unknown";
+    const llmStatus = next?.strategist?.run?.llm_status ?? null;
+    const fallbackUsed = llmStatus === "fallback";
     setSessionRuns((current) => [
       {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -63,8 +65,8 @@ export function StrategistRunner() {
         status,
         readiness: next.contract?.readiness ?? null,
         confidence: next.contract?.confidence ?? null,
-        fallbackUsed: false,
-        guardrailState: next.contract?.readiness ?? null,
+        fallbackUsed,
+        guardrailState: status !== "unknown" ? status : next.contract?.readiness ?? null,
         fields: [{ label: "priorities_count", value: String(prioritiesCount) }],
       },
       ...current,
@@ -156,7 +158,12 @@ export function StrategistRunner() {
         ) : payload ? (
           <p className="text-sm text-muted-foreground">No actionable weekly priorities returned.</p>
         ) : null}
-        <OutputTrustPanel contract={payload?.contract} runMetadata={payload?.strategist?.run ?? null} />
+        <OutputTrustPanel
+          contract={payload?.contract}
+          fallbackUsed={payload?.strategist?.run?.llm_status === "fallback"}
+          guardrailState={payload?.strategist?.status ?? null}
+          runMetadata={payload?.strategist?.run ?? null}
+        />
         <AgentRunHistoryPanel
           storageAgentId="marketer-strategist"
           locationId={locationId}

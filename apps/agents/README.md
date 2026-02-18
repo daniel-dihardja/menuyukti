@@ -66,6 +66,7 @@ Agent workflows:
 - Runtime defaults:
   - `AGENTS_LLM_ENABLED=true`
   - `AGENTS_LLM_PROVIDER=mock`
+  - `AGENTS_LLM_FAILURE_MODE=fallback` (`fallback|blocked`)
 - Set `AGENTS_LLM_PROVIDER=openai` with `OPENAI_API_KEY` to run live provider mode.
 - Optional per-agent runtime overrides:
   - `AGENTS_MODEL_ID_<AGENT_ID_NORMALIZED>`

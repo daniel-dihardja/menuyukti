@@ -9,6 +9,7 @@ from agent.llm_runtime import (
     build_run_metadata,
     build_skipped_llm_result,
     execute_llm_step,
+    resolve_agent_status,
 )
 from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
@@ -118,6 +119,9 @@ def run_consensus(payload: DebateConsensusRequest) -> dict:
 
     status = "accepted" if winner else "degraded"
     reason_code = "ALLOWED" if winner else "NO_CONSENSUS_CANDIDATES"
+    if payload.readiness == "degraded":
+        status = "degraded"
+        reason_code = "DATA_READINESS_DEGRADED"
     prompt_contract = get_prompt_contract(agent_id, runtime.prompt_version)
     llm = execute_llm_step(
         agent_id=agent_id,
@@ -130,11 +134,17 @@ def run_consensus(payload: DebateConsensusRequest) -> dict:
         required_output_keys=prompt_contract.required_output_keys,
     )
 
+    final_status, final_reason_code = resolve_agent_status(
+        base_status=status,
+        base_reason_code=reason_code,
+        llm=llm,
+    )
+
     return {
         "contract_version": payload.contract_version,
         "agent_id": agent_id,
-        "status": status,
-        "reason_code": reason_code,
+        "status": final_status,
+        "reason_code": final_reason_code,
         "run": build_run_metadata(run_id=run_id, runtime=runtime, llm=llm),
         "consensus": {
             "mode": payload.mode,

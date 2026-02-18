@@ -9,6 +9,7 @@ from agent.llm_runtime import (
     build_run_metadata,
     build_skipped_llm_result,
     execute_llm_step,
+    resolve_agent_status,
 )
 from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
@@ -131,6 +132,9 @@ def generate_action_board(payload: ProfitIntelligenceRequest) -> dict:
 
     status = "accepted" if len(recommendations) > 0 else "degraded"
     reason_code = "ALLOWED" if len(recommendations) > 0 else "NO_ACTIONABLE_RECOMMENDATIONS"
+    if payload.readiness == "degraded":
+        status = "degraded"
+        reason_code = "DATA_READINESS_DEGRADED"
     headline = (
         "Analyst action board generated with profitability priorities."
         if len(recommendations) > 0
@@ -152,11 +156,17 @@ def generate_action_board(payload: ProfitIntelligenceRequest) -> dict:
     if isinstance(llm_headline, str) and llm_headline.strip():
         headline = llm_headline.strip()
 
+    final_status, final_reason_code = resolve_agent_status(
+        base_status=status,
+        base_reason_code=reason_code,
+        llm=llm,
+    )
+
     return {
         "contract_version": payload.contract_version,
         "agent_id": agent_id,
-        "status": status,
-        "reason_code": reason_code,
+        "status": final_status,
+        "reason_code": final_reason_code,
         "run": build_run_metadata(run_id=run_id, runtime=runtime, llm=llm),
         "board": {
             "headline": headline,

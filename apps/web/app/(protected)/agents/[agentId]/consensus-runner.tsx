@@ -62,6 +62,8 @@ export function ConsensusRunner() {
     const winner = next?.consensus?.consensus?.winner?.menu_item ?? "none";
     const recCount = next?.consensus?.consensus?.recommendations?.length ?? 0;
     const status = next?.consensus?.status ?? "unknown";
+    const llmStatus = next?.consensus?.run?.llm_status ?? null;
+    const fallbackUsed = llmStatus === "fallback";
     setSessionRuns((current) => [
       {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -69,8 +71,8 @@ export function ConsensusRunner() {
         status,
         readiness: next.contract?.readiness ?? null,
         confidence: next.contract?.confidence ?? null,
-        fallbackUsed: false,
-        guardrailState: next.contract?.readiness ?? null,
+        fallbackUsed,
+        guardrailState: status !== "unknown" ? status : next.contract?.readiness ?? null,
         fields: [
           { label: "mode", value: mode },
           { label: "winner", value: winner },
@@ -197,7 +199,12 @@ export function ConsensusRunner() {
             disagreement: {result.disagreement_reasons.join(", ")}
           </div>
         ) : null}
-        <OutputTrustPanel contract={payload?.contract} runMetadata={payload?.consensus?.run ?? null} />
+        <OutputTrustPanel
+          contract={payload?.contract}
+          fallbackUsed={payload?.consensus?.run?.llm_status === "fallback"}
+          guardrailState={payload?.consensus?.status ?? null}
+          runMetadata={payload?.consensus?.run ?? null}
+        />
         <AgentRunHistoryPanel
           storageAgentId="multi-agent-consensus"
           locationId={locationId}

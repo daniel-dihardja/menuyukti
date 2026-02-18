@@ -129,12 +129,23 @@ def test_llm_provider_failure_falls_back_to_deterministic(monkeypatch: pytest.Mo
             "location_id": 7,
             "week_start_date": "2026-02-16",
             "readiness": "ready",
-            "suggestions": [],
+            "suggestions": [
+                {
+                    "rank": 1,
+                    "menu_item": "Burger",
+                    "suggested_for": "lunch",
+                    "suggested_daypart": "lunch",
+                    "offer_type": "hero_item",
+                    "rationale": "Top performer with repeat demand",
+                    "confidence": "high",
+                },
+            ],
         },
     )
     assert response.status_code == 200
     body = response.json()
-    assert body["status"] in {"accepted", "degraded"}
+    assert body["status"] == "degraded"
+    assert body["reason_code"] == "LLM_FALLBACK_USED"
     assert body["llm"]["status"] == "fallback"
     assert body["llm"]["error_code"] == "LLM_PROVIDER_ERROR"
 
@@ -183,9 +194,81 @@ def test_llm_schema_invalid_triggers_fallback(monkeypatch: pytest.MonkeyPatch) -
     )
     assert response.status_code == 200
     body = response.json()
-    assert body["status"] == "accepted"
+    assert body["status"] == "degraded"
+    assert body["reason_code"] == "LLM_FALLBACK_USED"
     assert body["llm"]["status"] == "fallback"
     assert body["llm"]["error_code"] == "LLM_SCHEMA_INVALID"
+
+
+def test_llm_failure_mode_blocked_returns_blocked_status(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AGENTS_LLM_ENABLED", "1")
+    monkeypatch.setenv("AGENTS_LLM_PROVIDER", "mock")
+    monkeypatch.setenv("AGENTS_LLM_MOCK_BEHAVIOR", "error")
+    monkeypatch.setenv("AGENTS_LLM_FAILURE_MODE", "blocked")
+
+    response = client.post(
+        "/agents/profit-intelligence/action-board",
+        json={
+            "contract_version": "v1",
+            "analytics_id": 12,
+            "location_id": 7,
+            "readiness": "ready",
+            "cogs_readiness": "ready",
+            "candidates": [
+                {
+                    "menu_item": "Pizza",
+                    "matrix_action": "promote",
+                    "margin_pct": 0.32,
+                    "units_sold": 120,
+                    "revenue": 1600,
+                    "impact_score": 0.89,
+                    "combo_supported": True,
+                    "attribution_delta_revenue": 90,
+                },
+            ],
+            "combo_signals": [],
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "blocked"
+    assert body["reason_code"] == "LLM_GUARDRAIL_BLOCKED"
+    assert body["llm"]["status"] == "blocked"
+    assert body["llm"]["error_code"] == "LLM_PROVIDER_ERROR"
+
+
+def test_degraded_readiness_returns_degraded_reason_code(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AGENTS_LLM_ENABLED", "1")
+    monkeypatch.setenv("AGENTS_LLM_PROVIDER", "mock")
+    monkeypatch.delenv("AGENTS_LLM_MOCK_BEHAVIOR", raising=False)
+
+    response = client.post(
+        "/agents/simulation/what-if",
+        json={
+            "contract_version": "v1",
+            "analytics_id": 1,
+            "location_id": 1,
+            "readiness": "degraded",
+            "baseline": {"weekly_posts": 4, "avg_margin_pct": 0.3, "avg_revenue_per_post": 100},
+            "scenarios": [
+                {
+                    "scenario_id": "s1",
+                    "name": "extra evening push",
+                    "cadence_multiplier": 1.3,
+                    "item_focus_multiplier": 1.1,
+                    "bundle_multiplier": 0.5,
+                    "constraint_penalty": 0.1,
+                    "assumptions": [],
+                },
+            ],
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "degraded"
+    assert body["reason_code"] == "DATA_READINESS_DEGRADED"
+    assert "simulation" in body
+    assert isinstance(body["simulation"]["ranked_scenarios"], list)
 
 
 def test_prompt_version_override_is_applied(monkeypatch: pytest.MonkeyPatch) -> None:

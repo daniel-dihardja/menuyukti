@@ -156,6 +156,12 @@ Run output-trust-panel validation (ready/degraded trust states):
 pnpm -C apps/web run test:e2e:agents:output-trust-panel
 ```
 
+Run guardrail/fallback rendering validation (degraded fallback + blocked status):
+
+```bash
+pnpm -C apps/web run test:e2e:agents:llm-guardrails-fallback
+```
+
 Run agent run-history validation (history updates after execution):
 
 ```bash

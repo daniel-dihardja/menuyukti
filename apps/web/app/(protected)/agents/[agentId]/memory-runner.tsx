@@ -28,6 +28,7 @@ type MemoryPayload = {
   count: number;
   events: MemoryEvent[];
   memoryContext?: {
+    status?: string;
     run?: {
       model_id?: string;
       prompt_version?: string;
@@ -57,6 +58,9 @@ export function MemoryRunner() {
   function appendSessionRun(next: MemoryPayload, action: "refresh" | "accepted" | "rejected") {
     const status = action === "refresh" ? "observed" : "accepted";
     const continuity = next?.memoryContext?.memory_context?.continuity_signal ?? "n/a";
+    const llmStatus = next?.memoryContext?.run?.llm_status ?? null;
+    const fallbackUsed = llmStatus === "fallback";
+    const guardrailState = next?.memoryContext?.status ?? next.contract?.readiness ?? null;
     setSessionRuns((current) => [
       {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -64,8 +68,8 @@ export function MemoryRunner() {
         status,
         readiness: next.contract?.readiness ?? null,
         confidence: next.contract?.confidence ?? null,
-        fallbackUsed: false,
-        guardrailState: next.contract?.readiness ?? null,
+        fallbackUsed,
+        guardrailState,
         fields: [
           { label: "action", value: action },
           { label: "event_count", value: String(next.count) },
@@ -205,7 +209,12 @@ export function MemoryRunner() {
         ) : payload ? (
           <p className="text-sm text-muted-foreground">No memory events yet.</p>
         ) : null}
-        <OutputTrustPanel contract={payload?.contract} runMetadata={payload?.memoryContext?.run ?? null} />
+        <OutputTrustPanel
+          contract={payload?.contract}
+          fallbackUsed={payload?.memoryContext?.run?.llm_status === "fallback"}
+          guardrailState={payload?.memoryContext?.status ?? null}
+          runMetadata={payload?.memoryContext?.run ?? null}
+        />
         <AgentRunHistoryPanel
           storageAgentId="agent-memory-tracker"
           locationId={locationId}

@@ -68,6 +68,8 @@ export function ProfitIntelligenceRunner() {
   function appendSessionRun(next: ProfitIntelligenceResponse) {
     const recCount = next?.profitIntelligence?.board?.recommendations?.length ?? 0;
     const status = next?.profitIntelligence?.status ?? "unknown";
+    const llmStatus = next?.profitIntelligence?.run?.llm_status ?? null;
+    const fallbackUsed = llmStatus === "fallback";
     setSessionRuns((current) => [
       {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -75,8 +77,8 @@ export function ProfitIntelligenceRunner() {
         status,
         readiness: next.contract?.readiness ?? null,
         confidence: next.contract?.confidence ?? null,
-        fallbackUsed: false,
-        guardrailState: next.contract?.readiness ?? null,
+        fallbackUsed,
+        guardrailState: status !== "unknown" ? status : next.contract?.readiness ?? null,
         fields: [
           { label: "recommendations_count", value: String(recCount) },
           { label: "cogs_readiness", value: next.contextCoverage?.cogsReadiness ?? "n/a" },
@@ -186,7 +188,12 @@ export function ProfitIntelligenceRunner() {
             ) : null}
           </div>
         ) : null}
-        <OutputTrustPanel contract={payload?.contract} runMetadata={payload?.profitIntelligence?.run ?? null} />
+        <OutputTrustPanel
+          contract={payload?.contract}
+          fallbackUsed={payload?.profitIntelligence?.run?.llm_status === "fallback"}
+          guardrailState={payload?.profitIntelligence?.status ?? null}
+          runMetadata={payload?.profitIntelligence?.run ?? null}
+        />
         <AgentRunHistoryPanel
           storageAgentId="menu-profit-intelligence"
           locationId={locationId}
