@@ -104,6 +104,7 @@ Why:
 - Basic run history panel per agent/detail page.
 - Per-agent prompt/runtime contract with versioned model configuration.
 - Guardrailed LLM invocation policy (timeouts, fallback behavior, blocked-state messaging).
+- Global mechanical test mode via env flag to disable live LLM calls and force deterministic fallback paths.
 - Test-first agent implementation via integration tests with mocked required inputs.
 - Prompt-tuning loop per agent using isolated mocked-input integration tests.
 - UX states:
@@ -192,6 +193,9 @@ Why:
   - trust metadata completeness
   - fallback correctness
 
+16. **AST-16: LLM Disable Switch (Mechanical Test Mode)**
+- Add runtime config/env flag (for example `AGENTS_LLM_ENABLED=false`) to disable live LLM calls globally and run deterministic mechanical mode for regression and UI testing.
+
 ## Acceptance Criteria
 
 - Agents app integration tests pass before web integration is enabled.
@@ -204,6 +208,7 @@ Why:
   - output contract
   - runnable test control
 - Every released agent has an LLM execution path available behind rollout flag, with deterministic fallback.
+- Global runtime switch can disable LLM calls for mechanical testing without breaking agent pages, trust panels, run history, or comparison flows.
 - Output trust metadata is visible and consistent across agents.
 - Users can run each agent with sample context without manual API calls.
 - Model failure/degraded paths are explicit and user-safe (fallback or blocked state).
