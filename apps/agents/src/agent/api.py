@@ -1,32 +1,53 @@
 from __future__ import annotations
 
-from typing import Any
-
 from fastapi import FastAPI
-from pydantic import BaseModel, Field
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 
-from agent.graph import graph as audience_graph
-from agent.tone_graph import graph as tone_graph
+from agent.tool_contract import (
+    ToolInvokeRequest,
+    evaluate_runtime_policy,
+    validate_tool_payload,
+)
 
 load_dotenv()
 
 app = FastAPI(title="Agent API")
 
 
-class AudienceInvokeRequest(BaseModel):
-    core_input: dict[str, Any] = Field(default_factory=dict)
+@app.post("/tools/invoke", response_model=None)
+async def invoke_tool(payload: ToolInvokeRequest):
+    policy = evaluate_runtime_policy(payload)
+    if not policy.allowed:
+        return JSONResponse(
+            status_code=403,
+            content={
+                "contract_version": payload.contract_version,
+                "status": "blocked",
+                "reason_code": policy.reason_code,
+                "tool_id": payload.tool_id,
+            },
+        )
 
+    validation = validate_tool_payload(payload)
+    if not validation.allowed:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "contract_version": payload.contract_version,
+                "status": "invalid",
+                "reason_code": validation.reason_code,
+                "tool_id": payload.tool_id,
+            },
+        )
 
-@app.post("/audience/invoke")
-async def invoke_audience_agent(payload: AudienceInvokeRequest) -> dict[str, Any]:
-    return await audience_graph.ainvoke({"core_input": payload.core_input})
-
-
-class ToneInvokeRequest(BaseModel):
-    core_input: dict[str, Any] = Field(default_factory=dict)
-
-
-@app.post("/tone/invoke")
-async def invoke_tone_agent(payload: ToneInvokeRequest) -> dict[str, Any]:
-    return await tone_graph.ainvoke({"core_input": payload.core_input})
+    # AS-02 scope: policy + contract validation in invocation path.
+    # Tool execution remains a no-op stub until AS-03+ surfaces integrate.
+    return {
+        "contract_version": payload.contract_version,
+        "status": "accepted",
+        "reason_code": "ALLOWED",
+        "tool_id": payload.tool_id,
+        "persona": payload.persona,
+        "workflow_stage": payload.workflow_stage,
+    }

@@ -2,7 +2,8 @@
 
 ## Story Metadata
 - Created Date: 2026-02-18
-- Status: `todo`
+- Status: `complete`
+- Completed Date: 2026-02-18
 - Parent: EPIC-AI-AGENTIC-SYSTEM
 
 ## Goal
@@ -32,3 +33,18 @@ Establish versioned tool contracts and runtime policy rules for all agent data a
 - Runtime policy matrix and enforcement logic.
 - Test coverage for contract and policy enforcement.
 
+## Notes
+- Implemented tool contract + runtime policy in agents app:
+  - `apps/agents/src/agent/tool_contract.py`
+  - `apps/agents/src/agent/api.py` (`POST /tools/invoke`)
+- Added contract spec:
+  - `packages/docs/contracts/AGENT_TOOL_CONTRACT_V1.md`
+- Added agents-app integration tests:
+  - `apps/agents/tests/integration_tests/test_tool_contract_policy.py`
+- Added story-specific E2E:
+  - `apps/web/e2e/agent-tool-contract-policy.e2e.ts`
+  - script: `pnpm -C apps/web run test:e2e:agents:tool-contract-policy`
+- Verification:
+  - `uv run --project apps/agents pytest apps/agents/tests/integration_tests/test_tool_contract_policy.py apps/agents/tests/integration_tests/test_api.py` (passed)
+  - `pnpm -C apps/web run typecheck` (passed)
+  - `pnpm -C apps/web run test:e2e:agents:tool-contract-policy` (passed)

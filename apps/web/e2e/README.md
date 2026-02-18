@@ -108,6 +108,12 @@ Run legacy agent decommission validation (no analytics/agents services required)
 pnpm -C apps/web run test:e2e:agents:legacy-decommission
 ```
 
+Run agent tool-contract and runtime-policy validation (agents service only):
+
+```bash
+pnpm -C apps/web run test:e2e:agents:tool-contract-policy
+```
+
 Run seed-validation suite without starting app/agent services:
 
 ```bash
