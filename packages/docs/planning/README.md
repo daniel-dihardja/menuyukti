@@ -6,7 +6,7 @@ This guide defines how implementation work must be executed in this project.
 
 1. Commit all newly created open stories in `todo/`.
 2. Start implementing one story.
-3. When the story is finished, move that story file from `todo/` to `archive/`.
+3. When the story is finished, move that story file from `todo/` to `archive/<EPIC_ID>/`.
 4. Commit the moved story file together with all implementation/code/doc changes for that story.
 
 ## Working Rules
@@ -20,13 +20,13 @@ This guide defines how implementation work must be executed in this project.
 ## Planning Directory Structure
 
 - `todo/`: Open stories that are ready to be implemented.
-- `archive/`: Completed stories kept for historical reference.
+- `archive/<EPIC_ID>/`: Completed stories grouped by epic id for historical reference.
 - `blueprints/`: Design and migration blueprints used before implementation.
 - `SPECS.md`: Current MVP/release specification and open-feature tracking.
 
 ## Markdown Story Spec
 
-Every story file in `todo/` and `archive/` should follow this structure:
+Every story file in `todo/` and `archive/<EPIC_ID>/` should follow this structure:
 
 1. Title:
    - `# Story <id>: <short title>`
@@ -58,6 +58,10 @@ Story grouping is supported via metadata:
 Recommendation:
 - Keep grouping lightweight with `Parent` (as you suggested).
 - If needed later, add `Type: epic|story|task` in metadata, but this is optional for now.
+- Archive rule: completed stories are physically grouped by epic id in directory path (`archive/<EPIC_ID>/...`).
+- Epic archive folder naming convention:
+  - Format: `EPIC-<DOMAIN>-<TOPIC>` (uppercase, hyphen-separated)
+  - Example: `EPIC-AI-AGENTIC-DATA-CONTRACT-REFACTOR`
 
 ## Story Template
 

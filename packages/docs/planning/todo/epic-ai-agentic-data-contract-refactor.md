@@ -208,7 +208,7 @@ These are mandatory requirements for the target schema and contract design.
 ## Dependencies
 - Existing Prisma schema and migrations in `apps/web/prisma`
 - Seed/export scripts in `apps/web/scripts`
-- Current specs in `packages/docs/roadmap/SPECS.md`
+- Current specs in `packages/docs/planning/SPECS.md`
 
 ## Risks
 - Contract drift between analytics pages and agent routes
@@ -311,7 +311,7 @@ These are mandatory requirements for the target schema and contract design.
   - Spec/manual updates reflecting new model
 - **DoD**:
   - Release-gate suites pass
-  - `packages/docs/roadmap/SPECS.md` and related docs updated
+  - `packages/docs/planning/SPECS.md` and related docs updated
   - No critical regression in retained pages
 
 ## Global Definition of Done (Epic)

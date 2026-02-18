@@ -95,8 +95,8 @@ To keep MVP execution focused and avoid over-engineering, release scope is inten
 - Building generalized memory/RAG platform depth beyond MVP need.
 
 ### Document Boundary (Avoid Redundancy)
-- `packages/docs/roadmap/SPECS.md` defines **what** MVP must deliver and how release-readiness is judged.
-- `packages/docs/roadmap/todo/epic-ai-agentic-data-contract-refactor.md` defines **how** delivery is executed (workstreams, stories, sequencing, implementation tasks).
+- `packages/docs/planning/SPECS.md` defines **what** MVP must deliver and how release-readiness is judged.
+- `packages/docs/planning/todo/epic-ai-agentic-data-contract-refactor.md` defines **how** delivery is executed (workstreams, stories, sequencing, implementation tasks).
 
 ---
 
