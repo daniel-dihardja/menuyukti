@@ -9,11 +9,9 @@ import {
 
 describe("run-history helpers", () => {
   it("normalizes status filters from csv and repeated query values", () => {
-    expect(normalizeRunStatusFilter(["failed,succeeded", "running", "failed"])).toEqual([
-      "failed",
-      "succeeded",
-      "running",
-    ]);
+    expect(
+      normalizeRunStatusFilter(["failed,succeeded", "running", "failed"]),
+    ).toEqual(["failed", "succeeded", "running"]);
   });
 
   it("builds and parses cursor deterministically", () => {
@@ -38,6 +36,10 @@ describe("run-history helpers", () => {
         startedAt: null,
         finishedAt: null,
       }),
-    ).toEqual(["operation_trigger", "missing_pipeline_run_id", "failure_needs_recovery"]);
+    ).toEqual([
+      "operation_trigger",
+      "missing_pipeline_run_id",
+      "failure_needs_recovery",
+    ]);
   });
 });
