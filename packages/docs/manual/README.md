@@ -15,6 +15,7 @@ This manual explains the ship-ready features that already deliver practical valu
 - Use daypart heatmaps + COGS (`04`) to improve timing and margin accuracy with trust-aware signals, completeness KPIs, and explainability.
 - Use pair/combo + export (`05`) for deeper analyst workflows, pair-type strategy (`food+drink`), and reporting loops.
 - Use agents + guardrails (`06`) for assisted content and controlled automation under data-readiness policy.
+- Use Agent Studio vs analytics guidance (`12`) to choose the right surface for exploration vs execution decisions.
 - Use weekly scheduler (`07`) to operationalize Instagram plans with trust/readiness controls and draft-to-final workflow.
 - Use attribution overview (`08`) to measure post outcomes with confidence tuning and exportable reporting context.
 - Use scheduler post generation (`10`) to convert weekly heatmap suggestions into editable Instagram post drafts and export-ready publish packages.
@@ -24,6 +25,7 @@ This manual explains the ship-ready features that already deliver practical valu
 
 - Marketer path: `01` -> `02` -> `03` -> `04` -> `07` -> `08` -> `06`
 - Analyst path: `01` -> `02` -> `03` -> `04` -> `05` -> `08` -> `10` -> `06`
+- Surface-orientation path: `12` -> `02` -> `04` -> `06` -> `07`
 - Operator path: `01` -> `04` -> `08` -> `06` -> `07`
 - Quality/release path: `11` -> `02` -> `05` -> `08`
 
@@ -46,3 +48,4 @@ This manual explains the ship-ready features that already deliver practical valu
 9. [Pipeline Recovery Operations](./09-pipeline-recovery-operations.md)
 10. [Instagram Post Generation From Scheduler](./10-instagram-post-generation-from-scheduler.md)
 11. [E2E Validation Runners (Full, Batch, Per-Suite)](./11-e2e-full-lifecycle-runner.md)
+12. [Agent Studio vs Analytics Pages (Dropdown)](./12-agent-studio-vs-analytics-pages.md)
