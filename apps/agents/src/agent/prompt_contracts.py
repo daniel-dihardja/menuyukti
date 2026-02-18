@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 
 
@@ -11,6 +12,13 @@ class PromptContract:
     required_output_keys: tuple[str, ...]
 
 
+def _load_prompt_text(relative_path: str) -> str:
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    file_path = os.path.join(base_dir, "prompts", relative_path)
+    with open(file_path, "r", encoding="utf-8") as handle:
+        return handle.read().strip()
+
+
 PROMPT_CONTRACTS: dict[tuple[str, str], PromptContract] = {
     (
         "marketer-strategist",
@@ -18,10 +26,16 @@ PROMPT_CONTRACTS: dict[tuple[str, str], PromptContract] = {
     ): PromptContract(
         agent_id="marketer-strategist",
         prompt_version="v1-draft",
-        system_prompt=(
-            "You are Menuyukti Instagram Growth Strategist. "
-            "Return strict JSON only."
-        ),
+        system_prompt=_load_prompt_text("marketer-strategist/v1-draft.txt"),
+        required_output_keys=("headline", "confidence_note", "brief_rationale"),
+    ),
+    (
+        "marketer-strategist",
+        "v1-alt",
+    ): PromptContract(
+        agent_id="marketer-strategist",
+        prompt_version="v1-alt",
+        system_prompt=_load_prompt_text("marketer-strategist/v1-alt.txt"),
         required_output_keys=("headline", "confidence_note", "brief_rationale"),
     ),
     (
@@ -30,10 +44,7 @@ PROMPT_CONTRACTS: dict[tuple[str, str], PromptContract] = {
     ): PromptContract(
         agent_id="menu-profit-intelligence",
         prompt_version="v1-draft",
-        system_prompt=(
-            "You are Menuyukti Menu Profit Intelligence agent. "
-            "Return strict JSON only."
-        ),
+        system_prompt=_load_prompt_text("menu-profit-intelligence/v1-draft.txt"),
         required_output_keys=("headline", "confidence_note", "analyst_summary"),
     ),
     (
@@ -42,10 +53,7 @@ PROMPT_CONTRACTS: dict[tuple[str, str], PromptContract] = {
     ): PromptContract(
         agent_id="multi-agent-consensus",
         prompt_version="v1-draft",
-        system_prompt=(
-            "You are Menuyukti Multi-Agent Consensus arbiter. "
-            "Return strict JSON only."
-        ),
+        system_prompt=_load_prompt_text("multi-agent-consensus/v1-draft.txt"),
         required_output_keys=("headline", "consensus_confidence", "reason_summary"),
     ),
     (
@@ -54,10 +62,16 @@ PROMPT_CONTRACTS: dict[tuple[str, str], PromptContract] = {
     ): PromptContract(
         agent_id="what-if-simulation",
         prompt_version="v1-draft",
-        system_prompt=(
-            "You are Menuyukti What-If Simulation agent. "
-            "Return strict JSON only."
-        ),
+        system_prompt=_load_prompt_text("what-if-simulation/v1-draft.txt"),
+        required_output_keys=("headline", "scenario_summary", "confidence_note"),
+    ),
+    (
+        "what-if-simulation",
+        "v1-alt",
+    ): PromptContract(
+        agent_id="what-if-simulation",
+        prompt_version="v1-alt",
+        system_prompt=_load_prompt_text("what-if-simulation/v1-alt.txt"),
         required_output_keys=("headline", "scenario_summary", "confidence_note"),
     ),
     (
@@ -66,10 +80,7 @@ PROMPT_CONTRACTS: dict[tuple[str, str], PromptContract] = {
     ): PromptContract(
         agent_id="agent-memory-tracker",
         prompt_version="v1-draft",
-        system_prompt=(
-            "You are Menuyukti Agent Memory Tracker. "
-            "Return strict JSON only."
-        ),
+        system_prompt=_load_prompt_text("agent-memory-tracker/v1-draft.txt"),
         required_output_keys=("continuity_signal", "memory_summary", "risk_note"),
     ),
     (
@@ -78,10 +89,7 @@ PROMPT_CONTRACTS: dict[tuple[str, str], PromptContract] = {
     ): PromptContract(
         agent_id="feedback-reranker",
         prompt_version="v1-draft",
-        system_prompt=(
-            "You are Menuyukti Feedback Reranker. "
-            "Return strict JSON only."
-        ),
+        system_prompt=_load_prompt_text("feedback-reranker/v1-draft.txt"),
         required_output_keys=("ranking_summary", "confidence_note"),
     ),
     (
@@ -90,10 +98,7 @@ PROMPT_CONTRACTS: dict[tuple[str, str], PromptContract] = {
     ): PromptContract(
         agent_id="learning-release-loop",
         prompt_version="v1-draft",
-        system_prompt=(
-            "You are Menuyukti Learning Release Loop controller. "
-            "Return strict JSON only."
-        ),
+        system_prompt=_load_prompt_text("learning-release-loop/v1-draft.txt"),
         required_output_keys=("release_summary", "risk_note", "recommendation"),
     ),
 }

@@ -186,3 +186,49 @@ def test_llm_schema_invalid_triggers_fallback(monkeypatch: pytest.MonkeyPatch) -
     assert body["status"] == "accepted"
     assert body["llm"]["status"] == "fallback"
     assert body["llm"]["error_code"] == "LLM_SCHEMA_INVALID"
+
+
+def test_prompt_version_override_is_applied(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AGENTS_LLM_ENABLED", "1")
+    monkeypatch.setenv("AGENTS_LLM_PROVIDER", "mock")
+    monkeypatch.setenv("AGENTS_PROMPT_VERSION_MARKETER_STRATEGIST", "v1-alt")
+    monkeypatch.delenv("AGENTS_LLM_MOCK_RESPONSE", raising=False)
+
+    response = client.post(
+        "/agents/strategist/weekly-plan",
+        json={
+            "contract_version": "v1",
+            "analytics_id": 1,
+            "location_id": 1,
+            "week_start_date": "2026-02-18",
+            "readiness": "ready",
+            "suggestions": [],
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["run"]["prompt_version"] == "v1-alt"
+    assert body["llm"]["prompt_version"] == "v1-alt"
+
+
+def test_model_id_override_is_applied(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AGENTS_LLM_ENABLED", "1")
+    monkeypatch.setenv("AGENTS_LLM_PROVIDER", "mock")
+    monkeypatch.setenv("AGENTS_MODEL_ID_WHAT_IF_SIMULATION", "gpt-4.1-mini")
+    monkeypatch.delenv("AGENTS_LLM_MOCK_RESPONSE", raising=False)
+
+    response = client.post(
+        "/agents/simulation/what-if",
+        json={
+            "contract_version": "v1",
+            "analytics_id": 1,
+            "location_id": 1,
+            "readiness": "ready",
+            "baseline": {"weekly_posts": 4, "avg_margin_pct": 0.3, "avg_revenue_per_post": 100},
+            "scenarios": [],
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["run"]["model_id"] == "gpt-4.1-mini"
+    assert body["llm"]["model_id"] == "gpt-4.1-mini"

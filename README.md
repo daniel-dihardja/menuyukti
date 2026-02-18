@@ -119,5 +119,11 @@ The web app expects:
 
 Agents service environment:
 
-- No additional required variables for current deterministic contract endpoints.
-- Optional provider keys can be introduced in future LLM-integrated epics.
+- Required:
+  - `AGENTS_LLM_ENABLED` — `true|false` to enable live provider runtime.
+  - `AGENTS_LLM_PROVIDER` — `mock|openai`.
+- Required when `AGENTS_LLM_PROVIDER=openai`:
+  - `OPENAI_API_KEY`.
+- Optional per-agent overrides:
+  - `AGENTS_MODEL_ID_<AGENT_ID_NORMALIZED>`
+  - `AGENTS_PROMPT_VERSION_<AGENT_ID_NORMALIZED>`

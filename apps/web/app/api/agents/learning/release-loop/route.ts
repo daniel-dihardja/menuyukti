@@ -189,6 +189,16 @@ export async function POST(request: NextRequest) {
     );
   }
   const decisionPayload = (await response.json()) as {
+    run?: {
+      run_id?: string;
+      model?: string;
+      model_id?: string;
+      prompt_version?: string;
+      llm_provider?: string;
+      llm_mode?: string;
+      llm_status?: string;
+    };
+    llm?: Record<string, unknown>;
     release_decision?: {
       decision?: "advance" | "hold" | "rollback";
       reasons?: string[];
@@ -228,9 +238,20 @@ export async function POST(request: NextRequest) {
     },
   });
 
+  const run = decisionPayload.run;
+  const modelName =
+    typeof run?.model_id === "string"
+      ? run.model_id
+      : typeof run?.model === "string"
+        ? run.model
+        : "learning-release-loop-v1";
+  const runId = typeof run?.run_id === "string" ? run.run_id : record.id;
+
   const responseBody = {
     record,
     decision: decisionPayload.release_decision ?? null,
+    run: decisionPayload.run ?? null,
+    llm: decisionPayload.llm ?? null,
     contract: createDecisionApiContract({
       surface: "agent:learning-release-loop",
       context,
@@ -263,16 +284,16 @@ export async function POST(request: NextRequest) {
       analyticsId,
       outputs: outputJson,
       contractVersion: "v1",
-      runId: record.id,
-      modelName: "learning-release-loop-v1",
+      runId,
+      modelName,
       runStatus: record.decision,
       outputEnvelopeJson: outputJson,
     },
     update: {
       outputs: outputJson,
       contractVersion: "v1",
-      runId: record.id,
-      modelName: "learning-release-loop-v1",
+      runId,
+      modelName,
       runStatus: record.decision,
       outputEnvelopeJson: outputJson,
     },

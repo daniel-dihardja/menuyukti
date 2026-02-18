@@ -29,6 +29,13 @@ type RecordDto = {
 
 type ReleaseLoopPayload = {
   contract?: DecisionApiContractDto;
+  run?: {
+    model_id?: string;
+    prompt_version?: string;
+    llm_provider?: string;
+    llm_mode?: string;
+    llm_status?: string;
+  };
   records?: RecordDto[];
   record?: RecordDto;
   decision?: {
@@ -46,6 +53,7 @@ export function ReleaseLoopRunner() {
   const [error, setError] = useState("");
   const [records, setRecords] = useState<RecordDto[]>([]);
   const [contract, setContract] = useState<DecisionApiContractDto | null>(null);
+  const [runMetadata, setRunMetadata] = useState<ReleaseLoopPayload["run"] | null>(null);
   const [historyToken, setHistoryToken] = useState(0);
   const [sessionRuns, setSessionRuns] = useState<SessionRunSnapshot[]>([]);
 
@@ -104,9 +112,11 @@ export function ReleaseLoopRunner() {
       const body = (await response.json().catch(() => ({}))) as ReleaseLoopPayload & { error?: string };
       if (!response.ok) {
         setContract(body.contract ?? null);
+        setRunMetadata(body.run ?? null);
         throw new Error(body.error ?? "FAILED_TO_RUN_RELEASE_LOOP");
       }
       setContract(body.contract ?? null);
+      setRunMetadata(body.run ?? null);
       appendSessionRun(body);
       await refresh(targetContext);
       setHistoryToken((value) => value + 1);
@@ -202,6 +212,7 @@ export function ReleaseLoopRunner() {
           contract={contract}
           guardrailState={latest?.decision ?? null}
           fallbackUsed={latest?.decision === "rollback"}
+          runMetadata={runMetadata}
         />
         <AgentRunHistoryPanel
           storageAgentId="learning-release-loop"

@@ -28,6 +28,13 @@ type ProfitIntelligenceResponse = {
   contract?: DecisionApiContractDto;
   profitIntelligence?: {
     status?: string;
+    run?: {
+      model_id?: string;
+      prompt_version?: string;
+      llm_provider?: string;
+      llm_mode?: string;
+      llm_status?: string;
+    };
     board?: {
       headline?: string;
       recommendations?: Recommendation[];
@@ -179,7 +186,7 @@ export function ProfitIntelligenceRunner() {
             ) : null}
           </div>
         ) : null}
-        <OutputTrustPanel contract={payload?.contract} />
+        <OutputTrustPanel contract={payload?.contract} runMetadata={payload?.profitIntelligence?.run ?? null} />
         <AgentRunHistoryPanel
           storageAgentId="menu-profit-intelligence"
           locationId={locationId}

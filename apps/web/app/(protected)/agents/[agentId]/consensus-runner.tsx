@@ -30,6 +30,13 @@ type ConsensusResponse = {
   contract?: DecisionApiContractDto;
   consensus?: {
     status?: string;
+    run?: {
+      model_id?: string;
+      prompt_version?: string;
+      llm_provider?: string;
+      llm_mode?: string;
+      llm_status?: string;
+    };
     consensus?: {
       winner?: ConsensusRecommendation | null;
       recommendations?: ConsensusRecommendation[];
@@ -190,7 +197,7 @@ export function ConsensusRunner() {
             disagreement: {result.disagreement_reasons.join(", ")}
           </div>
         ) : null}
-        <OutputTrustPanel contract={payload?.contract} />
+        <OutputTrustPanel contract={payload?.contract} runMetadata={payload?.consensus?.run ?? null} />
         <AgentRunHistoryPanel
           storageAgentId="multi-agent-consensus"
           locationId={locationId}

@@ -31,6 +31,13 @@ type RerankedRecommendation = {
 type RerankedPayload = {
   contract?: DecisionApiContractDto;
   reranked?: {
+    run?: {
+      model_id?: string;
+      prompt_version?: string;
+      llm_provider?: string;
+      llm_mode?: string;
+      llm_status?: string;
+    };
     policy_version?: string;
     fallback_to_baseline?: boolean;
     signal_count?: number;
@@ -164,6 +171,7 @@ export function RerankerRunner() {
           contract={payload?.contract}
           fallbackUsed={Boolean(payload?.reranked?.fallback_to_baseline)}
           guardrailState={payload?.reranked?.fallback_to_baseline ? "degraded" : null}
+          runMetadata={payload?.reranked?.run ?? null}
         />
         <AgentRunHistoryPanel
           storageAgentId="profit-intelligence-reranked"

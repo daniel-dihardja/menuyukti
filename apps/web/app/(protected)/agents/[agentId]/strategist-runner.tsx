@@ -28,6 +28,13 @@ type StrategistResponse = {
   strategist?: {
     status?: string;
     reason_code?: string;
+    run?: {
+      model_id?: string;
+      prompt_version?: string;
+      llm_provider?: string;
+      llm_mode?: string;
+      llm_status?: string;
+    };
     plan?: { headline?: string; priorities?: StrategistPriority[] };
   };
 };
@@ -149,7 +156,7 @@ export function StrategistRunner() {
         ) : payload ? (
           <p className="text-sm text-muted-foreground">No actionable weekly priorities returned.</p>
         ) : null}
-        <OutputTrustPanel contract={payload?.contract} />
+        <OutputTrustPanel contract={payload?.contract} runMetadata={payload?.strategist?.run ?? null} />
         <AgentRunHistoryPanel
           storageAgentId="marketer-strategist"
           locationId={locationId}

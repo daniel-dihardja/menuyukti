@@ -28,6 +28,13 @@ type MemoryPayload = {
   count: number;
   events: MemoryEvent[];
   memoryContext?: {
+    run?: {
+      model_id?: string;
+      prompt_version?: string;
+      llm_provider?: string;
+      llm_mode?: string;
+      llm_status?: string;
+    };
     memory_context?: {
       continuity_signal?: string;
       accepted_count?: number;
@@ -198,7 +205,7 @@ export function MemoryRunner() {
         ) : payload ? (
           <p className="text-sm text-muted-foreground">No memory events yet.</p>
         ) : null}
-        <OutputTrustPanel contract={payload?.contract} />
+        <OutputTrustPanel contract={payload?.contract} runMetadata={payload?.memoryContext?.run ?? null} />
         <AgentRunHistoryPanel
           storageAgentId="agent-memory-tracker"
           locationId={locationId}

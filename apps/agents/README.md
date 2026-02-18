@@ -56,6 +56,9 @@ Agent workflows:
 
 - `apps/agents/src/agent/api.py`: FastAPI router and endpoint wiring.
 - `apps/agents/src/agent/*.py`: agent logic modules.
+- `apps/agents/src/agent/runtime_config.py`: per-agent model/prompt runtime mapping.
+- `apps/agents/src/agent/prompt_contracts.py`: prompt contract registry + required output keys.
+- `apps/agents/prompts/**`: versioned prompt template files.
 - `apps/agents/tests/integration_tests/*.py`: integration coverage by story/capability.
 
 ## Notes
@@ -64,3 +67,6 @@ Agent workflows:
   - `AGENTS_LLM_ENABLED=true`
   - `AGENTS_LLM_PROVIDER=mock`
 - Set `AGENTS_LLM_PROVIDER=openai` with `OPENAI_API_KEY` to run live provider mode.
+- Optional per-agent runtime overrides:
+  - `AGENTS_MODEL_ID_<AGENT_ID_NORMALIZED>`
+  - `AGENTS_PROMPT_VERSION_<AGENT_ID_NORMALIZED>`

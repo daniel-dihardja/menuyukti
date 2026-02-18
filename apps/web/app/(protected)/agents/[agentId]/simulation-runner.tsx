@@ -39,6 +39,13 @@ type SimulationResponse = {
   contract?: DecisionApiContractDto;
   simulation?: {
     status?: string;
+    run?: {
+      model_id?: string;
+      prompt_version?: string;
+      llm_provider?: string;
+      llm_mode?: string;
+      llm_status?: string;
+    };
     simulation?: {
       winner?: RankedScenario | null;
       ranked_scenarios?: RankedScenario[];
@@ -183,7 +190,7 @@ export function SimulationRunner() {
         ) : payload ? (
           <p className="text-sm text-muted-foreground">No scenarios were returned.</p>
         ) : null}
-        <OutputTrustPanel contract={payload?.contract} />
+        <OutputTrustPanel contract={payload?.contract} runMetadata={payload?.simulation?.run ?? null} />
         <AgentRunHistoryPanel
           storageAgentId="what-if-simulation"
           locationId={locationId}

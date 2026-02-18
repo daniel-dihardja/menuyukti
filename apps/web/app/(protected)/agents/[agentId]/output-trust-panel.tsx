@@ -8,6 +8,13 @@ type Props = {
   contract?: DecisionApiContractDto | null;
   fallbackUsed?: boolean;
   guardrailState?: string | null;
+  runMetadata?: {
+    model_id?: string | null;
+    prompt_version?: string | null;
+    llm_provider?: string | null;
+    llm_mode?: string | null;
+    llm_status?: string | null;
+  } | null;
 };
 
 function formatValue(value: unknown): string {
@@ -17,7 +24,12 @@ function formatValue(value: unknown): string {
   return JSON.stringify(value);
 }
 
-export function OutputTrustPanel({ contract, fallbackUsed = false, guardrailState = null }: Props) {
+export function OutputTrustPanel({
+  contract,
+  fallbackUsed = false,
+  guardrailState = null,
+  runMetadata = null,
+}: Props) {
   if (!contract) return null;
 
   const trust = contract.context?.trust;
@@ -47,6 +59,31 @@ export function OutputTrustPanel({ contract, fallbackUsed = false, guardrailStat
           <Badge data-trust-fallback variant={fallbackUsed ? "secondary" : "default"}>
             fallback: {String(fallbackUsed)}
           </Badge>
+          {runMetadata?.model_id ? (
+            <Badge data-run-model-id variant="secondary">
+              model: {runMetadata.model_id}
+            </Badge>
+          ) : null}
+          {runMetadata?.prompt_version ? (
+            <Badge data-run-prompt-version variant="secondary">
+              prompt: {runMetadata.prompt_version}
+            </Badge>
+          ) : null}
+          {runMetadata?.llm_provider ? (
+            <Badge data-run-llm-provider variant="secondary">
+              provider: {runMetadata.llm_provider}
+            </Badge>
+          ) : null}
+          {runMetadata?.llm_mode ? (
+            <Badge data-run-llm-mode variant="secondary">
+              mode: {runMetadata.llm_mode}
+            </Badge>
+          ) : null}
+          {runMetadata?.llm_status ? (
+            <Badge data-run-llm-status variant="secondary">
+              llm: {runMetadata.llm_status}
+            </Badge>
+          ) : null}
         </div>
 
         <div data-trust-lineage className="text-xs text-muted-foreground">
