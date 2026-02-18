@@ -2,7 +2,7 @@
 
 ## Story Metadata
 - Created Date: 2026-02-18
-- Status: `todo`
+- Status: `done`
 - Parent: EPIC-AGENT-STUDIO-EXPLORATION-LAB
 
 ## Goal
@@ -33,3 +33,32 @@ Prepare a formal handoff package for the next epic (multi-agent interaction), wi
 - Validation evidence index (tests, runs, metadata).
 - Rollout/fallback policy references.
 - Story E2E suite and evidence.
+
+## Implementation Notes
+- Added formal Phase-2 handoff checklist package:
+  - `packages/docs/planning/blueprints/PHASE2_HANDOFF_READINESS_CHECKLIST.md`
+- Checklist includes:
+  - mandatory gate criteria
+  - evidence index references
+  - rollout/fallback policy references
+  - GO/NO-GO signoff section for product + engineering
+- Added story-specific E2E guard to validate no Phase-2 scope leakage:
+  - `apps/web/e2e/agent-phase2-handoff-readiness.e2e.ts`
+  - verifies:
+    - disallowed Phase-2 routes return `404`
+    - no Phase-2 orchestrator ids exist in `apps/web/lib/agents.json`
+- Wired new E2E command into suite runners:
+  - `apps/web/package.json`
+  - `apps/web/scripts/run-e2e-shared-services.ts`
+  - `apps/web/scripts/run-e2e-full.ts`
+  - `apps/web/e2e/README.md`
+
+## Test Evidence
+- Story E2E:
+  - `pnpm -C apps/web run test:e2e:agents:phase2-handoff-readiness`
+- Regression typecheck:
+  - `pnpm -C apps/web run typecheck`
+
+## Unit Test Notes
+- N/A for this story.
+- Scope is checklist documentation + route-level E2E guardrail validation.

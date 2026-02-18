@@ -174,6 +174,12 @@ Run mocked-baseline state validation (degraded, blocked, malformed-context, fall
 pnpm -C apps/web run test:e2e:agents:mocked-baseline-states
 ```
 
+Run phase-2 handoff readiness validation (ensures no phase-2 routes/features are introduced yet):
+
+```bash
+pnpm -C apps/web run test:e2e:agents:phase2-handoff-readiness
+```
+
 Run agent run-history validation (history updates after execution):
 
 ```bash
