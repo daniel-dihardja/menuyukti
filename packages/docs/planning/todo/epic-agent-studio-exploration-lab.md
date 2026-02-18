@@ -29,6 +29,12 @@ Deliver a guided Agent Studio experience where each agent is:
 - tested in isolation with mocked inputs
 - tuned for output quality before any multi-agent interaction work
 
+Structured-output baseline for all Phase 1 agents:
+
+- Responses must use a stable structured envelope (`contract_version`, `agent_id`, `status`, `reason_code`, `run`, `llm`).
+- Domain payloads must be typed and structured (for example `plan`, `board`, `consensus`, `simulation`, `memory_context`, `recommendations`, `release_decision`).
+- Free-form text can exist only as nested fields inside typed objects, never as the primary contract.
+
 ## Delivery Sequence (Hard Order)
 
 Phase 1 must be completed first:
@@ -213,6 +219,7 @@ Why:
 - Users can run each agent with sample context without manual API calls.
 - Model failure/degraded paths are explicit and user-safe (fallback or blocked state).
 - Integration tests do not depend on live analytics/db state for core agent behavior validation.
+- All agent responses (normal, degraded, blocked, fallback, mechanical mode) remain contract-structured and machine-parseable.
 - Dedicated E2E coverage for:
   - overview grid discoverability
   - per-agent run flow

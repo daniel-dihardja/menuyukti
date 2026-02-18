@@ -25,6 +25,7 @@ Establish golden mocked-input integration test sets for every Phase 1 agent.
 - Every Phase 1 agent has complete mocked scenario coverage.
 - Scenario coverage is mandatory CI gate before web integration.
 - Integration tests assert schema compliance, trust fields, fallback behavior.
+- Integration tests assert stable structured envelope + typed domain payload shape in every scenario.
 - Story-specific E2E validates that agent pages behave correctly when these states occur.
 
 - Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.

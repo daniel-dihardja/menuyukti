@@ -4,6 +4,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from agent.llm_runtime import build_run_metadata, execute_llm_step
+from agent.runtime_config import get_agent_runtime_config
+
 
 class BaselineRecommendation(BaseModel):
     recommendation_id: str
@@ -29,6 +32,9 @@ class RerankRequest(BaseModel):
 
 
 def rerank_recommendations(payload: RerankRequest) -> dict:
+    agent_id = "feedback-reranker"
+    runtime = get_agent_runtime_config(agent_id)
+    run_id = f"rerank_{payload.policy_version}_{len(payload.baseline)}_{len(payload.priors)}"
     priors_by_id = {prior.recommendation_id: prior for prior in payload.priors}
     eligible_signals = [prior for prior in payload.priors if prior.sample_size >= 1]
     fallback = len(eligible_signals) < payload.min_signal_count
@@ -78,12 +84,28 @@ def rerank_recommendations(payload: RerankRequest) -> dict:
                 },
             }
         )
+    llm = execute_llm_step(
+        agent_id=agent_id,
+        runtime=runtime,
+        system_prompt=(
+            "You are Menuyukti Feedback Reranker. "
+            "Return JSON keys: ranking_summary, confidence_note."
+        ),
+        user_prompt=(
+            f"Summarize reranking for policy_version={payload.policy_version}, "
+            f"baseline_count={len(payload.baseline)}, signal_count={len(eligible_signals)}, fallback={fallback}."
+        ),
+    )
 
     return {
         "contract_version": payload.contract_version,
+        "agent_id": agent_id,
         "status": "accepted",
+        "reason_code": "ALLOWED",
+        "run": build_run_metadata(run_id=run_id, runtime=runtime, llm=llm),
         "policy_version": payload.policy_version,
         "fallback_to_baseline": fallback,
         "signal_count": len(eligible_signals),
         "recommendations": recommendations,
+        "llm": llm.to_public_dict(),
     }

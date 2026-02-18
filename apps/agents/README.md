@@ -48,7 +48,7 @@ Agent workflows:
 ## Design Principles
 
 - Contract-first responses (`v1`) for stable web integration.
-- Deterministic logic for repeatable tests and rollout safety.
+- LLM runtime with deterministic fallback for repeatable tests and rollout safety.
 - Policy/guardrail checks before action execution.
 - Explainability-ready payloads for evidence, confidence, and rollback decisions.
 
@@ -60,4 +60,7 @@ Agent workflows:
 
 ## Notes
 
-- LLM integration is intentionally deferred to later epics; current implementation focuses on stable orchestration contracts and deterministic behavior.
+- Runtime defaults:
+  - `AGENTS_LLM_ENABLED=true`
+  - `AGENTS_LLM_PROVIDER=mock`
+- Set `AGENTS_LLM_PROVIDER=openai` with `OPENAI_API_KEY` to run live provider mode.

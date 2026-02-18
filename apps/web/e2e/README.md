@@ -132,6 +132,12 @@ Run one-click sample-context runner validation across all ready agents:
 pnpm -C apps/web run test:e2e:agents:sample-context
 ```
 
+Run LLM runtime availability validation for Agent Studio API surfaces:
+
+```bash
+pnpm -C apps/web run test:e2e:agents:llm-runtime
+```
+
 Run selected-context runner validation across all ready agents:
 
 ```bash

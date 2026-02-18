@@ -16,11 +16,13 @@ Define and version prompt/model contracts for each Phase 1 agent.
 - Create prompt template files/specs per agent.
 - Enforce output-schema constraints in prompt contract.
 - Add version labels for prompt and model in outputs and logs.
+- Define envelope schema + typed domain schema as first-class contract artifacts.
 
 ## Acceptance Criteria
 - Each Phase 1 agent has `prompt_version` and `model_id` contract fields.
 - Prompt templates are versioned and referenced at runtime.
 - Agents app integration tests validate schema compliance across prompt versions.
+- Contract versions explicitly cover structured envelope fields and typed domain payload fields.
 - Story-specific E2E validates prompt/model version visibility in Agent Studio output metadata.
 
 - Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.

@@ -17,12 +17,14 @@ Create an evaluation harness for response quality, trust completeness, and fallb
 - Implement automated checks for schema and trust fields.
 - Track evaluation results per agent/prompt version.
 - Add live-provider evaluation mode (mocked upstream inputs + real LLM calls) for Phase 1 validation.
+- Add checks that enforce structured envelope presence and typed domain payload validity.
 
 ## Acceptance Criteria
 - Harness produces pass/fail results per agent and prompt version.
 - Quality thresholds are enforced for merge/release.
 - Agents app integration tests run harness scenarios with mocked required inputs (default required CI gate).
 - Harness supports live-provider evaluation runs (mocked upstream inputs + real LLM calls) for release readiness in Phase 1.
+- Harness fails any response that is free-form-only or missing structured contract sections.
 - Story-specific E2E validates surfaced evaluation state where applicable.
 
 - Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.

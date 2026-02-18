@@ -5,6 +5,13 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from agent.llm_runtime import (
+    build_run_metadata,
+    build_skipped_llm_result,
+    execute_llm_step,
+)
+from agent.runtime_config import get_agent_runtime_config
+
 
 Confidence = Literal["high", "medium", "low"]
 Readiness = Literal["ready", "degraded", "blocked"]
@@ -32,18 +39,18 @@ class StrategistWeeklyPlanRequest(BaseModel):
 
 
 def generate_weekly_plan(payload: StrategistWeeklyPlanRequest) -> dict:
+    agent_id = "marketer-strategist"
+    runtime = get_agent_runtime_config(agent_id)
     run_id = f"run_{uuid4().hex[:16]}"
 
     if payload.readiness == "blocked":
+        llm = build_skipped_llm_result(runtime=runtime, reason_code="DATA_READINESS_BLOCKED")
         return {
             "contract_version": payload.contract_version,
-            "agent_id": "marketer-strategist",
+            "agent_id": agent_id,
             "status": "blocked",
             "reason_code": "DATA_READINESS_BLOCKED",
-            "run": {
-                "run_id": run_id,
-                "model": "marketer-strategist-v1",
-            },
+            "run": build_run_metadata(run_id=run_id, runtime=runtime, llm=llm),
             "plan": {
                 "headline": "Weekly plan blocked by data readiness policy.",
                 "priorities": [],
@@ -51,6 +58,7 @@ def generate_weekly_plan(payload: StrategistWeeklyPlanRequest) -> dict:
             "scheduler_handoff": {
                 "recommendations": [],
             },
+            "llm": llm.to_public_dict(),
         }
 
     priorities = [
@@ -73,16 +81,29 @@ def generate_weekly_plan(payload: StrategistWeeklyPlanRequest) -> dict:
         if len(priorities) > 0
         else "No actionable suggestions were found for this week."
     )
+    llm = execute_llm_step(
+        agent_id=agent_id,
+        runtime=runtime,
+        system_prompt=(
+            "You are Menuyukti Instagram Growth Strategist. "
+            "Return JSON with keys: headline, confidence_note, brief_rationale."
+        ),
+        user_prompt=(
+            f"Generate concise strategist summary for analytics_id={payload.analytics_id}, "
+            f"location_id={payload.location_id}, priorities_count={len(priorities)}."
+        ),
+    )
+    llm_output = llm.output or {}
+    llm_headline = llm_output.get("headline")
+    if isinstance(llm_headline, str) and llm_headline.strip():
+        headline = llm_headline.strip()
 
     return {
         "contract_version": payload.contract_version,
-        "agent_id": "marketer-strategist",
+        "agent_id": agent_id,
         "status": status,
         "reason_code": reason_code,
-        "run": {
-            "run_id": run_id,
-            "model": "marketer-strategist-v1",
-        },
+        "run": build_run_metadata(run_id=run_id, runtime=runtime, llm=llm),
         "plan": {
             "headline": headline,
             "priorities": priorities,
@@ -99,4 +120,5 @@ def generate_weekly_plan(payload: StrategistWeeklyPlanRequest) -> dict:
                 for item in priorities
             ],
         },
+        "llm": llm.to_public_dict(),
     }

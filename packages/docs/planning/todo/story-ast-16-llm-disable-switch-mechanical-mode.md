@@ -18,6 +18,7 @@ Allow disabling live LLM calls globally via runtime config/env var so the app ca
   - no live LLM/provider call is attempted
   - deterministic fallback path is used
   - trust metadata clearly signals fallback/mechanical mode
+- Keep mechanical-mode responses in the same structured contract shape as LLM-enabled mode.
 - Document behavior and local usage.
 
 ## Acceptance Criteria
@@ -25,6 +26,7 @@ Allow disabling live LLM calls globally via runtime config/env var so the app ca
 - Agent pages still run end-to-end with deterministic outputs and trust metadata.
 - Run history and comparison views continue to function in mechanical mode.
 - Agents integration tests validate disabled-mode behavior.
+- Mechanical mode preserves structured envelope + typed payload fields for all agents.
 - Story-specific E2E validates mechanical-mode runs and visible fallback/trust signals.
 
 - Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.

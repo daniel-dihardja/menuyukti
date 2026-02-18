@@ -4,6 +4,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from agent.llm_runtime import build_run_metadata, execute_llm_step
+from agent.runtime_config import get_agent_runtime_config
+
 
 RecommendationState = Literal["accepted", "rejected"]
 
@@ -28,6 +31,9 @@ class MemoryContextRequest(BaseModel):
 
 
 def build_memory_context(payload: MemoryContextRequest) -> dict:
+    agent_id = "agent-memory-tracker"
+    runtime = get_agent_runtime_config(agent_id)
+    run_id = f"mem_{payload.location_id}_{payload.analytics_id or 'na'}_{len(payload.events)}"
     sorted_events = sorted(
         payload.events,
         key=lambda event: (event.version, event.created_at),
@@ -42,10 +48,29 @@ def build_memory_context(payload: MemoryContextRequest) -> dict:
         if accepted >= rejected
         else "caution"
     )
+    llm = execute_llm_step(
+        agent_id=agent_id,
+        runtime=runtime,
+        system_prompt=(
+            "You are Menuyukti Memory Tracker. "
+            "Return JSON keys: continuity_signal, memory_summary, risk_note."
+        ),
+        user_prompt=(
+            f"Summarize memory context for location_id={payload.location_id}, "
+            f"analytics_id={payload.analytics_id}, accepted={accepted}, rejected={rejected}."
+        ),
+    )
+    llm_output = llm.output or {}
+    llm_signal = llm_output.get("continuity_signal")
+    if llm_signal in {"stable", "caution"}:
+        continuity_signal = llm_signal
 
     return {
         "contract_version": payload.contract_version,
+        "agent_id": agent_id,
         "status": "accepted",
+        "reason_code": "ALLOWED",
+        "run": build_run_metadata(run_id=run_id, runtime=runtime, llm=llm),
         "memory_context": {
             "location_id": payload.location_id,
             "analytics_id": payload.analytics_id,
@@ -54,4 +79,5 @@ def build_memory_context(payload: MemoryContextRequest) -> dict:
             "rejected_count": rejected,
             "recent_events": [event.model_dump() for event in recent],
         },
+        "llm": llm.to_public_dict(),
     }

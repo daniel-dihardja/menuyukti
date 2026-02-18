@@ -5,6 +5,13 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
+from agent.llm_runtime import (
+    build_run_metadata,
+    build_skipped_llm_result,
+    execute_llm_step,
+)
+from agent.runtime_config import get_agent_runtime_config
+
 
 Mode = Literal["conservative", "aggressive"]
 Readiness = Literal["ready", "degraded", "blocked"]
@@ -46,21 +53,25 @@ def _risk_penalty(candidate: ConsensusCandidate, mode: Mode) -> float:
 
 
 def run_consensus(payload: DebateConsensusRequest) -> dict:
+    agent_id = "multi-agent-consensus"
+    runtime = get_agent_runtime_config(agent_id)
     run_id = f"run_{uuid4().hex[:16]}"
 
     if payload.readiness == "blocked":
+        llm = build_skipped_llm_result(runtime=runtime, reason_code="DATA_READINESS_BLOCKED")
         return {
             "contract_version": payload.contract_version,
-            "agent_id": "multi-agent-consensus",
+            "agent_id": agent_id,
             "status": "blocked",
             "reason_code": "DATA_READINESS_BLOCKED",
-            "run": {"run_id": run_id, "model": "multi-agent-consensus-v1"},
+            "run": build_run_metadata(run_id=run_id, runtime=runtime, llm=llm),
             "consensus": {
                 "mode": payload.mode,
                 "winner": None,
                 "recommendations": [],
                 "disagreement_reasons": ["data_readiness_blocked"],
             },
+            "llm": llm.to_public_dict(),
         }
 
     debate_rows = []
@@ -106,17 +117,30 @@ def run_consensus(payload: DebateConsensusRequest) -> dict:
 
     status = "accepted" if winner else "degraded"
     reason_code = "ALLOWED" if winner else "NO_CONSENSUS_CANDIDATES"
+    llm = execute_llm_step(
+        agent_id=agent_id,
+        runtime=runtime,
+        system_prompt=(
+            "You are Menuyukti Consensus agent. "
+            "Return JSON keys: headline, consensus_confidence, reason_summary."
+        ),
+        user_prompt=(
+            f"Summarize consensus result for analytics_id={payload.analytics_id}, "
+            f"mode={payload.mode}, recommendation_count={len(recommendations)}."
+        ),
+    )
 
     return {
         "contract_version": payload.contract_version,
-        "agent_id": "multi-agent-consensus",
+        "agent_id": agent_id,
         "status": status,
         "reason_code": reason_code,
-        "run": {"run_id": run_id, "model": "multi-agent-consensus-v1"},
+        "run": build_run_metadata(run_id=run_id, runtime=runtime, llm=llm),
         "consensus": {
             "mode": payload.mode,
             "winner": winner,
             "recommendations": recommendations,
             "disagreement_reasons": disagreement_reasons,
         },
+        "llm": llm.to_public_dict(),
     }

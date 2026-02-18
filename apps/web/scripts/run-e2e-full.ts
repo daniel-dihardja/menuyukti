@@ -46,6 +46,7 @@ const DEFAULT_E2E_SUITES = [
   "test:e2e:scheduler:post-generation",
   "test:e2e:attribution",
   "test:e2e:agents:legacy-decommission",
+  "test:e2e:agents:llm-runtime",
   "test:e2e:agents:card-standard",
   "test:e2e:agents:contract-panels",
   "test:e2e:agents:sample-context",

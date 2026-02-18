@@ -5,6 +5,13 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
+from agent.llm_runtime import (
+    build_run_metadata,
+    build_skipped_llm_result,
+    execute_llm_step,
+)
+from agent.runtime_config import get_agent_runtime_config
+
 
 Readiness = Literal["ready", "degraded", "blocked"]
 ConfidenceBand = Literal["narrow", "medium", "wide"]
@@ -53,19 +60,23 @@ def _confidence_range(value: float, band: ConfidenceBand) -> tuple[float, float]
 
 
 def run_what_if_simulation(payload: WhatIfSimulationRequest) -> dict:
+    agent_id = "what-if-simulation"
+    runtime = get_agent_runtime_config(agent_id)
     run_id = f"run_{uuid4().hex[:16]}"
 
     if payload.readiness == "blocked":
+        llm = build_skipped_llm_result(runtime=runtime, reason_code="DATA_READINESS_BLOCKED")
         return {
             "contract_version": payload.contract_version,
-            "agent_id": "what-if-simulation",
+            "agent_id": agent_id,
             "status": "blocked",
             "reason_code": "DATA_READINESS_BLOCKED",
-            "run": {"run_id": run_id, "model": "what-if-simulation-v1"},
+            "run": build_run_metadata(run_id=run_id, runtime=runtime, llm=llm),
             "simulation": {
                 "winner": None,
                 "ranked_scenarios": [],
             },
+            "llm": llm.to_public_dict(),
         }
 
     ranked = []
@@ -131,15 +142,28 @@ def run_what_if_simulation(payload: WhatIfSimulationRequest) -> dict:
     winner = ranked[0] if ranked else None
     status = "accepted" if winner else "degraded"
     reason_code = "ALLOWED" if winner else "NO_SCENARIOS_PROVIDED"
+    llm = execute_llm_step(
+        agent_id=agent_id,
+        runtime=runtime,
+        system_prompt=(
+            "You are Menuyukti What-If Simulation agent. "
+            "Return JSON keys: headline, scenario_summary, confidence_note."
+        ),
+        user_prompt=(
+            f"Summarize scenario simulation for analytics_id={payload.analytics_id}, "
+            f"location_id={payload.location_id}, scenario_count={len(ranked)}."
+        ),
+    )
 
     return {
         "contract_version": payload.contract_version,
-        "agent_id": "what-if-simulation",
+        "agent_id": agent_id,
         "status": status,
         "reason_code": reason_code,
-        "run": {"run_id": run_id, "model": "what-if-simulation-v1"},
+        "run": build_run_metadata(run_id=run_id, runtime=runtime, llm=llm),
         "simulation": {
             "winner": winner,
             "ranked_scenarios": ranked,
         },
+        "llm": llm.to_public_dict(),
     }

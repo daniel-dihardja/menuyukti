@@ -5,6 +5,13 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
+from agent.llm_runtime import (
+    build_run_metadata,
+    build_skipped_llm_result,
+    execute_llm_step,
+)
+from agent.runtime_config import get_agent_runtime_config
+
 
 Readiness = Literal["ready", "degraded", "blocked"]
 BoardAction = Literal["promote", "improve", "bundle", "deprioritize"]
@@ -61,22 +68,23 @@ def _confidence(candidate: ProfitCandidate) -> Confidence:
 
 
 def generate_action_board(payload: ProfitIntelligenceRequest) -> dict:
+    agent_id = "menu-profit-intelligence"
+    runtime = get_agent_runtime_config(agent_id)
     run_id = f"run_{uuid4().hex[:16]}"
 
     if payload.readiness == "blocked":
+        llm = build_skipped_llm_result(runtime=runtime, reason_code="DATA_READINESS_BLOCKED")
         return {
             "contract_version": payload.contract_version,
-            "agent_id": "menu-profit-intelligence",
+            "agent_id": agent_id,
             "status": "blocked",
             "reason_code": "DATA_READINESS_BLOCKED",
-            "run": {
-                "run_id": run_id,
-                "model": "menu-profit-intelligence-v1",
-            },
+            "run": build_run_metadata(run_id=run_id, runtime=runtime, llm=llm),
             "board": {
                 "headline": "Action board blocked by readiness policy.",
                 "recommendations": [],
             },
+            "llm": llm.to_public_dict(),
         }
 
     ranked = sorted(payload.candidates, key=lambda item: item.impact_score, reverse=True)[:10]
@@ -127,18 +135,32 @@ def generate_action_board(payload: ProfitIntelligenceRequest) -> dict:
         if len(recommendations) > 0
         else "No actionable profitability recommendations were generated."
     )
+    llm = execute_llm_step(
+        agent_id=agent_id,
+        runtime=runtime,
+        system_prompt=(
+            "You are Menuyukti Profit Intelligence agent. "
+            "Return JSON keys: headline, confidence_note, analyst_summary."
+        ),
+        user_prompt=(
+            f"Summarize profitability action board for analytics_id={payload.analytics_id}, "
+            f"location_id={payload.location_id}, recommendation_count={len(recommendations)}."
+        ),
+    )
+    llm_output = llm.output or {}
+    llm_headline = llm_output.get("headline")
+    if isinstance(llm_headline, str) and llm_headline.strip():
+        headline = llm_headline.strip()
 
     return {
         "contract_version": payload.contract_version,
-        "agent_id": "menu-profit-intelligence",
+        "agent_id": agent_id,
         "status": status,
         "reason_code": reason_code,
-        "run": {
-            "run_id": run_id,
-            "model": "menu-profit-intelligence-v1",
-        },
+        "run": build_run_metadata(run_id=run_id, runtime=runtime, llm=llm),
         "board": {
             "headline": headline,
             "recommendations": recommendations,
         },
+        "llm": llm.to_public_dict(),
     }
