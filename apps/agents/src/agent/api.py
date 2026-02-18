@@ -13,6 +13,7 @@ from agent.consensus import DebateConsensusRequest, run_consensus
 from agent.learning import LearningEligibilityRequest, evaluate_learning_eligibility
 from agent.memory import MemoryContextRequest, build_memory_context
 from agent.profit_intelligence import ProfitIntelligenceRequest, generate_action_board
+from agent.rerank import RerankRequest, rerank_recommendations
 from agent.simulation import WhatIfSimulationRequest, run_what_if_simulation
 from agent.strategist import StrategistWeeklyPlanRequest, generate_weekly_plan
 
@@ -87,3 +88,8 @@ async def memory_context(payload: MemoryContextRequest):
 @app.post("/agents/learning/eligibility", response_model=None)
 async def learning_eligibility(payload: LearningEligibilityRequest):
     return evaluate_learning_eligibility(payload)
+
+
+@app.post("/agents/rerank/recommendations", response_model=None)
+async def rerank_recommendation_list(payload: RerankRequest):
+    return rerank_recommendations(payload)

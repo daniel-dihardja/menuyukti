@@ -89,6 +89,7 @@ def generate_action_board(payload: ProfitIntelligenceRequest) -> dict:
         recommendations.append(
             {
                 "rank": idx,
+                "recommendation_id": f"rec:{item.menu_item.strip().lower().replace(' ', '_')}",
                 "menu_item": item.menu_item,
                 "action": action,
                 "confidence": confidence,

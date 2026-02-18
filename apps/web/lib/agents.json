@@ -101,5 +101,25 @@
       "recent_memory_context",
       "tenant_scoped_history"
     ]
+  },
+  {
+    "id": "feedback-reranker",
+    "name": "Feedback Reranker",
+    "imageUrl": "/images/placeholder.svg",
+    "description": "Applies outcome-aware priors to re-rank baseline recommendations with explainable rank deltas.",
+    "status": "ready",
+    "inputs": [
+      "Baseline recommendation score/rank",
+      "Outcome feedback priors",
+      "Policy version and min signal threshold",
+      "Learning signal quality metadata"
+    ],
+    "outputs": [
+      "final_ranked_recommendations",
+      "rank_delta_explainability",
+      "policy_version",
+      "fallback_to_baseline",
+      "signal_count"
+    ]
   }
 ]
