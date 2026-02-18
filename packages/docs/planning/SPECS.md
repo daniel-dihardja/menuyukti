@@ -96,7 +96,8 @@ To keep MVP execution focused and avoid over-engineering, release scope is inten
 
 ### Document Boundary (Avoid Redundancy)
 - `packages/docs/planning/SPECS.md` defines **what** MVP must deliver and how release-readiness is judged.
-- `packages/docs/planning/todo/epic-ai-agentic-data-contract-refactor.md` defines **how** delivery is executed (workstreams, stories, sequencing, implementation tasks).
+- `packages/docs/planning/archive/EPIC-AI-AGENTIC-DATA-CONTRACT-REFACTOR/epic-ai-agentic-data-contract-refactor.md` captures the completed data-contract refactor execution.
+- `packages/docs/planning/todo/epic-ai-agentic-system.md` defines the next execution phase for advanced AI agentic capabilities.
 
 ---
 
@@ -413,3 +414,53 @@ Legend:
 | H7 | Full RBAC and explicit tenant authz controls | Not Yet | Location scoping exists; formal RBAC remains pending. |
 | H8 | End-to-end audit trail for recommendation-affecting actions | Not Yet | Not fully implemented as a complete audit system. |
 | H9 | Full retry/backfill runner handler execution parity | Not Yet | End-user operation handlers are de-scoped from MVP and remain a post-MVP capability. |
+
+---
+
+## 12. Next Epic: AI Agentic System (Post-MVP Build Focus)
+
+Menuyukti's next phase is to become a category-defining AI agentic system for restaurant marketing (Instagram) and menu analytics, built on top of the now-stable deterministic data foundation.
+
+Primary reference:
+- `packages/docs/planning/todo/epic-ai-agentic-system.md`
+
+### 12.1 Product Ambition
+- Deliver an "AI decision operating system" rather than a summary assistant.
+- Combine strategic reasoning, execution orchestration, and measurable outcomes.
+- Keep trust as a hard requirement: evidence-linked, confidence-scored, readiness-governed outputs.
+
+### 12.2 Cutting-Edge Capability Targets
+- Instagram Growth Strategist Agent:
+  - weekly objective-based campaign plans, posting windows, menu focus, CTA guidance.
+- Menu Profit Intelligence Agent:
+  - weekly action board with impact-ranked `promote/improve/bundle/deprioritize` recommendations.
+- Multi-Agent Debate + Consensus:
+  - upside/risk perspectives, consensus recommendation, disagreement rationale.
+- What-If Simulation Studio:
+  - scenario comparisons for cadence/promo/bundle strategies with confidence bands.
+- Autonomous Weekly Decision Brief:
+  - executive-ready marketer + analyst plan with prior-cycle outcome feedback.
+
+### 12.3 Guardrails for Advanced Agentic Release
+- Tool-first deterministic grounding for high-impact recommendations.
+- Evidence thresholds and policy checks before finalize/publish-style actions.
+- Output schema validation and auditability for every agent run.
+- Cost controls via bounded context windows and cache-aware orchestration.
+
+### 12.4 Post-MVP Story Direction
+- AS-00: Legacy Audience/Tone Agent Decommission and Route Cleanup
+- AS-01: Agent Workflow Blueprint and Persona Journey Maps
+- AS-02: Agent Tool Contract v1 and Runtime Policy
+- AS-03: Marketer Agent (Instagram Planning Copilot)
+- AS-04: Analyst Agent (Menu Decision Copilot)
+- AS-05: Multi-Agent Debate and Consensus Engine
+- AS-06: Scenario Simulation and What-If Evaluation
+- AS-07: Agent Memory, Recommendation Tracking, and Feedback Signals
+- AS-08: Agent Guardrails, Evaluation Harness, and Release Gate
+- AS-09: Learning Data Model and Outcome Signal Capture
+- AS-10: Recommendation Re-Ranking from Outcome Feedback
+- AS-11: Safe Learning Release Loop (Shadow -> Canary -> Rollout)
+
+Transition note:
+- AS-00 is required before new agent implementation to remove legacy audience/tone agent surface and prevent architecture drift during the rebuild.
+- Self-learning is delivered via AS-09/AS-10/AS-11 with policy-gated rollout, explicit evaluation thresholds, and rollback controls.
