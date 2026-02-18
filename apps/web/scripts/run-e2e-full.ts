@@ -55,6 +55,7 @@ const DEFAULT_E2E_SUITES = [
   "test:e2e:agents:selected-context",
   "test:e2e:agents:output-trust-panel",
   "test:e2e:agents:llm-guardrails-fallback",
+  "test:e2e:agents:mocked-baseline-states",
   "test:e2e:agents:run-history",
   "test:e2e:agents:run-comparison",
   "test:e2e:agents:strategist",

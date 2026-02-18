@@ -28,6 +28,12 @@ Run one test file:
 uv run --project apps/agents pytest apps/agents/tests/integration_tests/test_api.py
 ```
 
+Run mandatory mocked-baseline integration gate (Phase 1 agents):
+
+```bash
+make -C apps/agents mocked_baseline_tests
+```
+
 Run LLM evaluation harness (mock mode):
 
 ```bash
@@ -66,6 +72,7 @@ Agent workflows:
 - `apps/agents/src/agent/prompt_contracts.py`: prompt contract registry + required output keys.
 - `apps/agents/prompts/**`: versioned prompt template files.
 - `apps/agents/tests/integration_tests/*.py`: integration coverage by story/capability.
+- `apps/agents/tests/integration_tests/test_mocked_input_baseline_per_agent.py`: mandatory per-agent mocked baseline gate.
 
 ## Notes
 

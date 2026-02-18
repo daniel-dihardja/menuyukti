@@ -26,6 +26,7 @@
     "test:e2e:agents:selected-context": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-selected-context-runner.e2e.ts",
     "test:e2e:agents:output-trust-panel": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-output-trust-panel.e2e.ts",
     "test:e2e:agents:llm-guardrails-fallback": "E2E_REQUIRED_SERVICES=web node --import tsx scripts/run-e2e-suite.ts e2e/agent-llm-guardrails-fallback.e2e.ts",
+    "test:e2e:agents:mocked-baseline-states": "E2E_REQUIRED_SERVICES=web node --import tsx scripts/run-e2e-suite.ts e2e/agent-mocked-baseline-states.e2e.ts",
     "test:e2e:agents:run-history": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-run-history.e2e.ts",
     "test:e2e:agents:run-comparison": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-run-comparison.e2e.ts",
     "test:e2e:agents:strategist": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-strategist-weekly-plan.e2e.ts",

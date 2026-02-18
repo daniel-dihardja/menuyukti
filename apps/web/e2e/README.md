@@ -168,6 +168,12 @@ Run guardrail/fallback rendering validation (degraded fallback + blocked status)
 pnpm -C apps/web run test:e2e:agents:llm-guardrails-fallback
 ```
 
+Run mocked-baseline state validation (degraded, blocked, malformed-context, fallback rendering):
+
+```bash
+pnpm -C apps/web run test:e2e:agents:mocked-baseline-states
+```
+
 Run agent run-history validation (history updates after execution):
 
 ```bash

@@ -1,4 +1,4 @@
-.PHONY: all format lint test tests test_watch integration_tests docker_tests help extended_tests serve_api
+.PHONY: all format lint test tests test_watch integration_tests mocked_baseline_tests docker_tests help extended_tests serve_api
 
 # Default target executed when no arguments are given to make.
 all: help
@@ -12,6 +12,9 @@ test:
 
 integration_tests:
 	LANGCHAIN_TRACING_V2=false uv run python -m pytest tests/integration_tests -m "not langsmith"
+
+mocked_baseline_tests:
+	LANGCHAIN_TRACING_V2=false uv run python -m pytest tests/integration_tests/test_mocked_input_baseline_per_agent.py
 
 test_watch:
 	uv run python -m ptw --snapshot-update --now . -- -vv tests/unit_tests
@@ -68,4 +71,5 @@ help:
 	@echo 'tests                        - run unit tests'
 	@echo 'test TEST_FILE=<test_file>   - run all tests in file'
 	@echo 'test_watch                   - run unit tests in watch mode'
+	@echo 'mocked_baseline_tests        - run mandatory per-agent mocked baseline integration suite'
 	@echo 'serve_api                    - run FastAPI on AGENTS_API_PORT (default: 8001)'
