@@ -5,10 +5,11 @@ Define the minimum set of capabilities required to deliver measurable value for:
 - restaurant marketers (Instagram planning and execution)
 - menu analysts (profitability, pricing, and combo optimization)
 
-Menuyukti is a data-engineering-first product. Therefore, value must come from deterministic, trustworthy analytics before any AI narration.
-Menuyukti is a data engineering application that serves two primary value paths:
-- Restaurant marketers who need focused Instagram marketing decisions.
+Menuyukti is an AI-agentic application that serves two primary value paths:
+- Restaurant marketers who need focused, insight-driven Instagram marketing decisions.
 - Menu analysts who need data-driven menu improvement and marketing decisions (for example: combo offers, happy hour strategies, and item-level promote/improve/remove actions).
+
+AI-agent outputs must remain grounded in deterministic, trustworthy analytics and explicit data-readiness guardrails.
 
 This document reflects the current release state and defines what is required for a **minimum valuable product (MVP) release** today.
 
@@ -17,8 +18,8 @@ This document reflects the current release state and defines what is required fo
 ## 1. Product Success Metrics (Minimum)
 
 MVP value must be demonstrated for both primary personas:
-- Restaurant marketers receive actionable Instagram marketing decisions from trustworthy analytics.
-- Menu analysts receive decision-grade profitability and mix insights from trustworthy analytics.
+- Restaurant marketers receive actionable Instagram marketing decisions from AI-agentic workflows backed by trustworthy analytics.
+- Menu analysts receive decision-grade profitability and mix insights from AI-agentic workflows backed by trustworthy analytics.
 
 ### 1.1 Marketer Outcomes
 - Time-to-first marketer decision package (matrix + presets + recommended actions): <= 15 minutes from upload.
@@ -49,6 +50,53 @@ For a minimum valuable release, all items below are required and release-blockin
 - SLI/SLO contract defined and quality-gate behavior enforced in UI/API behavior.
 
 Items not listed above are not release-blocking for MVP, but may remain important for post-MVP hardening and scale.
+
+## 1B. MVP Scope Discipline (Simple, Smart, Elegant)
+
+To keep MVP execution focused and avoid over-engineering, release scope is intentionally constrained to the minimum capabilities that deliver decision-grade value for marketers and analysts.
+
+### Required MVP Features (Must Ship)
+- Canonical decision contract shared by analytics pages and agent routes:
+  - recommendation
+  - rationale
+  - confidence
+  - readiness
+  - evidence references
+  - lineage/freshness context
+- Deterministic analytics surfaces remain operational:
+  - matrix
+  - heatmap
+  - pairs/combos
+  - cogs
+  - attribution
+  - finance
+- Instagram marketer execution flow:
+  - scheduler planning
+  - recommendation/suggestion to schedule flow
+  - save/finalize with readiness guardrails
+- Agentic workflow at MVP level:
+  - agent reads canonical precomputed features
+  - agent outputs include evidence references and confidence/readiness
+  - quality/freshness guardrails block or downgrade low-trust outputs
+- Reliability baseline:
+  - upload -> ETL -> marts
+  - idempotency + rejection logging
+  - run lineage + quality status
+  - deterministic seed/export support
+- Focused release validation:
+  - marketer and analyst critical-path E2E coverage
+  - release docs/spec aligned to shipped behavior
+
+### Explicit Non-Goals for MVP
+- Advanced autonomous multi-agent orchestration loops.
+- Full enterprise RBAC/governance hardening.
+- Broad channel expansion beyond Instagram-focused marketer workflow.
+- Complex long-horizon simulation/planning systems.
+- Building generalized memory/RAG platform depth beyond MVP need.
+
+### Document Boundary (Avoid Redundancy)
+- `packages/docs/roadmap/SPECS.md` defines **what** MVP must deliver and how release-readiness is judged.
+- `packages/docs/roadmap/todo/epic-ai-agentic-data-contract-refactor.md` defines **how** delivery is executed (workstreams, stories, sequencing, implementation tasks).
 
 ---
 
