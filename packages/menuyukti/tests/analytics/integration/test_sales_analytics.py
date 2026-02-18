@@ -49,3 +49,11 @@ def test_calculate_sales_analytics_invalid_order_time():
 def test_calculate_sales_analytics_empty_df():
     with pytest.raises(ValueError):
         calculate_sales_analytics(pd.DataFrame())
+
+
+def test_calculate_sales_analytics_rejects_all_non_positive_revenue_orders():
+    df = pd.DataFrame(_load_sales_rows())
+    df["total_after_bill_discount"] = 0
+
+    with pytest.raises(ValueError, match="No positive-revenue orders found."):
+        calculate_sales_analytics(df)

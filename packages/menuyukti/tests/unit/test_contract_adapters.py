@@ -1,3 +1,5 @@
+import pytest
+
 from menuyukti.core.contracts.adapters import (
     to_menu_matrix_envelope_v1,
     to_sales_analytics_envelope_v1,
@@ -107,3 +109,26 @@ def test_to_menu_matrix_envelope_v1():
     envelope = to_menu_matrix_envelope_v1(payload, source_system="api")
     assert envelope.contract_type == "menu_matrix"
     assert envelope.metadata.schema_version == "v1"
+
+
+def test_to_sales_analytics_envelope_v1_rejects_non_mapping_metadata():
+    payload = {
+        "metadata": "invalid-metadata",
+        "total_orders": 1,
+        "total_items_sold": 2,
+        "total_revenue": 30.0,
+        "avg_order_revenue": 30.0,
+        "max_order_revenue": 30.0,
+        "min_order_revenue": 30.0,
+        "avg_order_items": 2.0,
+        "max_order_items": 2,
+        "min_order_items": 2,
+        "avg_popularity_threshold": 1.0,
+        "popularity_index": [],
+        "menu_heatmaps": [],
+        "period_start": "2025-02-01",
+        "period_end": "2025-02-01",
+    }
+
+    with pytest.raises(TypeError):
+        to_sales_analytics_envelope_v1(payload)

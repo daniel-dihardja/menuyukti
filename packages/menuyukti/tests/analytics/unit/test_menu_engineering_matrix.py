@@ -64,3 +64,21 @@ def test_calculate_menu_engineering_matrix_items_tie_break_stable():
 
     result = calculate_menu_engineering_matrix(df)
     assert [item["menu"] for item in result["items"]] == ["Alpha", "Beta"]
+
+
+def test_calculate_menu_engineering_matrix_rejects_when_no_valid_items_after_cogs_filter():
+    df = pd.DataFrame(
+        [
+            {
+                "menu": "Latte",
+                "menu_category": "DRINK",
+                "menu_category_detail": "COFFEE",
+                "quantity": 10,
+                "total_revenue": 120.0,
+                "cogs": 0.0,
+            }
+        ]
+    )
+
+    with pytest.raises(ValueError, match="No valid menu items with cogs > 0 and revenue > 0"):
+        calculate_menu_engineering_matrix(df)
