@@ -39,6 +39,15 @@ PROMPT_CONTRACTS: dict[tuple[str, str], PromptContract] = {
         required_output_keys=("headline", "confidence_note", "brief_rationale"),
     ),
     (
+        "marketer-strategist",
+        "v1-tuned",
+    ): PromptContract(
+        agent_id="marketer-strategist",
+        prompt_version="v1-tuned",
+        system_prompt=_load_prompt_text("marketer-strategist/v1-tuned.txt"),
+        required_output_keys=("headline", "confidence_note", "brief_rationale"),
+    ),
+    (
         "menu-profit-intelligence",
         "v1-draft",
     ): PromptContract(
@@ -48,12 +57,30 @@ PROMPT_CONTRACTS: dict[tuple[str, str], PromptContract] = {
         required_output_keys=("headline", "confidence_note", "analyst_summary"),
     ),
     (
+        "menu-profit-intelligence",
+        "v1-tuned",
+    ): PromptContract(
+        agent_id="menu-profit-intelligence",
+        prompt_version="v1-tuned",
+        system_prompt=_load_prompt_text("menu-profit-intelligence/v1-tuned.txt"),
+        required_output_keys=("headline", "confidence_note", "analyst_summary"),
+    ),
+    (
         "multi-agent-consensus",
         "v1-draft",
     ): PromptContract(
         agent_id="multi-agent-consensus",
         prompt_version="v1-draft",
         system_prompt=_load_prompt_text("multi-agent-consensus/v1-draft.txt"),
+        required_output_keys=("headline", "consensus_confidence", "reason_summary"),
+    ),
+    (
+        "multi-agent-consensus",
+        "v1-tuned",
+    ): PromptContract(
+        agent_id="multi-agent-consensus",
+        prompt_version="v1-tuned",
+        system_prompt=_load_prompt_text("multi-agent-consensus/v1-tuned.txt"),
         required_output_keys=("headline", "consensus_confidence", "reason_summary"),
     ),
     (
@@ -75,12 +102,30 @@ PROMPT_CONTRACTS: dict[tuple[str, str], PromptContract] = {
         required_output_keys=("headline", "scenario_summary", "confidence_note"),
     ),
     (
+        "what-if-simulation",
+        "v1-tuned",
+    ): PromptContract(
+        agent_id="what-if-simulation",
+        prompt_version="v1-tuned",
+        system_prompt=_load_prompt_text("what-if-simulation/v1-tuned.txt"),
+        required_output_keys=("headline", "scenario_summary", "confidence_note"),
+    ),
+    (
         "agent-memory-tracker",
         "v1-draft",
     ): PromptContract(
         agent_id="agent-memory-tracker",
         prompt_version="v1-draft",
         system_prompt=_load_prompt_text("agent-memory-tracker/v1-draft.txt"),
+        required_output_keys=("continuity_signal", "memory_summary", "risk_note"),
+    ),
+    (
+        "agent-memory-tracker",
+        "v1-tuned",
+    ): PromptContract(
+        agent_id="agent-memory-tracker",
+        prompt_version="v1-tuned",
+        system_prompt=_load_prompt_text("agent-memory-tracker/v1-tuned.txt"),
         required_output_keys=("continuity_signal", "memory_summary", "risk_note"),
     ),
     (
@@ -93,12 +138,30 @@ PROMPT_CONTRACTS: dict[tuple[str, str], PromptContract] = {
         required_output_keys=("ranking_summary", "confidence_note"),
     ),
     (
+        "feedback-reranker",
+        "v1-tuned",
+    ): PromptContract(
+        agent_id="feedback-reranker",
+        prompt_version="v1-tuned",
+        system_prompt=_load_prompt_text("feedback-reranker/v1-tuned.txt"),
+        required_output_keys=("ranking_summary", "confidence_note"),
+    ),
+    (
         "learning-release-loop",
         "v1-draft",
     ): PromptContract(
         agent_id="learning-release-loop",
         prompt_version="v1-draft",
         system_prompt=_load_prompt_text("learning-release-loop/v1-draft.txt"),
+        required_output_keys=("release_summary", "risk_note", "recommendation"),
+    ),
+    (
+        "learning-release-loop",
+        "v1-tuned",
+    ): PromptContract(
+        agent_id="learning-release-loop",
+        prompt_version="v1-tuned",
+        system_prompt=_load_prompt_text("learning-release-loop/v1-tuned.txt"),
         required_output_keys=("release_summary", "risk_note", "recommendation"),
     ),
 }

@@ -144,6 +144,12 @@ Run LLM evaluation harness surfaced-state validation:
 pnpm -C apps/web run test:e2e:agents:llm-evaluation-harness
 ```
 
+Run prompt tuning loop surfaced-state validation:
+
+```bash
+pnpm -C apps/web run test:e2e:agents:prompt-tuning-loop
+```
+
 Run prompt/model metadata visibility validation in Agent Studio UI:
 
 ```bash

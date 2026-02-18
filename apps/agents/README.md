@@ -40,6 +40,12 @@ Run LLM evaluation harness (mock mode):
 uv run --project apps/agents python apps/agents/scripts/run_llm_evaluation_harness.py --mode mock --fail-on-fail
 ```
 
+Run isolated prompt tuning loop (mock mode) and write latest report:
+
+```bash
+uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_loop.py --mode mock --fail-on-unapproved
+```
+
 ## Current Endpoints
 
 General contract/policy:
@@ -56,6 +62,8 @@ Agent workflows:
 - `POST /agents/learning/eligibility`
 - `POST /agents/rerank/recommendations`
 - `POST /agents/learning/release-loop/evaluate`
+- `POST /agents/evaluation/harness`
+- `POST /agents/evaluation/prompt-tuning`
 
 ## Design Principles
 

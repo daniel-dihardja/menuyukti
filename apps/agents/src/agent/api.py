@@ -18,6 +18,7 @@ from agent.release_loop import ReleaseLoopRequest, evaluate_release_loop
 from agent.simulation import WhatIfSimulationRequest, run_what_if_simulation
 from agent.strategist import StrategistWeeklyPlanRequest, generate_weekly_plan
 from agent.evaluation_harness import EvaluationHarnessRequest, run_evaluation_harness
+from agent.prompt_tuning import run_prompt_tuning_loop
 
 load_dotenv()
 
@@ -105,3 +106,8 @@ async def learning_release_loop(payload: ReleaseLoopRequest):
 @app.post("/agents/evaluation/harness", response_model=None)
 async def evaluation_harness(payload: EvaluationHarnessRequest):
     return run_evaluation_harness(payload)
+
+
+@app.post("/agents/evaluation/prompt-tuning", response_model=None)
+async def prompt_tuning_loop(payload: EvaluationHarnessRequest):
+    return run_prompt_tuning_loop(mode=payload.mode, agents=payload.agents)
