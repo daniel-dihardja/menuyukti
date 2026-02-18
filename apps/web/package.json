@@ -13,6 +13,7 @@
     "test": "vitest",
     "test:e2e:sales": "node --import tsx scripts/run-e2e-suite.ts e2e/analytics-sales-upload.e2e.ts",
     "test:e2e:seed": "E2E_REQUIRED_SERVICES=none node --import tsx scripts/run-e2e-suite.ts e2e/seed-creation.e2e.ts",
+    "test:e2e:agents:workflow-blueprint": "E2E_REQUIRED_SERVICES=web,analytics node --import tsx scripts/run-e2e-suite.ts e2e/agent-workflow-blueprint.e2e.ts",
     "test:e2e:api:contracts": "node --import tsx scripts/run-e2e-suite.ts e2e/api-contracts.e2e.ts",
     "postinstall": "prisma generate",
     "db:reset": "prisma migrate reset --force",

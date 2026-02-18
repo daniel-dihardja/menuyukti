@@ -3,7 +3,8 @@
 ## Story Metadata
 
 - Created Date: 2026-02-18
-- Status: `todo`
+- Status: `complete`
+- Completed Date: 2026-02-18
 - Parent: EPIC-AI-AGENTIC-SYSTEM
 
 ## Goal
@@ -37,3 +38,13 @@ Define the end-to-end workflows for marketer and analyst agents, including requi
 - Agent workflow blueprint document.
 - Persona journey maps with state transitions.
 - Story dependency map for AS-02 onward.
+
+## Notes
+- Implemented artifact:
+  - `packages/docs/planning/blueprints/AGENT_WORKFLOW_BLUEPRINT_V1.md`
+- Story-specific E2E scenario:
+  - `apps/web/e2e/agent-workflow-blueprint.e2e.ts`
+  - script: `pnpm -C apps/web run test:e2e:agents:workflow-blueprint`
+- Verification:
+  - `pnpm -C apps/web run typecheck` (passed)
+  - `pnpm -C apps/web run test:e2e:agents:workflow-blueprint` (passed)
