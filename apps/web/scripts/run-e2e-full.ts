@@ -52,6 +52,7 @@ const DEFAULT_E2E_SUITES = [
   "test:e2e:agents:simulation",
   "test:e2e:agents:memory",
   "test:e2e:agents:release-gate",
+  "test:e2e:agents:learning",
   "test:e2e:release-gate",
 ];
 

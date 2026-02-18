@@ -21,6 +21,7 @@
     "test:e2e:agents:simulation": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-what-if-simulation.e2e.ts",
     "test:e2e:agents:memory": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-memory-continuity.e2e.ts",
     "test:e2e:agents:release-gate": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-release-gate.e2e.ts",
+    "test:e2e:agents:learning": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-learning-signal-capture.e2e.ts",
     "test:e2e:api:contracts": "node --import tsx scripts/run-e2e-suite.ts e2e/api-contracts.e2e.ts",
     "postinstall": "prisma generate",
     "db:reset": "prisma migrate reset --force",

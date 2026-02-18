@@ -10,6 +10,7 @@ from agent.tool_contract import (
     validate_tool_payload,
 )
 from agent.consensus import DebateConsensusRequest, run_consensus
+from agent.learning import LearningEligibilityRequest, evaluate_learning_eligibility
 from agent.memory import MemoryContextRequest, build_memory_context
 from agent.profit_intelligence import ProfitIntelligenceRequest, generate_action_board
 from agent.simulation import WhatIfSimulationRequest, run_what_if_simulation
@@ -81,3 +82,8 @@ async def what_if_simulation(payload: WhatIfSimulationRequest):
 @app.post("/agents/memory/context", response_model=None)
 async def memory_context(payload: MemoryContextRequest):
     return build_memory_context(payload)
+
+
+@app.post("/agents/learning/eligibility", response_model=None)
+async def learning_eligibility(payload: LearningEligibilityRequest):
+    return evaluate_learning_eligibility(payload)
