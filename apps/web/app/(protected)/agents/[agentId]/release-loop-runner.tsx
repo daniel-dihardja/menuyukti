@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@work
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
 import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
+import { resolveSelectedContextState } from "./selected-context";
 
 type Stage = "shadow" | "canary" | "rollout";
 
@@ -39,6 +40,7 @@ export function ReleaseLoopRunner() {
   const [records, setRecords] = useState<RecordDto[]>([]);
 
   const latest = useMemo(() => records[0] ?? null, [records]);
+  const contextState = resolveSelectedContextState({ locationId, analyticsId });
 
   async function refresh(targetContext: { locationId: number | null; analyticsId: number | null } = { locationId, analyticsId }) {
     if (!targetContext.locationId) return;
@@ -111,7 +113,7 @@ export function ReleaseLoopRunner() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={() => void run()} disabled={!locationId || !analyticsId || loading}>
+          <Button onClick={() => void run()} disabled={!contextState.canRun || loading}>
             {loading ? "Evaluating..." : "Run Release Decision"}
           </Button>
           <Button variant="outline" onClick={() => void runSampleContext()} disabled={loading}>
@@ -127,10 +129,16 @@ export function ReleaseLoopRunner() {
           >
             simulate canary failure: {String(simulateCanaryFailure)}
           </Button>
-          {!locationId || !analyticsId ? (
-            <Badge variant="secondary">Select location and report first</Badge>
-          ) : null}
+          <Badge
+            data-selected-context-state={contextState.status}
+            variant={contextState.status === "blocked" ? "destructive" : "secondary"}
+          >
+            selected context: {contextState.status}
+          </Badge>
         </div>
+        {contextState.status !== "ready" ? (
+          <p className="text-xs text-muted-foreground">{contextState.reason}</p>
+        ) : null}
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

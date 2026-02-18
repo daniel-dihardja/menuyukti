@@ -6,6 +6,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
+import { resolveSelectedContextState } from "./selected-context";
 
 type MemoryEvent = {
   id: string;
@@ -36,6 +37,7 @@ export function MemoryRunner() {
   const [payload, setPayload] = useState<MemoryPayload | null>(null);
 
   const events = useMemo(() => payload?.events ?? [], [payload]);
+  const contextState = resolveSelectedContextState({ locationId, analyticsId });
 
   async function refresh(targetLocationId = locationId) {
     if (!targetLocationId) return;
@@ -103,7 +105,7 @@ export function MemoryRunner() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => record("accepted")} disabled={!analyticsId || !locationId || loading}>
+          <Button onClick={() => record("accepted")} disabled={!contextState.canRun || loading}>
             Record Accepted
           </Button>
           <Button variant="outline" onClick={() => void runSampleContext()} disabled={loading}>
@@ -112,22 +114,28 @@ export function MemoryRunner() {
           <Button
             variant="secondary"
             onClick={() => record("rejected")}
-            disabled={!analyticsId || !locationId || loading}
+            disabled={!contextState.canRun || loading}
           >
             Record Rejected
           </Button>
           <Button variant="outline" onClick={() => void refresh()} disabled={!locationId || loading}>
             Refresh Memory
           </Button>
-          {!locationId || !analyticsId ? (
-            <Badge variant="secondary">Select location and report first</Badge>
-          ) : null}
+          <Badge
+            data-selected-context-state={contextState.status}
+            variant={contextState.status === "blocked" ? "destructive" : "secondary"}
+          >
+            selected context: {contextState.status}
+          </Badge>
           {payload?.memoryContext?.memory_context?.continuity_signal ? (
             <Badge variant="secondary">
               continuity: {payload.memoryContext.memory_context.continuity_signal}
             </Badge>
           ) : null}
         </div>
+        {contextState.status !== "ready" ? (
+          <p className="text-xs text-muted-foreground">{contextState.reason}</p>
+        ) : null}
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

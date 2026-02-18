@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@work
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
 import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
+import { resolveSelectedContextState } from "./selected-context";
 
 type Mode = "conservative" | "aggressive";
 
@@ -41,6 +42,7 @@ export function ConsensusRunner() {
 
   const result = payload?.consensus?.consensus;
   const recommendations = useMemo(() => result?.recommendations ?? [], [result]);
+  const contextState = resolveSelectedContextState({ locationId, analyticsId });
 
   async function runConsensus(targetAnalyticsId = analyticsId) {
     if (!targetAnalyticsId) return;
@@ -99,19 +101,27 @@ export function ConsensusRunner() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={() => void runConsensus()} disabled={!analyticsId || loading}>
+          <Button onClick={() => void runConsensus()} disabled={!contextState.canRun || loading}>
             {loading ? "Resolving..." : "Run Consensus"}
           </Button>
           <Button variant="outline" onClick={() => void runSampleContext()} disabled={loading}>
             Run Sample Context
           </Button>
-          {!analyticsId ? <Badge variant="secondary">Select analytics report first</Badge> : null}
+          <Badge
+            data-selected-context-state={contextState.status}
+            variant={contextState.status === "blocked" ? "destructive" : "secondary"}
+          >
+            selected context: {contextState.status}
+          </Badge>
           {payload?.contract?.readiness ? (
             <Badge variant={payload.contract.readiness === "blocked" ? "destructive" : "secondary"}>
               readiness: {payload.contract.readiness}
             </Badge>
           ) : null}
         </div>
+        {contextState.status !== "ready" ? (
+          <p className="text-xs text-muted-foreground">{contextState.reason}</p>
+        ) : null}
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

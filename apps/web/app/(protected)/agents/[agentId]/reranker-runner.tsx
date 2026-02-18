@@ -6,6 +6,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
+import { resolveSelectedContextState } from "./selected-context";
 
 type RerankedRecommendation = {
   recommendation_id: string;
@@ -38,6 +39,7 @@ export function RerankerRunner() {
   const [payload, setPayload] = useState<RerankedPayload | null>(null);
 
   const recs = useMemo(() => payload?.reranked?.recommendations ?? [], [payload]);
+  const contextState = resolveSelectedContextState({ locationId, analyticsId });
 
   async function runRerank(targetAnalyticsId = analyticsId) {
     if (!targetAnalyticsId) return;
@@ -82,13 +84,18 @@ export function RerankerRunner() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => void runRerank()} disabled={!analyticsId || loading}>
+          <Button onClick={() => void runRerank()} disabled={!contextState.canRun || loading}>
             {loading ? "Re-ranking..." : "Run Re-ranking"}
           </Button>
           <Button variant="outline" onClick={() => void runSampleContext()} disabled={loading}>
             Run Sample Context
           </Button>
-          {!analyticsId ? <Badge variant="secondary">Select analytics report first</Badge> : null}
+          <Badge
+            data-selected-context-state={contextState.status}
+            variant={contextState.status === "blocked" ? "destructive" : "secondary"}
+          >
+            selected context: {contextState.status}
+          </Badge>
           {payload?.reranked?.policy_version ? (
             <Badge variant="secondary">policy: {payload.reranked.policy_version}</Badge>
           ) : null}
@@ -98,6 +105,9 @@ export function RerankerRunner() {
             </Badge>
           ) : null}
         </div>
+        {contextState.status !== "ready" ? (
+          <p className="text-xs text-muted-foreground">{contextState.reason}</p>
+        ) : null}
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
         {recs.length > 0 ? (
           <div className="space-y-3">

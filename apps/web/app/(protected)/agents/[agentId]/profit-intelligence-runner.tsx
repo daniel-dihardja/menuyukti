@@ -6,6 +6,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
+import { resolveSelectedContextState } from "./selected-context";
 
 type Recommendation = {
   rank: number;
@@ -48,6 +49,7 @@ export function ProfitIntelligenceRunner() {
     () => payload?.profitIntelligence?.board?.recommendations ?? [],
     [payload],
   );
+  const contextState = resolveSelectedContextState({ locationId, analyticsId });
 
   async function runBoard(targetAnalyticsId = analyticsId) {
     if (!targetAnalyticsId) return;
@@ -86,13 +88,18 @@ export function ProfitIntelligenceRunner() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={() => void runBoard()} disabled={!analyticsId || loading}>
+          <Button onClick={() => void runBoard()} disabled={!contextState.canRun || loading}>
             {loading ? "Generating..." : "Generate Action Board"}
           </Button>
           <Button variant="outline" onClick={() => void runSampleContext()} disabled={loading}>
             Run Sample Context
           </Button>
-          {!analyticsId ? <Badge variant="secondary">Select analytics report first</Badge> : null}
+          <Badge
+            data-selected-context-state={contextState.status}
+            variant={contextState.status === "blocked" ? "destructive" : "secondary"}
+          >
+            selected context: {contextState.status}
+          </Badge>
           {payload?.contract?.readiness ? (
             <Badge variant={payload.contract.readiness === "blocked" ? "destructive" : "secondary"}>
               readiness: {payload.contract.readiness}
@@ -102,6 +109,9 @@ export function ProfitIntelligenceRunner() {
             <Badge variant="secondary">cogs: {payload.contextCoverage.cogsReadiness}</Badge>
           ) : null}
         </div>
+        {contextState.status !== "ready" ? (
+          <p className="text-xs text-muted-foreground">{contextState.reason}</p>
+        ) : null}
 
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 

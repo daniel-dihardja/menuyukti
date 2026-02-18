@@ -132,6 +132,12 @@ Run one-click sample-context runner validation across all ready agents:
 pnpm -C apps/web run test:e2e:agents:sample-context
 ```
 
+Run selected-context runner validation across all ready agents:
+
+```bash
+pnpm -C apps/web run test:e2e:agents:selected-context
+```
+
 Run learning release-loop gate validation (web + agents services):
 
 ```bash
