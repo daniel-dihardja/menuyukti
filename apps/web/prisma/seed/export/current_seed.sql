@@ -1,4 +1,4 @@
--- SQL seed export generated at 2026-02-17T13:15:36.318Z
+-- SQL seed export generated at 2026-02-18T14:53:37.359Z
 -- Source: current DATABASE_URL
 
 -- table: public.branches (1 rows)
@@ -176,3 +176,7 @@ INSERT INTO "public"."analytics_menu_items" ("id", "analytics_id", "menu_name", 
 -- table: public.instagram_weekly_schedules (0 rows)
 
 -- table: public.instagram_weekly_schedule_entries (0 rows)
+
+-- table: public.instagram_schedule_post_drafts (0 rows)
+
+-- table: public.instagram_schedule_post_draft_history (0 rows)

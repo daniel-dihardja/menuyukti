@@ -28,6 +28,48 @@ function parseInsertTarget(statement: string): string | null {
   return match[1].replace(/\s+/g, "");
 }
 
+async function backfillAgentOutputCompatInSeed() {
+  const compatColumns = await prisma.$queryRawUnsafe<Array<{ column_name: string }>>(
+    `
+    SELECT column_name::text AS column_name
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'agent_outputs'
+      AND column_name IN ('contract_version', 'run_status', 'output_envelope_json')
+    `,
+  );
+  const columnSet = new Set(compatColumns.map((row) => row.column_name));
+  if (
+    !columnSet.has("contract_version") ||
+    !columnSet.has("run_status") ||
+    !columnSet.has("output_envelope_json")
+  ) {
+    return;
+  }
+
+  await prisma.$executeRawUnsafe(`
+    UPDATE "public"."agent_outputs"
+    SET
+      "contract_version" = COALESCE(NULLIF("contract_version", ''), 'v1'),
+      "run_status" = COALESCE(NULLIF("run_status", ''), CASE WHEN "outputs" IS NULL THEN 'failed' ELSE 'succeeded' END),
+      "output_envelope_json" = COALESCE(
+        "output_envelope_json",
+        jsonb_build_object(
+          'contractVersion', 'v1',
+          'run', jsonb_build_object(
+            'status', COALESCE(NULLIF("run_status", ''), CASE WHEN "outputs" IS NULL THEN 'failed' ELSE 'succeeded' END)
+          ),
+          'outputs', "outputs"
+        )
+      )
+    WHERE "contract_version" IS NULL
+       OR "contract_version" = ''
+       OR "run_status" IS NULL
+       OR "run_status" = ''
+       OR "output_envelope_json" IS NULL
+  `);
+}
+
 async function syncSerialSequences() {
   for (const table of SEED_TABLES) {
     const qualifiedTable = qualifyTable(table.schema, table.table);
@@ -109,6 +151,7 @@ async function run() {
     }
 
     await syncSerialSequences();
+    await backfillAgentOutputCompatInSeed();
     await prisma.$executeRawUnsafe("COMMIT");
     if (statements.length === 0) {
       console.log(`[seed] No statements found in ${SQL_FILE_PATH}. Applied truncate only.`);

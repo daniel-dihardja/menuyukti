@@ -61,6 +61,34 @@ async function validateRowCounts(targets: InsertTarget[]) {
   }
 }
 
+async function validateAgentOutputCompatColumns() {
+  if (!process.env.DATABASE_URL) return;
+
+  const rows = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
+    `SELECT COUNT(*)::bigint AS count FROM "public"."agent_outputs"`,
+  );
+  const count = Number(rows[0]?.count ?? 0n);
+  if (count <= 0) return;
+
+  const invalid = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
+    `
+    SELECT COUNT(*)::bigint AS count
+    FROM "public"."agent_outputs"
+    WHERE "contract_version" IS NULL
+       OR "contract_version" = ''
+       OR "run_status" IS NULL
+       OR "run_status" = ''
+       OR "output_envelope_json" IS NULL
+    `,
+  );
+  const invalidCount = Number(invalid[0]?.count ?? 0n);
+  if (invalidCount > 0) {
+    fail(
+      `Expected compatibility fields on seeded agent_outputs rows. Found ${invalidCount} rows with missing contract/run/envelope metadata.`,
+    );
+  }
+}
+
 async function run() {
   if (!fs.existsSync(PACKAGE_JSON_PATH)) fail("package.json not found.");
   const pkg = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH, "utf8")) as {
@@ -93,6 +121,7 @@ async function run() {
   }
 
   await validateRowCounts(targets);
+  await validateAgentOutputCompatColumns();
   console.log(`[seed:smoke] Passed wiring and data checks for ${targets.length} table(s).`);
 }
 
