@@ -18,7 +18,6 @@
     "test:e2e:agents:llm-runtime": "AGENTS_LLM_ENABLED=1 AGENTS_LLM_PROVIDER=mock E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-llm-runtime-availability.e2e.ts",
     "test:e2e:agents:llm-evaluation-harness": "AGENTS_LLM_ENABLED=1 AGENTS_LLM_PROVIDER=mock E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-llm-evaluation-harness.e2e.ts",
     "test:e2e:agents:prompt-model-visibility": "AGENTS_LLM_ENABLED=1 AGENTS_LLM_PROVIDER=mock E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-prompt-model-visibility.e2e.ts",
-    "test:agents:integration": "uv run --project apps/agents pytest apps/agents/tests/integration_tests",
     "test:e2e:agents:validation-gate": "E2E_REQUIRED_SERVICES=none node --import tsx scripts/run-e2e-suite.ts e2e/agent-validation-e2e-gate.e2e.ts",
     "test:e2e:release:validate": "node --import tsx scripts/run-release-validation-gate.ts",
     "test:e2e:agents:card-standard": "E2E_REQUIRED_SERVICES=web node --import tsx scripts/run-e2e-suite.ts e2e/agent-card-information-standard.e2e.ts",
