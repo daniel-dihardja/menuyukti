@@ -294,6 +294,13 @@ LLM-call rule for this epic:
 - upstream/data/tool inputs are mocked
 - LLM call path is validated with real provider/model in live-integration runs
 
+Clarification:
+
+- Phase 1 includes both:
+  - deterministic mocked integration gates (required for CI stability)
+  - isolated live-LLM evaluation runs per agent (for real model behavior validation)
+- Phase 2 starts only when these single-agent live-LLM validations are complete.
+
 Two-layer execution policy:
 
 1. CI default gate:

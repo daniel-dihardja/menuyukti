@@ -16,11 +16,14 @@ Implement LLM execution path for each Phase 1 agent with provider abstraction an
 - Add provider abstraction layer and per-agent runtime config.
 - Integrate LLM invocation for each Phase 1 agent endpoint.
 - Enforce timeout/retry and error classification.
+- Keep CI integration tests deterministic by mocking required inputs and provider responses.
+- Expose a runtime switch/profile so the same endpoints can execute with live provider in non-mocked runs.
 
 ## Acceptance Criteria
 - Each Phase 1 agent endpoint can execute via LLM path.
 - LLM invocation includes prompt version and model id in run metadata.
-- Agents app integration tests mock required inputs and provider responses per agent.
+- Agents app integration tests mock required inputs and provider responses per agent (required CI gate).
+- Live-provider execution path is available for Phase 1 agents and can be invoked by dedicated evaluation runs.
 - Story-specific E2E validates LLM-backed run availability from Agent Studio.
 
 - Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
