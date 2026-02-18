@@ -114,6 +114,12 @@ Run agent tool-contract and runtime-policy validation (agents service only):
 pnpm -C apps/web run test:e2e:agents:tool-contract-policy
 ```
 
+Run learning release-loop gate validation (web + agents services):
+
+```bash
+pnpm -C apps/web run test:e2e:agents:learning-release-loop
+```
+
 Run seed-validation suite without starting app/agent services:
 
 ```bash

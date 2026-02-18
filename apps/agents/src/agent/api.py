@@ -14,6 +14,7 @@ from agent.learning import LearningEligibilityRequest, evaluate_learning_eligibi
 from agent.memory import MemoryContextRequest, build_memory_context
 from agent.profit_intelligence import ProfitIntelligenceRequest, generate_action_board
 from agent.rerank import RerankRequest, rerank_recommendations
+from agent.release_loop import ReleaseLoopRequest, evaluate_release_loop
 from agent.simulation import WhatIfSimulationRequest, run_what_if_simulation
 from agent.strategist import StrategistWeeklyPlanRequest, generate_weekly_plan
 
@@ -93,3 +94,8 @@ async def learning_eligibility(payload: LearningEligibilityRequest):
 @app.post("/agents/rerank/recommendations", response_model=None)
 async def rerank_recommendation_list(payload: RerankRequest):
     return rerank_recommendations(payload)
+
+
+@app.post("/agents/learning/release-loop/evaluate", response_model=None)
+async def learning_release_loop(payload: ReleaseLoopRequest):
+    return evaluate_release_loop(payload)

@@ -1,0 +1,137 @@
+import { NextRequest, NextResponse } from "next/server";
+
+import { prisma } from "@/lib/prisma/client";
+import { listLearningSignalEvents } from "@/lib/agents/learning-repository";
+import {
+  appendReleaseLoopRecord,
+  listReleaseLoopRecords,
+  type ReleaseLoopAuditRecord,
+} from "@/lib/agents/release-loop-repository";
+
+function parsePositiveInt(raw: string | null): number | null {
+  if (!raw) return null;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value <= 0) return null;
+  return value;
+}
+
+export async function GET(request: NextRequest) {
+  const locationId = parsePositiveInt(request.nextUrl.searchParams.get("locationId"));
+  const analyticsId = parsePositiveInt(request.nextUrl.searchParams.get("analyticsId"));
+  if (!locationId) {
+    return NextResponse.json({ error: "INVALID_LOCATION_ID" }, { status: 400 });
+  }
+  const records = await listReleaseLoopRecords(prisma, {
+    locationId,
+    analyticsId: analyticsId ?? undefined,
+    limit: parsePositiveInt(request.nextUrl.searchParams.get("limit")) ?? 30,
+  });
+  return NextResponse.json({ locationId, analyticsId: analyticsId ?? null, records });
+}
+
+export async function POST(request: NextRequest) {
+  const body = (await request.json()) as {
+    locationId?: number;
+    analyticsId?: number;
+    stage?: "shadow" | "canary" | "rollout";
+    candidatePolicyVersion?: string;
+    baselinePolicyVersion?: string;
+    simulateCanaryFailure?: boolean;
+  };
+  if (
+    !Number.isInteger(body.locationId) ||
+    !Number.isInteger(body.analyticsId) ||
+    (body.stage !== "shadow" && body.stage !== "canary" && body.stage !== "rollout") ||
+    typeof body.candidatePolicyVersion !== "string" ||
+    body.candidatePolicyVersion.trim() === "" ||
+    typeof body.baselinePolicyVersion !== "string" ||
+    body.baselinePolicyVersion.trim() === ""
+  ) {
+    return NextResponse.json({ error: "INVALID_RELEASE_LOOP_PAYLOAD" }, { status: 400 });
+  }
+
+  const locationId = body.locationId as number;
+  const analyticsId = body.analyticsId as number;
+  const stage = body.stage;
+  const candidatePolicyVersion = body.candidatePolicyVersion.trim();
+  const baselinePolicyVersion = body.baselinePolicyVersion.trim();
+  const simulateCanaryFailure = body.simulateCanaryFailure === true;
+
+  const eligibleEvents = await listLearningSignalEvents(prisma, {
+    locationId,
+    analyticsId,
+    eligibleOnly: true,
+    limit: 500,
+  });
+  const shadowQualityScore = Math.min(1, eligibleEvents.length / 20);
+  const shadowContractPassRate = eligibleEvents.length > 0 ? 1 : 0.9;
+  const canaryErrorRate = simulateCanaryFailure ? 0.2 : 0.01;
+  const canaryRegressionRate = simulateCanaryFailure ? 0.18 : 0.02;
+
+  const priorRecords = await listReleaseLoopRecords(prisma, { locationId, analyticsId, limit: 100 });
+  const priorStagePass =
+    stage !== "rollout"
+      ? true
+      : priorRecords.some(
+          (record) =>
+            record.stage === "canary" &&
+            record.candidatePolicyVersion === candidatePolicyVersion &&
+            record.decision === "advance",
+        );
+
+  const agentsApiUrl = (process.env.AGENTS_API_URL ?? "http://127.0.0.1:8001").replace(/\/+$/g, "");
+  const response = await fetch(`${agentsApiUrl}/agents/learning/release-loop/evaluate`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      contract_version: "v1",
+      stage,
+      candidate_policy_version: candidatePolicyVersion,
+      baseline_policy_version: baselinePolicyVersion,
+      prior_stage_pass: priorStagePass,
+      metrics: {
+        shadow_quality_score: shadowQualityScore,
+        shadow_contract_pass_rate: shadowContractPassRate,
+        canary_error_rate: canaryErrorRate,
+        canary_regression_rate: canaryRegressionRate,
+      },
+    }),
+  });
+  if (!response.ok) {
+    return NextResponse.json({ error: "AGENTS_SERVICE_UNAVAILABLE" }, { status: 503 });
+  }
+  const decisionPayload = (await response.json()) as {
+    release_decision?: {
+      decision?: "advance" | "hold" | "rollback";
+      reasons?: string[];
+      rollback_to_policy_version?: string | null;
+    };
+  };
+
+  const record: ReleaseLoopAuditRecord = {
+    id: `roll_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    stage,
+    candidatePolicyVersion,
+    baselinePolicyVersion,
+    decision: decisionPayload.release_decision?.decision ?? "hold",
+    reasons: decisionPayload.release_decision?.reasons ?? [],
+    rollbackToPolicyVersion: decisionPayload.release_decision?.rollback_to_policy_version ?? null,
+    metrics: {
+      shadowQualityScore,
+      shadowContractPassRate,
+      canaryErrorRate,
+      canaryRegressionRate,
+    },
+    createdAt: new Date().toISOString(),
+  };
+  await appendReleaseLoopRecord(prisma, {
+    locationId,
+    analyticsId,
+    record,
+  });
+
+  return NextResponse.json({
+    record,
+    decision: decisionPayload.release_decision ?? null,
+  });
+}

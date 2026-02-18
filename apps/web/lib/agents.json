@@ -121,5 +121,25 @@
       "fallback_to_baseline",
       "signal_count"
     ]
+  },
+  {
+    "id": "learning-release-loop",
+    "name": "Learning Release Loop",
+    "imageUrl": "/images/placeholder.svg",
+    "description": "Evaluates learning policy progression through shadow, canary, and rollout with rollback safeguards.",
+    "status": "ready",
+    "inputs": [
+      "Learning signal quality metrics",
+      "Candidate and baseline policy versions",
+      "Current release stage",
+      "Prior stage pass/fail status"
+    ],
+    "outputs": [
+      "release_decision",
+      "stage_reasons",
+      "rollback_target",
+      "threshold_snapshot",
+      "audit_trail_records"
+    ]
   }
 ]

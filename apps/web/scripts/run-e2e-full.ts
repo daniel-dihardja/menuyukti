@@ -54,6 +54,7 @@ const DEFAULT_E2E_SUITES = [
   "test:e2e:agents:release-gate",
   "test:e2e:agents:learning",
   "test:e2e:agents:reranking",
+  "test:e2e:agents:learning-release-loop",
   "test:e2e:release-gate",
 ];
 

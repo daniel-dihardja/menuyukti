@@ -25,6 +25,7 @@ import { ConsensusRunner } from "./consensus-runner";
 import { SimulationRunner } from "./simulation-runner";
 import { MemoryRunner } from "./memory-runner";
 import { RerankerRunner } from "./reranker-runner";
+import { ReleaseLoopRunner } from "./release-loop-runner";
 
 type PageProps = {
   params: Promise<{ agentId?: string }>;
@@ -88,6 +89,7 @@ export default async function Page({ params }: PageProps) {
           {agent.id === "what-if-simulation" ? <SimulationRunner /> : null}
           {agent.id === "agent-memory-tracker" ? <MemoryRunner /> : null}
           {agent.id === "feedback-reranker" ? <RerankerRunner /> : null}
+          {agent.id === "learning-release-loop" ? <ReleaseLoopRunner /> : null}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Card>
