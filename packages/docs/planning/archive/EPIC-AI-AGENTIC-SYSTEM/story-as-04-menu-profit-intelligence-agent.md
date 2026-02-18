@@ -2,7 +2,7 @@
 
 ## Story Metadata
 - Created Date: 2026-02-18
-- Status: `todo`
+- Status: `done`
 - Parent: EPIC-AI-AGENTIC-SYSTEM
 
 ## Goal
@@ -32,3 +32,18 @@ Ship the analyst-facing profit intelligence agent that generates action boards w
 - Analyst export alignment updates.
 - Test coverage for analyst workflow.
 
+## Implementation Notes
+- Added agents app endpoint: `POST /agents/profit-intelligence/action-board`.
+- Added web API orchestration endpoint: `GET /api/agents/profit-intelligence`.
+- Added `menu-profit-intelligence` agent in Agent Studio with dedicated runner UI.
+- Integrated matrix + COGS readiness + combo context + attribution context into candidate generation.
+- Added decision package export links (`matrix`, `pairs`, `combos`, `attribution`) in response payload.
+- Persisted outputs into `agent_outputs` (`agent_id=menu-profit-intelligence`).
+
+## Test Evidence
+- Agents integration tests:
+  - `uv run --project apps/agents pytest apps/agents/tests/integration_tests/test_profit_intelligence_agent.py apps/agents/tests/integration_tests/test_strategist_agent.py apps/agents/tests/integration_tests/test_api.py`
+- Type check:
+  - `pnpm -C apps/web run typecheck`
+- Story E2E:
+  - `pnpm -C apps/web run test:e2e:agents:profit-intelligence`

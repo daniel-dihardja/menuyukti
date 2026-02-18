@@ -18,5 +18,26 @@
       "readiness",
       "evidence"
     ]
+  },
+  {
+    "id": "menu-profit-intelligence",
+    "name": "Menu Profit Intelligence",
+    "imageUrl": "/images/placeholder.svg",
+    "description": "Builds analyst action boards for promote, improve, bundle, and deprioritize decisions.",
+    "status": "ready",
+    "inputs": [
+      "Analytics matrix snapshot",
+      "Pair and combo opportunity context",
+      "COGS readiness context",
+      "Instagram attribution context"
+    ],
+    "outputs": [
+      "action_board_recommendations",
+      "impact_forecasts",
+      "confidence",
+      "readiness",
+      "evidence",
+      "decision_package_exports"
+    ]
   }
 ]
