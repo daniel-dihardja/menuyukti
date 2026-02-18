@@ -35,6 +35,10 @@ function formatOutputLabel(output: string) {
   return output.replaceAll("_", " ");
 }
 
+function formatLabel(value: string) {
+  return value.replaceAll("_", " ");
+}
+
 export default async function Page({ params }: PageProps) {
   const t = await getTranslations("agents");
   const tDetail = await getTranslations("agents.detail");
@@ -106,29 +110,59 @@ export default async function Page({ params }: PageProps) {
           )}
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Card>
+            <Card data-agent-input-contract={agent.id}>
               <CardHeader>
-                <CardTitle>{tDetail("cards.inputs")}</CardTitle>
+                <CardTitle>Input Contract</CardTitle>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" data-contract-input-version>
+                    input {agent.contract.inputContractVersion}
+                  </Badge>
+                  <Badge variant="outline" data-contract-prompt-version>
+                    prompt {agent.contract.promptContractVersion}
+                  </Badge>
+                </div>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
+                <p className="mb-1 font-medium text-foreground/80">{tDetail("cards.inputs")}</p>
                 <ul className="list-disc pl-4 space-y-1">
                   {agent.inputs.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+                <p className="mt-3 mb-1 font-medium text-foreground/80">Value Constraints</p>
+                <ul className="list-disc pl-4 space-y-1" data-contract-input-constraints>
+                  {agent.contract.inputValueConstraints.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card data-agent-output-contract={agent.id}>
               <CardHeader>
-                <CardTitle>{tDetail("cards.outputs")}</CardTitle>
+                <CardTitle>Output Contract</CardTitle>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" data-contract-output-version>
+                    output {agent.contract.outputContractVersion}
+                  </Badge>
+                  <Badge variant="outline" data-contract-model-version>
+                    model {agent.contract.modelContractVersion}
+                  </Badge>
+                </div>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
+                <p className="mb-1 font-medium text-foreground/80">{tDetail("cards.outputs")}</p>
                 <ul className="list-disc pl-4 space-y-1">
                   {agent.outputs.map((item) => (
                     <li key={item}>
                       <span>{formatOutputLabel(item)}</span>
                     </li>
+                  ))}
+                </ul>
+                <p className="mt-3 mb-1 font-medium text-foreground/80">Required Trust Metadata</p>
+                <ul className="list-disc pl-4 space-y-1" data-contract-required-trust-fields>
+                  {agent.contract.requiredTrustFields.map((item) => (
+                    <li key={item}>{formatLabel(item)}</li>
                   ))}
                 </ul>
               </CardContent>

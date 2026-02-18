@@ -9,6 +9,18 @@
     "status": "ready",
     "persona": "marketer",
     "trustScope": "campaign_planning",
+    "contract": {
+      "inputContractVersion": "v1",
+      "outputContractVersion": "v1",
+      "promptContractVersion": "v1-draft",
+      "modelContractVersion": "phase1-llm-pending",
+      "requiredTrustFields": ["confidence", "readiness", "evidence", "lineage"],
+      "inputValueConstraints": [
+        "all required input fields must be present",
+        "location/analytics scope must be tenant-scoped",
+        "freshness and quality guardrails must pass for ready state"
+      ]
+    },
     "inputs": [
       "Analytics snapshot",
       "Matrix signals",
@@ -33,6 +45,18 @@
     "status": "ready",
     "persona": "analyst",
     "trustScope": "menu_decisioning",
+    "contract": {
+      "inputContractVersion": "v1",
+      "outputContractVersion": "v1",
+      "promptContractVersion": "v1-draft",
+      "modelContractVersion": "phase1-llm-pending",
+      "requiredTrustFields": ["confidence", "readiness", "evidence", "lineage"],
+      "inputValueConstraints": [
+        "all required input fields must be present",
+        "location/analytics scope must be tenant-scoped",
+        "freshness and quality guardrails must pass for ready state"
+      ]
+    },
     "inputs": [
       "Analytics matrix snapshot",
       "Pair and combo opportunity context",
@@ -58,6 +82,18 @@
     "status": "ready",
     "persona": "shared",
     "trustScope": "consensus_risk",
+    "contract": {
+      "inputContractVersion": "v1",
+      "outputContractVersion": "v1",
+      "promptContractVersion": "v1-draft",
+      "modelContractVersion": "phase1-llm-pending",
+      "requiredTrustFields": ["confidence", "readiness", "evidence", "lineage"],
+      "inputValueConstraints": [
+        "all required input fields must be present",
+        "location/analytics scope must be tenant-scoped",
+        "freshness and quality guardrails must pass for ready state"
+      ]
+    },
     "inputs": [
       "Profit intelligence recommendations",
       "Risk flags and confidence levels",
@@ -83,6 +119,18 @@
     "status": "ready",
     "persona": "shared",
     "trustScope": "scenario_forecasting",
+    "contract": {
+      "inputContractVersion": "v1",
+      "outputContractVersion": "v1",
+      "promptContractVersion": "v1-draft",
+      "modelContractVersion": "phase1-llm-pending",
+      "requiredTrustFields": ["confidence", "readiness", "evidence", "lineage"],
+      "inputValueConstraints": [
+        "all required input fields must be present",
+        "location/analytics scope must be tenant-scoped",
+        "freshness and quality guardrails must pass for ready state"
+      ]
+    },
     "inputs": [
       "Analytics matrix context",
       "Scenario assumptions",
@@ -108,6 +156,18 @@
     "status": "ready",
     "persona": "ops",
     "trustScope": "memory_continuity",
+    "contract": {
+      "inputContractVersion": "v1",
+      "outputContractVersion": "v1",
+      "promptContractVersion": "v1-draft",
+      "modelContractVersion": "phase1-llm-pending",
+      "requiredTrustFields": ["confidence", "readiness", "evidence", "lineage"],
+      "inputValueConstraints": [
+        "all required input fields must be present",
+        "location/analytics scope must be tenant-scoped",
+        "freshness and quality guardrails must pass for ready state"
+      ]
+    },
     "inputs": [
       "Recommendation id and source agent",
       "Accepted/rejected state",
@@ -132,6 +192,18 @@
     "status": "ready",
     "persona": "analyst",
     "trustScope": "learning_reranking",
+    "contract": {
+      "inputContractVersion": "v1",
+      "outputContractVersion": "v1",
+      "promptContractVersion": "v1-draft",
+      "modelContractVersion": "phase1-llm-pending",
+      "requiredTrustFields": ["confidence", "readiness", "evidence", "lineage"],
+      "inputValueConstraints": [
+        "all required input fields must be present",
+        "location/analytics scope must be tenant-scoped",
+        "freshness and quality guardrails must pass for ready state"
+      ]
+    },
     "inputs": [
       "Baseline recommendation score/rank",
       "Outcome feedback priors",
@@ -156,6 +228,18 @@
     "status": "ready",
     "persona": "ops",
     "trustScope": "release_safety",
+    "contract": {
+      "inputContractVersion": "v1",
+      "outputContractVersion": "v1",
+      "promptContractVersion": "v1-draft",
+      "modelContractVersion": "phase1-llm-pending",
+      "requiredTrustFields": ["confidence", "readiness", "evidence", "lineage"],
+      "inputValueConstraints": [
+        "all required input fields must be present",
+        "location/analytics scope must be tenant-scoped",
+        "freshness and quality guardrails must pass for ready state"
+      ]
+    },
     "inputs": [
       "Learning signal quality metrics",
       "Candidate and baseline policy versions",

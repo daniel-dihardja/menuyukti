@@ -120,6 +120,12 @@ Run Agent Studio card metadata standard validation:
 pnpm -C apps/web run test:e2e:agents:card-standard
 ```
 
+Run per-agent input/output contract panel validation:
+
+```bash
+pnpm -C apps/web run test:e2e:agents:contract-panels
+```
+
 Run learning release-loop gate validation (web + agents services):
 
 ```bash

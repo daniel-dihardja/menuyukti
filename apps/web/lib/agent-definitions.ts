@@ -15,6 +15,14 @@ export type AgentDefinition = {
     | "memory_continuity"
     | "learning_reranking"
     | "release_safety";
+  contract: {
+    inputContractVersion: "v1";
+    outputContractVersion: "v1";
+    promptContractVersion: string;
+    modelContractVersion: string;
+    requiredTrustFields: Array<"confidence" | "readiness" | "evidence" | "lineage">;
+    inputValueConstraints: string[];
+  };
   inputs: string[];
   outputs: string[];
 };
