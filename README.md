@@ -4,7 +4,7 @@ Menuyukti is an AI restaurant marketing SaaS for restaurant marketers and agenci
 
 - `apps/web`: Next.js web app (UI + API routes)
 - `apps/analytics`: FastAPI service for deterministic analytics and decisioning
-- `apps/agents`: agent runtime and supporting utilities
+- `apps/agents`: FastAPI agent service (contract-first orchestration endpoints)
 
 ## Key Capabilities
 
@@ -14,6 +14,16 @@ Menuyukti is an AI restaurant marketing SaaS for restaurant marketers and agenci
 - Marketing insights derived from sales performance
 - Agentic AI workflows for campaign planning and Instagram post scheduling with content
 - Social post impact analytics tied back to sales performance
+
+## Docs and Planning
+
+- Planning workspace: `packages/docs/planning/`
+- Active stories: `packages/docs/planning/todo/`
+- Archived stories/epics: `packages/docs/planning/archive/`
+- Current archived AI-agentic epic:
+  - `packages/docs/planning/archive/EPIC-AI-AGENTIC-SYSTEM/epic-ai-agentic-system.md`
+- Agent service manual:
+  - `apps/agents/README.md`
 
 ## Development
 
@@ -82,11 +92,21 @@ cd apps/analytics
 make dev
 ```
 
+### Agents service
+
+```bash
+uv run --project apps/agents uvicorn agent.api:app --app-dir apps/agents/src --host 127.0.0.1 --port 8001
+```
+
 ### Run tests
 
 ```bash
 cd apps/analytics
 uv run pytest
+```
+
+```bash
+uv run --project apps/agents pytest apps/agents/tests/integration_tests
 ```
 
 ## Environment Variables
@@ -97,7 +117,7 @@ The web app expects:
 - `AGENTS_API_URL` — base URL of the agents service
 - `DATABASE_URL` — database connection string
 
-The agents service expects:
+Agents service environment:
 
-- `OPENAI_API_KEY` — OpenAI API key for tone generation
-- `OPENAI_TONE_MODEL` — optional model override (defaults to `gpt-4o-mini`)
+- No additional required variables for current deterministic contract endpoints.
+- Optional provider keys can be introduced in future LLM-integrated epics.
