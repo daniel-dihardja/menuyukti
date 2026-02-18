@@ -50,6 +50,7 @@ const DEFAULT_E2E_SUITES = [
   "test:e2e:agents:profit-intelligence",
   "test:e2e:agents:consensus",
   "test:e2e:agents:simulation",
+  "test:e2e:agents:memory",
   "test:e2e:release-gate",
 ];
 

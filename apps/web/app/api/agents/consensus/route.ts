@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma/client";
+import { listRecentRecommendationMemory } from "@/lib/agents/memory-repository";
 import { loadPipelineFreshnessMetadata } from "@/lib/etl/latest-valid-materialization";
 import {
   createDecisionApiContract,
@@ -176,6 +177,10 @@ export async function GET(request: NextRequest) {
       sourceSystem: "warehouse",
     },
   });
+  const memoryEvents = await listRecentRecommendationMemory(prisma, {
+    locationId: analytics.locationId,
+    limit: 20,
+  });
 
   const sourceOutputs =
     source.outputs && typeof source.outputs === "object" && !Array.isArray(source.outputs)
@@ -266,6 +271,14 @@ export async function GET(request: NextRequest) {
         pipelineRunId: metadata.pipelineRunId,
         note: source.runId ? `source_run_id:${source.runId}` : null,
       },
+      {
+        source: "derived_runtime",
+        entity: "agent.memory_store",
+        metric: "recent_memory_events_count",
+        value: memoryEvents.length,
+        key: { locationId: analytics.locationId },
+        pipelineRunId: metadata.pipelineRunId,
+      },
     ],
   });
 
@@ -302,6 +315,11 @@ export async function GET(request: NextRequest) {
     analyticsId: analytics.id,
     locationId: analytics.locationId,
     mode,
+    memoryContext: {
+      recentEventsCount: memoryEvents.length,
+      recentAccepted: memoryEvents.filter((item) => item.state === "accepted").length,
+      recentRejected: memoryEvents.filter((item) => item.state === "rejected").length,
+    },
     contract,
     consensus: body,
   });

@@ -81,5 +81,25 @@
       "readiness",
       "evidence"
     ]
+  },
+  {
+    "id": "agent-memory-tracker",
+    "name": "Agent Memory Tracker",
+    "imageUrl": "/images/placeholder.svg",
+    "description": "Tracks recommendation outcomes and provides bounded continuity signals for future cycles.",
+    "status": "ready",
+    "inputs": [
+      "Recommendation id and source agent",
+      "Accepted/rejected state",
+      "Minimal rationale and execution link",
+      "Location and analytics scope"
+    ],
+    "outputs": [
+      "versioned_memory_events",
+      "accepted_rejected_counts",
+      "continuity_signal",
+      "recent_memory_context",
+      "tenant_scoped_history"
+    ]
   }
 ]
