@@ -6,6 +6,7 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 
 from agent.llm_runtime import build_run_metadata, execute_llm_step
+from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
 
 
@@ -77,17 +78,16 @@ def evaluate_release_loop(payload: ReleaseLoopRequest) -> dict:
             reasons.append("prior_stage_not_passed")
         else:
             decision = "advance"
+    prompt_contract = get_prompt_contract(agent_id, runtime.prompt_version)
     llm = execute_llm_step(
         agent_id=agent_id,
         runtime=runtime,
-        system_prompt=(
-            "You are Menuyukti Learning Release Loop agent. "
-            "Return JSON keys: release_summary, risk_note, recommendation."
-        ),
+        system_prompt=prompt_contract.system_prompt,
         user_prompt=(
             f"Summarize release decision for stage={payload.stage}, "
             f"candidate={payload.candidate_policy_version}, decision={decision}, reasons={','.join(reasons)}."
         ),
+        required_output_keys=prompt_contract.required_output_keys,
     )
 
     return {

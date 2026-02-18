@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from agent.llm_runtime import build_run_metadata, execute_llm_step
+from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
 
 
@@ -84,17 +85,16 @@ def rerank_recommendations(payload: RerankRequest) -> dict:
                 },
             }
         )
+    prompt_contract = get_prompt_contract(agent_id, runtime.prompt_version)
     llm = execute_llm_step(
         agent_id=agent_id,
         runtime=runtime,
-        system_prompt=(
-            "You are Menuyukti Feedback Reranker. "
-            "Return JSON keys: ranking_summary, confidence_note."
-        ),
+        system_prompt=prompt_contract.system_prompt,
         user_prompt=(
             f"Summarize reranking for policy_version={payload.policy_version}, "
             f"baseline_count={len(payload.baseline)}, signal_count={len(eligible_signals)}, fallback={fallback}."
         ),
+        required_output_keys=prompt_contract.required_output_keys,
     )
 
     return {

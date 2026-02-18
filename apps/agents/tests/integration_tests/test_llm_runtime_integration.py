@@ -159,3 +159,30 @@ def test_llm_disabled_mode_keeps_agent_available(monkeypatch: pytest.MonkeyPatch
     assert response.status_code == 200
     body = response.json()
     assert body["llm"]["status"] == "disabled"
+
+
+def test_llm_schema_invalid_triggers_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("AGENTS_LLM_ENABLED", "1")
+    monkeypatch.setenv("AGENTS_LLM_PROVIDER", "mock")
+    monkeypatch.setenv("AGENTS_LLM_MOCK_RESPONSE", '{"unexpected":"shape"}')
+
+    response = client.post(
+        "/agents/learning/release-loop/evaluate",
+        json={
+            "contract_version": "v1",
+            "stage": "shadow",
+            "candidate_policy_version": "v2",
+            "baseline_policy_version": "v1",
+            "metrics": {
+                "shadow_quality_score": 0.8,
+                "shadow_contract_pass_rate": 0.99,
+                "canary_error_rate": 0.01,
+                "canary_regression_rate": 0.02,
+            },
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "accepted"
+    assert body["llm"]["status"] == "fallback"
+    assert body["llm"]["error_code"] == "LLM_SCHEMA_INVALID"

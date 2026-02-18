@@ -141,6 +141,7 @@ def execute_llm_step(
     runtime: AgentRuntimeConfig,
     system_prompt: str,
     user_prompt: str,
+    required_output_keys: tuple[str, ...] = (),
 ) -> LlmExecutionResult:
     provider_name = get_llm_provider_name()
     if not is_llm_enabled():
@@ -170,6 +171,12 @@ def execute_llm_step(
                 user_prompt=user_prompt,
                 timeout_seconds=runtime.timeout_seconds,
             )
+            if required_output_keys:
+                missing = [key for key in required_output_keys if key not in output]
+                if missing:
+                    raise ValueError(
+                        f"missing required llm output keys for {agent_id}: {', '.join(missing)}",
+                    )
             elapsed_ms = int((time.perf_counter() - started) * 1000)
             return LlmExecutionResult(
                 status="used",
@@ -183,6 +190,9 @@ def execute_llm_step(
             )
         except TimeoutError as error:
             last_error_code = "LLM_TIMEOUT"
+            last_error_message = str(error)
+        except ValueError as error:
+            last_error_code = "LLM_SCHEMA_INVALID"
             last_error_message = str(error)
         except Exception as error:  # noqa: BLE001
             last_error_code = "LLM_PROVIDER_ERROR"

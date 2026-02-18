@@ -10,6 +10,7 @@ from agent.llm_runtime import (
     build_skipped_llm_result,
     execute_llm_step,
 )
+from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
 
 
@@ -142,17 +143,16 @@ def run_what_if_simulation(payload: WhatIfSimulationRequest) -> dict:
     winner = ranked[0] if ranked else None
     status = "accepted" if winner else "degraded"
     reason_code = "ALLOWED" if winner else "NO_SCENARIOS_PROVIDED"
+    prompt_contract = get_prompt_contract(agent_id, runtime.prompt_version)
     llm = execute_llm_step(
         agent_id=agent_id,
         runtime=runtime,
-        system_prompt=(
-            "You are Menuyukti What-If Simulation agent. "
-            "Return JSON keys: headline, scenario_summary, confidence_note."
-        ),
+        system_prompt=prompt_contract.system_prompt,
         user_prompt=(
             f"Summarize scenario simulation for analytics_id={payload.analytics_id}, "
             f"location_id={payload.location_id}, scenario_count={len(ranked)}."
         ),
+        required_output_keys=prompt_contract.required_output_keys,
     )
 
     return {

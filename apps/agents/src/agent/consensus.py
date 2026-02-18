@@ -10,6 +10,7 @@ from agent.llm_runtime import (
     build_skipped_llm_result,
     execute_llm_step,
 )
+from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
 
 
@@ -117,17 +118,16 @@ def run_consensus(payload: DebateConsensusRequest) -> dict:
 
     status = "accepted" if winner else "degraded"
     reason_code = "ALLOWED" if winner else "NO_CONSENSUS_CANDIDATES"
+    prompt_contract = get_prompt_contract(agent_id, runtime.prompt_version)
     llm = execute_llm_step(
         agent_id=agent_id,
         runtime=runtime,
-        system_prompt=(
-            "You are Menuyukti Consensus agent. "
-            "Return JSON keys: headline, consensus_confidence, reason_summary."
-        ),
+        system_prompt=prompt_contract.system_prompt,
         user_prompt=(
             f"Summarize consensus result for analytics_id={payload.analytics_id}, "
             f"mode={payload.mode}, recommendation_count={len(recommendations)}."
         ),
+        required_output_keys=prompt_contract.required_output_keys,
     )
 
     return {

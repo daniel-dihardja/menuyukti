@@ -10,6 +10,7 @@ from agent.llm_runtime import (
     build_skipped_llm_result,
     execute_llm_step,
 )
+from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
 
 
@@ -81,17 +82,16 @@ def generate_weekly_plan(payload: StrategistWeeklyPlanRequest) -> dict:
         if len(priorities) > 0
         else "No actionable suggestions were found for this week."
     )
+    prompt_contract = get_prompt_contract(agent_id, runtime.prompt_version)
     llm = execute_llm_step(
         agent_id=agent_id,
         runtime=runtime,
-        system_prompt=(
-            "You are Menuyukti Instagram Growth Strategist. "
-            "Return JSON with keys: headline, confidence_note, brief_rationale."
-        ),
+        system_prompt=prompt_contract.system_prompt,
         user_prompt=(
             f"Generate concise strategist summary for analytics_id={payload.analytics_id}, "
             f"location_id={payload.location_id}, priorities_count={len(priorities)}."
         ),
+        required_output_keys=prompt_contract.required_output_keys,
     )
     llm_output = llm.output or {}
     llm_headline = llm_output.get("headline")

@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from agent.llm_runtime import build_run_metadata, execute_llm_step
+from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
 
 
@@ -48,17 +49,16 @@ def build_memory_context(payload: MemoryContextRequest) -> dict:
         if accepted >= rejected
         else "caution"
     )
+    prompt_contract = get_prompt_contract(agent_id, runtime.prompt_version)
     llm = execute_llm_step(
         agent_id=agent_id,
         runtime=runtime,
-        system_prompt=(
-            "You are Menuyukti Memory Tracker. "
-            "Return JSON keys: continuity_signal, memory_summary, risk_note."
-        ),
+        system_prompt=prompt_contract.system_prompt,
         user_prompt=(
             f"Summarize memory context for location_id={payload.location_id}, "
             f"analytics_id={payload.analytics_id}, accepted={accepted}, rejected={rejected}."
         ),
+        required_output_keys=prompt_contract.required_output_keys,
     )
     llm_output = llm.output or {}
     llm_signal = llm_output.get("continuity_signal")
