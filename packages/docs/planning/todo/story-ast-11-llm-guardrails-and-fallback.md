@@ -23,7 +23,10 @@ Add robust guardrail and fallback behavior for LLM execution failures or low-tru
 - Agents app integration tests cover failure modes with mocked inputs/provider errors.
 - Story-specific E2E validates blocked/degraded/fallback rendering in Agent Studio.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - Guardrail and fallback implementation.
 - Reason-code catalog for LLM failure states.
 - Failure-mode integration tests.

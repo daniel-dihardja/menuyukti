@@ -23,7 +23,10 @@ Create an evaluation harness for response quality, trust completeness, and fallb
 - Agents app integration tests run harness scenarios with mocked required inputs.
 - Story-specific E2E validates surfaced evaluation state where applicable.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - Evaluation harness implementation.
 - Rubric + threshold documentation.
 - Integration test coverage for harness scenarios.

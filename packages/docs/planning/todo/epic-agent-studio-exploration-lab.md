@@ -214,6 +214,15 @@ Why:
   - trust state rendering
   - blocked/degraded state behavior
 
+## Test Execution Rule (Per Story)
+
+For every story in this epic:
+
+- Add or update **agents integration tests** when agent/runtime/contract behavior changes.
+- Add or update **web E2E tests** whenever UI flows, route behavior, or cross-service integration paths are affected.
+- Add or update **unit tests** when isolated logic (formatters, mappers, validation rules, ranking/policy helpers, UI state helpers) is introduced or changed.
+- If a story is purely documentation/non-functional, explicitly state why no new tests are needed.
+
 ## Quality Thresholds (Prompt Tuning Gate)
 
 Per in-scope agent, prompt tuning is considered complete only when:

@@ -23,7 +23,10 @@ Enable users to compare two runs of the same agent in one session.
 - Agents app integration tests validate deterministic diff inputs using mocked runs.
 - Story-specific E2E validates compare flow and diff rendering.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - Comparison view UI + diff model.
 - Run-diff adapter for Phase 1 agent outputs.
 - Integration tests for diff semantics.

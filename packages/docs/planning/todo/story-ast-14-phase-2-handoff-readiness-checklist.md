@@ -23,7 +23,10 @@ Prepare a formal handoff package for the next epic (multi-agent interaction), wi
 - Checklist confirms per-agent run surfaces are stable in Agent Studio.
 - Story-specific E2E validates no phase-2 routes/features were introduced in this epic.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - Phase-2 handoff checklist document.
 - Validation evidence index (tests, runs, metadata).
 - Rollout/fallback policy references.

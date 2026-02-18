@@ -23,7 +23,10 @@ Define and version prompt/model contracts for each Phase 1 agent.
 - Agents app integration tests validate schema compliance across prompt versions.
 - Story-specific E2E validates prompt/model version visibility in Agent Studio output metadata.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - Prompt/model contract docs + runtime mapping.
 - Version-aware prompt loading.
 - Integration tests for contract version behavior.

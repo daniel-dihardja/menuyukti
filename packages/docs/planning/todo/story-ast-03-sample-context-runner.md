@@ -23,7 +23,10 @@ Enable one-click execution of each agent using safe seeded sample context.
 - Agents app integration tests include mocked sample-context fixtures per agent.
 - Story-specific E2E validates one-click sample run and rendered output state.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - Sample context runner implementation.
 - Fixture mapping for each Phase 1 agent.
 - Mocked-input integration tests per agent sample run.

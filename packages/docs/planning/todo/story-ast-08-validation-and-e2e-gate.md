@@ -23,7 +23,10 @@ Establish release gates for Agent Studio exploration flows.
 - Failing gates block merge/release for covered stories.
 - Story-specific E2E validates gate wiring and failure reporting.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - CI/release gate updates.
 - Test manifest for mandatory story suites.
 - Integration + E2E gate documentation.

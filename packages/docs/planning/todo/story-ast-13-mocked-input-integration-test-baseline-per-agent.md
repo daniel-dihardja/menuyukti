@@ -27,7 +27,10 @@ Establish golden mocked-input integration test sets for every Phase 1 agent.
 - Integration tests assert schema compliance, trust fields, fallback behavior.
 - Story-specific E2E validates that agent pages behave correctly when these states occur.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - Golden mocked scenario fixtures per agent.
 - Agents integration test suites per agent.
 - CI policy updates for mandatory mocked baseline.

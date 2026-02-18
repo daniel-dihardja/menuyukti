@@ -23,7 +23,10 @@ Allow running each agent with user-selected location and analytics context.
 - Agents app integration tests mock selected-context payload variants.
 - Story-specific E2E validates selected-context run flow and state transitions.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - Selected context run orchestration.
 - Guardrail checks for context availability.
 - Mocked-input integration tests for selected-context variants.

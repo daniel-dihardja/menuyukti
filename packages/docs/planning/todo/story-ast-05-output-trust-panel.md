@@ -23,7 +23,10 @@ Standardize output trust display across agents: confidence, readiness, evidence,
 - Agents app integration tests validate trust field presence in response contracts.
 - Story-specific E2E validates trust panel rendering for ready and degraded states.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - Reusable trust panel UI.
 - Contract adapters for all Phase 1 agent outputs.
 - Integration tests for trust metadata contract completeness.

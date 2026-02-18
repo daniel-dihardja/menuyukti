@@ -23,7 +23,10 @@ Tune each Phase 1 agent prompt iteratively using isolated mocked-input scenarios
 - Agents app integration tests verify passing prompt versions and regression protections.
 - Story-specific E2E validates final tuned outputs appear in Agent Studio with trust metadata.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - Tuned prompt versions per Phase 1 agent.
 - Prompt tuning result logs/report.
 - Integration tests locking expected quality thresholds.

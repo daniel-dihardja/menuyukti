@@ -23,7 +23,10 @@ Add lightweight run history per agent page for recent executions and outcomes.
 - Agents app integration tests validate run-history persistence contract.
 - Story-specific E2E validates run history list updates after execution.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - Run history storage/read APIs.
 - Agent detail run-history panel.
 - Integration tests for history write/read behavior.

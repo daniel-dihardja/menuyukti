@@ -23,7 +23,10 @@ Implement LLM execution path for each Phase 1 agent with provider abstraction an
 - Agents app integration tests mock required inputs and provider responses per agent.
 - Story-specific E2E validates LLM-backed run availability from Agent Studio.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - LLM runtime integration in agents app.
 - Per-agent runtime configuration.
 - Mocked-input integration tests per Phase 1 agent.

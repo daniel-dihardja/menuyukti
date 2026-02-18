@@ -23,7 +23,10 @@ Provide contract panels on each agent page showing required inputs and expected 
 - Agents app integration tests validate output schema compatibility with shown contract.
 - Story-specific E2E validates panel visibility and contract labels on agent pages.
 
+- Unit tests are added/updated when isolated logic is introduced; if not applicable, include an explicit rationale.
+
 ## Deliverables
+- Unit-test updates (where applicable) or explicit N/A rationale.
 - Contract panel UI components.
 - Contract metadata binding from agent definitions/contracts.
 - Integration tests for schema compatibility.
