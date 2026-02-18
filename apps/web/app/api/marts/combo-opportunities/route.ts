@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { parsePairTypeFilter } from "@/lib/analytics/pair-type";
+import {
+  createDecisionApiContract,
+  createDecisionContext,
+} from "@/lib/contracts/decision-api-contract";
 
 export async function GET(req: Request) {
   try {
@@ -11,22 +15,84 @@ export async function GET(req: Request) {
     const pairType = parsePairTypeFilter(searchParams.get("pairType"));
 
     if (!locationIdParam) {
-      return NextResponse.json({ error: "MISSING_LOCATION_ID" }, { status: 400 });
+      const context = createDecisionContext({
+        persona: "analyst",
+        trust: { qualityStatus: "failed", reasons: ["missing_location_id"] },
+      });
+      return NextResponse.json(
+        {
+          error: "MISSING_LOCATION_ID",
+          contract: createDecisionApiContract({
+            surface: "pairs",
+            context,
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const locationId = Number(locationIdParam);
     if (!Number.isInteger(locationId)) {
-      return NextResponse.json({ error: "INVALID_LOCATION_ID" }, { status: 400 });
+      const context = createDecisionContext({
+        persona: "analyst",
+        trust: { qualityStatus: "failed", reasons: ["invalid_location_id"] },
+      });
+      return NextResponse.json(
+        {
+          error: "INVALID_LOCATION_ID",
+          contract: createDecisionApiContract({
+            surface: "pairs",
+            context,
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const minPairOrders = minPairOrdersParam ? Number(minPairOrdersParam) : 5;
     if (!Number.isInteger(minPairOrders) || minPairOrders < 1 || minPairOrders > 10000) {
-      return NextResponse.json({ error: "INVALID_MIN_PAIR_ORDERS" }, { status: 400 });
+      const context = createDecisionContext({
+        persona: "analyst",
+        locationId,
+        trust: { qualityStatus: "failed", reasons: ["invalid_min_pair_orders"] },
+      });
+      return NextResponse.json(
+        {
+          error: "INVALID_MIN_PAIR_ORDERS",
+          contract: createDecisionApiContract({
+            surface: "pairs",
+            context,
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const limit = limitParam ? Number(limitParam) : 100;
     if (!Number.isInteger(limit) || limit <= 0 || limit > 2000) {
-      return NextResponse.json({ error: "INVALID_LIMIT" }, { status: 400 });
+      const context = createDecisionContext({
+        persona: "analyst",
+        locationId,
+        trust: { qualityStatus: "failed", reasons: ["invalid_limit"] },
+      });
+      return NextResponse.json(
+        {
+          error: "INVALID_LIMIT",
+          contract: createDecisionApiContract({
+            surface: "pairs",
+            context,
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const rows = await prisma.$queryRaw<
@@ -92,9 +158,49 @@ export async function GET(req: Request) {
       LIMIT ${limit}
     `;
 
-    return NextResponse.json({ items: rows });
+    const context = createDecisionContext({
+      persona: "analyst",
+      locationId,
+      filterState: {
+        minPairOrders,
+        limit,
+        pairType,
+      },
+      trust: { qualityStatus: "unknown", reasons: ["pipeline_metadata_not_loaded"] },
+    });
+    return NextResponse.json({
+      items: rows,
+      contract: createDecisionApiContract({
+        surface: "pairs",
+        context,
+        evidence: [
+          {
+            source: "marts",
+            entity: "marts.vw_combo_opportunity_candidates",
+            metric: "row_count",
+            value: rows.length,
+            key: { locationId, pairType, minPairOrders, limit },
+          },
+        ],
+      }),
+    });
   } catch (error) {
     console.error("Load combo opportunities error:", error);
-    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR" }, { status: 500 });
+    const context = createDecisionContext({
+      persona: "analyst",
+      trust: { qualityStatus: "failed", reasons: ["internal_server_error"] },
+    });
+    return NextResponse.json(
+      {
+        error: "INTERNAL_SERVER_ERROR",
+        contract: createDecisionApiContract({
+          surface: "pairs",
+          context,
+          readiness: "blocked",
+          confidence: "blocked",
+        }),
+      },
+      { status: 500 },
+    );
   }
 }

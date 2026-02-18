@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
+import { ensureApiReachable, ensureE2eData } from "./_helpers/data-setup";
 
 const baseUrl = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000";
 
@@ -11,6 +12,8 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 async function run() {
+  await ensureE2eData({ testId: "analytics-agents-audience-workflow", defaultPolicy: "reuse" });
+  await ensureApiReachable(baseUrl);
   const artifactsDir = path.resolve(process.cwd(), "e2e-artifacts");
   const videosDir = path.join(artifactsDir, "videos");
   fs.mkdirSync(videosDir, { recursive: true });

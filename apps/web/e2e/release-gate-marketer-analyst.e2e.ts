@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
+import { ensureApiReachable, ensureE2eData } from "./_helpers/data-setup";
 
 const baseUrl = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000";
 const analyticsId = process.env.E2E_ANALYTICS_ID ?? "1";
@@ -32,6 +33,8 @@ async function fetchCsv(page: import("playwright").Page, url: string): Promise<s
 }
 
 async function run() {
+  await ensureE2eData({ testId: "release-gate-marketer-analyst", defaultPolicy: "reuse" });
+  await ensureApiReachable(baseUrl);
   const artifactsDir = path.resolve(process.cwd(), "e2e-artifacts");
   const videosDir = path.join(artifactsDir, "videos");
   fs.mkdirSync(videosDir, { recursive: true });

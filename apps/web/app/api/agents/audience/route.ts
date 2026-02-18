@@ -8,6 +8,11 @@ import {
   normalizeStoredEnvelope,
   toLegacyOutputs,
 } from "@/lib/agents/output-compat";
+import {
+  createDecisionApiContract,
+  createDecisionContext,
+  mapAgentReadinessToTrust,
+} from "@/lib/contracts/decision-api-contract";
 
 export const runtime = "nodejs";
 
@@ -51,6 +56,53 @@ function normalizeHeatmaps(raw: unknown): Array<Record<string, unknown>> {
   });
 }
 
+function createAudienceContract(input: {
+  locationId?: number | null;
+  analyticsId?: number | null;
+  filterState?: Record<string, unknown>;
+  trust?: ReturnType<typeof mapAgentReadinessToTrust>;
+  evidenceMetric?: string;
+  evidenceValue?: string | number | boolean | null;
+} = {}) {
+  const context = createDecisionContext({
+    persona: "marketer",
+    locationId: input.locationId ?? null,
+    analyticsId: input.analyticsId ?? null,
+    filterState: input.filterState ?? {},
+    trust:
+      input.trust ??
+      ({
+        qualityStatus: "unknown",
+        freshnessMinutes: null,
+        isStale: false,
+        reasons: ["agent_guardrail_not_loaded"],
+      } as const),
+    lineage: {
+      sourceSystem: "public_snapshot",
+    },
+  });
+
+  return createDecisionApiContract({
+    surface: "agent:audience",
+    context,
+    evidence:
+      input.evidenceMetric === undefined
+        ? []
+        : [
+            {
+              source: "public_snapshot",
+              entity: "public.agent_outputs",
+              metric: input.evidenceMetric,
+              value: input.evidenceValue ?? null,
+              key: {
+                locationId: input.locationId ?? null,
+                analyticsId: input.analyticsId ?? null,
+              },
+            },
+          ],
+  });
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -58,7 +110,18 @@ export async function GET(request: Request) {
 
     if (!Number.isInteger(analyticsId)) {
       return NextResponse.json(
-        { error: "INVALID_ANALYTICS_ID" },
+        {
+          error: "INVALID_ANALYTICS_ID",
+          contract: createDecisionApiContract({
+            surface: "agent:audience",
+            context: createDecisionContext({
+              persona: "marketer",
+              trust: { qualityStatus: "failed", reasons: ["invalid_analytics_id"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
         { status: 400 },
       );
     }
@@ -70,7 +133,19 @@ export async function GET(request: Request) {
 
     if (!analytics) {
       return NextResponse.json(
-        { error: "ANALYTICS_NOT_FOUND" },
+        {
+          error: "ANALYTICS_NOT_FOUND",
+          contract: createDecisionApiContract({
+            surface: "agent:audience",
+            context: createDecisionContext({
+              persona: "marketer",
+              analyticsId,
+              trust: { qualityStatus: "failed", reasons: ["analytics_not_found"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
         { status: 404 },
       );
     }
@@ -96,13 +171,42 @@ export async function GET(request: Request) {
       },
     });
 
-    if (!cached) return NextResponse.json({ outputs: null });
+    if (!cached) {
+      return NextResponse.json({
+        outputs: null,
+        contract: createAudienceContract({
+          analyticsId,
+          locationId: analytics.locationId,
+          evidenceMetric: "cached_output_exists",
+          evidenceValue: false,
+        }),
+      });
+    }
     const envelope = normalizeStoredEnvelope(cached);
-    return NextResponse.json({ outputs: toLegacyOutputs(envelope) });
+    return NextResponse.json({
+      outputs: toLegacyOutputs(envelope),
+      contract: createAudienceContract({
+        analyticsId,
+        locationId: analytics.locationId,
+        evidenceMetric: "cached_output_exists",
+        evidenceValue: true,
+      }),
+    });
   } catch (error) {
     console.error("Audience agent output lookup failed:", error);
     return NextResponse.json(
-      { error: "AUDIENCE_AGENT_LOOKUP_FAILED" },
+      {
+        error: "AUDIENCE_AGENT_LOOKUP_FAILED",
+        contract: createDecisionApiContract({
+          surface: "agent:audience",
+          context: createDecisionContext({
+            persona: "marketer",
+            trust: { qualityStatus: "failed", reasons: ["lookup_failed"] },
+          }),
+          readiness: "blocked",
+          confidence: "blocked",
+        }),
+      },
       { status: 500 },
     );
   }
@@ -115,7 +219,18 @@ export async function DELETE(request: Request) {
 
     if (!Number.isInteger(analyticsId)) {
       return NextResponse.json(
-        { error: "INVALID_ANALYTICS_ID" },
+        {
+          error: "INVALID_ANALYTICS_ID",
+          contract: createDecisionApiContract({
+            surface: "agent:audience",
+            context: createDecisionContext({
+              persona: "marketer",
+              trust: { qualityStatus: "failed", reasons: ["invalid_analytics_id"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
         { status: 400 },
       );
     }
@@ -127,7 +242,19 @@ export async function DELETE(request: Request) {
 
     if (!analytics) {
       return NextResponse.json(
-        { error: "ANALYTICS_NOT_FOUND" },
+        {
+          error: "ANALYTICS_NOT_FOUND",
+          contract: createDecisionApiContract({
+            surface: "agent:audience",
+            context: createDecisionContext({
+              persona: "marketer",
+              analyticsId,
+              trust: { qualityStatus: "failed", reasons: ["analytics_not_found"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
         { status: 404 },
       );
     }
@@ -140,11 +267,30 @@ export async function DELETE(request: Request) {
       },
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({
+      ok: true,
+      contract: createAudienceContract({
+        analyticsId,
+        locationId: analytics.locationId,
+        evidenceMetric: "deleted_outputs_count",
+        evidenceValue: true,
+      }),
+    });
   } catch (error) {
     console.error("Audience agent output clear failed:", error);
     return NextResponse.json(
-      { error: "AUDIENCE_AGENT_CLEAR_FAILED" },
+      {
+        error: "AUDIENCE_AGENT_CLEAR_FAILED",
+        contract: createDecisionApiContract({
+          surface: "agent:audience",
+          context: createDecisionContext({
+            persona: "marketer",
+            trust: { qualityStatus: "failed", reasons: ["clear_failed"] },
+          }),
+          readiness: "blocked",
+          confidence: "blocked",
+        }),
+      },
       { status: 500 },
     );
   }
@@ -155,7 +301,18 @@ export async function POST(request: Request) {
     const AGENTS_API_URL = process.env.AGENTS_API_URL;
     if (!AGENTS_API_URL) {
       return NextResponse.json(
-        { error: "AGENTS_API_URL_NOT_CONFIGURED" },
+        {
+          error: "AGENTS_API_URL_NOT_CONFIGURED",
+          contract: createDecisionApiContract({
+            surface: "agent:audience",
+            context: createDecisionContext({
+              persona: "marketer",
+              trust: { qualityStatus: "failed", reasons: ["agents_api_url_not_configured"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
         { status: 500 },
       );
     }
@@ -166,7 +323,18 @@ export async function POST(request: Request) {
 
     if (!Number.isInteger(analyticsId)) {
       return NextResponse.json(
-        { error: "INVALID_ANALYTICS_ID" },
+        {
+          error: "INVALID_ANALYTICS_ID",
+          contract: createDecisionApiContract({
+            surface: "agent:audience",
+            context: createDecisionContext({
+              persona: "marketer",
+              trust: { qualityStatus: "failed", reasons: ["invalid_analytics_id"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
         { status: 400 },
       );
     }
@@ -189,17 +357,37 @@ export async function POST(request: Request) {
 
     if (!analytics) {
       return NextResponse.json(
-        { error: "ANALYTICS_NOT_FOUND" },
+        {
+          error: "ANALYTICS_NOT_FOUND",
+          contract: createDecisionApiContract({
+            surface: "agent:audience",
+            context: createDecisionContext({
+              persona: "marketer",
+              analyticsId,
+              trust: { qualityStatus: "failed", reasons: ["analytics_not_found"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
         { status: 404 },
       );
     }
 
     const readiness = await evaluateAgentDataReadiness(analyticsId);
+    const trust = mapAgentReadinessToTrust(readiness);
     if (readiness.level === "blocked") {
       return NextResponse.json(
         {
           error: "AGENT_DATA_NOT_READY",
           guardrail: readiness,
+          contract: createAudienceContract({
+            analyticsId,
+            locationId: analytics.locationId,
+            trust,
+            evidenceMetric: "readiness_level",
+            evidenceValue: readiness.level,
+          }),
         },
         { status: 412 },
       );
@@ -238,7 +426,17 @@ export async function POST(request: Request) {
       if (cached) {
         const envelope = normalizeStoredEnvelope(cached);
         if (envelope.outputs) {
-          return NextResponse.json({ outputs: toLegacyOutputs(envelope), guardrail: readiness });
+          return NextResponse.json({
+            outputs: toLegacyOutputs(envelope),
+            guardrail: readiness,
+            contract: createAudienceContract({
+              analyticsId,
+              locationId: analytics.locationId,
+              trust,
+              evidenceMetric: "cached_output_exists",
+              evidenceValue: true,
+            }),
+          });
         }
       }
     }
@@ -307,7 +505,14 @@ export async function POST(request: Request) {
     } catch (err) {
       if ((err as Error).name === "AbortError") {
         return NextResponse.json(
-          { error: "AGENTS_SERVICE_TIMEOUT" },
+          {
+            error: "AGENTS_SERVICE_TIMEOUT",
+            contract: createAudienceContract({
+              analyticsId,
+              locationId: analytics.locationId,
+              trust,
+            }),
+          },
           { status: 504 },
         );
       }
@@ -318,7 +523,14 @@ export async function POST(request: Request) {
 
     if (!invokeResponse.ok) {
       return NextResponse.json(
-        { error: "AGENTS_SERVICE_FAILED" },
+        {
+          error: "AGENTS_SERVICE_FAILED",
+          contract: createAudienceContract({
+            analyticsId,
+            locationId: analytics.locationId,
+            trust,
+          }),
+        },
         { status: 502 },
       );
     }
@@ -370,11 +582,32 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ ...result, guardrail: readiness });
+    return NextResponse.json({
+      ...result,
+      guardrail: readiness,
+      contract: createAudienceContract({
+        analyticsId,
+        locationId: analytics.locationId,
+        trust,
+        evidenceMetric: "agent_outputs_present",
+        evidenceValue: Boolean(result?.outputs),
+      }),
+    });
   } catch (error) {
     console.error("Audience agent invocation failed:", error);
     return NextResponse.json(
-      { error: "AUDIENCE_AGENT_INVOKE_FAILED" },
+      {
+        error: "AUDIENCE_AGENT_INVOKE_FAILED",
+        contract: createDecisionApiContract({
+          surface: "agent:audience",
+          context: createDecisionContext({
+            persona: "marketer",
+            trust: { qualityStatus: "failed", reasons: ["invoke_failed"] },
+          }),
+          readiness: "blocked",
+          confidence: "blocked",
+        }),
+      },
       { status: 500 },
     );
   }

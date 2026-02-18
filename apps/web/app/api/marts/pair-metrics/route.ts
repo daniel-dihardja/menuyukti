@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma/client";
 import { parsePairTypeFilter } from "@/lib/analytics/pair-type";
+import {
+  createDecisionApiContract,
+  createDecisionContext,
+} from "@/lib/contracts/decision-api-contract";
 
 export async function GET(req: Request) {
   try {
@@ -13,33 +17,127 @@ export async function GET(req: Request) {
     const pairType = parsePairTypeFilter(searchParams.get("pairType"));
 
     if (!locationIdParam) {
-      return NextResponse.json({ error: "MISSING_LOCATION_ID" }, { status: 400 });
+      const context = createDecisionContext({
+        persona: "analyst",
+        trust: { qualityStatus: "failed", reasons: ["missing_location_id"] },
+      });
+      return NextResponse.json(
+        {
+          error: "MISSING_LOCATION_ID",
+          contract: createDecisionApiContract({
+            surface: "pairs",
+            context,
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const locationId = Number(locationIdParam);
     if (!Number.isInteger(locationId)) {
-      return NextResponse.json({ error: "INVALID_LOCATION_ID" }, { status: 400 });
+      const context = createDecisionContext({
+        persona: "analyst",
+        trust: { qualityStatus: "failed", reasons: ["invalid_location_id"] },
+      });
+      return NextResponse.json(
+        {
+          error: "INVALID_LOCATION_ID",
+          contract: createDecisionApiContract({
+            surface: "pairs",
+            context,
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const from = fromParam ? new Date(fromParam) : null;
     const to = toParam ? new Date(toParam) : null;
 
     if (fromParam && Number.isNaN(from?.getTime())) {
-      return NextResponse.json({ error: "INVALID_FROM_DATE" }, { status: 400 });
+      const context = createDecisionContext({
+        persona: "analyst",
+        locationId,
+        trust: { qualityStatus: "failed", reasons: ["invalid_from_date"] },
+      });
+      return NextResponse.json(
+        {
+          error: "INVALID_FROM_DATE",
+          contract: createDecisionApiContract({
+            surface: "pairs",
+            context,
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     if (toParam && Number.isNaN(to?.getTime())) {
-      return NextResponse.json({ error: "INVALID_TO_DATE" }, { status: 400 });
+      const context = createDecisionContext({
+        persona: "analyst",
+        locationId,
+        trust: { qualityStatus: "failed", reasons: ["invalid_to_date"] },
+      });
+      return NextResponse.json(
+        {
+          error: "INVALID_TO_DATE",
+          contract: createDecisionApiContract({
+            surface: "pairs",
+            context,
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const minSampleSize = minSampleSizeParam ? Number(minSampleSizeParam) : 5;
     if (!Number.isInteger(minSampleSize) || minSampleSize < 1 || minSampleSize > 1000) {
-      return NextResponse.json({ error: "INVALID_MIN_SAMPLE_SIZE" }, { status: 400 });
+      const context = createDecisionContext({
+        persona: "analyst",
+        locationId,
+        trust: { qualityStatus: "failed", reasons: ["invalid_min_sample_size"] },
+      });
+      return NextResponse.json(
+        {
+          error: "INVALID_MIN_SAMPLE_SIZE",
+          contract: createDecisionApiContract({
+            surface: "pairs",
+            context,
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const limit = limitParam ? Number(limitParam) : 200;
     if (!Number.isInteger(limit) || limit <= 0 || limit > 2000) {
-      return NextResponse.json({ error: "INVALID_LIMIT" }, { status: 400 });
+      const context = createDecisionContext({
+        persona: "analyst",
+        locationId,
+        trust: { qualityStatus: "failed", reasons: ["invalid_limit"] },
+      });
+      return NextResponse.json(
+        {
+          error: "INVALID_LIMIT",
+          contract: createDecisionApiContract({
+            surface: "pairs",
+            context,
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const rows = await prisma.$queryRaw<
@@ -157,9 +255,51 @@ export async function GET(req: Request) {
       LIMIT ${limit}
     `;
 
-    return NextResponse.json({ items: rows });
+    const context = createDecisionContext({
+      persona: "analyst",
+      locationId,
+      from: from ? from.toISOString() : null,
+      to: to ? to.toISOString() : null,
+      filterState: {
+        minSampleSize,
+        limit,
+        pairType,
+      },
+      trust: { qualityStatus: "unknown", reasons: ["pipeline_metadata_not_loaded"] },
+    });
+    return NextResponse.json({
+      items: rows,
+      contract: createDecisionApiContract({
+        surface: "pairs",
+        context,
+        evidence: [
+          {
+            source: "marts",
+            entity: "marts.vw_pair_metrics_daily_base",
+            metric: "row_count",
+            value: rows.length,
+            key: { locationId, pairType, minSampleSize, limit },
+          },
+        ],
+      }),
+    });
   } catch (error) {
     console.error("Load pair metrics mart error:", error);
-    return NextResponse.json({ error: "INTERNAL_SERVER_ERROR" }, { status: 500 });
+    const context = createDecisionContext({
+      persona: "analyst",
+      trust: { qualityStatus: "failed", reasons: ["internal_server_error"] },
+    });
+    return NextResponse.json(
+      {
+        error: "INTERNAL_SERVER_ERROR",
+        contract: createDecisionApiContract({
+          surface: "pairs",
+          context,
+          readiness: "blocked",
+          confidence: "blocked",
+        }),
+      },
+      { status: 500 },
+    );
   }
 }

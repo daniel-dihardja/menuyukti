@@ -4,6 +4,11 @@ import type {
   UpdateInstagramWeeklyScheduleRequest,
   UpsertInstagramWeeklyScheduleRequest,
 } from "@/app/api/instagram/types";
+import {
+  createDecisionApiContract,
+  createDecisionContext,
+  mapSchedulerGuardrailToTrust,
+} from "@/lib/contracts/decision-api-contract";
 
 function hasSchedulerDelegates(): boolean {
   const client = prisma as unknown as Record<string, unknown>;
@@ -63,6 +68,13 @@ async function getSchedulerStorageReadiness(): Promise<SchedulerStorageReadiness
 }
 
 function schedulerStorageNotReadyResponse(readiness: SchedulerStorageReadiness) {
+  const context = createDecisionContext({
+    persona: "marketer",
+    trust: {
+      qualityStatus: "failed",
+      reasons: ["scheduler_storage_not_ready"],
+    },
+  });
   return NextResponse.json(
     {
       error: "SCHEDULER_STORAGE_NOT_READY",
@@ -70,6 +82,12 @@ function schedulerStorageNotReadyResponse(readiness: SchedulerStorageReadiness) 
         "Instagram weekly scheduler tables or Prisma delegates are not available. Run database migrations and Prisma generate before using scheduler save APIs.",
       readiness,
       actions: ["pnpm -C apps/web run db:init", "pnpm -C apps/web run db:gen"],
+      contract: createDecisionApiContract({
+        surface: "scheduler",
+        context,
+        readiness: "blocked",
+        confidence: "blocked",
+      }),
     },
     { status: 503 },
   );
@@ -131,6 +149,51 @@ type SchedulingGuardrail = {
   reasons: string[];
   actions: string[];
 };
+
+function createSchedulerContract(input: {
+  locationId?: number | null;
+  filterState?: Record<string, unknown>;
+  guardrail?: SchedulingGuardrail | null;
+  evidenceMetric?: string;
+  evidenceValue?: string | number | boolean | null;
+} = {}) {
+  const trust = input.guardrail
+    ? mapSchedulerGuardrailToTrust(input.guardrail)
+    : {
+        qualityStatus: "unknown" as const,
+        freshnessMinutes: null,
+        isStale: false,
+        reasons: ["guardrail_not_loaded"],
+      };
+
+  const context = createDecisionContext({
+    persona: "marketer",
+    locationId: input.locationId ?? null,
+    filterState: input.filterState ?? {},
+    trust,
+    lineage: {
+      sourceSystem: "warehouse",
+    },
+  });
+
+  return createDecisionApiContract({
+    surface: "scheduler",
+    context,
+    evidence:
+      input.evidenceMetric === undefined
+        ? []
+        : [
+            {
+              source: "derived_runtime",
+              entity: "public.instagram_weekly_schedules",
+              metric: input.evidenceMetric,
+              value: input.evidenceValue ?? null,
+              key: { locationId: input.locationId ?? null },
+              note: "scheduler workflow guardrail context",
+            },
+          ],
+  });
+}
 
 function normalizeEntries(entriesRaw: unknown): { entries: NormalizedEntry[]; invalid: boolean } {
   const entriesInput = Array.isArray(entriesRaw) ? entriesRaw : [];
@@ -410,14 +473,43 @@ export async function GET(req: NextRequest) {
     const weekStartDateRaw = req.nextUrl.searchParams.get("weekStartDate");
 
     if (!Number.isInteger(locationId)) {
-      return NextResponse.json({ error: "locationId must be a valid integer" }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "locationId must be a valid integer",
+          contract: createDecisionApiContract({
+            surface: "scheduler",
+            context: createDecisionContext({
+              persona: "marketer",
+              trust: { qualityStatus: "failed", reasons: ["invalid_location_id"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     let weekStartDate: Date | undefined;
     if (weekStartDateRaw) {
       weekStartDate = parseDate(weekStartDateRaw) ?? undefined;
       if (!weekStartDate) {
-        return NextResponse.json({ error: "weekStartDate must be a valid date string" }, { status: 400 });
+        return NextResponse.json(
+          {
+            error: "weekStartDate must be a valid date string",
+            contract: createDecisionApiContract({
+              surface: "scheduler",
+              context: createDecisionContext({
+                persona: "marketer",
+                locationId,
+                trust: { qualityStatus: "failed", reasons: ["invalid_week_start_date"] },
+              }),
+              readiness: "blocked",
+              confidence: "blocked",
+            }),
+          },
+          { status: 400 },
+        );
       }
     }
 
@@ -436,7 +528,20 @@ export async function GET(req: NextRequest) {
     });
     const guardrail = await getSchedulingGuardrail(locationId);
 
-    return NextResponse.json({ schedules, guardrail }, { status: 200 });
+    return NextResponse.json(
+      {
+        schedules,
+        guardrail,
+        contract: createSchedulerContract({
+          locationId,
+          filterState: { weekStartDate: weekStartDate?.toISOString() ?? null },
+          guardrail,
+          evidenceMetric: "schedule_count",
+          evidenceValue: schedules.length,
+        }),
+      },
+      { status: 200 },
+    );
   } catch (error) {
     if (isMissingSchedulerStorageError(error)) {
       return schedulerStorageNotReadyResponse({
@@ -445,7 +550,21 @@ export async function GET(req: NextRequest) {
       });
     }
     console.error("List Instagram weekly schedules error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        contract: createDecisionApiContract({
+          surface: "scheduler",
+          context: createDecisionContext({
+            persona: "marketer",
+            trust: { qualityStatus: "failed", reasons: ["internal_server_error"] },
+          }),
+          readiness: "blocked",
+          confidence: "blocked",
+        }),
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -460,23 +579,79 @@ export async function POST(req: NextRequest) {
     const locationId = Number(body.locationId);
 
     if (!Number.isInteger(locationId)) {
-      return NextResponse.json({ error: "locationId must be a valid integer" }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "locationId must be a valid integer",
+          contract: createDecisionApiContract({
+            surface: "scheduler",
+            context: createDecisionContext({
+              persona: "marketer",
+              trust: { qualityStatus: "failed", reasons: ["invalid_location_id"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const weekRange = normalizeWeekRange(String(body.weekStartDate ?? ""), body.weekEndDate);
     if (!weekRange) {
-      return NextResponse.json({ error: "weekStartDate/weekEndDate must be valid date values" }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "weekStartDate/weekEndDate must be valid date values",
+          contract: createDecisionApiContract({
+            surface: "scheduler",
+            context: createDecisionContext({
+              persona: "marketer",
+              locationId,
+              trust: { qualityStatus: "failed", reasons: ["invalid_week_range"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const { entries, invalid } = normalizeEntries(body.entries);
     if (invalid) {
-      return NextResponse.json({ error: "entries contain invalid values" }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "entries contain invalid values",
+          contract: createDecisionApiContract({
+            surface: "scheduler",
+            context: createDecisionContext({
+              persona: "marketer",
+              locationId,
+              trust: { qualityStatus: "failed", reasons: ["invalid_entries"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const referencesOk = await validateReferenceOwnership(locationId, entries);
     if (!referencesOk) {
       return NextResponse.json(
-        { error: "instagramCampaignId/instagramPostId references must exist and belong to locationId" },
+        {
+          error: "instagramCampaignId/instagramPostId references must exist and belong to locationId",
+          contract: createDecisionApiContract({
+            surface: "scheduler",
+            context: createDecisionContext({
+              persona: "marketer",
+              locationId,
+              trust: { qualityStatus: "failed", reasons: ["invalid_references"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
         { status: 400 },
       );
     }
@@ -486,7 +661,22 @@ export async function POST(req: NextRequest) {
       select: { id: true },
     });
     if (!location) {
-      return NextResponse.json({ error: "Location not found" }, { status: 404 });
+      return NextResponse.json(
+        {
+          error: "Location not found",
+          contract: createDecisionApiContract({
+            surface: "scheduler",
+            context: createDecisionContext({
+              persona: "marketer",
+              locationId,
+              trust: { qualityStatus: "failed", reasons: ["location_not_found"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 404 },
+      );
     }
 
     const status = normalizeScheduleStatus(body.status) ?? "draft";
@@ -499,6 +689,12 @@ export async function POST(req: NextRequest) {
         {
           error: "SCHEDULER_BLOCKED_BY_READINESS",
           guardrail,
+          contract: createSchedulerContract({
+            locationId,
+            guardrail,
+            evidenceMetric: "entry_count",
+            evidenceValue: entries.length,
+          }),
         },
         { status: 409 },
       );
@@ -538,7 +734,20 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ schedule: scheduleWithEntries, guardrail }, { status: 200 });
+    return NextResponse.json(
+      {
+        schedule: scheduleWithEntries,
+        guardrail,
+        contract: createSchedulerContract({
+          locationId,
+          guardrail,
+          filterState: { source, replaceEntries },
+          evidenceMetric: "entry_count",
+          evidenceValue: scheduleWithEntries?.entries?.length ?? 0,
+        }),
+      },
+      { status: 200 },
+    );
   } catch (error) {
     if (isMissingSchedulerStorageError(error)) {
       return schedulerStorageNotReadyResponse({
@@ -547,7 +756,21 @@ export async function POST(req: NextRequest) {
       });
     }
     console.error("Upsert Instagram weekly schedule error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        contract: createDecisionApiContract({
+          surface: "scheduler",
+          context: createDecisionContext({
+            persona: "marketer",
+            trust: { qualityStatus: "failed", reasons: ["internal_server_error"] },
+          }),
+          readiness: "blocked",
+          confidence: "blocked",
+        }),
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -563,7 +786,21 @@ export async function PATCH(req: NextRequest) {
     const locationId = Number(body.locationId);
 
     if (!Number.isInteger(scheduleId) || !Number.isInteger(locationId)) {
-      return NextResponse.json({ error: "scheduleId and locationId must be valid integers" }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "scheduleId and locationId must be valid integers",
+          contract: createDecisionApiContract({
+            surface: "scheduler",
+            context: createDecisionContext({
+              persona: "marketer",
+              trust: { qualityStatus: "failed", reasons: ["invalid_identifiers"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const current = await prisma.instagramWeeklySchedule.findUnique({
@@ -571,10 +808,40 @@ export async function PATCH(req: NextRequest) {
       select: { id: true, locationId: true },
     });
     if (!current) {
-      return NextResponse.json({ error: "Schedule not found" }, { status: 404 });
+      return NextResponse.json(
+        {
+          error: "Schedule not found",
+          contract: createDecisionApiContract({
+            surface: "scheduler",
+            context: createDecisionContext({
+              persona: "marketer",
+              locationId,
+              trust: { qualityStatus: "failed", reasons: ["schedule_not_found"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 404 },
+      );
     }
     if (current.locationId !== locationId) {
-      return NextResponse.json({ error: "scheduleId does not belong to locationId" }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "scheduleId does not belong to locationId",
+          contract: createDecisionApiContract({
+            surface: "scheduler",
+            context: createDecisionContext({
+              persona: "marketer",
+              locationId,
+              trust: { qualityStatus: "failed", reasons: ["schedule_location_mismatch"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     const statusFromAction = req.nextUrl.searchParams.get("action") === "finalize" ? "finalized" : undefined;
@@ -582,14 +849,41 @@ export async function PATCH(req: NextRequest) {
 
     const { entries, invalid } = normalizeEntries(body.entries);
     if (invalid) {
-      return NextResponse.json({ error: "entries contain invalid values" }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "entries contain invalid values",
+          contract: createDecisionApiContract({
+            surface: "scheduler",
+            context: createDecisionContext({
+              persona: "marketer",
+              locationId,
+              trust: { qualityStatus: "failed", reasons: ["invalid_entries"] },
+            }),
+            readiness: "blocked",
+            confidence: "blocked",
+          }),
+        },
+        { status: 400 },
+      );
     }
 
     if (entries.length > 0) {
       const referencesOk = await validateReferenceOwnership(locationId, entries);
       if (!referencesOk) {
         return NextResponse.json(
-          { error: "instagramCampaignId/instagramPostId references must exist and belong to locationId" },
+          {
+            error: "instagramCampaignId/instagramPostId references must exist and belong to locationId",
+            contract: createDecisionApiContract({
+              surface: "scheduler",
+              context: createDecisionContext({
+                persona: "marketer",
+                locationId,
+                trust: { qualityStatus: "failed", reasons: ["invalid_references"] },
+              }),
+              readiness: "blocked",
+              confidence: "blocked",
+            }),
+          },
           { status: 400 },
         );
       }
@@ -603,6 +897,12 @@ export async function PATCH(req: NextRequest) {
           {
             error: "SCHEDULER_FINALIZE_BLOCKED_BY_READINESS",
             guardrail,
+            contract: createSchedulerContract({
+              locationId,
+              guardrail,
+              evidenceMetric: "entry_count",
+              evidenceValue: entries.length,
+            }),
           },
           { status: 409 },
         );
@@ -631,7 +931,23 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ schedule, guardrail }, { status: 200 });
+    return NextResponse.json(
+      {
+        schedule,
+        guardrail,
+        contract: createSchedulerContract({
+          locationId,
+          guardrail,
+          filterState: {
+            status,
+            replaceEntries: body.replaceEntries === true,
+          },
+          evidenceMetric: "entry_count",
+          evidenceValue: schedule?.entries?.length ?? 0,
+        }),
+      },
+      { status: 200 },
+    );
   } catch (error) {
     if (isMissingSchedulerStorageError(error)) {
       return schedulerStorageNotReadyResponse({
@@ -640,6 +956,20 @@ export async function PATCH(req: NextRequest) {
       });
     }
     console.error("Update Instagram weekly schedule error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        contract: createDecisionApiContract({
+          surface: "scheduler",
+          context: createDecisionContext({
+            persona: "marketer",
+            trust: { qualityStatus: "failed", reasons: ["internal_server_error"] },
+          }),
+          readiness: "blocked",
+          confidence: "blocked",
+        }),
+      },
+      { status: 500 },
+    );
   }
 }
