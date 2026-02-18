@@ -114,6 +114,12 @@ Run agent tool-contract and runtime-policy validation (agents service only):
 pnpm -C apps/web run test:e2e:agents:tool-contract-policy
 ```
 
+Run Agent Studio card metadata standard validation:
+
+```bash
+pnpm -C apps/web run test:e2e:agents:card-standard
+```
+
 Run learning release-loop gate validation (web + agents services):
 
 ```bash

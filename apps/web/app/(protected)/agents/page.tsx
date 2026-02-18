@@ -23,6 +23,13 @@ export default async function Page() {
   const t = await getTranslations("agents");
   const agentDefinitions = agents as AgentDefinition[];
 
+  const personaLabel: Record<AgentDefinition["persona"], string> = {
+    marketer: "marketer",
+    analyst: "analyst",
+    shared: "shared",
+    ops: "ops",
+  };
+
   return (
     <SidebarInset>
       <div className="w-full">
@@ -42,6 +49,7 @@ export default async function Page() {
               const isReady = agent.status === "ready";
               const card = (
                 <Card
+                  data-agent-card={agent.id}
                   className={`h-full gap-0 py-0 transition-colors ${
                     isReady ? "group-hover:border-foreground/30" : "opacity-80"
                   }`}
@@ -58,13 +66,25 @@ export default async function Page() {
                   <CardHeader className="space-y-2 px-5 pt-5">
                     <CardTitle className="flex items-center justify-between">
                       <span>{agent.name}</span>
-                      <Badge variant="secondary" className="capitalize">
+                      <Badge
+                        variant="secondary"
+                        className="capitalize"
+                        data-agent-status={agent.status}
+                      >
                         {agent.status}
                       </Badge>
                     </CardTitle>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline" data-agent-persona={agent.persona}>
+                        persona: {personaLabel[agent.persona]}
+                      </Badge>
+                      <Badge variant="outline" data-agent-trust-scope={agent.trustScope}>
+                        trust: {agent.trustScope}
+                      </Badge>
+                    </div>
                   </CardHeader>
                   <CardContent className="px-5 pb-3 text-sm text-muted-foreground">
-                    {agent.description}
+                    <p data-agent-purpose>{agent.purpose}</p>
                   </CardContent>
                   <CardFooter className="px-5 pb-5 pt-0">
                     <span className="inline-flex items-center gap-1 text-sm font-medium text-foreground/90">
