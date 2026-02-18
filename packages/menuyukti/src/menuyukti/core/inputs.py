@@ -15,7 +15,7 @@ class CoreInputs(BaseModel):
     Immutable core inputs for all marketing agents.
 
     `sales_summary` is optional to preserve backward compatibility with
-    existing callers, but recommended for audience-oriented agents that need
+    existing callers, but recommended when downstream decision logic needs
     order/revenue context.
     """
 

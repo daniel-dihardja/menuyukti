@@ -9,8 +9,8 @@ class SalesAnalyticsSummary(BaseModel):
     """
     Summary metrics produced by `calculate_sales_analytics`.
 
-    This extends the marketing engine core input surface with order-level and
-    period-level context that audience agents can use directly.
+    This extends the menuyukti core input surface with order-level and
+    period-level context used by downstream decision logic.
     """
 
     total_orders: int

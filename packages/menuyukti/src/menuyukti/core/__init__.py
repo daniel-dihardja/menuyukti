@@ -1,1 +1,1 @@
-"""Core inputs for marketing engine."""
+"""Core input contracts for menuyukti analytics and agents consumers."""

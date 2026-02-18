@@ -1,1 +1,1 @@
-"""Marketing engine package: core inputs, shared primitives, and agent-specific features."""
+"""Menuyukti package: core analytics inputs and contract-safe data models."""
