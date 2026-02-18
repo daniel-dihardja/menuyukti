@@ -6,6 +6,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
 import { useAnalytics } from "../../analytics/use-analytics";
+import { applySampleContext, resolveSampleContext } from "./sample-context";
 
 type Mode = "conservative" | "aggressive";
 
@@ -40,7 +41,7 @@ type SimulationResponse = {
 };
 
 export function SimulationRunner() {
-  const { analyticsId } = useAnalytics();
+  const { analyticsId, locationId, setAnalyticsId, setLocationId } = useAnalytics();
   const [mode, setMode] = useState<Mode>("conservative");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -49,12 +50,12 @@ export function SimulationRunner() {
   const result = payload?.simulation?.simulation;
   const scenarios = useMemo(() => result?.ranked_scenarios ?? [], [result]);
 
-  async function runSimulation() {
-    if (!analyticsId) return;
+  async function runSimulation(targetAnalyticsId = analyticsId) {
+    if (!targetAnalyticsId) return;
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`/api/agents/simulation?analyticsId=${analyticsId}&mode=${mode}`);
+      const response = await fetch(`/api/agents/simulation?analyticsId=${targetAnalyticsId}&mode=${mode}`);
       const body = (await response.json().catch(() => ({}))) as SimulationResponse;
       if (!response.ok) {
         throw new Error((body as { error?: string }).error ?? "FAILED_TO_RUN_SIMULATION");
@@ -66,6 +67,12 @@ export function SimulationRunner() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function runSampleContext() {
+    const sample = resolveSampleContext({ locationId, analyticsId });
+    applySampleContext({ setLocationId, setAnalyticsId });
+    await runSimulation(sample.analyticsId);
   }
 
   return (
@@ -90,8 +97,11 @@ export function SimulationRunner() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={runSimulation} disabled={!analyticsId || loading}>
+          <Button onClick={() => void runSimulation()} disabled={!analyticsId || loading}>
             {loading ? "Simulating..." : "Run What-If"}
+          </Button>
+          <Button variant="outline" onClick={() => void runSampleContext()} disabled={loading}>
+            Run Sample Context
           </Button>
           {!analyticsId ? <Badge variant="secondary">Select analytics report first</Badge> : null}
           {payload?.contract?.readiness ? (

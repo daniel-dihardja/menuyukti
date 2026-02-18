@@ -6,6 +6,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
 import { useAnalytics } from "../../analytics/use-analytics";
+import { applySampleContext, resolveSampleContext } from "./sample-context";
 
 type Stage = "shadow" | "canary" | "rollout";
 
@@ -30,7 +31,7 @@ type ReleaseLoopPayload = {
 };
 
 export function ReleaseLoopRunner() {
-  const { analyticsId, locationId } = useAnalytics();
+  const { analyticsId, locationId, setAnalyticsId, setLocationId } = useAnalytics();
   const [stage, setStage] = useState<Stage>("shadow");
   const [simulateCanaryFailure, setSimulateCanaryFailure] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,18 +40,18 @@ export function ReleaseLoopRunner() {
 
   const latest = useMemo(() => records[0] ?? null, [records]);
 
-  async function refresh() {
-    if (!locationId) return;
+  async function refresh(targetContext: { locationId: number | null; analyticsId: number | null } = { locationId, analyticsId }) {
+    if (!targetContext.locationId) return;
     const response = await fetch(
-      `/api/agents/learning/release-loop?locationId=${locationId}${analyticsId ? `&analyticsId=${analyticsId}` : ""}`,
+      `/api/agents/learning/release-loop?locationId=${targetContext.locationId}${targetContext.analyticsId ? `&analyticsId=${targetContext.analyticsId}` : ""}`,
     );
     const body = (await response.json().catch(() => ({}))) as { records?: RecordDto[] };
     if (!response.ok) throw new Error((body as { error?: string }).error ?? "FAILED_TO_LOAD_RELEASE_LOOP");
     setRecords(Array.isArray(body.records) ? body.records : []);
   }
 
-  async function run() {
-    if (!locationId || !analyticsId) return;
+  async function run(targetContext: { locationId: number | null; analyticsId: number | null } = { locationId, analyticsId }) {
+    if (!targetContext.locationId || !targetContext.analyticsId) return;
     setLoading(true);
     setError("");
     try {
@@ -58,8 +59,8 @@ export function ReleaseLoopRunner() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          locationId,
-          analyticsId,
+          locationId: targetContext.locationId,
+          analyticsId: targetContext.analyticsId,
           stage,
           candidatePolicyVersion: "as10-v2",
           baselinePolicyVersion: "as10-v1",
@@ -68,7 +69,7 @@ export function ReleaseLoopRunner() {
       });
       const body = (await response.json().catch(() => ({}))) as ReleaseLoopPayload & { error?: string };
       if (!response.ok) throw new Error(body.error ?? "FAILED_TO_RUN_RELEASE_LOOP");
-      await refresh();
+      await refresh(targetContext);
       if (body.decision?.decision === "rollback") {
         setError(
           `Rollback triggered to ${body.decision.rollback_to_policy_version ?? "baseline"} (${(body.decision.reasons ?? []).join(", ")})`,
@@ -79,6 +80,12 @@ export function ReleaseLoopRunner() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function runSampleContext() {
+    const sample = resolveSampleContext({ locationId, analyticsId });
+    applySampleContext({ setLocationId, setAnalyticsId });
+    await run(sample);
   }
 
   return (
@@ -104,10 +111,13 @@ export function ReleaseLoopRunner() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={run} disabled={!locationId || !analyticsId || loading}>
+          <Button onClick={() => void run()} disabled={!locationId || !analyticsId || loading}>
             {loading ? "Evaluating..." : "Run Release Decision"}
           </Button>
-          <Button variant="outline" onClick={refresh} disabled={!locationId || loading}>
+          <Button variant="outline" onClick={() => void runSampleContext()} disabled={loading}>
+            Run Sample Context
+          </Button>
+          <Button variant="outline" onClick={() => void refresh()} disabled={!locationId || loading}>
             Refresh Audit
           </Button>
           <Button

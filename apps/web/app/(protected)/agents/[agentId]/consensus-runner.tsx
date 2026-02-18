@@ -6,6 +6,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@workspace/ui/components/select";
 import { useAnalytics } from "../../analytics/use-analytics";
+import { applySampleContext, resolveSampleContext } from "./sample-context";
 
 type Mode = "conservative" | "aggressive";
 
@@ -32,7 +33,7 @@ type ConsensusResponse = {
 };
 
 export function ConsensusRunner() {
-  const { analyticsId } = useAnalytics();
+  const { analyticsId, locationId, setAnalyticsId, setLocationId } = useAnalytics();
   const [mode, setMode] = useState<Mode>("conservative");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -41,12 +42,12 @@ export function ConsensusRunner() {
   const result = payload?.consensus?.consensus;
   const recommendations = useMemo(() => result?.recommendations ?? [], [result]);
 
-  async function runConsensus() {
-    if (!analyticsId) return;
+  async function runConsensus(targetAnalyticsId = analyticsId) {
+    if (!targetAnalyticsId) return;
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`/api/agents/consensus?analyticsId=${analyticsId}&mode=${mode}`);
+      const response = await fetch(`/api/agents/consensus?analyticsId=${targetAnalyticsId}&mode=${mode}`);
       const body = (await response.json().catch(() => ({}))) as ConsensusResponse;
       if (!response.ok) {
         throw new Error((body as { error?: string }).error ?? "FAILED_TO_RUN_CONSENSUS");
@@ -55,6 +56,22 @@ export function ConsensusRunner() {
     } catch (err) {
       setPayload(null);
       setError(err instanceof Error ? err.message : "FAILED_TO_RUN_CONSENSUS");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function runSampleContext() {
+    const sample = resolveSampleContext({ locationId, analyticsId });
+    applySampleContext({ setLocationId, setAnalyticsId });
+    setLoading(true);
+    setError("");
+    try {
+      const prime = await fetch(`/api/agents/profit-intelligence?analyticsId=${sample.analyticsId}`);
+      if (!prime.ok) {
+        throw new Error("FAILED_TO_PRIME_PROFIT_INTELLIGENCE");
+      }
+      await runConsensus(sample.analyticsId);
     } finally {
       setLoading(false);
     }
@@ -82,8 +99,11 @@ export function ConsensusRunner() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={runConsensus} disabled={!analyticsId || loading}>
+          <Button onClick={() => void runConsensus()} disabled={!analyticsId || loading}>
             {loading ? "Resolving..." : "Run Consensus"}
+          </Button>
+          <Button variant="outline" onClick={() => void runSampleContext()} disabled={loading}>
+            Run Sample Context
           </Button>
           {!analyticsId ? <Badge variant="secondary">Select analytics report first</Badge> : null}
           {payload?.contract?.readiness ? (

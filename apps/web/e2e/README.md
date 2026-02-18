@@ -126,6 +126,12 @@ Run per-agent input/output contract panel validation:
 pnpm -C apps/web run test:e2e:agents:contract-panels
 ```
 
+Run one-click sample-context runner validation across all ready agents:
+
+```bash
+pnpm -C apps/web run test:e2e:agents:sample-context
+```
+
 Run learning release-loop gate validation (web + agents services):
 
 ```bash
@@ -148,3 +154,17 @@ E2E_REQUIRED_SERVICES=none pnpm -C apps/web run test:e2e:seed
 
 - Browser/API E2E tests also verify API reachability before running.
 - `seed-creation.e2e.ts` already contains seed-specific validation logic.
+
+## Sandbox mode guidance (to avoid hanging tests)
+
+If you run E2E commands from a sandboxed agent environment, service startup can hang when the process cannot bind ports or manage child processes.
+
+- Use normal sandbox mode for read-only checks (lint/typecheck/unit).
+- Use **escalated sandbox mode** for E2E commands that start `web`, `analytics`, or `agents` services.
+- If a test appears stuck at startup, stop it and rerun in escalated mode.
+
+Recommended commands in escalated mode:
+
+- `pnpm -C apps/web run test:e2e:agents:sample-context`
+- `pnpm -C apps/web run test:e2e:batch`
+- `pnpm -C apps/web run test:e2e:full`

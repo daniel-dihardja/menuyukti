@@ -5,6 +5,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { useAnalytics } from "../../analytics/use-analytics";
+import { applySampleContext, resolveSampleContext } from "./sample-context";
 
 type Recommendation = {
   rank: number;
@@ -38,7 +39,7 @@ type ProfitIntelligenceResponse = {
 };
 
 export function ProfitIntelligenceRunner() {
-  const { analyticsId } = useAnalytics();
+  const { analyticsId, locationId, setAnalyticsId, setLocationId } = useAnalytics();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<ProfitIntelligenceResponse | null>(null);
@@ -48,12 +49,12 @@ export function ProfitIntelligenceRunner() {
     [payload],
   );
 
-  async function runBoard() {
-    if (!analyticsId) return;
+  async function runBoard(targetAnalyticsId = analyticsId) {
+    if (!targetAnalyticsId) return;
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`/api/agents/profit-intelligence?analyticsId=${analyticsId}`);
+      const response = await fetch(`/api/agents/profit-intelligence?analyticsId=${targetAnalyticsId}`);
       const body = (await response.json().catch(() => ({}))) as ProfitIntelligenceResponse;
       if (!response.ok) {
         throw new Error((body as { error?: string }).error ?? "FAILED_TO_RUN_PROFIT_INTELLIGENCE");
@@ -65,6 +66,12 @@ export function ProfitIntelligenceRunner() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function runSampleContext() {
+    const sample = resolveSampleContext({ locationId, analyticsId });
+    applySampleContext({ setLocationId, setAnalyticsId });
+    await runBoard(sample.analyticsId);
   }
 
   const exports = payload?.decisionPackage;
@@ -79,8 +86,11 @@ export function ProfitIntelligenceRunner() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={runBoard} disabled={!analyticsId || loading}>
+          <Button onClick={() => void runBoard()} disabled={!analyticsId || loading}>
             {loading ? "Generating..." : "Generate Action Board"}
+          </Button>
+          <Button variant="outline" onClick={() => void runSampleContext()} disabled={loading}>
+            Run Sample Context
           </Button>
           {!analyticsId ? <Badge variant="secondary">Select analytics report first</Badge> : null}
           {payload?.contract?.readiness ? (

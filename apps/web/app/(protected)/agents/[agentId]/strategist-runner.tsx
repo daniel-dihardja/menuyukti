@@ -5,6 +5,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { useAnalytics } from "../../analytics/use-analytics";
+import { applySampleContext, resolveSampleContext } from "./sample-context";
 
 type StrategistPriority = {
   rank: number;
@@ -26,7 +27,7 @@ type StrategistResponse = {
 };
 
 export function StrategistRunner() {
-  const { analyticsId } = useAnalytics();
+  const { analyticsId, locationId, setAnalyticsId, setLocationId } = useAnalytics();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<StrategistResponse | null>(null);
@@ -36,12 +37,12 @@ export function StrategistRunner() {
     [payload],
   );
 
-  async function runStrategist() {
-    if (!analyticsId) return;
+  async function runStrategist(targetAnalyticsId = analyticsId) {
+    if (!targetAnalyticsId) return;
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`/api/agents/strategist?analyticsId=${analyticsId}`, {
+      const response = await fetch(`/api/agents/strategist?analyticsId=${targetAnalyticsId}`, {
         method: "GET",
       });
       const body = (await response.json().catch(() => ({}))) as StrategistResponse;
@@ -57,6 +58,12 @@ export function StrategistRunner() {
     }
   }
 
+  async function runSampleContext() {
+    const sample = resolveSampleContext({ locationId, analyticsId });
+    applySampleContext({ setLocationId, setAnalyticsId });
+    await runStrategist(sample.analyticsId);
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -67,8 +74,11 @@ export function StrategistRunner() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={runStrategist} disabled={!analyticsId || loading}>
+          <Button onClick={() => void runStrategist()} disabled={!analyticsId || loading}>
             {loading ? "Generating..." : "Generate Weekly Plan"}
+          </Button>
+          <Button variant="outline" onClick={() => void runSampleContext()} disabled={loading}>
+            Run Sample Context
           </Button>
           {!analyticsId ? (
             <Badge variant="secondary">Select analytics report first</Badge>

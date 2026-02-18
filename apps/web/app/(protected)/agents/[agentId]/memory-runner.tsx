@@ -5,6 +5,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { useAnalytics } from "../../analytics/use-analytics";
+import { applySampleContext, resolveSampleContext } from "./sample-context";
 
 type MemoryEvent = {
   id: string;
@@ -29,19 +30,19 @@ type MemoryPayload = {
 };
 
 export function MemoryRunner() {
-  const { analyticsId, locationId } = useAnalytics();
+  const { analyticsId, locationId, setAnalyticsId, setLocationId } = useAnalytics();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<MemoryPayload | null>(null);
 
   const events = useMemo(() => payload?.events ?? [], [payload]);
 
-  async function refresh() {
-    if (!locationId) return;
+  async function refresh(targetLocationId = locationId) {
+    if (!targetLocationId) return;
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`/api/agents/memory?locationId=${locationId}&limit=20`);
+      const response = await fetch(`/api/agents/memory?locationId=${targetLocationId}&limit=20`);
       const body = (await response.json().catch(() => ({}))) as MemoryPayload;
       if (!response.ok) {
         throw new Error((body as { error?: string }).error ?? "FAILED_TO_LOAD_MEMORY");
@@ -54,8 +55,11 @@ export function MemoryRunner() {
     }
   }
 
-  async function record(state: "accepted" | "rejected") {
-    if (!analyticsId || !locationId) return;
+  async function record(
+    state: "accepted" | "rejected",
+    targetContext: { locationId: number | null; analyticsId: number | null } = { locationId, analyticsId },
+  ) {
+    if (!targetContext.analyticsId || !targetContext.locationId) return;
     setLoading(true);
     setError("");
     try {
@@ -64,8 +68,8 @@ export function MemoryRunner() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          locationId,
-          analyticsId,
+          locationId: targetContext.locationId,
+          analyticsId: targetContext.analyticsId,
           recommendationId,
           sourceAgentId: "menu-profit-intelligence",
           state,
@@ -76,11 +80,17 @@ export function MemoryRunner() {
       if (!response.ok) {
         throw new Error(body.error ?? "FAILED_TO_RECORD_MEMORY");
       }
-      await refresh();
+      await refresh(targetContext.locationId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "FAILED_TO_RECORD_MEMORY");
       setLoading(false);
     }
+  }
+
+  async function runSampleContext() {
+    const sample = resolveSampleContext({ locationId, analyticsId });
+    applySampleContext({ setLocationId, setAnalyticsId });
+    await record("accepted", sample);
   }
 
   return (
@@ -96,6 +106,9 @@ export function MemoryRunner() {
           <Button onClick={() => record("accepted")} disabled={!analyticsId || !locationId || loading}>
             Record Accepted
           </Button>
+          <Button variant="outline" onClick={() => void runSampleContext()} disabled={loading}>
+            Run Sample Context
+          </Button>
           <Button
             variant="secondary"
             onClick={() => record("rejected")}
@@ -103,7 +116,7 @@ export function MemoryRunner() {
           >
             Record Rejected
           </Button>
-          <Button variant="outline" onClick={refresh} disabled={!locationId || loading}>
+          <Button variant="outline" onClick={() => void refresh()} disabled={!locationId || loading}>
             Refresh Memory
           </Button>
           {!locationId || !analyticsId ? (

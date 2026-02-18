@@ -17,6 +17,7 @@
     "test:e2e:agents:tool-contract-policy": "E2E_REQUIRED_SERVICES=agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-tool-contract-policy.e2e.ts",
     "test:e2e:agents:card-standard": "E2E_REQUIRED_SERVICES=web node --import tsx scripts/run-e2e-suite.ts e2e/agent-card-information-standard.e2e.ts",
     "test:e2e:agents:contract-panels": "E2E_REQUIRED_SERVICES=web node --import tsx scripts/run-e2e-suite.ts e2e/agent-contract-panels.e2e.ts",
+    "test:e2e:agents:sample-context": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-sample-context-runner.e2e.ts",
     "test:e2e:agents:strategist": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-strategist-weekly-plan.e2e.ts",
     "test:e2e:agents:profit-intelligence": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-profit-intelligence-action-board.e2e.ts",
     "test:e2e:agents:consensus": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-consensus-debate.e2e.ts",

@@ -5,6 +5,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { useAnalytics } from "../../analytics/use-analytics";
+import { applySampleContext, resolveSampleContext } from "./sample-context";
 
 type RerankedRecommendation = {
   recommendation_id: string;
@@ -31,25 +32,41 @@ type RerankedPayload = {
 };
 
 export function RerankerRunner() {
-  const { analyticsId } = useAnalytics();
+  const { analyticsId, locationId, setAnalyticsId, setLocationId } = useAnalytics();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<RerankedPayload | null>(null);
 
   const recs = useMemo(() => payload?.reranked?.recommendations ?? [], [payload]);
 
-  async function runRerank() {
-    if (!analyticsId) return;
+  async function runRerank(targetAnalyticsId = analyticsId) {
+    if (!targetAnalyticsId) return;
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`/api/agents/profit-intelligence/reranked?analyticsId=${analyticsId}`);
+      const response = await fetch(`/api/agents/profit-intelligence/reranked?analyticsId=${targetAnalyticsId}`);
       const body = (await response.json().catch(() => ({}))) as RerankedPayload & { error?: string };
       if (!response.ok) throw new Error(body.error ?? "FAILED_TO_RUN_RERANK");
       setPayload(body);
     } catch (err) {
       setPayload(null);
       setError(err instanceof Error ? err.message : "FAILED_TO_RUN_RERANK");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function runSampleContext() {
+    const sample = resolveSampleContext({ locationId, analyticsId });
+    applySampleContext({ setLocationId, setAnalyticsId });
+    setLoading(true);
+    setError("");
+    try {
+      const prime = await fetch(`/api/agents/profit-intelligence?analyticsId=${sample.analyticsId}`);
+      if (!prime.ok) {
+        throw new Error("FAILED_TO_PRIME_PROFIT_INTELLIGENCE");
+      }
+      await runRerank(sample.analyticsId);
     } finally {
       setLoading(false);
     }
@@ -65,8 +82,11 @@ export function RerankerRunner() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-2">
-          <Button onClick={runRerank} disabled={!analyticsId || loading}>
+          <Button onClick={() => void runRerank()} disabled={!analyticsId || loading}>
             {loading ? "Re-ranking..." : "Run Re-ranking"}
+          </Button>
+          <Button variant="outline" onClick={() => void runSampleContext()} disabled={loading}>
+            Run Sample Context
           </Button>
           {!analyticsId ? <Badge variant="secondary">Select analytics report first</Badge> : null}
           {payload?.reranked?.policy_version ? (
