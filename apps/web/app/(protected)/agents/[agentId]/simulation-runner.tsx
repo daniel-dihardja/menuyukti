@@ -10,6 +10,7 @@ import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
+import { AgentRunHistoryPanel } from "./agent-run-history-panel";
 
 type Mode = "conservative" | "aggressive";
 
@@ -49,6 +50,7 @@ export function SimulationRunner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<SimulationResponse | null>(null);
+  const [historyToken, setHistoryToken] = useState(0);
 
   const result = payload?.simulation?.simulation;
   const scenarios = useMemo(() => result?.ranked_scenarios ?? [], [result]);
@@ -66,6 +68,7 @@ export function SimulationRunner() {
         throw new Error((body as { error?: string }).error ?? "FAILED_TO_RUN_SIMULATION");
       }
       setPayload(body);
+      setHistoryToken((value) => value + 1);
     } catch (err) {
       setPayload(null);
       setError(err instanceof Error ? err.message : "FAILED_TO_RUN_SIMULATION");
@@ -154,6 +157,12 @@ export function SimulationRunner() {
           <p className="text-sm text-muted-foreground">No scenarios were returned.</p>
         ) : null}
         <OutputTrustPanel contract={payload?.contract} />
+        <AgentRunHistoryPanel
+          storageAgentId="what-if-simulation"
+          locationId={locationId}
+          analyticsId={analyticsId}
+          refreshToken={historyToken}
+        />
       </CardContent>
     </Card>
   );

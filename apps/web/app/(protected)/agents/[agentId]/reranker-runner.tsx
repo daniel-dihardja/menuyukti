@@ -9,6 +9,7 @@ import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
+import { AgentRunHistoryPanel } from "./agent-run-history-panel";
 
 type RerankedRecommendation = {
   recommendation_id: string;
@@ -40,6 +41,7 @@ export function RerankerRunner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<RerankedPayload | null>(null);
+  const [historyToken, setHistoryToken] = useState(0);
 
   const recs = useMemo(() => payload?.reranked?.recommendations ?? [], [payload]);
   const contextState = resolveSelectedContextState({ locationId, analyticsId });
@@ -56,6 +58,7 @@ export function RerankerRunner() {
         throw new Error(body.error ?? "FAILED_TO_RUN_RERANK");
       }
       setPayload(body);
+      setHistoryToken((value) => value + 1);
     } catch (err) {
       setPayload(null);
       setError(err instanceof Error ? err.message : "FAILED_TO_RUN_RERANK");
@@ -136,6 +139,12 @@ export function RerankerRunner() {
           contract={payload?.contract}
           fallbackUsed={Boolean(payload?.reranked?.fallback_to_baseline)}
           guardrailState={payload?.reranked?.fallback_to_baseline ? "degraded" : null}
+        />
+        <AgentRunHistoryPanel
+          storageAgentId="profit-intelligence-reranked"
+          locationId={locationId}
+          analyticsId={analyticsId}
+          refreshToken={historyToken}
         />
       </CardContent>
     </Card>

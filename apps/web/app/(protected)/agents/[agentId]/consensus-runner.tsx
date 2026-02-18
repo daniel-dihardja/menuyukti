@@ -10,6 +10,7 @@ import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
+import { AgentRunHistoryPanel } from "./agent-run-history-panel";
 
 type Mode = "conservative" | "aggressive";
 
@@ -41,6 +42,7 @@ export function ConsensusRunner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<ConsensusResponse | null>(null);
+  const [historyToken, setHistoryToken] = useState(0);
 
   const result = payload?.consensus?.consensus;
   const recommendations = useMemo(() => result?.recommendations ?? [], [result]);
@@ -58,6 +60,7 @@ export function ConsensusRunner() {
         throw new Error((body as { error?: string }).error ?? "FAILED_TO_RUN_CONSENSUS");
       }
       setPayload(body);
+      setHistoryToken((value) => value + 1);
     } catch (err) {
       setPayload(null);
       setError(err instanceof Error ? err.message : "FAILED_TO_RUN_CONSENSUS");
@@ -161,6 +164,12 @@ export function ConsensusRunner() {
           </div>
         ) : null}
         <OutputTrustPanel contract={payload?.contract} />
+        <AgentRunHistoryPanel
+          storageAgentId="multi-agent-consensus"
+          locationId={locationId}
+          analyticsId={analyticsId}
+          refreshToken={historyToken}
+        />
       </CardContent>
     </Card>
   );

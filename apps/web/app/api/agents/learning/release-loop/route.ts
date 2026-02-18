@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma/client";
 import { listLearningSignalEvents } from "@/lib/agents/learning-repository";
@@ -227,7 +228,7 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  return NextResponse.json({
+  const responseBody = {
     record,
     decision: decisionPayload.release_decision ?? null,
     contract: createDecisionApiContract({
@@ -245,5 +246,37 @@ export async function POST(request: NextRequest) {
         },
       ],
     }),
+  };
+
+  const outputJson = JSON.parse(JSON.stringify(responseBody)) as Prisma.InputJsonValue;
+  await prisma.agentOutput.upsert({
+    where: {
+      agentId_locationId_analyticsId: {
+        agentId: "learning-release-loop",
+        locationId,
+        analyticsId,
+      },
+    },
+    create: {
+      agentId: "learning-release-loop",
+      locationId,
+      analyticsId,
+      outputs: outputJson,
+      contractVersion: "v1",
+      runId: record.id,
+      modelName: "learning-release-loop-v1",
+      runStatus: record.decision,
+      outputEnvelopeJson: outputJson,
+    },
+    update: {
+      outputs: outputJson,
+      contractVersion: "v1",
+      runId: record.id,
+      modelName: "learning-release-loop-v1",
+      runStatus: record.decision,
+      outputEnvelopeJson: outputJson,
+    },
   });
+
+  return NextResponse.json(responseBody);
 }

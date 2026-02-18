@@ -9,6 +9,7 @@ import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
+import { AgentRunHistoryPanel } from "./agent-run-history-panel";
 
 type Recommendation = {
   rank: number;
@@ -46,6 +47,7 @@ export function ProfitIntelligenceRunner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<ProfitIntelligenceResponse | null>(null);
+  const [historyToken, setHistoryToken] = useState(0);
 
   const recommendations = useMemo(
     () => payload?.profitIntelligence?.board?.recommendations ?? [],
@@ -65,6 +67,7 @@ export function ProfitIntelligenceRunner() {
         throw new Error((body as { error?: string }).error ?? "FAILED_TO_RUN_PROFIT_INTELLIGENCE");
       }
       setPayload(body);
+      setHistoryToken((value) => value + 1);
     } catch (err) {
       setPayload(null);
       setError(err instanceof Error ? err.message : "FAILED_TO_RUN_PROFIT_INTELLIGENCE");
@@ -152,6 +155,12 @@ export function ProfitIntelligenceRunner() {
           </div>
         ) : null}
         <OutputTrustPanel contract={payload?.contract} />
+        <AgentRunHistoryPanel
+          storageAgentId="menu-profit-intelligence"
+          locationId={locationId}
+          analyticsId={analyticsId}
+          refreshToken={historyToken}
+        />
       </CardContent>
     </Card>
   );

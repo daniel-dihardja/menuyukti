@@ -9,6 +9,7 @@ import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
+import { AgentRunHistoryPanel } from "./agent-run-history-panel";
 
 type MemoryEvent = {
   id: string;
@@ -38,6 +39,7 @@ export function MemoryRunner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<MemoryPayload | null>(null);
+  const [historyToken, setHistoryToken] = useState(0);
 
   const events = useMemo(() => payload?.events ?? [], [payload]);
   const contextState = resolveSelectedContextState({ locationId, analyticsId });
@@ -54,6 +56,7 @@ export function MemoryRunner() {
         throw new Error((body as { error?: string }).error ?? "FAILED_TO_LOAD_MEMORY");
       }
       setPayload(body);
+      setHistoryToken((value) => value + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "FAILED_TO_LOAD_MEMORY");
     } finally {
@@ -87,6 +90,7 @@ export function MemoryRunner() {
         throw new Error(body.error ?? "FAILED_TO_RECORD_MEMORY");
       }
       await refresh(targetContext.locationId);
+      setHistoryToken((value) => value + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "FAILED_TO_RECORD_MEMORY");
       setLoading(false);
@@ -166,6 +170,12 @@ export function MemoryRunner() {
           <p className="text-sm text-muted-foreground">No memory events yet.</p>
         ) : null}
         <OutputTrustPanel contract={payload?.contract} />
+        <AgentRunHistoryPanel
+          storageAgentId="agent-memory-tracker"
+          locationId={locationId}
+          analyticsId={analyticsId}
+          refreshToken={historyToken}
+        />
       </CardContent>
     </Card>
   );

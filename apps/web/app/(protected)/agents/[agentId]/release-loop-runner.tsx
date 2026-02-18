@@ -10,6 +10,7 @@ import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
+import { AgentRunHistoryPanel } from "./agent-run-history-panel";
 
 type Stage = "shadow" | "canary" | "rollout";
 
@@ -43,6 +44,7 @@ export function ReleaseLoopRunner() {
   const [error, setError] = useState("");
   const [records, setRecords] = useState<RecordDto[]>([]);
   const [contract, setContract] = useState<DecisionApiContractDto | null>(null);
+  const [historyToken, setHistoryToken] = useState(0);
 
   const latest = useMemo(() => records[0] ?? null, [records]);
   const contextState = resolveSelectedContextState({ locationId, analyticsId });
@@ -56,6 +58,7 @@ export function ReleaseLoopRunner() {
     if (!response.ok) throw new Error(body.error ?? "FAILED_TO_LOAD_RELEASE_LOOP");
     setRecords(Array.isArray(body.records) ? body.records : []);
     setContract(body.contract ?? null);
+    setHistoryToken((value) => value + 1);
   }
 
   async function run(targetContext: { locationId: number | null; analyticsId: number | null } = { locationId, analyticsId }) {
@@ -82,6 +85,7 @@ export function ReleaseLoopRunner() {
       }
       setContract(body.contract ?? null);
       await refresh(targetContext);
+      setHistoryToken((value) => value + 1);
       if (body.decision?.decision === "rollback") {
         setError(
           `Rollback triggered to ${body.decision.rollback_to_policy_version ?? "baseline"} (${(body.decision.reasons ?? []).join(", ")})`,
@@ -174,6 +178,12 @@ export function ReleaseLoopRunner() {
           contract={contract}
           guardrailState={latest?.decision ?? null}
           fallbackUsed={latest?.decision === "rollback"}
+        />
+        <AgentRunHistoryPanel
+          storageAgentId="learning-release-loop"
+          locationId={locationId}
+          analyticsId={analyticsId}
+          refreshToken={historyToken}
         />
       </CardContent>
     </Card>

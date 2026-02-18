@@ -9,6 +9,7 @@ import { useAnalytics } from "../../analytics/use-analytics";
 import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
+import { AgentRunHistoryPanel } from "./agent-run-history-panel";
 
 type StrategistPriority = {
   rank: number;
@@ -34,6 +35,7 @@ export function StrategistRunner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<StrategistResponse | null>(null);
+  const [historyToken, setHistoryToken] = useState(0);
 
   const priorities = useMemo(
     () => payload?.strategist?.plan?.priorities ?? [],
@@ -55,6 +57,7 @@ export function StrategistRunner() {
         throw new Error((body as { error?: string }).error ?? "FAILED_TO_RUN_STRATEGIST");
       }
       setPayload(body);
+      setHistoryToken((value) => value + 1);
     } catch (err) {
       setPayload(null);
       setError(err instanceof Error ? err.message : "FAILED_TO_RUN_STRATEGIST");
@@ -125,6 +128,12 @@ export function StrategistRunner() {
           <p className="text-sm text-muted-foreground">No actionable weekly priorities returned.</p>
         ) : null}
         <OutputTrustPanel contract={payload?.contract} />
+        <AgentRunHistoryPanel
+          storageAgentId="marketer-strategist"
+          locationId={locationId}
+          analyticsId={analyticsId}
+          refreshToken={historyToken}
+        />
       </CardContent>
     </Card>
   );

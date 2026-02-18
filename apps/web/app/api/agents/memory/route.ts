@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma/client";
 import {
@@ -167,7 +168,7 @@ export async function POST(request: NextRequest) {
     trust: { qualityStatus: "passed", reasons: [] },
   });
 
-  return NextResponse.json({
+  const responseBody = {
     event,
     contract: createDecisionApiContract({
       surface: "agent:memory-context",
@@ -184,5 +185,37 @@ export async function POST(request: NextRequest) {
         },
       ],
     }),
+  };
+
+  const outputJson = JSON.parse(JSON.stringify(responseBody)) as Prisma.InputJsonValue;
+  await prisma.agentOutput.upsert({
+    where: {
+      agentId_locationId_analyticsId: {
+        agentId: "agent-memory-tracker",
+        locationId,
+        analyticsId,
+      },
+    },
+    create: {
+      agentId: "agent-memory-tracker",
+      locationId,
+      analyticsId,
+      outputs: outputJson,
+      contractVersion: "v1",
+      runId: event.id,
+      modelName: "agent-memory-tracker-v1",
+      runStatus: "accepted",
+      outputEnvelopeJson: outputJson,
+    },
+    update: {
+      outputs: outputJson,
+      contractVersion: "v1",
+      runId: event.id,
+      modelName: "agent-memory-tracker-v1",
+      runStatus: "accepted",
+      outputEnvelopeJson: outputJson,
+    },
   });
+
+  return NextResponse.json(responseBody);
 }
