@@ -39,5 +39,26 @@
       "evidence",
       "decision_package_exports"
     ]
+  },
+  {
+    "id": "multi-agent-consensus",
+    "name": "Multi-Agent Consensus",
+    "imageUrl": "/images/placeholder.svg",
+    "description": "Runs strategy-vs-risk debate and resolves a consensus recommendation set.",
+    "status": "ready",
+    "inputs": [
+      "Profit intelligence recommendations",
+      "Risk flags and confidence levels",
+      "Mode selection (conservative/aggressive)",
+      "Pipeline readiness metadata"
+    ],
+    "outputs": [
+      "consensus_winner",
+      "ranked_recommendations",
+      "disagreement_reasons",
+      "confidence",
+      "readiness",
+      "evidence"
+    ]
   }
 ]

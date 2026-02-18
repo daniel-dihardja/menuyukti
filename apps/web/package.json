@@ -17,6 +17,7 @@
     "test:e2e:agents:tool-contract-policy": "E2E_REQUIRED_SERVICES=agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-tool-contract-policy.e2e.ts",
     "test:e2e:agents:strategist": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-strategist-weekly-plan.e2e.ts",
     "test:e2e:agents:profit-intelligence": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-profit-intelligence-action-board.e2e.ts",
+    "test:e2e:agents:consensus": "E2E_REQUIRED_SERVICES=web,agents node --import tsx scripts/run-e2e-suite.ts e2e/agent-consensus-debate.e2e.ts",
     "test:e2e:api:contracts": "node --import tsx scripts/run-e2e-suite.ts e2e/api-contracts.e2e.ts",
     "postinstall": "prisma generate",
     "db:reset": "prisma migrate reset --force",

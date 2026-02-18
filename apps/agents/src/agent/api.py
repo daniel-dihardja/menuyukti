@@ -9,6 +9,7 @@ from agent.tool_contract import (
     evaluate_runtime_policy,
     validate_tool_payload,
 )
+from agent.consensus import DebateConsensusRequest, run_consensus
 from agent.profit_intelligence import ProfitIntelligenceRequest, generate_action_board
 from agent.strategist import StrategistWeeklyPlanRequest, generate_weekly_plan
 
@@ -63,3 +64,8 @@ async def strategist_weekly_plan(payload: StrategistWeeklyPlanRequest):
 @app.post("/agents/profit-intelligence/action-board", response_model=None)
 async def profit_intelligence_action_board(payload: ProfitIntelligenceRequest):
     return generate_action_board(payload)
+
+
+@app.post("/agents/consensus/debate", response_model=None)
+async def consensus_debate(payload: DebateConsensusRequest):
+    return run_consensus(payload)

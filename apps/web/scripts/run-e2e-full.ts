@@ -48,6 +48,7 @@ const DEFAULT_E2E_SUITES = [
   "test:e2e:agents:legacy-decommission",
   "test:e2e:agents:strategist",
   "test:e2e:agents:profit-intelligence",
+  "test:e2e:agents:consensus",
   "test:e2e:release-gate",
 ];
 
