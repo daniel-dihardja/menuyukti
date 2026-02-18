@@ -1,5 +1,8 @@
-from pydantic import BaseModel, Field
-from typing import List, Literal
+from typing import List
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from menuyukti.core.models.matrix_item import MatrixCategory
 
 
 # ---------------------------------------------------------
@@ -19,11 +22,10 @@ from typing import List, Literal
 # The model makes them explicit.
 # ---------------------------------------------------------
 
-MenuCategory = Literal["star", "puzzle", "plow_horse", "low_end"]
-
-
 class CategoryDistribution(BaseModel):
-    category: MenuCategory = Field(description="Menu engineering quadrant.")
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    category: MatrixCategory = Field(description="Menu engineering quadrant.")
 
     item_count: int = Field(ge=0, description="Number of items in this category.")
 
@@ -67,8 +69,33 @@ class CategoryDistribution(BaseModel):
 
 
 class MatrixDistribution(BaseModel):
-    categories: List[CategoryDistribution]
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    categories: List[CategoryDistribution] = Field(min_length=1)
 
     # Optional but HIGHLY recommended:
     # attach a timestamp or reporting period later
     # to enable trend detection.
+
+    @model_validator(mode="after")
+    def validate_and_normalize(self) -> "MatrixDistribution":
+        seen: set[str] = set()
+        duplicates: list[str] = []
+        for category in self.categories:
+            if category.category in seen:
+                duplicates.append(category.category)
+            seen.add(category.category)
+
+        if duplicates:
+            duplicate_values = ", ".join(sorted(set(duplicates)))
+            raise ValueError(
+                f"CORE_MODEL_DUPLICATE_CATEGORY_DISTRIBUTION: {duplicate_values}"
+            )
+
+        # Deterministic order for stable serialization and downstream comparisons.
+        object.__setattr__(
+            self,
+            "categories",
+            sorted(self.categories, key=lambda category: category.category),
+        )
+        return self

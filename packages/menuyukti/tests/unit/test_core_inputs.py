@@ -6,7 +6,7 @@ import pytest
 from menuyukti.core.inputs import CoreInputs
 from menuyukti.core.models.matrix_item import MatrixItem
 from menuyukti.core.models.heatmap import MenuHeatmap
-from menuyukti.core.models.matrix_distribution import CategoryDistribution, MatrixDistribution
+from menuyukti.core.models.matrix_distribution import MatrixDistribution
 from menuyukti.core.models.sales_analytics_summary import SalesAnalyticsSummary
 
 
@@ -102,17 +102,20 @@ def test_core_inputs_rejects_unknown_heatmap_menu():
 def test_core_inputs_rejects_duplicate_distribution_category():
     matrix_items = [MatrixItem(**i) for i in _load_json("matrix_items.json")]
     heatmaps = [MenuHeatmap(**h) for h in _load_json("heatmaps.json")]
-    distribution = MatrixDistribution(
-        categories=[
-            CategoryDistribution(category="star", item_count=1, item_share=0.5, margin_share=0.6),
-            CategoryDistribution(category="star", item_count=1, item_share=0.5, margin_share=0.4),
-        ]
-    )
 
     with pytest.raises(ValueError) as exc:
-        CoreInputs(matrix_items=matrix_items, heatmaps=heatmaps, distribution=distribution)
+        CoreInputs(
+            matrix_items=matrix_items,
+            heatmaps=heatmaps,
+            distribution={
+                "categories": [
+                    {"category": "star", "item_count": 1, "item_share": 0.5, "margin_share": 0.6},
+                    {"category": "star", "item_count": 1, "item_share": 0.5, "margin_share": 0.4},
+                ]
+            },
+        )
 
-    assert "CORE_INPUT_DISTRIBUTION_DUPLICATE_CATEGORY" in str(exc.value)
+    assert "CORE_MODEL_DUPLICATE_CATEGORY_DISTRIBUTION" in str(exc.value)
 
 
 def test_core_inputs_sorts_deterministically():

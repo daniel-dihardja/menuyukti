@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
 from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # ---------------------------------------------------------
@@ -39,13 +40,17 @@ class MatrixItem(BaseModel):
     # Identity
     # -----------------------------------------------------
 
-    menu: str = Field(description="Display name of the menu item.")
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    menu: str = Field(min_length=1, description="Display name of the menu item.")
 
     menu_category: str = Field(
+        min_length=1,
         description="Top-level category (e.g., DRINK, FOOD, DESSERT). Useful for marketing segmentation."
     )
 
     menu_category_detail: str = Field(
+        min_length=1,
         description="More granular classification (e.g., ESPRESSO DRINKS, BURGERS). Enables smarter promotions later."
     )
 
@@ -123,3 +128,11 @@ class MatrixItem(BaseModel):
         Useful for visualization — rarely used directly by agents.
         """
     )
+
+    @field_validator("menu", "menu_category", "menu_category_detail")
+    @classmethod
+    def strip_identity_fields(cls, value: str) -> str:
+        trimmed = value.strip()
+        if not trimmed:
+            raise ValueError("CORE_MODEL_EMPTY_STRING")
+        return trimmed
