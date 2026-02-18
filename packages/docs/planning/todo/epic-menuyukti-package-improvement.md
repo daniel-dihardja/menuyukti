@@ -13,7 +13,7 @@ Draft
 Improve `packages/menuyukti` so it becomes a reliable, testable, and extensible decision engine for restaurant Instagram marketing workflows.
 
 ## Why This Epic
-- The package already contains core models and feature modules (`audience`, `inputs`, `matrix_item`, `matrix_distribution`), but needs stronger consistency and production-hardening.
+- The package already contains core models and legacy feature modules (`inputs`, `matrix_item`, `matrix_distribution`, and retired audience leftovers), but needs stronger consistency and production-hardening.
 - A stronger engine contract reduces downstream breakage in web/agents.
 - Better model boundaries and validation will make future agent orchestration easier and safer.
 
@@ -28,7 +28,7 @@ By the end of this epic:
 - Dead-code removal and module simplification before refactors.
 - Input contract normalization and validation hardening.
 - Core model cleanup for matrix entities/distributions.
-- Feature module consistency (especially audience segmentation path).
+- Feature module consistency, including cleanup of retired audience implementation leftovers.
 - Strict typing and type-safe boundaries across core + feature modules.
 - Deterministic scoring/ordering behavior for repeatable outcomes.
 - Unit-test expansion for all changed logic, plus integration coverage where relevant.
@@ -44,7 +44,7 @@ By the end of this epic:
 1. Remove unused/dead code and simplify module surface.
 2. Contract + input normalization foundation.
 3. Core model consistency and strict typing cleanup.
-4. Feature logic alignment (audience + matrix distribution behavior).
+4. Feature module cleanup/alignment (retired audience leftovers + matrix distribution behavior).
 5. Deterministic scoring/ranking guarantees.
 6. Unit tests for all changed logic + integration contract tests for representative scenarios.
 7. Performance pass for key computation paths.
@@ -60,8 +60,8 @@ By the end of this epic:
 3. **ME-02: Core Model Consistency Refactor**
 - Align `matrix_item` and `matrix_distribution` model fields, types, and invariants.
 
-4. **ME-03: Audience Feature Pipeline Hardening**
-- Refactor `features/audience.py` to enforce deterministic segmentation and explainable outputs.
+4. **ME-03: Audience Implementation Decommission**
+- Remove or de-scope leftover audience implementation no longer needed after audience agent retirement.
 
 5. **ME-04: Deterministic Ranking and Tie-Break Rules**
 - Make scoring/ranking reproducible with explicit tie-break hierarchy.
@@ -85,7 +85,8 @@ By the end of this epic:
 - Unused/dead code identified in scope modules is removed (or explicitly justified if retained).
 - Engine input validation rejects malformed payloads with clear reason codes.
 - Matrix-related models produce stable, schema-valid objects under repeated runs.
-- Audience and matrix distribution results are deterministic for identical inputs.
+- Retired audience leftovers are removed (or explicitly de-scoped) without breaking active package consumers.
+- Matrix distribution results are deterministic for identical inputs.
 - All touched code paths are type-safe and pass project type checks.
 - Output contract is versioned and consumed by integration tests.
 - Unit tests cover changed logic branches; integration tests cover success, degraded, and edge-case behavior.
