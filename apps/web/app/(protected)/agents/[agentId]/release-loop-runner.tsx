@@ -11,6 +11,8 @@ import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
 import { AgentRunHistoryPanel } from "./agent-run-history-panel";
+import { AgentRunComparisonPanel } from "./agent-run-comparison-panel";
+import type { SessionRunSnapshot } from "./run-comparison";
 
 type Stage = "shadow" | "canary" | "rollout";
 
@@ -45,9 +47,30 @@ export function ReleaseLoopRunner() {
   const [records, setRecords] = useState<RecordDto[]>([]);
   const [contract, setContract] = useState<DecisionApiContractDto | null>(null);
   const [historyToken, setHistoryToken] = useState(0);
+  const [sessionRuns, setSessionRuns] = useState<SessionRunSnapshot[]>([]);
 
   const latest = useMemo(() => records[0] ?? null, [records]);
   const contextState = resolveSelectedContextState({ locationId, analyticsId });
+
+  function appendSessionRun(next: ReleaseLoopPayload) {
+    const decision = next.decision?.decision ?? next.record?.decision ?? "unknown";
+    setSessionRuns((current) => [
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        timestamp: new Date().toISOString(),
+        status: decision,
+        readiness: next.contract?.readiness ?? null,
+        confidence: next.contract?.confidence ?? null,
+        fallbackUsed: decision === "rollback",
+        guardrailState: decision,
+        fields: [
+          { label: "stage", value: next.record?.stage ?? stage },
+          { label: "decision", value: decision },
+        ],
+      },
+      ...current,
+    ]);
+  }
 
   async function refresh(targetContext: { locationId: number | null; analyticsId: number | null } = { locationId, analyticsId }) {
     if (!targetContext.locationId) return;
@@ -84,6 +107,7 @@ export function ReleaseLoopRunner() {
         throw new Error(body.error ?? "FAILED_TO_RUN_RELEASE_LOOP");
       }
       setContract(body.contract ?? null);
+      appendSessionRun(body);
       await refresh(targetContext);
       setHistoryToken((value) => value + 1);
       if (body.decision?.decision === "rollback") {
@@ -185,6 +209,7 @@ export function ReleaseLoopRunner() {
           analyticsId={analyticsId}
           refreshToken={historyToken}
         />
+        <AgentRunComparisonPanel runs={sessionRuns} />
       </CardContent>
     </Card>
   );

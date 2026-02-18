@@ -11,6 +11,8 @@ import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
 import { AgentRunHistoryPanel } from "./agent-run-history-panel";
+import { AgentRunComparisonPanel } from "./agent-run-comparison-panel";
+import type { SessionRunSnapshot } from "./run-comparison";
 
 type Mode = "conservative" | "aggressive";
 
@@ -51,10 +53,34 @@ export function SimulationRunner() {
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<SimulationResponse | null>(null);
   const [historyToken, setHistoryToken] = useState(0);
+  const [sessionRuns, setSessionRuns] = useState<SessionRunSnapshot[]>([]);
 
   const result = payload?.simulation?.simulation;
   const scenarios = useMemo(() => result?.ranked_scenarios ?? [], [result]);
   const contextState = resolveSelectedContextState({ locationId, analyticsId });
+
+  function appendSessionRun(next: SimulationResponse) {
+    const winner = next?.simulation?.simulation?.winner?.name ?? "none";
+    const scenarioCount = next?.simulation?.simulation?.ranked_scenarios?.length ?? 0;
+    const status = next?.simulation?.status ?? "unknown";
+    setSessionRuns((current) => [
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        timestamp: new Date().toISOString(),
+        status,
+        readiness: next.contract?.readiness ?? null,
+        confidence: next.contract?.confidence ?? null,
+        fallbackUsed: false,
+        guardrailState: next.contract?.readiness ?? null,
+        fields: [
+          { label: "mode", value: mode },
+          { label: "winner", value: winner },
+          { label: "scenario_count", value: String(scenarioCount) },
+        ],
+      },
+      ...current,
+    ]);
+  }
 
   async function runSimulation(targetAnalyticsId = analyticsId) {
     if (!targetAnalyticsId) return;
@@ -69,6 +95,7 @@ export function SimulationRunner() {
       }
       setPayload(body);
       setHistoryToken((value) => value + 1);
+      appendSessionRun(body);
     } catch (err) {
       setPayload(null);
       setError(err instanceof Error ? err.message : "FAILED_TO_RUN_SIMULATION");
@@ -163,6 +190,7 @@ export function SimulationRunner() {
           analyticsId={analyticsId}
           refreshToken={historyToken}
         />
+        <AgentRunComparisonPanel runs={sessionRuns} />
       </CardContent>
     </Card>
   );

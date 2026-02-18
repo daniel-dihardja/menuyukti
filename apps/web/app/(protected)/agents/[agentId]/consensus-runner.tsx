@@ -11,6 +11,8 @@ import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
 import { AgentRunHistoryPanel } from "./agent-run-history-panel";
+import { AgentRunComparisonPanel } from "./agent-run-comparison-panel";
+import type { SessionRunSnapshot } from "./run-comparison";
 
 type Mode = "conservative" | "aggressive";
 
@@ -43,10 +45,34 @@ export function ConsensusRunner() {
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<ConsensusResponse | null>(null);
   const [historyToken, setHistoryToken] = useState(0);
+  const [sessionRuns, setSessionRuns] = useState<SessionRunSnapshot[]>([]);
 
   const result = payload?.consensus?.consensus;
   const recommendations = useMemo(() => result?.recommendations ?? [], [result]);
   const contextState = resolveSelectedContextState({ locationId, analyticsId });
+
+  function appendSessionRun(next: ConsensusResponse) {
+    const winner = next?.consensus?.consensus?.winner?.menu_item ?? "none";
+    const recCount = next?.consensus?.consensus?.recommendations?.length ?? 0;
+    const status = next?.consensus?.status ?? "unknown";
+    setSessionRuns((current) => [
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        timestamp: new Date().toISOString(),
+        status,
+        readiness: next.contract?.readiness ?? null,
+        confidence: next.contract?.confidence ?? null,
+        fallbackUsed: false,
+        guardrailState: next.contract?.readiness ?? null,
+        fields: [
+          { label: "mode", value: mode },
+          { label: "winner", value: winner },
+          { label: "recommendations_count", value: String(recCount) },
+        ],
+      },
+      ...current,
+    ]);
+  }
 
   async function runConsensus(targetAnalyticsId = analyticsId) {
     if (!targetAnalyticsId) return;
@@ -61,6 +87,7 @@ export function ConsensusRunner() {
       }
       setPayload(body);
       setHistoryToken((value) => value + 1);
+      appendSessionRun(body);
     } catch (err) {
       setPayload(null);
       setError(err instanceof Error ? err.message : "FAILED_TO_RUN_CONSENSUS");
@@ -170,6 +197,7 @@ export function ConsensusRunner() {
           analyticsId={analyticsId}
           refreshToken={historyToken}
         />
+        <AgentRunComparisonPanel runs={sessionRuns} />
       </CardContent>
     </Card>
   );

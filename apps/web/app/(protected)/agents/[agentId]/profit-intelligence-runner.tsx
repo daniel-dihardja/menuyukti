@@ -10,6 +10,8 @@ import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
 import { AgentRunHistoryPanel } from "./agent-run-history-panel";
+import { AgentRunComparisonPanel } from "./agent-run-comparison-panel";
+import type { SessionRunSnapshot } from "./run-comparison";
 
 type Recommendation = {
   rank: number;
@@ -48,12 +50,34 @@ export function ProfitIntelligenceRunner() {
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<ProfitIntelligenceResponse | null>(null);
   const [historyToken, setHistoryToken] = useState(0);
+  const [sessionRuns, setSessionRuns] = useState<SessionRunSnapshot[]>([]);
 
   const recommendations = useMemo(
     () => payload?.profitIntelligence?.board?.recommendations ?? [],
     [payload],
   );
   const contextState = resolveSelectedContextState({ locationId, analyticsId });
+
+  function appendSessionRun(next: ProfitIntelligenceResponse) {
+    const recCount = next?.profitIntelligence?.board?.recommendations?.length ?? 0;
+    const status = next?.profitIntelligence?.status ?? "unknown";
+    setSessionRuns((current) => [
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        timestamp: new Date().toISOString(),
+        status,
+        readiness: next.contract?.readiness ?? null,
+        confidence: next.contract?.confidence ?? null,
+        fallbackUsed: false,
+        guardrailState: next.contract?.readiness ?? null,
+        fields: [
+          { label: "recommendations_count", value: String(recCount) },
+          { label: "cogs_readiness", value: next.contextCoverage?.cogsReadiness ?? "n/a" },
+        ],
+      },
+      ...current,
+    ]);
+  }
 
   async function runBoard(targetAnalyticsId = analyticsId) {
     if (!targetAnalyticsId) return;
@@ -68,6 +92,7 @@ export function ProfitIntelligenceRunner() {
       }
       setPayload(body);
       setHistoryToken((value) => value + 1);
+      appendSessionRun(body);
     } catch (err) {
       setPayload(null);
       setError(err instanceof Error ? err.message : "FAILED_TO_RUN_PROFIT_INTELLIGENCE");
@@ -161,6 +186,7 @@ export function ProfitIntelligenceRunner() {
           analyticsId={analyticsId}
           refreshToken={historyToken}
         />
+        <AgentRunComparisonPanel runs={sessionRuns} />
       </CardContent>
     </Card>
   );

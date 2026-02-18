@@ -10,6 +10,8 @@ import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
 import { AgentRunHistoryPanel } from "./agent-run-history-panel";
+import { AgentRunComparisonPanel } from "./agent-run-comparison-panel";
+import type { SessionRunSnapshot } from "./run-comparison";
 
 type MemoryEvent = {
   id: string;
@@ -40,11 +42,37 @@ export function MemoryRunner() {
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<MemoryPayload | null>(null);
   const [historyToken, setHistoryToken] = useState(0);
+  const [sessionRuns, setSessionRuns] = useState<SessionRunSnapshot[]>([]);
 
   const events = useMemo(() => payload?.events ?? [], [payload]);
   const contextState = resolveSelectedContextState({ locationId, analyticsId });
 
-  async function refresh(targetLocationId = locationId) {
+  function appendSessionRun(next: MemoryPayload, action: "refresh" | "accepted" | "rejected") {
+    const status = action === "refresh" ? "observed" : "accepted";
+    const continuity = next?.memoryContext?.memory_context?.continuity_signal ?? "n/a";
+    setSessionRuns((current) => [
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        timestamp: new Date().toISOString(),
+        status,
+        readiness: next.contract?.readiness ?? null,
+        confidence: next.contract?.confidence ?? null,
+        fallbackUsed: false,
+        guardrailState: next.contract?.readiness ?? null,
+        fields: [
+          { label: "action", value: action },
+          { label: "event_count", value: String(next.count) },
+          { label: "continuity_signal", value: continuity },
+        ],
+      },
+      ...current,
+    ]);
+  }
+
+  async function refresh(
+    targetLocationId = locationId,
+    action: "refresh" | "accepted" | "rejected" = "refresh",
+  ) {
     if (!targetLocationId) return;
     setLoading(true);
     setError("");
@@ -57,6 +85,7 @@ export function MemoryRunner() {
       }
       setPayload(body);
       setHistoryToken((value) => value + 1);
+      appendSessionRun(body, action);
     } catch (err) {
       setError(err instanceof Error ? err.message : "FAILED_TO_LOAD_MEMORY");
     } finally {
@@ -89,10 +118,10 @@ export function MemoryRunner() {
       if (!response.ok) {
         throw new Error(body.error ?? "FAILED_TO_RECORD_MEMORY");
       }
-      await refresh(targetContext.locationId);
-      setHistoryToken((value) => value + 1);
+      await refresh(targetContext.locationId, state);
     } catch (err) {
       setError(err instanceof Error ? err.message : "FAILED_TO_RECORD_MEMORY");
+    } finally {
       setLoading(false);
     }
   }
@@ -176,6 +205,7 @@ export function MemoryRunner() {
           analyticsId={analyticsId}
           refreshToken={historyToken}
         />
+        <AgentRunComparisonPanel runs={sessionRuns} />
       </CardContent>
     </Card>
   );

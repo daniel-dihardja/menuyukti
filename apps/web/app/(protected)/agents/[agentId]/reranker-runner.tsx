@@ -10,6 +10,8 @@ import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
 import { AgentRunHistoryPanel } from "./agent-run-history-panel";
+import { AgentRunComparisonPanel } from "./agent-run-comparison-panel";
+import type { SessionRunSnapshot } from "./run-comparison";
 
 type RerankedRecommendation = {
   recommendation_id: string;
@@ -42,9 +44,31 @@ export function RerankerRunner() {
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<RerankedPayload | null>(null);
   const [historyToken, setHistoryToken] = useState(0);
+  const [sessionRuns, setSessionRuns] = useState<SessionRunSnapshot[]>([]);
 
   const recs = useMemo(() => payload?.reranked?.recommendations ?? [], [payload]);
   const contextState = resolveSelectedContextState({ locationId, analyticsId });
+
+  function appendSessionRun(next: RerankedPayload) {
+    const recCount = next?.reranked?.recommendations?.length ?? 0;
+    const fallbackUsed = Boolean(next?.reranked?.fallback_to_baseline);
+    setSessionRuns((current) => [
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        timestamp: new Date().toISOString(),
+        status: recCount > 0 ? "accepted" : "degraded",
+        readiness: next.contract?.readiness ?? null,
+        confidence: next.contract?.confidence ?? null,
+        fallbackUsed,
+        guardrailState: fallbackUsed ? "degraded" : null,
+        fields: [
+          { label: "recommendations_count", value: String(recCount) },
+          { label: "policy_version", value: next?.reranked?.policy_version ?? "n/a" },
+        ],
+      },
+      ...current,
+    ]);
+  }
 
   async function runRerank(targetAnalyticsId = analyticsId) {
     if (!targetAnalyticsId) return;
@@ -59,6 +83,7 @@ export function RerankerRunner() {
       }
       setPayload(body);
       setHistoryToken((value) => value + 1);
+      appendSessionRun(body);
     } catch (err) {
       setPayload(null);
       setError(err instanceof Error ? err.message : "FAILED_TO_RUN_RERANK");
@@ -146,6 +171,7 @@ export function RerankerRunner() {
           analyticsId={analyticsId}
           refreshToken={historyToken}
         />
+        <AgentRunComparisonPanel runs={sessionRuns} />
       </CardContent>
     </Card>
   );

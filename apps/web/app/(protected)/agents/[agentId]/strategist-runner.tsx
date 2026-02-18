@@ -10,6 +10,8 @@ import { applySampleContext, resolveSampleContext } from "./sample-context";
 import { resolveSelectedContextState } from "./selected-context";
 import { OutputTrustPanel } from "./output-trust-panel";
 import { AgentRunHistoryPanel } from "./agent-run-history-panel";
+import { AgentRunComparisonPanel } from "./agent-run-comparison-panel";
+import type { SessionRunSnapshot } from "./run-comparison";
 
 type StrategistPriority = {
   rank: number;
@@ -36,12 +38,31 @@ export function StrategistRunner() {
   const [error, setError] = useState("");
   const [payload, setPayload] = useState<StrategistResponse | null>(null);
   const [historyToken, setHistoryToken] = useState(0);
+  const [sessionRuns, setSessionRuns] = useState<SessionRunSnapshot[]>([]);
 
   const priorities = useMemo(
     () => payload?.strategist?.plan?.priorities ?? [],
     [payload],
   );
   const contextState = resolveSelectedContextState({ locationId, analyticsId });
+
+  function appendSessionRun(next: StrategistResponse) {
+    const prioritiesCount = next?.strategist?.plan?.priorities?.length ?? 0;
+    const status = next?.strategist?.status ?? "unknown";
+    setSessionRuns((current) => [
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        timestamp: new Date().toISOString(),
+        status,
+        readiness: next.contract?.readiness ?? null,
+        confidence: next.contract?.confidence ?? null,
+        fallbackUsed: false,
+        guardrailState: next.contract?.readiness ?? null,
+        fields: [{ label: "priorities_count", value: String(prioritiesCount) }],
+      },
+      ...current,
+    ]);
+  }
 
   async function runStrategist(targetAnalyticsId = analyticsId) {
     if (!targetAnalyticsId) return;
@@ -58,6 +79,7 @@ export function StrategistRunner() {
       }
       setPayload(body);
       setHistoryToken((value) => value + 1);
+      appendSessionRun(body);
     } catch (err) {
       setPayload(null);
       setError(err instanceof Error ? err.message : "FAILED_TO_RUN_STRATEGIST");
@@ -134,6 +156,7 @@ export function StrategistRunner() {
           analyticsId={analyticsId}
           refreshToken={historyToken}
         />
+        <AgentRunComparisonPanel runs={sessionRuns} />
       </CardContent>
     </Card>
   );

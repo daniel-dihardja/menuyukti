@@ -150,6 +150,12 @@ Run agent run-history validation (history updates after execution):
 pnpm -C apps/web run test:e2e:agents:run-history
 ```
 
+Run single-session run-comparison validation (A/B diff rendering):
+
+```bash
+pnpm -C apps/web run test:e2e:agents:run-comparison
+```
+
 Run learning release-loop gate validation (web + agents services):
 
 ```bash
