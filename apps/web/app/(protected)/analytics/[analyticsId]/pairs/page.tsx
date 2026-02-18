@@ -15,10 +15,15 @@ import Link from "next/link";
 
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
+import { DecisionContractBanner } from "@/components/decision-contract-banner";
 import { parsePairFilterState, serializePairFilterState } from "@/lib/analytics/pair-filter-state";
 import type { PairType } from "@/lib/analytics/pair-type";
 import { prisma } from "@/lib/prisma/client";
 import { routes } from "@/lib/routes";
+import {
+  createDecisionApiContract,
+  createDecisionContext,
+} from "@/lib/contracts/decision-api-contract";
 import {
   loadPipelineFreshnessMetadata,
   resolveAnalyticsMaterialization,
@@ -389,6 +394,48 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
   const filterQuery = serializePairFilterState(filters).toString();
   const pairExportHref = `/api/exports/analyst?dataset=pairs&locationId=${analyticsData.locationId}&${filterQuery}`;
   const comboExportHref = `/api/exports/analyst?dataset=combos&locationId=${analyticsData.locationId}&${filterQuery}`;
+  const qualityStatusRaw = String(metadata.qualityStatus ?? "").toLowerCase();
+  const contract = createDecisionApiContract({
+    surface: "pairs",
+    context: createDecisionContext({
+      persona: "analyst",
+      locationId: analyticsData.locationId,
+      analyticsId: materialization.resolvedAnalyticsId,
+      filterState: filters,
+      trust: {
+        qualityStatus:
+          qualityStatusRaw === "passed" || qualityStatusRaw === "warn" || qualityStatusRaw === "failed"
+            ? qualityStatusRaw
+            : "unknown",
+        freshnessMinutes,
+        isStale: freshnessMinutes !== null && freshnessMinutes > freshnessSlaMinutes,
+        reasons: metadata.pipelineRunId ? [] : ["missing_pipeline_run"],
+      },
+      lineage: {
+        pipelineRunId: metadata.pipelineRunId,
+        sourceSystem: "marts",
+        ingestedAtUtc: metadata.ingestedAtUtc,
+      },
+    }),
+    evidence: [
+      {
+        source: "marts",
+        entity: "marts.vw_pair_metrics_daily_base",
+        metric: "pair_rows",
+        value: sortedPairs.length,
+        key: { locationId: analyticsData.locationId },
+        pipelineRunId: metadata.pipelineRunId,
+      },
+      {
+        source: "marts",
+        entity: "marts.vw_combo_opportunity_candidates",
+        metric: "combo_rows",
+        value: sortedCombos.length,
+        key: { locationId: analyticsData.locationId },
+        pipelineRunId: metadata.pipelineRunId,
+      },
+    ],
+  });
 
   return (
     <AnalyticsPageShell
@@ -402,6 +449,11 @@ export default async function PairsPage({ params, searchParams }: PageProps) {
       <PageHeading
         title="Top Pair Menu Insights"
         description="Analyze co-purchase behavior and margin-aware combo opportunities with a decision-grade GUI."
+      />
+      <DecisionContractBanner
+        contract={contract}
+        fallbackApplied={materialization.fallbackApplied}
+        fallbackLabel={`using latest valid materialization (#${materialization.resolvedAnalyticsId})`}
       />
 
       <div className="mb-6 flex flex-wrap gap-2">

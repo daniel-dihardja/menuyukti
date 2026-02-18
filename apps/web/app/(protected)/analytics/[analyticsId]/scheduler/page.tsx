@@ -13,6 +13,10 @@ import { buildWeeklyInstagramSuggestions } from "@/lib/analytics/instagram-weekl
 import { toDecisionGradeMatrixRows } from "@/lib/analytics/matrix-row-contract";
 import { prisma } from "@/lib/prisma/client";
 import { routes } from "@/lib/routes";
+import {
+  createDecisionApiContract,
+  createDecisionContext,
+} from "@/lib/contracts/decision-api-contract";
 
 import { SchedulerClient } from "./scheduler-client";
 
@@ -281,6 +285,46 @@ export default async function SchedulerPage({ params, searchParams }: PageProps)
     : null;
   const isStale = freshnessMinutes !== null && freshnessMinutes > freshnessSlaMinutes;
   const qualityStatus = pipelineRun?.quality_status ?? null;
+  const qualityStatusRaw = String(qualityStatus ?? "").toLowerCase();
+  const contract = createDecisionApiContract({
+    surface: "scheduler",
+    context: createDecisionContext({
+      persona: "marketer",
+      locationId: analytics.locationId,
+      analyticsId,
+      filterState: { weekStartDate: dateToYmd(weekStartDate) },
+      trust: {
+        qualityStatus:
+          qualityStatusRaw === "passed" || qualityStatusRaw === "warn" || qualityStatusRaw === "failed"
+            ? qualityStatusRaw
+            : "unknown",
+        freshnessMinutes,
+        isStale,
+        reasons: etlJob?.pipelineRunId ? [] : ["missing_pipeline_run"],
+      },
+      lineage: {
+        pipelineRunId: etlJob?.pipelineRunId ?? null,
+        sourceSystem: "warehouse",
+        ingestedAtUtc: pipelineRun ? new Date(pipelineRun.ingested_at_utc).toISOString() : null,
+      },
+    }),
+    evidence: [
+      {
+        source: "derived_runtime",
+        entity: "runtime.scheduler",
+        metric: "recommendations_count",
+        value: recommendations.length,
+        key: { analyticsId, locationId: analytics.locationId },
+      },
+      {
+        source: "derived_runtime",
+        entity: "runtime.scheduler",
+        metric: "weekly_suggestions_count",
+        value: weeklySuggestions.length,
+        key: { analyticsId, locationId: analytics.locationId },
+      },
+    ],
+  });
 
   const attributionRows = await loadInstagramAttribution({
     locationId: analytics.locationId,
@@ -334,6 +378,7 @@ export default async function SchedulerPage({ params, searchParams }: PageProps)
         qualityStatus={qualityStatus}
         freshnessMinutes={freshnessMinutes}
         isStale={isStale}
+        initialContract={contract}
         attributionOutcomes={Array.from(attributionByPostMenu.values())}
         initialSchedule={
           schedule

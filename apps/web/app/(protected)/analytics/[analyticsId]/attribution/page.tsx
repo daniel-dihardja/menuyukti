@@ -20,6 +20,7 @@ import {
 
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
+import { DecisionContractBanner } from "@/components/decision-contract-banner";
 import {
   loadInstagramAttribution,
   resolveAttributionViewState,
@@ -35,6 +36,10 @@ import { formatCurrency as formatCurrencyValue } from "@/lib/currency";
 import { prisma } from "@/lib/prisma/client";
 import { routes } from "@/lib/routes";
 import { loadPipelineFreshnessMetadata } from "@/lib/etl/latest-valid-materialization";
+import {
+  createDecisionApiContract,
+  createDecisionContext,
+} from "@/lib/contracts/decision-api-contract";
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>;
@@ -256,6 +261,46 @@ export default async function AttributionPage({ params, searchParams }: PageProp
     };
   });
   const viewState = resolveAttributionViewState(filteredRows, loadError);
+  const qualityStatusRaw = String(qualityStatus ?? "").toLowerCase();
+  const contract = createDecisionApiContract({
+    surface: "attribution",
+    context: createDecisionContext({
+      persona: "analyst",
+      locationId: analytics.locationId,
+      analyticsId,
+      from: from?.toISOString() ?? null,
+      to: to?.toISOString() ?? null,
+      filterState: {
+        postId: postIdFilter,
+        menu: menuFilter || null,
+        limit,
+      },
+      trust: {
+        qualityStatus:
+          qualityStatusRaw === "passed" || qualityStatusRaw === "warn" || qualityStatusRaw === "failed"
+            ? qualityStatusRaw
+            : "unknown",
+        freshnessMinutes,
+        isStale,
+        reasons: metadata.pipelineRunId ? [] : ["missing_pipeline_run"],
+      },
+      lineage: {
+        pipelineRunId: metadata.pipelineRunId,
+        sourceSystem: "marts",
+        ingestedAtUtc: metadata.ingestedAtUtc,
+      },
+    }),
+    evidence: [
+      {
+        source: "marts",
+        entity: "marts.vw_instagram_item_attribution_pre_post",
+        metric: "filtered_rows",
+        value: filteredRows.length,
+        key: { locationId: analytics.locationId, analyticsId },
+        pipelineRunId: metadata.pipelineRunId,
+      },
+    ],
+  });
 
   return (
     <AnalyticsPageShell
@@ -270,6 +315,7 @@ export default async function AttributionPage({ params, searchParams }: PageProp
         title="Instagram Attribution Overview"
         description="Review campaign/post outcomes by promoted menu item using deterministic pre/post windows and confidence signals."
       />
+      <DecisionContractBanner contract={contract} />
 
       <section className="flex flex-wrap items-center gap-2">
         <Badge variant="outline">Window: {buildFromToLabel(from ?? null, to ?? null)}</Badge>

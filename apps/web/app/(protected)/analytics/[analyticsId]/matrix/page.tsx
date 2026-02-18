@@ -11,11 +11,16 @@ import { notFound } from "next/navigation";
 import { formatCurrencyWithCode, getCurrencyLocale } from "@/lib/currency";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
+import { DecisionContractBanner } from "@/components/decision-contract-banner";
 import { parseMatrixFilterState } from "@/lib/analytics/matrix-filter-state";
 import { applyMatrixFilterState } from "@/lib/analytics/matrix-filter-engine";
 import { toDecisionGradeMatrixRows } from "@/lib/analytics/matrix-row-contract";
 import { summarizeCogsCoverage } from "@/lib/analytics/cogs-completeness";
 import { evaluateCogsReadiness } from "@/lib/analytics/cogs-readiness";
+import {
+  createDecisionApiContract,
+  createDecisionContext,
+} from "@/lib/contracts/decision-api-contract";
 import {
   loadPipelineFreshnessMetadata,
   resolveAnalyticsMaterialization,
@@ -94,6 +99,13 @@ export default async function Page({ params, searchParams }: PageProps) {
   const freshnessSlaMinutes = Number(process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440");
   const dataFreshnessMinutes = metadata.freshnessMinutes;
   const isStale = Boolean(metadata.stale);
+  const qualityStatusRaw = String(metadata.qualityStatus ?? "").toLowerCase();
+  const qualityStatus =
+    qualityStatusRaw === "passed" ||
+    qualityStatusRaw === "warn" ||
+    qualityStatusRaw === "failed"
+      ? qualityStatusRaw
+      : "unknown";
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analytics.id}`;
   const matrix = analytics.matrixJson as MatrixJson | null;
@@ -158,6 +170,43 @@ export default async function Page({ params, searchParams }: PageProps) {
     })),
   );
   const cogsReadiness = evaluateCogsReadiness(cogsCoverage);
+  const contract = createDecisionApiContract({
+    surface: "matrix",
+    context: createDecisionContext({
+      persona: "analyst",
+      locationId: materialization.locationId,
+      analyticsId: materialization.resolvedAnalyticsId,
+      filterState: filters,
+      trust: {
+        qualityStatus,
+        freshnessMinutes: dataFreshnessMinutes,
+        isStale,
+        reasons: metadata.pipelineRunId ? [] : ["missing_pipeline_run"],
+      },
+      lineage: {
+        pipelineRunId: metadata.pipelineRunId,
+        sourceSystem: "warehouse",
+        ingestedAtUtc: metadata.ingestedAtUtc,
+      },
+    }),
+    evidence: [
+      {
+        source: "public_snapshot",
+        entity: "public.analytics",
+        metric: "matrix_row_count",
+        value: matrixRows.length,
+        key: { analyticsId: materialization.resolvedAnalyticsId },
+        pipelineRunId: metadata.pipelineRunId,
+      },
+      {
+        source: "derived_runtime",
+        entity: "runtime.cogs_readiness",
+        metric: "cogs_readiness",
+        value: cogsReadiness.readiness,
+        key: { analyticsId: materialization.resolvedAnalyticsId },
+      },
+    ],
+  });
 
   const distribution =
     (analytics.matrixDistributionJson as MatrixDistributionItem[]) ??
@@ -189,6 +238,11 @@ export default async function Page({ params, searchParams }: PageProps) {
       <PageHeading
         title={tMatrix("heading")}
         description={tMatrix("description")}
+      />
+      <DecisionContractBanner
+        contract={contract}
+        fallbackApplied={materialization.fallbackApplied}
+        fallbackLabel={`using latest valid materialization (#${materialization.resolvedAnalyticsId})`}
       />
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <span className="text-sm text-muted-foreground">

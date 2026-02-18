@@ -28,6 +28,8 @@ import {
 import { routes } from "@/lib/routes";
 import { generateDeterministicPostCopy } from "@/lib/instagram/post-copy-generator";
 import { validatePostDraftGuardrails } from "@/lib/instagram/post-draft-guardrails";
+import { DecisionContractBanner } from "@/components/decision-contract-banner";
+import type { DecisionApiContractDto } from "@/lib/contracts/decision-api-contract";
 
 type Recommendation = {
   menuItem: string;
@@ -126,6 +128,7 @@ type Props = {
     reasons: string[];
   }>;
   initialSchedule: ScheduleDto | null;
+  initialContract: DecisionApiContractDto;
 };
 
 function toLocalDateTimeInput(iso: string): string {
@@ -236,6 +239,7 @@ export function SchedulerClient({
   isStale,
   attributionOutcomes,
   initialSchedule,
+  initialContract,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -266,6 +270,7 @@ export function SchedulerClient({
     reasons: [],
     actions: [],
   });
+  const [contract, setContract] = useState<DecisionApiContractDto>(initialContract);
 
   const applyScheduleResponse = (schedule: ScheduleDto | null | undefined) => {
     if (!schedule) return;
@@ -536,6 +541,7 @@ export function SchedulerClient({
       const data = (await response.json()) as {
         schedule?: ScheduleDto;
         guardrail?: GuardrailDto;
+        contract?: DecisionApiContractDto;
         error?: string;
       };
       if (!response.ok) {
@@ -544,6 +550,7 @@ export function SchedulerClient({
 
       applyScheduleResponse(data.schedule);
       if (data.guardrail) setGuardrail(data.guardrail);
+      if (data.contract) setContract(data.contract);
       setMessage("Schedule saved.");
       return data.schedule ?? null;
     } catch (error) {
@@ -578,6 +585,7 @@ export function SchedulerClient({
       const data = (await response.json()) as {
         schedule?: ScheduleDto;
         guardrail?: GuardrailDto;
+        contract?: DecisionApiContractDto;
         error?: string;
       };
       if (!response.ok) {
@@ -585,6 +593,7 @@ export function SchedulerClient({
       }
       applyScheduleResponse(data.schedule);
       if (data.guardrail) setGuardrail(data.guardrail);
+      if (data.contract) setContract(data.contract);
       setMessage("Schedule finalized.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Failed to finalize schedule");
@@ -608,6 +617,7 @@ export function SchedulerClient({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <DecisionContractBanner contract={contract} />
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-1.5 min-w-0">
               <HelpLabel

@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
+import { DecisionContractBanner } from "@/components/decision-contract-banner";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
@@ -46,6 +47,10 @@ import {
   loadPipelineFreshnessMetadata,
   resolveAnalyticsMaterialization,
 } from "@/lib/etl/latest-valid-materialization";
+import {
+  createDecisionApiContract,
+  createDecisionContext,
+} from "@/lib/contracts/decision-api-contract";
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>;
@@ -171,6 +176,47 @@ export default async function Page({ params, searchParams }: PageProps) {
       : readiness === "degraded"
         ? `Use with caution: ${analystInsights.suggestedAction}`
         : analystInsights.suggestedAction;
+  const contract = createDecisionApiContract({
+    surface: "heatmap",
+    context: createDecisionContext({
+      persona: "analyst",
+      locationId: materialization.locationId,
+      analyticsId: materialization.resolvedAnalyticsId,
+      filterState: filters,
+      trust: {
+        qualityStatus:
+          qualityStatus === "passed" || qualityStatus === "warn" || qualityStatus === "failed"
+            ? qualityStatus
+            : "unknown",
+        freshnessMinutes,
+        isStale,
+        reasons: metadata.pipelineRunId ? [] : ["missing_pipeline_run"],
+      },
+      lineage: {
+        pipelineRunId: metadata.pipelineRunId,
+        sourceSystem: "warehouse",
+        ingestedAtUtc: metadata.ingestedAtUtc,
+      },
+    }),
+    evidence: [
+      {
+        source: "public_snapshot",
+        entity: "public.analytics",
+        metric: "daily_heatmap_rows",
+        value: dailyRowsForRender.length,
+        key: { analyticsId: materialization.resolvedAnalyticsId },
+        pipelineRunId: metadata.pipelineRunId,
+      },
+      {
+        source: "public_snapshot",
+        entity: "public.analytics",
+        metric: "weekly_heatmap_rows",
+        value: weeklyRowsForRender.length,
+        key: { analyticsId: materialization.resolvedAnalyticsId },
+        pipelineRunId: metadata.pipelineRunId,
+      },
+    ],
+  });
 
   // --------------------------------------------------
   // UI
@@ -187,6 +233,11 @@ export default async function Page({ params, searchParams }: PageProps) {
       <PageHeading
         title={tHeatmap("heading")}
         description={tHeatmap("description")}
+      />
+      <DecisionContractBanner
+        contract={contract}
+        fallbackApplied={materialization.fallbackApplied}
+        fallbackLabel={`using latest valid materialization (#${materialization.resolvedAnalyticsId})`}
       />
       <section className="flex flex-wrap items-center gap-2">
         {materialization.fallbackApplied ? (
