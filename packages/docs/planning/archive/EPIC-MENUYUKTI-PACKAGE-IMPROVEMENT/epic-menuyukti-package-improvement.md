@@ -7,7 +7,7 @@ EPIC-MENUYUKTI-PACKAGE-IMPROVEMENT
 TBD
 
 ## Status
-Draft
+Done
 
 ## Goal
 Improve `packages/menuyukti` so it becomes a reliable, testable, and extensible decision engine for restaurant Instagram marketing workflows.
