@@ -2,7 +2,7 @@
 
 ## Story Metadata
 - Created Date: 2026-02-19
-- Status: `todo`
+- Status: `done`
 - Parent: EPIC-PLANNING-WORKFLOW-SKILL
 - Story Points: `3`
 
@@ -28,3 +28,19 @@ Formalize path resolution behavior so the skill always finds the correct plannin
 - Path resolution rules section in skill docs.
 - Folder existence/creation policy.
 - Worked examples for default and custom project paths.
+
+## Implementation Notes
+- Added dedicated path resolution blueprint:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_PATH_RESOLUTION_V1.md`
+- Documented:
+  - canonical directory expectations
+  - resolution order (config -> derived -> defaults)
+  - path normalization and traversal safety rules
+  - missing-folder policy with `allow_auto_create_dirs`
+  - deterministic archive target rules for story/epic closure
+  - worked examples (default and custom planning roots)
+- Linked the new v1 path resolution spec from the epic:
+  - `packages/docs/planning/todo/epic-planning-workflow-skill.md`
+
+## Test Evidence
+- Test impact: `N/A` (docs-only story)

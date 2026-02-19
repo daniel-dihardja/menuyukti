@@ -285,6 +285,22 @@ The `planning-workflow` skill uses a config contract to support multi-repo usage
 Detailed contract, examples, and validation checklist:
 - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_CONFIG_CONTRACT_V1.md`
 
+### Path Resolution Spec (`v1`)
+
+The skill resolves planning paths deterministically using:
+1. explicit config
+2. derived values from `planning_root`
+3. hard defaults
+
+This spec also defines:
+- path normalization rules
+- missing-folder behavior (`allow_auto_create_dirs`)
+- deterministic archive target resolution for story/epic closure
+- worked examples for default and custom planning roots
+
+Reference:
+- `packages/docs/planning/blueprints/PLANNING_WORKFLOW_PATH_RESOLUTION_V1.md`
+
 ## Proposed Story List
 1. **PWS-01: Skill Scope and Config Contract**
 - Define required/optional config inputs and defaults.
