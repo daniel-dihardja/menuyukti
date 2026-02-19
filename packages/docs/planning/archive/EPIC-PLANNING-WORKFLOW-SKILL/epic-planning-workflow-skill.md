@@ -7,7 +7,7 @@ EPIC-PLANNING-WORKFLOW-SKILL
 TBD
 
 ## Status
-Draft
+Done
 
 ## Goal
 Productize the current planning workflow (`todo -> implement -> archive`) as a reusable Codex skill so the same development method can be applied across projects with minimal setup.
@@ -17,7 +17,7 @@ Productize the current planning workflow (`todo -> implement -> archive`) as a r
 - Suggested skill id: `planning-workflow`
 
 ## Why This Epic
-- The current workflow in `packages/docs/planning/README.md` is strong and repeatable.
+- The current planning workflow is strong and repeatable.
 - Reusing it manually in new repositories is slow and error-prone.
 - A skill can enforce consistent story quality, closure discipline, and evidence-first delivery.
 
@@ -195,7 +195,7 @@ Every story file must follow this structure:
   - story template
   - closure checklist template
 - Installation and usage documentation with examples.
-- Validation checklist showing the skill can run this workflow in at least one non-menuyukti project.
+- Validation checklist showing the skill can run this workflow in at least one additional project.
 
 ## Versioned Workflow Spec
 
@@ -283,7 +283,7 @@ The `planning-workflow` skill uses a config contract to support multi-repo usage
   - repository-root `docs/planning/`
 
 Detailed contract, examples, and validation checklist:
-- `packages/docs/planning/blueprints/PLANNING_WORKFLOW_CONFIG_CONTRACT_V1.md`
+- `<blueprints_dir>/PLANNING_WORKFLOW_CONFIG_CONTRACT_V1.md`
 
 ### Path Resolution Spec (`v1`)
 
@@ -299,62 +299,62 @@ This spec also defines:
 - worked examples for default and custom planning roots
 
 Reference:
-- `packages/docs/planning/blueprints/PLANNING_WORKFLOW_PATH_RESOLUTION_V1.md`
+- `<blueprints_dir>/PLANNING_WORKFLOW_PATH_RESOLUTION_V1.md`
 
 ### Epic Template and Quality Gate Spec (`v1`)
 
 Reusable assets:
 - Epic template:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_EPIC_TEMPLATE_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_EPIC_TEMPLATE_V1.md`
 - Epic quality gate checklist:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_EPIC_QUALITY_GATE_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_EPIC_QUALITY_GATE_V1.md`
 - Filled example epic:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_EPIC_EXAMPLE_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_EPIC_EXAMPLE_V1.md`
 
 ### Story Template and Closure Checklist Spec (`v1`)
 
 Reusable assets:
 - Story template:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_STORY_TEMPLATE_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_STORY_TEMPLATE_V1.md`
 - Story closure checklist:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_STORY_CLOSURE_CHECKLIST_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_STORY_CLOSURE_CHECKLIST_V1.md`
 - Filled example story:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_STORY_EXAMPLE_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_STORY_EXAMPLE_V1.md`
 
 ### Workflow Guardrails and State Machine Spec (`v1`)
 
 Reusable assets:
 - State machine spec:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_STATE_MACHINE_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_STATE_MACHINE_V1.md`
 - Guardrails policy:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_GUARDRAILS_POLICY_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_GUARDRAILS_POLICY_V1.md`
 - Lifecycle trace examples:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_LIFECYCLE_TRACE_EXAMPLE_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_LIFECYCLE_TRACE_EXAMPLE_V1.md`
 
 ### Command Playbook and Commit Convention Spec (`v1`)
 
 Reference:
-- `packages/docs/planning/blueprints/PLANNING_WORKFLOW_COMMAND_PLAYBOOK_V1.md`
+- `<blueprints_dir>/PLANNING_WORKFLOW_COMMAND_PLAYBOOK_V1.md`
 
 ### Cross-Project Trial and Readiness Spec (`v1`)
 
 References:
 - Trial report:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_CROSS_PROJECT_TRIAL_REPORT_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_CROSS_PROJECT_TRIAL_REPORT_V1.md`
 - Gap and fixback log:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_GAP_AND_FIXBACK_LOG_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_GAP_AND_FIXBACK_LOG_V1.md`
 - Readiness note:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_V1_READINESS_NOTE.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_V1_READINESS_NOTE.md`
 
 ### Adoption and DoD Spec (`v1`)
 
 References:
 - Adoption guide:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_ADOPTION_GUIDE_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_ADOPTION_GUIDE_V1.md`
 - Definition of Done checklist:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_DOD_CHECKLIST_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_DOD_CHECKLIST_V1.md`
 - Reference links map:
-  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_REFERENCE_MAP_V1.md`
+  - `<blueprints_dir>/PLANNING_WORKFLOW_REFERENCE_MAP_V1.md`
 
 ## Proposed Story List
 1. **PWS-01: Skill Scope and Config Contract**
@@ -382,7 +382,7 @@ References:
 - Skill instructions are clear enough to be followed without project-specific tribal knowledge.
 
 ## Risks
-- Overfitting to menuyukti directory structure.
+- Overfitting to one repository’s directory structure.
 - Too much rigidity for teams with different conventions.
 - Skill drift if planning workflow evolves but skill docs are not updated.
 

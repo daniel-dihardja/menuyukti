@@ -5,7 +5,7 @@
 
 ## Why Conditionally Ready
 - Core lifecycle, templates, and guardrails are documented and reusable.
-- Cross-project trial indicates the workflow can operate beyond menuyukti package implementation.
+- Cross-project trial indicates the workflow can operate beyond the source project context.
 - Some operational hardening remains in fixback backlog (linting, quick-reference improvements).
 
 ## Ready Criteria Check

@@ -110,9 +110,9 @@ allow_auto_create_dirs: false
 ```
 
 Epic:
-- source: `docs/workflow-planning/open/epic-analytics-platform.md`
-- id: `EPIC-ANALYTICS-PLATFORM`
-- target: `docs/workflow-planning/archive/EPIC-ANALYTICS-PLATFORM/epic-analytics-platform.md`
+- source: `docs/workflow-planning/open/epic-platform-ops.md`
+- id: `EPIC-PLATFORM-OPS`
+- target: `docs/workflow-planning/archive/EPIC-PLATFORM-OPS/epic-platform-ops.md`
 
 ## Validation Checklist
 

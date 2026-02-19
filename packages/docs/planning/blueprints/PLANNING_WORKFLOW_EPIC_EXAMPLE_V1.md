@@ -1,7 +1,7 @@
-# Epic: Analytics Upload Reliability
+# Epic: Data Import Reliability
 
 ## Epic ID
-EPIC-ANALYTICS-UPLOAD-RELIABILITY
+EPIC-DATA-IMPORT-RELIABILITY
 
 ## Owner
 Data Platform Team
@@ -10,41 +10,41 @@ Data Platform Team
 Draft
 
 ## Goal
-Reduce failed analytics uploads by introducing deterministic validation and clear recovery flow.
+Reduce failed data imports by introducing deterministic validation and clear recovery flow.
 
 ## Why This Epic
-- Upload failures currently surface too late and require manual triage.
-- Reliable upload quality directly impacts downstream analytics and agent outputs.
+- Import failures currently surface too late and require manual triage.
+- Reliable input quality directly impacts downstream workflows.
 
 ## In Scope
 - Input schema validation before ingestion.
-- Upload error classification and user-facing error messages.
+- Import error classification and user-facing error messages.
 - Retry-safe ingestion workflow for transient failures.
-- E2E checks for upload happy path and common failure modes.
+- E2E checks for import happy path and common failure modes.
 
 ## Out of Scope
-- Full UI redesign of upload page.
+- Full UI redesign of import page.
 - Historical data backfill for old failed runs.
 
 ## Story List
-1. **AUR-01: Upload Input Contract v1**
+1. **DIR-01: Import Input Contract v1**
 - Define required columns/types and rejection reasons.
 
-2. **AUR-02: Upload Validation Pipeline**
+2. **DIR-02: Import Validation Pipeline**
 - Validate payloads before persistence and classify failures.
 
-3. **AUR-03: Retry and Idempotency Guardrails**
+3. **DIR-03: Retry and Idempotency Guardrails**
 - Ensure retries do not duplicate data.
 
-4. **AUR-04: Upload Error UX and Messaging**
+4. **DIR-04: Import Error UX and Messaging**
 - Surface actionable errors and recovery actions.
 
-5. **AUR-05: Upload E2E Reliability Suite**
+5. **DIR-05: Import E2E Reliability Suite**
 - Add E2E coverage for success/degraded/failure scenarios.
 
 ## Acceptance Criteria
-- Upload contract is documented and enforced.
-- Invalid uploads fail fast with explicit reason codes.
+- Import contract is documented and enforced.
+- Invalid inputs fail fast with explicit reason codes.
 - Retry flow is idempotent for repeated attempts.
 - E2E suite verifies key reliability scenarios.
 

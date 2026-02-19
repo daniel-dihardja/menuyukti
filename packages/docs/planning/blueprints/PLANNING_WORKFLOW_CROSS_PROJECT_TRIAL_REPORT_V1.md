@@ -1,8 +1,8 @@
 # Planning Workflow Cross-Project Trial Report v1
 
 ## Trial Summary
-- Trial target project: `apps/agents` (non-menuyukti implementation area in same monorepo)
-- Trial objective: verify planning-workflow process can be followed outside menuyukti package stream
+- Trial target project: `project-beta` (a separate implementation context from the source project)
+- Trial objective: verify planning-workflow process can be followed outside the source project context
 - Trial scope: epic creation -> story creation -> story close simulation
 
 ## Trial Preconditions
@@ -32,7 +32,7 @@
 - Confirm no completed story remains in `todo/`.
 
 ## Trial Outcome
-- Workflow is usable in a non-menuyukti project context.
+- Workflow is usable in a second project context.
 - Path resolution and archive targeting remained deterministic.
 - Guardrails are understandable and mostly enforceable through process discipline.
 
