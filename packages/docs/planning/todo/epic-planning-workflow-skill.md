@@ -346,6 +346,16 @@ References:
 - Readiness note:
   - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_V1_READINESS_NOTE.md`
 
+### Adoption and DoD Spec (`v1`)
+
+References:
+- Adoption guide:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_ADOPTION_GUIDE_V1.md`
+- Definition of Done checklist:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_DOD_CHECKLIST_V1.md`
+- Reference links map:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_REFERENCE_MAP_V1.md`
+
 ## Proposed Story List
 1. **PWS-01: Skill Scope and Config Contract**
 - Define required/optional config inputs and defaults.

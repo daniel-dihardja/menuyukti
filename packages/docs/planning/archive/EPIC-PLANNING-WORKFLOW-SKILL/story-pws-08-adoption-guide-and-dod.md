@@ -2,7 +2,7 @@
 
 ## Story Metadata
 - Created Date: 2026-02-19
-- Status: `todo`
+- Status: `done`
 - Parent: EPIC-PLANNING-WORKFLOW-SKILL
 - Story Points: `3`
 
@@ -30,3 +30,16 @@ Publish final adoption guidance and definition-of-done criteria for the planning
 - Skill adoption guide.
 - Final DoD checklist.
 - Reference links map.
+
+## Implementation Notes
+- Added adoption guide:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_ADOPTION_GUIDE_V1.md`
+- Added final Definition-of-Done checklist:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_DOD_CHECKLIST_V1.md`
+- Added consolidated reference links map:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_REFERENCE_MAP_V1.md`
+- Linked these assets from epic under `Adoption and DoD Spec (v1)`:
+  - `packages/docs/planning/todo/epic-planning-workflow-skill.md`
+
+## Test Evidence
+- Test impact: `N/A` (docs-only story)
