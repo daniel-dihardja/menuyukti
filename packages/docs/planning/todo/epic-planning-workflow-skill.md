@@ -331,6 +331,11 @@ Reusable assets:
 - Lifecycle trace examples:
   - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_LIFECYCLE_TRACE_EXAMPLE_V1.md`
 
+### Command Playbook and Commit Convention Spec (`v1`)
+
+Reference:
+- `packages/docs/planning/blueprints/PLANNING_WORKFLOW_COMMAND_PLAYBOOK_V1.md`
+
 ## Proposed Story List
 1. **PWS-01: Skill Scope and Config Contract**
 - Define required/optional config inputs and defaults.

@@ -2,7 +2,7 @@
 
 ## Story Metadata
 - Created Date: 2026-02-19
-- Status: `todo`
+- Status: `done`
 - Parent: EPIC-PLANNING-WORKFLOW-SKILL
 - Story Points: `3`
 
@@ -32,3 +32,13 @@ Define operational command conventions for planning workflow execution and closu
 - Command playbook section.
 - Commit naming convention table.
 - Example closure command transcript.
+
+## Implementation Notes
+- Added command playbook covering epic refine, story generation, story close, and epic close:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_COMMAND_PLAYBOOK_V1.md`
+- Included commit convention table and closure transcript example.
+- Linked playbook from epic under `Command Playbook and Commit Convention Spec (v1)`:
+  - `packages/docs/planning/todo/epic-planning-workflow-skill.md`
+
+## Test Evidence
+- Test impact: `N/A` (docs-only story)
