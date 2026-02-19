@@ -2,7 +2,7 @@
 
 ## Story Metadata
 - Created Date: 2026-02-19
-- Status: `todo`
+- Status: `done`
 - Parent: EPIC-PLANNING-WORKFLOW-SKILL
 - Story Points: `5`
 
@@ -31,3 +31,16 @@ Define enforceable workflow guardrails and state transitions for epic/story life
 - Workflow state machine documentation.
 - Guardrail policy checklist.
 - Example lifecycle trace for one story and one epic.
+
+## Implementation Notes
+- Added workflow state machine spec:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_STATE_MACHINE_V1.md`
+- Added guardrails policy and enforcement checklist:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_GUARDRAILS_POLICY_V1.md`
+- Added lifecycle trace examples for one story and one epic:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_LIFECYCLE_TRACE_EXAMPLE_V1.md`
+- Linked these assets from the epic under `Workflow Guardrails and State Machine Spec (v1)`:
+  - `packages/docs/planning/todo/epic-planning-workflow-skill.md`
+
+## Test Evidence
+- Test impact: `N/A` (docs-only story)
