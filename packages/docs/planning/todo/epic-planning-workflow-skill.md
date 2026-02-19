@@ -336,6 +336,16 @@ Reusable assets:
 Reference:
 - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_COMMAND_PLAYBOOK_V1.md`
 
+### Cross-Project Trial and Readiness Spec (`v1`)
+
+References:
+- Trial report:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_CROSS_PROJECT_TRIAL_REPORT_V1.md`
+- Gap and fixback log:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_GAP_AND_FIXBACK_LOG_V1.md`
+- Readiness note:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_V1_READINESS_NOTE.md`
+
 ## Proposed Story List
 1. **PWS-01: Skill Scope and Config Contract**
 - Define required/optional config inputs and defaults.
