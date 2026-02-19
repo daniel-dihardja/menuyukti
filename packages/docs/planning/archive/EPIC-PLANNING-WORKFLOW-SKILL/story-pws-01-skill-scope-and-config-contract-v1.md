@@ -2,7 +2,7 @@
 
 ## Story Metadata
 - Created Date: 2026-02-19
-- Status: `todo`
+- Status: `done`
 - Parent: EPIC-PLANNING-WORKFLOW-SKILL
 - Story Points: `3`
 
@@ -30,3 +30,13 @@ Define the minimum config contract for the `planning-workflow` skill so it can r
 - Config contract spec document section in epic/skill docs.
 - Example config snippet (`minimal` and `full`).
 - Validation checklist for config inputs.
+
+## Implementation Notes
+- Added formal config contract spec:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_CONFIG_CONTRACT_V1.md`
+- Updated epic with a dedicated `Skill Config Contract Spec (v1)` section and link to the blueprint:
+  - `packages/docs/planning/todo/epic-planning-workflow-skill.md`
+- Documented required/optional keys, default values, path recommendation, minimal/full examples, and validation checklist.
+
+## Test Evidence
+- Test impact: `N/A` (docs-only story)

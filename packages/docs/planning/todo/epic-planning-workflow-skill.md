@@ -263,6 +263,28 @@ Compliance rules:
 - Evidence-first closure: no close without acceptance proof.
 - Prefer repository-root planning path (`docs/planning/`) unless explicitly overridden by config.
 
+### Skill Config Contract Spec (`v1`)
+
+The `planning-workflow` skill uses a config contract to support multi-repo usage without hard-coded paths.
+
+- Required keys:
+  - `planning_root`
+  - `todo_dir`
+  - `archive_dir`
+- Optional keys:
+  - `blueprints_dir`
+  - `specs_file`
+  - `planning_readme_file`
+  - `epic_file_prefix`
+  - `story_file_prefix`
+  - `epic_archive_id_pattern`
+  - `allow_auto_create_dirs`
+- Default recommendation:
+  - repository-root `docs/planning/`
+
+Detailed contract, examples, and validation checklist:
+- `packages/docs/planning/blueprints/PLANNING_WORKFLOW_CONFIG_CONTRACT_V1.md`
+
 ## Proposed Story List
 1. **PWS-01: Skill Scope and Config Contract**
 - Define required/optional config inputs and defaults.
