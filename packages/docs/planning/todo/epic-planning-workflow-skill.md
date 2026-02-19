@@ -301,6 +301,16 @@ This spec also defines:
 Reference:
 - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_PATH_RESOLUTION_V1.md`
 
+### Epic Template and Quality Gate Spec (`v1`)
+
+Reusable assets:
+- Epic template:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_EPIC_TEMPLATE_V1.md`
+- Epic quality gate checklist:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_EPIC_QUALITY_GATE_V1.md`
+- Filled example epic:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_EPIC_EXAMPLE_V1.md`
+
 ## Proposed Story List
 1. **PWS-01: Skill Scope and Config Contract**
 - Define required/optional config inputs and defaults.
