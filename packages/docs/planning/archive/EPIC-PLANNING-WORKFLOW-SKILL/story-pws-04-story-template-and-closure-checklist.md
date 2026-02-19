@@ -2,7 +2,7 @@
 
 ## Story Metadata
 - Created Date: 2026-02-19
-- Status: `todo`
+- Status: `done`
 - Parent: EPIC-PLANNING-WORKFLOW-SKILL
 - Story Points: `3`
 
@@ -28,3 +28,16 @@ Create a reusable story template with a strict closure checklist to enforce cons
 - `story-template-v1.md` (or equivalent embedded template section).
 - Story closure checklist template.
 - One filled example story.
+
+## Implementation Notes
+- Added reusable story template:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_STORY_TEMPLATE_V1.md`
+- Added story closure checklist:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_STORY_CLOSURE_CHECKLIST_V1.md`
+- Added one realistic filled story example:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_STORY_EXAMPLE_V1.md`
+- Linked all assets from the epic under `Story Template and Closure Checklist Spec (v1)`:
+  - `packages/docs/planning/todo/epic-planning-workflow-skill.md`
+
+## Test Evidence
+- Test impact: `N/A` (docs-only story)

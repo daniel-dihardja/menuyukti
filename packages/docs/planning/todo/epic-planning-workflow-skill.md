@@ -311,6 +311,16 @@ Reusable assets:
 - Filled example epic:
   - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_EPIC_EXAMPLE_V1.md`
 
+### Story Template and Closure Checklist Spec (`v1`)
+
+Reusable assets:
+- Story template:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_STORY_TEMPLATE_V1.md`
+- Story closure checklist:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_STORY_CLOSURE_CHECKLIST_V1.md`
+- Filled example story:
+  - `packages/docs/planning/blueprints/PLANNING_WORKFLOW_STORY_EXAMPLE_V1.md`
+
 ## Proposed Story List
 1. **PWS-01: Skill Scope and Config Contract**
 - Define required/optional config inputs and defaults.
