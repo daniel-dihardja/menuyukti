@@ -2,7 +2,7 @@ import pandas as pd
 from io import BytesIO
 
 from menuyukti.core.analytics.utils import normalize_columns
-from menuyukti.core.analytics.esb.transformer import REQUIRED_COLUMNS
+from menuyukti.core.models.pos_transaction import POSTransactionLineItem
 
 
 def normalize_esb_excel_with_rejections(
@@ -13,18 +13,23 @@ def normalize_esb_excel_with_rejections(
     Load and normalize ESB Excel export into:
     - accepted rows (typed and valid)
     - rejected rows with `rejection_reason`
+
+    Uses POSTransactionLineItem model to define the data contract.
     """
+    required_columns = POSTransactionLineItem.get_required_columns()
+    COL = POSTransactionLineItem
+
     df = pd.read_excel(
         BytesIO(data),
         skiprows=skiprows,
     )
     df = normalize_columns(df)
 
-    missing = [col for col in REQUIRED_COLUMNS if col not in df.columns]
+    missing = [col for col in required_columns if col not in df.columns]
     if missing:
         raise ValueError(f"Missing required columns: {missing}")
 
-    df_required = df[REQUIRED_COLUMNS].copy()
+    df_required = df[required_columns].copy()
 
     missing_required_mask = df_required.isna().any(axis=1)
     rejected_missing = df_required[missing_required_mask].copy()
@@ -32,13 +37,13 @@ def normalize_esb_excel_with_rejections(
 
     accepted = df_required[~missing_required_mask].copy()
 
-    accepted["qty"] = pd.to_numeric(accepted["qty"], errors="coerce")
-    accepted["price"] = pd.to_numeric(accepted["price"], errors="coerce")
-    accepted["total_after_bill_discount"] = pd.to_numeric(
-        accepted["total_after_bill_discount"],
+    accepted[COL.QTY] = pd.to_numeric(accepted[COL.QTY], errors="coerce")
+    accepted[COL.PRICE] = pd.to_numeric(accepted[COL.PRICE], errors="coerce")
+    accepted[COL.TOTAL_AFTER_BILL_DISCOUNT] = pd.to_numeric(
+        accepted[COL.TOTAL_AFTER_BILL_DISCOUNT],
         errors="coerce",
     )
-    accepted["order_time"] = pd.to_datetime(accepted["order_time"], errors="coerce")
+    accepted[COL.ORDER_TIME] = pd.to_datetime(accepted[COL.ORDER_TIME], errors="coerce")
 
     invalid_conversion_mask = accepted.isna().any(axis=1)
     rejected_invalid = accepted[invalid_conversion_mask].copy()

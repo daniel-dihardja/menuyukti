@@ -1,5 +1,6 @@
 import pandas as pd
 
+from menuyukti.core.models.pos_transaction import POSTransactionLineItem
 from menuyukti.indicators.analytics.heatmaps import calculate_menu_heatmaps
 from menuyukti.indicators.analytics.popularity import calculate_popularity_index
 from menuyukti.indicators.contracts.metadata import build_metadata_v1
@@ -12,29 +13,34 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict[str, object]:
 
     Orders with total_after_bill_discount <= 0 are excluded
     from order-level revenue and item metrics (bonuses, promos).
+
+    Uses POSTransactionLineItem constants for type-safe column access.
     """
     if df.empty:
         raise ValueError("DataFrame is empty. Cannot calculate analytics.")
 
     df = df.copy()
 
+    # Use model constants for column names
+    COL = POSTransactionLineItem
+
     # -------------------------------------------------------
     # Parse & validate order_time
     # -------------------------------------------------------
-    df["order_time"] = pd.to_datetime(
-        df["order_time"],
+    df[COL.ORDER_TIME] = pd.to_datetime(
+        df[COL.ORDER_TIME],
         errors="coerce",
         format="mixed",
     )
-    if df["order_time"].isna().any():
+    if df[COL.ORDER_TIME].isna().any():
         raise ValueError("Invalid order_time values after parsing")
 
     # -------------------------------------------------------
     # 1. Global Summary Metrics (raw data)
     # -------------------------------------------------------
-    total_orders = df["bill_number"].nunique()
-    total_items_sold = df.loc[df["price"] > 0, "qty"].sum()
-    total_revenue = df["total_after_bill_discount"].sum()
+    total_orders = df[COL.BILL_NUMBER].nunique()
+    total_items_sold = df.loc[df[COL.PRICE] > 0, COL.QTY].sum()
+    total_revenue = df[COL.TOTAL_AFTER_BILL_DISCOUNT].sum()
 
     if total_items_sold == 0:
         raise ValueError("Total quantity is zero. Cannot calculate analytics.")
@@ -42,8 +48,8 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict[str, object]:
     # -------------------------------------------------------
     # 2. Order-level aggregates
     # -------------------------------------------------------
-    order_totals = df.groupby("bill_number")["total_after_bill_discount"].sum()
-    items_per_order = df.groupby("bill_number")["qty"].sum()
+    order_totals = df.groupby(COL.BILL_NUMBER)[COL.TOTAL_AFTER_BILL_DISCOUNT].sum()
+    items_per_order = df.groupby(COL.BILL_NUMBER)[COL.QTY].sum()
 
     # -------------------------------------------------------
     # 3. Exclude zero or negative revenue orders
@@ -59,13 +65,13 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict[str, object]:
     # -------------------------------------------------------
     # 4. Period range
     # -------------------------------------------------------
-    period_start = df["order_time"].min().date()
-    period_end = df["order_time"].max().date()
+    period_start = df[COL.ORDER_TIME].min().date()
+    period_end = df[COL.ORDER_TIME].max().date()
 
     # -------------------------------------------------------
     # 5. Avg Popularity Threshold
     # -------------------------------------------------------
-    unique_menus = df["menu"].nunique()
+    unique_menus = df[COL.MENU].nunique()
     avg_popularity_threshold = 1 / unique_menus if unique_menus else 0
 
     # -------------------------------------------------------

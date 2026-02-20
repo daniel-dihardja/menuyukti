@@ -1,8 +1,13 @@
+from menuyukti.core.models.pos_transaction import POSTransactionLineItem
 from menuyukti.indicators.analytics.esb.normalizer import normalize_esb_excel
 from menuyukti.indicators.analytics.esb.transformer import (
-    REQUIRED_COLUMNS,
     convert_column_types,
     filter_required_columns,
 )
 
-__all__ = ["normalize_esb_excel", "REQUIRED_COLUMNS", "filter_required_columns", "convert_column_types"]
+__all__ = [
+    "normalize_esb_excel",
+    "POSTransactionLineItem",
+    "filter_required_columns",
+    "convert_column_types",
+]
