@@ -4,6 +4,10 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from menuyukti.agents.learning_eligibility import (
+    evaluate_learning_events,
+)
+
 
 SignalType = Literal[
     "recommendation_issued",
@@ -30,41 +34,18 @@ class LearningEligibilityRequest(BaseModel):
 
 
 def evaluate_learning_eligibility(payload: LearningEligibilityRequest) -> dict:
-    result: list[dict] = []
+    # Convert Pydantic events to dicts for menuyukti learning eligibility logic
+    event_dicts = [e.model_dump() for e in payload.events]
 
-    for event in payload.events:
-        reasons: list[str] = []
-        eligible = True
-
-        if event.signal_type != "outcome_delta":
-            eligible = False
-            reasons.append("signal_not_outcome")
-        else:
-            if event.outcome_confidence in {None, "low", "blocked"}:
-                eligible = False
-                reasons.append("outcome_confidence_too_low")
-
-            sample_size = event.sample_size or 0
-            if sample_size < payload.min_sample_size:
-                eligible = False
-                reasons.append("sample_size_below_minimum")
-
-            abs_delta = abs(event.outcome_delta_revenue or 0)
-            if abs_delta < payload.min_abs_delta_revenue:
-                eligible = False
-                reasons.append("outcome_delta_too_small")
-
-        result.append(
-            {
-                "linkage_key": event.linkage_key,
-                "signal_type": event.signal_type,
-                "eligible": eligible,
-                "reasons": reasons,
-            }
-        )
+    # Use deterministic eligibility evaluation from menuyukti
+    eligibility_results = evaluate_learning_events(
+        events=event_dicts,
+        min_sample_size=payload.min_sample_size,
+        min_abs_delta_revenue=payload.min_abs_delta_revenue,
+    )
 
     return {
         "contract_version": payload.contract_version,
         "status": "accepted",
-        "eligibility": result,
+        "eligibility": eligibility_results,
     }
