@@ -465,13 +465,59 @@ Example (`menu_matrix`):
 }
 ```
 
+## Testing
+
+All 191 unit tests are organized by domain and can be run with `make`:
+
+```bash
+cd packages/menuyukti
+
+# Run all tests (190 passing)
+make test
+
+# Run specific test suites
+make agent_tests       # 167 agent tests
+make core_tests        # 24 core tests
+
+# Detailed output and analysis
+make test_verbose      # Double verbose output
+make test_fast         # Stop on first failure
+make test_coverage     # Coverage report (requires pytest-cov)
+make test_stats        # Count tests by category
+
+# Interactive/custom
+make test_file         # Prompt for specific test file
+make test_by_name      # TEST_NAME=pattern make test_by_name
+make test_watch        # Auto-rerun on file changes (requires pytest-watch)
+```
+
+**Test organization:**
+
+- `tests/unit/agents/` - Agent logic (consensus, simulation, rerank, etc.)
+- `tests/unit/core/` - Core models, contracts, and analytics
+- `tests/fixtures/` - Shared test data (matrix items, heatmaps, etc.)
+
+**Test coverage:**
+
+- Agent layer: 167 tests (all agent functions, edge cases, integration)
+- Core layer: 24 tests (models, contracts, validators)
+- Analytics: 8 integration tests (full pipeline validation)
+
 ## Commands
+
+All commands are available via `make`. See `make help` for complete list.
 
 Type checks:
 
-- `uv run --project packages/menuyukti --group dev mypy src/menuyukti`
+- `make type-check` (or `uv run --project packages/menuyukti --group dev mypy src/menuyukti`)
 
-Tests:
+Tests (see Testing section above):
+
+- `make test` - Run all unit tests
+- `make test_coverage` - Generate coverage report
+- `make check` - Run all checks (lint + type-check + test)
+
+For detailed uv commands:
 
 - `uv run --project packages/menuyukti --group dev pytest tests`
 - `uv run --project packages/menuyukti --group dev pytest tests/unit tests/analytics/integration tests/analytics/contract`
