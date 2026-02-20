@@ -24,6 +24,19 @@ This guide defines how implementation work must be executed in this project.
 - `blueprints/`: Design and migration blueprints used before implementation.
 - `SPECS.md`: Current MVP/release specification and open-feature tracking.
 
+## Repository Config
+
+Planning path resolution for this repository is explicitly defined in:
+
+- `planning-workflow.config.yaml`
+
+Configured paths:
+
+- `planning_root: packages/docs/planning`
+- `todo_dir: packages/docs/planning/todo`
+- `archive_dir: packages/docs/planning/archive`
+- `execution_mode: step_by_step`
+
 ## Markdown Story Spec
 
 Every story file in `todo/` and `archive/<EPIC_ID>/` should follow this structure:

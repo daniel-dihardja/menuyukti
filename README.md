@@ -20,6 +20,7 @@ Menuyukti is an AI restaurant marketing SaaS for restaurant marketers and agenci
 - Planning workspace: `packages/docs/planning/`
 - Active stories: `packages/docs/planning/todo/`
 - Archived stories/epics: `packages/docs/planning/archive/`
+- Planning workflow config: `planning-workflow.config.yaml`
 - Current archived AI-agentic epic:
   - `packages/docs/planning/archive/EPIC-AI-AGENTIC-SYSTEM/epic-ai-agentic-system.md`
 - Agent service manual:
