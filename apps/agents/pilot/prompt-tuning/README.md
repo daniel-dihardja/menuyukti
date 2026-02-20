@@ -61,6 +61,15 @@ uv run --project apps/agents python apps/agents/pilot/prompt-tuning/run_prompt_t
 
 Codex then evaluates and iterates using artifact files for each iteration.
 
+### CLI options explained
+- `--mode loop`: starts the full improvement loop (baseline-only run uses `--mode baseline`).
+- `--write-freeze-map`: saves `PILOT_PROMPT_VERSION_FREEZE_V1.json` containing the approved candidate.
+- `--write-readiness-report`: emits the Markdown readiness checklist at `outputs/readiness-report.md`.
+- `--write-final-prompt`: captures the prompt text that cleared the gate in `outputs/final-prompt.txt`.
+- `--fail-on-unapproved`: makes the script exit non-zero if no approved candidate is selected (useful for automation/CI).
+
+To run the baseline only and inspect the initial scoring without improvement, replace `--mode loop` with `--mode baseline` and omit the extra artifact flags.
+
 ## Scoring Approach
 
 For each case:
