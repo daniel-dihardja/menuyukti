@@ -7,7 +7,7 @@ from menuyukti.core.inputs import CoreInputs
 from menuyukti.indicators.models.matrix_item import MatrixItem
 from menuyukti.indicators.models.heatmap import MenuHeatmap
 from menuyukti.indicators.models.matrix_distribution import MatrixDistribution
-from menuyukti.indicators.models.sales_analytics_summary import SalesAnalyticsSummary
+from menuyukti.core.models.sales_analytics_summary import SalesAnalyticsSummary
 
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "menuyukti"
