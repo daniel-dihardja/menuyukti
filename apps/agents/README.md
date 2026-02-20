@@ -85,18 +85,24 @@ Example scenario:
 Run pilot prompt tuning workflow (mocked fixture only):
 
 ```bash
-uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_pilot.py --mode baseline
-uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_pilot.py --mode loop --write-freeze-map --write-readiness-report --fail-on-unapproved
+uv run --project apps/agents python apps/agents/pilot/prompt-tuning/run_prompt_tuning_pilot.py --mode baseline
+uv run --project apps/agents python apps/agents/pilot/prompt-tuning/run_prompt_tuning_pilot.py --mode loop --write-freeze-map --write-readiness-report --write-final-prompt --fail-on-unapproved
 ```
 
 What this does:
 - Uses fixed mocked fixture dataset and fixed scoring spec for `marketer-strategist`.
-- Runs baseline and iterative prompt-improvement loop with deterministic settings.
+- Runs pilot runtime and writes iteration artifacts for Codex-orchestrated scoring/improvement.
 - Writes report JSON to:
-  - `apps/agents/eval-artifacts/pilot/prompt-tuning-pilot-latest.json`
+  - `apps/agents/pilot/prompt-tuning/outputs/prompt-tuning-pilot-latest.json`
 - Optionally writes:
-  - freeze map: `apps/agents/prompts/PILOT_PROMPT_VERSION_FREEZE_V1.json`
-  - readiness report: `apps/agents/eval-artifacts/pilot/readiness-report.md`
+  - freeze map: `apps/agents/pilot/prompt-tuning/outputs/PILOT_PROMPT_VERSION_FREEZE_V1.json`
+  - readiness report: `apps/agents/pilot/prompt-tuning/outputs/readiness-report.md`
+  - final prompt: `apps/agents/pilot/prompt-tuning/outputs/final-prompt.txt` (with `--write-final-prompt`)
+
+Pilot orchestration model:
+- Runtime writes iteration artifacts.
+- Codex reads artifacts, applies scoring matrix, and decides prompt revisions.
+- Deterministic scoring remains the final release gate.
 
 ## Current Endpoints
 
@@ -131,8 +137,8 @@ Agent workflows:
 - `apps/agents/src/agent/runtime_config.py`: per-agent model/prompt runtime mapping.
 - `apps/agents/src/agent/prompt_contracts.py`: prompt contract registry + required output keys.
 - `apps/agents/prompts/**`: versioned prompt template files.
-- `apps/agents/eval-fixtures/prompt-tuning-pilot/**`: mocked pilot dataset fixtures.
-- `apps/agents/scripts/run_prompt_tuning_pilot.py`: pilot baseline/loop CLI.
+- `apps/agents/pilot/prompt-tuning/fixtures/**`: mocked pilot dataset fixtures.
+- `apps/agents/pilot/prompt-tuning/run_prompt_tuning_pilot.py`: pilot baseline/loop CLI.
 - `apps/agents/tests/integration_tests/*.py`: integration coverage by story/capability.
 - `apps/agents/tests/integration_tests/test_mocked_input_baseline_per_agent.py`: mandatory per-agent mocked baseline gate.
 

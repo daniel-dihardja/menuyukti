@@ -6,8 +6,9 @@ from pathlib import Path
 
 SCORING_SPEC_PATH = (
     Path(__file__).resolve().parents[2]
-    / "eval-fixtures"
-    / "prompt-tuning-pilot"
+    / "pilot"
+    / "prompt-tuning"
+    / "fixtures"
     / "marketer-strategist-caption-scoring-spec-v1.json"
 )
 

@@ -34,13 +34,13 @@ Implement the automatic loop that improves prompt candidates and re-evaluates un
 
 ## Implementation Notes
 - Implemented automatic improvement loop logic:
-  - `apps/agents/src/agent/prompt_tuning_pilot.py`
+  - `apps/agents/src/agent/pilot/prompt_tuning.py`
   - `run_pilot_improvement_loop()`
   - `_improve_prompt_text()`
 - Enforced mocked fixture input usage via pilot fixture paths and data policy.
 - Enforced threshold + baseline-delta + regression-guard stop condition.
 - Added loop execution CLI path:
-  - `apps/agents/scripts/run_prompt_tuning_pilot.py`
+  - `apps/agents/pilot/prompt-tuning/run_prompt_tuning_pilot.py`
   - `--mode loop`
 - Added unit tests for iterative loop stop behavior:
   - `apps/agents/tests/unit_tests/test_prompt_tuning_pilot_loop.py`
@@ -48,5 +48,5 @@ Implement the automatic loop that improves prompt candidates and re-evaluates un
 ## Test Evidence
 - `uv run --project apps/agents pytest apps/agents/tests/unit_tests/test_prompt_tuning_pilot_loop.py`
   - Result: 3 passed
-- `uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_pilot.py --mode loop --fail-on-unapproved`
+- `uv run --project apps/agents python apps/agents/pilot/prompt-tuning/run_prompt_tuning_pilot.py --mode loop --fail-on-unapproved`
   - Result: loop run completed with selected candidate and pass status

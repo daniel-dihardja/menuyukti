@@ -161,3 +161,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 .langgraph_api/
+
+# Prompt tuning pilot runtime artifacts (generated at execution time)
+pilot/prompt-tuning/outputs/*.json
+pilot/prompt-tuning/outputs/*.md
+pilot/prompt-tuning/outputs/*.txt

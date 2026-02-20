@@ -8,7 +8,7 @@ Define the pilot contract and fixed mocked dataset used for `EPIC-AGENT-PROMPT-T
 - No live DB/API input is allowed for pilot scoring runs.
 
 ## Dataset Artifact
-- `apps/agents/eval-fixtures/prompt-tuning-pilot/marketer-strategist-caption-dataset-v1.json`
+- `apps/agents/pilot/prompt-tuning/fixtures/marketer-strategist-caption-dataset-v1.json`
 
 ## Dataset Version
 - `pilot-ms-caption-v1`

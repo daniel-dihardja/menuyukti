@@ -9,13 +9,19 @@ from typing import Any
 from uuid import uuid4
 
 
-BASE_DIR = Path(__file__).resolve().parents[2]
-PILOT_DIR = BASE_DIR / "eval-fixtures" / "prompt-tuning-pilot"
-PILOT_DATASET_PATH = PILOT_DIR / "marketer-strategist-caption-dataset-v1.json"
-PILOT_SCORING_SPEC_PATH = PILOT_DIR / "marketer-strategist-caption-scoring-spec-v1.json"
-PILOT_PROMPT_V1_PATH = BASE_DIR / "prompts" / "marketer-strategist" / "pilot-v1.txt"
-PILOT_FREEZE_MAP_PATH = BASE_DIR / "prompts" / "PILOT_PROMPT_VERSION_FREEZE_V1.json"
-PILOT_READINESS_REPORT_PATH = BASE_DIR / "eval-artifacts" / "pilot" / "readiness-report.md"
+BASE_DIR = Path(__file__).resolve().parents[3]
+PILOT_DIR = BASE_DIR / "pilot" / "prompt-tuning"
+PILOT_FIXTURES_DIR = PILOT_DIR / "fixtures"
+PILOT_PROMPTS_DIR = PILOT_DIR / "prompts"
+PILOT_OUTPUTS_DIR = PILOT_DIR / "outputs"
+PILOT_DATASET_PATH = PILOT_FIXTURES_DIR / "marketer-strategist-caption-dataset-v1.json"
+PILOT_SCORING_SPEC_PATH = (
+    PILOT_FIXTURES_DIR / "marketer-strategist-caption-scoring-spec-v1.json"
+)
+PILOT_PROMPT_V1_PATH = PILOT_PROMPTS_DIR / "pilot-v1.txt"
+PILOT_FREEZE_MAP_PATH = PILOT_OUTPUTS_DIR / "PILOT_PROMPT_VERSION_FREEZE_V1.json"
+PILOT_FINAL_PROMPT_PATH = PILOT_OUTPUTS_DIR / "final-prompt.txt"
+PILOT_READINESS_REPORT_PATH = PILOT_OUTPUTS_DIR / "readiness-report.md"
 
 PILOT_VERSION = "ptl-pilot-v1"
 PILOT_AGENT_ID = "marketer-strategist"
@@ -59,7 +65,11 @@ def _invoke_mock_llm(prompt_text: str, case_input: dict[str, Any]) -> Any:
         caption = caption.replace("Elevate", "Experience")
 
     cta = "Order now for tonight's seating." if action_verb_cta else "Try it soon."
-    hashtags = ["#foodie"] if not hashtag_range else ["#PremiumDining", _normalize_menu_hashtag(menu_item), "#RestaurantFinds"]
+    hashtags = (
+        ["#foodie"]
+        if not hashtag_range
+        else ["#PremiumDining", _normalize_menu_hashtag(menu_item), "#RestaurantFinds"]
+    )
 
     return {
         "caption": caption,
@@ -111,7 +121,13 @@ def _score_output(expected: dict[str, Any], output: Any) -> dict[str, Any]:
             dimensions["cta_actionability"] = 6.0
 
         if isinstance(hashtags, list):
-            valid_count = len([item for item in hashtags if isinstance(item, str) and item.startswith("#")])
+            valid_count = len(
+                [
+                    item
+                    for item in hashtags
+                    if isinstance(item, str) and item.startswith("#")
+                ]
+            )
             if 2 <= valid_count <= 4:
                 dimensions["hashtag_quality"] = 15.0
             elif valid_count > 0:
@@ -169,17 +185,28 @@ def evaluate_prompt_against_pilot(
         run_scores: list[dict[str, Any]] = []
         run_totals: list[float] = []
         for _ in range(reruns_per_candidate):
-            output = _invoke_mock_llm(prompt_text, case_input if isinstance(case_input, dict) else {})
-            scored = _score_output(case_input if isinstance(case_input, dict) else {}, output)
+            output = _invoke_mock_llm(
+                prompt_text, case_input if isinstance(case_input, dict) else {}
+            )
+            scored = _score_output(
+                case_input if isinstance(case_input, dict) else {}, output
+            )
             run_scores.append(scored)
             run_totals.append(float(scored["total_score"]))
         chosen_total = median(run_totals) if run_totals else 0.0
-        chosen = min(run_scores, key=lambda row: abs(float(row["total_score"]) - chosen_total)) if run_scores else {
-            "dimensions": {key: 0.0 for key in aggregate_dimensions},
-            "critical_failures": ["no_run_scores"],
-            "total_score": 0.0,
-            "pass_fail": False,
-        }
+        chosen = (
+            min(
+                run_scores,
+                key=lambda row: abs(float(row["total_score"]) - chosen_total),
+            )
+            if run_scores
+            else {
+                "dimensions": {key: 0.0 for key in aggregate_dimensions},
+                "critical_failures": ["no_run_scores"],
+                "total_score": 0.0,
+                "pass_fail": False,
+            }
+        )
         dimensions = chosen["dimensions"]
         for key in aggregate_dimensions:
             aggregate_dimensions[key].append(float(dimensions[key]))
@@ -199,8 +226,13 @@ def evaluate_prompt_against_pilot(
         for key, values in aggregate_dimensions.items()
     }
     total_score = round((sum(totals) / len(totals)) if totals else 0.0, 3)
-    critical_fail_count = sum(1 for case in per_case_scores if case["critical_failures"])
-    pass_fail = total_score >= float(scoring_spec["thresholds"]["pass_score"]) and critical_fail_count == 0
+    critical_fail_count = sum(
+        1 for case in per_case_scores if case["critical_failures"]
+    )
+    pass_fail = (
+        total_score >= float(scoring_spec["thresholds"]["pass_score"])
+        and critical_fail_count == 0
+    )
 
     return {
         "run_id": f"pilot_{uuid4().hex[:16]}",
@@ -239,20 +271,37 @@ def _improve_prompt_text(prompt_text: str, latest_eval: dict[str, Any]) -> str:
     improved = prompt_text
     avg = latest_eval.get("average_dimensions", {})
 
-    if float(avg.get("schema_validity", 0.0)) < 20.0 and "Return strict JSON with keys caption, cta, hashtags." not in improved:
+    if (
+        float(avg.get("schema_validity", 0.0)) < 20.0
+        and "Return strict JSON with keys caption, cta, hashtags." not in improved
+    ):
         improved += "\nReturn strict JSON with keys caption, cta, hashtags."
-    if float(avg.get("menu_item_mention", 0.0)) < 25.0 and "Use the exact menu_item string in caption." not in improved:
+    if (
+        float(avg.get("menu_item_mention", 0.0)) < 25.0
+        and "Use the exact menu_item string in caption." not in improved
+    ):
         improved += "\nUse the exact menu_item string in caption."
-    if float(avg.get("premium_tone", 0.0)) < 20.0 and "Use premium wording, no slang, concise style." not in improved:
+    if (
+        float(avg.get("premium_tone", 0.0)) < 20.0
+        and "Use premium wording, no slang, concise style." not in improved
+    ):
         improved += "\nUse premium wording, no slang, concise style."
-    if float(avg.get("cta_actionability", 0.0)) < 20.0 and "CTA must start with an action verb." not in improved:
+    if (
+        float(avg.get("cta_actionability", 0.0)) < 20.0
+        and "CTA must start with an action verb." not in improved
+    ):
         improved += "\nCTA must start with an action verb."
-    if float(avg.get("hashtag_quality", 0.0)) < 15.0 and "Include 2-4 relevant hashtags." not in improved:
+    if (
+        float(avg.get("hashtag_quality", 0.0)) < 15.0
+        and "Include 2-4 relevant hashtags." not in improved
+    ):
         improved += "\nInclude 2-4 relevant hashtags."
     return improved
 
 
-def run_pilot_improvement_loop(*, max_iterations: int = 5, reruns_per_candidate: int = 3) -> dict[str, Any]:
+def run_pilot_improvement_loop(
+    *, max_iterations: int = 5, reruns_per_candidate: int = 3
+) -> dict[str, Any]:
     baseline = run_pilot_baseline(reruns_per_candidate=reruns_per_candidate)
     baseline_total = float(baseline["total_score"])
     baseline_critical = baseline["average_dimensions"]
@@ -270,9 +319,14 @@ def run_pilot_improvement_loop(*, max_iterations: int = 5, reruns_per_candidate:
             reruns_per_candidate=reruns_per_candidate,
         )
         baseline_delta = round(float(evaluation["total_score"]) - baseline_total, 3)
-        critical_dimensions = ("schema_validity", "menu_item_mention", "hashtag_quality")
+        critical_dimensions = (
+            "schema_validity",
+            "menu_item_mention",
+            "hashtag_quality",
+        )
         regression_guard = all(
-            float(evaluation["average_dimensions"].get(key, 0.0)) >= float(baseline_critical.get(key, 0.0))
+            float(evaluation["average_dimensions"].get(key, 0.0))
+            >= float(baseline_critical.get(key, 0.0))
             for key in critical_dimensions
         )
         threshold_met = bool(evaluation["pass_fail"])
@@ -281,6 +335,7 @@ def run_pilot_improvement_loop(*, max_iterations: int = 5, reruns_per_candidate:
 
         iteration_row = {
             **evaluation,
+            "prompt_text": current_prompt,
             "baseline_delta": baseline_delta,
             "regression_guard": regression_guard,
             "threshold_met": threshold_met,
@@ -313,7 +368,9 @@ def run_pilot_improvement_loop(*, max_iterations: int = 5, reruns_per_candidate:
     }
 
 
-def write_pilot_freeze_map(loop_report: dict[str, Any], freeze_map_path: Path = PILOT_FREEZE_MAP_PATH) -> Path | None:
+def write_pilot_freeze_map(
+    loop_report: dict[str, Any], freeze_map_path: Path = PILOT_FREEZE_MAP_PATH
+) -> Path | None:
     selected = loop_report.get("selected_candidate")
     if not isinstance(selected, str) or not selected:
         return None
@@ -337,7 +394,9 @@ def write_pilot_readiness_report(
     stop_reason = loop_report.get("stop_reason")
     passed = bool(loop_report.get("pass_fail"))
     baseline_total = float(loop_report.get("baseline", {}).get("total_score", 0.0))
-    final_total = float(loop_report.get("iterations", [{}])[-1].get("total_score", baseline_total))
+    final_total = float(
+        loop_report.get("iterations", [{}])[-1].get("total_score", baseline_total)
+    )
     delta = round(final_total - baseline_total, 3)
 
     content = [
@@ -361,4 +420,33 @@ def write_pilot_readiness_report(
         f"- [{'x' if passed else ' '}] Candidate prompt selected and ready to freeze.",
     ]
     output_path.write_text("\n".join(content) + "\n", encoding="utf-8")
+    return output_path
+
+
+def write_selected_final_prompt(
+    loop_report: dict[str, Any],
+    output_path: Path = PILOT_FINAL_PROMPT_PATH,
+) -> Path | None:
+    iterations = loop_report.get("iterations")
+    selected = loop_report.get("selected_candidate")
+    if not isinstance(iterations, list) or not isinstance(selected, str):
+        return None
+
+    selected_row = next(
+        (
+            item
+            for item in iterations
+            if isinstance(item, dict) and item.get("prompt_version") == selected
+        ),
+        None,
+    )
+    if not isinstance(selected_row, dict):
+        return None
+
+    prompt_text = selected_row.get("prompt_text")
+    if not isinstance(prompt_text, str) or not prompt_text.strip():
+        return None
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(prompt_text.strip() + "\n", encoding="utf-8")
     return output_path

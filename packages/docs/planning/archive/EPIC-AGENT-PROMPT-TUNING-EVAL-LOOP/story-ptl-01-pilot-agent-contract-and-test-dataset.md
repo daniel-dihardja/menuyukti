@@ -34,7 +34,7 @@ Define the pilot `marketer-strategist` input/output contract and a fixed high-qu
 
 ## Implementation Notes
 - Added pilot mocked dataset fixture:
-  - `apps/agents/eval-fixtures/prompt-tuning-pilot/marketer-strategist-caption-dataset-v1.json`
+  - `apps/agents/pilot/prompt-tuning/fixtures/marketer-strategist-caption-dataset-v1.json`
 - Added dataset contract reference:
   - `packages/docs/contracts/AGENT_PROMPT_TUNING_PILOT_MARKETER_STRATEGIST_DATASET_V1.md`
 - Added unit coverage for dataset integrity and mocked-data policy:

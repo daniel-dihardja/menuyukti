@@ -34,23 +34,23 @@ Freeze the winning pilot prompt version and publish a readiness report that dete
 
 ## Implementation Notes
 - Added pilot freeze-map writing behavior:
-  - `apps/agents/src/agent/prompt_tuning_pilot.py`
+  - `apps/agents/src/agent/pilot/prompt_tuning.py`
   - `write_pilot_freeze_map()`
 - Added pilot readiness report generation:
-  - `apps/agents/src/agent/prompt_tuning_pilot.py`
+  - `apps/agents/src/agent/pilot/prompt_tuning.py`
   - `write_pilot_readiness_report()`
 - Added CLI flags:
   - `--write-freeze-map`
   - `--write-readiness-report`
 - Freeze artifact path:
-  - `apps/agents/prompts/PILOT_PROMPT_VERSION_FREEZE_V1.json`
+  - `apps/agents/pilot/prompt-tuning/outputs/PILOT_PROMPT_VERSION_FREEZE_V1.json`
 - Updated agents README with pilot command usage:
   - `apps/agents/README.md`
 
 ## Test Evidence
 - `uv run --project apps/agents pytest apps/agents/tests/unit_tests/test_prompt_tuning_pilot_loop.py`
   - Result: 3 passed
-- `uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_pilot.py --mode loop --write-freeze-map --write-readiness-report --fail-on-unapproved`
+- `uv run --project apps/agents python apps/agents/pilot/prompt-tuning/run_prompt_tuning_pilot.py --mode loop --write-freeze-map --write-readiness-report --write-final-prompt --fail-on-unapproved`
   - Result:
     - freeze map written
     - readiness report written

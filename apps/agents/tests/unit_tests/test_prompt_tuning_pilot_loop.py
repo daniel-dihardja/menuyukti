@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from agent.prompt_tuning_pilot import (
+from agent.pilot.prompt_tuning import (
     run_pilot_baseline,
     run_pilot_improvement_loop,
+    write_selected_final_prompt,
     write_pilot_freeze_map,
     write_pilot_readiness_report,
 )
@@ -28,6 +29,7 @@ def test_pilot_loop_reaches_stop_condition() -> None:
     assert report["stop_reason"] in {"stop_condition_met", "max_iterations_reached"}
     assert report["pass_fail"] is True
     assert isinstance(report["selected_candidate"], str)
+    assert isinstance(report["iterations"][-1]["prompt_text"], str)
 
 
 def test_pilot_freeze_map_and_readiness_report_outputs(tmp_path: Path) -> None:
@@ -40,3 +42,8 @@ def test_pilot_freeze_map_and_readiness_report_outputs(tmp_path: Path) -> None:
     assert readiness_path.exists()
     text = readiness_path.read_text(encoding="utf-8")
     assert "Prompt Tuning Pilot Readiness Report" in text
+
+    final_prompt_path = write_selected_final_prompt(report, output_path=tmp_path / "final-prompt.txt")
+    assert final_prompt_path is not None
+    assert final_prompt_path.exists()
+    assert final_prompt_path.read_text(encoding="utf-8").strip() != ""

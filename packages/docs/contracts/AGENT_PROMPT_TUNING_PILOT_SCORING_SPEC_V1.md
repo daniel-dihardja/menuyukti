@@ -4,7 +4,7 @@
 Define the deterministic scoring policy for story `PTL-02` in `EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP`.
 
 ## Scoring Spec Artifact
-- `apps/agents/eval-fixtures/prompt-tuning-pilot/marketer-strategist-caption-scoring-spec-v1.json`
+- `apps/agents/pilot/prompt-tuning/fixtures/marketer-strategist-caption-scoring-spec-v1.json`
 
 ## Version
 - `scoring_spec_version: pilot-ms-caption-scoring-v1`

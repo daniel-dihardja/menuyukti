@@ -34,7 +34,7 @@ Define and lock the pilot scoring specification before any prompt iteration is e
 
 ## Implementation Notes
 - Added versioned pilot scoring spec artifact:
-  - `apps/agents/eval-fixtures/prompt-tuning-pilot/marketer-strategist-caption-scoring-spec-v1.json`
+  - `apps/agents/pilot/prompt-tuning/fixtures/marketer-strategist-caption-scoring-spec-v1.json`
 - Added scoring-spec contract reference:
   - `packages/docs/contracts/AGENT_PROMPT_TUNING_PILOT_SCORING_SPEC_V1.md`
 - Added unit coverage for scoring-spec structure and policy constraints:

@@ -4,58 +4,56 @@
 Operational runbook for the single-agent prompt-tuning pilot (`marketer-strategist`) using mocked fixtures only.
 
 ## Scope
-- Baseline scoring run
-- Automatic prompt improvement loop
+- Agent invocation runtime
+- Codex scoring + decision loop
+- Codex prompt improvement loop
 - Prompt freeze and readiness reporting
 - Scale-out checklist for onboarding the next agent
 
 ## Data Policy
 - Inputs must come only from:
-  - `apps/agents/eval-fixtures/prompt-tuning-pilot/marketer-strategist-caption-dataset-v1.json`
+  - `apps/agents/pilot/prompt-tuning/fixtures/marketer-strategist-caption-dataset-v1.json`
 - Live DB/API input is out of scope for this workflow.
 
 ## Artifacts
 - Dataset:
-  - `apps/agents/eval-fixtures/prompt-tuning-pilot/marketer-strategist-caption-dataset-v1.json`
+  - `apps/agents/pilot/prompt-tuning/fixtures/marketer-strategist-caption-dataset-v1.json`
 - Scoring spec:
-  - `apps/agents/eval-fixtures/prompt-tuning-pilot/marketer-strategist-caption-scoring-spec-v1.json`
+  - `apps/agents/pilot/prompt-tuning/fixtures/marketer-strategist-caption-scoring-spec-v1.json`
 - Baseline/loop report:
-  - `apps/agents/eval-artifacts/pilot/prompt-tuning-pilot-latest.json`
+  - `apps/agents/pilot/prompt-tuning/outputs/prompt-tuning-pilot-latest.json`
 - Freeze map:
-  - `apps/agents/prompts/PILOT_PROMPT_VERSION_FREEZE_V1.json`
+  - `apps/agents/pilot/prompt-tuning/outputs/PILOT_PROMPT_VERSION_FREEZE_V1.json`
 - Readiness report:
-  - `apps/agents/eval-artifacts/pilot/readiness-report.md`
+  - `apps/agents/pilot/prompt-tuning/outputs/readiness-report.md`
+- Final prompt:
+  - `apps/agents/pilot/prompt-tuning/outputs/final-prompt.txt`
 
 ## Runbook
 
-### 1. Baseline
+### 1. Runtime Execution
 
 ```bash
-uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_pilot.py --mode baseline
-```
-
-Expected:
-- Report JSON written.
-- `mode` is `baseline`.
-- `selected_candidate` is `pilot-v1`.
-
-### 2. Improvement Loop
-
-```bash
-uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_pilot.py \
+uv run --project apps/agents python apps/agents/pilot/prompt-tuning/run_prompt_tuning_pilot.py \
   --mode loop \
-  --max-iterations 5 \
-  --reruns-per-candidate 3 \
   --write-freeze-map \
   --write-readiness-report \
+  --write-final-prompt \
   --fail-on-unapproved
 ```
 
 Expected:
-- Loop report JSON written.
-- `selected_candidate` populated on pass.
-- Freeze map updated on pass.
-- Readiness report written.
+- Runtime report JSON written.
+- Freeze/readiness/final-prompt artifacts written on pass.
+
+### 2. Codex-Orchestrated Iteration Loop
+
+Per iteration:
+1. Agent invocation writes `output.json`.
+2. Codex reads `output.json` and writes `score.json`.
+3. Codex writes `iteration-summary.json`.
+4. If below threshold, Codex revises prompt and triggers next iteration.
+5. If above threshold, Codex stops and freezes selected prompt.
 
 ## Scoring Spec Authoring Guide
 
@@ -73,15 +71,11 @@ Guidance:
 
 ## Artifact Interpretation
 
-Use these fields from loop report:
-- `baseline.total_score`: quality starting point
-- `iterations[].total_score`: candidate quality trend
-- `iterations[].baseline_delta`: improvement amount
-- `iterations[].regression_guard`: critical dimensions preserved
-- `selected_candidate`: approved prompt candidate (if any)
-- `stop_reason`:
-  - `stop_condition_met`
-  - `max_iterations_reached`
+Use these fields from artifacts:
+- `output.json`: raw generated output and runtime metadata
+- `score.json`: dimension scores, failed checks, threshold result
+- `iteration-summary.json`: iteration decision and next-step state
+- `prompt-tuning-pilot-latest.json`: aggregate run summary
 
 ## Troubleshooting
 
