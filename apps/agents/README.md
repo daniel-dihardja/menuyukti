@@ -1,6 +1,15 @@
 # Menuyukti Agents Service
 
-FastAPI service for Menuyukti's AI-agentic workflows. This app provides deterministic, contract-first agent endpoints used by the web app.
+FastAPI service for data-driven menu optimization with AI context. This app provides transparent, deterministic agent endpoints used by the web app, with optional AI assistance for understanding and implementation.
+
+## Architecture
+
+**Data-Driven Optimization + AI Context**
+
+- ✅ **Deterministic Core**: All decisions based on transparent business logic and proven analytics
+- ✅ **AI Assistance**: LLM provides implementation context, headlines, and risk identification
+- ✅ **Auditable**: Every recommendation can be traced to the formulas that generated it
+- ✅ **Fast**: Recommendations generated instantly without LLM latency dependency
 
 ## Run
 
@@ -41,6 +50,7 @@ uv run --project apps/agents python apps/agents/scripts/run_llm_evaluation_harne
 ```
 
 What this does:
+
 - Executes a fixed scenario set against the selected agents.
 - Uses mocked LLM behavior (`--mode mock`) so results are deterministic and CI-safe.
 - Validates contract shape, trust metadata, and pass/fail outcomes per scenario.
@@ -49,6 +59,7 @@ What this does:
 - Exits with non-zero when any scenario fails (because of `--fail-on-fail`).
 
 Example scenario:
+
 - You changed `marketer-strategist` prompt mapping and want to ensure no regression.
 - Run:
   - `uv run --project apps/agents python apps/agents/scripts/run_llm_evaluation_harness.py --mode mock --agent marketer-strategist --fail-on-fail`
@@ -64,6 +75,7 @@ uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_loop.p
 ```
 
 What this does:
+
 - Runs isolated prompt checks per agent (no multi-agent orchestration).
 - Scores candidate prompt versions and decides which versions are approved.
 - Writes a tuning report JSON to:
@@ -73,6 +85,7 @@ What this does:
   - add `--write-freeze-map` to persist approved versions into freeze-map config for release use.
 
 Example scenario:
+
 - You updated prompt versions for `menu-profit-intelligence` and `what-if-simulation`.
 - Run:
   - `uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_loop.py --mode mock --agent menu-profit-intelligence --agent what-if-simulation --fail-on-unapproved --write-freeze-map`
@@ -90,6 +103,7 @@ uv run --project apps/agents python apps/agents/pilot/prompt-tuning/run_prompt_t
 ```
 
 What this does:
+
 - Uses fixed mocked fixture dataset and fixed scoring spec for `marketer-strategist`.
 - Runs pilot runtime and writes iteration artifacts for Codex-orchestrated scoring/improvement.
 - Writes report JSON to:
@@ -100,6 +114,7 @@ What this does:
   - final prompt: `apps/agents/pilot/prompt-tuning/outputs/final-prompt.txt` (with `--write-final-prompt`)
 
 Pilot orchestration model:
+
 - Runtime writes iteration artifacts.
 - Codex reads artifacts, applies scoring matrix, and decides prompt revisions.
 - Deterministic scoring remains the final release gate.
@@ -143,6 +158,7 @@ Agent workflows:
 - `apps/agents/tests/integration_tests/test_mocked_input_baseline_per_agent.py`: mandatory per-agent mocked baseline gate.
 
 Pilot dataset contract reference:
+
 - `packages/docs/contracts/AGENT_PROMPT_TUNING_PILOT_MARKETER_STRATEGIST_DATASET_V1.md`
 - `packages/docs/contracts/AGENT_PROMPT_TUNING_PILOT_SCORING_SPEC_V1.md`
 - `packages/docs/contracts/AGENT_PROMPT_TUNING_PILOT_WORKFLOW_V1.md`
