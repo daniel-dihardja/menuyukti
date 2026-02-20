@@ -29,6 +29,58 @@ PILOT_READINESS_REPORT_PATH = PILOT_OUTPUTS_DIR / "readiness-report.md"
 PILOT_VERSION = "ptl-pilot-v1"
 PILOT_AGENT_ID = "marketer-strategist"
 
+IMPROVER_CONSTRAINTS = [
+    "Return strict JSON with keys caption, cta, hashtags.",
+    "CTA must start with an action verb.",
+    "Include 2-4 relevant hashtags that each begin with '#'.",
+]
+IMPROVER_FORBIDDEN_PHRASES = ["cheap", "fast-food"]
+
+
+@dataclass(frozen=True)
+class ImproverCandidate:
+    candidate_id: str
+    prompt_text: str
+    rationale: str
+    constraints_preserved: list[str]
+    safety_notes: list[str] | None = None
+
+
+class CodexImproverClient:
+    """Simulated Codex improver that follows the pilot contract."""
+
+    def generate_candidate(
+        self, *, payload: dict[str, Any], iteration: int
+    ) -> ImproverCandidate | None:
+        prompt_text = payload.get("prompt_text")
+        if not isinstance(prompt_text, str) or not prompt_text.strip():
+            return None
+        failed_dimensions = payload.get("failed_dimensions", [])
+        instructions: list[str] = []
+        if "menu_item_mention" in failed_dimensions:
+            instructions.append("Mention the menu_item string exactly in the next caption.")
+        if "cta_actionability" in failed_dimensions:
+            instructions.append("Start the CTA with an action verb (Reserve/Order/Book).")
+        if "premium_tone" in failed_dimensions:
+            instructions.append("Use premium wording, no slang, concise style.")
+        if "schema_validity" in failed_dimensions or "hashtag_quality" in failed_dimensions:
+            instructions.append("Return JSON payload and include 2-4 hashtags that begin with '#'.")
+        instructions.extend(IMPROVER_CONSTRAINTS)
+
+        rationale = (
+            " ".join(instructions[:2])
+            if instructions
+            else "Refined prompt to honor constraints."
+        )
+        candidate_id = f"v1-improved-{iteration:02d}"
+        improved_prompt = f"{prompt_text.strip()}\n" + " ".join(instructions)
+        return ImproverCandidate(
+            candidate_id=candidate_id,
+            prompt_text=improved_prompt,
+            rationale=rationale,
+            constraints_preserved=IMPROVER_CONSTRAINTS,
+        )
+
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -213,13 +265,14 @@ def _build_iteration_summary_payload(
     next_action: str,
     matrix: dict[str, Any],
     paths: dict[str, Path],
+    improver_output: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     case_outputs = evaluation.get("case_outputs") or []
     failed_checks = _collect_failed_checks(case_outputs)
     failed_dimensions = _determine_failed_dimensions(
         matrix, evaluation.get("average_dimensions", {})
     )
-    return {
+    summary = {
         "run_id": loop_run_id,
         "iteration": iteration,
         "prompt_version": prompt_version,
@@ -238,6 +291,17 @@ def _build_iteration_summary_payload(
             "baseline_delta": baseline_delta,
         },
     }
+    if improver_output:
+        summary["improver"].update(
+            {
+                "candidate_id": improver_output.get("candidate_id"),
+                "prompt_text": improver_output.get("prompt_text"),
+                "rationale": improver_output.get("rationale"),
+                "constraints_preserved": improver_output.get("constraints_preserved", []),
+                "safety_notes": improver_output.get("safety_notes", []),
+            }
+        )
+    return summary
 
 
 def _write_iteration_artifacts(
@@ -252,6 +316,8 @@ def _write_iteration_artifacts(
     next_action: str,
     matrix: dict[str, Any],
     paths: dict[str, Path],
+    improver_input: dict[str, Any] | None = None,
+    improver_output: dict[str, Any] | None = None,
 ) -> None:
     case_outputs = evaluation.get("case_outputs") or []
     output_payload = _build_output_artifact_payload(
@@ -284,8 +350,80 @@ def _write_iteration_artifacts(
         next_action=next_action,
         matrix=matrix,
         paths=paths,
+        improver_output=improver_output,
     )
     _write_json(paths["summary_path"], summary_payload)
+
+    if improver_input:
+        _write_json(paths["improver_input_path"], improver_input)
+    if improver_output:
+        _write_json(paths["improver_output_path"], improver_output)
+
+
+def _build_improver_input_payload(
+    *,
+    loop_run_id: str,
+    iteration: int,
+    prompt_version: str,
+    prompt_text: str,
+    evaluation: dict[str, Any],
+    baseline_delta: float,
+    stop_reason: str,
+    matrix: dict[str, Any],
+    candidate_history: list[str],
+) -> dict[str, Any]:
+    case_inputs = []
+    for case in evaluation.get("case_outputs") or []:
+        case_inputs.append(
+            {
+                "case_id": case.get("case_id"),
+                "input": case.get("input"),
+                "selected_output": case.get("selected_output"),
+                "scores": case.get("scores"),
+            }
+        )
+    return {
+        "run_id": loop_run_id,
+        "iteration": iteration,
+        "prompt_version": prompt_version,
+        "prompt_text": prompt_text,
+        "dataset_version": evaluation.get("dataset_version"),
+        "scoring_spec_version": evaluation.get("scoring_spec_version"),
+        "model_id": evaluation.get("model_id"),
+        "provider": evaluation.get("provider"),
+        "total_score": evaluation.get("total_score"),
+        "baseline_delta": baseline_delta,
+        "pass_fail": evaluation.get("pass_fail"),
+        "failed_dimensions": _determine_failed_dimensions(
+            matrix, evaluation.get("average_dimensions", {})
+        ),
+        "failed_checks": _collect_failed_checks(evaluation.get("case_outputs") or []),
+        "dimension_scores": evaluation.get("average_dimensions"),
+        "case_inputs": case_inputs,
+        "constraints": IMPROVER_CONSTRAINTS,
+        "stop_reason": stop_reason,
+        "candidate_history": list(candidate_history),
+    }
+
+
+def _serialize_improver_candidate(candidate: ImproverCandidate) -> dict[str, Any]:
+    return {
+        "candidate_id": candidate.candidate_id,
+        "prompt_text": candidate.prompt_text,
+        "rationale": candidate.rationale,
+        "constraints_preserved": candidate.constraints_preserved,
+        "safety_notes": candidate.safety_notes or [],
+    }
+
+
+def _validate_candidate(candidate: ImproverCandidate | None) -> bool:
+    if candidate is None:
+        return False
+    if not candidate.prompt_text.strip():
+        return False
+    if not candidate.constraints_preserved:
+        return False
+    return True
 
 
 def _normalize_menu_hashtag(menu_item: str) -> str:
@@ -580,8 +718,11 @@ def run_pilot_improvement_loop(
     iterations: list[dict[str, Any]] = []
     selected_candidate = None
     stop_reason = "max_iterations_reached"
+    candidate_history: list[str] = []
+    improver_client = CodexImproverClient()
 
     for iteration in range(1, max_iterations + 1):
+        prompt_used = current_prompt
         prompt_version = f"pilot-candidate-{iteration:02d}"
         evaluation = evaluate_prompt_against_pilot(
             prompt_version=prompt_version,
@@ -610,9 +751,41 @@ def run_pilot_improvement_loop(
             scoring_matrix, evaluation.get("average_dimensions", {})
         )
 
+        improver_input_payload = None
+        improver_output_payload = None
+        candidate = None
+
+        if not stop_condition:
+            improver_input_payload = _build_improver_input_payload(
+                loop_run_id=loop_run_id,
+                iteration=iteration,
+                prompt_version=prompt_version,
+                prompt_text=prompt_used,
+                evaluation=evaluation,
+                baseline_delta=baseline_delta,
+                stop_reason=iteration_stop_reason,
+                matrix=scoring_matrix,
+                candidate_history=candidate_history,
+            )
+            candidate = improver_client.generate_candidate(
+                payload=improver_input_payload, iteration=iteration
+            )
+            if _validate_candidate(candidate):
+                current_prompt = candidate.prompt_text
+                candidate_history.append(candidate.candidate_id)
+                improver_output_payload = _serialize_improver_candidate(candidate)
+            else:
+                next_action = "improver_failed"
+                improver_output_payload = {
+                    "candidate_id": None,
+                    "prompt_text": None,
+                    "rationale": None,
+                    "constraints_preserved": [],
+                    "safety_notes": ["codex_improver_invalid"],
+                }
         iteration_row = {
             **evaluation,
-            "prompt_text": current_prompt,
+            "prompt_text": prompt_used,
             "baseline_delta": baseline_delta,
             "regression_guard": regression_guard,
             "threshold_met": threshold_met,
@@ -622,6 +795,12 @@ def run_pilot_improvement_loop(
             "next_action": next_action,
             "failed_checks": failed_checks,
             "failed_dimensions": failed_dimensions,
+            "improver_candidate_id": candidate.candidate_id if candidate else None,
+            "improver_prompt_text": candidate.prompt_text if candidate else None,
+            "improver_rationale": candidate.rationale if candidate else None,
+            "improver_constraints_preserved": candidate.constraints_preserved
+            if candidate
+            else [],
         }
 
         iteration_paths = get_iteration_paths(
@@ -631,13 +810,15 @@ def run_pilot_improvement_loop(
             loop_run_id=loop_run_id,
             iteration=iteration,
             prompt_version=prompt_version,
-            prompt_text=current_prompt,
+            prompt_text=prompt_used,
             evaluation=evaluation,
             baseline_delta=baseline_delta,
             stop_reason=iteration_stop_reason,
             next_action=next_action,
             matrix=scoring_matrix,
             paths=iteration_paths,
+            improver_input=improver_input_payload,
+            improver_output=improver_output_payload,
         )
 
         iterations.append(iteration_row)

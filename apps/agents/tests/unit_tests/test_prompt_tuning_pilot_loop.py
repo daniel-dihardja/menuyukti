@@ -85,3 +85,18 @@ def test_iteration_artifacts_written(tmp_path: Path) -> None:
     assert summary_data["iteration"] == 1
     assert summary_data["next_action"] in {"improve", "stop"}
     assert summary_data["stop_reason"] in {"stop_condition_met", "below_threshold"}
+
+    improver_input_path = iteration_dir / "improver-input.json"
+    improver_output_path = iteration_dir / "improver-output.json"
+    assert improver_input_path.exists()
+    assert improver_output_path.exists()
+
+    improver_input = json.loads(improver_input_path.read_text(encoding="utf-8"))
+    assert improver_input["run_id"] == report["run_id"]
+    assert improver_input["iteration"] == 1
+    assert "constraints" in improver_input
+
+    improver_output = json.loads(improver_output_path.read_text(encoding="utf-8"))
+    assert "candidate_id" in improver_output
+    assert improver_output["constraints_preserved"]
+    assert summary_data["improver"]["candidate_id"] == improver_output["candidate_id"]

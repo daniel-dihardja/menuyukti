@@ -105,3 +105,75 @@ This file shows how the loop records the failing dimensions, baseline impact, an
 ## Notes
 - Keep these samples synchronized with the real artifacts used by the pilot loop.
 - Link this blueprint from PTL-08 and PTL-09 documentation so implementers can see both happy and fail states when validating guardrails.
+
+## Improver Artifacts
+- Each iteration folder also records the Codex improver payloads that feed PTL-08/PTL-09.
+- `improver-input.json` follows the pilot contract (run, iteration, failed dimensions/checks, case inputs, constraint list) and shows what Codex received before crafting a new prompt.
+- `improver-output.json` stores the candidate ID, prompt text, rationale, preserved constraints, and safety notes when available.
+
+### Sample `improver-input.json`
+```json
+{
+  "run_id": "pilot_loop_abcdef",
+  "iteration": 2,
+  "prompt_version": "pilot-candidate-02",
+  "prompt_text": "Return premium JSON with caption/cta/hashtags.",
+  "total_score": 62,
+  "baseline_delta": -3,
+  "failed_dimensions": ["menu_item_mention", "cta_actionability"],
+  "failed_checks": ["missing_required_field"],
+  "dimension_scores": {
+    "schema_validity": 18,
+    "menu_item_mention": 0,
+    "premium_tone": 12,
+    "cta_actionability": 6,
+    "hashtag_quality": 12
+  },
+  "constraints": [
+    "Return strict JSON with keys caption, cta, hashtags.",
+    "CTA must start with an action verb.",
+    "Include 2-4 relevant hashtags that each begin with '#'."
+  ],
+  "case_inputs": [
+    {
+      "case_id": "pilot-case-01",
+      "input": {
+        "restaurant_name": "Luminous Brunch Atelier",
+        "menu_item": "Golden Tartine"
+      },
+      "selected_output": {
+        "caption": "Elevate tonight with our chef special.",
+        "cta": "Try it soon.",
+        "hashtags": ["#foodie"]
+      },
+      "scores": {
+        "dimensions": {
+          "schema_validity": 18,
+          "menu_item_mention": 0,
+          "premium_tone": 12,
+          "cta_actionability": 6,
+          "hashtag_quality": 12
+        },
+        "critical_failures": ["missing_required_field"],
+        "total_score": 62,
+        "pass_fail": false
+      }
+    }
+  ]
+}
+```
+
+### Sample `improver-output.json`
+```json
+{
+  "candidate_id": "v1-improved-02",
+  "prompt_text": "Return premium JSON with caption/cta/hashtags. Mention the menu_item string exactly in the next caption. Start the CTA with an action verb (Reserve/Order/Book). Include 2-4 relevant hashtags that each begin with '#'.",
+  "rationale": "Mentioned the menu_item and CTA verbs after menu_item_mention and cta_actionability failed.",
+  "constraints_preserved": [
+    "Return strict JSON with keys caption, cta, hashtags.",
+    "CTA must start with an action verb.",
+    "Include 2-4 relevant hashtags that each begin with '#'."
+  ],
+  "safety_notes": []
+}
+```
