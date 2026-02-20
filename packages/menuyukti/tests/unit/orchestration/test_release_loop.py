@@ -6,7 +6,7 @@ Tests release decision logic across all stages: shadow, canary, rollout.
 
 import pytest
 
-from menuyukti.agents.release_loop import (
+from menuyukti.orchestration.release_loop import (
     evaluate_release_decision,
     get_stage_metrics_summary,
 )

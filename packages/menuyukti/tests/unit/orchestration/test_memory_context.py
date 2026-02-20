@@ -6,7 +6,7 @@ Tests event filtering, acceptance ratio calculation, continuity signal detection
 
 import pytest
 
-from menuyukti.agents.memory_context import (
+from menuyukti.orchestration.memory_context import (
     filter_recent_events,
     calculate_acceptance_ratio,
     determine_continuity_signal,

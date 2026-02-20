@@ -17,7 +17,7 @@ Agents:
     - strategist: Generate strategy for menu optimization
 
 Example:
-    from menuyukti.agents import consensus
+    from menuyukti.orchestration import consensus
 
     rankings = consensus.rank_consensus_candidates(
         candidates=menu_items,

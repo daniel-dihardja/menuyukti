@@ -4,7 +4,7 @@ Tests for menuyukti.agents.learning_eligibility - event eligibility determinatio
 
 import pytest
 
-from menuyukti.agents.learning_eligibility import (
+from menuyukti.orchestration.learning_eligibility import (
     evaluate_learning_event_eligibility,
     evaluate_learning_events,
     get_eligible_events,

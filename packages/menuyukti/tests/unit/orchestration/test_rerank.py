@@ -4,7 +4,7 @@ Tests for menuyukti.agents.rerank - feedback-based recommendation reranking.
 
 import pytest
 
-from menuyukti.agents.rerank import (
+from menuyukti.orchestration.rerank import (
     rerank_by_feedback,
     get_top_recommendation,
     get_rank_changes,

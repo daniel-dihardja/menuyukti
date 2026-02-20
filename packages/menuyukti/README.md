@@ -174,7 +174,7 @@ Just like traders use indicators **directly** without AI:
 **Restaurant analyst without AI**:
 
 ```python
-from menuyukti.agents import consensus_ranking
+from menuyukti.orchestration import consensus_ranking
 rankings = consensus_ranking(items, mode="conservative")
 # I understand the math, I trust it, I act on it
 ```
@@ -204,7 +204,7 @@ Menuyukti is designed to work at three levels:
 ### Layer 1: Agent Logic (Deterministic Decisions)
 
 ```python
-from menuyukti.agents import consensus_ranking
+from menuyukti.orchestration import consensus_ranking
 
 rankings = consensus_ranking(items, mode="conservative")
 # Returns: sorted list of items with scores, ready to act on
@@ -273,7 +273,7 @@ explanation = llm_enhance(rankings[0])  # Optional
 
 ```python
 from menuyukti.core.inputs import CoreInputs
-from menuyukti.agents import consensus_ranking
+from menuyukti.orchestration import consensus_ranking
 
 # Load your restaurant data
 inputs = CoreInputs(
@@ -300,7 +300,7 @@ for item in rankings[:5]:
 
 ```python
 # apps/agents/src/agent/routes/consensus_route.py
-from menuyukti.agents import consensus_ranking  # Import pure logic
+from menuyukti.orchestration import consensus_ranking  # Import pure logic
 from menuyukti.core.inputs import CoreInputs
 
 @router.post("/consensus/debate")
@@ -325,7 +325,7 @@ async def consensus(request):
 ### For Data Scientists (Experimentation)
 
 ```python
-from menuyukti.agents import consensus_ranking
+from menuyukti.orchestration import consensus_ranking
 from menuyukti.core.inputs import CoreInputs
 
 # Experiment with different weightings

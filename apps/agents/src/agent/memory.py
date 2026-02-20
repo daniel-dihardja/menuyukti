@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from agent.llm_runtime import build_run_metadata, execute_llm_step, resolve_agent_status
 from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
-from menuyukti.agents.memory_context import get_memory_analytics
+from menuyukti.orchestration.memory_context import get_memory_analytics
 
 
 RecommendationState = Literal["accepted", "rejected"]

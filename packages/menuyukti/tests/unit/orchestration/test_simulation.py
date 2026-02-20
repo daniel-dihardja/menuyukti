@@ -4,7 +4,7 @@ Tests for menuyukti.agents.simulation - scenario ranking and projection.
 
 import pytest
 
-from menuyukti.agents.simulation import (
+from menuyukti.orchestration.simulation import (
     simulate_scenario,
     rank_scenarios,
     get_winning_scenario,

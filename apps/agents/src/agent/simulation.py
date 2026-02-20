@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-from menuyukti.agents.simulation import (
+from menuyukti.orchestration.simulation import (
     rank_scenarios,
     get_winning_scenario,
 )

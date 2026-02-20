@@ -6,7 +6,7 @@ Tests priority filtering, status determination, headline generation, and schedul
 
 import pytest
 
-from menuyukti.agents.strategist import (
+from menuyukti.orchestration.strategist import (
     filter_priority_suggestions,
     determine_plan_status,
     generate_default_headline,

@@ -1,11 +1,11 @@
-.PHONY: help test unit_tests agent_tests core_tests integration_tests clean lint type-check format
+.PHONY: help test unit_tests orchestration_tests core_tests integration_tests clean lint type-check format
 
 help:
 	@echo "menuyukti test commands:"
 	@echo ""
 	@echo "  make test              - Run all unit tests"
 	@echo "  make unit_tests        - Run all unit tests (alias)"
-	@echo "  make agent_tests       - Run agent unit tests only"
+	@echo "  make orchestration_tests       - Run orchestration unit tests only"
 	@echo "  make core_tests        - Run core unit tests only"
 	@echo "  make test_verbose      - Run all unit tests with verbose output"
 	@echo "  make test_coverage     - Run tests with coverage report"
@@ -23,9 +23,9 @@ test:
 # Alias for test
 unit_tests: test
 
-# Run agent tests only
-agent_tests:
-	python -m pytest tests/unit/agents/ -v
+# Run orchestration tests only
+orchestration_tests:
+	python -m pytest tests/unit/orchestration/ -v
 
 # Run core tests only
 core_tests:
@@ -86,8 +86,8 @@ dev-install:
 
 # Show test statistics
 test_stats:
-	@echo "=== Agent Tests ==="
-	@python -m pytest tests/unit/agents/ --collect-only -q | tail -1
+	@echo "=== Orchestration Tests ==="
+	@python -m pytest tests/unit/orchestration/ --collect-only -q | tail -1
 	@echo "=== Core Tests ==="
 	@python -m pytest tests/unit/core/ --collect-only -q | tail -1
 	@echo "=== Total Unit Tests ==="

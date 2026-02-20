@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from menuyukti.agents.learning_eligibility import (
+from menuyukti.orchestration.learning_eligibility import (
     evaluate_learning_events,
 )
 

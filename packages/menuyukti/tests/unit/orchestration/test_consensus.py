@@ -4,7 +4,7 @@ Tests for menuyukti.agents.consensus - pure deterministic ranking logic.
 
 import pytest
 
-from menuyukti.agents.consensus import (
+from menuyukti.orchestration.consensus import (
     rank_consensus_candidates,
     get_consensus_winner,
     get_disagreement_reasons,

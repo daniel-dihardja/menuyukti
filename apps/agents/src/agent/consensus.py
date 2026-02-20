@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-from menuyukti.agents.consensus import (
+from menuyukti.orchestration.consensus import (
     rank_consensus_candidates,
     get_consensus_winner,
     get_disagreement_reasons,

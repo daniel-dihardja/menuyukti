@@ -13,7 +13,7 @@ from agent.llm_runtime import (
 )
 from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
-from menuyukti.agents.strategist import (
+from menuyukti.orchestration.strategist import (
     filter_priority_suggestions,
     determine_plan_status,
     generate_default_headline,

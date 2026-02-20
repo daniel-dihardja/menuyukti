@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from agent.llm_runtime import build_run_metadata, execute_llm_step, resolve_agent_status
 from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
-from menuyukti.agents.release_loop import (
+from menuyukti.orchestration.release_loop import (
     evaluate_release_decision as _evaluate_release_decision,
 )
 

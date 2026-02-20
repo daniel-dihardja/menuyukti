@@ -217,7 +217,7 @@ def rank_consensus_candidates(
 """Thin wrapper. No business logic. Just validate → compute → enhance → return."""
 
 from fastapi import APIRouter
-from menuyukti.agents.consensus import rank_consensus_candidates  # ← Import from menuyukti
+from menuyukti.orchestration.consensus import rank_consensus_candidates  # ← Import from menuyukti
 from menuyukti.core.inputs import CoreInputs
 from agent.ai_context import enhance_consensus_with_ai  # Layer 3 (optional)
 
@@ -283,7 +283,7 @@ from agent.llm_runtime import ...
 
 ```python
 # This should work WITHOUT apps/agents existing
-from menuyukti.agents.consensus import rank_consensus_candidates
+from menuyukti.orchestration.consensus import rank_consensus_candidates
 
 rankings = rank_consensus_candidates(items, mode="conservative")
 print(rankings)
@@ -332,7 +332,7 @@ packages/menuyukti/tests/agents/test_simulation.py
 Replace `from agent.consensus import run_consensus` with:
 
 ```python
-from menuyukti.agents.consensus import rank_consensus_candidates
+from menuyukti.orchestration.consensus import rank_consensus_candidates
 ```
 
 ### Phase 5: Verify Integration Tests Pass
@@ -347,8 +347,8 @@ make integration_tests
 
 | Use Case                   | Before                      | After                                            |
 | -------------------------- | --------------------------- | ------------------------------------------------ |
-| **Restaurant analyst**     | Can't use logic outside web | `from menuyukti.agents import consensus_ranking` |
-| **CLI tool**               | Would duplicate code        | `from menuyukti.agents import ...`               |
+| **Restaurant analyst**     | Can't use logic outside web | `from menuyukti.orchestration import consensus_ranking` |
+| **CLI tool**               | Would duplicate code        | `from menuyukti.orchestration import ...`               |
 | **Analytics dashboard**    | Slow (HTTP calls)           | Fast (direct imports)                            |
 | **Batch processing**       | 1000 HTTP calls             | Loop with direct imports                         |
 | **Mobile backend**         | Code duplication            | Reuse menuyukti                                  |
