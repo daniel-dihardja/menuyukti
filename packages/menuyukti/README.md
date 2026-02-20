@@ -236,36 +236,71 @@ explanation = llm_enhance(rankings[0])  # Optional
 
 ## Package Structure
 
-### Core Layer (Data Models & Analytics)
+The menuyukti package is organized into layers with clear separation of concerns:
 
-- `src/menuyukti/core/inputs.py` - Canonical `CoreInputs` contract
-- `src/menuyukti/core/models/` - Typed domain models (MatrixItem, MenuHeatmap, etc)
-- `src/menuyukti/core/analytics/` - Deterministic analytics functions (POS → signals)
-- `src/menuyukti/core/contracts/` - Versioned payload/envelope models
+### `core/` - Foundation Layer
 
-### Agent Layer (Decision Logic) - NEW
+**Purpose**: Data contracts, models, and POS-to-analytics transformation pipeline
 
-- `src/menuyukti/agents/` - Pure deterministic decision functions
-  - `consensus.py` - Rank items by profit + volume
-  - `simulation.py` - What-if scenario analysis
-  - `rerank.py` - Feedback-driven reranking
-  - `release_loop.py` - Stage-based release gating
-  - `learning_eligibility.py` - Learning readiness assessment
-  - `strategist.py` - Weekly strategy computation
+- **`inputs.py`** - Canonical `CoreInputs` contract (immutable, validated entry point for all consumers)
+- **`models/`** - Typed domain models with validation
+  - `pos_transaction.py` - Foundational POS transaction data contract (8 required fields)
+  - `pos_mapping.py` - POS system configuration registry (ESB, Toast, Square, etc.)
+  - `matrix_item.py` - Menu engineering matrix item model
+  - `heatmap.py` - Demand heatmap model (hourly/daily patterns)
+  - `sales_analytics_summary.py` - Order-level analytics model
+  - `matrix_distribution.py` - Portfolio distribution model (stars/puzzles/plow/low-end)
+- **`analytics/`** - Deterministic analytics transforms (POS → business signals)
+  - `calculate_menu_engineering_matrix.py` - Classify items economically
+  - `calculate_menu_heatmaps.py` - Analyze demand patterns
+  - `calculate_sales_analytics.py` - Compute order context
+  - `calculate_popularity_index.py` - Calculate item popularity
+  - `pos_detector.py` - Detect POS system from Excel header
+  - `registry.py` - Maps POS names to normalizer functions
+  - `esb/` - ESB-specific normalization logic
+- **`contracts/`** - Versioned payload/envelope models for machine consumers
 
-### Features Layer (Shared Utilities)
+### `orchestration/` - Decision Layer
 
-- `src/menuyukti/features/` - Shared scoring, ranking, penalties
-  - `scoring.py` - Confidence/impact calculations
-  - `ranking.py` - Generic ranking utilities
-  - `penalties.py` - Risk/penalty calculations
-  - `popularity.py` - Popularity index utilities
+**Purpose**: Consumer-agnostic deterministic decision functions (renamed from `agents/` for architectural clarity)
+
+- **`consensus.py`** - Rank items by profit + volume (conservative/aggressive modes)
+- **`simulation.py`** - What-if scenario analysis with confidence bands
+- **`rerank.py`** - Feedback-driven reranking (boost by success rate)
+- **`release_loop.py`** - Stage-based release gating (shadow → canary → rollout)
+- **`learning_eligibility.py`** - Learning readiness assessment
+- **`strategist.py`** - Weekly strategy computation by category
+- **`memory_context.py`** - Context management for decision persistence
+
+### `indicators/` - Financial Calculations
+
+**Purpose**: Restaurant-specific financial indicator calculations (parallel to core analytics)
+
+- **`analytics/`** - Indicator-specific analytics (menu matrix, sales summaries)
+- **`models/`** - Indicator domain models
+- **`contracts/`** - Indicator-specific contracts
+- **`utils/`** - Helper utilities for indicators
+  - `extraction.py` - Data extraction utilities
+  - `formatting.py` - Output formatting
+  - `pos.py` - POS-specific utilities
+  - `registry.py` - Indicator normalizer registry
+
+### `features/` - Shared Utilities
+
+**Purpose**: Cross-cutting utilities used by orchestration and analytics layers
+
+- Currently minimal (reserved for future shared feature flags, scoring utilities, etc.)
 
 ### Infrastructure
 
-- `scripts/perf_guardrails.py` - Performance benchmarks and regressions
-- `tests/` - Unit + integration tests
-- `perf/baseline_v1.json` - Performance baseline
+- **`scripts/`** - Build and performance tooling
+  - `perf_guardrails.py` - Performance benchmarks and regression detection
+- **`tests/`** - Comprehensive test suite
+  - `unit/core/` - Core layer tests (24 tests)
+  - `unit/orchestration/` - Decision layer tests (167 tests)
+  - `fixtures/` - Shared test data
+- **`perf/`** - Performance baselines
+  - `baseline_v1.json` - Performance regression baseline
 
 ## How to Use Menuyukti
 
