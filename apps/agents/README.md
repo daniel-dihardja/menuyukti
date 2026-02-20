@@ -115,8 +115,12 @@ Agent workflows:
 - `apps/agents/src/agent/runtime_config.py`: per-agent model/prompt runtime mapping.
 - `apps/agents/src/agent/prompt_contracts.py`: prompt contract registry + required output keys.
 - `apps/agents/prompts/**`: versioned prompt template files.
+- `apps/agents/eval-fixtures/prompt-tuning-pilot/**`: mocked pilot dataset fixtures.
 - `apps/agents/tests/integration_tests/*.py`: integration coverage by story/capability.
 - `apps/agents/tests/integration_tests/test_mocked_input_baseline_per_agent.py`: mandatory per-agent mocked baseline gate.
+
+Pilot dataset contract reference:
+- `packages/docs/contracts/AGENT_PROMPT_TUNING_PILOT_MARKETER_STRATEGIST_DATASET_V1.md`
 
 ## Notes
 

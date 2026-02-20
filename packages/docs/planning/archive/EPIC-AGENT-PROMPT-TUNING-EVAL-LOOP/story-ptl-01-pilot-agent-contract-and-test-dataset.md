@@ -2,7 +2,8 @@
 
 ## Story Metadata
 - Created Date: 2026-02-20
-- Status: `todo`
+- Status: `complete`
+- Completed Date: 2026-02-20
 - Parent: EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP
 - Story Points: `3`
 
@@ -30,3 +31,17 @@ Define the pilot `marketer-strategist` input/output contract and a fixed high-qu
 - Pilot contract spec doc/file.
 - Versioned pilot dataset artifact.
 - Dataset coverage notes.
+
+## Implementation Notes
+- Added pilot mocked dataset fixture:
+  - `apps/agents/eval-fixtures/prompt-tuning-pilot/marketer-strategist-caption-dataset-v1.json`
+- Added dataset contract reference:
+  - `packages/docs/contracts/AGENT_PROMPT_TUNING_PILOT_MARKETER_STRATEGIST_DATASET_V1.md`
+- Added unit coverage for dataset integrity and mocked-data policy:
+  - `apps/agents/tests/unit_tests/test_prompt_tuning_pilot_dataset.py`
+- Updated agents service README source layout reference:
+  - `apps/agents/README.md`
+
+## Test Evidence
+- `uv run --project apps/agents pytest apps/agents/tests/unit_tests/test_prompt_tuning_pilot_dataset.py`
+  - Result: 2 passed

@@ -1,0 +1,67 @@
+{
+  "dataset_version": "pilot-ms-caption-v1",
+  "agent_id": "marketer-strategist",
+  "data_policy": "mocked-fixtures-only",
+  "description": "Mocked pilot dataset for strategist caption generation prompt tuning.",
+  "input_contract": {
+    "restaurant_name": "string",
+    "menu_item": "string",
+    "target_audience": "string",
+    "tone": "premium"
+  },
+  "output_contract": {
+    "caption": "string",
+    "cta": "string",
+    "hashtags": "string[]"
+  },
+  "cases": [
+    {
+      "case_id": "ms-caption-001",
+      "type": "normal",
+      "input": {
+        "restaurant_name": "Sushi Go",
+        "menu_item": "Spicy Tuna Roll",
+        "target_audience": "young professionals",
+        "tone": "premium"
+      },
+      "expected_context": {
+        "must_mention_menu_item_exact": true,
+        "cta_required": true,
+        "hashtags_min": 2,
+        "hashtags_max": 4
+      }
+    },
+    {
+      "case_id": "ms-caption-002",
+      "type": "normal",
+      "input": {
+        "restaurant_name": "Bali Bowl",
+        "menu_item": "Dragon Fruit Smoothie",
+        "target_audience": "health-conscious commuters",
+        "tone": "premium"
+      },
+      "expected_context": {
+        "must_mention_menu_item_exact": true,
+        "cta_required": true,
+        "hashtags_min": 2,
+        "hashtags_max": 4
+      }
+    },
+    {
+      "case_id": "ms-caption-003",
+      "type": "edge",
+      "input": {
+        "restaurant_name": "Noodle Lab",
+        "menu_item": "XO Prawn Noodles",
+        "target_audience": "late-night foodies",
+        "tone": "premium"
+      },
+      "expected_context": {
+        "must_mention_menu_item_exact": true,
+        "cta_required": true,
+        "hashtags_min": 2,
+        "hashtags_max": 4
+      }
+    }
+  ]
+}
