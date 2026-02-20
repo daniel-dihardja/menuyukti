@@ -125,6 +125,8 @@ def get_iteration_paths(
         "output_path": base / "output.json",
         "score_path": base / "score.json",
         "summary_path": base / "iteration-summary.json",
+        "improver_input_path": base / "improver-input.json",
+        "improver_output_path": base / "improver-output.json",
     }
 
 
