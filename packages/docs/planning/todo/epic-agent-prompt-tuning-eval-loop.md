@@ -98,11 +98,11 @@ Prove a reliable workflow that automatically improves one agent prompt through i
 ## Completed Stories
 - `PTL-12` (Execution Order 2, Status: `complete`): Codex scoring matrix + iteration artifact contract; see `packages/docs/planning/archive/EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP/001-story-ptl-12-llm-scoring-matrix-and-iteration-artifact-contract.md`.
 - `PTL-11` (Execution Order 3, Status: `complete`): Iteration loop + mocked-input invocation; see `packages/docs/planning/archive/EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP/002-story-ptl-11-iterating-prompt-and-mocked-input-invocation-loop.md`.
+- `PTL-07` (Execution Order 4, Status: `complete`): Codex improver protocol spec; see `packages/docs/planning/archive/EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP/003-story-ptl-07-llm-prompt-improver-agent-spec-pilot-only.md`.
 
 ## Current Open Story Queue
-1. `PTL-07` (Execution Order 4, Status: `todo`): Codex improver protocol spec (pilot-only) that defines contracts and guardrails; see `packages/docs/planning/todo/003-story-ptl-07-llm-prompt-improver-agent-spec-pilot-only.md`.
-2. `PTL-08` (Execution Order 5, Status: `todo`): Codex-driven prompt improvement integration that wires the improver output into the loop; see `packages/docs/planning/todo/004-story-ptl-08-llm-driven-prompt-improvement-integration.md`.
-3. `PTL-09` (Execution Order 6, Status: `todo`): validation & safety guardrails for improver outputs plus documentation updates; see `packages/docs/planning/todo/005-story-ptl-09-llm-improver-validation-and-safety-guardrails.md`.
+1. `PTL-08` (Execution Order 5, Status: `todo`): Codex-driven prompt improvement integration that wires the improver output into the loop; see `packages/docs/planning/todo/004-story-ptl-08-llm-driven-prompt-improvement-integration.md`.
+2. `PTL-09` (Execution Order 6, Status: `todo`): validation & safety guardrails for improver outputs plus documentation updates; see `packages/docs/planning/todo/005-story-ptl-09-llm-improver-validation-and-safety-guardrails.md`.
 
 ## Workflow Walkthrough
 - PTL-10 defines the pilot test agent + contract, PTL-12 locks down how scoring artifacts look, and PTL-11 wires the mocked inputs and iteration runner so the artifacts are generated reliably.

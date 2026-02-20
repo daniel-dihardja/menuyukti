@@ -2,7 +2,8 @@
 
 ## Story Metadata
 - Created Date: 2026-02-20
-- Status: `todo`
+- Completed Date: 2026-02-20
+- Status: `complete`
 - Parent: EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP
 - Story Points: `3`
 - Execution Order: 4 (per reopened execution order after PTL-11)
@@ -23,6 +24,7 @@ Define a pilot-only Codex improver protocol that describes how iteration results
 ## Reference Run Integration
 - Explain how a failing artifact from `packages/docs/planning/blueprints/iteration-artifacts-samples.md` maps to the improver inputs so the team can follow one concrete example from PTL-11.
 - Capture how the improver output candidate is versioned (e.g., `v1-improved-2`) and what metadata fields the loop expects before it can proceed.
+- Store the formalized contract in `packages/docs/planning/blueprints/codex-improver-protocol.md`, linking the sample input/output with the iteration artifacts above.
 
 ## Acceptance Criteria
 - A versioned contract/spec doc exists for the pilot Codex improver protocol.
@@ -34,3 +36,11 @@ Define a pilot-only Codex improver protocol that describes how iteration results
 - Pilot Codex improver protocol document.
 - Example improver request/response payloads.
 - Guardrail and scope notes.
+
+## Implementation Notes
+- Authored `packages/docs/planning/blueprints/codex-improver-protocol.md`, which lays out the pilot-only input/output JSON contracts, guardrails, and sample payloads that connect PTL-11 artifacts with the Codex improver step.
+- Referenced the iteration artifact blueprint from PTL-12 so the improver input uses the same `failed_dimensions`, `failed_checks`, and `case_inputs` fields that the loop already produces and PTL-08 will consume.
+- Documented boundaries (pilot scope, non-production guardrails, fallback behavior) so future runs can reuse the same spec without guessing which fields came from the loop.
+
+## Testing
+- None (documentation-only change).  Existing pytest runs remain blocked because `pytest` is unavailable locally (`python3 -m pytest ...` fails with “No module named pytest” and pip cannot reach PyPI: `[Errno 8] nodename nor servname provided, or not known`).
