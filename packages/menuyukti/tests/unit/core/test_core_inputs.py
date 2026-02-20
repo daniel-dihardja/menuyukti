@@ -4,13 +4,13 @@ from pathlib import Path
 import pytest
 
 from menuyukti.core.inputs import CoreInputs
-from menuyukti.core.models.matrix_item import MatrixItem
-from menuyukti.core.models.heatmap import MenuHeatmap
-from menuyukti.core.models.matrix_distribution import MatrixDistribution
-from menuyukti.core.models.sales_analytics_summary import SalesAnalyticsSummary
+from menuyukti.indicators.models.matrix_item import MatrixItem
+from menuyukti.indicators.models.heatmap import MenuHeatmap
+from menuyukti.indicators.models.matrix_distribution import MatrixDistribution
+from menuyukti.indicators.models.sales_analytics_summary import SalesAnalyticsSummary
 
 
-FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "menuyukti"
+FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "menuyukti"
 
 
 def _load_json(name: str):
@@ -109,8 +109,18 @@ def test_core_inputs_rejects_duplicate_distribution_category():
             heatmaps=heatmaps,
             distribution={
                 "categories": [
-                    {"category": "star", "item_count": 1, "item_share": 0.5, "margin_share": 0.6},
-                    {"category": "star", "item_count": 1, "item_share": 0.5, "margin_share": 0.4},
+                    {
+                        "category": "star",
+                        "item_count": 1,
+                        "item_share": 0.5,
+                        "margin_share": 0.6,
+                    },
+                    {
+                        "category": "star",
+                        "item_count": 1,
+                        "item_share": 0.5,
+                        "margin_share": 0.4,
+                    },
                 ]
             },
         )
@@ -126,11 +136,17 @@ def test_core_inputs_sorts_deterministically():
     core = CoreInputs(
         matrix_items=list(reversed(matrix_items)),
         heatmaps=list(reversed(heatmaps)),
-        distribution=MatrixDistribution(categories=list(reversed(distribution.categories))),
+        distribution=MatrixDistribution(
+            categories=list(reversed(distribution.categories))
+        ),
     )
 
-    assert [item.menu for item in core.matrix_items] == sorted([item.menu for item in matrix_items], key=str.lower)
-    assert [item.menu for item in core.heatmaps] == sorted([item.menu for item in heatmaps], key=str.lower)
+    assert [item.menu for item in core.matrix_items] == sorted(
+        [item.menu for item in matrix_items], key=str.lower
+    )
+    assert [item.menu for item in core.heatmaps] == sorted(
+        [item.menu for item in heatmaps], key=str.lower
+    )
     assert [item.category for item in core.distribution.categories] == sorted(
         [item.category for item in distribution.categories]
     )

@@ -7,19 +7,19 @@ import math
 
 import pandas as pd
 
-from menuyukti.core.analytics.extract_menu_items import extract_menu_items
-from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
-from menuyukti.core.analytics.registry import NORMALIZERS
-from menuyukti.core.analytics.esb.normalizer import (
-    normalize_esb_excel_with_rejections,
+from menuyukti.indicators.utils.extraction import extract_menu_items
+from menuyukti.indicators.utils.pos import detect_pos_from_excel_bytes
+from menuyukti.indicators.utils.registry import NORMALIZERS
+from menuyukti.indicators.analytics.esb.normalizer import (
+    normalize_esb_excel,
 )
-from menuyukti.core.analytics.calculate_sales_analytics import (
+from menuyukti.indicators.analytics.sales import (
     calculate_sales_analytics,
 )
-from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
+from menuyukti.indicators.analytics.menu_engineering import (
     calculate_menu_engineering_matrix,
 )
-from menuyukti.core.contracts import (
+from menuyukti.indicators.contracts import (
     build_metadata_v1,
 )
 
@@ -54,6 +54,7 @@ def sanitize_json_payload(value: Any) -> Any:
         pass
 
     return value
+
 
 # ==================================================
 # Existing Excel-based analytics endpoint
@@ -183,4 +184,3 @@ async def calculate_matrix(payload: MenuItemsMatrixRequest):
         "metadata": build_metadata_v1(source_system="api"),
         "matrix": matrix,
     }
-

@@ -4,7 +4,7 @@ import sys
 
 
 def _load_perf_module():
-    script_path = Path(__file__).resolve().parents[2] / "scripts" / "perf_guardrails.py"
+    script_path = Path(__file__).resolve().parents[3] / "scripts" / "perf_guardrails.py"
     spec = spec_from_file_location("perf_guardrails", script_path)
     assert spec is not None and spec.loader is not None
     module = module_from_spec(spec)

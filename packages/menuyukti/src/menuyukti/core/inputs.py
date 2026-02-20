@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from menuyukti.core.models.matrix_item import MatrixItem
-from menuyukti.core.models.heatmap import MenuHeatmap
-from menuyukti.core.models.matrix_distribution import MatrixDistribution
+from menuyukti.indicators.models.matrix_item import MatrixItem
+from menuyukti.indicators.models.heatmap import MenuHeatmap
+from menuyukti.indicators.models.matrix_distribution import MatrixDistribution
 from menuyukti.core.models.sales_analytics_summary import (
     SalesAnalyticsSummary,
 )
@@ -53,8 +53,16 @@ class CoreInputs(BaseModel):
             )
 
         # Normalize ordering so repeated equivalent payloads serialize deterministically.
-        object.__setattr__(self, "matrix_items", sorted(self.matrix_items, key=lambda item: item.menu.lower()))
-        object.__setattr__(self, "heatmaps", sorted(self.heatmaps, key=lambda heatmap: heatmap.menu.lower()))
+        object.__setattr__(
+            self,
+            "matrix_items",
+            sorted(self.matrix_items, key=lambda item: item.menu.lower()),
+        )
+        object.__setattr__(
+            self,
+            "heatmaps",
+            sorted(self.heatmaps, key=lambda heatmap: heatmap.menu.lower()),
+        )
         object.__setattr__(
             self,
             "distribution",
