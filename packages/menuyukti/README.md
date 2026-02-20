@@ -112,6 +112,85 @@ Restaurant analyst reads this and asks:
 
 ---
 
+## The Indicator Model (Why This Works)
+
+Think of Menuyukti like **financial trading indicators**.
+
+### How Financial Indicators Work
+
+Financial traders use deterministic indicators (not AI) to make decisions:
+
+```
+Raw Data (OHLCV: Open/High/Low/Close/Volume)
+    ↓
+[Indicators - Deterministic Math]
+    - Moving Average (trend)
+    - RSI (strength index)
+    - MACD (momentum)
+    - Bollinger Bands (volatility)
+    ↓
+[Strategy Rules]
+    - IF RSI < 30 THEN oversold → BUY signal
+    - IF price > 200-day MA THEN uptrend → HOLD signal
+    ↓
+[Optional AI]
+    - Predict next move (ML model)
+    - Explain the decision (LLM context)
+```
+
+**Why indicators work**: They isolate specific signals (trend, momentum, volatility) so traders can reason about them independently.
+
+### Menuyukti Uses the Same Model
+
+```
+Raw Data (POS transactions)
+    ↓
+[Indicators - Deterministic Calculations] ← THIS IS MENUYUKTI
+    - Profit Margin Score (economic contribution)
+    - Volume Trend (demand consistency)
+    - Economic Classification (Star/Puzzle/Plow/Low-End)
+    - Consistency Score (predictability)
+    - Risk Assessment (volatility)
+    ↓
+[Decision Rules]
+    - IF profit_score > 70 AND volume > avg THEN → PROMOTE
+    - IF margin < 5% AND low_volume THEN → CONSIDER REMOVING
+    - IF new_feedback > baseline THEN → RERANK
+    ↓
+[Optional Enhancement] ← THIS IS LAYER 3
+    - Headlines: "Why this recommendation matters"
+    - Signal Override: "Market changed, recalibrate indicator"
+    - Implementation: "How to execute on Instagram"
+```
+
+### Why This Matters
+
+Just like traders use indicators **directly** without AI:
+
+- Restaurant analysts can use Menuyukti indicators **directly** without AI
+- Or they can add optional AI for context and implementation guidance
+- Both approaches are valid
+
+**Restaurant analyst without AI**:
+
+```python
+from menuyukti.agents import consensus_ranking
+rankings = consensus_ranking(items, mode="conservative")
+# I understand the math, I trust it, I act on it
+```
+
+**Restaurant analyst with AI enhancement**:
+
+```python
+rankings = consensus_ranking(items, mode="conservative")
+explanation = llm_enhance(rankings[0])  # Optional context
+# Math + AI explanation = higher confidence + better communication
+```
+
+The indicators are the foundation. AI is optional enhancement.
+
+---
+
 ## The Three-Layer Architecture
 
 Menuyukti is designed to work at three levels:
