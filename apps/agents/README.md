@@ -121,6 +121,7 @@ Agent workflows:
 
 Pilot dataset contract reference:
 - `packages/docs/contracts/AGENT_PROMPT_TUNING_PILOT_MARKETER_STRATEGIST_DATASET_V1.md`
+- `packages/docs/contracts/AGENT_PROMPT_TUNING_PILOT_SCORING_SPEC_V1.md`
 
 ## Notes
 
