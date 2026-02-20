@@ -14,14 +14,14 @@ def get_memory_context(
 ) -> dict:
     """
     Get contextual memory about item's decision history.
-    
+
     TODO: Extract logic from apps/agents/src/agent/memory_context.py
-    
+
     Args:
         item_id: Menu item identifier
         decision_history: Historical decisions for the item
         time_window: Days to look back
-        
+
     Returns:
         Memory context with relevant history and patterns
     """

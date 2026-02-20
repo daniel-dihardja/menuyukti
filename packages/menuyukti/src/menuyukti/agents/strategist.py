@@ -14,14 +14,14 @@ def generate_optimization_strategy(
 ) -> dict:
     """
     Generate optimization strategy based on analysis and goals.
-    
+
     TODO: Extract logic from apps/agents/src/agent/strategist.py
-    
+
     Args:
         menu_analysis: Current menu analysis with all indicators
         business_goals: Business objectives (profit target, volume target, etc.)
         constraints: Operational constraints
-        
+
     Returns:
         Strategy recommendation with action plan
     """

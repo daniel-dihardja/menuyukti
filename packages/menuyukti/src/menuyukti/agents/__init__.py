@@ -18,7 +18,7 @@ Agents:
 
 Example:
     from menuyukti.agents import consensus
-    
+
     rankings = consensus.rank_consensus_candidates(
         candidates=menu_items,
         profit_data=profits,

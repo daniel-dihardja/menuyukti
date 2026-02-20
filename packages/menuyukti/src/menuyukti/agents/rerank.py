@@ -14,14 +14,14 @@ def rerank_candidates(
 ) -> list[dict]:
     """
     Re-rank candidates based on multiple criteria and weights.
-    
+
     TODO: Extract logic from apps/agents/src/agent/rerank.py
-    
+
     Args:
         candidates: List of candidates with scores
         criteria: Criteria definitions for reranking
         weights: Weighting configuration for each criterion
-        
+
     Returns:
         Re-ranked list of candidates
     """

@@ -14,14 +14,14 @@ def simulate_menu_change(
 ) -> dict:
     """
     Simulate impact of proposed menu changes.
-    
+
     TODO: Extract logic from apps/agents/src/agent/simulation.py
-    
+
     Args:
         current_menu: Current menu configuration
         proposed_changes: Proposed changes (additions, removals, modifications)
         historical_data: Historical sales and margin data
-        
+
     Returns:
         Simulation results with projected impact metrics
     """

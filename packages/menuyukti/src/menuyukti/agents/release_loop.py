@@ -15,15 +15,15 @@ def determine_release_action(
 ) -> dict:
     """
     Determine next action for menu item in the release lifecycle.
-    
+
     TODO: Extract logic from apps/agents/src/agent/release_loop.py
-    
+
     Args:
         item_id: Menu item identifier
         current_state: Current state in release loop
         performance_metrics: Current performance data
         release_config: Release loop configuration
-        
+
     Returns:
         Recommended action (promote, demote, hold, remove, etc.)
     """

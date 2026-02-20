@@ -11,7 +11,7 @@ test:
 	uv run python -m pytest $(TEST_FILE)
 
 integration_tests:
-	LANGCHAIN_TRACING_V2=false uv run python -m pytest tests/integration_tests -m "not langsmith"
+	AGENTS_LLM_ENABLED=false LANGCHAIN_TRACING_V2=false uv run python -m pytest tests/integration_tests -m "not langsmith"
 
 mocked_baseline_tests:
 	LANGCHAIN_TRACING_V2=false uv run python -m pytest tests/integration_tests/test_mocked_input_baseline_per_agent.py
