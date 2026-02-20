@@ -21,8 +21,12 @@ def test_pilot_baseline_report_shape() -> None:
     assert isinstance(report["per_case_scores"], list)
 
 
-def test_pilot_loop_reaches_stop_condition() -> None:
-    report = run_pilot_improvement_loop(max_iterations=5, reruns_per_candidate=3)
+def test_pilot_loop_reaches_stop_condition(tmp_path: Path) -> None:
+    report = run_pilot_improvement_loop(
+        max_iterations=5,
+        reruns_per_candidate=3,
+        artifacts_base_dir=tmp_path / "pilot-iterations",
+    )
     assert report["agent_id"] == "marketer-strategist"
     assert isinstance(report["iterations"], list)
     assert len(report["iterations"]) >= 1
@@ -33,7 +37,11 @@ def test_pilot_loop_reaches_stop_condition() -> None:
 
 
 def test_pilot_freeze_map_and_readiness_report_outputs(tmp_path: Path) -> None:
-    report = run_pilot_improvement_loop(max_iterations=5, reruns_per_candidate=3)
+    report = run_pilot_improvement_loop(
+        max_iterations=5,
+        reruns_per_candidate=3,
+        artifacts_base_dir=tmp_path / "pilot-iterations",
+    )
     freeze_path = write_pilot_freeze_map(report, freeze_map_path=tmp_path / "freeze.json")
     assert freeze_path is not None
     assert freeze_path.exists()

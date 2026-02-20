@@ -14,10 +14,13 @@ PILOT_DIR = BASE_DIR / "pilot" / "prompt-tuning"
 PILOT_FIXTURES_DIR = PILOT_DIR / "fixtures"
 PILOT_PROMPTS_DIR = PILOT_DIR / "prompts"
 PILOT_OUTPUTS_DIR = PILOT_DIR / "outputs"
+PILOT_SPECS_DIR = PILOT_DIR / "specs"
 PILOT_DATASET_PATH = PILOT_FIXTURES_DIR / "marketer-strategist-caption-dataset-v1.json"
 PILOT_SCORING_SPEC_PATH = (
     PILOT_FIXTURES_DIR / "marketer-strategist-caption-scoring-spec-v1.json"
 )
+CODEX_SCORING_MATRIX_PATH = PILOT_SPECS_DIR / "codex-scoring-matrix-v1.json"
+ITERATION_ARTIFACT_SCHEMA_PATH = PILOT_SPECS_DIR / "iteration-artifact-schema-v1.json"
 PILOT_PROMPT_V1_PATH = PILOT_PROMPTS_DIR / "pilot-v1.txt"
 PILOT_FREEZE_MAP_PATH = PILOT_OUTPUTS_DIR / "PILOT_PROMPT_VERSION_FREEZE_V1.json"
 PILOT_FINAL_PROMPT_PATH = PILOT_OUTPUTS_DIR / "final-prompt.txt"
@@ -36,6 +39,253 @@ def _load_json(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"invalid JSON object: {path}")
     return payload
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def get_iteration_paths(
+    *, run_id: str, iteration: int, base_dir: Path | None = None
+) -> dict[str, Path]:
+    run_root = base_dir or PILOT_OUTPUTS_DIR / "runs"
+    base = run_root / run_id / f"iter-{iteration:02d}"
+    return {
+        "base_dir": base,
+        "output_path": base / "output.json",
+        "score_path": base / "score.json",
+        "summary_path": base / "iteration-summary.json",
+    }
+
+
+def load_codex_scoring_matrix() -> dict[str, Any]:
+    matrix = _load_json(CODEX_SCORING_MATRIX_PATH)
+    dims = matrix.get("dimensions")
+    if not isinstance(dims, list):
+        raise ValueError("codex scoring matrix: dimensions must be a list")
+    if sum(int(item.get("weight", 0)) for item in dims if isinstance(item, dict)) != 100:
+        raise ValueError("codex scoring matrix: dimension weights must sum to 100")
+    return matrix
+
+
+def load_iteration_artifact_schema() -> dict[str, Any]:
+    schema = _load_json(ITERATION_ARTIFACT_SCHEMA_PATH)
+    artifacts = schema.get("artifacts")
+    if not isinstance(artifacts, dict):
+        raise ValueError("iteration artifact schema: artifacts section missing")
+    return schema
+
+
+def validate_score_artifact(score_payload: dict[str, Any]) -> dict[str, Any]:
+    matrix = load_codex_scoring_matrix()
+    schema = load_iteration_artifact_schema()
+    required = (
+        schema.get("artifacts", {})
+        .get("score.json", {})
+        .get("required_fields", [])
+    )
+    if not isinstance(required, list):
+        raise ValueError("iteration artifact schema: invalid score.json required_fields")
+    missing = [field for field in required if field not in score_payload]
+    if missing:
+        raise ValueError(f"score.json missing required fields: {', '.join(missing)}")
+
+    dimension_scores = score_payload.get("dimension_scores")
+    if not isinstance(dimension_scores, dict):
+        raise ValueError("score.json dimension_scores must be an object")
+
+    expected_dims = {
+        item["id"]
+        for item in matrix.get("dimensions", [])
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    missing_dims = [dim for dim in expected_dims if dim not in dimension_scores]
+    if missing_dims:
+        raise ValueError(f"score.json missing dimension scores: {', '.join(sorted(missing_dims))}")
+
+    threshold = matrix.get("thresholds", {}).get("pass_score")
+    payload_threshold = score_payload.get("threshold")
+    if payload_threshold != threshold:
+        raise ValueError("score.json threshold does not match scoring matrix")
+
+    total_score = float(score_payload.get("total_score", 0.0))
+    pass_fail = bool(score_payload.get("pass_fail"))
+    if pass_fail and total_score < float(threshold):
+        raise ValueError("score.json pass_fail=true but total_score below threshold")
+    return score_payload
+
+
+def _collect_failed_checks(case_outputs: list[dict[str, Any]]) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for entry in case_outputs:
+        scores = entry.get("scores", {})
+        for check in scores.get("critical_failures", []):
+            if check not in seen:
+                seen.add(check)
+                ordered.append(check)
+    return ordered
+
+
+def _determine_failed_dimensions(
+    matrix: dict[str, Any], dimension_scores: dict[str, Any]
+) -> list[str]:
+    failed: list[str] = []
+    for item in matrix.get("dimensions", []):
+        dim_id = item.get("id")
+        weight = float(item.get("weight", 0))
+        if not dim_id:
+            continue
+        score = float(dimension_scores.get(dim_id, 0.0))
+        if score < weight:
+            failed.append(dim_id)
+    return failed
+
+
+def _build_output_artifact_payload(
+    *,
+    loop_run_id: str,
+    iteration: int,
+    prompt_version: str,
+    prompt_text: str,
+    case_outputs: list[dict[str, Any]],
+) -> dict[str, Any]:
+    cases: list[dict[str, Any]] = []
+    for entry in case_outputs:
+        cases.append(
+            {
+                "case_id": entry.get("case_id"),
+                "input": entry.get("input"),
+                "outputs": entry.get("outputs", []),
+                "selected_output": entry.get("selected_output"),
+                "scores": entry.get("scores", {}),
+            }
+        )
+    return {
+        "run_id": loop_run_id,
+        "iteration": iteration,
+        "prompt_version": prompt_version,
+        "prompt_text": prompt_text,
+        "agent_id": PILOT_AGENT_ID,
+        "cases": cases,
+    }
+
+
+def _build_score_artifact_payload(
+    *,
+    loop_run_id: str,
+    iteration: int,
+    prompt_version: str,
+    evaluation: dict[str, Any],
+    baseline_delta: float,
+    stop_reason: str,
+    matrix: dict[str, Any],
+) -> dict[str, Any]:
+    case_outputs = evaluation.get("case_outputs") or []
+    failed_checks = _collect_failed_checks(case_outputs)
+    dimension_scores = evaluation.get("average_dimensions", {})
+    thresholds = matrix.get("thresholds", {})
+    return {
+        "run_id": loop_run_id,
+        "iteration": iteration,
+        "prompt_version": prompt_version,
+        "scoring_matrix_version": matrix.get("scoring_matrix_version"),
+        "threshold": thresholds.get("pass_score"),
+        "total_score": evaluation.get("total_score"),
+        "pass_fail": evaluation.get("pass_fail"),
+        "dimension_scores": dimension_scores,
+        "failed_checks": failed_checks,
+        "baseline_delta": baseline_delta,
+        "stop_reason": stop_reason,
+    }
+
+
+def _build_iteration_summary_payload(
+    *,
+    loop_run_id: str,
+    iteration: int,
+    prompt_version: str,
+    evaluation: dict[str, Any],
+    baseline_delta: float,
+    stop_reason: str,
+    next_action: str,
+    matrix: dict[str, Any],
+    paths: dict[str, Path],
+) -> dict[str, Any]:
+    case_outputs = evaluation.get("case_outputs") or []
+    failed_checks = _collect_failed_checks(case_outputs)
+    failed_dimensions = _determine_failed_dimensions(
+        matrix, evaluation.get("average_dimensions", {})
+    )
+    return {
+        "run_id": loop_run_id,
+        "iteration": iteration,
+        "prompt_version": prompt_version,
+        "output_path": str(paths["output_path"]),
+        "score_path": str(paths["score_path"]),
+        "total_score": evaluation.get("total_score"),
+        "pass_fail": evaluation.get("pass_fail"),
+        "baseline_delta": baseline_delta,
+        "stop_reason": stop_reason,
+        "next_action": next_action,
+        "failed_dimensions": failed_dimensions,
+        "failed_checks": failed_checks,
+        "improver": {
+            "failed_dimensions": failed_dimensions,
+            "failed_checks": failed_checks,
+            "baseline_delta": baseline_delta,
+        },
+    }
+
+
+def _write_iteration_artifacts(
+    *,
+    loop_run_id: str,
+    iteration: int,
+    prompt_version: str,
+    prompt_text: str,
+    evaluation: dict[str, Any],
+    baseline_delta: float,
+    stop_reason: str,
+    next_action: str,
+    matrix: dict[str, Any],
+    paths: dict[str, Path],
+) -> None:
+    case_outputs = evaluation.get("case_outputs") or []
+    output_payload = _build_output_artifact_payload(
+        loop_run_id=loop_run_id,
+        iteration=iteration,
+        prompt_version=prompt_version,
+        prompt_text=prompt_text,
+        case_outputs=case_outputs,
+    )
+    _write_json(paths["output_path"], output_payload)
+
+    score_payload = _build_score_artifact_payload(
+        loop_run_id=loop_run_id,
+        iteration=iteration,
+        prompt_version=prompt_version,
+        evaluation=evaluation,
+        baseline_delta=baseline_delta,
+        stop_reason=stop_reason,
+        matrix=matrix,
+    )
+    _write_json(paths["score_path"], score_payload)
+
+    summary_payload = _build_iteration_summary_payload(
+        loop_run_id=loop_run_id,
+        iteration=iteration,
+        prompt_version=prompt_version,
+        evaluation=evaluation,
+        baseline_delta=baseline_delta,
+        stop_reason=stop_reason,
+        next_action=next_action,
+        matrix=matrix,
+        paths=paths,
+    )
+    _write_json(paths["summary_path"], summary_payload)
 
 
 def _normalize_menu_hashtag(menu_item: str) -> str:
@@ -169,6 +419,7 @@ def evaluate_prompt_against_pilot(
         raise ValueError("pilot dataset cases must be a list")
 
     per_case_scores: list[dict[str, Any]] = []
+    case_outputs: list[dict[str, Any]] = []
     aggregate_dimensions = {
         "schema_validity": [],
         "menu_item_mention": [],
@@ -184,6 +435,7 @@ def evaluate_prompt_against_pilot(
         case_input = case.get("input", {})
         run_scores: list[dict[str, Any]] = []
         run_totals: list[float] = []
+        run_outputs: list[Any] = []
         for _ in range(reruns_per_candidate):
             output = _invoke_mock_llm(
                 prompt_text, case_input if isinstance(case_input, dict) else {}
@@ -191,8 +443,10 @@ def evaluate_prompt_against_pilot(
             scored = _score_output(
                 case_input if isinstance(case_input, dict) else {}, output
             )
-            run_scores.append(scored)
+            scored_with_output = {**scored, "output": output}
+            run_scores.append(scored_with_output)
             run_totals.append(float(scored["total_score"]))
+            run_outputs.append(output)
         chosen_total = median(run_totals) if run_totals else 0.0
         chosen = (
             min(
@@ -205,19 +459,28 @@ def evaluate_prompt_against_pilot(
                 "critical_failures": ["no_run_scores"],
                 "total_score": 0.0,
                 "pass_fail": False,
+                "output": None,
             }
         )
         dimensions = chosen["dimensions"]
         for key in aggregate_dimensions:
             aggregate_dimensions[key].append(float(dimensions[key]))
         totals.append(float(chosen["total_score"]))
-        per_case_scores.append(
+        case_score = {
+            "case_id": case.get("case_id"),
+            "dimensions": dimensions,
+            "critical_failures": chosen["critical_failures"],
+            "total_score": chosen["total_score"],
+            "pass_fail": chosen["pass_fail"],
+        }
+        per_case_scores.append(case_score)
+        case_outputs.append(
             {
                 "case_id": case.get("case_id"),
-                "dimensions": dimensions,
-                "critical_failures": chosen["critical_failures"],
-                "total_score": chosen["total_score"],
-                "pass_fail": chosen["pass_fail"],
+                "input": case_input,
+                "outputs": run_outputs,
+                "selected_output": chosen.get("output"),
+                "scores": case_score,
             }
         )
 
@@ -245,6 +508,7 @@ def evaluate_prompt_against_pilot(
         "model_id": model_id,
         "provider": provider,
         "per_case_scores": per_case_scores,
+        "case_outputs": case_outputs,
         "average_dimensions": avg_dimensions,
         "total_score": total_score,
         "pass_fail": pass_fail,
@@ -300,8 +564,14 @@ def _improve_prompt_text(prompt_text: str, latest_eval: dict[str, Any]) -> str:
 
 
 def run_pilot_improvement_loop(
-    *, max_iterations: int = 5, reruns_per_candidate: int = 3
+    *,
+    max_iterations: int = 5,
+    reruns_per_candidate: int = 3,
+    artifacts_base_dir: Path | None = None,
 ) -> dict[str, Any]:
+    artifacts_root = artifacts_base_dir or PILOT_OUTPUTS_DIR / "runs"
+    scoring_matrix = load_codex_scoring_matrix()
+    loop_run_id = f"pilot_loop_{uuid4().hex[:16]}"
     baseline = run_pilot_baseline(reruns_per_candidate=reruns_per_candidate)
     baseline_total = float(baseline["total_score"])
     baseline_critical = baseline["average_dimensions"]
@@ -333,6 +603,13 @@ def run_pilot_improvement_loop(
         min_delta_met = baseline_delta >= 8.0
         stop_condition = threshold_met and min_delta_met and regression_guard
 
+        iteration_stop_reason = "stop_condition_met" if stop_condition else "below_threshold"
+        next_action = "stop" if stop_condition else "improve"
+        failed_checks = _collect_failed_checks(evaluation.get("case_outputs") or [])
+        failed_dimensions = _determine_failed_dimensions(
+            scoring_matrix, evaluation.get("average_dimensions", {})
+        )
+
         iteration_row = {
             **evaluation,
             "prompt_text": current_prompt,
@@ -341,7 +618,28 @@ def run_pilot_improvement_loop(
             "threshold_met": threshold_met,
             "min_delta_met": min_delta_met,
             "stop_condition": stop_condition,
+            "stop_reason": iteration_stop_reason,
+            "next_action": next_action,
+            "failed_checks": failed_checks,
+            "failed_dimensions": failed_dimensions,
         }
+
+        iteration_paths = get_iteration_paths(
+            run_id=loop_run_id, iteration=iteration, base_dir=artifacts_root
+        )
+        _write_iteration_artifacts(
+            loop_run_id=loop_run_id,
+            iteration=iteration,
+            prompt_version=prompt_version,
+            prompt_text=current_prompt,
+            evaluation=evaluation,
+            baseline_delta=baseline_delta,
+            stop_reason=iteration_stop_reason,
+            next_action=next_action,
+            matrix=scoring_matrix,
+            paths=iteration_paths,
+        )
+
         iterations.append(iteration_row)
 
         if stop_condition:
@@ -351,7 +649,7 @@ def run_pilot_improvement_loop(
         current_prompt = _improve_prompt_text(current_prompt, evaluation)
 
     return {
-        "run_id": f"pilot_loop_{uuid4().hex[:16]}",
+        "run_id": loop_run_id,
         "run_timestamp": _utc_now(),
         "pilot_version": PILOT_VERSION,
         "agent_id": PILOT_AGENT_ID,

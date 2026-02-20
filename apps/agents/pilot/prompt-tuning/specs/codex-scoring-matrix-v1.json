@@ -1,0 +1,48 @@
+{
+  "scoring_matrix_version": "codex-scoring-v1",
+  "orchestrator": "codex",
+  "agent_id": "marketer-strategist",
+  "thresholds": {
+    "pass_score": 80,
+    "critical_fail_if_any": [
+      "invalid_json",
+      "missing_required_field"
+    ]
+  },
+  "dimensions": [
+    {
+      "id": "schema_validity",
+      "type": "binary",
+      "weight": 20,
+      "scoring_rule": "20 if output is valid JSON and includes caption, cta, hashtags"
+    },
+    {
+      "id": "menu_item_mention",
+      "type": "binary",
+      "weight": 25,
+      "scoring_rule": "25 if caption references the menu_item exactly"
+    },
+    {
+      "id": "premium_tone",
+      "type": "rubric",
+      "weight": 20,
+      "scoring_rule": "0-20 based on premium wording markers"
+    },
+    {
+      "id": "cta_actionability",
+      "type": "rubric",
+      "weight": 20,
+      "scoring_rule": "20 if CTA starts with action verb, partial otherwise"
+    },
+    {
+      "id": "hashtag_quality",
+      "type": "binary",
+      "weight": 15,
+      "scoring_rule": "15 if 2-4 hashtags and each starts with #"
+    }
+  ],
+  "calculation": {
+    "total_score": "sum(dimension_scores)",
+    "pass_condition": "total_score >= 80 and no critical_fail_if_any"
+  }
+}
