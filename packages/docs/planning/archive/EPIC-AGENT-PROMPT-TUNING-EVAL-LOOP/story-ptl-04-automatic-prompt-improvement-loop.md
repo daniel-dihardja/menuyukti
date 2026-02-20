@@ -2,7 +2,8 @@
 
 ## Story Metadata
 - Created Date: 2026-02-20
-- Status: `todo`
+- Status: `complete`
+- Completed Date: 2026-02-20
 - Parent: EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP
 - Story Points: `5`
 
@@ -30,3 +31,22 @@ Implement the automatic loop that improves prompt candidates and re-evaluates un
 - Prompt improvement loop implementation.
 - Iteration decision log/artifact outputs.
 - Automated pass/fail decision logic.
+
+## Implementation Notes
+- Implemented automatic improvement loop logic:
+  - `apps/agents/src/agent/prompt_tuning_pilot.py`
+  - `run_pilot_improvement_loop()`
+  - `_improve_prompt_text()`
+- Enforced mocked fixture input usage via pilot fixture paths and data policy.
+- Enforced threshold + baseline-delta + regression-guard stop condition.
+- Added loop execution CLI path:
+  - `apps/agents/scripts/run_prompt_tuning_pilot.py`
+  - `--mode loop`
+- Added unit tests for iterative loop stop behavior:
+  - `apps/agents/tests/unit_tests/test_prompt_tuning_pilot_loop.py`
+
+## Test Evidence
+- `uv run --project apps/agents pytest apps/agents/tests/unit_tests/test_prompt_tuning_pilot_loop.py`
+  - Result: 3 passed
+- `uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_pilot.py --mode loop --fail-on-unapproved`
+  - Result: loop run completed with selected candidate and pass status

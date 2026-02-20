@@ -80,7 +80,23 @@ Example scenario:
   - report lists each targeted agent and approval status
   - `approved_prompt_versions` contains approved versions only
   - if one agent has no approved candidate, command exits with code `1`
-  - if both pass, freeze-map is written and can be used as release baseline
+- if both pass, freeze-map is written and can be used as release baseline
+
+Run pilot prompt tuning workflow (mocked fixture only):
+
+```bash
+uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_pilot.py --mode baseline
+uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_pilot.py --mode loop --write-freeze-map --write-readiness-report --fail-on-unapproved
+```
+
+What this does:
+- Uses fixed mocked fixture dataset and fixed scoring spec for `marketer-strategist`.
+- Runs baseline and iterative prompt-improvement loop with deterministic settings.
+- Writes report JSON to:
+  - `apps/agents/eval-artifacts/pilot/prompt-tuning-pilot-latest.json`
+- Optionally writes:
+  - freeze map: `apps/agents/prompts/PILOT_PROMPT_VERSION_FREEZE_V1.json`
+  - readiness report: `apps/agents/eval-artifacts/pilot/readiness-report.md`
 
 ## Current Endpoints
 
@@ -116,12 +132,14 @@ Agent workflows:
 - `apps/agents/src/agent/prompt_contracts.py`: prompt contract registry + required output keys.
 - `apps/agents/prompts/**`: versioned prompt template files.
 - `apps/agents/eval-fixtures/prompt-tuning-pilot/**`: mocked pilot dataset fixtures.
+- `apps/agents/scripts/run_prompt_tuning_pilot.py`: pilot baseline/loop CLI.
 - `apps/agents/tests/integration_tests/*.py`: integration coverage by story/capability.
 - `apps/agents/tests/integration_tests/test_mocked_input_baseline_per_agent.py`: mandatory per-agent mocked baseline gate.
 
 Pilot dataset contract reference:
 - `packages/docs/contracts/AGENT_PROMPT_TUNING_PILOT_MARKETER_STRATEGIST_DATASET_V1.md`
 - `packages/docs/contracts/AGENT_PROMPT_TUNING_PILOT_SCORING_SPEC_V1.md`
+- `packages/docs/contracts/AGENT_PROMPT_TUNING_PILOT_WORKFLOW_V1.md`
 
 ## Notes
 

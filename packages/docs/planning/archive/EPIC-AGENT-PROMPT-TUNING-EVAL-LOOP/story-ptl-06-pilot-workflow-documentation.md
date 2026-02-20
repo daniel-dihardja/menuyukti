@@ -2,7 +2,8 @@
 
 ## Story Metadata
 - Created Date: 2026-02-20
-- Status: `todo`
+- Status: `complete`
+- Completed Date: 2026-02-20
 - Parent: EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP
 - Story Points: `3`
 
@@ -32,3 +33,17 @@ Publish practical documentation for operating, debugging, and extending the pilo
 - Scoring spec guide document.
 - Artifact interpretation and troubleshooting document.
 - "Onboard Next Agent" checklist.
+
+## Implementation Notes
+- Added pilot workflow runbook covering:
+  - baseline and loop commands
+  - scoring-spec authoring guidance
+  - artifact interpretation
+  - troubleshooting
+  - onboarding checklist
+  - File: `packages/docs/contracts/AGENT_PROMPT_TUNING_PILOT_WORKFLOW_V1.md`
+- Updated agents README to reference workflow docs:
+  - `apps/agents/README.md`
+
+## Test Evidence
+- Test impact: N/A (documentation-only story)

@@ -2,7 +2,8 @@
 
 ## Story Metadata
 - Created Date: 2026-02-20
-- Status: `todo`
+- Status: `complete`
+- Completed Date: 2026-02-20
 - Parent: EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP
 - Story Points: `3`
 
@@ -30,3 +31,26 @@ Freeze the winning pilot prompt version and publish a readiness report that dete
 - Prompt freeze artifact update.
 - Pilot readiness report template/output.
 - Scale recommendation checklist.
+
+## Implementation Notes
+- Added pilot freeze-map writing behavior:
+  - `apps/agents/src/agent/prompt_tuning_pilot.py`
+  - `write_pilot_freeze_map()`
+- Added pilot readiness report generation:
+  - `apps/agents/src/agent/prompt_tuning_pilot.py`
+  - `write_pilot_readiness_report()`
+- Added CLI flags:
+  - `--write-freeze-map`
+  - `--write-readiness-report`
+- Freeze artifact path:
+  - `apps/agents/prompts/PILOT_PROMPT_VERSION_FREEZE_V1.json`
+- Updated agents README with pilot command usage:
+  - `apps/agents/README.md`
+
+## Test Evidence
+- `uv run --project apps/agents pytest apps/agents/tests/unit_tests/test_prompt_tuning_pilot_loop.py`
+  - Result: 3 passed
+- `uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_pilot.py --mode loop --write-freeze-map --write-readiness-report --fail-on-unapproved`
+  - Result:
+    - freeze map written
+    - readiness report written

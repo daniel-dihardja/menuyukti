@@ -2,7 +2,8 @@
 
 ## Story Metadata
 - Created Date: 2026-02-20
-- Status: `todo`
+- Status: `complete`
+- Completed Date: 2026-02-20
 - Parent: EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP
 - Story Points: `5`
 
@@ -30,3 +31,22 @@ Create prompt v1 and a baseline evaluation runner that scores the pilot dataset 
 - Prompt v1 artifact.
 - Baseline evaluation runner implementation.
 - Baseline result artifact/report.
+
+## Implementation Notes
+- Added pilot baseline prompt artifact:
+  - `apps/agents/prompts/marketer-strategist/pilot-v1.txt`
+- Added pilot baseline evaluation engine:
+  - `apps/agents/src/agent/prompt_tuning_pilot.py`
+  - `run_pilot_baseline()`
+  - `evaluate_prompt_against_pilot()`
+- Added CLI command for baseline execution:
+  - `apps/agents/scripts/run_prompt_tuning_pilot.py`
+  - `--mode baseline`
+- Added unit coverage for baseline output shape:
+  - `apps/agents/tests/unit_tests/test_prompt_tuning_pilot_loop.py`
+
+## Test Evidence
+- `uv run --project apps/agents pytest apps/agents/tests/unit_tests/test_prompt_tuning_pilot_dataset.py apps/agents/tests/unit_tests/test_prompt_tuning_pilot_scoring_spec.py apps/agents/tests/unit_tests/test_prompt_tuning_pilot_loop.py`
+  - Result: 7 passed
+- `uv run --project apps/agents python apps/agents/scripts/run_prompt_tuning_pilot.py --mode baseline`
+  - Result: report written to `apps/agents/eval-artifacts/pilot/prompt-tuning-pilot-latest.json`
