@@ -2,7 +2,8 @@
 
 ## Story Metadata
 - Created Date: 2026-02-20
-- Status: `todo`
+- Completed Date: 2026-02-20
+- Status: `complete`
 - Parent: EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP
 - Story Points: `5`
 - Execution Order: 3 (per reopened execution order after PTL-12)
@@ -55,3 +56,11 @@ Implement the loop that applies iterating prompt versions to mocked input fixtur
 - Iteration runner wiring between prompt candidate, mocked fixtures, and test-agent invocation.
 - Updated loop report schema with per-iteration execution evidence and artifact paths.
 - Test coverage for pass path and below-threshold repeat path.
+
+## Implementation Notes
+- Added helper routines in `apps/agents/src/agent/pilot/prompt_tuning.py` that build and write `output.json`, `score.json`, and `iteration-summary.json` for every iteration and include failed-dimension/check context plus artifact paths.
+- Updated the pilot scoring schema/specs under `apps/agents/pilot/prompt-tuning/specs/` so the artifact contract matches exactly what the loop emits, and added `run_pilot_improvement_loop()` tests in `apps/agents/tests/unit_tests/test_prompt_tuning_pilot_loop.py` that assert the artifacts exist and contain the required fields.
+- Documented the mocked fixture and artifact samples in `packages/docs/planning/blueprints/mock-inputs.md` and `packages/docs/planning/blueprints/iteration-artifacts-samples.md`, then referenced those blueprints from the PTL-11 story so the loop behavior stays tied to a simple example run.
+
+## Testing
+- `python3 -m pytest apps/agents/tests/unit_tests/test_prompt_tuning_pilot_scoring_contracts.py apps/agents/tests/unit_tests/test_prompt_tuning_pilot_loop.py` *(fails: `pytest` is not installed locally and `python3 -m pip install pytest` cannot reach PyPI – `[Errno 8] nodename nor servname provided, or not known`).*

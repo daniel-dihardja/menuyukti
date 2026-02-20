@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from agent.pilot.prompt_tuning import (
@@ -55,3 +56,32 @@ def test_pilot_freeze_map_and_readiness_report_outputs(tmp_path: Path) -> None:
     assert final_prompt_path is not None
     assert final_prompt_path.exists()
     assert final_prompt_path.read_text(encoding="utf-8").strip() != ""
+
+
+def test_iteration_artifacts_written(tmp_path: Path) -> None:
+    base_dir = tmp_path / "pilot-iterations"
+    report = run_pilot_improvement_loop(
+        max_iterations=2,
+        reruns_per_candidate=1,
+        artifacts_base_dir=base_dir,
+    )
+
+    iteration_dir = base_dir / report["run_id"] / "iter-01"
+    assert iteration_dir.exists()
+
+    output_data = json.loads((iteration_dir / "output.json").read_text(encoding="utf-8"))
+    assert output_data["run_id"] == report["run_id"]
+    assert output_data["iteration"] == 1
+    assert "cases" in output_data
+
+    score_data = json.loads((iteration_dir / "score.json").read_text(encoding="utf-8"))
+    assert score_data["prompt_version"].startswith("pilot-candidate-")
+    assert "dimension_scores" in score_data
+    assert "failed_checks" in score_data
+    assert isinstance(score_data["pass_fail"], bool)
+
+    summary_data = json.loads((iteration_dir / "iteration-summary.json").read_text(encoding="utf-8"))
+    assert summary_data["run_id"] == report["run_id"]
+    assert summary_data["iteration"] == 1
+    assert summary_data["next_action"] in {"improve", "stop"}
+    assert summary_data["stop_reason"] in {"stop_condition_met", "below_threshold"}
