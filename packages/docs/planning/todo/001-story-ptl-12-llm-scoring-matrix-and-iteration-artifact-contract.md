@@ -5,6 +5,7 @@
 - Status: `todo`
 - Parent: EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP
 - Story Points: `5`
+- Execution Order: 2 (per reopened execution order after PTL-10)
 
 ## Goal
 Define the Codex-applied scoring matrix and file-based artifact contract so each iteration can be invoked, scored, and consumed by the next loop step.
@@ -38,3 +39,8 @@ Define the Codex-applied scoring matrix and file-based artifact contract so each
 - Scoring matrix specification artifact.
 - Runtime artifact schema specification.
 - Implementation notes for run-directory and per-iteration file layout.
+- Sample artifact blueprint linking back to `packages/docs/planning/blueprints/iteration-artifacts-samples.md`.
+
+## Sample Artifact Reference
+- Include an annotated `score.json` and `iteration-summary.json` example so the team can trace how the scoring matrix scores each dimension and how the loop records stop reasons.
+- Reference the blueprint when drafting documentation or tests that consume the artifact contract.

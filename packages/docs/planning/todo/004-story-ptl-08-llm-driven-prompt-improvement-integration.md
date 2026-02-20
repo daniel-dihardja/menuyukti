@@ -5,6 +5,7 @@
 - Status: `todo`
 - Parent: EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP
 - Story Points: `5`
+- Execution Order: 5 (per reopened execution order after PTL-07)
 
 ## Goal
 Integrate Codex-generated prompt revisions into the pilot loop so below-threshold iterations are improved by Codex orchestration.
@@ -18,6 +19,10 @@ Integrate Codex-generated prompt revisions into the pilot loop so below-threshol
 - Pass structured iteration diagnostics to Codex through artifact inputs.
 - Validate revised prompt contract before using next candidate.
 - Keep deterministic scoring gate unchanged as the final pass/fail authority.
+
+## Feedback Loop Example
+- Reference the happy/failing artifact samples so readers can see exactly when the improver should run and how the new prompt version is stitched back into the loop.
+- Document the file path and metadata updates (prompt version, candidate tag, improved-instruction summary) that PTL-08 must produce for PTL-09 validation and PTL-10 consumer readiness.
 
 ## Acceptance Criteria
 - For below-threshold iterations, next prompt candidate comes from Codex improver output.

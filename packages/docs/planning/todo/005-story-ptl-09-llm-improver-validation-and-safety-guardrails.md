@@ -5,6 +5,7 @@
 - Status: `todo`
 - Parent: EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP
 - Story Points: `3`
+- Execution Order: 6 (per reopened execution order after PTL-08)
 
 ## Goal
 Add validation and guardrail coverage for Codex-improver outputs so the pilot loop remains safe, traceable, and reproducible.
@@ -18,6 +19,10 @@ Add validation and guardrail coverage for Codex-improver outputs so the pilot lo
 - Add tests for preserved required output constraints after prompt revision.
 - Ensure per-iteration reports include clear stop/failure reasons related to improver behavior.
 - Update documentation to explain improver failure and recovery behavior.
+
+## Troubleshooting Example
+- Use the failing sample in `packages/docs/planning/blueprints/iteration-artifacts-samples.md` to show how the guardrail logic detects missing CTA/Menu Item coverage and how the fallback candidate is logged.
+- Document what evidence (score deltas, stop reason, guardrail trigger) should appear next to each archived story so engineers instantly see if a run failed for safety reasons.
 
 ## Acceptance Criteria
 - Unit/integration tests cover happy path and malformed-improver-output path.

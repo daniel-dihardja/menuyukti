@@ -5,6 +5,7 @@
 - Status: `todo`
 - Parent: EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP
 - Story Points: `3`
+- Execution Order: 4 (per reopened execution order after PTL-11)
 
 ## Goal
 Define a pilot-only Codex improver protocol that describes how iteration results are converted into revised prompt candidates.
@@ -18,6 +19,10 @@ Define a pilot-only Codex improver protocol that describes how iteration results
 - Define improver output contract (revised prompt, rationale, preserved constraints).
 - Define pilot-only scope boundary (no global rollout in this story).
 - Document safety rules for schema preservation and forbidden changes.
+
+## Reference Run Integration
+- Explain how a failing artifact from `packages/docs/planning/blueprints/iteration-artifacts-samples.md` maps to the improver inputs so the team can follow one concrete example from PTL-11.
+- Capture how the improver output candidate is versioned (e.g., `v1-improved-2`) and what metadata fields the loop expects before it can proceed.
 
 ## Acceptance Criteria
 - A versioned contract/spec doc exists for the pilot Codex improver protocol.

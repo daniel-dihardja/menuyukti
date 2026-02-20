@@ -95,6 +95,27 @@ Prove a reliable workflow that automatically improves one agent prompt through i
 5. `PTL-08`: integrate Codex-driven prompt improvement in loop.
 6. `PTL-09`: add improver validation and safety guardrails.
 
+## Current Open Story Queue
+1. `PTL-12` (Execution Order 2, Status: `todo`): scoring matrix + runtime artifact schema that drives the loop; see `packages/docs/planning/todo/001-story-ptl-12-llm-scoring-matrix-and-iteration-artifact-contract.md`.
+2. `PTL-11` (Execution Order 3, Status: `todo`): iteration loop invocation with mocked fixtures feeding agent + aggregator; see `packages/docs/planning/todo/002-story-ptl-11-iterating-prompt-and-mocked-input-invocation-loop.md`.
+3. `PTL-07` (Execution Order 4, Status: `todo`): Codex improver protocol spec (pilot-only) that defines contracts and guardrails; see `packages/docs/planning/todo/003-story-ptl-07-llm-prompt-improver-agent-spec-pilot-only.md`.
+4. `PTL-08` (Execution Order 5, Status: `todo`): Codex-driven prompt improvement integration that wires the improver output into the loop; see `packages/docs/planning/todo/004-story-ptl-08-llm-driven-prompt-improvement-integration.md`.
+5. `PTL-09` (Execution Order 6, Status: `todo`): validation & safety guardrails for improver outputs plus documentation updates; see `packages/docs/planning/todo/005-story-ptl-09-llm-improver-validation-and-safety-guardrails.md`.
+
+## Workflow Walkthrough
+- PTL-10 defines the pilot test agent + contract, PTL-12 locks down how scoring artifacts look, and PTL-11 wires the mocked inputs and iteration runner so the artifacts are generated reliably.
+- PTL-07/PTL-08 reuse the artifact samples in `packages/docs/planning/blueprints/iteration-artifacts-samples.md` to show how Codex receives failing dimensions, emits a candidate, and feeds the loop.
+- PTL-09 closes the loop by matching guardrail tests/safety notes to the documented `iteration-summary.json` stop reasons.
+
+```mermaid
+flowchart LR
+    A["PTL-10: pilot test agent contract"] --> B["PTL-12: scoring matrix + artifacts"]
+    B --> C["PTL-11: iteration runner + mocked input fixture"]
+    C --> D["PTL-07: improver protocol + reference artifacts"]
+    D --> E["PTL-08: integrate Codex revisions into loop"]
+    E --> F["PTL-09: validation & guardrails + docs"]
+```
+
 ## Pilot Example (Concrete)
 - Agent: `marketer-strategist`
 - Data source: mocked fixtures only (no live DB/API input)

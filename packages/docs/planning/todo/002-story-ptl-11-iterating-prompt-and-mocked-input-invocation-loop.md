@@ -5,6 +5,7 @@
 - Status: `todo`
 - Parent: EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP
 - Story Points: `5`
+- Execution Order: 3 (per reopened execution order after PTL-12)
 
 ## Goal
 Implement the loop that applies iterating prompt versions to mocked input fixtures and invokes the pilot test agent each cycle.
@@ -21,6 +22,20 @@ Implement the loop that applies iterating prompt versions to mocked input fixtur
 - Produce `iteration-summary.json` for loop decision state.
 - Feed failure diagnostics to Codex improver for next prompt candidate.
 - Repeat until pass criteria or max iterations.
+
+## Mocked Input Set
+- Define the minimal fixture schema (restaurant_name, menu_item, target_audience, tone, objective, scenario_id) in one document so the loop is repeatable.
+- Reference a concrete fixture (e.g., premium brunch menu with “Golden Tartine” + “On-trend caption”) so implementers can verify the same inputs across PTL-11 runs.
+- Store the fixture in a dedicated doc or JSON under `packages/docs/planning/blueprints/mock-inputs.md` for quick reference when wiring the pilot agent.
+
+## Reference Run Example
+- Walk through how a single iteration is executed:
+  1. Start with `prompt-version: v1` and apply it to the mocked input fixture.
+  2. The test agent writes `output.json` inside `runs/<run_id>/iter-01/`.
+  3. PTL-12 scoring produces `score.json` and the loop writes `iteration-summary.json`.
+  4. Codex receives the failing-dimension summary and chooses an improved prompt version.
+  5. The loop records the artifacts so PTL-07/PTL-08 can consume them.
+- Link this narrative with the sample artifacts in `packages/docs/planning/blueprints/iteration-artifacts-samples.md` to illustrate actual file contents.
 
 ## Acceptance Criteria
 - Each iteration executes test-agent calls using mocked fixtures only.
