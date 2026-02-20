@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from agent.pilot.prompt_tuning import (
+    CodexImproverClient,
+    ImproverCandidate,
     run_pilot_baseline,
     run_pilot_improvement_loop,
     write_selected_final_prompt,
@@ -100,3 +103,33 @@ def test_iteration_artifacts_written(tmp_path: Path) -> None:
     assert "candidate_id" in improver_output
     assert improver_output["constraints_preserved"]
     assert summary_data["improver"]["candidate_id"] == improver_output["candidate_id"]
+
+
+def test_improver_guardrails_reject_bad_candidate(tmp_path: Path) -> None:
+    class BrokenImprover(CodexImproverClient):
+        def generate_candidate(
+            self, *, payload: dict[str, Any], iteration: int
+        ) -> ImproverCandidate | None:
+            return ImproverCandidate(
+                candidate_id="bad",
+                prompt_text="cheap output without constraints",
+                rationale="unsafe",
+                constraints_preserved=[],
+            )
+
+    base_dir = tmp_path / "pilot-guardrails"
+    report = run_pilot_improvement_loop(
+        max_iterations=1,
+        reruns_per_candidate=1,
+        artifacts_base_dir=base_dir,
+        improver_client=BrokenImprover(),
+    )
+
+    iteration_dir = base_dir / report["run_id"] / "iter-01"
+    summary_data = json.loads(
+        (iteration_dir / "iteration-summary.json").read_text(encoding="utf-8")
+    )
+    assert summary_data["next_action"] == "improver_failed"
+    assert summary_data["improver"]["guardrail_reasons"]
+    assert "forbidden phrase" in summary_data["improver"]["guardrail_reasons"][0]
+    assert report["iterations"][-1]["improver_failure_reasons"]

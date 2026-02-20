@@ -82,6 +82,22 @@ class CodexImproverClient:
         )
 
 
+def _check_improver_guardrails(
+    candidate: ImproverCandidate | None,
+) -> tuple[bool, list[str]]:
+    if candidate is None:
+        return False, ["improver_candidate_missing"]
+    text = candidate.prompt_text.lower()
+    reasons: list[str] = []
+    for phrase in IMPROVER_FORBIDDEN_PHRASES:
+        if phrase in text:
+            reasons.append(f"forbidden phrase '{phrase}' detected")
+    for constraint in IMPROVER_CONSTRAINTS:
+        if constraint.lower() not in text:
+            reasons.append(f"missing constraint '{constraint}'")
+    return (len(reasons) == 0, reasons)
+
+
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -266,6 +282,7 @@ def _build_iteration_summary_payload(
     matrix: dict[str, Any],
     paths: dict[str, Path],
     improver_output: dict[str, Any] | None = None,
+    guardrail_reasons: list[str] | None = None,
 ) -> dict[str, Any]:
     case_outputs = evaluation.get("case_outputs") or []
     failed_checks = _collect_failed_checks(case_outputs)
@@ -299,8 +316,11 @@ def _build_iteration_summary_payload(
                 "rationale": improver_output.get("rationale"),
                 "constraints_preserved": improver_output.get("constraints_preserved", []),
                 "safety_notes": improver_output.get("safety_notes", []),
+                "guardrail_reasons": guardrail_reasons or [],
             }
         )
+    else:
+        summary["improver"]["guardrail_reasons"] = guardrail_reasons or []
     return summary
 
 
@@ -318,6 +338,7 @@ def _write_iteration_artifacts(
     paths: dict[str, Path],
     improver_input: dict[str, Any] | None = None,
     improver_output: dict[str, Any] | None = None,
+    guardrail_reasons: list[str] | None = None,
 ) -> None:
     case_outputs = evaluation.get("case_outputs") or []
     output_payload = _build_output_artifact_payload(
@@ -351,6 +372,7 @@ def _write_iteration_artifacts(
         matrix=matrix,
         paths=paths,
         improver_output=improver_output,
+        guardrail_reasons=guardrail_reasons,
     )
     _write_json(paths["summary_path"], summary_payload)
 
@@ -706,6 +728,7 @@ def run_pilot_improvement_loop(
     max_iterations: int = 5,
     reruns_per_candidate: int = 3,
     artifacts_base_dir: Path | None = None,
+    improver_client: CodexImproverClient | None = None,
 ) -> dict[str, Any]:
     artifacts_root = artifacts_base_dir or PILOT_OUTPUTS_DIR / "runs"
     scoring_matrix = load_codex_scoring_matrix()
@@ -719,7 +742,7 @@ def run_pilot_improvement_loop(
     selected_candidate = None
     stop_reason = "max_iterations_reached"
     candidate_history: list[str] = []
-    improver_client = CodexImproverClient()
+    improver_client = improver_client or CodexImproverClient()
 
     for iteration in range(1, max_iterations + 1):
         prompt_used = current_prompt
@@ -754,6 +777,7 @@ def run_pilot_improvement_loop(
         improver_input_payload = None
         improver_output_payload = None
         candidate = None
+        guardrail_reasons: list[str] = []
 
         if not stop_condition:
             improver_input_payload = _build_improver_input_payload(
@@ -770,19 +794,24 @@ def run_pilot_improvement_loop(
             candidate = improver_client.generate_candidate(
                 payload=improver_input_payload, iteration=iteration
             )
-            if _validate_candidate(candidate):
+            guardrail_ok, guardrail_reasons = _check_improver_guardrails(candidate)
+            if _validate_candidate(candidate) and guardrail_ok:
                 current_prompt = candidate.prompt_text
                 candidate_history.append(candidate.candidate_id)
                 improver_output_payload = _serialize_improver_candidate(candidate)
             else:
                 next_action = "improver_failed"
+                failure_reasons = guardrail_reasons or ["codex_improver_invalid"]
                 improver_output_payload = {
                     "candidate_id": None,
                     "prompt_text": None,
                     "rationale": None,
                     "constraints_preserved": [],
-                    "safety_notes": ["codex_improver_invalid"],
+                    "safety_notes": failure_reasons,
                 }
+                guardrail_reasons = failure_reasons
+        else:
+            guardrail_reasons = []
         iteration_row = {
             **evaluation,
             "prompt_text": prompt_used,
@@ -801,6 +830,7 @@ def run_pilot_improvement_loop(
             "improver_constraints_preserved": candidate.constraints_preserved
             if candidate
             else [],
+            "improver_failure_reasons": guardrail_reasons,
         }
 
         iteration_paths = get_iteration_paths(
@@ -819,6 +849,7 @@ def run_pilot_improvement_loop(
             paths=iteration_paths,
             improver_input=improver_input_payload,
             improver_output=improver_output_payload,
+            guardrail_reasons=guardrail_reasons,
         )
 
         iterations.append(iteration_row)

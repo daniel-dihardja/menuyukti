@@ -95,14 +95,14 @@ Prove a reliable workflow that automatically improves one agent prompt through i
 5. `PTL-08`: integrate Codex-driven prompt improvement in loop.
 6. `PTL-09`: add improver validation and safety guardrails.
 
-## Completed Stories
 - `PTL-12` (Execution Order 2, Status: `complete`): Codex scoring matrix + iteration artifact contract; see `packages/docs/planning/archive/EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP/001-story-ptl-12-llm-scoring-matrix-and-iteration-artifact-contract.md`.
 - `PTL-11` (Execution Order 3, Status: `complete`): Iteration loop + mocked-input invocation; see `packages/docs/planning/archive/EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP/002-story-ptl-11-iterating-prompt-and-mocked-input-invocation-loop.md`.
 - `PTL-07` (Execution Order 4, Status: `complete`): Codex improver protocol spec; see `packages/docs/planning/archive/EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP/003-story-ptl-07-llm-prompt-improver-agent-spec-pilot-only.md`.
 - `PTL-08` (Execution Order 5, Status: `complete`): Codex-driven prompt improvement integration; see `packages/docs/planning/archive/EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP/004-story-ptl-08-llm-driven-prompt-improvement-integration.md`.
+- `PTL-09` (Execution Order 6, Status: `complete`): Codex improver validation & safety guardrails; see `packages/docs/planning/archive/EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP/005-story-ptl-09-llm-improver-validation-and-safety-guardrails.md`.
 
 ## Current Open Story Queue
-1. `PTL-09` (Execution Order 6, Status: `todo`): validation & safety guardrails for improver outputs plus documentation updates; see `packages/docs/planning/todo/005-story-ptl-09-llm-improver-validation-and-safety-guardrails.md`.
+1. None — all planned PTL stories for this epic are complete; repo remains ready for pilot readiness review.
 
 ## Workflow Walkthrough
 - PTL-10 defines the pilot test agent + contract, PTL-12 locks down how scoring artifacts look, and PTL-11 wires the mocked inputs and iteration runner so the artifacts are generated reliably.

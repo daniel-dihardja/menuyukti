@@ -177,3 +177,6 @@ This file shows how the loop records the failing dimensions, baseline impact, an
   "safety_notes": []
 }
 ```
+
+### Guardrail Outputs
+- `iteration-summary.json` records `improver_failure_reasons` (list) when Codex output fails guardrails and includes `improver.guardrail_reasons` within the improver object so operators can quickly see why the candidate was rejected.
