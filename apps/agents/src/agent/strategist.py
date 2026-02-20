@@ -13,6 +13,12 @@ from agent.llm_runtime import (
 )
 from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
+from menuyukti.agents.strategist import (
+    filter_priority_suggestions,
+    determine_plan_status,
+    generate_default_headline,
+    build_scheduler_handoff,
+)
 
 
 Confidence = Literal["high", "medium", "low"]
@@ -46,7 +52,9 @@ def generate_weekly_plan(payload: StrategistWeeklyPlanRequest) -> dict:
     run_id = f"run_{uuid4().hex[:16]}"
 
     if payload.readiness == "blocked":
-        llm = build_skipped_llm_result(runtime=runtime, reason_code="DATA_READINESS_BLOCKED")
+        llm = build_skipped_llm_result(
+            runtime=runtime, reason_code="DATA_READINESS_BLOCKED"
+        )
         return {
             "contract_version": payload.contract_version,
             "agent_id": agent_id,
@@ -63,7 +71,8 @@ def generate_weekly_plan(payload: StrategistWeeklyPlanRequest) -> dict:
             "llm": llm.to_public_dict(),
         }
 
-    priorities = [
+    # Deterministic priority filtering (convert Pydantic models to dicts)
+    suggestions_dicts = [
         {
             "rank": item.rank,
             "menu_item": item.menu_item,
@@ -73,19 +82,17 @@ def generate_weekly_plan(payload: StrategistWeeklyPlanRequest) -> dict:
             "rationale": item.rationale,
             "confidence": item.confidence,
         }
-        for item in payload.suggestions[:7]
+        for item in payload.suggestions
     ]
+    filtered_suggestions = filter_priority_suggestions(suggestions_dicts)
+    priorities = filtered_suggestions
 
-    status = "accepted" if len(priorities) > 0 else "degraded"
-    reason_code = "ALLOWED" if len(priorities) > 0 else "NO_ACTIONABLE_SUGGESTIONS"
-    if payload.readiness == "degraded":
-        status = "degraded"
-        reason_code = "DATA_READINESS_DEGRADED"
-    headline = (
-        "Weekly Instagram growth plan generated."
-        if len(priorities) > 0
-        else "No actionable suggestions were found for this week."
+    status, reason_code = determine_plan_status(
+        priorities_count=len(priorities),
+        readiness=payload.readiness,
     )
+    headline = generate_default_headline(priorities_count=len(priorities))
+
     prompt_contract = get_prompt_contract(agent_id, runtime.prompt_version)
     llm = execute_llm_step(
         agent_id=agent_id,
@@ -118,17 +125,6 @@ def generate_weekly_plan(payload: StrategistWeeklyPlanRequest) -> dict:
             "headline": headline,
             "priorities": priorities,
         },
-        "scheduler_handoff": {
-            "recommendations": [
-                {
-                    "menu_item": item["menu_item"],
-                    "daypart": item["suggested_daypart"],
-                    "offer_type": item["offer_type"],
-                    "confidence": item["confidence"],
-                    "rationale": item["rationale"],
-                }
-                for item in priorities
-            ],
-        },
+        "scheduler_handoff": build_scheduler_handoff(priorities),
         "llm": llm.to_public_dict(),
     }

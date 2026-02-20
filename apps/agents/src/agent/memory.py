@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from agent.llm_runtime import build_run_metadata, execute_llm_step, resolve_agent_status
 from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
+from menuyukti.agents.memory_context import get_memory_analytics
 
 
 RecommendationState = Literal["accepted", "rejected"]
@@ -35,20 +36,16 @@ def build_memory_context(payload: MemoryContextRequest) -> dict:
     agent_id = "agent-memory-tracker"
     runtime = get_agent_runtime_config(agent_id)
     run_id = f"mem_{payload.location_id}_{payload.analytics_id or 'na'}_{len(payload.events)}"
-    sorted_events = sorted(
-        payload.events,
-        key=lambda event: (event.version, event.created_at),
-        reverse=True,
-    )
-    recent = sorted_events[: payload.max_items]
-    accepted = sum(1 for event in recent if event.state == "accepted")
-    rejected = sum(1 for event in recent if event.state == "rejected")
 
-    continuity_signal = (
-        "stable"
-        if accepted >= rejected
-        else "caution"
-    )
+    # Deterministic memory analytics
+    events_dict = [event.model_dump() for event in payload.events]
+    analytics = get_memory_analytics(events_dict, max_items=payload.max_items)
+
+    accepted = analytics["accepted_count"]
+    rejected = analytics["rejected_count"]
+    continuity_signal = analytics["continuity_signal"]
+    recent = analytics["recent_events"]
+
     prompt_contract = get_prompt_contract(agent_id, runtime.prompt_version)
     llm = execute_llm_step(
         agent_id=agent_id,
@@ -83,7 +80,7 @@ def build_memory_context(payload: MemoryContextRequest) -> dict:
             "continuity_signal": continuity_signal,
             "accepted_count": accepted,
             "rejected_count": rejected,
-            "recent_events": [event.model_dump() for event in recent],
+            "recent_events": recent,
         },
         "llm": llm.to_public_dict(),
     }

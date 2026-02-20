@@ -8,6 +8,9 @@ from pydantic import BaseModel, Field
 from agent.llm_runtime import build_run_metadata, execute_llm_step, resolve_agent_status
 from agent.prompt_contracts import get_prompt_contract
 from agent.runtime_config import get_agent_runtime_config
+from menuyukti.agents.release_loop import (
+    evaluate_release_decision as _evaluate_release_decision,
+)
 
 
 Stage = Literal["shadow", "canary", "rollout"]
@@ -35,49 +38,26 @@ def evaluate_release_loop(payload: ReleaseLoopRequest) -> dict:
     agent_id = "learning-release-loop"
     runtime = get_agent_runtime_config(agent_id)
     run_id = f"run_{uuid4().hex[:16]}"
-    thresholds = {
-        "shadow_quality_min": payload.thresholds.get("shadow_quality_min", 0.6),
-        "shadow_contract_pass_min": payload.thresholds.get("shadow_contract_pass_min", 0.95),
-        "canary_error_max": payload.thresholds.get("canary_error_max", 0.05),
-        "canary_regression_max": payload.thresholds.get("canary_regression_max", 0.1),
-    }
 
-    reasons: list[str] = []
-    decision: Decision = "hold"
-    rollback_to_policy_version: str | None = None
-
-    shadow_ok = (
-        payload.metrics.shadow_quality_score >= thresholds["shadow_quality_min"]
-        and payload.metrics.shadow_contract_pass_rate >= thresholds["shadow_contract_pass_min"]
+    # Deterministic release decision logic
+    release_decision = _evaluate_release_decision(
+        stage=payload.stage,
+        candidate_policy_version=payload.candidate_policy_version,
+        baseline_policy_version=payload.baseline_policy_version,
+        shadow_quality_score=payload.metrics.shadow_quality_score,
+        shadow_contract_pass_rate=payload.metrics.shadow_contract_pass_rate,
+        canary_error_rate=payload.metrics.canary_error_rate,
+        canary_regression_rate=payload.metrics.canary_regression_rate,
+        prior_stage_pass=payload.prior_stage_pass,
+        thresholds=payload.thresholds,
     )
-    if not shadow_ok:
-        reasons.append("shadow_threshold_failed")
 
-    if payload.stage == "shadow":
-        decision = "advance" if shadow_ok else "hold"
-    elif payload.stage == "canary":
-        if not shadow_ok:
-            decision = "hold"
-        else:
-            canary_ok = (
-                payload.metrics.canary_error_rate <= thresholds["canary_error_max"]
-                and payload.metrics.canary_regression_rate <= thresholds["canary_regression_max"]
-            )
-            if canary_ok:
-                decision = "advance"
-            else:
-                decision = "rollback"
-                rollback_to_policy_version = payload.baseline_policy_version
-                if payload.metrics.canary_error_rate > thresholds["canary_error_max"]:
-                    reasons.append("canary_error_rate_exceeded")
-                if payload.metrics.canary_regression_rate > thresholds["canary_regression_max"]:
-                    reasons.append("canary_regression_exceeded")
-    else:  # rollout
-        if not payload.prior_stage_pass:
-            decision = "hold"
-            reasons.append("prior_stage_not_passed")
-        else:
-            decision = "advance"
+    decision: Decision = release_decision["decision"]
+    reasons: list[str] = release_decision["reasons"]
+    rollback_to_policy_version: str | None = release_decision[
+        "rollback_to_policy_version"
+    ]
+
     prompt_contract = get_prompt_contract(agent_id, runtime.prompt_version)
     llm = execute_llm_step(
         agent_id=agent_id,
@@ -110,6 +90,6 @@ def evaluate_release_loop(payload: ReleaseLoopRequest) -> dict:
             "reasons": reasons,
             "rollback_to_policy_version": rollback_to_policy_version,
         },
-        "thresholds": thresholds,
+        "thresholds": payload.thresholds,
         "llm": llm.to_public_dict(),
     }
