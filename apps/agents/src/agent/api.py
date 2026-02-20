@@ -19,6 +19,10 @@ from agent.simulation import WhatIfSimulationRequest, run_what_if_simulation
 from agent.strategist import StrategistWeeklyPlanRequest, generate_weekly_plan
 from agent.evaluation_harness import EvaluationHarnessRequest, run_evaluation_harness
 from agent.prompt_tuning import run_prompt_tuning_loop
+from agent.pilot.test_agent import (
+    PromptTuningTestAgentRequest,
+    run_prompt_tuning_test_agent,
+)
 
 load_dotenv()
 
@@ -111,3 +115,8 @@ async def evaluation_harness(payload: EvaluationHarnessRequest):
 @app.post("/agents/evaluation/prompt-tuning", response_model=None)
 async def prompt_tuning_loop(payload: EvaluationHarnessRequest):
     return run_prompt_tuning_loop(mode=payload.mode, agents=payload.agents)
+
+
+@app.post("/agents/pilot/prompt-tuning/test-agent", response_model=None)
+async def pilot_prompt_tuning_test_agent(payload: PromptTuningTestAgentRequest):
+    return run_prompt_tuning_test_agent(payload)

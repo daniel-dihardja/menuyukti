@@ -2,7 +2,8 @@
 
 ## Story Metadata
 - Created Date: 2026-02-20
-- Status: `todo`
+- Status: `complete`
+- Completed Date: 2026-02-20
 - Parent: EPIC-AGENT-PROMPT-TUNING-EVAL-LOOP
 - Story Points: `5`
 
@@ -82,3 +83,16 @@ First story in reopened epic execution order.
   - actionability
   - justification quality
   - readability/conciseness
+
+## Implementation Notes
+- Added pilot test-agent runtime module:
+  - `apps/agents/src/agent/pilot/test_agent.py`
+- Added pilot API endpoint:
+  - `POST /agents/pilot/prompt-tuning/test-agent`
+  - wiring in `apps/agents/src/agent/api.py`
+- Added integration tests for invocation and contract validation:
+  - `apps/agents/tests/integration_tests/test_pilot_prompt_tuning_test_agent.py`
+
+## Test Evidence
+- `uv run --project apps/agents pytest apps/agents/tests/integration_tests/test_pilot_prompt_tuning_test_agent.py`
+  - Result: 2 passed
