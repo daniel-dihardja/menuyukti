@@ -354,6 +354,53 @@ for aggressive_mode in [True, False]:
 3. Build `CoreInputs` (immutable, validated)
 4. Pass to downstream consumers
 
+### POS System Integration
+
+Menuyukti supports multiple POS systems through a **configuration-based mapping system**.
+
+**Canonical schema** (defined in `core/models/pos_transaction.py`):
+
+- `bill_number` - Order/transaction identifier
+- `menu` - Item name
+- `qty` - Quantity sold
+- `rate` - Unit price
+- `base_amt` - Pre-discount amount
+- `disc` - Discount amount
+- `tax` - Tax amount
+- `revenue` - Final revenue amount
+
+**Default POS system**: ESB (uses canonical column names directly)
+
+**Adding a new POS system** (e.g., Toast, Square, Clover):
+
+1. Add configuration to `core/models/pos_mapping.py`:
+
+```python
+POS_CONFIG = {
+    "ESB": (lambda x: "ESB" in str(x), 3, {}),
+    "Toast": (lambda x: "Toast" in str(x), 2, {
+        "Order ID": "bill_number",
+        "Item Name": "menu",
+        "Quantity": "qty",
+        # ... map Toast columns to canonical names
+    })
+}
+```
+
+2. That's it. The system automatically:
+   - Detects POS system from Excel header
+   - Applies column name mapping
+   - Validates against canonical schema
+   - Routes to appropriate normalizer
+
+**Key files**:
+
+- `core/models/pos_transaction.py` - Canonical data contract with validation
+- `core/models/pos_mapping.py` - POS system configuration registry
+- `core/analytics/registry.py` - Maps POS names to normalizer functions
+
+**Philosophy**: Configuration over code. Add new POS systems without changing core logic.
+
 ### Agent Decision Pipeline
 
 1. Receive `CoreInputs` from core data layer
@@ -539,6 +586,7 @@ Safe extension points for new features:
 - add new analytics function in `core/analytics/` with deterministic sorting and explicit tie-breaks.
 - add/extend contracts under `core/contracts/v1.py` and keep adapters backward-compatible.
 - extend `CoreInputs` only when consumer-facing semantics are clear and validated.
+- **add new POS systems** in `core/models/pos_mapping.py` with detection pattern and column mappings.
 
 When changing contracts:
 
