@@ -32,7 +32,7 @@ After upload succeeds, use the row action menu on `/analytics/sales` as the guid
 
 - `Matrix`: opens when COGS is ready for that analytics snapshot.
 - `COGS`: always available to complete missing item costs.
-- `Heatmap`, `Pairs`, `Finance`: require COGS (`Needs COGS` badge when missing).
+- `Heatmap`, `Finance`: require COGS (`Needs COGS` badge when missing).
 - `Scheduler`, `Attribution`: require attribution inputs (`Needs Attribution` badge when mappings/posts are not ready).
 
 Each action shows a readiness badge (`Ready`, `Needs COGS`, `Needs Attribution`, `Degraded`, `Blocked`) and a tooltip explanation. This prevents dead-end clicks and makes next steps explicit for both marketers and menu analysts.
@@ -41,7 +41,7 @@ Each action shows a readiness badge (`Ready`, `Needs COGS`, `Needs Attribution`,
 
 - You upload `Sales_Recapitulation_Detail_Report_Jan-Mar_2025.xlsx` for Location A.
 - Status becomes `succeeded`.
-- You open the action menu for that snapshot, complete `COGS` if required, then continue to matrix/heatmap/pairs/scheduler flows based on readiness badges.
+- You open the action menu for that snapshot, complete `COGS` if required, then continue to matrix/heatmap/scheduler flows based on readiness badges.
 
 ## Why It Delivers Real Value
 

@@ -38,8 +38,6 @@ const reportDir = path.resolve(webRoot, "e2e-artifacts", "runner-reports");
 const DEFAULT_E2E_SUITES = [
   "test:e2e:sales",
   "test:e2e:matrix",
-  "test:e2e:pairs",
-  "test:e2e:pairs:pair-type",
   "test:e2e:heatmap",
   "test:e2e:cogs",
   "test:e2e:scheduler",

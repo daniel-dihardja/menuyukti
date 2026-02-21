@@ -12,13 +12,18 @@ describe("sales dropdown readiness", () => {
       hasAttributionData: true,
     };
 
-    expect(evaluateSalesActionReadiness("matrix", signals).status).toBe("needs_cogs");
-    expect(evaluateSalesActionReadiness("heatmap", signals).status).toBe("needs_cogs");
-    expect(evaluateSalesActionReadiness("pairs", signals).status).toBe("needs_cogs");
-    expect(evaluateSalesActionReadiness("finance", signals).status).toBe("needs_cogs");
+    expect(evaluateSalesActionReadiness("matrix", signals).status).toBe(
+      "needs_cogs",
+    );
+    expect(evaluateSalesActionReadiness("heatmap", signals).status).toBe(
+      "needs_cogs",
+    );
+    expect(evaluateSalesActionReadiness("finance", signals).status).toBe(
+      "needs_cogs",
+    );
   });
 
-  it("marks matrix/heatmap/pairs/finance as ready when COGS is present", () => {
+  it("marks matrix/heatmap/finance as ready when COGS is present", () => {
     const signals = {
       hasCoreData: true,
       hasCogsData: true,
@@ -29,7 +34,6 @@ describe("sales dropdown readiness", () => {
 
     expect(readiness.matrix.status).toBe("ready");
     expect(readiness.heatmap.status).toBe("ready");
-    expect(readiness.pairs.status).toBe("ready");
     expect(readiness.finance.status).toBe("ready");
   });
 

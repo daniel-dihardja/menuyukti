@@ -19,7 +19,6 @@ Typical pages:
 
 - `Matrix`: item-level action classification (`promote`, `improve/reprice`, `remove`, `keep`)
 - `Heatmap`: daypart/time demand patterns
-- `Pairs`: basket co-occurrence and combo opportunities
 - `Scheduler`: weekly Instagram planning surface
 - `Attribution`: social-post to sales impact evidence
 - `Finance` / `COGS`: margin and cost-readiness context

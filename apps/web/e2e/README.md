@@ -52,7 +52,7 @@ Behavior:
 Select suites with:
 
 ```bash
-E2E_SUITE_LIST=test:e2e:matrix,test:e2e:pairs,test:e2e:api:contracts pnpm -C apps/web run test:e2e:batch
+E2E_SUITE_LIST=test:e2e:matrix,test:e2e:api:contracts pnpm -C apps/web run test:e2e:batch
 ```
 
 Smoke preset:
@@ -77,11 +77,6 @@ Per test, resolution order is:
 
 `<TEST_ID>` is uppercase with non-alphanumeric chars replaced by `_`.
 
-Example:
-
-- test id: `analytics-pairs-gui`
-- env key: `E2E_DATA_POLICY_ANALYTICS_PAIRS_GUI`
-
 ## Usage examples
 
 Run one suite with fresh reset + seed:
@@ -99,7 +94,7 @@ E2E_DATA_POLICY_API_CONTRACTS=reset-seed pnpm -C apps/web run test:e2e:api:contr
 Use existing DB state (fast local loop):
 
 ```bash
-E2E_DATA_POLICY=reuse pnpm -C apps/web run test:e2e:pairs
+E2E_DATA_POLICY=reuse pnpm -C apps/web run test:e2e:matrix
 ```
 
 Run legacy agent decommission validation (no analytics/agents services required):

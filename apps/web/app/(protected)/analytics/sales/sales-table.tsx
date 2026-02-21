@@ -31,7 +31,6 @@ import {
   Coins,
   Flame,
   HandCoins,
-  Link2,
   Loader2,
   MoreHorizontal,
   Pencil,
@@ -142,7 +141,6 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
     if (action === "cogs") return t("cogs");
     if (action === "matrix") return t("matrix");
     if (action === "heatmap") return t("heatmap");
-    if (action === "pairs") return t("pairs");
     if (action === "scheduler") return t("scheduler");
     if (action === "attribution") return t("attribution");
     return t("finance");
@@ -154,9 +152,9 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
   ): string => {
     if (action === "matrix") return routes.analytics.matrix(analyticsId);
     if (action === "heatmap") return routes.analytics.heatmap(analyticsId);
-    if (action === "pairs") return routes.analytics.pairs(analyticsId);
     if (action === "scheduler") return routes.analytics.scheduler(analyticsId);
-    if (action === "attribution") return routes.analytics.attribution(analyticsId);
+    if (action === "attribution")
+      return routes.analytics.attribution(analyticsId);
     return routes.analytics.finance(analyticsId);
   };
 
@@ -169,13 +167,16 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
         {action === "matrix" ? <Table2 className="h-4 w-4" /> : null}
         {action === "cogs" ? <Coins className="h-4 w-4" /> : null}
         {action === "heatmap" ? <Flame className="h-4 w-4" /> : null}
-        {action === "pairs" ? <Link2 className="h-4 w-4" /> : null}
+
         {action === "scheduler" ? <CalendarClock className="h-4 w-4" /> : null}
         {action === "attribution" ? <BarChart3 className="h-4 w-4" /> : null}
         {action === "finance" ? <HandCoins className="h-4 w-4" /> : null}
         <span>{actionLabel(action)}</span>
       </div>
-      <Badge variant={statusBadgeVariant(readiness.status)} className="h-5 px-1.5 text-[10px] uppercase">
+      <Badge
+        variant={statusBadgeVariant(readiness.status)}
+        className="h-5 px-1.5 text-[10px] uppercase"
+      >
         {readinessLabel(readiness.status)}
       </Badge>
     </div>
@@ -199,155 +200,164 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
             );
 
             return (
-            <TableRow key={file.id}>
-              <TableCell>{index + 1}</TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  {editingId === file.id ? (
-                    <Input
-                      aria-label={`Analytics name for ${file.name}`}
-                      value={draftName}
-                      onChange={(event) => setDraftName(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          void saveName(file);
-                        }
-                        if (event.key === "Escape") {
+              <TableRow key={file.id}>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    {editingId === file.id ? (
+                      <Input
+                        aria-label={`Analytics name for ${file.name}`}
+                        value={draftName}
+                        onChange={(event) => setDraftName(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            void saveName(file);
+                          }
+                          if (event.key === "Escape") {
+                            cancelEdit();
+                          }
+                        }}
+                        onBlur={(event) => {
+                          if (event.relatedTarget === saveButtonRef.current) {
+                            return;
+                          }
                           cancelEdit();
+                        }}
+                        className="h-8 max-w-xs"
+                        disabled={savingId === file.id}
+                        autoFocus
+                      />
+                    ) : (
+                      <span>{file.name}</span>
+                    )}
+
+                    {editingId === file.id ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => void saveName(file)}
+                        disabled={savingId === file.id}
+                        aria-label="Save analytics name"
+                        ref={saveButtonRef}
+                      >
+                        {savingId === file.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Check className="h-4 w-4" />
+                        )}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => startEdit(file)}
+                        aria-label="Edit analytics name"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+
+                    <DropdownMenuContent align="end">
+                      {SALES_DROPDOWN_ACTION_ORDER.map((action) => {
+                        const withSetupSeparator = action === "cogs";
+                        const readiness = readinessByAction[action];
+                        const disabled = isActionDisabled(
+                          action,
+                          readiness.status,
+                        );
+                        const body = renderActionText(action, readiness);
+                        const content = readiness.reasonMessage ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="w-full">{body}</div>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="left"
+                              sideOffset={8}
+                              className="max-w-xs"
+                            >
+                              {readiness.reasonMessage}
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          body
+                        );
+
+                        if (action === "cogs") {
+                          return (
+                            <Fragment key={action}>
+                              {withSetupSeparator ? (
+                                <DropdownMenuSeparator />
+                              ) : null}
+                              <DropdownMenuItem
+                                onClick={() => onCogs(file.id)}
+                                onSelect={(event) => {
+                                  if (disabled) event.preventDefault();
+                                }}
+                                aria-disabled={disabled}
+                                className={disabled ? "opacity-60" : undefined}
+                              >
+                                {content}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </Fragment>
+                          );
                         }
-                      }}
-                      onBlur={(event) => {
-                        if (event.relatedTarget === saveButtonRef.current) {
-                          return;
-                        }
-                        cancelEdit();
-                      }}
-                      className="h-8 max-w-xs"
-                      disabled={savingId === file.id}
-                      autoFocus
-                    />
-                  ) : (
-                    <span>{file.name}</span>
-                  )}
 
-                  {editingId === file.id ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => void saveName(file)}
-                      disabled={savingId === file.id}
-                      aria-label="Save analytics name"
-                      ref={saveButtonRef}
-                    >
-                      {savingId === file.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Check className="h-4 w-4" />
-                      )}
-                    </Button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => startEdit(file)}
-                      aria-label="Edit analytics name"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent align="end">
-                    {SALES_DROPDOWN_ACTION_ORDER.map((action) => {
-                      const withSetupSeparator = action === "cogs";
-                      const readiness = readinessByAction[action];
-                      const disabled = isActionDisabled(action, readiness.status);
-                      const body = renderActionText(action, readiness);
-                      const content = readiness.reasonMessage ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="w-full">{body}</div>
-                          </TooltipTrigger>
-                          <TooltipContent side="left" sideOffset={8} className="max-w-xs">
-                            {readiness.reasonMessage}
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        body
-                      );
-
-                      if (action === "cogs") {
-                        return (
-                          <Fragment key={action}>
-                            {withSetupSeparator ? <DropdownMenuSeparator /> : null}
+                        if (disabled) {
+                          return (
                             <DropdownMenuItem
-                              onClick={() => onCogs(file.id)}
-                              onSelect={(event) => {
-                                if (disabled) event.preventDefault();
-                              }}
-                              aria-disabled={disabled}
-                              className={disabled ? "opacity-60" : undefined}
+                              key={action}
+                              onSelect={(event) => event.preventDefault()}
+                              aria-disabled
+                              className="opacity-60"
                             >
                               {content}
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                          </Fragment>
-                        );
-                      }
+                          );
+                        }
 
-                      if (disabled) {
                         return (
-                          <DropdownMenuItem
-                            key={action}
-                            onSelect={(event) => event.preventDefault()}
-                            aria-disabled
-                            className="opacity-60"
-                          >
-                            {content}
+                          <DropdownMenuItem key={action} asChild>
+                            <Link
+                              href={actionHref(
+                                action as Exclude<SalesDropdownAction, "cogs">,
+                                file.id,
+                              )}
+                            >
+                              {content}
+                            </Link>
                           </DropdownMenuItem>
                         );
-                      }
+                      })}
 
-                      return (
-                        <DropdownMenuItem key={action} asChild>
-                          <Link
-                            href={actionHref(
-                              action as Exclude<SalesDropdownAction, "cogs">,
-                              file.id,
-                            )}
-                          >
-                            {content}
-                          </Link>
-                        </DropdownMenuItem>
-                      );
-                    })}
-
-                    {/* Delete */}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={() => onDelete(file.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      {t("delete")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          );
+                      {/* Delete */}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => onDelete(file.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        {t("delete")}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            );
           })}
         </TableBody>
       </Table>

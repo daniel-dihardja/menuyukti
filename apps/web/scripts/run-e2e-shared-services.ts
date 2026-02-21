@@ -18,8 +18,6 @@ const logDir = path.resolve(webRoot, "e2e-artifacts", "shared-service-logs");
 const DEFAULT_SUITES = [
   "test:e2e:sales",
   "test:e2e:matrix",
-  "test:e2e:pairs",
-  "test:e2e:pairs:pair-type",
   "test:e2e:heatmap",
   "test:e2e:cogs",
   "test:e2e:scheduler",
@@ -33,8 +31,6 @@ const SERVICES_BY_SUITE: Record<string, ServiceName[]> = {
   "test:e2e:seed": [],
   "test:e2e:sales": ["web", "analytics"],
   "test:e2e:matrix": ["web", "analytics"],
-  "test:e2e:pairs": ["web", "analytics"],
-  "test:e2e:pairs:pair-type": ["web", "analytics"],
   "test:e2e:heatmap": ["web", "analytics"],
   "test:e2e:cogs": ["web", "analytics"],
   "test:e2e:scheduler": ["web", "analytics"],

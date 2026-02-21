@@ -9,8 +9,6 @@ export const routes = {
 
     matrix: (analyticsId: string | number) =>
       `/analytics/${analyticsId}/matrix`,
-    pairs: (analyticsId: string | number) =>
-      `/analytics/${analyticsId}/pairs`,
     attribution: (analyticsId: string | number) =>
       `/analytics/${analyticsId}/attribution`,
     scheduler: (analyticsId: string | number) =>

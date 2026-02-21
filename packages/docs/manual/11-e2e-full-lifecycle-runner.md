@@ -77,6 +77,7 @@ pnpm -C apps/web run test:e2e:matrix
 ```
 
 Default artifact mode:
+
 - `E2E_REPORT_ONLY` is enabled by default.
 - Runner keeps only coverage reports after each run.
 
@@ -89,7 +90,7 @@ E2E_REPORT_ONLY=0 pnpm -C apps/web run test:e2e:full
 Override suite list:
 
 ```bash
-E2E_SUITE_LIST="test:e2e:matrix,test:e2e:pairs" pnpm -C apps/web run test:e2e:full
+E2E_SUITE_LIST="test:e2e:matrix,test:e2e:heatmap" pnpm -C apps/web run test:e2e:full
 ```
 
 ## Automatic Data Initialization Policy
@@ -111,7 +112,7 @@ Examples:
 ```bash
 E2E_DATA_POLICY=reset-seed pnpm -C apps/web run test:e2e:matrix
 E2E_DATA_POLICY_API_CONTRACTS=reset-seed pnpm -C apps/web run test:e2e:api:contracts
-E2E_DATA_POLICY=reuse pnpm -C apps/web run test:e2e:pairs
+E2E_DATA_POLICY=reuse pnpm -C apps/web run test:e2e:matrix
 ```
 
 Legacy compatibility:
@@ -134,11 +135,13 @@ If any condition fails, release is blocked.
 ## Output and Logs
 
 Default (`E2E_REPORT_ONLY` enabled):
+
 - Keeps only:
   - `apps/web/e2e-artifacts/runner-reports/coverage-latest.json`
   - timestamped `coverage-*.json` reports
 
 When `E2E_REPORT_ONLY=0`:
+
 - Also keeps:
   - `apps/web/e2e-artifacts/runner-logs/analytics.log`
   - `apps/web/e2e-artifacts/runner-logs/agents.log`

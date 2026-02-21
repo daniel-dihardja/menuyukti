@@ -2,7 +2,6 @@ export const SALES_DROPDOWN_ACTIONS = [
   "matrix",
   "cogs",
   "heatmap",
-  "pairs",
   "scheduler",
   "attribution",
   "finance",
@@ -14,7 +13,6 @@ export const SALES_DROPDOWN_ACTION_ORDER: SalesDropdownAction[] = [
   "matrix",
   "cogs",
   "heatmap",
-  "pairs",
   "scheduler",
   "attribution",
   "finance",
@@ -54,7 +52,8 @@ const REASON_MESSAGES: Record<SalesActionReadinessReasonCode, string | null> = {
   none: null,
   missing_core_data: "Core analytics data is not available yet.",
   missing_cogs: "COGS is required before this action can be used.",
-  missing_attribution_data: "Attribution data is required before this action can be used.",
+  missing_attribution_data:
+    "Attribution data is required before this action can be used.",
   degraded_upstream_dependency:
     "Upstream data is degraded. Results may be partial or delayed.",
   blocked_upstream_dependency:
@@ -104,12 +103,7 @@ export function evaluateSalesActionReadiness(
     return readiness(action, "ready", "none");
   }
 
-  if (
-    action === "matrix" ||
-    action === "heatmap" ||
-    action === "pairs" ||
-    action === "finance"
-  ) {
+  if (action === "matrix" || action === "heatmap" || action === "finance") {
     if (!signals.hasCogsData) {
       return readiness(action, "needs_cogs", "missing_cogs");
     }
@@ -117,7 +111,11 @@ export function evaluateSalesActionReadiness(
 
   if (action === "attribution") {
     if (!signals.hasAttributionData) {
-      return readiness(action, "needs_attribution_data", "missing_attribution_data");
+      return readiness(
+        action,
+        "needs_attribution_data",
+        "missing_attribution_data",
+      );
     }
   }
 
