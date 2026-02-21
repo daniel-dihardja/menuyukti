@@ -43,6 +43,7 @@ OPENAI_MODEL=gpt-4o-mini  # Optional, defaults to gpt-4o-mini
 ### 2. Dependencies Installed
 
 Already installed via pnpm:
+
 - ✅ `openai` - OpenAI SDK
 - ✅ `zod` - Schema validation
 
@@ -79,6 +80,7 @@ Navigate to: **http://localhost:3000/agents/menu-strategist**
 The agent will return:
 
 #### 📈 Items to Promote
+
 - Menu items with high potential
 - Data-backed reasons
 - Ready-to-use marketing angles
@@ -86,6 +88,7 @@ The agent will return:
 - Confidence scores
 
 #### ⚠️ Items Needing Attention
+
 - Underperforming items
 - Clear issue descriptions
 - Specific suggestions (pricing, bundling, promotion, removal)
@@ -173,17 +176,20 @@ echo "OPENAI_API_KEY=sk-proj-your-key" >> apps/web/.env
 ### Issue: "No matrix data available"
 
 **Solution**: Ensure the analytics snapshot has completed processing
+
 - Check ETL jobs status
 - Verify matrix materialization
 
 ### Issue: "Analysis takes too long (>30s)"
 
 **Possible causes**:
+
 - Large matrix data (>100 items)
 - OpenAI API rate limits
 - Network issues
 
 **Solutions**:
+
 - Use smaller date ranges for analytics
 - Check OpenAI API status
 - Adjust `maxDuration` in route.ts if needed
@@ -191,6 +197,7 @@ echo "OPENAI_API_KEY=sk-proj-your-key" >> apps/web/.env
 ### Issue: "Recommendations don't make sense"
 
 **Solution**: The prompt may need tuning for your data
+
 - Check if matrix data has correct actions (promote/remove/etc)
 - Verify margin percentages are realistic
 - Consider adjusting the prompt in route.ts
@@ -234,16 +241,19 @@ echo "OPENAI_API_KEY=sk-proj-your-key" >> apps/web/.env
 ## 💡 Tips for Best Results
 
 ### Data Quality
+
 - Use analytics snapshots with 30+ days of data
 - Ensure COGS/margin data is accurate
 - Keep menu names consistent
 
 ### Prompt Engineering
+
 - The current prompt is tuned for general restaurants
 - Customize in `route.ts` for specific cuisines
 - Adjust tone for your brand voice
 
 ### Marketing Execution
+
 - Test recommendations with small campaigns first
 - Track metrics (engagement, sales lift)
 - Iterate based on results
@@ -270,11 +280,13 @@ curl "http://localhost:3000/api/agents/menu-strategist?analyticsId=1"
 ## ✨ Success Metrics
 
 ### Technical KPIs
+
 - ✅ Response time: <5 seconds (target)
 - ✅ Success rate: >95%
 - ✅ Data accuracy: High confidence scores
 
 ### Business KPIs
+
 - 📊 Recommendations implemented
 - 💰 Revenue impact of promoted items
 - 📈 Engagement on marketing content
@@ -289,6 +301,7 @@ The Menu Promotion Strategist is fully implemented and ready to use.
 **Start here**: http://localhost:3000/agents/menu-strategist
 
 For questions or issues, check:
+
 - `MENU_STRATEGIST_IMPLEMENTATION.md` - Full technical details
 - API route code - `apps/web/app/api/agents/menu-strategist/route.ts`
 - UI code - `apps/web/app/(protected)/agents/menu-strategist/page.tsx`
