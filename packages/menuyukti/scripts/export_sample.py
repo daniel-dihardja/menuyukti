@@ -11,12 +11,30 @@ from typing import Iterable
 
 from menuyukti.core.models.pos_transaction import POSTransactionLineItem
 from menuyukti.samples.star_item import STAR_ITEM_COGS_RATES, star_item_scenario
+from menuyukti.samples.thriving_cafe import (
+    THRIVING_CAFE_COGS_RATES,
+    thriving_cafe_scenario,
+)
+from menuyukti.samples.struggling_restaurant import (
+    STRUGGLING_RESTAURANT_COGS_RATES,
+    struggling_restaurant_scenario,
+)
 
 SCENARIOS = {
     "star_item": {
         "fn": star_item_scenario,
         "description": "Restaurant with one dominant high-margin item.",
         "cogs_rates": STAR_ITEM_COGS_RATES,
+    },
+    "thriving_cafe": {
+        "fn": thriving_cafe_scenario,
+        "description": "Thriving downtown cafe with good margins and diverse menu.",
+        "cogs_rates": THRIVING_CAFE_COGS_RATES,
+    },
+    "struggling_restaurant": {
+        "fn": struggling_restaurant_scenario,
+        "description": "Family restaurant with low margins and underperforming items.",
+        "cogs_rates": STRUGGLING_RESTAURANT_COGS_RATES,
     },
 }
 

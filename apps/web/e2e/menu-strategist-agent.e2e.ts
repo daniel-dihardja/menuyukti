@@ -281,12 +281,19 @@ async function runScenario(
     await page.waitForURL(`${baseUrl}/menu-strategist`);
     console.log(`   ✓ Navigated to Menu Strategist page`);
 
-    // Wait for the select dropdown to be visible
-    const selectElement = page.locator("select");
-    await selectElement.waitFor({ state: "visible", timeout: 10000 });
+    // Wait for the select dropdown to be visible (shadcn/ui Select component)
+    const selectTrigger = page.locator('[role="combobox"]').first();
+    await selectTrigger.waitFor({ state: "visible", timeout: 10000 });
 
-    // Select our test analytics by ID
-    await selectElement.selectOption(analyticsId.toString());
+    // Click to open the dropdown
+    await selectTrigger.click();
+
+    // Select our test analytics by ID - wait for the select item to appear
+    const selectItem = page.locator(
+      `[role="option"]:has-text("${analyticsId}")`,
+    );
+    await selectItem.waitFor({ state: "visible", timeout: 5000 });
+    await selectItem.click();
     console.log(`   ✓ Selected analytics dataset`);
 
     // Click analyze button

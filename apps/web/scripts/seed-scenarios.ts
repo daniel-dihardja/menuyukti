@@ -1,14 +1,16 @@
 /**
- * Scenario-based database seeder
+ * Scenario-based database seeder (DEPRECATED)
  *
- * Seeds the database with realistic restaurant data for specific business scenarios.
- * Simulates the complete workflow: sales upload → COGS setting → save
+ * ⚠️ This script is deprecated. Use seed-scenarios-v2.ts instead.
+ * The v2 script uses real analytics calculations from the Python package.
  *
- * Usage:
- *   pnpm db:seed:scenario                    # Interactive menu
- *   pnpm db:seed:scenario thriving-cafe      # Specific scenario
- *   pnpm db:seed:scenario --all              # All scenarios
- *   pnpm db:seed:scenario --list             # List available scenarios
+ * @deprecated Use pnpm db:seed:v2 instead
+ *
+ * Old Usage:
+ *   pnpm db:seed:scenario thriving-cafe      # Specific scenario (deprecated)
+ *
+ * New Usage:
+ *   pnpm db:seed:v2 thriving-cafe            # Use v2 with real calculations
  */
 
 import { prisma } from "@/lib/prisma/client";
@@ -19,6 +21,145 @@ import {
   listScenarios,
   type SeedScenario,
 } from "../prisma/seed/scenarios";
+
+type MenuItem = {
+  menuName: string;
+  quantity: number;
+  totalRevenue: number;
+  cogs: number;
+  menuCategory?: string;
+};
+
+function generateMatrixJson(menuItems: MenuItem[], avgPopularity: number) {
+  const items = menuItems.map((item) => {
+    const margin = item.totalRevenue - item.cogs;
+    const marginPercentage =
+      item.totalRevenue > 0 ? margin / item.totalRevenue : 0;
+    const popularityIndex =
+      avgPopularity > 0 ? item.quantity / avgPopularity : 1;
+
+    // Determine category based on popularity and margin
+    let category: string;
+    let action: string;
+
+    if (popularityIndex >= 1 && marginPercentage >= 0.5) {
+      category = "star";
+      action = "keep";
+    } else if (popularityIndex >= 1 && marginPercentage < 0.5) {
+      category = "plow_horse";
+      action = "reprice";
+    } else if (popularityIndex < 1 && marginPercentage >= 0.5) {
+      category = "puzzle";
+      action = "promote";
+    } else {
+      category = "dog";
+      action = "remove";
+    }
+
+    return {
+      menu: item.menuName,
+      quantity: item.quantity,
+      total_revenue: item.totalRevenue,
+      cogs: Math.round(item.cogs / item.quantity),
+      total_cogs: item.cogs,
+      contribution_margin: margin,
+      contribution_margin_percentage: marginPercentage,
+      margin_per_unit: margin / item.quantity,
+      menu_category: item.menuCategory,
+      category,
+      action,
+      popularity_index: popularityIndex,
+      we_value: popularityIndex * marginPercentage,
+    };
+  });
+
+  return {
+    items,
+    thresholds: {
+      avg_popularity: avgPopularity,
+      avg_margin_percentage: 0.5,
+    },
+  };
+}
+
+function generateHeatmapJson(menuItems: MenuItem[]) {
+  return menuItems.map((item) => {
+    // Generate hourly pattern (8am - 10pm)
+    const dailyHeatmap = Array.from({ length: 24 }, (_, hour) => {
+      let quantity = 0;
+
+      // Business hours with realistic patterns
+      if (hour >= 8 && hour <= 22) {
+        // Peak hours: 11am-2pm (lunch) and 6pm-8pm (dinner)
+        if ((hour >= 11 && hour <= 14) || (hour >= 18 && hour <= 20)) {
+          quantity = Math.floor(
+            (item.quantity / 7) * (0.15 + Math.random() * 0.1),
+          );
+        } else if (hour >= 8 && hour <= 10) {
+          // Breakfast
+          quantity = Math.floor(
+            (item.quantity / 7) * (0.08 + Math.random() * 0.05),
+          );
+        } else {
+          // Off-peak
+          quantity = Math.floor(
+            (item.quantity / 7) * (0.03 + Math.random() * 0.04),
+          );
+        }
+      }
+
+      return {
+        hour: String(hour).padStart(2, "0"),
+        quantity: Math.max(0, quantity),
+      };
+    });
+
+    // Generate weekly pattern
+    const weeklyHeatmap = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map(
+      (day, index) => {
+        // Weekend boost for some items
+        const weekendMultiplier = index >= 5 ? 1.3 : 1.0;
+        const quantity = Math.floor((item.quantity / 7) * weekendMultiplier);
+
+        return {
+          day,
+          quantity: Math.max(0, quantity),
+        };
+      },
+    );
+
+    return {
+      menu: item.menuName,
+      dailyHeatmap,
+      weeklyHeatmap,
+    };
+  });
+}
+
+function generateMatrixDistributionJson(matrixJson: {
+  items: Array<{ category: string }>;
+}) {
+  const items = matrixJson.items;
+  const distribution: Record<string, number> = {
+    star: 0,
+    plow_horse: 0,
+    puzzle: 0,
+    dog: 0,
+  };
+
+  items.forEach((item) => {
+    distribution[item.category] = (distribution[item.category] || 0) + 1;
+  });
+
+  return {
+    distribution,
+    categories: Object.entries(distribution).map(([category, count]) => ({
+      category,
+      count,
+      percentage: count / items.length,
+    })),
+  };
+}
 
 async function seedScenario(scenario: SeedScenario): Promise<void> {
   console.log(`\n📦 Seeding: ${scenario.name}`);
@@ -67,6 +208,18 @@ async function seedScenario(scenario: SeedScenario): Promise<void> {
         menuItems.length
       : 0;
 
+  // Generate analytics JSON data
+  const matrixJson = generateMatrixJson(menuItems, avgPopularity);
+  const matrixDistributionJson = generateMatrixDistributionJson(matrixJson);
+  const heatmapJson = generateHeatmapJson(menuItems);
+  const popularityJson = {
+    items: menuItems.map((item) => ({
+      menu: item.menuName,
+      quantity: item.quantity,
+      popularity_index: avgPopularity > 0 ? item.quantity / avgPopularity : 1,
+    })),
+  };
+
   // 3. Create analytics record
   const analytics = await prisma.analytics.create({
     data: {
@@ -94,6 +247,12 @@ async function seedScenario(scenario: SeedScenario): Promise<void> {
       minOrderItems: Math.max(1, Math.floor(avgOrderItems * 0.4)),
       maxOrderRevenue: avgOrderRevenue * 2.5,
       minOrderRevenue: avgOrderRevenue * 0.3,
+
+      // Analytics JSON results
+      matrixJson,
+      matrixDistributionJson,
+      heatmapJson,
+      popularityJson,
     },
   });
 

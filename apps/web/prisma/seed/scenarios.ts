@@ -158,33 +158,12 @@ export const SEED_SCENARIOS: Record<string, SeedScenario> = {
       periodStart: new Date("2025-01-01"),
       periodEnd: new Date("2025-03-31"),
       menuItems: [
-        // Low performers
+        // Very low performers - need improvement
         {
           menuName: "Basic Burger",
           quantity: 45,
           totalRevenue: 540,
           cogs: 360,
-          menuCategory: "Mains",
-        },
-        {
-          menuName: "Chicken Wings",
-          quantity: 38,
-          totalRevenue: 456,
-          cogs: 304,
-          menuCategory: "Appetizers",
-        },
-        {
-          menuName: "French Fries",
-          quantity: 62,
-          totalRevenue: 372,
-          cogs: 186,
-          menuCategory: "Sides",
-        },
-        {
-          menuName: "House Pasta",
-          quantity: 28,
-          totalRevenue: 420,
-          cogs: 252,
           menuCategory: "Mains",
         },
         {
@@ -195,12 +174,74 @@ export const SEED_SCENARIOS: Record<string, SeedScenario> = {
           menuCategory: "Mains",
         },
         {
+          menuName: "House Pasta",
+          quantity: 28,
+          totalRevenue: 420,
+          cogs: 252,
+          menuCategory: "Mains",
+        },
+        {
+          menuName: "Meatloaf Special",
+          quantity: 22,
+          totalRevenue: 308,
+          cogs: 220,
+          menuCategory: "Mains",
+        },
+        {
+          menuName: "Fish & Chips",
+          quantity: 35,
+          totalRevenue: 525,
+          cogs: 368,
+          menuCategory: "Mains",
+        },
+
+        // Appetizers - underperforming
+        {
+          menuName: "Chicken Wings",
+          quantity: 38,
+          totalRevenue: 456,
+          cogs: 304,
+          menuCategory: "Appetizers",
+        },
+        {
+          menuName: "Mozzarella Sticks",
+          quantity: 25,
+          totalRevenue: 300,
+          cogs: 200,
+          menuCategory: "Appetizers",
+        },
+        {
+          menuName: "Nachos",
+          quantity: 30,
+          totalRevenue: 360,
+          cogs: 252,
+          menuCategory: "Appetizers",
+        },
+
+        // Sides - low margin
+        {
+          menuName: "French Fries",
+          quantity: 62,
+          totalRevenue: 372,
+          cogs: 186,
+          menuCategory: "Sides",
+        },
+        {
           menuName: "Onion Rings",
           quantity: 22,
           totalRevenue: 220,
           cogs: 132,
           menuCategory: "Sides",
         },
+        {
+          menuName: "Coleslaw",
+          quantity: 18,
+          totalRevenue: 144,
+          cogs: 90,
+          menuCategory: "Sides",
+        },
+
+        // Salads & Soups - minimal sales
         {
           menuName: "Garden Salad",
           quantity: 18,
@@ -214,6 +255,22 @@ export const SEED_SCENARIOS: Record<string, SeedScenario> = {
           totalRevenue: 144,
           cogs: 96,
           menuCategory: "Soups",
+        },
+
+        // Beverages - only bright spot
+        {
+          menuName: "Soft Drinks",
+          quantity: 95,
+          totalRevenue: 285,
+          cogs: 95,
+          menuCategory: "Beverages",
+        },
+        {
+          menuName: "Iced Tea",
+          quantity: 68,
+          totalRevenue: 204,
+          cogs: 68,
+          menuCategory: "Beverages",
         },
       ],
     },
@@ -432,7 +489,7 @@ export const SEED_SCENARIOS: Record<string, SeedScenario> = {
       periodStart: new Date("2025-01-01"),
       periodEnd: new Date("2025-03-31"),
       menuItems: [
-        // High margin, low volume (hidden gems)
+        // High margin, low volume (hidden gems - need promotion!)
         {
           menuName: "Duck Confit",
           quantity: 32,
@@ -459,6 +516,27 @@ export const SEED_SCENARIOS: Record<string, SeedScenario> = {
           quantity: 24,
           totalRevenue: 720,
           cogs: 216,
+          menuCategory: "Pasta",
+        },
+        {
+          menuName: "Pan-Seared Sea Bass",
+          quantity: 22,
+          totalRevenue: 770,
+          cogs: 231,
+          menuCategory: "Seafood",
+        },
+        {
+          menuName: "Veal Osso Buco",
+          quantity: 15,
+          totalRevenue: 645,
+          cogs: 215,
+          menuCategory: "Mains",
+        },
+        {
+          menuName: "Wild Mushroom Gnocchi",
+          quantity: 26,
+          totalRevenue: 598,
+          cogs: 156,
           menuCategory: "Pasta",
         },
 
@@ -506,6 +584,29 @@ export const SEED_SCENARIOS: Record<string, SeedScenario> = {
           totalRevenue: 950,
           cogs: 285,
           menuCategory: "Appetizers",
+        },
+        {
+          menuName: "Prosciutto & Melon",
+          quantity: 48,
+          totalRevenue: 672,
+          cogs: 240,
+          menuCategory: "Appetizers",
+        },
+
+        // Desserts
+        {
+          menuName: "Tiramisu",
+          quantity: 72,
+          totalRevenue: 720,
+          cogs: 216,
+          menuCategory: "Desserts",
+        },
+        {
+          menuName: "Panna Cotta",
+          quantity: 55,
+          totalRevenue: 495,
+          cogs: 138,
+          menuCategory: "Desserts",
         },
       ],
     },

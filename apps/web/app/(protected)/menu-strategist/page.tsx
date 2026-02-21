@@ -2,6 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { Loader2, TrendingUp } from "lucide-react";
+import { Button } from "@workspace/ui/components/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
+import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
 
 type Recommendation = {
   recommendations: {
@@ -88,130 +97,136 @@ export default function MenuStrategistPage() {
   };
 
   return (
-    <div className="space-y-6 p-8 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold">Menu Promotion Strategist</h1>
-        <p className="text-gray-600 mt-2">
-          Analyze menu performance and get AI-powered recommendations
-        </p>
-      </div>
-
-      <div className="bg-white rounded-lg border shadow">
-        <div className="p-6 border-b">
-          <h2 className="text-lg font-semibold">Analyze Menu Data</h2>
-          <p className="text-gray-600 text-sm mt-1">
-            Select an analytics dataset to analyze
-          </p>
-        </div>
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Analytics Dataset
-            </label>
-            <select
-              value={selectedAnalyticsId}
-              onChange={(e) => setSelectedAnalyticsId(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select an analytics dataset...</option>
-              {analyticsList.map((item: any) => (
-                <option key={item.id} value={item.id}>
-                  {item.locationName || `Analytics ${item.id.slice(0, 8)}`}
-                </option>
-              ))}
-            </select>
+    <div className="flex flex-col min-h-screen">
+      <SidebarTriggerClient
+        title="Menu Promotion Strategist"
+        breadcrumbs={[
+          { label: "Agents", href: "/agents" },
+          { label: "Menu Promotion Strategist" },
+        ]}
+      />
+      <div className="space-y-6 p-8 max-w-6xl mx-auto flex-1">
+        <div className="bg-white rounded-lg border shadow">
+          <div className="p-6 border-b">
+            <h2 className="text-lg font-semibold">Analyze Menu Data</h2>
+            <p className="text-gray-600 text-sm mt-1">
+              Select an analytics dataset to analyze
+            </p>
           </div>
-
-          {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-              {error}
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Analytics Dataset
+              </label>
+              <Select
+                value={selectedAnalyticsId}
+                onValueChange={setSelectedAnalyticsId}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select an analytics dataset..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {analyticsList.map((item: any) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.locationName || `Analytics ${item.id.slice(0, 8)}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
 
-          <button
-            onClick={handleAnalyze}
-            disabled={loading || !selectedAnalyticsId}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <TrendingUp className="h-4 w-4" />
-                Generate Recommendations
-              </>
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                {error}
+              </div>
             )}
-          </button>
+
+            <Button
+              onClick={handleAnalyze}
+              disabled={loading || !selectedAnalyticsId}
+              className="w-full"
+              size="lg"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  Generate Recommendations
+                </>
+              )}
+            </Button>
+          </div>
         </div>
+
+        {recommendations && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg border shadow">
+              <div className="p-6 border-b">
+                <h2 className="text-lg font-semibold">Items to Promote</h2>
+                <p className="text-gray-600 text-sm mt-1">
+                  High-value opportunities to highlight
+                </p>
+              </div>
+              <div className="p-6">
+                <div className="space-y-3">
+                  {recommendations.recommendations.promote.map((item, idx) => (
+                    <div key={idx} className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-semibold">{item.menuItem}</h3>
+                        <span
+                          className={`px-3 py-1 rounded text-xs font-medium ${getImpactColor(
+                            item.expectedImpact,
+                          )}`}
+                        >
+                          {item.expectedImpact} impact
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">{item.reason}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border shadow">
+              <div className="p-6 border-b">
+                <h2 className="text-lg font-semibold">Items to Adjust</h2>
+                <p className="text-gray-600 text-sm mt-1">
+                  Underperformers that need attention
+                </p>
+              </div>
+              <div className="p-6">
+                <div className="space-y-3">
+                  {recommendations.recommendations.adjust.map((item, idx) => (
+                    <div key={idx} className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-semibold">{item.menuItem}</h3>
+                        <span
+                          className={`px-3 py-1 rounded text-xs font-medium ${getImpactColor(
+                            item.expectedImpact,
+                          )}`}
+                        >
+                          {item.expectedImpact} impact
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        <strong>Issue:</strong> {item.issue}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        <strong>Suggestion:</strong> {item.suggestion}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
-      {recommendations && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg border shadow">
-            <div className="p-6 border-b">
-              <h2 className="text-lg font-semibold">Items to Promote</h2>
-              <p className="text-gray-600 text-sm mt-1">
-                High-value opportunities to highlight
-              </p>
-            </div>
-            <div className="p-6">
-              <div className="space-y-3">
-                {recommendations.recommendations.promote.map((item, idx) => (
-                  <div key={idx} className="p-4 border rounded-lg">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold">{item.menuItem}</h3>
-                      <span
-                        className={`px-3 py-1 rounded text-xs font-medium ${getImpactColor(
-                          item.expectedImpact,
-                        )}`}
-                      >
-                        {item.expectedImpact} impact
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600">{item.reason}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border shadow">
-            <div className="p-6 border-b">
-              <h2 className="text-lg font-semibold">Items to Adjust</h2>
-              <p className="text-gray-600 text-sm mt-1">
-                Underperformers that need attention
-              </p>
-            </div>
-            <div className="p-6">
-              <div className="space-y-3">
-                {recommendations.recommendations.adjust.map((item, idx) => (
-                  <div key={idx} className="p-4 border rounded-lg">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold">{item.menuItem}</h3>
-                      <span
-                        className={`px-3 py-1 rounded text-xs font-medium ${getImpactColor(
-                          item.expectedImpact,
-                        )}`}
-                      >
-                        {item.expectedImpact} impact
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      <strong>Issue:</strong> {item.issue}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      <strong>Suggestion:</strong> {item.suggestion}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

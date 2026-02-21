@@ -66,6 +66,7 @@ pnpm run dev:all
 ```
 
 This command will:
+
 - run web DB lifecycle (`db:reset`, `db:gen`, `db:init`, `db:seed`)
 - start analytics service on `127.0.0.1:8000`
 - start agents service on `127.0.0.1:8001`
@@ -77,6 +78,31 @@ You can skip DB steps if needed:
 RUN_DB_RESET=0 RUN_DB_GEN=0 RUN_DB_INIT=0 RUN_DB_SEED=0 pnpm run dev:all
 ```
 
+### Seed with specific scenarios
+
+To seed the database with a specific scenario instead of the default, use:
+
+```bash
+cd apps/web
+pnpm db:seed:v2 star-item          # Seed with star-item scenario
+pnpm db:seed:v2 thriving-cafe      # Seed with thriving-cafe scenario
+pnpm db:seed:v2 struggling-restaurant  # Seed with struggling-restaurant scenario
+```
+
+To see available scenarios:
+
+```bash
+cd apps/web
+pnpm db:seed:v2 --list
+```
+
+To seed all scenarios at once:
+
+```bash
+cd apps/web
+pnpm db:seed:v2 --all
+```
+
 ### Export current Neon data snapshot for seed
 
 ```bash
@@ -84,6 +110,7 @@ pnpm -C apps/web run db:seed:export
 ```
 
 SQL export output:
+
 - `apps/web/prisma/seed/export/current_seed.sql`
 
 ### Menu analytics service
