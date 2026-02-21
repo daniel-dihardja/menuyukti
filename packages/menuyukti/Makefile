@@ -15,6 +15,7 @@ help:
 	@echo "  make lint              - Run pylint (if configured)"
 	@echo "  make type-check        - Run mypy type checking"
 	@echo "  make format            - Auto-format code with black"
+	@echo "  make sample_star_item  - Export star_item scenario as JSON"
 
 # Run all unit tests
 test:
@@ -76,13 +77,17 @@ lint:
 format:
 	black src/menuyukti tests/
 
+# Export sample data
+sample_star_item:
+	python scripts/export_sample.py --scenario star_item --format json --output-dir samples_output
+
 # Run all checks
 check: lint type-check test
 
 # Development setup
 dev-install:
-	pip install -e .
-	pip install pytest pytest-cov pytest-watch
+	uv pip install -e .
+	uv pip install pytest pytest-cov pytest-watch
 
 # Show test statistics
 test_stats:

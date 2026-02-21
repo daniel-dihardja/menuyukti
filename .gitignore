@@ -46,6 +46,7 @@ reports/
 .vscode/*
 creds
 apps/web/e2e-artifacts/
+packages/menuyukti/samples_output/
 
 notebooks/*
 # Python caches
