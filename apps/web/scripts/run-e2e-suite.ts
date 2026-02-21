@@ -3,7 +3,7 @@ import path from "node:path";
 import { spawn, type ChildProcess } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 
-type ManagedServiceName = "web" | "analytics" | "agents";
+type ManagedServiceName = "web" | "analytics";
 
 type ManagedService = {
   name: ManagedServiceName;
@@ -22,7 +22,10 @@ function parseEnvFile(filePath: string): Record<string, string> {
     const eqIndex = line.indexOf("=");
     if (eqIndex <= 0) continue;
     const key = line.slice(0, eqIndex).trim();
-    const value = line.slice(eqIndex + 1).trim().replace(/^['"]|['"]$/g, "");
+    const value = line
+      .slice(eqIndex + 1)
+      .trim()
+      .replace(/^['"]|['"]$/g, "");
     result[key] = value;
   }
   return result;
@@ -48,7 +51,7 @@ function parseRequiredServices(): ManagedServiceName[] {
   const result: ManagedServiceName[] = [];
   for (const token of raw) {
     if (token === "none") return [];
-    if ((token === "web" || token === "analytics" || token === "agents") && !result.includes(token)) {
+    if ((token === "web" || token === "analytics") && !result.includes(token)) {
       result.push(token);
     }
   }
@@ -64,7 +67,11 @@ async function isUrlReady(url: string): Promise<boolean> {
   }
 }
 
-async function waitForHttpReady(name: string, url: string, timeoutMs = 120_000) {
+async function waitForHttpReady(
+  name: string,
+  url: string,
+  timeoutMs = 120_000,
+) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeoutMs) {
     if (await isUrlReady(url)) return;
@@ -84,7 +91,9 @@ function spawnLoggedProcess(params: {
   fs.mkdirSync(params.logDir, { recursive: true });
   const logPath = path.resolve(params.logDir, `${params.name}.log`);
   const stream = fs.createWriteStream(logPath, { flags: "w" });
-  stream.write(`[${new Date().toISOString()}] starting: ${params.command} ${params.args.join(" ")}\n`);
+  stream.write(
+    `[${new Date().toISOString()}] starting: ${params.command} ${params.args.join(" ")}\n`,
+  );
 
   const child = spawn(params.command, params.args, {
     cwd: params.cwd,
@@ -94,7 +103,9 @@ function spawnLoggedProcess(params: {
   child.stdout?.pipe(stream);
   child.stderr?.pipe(stream);
   child.on("exit", (code, signal) => {
-    stream.write(`[${new Date().toISOString()}] exited: code=${code ?? "null"} signal=${signal ?? "null"}\n`);
+    stream.write(
+      `[${new Date().toISOString()}] exited: code=${code ?? "null"} signal=${signal ?? "null"}\n`,
+    );
     stream.end();
   });
 
@@ -124,7 +135,12 @@ async function runSuite(filePath: string, cwd: string) {
     child.on("error", reject);
     child.on("exit", (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`[e2e:suite] failed: ${path.basename(filePath)} (exit ${code ?? "null"})`));
+      else
+        reject(
+          new Error(
+            `[e2e:suite] failed: ${path.basename(filePath)} (exit ${code ?? "null"})`,
+          ),
+        );
     });
   });
 }
@@ -132,7 +148,9 @@ async function runSuite(filePath: string, cwd: string) {
 async function run() {
   const suitePathArg = process.argv[2];
   if (!suitePathArg) {
-    throw new Error("Usage: node --import tsx scripts/run-e2e-suite.ts <relative-e2e-file>");
+    throw new Error(
+      "Usage: node --import tsx scripts/run-e2e-suite.ts <relative-e2e-file>",
+    );
   }
 
   const webRoot = process.cwd();
@@ -143,7 +161,8 @@ async function run() {
   }
 
   applyEnvProfile(webRoot);
-  const requiredServices = process.env.E2E_MANAGE_SERVICES === "0" ? [] : parseRequiredServices();
+  const requiredServices =
+    process.env.E2E_MANAGE_SERVICES === "0" ? [] : parseRequiredServices();
   const logDir = path.resolve(webRoot, "e2e-artifacts", "service-logs");
   const started: ManagedService[] = [];
 
@@ -155,14 +174,15 @@ async function run() {
   const readinessByService: Record<ManagedServiceName, string> = {
     web: `${(process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000").replace(/\/+$/g, "")}/api/locations`,
     analytics: `${(process.env.ANALYTICS_API_URL ?? "http://127.0.0.1:8000").replace(/\/+$/g, "")}/docs`,
-    agents: `${(process.env.AGENTS_API_URL ?? "http://127.0.0.1:8001").replace(/\/+$/g, "")}/docs`,
   };
 
   try {
     for (const service of requiredServices) {
       const readinessUrl = readinessByService[service];
       if (await isUrlReady(readinessUrl)) {
-        console.log(`[e2e:suite] using existing ${service} service (${readinessUrl})`);
+        console.log(
+          `[e2e:suite] using existing ${service} service (${readinessUrl})`,
+        );
         continue;
       }
 
@@ -171,27 +191,16 @@ async function run() {
         managed = spawnLoggedProcess({
           name: "analytics",
           command: "uv",
-          args: ["run", "--project", "apps/analytics", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"],
-          cwd: repoRoot,
-          env,
-          logDir,
-        });
-      } else if (service === "agents") {
-        managed = spawnLoggedProcess({
-          name: "agents",
-          command: "uv",
           args: [
             "run",
             "--project",
-            "apps/agents",
+            "apps/analytics",
             "uvicorn",
-            "agent.api:app",
-            "--app-dir",
-            "apps/agents/src",
+            "app.main:app",
             "--host",
             "127.0.0.1",
             "--port",
-            "8001",
+            "8000",
           ],
           cwd: repoRoot,
           env,
@@ -201,7 +210,18 @@ async function run() {
         managed = spawnLoggedProcess({
           name: "web",
           command: "pnpm",
-          args: ["-C", "apps/web", "exec", "next", "dev", "--turbopack", "--hostname", "127.0.0.1", "--port", "3000"],
+          args: [
+            "-C",
+            "apps/web",
+            "exec",
+            "next",
+            "dev",
+            "--turbopack",
+            "--hostname",
+            "127.0.0.1",
+            "--port",
+            "3000",
+          ],
           cwd: repoRoot,
           env,
           logDir,
@@ -216,7 +236,9 @@ async function run() {
   } finally {
     for (const service of started.reverse()) {
       await stopService(service);
-      console.log(`[e2e:suite] stopped ${service.name} (log: ${service.logPath})`);
+      console.log(
+        `[e2e:suite] stopped ${service.name} (log: ${service.logPath})`,
+      );
     }
   }
 }

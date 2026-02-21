@@ -17,7 +17,6 @@ jobs:
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       ANALYTICS_API_URL: http://127.0.0.1:8000
-      AGENTS_API_URL: http://127.0.0.1:8001
       E2E_BASE_URL: http://127.0.0.1:3000
       E2E_DB_FORBIDDEN_PATTERN: "(prod|production)"
 

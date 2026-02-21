@@ -45,32 +45,6 @@ const DEFAULT_E2E_SUITES = [
   "test:e2e:scheduler",
   "test:e2e:scheduler:post-generation",
   "test:e2e:attribution",
-  "test:e2e:agents:legacy-decommission",
-  "test:e2e:agents:llm-runtime",
-  "test:e2e:agents:llm-disabled-mode",
-  "test:e2e:agents:llm-evaluation-harness",
-  "test:e2e:agents:prompt-tuning-loop",
-  "test:e2e:agents:prompt-model-visibility",
-  "test:e2e:agents:card-standard",
-  "test:e2e:agents:contract-panels",
-  "test:e2e:agents:sample-context",
-  "test:e2e:agents:selected-context",
-  "test:e2e:agents:output-trust-panel",
-  "test:e2e:agents:llm-guardrails-fallback",
-  "test:e2e:agents:mocked-baseline-states",
-  "test:e2e:agents:phase2-handoff-readiness",
-  "test:e2e:agents:run-history",
-  "test:e2e:agents:run-comparison",
-  "test:e2e:agents:strategist",
-  "test:e2e:agents:profit-intelligence",
-  "test:e2e:agents:consensus",
-  "test:e2e:agents:simulation",
-  "test:e2e:agents:memory",
-  "test:e2e:agents:release-gate",
-  "test:e2e:agents:learning",
-  "test:e2e:agents:reranking",
-  "test:e2e:agents:learning-release-loop",
-  "test:e2e:agents:studio-overview-sandbox",
   "test:e2e:release-gate",
 ];
 
@@ -105,7 +79,9 @@ function applyEnvProfile() {
 
 function assertSafeDatabaseUrl() {
   if (process.env.E2E_DB_GUARD_DISABLED === "true") {
-    console.warn("[e2e:full] WARNING: E2E DB guard disabled by E2E_DB_GUARD_DISABLED=true");
+    console.warn(
+      "[e2e:full] WARNING: E2E DB guard disabled by E2E_DB_GUARD_DISABLED=true",
+    );
     return;
   }
 
@@ -114,7 +90,8 @@ function assertSafeDatabaseUrl() {
     throw new Error("DATABASE_URL is required for E2E full runner");
   }
 
-  const forbiddenPattern = process.env.E2E_DB_FORBIDDEN_PATTERN ?? "(prod|production)";
+  const forbiddenPattern =
+    process.env.E2E_DB_FORBIDDEN_PATTERN ?? "(prod|production)";
   const forbiddenRegex = new RegExp(forbiddenPattern, "i");
   if (forbiddenRegex.test(dbUrl)) {
     throw new Error(
@@ -143,7 +120,9 @@ function spawnLoggedProcess(
   fs.mkdirSync(logDir, { recursive: true });
   const logPath = path.resolve(logDir, `${name}.log`);
   const stream = fs.createWriteStream(logPath, { flags: "w" });
-  stream.write(`[${new Date().toISOString()}] starting: ${command} ${args.join(" ")}\n`);
+  stream.write(
+    `[${new Date().toISOString()}] starting: ${command} ${args.join(" ")}\n`,
+  );
 
   const child = spawn(command, args, {
     cwd,
@@ -153,7 +132,9 @@ function spawnLoggedProcess(
   child.stdout?.pipe(stream);
   child.stderr?.pipe(stream);
   child.on("exit", (code, signal) => {
-    stream.write(`[${new Date().toISOString()}] exited: code=${code ?? "null"} signal=${signal ?? "null"}\n`);
+    stream.write(
+      `[${new Date().toISOString()}] exited: code=${code ?? "null"} signal=${signal ?? "null"}\n`,
+    );
     stream.end();
   });
 
@@ -185,7 +166,11 @@ async function runCommand(
   });
 }
 
-async function waitForHttpReady(name: string, url: string, timeoutMs = 120_000) {
+async function waitForHttpReady(
+  name: string,
+  url: string,
+  timeoutMs = 120_000,
+) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
@@ -225,7 +210,10 @@ function keepOnlyCoverageReports() {
   const entries = fs.readdirSync(artifactsRoot);
   for (const entry of entries) {
     if (entry === "runner-reports") continue;
-    fs.rmSync(path.resolve(artifactsRoot, entry), { recursive: true, force: true });
+    fs.rmSync(path.resolve(artifactsRoot, entry), {
+      recursive: true,
+      force: true,
+    });
   }
 }
 
@@ -254,7 +242,9 @@ async function run() {
   resetArtifactsDirectory();
   fs.mkdirSync(logDir, { recursive: true });
   console.log(`[e2e:full] logs: ${logDir}`);
-  console.log(`[e2e:full] using DATABASE_URL host guard with pattern: ${process.env.E2E_DB_FORBIDDEN_PATTERN ?? "(prod|production)"}`);
+  console.log(
+    `[e2e:full] using DATABASE_URL host guard with pattern: ${process.env.E2E_DB_FORBIDDEN_PATTERN ?? "(prod|production)"}`,
+  );
 
   const services: ServiceProcess[] = [];
   let resetAfterRunFailed = false;
@@ -266,27 +256,16 @@ async function run() {
       spawnLoggedProcess(
         "analytics",
         "uv",
-        ["run", "--project", "apps/analytics", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"],
-        repoRoot,
-        env,
-      ),
-    );
-    services.push(
-      spawnLoggedProcess(
-        "agents",
-        "uv",
         [
           "run",
           "--project",
-          "apps/agents",
+          "apps/analytics",
           "uvicorn",
-          "agent.api:app",
-          "--app-dir",
-          "apps/agents/src",
+          "app.main:app",
           "--host",
           "127.0.0.1",
           "--port",
-          "8001",
+          "8000",
         ],
         repoRoot,
         env,
@@ -296,7 +275,18 @@ async function run() {
       spawnLoggedProcess(
         "web",
         "pnpm",
-        ["-C", "apps/web", "exec", "next", "dev", "--turbopack", "--hostname", "127.0.0.1", "--port", "3000"],
+        [
+          "-C",
+          "apps/web",
+          "exec",
+          "next",
+          "dev",
+          "--turbopack",
+          "--hostname",
+          "127.0.0.1",
+          "--port",
+          "3000",
+        ],
         repoRoot,
         env,
       ),
@@ -304,26 +294,66 @@ async function run() {
 
     await waitForHttpReady(
       "analytics",
-      joinUrl(process.env.ANALYTICS_API_URL ?? "http://127.0.0.1:8000", "/docs"),
+      joinUrl(
+        process.env.ANALYTICS_API_URL ?? "http://127.0.0.1:8000",
+        "/docs",
+      ),
     );
     await waitForHttpReady(
-      "agents",
-      joinUrl(process.env.AGENTS_API_URL ?? "http://127.0.0.1:8001", "/docs"),
+      "web",
+      process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000",
     );
-    await waitForHttpReady("web", process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000");
 
     console.log("[e2e:full] running DB lifecycle (pre-test)");
-    await runCommand("db:reset", "pnpm", ["-C", "apps/web", "run", "db:reset"], repoRoot, env);
-    await runCommand("db:gen", "pnpm", ["-C", "apps/web", "run", "db:gen"], repoRoot, env);
-    await runCommand("db:init", "pnpm", ["-C", "apps/web", "run", "db:init"], repoRoot, env);
-    await runCommand("db:seed", "pnpm", ["-C", "apps/web", "run", "db:seed"], repoRoot, env);
-    await runCommand("db:seed:smoke", "pnpm", ["-C", "apps/web", "run", "db:seed:smoke"], repoRoot, env);
+    await runCommand(
+      "db:reset",
+      "pnpm",
+      ["-C", "apps/web", "run", "db:reset"],
+      repoRoot,
+      env,
+    );
+    await runCommand(
+      "db:gen",
+      "pnpm",
+      ["-C", "apps/web", "run", "db:gen"],
+      repoRoot,
+      env,
+    );
+    await runCommand(
+      "db:init",
+      "pnpm",
+      ["-C", "apps/web", "run", "db:init"],
+      repoRoot,
+      env,
+    );
+    await runCommand(
+      "db:seed",
+      "pnpm",
+      ["-C", "apps/web", "run", "db:seed"],
+      repoRoot,
+      env,
+    );
+    await runCommand(
+      "db:seed:smoke",
+      "pnpm",
+      ["-C", "apps/web", "run", "db:seed:smoke"],
+      repoRoot,
+      env,
+    );
 
     const suites = getSuites();
-    console.log(`[e2e:full] running suites (${suites.length}): ${suites.join(", ")}`);
+    console.log(
+      `[e2e:full] running suites (${suites.length}): ${suites.join(", ")}`,
+    );
     for (const suite of suites) {
       try {
-        await runCommand(suite, "pnpm", ["-C", "apps/web", "run", suite], repoRoot, env);
+        await runCommand(
+          suite,
+          "pnpm",
+          ["-C", "apps/web", "run", suite],
+          repoRoot,
+          env,
+        );
         suiteResults.push({ suite, status: "passed" });
       } catch (error) {
         suiteResults.push({
@@ -335,11 +365,15 @@ async function run() {
       }
     }
 
-    const failedCount = suiteResults.filter((item) => item.status === "failed").length;
+    const failedCount = suiteResults.filter(
+      (item) => item.status === "failed",
+    ).length;
     if (failedCount === 0) {
       console.log("[e2e:full] all suites passed");
     } else {
-      console.error(`[e2e:full] suites completed with failures: ${failedCount}/${suiteResults.length}`);
+      console.error(
+        `[e2e:full] suites completed with failures: ${failedCount}/${suiteResults.length}`,
+      );
       process.exitCode = 1;
     }
   } catch (error) {
@@ -348,7 +382,13 @@ async function run() {
   } finally {
     try {
       console.log("[e2e:full] running DB cleanup reset (post-test)");
-      await runCommand("db:reset (post)", "pnpm", ["-C", "apps/web", "run", "db:reset"], repoRoot, env);
+      await runCommand(
+        "db:reset (post)",
+        "pnpm",
+        ["-C", "apps/web", "run", "db:reset"],
+        repoRoot,
+        env,
+      );
     } catch (error) {
       resetAfterRunFailed = true;
       console.error("[e2e:full] post-run db:reset failed:", error);
@@ -357,33 +397,47 @@ async function run() {
 
     for (const service of services.reverse()) {
       await stopService(service);
-      console.log(`[e2e:full] stopped ${service.name} (log: ${service.logPath})`);
+      console.log(
+        `[e2e:full] stopped ${service.name} (log: ${service.logPath})`,
+      );
     }
 
     if (resetAfterRunFailed) {
-      console.error("[e2e:full] run ended with DB reset failure. Check logs and DB state before next run.");
+      console.error(
+        "[e2e:full] run ended with DB reset failure. Check logs and DB state before next run.",
+      );
     }
 
     const report: CoverageReport = {
       generatedAt: new Date().toISOString(),
       plannedSuites,
       executedSuites: suiteResults.map((item) => item.suite),
-      passedSuites: suiteResults.filter((item) => item.status === "passed").map((item) => item.suite),
+      passedSuites: suiteResults
+        .filter((item) => item.status === "passed")
+        .map((item) => item.suite),
       failedSuites: suiteResults
         .filter((item) => item.status === "failed")
         .map((item) => ({ suite: item.suite, error: item.error })),
       plannedCount: plannedSuites.length,
       executedCount: suiteResults.length,
-      passedCount: suiteResults.filter((item) => item.status === "passed").length,
-      failedCount: suiteResults.filter((item) => item.status === "failed").length,
+      passedCount: suiteResults.filter((item) => item.status === "passed")
+        .length,
+      failedCount: suiteResults.filter((item) => item.status === "failed")
+        .length,
       scenarioCoveragePct:
-        plannedSuites.length === 0 ? 0 : Number(((suiteResults.length / plannedSuites.length) * 100).toFixed(2)),
+        plannedSuites.length === 0
+          ? 0
+          : Number(
+              ((suiteResults.length / plannedSuites.length) * 100).toFixed(2),
+            ),
       passRatePct:
         suiteResults.length === 0
           ? 0
           : Number(
               (
-                (suiteResults.filter((item) => item.status === "passed").length / suiteResults.length) *
+                (suiteResults.filter((item) => item.status === "passed")
+                  .length /
+                  suiteResults.length) *
                 100
               ).toFixed(2),
             ),
@@ -393,8 +447,16 @@ async function run() {
     const timestamp = report.generatedAt.replace(/[:.]/g, "-");
     const reportPath = path.resolve(reportDir, `coverage-${timestamp}.json`);
     const latestPath = path.resolve(reportDir, "coverage-latest.json");
-    fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
-    fs.writeFileSync(latestPath, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+    fs.writeFileSync(
+      reportPath,
+      `${JSON.stringify(report, null, 2)}\n`,
+      "utf8",
+    );
+    fs.writeFileSync(
+      latestPath,
+      `${JSON.stringify(report, null, 2)}\n`,
+      "utf8",
+    );
 
     console.log("[e2e:full] coverage summary:");
     console.log(`  planned: ${report.plannedCount}`);
@@ -408,12 +470,16 @@ async function run() {
     if (report.failedCount > 0) {
       console.error("[e2e:full] failed suites:");
       for (const failed of report.failedSuites) {
-        console.error(`  - ${failed.suite}: ${failed.error ?? "unknown error"}`);
+        console.error(
+          `  - ${failed.suite}: ${failed.error ?? "unknown error"}`,
+        );
       }
     }
     if (isReportOnlyEnabled()) {
       keepOnlyCoverageReports();
-      console.log("[e2e:full] report-only mode active: removed screenshots/videos/logs; kept runner-reports only.");
+      console.log(
+        "[e2e:full] report-only mode active: removed screenshots/videos/logs; kept runner-reports only.",
+      );
     }
   }
 }
