@@ -3,6 +3,7 @@
 import { Bot, TrendingUp, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { SidebarInset } from "@workspace/ui/components/sidebar";
 import { SidebarTriggerClient } from "@/components/sidebar-trigger-client";
 
 type AgentCard = {
@@ -31,18 +32,20 @@ export default function AgentsPage() {
   const t = useTranslations("agents");
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <SidebarTriggerClient
-        title="Agents"
-        breadcrumbs={[{ label: "Agents" }]}
-      />
-      <div className="space-y-8 p-8 max-w-7xl mx-auto flex-1">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {AGENTS.map((agent) => (
-            <Link
-              key={agent.id}
-              href={agent.href}
-              className={`
+    <SidebarInset>
+      <div className="w-full">
+        <SidebarTriggerClient
+          title="Agents"
+          breadcrumbs={[{ label: "Agents" }]}
+        />
+
+        <main className="mx-auto max-w-6xl p-4 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {AGENTS.map((agent) => (
+              <Link
+                key={agent.id}
+                href={agent.href}
+                className={`
               group relative bg-white rounded-lg border shadow-sm p-6 
               transition-all duration-200 
               ${
@@ -51,16 +54,16 @@ export default function AgentsPage() {
                   : "opacity-60 cursor-not-allowed"
               }
             `}
-            >
-              {agent.status === "coming-soon" && (
-                <div className="absolute top-4 right-4 bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                  Coming Soon
-                </div>
-              )}
+              >
+                {agent.status === "coming-soon" && (
+                  <div className="absolute top-4 right-4 bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                    Coming Soon
+                  </div>
+                )}
 
-              <div className="flex items-start gap-4">
-                <div
-                  className={`
+                <div className="flex items-start gap-4">
+                  <div
+                    className={`
                 p-3 rounded-lg 
                 ${
                   agent.status === "active"
@@ -68,37 +71,38 @@ export default function AgentsPage() {
                     : "bg-gray-100 text-gray-400"
                 }
               `}
-                >
-                  {agent.icon}
+                  >
+                    {agent.icon}
+                  </div>
+
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
+                      {agent.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {agent.description}
+                    </p>
+
+                    {agent.status === "active" && (
+                      <div className="mt-4 flex items-center gap-2 text-primary text-sm font-medium">
+                        <span>Open agent</span>
+                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                      </div>
+                    )}
+                  </div>
                 </div>
-
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">
-                    {agent.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    {agent.description}
-                  </p>
-
-                  {agent.status === "active" && (
-                    <div className="mt-4 flex items-center gap-2 text-primary text-sm font-medium">
-                      <span>Open agent</span>
-                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {AGENTS.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            <Bot className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p>No agents available yet</p>
+              </Link>
+            ))}
           </div>
-        )}
+
+          {AGENTS.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <Bot className="w-16 h-16 mx-auto mb-4 opacity-50" />
+              <p>No agents available yet</p>
+            </div>
+          )}
+        </main>
       </div>
-    </div>
+    </SidebarInset>
   );
 }
