@@ -9,7 +9,7 @@ import pandas as pd
 
 from menuyukti.indicators.utils.extraction import extract_menu_items
 from menuyukti.indicators.utils.pos import detect_pos_from_excel_bytes
-from menuyukti.indicators.utils.registry import NORMALIZERS
+from menuyukti.indicators.utils.registry import NORMALIZERS, register_normalizers
 from menuyukti.indicators.analytics.esb.normalizer import (
     normalize_esb_excel,
 )
@@ -25,6 +25,9 @@ from menuyukti.indicators.contracts import (
 
 
 app = FastAPI(title="Menuyukti Analytics API")
+
+# Register normalizers to avoid circular imports
+register_normalizers()
 
 
 def sanitize_json_payload(value: Any) -> Any:

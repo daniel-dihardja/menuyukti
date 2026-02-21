@@ -32,6 +32,7 @@
     "test:e2e:cogs": "node --import tsx scripts/run-e2e-suite.ts e2e/analytics-cogs-completeness.e2e.ts",
     "test:e2e:pairs:pair-type": "node --import tsx scripts/run-e2e-suite.ts e2e/analytics-pairs-pair-type.e2e.ts",
     "test:e2e:release-gate": "node --import tsx scripts/run-e2e-suite.ts e2e/release-gate-marketer-analyst.e2e.ts",
+    "test:e2e:menu-strategist": "node --import tsx scripts/run-e2e-suite.ts e2e/menu-strategist-agent.e2e.ts",
     "test:e2e:batch": "node --import tsx scripts/run-e2e-shared-services.ts",
     "test:e2e:batch:smoke": "E2E_SUITE_LIST=test:e2e:matrix,test:e2e:pairs,test:e2e:api:contracts node --import tsx scripts/run-e2e-shared-services.ts",
     "test:e2e:full": "node --import tsx scripts/run-e2e-full.ts",

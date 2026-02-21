@@ -23,8 +23,6 @@ const RecommendationSchema = z.object({
   }),
 });
 
-type Recommendation = z.infer<typeof RecommendationSchema>;
-
 export async function POST(request: Request) {
   try {
     const { analyticsId } = await request.json();
@@ -36,9 +34,18 @@ export async function POST(request: Request) {
       );
     }
 
+    // Convert analyticsId to number (it comes as string from JSON)
+    const analyticsIdNum = Number(analyticsId);
+    if (isNaN(analyticsIdNum)) {
+      return Response.json(
+        { error: "analyticsId must be a valid number" },
+        { status: 400 },
+      );
+    }
+
     // Get menu analytics data from database
     const analytics = await prisma.analytics.findUnique({
-      where: { id: analyticsId },
+      where: { id: analyticsIdNum },
       include: {
         menuItems: true,
         location: true,

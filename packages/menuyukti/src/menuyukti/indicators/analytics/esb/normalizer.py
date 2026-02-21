@@ -2,7 +2,7 @@ import pandas as pd
 from io import BytesIO
 
 from menuyukti.core.models.pos_transaction import POSTransactionLineItem
-from menuyukti.indicators.analytics.utils import normalize_columns
+from menuyukti.indicators.utils.formatting import normalize_columns
 
 
 def normalize_esb_excel_with_rejections(

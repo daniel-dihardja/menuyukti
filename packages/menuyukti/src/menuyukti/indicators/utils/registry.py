@@ -20,8 +20,13 @@ That's it! Your POS is now:
 - Auto-normalized (via NORMALIZERS function)
 """
 
-from menuyukti.indicators.analytics.esb.normalizer import normalize_esb_excel
+# Empty registry - normalizers are registered lazily to avoid circular imports
+NORMALIZERS = {}
 
-NORMALIZERS = {
-    "esb": normalize_esb_excel,
-}
+
+def register_normalizers():
+    """Lazy registration to avoid circular imports"""
+    if not NORMALIZERS:
+        from menuyukti.indicators.analytics.esb.normalizer import normalize_esb_excel
+
+        NORMALIZERS["esb"] = normalize_esb_excel
