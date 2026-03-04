@@ -2,7 +2,7 @@ PYTHON=uv run python
 UV=uv run
 UVICORN=uv run uvicorn
 
-.PHONY: install run dev migrate-db drop-db test-upload lint format clean
+.PHONY: install run dev migrate-db drop-db test-upload load-report lint format clean
 
 install:
 	uv sync
@@ -21,6 +21,10 @@ drop-db:
 
 test-upload:
 	DATABASE_URL=sqlite+pysqlite:///$(CURDIR)/test.db PYTHONPATH=../.. $(UV) pytest tests/test_upload_excel.py
+
+load-report:
+	@if [ -z "$(REPORT_PATH)" ]; then echo "REPORT_PATH is required"; exit 1; fi
+	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_sales_report "$(REPORT_PATH)"
 
 lint:
 	uv run ruff check .

@@ -11,24 +11,25 @@ A minimal starter for the Strawberry GraphQL endpoint. The service currently exp
 4. The script falls back to the on-disk SQLite file (`sqlite+pysqlite:///./graphql.db`) when the env var is missing, keeping the workflow safe for quick local tests.
 5. After the table exists, import `SessionLocal`/`User` from `graphql.data_sources` inside your resolvers to read or write Neon rows via SQLAlchemy sessions.
 
-Need a clean slate? Run `make drop-db` (or `uv run python -m graphql.data_sources.database drop`) to drop every table before recreating the schema with `make migrate-db`.
+Need a clean slate? Run `make drop-db` (or `uv run python -m graphql.data_sources.database drop`) to drop every table before recreating the schema with `make migrate-db`.  
+To import a specific Excel report directly into `order_fact`, run `make load-report REPORT_PATH=../../reports/Sales_Recapitulation_Detail_Report_Test.xlsx`; this drops/recreates the database, normalizes the specified workbook with Menyukti, and loads the rows so the analytics schema mirrors that report.
 
 ## Orders fact schema (next step)
 
 The normalized upload mutation now feeds a dedicated Orders fact table (`apps/graphql/data_sources/database.py::OrderFact`). Each record captures the `POSTransactionLineItem` contract, plus a `pos_system` column so you can trace the ingestion source. The column definitions are:
 
-| Column | Type | Notes |
-| --- | --- | --- |
-| `id` | integer (PK) | Auto-increment surrogate |
-| `bill_number` | string | Indexed for join/filter |
-| `menu` | string | Menu item name |
-| `qty` | integer | Quantity ordered |
-| `price` | float | Unit price |
-| `total_after_bill_discount` | float | Line revenue |
-| `order_time` | timestamp | Indexed for time-series analytics |
-| `menu_category` | string | Category classification |
-| `menu_category_detail` | string | Subcategory/classifier |
-| `pos_system` | string | Detected POS (currently `esb`) |
+| Column                      | Type         | Notes                             |
+| --------------------------- | ------------ | --------------------------------- |
+| `id`                        | integer (PK) | Auto-increment surrogate          |
+| `bill_number`               | string       | Indexed for join/filter           |
+| `menu`                      | string       | Menu item name                    |
+| `qty`                       | integer      | Quantity ordered                  |
+| `price`                     | float        | Unit price                        |
+| `total_after_bill_discount` | float        | Line revenue                      |
+| `order_time`                | timestamp    | Indexed for time-series analytics |
+| `menu_category`             | string       | Category classification           |
+| `menu_category_detail`      | string       | Subcategory/classifier            |
+| `pos_system`                | string       | Detected POS (currently `esb`)    |
 
 Running `make migrate-db` (or `DATABASE_URL="..." make migrate-db`) will create this table alongside the existing `users` table. The next step after this is wiring the mutation to persist `NormalizedLineItem` rows into `OrderFact`, then building materialized views or summaries for your downstream analytics/agentic consumers.
 
