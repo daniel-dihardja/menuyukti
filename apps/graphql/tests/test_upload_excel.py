@@ -1,9 +1,15 @@
 from datetime import datetime
+import os
 from io import BytesIO
 from pathlib import Path
 
 import pytest
 import asyncio
+
+TEST_DB = Path(__file__).resolve().parents[1] / "test.db"
+os.environ["DATABASE_URL"] = f"sqlite+pysqlite:///{TEST_DB}"
+
+from apps.graphql.data_sources import OrderFact, SessionLocal, init_db
 from apps.graphql.schema import schema
 from apps.graphql.schema.mutation import _normalize_uploaded_excel
 from starlette.datastructures import Headers, UploadFile
@@ -11,6 +17,8 @@ from starlette.datastructures import Headers, UploadFile
 ROOT_DIR = Path(__file__).resolve().parents[3]
 REPORT_FILE = ROOT_DIR / "reports" / "Sales_Recapitulation_Detail_Report_Test.xlsx"
 UPLOAD_DIR = Path(__file__).resolve().parents[1] / "uploads"
+
+init_db()
 
 MUTATION = """
 mutation UploadFile($file: Upload!) {
@@ -94,5 +102,13 @@ def test_upload_excel_creates_metadata(tmp_path):
         assert normalized_rows[0]["menuCategoryDetail"] == expected_first[
             "menu_category_detail"
         ]
+
+    session = SessionLocal()
+    try:
+        assert session.query(OrderFact).count() == len(expected_records)
+        session.query(OrderFact).delete()
+        session.commit()
+    finally:
+        session.close()
 
     stored_path.unlink()

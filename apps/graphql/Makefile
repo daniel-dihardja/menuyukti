@@ -20,7 +20,7 @@ drop-db:
 	PYTHONPATH=../.. $(PYTHON) -m apps.graphql.data_sources.database drop
 
 test-upload:
-	PYTHONPATH=../.. $(UV) pytest tests/test_upload_excel.py
+	DATABASE_URL=sqlite+pysqlite:///$(CURDIR)/test.db PYTHONPATH=../.. $(UV) pytest tests/test_upload_excel.py
 
 lint:
 	uv run ruff check .
