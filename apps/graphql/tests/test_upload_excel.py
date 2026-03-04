@@ -22,7 +22,7 @@ init_db()
 
 MUTATION = """
 mutation UploadFile($file: Upload!) {
-  uploadExcel(file: $file) {
+  uploadSalesReport(file: $file) {
     filename
     sheetNames
     headerPreview
@@ -60,6 +60,13 @@ def test_upload_excel_creates_metadata(tmp_path):
     expected_df, detected_pos = _normalize_uploaded_excel(payload)
     expected_records = expected_df.to_dict(orient="records")
 
+    session = SessionLocal()
+    try:
+        session.query(OrderFact).delete()
+        session.commit()
+    finally:
+        session.close()
+
     result = asyncio.run(
         schema.execute(
             MUTATION,
@@ -68,7 +75,7 @@ def test_upload_excel_creates_metadata(tmp_path):
     )
     assert not result.errors
 
-    data = result.data["uploadExcel"]
+    data = result.data["uploadSalesReport"]
     assert data["filename"] == REPORT_FILE.name
     assert data["sheetNames"]
     assert isinstance(data["headerPreview"], list)

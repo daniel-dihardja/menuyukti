@@ -34,7 +34,7 @@ Running `make migrate-db` (or `DATABASE_URL="..." make migrate-db`) will create 
 
 ## Uploading Excel files
 
-The schema now exposes an `uploadExcel(file: Upload!): ExcelUploadResult!` mutation. It stores the uploaded workbook in `apps/graphql/uploads`, captures sheet names and the first row of the first sheet, and returns metadata (`filename`, `storedPath`, `sheetNames`, `headerPreview`, `sizeBytes`). To test:
+The schema now exposes an `uploadSalesReport(file: Upload!): ExcelUploadResult!` mutation. It reads the file into memory, detects the POS system (ESB today, others in the future), normalizes the rows via Menyukti, persists them into the `order_fact` table, and returns metadata (sheet names/header row, bytes) plus the normalized data.
 
 1. Open a GraphQL client that supports multipart file uploads (Insomnia, Altair, GraphiQL with `graphql-multipart-request-spec`).
 2. Issue a mutation such as:

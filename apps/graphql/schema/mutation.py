@@ -110,7 +110,7 @@ def _persist_order_fact_rows(rows: list[NormalizedLineItem], pos_system: str | N
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    async def upload_excel(self, file: Upload) -> ExcelUploadResult:
+    async def upload_sales_report(self, file: Upload) -> ExcelUploadResult:
         payload = await file.read()
         normalized_df, detected_pos = _normalize_uploaded_excel(payload)
         normalized_rows = _build_normalized_rows(normalized_df)
