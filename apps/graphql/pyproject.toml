@@ -12,4 +12,23 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "openpyxl>=3.1.2",
     "pytest>=9.0.0",
+    "menuyukti",
 ]
+
+[build-system]
+requires = ["setuptools>=70.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+    "apps.graphql",
+    "apps.graphql.schema",
+    "apps.graphql.resolvers",
+    "apps.graphql.data_sources",
+]
+
+[tool.setuptools.package-dir]
+"apps.graphql" = "."
+"apps.graphql.schema" = "schema"
+"apps.graphql.resolvers" = "resolvers"
+"apps.graphql.data_sources" = "data_sources"

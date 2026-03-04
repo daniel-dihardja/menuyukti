@@ -1,9 +1,11 @@
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 
 import pytest
 import asyncio
 from apps.graphql.schema import schema
+from apps.graphql.schema.mutation import _normalize_uploaded_excel
 from starlette.datastructures import Headers, UploadFile
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
@@ -18,6 +20,16 @@ mutation UploadFile($file: Upload!) {
     sheetNames
     headerPreview
     sizeBytes
+    normalizedRows {
+      billNumber
+      menu
+      qty
+      price
+      totalAfterBillDiscount
+      orderTime
+      menuCategory
+      menuCategoryDetail
+    }
   }
 }
 """
@@ -38,6 +50,9 @@ def test_upload_excel_creates_metadata(tmp_path):
         ),
     )
 
+    expected_df, detected_pos = _normalize_uploaded_excel(payload)
+    expected_records = expected_df.to_dict(orient="records")
+
     result = asyncio.run(
         schema.execute(
             MUTATION,
@@ -54,5 +69,30 @@ def test_upload_excel_creates_metadata(tmp_path):
     assert data["sheetNames"]
     assert isinstance(data["headerPreview"], list)
     assert data["sizeBytes"] == len(payload)
+    normalized_rows = data["normalizedRows"]
+    assert len(normalized_rows) == len(expected_records)
+
+    if expected_records:
+        expected_first = expected_records[0]
+        order_time = expected_first["order_time"]
+        if hasattr(order_time, "to_pydatetime"):
+            order_time = order_time.to_pydatetime()
+
+        order_time_value = normalized_rows[0]["orderTime"]
+        if isinstance(order_time_value, str):
+            order_time_value = datetime.fromisoformat(order_time_value)
+
+        assert normalized_rows[0]["billNumber"] == expected_first["bill_number"]
+        assert normalized_rows[0]["menu"] == expected_first["menu"]
+        assert normalized_rows[0]["qty"] == int(expected_first["qty"])
+        assert normalized_rows[0]["price"] == float(expected_first["price"])
+        assert normalized_rows[0]["totalAfterBillDiscount"] == float(
+            expected_first["total_after_bill_discount"]
+        )
+        assert order_time_value == order_time
+        assert normalized_rows[0]["menuCategory"] == expected_first["menu_category"]
+        assert normalized_rows[0]["menuCategoryDetail"] == expected_first[
+            "menu_category_detail"
+        ]
 
     stored_path.unlink()

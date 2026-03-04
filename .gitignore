@@ -52,3 +52,4 @@ notebooks/*
 # Python caches
 __pycache__/
 *.pyc
+apps/graphql/uploads/

@@ -529,8 +529,9 @@ wheels = [
 [[package]]
 name = "graphql"
 version = "0.1.0"
-source = { virtual = "apps/graphql" }
+source = { editable = "apps/graphql" }
 dependencies = [
+    { name = "menuyukti" },
     { name = "openpyxl" },
     { name = "psycopg2-binary" },
     { name = "pytest" },
@@ -542,6 +543,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "menuyukti", editable = "packages/menuyukti" },
     { name = "openpyxl", specifier = ">=3.1.2" },
     { name = "psycopg2-binary", specifier = ">=2.9.5,<3.0" },
     { name = "pytest", specifier = ">=9.0.0" },

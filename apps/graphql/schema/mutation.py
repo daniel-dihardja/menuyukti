@@ -1,14 +1,37 @@
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 
 import strawberry
 from openpyxl import load_workbook
 from strawberry.file_uploads import Upload
 
+from menuyukti.core.analytics.esb import normalize_esb_excel
+from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
+from menuyukti.core.models.pos_mapping import get_config
+from menuyukti.core.models.pos_transaction import POSTransactionLineItem
+
 ROOT_DIR = Path(__file__).resolve().parent.parent
 UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
+
+
+SUPPORTED_NORMALIZERS = {
+    "esb": normalize_esb_excel,
+}
+
+
+@strawberry.type
+class NormalizedLineItem:
+    billNumber: str
+    menu: str
+    qty: int
+    price: float
+    totalAfterBillDiscount: float
+    orderTime: datetime
+    menuCategory: str
+    menuCategoryDetail: str
 
 
 @strawberry.type
@@ -18,6 +41,50 @@ class ExcelUploadResult:
     sheet_names: list[str]
     header_preview: list[str]
     size_bytes: int
+    normalized_rows: list[NormalizedLineItem]
+
+
+def _to_python(value: Any) -> Any:
+    if hasattr(value, "to_pydatetime"):
+        return value.to_pydatetime()
+    return value
+
+
+def _build_normalized_rows(df) -> list[NormalizedLineItem]:
+    rows: list[NormalizedLineItem] = []
+    for record in df.to_dict(orient="records"):
+        rows.append(
+            NormalizedLineItem(
+                billNumber=str(record[POSTransactionLineItem.BILL_NUMBER]),
+                menu=str(record[POSTransactionLineItem.MENU]),
+                qty=int(record[POSTransactionLineItem.QTY]),
+                price=float(record[POSTransactionLineItem.PRICE]),
+                totalAfterBillDiscount=float(
+                    record[POSTransactionLineItem.TOTAL_AFTER_BILL_DISCOUNT]
+                ),
+                orderTime=_to_python(record[POSTransactionLineItem.ORDER_TIME]),
+                menuCategory=str(record[POSTransactionLineItem.MENU_CATEGORY]),
+                menuCategoryDetail=str(
+                    record[POSTransactionLineItem.MENU_CATEGORY_DETAIL]
+                ),
+            )
+        )
+    return rows
+
+
+def _normalize_uploaded_excel(payload: bytes):
+    pos = detect_pos_from_excel_bytes(payload) or "unknown"
+    normalizer = SUPPORTED_NORMALIZERS.get(pos)
+    if normalizer is None:
+        raise ValueError(f"Unsupported POS system detected: {pos}")
+
+    skip_rows, rename_map = get_config(pos)
+    df = normalizer(payload, skiprows=skip_rows)
+
+    if rename_map:
+        df = df.rename(columns=rename_map)
+
+    return df, pos
 
 
 @strawberry.type
@@ -25,6 +92,46 @@ class Mutation:
     @strawberry.mutation
     async def upload_excel(self, file: Upload) -> ExcelUploadResult:
         payload = await file.read()
+        normalized_df, _ = _normalize_uploaded_excel(payload)
+        normalized_rows = _build_normalized_rows(normalized_df)
+
+
+def _to_python(value: Any) -> Any:
+    if hasattr(value, "to_pydatetime"):
+        return value.to_pydatetime()
+    return value
+
+
+def _build_normalized_rows(df) -> list[NormalizedLineItem]:
+    rows: list[NormalizedLineItem] = []
+    for record in df.to_dict(orient="records"):
+        rows.append(
+            NormalizedLineItem(
+                billNumber=str(record[POSTransactionLineItem.BILL_NUMBER]),
+                menu=str(record[POSTransactionLineItem.MENU]),
+                qty=int(record[POSTransactionLineItem.QTY]),
+                price=float(record[POSTransactionLineItem.PRICE]),
+                totalAfterBillDiscount=float(
+                    record[POSTransactionLineItem.TOTAL_AFTER_BILL_DISCOUNT]
+                ),
+                orderTime=_to_python(record[POSTransactionLineItem.ORDER_TIME]),
+                menuCategory=str(record[POSTransactionLineItem.MENU_CATEGORY]),
+                menuCategoryDetail=str(
+                    record[POSTransactionLineItem.MENU_CATEGORY_DETAIL]
+                ),
+            )
+        )
+    return rows
+
+
+@strawberry.type
+class Mutation:
+    @strawberry.mutation
+    async def upload_excel(self, file: Upload) -> ExcelUploadResult:
+        payload = await file.read()
+        normalized_df = normalize_esb_excel(payload)
+        normalized_rows = _build_normalized_rows(normalized_df)
+
         stored_name = f"{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}_{uuid4().hex}_{file.filename}"
         stored_path = UPLOAD_DIR / stored_name
         stored_path.write_bytes(payload)
@@ -36,7 +143,9 @@ class Mutation:
         if sheet_names:
             active_sheet = workbook[sheet_names[0]]
             first_row = next(active_sheet.iter_rows(max_row=1, values_only=True), ())
-            header_preview = [str(value) if value is not None else "" for value in first_row]
+            header_preview = [
+                str(value) if value is not None else "" for value in first_row
+            ]
 
         workbook.close()
 
@@ -46,4 +155,5 @@ class Mutation:
             sheet_names=sheet_names,
             header_preview=header_preview,
             size_bytes=len(payload),
+            normalized_rows=normalized_rows,
         )
