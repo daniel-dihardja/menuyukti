@@ -51,6 +51,6 @@ mutation UploadFile($file: Upload!) {
 }
 ```
 
-3. Attach your Excel file under the `file` variable and run the mutation. The server detects the POS system (ESB today, others in the future) and only normalizes the file when the detection matches a supported normalizer. The file is persisted locally, and the response returns the captured metadata so you can verify the upload succeeded.
+3. Attach your Excel file under the `file` variable and run the mutation. The server detects the POS system (ESB today, others in the future), reads the bytes into memory, normalizes the rows, persists them into the analytics table, and returns metadata so you can verify the upload succeeded (no file is stored on disk).
 4. The response also includes `normalizedRows`, which mirrors the `POSTransactionLineItem` contract from `menuyukti.core` (fields like `billNumber`, `menu`, `qty`, `price`, `totalAfterBillDiscount`, `orderTime`, `menuCategory`, `menuCategoryDetail`). Use those entries directly in your UI or downstream analytics without additional conversions.
 5. Unsupported POS systems return a GraphQL `ValueError` mentioning the detected POS name, so clients can fall back to another workflow until a normalizer is available.

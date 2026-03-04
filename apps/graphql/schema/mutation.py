@@ -1,7 +1,7 @@
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import datetime
 from typing import Any
-from uuid import uuid4
+
+from io import BytesIO
 
 import strawberry
 from openpyxl import load_workbook
@@ -12,10 +12,6 @@ from menuyukti.core.analytics.esb import normalize_esb_excel
 from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
 from menuyukti.core.models.pos_mapping import get_config
 from menuyukti.core.models.pos_transaction import POSTransactionLineItem
-
-ROOT_DIR = Path(__file__).resolve().parent.parent
-UPLOAD_DIR = ROOT_DIR / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
 
 SUPPORTED_NORMALIZERS = {
     "esb": normalize_esb_excel,
@@ -37,7 +33,6 @@ class NormalizedLineItem:
 @strawberry.type
 class ExcelUploadResult:
     filename: str
-    stored_path: str
     sheet_names: list[str]
     header_preview: list[str]
     size_bytes: int
@@ -121,11 +116,7 @@ class Mutation:
         normalized_rows = _build_normalized_rows(normalized_df)
         _persist_order_fact_rows(normalized_rows, detected_pos)
 
-        stored_name = f"{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}_{uuid4().hex}_{file.filename}"
-        stored_path = UPLOAD_DIR / stored_name
-        stored_path.write_bytes(payload)
-
-        workbook = load_workbook(filename=stored_path, read_only=True, data_only=True)
+        workbook = load_workbook(filename=BytesIO(payload), read_only=True, data_only=True)
         sheet_names = workbook.sheetnames
         header_preview: list[str] = []
 
@@ -138,7 +129,6 @@ class Mutation:
 
         return ExcelUploadResult(
             filename=file.filename,
-            stored_path=str(stored_path),
             sheet_names=sheet_names,
             header_preview=header_preview,
             size_bytes=len(payload),

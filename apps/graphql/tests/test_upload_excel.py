@@ -24,7 +24,6 @@ MUTATION = """
 mutation UploadFile($file: Upload!) {
   uploadExcel(file: $file) {
     filename
-    storedPath
     sheetNames
     headerPreview
     sizeBytes
@@ -71,9 +70,6 @@ def test_upload_excel_creates_metadata(tmp_path):
 
     data = result.data["uploadExcel"]
     assert data["filename"] == REPORT_FILE.name
-    stored_path = Path(data["storedPath"])
-    assert stored_path.exists()
-    assert stored_path.resolve().parent == UPLOAD_DIR.resolve()
     assert data["sheetNames"]
     assert isinstance(data["headerPreview"], list)
     assert data["sizeBytes"] == len(payload)
@@ -110,5 +106,3 @@ def test_upload_excel_creates_metadata(tmp_path):
         session.commit()
     finally:
         session.close()
-
-    stored_path.unlink()
