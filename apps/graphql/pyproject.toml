@@ -21,14 +21,16 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = [
-    "apps.graphql",
-    "apps.graphql.schema",
-    "apps.graphql.resolvers",
-    "apps.graphql.data_sources",
+    "graphql",
+    "graphql.schema",
+    "graphql.resolvers",
+    "graphql.data_sources",
+    "graphql.reports",
 ]
 
 [tool.setuptools.package-dir]
-"apps.graphql" = "."
-"apps.graphql.schema" = "schema"
-"apps.graphql.resolvers" = "resolvers"
-"apps.graphql.data_sources" = "data_sources"
+"graphql" = "."
+"graphql.schema" = "schema"
+"graphql.resolvers" = "resolvers"
+"graphql.data_sources" = "data_sources"
+"graphql.reports" = "reports"

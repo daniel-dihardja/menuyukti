@@ -4,7 +4,7 @@ from typing import Any, Iterable
 
 import pandas as pd
 
-from apps.graphql.data_sources import OrderFact, SessionLocal
+from graphql.data_sources import OrderFact, SessionLocal
 from menuyukti.core.analytics.esb import normalize_esb_excel
 from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
 from menuyukti.core.models.pos_mapping import get_config
