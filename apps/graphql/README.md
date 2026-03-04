@@ -12,3 +12,24 @@ A minimal starter for the Strawberry GraphQL endpoint. The service currently exp
 5. After the table exists, import `SessionLocal`/`User` from `apps.graphql.data_sources` inside your resolvers to read or write Neon rows via SQLAlchemy sessions.
 
 Need a clean slate? Run `make drop-db` (or `uv run python -m apps.graphql.data_sources.database drop`) to drop every table before recreating the schema with `make migrate-db`.
+
+## Uploading Excel files
+
+The schema now exposes an `uploadExcel(file: Upload!): ExcelUploadResult!` mutation. It stores the uploaded workbook in `apps/graphql/uploads`, captures sheet names and the first row of the first sheet, and returns metadata (`filename`, `storedPath`, `sheetNames`, `headerPreview`, `sizeBytes`). To test:
+
+1. Open a GraphQL client that supports multipart file uploads (Insomnia, Altair, GraphiQL with `graphql-multipart-request-spec`).
+2. Issue a mutation such as:
+
+```
+mutation UploadFile($file: Upload!) {
+  uploadExcel(file: $file) {
+    filename
+    storedPath
+    sheetNames
+    headerPreview
+    sizeBytes
+  }
+}
+```
+
+3. Attach your Excel file under the `file` variable and run the mutation. The server persists the file and returns the captured metadata so you can verify the upload succeeded.

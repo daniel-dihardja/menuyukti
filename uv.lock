@@ -531,7 +531,9 @@ name = "graphql"
 version = "0.1.0"
 source = { virtual = "apps/graphql" }
 dependencies = [
+    { name = "openpyxl" },
     { name = "psycopg2-binary" },
+    { name = "pytest" },
     { name = "python-dotenv" },
     { name = "sqlalchemy" },
     { name = "strawberry-graphql", extra = ["asgi"] },
@@ -540,7 +542,9 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "openpyxl", specifier = ">=3.1.2" },
     { name = "psycopg2-binary", specifier = ">=2.9.5,<3.0" },
+    { name = "pytest", specifier = ">=9.0.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "sqlalchemy", specifier = ">=2.0.46" },
     { name = "strawberry-graphql", extras = ["asgi"], specifier = ">=0.308.2" },

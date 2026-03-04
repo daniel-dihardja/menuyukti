@@ -1,7 +1,8 @@
 PYTHON=uv run python
+UV=uv run
 UVICORN=uv run uvicorn
 
-.PHONY: install run dev migrate-db drop-db lint format clean
+.PHONY: install run dev migrate-db drop-db test-upload lint format clean
 
 install:
 	uv sync
@@ -17,6 +18,9 @@ migrate-db:
 
 drop-db:
 	PYTHONPATH=../.. $(PYTHON) -m apps.graphql.data_sources.database drop
+
+test-upload:
+	PYTHONPATH=../.. $(UV) pytest tests/test_upload_excel.py
 
 lint:
 	uv run ruff check .
