@@ -30,7 +30,9 @@ class BenchmarkResult:
     max_ratio: float
 
 
-def evaluate_regression(*, baseline_ms: float, measured_ms: float, max_ratio: float) -> bool:
+def evaluate_regression(
+    *, baseline_ms: float, measured_ms: float, max_ratio: float
+) -> bool:
     """Return True when measured runtime breaches allowed regression ratio."""
     allowed_ms = baseline_ms * max_ratio
     return measured_ms > allowed_ms
@@ -149,7 +151,9 @@ def _check_against_baseline(results: list[BenchmarkResult]) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Menuyukti performance baseline guardrails")
+    parser = argparse.ArgumentParser(
+        description="Menuyukti performance baseline guardrails"
+    )
     parser.add_argument(
         "--mode",
         choices=("check", "report"),

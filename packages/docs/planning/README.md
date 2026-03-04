@@ -55,6 +55,7 @@ Every story file in `todo/` and `archive/<EPIC_ID>/` should follow this structur
 7. `## Deliverables` (required)
 
 Optional sections:
+
 - `## Data Engineering Requirements`
 - `## Dependencies`
 - `## Notes`
@@ -69,6 +70,7 @@ Story grouping is supported via metadata:
   - Child story: `Parent: 73` (or other story/epic ID)
 
 Recommendation:
+
 - Keep grouping lightweight with `Parent` (as you suggested).
 - If needed later, add `Type: epic|story|task` in metadata, but this is optional for now.
 - Archive rule: completed stories are physically grouped by epic id in directory path (`archive/<EPIC_ID>/...`).
@@ -82,25 +84,31 @@ Recommendation:
 # Story <id>: <short title>
 
 ## Story Metadata
+
 - Created Date: YYYY-MM-DD
 - Status: `todo`
 - Parent: <id-or-none>
 
 ## Goal
+
 <one clear outcome>
 
 ## Why This Matters
+
 - <business/technical impact>
 
 ## Scope
+
 - <in scope>
 - <in scope>
 
 ## Acceptance Criteria
+
 - <verifiable outcome>
 - <verifiable outcome>
 
 ## Deliverables
+
 - <artifact/code/docs/tests>
 ```
 
@@ -163,6 +171,7 @@ Use these commands for cold-start E2E runs where services are down before execut
   - `pnpm -C apps/web run test:e2e:full`
 
 Runner behavior:
+
 - Starts `analytics`, `agents`, and `web`.
 - Applies pre-test DB lifecycle (`db:reset`, `db:gen`, `db:init`, `db:seed`).
 - Applies seed determinism precheck (`db:seed:smoke`) before suites.
@@ -172,9 +181,11 @@ Runner behavior:
   - `apps/web/e2e-artifacts/runner-logs/`
 
 Shared DB guardrails:
+
 - Configure from `apps/web/.env.e2e` (template: `.env.e2e.example`).
 - Default forbidden DB pattern: `(prod|production)`.
 
 CI gate:
+
 - Workflow: `.github/workflows/mvp-release-gate.yml`
 - Requires full gate pass (`test:e2e:full`) and uploads `apps/web/e2e-artifacts/`.
