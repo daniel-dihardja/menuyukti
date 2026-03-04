@@ -42,7 +42,7 @@ __pycache__/
 .ruff_cache/
 
 
-reports/
+/reports/
 .vscode/*
 creds
 apps/web/e2e-artifacts/
