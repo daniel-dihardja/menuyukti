@@ -1,0 +1,24 @@
+PYTHON=uv run python
+UVICORN=uv run uvicorn
+
+.PHONY: install run dev lint format clean
+
+install:
+	uv sync
+
+run:
+	$(UVICORN) server:app --host 0.0.0.0 --port 8000
+
+dev:
+	$(UVICORN) server:app --reload --host 0.0.0.0 --port 8000
+
+lint:
+	uv run ruff check .
+
+format:
+	uv run ruff format .
+
+clean:
+	rm -rf __pycache__
+	rm -rf .pytest_cache
+	rm -rf .ruff_cache

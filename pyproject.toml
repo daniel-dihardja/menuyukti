@@ -12,6 +12,7 @@ dependencies = [
 members = [
   "apps/analytics",
   "packages/menuyukti",
+  "apps/graphql",
 ]
 
 [tool.uv.sources]
