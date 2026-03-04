@@ -1,6 +1,14 @@
 """Placeholders for GraphQL data sources."""
 
-__all__ = ["Base", "User", "SessionLocal", "engine", "init_db", "drop_db"]
+__all__ = [
+    "Base",
+    "OrderFact",
+    "User",
+    "SessionLocal",
+    "engine",
+    "init_db",
+    "drop_db",
+]
 
 
 def __getattr__(name: str):

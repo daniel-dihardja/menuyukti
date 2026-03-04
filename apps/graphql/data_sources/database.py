@@ -5,7 +5,7 @@ import os
 
 from dotenv import load_dotenv
 
-from sqlalchemy import Column, DateTime, Integer, String, create_engine, func
+from sqlalchemy import Column, DateTime, Float, Integer, String, create_engine, func
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 
@@ -26,6 +26,21 @@ class User(Base):
     name = Column(String(100), nullable=False)
     email = Column(String(320), nullable=False, unique=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class OrderFact(Base):
+    __tablename__ = "order_fact"
+
+    id = Column(Integer, primary_key=True)
+    bill_number = Column(String(64), nullable=False, index=True)
+    menu = Column(String(256), nullable=False)
+    qty = Column(Integer, nullable=False)
+    price = Column(Float, nullable=False)
+    total_after_bill_discount = Column(Float, nullable=False)
+    order_time = Column(DateTime(timezone=True), nullable=False, index=True)
+    menu_category = Column(String(128), nullable=False)
+    menu_category_detail = Column(String(128), nullable=False)
+    pos_system = Column(String(64), nullable=False, default="unknown")
 
 
 def init_db(target_engine=None) -> None:
