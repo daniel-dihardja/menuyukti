@@ -1,7 +1,7 @@
 PYTHON=uv run python
 UVICORN=uv run uvicorn
 
-.PHONY: install run dev lint format clean
+.PHONY: install run dev migrate-db drop-db lint format clean
 
 install:
 	uv sync
@@ -13,7 +13,10 @@ dev:
 	$(UVICORN) server:app --reload --host 0.0.0.0 --port 8000
 
 migrate-db:
-	$(PYTHON) -m apps.graphql.data_sources.database
+	PYTHONPATH=../.. $(PYTHON) -m apps.graphql.data_sources.database
+
+drop-db:
+	PYTHONPATH=../.. $(PYTHON) -m apps.graphql.data_sources.database drop
 
 lint:
 	uv run ruff check .

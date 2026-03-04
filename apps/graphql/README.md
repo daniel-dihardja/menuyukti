@@ -10,3 +10,5 @@ A minimal starter for the Strawberry GraphQL endpoint. The service currently exp
 3. Run `make migrate-db` (or `DATABASE_URL="..." make migrate-db` if you need to override the `.env`) to create the `users` table defined in `apps/graphql/data_sources/database.py`; `DATABASE_URL` now comes from `.env`, so no extra flags are required.
 4. The script falls back to the on-disk SQLite file (`sqlite+pysqlite:///./graphql.db`) when the env var is missing, keeping the workflow safe for quick local tests.
 5. After the table exists, import `SessionLocal`/`User` from `apps.graphql.data_sources` inside your resolvers to read or write Neon rows via SQLAlchemy sessions.
+
+Need a clean slate? Run `make drop-db` (or `uv run python -m apps.graphql.data_sources.database drop`) to drop every table before recreating the schema with `make migrate-db`.

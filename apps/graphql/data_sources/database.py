@@ -35,6 +35,13 @@ def init_db(target_engine=None) -> None:
     Base.metadata.create_all(bind=resolved_engine)
 
 
+def drop_db(target_engine=None) -> None:
+    """Drop all tables for the configured models."""
+
+    resolved_engine = target_engine or engine
+    Base.metadata.drop_all(bind=resolved_engine)
+
+
 def main() -> None:
     """Entry point so the schema can be quickly bootstrapped."""
 
@@ -42,5 +49,19 @@ def main() -> None:
     print("Created tables for the GraphQL service.")
 
 
+def _main_drop() -> None:
+    """Drop tables via the same module entry point."""
+
+    drop_db()
+    print("Dropped all GraphQL tables.")
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+
+    action = sys.argv[1] if len(sys.argv) > 1 else "init"
+
+    if action == "drop":
+        _main_drop()
+    else:
+        main()
