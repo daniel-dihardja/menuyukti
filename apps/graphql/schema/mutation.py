@@ -8,7 +8,8 @@ from openpyxl import load_workbook
 from strawberry.file_uploads import Upload
 from strawberry.scalars import JSON
 
-from graphql.data_sources import AnalyticsRun, SessionLocal
+from graphql.data_sources import AnalyticsRun, Location, SessionLocal
+from graphql.schema.query import LocationType
 from graphql.reports import (
     Order,
     line_items_to_orders,
@@ -79,7 +80,11 @@ def _order_to_strawberry(order: Order) -> OrderType:
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    async def upload_sales_report(self, file: Upload) -> ExcelUploadResult:
+    async def upload_sales_report(
+        self,
+        file: Upload,
+        location_id: strawberry.ID,
+    ) -> ExcelUploadResult:
         payload = await file.read()
         normalized_rows_data, detected_pos = normalize_sales_report(payload)
         session = SessionLocal()
@@ -96,12 +101,17 @@ class Mutation:
                 period_start = min(times)
                 period_end = max(times)
 
+            loc = session.get(Location, int(location_id))
+            if loc is None:
+                raise ValueError(f"Location {location_id} not found")
+
             analytics_run = AnalyticsRun(
                 name=file.filename or "sales_report",
                 filename=file.filename or "",
                 pos_system=detected_pos,
                 period_start=period_start.date() if period_start else None,
                 period_end=period_end.date() if period_end else None,
+                location_id=loc.id,
             )
             session.add(analytics_run)
             session.commit()
@@ -149,3 +159,15 @@ class Mutation:
             orders=orders,
             sales_analytics=sales_analytics_dict,
         )
+
+    @strawberry.mutation
+    def create_location(self, name: str) -> LocationType:
+        session = SessionLocal()
+        try:
+            loc = Location(name=name)
+            session.add(loc)
+            session.commit()
+            session.refresh(loc)
+            return LocationType(id=loc.id, name=loc.name)
+        finally:
+            session.close()

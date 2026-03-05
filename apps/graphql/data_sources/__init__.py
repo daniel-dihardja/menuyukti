@@ -2,6 +2,7 @@
 
 __all__ = [
     "Base",
+    "Location",
     "AnalyticsRun",
     "OrderFact",
     "MenuItemCogs",

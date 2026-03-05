@@ -10,7 +10,7 @@ import asyncio
 TEST_DB = Path(__file__).resolve().parents[1] / "test.db"
 os.environ["DATABASE_URL"] = f"sqlite+pysqlite:///{TEST_DB}"
 
-from graphql.data_sources import OrderFact, SessionLocal, init_db, drop_db
+from graphql.data_sources import Location, OrderFact, SessionLocal, init_db, drop_db
 from graphql.reports import normalize_sales_report
 from graphql.schema import schema
 from starlette.datastructures import Headers, UploadFile
@@ -22,8 +22,8 @@ drop_db()
 init_db()
 
 MUTATION = """
-mutation UploadFile($file: Upload!) {
-  uploadSalesReport(file: $file) {
+mutation UploadFile($file: Upload!, $locationId: ID!) {
+  uploadSalesReport(file: $file, locationId: $locationId) {
     filename
     sheetNames
     headerPreview
@@ -65,13 +65,20 @@ def test_upload_excel_creates_metadata(tmp_path):
     try:
         session.query(OrderFact).delete()
         session.commit()
+
+        # Ensure a test location exists
+        location = Location(name="Test Location")
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
     finally:
         session.close()
 
     result = asyncio.run(
         schema.execute(
             MUTATION,
-            variable_values={"file": upload},
+            variable_values={"file": upload, "locationId": str(location_id)},
         )
     )
     assert not result.errors

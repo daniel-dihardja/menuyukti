@@ -30,6 +30,17 @@ SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 Base = declarative_base()
 
 
+class Location(Base):
+    """
+    Restaurant / location dimension for analytics runs.
+    """
+
+    __tablename__ = "location"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(256), nullable=False)
+
+
 class AnalyticsRun(Base):
     """
     Represents a single analytics context / upload of a sales report.
@@ -46,6 +57,12 @@ class AnalyticsRun(Base):
     period_start = Column(Date, nullable=True)
     period_end = Column(Date, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    location_id = Column(
+        Integer,
+        ForeignKey("location.id"),
+        nullable=False,
+        index=True,
+    )
 
 
 class OrderFact(Base):

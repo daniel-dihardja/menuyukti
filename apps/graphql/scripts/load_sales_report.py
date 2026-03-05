@@ -3,7 +3,7 @@ import argparse
 import sys
 from datetime import datetime
 
-from graphql.data_sources import AnalyticsRun, SessionLocal, drop_db, init_db
+from graphql.data_sources import AnalyticsRun, Location, SessionLocal, drop_db, init_db
 from graphql.reports import normalize_sales_report, persist_sales_report
 
 
@@ -21,6 +21,14 @@ def main(excel_path: str) -> int:
 
     session = SessionLocal()
     try:
+        # Ensure a default location exists for CLI ingestion
+        location = session.query(Location).order_by(Location.id).first()
+        if location is None:
+            location = Location(name="CLI Default")
+            session.add(location)
+            session.commit()
+            session.refresh(location)
+
         period_start: datetime | None = None
         period_end: datetime | None = None
         if normalized_rows:
@@ -39,6 +47,7 @@ def main(excel_path: str) -> int:
             pos_system=detected_pos,
             period_start=period_start.date() if period_start else None,
             period_end=period_end.date() if period_end else None,
+            location_id=location.id,
         )
         session.add(analytics_run)
         session.commit()
@@ -47,7 +56,11 @@ def main(excel_path: str) -> int:
     finally:
         session.close()
 
-    persist_sales_report(normalized_rows, detected_pos, analytics_run_id=analytics_run_id)
+    persist_sales_report(
+        normalized_rows,
+        detected_pos,
+        analytics_run_id=analytics_run_id,
+    )
 
     print(f"Loaded {len(normalized_rows)} rows from {path} into the database.")
     return 0
