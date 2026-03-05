@@ -30,15 +30,6 @@ SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 Base = declarative_base()
 
 
-class User(Base):
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), nullable=False)
-    email = Column(String(320), nullable=False, unique=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-
 class AnalyticsRun(Base):
     """
     Represents a single analytics context / upload of a sales report.
