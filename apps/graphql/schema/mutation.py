@@ -8,8 +8,8 @@ from openpyxl import load_workbook
 from strawberry.file_uploads import Upload
 from strawberry.scalars import JSON
 
-from graphql.data_sources import AnalyticsRun, Location, SessionLocal
-from graphql.schema.query import LocationType
+from graphql.data_sources import AnalyticsRun, Location, MenuItemCogs, SessionLocal
+from graphql.schema.query import LocationType, MenuItemCogsType
 from graphql.reports import (
     Order,
     line_items_to_orders,
@@ -57,6 +57,12 @@ class ExcelUploadResult:
     normalized_rows: list[NormalizedLineItem]
     orders: list[OrderType]
     sales_analytics: JSON
+
+
+@strawberry.input
+class MenuItemCogsUpdateInput:
+    id: strawberry.ID
+    cogs: float
 
 
 def _order_to_strawberry(order: Order) -> OrderType:
@@ -169,5 +175,42 @@ class Mutation:
             session.commit()
             session.refresh(loc)
             return LocationType(id=loc.id, name=loc.name)
+        finally:
+            session.close()
+
+    @strawberry.mutation
+    def update_menu_item_cogs_bulk(
+        self,
+        updates: list[MenuItemCogsUpdateInput],
+    ) -> list[MenuItemCogsType]:
+        session = SessionLocal()
+        try:
+            updated_ids: list[int] = []
+            for item in updates:
+                row = session.get(MenuItemCogs, int(item.id))
+                if row is None:
+                    continue
+                row.cogs = item.cogs
+                updated_ids.append(row.id)
+            session.commit()
+            result: list[MenuItemCogsType] = []
+            for uid in updated_ids:
+                row = session.get(MenuItemCogs, uid)
+                if row is not None:
+                    session.refresh(row)
+                    result.append(
+                        MenuItemCogsType(
+                            id=row.id,
+                            analyticsRunId=row.analytics_run_id,
+                            menu=row.menu,
+                            menuCategory=row.menu_category,
+                            menuCategoryDetail=row.menu_category_detail,
+                            cogs=row.cogs,
+                            currency=row.currency,
+                            createdAt=row.created_at,
+                            updatedAt=row.updated_at,
+                        )
+                    )
+            return result
         finally:
             session.close()
