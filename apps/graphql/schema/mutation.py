@@ -8,6 +8,7 @@ from openpyxl import load_workbook
 from strawberry.file_uploads import Upload
 from strawberry.scalars import JSON
 
+from graphql.data_sources import AnalyticsRun, SessionLocal
 from graphql.reports import (
     Order,
     line_items_to_orders,
@@ -81,7 +82,39 @@ class Mutation:
     async def upload_sales_report(self, file: Upload) -> ExcelUploadResult:
         payload = await file.read()
         normalized_rows_data, detected_pos = normalize_sales_report(payload)
-        persist_sales_report(normalized_rows_data, detected_pos)
+        session = SessionLocal()
+        try:
+            period_start: datetime | None = None
+            period_end: datetime | None = None
+            if normalized_rows_data:
+                times = [
+                    row.orderTime
+                    if isinstance(row.orderTime, datetime)
+                    else datetime.fromisoformat(str(row.orderTime))
+                    for row in normalized_rows_data
+                ]
+                period_start = min(times)
+                period_end = max(times)
+
+            analytics_run = AnalyticsRun(
+                name=file.filename or "sales_report",
+                filename=file.filename or "",
+                pos_system=detected_pos,
+                period_start=period_start.date() if period_start else None,
+                period_end=period_end.date() if period_end else None,
+            )
+            session.add(analytics_run)
+            session.commit()
+            session.refresh(analytics_run)
+            analytics_run_id = analytics_run.id
+        finally:
+            session.close()
+
+        persist_sales_report(
+            normalized_rows_data,
+            detected_pos,
+            analytics_run_id=analytics_run_id,
+        )
 
         normalized_rows = [
             NormalizedLineItem(**asdict(row)) for row in normalized_rows_data

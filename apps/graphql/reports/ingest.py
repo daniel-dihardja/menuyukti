@@ -4,7 +4,7 @@ from typing import Any, Iterable
 
 import pandas as pd
 
-from graphql.data_sources import OrderFact, SessionLocal
+from graphql.data_sources import AnalyticsRun, OrderFact, SessionLocal
 from menuyukti.core.analytics.esb import normalize_esb_excel
 from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
 from menuyukti.core.models.pos_mapping import get_config
@@ -71,7 +71,9 @@ def normalize_sales_report(payload: bytes) -> tuple[list[NormalizedLineItemData]
 
 
 def persist_sales_report(
-    rows: Iterable[NormalizedLineItemData], pos_system: str | None
+    rows: Iterable[NormalizedLineItemData],
+    pos_system: str | None,
+    analytics_run_id: int | None = None,
 ) -> None:
     session = SessionLocal()
     try:
@@ -82,6 +84,7 @@ def persist_sales_report(
 
             session.add(
                 OrderFact(
+                    analytics_run_id=analytics_run_id,
                     bill_number=row.billNumber,
                     menu=row.menu,
                     qty=row.qty,

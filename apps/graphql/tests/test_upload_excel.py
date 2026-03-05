@@ -10,7 +10,7 @@ import asyncio
 TEST_DB = Path(__file__).resolve().parents[1] / "test.db"
 os.environ["DATABASE_URL"] = f"sqlite+pysqlite:///{TEST_DB}"
 
-from graphql.data_sources import OrderFact, SessionLocal, init_db
+from graphql.data_sources import OrderFact, SessionLocal, init_db, drop_db
 from graphql.reports import normalize_sales_report
 from graphql.schema import schema
 from starlette.datastructures import Headers, UploadFile
@@ -18,6 +18,7 @@ from starlette.datastructures import Headers, UploadFile
 ROOT_DIR = Path(__file__).resolve().parents[3]
 REPORT_FILE = ROOT_DIR / "reports" / "Sales_Recapitulation_Detail_Report_Test.xlsx"
 
+drop_db()
 init_db()
 
 MUTATION = """

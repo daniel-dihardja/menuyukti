@@ -1,8 +1,9 @@
 from pathlib import Path
 import argparse
 import sys
+from datetime import datetime
 
-from graphql.data_sources import drop_db, init_db
+from graphql.data_sources import AnalyticsRun, SessionLocal, drop_db, init_db
 from graphql.reports import normalize_sales_report, persist_sales_report
 
 
@@ -17,7 +18,36 @@ def main(excel_path: str) -> int:
 
     payload = path.read_bytes()
     normalized_rows, detected_pos = normalize_sales_report(payload)
-    persist_sales_report(normalized_rows, detected_pos)
+
+    session = SessionLocal()
+    try:
+        period_start: datetime | None = None
+        period_end: datetime | None = None
+        if normalized_rows:
+            times = [
+                row.orderTime
+                if isinstance(row.orderTime, datetime)
+                else datetime.fromisoformat(str(row.orderTime))
+                for row in normalized_rows
+            ]
+            period_start = min(times)
+            period_end = max(times)
+
+        analytics_run = AnalyticsRun(
+            name=path.name,
+            filename=path.name,
+            pos_system=detected_pos,
+            period_start=period_start.date() if period_start else None,
+            period_end=period_end.date() if period_end else None,
+        )
+        session.add(analytics_run)
+        session.commit()
+        session.refresh(analytics_run)
+        analytics_run_id = analytics_run.id
+    finally:
+        session.close()
+
+    persist_sales_report(normalized_rows, detected_pos, analytics_run_id=analytics_run_id)
 
     print(f"Loaded {len(normalized_rows)} rows from {path} into the database.")
     return 0

@@ -53,3 +53,6 @@ notebooks/*
 __pycache__/
 *.pyc
 apps/graphql/uploads/
+
+# Local GraphQL test database
+apps/graphql/test.db
