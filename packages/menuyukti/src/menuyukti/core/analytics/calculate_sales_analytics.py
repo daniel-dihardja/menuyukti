@@ -2,7 +2,6 @@ import pandas as pd
 
 from menuyukti.core.analytics.calculate_menu_heatmaps import calculate_menu_heatmaps
 from menuyukti.core.analytics.calculate_popularity_index import calculate_popularity_index
-from menuyukti.core.contracts.metadata import build_metadata_v1
 
 
 def calculate_sales_analytics(df: pd.DataFrame) -> dict[str, object]:
@@ -82,7 +81,7 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict[str, object]:
     # Final Output
     # -------------------------------------------------------
     return {
-        "metadata": build_metadata_v1(source_system="esb"),
+        "metadata": {"source_system": "esb"},
         # Raw totals
         "total_orders": int(total_orders),
         "total_items_sold": int(total_items_sold),

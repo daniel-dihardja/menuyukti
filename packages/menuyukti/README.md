@@ -236,16 +236,15 @@ explanation = llm_enhance(rankings[0])  # Optional
 
 ## Package Structure
 
-The menuyukti package is organized into layers with clear separation of concerns:
+The menuyukti package currently provides a single **core** layer. Other layers (orchestration, indicators, features) are not yet in this package.
 
 ### `core/` - Foundation Layer
 
-**Purpose**: Data contracts, models, and POS-to-analytics transformation pipeline
+**Purpose**: Data contracts, models, and POS-to-analytics transformation pipeline.
 
-- **`inputs.py`** - Canonical `CoreInputs` contract (immutable, validated entry point for all consumers)
 - **`models/`** - Typed domain models with validation
-  - `pos_transaction.py` - Foundational POS transaction data contract (8 required fields)
-  - `pos_mapping.py` - POS system configuration registry (ESB, Toast, Square, etc.)
+  - `pos_transaction.py` - Foundational POS transaction data contract (8 required fields); **stable public API** via `POSTransactionLineItem`
+  - `pos_mapping.py` - POS system configuration registry (ESB, Toast, Square, etc.); **stable public API** via `POS_CONFIG`, `detect`, `get_config`
   - `matrix_item.py` - Menu engineering matrix item model
   - `heatmap.py` - Demand heatmap model (hourly/daily patterns)
   - `sales_analytics_summary.py` - Order-level analytics model
@@ -255,52 +254,11 @@ The menuyukti package is organized into layers with clear separation of concerns
   - `calculate_menu_heatmaps.py` - Analyze demand patterns
   - `calculate_sales_analytics.py` - Compute order context
   - `calculate_popularity_index.py` - Calculate item popularity
+  - `extract_menu_items.py` - Aggregate menu item facts from transaction data
   - `pos_detector.py` - Detect POS system from Excel header
   - `registry.py` - Maps POS names to normalizer functions
-  - `esb/` - ESB-specific normalization logic
-- **`contracts/`** - Versioned payload/envelope models for machine consumers
-
-### `orchestration/` - Decision Layer
-
-**Purpose**: Consumer-agnostic deterministic decision functions (renamed from `agents/` for architectural clarity)
-
-- **`consensus.py`** - Rank items by profit + volume (conservative/aggressive modes)
-- **`simulation.py`** - What-if scenario analysis with confidence bands
-- **`rerank.py`** - Feedback-driven reranking (boost by success rate)
-- **`release_loop.py`** - Stage-based release gating (shadow → canary → rollout)
-- **`learning_eligibility.py`** - Learning readiness assessment
-- **`strategist.py`** - Weekly strategy computation by category
-- **`memory_context.py`** - Context management for decision persistence
-
-### `indicators/` - Financial Calculations
-
-**Purpose**: Restaurant-specific financial indicator calculations (parallel to core analytics)
-
-- **`analytics/`** - Indicator-specific analytics (menu matrix, sales summaries)
-- **`models/`** - Indicator domain models
-- **`contracts/`** - Indicator-specific contracts
-- **`utils/`** - Helper utilities for indicators
-  - `extraction.py` - Data extraction utilities
-  - `formatting.py` - Output formatting
-  - `pos.py` - POS-specific utilities
-  - `registry.py` - Indicator normalizer registry
-
-### `features/` - Shared Utilities
-
-**Purpose**: Cross-cutting utilities used by orchestration and analytics layers
-
-- Currently minimal (reserved for future shared feature flags, scoring utilities, etc.)
-
-### Infrastructure
-
-- **`scripts/`** - Build and performance tooling
-  - `perf_guardrails.py` - Performance benchmarks and regression detection
-- **`tests/`** - Comprehensive test suite
-  - `unit/core/` - Core layer tests (24 tests)
-  - `unit/orchestration/` - Decision layer tests (167 tests)
-  - `fixtures/` - Shared test data
-- **`perf/`** - Performance baselines
-  - `baseline_v1.json` - Performance regression baseline
+  - `utils.py` - Column normalization helpers
+  - `esb/` - ESB-specific normalization (`normalize_esb_excel`, `normalize_esb_excel_with_rejections`)
 
 ## How to Use Menuyukti
 
