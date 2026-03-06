@@ -8,10 +8,10 @@ install:
 	uv sync
 
 run:
-	$(UVICORN) server:app --host 0.0.0.0 --port 8000
+	PYTHONPATH=../.. $(UVICORN) graphql.server:app --host 0.0.0.0 --port 8000
 
 dev:
-	$(UVICORN) server:app --reload --host 0.0.0.0 --port 8000
+	PYTHONPATH=../.. $(UVICORN) graphql.server:app --reload --host 0.0.0.0 --port 8000
 
 migrate-db:
 	PYTHONPATH=../.. $(PYTHON) -m graphql.data_sources.database
