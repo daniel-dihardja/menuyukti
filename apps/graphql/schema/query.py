@@ -11,6 +11,7 @@ from graphql.data_sources import (
     OrderFact,
     SessionLocal,
 )
+from graphql.reports.heatmaps import calculate_menu_heatmaps_from_rows
 
 
 @strawberry.type
@@ -39,6 +40,28 @@ class AnalyticsRunOrderMetricsType:
 
 
 @strawberry.type
+class DailyHeatmapType:
+    hour: int
+    quantity: int
+
+
+@strawberry.type
+class WeeklyHeatmapType:
+    day: str
+    quantity: int
+
+
+@strawberry.type
+class MenuHeatmapType:
+    menu: str
+    menu_category: Optional[str]
+    menu_category_detail: Optional[str]
+    daily_heatmap: list[DailyHeatmapType]
+    weekly_heatmap: list[WeeklyHeatmapType]
+    reporting_period: str
+
+
+@strawberry.type
 class AnalyticsRunType:
     id: strawberry.ID
     name: str
@@ -50,6 +73,7 @@ class AnalyticsRunType:
     locationId: int
     menuItemCogs: list[MenuItemCogsType]
     orderMetrics: AnalyticsRunOrderMetricsType
+    menu_heatmaps: list[MenuHeatmapType]
 
 
 def _compute_order_metrics(
@@ -88,6 +112,50 @@ def _compute_order_metrics(
     )
 
 
+def _compute_menu_heatmaps(
+    session, run: AnalyticsRun
+) -> list[MenuHeatmapType]:
+    rows = (
+        session.query(OrderFact)
+        .where(OrderFact.analytics_run_id == run.id)
+        .all()
+    )
+
+    if not rows:
+        return []
+
+    payloads = calculate_menu_heatmaps_from_rows(rows)
+
+    result: list[MenuHeatmapType] = []
+    for payload in payloads:
+        daily_heatmap = [
+            DailyHeatmapType(
+                hour=row["hour"],
+                quantity=row["quantity"],
+            )
+            for row in payload["daily_heatmap"]
+        ]
+        weekly_heatmap = [
+            WeeklyHeatmapType(
+                day=row["day"],
+                quantity=row["quantity"],
+            )
+            for row in payload["weekly_heatmap"]
+        ]
+        result.append(
+            MenuHeatmapType(
+                menu=payload["menu"],
+                menu_category=payload["menu_category"],
+                menu_category_detail=payload["menu_category_detail"],
+                daily_heatmap=daily_heatmap,
+                weekly_heatmap=weekly_heatmap,
+                reporting_period=payload["reporting_period"],
+            )
+        )
+
+    return result
+
+
 def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
     cogs_rows = (
         session.query(MenuItemCogs)
@@ -109,6 +177,7 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
         for row in cogs_rows
     ]
     order_metrics = _compute_order_metrics(session, run)
+    menu_heatmaps = _compute_menu_heatmaps(session, run)
     return AnalyticsRunType(
         id=run.id,
         name=run.name,
@@ -120,6 +189,7 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
         locationId=run.location_id,
         menuItemCogs=menu_item_cogs,
         orderMetrics=order_metrics,
+        menu_heatmaps=menu_heatmaps,
     )
 
 
