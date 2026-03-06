@@ -36,8 +36,6 @@ class MenuItemCogsType:
 class AnalyticsRunOrderMetricsType:
     avgOrderSize: float
     avgOrderRevenue: float
-    periodStart: Optional[date]
-    periodEnd: Optional[date]
 
 
 @strawberry.type
@@ -67,8 +65,6 @@ def _compute_order_metrics(
         return AnalyticsRunOrderMetricsType(
             avgOrderSize=0.0,
             avgOrderRevenue=0.0,
-            periodStart=run.period_start,
-            periodEnd=run.period_end,
         )
 
     orders = defaultdict(list)
@@ -86,20 +82,9 @@ def _compute_order_metrics(
     avg_order_size = float(sum(order_sizes)) / len(order_sizes)
     avg_order_revenue = float(sum(order_revenues)) / len(order_revenues)
 
-    period_start: Optional[date] = run.period_start
-    period_end: Optional[date] = run.period_end
-    if period_start is None or period_end is None:
-        order_dates = [row.order_time.date() for row in rows]
-        if period_start is None and order_dates:
-            period_start = min(order_dates)
-        if period_end is None and order_dates:
-            period_end = max(order_dates)
-
     return AnalyticsRunOrderMetricsType(
         avgOrderSize=avg_order_size,
         avgOrderRevenue=avg_order_revenue,
-        periodStart=period_start,
-        periodEnd=period_end,
     )
 
 

@@ -28,11 +28,11 @@ query AnalyticsRunOrderMetrics {
   analyticsRuns {
     id
     filename
+    periodStart
+    periodEnd
     orderMetrics {
       avgOrderSize
       avgOrderRevenue
-      periodStart
-      periodEnd
     }
   }
 }
@@ -140,8 +140,8 @@ def test_order_metrics_for_uploaded_run(tmp_path):
 
     avg_order_size = float(metrics["avgOrderSize"])
     avg_order_revenue = float(metrics["avgOrderRevenue"])
-    period_start = _parse_date_value(metrics["periodStart"])
-    period_end = _parse_date_value(metrics["periodEnd"])
+    period_start = _parse_date_value(run_data["periodStart"])
+    period_end = _parse_date_value(run_data["periodEnd"])
 
     assert pytest.approx(avg_order_size, rel=1e-6) == expected_avg_size
     assert pytest.approx(avg_order_revenue, rel=1e-6) == expected_avg_revenue
