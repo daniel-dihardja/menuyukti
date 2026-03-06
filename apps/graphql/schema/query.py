@@ -1,9 +1,16 @@
+from collections import defaultdict
 from datetime import date, datetime
 from typing import Optional
 
 import strawberry
 
-from graphql.data_sources import AnalyticsRun, Location, MenuItemCogs, SessionLocal
+from graphql.data_sources import (
+    AnalyticsRun,
+    Location,
+    MenuItemCogs,
+    OrderFact,
+    SessionLocal,
+)
 
 
 @strawberry.type
@@ -26,6 +33,14 @@ class MenuItemCogsType:
 
 
 @strawberry.type
+class AnalyticsRunOrderMetricsType:
+    avgOrderSize: float
+    avgOrderRevenue: float
+    periodStart: Optional[date]
+    periodEnd: Optional[date]
+
+
+@strawberry.type
 class AnalyticsRunType:
     id: strawberry.ID
     name: str
@@ -36,6 +51,56 @@ class AnalyticsRunType:
     createdAt: datetime
     locationId: int
     menuItemCogs: list[MenuItemCogsType]
+    orderMetrics: AnalyticsRunOrderMetricsType
+
+
+def _compute_order_metrics(
+    session, run: AnalyticsRun
+) -> AnalyticsRunOrderMetricsType:
+    rows = (
+        session.query(OrderFact)
+        .where(OrderFact.analytics_run_id == run.id)
+        .all()
+    )
+
+    if not rows:
+        return AnalyticsRunOrderMetricsType(
+            avgOrderSize=0.0,
+            avgOrderRevenue=0.0,
+            periodStart=run.period_start,
+            periodEnd=run.period_end,
+        )
+
+    orders = defaultdict(list)
+    for row in rows:
+        orders[row.bill_number].append(row)
+
+    order_sizes: list[int] = []
+    order_revenues: list[float] = []
+    for group in orders.values():
+        order_sizes.append(len(group))
+        order_revenues.append(
+            float(sum(r.total_after_bill_discount for r in group))
+        )
+
+    avg_order_size = float(sum(order_sizes)) / len(order_sizes)
+    avg_order_revenue = float(sum(order_revenues)) / len(order_revenues)
+
+    period_start: Optional[date] = run.period_start
+    period_end: Optional[date] = run.period_end
+    if period_start is None or period_end is None:
+        order_dates = [row.order_time.date() for row in rows]
+        if period_start is None and order_dates:
+            period_start = min(order_dates)
+        if period_end is None and order_dates:
+            period_end = max(order_dates)
+
+    return AnalyticsRunOrderMetricsType(
+        avgOrderSize=avg_order_size,
+        avgOrderRevenue=avg_order_revenue,
+        periodStart=period_start,
+        periodEnd=period_end,
+    )
 
 
 def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
@@ -58,6 +123,7 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
         )
         for row in cogs_rows
     ]
+    order_metrics = _compute_order_metrics(session, run)
     return AnalyticsRunType(
         id=run.id,
         name=run.name,
@@ -68,6 +134,7 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
         createdAt=run.created_at,
         locationId=run.location_id,
         menuItemCogs=menu_item_cogs,
+        orderMetrics=order_metrics,
     )
 
 
