@@ -30,11 +30,12 @@ query AnalyticsRunMenuHeatmaps {
   analyticsRuns {
     id
     filename
+    periodStart
+    periodEnd
     menuHeatmaps {
       menu
       menuCategory
       menuCategoryDetail
-      reportingPeriod
       dailyHeatmap {
         hour
         quantity
@@ -60,7 +61,6 @@ def _normalize_graphql_heatmaps(menu_heatmaps):
                 "menu": m["menu"],
                 "menu_category": m["menuCategory"],
                 "menu_category_detail": m["menuCategoryDetail"],
-                "reporting_period": m["reportingPeriod"],
                 "daily": daily,
                 "weekly": weekly,
             }
@@ -84,7 +84,6 @@ def _normalize_expected_heatmaps(expected_payloads):
                 "menu": payload["menu"],
                 "menu_category": payload["menu_category"],
                 "menu_category_detail": payload["menu_category_detail"],
-                "reporting_period": payload["reporting_period"],
                 "daily": daily,
                 "weekly": weekly,
             }
@@ -156,7 +155,6 @@ def test_menu_heatmaps_match_menuyukti_calculation(tmp_path):
         assert got["menu"] == expected["menu"]
         assert got["menu_category"] == expected["menu_category"]
         assert got["menu_category_detail"] == expected["menu_category_detail"]
-        assert got["reporting_period"] == expected["reporting_period"]
         assert got["daily"] == expected["daily"]
         assert got["weekly"] == expected["weekly"]
 

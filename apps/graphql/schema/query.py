@@ -58,7 +58,6 @@ class MenuHeatmapType:
     menu_category_detail: Optional[str]
     daily_heatmap: list[DailyHeatmapType]
     weekly_heatmap: list[WeeklyHeatmapType]
-    reporting_period: str
 
 
 @strawberry.type
@@ -149,7 +148,6 @@ def _compute_menu_heatmaps(
                 menu_category_detail=payload["menu_category_detail"],
                 daily_heatmap=daily_heatmap,
                 weekly_heatmap=weekly_heatmap,
-                reporting_period=payload["reporting_period"],
             )
         )
 
