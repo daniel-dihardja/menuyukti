@@ -4,19 +4,16 @@ version = "0.1.0"
 requires-python = ">=3.12"
 
 dependencies = [
-  "analytics",
   "menuyukti",
 ]
 
 [tool.uv.workspace]
 members = [
-  "apps/analytics",
   "packages/menuyukti",
   "apps/graphql",
 ]
 
 [tool.uv.sources]
-analytics = { workspace = true }
 menuyukti = { workspace = true }
 
 [dependency-groups]
