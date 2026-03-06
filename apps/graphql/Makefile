@@ -20,7 +20,7 @@ drop-db:
 	PYTHONPATH=../.. $(PYTHON) -m graphql.data_sources.database drop
 
 test-upload:
-	DATABASE_URL=sqlite+pysqlite:///$(CURDIR)/test.db PYTHONPATH=../.. $(UV) pytest tests/test_upload_excel.py
+	PYTHONPATH=../.. $(UV) pytest tests/test_upload_excel.py
 
 load-report:
 	@if [ -z "$(REPORT_PATH)" ]; then echo "REPORT_PATH is required"; exit 1; fi

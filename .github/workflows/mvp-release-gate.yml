@@ -41,6 +41,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Run GraphQL integration tests
+        run: |
+          uv sync
+          make -C apps/graphql test-upload
+
       - name: Validate DATABASE_URL secret exists
         run: |
           if [ -z "${DATABASE_URL}" ]; then
