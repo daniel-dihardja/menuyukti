@@ -2,7 +2,7 @@ PYTHON=uv run python
 UV=uv run
 UVICORN=uv run uvicorn
 
-.PHONY: install run dev migrate-db drop-db test-upload test-order-metrics load-report lint format clean
+.PHONY: install run dev migrate-db drop-db test-upload test-order-metrics test-menu-item-cogs load-report lint format clean
 
 install:
 	uv sync
@@ -24,6 +24,9 @@ test-upload:
 
 test-order-metrics:
 	PYTHONPATH=../.. $(UV) pytest tests/test_order_metrics.py
+
+test-menu-item-cogs:
+	PYTHONPATH=../.. $(UV) pytest tests/test_menu_item_cogs_query.py
 
 load-report:
 	@if [ -z "$(REPORT_PATH)" ]; then echo "REPORT_PATH is required"; exit 1; fi
