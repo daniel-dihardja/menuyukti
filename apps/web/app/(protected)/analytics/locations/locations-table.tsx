@@ -10,7 +10,7 @@ import {
 } from "@workspace/ui/components/table";
 
 interface Branch {
-  id: number;
+  id: string;
   name: string;
 }
 
