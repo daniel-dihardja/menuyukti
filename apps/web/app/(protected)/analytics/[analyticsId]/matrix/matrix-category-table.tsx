@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@workspace/ui/components/badge";
 import {
@@ -9,6 +10,10 @@ import {
 } from "@workspace/ui/components/tooltip";
 import { formatCurrencyWithCode } from "@/lib/currency";
 import {
+  useSortableColumns,
+  SortableTableHead,
+} from "@/components/sortable-table";
+import {
   Table,
   TableBody,
   TableCell,
@@ -17,6 +22,8 @@ import {
   TableRow,
 } from "@workspace/ui/components/table";
 import type { MatrixCategory, MatrixDisplayRow } from "@/lib/analytics/matrix-page-adapter";
+
+type SortKey = "menuItem" | "unitsSold" | "revenue" | "marginPct";
 
 type ActionType = "keep" | "promote" | "reprice" | "remove";
 
@@ -54,6 +61,21 @@ type Props = {
 export function MatrixCategoryTable({ category, items, locale, currency }: Props) {
   const tTable = useTranslations("analytics.matrix.table");
   const tCategories = useTranslations("analytics.matrix.categories");
+  const { sortKey, sortDirection, toggleSort } =
+    useSortableColumns<SortKey>("unitsSold", "desc");
+
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => {
+      const aVal = a[sortKey];
+      const bVal = b[sortKey];
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        const cmp = aVal.localeCompare(bVal, locale);
+        return sortDirection === "asc" ? cmp : -cmp;
+      }
+      const diff = (aVal as number) - (bVal as number);
+      return sortDirection === "asc" ? diff : -diff;
+    });
+  }, [items, sortKey, sortDirection, locale]);
 
   return (
     <section className="space-y-2">
@@ -78,10 +100,35 @@ export function MatrixCategoryTable({ category, items, locale, currency }: Props
           </caption>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="text-left">{tTable("menu")}</TableHead>
-              <TableHead className="text-right">{tTable("qty")}</TableHead>
-              <TableHead className="text-right">{tTable("revenue")}</TableHead>
-              <TableHead className="text-right">{tTable("percentage")}</TableHead>
+              <SortableTableHead
+                align="left"
+                active={sortKey === "menuItem"}
+                direction={sortDirection}
+                onToggle={() => toggleSort("menuItem")}
+              >
+                {tTable("menu")}
+              </SortableTableHead>
+              <SortableTableHead
+                active={sortKey === "unitsSold"}
+                direction={sortDirection}
+                onToggle={() => toggleSort("unitsSold")}
+              >
+                {tTable("qty")}
+              </SortableTableHead>
+              <SortableTableHead
+                active={sortKey === "revenue"}
+                direction={sortDirection}
+                onToggle={() => toggleSort("revenue")}
+              >
+                {tTable("revenue")}
+              </SortableTableHead>
+              <SortableTableHead
+                active={sortKey === "marginPct"}
+                direction={sortDirection}
+                onToggle={() => toggleSort("marginPct")}
+              >
+                {tTable("percentage")}
+              </SortableTableHead>
               <TableHead className="text-center">{tTable("action")}</TableHead>
             </TableRow>
           </TableHeader>
@@ -96,7 +143,7 @@ export function MatrixCategoryTable({ category, items, locale, currency }: Props
                 </TableCell>
               </TableRow>
             ) : (
-              items.map((item) => (
+              sortedItems.map((item) => (
                 <TableRow
                   key={`${category}-${item.menuItem}`}
                   className="hover:bg-muted/20 odd:bg-background even:bg-muted/10"

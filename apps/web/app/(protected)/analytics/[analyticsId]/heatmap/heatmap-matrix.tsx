@@ -1,8 +1,11 @@
 "use client";
 
 import clsx from "clsx";
-import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { useMemo } from "react";
+import {
+  useSortableColumns,
+  SortableTableHead,
+} from "@/components/sortable-table";
 import {
   Table,
   TableBody,
@@ -17,11 +20,6 @@ export type HeatmapMatrixRow = {
   label: string;
   values: number[];
 };
-
-type SortState = {
-  columnIndex: number;
-  direction: "asc" | "desc";
-} | null;
 
 type Props = {
   title?: string;
@@ -38,32 +36,22 @@ export function HeatmapMatrix({
   color = "green",
   density = "comfortable",
 }: Props) {
-  const [sort, setSort] = useState<SortState>(null);
+  const { sortKey, sortDirection, toggleSort } =
+    useSortableColumns<string>("0", "desc");
 
   /* ---------------------------------------------
    * Sorting logic
    * --------------------------------------------- */
   const sortedRows = useMemo(() => {
-    if (!sort) return rows;
-
-    const { columnIndex, direction } = sort;
+    const columnIndex = parseInt(sortKey, 10);
+    if (Number.isNaN(columnIndex)) return rows;
 
     return [...rows].sort((a, b) => {
       const aVal = a.values[columnIndex] ?? 0;
       const bVal = b.values[columnIndex] ?? 0;
-      return direction === "asc" ? aVal - bVal : bVal - aVal;
+      return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
     });
-  }, [rows, sort]);
-
-  const handleSort = (columnIndex: number) => {
-    setSort((prev) => {
-      if (!prev || prev.columnIndex !== columnIndex) {
-        return { columnIndex, direction: "desc" };
-      }
-      if (prev.direction === "desc") return { columnIndex, direction: "asc" };
-      return null;
-    });
-  };
+  }, [rows, sortKey, sortDirection]);
 
   /* ---------------------------------------------
    * Color scaling
@@ -92,31 +80,18 @@ export function HeatmapMatrix({
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
               <TableHead className="min-w-[220px] sticky left-0 z-10 bg-muted/40">Menu</TableHead>
-              {columnLabels.map((label, i) => {
-                const isActive = sort?.columnIndex === i;
-
-                return (
-                  <TableHead key={label} className="p-0 text-center">
-                    <button
-                      onClick={() => handleSort(i)}
-                      className={clsx(
-                        "h-10 w-full px-2 flex items-center justify-center gap-1 hover:bg-muted transition-colors",
-                        isActive && "bg-muted",
-                      )}
-                      title="Click to sort"
-                      type="button"
-                    >
-                      <span>{label}</span>
-                      {isActive && sort?.direction === "desc" && (
-                        <ChevronDown className="w-3 h-3 opacity-70" />
-                      )}
-                      {isActive && sort?.direction === "asc" && (
-                        <ChevronUp className="w-3 h-3 opacity-70" />
-                      )}
-                    </button>
-                  </TableHead>
-                );
-              })}
+              {columnLabels.map((label, i) => (
+                <SortableTableHead
+                  key={label}
+                  active={sortKey === String(i)}
+                  direction={sortDirection}
+                  onToggle={() => toggleSort(String(i))}
+                  align="center"
+                  className="h-10 min-w-0"
+                >
+                  {label}
+                </SortableTableHead>
+              ))}
             </TableRow>
           </TableHeader>
 
@@ -178,8 +153,7 @@ export function HeatmapMatrix({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Click a column header to sort. Click again to toggle ASC/DESC. Click a
-        third time to reset.
+        Click a column header to sort. Click again to toggle ASC/DESC.
       </p>
     </div>
   );
