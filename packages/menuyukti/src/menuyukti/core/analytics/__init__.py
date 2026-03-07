@@ -1,4 +1,9 @@
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
+    MenuEngineeringDistributionItem,
+    MenuEngineeringMatrixItem,
+    MenuEngineeringMatrixResult,
+    MenuEngineeringThresholds,
+    OrderRowForMatrix,
     calculate_menu_engineering_matrix,
     compute_menu_engineering_from_orders,
 )
@@ -13,6 +18,11 @@ from menuyukti.core.analytics.registry import NORMALIZERS
 from menuyukti.core.analytics.utils import normalize_columns
 
 __all__ = [
+    "MenuEngineeringDistributionItem",
+    "MenuEngineeringMatrixItem",
+    "MenuEngineeringMatrixResult",
+    "MenuEngineeringThresholds",
+    "OrderRowForMatrix",
     "calculate_sales_analytics",
     "calculate_menu_heatmaps",
     "calculate_popularity_index",

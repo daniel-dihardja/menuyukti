@@ -1,12 +1,76 @@
 from __future__ import annotations
 
+from typing import NotRequired, TypedDict
+
 import pandas as pd
 
 
+# ---------------------------------------------------------------------------
+# Input: order-level rows for matrix aggregation
+# ---------------------------------------------------------------------------
+
+
+class OrderRowForMatrix(TypedDict):
+    """One order line. Required keys for aggregation; category fields optional."""
+
+    menu: str
+    qty: int | float
+    total_after_bill_discount: float
+    menu_category: NotRequired[str | None]
+    menu_category_detail: NotRequired[str | None]
+
+
+# ---------------------------------------------------------------------------
+# Output: matrix result structure (JSON-friendly dicts)
+# ---------------------------------------------------------------------------
+
+
+class MenuEngineeringThresholds(TypedDict):
+    avg_popularity: float
+    avg_contribution_margin: float
+    total_cogs: float
+    total_profit: float
+    total_margin: float
+
+
+class MenuEngineeringDistributionItem(TypedDict):
+    category: str
+    item_count: int
+    item_share: float
+    margin_share: float
+
+
+class MenuEngineeringMatrixItem(TypedDict):
+    menu: str
+    quantity: int
+    total_revenue: float
+    cogs: float
+    total_cogs: float
+    contribution_margin: float
+    contribution_margin_percentage: float
+    margin_per_unit: float
+    we_value: float
+    category: str
+    action: str
+    menu_category: NotRequired[str | None]
+    menu_category_detail: NotRequired[str | None]
+
+
+class MenuEngineeringMatrixResult(TypedDict):
+    thresholds: MenuEngineeringThresholds
+    distribution: list[MenuEngineeringDistributionItem]
+    items: list[MenuEngineeringMatrixItem]
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+
 def compute_menu_engineering_from_orders(
-    order_rows: list[dict],
+    order_rows: list[OrderRowForMatrix],
     cogs_by_menu: dict[str, float],
-) -> dict[str, object]:
+) -> MenuEngineeringMatrixResult:
     """
     Compute Menu Engineering Matrix from order-level rows and a COGS map.
 
@@ -15,17 +79,13 @@ def compute_menu_engineering_from_orders(
     (e.g. from a DB) and want a single entry point for the matrix result.
 
     Args:
-        order_rows: Each dict must have:
-            - menu (str)
-            - qty (int | float)
-            - total_after_bill_discount (float) — revenue for the line
-            Optional: menu_category, menu_category_detail (included in output if present).
+        order_rows: List of order lines; see OrderRowForMatrix for required
+            (menu, qty, total_after_bill_discount) and optional keys.
         cogs_by_menu: Map menu name -> COGS per unit (float). Menus not in
             the map get COGS 0.0.
 
     Returns:
-        Same shape as calculate_menu_engineering_matrix: dict with
-        "thresholds", "distribution", "items" (all snake_case).
+        MenuEngineeringMatrixResult with thresholds, distribution, items.
     """
     if not order_rows:
         raise ValueError("order_rows must not be empty")
@@ -50,7 +110,7 @@ def compute_menu_engineering_from_orders(
     return calculate_menu_engineering_matrix(menu_level)
 
 
-def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict[str, object]:
+def calculate_menu_engineering_matrix(df: pd.DataFrame) -> MenuEngineeringMatrixResult:
     """
     Calculate Menu Engineering Matrix from menu items.
 
@@ -164,7 +224,7 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict[str, object]:
     # Distribution (category-level aggregation)
     # --------------------------------------------------
     total_items = len(df)
-    distribution = []
+    distribution: list[MenuEngineeringDistributionItem] = []
 
     for category, group in df.groupby("category"):
         count = len(group)
