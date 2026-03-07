@@ -193,9 +193,6 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
 
 @strawberry.type
 class Query:
-    @strawberry.field
-    def hello(self) -> str:
-        return "Hello from GraphQL"
 
     @strawberry.field
     def locations(self) -> list[LocationType]:
@@ -217,11 +214,3 @@ class Query:
         finally:
             session.close()
 
-    @strawberry.field
-    def analytics_runs(self) -> list[AnalyticsRunType]:
-        session = SessionLocal()
-        try:
-            runs = session.query(AnalyticsRun).all()
-            return [_run_to_type(session, run) for run in runs]
-        finally:
-            session.close()
