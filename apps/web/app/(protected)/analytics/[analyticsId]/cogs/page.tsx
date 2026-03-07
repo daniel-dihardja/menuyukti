@@ -6,7 +6,6 @@ import { notFound } from "next/navigation";
 
 import { UpdateCogsForm } from "./update-cogs-form";
 import { getAppCurrencyCode } from "@/lib/app-currency";
-import { summarizeCogsCompleteness } from "@/lib/analytics/cogs-completeness";
 import { routes } from "@/lib/routes";
 import { graphqlQuery } from "@/lib/graphql/client";
 import { ANALYTICS_RUN_QUERY, type AnalyticsRunData } from "@/lib/graphql/queries";
@@ -64,8 +63,6 @@ export default async function Page({ params }: PageProps) {
     })
     .sort((a, b) => b.quantity - a.quantity);
 
-  const cogsCompleteness = summarizeCogsCompleteness(menuItems);
-
   // No list of other runs from GraphQL yet; pass empty options
   const analyticsOptions: Array<{ id: number; name: string }> = [];
 
@@ -84,7 +81,6 @@ export default async function Page({ params }: PageProps) {
       <UpdateCogsForm
         analyticsId={analyticsId}
         menuItems={menuItems}
-        cogsCompleteness={cogsCompleteness}
         analyticsOptions={analyticsOptions}
         currencyCode={currencyCode}
       />

@@ -25,7 +25,6 @@ import {
   getCurrencyLocale,
   parseCurrencyInput,
 } from "@/lib/currency";
-import type { CogsCompletenessSummary } from "@/lib/analytics/cogs-completeness";
 
 type MenuItem = {
   id: number;
@@ -39,7 +38,6 @@ type MenuItem = {
 type Props = {
   analyticsId: number;
   menuItems: MenuItem[];
-  cogsCompleteness: CogsCompletenessSummary;
   analyticsOptions: Array<{ id: number; name: string }>;
   currencyCode: string;
 };
@@ -47,7 +45,6 @@ type Props = {
 export function UpdateCogsForm({
   analyticsId,
   menuItems,
-  cogsCompleteness,
   analyticsOptions,
   currencyCode,
 }: Props) {
@@ -116,15 +113,6 @@ export function UpdateCogsForm({
     if (parsed === null) return "";
     return formatCurrencyInput(parsed, currencyCode, locale);
   }
-
-  const pct = (value: number) => `${(value * 100).toFixed(1)}%`;
-  const formatMoney = (value: number) =>
-    new Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: currencyCode,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
 
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
@@ -201,54 +189,6 @@ export function UpdateCogsForm({
           </div>
         </div>
       )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("completeness.title")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-4">
-            <div className="border p-3">
-              <p className="text-xs text-muted-foreground">{t("completeness.kpi.totalItems")}</p>
-              <p className="text-xl font-semibold">{cogsCompleteness.totalItems}</p>
-            </div>
-            <div className="border p-3">
-              <p className="text-xs text-muted-foreground">{t("completeness.kpi.validItems")}</p>
-              <p className="text-xl font-semibold">{cogsCompleteness.validCogsItems}</p>
-            </div>
-            <div className="border p-3">
-              <p className="text-xs text-muted-foreground">{t("completeness.kpi.itemCoverage")}</p>
-              <p className="text-xl font-semibold">{pct(cogsCompleteness.itemCompletenessRatio)}</p>
-            </div>
-            <div className="border p-3">
-              <p className="text-xs text-muted-foreground">{t("completeness.kpi.revenueCoverage")}</p>
-              <p className="text-xl font-semibold">{pct(cogsCompleteness.revenueCoverageRatio)}</p>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-sm font-medium">{t("completeness.watchlist.title")}</p>
-            {cogsCompleteness.prioritizedMissing.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("completeness.watchlist.empty")}</p>
-            ) : (
-              <div className="space-y-1">
-                {cogsCompleteness.prioritizedMissing.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className="grid gap-2 border px-3 py-2 text-sm md:grid-cols-[2rem_minmax(0,1fr)_6rem_8rem_7rem]"
-                  >
-                    <span className="text-muted-foreground">{index + 1}.</span>
-                    <span className="truncate">{item.menuName}</span>
-                    <span className="text-right tabular-nums">{item.quantity}</span>
-                    <span className="text-right tabular-nums">{formatMoney(item.totalRevenue)}</span>
-                    <span className="text-right text-muted-foreground">{item.issue}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>

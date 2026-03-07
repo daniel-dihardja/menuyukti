@@ -50,11 +50,7 @@ async function run() {
     state: "visible",
     timeout: 30_000,
   });
-  await page.getByText(/cogs completeness/i).first().waitFor({
-    state: "visible",
-    timeout: 10_000,
-  });
-  await page.getByText(/priority missing\/invalid cogs watchlist/i).first().waitFor({
+  await page.getByText(/edit cogs per menu item/i).first().waitFor({
     state: "visible",
     timeout: 10_000,
   });
