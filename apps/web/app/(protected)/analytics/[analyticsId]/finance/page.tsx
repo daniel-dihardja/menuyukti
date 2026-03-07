@@ -4,12 +4,13 @@ export const runtime = "nodejs";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
-import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
 import { getAppCurrencyCode, getAppCurrencyLocale } from "@/lib/app-currency";
 import { formatCurrencyWithCode } from "@/lib/currency";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
+import { graphqlQuery } from "@/lib/graphql/client";
+import { ANALYTICS_RUN_QUERY, type AnalyticsRunData } from "@/lib/graphql/queries";
 import {
   Table,
   TableBody,
@@ -37,65 +38,39 @@ export default async function Page({ params }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound();
 
   // --------------------------------------------------
-  // Fetch analytics snapshot (REAL finance KPIs)
+  // Fetch analytics run from GraphQL
   // --------------------------------------------------
-  const analytics = await prisma.analytics.findUnique({
-    where: { id: analyticsId },
-    select: {
-      sourceFile: true,
-      locationId: true,
-
-      // Period
-      periodStart: true,
-      periodEnd: true,
-
-      // Sales KPIs
-      totalOrders: true,
-      totalItemsSold: true,
-      avgOrderRevenue: true,
-      avgOrderItems: true,
-
-      // Finance KPIs
-      totalRevenue: true,
-      totalCogs: true,
-      totalProfit: true,
-    },
+  const data = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, {
+    id: String(analyticsId),
   });
+  const run = data.analytics_run;
+  if (!run) notFound();
 
-  if (!analytics) notFound();
-
-  const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
+  const analyticsName = run.name ?? run.filename ?? `Analytics #${analyticsId}`;
   const currencyCode = getAppCurrencyCode();
   const locale = getAppCurrencyLocale();
 
-  // --------------------------------------------------
-  // Fetch branch fixed costs (REAL)
-  // --------------------------------------------------
-  const fixedCosts = await prisma.fixedCost.findMany({
-    where: {
-      locationId: analytics.locationId,
-      isActive: true,
-    },
-    orderBy: { createdAt: "asc" },
-    select: {
-      id: true,
-      name: true,
-      amount: true,
-    },
-  });
-
-  const totalFixedCosts = fixedCosts.reduce(
-    (sum, fc) => sum + Number(fc.amount),
-    0,
-  );
-
-  // --------------------------------------------------
-  // Finance inputs (fully real now)
-  // --------------------------------------------------
-  const totalRevenue = Number(analytics.totalRevenue ?? 0);
-  const totalCogs = Number(analytics.totalCogs ?? 0);
-  const totalProfit = Number(analytics.totalProfit ?? 0);
+  // Derive finance KPIs from menu engineering matrix (GraphQL has no totalRevenue/totalCogs/totalProfit)
+  const eng = run.menuEngineeringMatrix;
+  const totalRevenue = eng
+    ? eng.items.reduce((s, i) => s + i.totalRevenue, 0)
+    : 0;
+  const totalCogs = eng ? eng.items.reduce((s, i) => s + i.totalCogs, 0) : 0;
+  const totalProfit = eng ? eng.thresholds.totalProfit : 0;
+  // Fixed costs not exposed by GraphQL; use 0
+  const totalFixedCosts = 0;
   const netProfit = totalProfit - totalFixedCosts;
+
+  const totalItemsSold = eng ? eng.items.reduce((s, i) => s + i.quantity, 0) : null;
+  const analytics = {
+    periodStart: run.periodStart ? new Date(run.periodStart) : null,
+    periodEnd: run.periodEnd ? new Date(run.periodEnd) : null,
+    totalOrders: null as number | null,
+    totalItemsSold,
+    avgOrderRevenue: run.orderMetrics.avgOrderRevenue,
+    avgOrderItems: run.orderMetrics.avgOrderSize,
+  };
+  const fixedCosts: Array<{ id: number; name: string; amount: number }> = [];
 
   // --------------------------------------------------
   // Formatting helpers
@@ -171,72 +146,56 @@ export default async function Page({ params }: PageProps) {
             <h2 className="text-xl font-semibold">{tFinance("overview.title")}</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Period */}
-              <div className="border rounded-md p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">{tFinance("overview.period.title")}</p>
-                <div className="text-sm">
-                  <div>
-                    <span className="text-muted-foreground">{tFinance("overview.period.start")}</span>{" "}
-                    <span className="font-medium">{startDate}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">{tFinance("overview.period.end")}</span>{" "}
-                    <span className="font-medium">{endDate}</span>
+              {/* Period - only when GraphQL provides it */}
+              {(analytics.periodStart ?? analytics.periodEnd) ? (
+                <div className="border rounded-md p-4 space-y-2">
+                  <p className="text-sm text-muted-foreground">{tFinance("overview.period.title")}</p>
+                  <div className="text-sm">
+                    <div>
+                      <span className="text-muted-foreground">{tFinance("overview.period.start")}</span>{" "}
+                      <span className="font-medium">{startDate}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">{tFinance("overview.period.end")}</span>{" "}
+                      <span className="font-medium">{endDate}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : null}
 
-              {/* Orders */}
-              <div className="border rounded-md p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">{tFinance("overview.orders.title")}</p>
-                <div className="text-sm">
-                  <div>
-                    <span className="text-muted-foreground">{tFinance("overview.orders.total")}</span>{" "}
+              {/* Items sold - from matrix */}
+              {analytics.totalItemsSold != null ? (
+                <div className="border rounded-md p-4 space-y-2">
+                  <p className="text-sm text-muted-foreground">{tFinance("overview.itemsSold.title")}</p>
+                  <div className="text-sm">
                     <span className="font-medium">
-                      {analytics.totalOrders?.toLocaleString(locale) ?? "—"}
+                      {analytics.totalItemsSold.toLocaleString(locale)}
                     </span>
                   </div>
                 </div>
-              </div>
+              ) : null}
 
-              {/* Items Sold */}
-              <div className="border rounded-md p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">{tFinance("overview.itemsSold.title")}</p>
-                <div className="text-sm">
-                  <div>
-                    <span className="text-muted-foreground">{tFinance("overview.itemsSold.total")}</span>{" "}
-                    <span className="font-medium">
-                      {analytics.totalItemsSold?.toLocaleString(locale) ?? "—"}
-                    </span>
+              {/* Avg revenue/items per order - from GraphQL orderMetrics */}
+              {analytics.avgOrderRevenue != null ? (
+                <div className="border rounded-md p-4 space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {tFinance("overview.avgRevenuePerOrder")}
+                  </p>
+                  <div className="text-sm">
+                    <span className="font-medium">{fmt(Number(analytics.avgOrderRevenue))}</span>
                   </div>
                 </div>
-              </div>
-
-              {/* Avg Revenue / Order */}
-              <div className="border rounded-md p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  {tFinance("overview.avgRevenuePerOrder")}
-                </p>
-                <div className="text-sm">
-                  <span className="font-medium">
-                    {analytics.avgOrderRevenue
-                      ? fmt(Number(analytics.avgOrderRevenue))
-                      : "—"}
-                  </span>
+              ) : null}
+              {analytics.avgOrderItems != null ? (
+                <div className="border rounded-md p-4 space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {tFinance("overview.avgItemsPerOrder")}
+                  </p>
+                  <div className="text-sm">
+                    <span className="font-medium">{analytics.avgOrderItems.toFixed(2)}</span>
+                  </div>
                 </div>
-              </div>
-
-              {/* Avg Items / Order */}
-              <div className="border rounded-md p-4 space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  {tFinance("overview.avgItemsPerOrder")}
-                </p>
-                <div className="text-sm">
-                  <span className="font-medium">
-                    {analytics.avgOrderItems?.toFixed(2) ?? "—"}
-                  </span>
-                </div>
-              </div>
+              ) : null}
             </div>
           </section>
 

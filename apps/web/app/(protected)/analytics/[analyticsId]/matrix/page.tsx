@@ -6,26 +6,18 @@ import { Badge } from "@workspace/ui/components/badge";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
-import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
 import { getAppCurrencyCode, getAppCurrencyLocale } from "@/lib/app-currency";
 import { formatCurrencyWithCode } from "@/lib/currency";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
-import { DecisionContractBanner } from "@/components/decision-contract-banner";
 import { parseMatrixFilterState } from "@/lib/analytics/matrix-filter-state";
 import { applyMatrixFilterState } from "@/lib/analytics/matrix-filter-engine";
 import { toDecisionGradeMatrixRows } from "@/lib/analytics/matrix-row-contract";
 import { summarizeCogsCoverage } from "@/lib/analytics/cogs-completeness";
 import { evaluateCogsReadiness } from "@/lib/analytics/cogs-readiness";
-import {
-  createDecisionApiContract,
-  createDecisionContext,
-} from "@/lib/contracts/decision-api-contract";
-import {
-  loadPipelineFreshnessMetadata,
-  resolveAnalyticsMaterialization,
-} from "@/lib/etl/latest-valid-materialization";
+import { graphqlQuery } from "@/lib/graphql/client";
+import { ANALYTICS_RUN_QUERY, type AnalyticsRunData } from "@/lib/graphql/queries";
 
 import { MatrixFilterBar } from "./matrix-filter-bar";
 import { MatrixInsightTable } from "./matrix-insight-table";
@@ -65,48 +57,68 @@ export default async function Page({ params, searchParams }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound();
 
   // --------------------------------------------------
-  // Fetch analytics snapshot
+  // Fetch analytics run from GraphQL
   // --------------------------------------------------
-  const materialization = await resolveAnalyticsMaterialization({
-    analyticsId,
-    requiredField: "matrixJson",
+  const data = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, {
+    id: String(analyticsId),
   });
-  if (!materialization) notFound();
+  const run = data.analytics_run;
+  if (!run) notFound();
 
-  const analytics = await prisma.analytics.findUnique({
-    where: { id: materialization.resolvedAnalyticsId },
-    select: {
-      id: true,
-      sourceFile: true,
-      periodStart: true,
-      periodEnd: true,
-      totalOrders: true,
-      totalItemsSold: true,
-      avgOrderRevenue: true,
-      avgOrderItems: true,
-      matrixJson: true,
-      matrixDistributionJson: true,
-    },
-  });
+  const resolvedAnalyticsId = Number(run.id);
+  const materialization = {
+    requestedAnalyticsId: analyticsId,
+    resolvedAnalyticsId,
+    locationId: run.locationId,
+    fallbackApplied: false,
+  };
 
-  if (!analytics) notFound();
-
-  const metadata = await loadPipelineFreshnessMetadata(analytics.id);
-  const freshnessSlaMinutes = Number(process.env.DATA_FRESHNESS_SLA_MINUTES ?? "1440");
-  const dataFreshnessMinutes = metadata.freshnessMinutes;
-  const isStale = Boolean(metadata.stale);
-  const qualityStatusRaw = String(metadata.qualityStatus ?? "").toLowerCase();
-  const qualityStatus =
-    qualityStatusRaw === "passed" ||
-    qualityStatusRaw === "warn" ||
-    qualityStatusRaw === "failed"
-      ? qualityStatusRaw
-      : "unknown";
-
-  const analyticsName = analytics.sourceFile ?? `Analytics #${analytics.id}`;
-  const matrix = analytics.matrixJson as MatrixJson | null;
+  const analyticsName = run.name ?? run.filename ?? `Analytics #${resolvedAnalyticsId}`;
   const currencyCode = getAppCurrencyCode();
   const locale = getAppCurrencyLocale();
+
+  // Build matrix from GraphQL menuEngineeringMatrix (snake_case for toDecisionGradeMatrixRows)
+  const eng = run.menuEngineeringMatrix;
+  const matrix: MatrixJson | null = eng
+    ? {
+        items: eng.items.map((item) => ({
+          menu: item.menu,
+          category: item.category,
+          quantity: item.quantity,
+          total_revenue: item.totalRevenue,
+          cogs: item.cogs,
+          contribution_margin: item.contributionMargin,
+          contribution_margin_percentage: item.contributionMarginPercentage,
+          action: item.action,
+          menu_category: item.menuCategory,
+          menu_category_detail: item.menuCategoryDetail,
+          thresholds_used: {
+            avg_popularity: eng.thresholds.avgPopularity,
+            avg_contribution_margin: eng.thresholds.avgContributionMargin,
+          },
+        })),
+        distribution: eng.distribution.map((d) => ({
+          category: d.category as MatrixDistributionItem["category"],
+          item_count: d.itemCount,
+          item_share: d.itemShare,
+          margin_share: d.marginShare,
+        })),
+      }
+    : null;
+
+  // Period and order stats from run (GraphQL has no totalOrders/totalItemsSold)
+  const analytics = {
+    id: resolvedAnalyticsId,
+    sourceFile: analyticsName,
+    periodStart: run.periodStart ? new Date(run.periodStart) : null,
+    periodEnd: run.periodEnd ? new Date(run.periodEnd) : null,
+    totalOrders: null as number | null,
+    totalItemsSold: eng ? eng.items.reduce((s, i) => s + i.quantity, 0) : null,
+    avgOrderRevenue: run.orderMetrics.avgOrderRevenue,
+    avgOrderItems: run.orderMetrics.avgOrderSize,
+    matrixJson: matrix,
+    matrixDistributionJson: matrix?.distribution ?? null,
+  };
 
   if (!matrix) {
     return (
@@ -165,43 +177,6 @@ export default async function Page({ params, searchParams }: PageProps) {
     })),
   );
   const cogsReadiness = evaluateCogsReadiness(cogsCoverage);
-  const contract = createDecisionApiContract({
-    surface: "matrix",
-    context: createDecisionContext({
-      persona: "analyst",
-      locationId: materialization.locationId,
-      analyticsId: materialization.resolvedAnalyticsId,
-      filterState: filters,
-      trust: {
-        qualityStatus,
-        freshnessMinutes: dataFreshnessMinutes,
-        isStale,
-        reasons: metadata.pipelineRunId ? [] : ["missing_pipeline_run"],
-      },
-      lineage: {
-        pipelineRunId: metadata.pipelineRunId,
-        sourceSystem: "warehouse",
-        ingestedAtUtc: metadata.ingestedAtUtc,
-      },
-    }),
-    evidence: [
-      {
-        source: "public_snapshot",
-        entity: "public.analytics",
-        metric: "matrix_row_count",
-        value: matrixRows.length,
-        key: { analyticsId: materialization.resolvedAnalyticsId },
-        pipelineRunId: metadata.pipelineRunId,
-      },
-      {
-        source: "derived_runtime",
-        entity: "runtime.cogs_readiness",
-        metric: "cogs_readiness",
-        value: cogsReadiness.readiness,
-        key: { analyticsId: materialization.resolvedAnalyticsId },
-      },
-    ],
-  });
 
   const distribution =
     (analytics.matrixDistributionJson as MatrixDistributionItem[]) ??
@@ -234,20 +209,10 @@ export default async function Page({ params, searchParams }: PageProps) {
         title={tMatrix("heading")}
         description={tMatrix("description")}
       />
-      <DecisionContractBanner
-        contract={contract}
-        fallbackApplied={materialization.fallbackApplied}
-        fallbackLabel={`using latest valid materialization (#${materialization.resolvedAnalyticsId})`}
-      />
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <span className="text-sm text-muted-foreground">
           {tMatrix("actionsLabel")}
         </span>
-        {materialization.fallbackApplied ? (
-          <Badge variant="secondary">
-            using latest valid materialization (#{materialization.resolvedAnalyticsId})
-          </Badge>
-        ) : null}
         <Badge variant="default">{tMatrix("actions.promote")}</Badge>
         <Badge variant="secondary">{tMatrix("actions.improve")}</Badge>
         <Badge variant="destructive">{tMatrix("actions.remove")}</Badge>
@@ -263,41 +228,36 @@ export default async function Page({ params, searchParams }: PageProps) {
             <h2 className="text-xl font-semibold">{tMatrix("overview.title")}</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Period */}
-              <div className="border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-border">
-                <p className="text-sm text-muted-foreground">{tMatrix("overview.period.title")}</p>
-                <div className="text-sm">
-                  <div>
-                    <span className="text-muted-foreground">{tMatrix("overview.period.start")}</span>{" "}
-                    <span className="font-medium">{startDate}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">{tMatrix("overview.period.end")}</span>{" "}
-                    <span className="font-medium">{endDate}</span>
+              {/* Period - only when GraphQL provides it */}
+              {(analytics.periodStart ?? analytics.periodEnd) ? (
+                <div className="border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-border">
+                  <p className="text-sm text-muted-foreground">{tMatrix("overview.period.title")}</p>
+                  <div className="text-sm">
+                    <div>
+                      <span className="text-muted-foreground">{tMatrix("overview.period.start")}</span>{" "}
+                      <span className="font-medium">{startDate}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">{tMatrix("overview.period.end")}</span>{" "}
+                      <span className="font-medium">{endDate}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : null}
 
-              {/* Orders & Items */}
-              <div className="border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-border">
-                <p className="text-sm text-muted-foreground">{tMatrix("overview.ordersAndItems.title")}</p>
-                <div className="text-sm">
-                  <div>
-                    <span className="text-muted-foreground">{tMatrix("overview.ordersAndItems.orders")}</span>{" "}
+              {/* Items sold - from matrix sum */}
+              {analytics.totalItemsSold != null ? (
+                <div className="border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-border">
+                  <p className="text-sm text-muted-foreground">{tMatrix("overview.ordersAndItems.itemsSold")}</p>
+                  <div className="text-sm">
                     <span className="font-medium">
-                      {analytics.totalOrders?.toLocaleString(locale) ?? "—"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">{tMatrix("overview.ordersAndItems.itemsSold")}</span>{" "}
-                    <span className="font-medium">
-                      {analytics.totalItemsSold?.toLocaleString(locale) ?? "—"}
+                      {analytics.totalItemsSold.toLocaleString(locale)}
                     </span>
                   </div>
                 </div>
-              </div>
+              ) : null}
 
-              {/* Averages */}
+              {/* Averages - from GraphQL orderMetrics */}
               <div className="border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-border">
                 <p className="text-sm text-muted-foreground">{tMatrix("overview.averages.title")}</p>
                 <div className="text-sm">
@@ -318,38 +278,7 @@ export default async function Page({ params, searchParams }: PageProps) {
                 </div>
               </div>
 
-              {/* Pipeline metadata */}
-              <div className="border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-border">
-                <p className="text-sm text-muted-foreground">Pipeline</p>
-                <div className="text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Run:</span>{" "}
-                    <span className="font-medium">
-                      {metadata.pipelineRunId ?? "—"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Quality:</span>{" "}
-                    <span className="font-medium">
-                      {metadata.qualityStatus ?? "—"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Freshness:</span>{" "}
-                    <span className="font-medium">
-                      {dataFreshnessMinutes !== null
-                        ? `${dataFreshnessMinutes} min`
-                        : "—"}
-                    </span>
-                  </div>
-                </div>
-                {isStale && (
-                  <p className="text-xs text-amber-600 mt-2">
-                    Data freshness SLA exceeded
-                  </p>
-                )}
-              </div>
-
+              {/* COGS readiness - derived from matrix data */}
               <div className="border border-border/70 bg-card p-4 shadow-sm transition-colors hover:border-border">
                 <p className="text-sm text-muted-foreground">COGS readiness</p>
                 <div className="mt-1 flex flex-wrap gap-2">

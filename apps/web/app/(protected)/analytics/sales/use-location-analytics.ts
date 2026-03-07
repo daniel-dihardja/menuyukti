@@ -1,8 +1,19 @@
 "use client";
 
-import { AnalyticsListItem } from "@/app/api/analytics/types";
 import { useCallback, useEffect, useState } from "react";
+import type { SalesDropdownReadinessSignals } from "@/lib/analytics/sales-dropdown-readiness";
 
+/** Shape expected by SalesTable (id, name, readinessSignals). */
+export type AnalyticsListItem = {
+  id: number;
+  name: string;
+  readinessSignals: SalesDropdownReadinessSignals;
+};
+
+/**
+ * Analytics list is not yet provided by the GraphQL API; returns empty until
+ * the service exposes an analytics-runs-by-location query.
+ */
 export function useLocationAnalytics(locationId: number | null) {
   const [analytics, setAnalytics] = useState<AnalyticsListItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -10,19 +21,13 @@ export function useLocationAnalytics(locationId: number | null) {
   const fetchAnalytics = useCallback(async () => {
     if (!locationId) {
       setAnalytics([]);
+      setLoading(false);
       return;
     }
-
     setLoading(true);
     try {
-      const res = await fetch(`/api/analytics/list?locationId=${locationId}`);
-
-      if (!res.ok) {
-        throw new Error("Failed to load analytics");
-      }
-
-      const data = (await res.json()) as AnalyticsListItem[];
-      setAnalytics(data);
+      // No /api/analytics/list; GraphQL does not yet expose analytics list by location.
+      setAnalytics([]);
     } catch (err) {
       console.error("Failed to fetch analytics:", err);
       setAnalytics([]);
@@ -31,7 +36,6 @@ export function useLocationAnalytics(locationId: number | null) {
     }
   }, [locationId]);
 
-  // Auto-fetch when branch changes
   useEffect(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);

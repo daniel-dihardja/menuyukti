@@ -8,7 +8,8 @@ import { UpdateCogsForm } from "./update-cogs-form";
 import { getAppCurrencyCode } from "@/lib/app-currency";
 import { summarizeCogsCompleteness } from "@/lib/analytics/cogs-completeness";
 import { routes } from "@/lib/routes";
-import { prisma } from "@/lib/prisma/client";
+import { graphqlQuery } from "@/lib/graphql/client";
+import { ANALYTICS_RUN_QUERY, type AnalyticsRunData } from "@/lib/graphql/queries";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 
 type PageProps = {
@@ -31,58 +32,42 @@ export default async function Page({ params }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound();
 
   // --------------------------------------------------
-  // Fetch analytics (for display name)
+  // Fetch analytics run from GraphQL
   // --------------------------------------------------
-  const analytics = await prisma.analytics.findUnique({
-    where: { id: analyticsId },
-    select: {
-      sourceFile: true,
-      locationId: true,
-    },
+  const data = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, {
+    id: String(analyticsId),
   });
+  const run = data.analytics_run;
+  if (!run) notFound();
 
-  if (!analytics) notFound();
-
-  const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
+  const analyticsName = run.name ?? run.filename ?? `Analytics #${analyticsId}`;
   const currencyCode = getAppCurrencyCode();
 
-  const analyticsOptions = await prisma.analytics.findMany({
-    where: {
-      locationId: analytics.locationId,
-      id: { not: analyticsId },
-    },
-    orderBy: { uploadedAt: "desc" },
-    select: {
-      id: true,
-      sourceFile: true,
-    },
-  });
+  // Build menu items from menuItemCogs + menuEngineeringMatrix (for quantity/totalRevenue)
+  const byMenu = new Map(
+    run.menuEngineeringMatrix?.items.map((row) => [
+      row.menu,
+      { quantity: row.quantity, totalRevenue: row.totalRevenue },
+    ]) ?? [],
+  );
+  const menuItems = run.menuItemCogs
+    .map((cog) => {
+      const extra = byMenu.get(cog.menu);
+      return {
+        id: cog.id,
+        menuName: cog.menu,
+        cogs: cog.cogs,
+        quantity: extra?.quantity ?? 0,
+        totalRevenue: extra?.totalRevenue ?? 0,
+        menuCategory: cog.menuCategory ?? null,
+      };
+    })
+    .sort((a, b) => b.quantity - a.quantity);
 
-  // --------------------------------------------------
-  // Fetch menu items
-  // --------------------------------------------------
-  const rawMenuItems = await prisma.analyticsMenuItem.findMany({
-    where: { analyticsId },
-    orderBy: [{ quantity: "desc" }, { id: "asc" }],
-    select: {
-      id: true,
-      menuName: true,
-      cogs: true,
-      quantity: true,
-      totalRevenue: true,
-      menuCategory: true,
-    },
-  });
-
-  const menuItems = rawMenuItems.map((item) => ({
-    id: item.id,
-    menuName: item.menuName,
-    cogs: item.cogs !== null ? Number(item.cogs) : null,
-    quantity: item.quantity,
-    totalRevenue: Number(item.totalRevenue),
-    menuCategory: item.menuCategory,
-  }));
   const cogsCompleteness = summarizeCogsCompleteness(menuItems);
+
+  // No list of other runs from GraphQL yet; pass empty options
+  const analyticsOptions: Array<{ id: number; name: string }> = [];
 
   // --------------------------------------------------
   // UI
@@ -100,10 +85,7 @@ export default async function Page({ params }: PageProps) {
         analyticsId={analyticsId}
         menuItems={menuItems}
         cogsCompleteness={cogsCompleteness}
-        analyticsOptions={analyticsOptions.map((item) => ({
-          id: item.id,
-          name: item.sourceFile ?? `Analytics #${item.id}`,
-        }))}
+        analyticsOptions={analyticsOptions}
         currencyCode={currencyCode}
       />
     </AnalyticsPageShell>

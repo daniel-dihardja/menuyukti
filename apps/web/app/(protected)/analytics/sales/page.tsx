@@ -2,11 +2,12 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 import { getTranslations } from "next-intl/server";
-import { prisma } from "@/lib/prisma/client";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
+import { graphqlQuery } from "@/lib/graphql/client";
+import { LOCATIONS_QUERY, type LocationsData } from "@/lib/graphql/queries";
 import { AnalyticsSalesClient } from "./analytics-sales-client";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
@@ -14,13 +15,11 @@ import { PageHeading } from "@/components/page-heading";
 export default async function Page() {
   const t = await getTranslations("analytics.sales");
 
-  const branches = await prisma.location.findMany({
-    orderBy: { createdAt: "asc" },
-    select: {
-      id: true,
-      name: true,
-    },
-  });
+  const data = await graphqlQuery<LocationsData>(LOCATIONS_QUERY);
+  const branches = data.locations.map((loc) => ({
+  id: String(loc.id),
+  name: loc.name,
+}));
 
   const hasBranches = branches.length > 0;
 

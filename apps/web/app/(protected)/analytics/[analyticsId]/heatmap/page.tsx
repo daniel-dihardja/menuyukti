@@ -3,15 +3,11 @@ export const runtime = "nodejs";
 
 import { getTranslations } from "next-intl/server";
 import { routes } from "@/lib/routes";
-import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
-import { DecisionContractBanner } from "@/components/decision-contract-banner";
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Badge } from "@workspace/ui/components/badge";
-import { Button } from "@workspace/ui/components/button";
-import Link from "next/link";
 
 import {
   Tabs,
@@ -41,16 +37,9 @@ import {
   applyHeatmapFilterState,
   applyWeeklySegment,
   parseHeatmapFilterState,
-  serializeHeatmapFilterState,
 } from "@/lib/analytics/heatmap-filter-state";
-import {
-  loadPipelineFreshnessMetadata,
-  resolveAnalyticsMaterialization,
-} from "@/lib/etl/latest-valid-materialization";
-import {
-  createDecisionApiContract,
-  createDecisionContext,
-} from "@/lib/contracts/decision-api-contract";
+import { graphqlQuery } from "@/lib/graphql/client";
+import { ANALYTICS_RUN_QUERY, type AnalyticsRunData } from "@/lib/graphql/queries";
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>;
@@ -71,61 +60,39 @@ export default async function Page({ params, searchParams }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound();
 
   // --------------------------------------------------
-  // Fetch analytics snapshot
+  // Fetch analytics run from GraphQL
   // --------------------------------------------------
-  const materialization = await resolveAnalyticsMaterialization({
-    analyticsId,
-    requiredField: "heatmapJson",
+  const data = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, {
+    id: String(analyticsId),
   });
-  if (!materialization) notFound();
+  const run = data.analytics_run;
+  if (!run) notFound();
 
-  const analytics = await prisma.analytics.findUnique({
-    where: { id: materialization.resolvedAnalyticsId },
-    select: {
-      id: true,
-      sourceFile: true,
-      heatmapJson: true,
-    },
-  });
+  const resolvedAnalyticsId = Number(run.id);
+  const materialization = {
+    requestedAnalyticsId: analyticsId,
+    resolvedAnalyticsId,
+    locationId: run.locationId,
+    fallbackApplied: false,
+  };
 
-  if (!analytics) notFound();
-
-  const analyticsName = analytics.sourceFile ?? `Analytics #${analytics.id}`;
-  const metadata = await loadPipelineFreshnessMetadata(analytics.id);
-  const freshnessMinutes = metadata.freshnessMinutes;
-  const isStale = Boolean(metadata.stale);
-  const qualityStatus = String(metadata.qualityStatus ?? "").toLowerCase() || "unknown";
-  const readiness: "ready" | "degraded" | "blocked" =
-    qualityStatus === "failed" ? "blocked" : qualityStatus === "warn" || isStale ? "degraded" : "ready";
+  const analyticsName = run.name ?? run.filename ?? `Analytics #${resolvedAnalyticsId}`;
 
   // --------------------------------------------------
-  // Parse + validate heatmap_json
+  // Build heatmap items from GraphQL menu_heatmaps
   // --------------------------------------------------
-  let dailyItems: DailyHeatmapInput[] = [];
-  let weeklyItems: WeeklyHeatmapInput[] = [];
-
-  try {
-    const raw = analytics.heatmapJson as unknown;
-
-    if (!Array.isArray(raw)) {
-      throw new Error("heatmap_json is not an array");
-    }
-
-    dailyItems = raw.filter(
-      (item: any): item is DailyHeatmapInput =>
-        typeof item?.menu === "string" &&
-        (Array.isArray(item?.dailyHeatmap) || Array.isArray(item?.daily_heatmap)),
-    );
-
-    weeklyItems = raw.filter(
-      (item: any): item is WeeklyHeatmapInput =>
-        typeof item?.menu === "string" &&
-        (Array.isArray(item?.weeklyHeatmap) || Array.isArray(item?.weekly_heatmap)),
-    );
-  } catch (err) {
-    console.error("Invalid heatmap_json:", err);
-    notFound();
-  }
+  const dailyItems: DailyHeatmapInput[] = run.menu_heatmaps
+    .filter((h) => h.daily_heatmap?.length)
+    .map((h) => ({
+      menu: h.menu,
+      daily_heatmap: h.daily_heatmap.map((d) => ({ hour: d.hour, quantity: d.quantity })),
+    }));
+  const weeklyItems: WeeklyHeatmapInput[] = run.menu_heatmaps
+    .filter((h) => h.weekly_heatmap?.length)
+    .map((h) => ({
+      menu: h.menu,
+      weekly_heatmap: h.weekly_heatmap.map((w) => ({ day: w.day, quantity: w.quantity })),
+    }));
 
   if (!dailyItems.length && !weeklyItems.length) {
     notFound();
@@ -149,11 +116,6 @@ export default async function Page({ params, searchParams }: PageProps) {
   const weeklyRowsForRender = filteredWeeklyRows.slice(0, MAX_RENDER_ROWS);
   const isDailyTrimmed = filteredDailyRows.length > MAX_RENDER_ROWS;
   const isWeeklyTrimmed = filteredWeeklyRows.length > MAX_RENDER_ROWS;
-  const heatmapExportParams = serializeHeatmapFilterState(filters);
-  heatmapExportParams.set("dataset", "heatmap");
-  heatmapExportParams.set("analyticsId", String(analyticsId));
-  const heatmapExportHref = `/api/exports/analyst?${heatmapExportParams.toString()}`;
-
   const marketerInsights = deriveHeatmapMarketerInsights(dailyRowsForRender, daily.columnLabels);
   const analystInsights = deriveHeatmapAnalystInsights(
     dailyRowsForRender,
@@ -162,64 +124,9 @@ export default async function Page({ params, searchParams }: PageProps) {
     segmentedWeekly.labels,
   );
   const avgRowDemand = avgDemandPerRow(dailyRowsForRender);
-  const confidenceLabel =
-    readiness === "ready" ? "high" : readiness === "degraded" ? "medium" : "blocked";
-  const marketerAction =
-    readiness === "blocked"
-      ? "Heatmap timing guidance is blocked due to data readiness. Re-run ingestion and resolve quality before execution."
-      : readiness === "degraded"
-        ? `Use with caution: ${marketerInsights.suggestedAction}`
-        : marketerInsights.suggestedAction;
-  const analystAction =
-    readiness === "blocked"
-      ? "Analyst optimization guidance is blocked due to readiness policy. Fix freshness/quality before decisions."
-      : readiness === "degraded"
-        ? `Use with caution: ${analystInsights.suggestedAction}`
-        : analystInsights.suggestedAction;
-  const contract = createDecisionApiContract({
-    surface: "heatmap",
-    context: createDecisionContext({
-      persona: "analyst",
-      locationId: materialization.locationId,
-      analyticsId: materialization.resolvedAnalyticsId,
-      filterState: filters,
-      trust: {
-        qualityStatus:
-          qualityStatus === "passed" || qualityStatus === "warn" || qualityStatus === "failed"
-            ? qualityStatus
-            : "unknown",
-        freshnessMinutes,
-        isStale,
-        reasons: metadata.pipelineRunId ? [] : ["missing_pipeline_run"],
-      },
-      lineage: {
-        pipelineRunId: metadata.pipelineRunId,
-        sourceSystem: "warehouse",
-        ingestedAtUtc: metadata.ingestedAtUtc,
-      },
-    }),
-    evidence: [
-      {
-        source: "public_snapshot",
-        entity: "public.analytics",
-        metric: "daily_heatmap_rows",
-        value: dailyRowsForRender.length,
-        key: { analyticsId: materialization.resolvedAnalyticsId },
-        pipelineRunId: metadata.pipelineRunId,
-      },
-      {
-        source: "public_snapshot",
-        entity: "public.analytics",
-        metric: "weekly_heatmap_rows",
-        value: weeklyRowsForRender.length,
-        key: { analyticsId: materialization.resolvedAnalyticsId },
-        pipelineRunId: metadata.pipelineRunId,
-      },
-    ],
-  });
 
   // --------------------------------------------------
-  // UI
+  // UI (only what GraphQL provides: heatmap data + derived insights)
   // --------------------------------------------------
   return (
     <AnalyticsPageShell
@@ -234,29 +141,6 @@ export default async function Page({ params, searchParams }: PageProps) {
         title={tHeatmap("heading")}
         description={tHeatmap("description")}
       />
-      <DecisionContractBanner
-        contract={contract}
-        fallbackApplied={materialization.fallbackApplied}
-        fallbackLabel={`using latest valid materialization (#${materialization.resolvedAnalyticsId})`}
-      />
-      <section className="flex flex-wrap items-center gap-2">
-        {materialization.fallbackApplied ? (
-          <Badge variant="secondary">
-            using latest valid materialization (#{materialization.resolvedAnalyticsId})
-          </Badge>
-        ) : null}
-        <Badge variant={readiness === "blocked" ? "destructive" : readiness === "degraded" ? "secondary" : "default"}>
-          readiness: {readiness}
-        </Badge>
-        <Badge variant="outline">quality: {qualityStatus}</Badge>
-        {freshnessMinutes !== null ? (
-          <Badge variant={isStale ? "destructive" : "secondary"}>freshness: {freshnessMinutes}m</Badge>
-        ) : null}
-        <Badge variant="outline">confidence: {confidenceLabel}</Badge>
-        <Button asChild variant="outline" size="sm" className="ml-auto">
-          <Link href={heatmapExportHref}>Export Heatmap CSV</Link>
-        </Button>
-      </section>
       <section className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="pb-3">
@@ -271,7 +155,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               Peak volume: {marketerInsights.peakWindow?.totalQty ?? 0} orders.
               Menu focus: {marketerInsights.menuFocusAtPeak?.menu ?? "—"}.
             </p>
-            <p>{marketerAction}</p>
+            <p>{marketerInsights.suggestedAction}</p>
           </CardContent>
         </Card>
 
@@ -291,7 +175,7 @@ export default async function Page({ params, searchParams }: PageProps) {
               {analystInsights.concentrationRisk ? formatPct(analystInsights.concentrationRisk.share) : "0.0%"})
               . Avg demand per menu row: {avgRowDemand.toFixed(1)}.
             </p>
-            <p>{analystAction}</p>
+            <p>{analystInsights.suggestedAction}</p>
           </CardContent>
         </Card>
       </section>
@@ -303,14 +187,10 @@ export default async function Page({ params, searchParams }: PageProps) {
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
             Daily heatmaps aggregate menu quantities by hour bucket. Weekly heatmaps aggregate by weekday bucket.
-            Insights shown above are deterministic transforms of these bucketed totals.
+            Insights above are derived from these bucketed totals.
           </p>
           <p>
-            Interpretation guidance: marketers should prioritize peak windows and avoid low windows for campaign posts;
-            analysts should use bias and concentration signals to validate operational and profitability decisions.
-          </p>
-          <p>
-            Confidence is constrained by readiness. If quality is degraded or freshness is stale, action language should be treated as lower-trust.
+            Marketers: prioritize peak windows; avoid low windows for campaign posts. Analysts: use bias and concentration signals for operational decisions.
           </p>
         </CardContent>
       </Card>
