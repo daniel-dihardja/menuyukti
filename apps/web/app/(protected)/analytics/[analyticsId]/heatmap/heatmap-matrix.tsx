@@ -20,6 +20,8 @@ type Props = {
   columnLabels: string[];
   color?: "red" | "green" | "blue";
   density?: "comfortable" | "compact";
+  /** When false, column headers are not sortable and row order is preserved. Default true. */
+  sortable?: boolean;
 };
 
 /** Sort by Menu (label) or by column index (e.g. "0", "1"). */
@@ -31,6 +33,7 @@ export function HeatmapMatrix({
   columnLabels,
   color = "green",
   density = "comfortable",
+  sortable = true,
 }: Props) {
   const { sortKey, sortDirection, toggleSort } =
     useSortableColumns<HeatmapSortKey>("0", "desc");
@@ -55,10 +58,12 @@ export function HeatmapMatrix({
     });
   }, [rows, sortKey, sortDirection]);
 
+  const displayRows = sortable ? sortedRows : rows;
+
   /* ---------------------------------------------
    * Color scaling
    * --------------------------------------------- */
-  const allValues = sortedRows.flatMap((r) => r.values);
+  const allValues = displayRows.flatMap((r) => r.values);
   const min = Math.min(...allValues);
   const max = Math.max(...allValues);
   const range = max - min || 1;
@@ -101,8 +106,9 @@ export function HeatmapMatrix({
             sortKey={sortKey}
             sortDirection={sortDirection}
             onSort={toggleSort}
+            sortable={sortable}
           >
-            {sortedRows.map((row) => (
+            {displayRows.map((row) => (
               <TableRow key={row.key}>
                 <TableCell className="max-w-[220px] text-sm font-medium truncate sticky left-0 z-10 bg-background">
                   {row.label}
@@ -157,9 +163,11 @@ export function HeatmapMatrix({
         </ul>
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Click a column header to sort. Click again to toggle ASC/DESC.
-      </p>
+      {sortable && (
+        <p className="text-xs text-muted-foreground">
+          Click a column header to sort. Click again to toggle ASC/DESC.
+        </p>
+      )}
     </div>
   );
 }

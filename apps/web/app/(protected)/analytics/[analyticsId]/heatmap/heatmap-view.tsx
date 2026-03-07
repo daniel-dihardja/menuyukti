@@ -53,6 +53,7 @@ export function HeatmapView({ dailyMatrix, weeklyMatrix }: HeatmapViewProps) {
               columnLabels={dailyMatrix.columnLabels}
               color="green"
               density="comfortable"
+              sortable={false}
             />
           )}
         </TabsContent>
@@ -66,6 +67,7 @@ export function HeatmapView({ dailyMatrix, weeklyMatrix }: HeatmapViewProps) {
               columnLabels={weeklyMatrix.columnLabels}
               color="green"
               density="comfortable"
+              sortable={false}
             />
           )}
         </TabsContent>

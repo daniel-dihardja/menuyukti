@@ -104,6 +104,8 @@ type SortableTableProps<SortKey extends string> = {
   sortKey: SortKey;
   sortDirection: SortDirection;
   onSort: (key: SortKey) => void;
+  /** When false, all column headers are non-sortable. Default true. */
+  sortable?: boolean;
   caption?: ReactNode;
   headerRowClassName?: string;
   children: ReactNode;
@@ -114,6 +116,7 @@ export function SortableTable<SortKey extends string>({
   sortKey,
   sortDirection,
   onSort,
+  sortable = true,
   caption,
   headerRowClassName,
   children,
@@ -126,7 +129,7 @@ export function SortableTable<SortKey extends string>({
       <TableHeader>
         <TableRow className={cn("bg-muted/40 hover:bg-muted/40", headerRowClassName)}>
           {columns.map((col) =>
-            col.sortable !== false ? (
+            sortable && col.sortable !== false ? (
               <SortableTableHead
                 key={col.id}
                 active={sortKey === col.id}
