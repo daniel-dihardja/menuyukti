@@ -2,7 +2,6 @@ from collections import defaultdict
 from datetime import date, datetime
 from typing import Optional
 
-import pandas as pd
 import strawberry
 
 from graphql.data_sources import (
@@ -14,7 +13,7 @@ from graphql.data_sources import (
 )
 from graphql.reports.heatmaps import calculate_menu_heatmaps_from_rows
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
-    calculate_menu_engineering_matrix,
+    compute_menu_engineering_from_orders,
 )
 
 
@@ -212,39 +211,26 @@ def _compute_menu_engineering_matrix(
     if not rows:
         return None
 
-    df = pd.DataFrame(
-        [
-            {
-                "menu": r.menu,
-                "qty": r.qty,
-                "total_after_bill_discount": r.total_after_bill_discount,
-                "menu_category": r.menu_category,
-                "menu_category_detail": r.menu_category_detail,
-            }
-            for r in rows
-        ]
-    )
-
-    menu_level = (
-        df.groupby("menu", as_index=False)
-        .agg(
-            quantity=("qty", "sum"),
-            total_revenue=("total_after_bill_discount", "sum"),
-            menu_category=("menu_category", "first"),
-            menu_category_detail=("menu_category_detail", "first"),
-        )
-    )
+    order_rows = [
+        {
+            "menu": r.menu,
+            "qty": r.qty,
+            "total_after_bill_discount": r.total_after_bill_discount,
+            "menu_category": r.menu_category,
+            "menu_category_detail": r.menu_category_detail,
+        }
+        for r in rows
+    ]
 
     cogs_rows = (
         session.query(MenuItemCogs)
         .where(MenuItemCogs.analytics_run_id == run.id)
         .all()
     )
-    cogs_map = {r.menu: float(r.cogs) for r in cogs_rows}
-    menu_level["cogs"] = menu_level["menu"].map(cogs_map).fillna(0.0)
+    cogs_by_menu = {r.menu: float(r.cogs) for r in cogs_rows}
 
     try:
-        result = calculate_menu_engineering_matrix(menu_level)
+        result = compute_menu_engineering_from_orders(order_rows, cogs_by_menu)
     except ValueError:
         return None
 

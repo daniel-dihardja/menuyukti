@@ -1,5 +1,6 @@
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
     calculate_menu_engineering_matrix,
+    compute_menu_engineering_from_orders,
 )
 from menuyukti.core.analytics.calculate_menu_heatmaps import calculate_menu_heatmaps
 from menuyukti.core.analytics.calculate_popularity_index import (
@@ -16,6 +17,7 @@ __all__ = [
     "calculate_menu_heatmaps",
     "calculate_popularity_index",
     "calculate_menu_engineering_matrix",
+    "compute_menu_engineering_from_orders",
     "extract_menu_items",
     "detect_pos_from_excel_bytes",
     "NORMALIZERS",

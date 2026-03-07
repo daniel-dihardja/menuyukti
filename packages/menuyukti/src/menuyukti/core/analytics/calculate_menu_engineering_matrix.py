@@ -1,4 +1,53 @@
+from __future__ import annotations
+
 import pandas as pd
+
+
+def compute_menu_engineering_from_orders(
+    order_rows: list[dict],
+    cogs_by_menu: dict[str, float],
+) -> dict[str, object]:
+    """
+    Compute Menu Engineering Matrix from order-level rows and a COGS map.
+
+    Aggregates orders to menu level, attaches COGS, then runs the matrix
+    calculation. Use this when you have raw order lines and per-menu COGS
+    (e.g. from a DB) and want a single entry point for the matrix result.
+
+    Args:
+        order_rows: Each dict must have:
+            - menu (str)
+            - qty (int | float)
+            - total_after_bill_discount (float) — revenue for the line
+            Optional: menu_category, menu_category_detail (included in output if present).
+        cogs_by_menu: Map menu name -> COGS per unit (float). Menus not in
+            the map get COGS 0.0.
+
+    Returns:
+        Same shape as calculate_menu_engineering_matrix: dict with
+        "thresholds", "distribution", "items" (all snake_case).
+    """
+    if not order_rows:
+        raise ValueError("order_rows must not be empty")
+
+    df = pd.DataFrame(order_rows)
+    agg_kw: dict[str, tuple] = {
+        "quantity": ("qty", "sum"),
+        "total_revenue": ("total_after_bill_discount", "sum"),
+    }
+    if "menu_category" in df.columns:
+        agg_kw["menu_category"] = ("menu_category", "first")
+    if "menu_category_detail" in df.columns:
+        agg_kw["menu_category_detail"] = ("menu_category_detail", "first")
+
+    menu_level = df.groupby("menu", as_index=False).agg(**agg_kw)
+    if "menu_category" not in menu_level.columns:
+        menu_level["menu_category"] = None
+    if "menu_category_detail" not in menu_level.columns:
+        menu_level["menu_category_detail"] = None
+
+    menu_level["cogs"] = menu_level["menu"].map(cogs_by_menu).fillna(0.0)
+    return calculate_menu_engineering_matrix(menu_level)
 
 
 def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict[str, object]:
@@ -9,7 +58,11 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict[str, object]:
     - menu (str)
     - quantity (int)
     - total_revenue (float)
-    - cogs (float | NaN)
+    - cogs (float | NaN) — default 0 if missing
+
+    Optional columns (if present, included in each output item; otherwise None):
+    - menu_category (str)
+    - menu_category_detail (str)
 
     Items with cogs == 0 are skipped for matrix logic.
     All percentage values are returned in the range [0, 1].
@@ -172,8 +225,8 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> dict[str, object]:
                 "we_value": round(row["we_value"], 4),
                 "category": row["category"],
                 "action": row["action"],
-                "menu_category": row["menu_category"],
-                "menu_category_detail": row["menu_category_detail"],
+                "menu_category": row.get("menu_category"),
+                "menu_category_detail": row.get("menu_category_detail"),
             }
             for _, row in df.sort_values(
                 by=["quantity", "total_revenue", "menu"],
