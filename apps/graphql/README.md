@@ -14,6 +14,10 @@ A minimal starter for the Strawberry GraphQL endpoint. The service currently exp
 Need a clean slate? Run `make drop-db` (or `uv run python -m graphql.data_sources.database drop`) to drop every table before recreating the schema with `make migrate-db`.  
 To import a specific Excel report directly into `order_fact`, run `make load-report REPORT_PATH=../../reports/Sales_Recapitulation_Detail_Report_Test.xlsx`; this drops/recreates the database, normalizes the specified workbook with Menyukti, and loads the rows so the analytics schema mirrors that report.
 
+### Dev data (Excel + COGS)
+
+To populate the dev database with the Jan–Mar 2025 report and menu COGS for manual or explorative testing, run `make dev-data` from `apps/graphql`. This uses `reports/Sales_Recapitulation_Detail_Report_Jan-Mar_2025.xlsx` and `notebooks/data/menu_cogs.json` by default; ensure those files exist, or pass `--excel` / `--cogs` when running the script directly. From the repo root: `make -C apps/graphql dev-data`.
+
 ## Orders fact schema (next step)
 
 The normalized upload mutation now feeds a dedicated Orders fact table (`apps/graphql/data_sources/database.py::OrderFact`). Each record captures the `POSTransactionLineItem` contract, plus a `pos_system` column so you can trace the ingestion source. The column definitions are:

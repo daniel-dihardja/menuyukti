@@ -2,7 +2,7 @@ PYTHON=uv run python
 UV=uv run
 UVICORN=uv run uvicorn
 
-.PHONY: install run dev migrate-db drop-db test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps load-report lint format clean
+.PHONY: install run dev migrate-db drop-db test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps load-report dev-data lint format clean
 
 install:
 	uv sync
@@ -34,6 +34,9 @@ test-menu-heatmaps:
 load-report:
 	@if [ -z "$(REPORT_PATH)" ]; then echo "REPORT_PATH is required"; exit 1; fi
 	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_sales_report "$(REPORT_PATH)"
+
+dev-data:
+	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_dev_data
 
 lint:
 	uv run ruff check .
