@@ -234,6 +234,7 @@
         "index": "#",
         "fileName": "File Name",
         "action": "Actions",
+        "askAi": "Ask AI",
         "cogs": "COGS",
         "report": "Report",
         "delete": "Delete",
@@ -324,6 +325,12 @@
       },
       "dailyTitle": "Hourly Sales ({startHour}:00 – {endHour}:00)",
       "weeklyTitle": "Weekly Sales (Mon–Fri)"
+    },
+    "ai": {
+      "reportTitle": "Ask AI",
+      "breadcrumb": "Ask AI",
+      "heading": "Ask AI",
+      "description": "Ask questions about this analytics snapshot."
     },
     "finance": {
       "reportTitle": "Finance Report",

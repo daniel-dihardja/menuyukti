@@ -20,6 +20,8 @@ export const routes = {
     heatmap: (analyticsId: string | number) =>
       `/analytics/${analyticsId}/heatmap`,
 
+    ai: (analyticsId: string | number) => `/analytics/${analyticsId}/ai`,
+
     cogs: (analyticsId: string | number) => `/analytics/${analyticsId}/cogs`,
   },
 

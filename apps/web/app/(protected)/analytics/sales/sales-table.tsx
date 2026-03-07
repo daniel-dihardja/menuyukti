@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
-import { Coins, Flame, MoreHorizontal, Table2, Trash2 } from "lucide-react";
+import { Coins, Flame, MoreHorizontal, Sparkles, Table2, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { routes } from "@/lib/routes";
 
@@ -57,6 +57,15 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={routes.analytics.ai(row.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        {t("askAi")}
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => onCogs(row.id)}
                       className="flex items-center gap-2"
