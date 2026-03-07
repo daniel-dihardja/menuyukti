@@ -245,6 +245,7 @@ def test_qa_menu_engineering_matrix(analytics_run_with_qa_data, qa_cogs_by_menu)
         assert pytest.approx(float(got_item["totalRevenue"]), rel=1e-6) == exp_item["total_revenue"]
         assert pytest.approx(float(got_item["cogs"]), rel=1e-6) == exp_item["cogs"]
         assert pytest.approx(float(got_item["contributionMargin"]), rel=1e-6) == exp_item["contribution_margin"]
+        assert pytest.approx(float(got_item["contributionMarginPercentage"]), rel=1e-5) == exp_item["contribution_margin_percentage"]
 
 
 def test_qa_menu_engineering_matrix_none_without_cogs(analytics_run_with_qa_sales_only):

@@ -117,6 +117,7 @@ def test_menu_engineering_matrix_with_qa_data(analytics_run_with_qa_data, qa_cog
         got_item = by_menu[exp_item["menu"]]
         assert got_item["category"] == exp_item["category"]
         assert got_item["action"] == exp_item["action"]
+        assert pytest.approx(float(got_item["contributionMarginPercentage"]), rel=1e-5) == exp_item["contribution_margin_percentage"]
 
 
 def test_menu_engineering_matrix_none_without_cogs(analytics_run_with_qa_sales_only):
