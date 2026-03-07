@@ -12,38 +12,18 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card";
 import { routes } from "@/lib/routes";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select";
 
 export function CreateLocationForm() {
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currencyCode, setCurrencyCode] = useState("IDR");
-  const [branchName, setBranchName] = useState("");
-
-  const slug = branchName.trim().toLowerCase().replace(/\s+/g, "-");
+  const [name, setName] = useState("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
-    if (!formRef.current) return;
-
-    const formData = new FormData(formRef.current);
-
-    const payload = {
-      name: formData.get("name"),
-      slug: formData.get("slug"),
-      currencyCode,
-    };
 
     try {
       const res = await fetch("/api/locations", {
@@ -51,7 +31,7 @@ export function CreateLocationForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ name }),
       });
 
       if (!res.ok) {
@@ -85,45 +65,9 @@ export function CreateLocationForm() {
                 placeholder="Berlin Mitte"
                 required
                 disabled={loading}
-                value={branchName}
-                onChange={(e) => setBranchName(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="slug">Slug</Label>
-              <Input
-                id="slug"
-                name="slug"
-                placeholder="berlin-mitte"
-                required
-                value={slug}
-                readOnly
-                aria-readonly="true"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="currencyCode">Currency</Label>
-              <Select
-                value={currencyCode}
-                onValueChange={setCurrencyCode}
-                disabled={loading}
-              >
-                <SelectTrigger id="currencyCode" className="w-full">
-                  <SelectValue placeholder="Select currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="IDR">IDR – Indonesian Rupiah</SelectItem>
-                  <SelectItem value="USD">USD – US Dollar</SelectItem>
-                  <SelectItem value="EUR">EUR – Euro</SelectItem>
-                  <SelectItem value="GBP">GBP – British Pound</SelectItem>
-                  <SelectItem value="SGD">SGD – Singapore Dollar</SelectItem>
-                  <SelectItem value="AUD">AUD – Australian Dollar</SelectItem>
-                  <SelectItem value="JPY">JPY – Japanese Yen</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             {error && (
