@@ -30,8 +30,8 @@ mutation UploadFile($file: Upload!, $locationId: ID!) {
 """
 
 HEATMAPS_QUERY = """
-query AnalyticsRunMenuHeatmaps {
-  analyticsRuns {
+query AnalyticsRunMenuHeatmaps($id: ID!) {
+  analyticsRun(id: $id) {
     id
     filename
     periodStart
@@ -186,13 +186,25 @@ def test_menu_heatmaps_match_menuyukti_calculation(tmp_path):
     )
     assert not upload_result.errors
 
-    query_result = asyncio.run(schema.execute(HEATMAPS_QUERY))
+    session = SessionLocal()
+    try:
+        run = session.query(AnalyticsRun).order_by(AnalyticsRun.id.desc()).first()
+        assert run is not None, "Expected an analytics run after upload"
+        run_id = run.id
+    finally:
+        session.close()
+
+    query_result = asyncio.run(
+        schema.execute(
+            HEATMAPS_QUERY,
+            variable_values={"id": str(run_id)},
+        )
+    )
     assert not query_result.errors
 
-    runs = query_result.data["analyticsRuns"]
-    target_runs = [r for r in runs if r["filename"] == REPORT_FILE.name]
-    assert target_runs, "Expected at least one analyticsRun for uploaded report"
-    run_data = target_runs[-1]
+    run_data = query_result.data["analyticsRun"]
+    assert run_data is not None, "Expected analyticsRun for uploaded report"
+    assert run_data["filename"] == REPORT_FILE.name
 
     menu_heatmaps = run_data["menuHeatmaps"]
     graphql_normalized = _normalize_graphql_heatmaps(menu_heatmaps)

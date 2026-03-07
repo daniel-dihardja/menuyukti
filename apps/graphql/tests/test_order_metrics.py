@@ -24,8 +24,8 @@ mutation UploadFile($file: Upload!, $locationId: ID!) {
 """
 
 METRICS_QUERY = """
-query AnalyticsRunOrderMetrics {
-  analyticsRuns {
+query AnalyticsRunOrderMetrics($id: ID!) {
+  analyticsRun(id: $id) {
     id
     filename
     periodStart
@@ -127,13 +127,22 @@ def test_order_metrics_for_uploaded_run(tmp_path):
     )
     assert not upload_result.errors
 
-    metrics_result = asyncio.run(schema.execute(METRICS_QUERY))
+    session = SessionLocal()
+    try:
+        run = session.query(AnalyticsRun).order_by(AnalyticsRun.id.desc()).first()
+        assert run is not None, "Expected an analytics run after upload"
+        run_id = run.id
+    finally:
+        session.close()
+
+    metrics_result = asyncio.run(
+        schema.execute(METRICS_QUERY, variable_values={"id": str(run_id)})
+    )
     assert not metrics_result.errors
 
-    runs = metrics_result.data["analyticsRuns"]
-    target_runs = [r for r in runs if r["filename"] == REPORT_FILE.name]
-    assert target_runs, "Expected at least one analyticsRun for uploaded report"
-    run_data = target_runs[-1]
+    run_data = metrics_result.data["analyticsRun"]
+    assert run_data is not None, "Expected analyticsRun for uploaded report"
+    assert run_data["filename"] == REPORT_FILE.name
 
     metrics = run_data["orderMetrics"]
     assert metrics is not None

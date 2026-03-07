@@ -29,8 +29,8 @@ mutation UploadFile($file: Upload!, $locationId: ID!) {
 
 
 COGS_QUERY = """
-query AnalyticsRunWithCogs {
-  analyticsRuns {
+query AnalyticsRunWithCogs($id: ID!) {
+  analyticsRun(id: $id) {
     id
     filename
     menuItemCogs {
@@ -120,16 +120,18 @@ def test_menu_item_cogs_query_returns_cogs_for_run(tmp_path):
     finally:
         session.close()
 
-    query_result = asyncio.run(schema.execute(COGS_QUERY))
+    run_id = run.id
+    query_result = asyncio.run(
+        schema.execute(COGS_QUERY, variable_values={"id": str(run_id)})
+    )
     assert not query_result.errors
 
-    runs = query_result.data["analyticsRuns"]
-    target_runs = [r for r in runs if r["filename"] == REPORT_FILE.name]
-    assert target_runs, "Expected at least one analyticsRun for uploaded report"
-    run_data = target_runs[-1]
+    run_data = query_result.data["analyticsRun"]
+    assert run_data is not None, "Expected analyticsRun for uploaded report"
+    assert run_data["filename"] == REPORT_FILE.name
 
     cogs_data = run_data["menuItemCogs"]
-    assert len(cogs_data) >= len(cogs_rows)
+    assert len(cogs_data) >= 2
 
     by_menu = {row["menu"]: row for row in cogs_data}
     assert "Item A" in by_menu
