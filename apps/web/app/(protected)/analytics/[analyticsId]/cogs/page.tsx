@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { UpdateCogsForm } from "./update-cogs-form";
+import { getAppCurrencyCode } from "@/lib/app-currency";
 import { summarizeCogsCompleteness } from "@/lib/analytics/cogs-completeness";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
@@ -37,18 +38,13 @@ export default async function Page({ params }: PageProps) {
     select: {
       sourceFile: true,
       locationId: true,
-      location: {
-        select: {
-          currencyCode: true,
-        },
-      },
     },
   });
 
   if (!analytics) notFound();
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
-  const currencyCode = analytics.location?.currencyCode ?? "IDR";
+  const currencyCode = getAppCurrencyCode();
 
   const analyticsOptions = await prisma.analytics.findMany({
     where: {

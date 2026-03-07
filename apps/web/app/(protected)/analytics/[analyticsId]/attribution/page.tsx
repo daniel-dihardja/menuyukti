@@ -27,7 +27,7 @@ import {
   summarizeAttribution,
   type InstagramAttributionRow,
 } from "@/lib/analytics/instagram-attribution";
-import { resolveAttributionCurrencyCode } from "@/lib/analytics/attribution-currency";
+import { getAppCurrencyCode } from "@/lib/app-currency";
 import {
   evaluateAttributionConfidence,
   parseConfidenceConfig,
@@ -193,11 +193,6 @@ export default async function AttributionPage({ params, searchParams }: PageProp
       locationId: true,
       periodStart: true,
       periodEnd: true,
-      location: {
-        select: {
-          currencyCode: true,
-        },
-      },
     },
   });
 
@@ -215,7 +210,7 @@ export default async function AttributionPage({ params, searchParams }: PageProp
   const menuFilter = typeof query.menu === "string" ? query.menu.trim().toLowerCase() : "";
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analytics.id}`;
-  const currencyCode = resolveAttributionCurrencyCode(analytics.location?.currencyCode);
+  const currencyCode = getAppCurrencyCode();
 
   const metadata = await loadPipelineFreshnessMetadata(analytics.id);
   const freshnessMinutes = metadata.freshnessMinutes;

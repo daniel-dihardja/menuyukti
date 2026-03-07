@@ -6,7 +6,8 @@ import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
-import { formatCurrencyWithCode, getCurrencyLocale } from "@/lib/currency";
+import { getAppCurrencyCode, getAppCurrencyLocale } from "@/lib/app-currency";
+import { formatCurrencyWithCode } from "@/lib/currency";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
 import {
@@ -43,11 +44,6 @@ export default async function Page({ params }: PageProps) {
     select: {
       sourceFile: true,
       locationId: true,
-      location: {
-        select: {
-          currencyCode: true,
-        },
-      },
 
       // Period
       periodStart: true,
@@ -69,7 +65,8 @@ export default async function Page({ params }: PageProps) {
   if (!analytics) notFound();
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analyticsId}`;
-  const currencyCode = analytics.location?.currencyCode ?? "IDR";
+  const currencyCode = getAppCurrencyCode();
+  const locale = getAppCurrencyLocale();
 
   // --------------------------------------------------
   // Fetch branch fixed costs (REAL)
@@ -103,8 +100,6 @@ export default async function Page({ params }: PageProps) {
   // --------------------------------------------------
   // Formatting helpers
   // --------------------------------------------------
-  const locale = getCurrencyLocale(currencyCode);
-
   const dateFormatter = new Intl.DateTimeFormat("de-DE", {
     day: "2-digit",
     month: "2-digit",

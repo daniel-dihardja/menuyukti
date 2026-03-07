@@ -8,7 +8,8 @@ import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { prisma } from "@/lib/prisma/client";
 import { notFound } from "next/navigation";
-import { formatCurrencyWithCode, getCurrencyLocale } from "@/lib/currency";
+import { getAppCurrencyCode, getAppCurrencyLocale } from "@/lib/app-currency";
+import { formatCurrencyWithCode } from "@/lib/currency";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
 import { DecisionContractBanner } from "@/components/decision-contract-banner";
@@ -77,11 +78,6 @@ export default async function Page({ params, searchParams }: PageProps) {
     select: {
       id: true,
       sourceFile: true,
-      location: {
-        select: {
-          currencyCode: true,
-        },
-      },
       periodStart: true,
       periodEnd: true,
       totalOrders: true,
@@ -109,7 +105,8 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const analyticsName = analytics.sourceFile ?? `Analytics #${analytics.id}`;
   const matrix = analytics.matrixJson as MatrixJson | null;
-  const currencyCode = analytics.location?.currencyCode ?? "IDR";
+  const currencyCode = getAppCurrencyCode();
+  const locale = getAppCurrencyLocale();
 
   if (!matrix) {
     return (
@@ -139,8 +136,6 @@ export default async function Page({ params, searchParams }: PageProps) {
   // --------------------------------------------------
   // Formatting helpers
   // --------------------------------------------------
-  const locale = getCurrencyLocale(currencyCode);
-
   const dateFormatter = new Intl.DateTimeFormat("de-DE", {
     day: "2-digit",
     month: "2-digit",
