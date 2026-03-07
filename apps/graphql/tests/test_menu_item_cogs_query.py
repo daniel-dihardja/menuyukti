@@ -49,6 +49,26 @@ query AnalyticsRunWithCogs($id: ID!) {
 """
 
 
+def test_menu_item_cogs_with_qa_data(analytics_run_with_qa_data, qa_cogs_by_menu):
+    """Menu item COGS from GraphQL match QA fixture (no Excel)."""
+    run_id = analytics_run_with_qa_data
+
+    result = asyncio.run(
+        schema.execute(COGS_QUERY, variable_values={"id": str(run_id)})
+    )
+    assert not result.errors
+
+    run_data = result.data["analyticsRun"]
+    assert run_data is not None
+    cogs_data = run_data["menuItemCogs"]
+    assert len(cogs_data) == len(qa_cogs_by_menu)
+
+    by_menu = {row["menu"]: row for row in cogs_data}
+    for menu, expected_cogs in qa_cogs_by_menu.items():
+        assert menu in by_menu
+        assert pytest.approx(float(by_menu[menu]["cogs"]), rel=1e-6) == expected_cogs
+
+
 def test_menu_item_cogs_query_returns_cogs_for_run(tmp_path):
     if not REPORT_FILE.exists():
         pytest.skip(

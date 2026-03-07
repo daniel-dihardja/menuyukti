@@ -2,7 +2,7 @@ PYTHON=uv run python
 UV=uv run
 UVICORN=uv run uvicorn
 
-.PHONY: install run dev migrate-db drop-db test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps load-report dev-data lint format clean
+.PHONY: install run dev migrate-db drop-db test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report dev-data lint format clean
 
 install:
 	uv sync
@@ -30,6 +30,15 @@ test-menu-item-cogs:
 
 test-menu-heatmaps:
 	PYTHONPATH=../.. $(UV) pytest tests/test_menu_heatmaps_query.py
+
+test-menu-engineering-matrix:
+	PYTHONPATH=../.. $(UV) pytest tests/test_menu_engineering_matrix_query.py
+
+test-qa:
+	PYTHONPATH=../.. $(UV) pytest tests/test_qa_analytics.py -v
+
+test:
+	PYTHONPATH=../.. $(UV) pytest tests/ -v
 
 load-report:
 	@if [ -z "$(REPORT_PATH)" ]; then echo "REPORT_PATH is required"; exit 1; fi

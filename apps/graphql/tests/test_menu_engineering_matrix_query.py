@@ -82,6 +82,60 @@ def _load_cogs_by_menu():
     return by_menu
 
 
+def test_menu_engineering_matrix_with_qa_data(analytics_run_with_qa_data, qa_cogs_by_menu):
+    """Menu engineering matrix from GraphQL matches menuyukti for QA data (no Excel/JSON)."""
+    from graphql.tests.fixtures.qa_data import qa_order_rows_for_matrix
+    from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
+        compute_menu_engineering_from_orders,
+    )
+
+    run_id = analytics_run_with_qa_data
+    order_rows = qa_order_rows_for_matrix()
+    expected = compute_menu_engineering_from_orders(order_rows, qa_cogs_by_menu)
+
+    query_result = asyncio.run(
+        schema.execute(
+            MENU_ENGINEERING_MATRIX_QUERY,
+            variable_values={"runId": str(run_id)},
+        )
+    )
+    assert not query_result.errors
+
+    run_data = query_result.data["analyticsRun"]
+    assert run_data is not None
+    matrix = run_data["menuEngineeringMatrix"]
+    assert matrix is not None
+
+    th = matrix["thresholds"]
+    assert pytest.approx(float(th["avgPopularity"]), rel=1e-6) == expected["thresholds"]["avg_popularity"]
+    assert pytest.approx(float(th["avgContributionMargin"]), rel=1e-6) == expected["thresholds"]["avg_contribution_margin"]
+
+    items = matrix["items"]
+    assert len(items) == len(expected["items"])
+    by_menu = {item["menu"]: item for item in items}
+    for exp_item in expected["items"]:
+        got_item = by_menu[exp_item["menu"]]
+        assert got_item["category"] == exp_item["category"]
+        assert got_item["action"] == exp_item["action"]
+
+
+def test_menu_engineering_matrix_none_without_cogs(analytics_run_with_qa_sales_only):
+    """Menu engineering matrix is None when the run has no COGS."""
+    run_id = analytics_run_with_qa_sales_only
+
+    query_result = asyncio.run(
+        schema.execute(
+            MENU_ENGINEERING_MATRIX_QUERY,
+            variable_values={"runId": str(run_id)},
+        )
+    )
+    assert not query_result.errors
+
+    run_data = query_result.data["analyticsRun"]
+    assert run_data is not None
+    assert run_data["menuEngineeringMatrix"] is None
+
+
 def test_menu_engineering_matrix_query_returns_matrix_with_cogs_from_json():
     if not REPORT_FILE.exists():
         pytest.skip(

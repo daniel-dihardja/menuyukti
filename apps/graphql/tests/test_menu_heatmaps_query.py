@@ -117,6 +117,37 @@ def test_compute_menu_heatmaps_from_orders_empty():
     assert compute_menu_heatmaps_from_orders([]) == []
 
 
+def test_menu_heatmaps_with_qa_data(analytics_run_with_qa_data):
+    """Menu heatmaps from GraphQL match menuyukti for QA data (no Excel)."""
+    from graphql.tests.fixtures.qa_data import qa_order_rows_for_heatmap
+
+    run_id = analytics_run_with_qa_data
+    order_rows = qa_order_rows_for_heatmap()
+    expected_payloads = compute_menu_heatmaps_from_orders(order_rows)
+    expected_normalized = _normalize_expected_heatmaps(expected_payloads)
+
+    query_result = asyncio.run(
+        schema.execute(
+            HEATMAPS_QUERY,
+            variable_values={"id": str(run_id)},
+        )
+    )
+    assert not query_result.errors
+
+    run_data = query_result.data["analyticsRun"]
+    assert run_data is not None
+    menu_heatmaps = run_data["menuHeatmaps"]
+    graphql_normalized = _normalize_graphql_heatmaps(menu_heatmaps)
+
+    assert len(graphql_normalized) == len(expected_normalized)
+    for got, expected in zip(graphql_normalized, expected_normalized):
+        assert got["menu"] == expected["menu"]
+        assert got["menu_category"] == expected["menu_category"]
+        assert got["menu_category_detail"] == expected["menu_category_detail"]
+        assert got["daily"] == expected["daily"]
+        assert got["weekly"] == expected["weekly"]
+
+
 def _normalize_expected_heatmaps(expected_payloads):
     normalized = []
     for payload in expected_payloads:

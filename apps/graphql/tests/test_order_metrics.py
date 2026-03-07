@@ -83,6 +83,58 @@ def _parse_date_value(value):
     return value
 
 
+def _expected_metrics_from_rows(rows):
+    """Compute expected avgOrderSize, avgOrderRevenue, periodStart, periodEnd from rows."""
+    orders = defaultdict(list)
+    for r in rows:
+        orders[r.billNumber].append(r)
+    if not orders:
+        return 0.0, 0.0, None, None
+    sizes = []
+    revenues = []
+    all_times = []
+    for group in orders.values():
+        sizes.append(len(group))
+        revenues.append(float(sum(r.totalAfterBillDiscount for r in group)))
+        for r in group:
+            t = r.orderTime
+            if hasattr(t, "to_pydatetime"):
+                t = t.to_pydatetime()
+            elif isinstance(t, str):
+                t = datetime.fromisoformat(t)
+            all_times.append(t)
+    avg_size = sum(sizes) / len(sizes)
+    avg_revenue = sum(revenues) / len(revenues)
+    period_start = min(all_times).date() if all_times else None
+    period_end = max(all_times).date() if all_times else None
+    return avg_size, avg_revenue, period_start, period_end
+
+
+def test_order_metrics_with_qa_data(analytics_run_with_qa_data, qa_sales_rows):
+    """Order metrics from GraphQL match expected values from QA sales rows (no Excel)."""
+    run_id = analytics_run_with_qa_data
+    expected_avg_size, expected_avg_revenue, expected_start, expected_end = _expected_metrics_from_rows(
+        qa_sales_rows
+    )
+
+    result = asyncio.run(
+        schema.execute(METRICS_QUERY, variable_values={"id": str(run_id)})
+    )
+    assert not result.errors
+
+    run_data = result.data["analyticsRun"]
+    assert run_data is not None
+    metrics = run_data["orderMetrics"]
+    assert metrics is not None
+
+    assert pytest.approx(float(metrics["avgOrderSize"]), rel=1e-6) == expected_avg_size
+    assert pytest.approx(float(metrics["avgOrderRevenue"]), rel=1e-6) == expected_avg_revenue
+    if expected_start is not None:
+        assert _parse_date_value(run_data["periodStart"]) == expected_start
+    if expected_end is not None:
+        assert _parse_date_value(run_data["periodEnd"]) == expected_end
+
+
 def test_order_metrics_for_uploaded_run(tmp_path):
     if not REPORT_FILE.exists():
         pytest.skip(
