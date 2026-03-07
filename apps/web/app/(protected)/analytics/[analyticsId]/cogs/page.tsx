@@ -37,7 +37,7 @@ export default async function Page({ params }: PageProps) {
   const data = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, {
     id: String(analyticsId),
   });
-  const run = data.analytics_run;
+  const run = data.analyticsRun;
   if (!run) notFound();
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${analyticsId}`;

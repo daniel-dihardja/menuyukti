@@ -44,7 +44,7 @@ export type AnalyticsRunsByLocationData = {
 
 export const ANALYTICS_RUN_QUERY = `
   query AnalyticsRun($id: ID!) {
-    analytics_run(id: $id) {
+    analyticsRun(id: $id) {
       id
       name
       filename
@@ -66,12 +66,12 @@ export const ANALYTICS_RUN_QUERY = `
         avgOrderSize
         avgOrderRevenue
       }
-      menu_heatmaps {
+      menuHeatmaps {
         menu
-        menu_category
-        menu_category_detail
-        daily_heatmap { hour quantity }
-        weekly_heatmap { day quantity }
+        menuCategory
+        menuCategoryDetail
+        dailyHeatmap { hour quantity }
+        weeklyHeatmap { day quantity }
       }
       menuEngineeringMatrix {
         thresholds {
@@ -108,7 +108,7 @@ export const ANALYTICS_RUN_QUERY = `
 `;
 
 export type AnalyticsRunData = {
-  analytics_run: {
+  analyticsRun: {
     id: string;
     name: string;
     filename: string;
@@ -127,12 +127,12 @@ export type AnalyticsRunData = {
       currency: string | null;
     }>;
     orderMetrics: { avgOrderSize: number; avgOrderRevenue: number };
-    menu_heatmaps: Array<{
+    menuHeatmaps: Array<{
       menu: string;
-      menu_category: string | null;
-      menu_category_detail: string | null;
-      daily_heatmap: Array<{ hour: number; quantity: number }>;
-      weekly_heatmap: Array<{ day: string; quantity: number }>;
+      menuCategory: string | null;
+      menuCategoryDetail: string | null;
+      dailyHeatmap: Array<{ hour: number; quantity: number }>;
+      weeklyHeatmap: Array<{ day: string; quantity: number }>;
     }>;
     menuEngineeringMatrix: {
       thresholds: {
