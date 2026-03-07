@@ -15,6 +15,33 @@ export type LocationsData = {
   locations: Array<{ id: string; name: string }>;
 };
 
+export const CREATE_LOCATION_MUTATION = `
+  mutation CreateLocation($name: String!) {
+    createLocation(name: $name) {
+      id
+      name
+    }
+  }
+`;
+
+export type CreateLocationData = {
+  createLocation: { id: string; name: string };
+};
+
+export const ANALYTICS_RUNS_BY_LOCATION_QUERY = `
+  query AnalyticsRunsByLocation($locationId: Int!) {
+    analyticsRuns(locationId: $locationId) {
+      id
+      name
+      filename
+    }
+  }
+`;
+
+export type AnalyticsRunsByLocationData = {
+  analyticsRuns: Array<{ id: string; name: string; filename: string }>;
+};
+
 export const ANALYTICS_RUN_QUERY = `
   query AnalyticsRun($id: ID!) {
     analytics_run(id: $id) {

@@ -1,94 +1,46 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma/client";
+import { graphqlQuery } from "@/lib/graphql/client";
+import type { AnalyticsRunsByLocationData } from "@/lib/graphql/queries";
+import { ANALYTICS_RUNS_BY_LOCATION_QUERY } from "@/lib/graphql/queries";
 
-export const runtime = "nodejs";
-
-export async function GET(request: Request) {
+/**
+ * GET /api/analytics/list?locationId=...
+ * Returns analytics runs for the location from GraphQL (no Prisma).
+ */
+export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const locationId = searchParams.get("locationId");
+    const { searchParams } = new URL(req.url);
+    const locationIdParam = searchParams.get("locationId");
+    const locationId = locationIdParam ? Number(locationIdParam) : null;
 
-    if (!locationId) {
+    if (locationId == null || !Number.isInteger(locationId)) {
       return NextResponse.json(
-        { error: "BRANCH_ID_REQUIRED" },
-        { status: 400 },
+        { error: "locationId is required and must be an integer" },
+        { status: 400 }
       );
     }
 
-    const locationIdNumber = Number(locationId);
+    const data = await graphqlQuery<AnalyticsRunsByLocationData>(
+      ANALYTICS_RUNS_BY_LOCATION_QUERY,
+      { locationId }
+    );
 
-    const analytics = await prisma.analytics.findMany({
-      where: {
-        locationId: locationIdNumber,
-      },
-      orderBy: {
-        uploadedAt: "desc",
-      },
-      select: {
-        id: true,
-        sourceFile: true,
-        uploadedAt: true,
-      },
-    });
-
-    const analyticsIds = analytics.map((item) => item.id);
-    const cogsCoverageByAnalyticsId = new Map<number, number>();
-
-    if (analyticsIds.length > 0) {
-      const cogsCoverageRows = await prisma.analyticsMenuItem.groupBy({
-        by: ["analyticsId"],
-        where: {
-          analyticsId: { in: analyticsIds },
-          cogs: { not: null },
-        },
-        _count: {
-          _all: true,
-        },
-      });
-
-      for (const row of cogsCoverageRows) {
-        cogsCoverageByAnalyticsId.set(row.analyticsId, row._count._all);
-      }
-    }
-
-    const [publishedPostsCount, mappedPromotedItemsCount] = await Promise.all([
-      prisma.instagramPost.count({
-        where: {
-          locationId: locationIdNumber,
-          publishedAt: {
-            not: null,
-          },
-        },
-      }),
-      prisma.instagramPostPromotedItem.count({
-        where: {
-          locationId: locationIdNumber,
-        },
-      }),
-    ]);
-
-    const hasAttributionData =
-      publishedPostsCount > 0 && mappedPromotedItemsCount > 0;
-
-    const result = analytics.map((a) => ({
-      id: a.id,
-      name: a.sourceFile ?? "Unknown file",
-      uploadedAt: a.uploadedAt.toISOString(),
+    const runs = data.analyticsRuns ?? [];
+    const list = runs.map((run) => ({
+      id: Number(run.id),
+      name: run.name || run.filename || `Run #${run.id}`,
       readinessSignals: {
         hasCoreData: true,
-        hasCogsData: (cogsCoverageByAnalyticsId.get(a.id) ?? 0) > 0,
-        hasAttributionData,
-        hasDegradedDependency: false,
-        hasBlockedDependency: false,
+        hasCogsData: false,
+        hasAttributionData: false,
       },
     }));
 
-    return NextResponse.json(result);
-  } catch (error) {
-    console.error("Fetch analytics error:", error);
-    return NextResponse.json(
-      { error: "FETCH_ANALYTICS_FAILED" },
-      { status: 500 },
-    );
+    return NextResponse.json(list);
+  } catch (err) {
+    console.error("Analytics list failed:", err);
+    const message =
+      err instanceof Error ? err.message : "Failed to load analytics";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

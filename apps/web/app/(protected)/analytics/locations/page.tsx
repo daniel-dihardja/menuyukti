@@ -8,30 +8,12 @@ import { routes } from "@/lib/routes";
 import { LocationsTable } from "./locations-table";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
+import { graphqlQuery } from "@/lib/graphql/client";
+import { LOCATIONS_QUERY, type LocationsData } from "@/lib/graphql/queries";
 
-type LocationItem = { id: string; name: string };
-type LocationsResponse = { data?: { locations: LocationItem[] }; errors?: unknown[] };
-
-async function fetchLocations(): Promise<LocationItem[]> {
-  const endpoint = process.env.GRAPHQL_ENDPOINT;
-  if (!endpoint) {
-    throw new Error("GRAPHQL_ENDPOINT is not set");
-  }
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query: "{ locations { id name } }" }),
-  });
-  if (!res.ok) {
-    throw new Error(`GraphQL request failed: ${res.status}`);
-  }
-  const json = (await res.json()) as LocationsResponse;
-  if (json.errors?.length) {
-    throw new Error(
-      `GraphQL errors: ${JSON.stringify(json.errors)}`
-    );
-  }
-  return json.data?.locations ?? [];
+async function fetchLocations() {
+  const data = await graphqlQuery<LocationsData>(LOCATIONS_QUERY);
+  return data.locations;
 }
 
 export default async function Page() {

@@ -310,6 +310,14 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
 
 
 @strawberry.type
+class AnalyticsRunListItemType:
+    """Minimal fields for listing analytics runs by location."""
+    id: strawberry.ID
+    name: str
+    filename: str
+
+
+@strawberry.type
 class AnalyticsRunQuery:
     @strawberry.field
     def analytics_run(self, id: strawberry.ID) -> Optional[AnalyticsRunType]:
@@ -319,5 +327,27 @@ class AnalyticsRunQuery:
             if run is None:
                 return None
             return _run_to_type(session, run)
+        finally:
+            session.close()
+
+    @strawberry.field
+    def analytics_runs(self, location_id: int) -> list[AnalyticsRunListItemType]:
+        """List analytics runs for a location, newest first."""
+        session = SessionLocal()
+        try:
+            runs = (
+                session.query(AnalyticsRun)
+                .where(AnalyticsRun.location_id == location_id)
+                .order_by(AnalyticsRun.id.desc())
+                .all()
+            )
+            return [
+                AnalyticsRunListItemType(
+                    id=run.id,
+                    name=run.name,
+                    filename=run.filename,
+                )
+                for run in runs
+            ]
         finally:
             session.close()

@@ -26,8 +26,15 @@ export function useLocationAnalytics(locationId: number | null) {
     }
     setLoading(true);
     try {
-      // No /api/analytics/list; GraphQL does not yet expose analytics list by location.
-      setAnalytics([]);
+      const res = await fetch(`/api/analytics/list?locationId=${locationId}`);
+      const body = await res.json();
+      if (!res.ok) {
+        const message =
+          (body?.error as string) || "Failed to load analytics";
+        throw new Error(message);
+      }
+      const data = body as AnalyticsListItem[];
+      setAnalytics(data);
     } catch (err) {
       console.error("Failed to fetch analytics:", err);
       setAnalytics([]);
