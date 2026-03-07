@@ -1,10 +1,31 @@
-from typing import Literal, TypedDict, cast
+from datetime import datetime
+from typing import Literal, NotRequired, TypedDict, cast
 
 import pandas as pd
 
 WEEKDAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
 Weekday = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+
+
+# ---------------------------------------------------------------------------
+# Input: order-level rows for heatmap aggregation
+# ---------------------------------------------------------------------------
+
+
+class OrderRowForHeatmap(TypedDict):
+    """One order line. Required: menu, qty, order_time; category fields optional."""
+
+    menu: str
+    qty: int | float
+    order_time: datetime
+    menu_category: NotRequired[str | None]
+    menu_category_detail: NotRequired[str | None]
+
+
+# ---------------------------------------------------------------------------
+# Output: heatmap payload structure
+# ---------------------------------------------------------------------------
 
 
 class DailyHeatmapRow(TypedDict):
@@ -122,3 +143,31 @@ def calculate_menu_heatmaps(df: pd.DataFrame) -> list[MenuHeatmapPayload]:
     )
 
     return heatmap_results
+
+
+def compute_menu_heatmaps_from_orders(
+    order_rows: list[OrderRowForHeatmap],
+) -> list[MenuHeatmapPayload]:
+    """
+    Compute menu heatmaps from order-level rows.
+
+    Builds a DataFrame from the given rows and runs the heatmap calculation.
+    Use this when you have raw order lines (e.g. from a DB) and want a single
+    entry point for the heatmap result.
+
+    Args:
+        order_rows: List of order lines; see OrderRowForHeatmap for required
+            (menu, qty, order_time) and optional (menu_category, menu_category_detail) keys.
+
+    Returns:
+        list[MenuHeatmapPayload] with daily_heatmap, weekly_heatmap per menu.
+    """
+    if not order_rows:
+        return []
+
+    df = pd.DataFrame(order_rows)
+    if "menu_category" not in df.columns:
+        df["menu_category"] = None
+    if "menu_category_detail" not in df.columns:
+        df["menu_category_detail"] = None
+    return calculate_menu_heatmaps(df)

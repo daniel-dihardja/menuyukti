@@ -3,13 +3,17 @@ from io import BytesIO
 from pathlib import Path
 
 import asyncio
+import pandas as pd
 import pytest
 
 from graphql.data_sources import AnalyticsRun, Location, OrderFact, SessionLocal
 from graphql.reports import normalize_sales_report
 from graphql.reports.transform import line_items_to_dataframe
 from graphql.schema import schema
-from menuyukti.core.analytics.calculate_menu_heatmaps import calculate_menu_heatmaps
+from menuyukti.core.analytics.calculate_menu_heatmaps import (
+    calculate_menu_heatmaps,
+    compute_menu_heatmaps_from_orders,
+)
 from starlette.datastructures import Headers, UploadFile
 
 
@@ -66,6 +70,51 @@ def _normalize_graphql_heatmaps(menu_heatmaps):
             }
         )
     return normalized
+
+
+def test_compute_menu_heatmaps_from_orders_matches_calculate_menu_heatmaps():
+    """compute_menu_heatmaps_from_orders yields same result as calculate_menu_heatmaps(df)."""
+    base = datetime(2024, 6, 15, 12, 0, 0)
+    order_rows = [
+        {
+            "menu": "Burger",
+            "qty": 2,
+            "order_time": base,
+            "menu_category": "Mains",
+            "menu_category_detail": "Grill",
+        },
+        {
+            "menu": "Burger",
+            "qty": 1,
+            "order_time": base.replace(hour=14),
+            "menu_category": "Mains",
+            "menu_category_detail": "Grill",
+        },
+        {
+            "menu": "Fries",
+            "qty": 3,
+            "order_time": base.replace(hour=12),
+            "menu_category": "Sides",
+            "menu_category_detail": None,
+        },
+    ]
+    from_orders = compute_menu_heatmaps_from_orders(order_rows)
+    df = pd.DataFrame(order_rows)
+    from_df = calculate_menu_heatmaps(df)
+    expected = _normalize_expected_heatmaps(from_df)
+    got = _normalize_expected_heatmaps(from_orders)
+    assert len(got) == len(expected)
+    for g, e in zip(got, expected):
+        assert g["menu"] == e["menu"]
+        assert g["menu_category"] == e["menu_category"]
+        assert g["menu_category_detail"] == e["menu_category_detail"]
+        assert g["daily"] == e["daily"]
+        assert g["weekly"] == e["weekly"]
+
+
+def test_compute_menu_heatmaps_from_orders_empty():
+    """compute_menu_heatmaps_from_orders returns [] for empty input."""
+    assert compute_menu_heatmaps_from_orders([]) == []
 
 
 def _normalize_expected_heatmaps(expected_payloads):

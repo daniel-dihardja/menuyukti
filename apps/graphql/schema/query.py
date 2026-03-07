@@ -11,7 +11,7 @@ from graphql.data_sources import (
     OrderFact,
     SessionLocal,
 )
-from graphql.reports.heatmaps import calculate_menu_heatmaps_from_rows
+from menuyukti.core.analytics import compute_menu_heatmaps_from_orders
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
     compute_menu_engineering_from_orders,
 )
@@ -168,7 +168,17 @@ def _compute_menu_heatmaps(
     if not rows:
         return []
 
-    payloads = calculate_menu_heatmaps_from_rows(rows)
+    order_rows = [
+        {
+            "menu": r.menu,
+            "qty": r.qty,
+            "order_time": r.order_time,
+            "menu_category": r.menu_category,
+            "menu_category_detail": r.menu_category_detail,
+        }
+        for r in rows
+    ]
+    payloads = compute_menu_heatmaps_from_orders(order_rows)
 
     result: list[MenuHeatmapType] = []
     for payload in payloads:
