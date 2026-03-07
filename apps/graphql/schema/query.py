@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import date, datetime
 from typing import Optional
 
+import pandas as pd
 import strawberry
 
 from graphql.data_sources import (
@@ -12,6 +13,9 @@ from graphql.data_sources import (
     SessionLocal,
 )
 from graphql.reports.heatmaps import calculate_menu_heatmaps_from_rows
+from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
+    calculate_menu_engineering_matrix,
+)
 
 
 @strawberry.type
@@ -61,6 +65,47 @@ class MenuHeatmapType:
 
 
 @strawberry.type
+class MenuEngineeringThresholdsType:
+    avgPopularity: float
+    avgContributionMargin: float
+    totalCogs: float
+    totalProfit: float
+    totalMargin: float
+
+
+@strawberry.type
+class MenuEngineeringDistributionItemType:
+    category: str
+    itemCount: int
+    itemShare: float
+    marginShare: float
+
+
+@strawberry.type
+class MenuEngineeringMatrixItemType:
+    menu: str
+    quantity: int
+    totalRevenue: float
+    cogs: float
+    totalCogs: float
+    contributionMargin: float
+    contributionMarginPercentage: float
+    marginPerUnit: float
+    weValue: float
+    category: str
+    action: str
+    menuCategory: Optional[str]
+    menuCategoryDetail: Optional[str]
+
+
+@strawberry.type
+class MenuEngineeringMatrixType:
+    thresholds: MenuEngineeringThresholdsType
+    distribution: list[MenuEngineeringDistributionItemType]
+    items: list[MenuEngineeringMatrixItemType]
+
+
+@strawberry.type
 class AnalyticsRunType:
     id: strawberry.ID
     name: str
@@ -73,6 +118,7 @@ class AnalyticsRunType:
     menuItemCogs: list[MenuItemCogsType]
     orderMetrics: AnalyticsRunOrderMetricsType
     menu_heatmaps: list[MenuHeatmapType]
+    menuEngineeringMatrix: Optional[MenuEngineeringMatrixType]
 
 
 def _compute_order_metrics(
@@ -154,6 +200,99 @@ def _compute_menu_heatmaps(
     return result
 
 
+def _compute_menu_engineering_matrix(
+    session, run: AnalyticsRun
+) -> Optional[MenuEngineeringMatrixType]:
+    rows = (
+        session.query(OrderFact)
+        .where(OrderFact.analytics_run_id == run.id)
+        .all()
+    )
+
+    if not rows:
+        return None
+
+    df = pd.DataFrame(
+        [
+            {
+                "menu": r.menu,
+                "qty": r.qty,
+                "total_after_bill_discount": r.total_after_bill_discount,
+                "menu_category": r.menu_category,
+                "menu_category_detail": r.menu_category_detail,
+            }
+            for r in rows
+        ]
+    )
+
+    menu_level = (
+        df.groupby("menu", as_index=False)
+        .agg(
+            quantity=("qty", "sum"),
+            total_revenue=("total_after_bill_discount", "sum"),
+            menu_category=("menu_category", "first"),
+            menu_category_detail=("menu_category_detail", "first"),
+        )
+    )
+
+    cogs_rows = (
+        session.query(MenuItemCogs)
+        .where(MenuItemCogs.analytics_run_id == run.id)
+        .all()
+    )
+    cogs_map = {r.menu: float(r.cogs) for r in cogs_rows}
+    menu_level["cogs"] = menu_level["menu"].map(cogs_map).fillna(0.0)
+
+    try:
+        result = calculate_menu_engineering_matrix(menu_level)
+    except ValueError:
+        return None
+
+    thresholds = result["thresholds"]
+    thresholds_type = MenuEngineeringThresholdsType(
+        avgPopularity=thresholds["avg_popularity"],
+        avgContributionMargin=thresholds["avg_contribution_margin"],
+        totalCogs=thresholds["total_cogs"],
+        totalProfit=thresholds["total_profit"],
+        totalMargin=thresholds["total_margin"],
+    )
+
+    distribution_type = [
+        MenuEngineeringDistributionItemType(
+            category=d["category"],
+            itemCount=d["item_count"],
+            itemShare=d["item_share"],
+            marginShare=d["margin_share"],
+        )
+        for d in result["distribution"]
+    ]
+
+    items_type = [
+        MenuEngineeringMatrixItemType(
+            menu=item["menu"],
+            quantity=item["quantity"],
+            totalRevenue=item["total_revenue"],
+            cogs=item["cogs"],
+            totalCogs=item["total_cogs"],
+            contributionMargin=item["contribution_margin"],
+            contributionMarginPercentage=item["contribution_margin_percentage"],
+            marginPerUnit=item["margin_per_unit"],
+            weValue=item["we_value"],
+            category=item["category"],
+            action=item["action"],
+            menuCategory=item.get("menu_category"),
+            menuCategoryDetail=item.get("menu_category_detail"),
+        )
+        for item in result["items"]
+    ]
+
+    return MenuEngineeringMatrixType(
+        thresholds=thresholds_type,
+        distribution=distribution_type,
+        items=items_type,
+    )
+
+
 def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
     cogs_rows = (
         session.query(MenuItemCogs)
@@ -176,6 +315,7 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
     ]
     order_metrics = _compute_order_metrics(session, run)
     menu_heatmaps = _compute_menu_heatmaps(session, run)
+    menu_engineering_matrix = _compute_menu_engineering_matrix(session, run)
     return AnalyticsRunType(
         id=run.id,
         name=run.name,
@@ -188,6 +328,7 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
         menuItemCogs=menu_item_cogs,
         orderMetrics=order_metrics,
         menu_heatmaps=menu_heatmaps,
+        menuEngineeringMatrix=menu_engineering_matrix,
     )
 
 
