@@ -61,18 +61,18 @@ const NAV_ITEMS: NavItem[] = [
     //   },
     // ],
   },
-  {
-    key: "docs",
-    labelKey: "docs",
-    href: routes.docs,
-    icon: <BookOpenText className="w-4 h-4" />,
-  },
-  {
-    key: "agents",
-    labelKey: "agents",
-    href: routes.agents.list,
-    icon: <Bot className="w-4 h-4" />,
-  },
+  // {
+  //   key: "docs",
+  //   labelKey: "docs",
+  //   href: routes.docs,
+  //   icon: <BookOpenText className="w-4 h-4" />,
+  // },
+  // {
+  //   key: "agents",
+  //   labelKey: "agents",
+  //   href: routes.agents.list,
+  //   icon: <Bot className="w-4 h-4" />,
+  // },
 ];
 
 export function NavMain() {
