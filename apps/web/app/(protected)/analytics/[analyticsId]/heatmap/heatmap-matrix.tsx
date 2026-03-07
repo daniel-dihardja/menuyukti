@@ -3,17 +3,10 @@
 import clsx from "clsx";
 import { useMemo } from "react";
 import {
+  SortableTable,
   useSortableColumns,
-  SortableTableHead,
 } from "@/components/sortable-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@workspace/ui/components/table";
+import { TableCell, TableRow } from "@workspace/ui/components/table";
 
 export type HeatmapMatrixRow = {
   key: string;
@@ -29,6 +22,9 @@ type Props = {
   density?: "comfortable" | "compact";
 };
 
+/** Sort by Menu (label) or by column index (e.g. "0", "1"). */
+type HeatmapSortKey = "label" | string;
+
 export function HeatmapMatrix({
   title,
   rows,
@@ -37,12 +33,18 @@ export function HeatmapMatrix({
   density = "comfortable",
 }: Props) {
   const { sortKey, sortDirection, toggleSort } =
-    useSortableColumns<string>("0", "desc");
+    useSortableColumns<HeatmapSortKey>("0", "desc");
 
   /* ---------------------------------------------
-   * Sorting logic
+   * Sorting logic: by row label or by column value
    * --------------------------------------------- */
   const sortedRows = useMemo(() => {
+    if (sortKey === "label") {
+      return [...rows].sort((a, b) => {
+        const cmp = a.label.localeCompare(b.label);
+        return sortDirection === "asc" ? cmp : -cmp;
+      });
+    }
     const columnIndex = parseInt(sortKey, 10);
     if (Number.isNaN(columnIndex)) return rows;
 
@@ -70,32 +72,36 @@ export function HeatmapMatrix({
     return `rgba(59, 130, 246, ${alpha})`;
   };
 
+  const columns = useMemo(
+    () => [
+      {
+        id: "label" as const,
+        label: "Menu",
+        align: "left" as const,
+        className: "min-w-[220px] sticky left-0 z-10 bg-muted/40 h-10",
+      },
+      ...columnLabels.map((label, i) => ({
+        id: String(i),
+        label,
+        align: "center" as const,
+        className: "h-10 min-w-0",
+      })),
+    ],
+    [columnLabels],
+  );
+
   return (
     <div className="space-y-3">
       {title && <h3 className="text-sm font-medium">{title}</h3>}
 
       <div className="border rounded-md">
         <div className="overflow-x-auto">
-          <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="min-w-[220px] sticky left-0 z-10 bg-muted/40">Menu</TableHead>
-              {columnLabels.map((label, i) => (
-                <SortableTableHead
-                  key={label}
-                  active={sortKey === String(i)}
-                  direction={sortDirection}
-                  onToggle={() => toggleSort(String(i))}
-                  align="center"
-                  className="h-10 min-w-0"
-                >
-                  {label}
-                </SortableTableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
+          <SortableTable<HeatmapSortKey>
+            columns={columns}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onSort={toggleSort}
+          >
             {sortedRows.map((row) => (
               <TableRow key={row.key}>
                 <TableCell className="max-w-[220px] text-sm font-medium truncate sticky left-0 z-10 bg-background">
@@ -125,8 +131,7 @@ export function HeatmapMatrix({
                 })}
               </TableRow>
             ))}
-          </TableBody>
-          </Table>
+          </SortableTable>
         </div>
       </div>
 

@@ -10,20 +10,13 @@ import {
 } from "@workspace/ui/components/tooltip";
 import { formatCurrencyWithCode } from "@/lib/currency";
 import {
+  SortableTable,
   useSortableColumns,
-  SortableTableHead,
 } from "@/components/sortable-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@workspace/ui/components/table";
+import { TableCell, TableRow } from "@workspace/ui/components/table";
 import type { MatrixCategory, MatrixDisplayRow } from "@/lib/analytics/matrix-page-adapter";
 
-type SortKey = "menuItem" | "unitsSold" | "revenue" | "marginPct";
+type SortKey = "menuItem" | "unitsSold" | "revenue" | "marginPct" | "action";
 
 type ActionType = "keep" | "promote" | "reprice" | "remove";
 
@@ -94,46 +87,20 @@ export function MatrixCategoryTable({ category, items, locale, currency }: Props
         </span>
       </div>
       <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
-        <Table>
-          <caption className="sr-only">
-            {tCategories(category)} menu items: Menu, Units sold, Revenue, Margin %, Action.
-          </caption>
-          <TableHeader>
-            <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <SortableTableHead
-                align="left"
-                active={sortKey === "menuItem"}
-                direction={sortDirection}
-                onToggle={() => toggleSort("menuItem")}
-              >
-                {tTable("menu")}
-              </SortableTableHead>
-              <SortableTableHead
-                active={sortKey === "unitsSold"}
-                direction={sortDirection}
-                onToggle={() => toggleSort("unitsSold")}
-              >
-                {tTable("qty")}
-              </SortableTableHead>
-              <SortableTableHead
-                active={sortKey === "revenue"}
-                direction={sortDirection}
-                onToggle={() => toggleSort("revenue")}
-              >
-                {tTable("revenue")}
-              </SortableTableHead>
-              <SortableTableHead
-                active={sortKey === "marginPct"}
-                direction={sortDirection}
-                onToggle={() => toggleSort("marginPct")}
-              >
-                {tTable("percentage")}
-              </SortableTableHead>
-              <TableHead className="text-center">{tTable("action")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {items.length === 0 ? (
+        <SortableTable<SortKey>
+          columns={[
+            { id: "menuItem", label: tTable("menu"), align: "left" },
+            { id: "unitsSold", label: tTable("qty") },
+            { id: "revenue", label: tTable("revenue") },
+            { id: "marginPct", label: tTable("percentage") },
+            { id: "action", label: tTable("action"), align: "center", sortable: false },
+          ]}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSort={toggleSort}
+          caption={`${tCategories(category)} menu items: Menu, Units sold, Revenue, Margin %, Action.`}
+        >
+          {items.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={5}
@@ -198,8 +165,7 @@ export function MatrixCategoryTable({ category, items, locale, currency }: Props
                 </TableRow>
               ))
             )}
-          </TableBody>
-        </Table>
+        </SortableTable>
       </div>
     </section>
   );

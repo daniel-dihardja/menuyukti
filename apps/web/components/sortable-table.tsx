@@ -1,7 +1,13 @@
 "use client";
 
 import { type KeyboardEvent, type ReactNode, useState } from "react";
-import { TableHead } from "@workspace/ui/components/table";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@workspace/ui/components/table";
 import { cn } from "@workspace/ui/lib/utils";
 
 export type SortDirection = "asc" | "desc";
@@ -77,5 +83,78 @@ export function SortableTableHead({
       {children}
       {sortIndicator(active, direction)}
     </TableHead>
+  );
+}
+
+/* ==================================================
+ * Reusable sortable table (header from config + body slot)
+ * ================================================== */
+
+export type SortableTableColumn<SortKey extends string = string> = {
+  id: SortKey;
+  label: ReactNode;
+  align?: "left" | "right" | "center";
+  className?: string;
+  /** When false, renders a plain TableHead (no sort). Default true. */
+  sortable?: boolean;
+};
+
+type SortableTableProps<SortKey extends string> = {
+  columns: SortableTableColumn<SortKey>[];
+  sortKey: SortKey;
+  sortDirection: SortDirection;
+  onSort: (key: SortKey) => void;
+  caption?: ReactNode;
+  headerRowClassName?: string;
+  children: ReactNode;
+};
+
+export function SortableTable<SortKey extends string>({
+  columns,
+  sortKey,
+  sortDirection,
+  onSort,
+  caption,
+  headerRowClassName,
+  children,
+}: SortableTableProps<SortKey>) {
+  return (
+    <Table>
+      {caption != null ? (
+        <caption className="sr-only">{caption}</caption>
+      ) : null}
+      <TableHeader>
+        <TableRow className={cn("bg-muted/40 hover:bg-muted/40", headerRowClassName)}>
+          {columns.map((col) =>
+            col.sortable !== false ? (
+              <SortableTableHead
+                key={col.id}
+                active={sortKey === col.id}
+                direction={sortDirection}
+                onToggle={() => onSort(col.id)}
+                align={col.align ?? "right"}
+                className={col.className}
+              >
+                {col.label}
+              </SortableTableHead>
+            ) : (
+              <TableHead
+                key={col.id}
+                className={cn(
+                  "px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground",
+                  col.align === "left" && "text-left",
+                  col.align === "right" && "text-right",
+                  (col.align === "center" || !col.align) && "text-center",
+                  col.className,
+                )}
+              >
+                {col.label}
+              </TableHead>
+            ),
+          )}
+        </TableRow>
+      </TableHeader>
+      <TableBody>{children}</TableBody>
+    </Table>
   );
 }

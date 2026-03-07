@@ -19,7 +19,7 @@ import {
 } from "@workspace/ui/components/tooltip";
 import { formatCurrencyWithCode } from "@/lib/currency";
 import {
-  SortableTableHead,
+  SortableTable,
   useSortableColumns,
 } from "@/components/sortable-table";
 import {
@@ -28,14 +28,7 @@ import {
   type MatrixCategory,
 } from "@/lib/analytics/matrix-row-contract";
 import { emitMatrixTelemetryEvent } from "@/lib/analytics/matrix-telemetry";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@workspace/ui/components/table";
+import { TableCell, TableRow } from "@workspace/ui/components/table";
 
 type SortKey = keyof Pick<
   DecisionGradeMatrixRow,
@@ -164,75 +157,22 @@ export function MatrixInsightTable({ items, locale, currency, analyticsId }: Pro
       </div>
 
       <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
-        <Table>
-        <caption className="sr-only">
-          Menu engineering matrix table with category and recommendation actions.
-        </caption>
-        <TableHeader>
-          <TableRow className="bg-muted/40 hover:bg-muted/40">
-            <SortableTableHead
-              align="left"
-              active={sortKey === "menuItem"}
-              direction={sortDir}
-              onToggle={() => toggleSort("menuItem")}
-            >
-              {tTable("menu")}
-            </SortableTableHead>
-            <SortableTableHead
-              align="left"
-              active={sortKey === "category"}
-              direction={sortDir}
-              onToggle={() => toggleSort("category")}
-            >
-              {tTable("category")}
-            </SortableTableHead>
-            <SortableTableHead
-              active={sortKey === "unitsSold"}
-              direction={sortDir}
-              onToggle={() => toggleSort("unitsSold")}
-            >
-              {tTable("qty")}
-            </SortableTableHead>
-            <SortableTableHead
-              active={sortKey === "revenue"}
-              direction={sortDir}
-              onToggle={() => toggleSort("revenue")}
-            >
-              {tTable("revenue")}
-            </SortableTableHead>
-            <SortableTableHead
-              active={sortKey === "cogs"}
-              direction={sortDir}
-              onToggle={() => toggleSort("cogs")}
-            >
-              {tTable("cogs")}
-            </SortableTableHead>
-            <SortableTableHead
-              active={sortKey === "contributionMargin"}
-              direction={sortDir}
-              onToggle={() => toggleSort("contributionMargin")}
-            >
-              {tTable("margin")}
-            </SortableTableHead>
-            <SortableTableHead
-              active={sortKey === "marginPct"}
-              direction={sortDir}
-              onToggle={() => toggleSort("marginPct")}
-            >
-              {tTable("percentage")}
-            </SortableTableHead>
-            <SortableTableHead
-              align="center"
-              active={sortKey === "action"}
-              direction={sortDir}
-              onToggle={() => toggleSort("action")}
-            >
-              {tTable("action")}
-            </SortableTableHead>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
+        <SortableTable<SortKey>
+          columns={[
+            { id: "menuItem", label: tTable("menu"), align: "left" },
+            { id: "category", label: tTable("category"), align: "left" },
+            { id: "unitsSold", label: tTable("qty") },
+            { id: "revenue", label: tTable("revenue") },
+            { id: "cogs", label: tTable("cogs") },
+            { id: "contributionMargin", label: tTable("margin") },
+            { id: "marginPct", label: tTable("percentage") },
+            { id: "action", label: tTable("action"), align: "center" },
+          ]}
+          sortKey={sortKey}
+          sortDirection={sortDir}
+          onSort={toggleSort}
+          caption="Menu engineering matrix table with category and recommendation actions."
+        >
           {pagedItems.map((item) => (
             <TableRow
               key={`${item.category}-${item.menuItem}`}
@@ -298,8 +238,7 @@ export function MatrixInsightTable({ items, locale, currency, analyticsId }: Pro
               </TableCell>
             </TableRow>
           ))}
-        </TableBody>
-      </Table>
+        </SortableTable>
       </div>
 
       <div className="flex flex-wrap items-center justify-end gap-2">
