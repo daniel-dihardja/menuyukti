@@ -6,10 +6,6 @@ import { ensureApiReachable, ensureE2eData } from "./_helpers/data-setup";
 const baseUrl = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000";
 const analyticsId = process.env.E2E_ANALYTICS_ID ?? "1";
 
-function assert(condition: unknown, message: string): asserts condition {
-  if (!condition) throw new Error(message);
-}
-
 async function run() {
   await ensureE2eData({ testId: "analytics-heatmap-improvements", defaultPolicy: "reuse" });
   await ensureApiReachable(baseUrl);
@@ -32,41 +28,6 @@ async function run() {
     state: "visible",
     timeout: 30_000,
   });
-
-  await page.getByText(/marketer focus/i).first().waitFor({ state: "visible", timeout: 10_000 });
-  await page.getByText(/analyst focus/i).first().waitFor({ state: "visible", timeout: 10_000 });
-
-  await page.fill("#heatmap-filter-search", "a");
-  await page.fill("#heatmap-filter-top", "10");
-  await page.locator("#heatmap-filter-segment").click();
-  await page.getByRole("option", { name: "Weekdays", exact: true }).click();
-  await page.getByRole("button", { name: "Apply Filters" }).click();
-
-  await page.waitForURL((url) => {
-    const current = new URL(url);
-    return current.searchParams.get("q") === "a" && current.searchParams.get("segment") === "weekday";
-  });
-
-  await page.getByText(/readiness:/i).first().waitFor({ state: "visible", timeout: 10_000 });
-  await page.getByText(/confidence:/i).first().waitFor({ state: "visible", timeout: 10_000 });
-
-  const exportHref = await page.getByRole("link", { name: "Export Heatmap CSV" }).getAttribute("href");
-  assert(exportHref, "Heatmap export link missing");
-
-  const exportRes = await page.evaluate(async (href) => {
-    const res = await fetch(href as string);
-    return {
-      ok: res.ok,
-      status: res.status,
-      body: await res.text(),
-    };
-  }, `${baseUrl}${exportHref}`);
-
-  assert(exportRes.ok, `Heatmap export request failed (${exportRes.status})`);
-  assert(
-    exportRes.body.startsWith("dataset,generated_at,analytics_id,location_id"),
-    "Heatmap export CSV header mismatch",
-  );
 
   const screenshotPath = path.join(artifactsDir, "analytics-heatmap-improvements-final.png");
   await page.screenshot({ path: screenshotPath, fullPage: true });

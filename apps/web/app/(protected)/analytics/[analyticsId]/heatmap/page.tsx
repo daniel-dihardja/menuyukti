@@ -10,6 +10,12 @@ import { Button } from "@workspace/ui/components/button";
 import Link from "next/link";
 import { graphqlQuery } from "@/lib/graphql/client";
 import { ANALYTICS_RUN_QUERY, type AnalyticsRunData } from "@/lib/graphql/queries";
+import {
+  DAILY_HEATMAP_END_HOUR,
+  DAILY_HEATMAP_START_HOUR,
+} from "@/lib/heatmap-config";
+import { adaptDailyHeatmapMatrix, adaptWeeklyHeatmapMatrix } from "./heatmap.adapters";
+import { HeatmapView } from "./heatmap-view";
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>;
@@ -34,6 +40,13 @@ export default async function Page({ params }: PageProps) {
   const analyticsName =
     run.name ?? run.filename ?? `Analytics #${run.id}`;
 
+  const dailyMatrix = adaptDailyHeatmapMatrix(
+    run.menuHeatmaps,
+    DAILY_HEATMAP_START_HOUR,
+    DAILY_HEATMAP_END_HOUR,
+  );
+  const weeklyMatrix = adaptWeeklyHeatmapMatrix(run.menuHeatmaps);
+
   return (
     <AnalyticsPageShell
       title={tHeatmap("reportTitle")}
@@ -51,6 +64,7 @@ export default async function Page({ params }: PageProps) {
         <Button asChild>
           <Link href={routes.analytics.sales}>Back to Sales</Link>
         </Button>
+        <HeatmapView dailyMatrix={dailyMatrix} weeklyMatrix={weeklyMatrix} />
       </section>
     </AnalyticsPageShell>
   );
