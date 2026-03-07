@@ -29,11 +29,6 @@ export async function GET(req: Request) {
     const list = runs.map((run) => ({
       id: Number(run.id),
       name: run.name || run.filename || `Run #${run.id}`,
-      readinessSignals: {
-        hasCoreData: true,
-        hasCogsData: false,
-        hasAttributionData: false,
-      },
     }));
 
     return NextResponse.json(list);

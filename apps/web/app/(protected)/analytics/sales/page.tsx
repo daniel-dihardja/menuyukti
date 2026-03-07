@@ -17,9 +17,9 @@ export default async function Page() {
 
   const data = await graphqlQuery<LocationsData>(LOCATIONS_QUERY);
   const branches = data.locations.map((loc) => ({
-  id: String(loc.id),
-  name: loc.name,
-}));
+    id: Number(loc.id),
+    name: loc.name,
+  }));
 
   const hasBranches = branches.length > 0;
 

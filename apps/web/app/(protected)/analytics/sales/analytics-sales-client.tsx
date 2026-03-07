@@ -6,9 +6,6 @@ import { useRouter } from "next/navigation";
 
 import { LocationSelect } from "./location-select";
 import { SalesTable } from "./sales-table";
-import UploadExcelClient from "./upload-xcel-client";
-
-import { useUploadAnalytics } from "./use-upload-analytics";
 import { useLocationAnalytics } from "./use-location-analytics";
 import { useDeleteAnalytics } from "./use-delete-analytics";
 import { routes } from "@/lib/routes";
@@ -27,7 +24,6 @@ export function AnalyticsSalesClient({ branches }: Props) {
   const t = useTranslations("analytics.sales");
   const router = useRouter();
 
-  // locationId now comes from AnalyticsProvider
   const { locationId, setLocationId } = useAnalytics();
 
   useEffect(() => {
@@ -38,22 +34,7 @@ export function AnalyticsSalesClient({ branches }: Props) {
     setLocationId(onlyBranch.id);
   }, [locationId, branches, setLocationId]);
 
-  // --------------------------------------------------
-  // Analytics list
-  // --------------------------------------------------
   const { analytics: uploads, loading, refetch } = useLocationAnalytics(locationId);
-
-  // --------------------------------------------------
-  // Upload logic
-  // --------------------------------------------------
-  const { uploading, status, message, pos, uploadFile } = useUploadAnalytics(
-    locationId,
-    refetch,
-  );
-
-  // --------------------------------------------------
-  // Delete logic
-  // --------------------------------------------------
   const { deleteAnalytics } = useDeleteAnalytics({
     locationId,
     onSuccess: refetch,
@@ -71,17 +52,6 @@ export function AnalyticsSalesClient({ branches }: Props) {
           placeholder={branches.length > 1 ? t("branchPlaceholder") : undefined}
           className="w-full max-w-none sm:max-w-xs"
         />
-
-        <div className="pt-1">
-          <UploadExcelClient
-            disabled={!locationId}
-            uploading={uploading}
-            status={status}
-            message={message}
-            pos={pos}
-            onFileSelected={uploadFile}
-          />
-        </div>
       </section>
 
       {!locationId ? (
