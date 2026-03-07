@@ -35,7 +35,6 @@ export default async function Page() {
         branches={branches}
         indexLabel={t("table.index")}
         branchNameLabel={t("table.branchName")}
-        actionLabel={t("table.action")}
         emptyLabel={t("table.empty")}
       />
     </AnalyticsPageShell>

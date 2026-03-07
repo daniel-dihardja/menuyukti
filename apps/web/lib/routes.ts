@@ -32,9 +32,6 @@ export const routes = {
     list: "/locations",
 
     detail: (locationId: string | number) => `/locations/${locationId}`,
-
-    fixedCosts: (locationId: string | number) =>
-      `/analytics/locations/${locationId}/fixed-cost`,
   },
 
   docs: "/docs",
