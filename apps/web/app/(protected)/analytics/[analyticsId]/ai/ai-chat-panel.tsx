@@ -1,5 +1,6 @@
 "use client";
 
+import type { UIMessage } from "ai";
 import type { PromptInputMessage } from "@workspace/ui/components/ai-elements/prompt-input";
 import {
   Conversation,
@@ -20,19 +21,27 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@workspace/ui/components/ai-elements/prompt-input";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { useCallback, useMemo, useState } from "react";
 
-type ChatMessage = { role: "user" | "assistant"; content: string };
-
-const PLACEHOLDER_RESPONSE =
-  "This is a placeholder response. Connect a chat API to get real answers.";
+function getMessageText(message: UIMessage): string {
+  return (
+    message.parts
+      ?.filter((p): p is { type: "text"; text: string } => p.type === "text")
+      .map((p) => p.text)
+      .join("") ?? ""
+  );
+}
 
 export function AiChatPanel() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
-  const [status, setStatus] = useState<
-    "submitted" | "streaming" | "ready" | "error"
-  >("ready");
+
+  const transport = useMemo(
+    () => new DefaultChatTransport({ api: "/api/chat" }),
+    []
+  );
+  const { messages, sendMessage, status } = useChat({ transport });
 
   const handleTextChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -41,31 +50,27 @@ export function AiChatPanel() {
     []
   );
 
-  const handleSubmit = useCallback((message: PromptInputMessage) => {
-    const hasText = Boolean(message.text?.trim());
-    const hasAttachments = Boolean(message.files?.length);
+  const handleSubmit = useCallback(
+    async (message: PromptInputMessage) => {
+      const hasText = Boolean(message.text?.trim());
+      const hasAttachments = Boolean(message.files?.length);
 
-    if (!(hasText || hasAttachments)) {
-      return;
-    }
+      if (!(hasText || hasAttachments)) {
+        return;
+      }
 
-    setStatus("submitted");
-
-    const content = message.text?.trim() || "Sent with attachments";
-    setMessages((prev) => [...prev, { role: "user", content }]);
-    setText("");
-
-    // Stub assistant reply; replace with useChat/API when backend is added
-    setStatus("streaming");
-    setMessages((prev) => [
-      ...prev,
-      { role: "assistant", content: PLACEHOLDER_RESPONSE },
-    ]);
-    setStatus("ready");
-  }, []);
+      const content = message.text?.trim() || "Sent with attachments";
+      setText("");
+      await sendMessage({
+        text: content,
+        ...(message.files?.length ? { files: message.files } : {}),
+      });
+    },
+    [sendMessage]
+  );
 
   const isSubmitDisabled = useMemo(
-    () => !text.trim() || status === "streaming",
+    () => !text.trim() || status === "streaming" || status === "submitted",
     [text, status]
   );
 
@@ -79,13 +84,15 @@ export function AiChatPanel() {
               description="Start a conversation to see messages here"
             />
           ) : (
-            messages.map((msg, i) => (
-              <Message key={i} from={msg.role}>
-                <MessageContent>
-                  <MessageResponse>{msg.content}</MessageResponse>
-                </MessageContent>
-              </Message>
-            ))
+            messages
+              .filter((msg) => msg.role !== "system")
+              .map((msg) => (
+                <Message key={msg.id} from={msg.role}>
+                  <MessageContent>
+                    <MessageResponse>{getMessageText(msg)}</MessageResponse>
+                  </MessageContent>
+                </Message>
+              ))
           )}
         </ConversationContent>
         <ConversationScrollButton />
