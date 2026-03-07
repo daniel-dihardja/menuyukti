@@ -21,6 +21,7 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@workspace/ui/components/ai-elements/prompt-input";
+import { Spinner } from "@workspace/ui/components/spinner";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useCallback, useMemo, useState } from "react";
@@ -41,7 +42,7 @@ export function AiChatPanel() {
     () => new DefaultChatTransport({ api: "/api/chat" }),
     []
   );
-  const { messages, sendMessage, status } = useChat({ transport });
+  const { messages, sendMessage, status, stop } = useChat({ transport });
 
   const handleTextChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -74,6 +75,15 @@ export function AiChatPanel() {
     [text, status]
   );
 
+  const visibleMessages = useMemo(
+    () => messages.filter((msg) => msg.role !== "system"),
+    [messages]
+  );
+  const isWaitingForReply =
+    (status === "submitted" || status === "streaming") &&
+    visibleMessages.length > 0 &&
+    visibleMessages[visibleMessages.length - 1]?.role === "user";
+
   return (
     <div className="relative flex size-full flex-col divide-y overflow-hidden">
       <Conversation>
@@ -84,15 +94,25 @@ export function AiChatPanel() {
               description="Start a conversation to see messages here"
             />
           ) : (
-            messages
-              .filter((msg) => msg.role !== "system")
-              .map((msg) => (
+            <>
+              {visibleMessages.map((msg) => (
                 <Message key={msg.id} from={msg.role}>
                   <MessageContent>
                     <MessageResponse>{getMessageText(msg)}</MessageResponse>
                   </MessageContent>
                 </Message>
-              ))
+              ))}
+              {isWaitingForReply && (
+                <Message from="assistant">
+                  <MessageContent>
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                      <Spinner />
+                      <span>Thinking...</span>
+                    </div>
+                  </MessageContent>
+                </Message>
+              )}
+            </>
           )}
         </ConversationContent>
         <ConversationScrollButton />
@@ -112,6 +132,7 @@ export function AiChatPanel() {
               <PromptInputSubmit
                 disabled={isSubmitDisabled}
                 status={status}
+                onStop={stop}
               />
             </PromptInputFooter>
           </PromptInput>
