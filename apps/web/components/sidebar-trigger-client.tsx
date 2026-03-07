@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { SidebarTrigger } from "@workspace/ui/components/sidebar";
 import { Separator } from "@workspace/ui/components/separator";
 import {
@@ -19,7 +19,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
-import { Button } from "@workspace/ui/components/button";
+import { Button, buttonVariants } from "@workspace/ui/components/button";
+import { cn } from "@workspace/ui/lib/utils";
 
 interface SidebarTriggerClientProps {
   title: string;
@@ -32,6 +33,11 @@ export function SidebarTriggerClient({
   breadcrumbs,
   showBreadcrumb,
 }: SidebarTriggerClientProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const items = breadcrumbs ?? [];
   const shouldShowBreadcrumb = showBreadcrumb ?? items.length > 0;
   const firstItem = items[0];
@@ -95,34 +101,48 @@ export function SidebarTriggerClient({
               {middleItems.length > 0 ? (
                 <>
                   <BreadcrumbItem>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label="Open breadcrumb navigation"
-                        >
-                          <BreadcrumbEllipsis className="size-7" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start">
-                        {middleItems.map((item, index) => (
-                          item.href ? (
-                            <DropdownMenuItem key={`${item.label}-${index}`} asChild>
-                              <Link href={item.href}>{item.label}</Link>
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem
-                              key={`${item.label}-${index}`}
-                              disabled
-                            >
-                              {item.label}
-                            </DropdownMenuItem>
-                          )
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {mounted ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="Open breadcrumb navigation"
+                          >
+                            <BreadcrumbEllipsis className="size-7" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          {middleItems.map((item, index) =>
+                            item.href ? (
+                              <DropdownMenuItem
+                                key={`${item.label}-${index}`}
+                                asChild
+                              >
+                                <Link href={item.href}>{item.label}</Link>
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                key={`${item.label}-${index}`}
+                                disabled
+                              >
+                                {item.label}
+                              </DropdownMenuItem>
+                            )
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      <span
+                        className={cn(
+                          buttonVariants({ variant: "ghost", size: "icon-sm" })
+                        )}
+                        aria-hidden
+                      >
+                        <BreadcrumbEllipsis className="size-7" />
+                      </span>
+                    )}
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                 </>
