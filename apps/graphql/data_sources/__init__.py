@@ -6,6 +6,8 @@ __all__ = [
     "AnalyticsRun",
     "OrderFact",
     "MenuItemCogs",
+    "InstagramPost",
+    "InstagramPostPromotedItem",
     "SessionLocal",
     "engine",
     "init_db",

@@ -6,18 +6,21 @@ import os
 from dotenv import load_dotenv
 
 from sqlalchemy import (
+    Boolean,
     Column,
     Date,
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
+    Text,
     UniqueConstraint,
     create_engine,
     func,
 )
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,6 +42,8 @@ class Location(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(256), nullable=False)
+
+    instagram_posts = relationship("InstagramPost", back_populates="location")
 
 
 class AnalyticsRun(Base):
@@ -119,6 +124,72 @@ class MenuItemCogs(Base):
             name="uq_menu_item_cogs_analytics_run_menu",
         ),
     )
+
+
+class InstagramPost(Base):
+    """
+    Instagram post (content plan / published post) scoped to a location.
+
+    Holds title (hook), caption, CTA, visual concept, strategy reason,
+    version, approval state, and optional planning month.
+    """
+
+    __tablename__ = "instagram_posts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    location_id = Column(
+        Integer,
+        ForeignKey("location.id"),
+        nullable=False,
+        index=True,
+    )
+    location = relationship("Location", back_populates="instagram_posts")
+
+    month = Column(Date, nullable=True)  # planning month (e.g. first day of month)
+    status = Column(String(64), nullable=False, default="draft")
+    title = Column(String(512), nullable=True)  # hook / headline
+    caption = Column(Text, nullable=True)
+    cta = Column(String(256), nullable=True)  # call to action
+    visual_concept = Column(Text, nullable=True)
+    strategy_reason = Column(Text, nullable=True)
+    version = Column(Integer, nullable=False, default=1)
+    approved = Column(Boolean, nullable=False, default=False)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    promoted_items = relationship(
+        "InstagramPostPromotedItem",
+        back_populates="instagram_post",
+        cascade="all, delete-orphan",
+    )
+
+    __table_args__ = (
+        Index("ix_instagram_post_location_month", "location_id", "month"),
+    )
+
+
+class InstagramPostPromotedItem(Base):
+    """
+    A menu item promoted in an Instagram post (many per post).
+    """
+
+    __tablename__ = "instagram_post_promoted_items"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    instagram_post_id = Column(
+        Integer,
+        ForeignKey("instagram_posts.id"),
+        nullable=False,
+        index=True,
+    )
+    instagram_post = relationship("InstagramPost", back_populates="promoted_items")
+
+    canonical_menu_name = Column(String(256), nullable=False)
 
 
 def init_db(target_engine=None) -> None:
