@@ -1,14 +1,10 @@
 """FastAPI application exposing the LangGraph agent over HTTP."""
 
 import json
-import logging
 
 from dotenv import load_dotenv
 
 load_dotenv()
-
-# Show intent classification and routing in server logs
-logging.getLogger("agent.graph").setLevel(logging.INFO)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

@@ -1,4 +1,3 @@
-import logging
 from typing import Any, Dict, Literal
 
 from langgraph.graph import StateGraph
@@ -7,9 +6,6 @@ from pydantic import BaseModel
 
 from agent.planning import planning_subgraph
 from agent.state import IntentCategory, State
-
-logger = logging.getLogger(__name__)
-
 
 class IntentResult(BaseModel):
     """Structured result for intent classification."""
@@ -42,19 +38,15 @@ Respond to the user confirming the campaign schedule with these exact dates."""
 
 async def classify_intent(state: State) -> Dict[str, Any]:
     """Classify user message into create_instagram_campaign or unknown."""
-    logger.debug("classify_intent: input message=%r intent_category=%r", state.message, state.intent_category)
     result = await intent_llm.ainvoke(
         INTENT_PROMPT.format(message=state.message, intent_category=state.intent_category)
     )
-    logger.info("classify_intent: classified intent=%s", result.intent)
     return {"intent": result.intent}
 
 
 def route_by_intent(state: State) -> str:
     """Route to handler based on classified intent."""
-    branch = state.intent if state.intent in ("create_instagram_campaign", "unknown") else "unknown"
-    logger.info("route_by_intent: intent=%s -> branch=%s", state.intent, branch)
-    return branch
+    return state.intent if state.intent in ("create_instagram_campaign", "unknown") else "unknown"
 
 
 async def handle_unknown(state: State) -> Dict[str, Any]:
@@ -66,11 +58,6 @@ async def handle_unknown(state: State) -> Dict[str, Any]:
 
 async def respond_with_plan(state: State) -> Dict[str, Any]:
     """Format a user-facing response from the computed planning dates."""
-    logger.info(
-        "respond_with_plan: dateStart=%s dateEnd=%s",
-        state.planning.dateStart if state.planning else None,
-        state.planning.dateEnd if state.planning else None,
-    )
     prompt = PLAN_RESPONSE_PROMPT.format(
         message=state.message,
         date_start=state.planning.dateStart,

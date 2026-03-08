@@ -1,7 +1,6 @@
 """Planning subgraph for the agent."""
 
 import calendar
-import logging
 from datetime import datetime
 from typing import Any, Dict
 
@@ -9,8 +8,6 @@ from langchain_core.tools import tool
 from langgraph.graph import StateGraph
 
 from agent.state import PlanningState, State
-
-logger = logging.getLogger(__name__)
 
 
 @tool
@@ -34,9 +31,7 @@ def _compute_campaign_dates() -> tuple[str, str]:
 
 async def generate_plan(state: State) -> Dict[str, Any]:
     """Planning node: determine campaign start and end dates for next month."""
-    logger.info("generate_plan: computing campaign dates")
     date_start, date_end = _compute_campaign_dates()
-    logger.info("generate_plan: dateStart=%s dateEnd=%s", date_start, date_end)
     return {"planning": PlanningState(dateStart=date_start, dateEnd=date_end)}
 
 
