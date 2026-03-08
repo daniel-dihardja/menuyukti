@@ -8,8 +8,15 @@ IntentCategory = Literal["planning"]
 
 
 @dataclass
+class PlanningState:
+    dateStart: str | None = None
+    dateEnd: str | None = None
+
+
+@dataclass
 class State:
     message: str
     intent_category: IntentCategory = "planning"
     response: str | None = None
     intent: str | None = None
+    planning: PlanningState | None = None

@@ -1,15 +1,14 @@
 """Planning subgraph for the agent."""
 
+import calendar
 import logging
 from datetime import datetime
 from typing import Any, Dict
 
-from langchain_core.messages import HumanMessage, ToolMessage
 from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph
 
-from agent.state import State
+from agent.state import PlanningState, State
 
 logger = logging.getLogger(__name__)
 
@@ -20,28 +19,25 @@ def get_current_date() -> str:
     return datetime.now().strftime("%Y-%m-%d")
 
 
-_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7).bind_tools([get_current_date])
-
-_tools = {get_current_date.name: get_current_date}
+def _compute_campaign_dates() -> tuple[str, str]:
+    """Return (dateStart, dateEnd) for the next calendar month."""
+    today = datetime.strptime(get_current_date.invoke({}), "%Y-%m-%d")
+    year, month = today.year, today.month + 1
+    if month > 12:
+        month = 1
+        year += 1
+    last_day = calendar.monthrange(year, month)[1]
+    date_start = datetime(year, month, 1).strftime("%Y-%m-%d")
+    date_end = datetime(year, month, last_day).strftime("%Y-%m-%d")
+    return date_start, date_end
 
 
 async def generate_plan(state: State) -> Dict[str, Any]:
-    """Planning node: invoke LLM with tool support to produce a plan."""
-    logger.info("generate_plan: invoking LLM")
-    messages = [HumanMessage(content=state.message)]
-
-    while True:
-        response = await _llm.ainvoke(messages)
-        messages.append(response)
-
-        if not response.tool_calls:
-            break
-
-        for tc in response.tool_calls:
-            result = _tools[tc["name"]].invoke(tc["args"])
-            messages.append(ToolMessage(content=str(result), tool_call_id=tc["id"]))
-
-    return {"response": response.content}
+    """Planning node: determine campaign start and end dates for next month."""
+    logger.info("generate_plan: computing campaign dates")
+    date_start, date_end = _compute_campaign_dates()
+    logger.info("generate_plan: dateStart=%s dateEnd=%s", date_start, date_end)
+    return {"planning": PlanningState(dateStart=date_start, dateEnd=date_end)}
 
 
 planning_subgraph = (
