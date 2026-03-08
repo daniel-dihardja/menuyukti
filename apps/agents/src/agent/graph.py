@@ -22,7 +22,7 @@ llm = ChatOpenAI(
 intent_llm = llm.with_structured_output(IntentResult)
 
 INTENT_PROMPT = """Intent category: {intent_category}. Classify the user message into one of the following intents:
-- 'create_instagram_campaign': user wants to plan or create an Instagram campaign (strategy, goals, targeting, scheduling, campaign structure, etc.)
+- 'create_instagram_campaign': user wants to create an Instagram campaign (strategy, goals, targeting, scheduling, campaign structure, etc.)
 - 'unknown': the message does not clearly match either intent above
 
 User message: {message}"""
