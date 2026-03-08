@@ -45,6 +45,11 @@ const SSE_DONE = "[DONE]" as const;
 interface AgentSSEChunk {
   delta?: string;
   error?: string;
+  planning?: { dateStart: string; dateEnd: string };
+}
+
+interface ParseResult {
+  planning?: { dateStart: string; dateEnd: string };
 }
 
 async function parseAgentSSEAndForward(
@@ -52,9 +57,10 @@ async function parseAgentSSEAndForward(
   controller: ReadableStreamDefaultController<Uint8Array>,
   textPartId: string,
   encoder: TextEncoder
-): Promise<void> {
+): Promise<ParseResult> {
   const decoder = new TextDecoder();
   let buffer = "";
+  let planning: { dateStart: string; dateEnd: string } | undefined;
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -76,7 +82,10 @@ async function parseAgentSSEAndForward(
                 sseLine({ type: SSE_EVENT.ERROR, errorText: data.error })
               )
             );
-            return;
+            return { planning };
+          }
+          if (data.planning) {
+            planning = data.planning;
           }
           if (typeof data.delta === "string" && data.delta) {
             controller.enqueue(
@@ -97,6 +106,7 @@ async function parseAgentSSEAndForward(
   } finally {
     reader.releaseLock();
   }
+  return { planning };
 }
 
 export async function POST(req: Request) {
@@ -172,12 +182,19 @@ export async function POST(req: Request) {
         return;
       }
 
-      await parseAgentSSEAndForward(reader, controller, textPartId, encoder);
+      const { planning } = await parseAgentSSEAndForward(reader, controller, textPartId, encoder);
 
       controller.enqueue(
         encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId }))
       );
-      controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.FINISH })));
+      controller.enqueue(
+        encoder.encode(
+          sseLine({
+            type: SSE_EVENT.FINISH,
+            ...(planning ? { messageMetadata: { planning } } : {}),
+          })
+        )
+      );
       controller.enqueue(encoder.encode(sseLine(SSE_DONE)));
       controller.close();
     },

@@ -61,8 +61,11 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
             )
             response_text = state.get("response") or ""
             intent = state.get("intent")
+            planning = state.get("planning")
             if intent:
                 yield f"data: {json.dumps({'intent': intent})}\n\n".encode("utf-8")
+            if planning and hasattr(planning, "dateStart"):
+                yield f"data: {json.dumps({'planning': {'dateStart': planning.dateStart, 'dateEnd': planning.dateEnd}})}\n\n".encode("utf-8")
             if response_text:
                 yield f"data: {json.dumps({'delta': response_text})}\n\n".encode("utf-8")
         except Exception as e:
