@@ -29,6 +29,7 @@ import {
 import { Spinner } from "@workspace/ui/components/spinner";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import { BotIcon, MessageCircleIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { AiArtifactPanel, type PlanningArtifact } from "./ai-artifact-panel";
 import { AgentActivityFeed, type ActivityStep } from "./agent-activity-feed";
@@ -196,8 +197,14 @@ export function AiChatPanel({ analyticsId, locationId }: { analyticsId: number; 
                     <PromptInputSelectValue />
                   </PromptInputSelectTrigger>
                   <PromptInputSelectContent>
-                    <PromptInputSelectItem value="agent">Agent</PromptInputSelectItem>
-                    <PromptInputSelectItem value="ask">Ask</PromptInputSelectItem>
+                    <PromptInputSelectItem value="agent">
+                      <BotIcon className="size-3.5" />
+                      Agent
+                    </PromptInputSelectItem>
+                    <PromptInputSelectItem value="ask">
+                      <MessageCircleIcon className="size-3.5" />
+                      Ask
+                    </PromptInputSelectItem>
                   </PromptInputSelectContent>
                 </PromptInputSelect>
               </PromptInputTools>
