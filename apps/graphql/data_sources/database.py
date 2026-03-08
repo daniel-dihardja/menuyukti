@@ -130,10 +130,9 @@ class MenuItemCogs(Base):
 
 class InstagramPost(Base):
     """
-    Instagram post (content plan / published post) scoped to a campaign.
+    Instagram post (content plan / published post) scoped to a location and optional campaign.
 
-    Holds title (hook), caption, CTA, visual concept, strategy reason,
-    version, approval state, and optional planning month.
+    Holds platform, platform post id, status, media type, caption, and published_at.
     """
 
     __tablename__ = "instagram_posts"
@@ -149,17 +148,16 @@ class InstagramPost(Base):
     campaign_id = Column(
         Integer,
         ForeignKey("campaign.id"),
-        nullable=False,
+        nullable=True,
         index=True,
     )
     campaign = relationship("Campaign", back_populates="instagram_posts")
-# planning month (e.g. first day of month)
+    platform = Column(String(32), nullable=False, default="instagram")
+    platform_post_id = Column(String(256), nullable=True, index=True)
     status = Column(String(64), nullable=False, default="draft")
-    title = Column(String(512), nullable=True)  # hook / headline
+    media_type = Column(String(64), nullable=True)
     caption = Column(Text, nullable=True)
-    cta = Column(String(256), nullable=True)  # call to action
-    visual_concept = Column(Text, nullable=True)
-    version = Column(Integer, nullable=False, default=1)
+    published_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True),
@@ -174,8 +172,8 @@ class InstagramPost(Base):
     )
 
     __table_args__ = (
-        Index("ix_instagram_post_location_month", "location_id", "month"),
-        Index("ix_instagram_post_campaign_month", "campaign_id", "month"),
+        Index("ix_instagram_post_location_published_at", "location_id", "published_at"),
+        Index("ix_instagram_post_platform_post_id", "platform_post_id"),
     )
 
 
