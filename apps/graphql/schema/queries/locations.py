@@ -11,6 +11,6 @@ class LocationsQuery:
         session = SessionLocal()
         try:
             rows = session.query(Location).all()
-            return [LocationType(id=row.id, name=row.name) for row in rows]
+            return [LocationType(id=row.id, name=row.name, street=row.street, city=row.city, country=row.country) for row in rows]
         finally:
             session.close()

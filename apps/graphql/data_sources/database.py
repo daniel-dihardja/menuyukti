@@ -43,6 +43,9 @@ class Location(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(256), nullable=False)
+    street = Column(String(512), nullable=True)
+    city = Column(String(128), nullable=True)
+    country = Column(String(128), nullable=True)
 
     instagram_posts = relationship("InstagramPost", back_populates="location")
     campaigns = relationship("Campaign", back_populates="location")
