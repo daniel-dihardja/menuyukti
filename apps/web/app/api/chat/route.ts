@@ -37,6 +37,7 @@ const SSE_EVENT = {
   TEXT_END: "text-end",
   FINISH: "finish",
   ERROR: "error",
+  DATA_PLANNING: "data-planning",
 } as const;
 
 const SSE_DONE = "[DONE]" as const;
@@ -48,19 +49,14 @@ interface AgentSSEChunk {
   planning?: { dateStart: string; dateEnd: string };
 }
 
-interface ParseResult {
-  planning?: { dateStart: string; dateEnd: string };
-}
-
 async function parseAgentSSEAndForward(
   reader: ReadableStreamDefaultReader<Uint8Array>,
   controller: ReadableStreamDefaultController<Uint8Array>,
   textPartId: string,
   encoder: TextEncoder
-): Promise<ParseResult> {
+): Promise<void> {
   const decoder = new TextDecoder();
   let buffer = "";
-  let planning: { dateStart: string; dateEnd: string } | undefined;
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -82,10 +78,17 @@ async function parseAgentSSEAndForward(
                 sseLine({ type: SSE_EVENT.ERROR, errorText: data.error })
               )
             );
-            return { planning };
+            return;
           }
           if (data.planning) {
-            planning = data.planning;
+            controller.enqueue(
+              encoder.encode(
+                sseLine({
+                  type: SSE_EVENT.DATA_PLANNING,
+                  data: { dateStart: data.planning.dateStart, dateEnd: data.planning.dateEnd },
+                })
+              )
+            );
           }
           if (typeof data.delta === "string" && data.delta) {
             controller.enqueue(
@@ -106,7 +109,6 @@ async function parseAgentSSEAndForward(
   } finally {
     reader.releaseLock();
   }
-  return { planning };
 }
 
 export async function POST(req: Request) {
@@ -182,18 +184,13 @@ export async function POST(req: Request) {
         return;
       }
 
-      const { planning } = await parseAgentSSEAndForward(reader, controller, textPartId, encoder);
+      await parseAgentSSEAndForward(reader, controller, textPartId, encoder);
 
       controller.enqueue(
         encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId }))
       );
       controller.enqueue(
-        encoder.encode(
-          sseLine({
-            type: SSE_EVENT.FINISH,
-            ...(planning ? { messageMetadata: { planning } } : {}),
-          })
-        )
+        encoder.encode(sseLine({ type: SSE_EVENT.FINISH }))
       );
       controller.enqueue(encoder.encode(sseLine(SSE_DONE)));
       controller.close();

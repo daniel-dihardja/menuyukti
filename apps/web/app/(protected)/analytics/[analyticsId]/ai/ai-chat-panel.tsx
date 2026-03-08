@@ -48,18 +48,9 @@ export function AiChatPanel() {
   const planningArtifact = useMemo<PlanningArtifact | undefined>(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
-      if (
-        msg?.role === "assistant" &&
-        msg.metadata &&
-        typeof msg.metadata === "object" &&
-        "planning" in msg.metadata &&
-        msg.metadata.planning &&
-        typeof msg.metadata.planning === "object" &&
-        "dateStart" in msg.metadata.planning &&
-        "dateEnd" in msg.metadata.planning
-      ) {
-        return msg.metadata.planning as PlanningArtifact;
-      }
+      if (msg?.role !== "assistant") continue;
+      const part = msg.parts?.find((p) => p.type === "data-planning");
+      if (part && "data" in part) return part.data as PlanningArtifact;
     }
     return undefined;
   }, [messages]);

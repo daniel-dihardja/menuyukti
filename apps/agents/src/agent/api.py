@@ -49,25 +49,44 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
     """
     Run the agent graph and stream its response via Server-Sent Events.
 
-    The graph (intent classification + handlers) is invoked; the handler's
-    response is then sent as SSE. Each event: {"delta": "<text chunk>"}.
-    Optional {"intent": "..."} for debug. Stream ends with: data: [DONE]
+    Uses astream_events (v2) to emit events as each node runs:
+    - planning data emitted immediately when run_planning_agent completes
+    - LLM tokens streamed word-by-word from respond_with_plan
+    - static fallback emitted on handle_unknown completion
+    Stream ends with: data: [DONE]
     """
 
     async def generate():
         try:
-            state = await graph.ainvoke(
-                {"message": body.message, "intent_category": body.intent_category}
-            )
-            response_text = state.get("response") or ""
-            intent = state.get("intent")
-            planning = state.get("planning")
-            if intent:
-                yield f"data: {json.dumps({'intent': intent})}\n\n".encode("utf-8")
-            if planning and hasattr(planning, "dateStart"):
-                yield f"data: {json.dumps({'planning': {'dateStart': planning.dateStart, 'dateEnd': planning.dateEnd}})}\n\n".encode("utf-8")
-            if response_text:
-                yield f"data: {json.dumps({'delta': response_text})}\n\n".encode("utf-8")
+            async for event in graph.astream_events(
+                {"message": body.message, "intent_category": body.intent_category},
+                version="v2",
+            ):
+                kind = event["event"]
+                name = event.get("name", "")
+                metadata = event.get("metadata", {})
+
+                if (
+                    kind == "on_chat_model_stream"
+                    and metadata.get("langgraph_node") == "respond_with_plan"
+                ):
+                    chunk = event["data"].get("chunk")
+                    content = getattr(chunk, "content", "") if chunk else ""
+                    if content:
+                        yield f"data: {json.dumps({'delta': content})}\n\n".encode("utf-8")
+
+                elif kind == "on_chain_end" and name == "run_planning_agent":
+                    output = event["data"].get("output") or {}
+                    planning = output.get("planning")
+                    if planning and hasattr(planning, "dateStart"):
+                        yield f"data: {json.dumps({'planning': {'dateStart': planning.dateStart, 'dateEnd': planning.dateEnd}})}\n\n".encode("utf-8")
+
+                elif kind == "on_chain_end" and name == "handle_unknown":
+                    output = event["data"].get("output") or {}
+                    response = output.get("response", "")
+                    if response:
+                        yield f"data: {json.dumps({'delta': response})}\n\n".encode("utf-8")
+
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n".encode("utf-8")
         yield "data: [DONE]\n\n".encode("utf-8")
