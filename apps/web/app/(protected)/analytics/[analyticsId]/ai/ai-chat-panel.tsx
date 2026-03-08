@@ -79,10 +79,6 @@ export function AiChatPanel() {
     () => messages.filter((msg) => msg.role !== "system"),
     [messages]
   );
-  const isWaitingForReply =
-    (status === "submitted" || status === "streaming") &&
-    visibleMessages.length > 0 &&
-    visibleMessages[visibleMessages.length - 1]?.role === "user";
 
   return (
     <div className="relative flex size-full flex-col divide-y overflow-hidden">
@@ -95,23 +91,42 @@ export function AiChatPanel() {
             />
           ) : (
             <>
-              {visibleMessages.map((msg) => (
-                <Message key={msg.id} from={msg.role}>
-                  <MessageContent>
-                    <MessageResponse>{getMessageText(msg)}</MessageResponse>
-                  </MessageContent>
-                </Message>
-              ))}
-              {isWaitingForReply && (
-                <Message from="assistant">
-                  <MessageContent>
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                      <Spinner />
-                      <span>Thinking...</span>
-                    </div>
-                  </MessageContent>
-                </Message>
-              )}
+              {visibleMessages.map((msg) => {
+                const isLast = msg === visibleMessages[visibleMessages.length - 1];
+                const isEmptyAssistant =
+                  msg.role === "assistant" && getMessageText(msg).length === 0;
+                const showSpinner =
+                  isLast &&
+                  isEmptyAssistant &&
+                  (status === "submitted" || status === "streaming");
+
+                return (
+                  <Message key={msg.id} from={msg.role}>
+                    <MessageContent>
+                      {showSpinner ? (
+                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                          <Spinner />
+                          <span>Thinking...</span>
+                        </div>
+                      ) : (
+                        <MessageResponse>{getMessageText(msg)}</MessageResponse>
+                      )}
+                    </MessageContent>
+                  </Message>
+                );
+              })}
+              {visibleMessages.length > 0 &&
+                (status === "submitted" || status === "streaming") &&
+                visibleMessages[visibleMessages.length - 1]?.role === "user" && (
+                  <Message from="assistant">
+                    <MessageContent>
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                        <Spinner />
+                        <span>Thinking...</span>
+                      </div>
+                    </MessageContent>
+                  </Message>
+                )}
             </>
           )}
         </ConversationContent>
