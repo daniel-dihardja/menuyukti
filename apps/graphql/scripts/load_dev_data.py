@@ -57,7 +57,7 @@ def main(excel_path: str, cogs_path: str | None) -> int:
 
     session = SessionLocal()
     try:
-        location = Location(name="Dev (Jan-Mar 2025)")
+        location = Location(name="Dev (Jan-Mar 2025)", city="Jakarta", country="Indonesia")
         session.add(location)
         session.commit()
         session.refresh(location)

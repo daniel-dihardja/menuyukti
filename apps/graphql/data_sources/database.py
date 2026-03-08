@@ -212,7 +212,6 @@ class Campaign(Base):
         Integer,
         ForeignKey("location.id"),
         nullable=False,
-        index=True,
     )
     location = relationship("Location", back_populates="campaigns")
     instagram_posts = relationship(
