@@ -38,6 +38,7 @@ const SSE_EVENT = {
   FINISH: "finish",
   ERROR: "error",
   DATA_PLANNING: "data-planning",
+  DATA_ACTIVITY: "data-activity",
 } as const;
 
 const SSE_DONE = "[DONE]" as const;
@@ -47,6 +48,12 @@ interface AgentSSEChunk {
   delta?: string;
   error?: string;
   planning?: { dateStart: string; dateEnd: string };
+  activity?: {
+    step: string;
+    status: "running" | "done";
+    label: string;
+    detail?: string;
+  };
 }
 
 async function parseAgentSSEAndForward(
@@ -79,6 +86,13 @@ async function parseAgentSSEAndForward(
               )
             );
             return;
+          }
+          if (data.activity) {
+            controller.enqueue(
+              encoder.encode(
+                sseLine({ type: SSE_EVENT.DATA_ACTIVITY, data: data.activity })
+              )
+            );
           }
           if (data.planning) {
             controller.enqueue(

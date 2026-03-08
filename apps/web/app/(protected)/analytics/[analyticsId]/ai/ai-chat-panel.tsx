@@ -26,6 +26,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useCallback, useMemo, useState } from "react";
 import { AiArtifactPanel, type PlanningArtifact } from "./ai-artifact-panel";
+import { AgentActivityFeed, type ActivityStep } from "./agent-activity-feed";
 
 function getMessageText(message: UIMessage): string {
   return (
@@ -34,6 +35,17 @@ function getMessageText(message: UIMessage): string {
       .map((p) => p.text)
       .join("") ?? ""
   );
+}
+
+function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
+  const stepMap = new Map<string, ActivityStep>();
+  for (const part of parts ?? []) {
+    if (part.type === "data-activity" && "data" in part) {
+      const a = part.data as ActivityStep;
+      stepMap.set(a.step, a);
+    }
+  }
+  return Array.from(stepMap.values());
 }
 
 export function AiChatPanel() {
@@ -106,23 +118,37 @@ export function AiChatPanel() {
               <>
                 {visibleMessages.map((msg) => {
                   const isLast = msg === visibleMessages[visibleMessages.length - 1];
-                  const isEmptyAssistant =
-                    msg.role === "assistant" && getMessageText(msg).length === 0;
-                  const showSpinner =
-                    isLast &&
-                    isEmptyAssistant &&
-                    (status === "submitted" || status === "streaming");
+                  const isActiveStream =
+                    isLast && (status === "submitted" || status === "streaming");
+                  const msgText = getMessageText(msg);
+                  const activitySteps =
+                    msg.role === "assistant"
+                      ? getActivitySteps(msg.parts)
+                      : [];
+                  const hasActivity = activitySteps.length > 0;
+                  const showFallbackSpinner =
+                    isActiveStream &&
+                    msg.role === "assistant" &&
+                    msgText.length === 0 &&
+                    !hasActivity;
 
                   return (
                     <Message key={msg.id} from={msg.role}>
                       <MessageContent>
-                        {showSpinner ? (
+                        {msg.role === "assistant" && (
+                          <AgentActivityFeed
+                            steps={activitySteps}
+                            hasText={msgText.length > 0}
+                            isStreaming={isActiveStream}
+                          />
+                        )}
+                        {showFallbackSpinner ? (
                           <div className="flex items-center gap-2 text-muted-foreground text-sm">
                             <Spinner />
                             <span>Thinking...</span>
                           </div>
                         ) : (
-                          <MessageResponse>{getMessageText(msg)}</MessageResponse>
+                          <MessageResponse>{msgText}</MessageResponse>
                         )}
                       </MessageContent>
                     </Message>
