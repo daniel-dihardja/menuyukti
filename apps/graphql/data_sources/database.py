@@ -153,17 +153,13 @@ class InstagramPost(Base):
         index=True,
     )
     campaign = relationship("Campaign", back_populates="instagram_posts")
-
-    month = Column(Date, nullable=True)  # planning month (e.g. first day of month)
+# planning month (e.g. first day of month)
     status = Column(String(64), nullable=False, default="draft")
     title = Column(String(512), nullable=True)  # hook / headline
     caption = Column(Text, nullable=True)
     cta = Column(String(256), nullable=True)  # call to action
     visual_concept = Column(Text, nullable=True)
-    strategy_reason = Column(Text, nullable=True)
     version = Column(Integer, nullable=False, default=1)
-    approved = Column(Boolean, nullable=False, default=False)
-
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True),
