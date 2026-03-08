@@ -14,3 +14,14 @@ class LocationsQuery:
             return [LocationType(id=row.id, name=row.name, street=row.street, city=row.city, country=row.country) for row in rows]
         finally:
             session.close()
+
+    @strawberry.field
+    def location(self, id: strawberry.ID) -> LocationType | None:
+        session = SessionLocal()
+        try:
+            row = session.query(Location).filter(Location.id == int(id)).first()
+            if row is None:
+                return None
+            return LocationType(id=row.id, name=row.name, street=row.street, city=row.city, country=row.country)
+        finally:
+            session.close()

@@ -15,6 +15,28 @@ export type LocationsData = {
   locations: Array<{ id: string; name: string }>;
 };
 
+export const LOCATION_QUERY = `
+  query Location($id: ID!) {
+    location(id: $id) {
+      id
+      name
+      street
+      city
+      country
+    }
+  }
+`;
+
+export type LocationData = {
+  location: {
+    id: string;
+    name: string;
+    street: string | null;
+    city: string | null;
+    country: string | null;
+  } | null;
+};
+
 export const CREATE_LOCATION_MUTATION = `
   mutation CreateLocation($name: String!) {
     createLocation(name: $name) {
