@@ -48,12 +48,12 @@ function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
   return Array.from(stepMap.values());
 }
 
-export function AiChatPanel() {
+export function AiChatPanel({ analyticsId, locationId }: { analyticsId: number; locationId: number }) {
   const [text, setText] = useState("");
 
   const transport = useMemo(
-    () => new DefaultChatTransport({ api: "/api/chat" }),
-    []
+    () => new DefaultChatTransport({ api: "/api/chat", body: { analyticsId, locationId } }),
+    [analyticsId, locationId]
   );
   const { messages, sendMessage, status, stop } = useChat({ transport });
 

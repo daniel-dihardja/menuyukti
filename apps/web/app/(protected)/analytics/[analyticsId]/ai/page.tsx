@@ -42,7 +42,7 @@ export default async function Page({ params }: PageProps) {
       ]}
       mainClassName="max-w-none w-full h-[calc(100vh-8rem)] min-h-[24rem]"
     >
-      <AiChatPanel />
+      <AiChatPanel analyticsId={analyticsId} locationId={run.locationId} />
     </AnalyticsPageShell>
   );
 }

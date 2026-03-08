@@ -6,6 +6,8 @@ from pydantic import BaseModel
 
 from agent.planning import planning_subgraph
 from agent.state import IntentCategory, State
+from agent.tools import get_location
+
 
 class IntentResult(BaseModel):
     """Structured result for intent classification."""
@@ -19,6 +21,7 @@ llm = ChatOpenAI(
     temperature=0.7,
 )
 
+llm_with_tools = llm.bind_tools([get_location])
 intent_llm = llm.with_structured_output(IntentResult)
 
 INTENT_PROMPT = """Intent category: {intent_category}. Classify the user message into one of the following intents:
@@ -63,7 +66,7 @@ async def respond_with_plan(state: State) -> Dict[str, Any]:
         date_start=state.planning.dateStart,
         date_end=state.planning.dateEnd,
     )
-    result = await llm.ainvoke(prompt)
+    result = await llm_with_tools.ainvoke(prompt)
     return {"response": result.content}
 
 

@@ -13,6 +13,8 @@ const messageSchema = z.object({
 
 export const chatRequestBodySchema = z.object({
   messages: z.array(messageSchema).optional().default([]),
+  analyticsId: z.number().optional(),
+  locationId: z.number().optional(),
 });
 
 export type ChatRequestBody = z.infer<typeof chatRequestBodySchema>;

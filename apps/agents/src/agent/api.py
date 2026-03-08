@@ -36,6 +36,8 @@ class InvokeRequest(BaseModel):
         default="planning",
         description="Intent category for classification (e.g. planning).",
     )
+    location_id: int | None = Field(default=None, description="Location ID resolved server-side; never exposed to the LLM.")
+    analytics_id: int | None = Field(default=None, description="Analytics run ID resolved server-side; never exposed to the LLM.")
 
 
 @app.get("/health")
@@ -69,6 +71,7 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
         try:
             async for event in graph.astream_events(
                 {"message": body.message, "intent_category": body.intent_category},
+                config={"configurable": {"location_id": body.location_id, "analytics_id": body.analytics_id}},
                 version="v2",
             ):
                 kind = event["event"]

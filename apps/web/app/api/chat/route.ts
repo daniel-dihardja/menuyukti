@@ -157,7 +157,11 @@ export async function POST(req: Request) {
     agentRes = await fetch(`${baseUrl}/invoke/stream`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: userText }),
+      body: JSON.stringify({
+        message: userText,
+        analytics_id: parsed.data.analyticsId ?? null,
+        location_id: parsed.data.locationId ?? null,
+      }),
       signal: req.signal,
     });
   } catch (err) {
