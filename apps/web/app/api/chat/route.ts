@@ -6,7 +6,7 @@ export const maxDuration = 30;
 function getLastUserMessageText(messages: UIMessage[]): string | null {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
-    if (msg.role !== "user") continue;
+    if (!msg || msg.role !== "user") continue;
     const text =
       msg.parts
         ?.filter(
@@ -114,11 +114,12 @@ export async function POST(req: Request) {
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split("\n\n");
-          buffer = lines.pop() ?? "";
+          const remainder = lines.pop();
+          buffer = remainder !== undefined ? remainder : "";
           for (const line of lines) {
             const match = line.match(/^data: (.+)$/m);
-            if (!match) continue;
-            const payload = match[1].trim();
+            const payload = match?.[1]?.trim();
+            if (!payload) continue;
             if (payload === "[DONE]") {
               continue;
             }
