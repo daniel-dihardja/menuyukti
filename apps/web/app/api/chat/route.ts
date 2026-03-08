@@ -1,7 +1,14 @@
+import { NextResponse } from "next/server";
 import type { UIMessage } from "ai";
+import { getAgentsBaseUrl } from "@/lib/config";
+import { chatRequestBodySchema } from "./schema";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
+
+function jsonError(message: string, status: number) {
+  return NextResponse.json({ error: message }, { status });
+}
 
 function getLastUserMessageText(messages: UIMessage[]): string | null {
   for (let i = messages.length - 1; i >= 0; i--) {
@@ -23,35 +30,102 @@ function sseLine(data: object | "[DONE]"): string {
   return `data: ${data === "[DONE]" ? "[DONE]" : JSON.stringify(data)}\n\n`;
 }
 
-export async function POST(req: Request) {
-  const agentsUrl = process.env.AGENTS_URL;
-  if (!agentsUrl?.trim()) {
-    return new Response(
-      JSON.stringify({ error: "AGENTS_URL is not configured" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
-  }
+const SSE_EVENT = {
+  START: "start",
+  TEXT_START: "text-start",
+  TEXT_DELTA: "text-delta",
+  TEXT_END: "text-end",
+  FINISH: "finish",
+  ERROR: "error",
+} as const;
 
-  let body: { messages?: UIMessage[] };
+const SSE_DONE = "[DONE]" as const;
+
+/** Chunk shape from the agents service SSE stream */
+interface AgentSSEChunk {
+  delta?: string;
+  error?: string;
+}
+
+async function parseAgentSSEAndForward(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  textPartId: string,
+  encoder: TextEncoder
+): Promise<void> {
+  const decoder = new TextDecoder();
+  let buffer = "";
   try {
-    body = await req.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n\n");
+      const remainder = lines.pop();
+      buffer = remainder !== undefined ? remainder : "";
+      for (const line of lines) {
+        const match = line.match(/^data: (.+)$/m);
+        const payload = match?.[1]?.trim();
+        if (!payload) continue;
+        if (payload === SSE_DONE) continue;
+        try {
+          const data = JSON.parse(payload) as AgentSSEChunk;
+          if (data.error) {
+            controller.enqueue(
+              encoder.encode(
+                sseLine({ type: SSE_EVENT.ERROR, errorText: data.error })
+              )
+            );
+            return;
+          }
+          if (typeof data.delta === "string" && data.delta) {
+            controller.enqueue(
+              encoder.encode(
+                sseLine({
+                  type: SSE_EVENT.TEXT_DELTA,
+                  id: textPartId,
+                  delta: data.delta,
+                })
+              )
+            );
+          }
+        } catch {
+          // ignore malformed JSON
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+export async function POST(req: Request) {
+  const baseUrl = getAgentsBaseUrl();
+  if (!baseUrl) {
+    return jsonError("AGENTS_URL is not configured", 500);
   }
 
-  const messages: UIMessage[] = body.messages ?? [];
+  let json: unknown;
+  try {
+    json = await req.json();
+  } catch {
+    return jsonError("Invalid JSON body", 400);
+  }
+
+  const parsed = chatRequestBodySchema.safeParse(json);
+  if (!parsed.success) {
+    const message = parsed.error.issues
+      .map((i) => i.message)
+      .join("; ") || "Invalid request body";
+    return jsonError(message, 400);
+  }
+
+  const messages = parsed.data.messages as UIMessage[];
   const userText = getLastUserMessageText(messages);
   if (!userText) {
-    return new Response(
-      JSON.stringify({ error: "No user message found in request" }),
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+    return jsonError("No user message found in request", 400);
   }
 
-  const baseUrl = agentsUrl.replace(/\/$/, "");
   let agentRes: Response;
   try {
     agentRes = await fetch(`${baseUrl}/invoke/stream`, {
@@ -63,22 +137,14 @@ export async function POST(req: Request) {
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Failed to reach agents service";
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 502, headers: { "Content-Type": "application/json" } }
-    );
+    return jsonError(message, 502);
   }
 
   if (!agentRes.ok) {
     const text = await agentRes.text();
-    return new Response(
-      JSON.stringify({
-        error: `Agents service error (${agentRes.status}): ${text || agentRes.statusText}`,
-      }),
-      {
-        status: 502,
-        headers: { "Content-Type": "application/json" },
-      }
+    return jsonError(
+      `Agents service error (${agentRes.status}): ${text || agentRes.statusText}`,
+      502
     );
   }
 
@@ -89,83 +155,35 @@ export async function POST(req: Request) {
   const stream = new ReadableStream({
     async start(controller) {
       controller.enqueue(
-        encoder.encode(sseLine({ type: "start", messageId }))
+        encoder.encode(sseLine({ type: SSE_EVENT.START, messageId }))
       );
       controller.enqueue(
-        encoder.encode(sseLine({ type: "text-start", id: textPartId }))
+        encoder.encode(sseLine({ type: SSE_EVENT.TEXT_START, id: textPartId }))
       );
 
       const reader = agentRes.body?.getReader();
       if (!reader) {
         controller.enqueue(
-          encoder.encode(sseLine({ type: "text-end", id: textPartId }))
+          encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId }))
         );
-        controller.enqueue(encoder.encode(sseLine({ type: "finish" })));
-        controller.enqueue(encoder.encode(sseLine("[DONE]" as const)));
+        controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.FINISH })));
+        controller.enqueue(encoder.encode(sseLine(SSE_DONE)));
         controller.close();
         return;
       }
 
-      const decoder = new TextDecoder();
-      let buffer = "";
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n\n");
-          const remainder = lines.pop();
-          buffer = remainder !== undefined ? remainder : "";
-          for (const line of lines) {
-            const match = line.match(/^data: (.+)$/m);
-            const payload = match?.[1]?.trim();
-            if (!payload) continue;
-            if (payload === "[DONE]") {
-              continue;
-            }
-            try {
-              const data = JSON.parse(payload) as {
-                delta?: string;
-                error?: string;
-              };
-              if (data.error) {
-                controller.enqueue(
-                  encoder.encode(
-                    sseLine({ type: "error", errorText: data.error })
-                  )
-                );
-                break;
-              }
-              if (typeof data.delta === "string" && data.delta) {
-                controller.enqueue(
-                  encoder.encode(
-                    sseLine({
-                      type: "text-delta",
-                      id: textPartId,
-                      delta: data.delta,
-                    })
-                  )
-                );
-              }
-            } catch {
-              // ignore malformed JSON
-            }
-          }
-        }
-      } finally {
-        reader.releaseLock();
-      }
+      await parseAgentSSEAndForward(reader, controller, textPartId, encoder);
 
       controller.enqueue(
-        encoder.encode(sseLine({ type: "text-end", id: textPartId }))
+        encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId }))
       );
-      controller.enqueue(encoder.encode(sseLine({ type: "finish" })));
-      controller.enqueue(encoder.encode(sseLine("[DONE]" as const)));
+      controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.FINISH })));
+      controller.enqueue(encoder.encode(sseLine(SSE_DONE)));
       controller.close();
     },
   });
 
-  return new Response(stream, {
+  return new NextResponse(stream, {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-store",
