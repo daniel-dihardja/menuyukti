@@ -56,10 +56,15 @@ def route_by_intent(state: State) -> str:
     return branch
 
 
-async def handle_generate_instagram_posts(state: State) -> Dict[str, Any]:
-    """Respond with simple placeholder for Instagram posts intent."""
-    logger.info("handle_generate_instagram_posts: returning placeholder response")
-    return {"response": "Instagram posts generation is not implemented yet."}
+async def run_planning_agent(state: State) -> Dict[str, Any]:
+    """Planning agent: output markdown that mentions planning."""
+    logger.info("run_planning_agent: returning planning markdown")
+    markdown = (
+        "# Planning\n\n"
+        f"Planning for your request: {state.message}\n\n"
+        "*Plan details can be added here.*"
+    )
+    return {"response": markdown}
 
 
 async def handle_unknown(state: State) -> Dict[str, Any]:
@@ -73,18 +78,18 @@ async def handle_unknown(state: State) -> Dict[str, Any]:
 graph = (
     StateGraph(State)
     .add_node("classify_intent", classify_intent)
-    .add_node("handle_generate_instagram_posts", handle_generate_instagram_posts)
+    .add_node("run_planning_agent", run_planning_agent)
     .add_node("handle_unknown", handle_unknown)
     .add_edge("__start__", "classify_intent")
     .add_conditional_edges(
         "classify_intent",
         route_by_intent,
         {
-            "generate_instagram_posts": "handle_generate_instagram_posts",
+            "generate_instagram_posts": "run_planning_agent",
             "unknown": "handle_unknown",
         },
     )
-    .add_edge("handle_generate_instagram_posts", "__end__")
+    .add_edge("run_planning_agent", "__end__")
     .add_edge("handle_unknown", "__end__")
     .compile()
 )
