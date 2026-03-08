@@ -46,10 +46,15 @@ export function AgentActivityFeed({
     }
   }, [isStreaming, steps.length]);
 
-  if (steps.length === 0) return null;
+  // "Writing response..." is a transient indicator only — hide it once streaming ends
+  const visibleSteps = isStreaming
+    ? steps
+    : steps.filter((s) => s.step !== "respond_with_plan");
 
-  const doneCount = steps.filter((s) => s.status === "done").length;
-  const hasRunning = steps.some((s) => s.status === "running");
+  if (visibleSteps.length === 0) return null;
+
+  const doneCount = visibleSteps.filter((s) => s.status === "done").length;
+  const hasRunning = visibleSteps.some((s) => s.status === "running");
 
   const headerLabel = hasRunning
     ? steps.find((s) => s.status === "running")?.label ?? "Working..."
@@ -60,7 +65,7 @@ export function AgentActivityFeed({
       <ChainOfThought open={isOpen} onOpenChange={setIsOpen}>
         <ChainOfThoughtHeader>{headerLabel}</ChainOfThoughtHeader>
         <ChainOfThoughtContent>
-          {steps.map((step) => (
+          {visibleSteps.map((step) => (
             <div
               key={step.step}
               className={cn(
