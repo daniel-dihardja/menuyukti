@@ -57,7 +57,7 @@ Or with the Makefile:
 make run
 ```
 
-- **POST /invoke** — Send `{"message": "your text"}` to get the agent response in `{"response": "..."}`.
+- **POST /invoke/stream** — Send `{"message": "your text", "intent_category": "planning"}` (optional, default `intent_category` is `"planning"`); response is Server-Sent Events with `delta` chunks and optional `intent`, ending with `[DONE]`.
 - **GET /health** — Health check; returns `{"status": "ok"}`.
 
 ## How to customize

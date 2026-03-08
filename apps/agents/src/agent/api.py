@@ -10,12 +10,12 @@ load_dotenv()
 # Show intent classification and routing in server logs
 logging.getLogger("agent.graph").setLevel(logging.INFO)
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from agent.graph import graph
+from agent.graph import IntentCategory, graph
 
 app = FastAPI(
     title="Agent API",
@@ -36,15 +36,9 @@ class InvokeRequest(BaseModel):
     """Request body for the invoke endpoint."""
 
     message: str = Field(..., description="User message to send to the agent.")
-
-
-class InvokeResponse(BaseModel):
-    """Response body for the invoke endpoint."""
-
-    response: str = Field(..., description="Agent response.")
-    debug: dict | None = Field(
-        default=None,
-        description="Optional debug info (e.g. classified intent).",
+    intent_category: IntentCategory = Field(
+        default="planning",
+        description="Intent category for classification (e.g. planning).",
     )
 
 
@@ -52,29 +46,6 @@ class InvokeResponse(BaseModel):
 def health() -> dict[str, str]:
     """Health check for deployment and load balancers."""
     return {"status": "ok"}
-
-
-@app.post("/invoke", response_model=InvokeResponse)
-async def invoke(body: InvokeRequest) -> InvokeResponse:
-    """
-    Invoke the agent graph with the given message.
-
-    Returns the agent's response.
-    """
-    try:
-        state = await graph.ainvoke({"message": body.message})
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
-
-    response_text = state.get("response")
-    if response_text is None:
-        raise HTTPException(
-            status_code=500,
-            detail="Agent did not return a response.",
-        )
-
-    debug = {"intent": state.get("intent")} if state.get("intent") else None
-    return InvokeResponse(response=response_text, debug=debug)
 
 
 @app.post("/invoke/stream")
@@ -89,7 +60,9 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
 
     async def generate():
         try:
-            state = await graph.ainvoke({"message": body.message})
+            state = await graph.ainvoke(
+                {"message": body.message, "intent_category": body.intent_category}
+            )
             response_text = state.get("response") or ""
             intent = state.get("intent")
             if intent:
