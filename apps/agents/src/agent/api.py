@@ -1,14 +1,18 @@
 """FastAPI application exposing the LangGraph agent over HTTP."""
 
+import json
+
 from dotenv import load_dotenv
 
 load_dotenv()
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 
-from agent.graph import graph
+from agent.graph import graph, llm
 
 app = FastAPI(
     title="Agent API",
@@ -63,3 +67,31 @@ async def invoke(body: InvokeRequest) -> InvokeResponse:
         )
 
     return InvokeResponse(response=response_text)
+
+
+@app.post("/invoke/stream")
+async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
+    """
+    Stream the agent's response token-by-token via Server-Sent Events.
+
+    Each event is a JSON object: {"delta": "<text chunk>"}.
+    Stream ends with: data: [DONE]
+    """
+
+    async def generate():
+        try:
+            async for chunk in llm.astream([HumanMessage(content=body.message)]):
+                if chunk.content:
+                    yield f"data: {json.dumps({'delta': chunk.content})}\n\n".encode("utf-8")
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n".encode("utf-8")
+        yield "data: [DONE]\n\n".encode("utf-8")
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-store",
+            "X-Accel-Buffering": "no",
+        },
+    )
