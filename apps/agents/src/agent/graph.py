@@ -1,23 +1,14 @@
 import logging
-from dataclasses import dataclass
 from typing import Any, Dict, Literal
 
 from langgraph.graph import StateGraph
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
+from agent.planning import planning_subgraph
+from agent.state import IntentCategory, State
+
 logger = logging.getLogger(__name__)
-
-# Intent category: top-level classification (extend with more later, e.g. "content")
-IntentCategory = Literal["planning"]
-
-# Define input/output state
-@dataclass
-class State:
-    message: str
-    intent_category: IntentCategory = "planning"
-    response: str | None = None
-    intent: str | None = None
 
 
 class IntentResult(BaseModel):
@@ -56,17 +47,6 @@ def route_by_intent(state: State) -> str:
     return branch
 
 
-async def run_planning_agent(state: State) -> Dict[str, Any]:
-    """Planning agent: output markdown that mentions planning."""
-    logger.info("run_planning_agent: returning planning markdown")
-    markdown = (
-        "# Planning\n\n"
-        f"Planning for your request: {state.message}\n\n"
-        "*Plan details can be added here.*"
-    )
-    return {"response": markdown}
-
-
 async def handle_unknown(state: State) -> Dict[str, Any]:
     """Respond when intent is unknown."""
     return {
@@ -78,7 +58,7 @@ async def handle_unknown(state: State) -> Dict[str, Any]:
 graph = (
     StateGraph(State)
     .add_node("classify_intent", classify_intent)
-    .add_node("run_planning_agent", run_planning_agent)
+    .add_node("run_planning_agent", planning_subgraph)
     .add_node("handle_unknown", handle_unknown)
     .add_edge("__start__", "classify_intent")
     .add_conditional_edges(
