@@ -17,6 +17,11 @@ import {
   PromptInput,
   PromptInputBody,
   PromptInputFooter,
+  PromptInputSelect,
+  PromptInputSelectContent,
+  PromptInputSelectItem,
+  PromptInputSelectTrigger,
+  PromptInputSelectValue,
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputTools,
@@ -50,6 +55,7 @@ function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
 
 export function AiChatPanel({ analyticsId, locationId }: { analyticsId: number; locationId: number }) {
   const [text, setText] = useState("");
+  const [chatMode, setChatMode] = useState<"agent" | "ask">("agent");
 
   const transport = useMemo(
     () => new DefaultChatTransport({ api: "/api/chat", body: { analyticsId, locationId } }),
@@ -181,7 +187,20 @@ export function AiChatPanel({ analyticsId, locationId }: { analyticsId: number; 
               />
             </PromptInputBody>
             <PromptInputFooter>
-              <PromptInputTools />
+              <PromptInputTools>
+                <PromptInputSelect
+                  value={chatMode}
+                  onValueChange={(v) => setChatMode(v as "agent" | "ask")}
+                >
+                  <PromptInputSelectTrigger className="h-7 text-xs">
+                    <PromptInputSelectValue />
+                  </PromptInputSelectTrigger>
+                  <PromptInputSelectContent>
+                    <PromptInputSelectItem value="agent">Agent</PromptInputSelectItem>
+                    <PromptInputSelectItem value="ask">Ask</PromptInputSelectItem>
+                  </PromptInputSelectContent>
+                </PromptInputSelect>
+              </PromptInputTools>
               <PromptInputSubmit
                 disabled={isSubmitDisabled}
                 status={status}
