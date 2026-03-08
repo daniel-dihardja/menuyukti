@@ -4,8 +4,8 @@
 all: help
 
 # Run the FastAPI agent HTTP server.
-run:
-	uv run uvicorn agent.api:app --reload --host 0.0.0.0 --port 8000
+dev:
+	uv run uvicorn agent.api:app --reload --host 0.0.0.0 --port 9000
 
 # Define a variable for the test file path.
 TEST_FILE ?= tests/unit_tests/
