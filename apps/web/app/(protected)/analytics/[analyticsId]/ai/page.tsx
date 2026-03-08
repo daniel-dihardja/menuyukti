@@ -40,7 +40,7 @@ export default async function Page({ params }: PageProps) {
         { label: analyticsName },
         { label: tAi("breadcrumb") },
       ]}
-      mainClassName="max-w-none w-full h-[calc(100vh-8rem)] min-h-[24rem]"
+      mainClassName="max-w-none w-full h-[calc(100vh-4rem)] min-h-[24rem]"
     >
       <AiChatPanel analyticsId={analyticsId} locationId={run.locationId} />
     </AnalyticsPageShell>
