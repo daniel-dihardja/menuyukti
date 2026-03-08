@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
     Date,
     DateTime,
@@ -44,6 +45,7 @@ class Location(Base):
     name = Column(String(256), nullable=False)
 
     instagram_posts = relationship("InstagramPost", back_populates="location")
+    campaigns = relationship("Campaign", back_populates="location")
 
 
 class AnalyticsRun(Base):
@@ -128,7 +130,7 @@ class MenuItemCogs(Base):
 
 class InstagramPost(Base):
     """
-    Instagram post (content plan / published post) scoped to a location.
+    Instagram post (content plan / published post) scoped to a campaign.
 
     Holds title (hook), caption, CTA, visual concept, strategy reason,
     version, approval state, and optional planning month.
@@ -144,6 +146,13 @@ class InstagramPost(Base):
         index=True,
     )
     location = relationship("Location", back_populates="instagram_posts")
+    campaign_id = Column(
+        Integer,
+        ForeignKey("campaign.id"),
+        nullable=False,
+        index=True,
+    )
+    campaign = relationship("Campaign", back_populates="instagram_posts")
 
     month = Column(Date, nullable=True)  # planning month (e.g. first day of month)
     status = Column(String(64), nullable=False, default="draft")
@@ -170,6 +179,7 @@ class InstagramPost(Base):
 
     __table_args__ = (
         Index("ix_instagram_post_location_month", "location_id", "month"),
+        Index("ix_instagram_post_campaign_month", "campaign_id", "month"),
     )
 
 
@@ -190,6 +200,46 @@ class InstagramPostPromotedItem(Base):
     instagram_post = relationship("InstagramPost", back_populates="promoted_items")
 
     canonical_menu_name = Column(String(256), nullable=False)
+
+
+class Campaign(Base):
+    """
+    Marketing campaign with goal, dates, theme, tone, and status.
+    Belongs to a location; has many Instagram posts.
+    """
+
+    __tablename__ = "campaign"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    location_id = Column(
+        Integer,
+        ForeignKey("location.id"),
+        nullable=False,
+        index=True,
+    )
+    location = relationship("Location", back_populates="campaigns")
+    instagram_posts = relationship(
+        "InstagramPost",
+        back_populates="campaign",
+        cascade="all, delete-orphan",
+    )
+
+    name = Column(String(256), nullable=False)
+    goal = Column(String(512), nullable=True)
+    start_date = Column(Date, nullable=True)
+    end_date = Column(Date, nullable=True)
+    theme = Column(String(256), nullable=True)
+    tone = Column(String(128), nullable=True)
+    status = Column(String(32), nullable=False, default="draft")
+
+    __table_args__ = (
+        Index("ix_campaign_status", "status"),
+        Index("ix_campaign_location_id", "location_id"),
+        CheckConstraint(
+            "status IN ('draft', 'approved', 'active', 'completed')",
+            name="ck_campaign_status",
+        ),
+    )
 
 
 def init_db(target_engine=None) -> None:
