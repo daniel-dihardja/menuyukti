@@ -1,18 +1,21 @@
 """FastAPI application exposing the LangGraph agent over HTTP."""
 
 import json
+import logging
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# Show intent classification and routing in server logs
+logging.getLogger("agent.graph").setLevel(logging.INFO)
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 
-from agent.graph import graph, llm
+from agent.graph import graph
 
 app = FastAPI(
     title="Agent API",
@@ -39,6 +42,10 @@ class InvokeResponse(BaseModel):
     """Response body for the invoke endpoint."""
 
     response: str = Field(..., description="Agent response.")
+    debug: dict | None = Field(
+        default=None,
+        description="Optional debug info (e.g. classified intent).",
+    )
 
 
 @app.get("/health")
@@ -66,23 +73,29 @@ async def invoke(body: InvokeRequest) -> InvokeResponse:
             detail="Agent did not return a response.",
         )
 
-    return InvokeResponse(response=response_text)
+    debug = {"intent": state.get("intent")} if state.get("intent") else None
+    return InvokeResponse(response=response_text, debug=debug)
 
 
 @app.post("/invoke/stream")
 async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
     """
-    Stream the agent's response token-by-token via Server-Sent Events.
+    Run the agent graph and stream its response via Server-Sent Events.
 
-    Each event is a JSON object: {"delta": "<text chunk>"}.
-    Stream ends with: data: [DONE]
+    The graph (intent classification + handlers) is invoked; the handler's
+    response is then sent as SSE. Each event: {"delta": "<text chunk>"}.
+    Optional {"intent": "..."} for debug. Stream ends with: data: [DONE]
     """
 
     async def generate():
         try:
-            async for chunk in llm.astream([HumanMessage(content=body.message)]):
-                if chunk.content:
-                    yield f"data: {json.dumps({'delta': chunk.content})}\n\n".encode("utf-8")
+            state = await graph.ainvoke({"message": body.message})
+            response_text = state.get("response") or ""
+            intent = state.get("intent")
+            if intent:
+                yield f"data: {json.dumps({'intent': intent})}\n\n".encode("utf-8")
+            if response_text:
+                yield f"data: {json.dumps({'delta': response_text})}\n\n".encode("utf-8")
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n".encode("utf-8")
         yield "data: [DONE]\n\n".encode("utf-8")
