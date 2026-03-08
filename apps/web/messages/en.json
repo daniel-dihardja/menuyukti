@@ -234,7 +234,7 @@
         "index": "#",
         "fileName": "File Name",
         "action": "Actions",
-        "askAi": "Ask AI",
+        "askAi": "AI Flow",
         "cogs": "COGS",
         "report": "Report",
         "delete": "Delete",
@@ -327,9 +327,9 @@
       "weeklyTitle": "Weekly Sales (Mon–Fri)"
     },
     "ai": {
-      "reportTitle": "Ask AI",
-      "breadcrumb": "Ask AI",
-      "heading": "Ask AI",
+      "reportTitle": "AI Flow",
+      "breadcrumb": "AI Flow",
+      "heading": "AI Flow",
       "description": "Ask questions about this analytics snapshot."
     },
     "finance": {
