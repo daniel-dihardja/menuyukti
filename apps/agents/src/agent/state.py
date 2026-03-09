@@ -3,6 +3,8 @@
 from dataclasses import dataclass, field
 from typing import Any, Literal, TypedDict
 
+from pydantic import BaseModel
+
 # Intent category: top-level classification (extend with more later, e.g. "content")
 IntentCategory = Literal["planning"]
 
@@ -18,6 +20,25 @@ class NationalHoliday(TypedDict):
     type: HolidayType
 
 
+class PostSlot(BaseModel):
+    """A single planned Instagram post within a campaign."""
+
+    scheduled_date: str
+    theme: Literal["holiday", "promotion", "engagement"]
+    focus_item: str | None = None
+    key_message: str
+
+
+class CampaignBrief(BaseModel):
+    """Structured campaign brief produced by the planner — input contract for the executor."""
+
+    campaign_theme: str
+    tone: str
+    target_audience: str
+    posting_cadence: str
+    post_slots: list[PostSlot]
+
+
 @dataclass
 class PlanningState:
     dateStart: str | None = None
@@ -26,6 +47,7 @@ class PlanningState:
     operatingProfile: dict[str, Any] | None = None
     locationSummary: str | None = None
     promotionItems: list[dict[str, Any]] | None = None
+    campaign_brief: CampaignBrief | None = None
 
 
 @dataclass

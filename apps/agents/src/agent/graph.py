@@ -32,11 +32,14 @@ User message: {message}"""
 
 PLAN_RESPONSE_PROMPT = """The user asked: {message}
 
-A campaign has been planned with the following dates:
-- Start date: {date_start}
-- End date: {date_end}
+A campaign brief has been created:
+- Campaign window: {date_start} to {date_end}
+- Theme: {campaign_theme}
+- Tone: {tone}
+- Posting cadence: {posting_cadence}
+- Total posts planned: {post_count}
 
-Respond to the user confirming the campaign schedule with these exact dates."""
+Respond to the user with a short, friendly confirmation of the campaign concept."""
 
 
 async def classify_intent(state: State) -> Dict[str, Any]:
@@ -60,11 +63,17 @@ async def handle_unknown(state: State) -> Dict[str, Any]:
 
 
 async def respond_with_plan(state: State) -> Dict[str, Any]:
-    """Format a user-facing response from the computed planning dates."""
+    """Format a user-facing response from the campaign brief."""
+    planning = state.planning
+    brief = planning.campaign_brief if planning else None
     prompt = PLAN_RESPONSE_PROMPT.format(
         message=state.message,
-        date_start=state.planning.dateStart,
-        date_end=state.planning.dateEnd,
+        date_start=planning.dateStart if planning else "unknown",
+        date_end=planning.dateEnd if planning else "unknown",
+        campaign_theme=brief.campaign_theme if brief else "N/A",
+        tone=brief.tone if brief else "N/A",
+        posting_cadence=brief.posting_cadence if brief else "N/A",
+        post_count=len(brief.post_slots) if brief else 0,
     )
     result = await llm_with_tools.ainvoke(prompt)
     return {"response": result.content}

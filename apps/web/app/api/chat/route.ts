@@ -43,6 +43,21 @@ const SSE_EVENT = {
 
 const SSE_DONE = "[DONE]" as const;
 
+interface PostSlot {
+  scheduled_date: string;
+  theme: "holiday" | "promotion" | "engagement";
+  focus_item: string | null;
+  key_message: string;
+}
+
+interface CampaignBrief {
+  campaign_theme: string;
+  tone: string;
+  target_audience: string;
+  posting_cadence: string;
+  post_slots: PostSlot[];
+}
+
 /** Chunk shape from the agents service SSE stream */
 interface AgentSSEChunk {
   delta?: string;
@@ -52,6 +67,7 @@ interface AgentSSEChunk {
     dateEnd: string;
     nationalHolidays?: string | null;
     locationSummary?: string | null;
+    campaignBrief?: CampaignBrief | null;
   };
   activity?: {
     step: string;
@@ -109,6 +125,7 @@ async function parseAgentSSEAndForward(
                     dateEnd: data.planning.dateEnd,
                     nationalHolidays: data.planning.nationalHolidays ?? null,
                     locationSummary: data.planning.locationSummary ?? null,
+                    campaignBrief: data.planning.campaignBrief ?? null,
                   },
                 })
               )

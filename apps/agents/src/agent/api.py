@@ -107,7 +107,7 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
                     if planning and hasattr(planning, "dateStart"):
                         detail = f"{planning.dateStart} – {planning.dateEnd}"
                         yield activity_sse("run_planning_agent", "done", "Campaign dates planned", detail)
-                        yield f"data: {json.dumps({'planning': {'dateStart': planning.dateStart, 'dateEnd': planning.dateEnd, 'nationalHolidays': planning.nationalHolidays, 'locationSummary': planning.locationSummary}})}\n\n".encode("utf-8")
+                        yield f"data: {json.dumps({'planning': {'dateStart': planning.dateStart, 'dateEnd': planning.dateEnd, 'nationalHolidays': planning.nationalHolidays, 'locationSummary': planning.locationSummary, 'campaignBrief': planning.campaign_brief.model_dump() if planning.campaign_brief else None}})}\n\n".encode("utf-8")
 
                 elif kind == "on_chain_start" and name == "respond_with_plan":
                     yield activity_sse("respond_with_plan", "running", "Writing response...")
