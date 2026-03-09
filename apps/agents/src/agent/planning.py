@@ -8,14 +8,13 @@ from datetime import datetime
 from typing import Any, Dict
 
 import httpx
+from langchain_core.callbacks.manager import adispatch_custom_event
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph
 from tavily import TavilyClient
-
-_date_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 from agent.state import PlanningState, State
 
@@ -30,6 +29,13 @@ query Location($id: ID!) {
   }
 }
 """
+
+_date_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
+
+# ---------------------------------------------------------------------------
+# Date helpers
+# ---------------------------------------------------------------------------
 
 
 @tool
@@ -51,26 +57,23 @@ def _compute_campaign_dates() -> tuple[str, str]:
     return date_start, date_end
 
 
-async def generate_plan(state: State) -> Dict[str, Any]:
-    """Planning node: determine campaign start and end dates for next month."""
-    date_start, date_end = _compute_campaign_dates()
-    return {"planning": PlanningState(dateStart=date_start, dateEnd=date_end)}
+# ---------------------------------------------------------------------------
+# Private helpers
+# ---------------------------------------------------------------------------
 
 
-async def search_relevant_events(state: State, config: RunnableConfig) -> Dict[str, Any]:
-    """Search for relevant events in the campaign timeframe at city, country, and world level."""
-    from langchain_core.callbacks.manager import adispatch_custom_event
-
-    planning = state.planning
-    date_start = planning.dateStart if planning else None
-    date_end = planning.dateEnd if planning else None
-
-    # Step 1: fetch location
+async def _emit(step: str, status: str, label: str, config: RunnableConfig) -> None:
+    """Dispatch a named activity event to the LangGraph callback stream."""
     await adispatch_custom_event(
         "activity",
-        {"step": "fetch_location", "status": "running", "label": "Looking for location address..."},
+        {"step": step, "status": status, "label": label},
         config=config,
     )
+
+
+async def _fetch_location(config: RunnableConfig) -> tuple[str | None, str | None]:
+    """Fetch city and country for the configured location via GraphQL."""
+    await _emit("fetch_location", "running", "Looking for location address...", config)
 
     city: str | None = None
     country: str | None = None
@@ -91,165 +94,173 @@ async def search_relevant_events(state: State, config: RunnableConfig) -> Dict[s
         except Exception:
             pass
 
-    await adispatch_custom_event(
-        "activity",
-        {"step": "fetch_location", "status": "done", "label": "Location address found"},
-        config=config,
-    )
+    await _emit("fetch_location", "done", "Location address found", config)
+    return city, country
 
-    tavily_api_key = os.environ.get("TAVILY_API_KEY")
-    all_results: list[dict] = []
 
-    date_context = ""
+async def _search_scope(
+    client: TavilyClient,
+    scope_label: str,
+    query: str,
+    step_key: str,
+    config: RunnableConfig,
+) -> list[dict]:
+    """Run a single Tavily search for one geographic scope and return normalised results."""
+    await _emit(step_key, "running", f"Looking for relevant events in {scope_label}...", config)
+    results: list[dict] = []
+    try:
+        raw = await asyncio.to_thread(client.search, query=query, max_results=5)
+        for r in raw.get("results", []):
+            results.append({
+                "scope": scope_label,
+                "title": r.get("title", ""),
+                "content": r.get("content", ""),
+                "url": r.get("url", ""),
+            })
+    except Exception:
+        pass
+    await _emit(step_key, "done", f"Searched events in {scope_label}", config)
+    return results
+
+
+async def _extract_date_hints(
+    deduped: list[dict],
+    date_start: str,
+    date_end: str,
+) -> list[str]:
+    """Ask the LLM to extract a concise date hint for each event in one batch call."""
+    date_hints: list[str] = [""] * len(deduped)
+    if not deduped:
+        return date_hints
+    try:
+        items_text = "\n".join(
+            f"{i + 1}. Title: {r['title']}\nContent: {r['content'][:300]}"
+            for i, r in enumerate(deduped)
+        )
+        prompt = (
+            f"Campaign period: {date_start} to {date_end}.\n\n"
+            f"For each event below extract the most specific date hint you can.\n"
+            f"Rules:\n"
+            f"- Use DD.MM for exact dates (e.g. 31.12)\n"
+            f"- Use month name for month-only (e.g. Late April)\n"
+            f"- Use a short range for multi-day events (e.g. Apr 1-7)\n"
+            f"- Return an empty string if nothing identifiable\n"
+            f"Reply ONLY with a numbered list matching the input order, one date hint per line "
+            f"(e.g. '1. 31.12'). Do not include any other text.\n\n"
+            f"{items_text}"
+        )
+        response = await _date_llm.ainvoke([HumanMessage(content=prompt)])
+        raw_lines = response.content.strip().split("\n")
+        parsed_hints: list[str] = []
+        for line in raw_lines:
+            parts = line.split(".", 1)
+            hint = parts[-1].strip() if len(parts) > 1 else line.strip()
+            parsed_hints.append(hint)
+        date_hints = (parsed_hints + [""] * len(deduped))[: len(deduped)]
+    except Exception:
+        pass
+    return date_hints
+
+
+async def _compile_events(
+    all_results: list[dict],
+    date_start: str | None,
+    date_end: str | None,
+) -> tuple[str | None, int]:
+    """Deduplicate results, extract date hints, and render the pipe-delimited event string."""
+    if not all_results:
+        return None, 0
+
+    seen_titles: set[str] = set()
+    deduped: list[dict] = []
+    for r in all_results:
+        title = r["title"].strip()
+        if not title or title in seen_titles:
+            continue
+        seen_titles.add(title)
+        deduped.append(r)
+
+    date_hints: list[str] = [""] * len(deduped)
     if date_start and date_end:
-        date_context = f" between {date_start} and {date_end}"
+        date_hints = await _extract_date_hints(deduped, date_start, date_end)
 
+    lines: list[str] = []
+    for i, r in enumerate(deduped):
+        content = r["content"].strip()
+        snippet = content[:200].rstrip() + ("..." if len(content) > 200 else "")
+        date_hint = date_hints[i] if i < len(date_hints) else ""
+        lines.append(f"{r['title'].strip()}|{r['scope']}|{date_hint}|{snippet}")
+
+    relevant_events = "\n".join(lines) if lines else None
+    return relevant_events, len(deduped)
+
+
+# ---------------------------------------------------------------------------
+# Graph nodes
+# ---------------------------------------------------------------------------
+
+
+async def generate_plan(state: State) -> Dict[str, Any]:
+    """Planning node: determine campaign start and end dates for next month."""
+    date_start, date_end = _compute_campaign_dates()
+    return {"planning": PlanningState(dateStart=date_start, dateEnd=date_end)}
+
+
+async def search_relevant_events(state: State, config: RunnableConfig) -> Dict[str, Any]:
+    """Search for relevant events in the campaign timeframe at city, country, and world level."""
+    planning = state.planning
+    date_start = planning.dateStart if planning else None
+    date_end = planning.dateEnd if planning else None
+    date_context = f" between {date_start} and {date_end}" if date_start and date_end else ""
+
+    city, country = await _fetch_location(config)
+
+    all_results: list[dict] = []
+    tavily_api_key = os.environ.get("TAVILY_API_KEY")
     if tavily_api_key and date_start and date_end:
         client = TavilyClient(api_key=tavily_api_key)
-
-        # Step 2: search city events
+        search_tasks = []
         if city:
-            await adispatch_custom_event(
-                "activity",
-                {"step": "search_city", "status": "running", "label": f"Looking for relevant events in {city}..."},
-                config=config,
-            )
-            try:
-                city_results = await asyncio.to_thread(
-                    client.search,
-                    query=f"major events festivals holidays {city}{date_context}",
-                    max_results=5,
-                )
-                for r in city_results.get("results", []):
-                    all_results.append({"scope": city, "title": r.get("title", ""), "content": r.get("content", ""), "url": r.get("url", "")})
-            except Exception:
-                pass
-            await adispatch_custom_event(
-                "activity",
-                {"step": "search_city", "status": "done", "label": f"Searched events in {city}"},
-                config=config,
-            )
-
-        # Step 3: search country events
+            search_tasks.append(_search_scope(
+                client, city,
+                f"major events festivals holidays {city}{date_context}",
+                "search_city", config,
+            ))
         if country:
-            await adispatch_custom_event(
-                "activity",
-                {"step": "search_country", "status": "running", "label": f"Looking for relevant events in {country}..."},
-                config=config,
-            )
-            try:
-                country_results = await asyncio.to_thread(
-                    client.search,
-                    query=f"national events public holidays sporting events {country}{date_context}",
-                    max_results=5,
-                )
-                for r in country_results.get("results", []):
-                    all_results.append({"scope": country, "title": r.get("title", ""), "content": r.get("content", ""), "url": r.get("url", "")})
-            except Exception:
-                pass
-            await adispatch_custom_event(
-                "activity",
-                {"step": "search_country", "status": "done", "label": f"Searched events in {country}"},
-                config=config,
-            )
+            search_tasks.append(_search_scope(
+                client, country,
+                f"national events public holidays sporting events {country}{date_context}",
+                "search_country", config,
+            ))
+        search_tasks.append(_search_scope(
+            client, "World",
+            f"major world events global holidays sporting tournaments cultural events{date_context}",
+            "search_world", config,
+        ))
+        gathered = await asyncio.gather(*search_tasks, return_exceptions=True)
+        for chunk in gathered:
+            if isinstance(chunk, list):
+                all_results.extend(chunk)
 
-        # Step 4: search world events
-        await adispatch_custom_event(
-            "activity",
-            {"step": "search_world", "status": "running", "label": "Looking for relevant events in the world..."},
-            config=config,
-        )
-        try:
-            world_results = await asyncio.to_thread(
-                client.search,
-                query=f"major world events global holidays sporting tournaments cultural events{date_context}",
-                max_results=5,
-            )
-            for r in world_results.get("results", []):
-                all_results.append({"scope": "World", "title": r.get("title", ""), "content": r.get("content", ""), "url": r.get("url", "")})
-        except Exception:
-            pass
-        await adispatch_custom_event(
-            "activity",
-            {"step": "search_world", "status": "done", "label": "Searched world events"},
-            config=config,
-        )
+    relevant_events, event_count = await _compile_events(all_results, date_start, date_end)
 
-    # Step 5: compile results
-    relevant_events: str | None = None
-    deduped: list[dict] = []
-    if all_results:
-        # Deduplicate by title first
-        deduped: list[dict] = []
-        seen_titles: set[str] = set()
-        for r in all_results:
-            title = r["title"].strip()
-            if not title or title in seen_titles:
-                continue
-            seen_titles.add(title)
-            deduped.append(r)
-
-        # Step 5.5: extract date hints via LLM (single batch call)
-        date_hints: list[str] = [""] * len(deduped)
-        if deduped and date_start and date_end:
-            try:
-                items_text = "\n".join(
-                    f"{i + 1}. Title: {r['title']}\nContent: {r['content'][:300]}"
-                    for i, r in enumerate(deduped)
-                )
-                prompt = (
-                    f"Campaign period: {date_start} to {date_end}.\n\n"
-                    f"For each event below extract the most specific date hint you can.\n"
-                    f"Rules:\n"
-                    f"- Use DD.MM for exact dates (e.g. 31.12)\n"
-                    f"- Use month name for month-only (e.g. Late April)\n"
-                    f"- Use a short range for multi-day events (e.g. Apr 1-7)\n"
-                    f"- Return an empty string if nothing identifiable\n"
-                    f"Reply ONLY with a numbered list matching the input order, one date hint per line "
-                    f"(e.g. '1. 31.12'). Do not include any other text.\n\n"
-                    f"{items_text}"
-                )
-                response = await _date_llm.ainvoke([HumanMessage(content=prompt)])
-                raw_lines = response.content.strip().split("\n")
-                parsed_hints: list[str] = []
-                for line in raw_lines:
-                    # Strip leading "N. " numbering
-                    parts = line.split(".", 1)
-                    hint = parts[-1].strip() if len(parts) > 1 else line.strip()
-                    parsed_hints.append(hint)
-                # Align hints to deduped list length (LLM may return fewer lines)
-                date_hints = (parsed_hints + [""] * len(deduped))[: len(deduped)]
-            except Exception:
-                pass
-
-        lines: list[str] = []
-        for i, r in enumerate(deduped):
-            scope = r["scope"]
-            content = r["content"].strip()
-            snippet = content[:200].rstrip() + ("..." if len(content) > 200 else "")
-            date_hint = date_hints[i] if i < len(date_hints) else ""
-            lines.append(f"{r['title'].strip()}|{scope}|{date_hint}|{snippet}")
-        if lines:
-            relevant_events = "\n".join(lines)
-
-    event_count = len(deduped) if all_results else 0
     if relevant_events:
         scope_label = city or country or "this region"
-        await adispatch_custom_event(
-            "activity",
-            {"step": "search_events_done", "status": "done", "label": f"Found {event_count} relevant event(s) in {scope_label}"},
-            config=config,
-        )
+        await _emit("search_events_done", "done", f"Found {event_count} relevant event(s) in {scope_label}", config)
     else:
-        await adispatch_custom_event(
-            "activity",
-            {"step": "search_events_done", "status": "done", "label": "No relevant events found"},
-            config=config,
-        )
+        await _emit("search_events_done", "done", "No relevant events found", config)
 
-    updated_planning = replace(planning, relevantEvents=relevant_events) if planning else PlanningState(relevantEvents=relevant_events)
+    updated_planning = (
+        replace(planning, relevantEvents=relevant_events)
+        if planning
+        else PlanningState(relevantEvents=relevant_events)
+    )
     return {"planning": updated_planning}
 
+
+# ---------------------------------------------------------------------------
+# Subgraph
+# ---------------------------------------------------------------------------
 
 planning_subgraph = (
     StateGraph(State)
