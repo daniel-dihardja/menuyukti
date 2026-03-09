@@ -25,6 +25,7 @@ class PlanningState:
     nationalHolidays: list[NationalHoliday] | None = field(default=None)
     operatingProfile: dict[str, Any] | None = None
     locationSummary: str | None = None
+    promotionItems: list[dict[str, Any]] | None = None
 
 
 @dataclass
