@@ -1,13 +1,31 @@
 """Planning subgraph for the agent."""
 
+import asyncio
 import calendar
+import os
+from dataclasses import replace
 from datetime import datetime
 from typing import Any, Dict
 
+import httpx
+from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langgraph.graph import StateGraph
+from tavily import TavilyClient
 
 from agent.state import PlanningState, State
+
+_LOCATION_QUERY = """
+query Location($id: ID!) {
+  location(id: $id) {
+    id
+    name
+    street
+    city
+    country
+  }
+}
+"""
 
 
 @tool
@@ -35,10 +53,166 @@ async def generate_plan(state: State) -> Dict[str, Any]:
     return {"planning": PlanningState(dateStart=date_start, dateEnd=date_end)}
 
 
+async def search_relevant_events(state: State, config: RunnableConfig) -> Dict[str, Any]:
+    """Search for relevant events in the campaign timeframe at city, country, and world level."""
+    from langchain_core.callbacks.manager import adispatch_custom_event
+
+    planning = state.planning
+    date_start = planning.dateStart if planning else None
+    date_end = planning.dateEnd if planning else None
+
+    # Step 1: fetch location
+    await adispatch_custom_event(
+        "activity",
+        {"step": "fetch_location", "status": "running", "label": "Looking for location address..."},
+        config=config,
+    )
+
+    city: str | None = None
+    country: str | None = None
+
+    location_id = (config.get("configurable") or {}).get("location_id")
+    if location_id is not None:
+        try:
+            endpoint = os.environ["GRAPHQL_ENDPOINT"]
+            async with httpx.AsyncClient(timeout=10) as client:
+                res = await client.post(
+                    endpoint,
+                    json={"query": _LOCATION_QUERY, "variables": {"id": str(location_id)}},
+                )
+            res.raise_for_status()
+            loc = res.json().get("data", {}).get("location") or {}
+            city = loc.get("city")
+            country = loc.get("country")
+        except Exception:
+            pass
+
+    await adispatch_custom_event(
+        "activity",
+        {"step": "fetch_location", "status": "done", "label": "Location address found"},
+        config=config,
+    )
+
+    tavily_api_key = os.environ.get("TAVILY_API_KEY")
+    all_results: list[dict] = []
+
+    date_context = ""
+    if date_start and date_end:
+        date_context = f" between {date_start} and {date_end}"
+
+    if tavily_api_key and date_start and date_end:
+        client = TavilyClient(api_key=tavily_api_key)
+
+        # Step 2: search city events
+        if city:
+            await adispatch_custom_event(
+                "activity",
+                {"step": "search_city", "status": "running", "label": f"Looking for relevant events in {city}..."},
+                config=config,
+            )
+            try:
+                city_results = await asyncio.to_thread(
+                    client.search,
+                    query=f"major events festivals holidays {city}{date_context}",
+                    max_results=5,
+                )
+                for r in city_results.get("results", []):
+                    all_results.append({"scope": city, "title": r.get("title", ""), "content": r.get("content", ""), "url": r.get("url", "")})
+            except Exception:
+                pass
+            await adispatch_custom_event(
+                "activity",
+                {"step": "search_city", "status": "done", "label": f"Searched events in {city}"},
+                config=config,
+            )
+
+        # Step 3: search country events
+        if country:
+            await adispatch_custom_event(
+                "activity",
+                {"step": "search_country", "status": "running", "label": f"Looking for relevant events in {country}..."},
+                config=config,
+            )
+            try:
+                country_results = await asyncio.to_thread(
+                    client.search,
+                    query=f"national events public holidays sporting events {country}{date_context}",
+                    max_results=5,
+                )
+                for r in country_results.get("results", []):
+                    all_results.append({"scope": country, "title": r.get("title", ""), "content": r.get("content", ""), "url": r.get("url", "")})
+            except Exception:
+                pass
+            await adispatch_custom_event(
+                "activity",
+                {"step": "search_country", "status": "done", "label": f"Searched events in {country}"},
+                config=config,
+            )
+
+        # Step 4: search world events
+        await adispatch_custom_event(
+            "activity",
+            {"step": "search_world", "status": "running", "label": "Looking for relevant events in the world..."},
+            config=config,
+        )
+        try:
+            world_results = await asyncio.to_thread(
+                client.search,
+                query=f"major world events global holidays sporting tournaments cultural events{date_context}",
+                max_results=5,
+            )
+            for r in world_results.get("results", []):
+                all_results.append({"scope": "World", "title": r.get("title", ""), "content": r.get("content", ""), "url": r.get("url", "")})
+        except Exception:
+            pass
+        await adispatch_custom_event(
+            "activity",
+            {"step": "search_world", "status": "done", "label": "Searched world events"},
+            config=config,
+        )
+
+    # Step 5: compile results
+    relevant_events: str | None = None
+    if all_results:
+        lines: list[str] = []
+        seen_titles: set[str] = set()
+        for r in all_results:
+            title = r["title"].strip()
+            if not title or title in seen_titles:
+                continue
+            seen_titles.add(title)
+            scope = r["scope"]
+            content = r["content"].strip()
+            snippet = content[:200].rstrip() + ("..." if len(content) > 200 else "")
+            lines.append(f"{title}|{scope}|{snippet}")
+        if lines:
+            relevant_events = "\n".join(lines)
+
+    event_count = len({r["title"] for r in all_results if r["title"].strip()})
+    if relevant_events:
+        scope_label = city or country or "this region"
+        await adispatch_custom_event(
+            "activity",
+            {"step": "search_events_done", "status": "done", "label": f"Found {event_count} relevant event(s) in {scope_label}"},
+            config=config,
+        )
+    else:
+        await adispatch_custom_event(
+            "activity",
+            {"step": "search_events_done", "status": "done", "label": "No relevant events found"},
+            config=config,
+        )
+
+    updated_planning = replace(planning, relevantEvents=relevant_events) if planning else PlanningState(relevantEvents=relevant_events)
+    return {"planning": updated_planning}
+
+
 planning_subgraph = (
     StateGraph(State)
     .add_node("generate_plan", generate_plan)
+    .add_node("search_relevant_events", search_relevant_events)
     .add_edge("__start__", "generate_plan")
-    .add_edge("generate_plan", "__end__")
+    .add_edge("generate_plan", "search_relevant_events")
+    .add_edge("search_relevant_events", "__end__")
     .compile()
 )

@@ -11,6 +11,7 @@ IntentCategory = Literal["planning"]
 class PlanningState:
     dateStart: str | None = None
     dateEnd: str | None = None
+    relevantEvents: str | None = None
 
 
 @dataclass

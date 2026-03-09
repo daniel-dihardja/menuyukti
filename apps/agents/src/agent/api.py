@@ -96,13 +96,18 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
                 elif kind == "on_chain_start" and name == "run_planning_agent":
                     yield activity_sse("run_planning_agent", "running", "Planning campaign dates...")
 
+                elif kind == "on_custom_event" and name == "activity":
+                    data = event.get("data") or {}
+                    if data.get("step") and data.get("status") and data.get("label"):
+                        yield activity_sse(data["step"], data["status"], data["label"], data.get("detail"))
+
                 elif kind == "on_chain_end" and name == "run_planning_agent":
                     output = event["data"].get("output") or {}
                     planning = output.get("planning")
                     if planning and hasattr(planning, "dateStart"):
                         detail = f"{planning.dateStart} – {planning.dateEnd}"
                         yield activity_sse("run_planning_agent", "done", "Campaign dates planned", detail)
-                        yield f"data: {json.dumps({'planning': {'dateStart': planning.dateStart, 'dateEnd': planning.dateEnd}})}\n\n".encode("utf-8")
+                        yield f"data: {json.dumps({'planning': {'dateStart': planning.dateStart, 'dateEnd': planning.dateEnd, 'relevantEvents': planning.relevantEvents}})}\n\n".encode("utf-8")
 
                 elif kind == "on_chain_start" and name == "respond_with_plan":
                     yield activity_sse("respond_with_plan", "running", "Writing response...")

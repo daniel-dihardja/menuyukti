@@ -47,7 +47,7 @@ const SSE_DONE = "[DONE]" as const;
 interface AgentSSEChunk {
   delta?: string;
   error?: string;
-  planning?: { dateStart: string; dateEnd: string };
+  planning?: { dateStart: string; dateEnd: string; relevantEvents?: string | null };
   activity?: {
     step: string;
     status: "running" | "done";
@@ -99,7 +99,11 @@ async function parseAgentSSEAndForward(
               encoder.encode(
                 sseLine({
                   type: SSE_EVENT.DATA_PLANNING,
-                  data: { dateStart: data.planning.dateStart, dateEnd: data.planning.dateEnd },
+                  data: {
+                    dateStart: data.planning.dateStart,
+                    dateEnd: data.planning.dateEnd,
+                    relevantEvents: data.planning.relevantEvents ?? null,
+                  },
                 })
               )
             );
