@@ -108,7 +108,7 @@ async def _search_public_holidays(
     country: str,
     date_start: str,
     date_end: str,
-) -> str | None:
+) -> list[dict[str, str]] | None:
     """Run a ReAct agent to find all public holidays in country within the date range."""
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     agent = create_react_agent(
@@ -141,7 +141,7 @@ async def _search_public_holidays(
             return None
         start_dt = datetime.strptime(date_start, "%Y-%m-%d").date()
         end_dt = datetime.strptime(date_end, "%Y-%m-%d").date()
-        filtered_lines = []
+        holidays: list[dict[str, str]] = []
         for line in content.strip().splitlines():
             parts = line.split("|")
             if len(parts) < 3:
@@ -150,10 +150,18 @@ async def _search_public_holidays(
             try:
                 entry_date = datetime.strptime(date_str, "%Y-%m-%d").date()
                 if start_dt <= entry_date <= end_dt:
-                    filtered_lines.append(line)
+                    holidays.append({
+                        "localName": parts[0].strip(),
+                        "name": parts[1].strip(),
+                        "date": date_str,
+                    })
             except ValueError:
-                filtered_lines.append(line)
-        return "\n".join(filtered_lines) if filtered_lines else None
+                holidays.append({
+                    "localName": parts[0].strip(),
+                    "name": parts[1].strip(),
+                    "date": date_str,
+                })
+        return holidays if holidays else None
     except Exception:
         return None
 
@@ -177,15 +185,15 @@ async def search_relevant_events(state: State, config: RunnableConfig) -> Dict[s
 
     _, country = await _fetch_location(config)
 
-    holidays_str: str | None = None
+    holidays: list[dict[str, str]] | None = None
     if country and date_start and date_end and os.environ.get("TAVILY_API_KEY"):
         await _emit(
             "search_holidays", "running",
             f"Searching public holidays in {country}...",
             config,
         )
-        holidays_str = await _search_public_holidays(country, date_start, date_end)
-        holiday_count = len([l for l in (holidays_str or "").splitlines() if l.strip()]) if holidays_str else 0
+        holidays = await _search_public_holidays(country, date_start, date_end)
+        holiday_count = len(holidays) if holidays else 0
         await _emit(
             "search_holidays", "done",
             f"Found {holiday_count} public holiday(s) in {country}",
@@ -195,9 +203,9 @@ async def search_relevant_events(state: State, config: RunnableConfig) -> Dict[s
         await _emit("search_holidays", "done", "No public holidays found", config)
 
     updated_planning = (
-        replace(planning, nationalHolidays=holidays_str)
+        replace(planning, nationalHolidays=holidays)
         if planning
-        else PlanningState(nationalHolidays=holidays_str)
+        else PlanningState(nationalHolidays=holidays)
     )
     return {"planning": updated_planning}
 

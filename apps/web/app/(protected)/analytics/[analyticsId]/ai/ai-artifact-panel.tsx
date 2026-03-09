@@ -9,10 +9,16 @@ import {
 } from "@workspace/ui/components/ai-elements/artifact";
 import { CalendarIcon, GlobeIcon } from "lucide-react";
 
+export type NationalHoliday = {
+  localName: string;
+  name: string;
+  date: string;
+};
+
 export type PlanningArtifact = {
   dateStart: string;
   dateEnd: string;
-  nationalHolidays?: string | null;
+  nationalHolidays?: NationalHoliday[] | null;
 };
 
 type AiArtifactPanelProps = {
@@ -35,23 +41,6 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function parseHolidays(raw: string): HolidayItem[] {
-  const items: HolidayItem[] = [];
-  for (const line of raw.split("\n")) {
-    const parts = line.split("|");
-    if (parts.length < 2) continue;
-    const localName = parts[0]?.trim() ?? "";
-    if (!localName) continue;
-    const item: HolidayItem = {
-      localName,
-      englishName: parts[1]?.trim() ?? "",
-      date: parts[2]?.trim() || undefined,
-    };
-    items.push(item);
-  }
-  return items;
-}
-
 export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
   if (!planning) {
     return (
@@ -69,8 +58,13 @@ export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
     );
   }
 
-  const holidays =
-    planning.nationalHolidays ? parseHolidays(planning.nationalHolidays) : null;
+  const holidays = planning.nationalHolidays
+    ? planning.nationalHolidays.map((h) => ({
+        localName: h.localName,
+        englishName: h.name,
+        date: h.date || undefined,
+      }))
+    : null;
   const holidaysReady = planning.nationalHolidays !== undefined;
 
   return (
