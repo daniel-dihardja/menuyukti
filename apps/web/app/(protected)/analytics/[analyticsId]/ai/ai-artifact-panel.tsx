@@ -22,6 +22,7 @@ type AiArtifactPanelProps = {
 type EventItem = {
   title: string;
   scope: string;
+  date?: string;
   snippet: string;
 };
 
@@ -36,18 +37,25 @@ function formatDate(dateStr: string): string {
 }
 
 function parseEvents(raw: string): EventItem[] {
-  return raw
-    .split("\n")
-    .map((line) => {
-      const parts = line.split("|");
-      if (parts.length < 2) return null;
-      return {
-        title: parts[0]?.trim() ?? "",
-        scope: parts[1]?.trim() ?? "",
-        snippet: parts.slice(2).join("|").trim(),
-      };
-    })
-    .filter((e): e is EventItem => e !== null && e.title.length > 0);
+  const items: EventItem[] = [];
+  for (const line of raw.split("\n")) {
+    const parts = line.split("|");
+    if (parts.length < 2) continue;
+    const title = parts[0]?.trim() ?? "";
+    if (!title) continue;
+    const hasDateField = parts.length >= 4;
+    const item: EventItem = {
+      title,
+      scope: parts[1]?.trim() ?? "",
+      snippet: hasDateField
+        ? parts.slice(3).join("|").trim()
+        : parts.slice(2).join("|").trim(),
+    };
+    const dateHint = hasDateField ? parts[2]?.trim() : undefined;
+    if (dateHint) item.date = dateHint;
+    items.push(item);
+  }
+  return items;
 }
 
 export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
@@ -158,9 +166,17 @@ export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
                       <p className="text-sm font-medium leading-snug text-foreground">
                         {event.title}
                       </p>
-                      <span className="mt-0.5 shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                        {event.scope}
-                      </span>
+                      <div className="mt-0.5 flex shrink-0 flex-wrap gap-1">
+                        {event.date && (
+                          <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                            <CalendarIcon className="size-3" />
+                            {event.date}
+                          </span>
+                        )}
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                          {event.scope}
+                        </span>
+                      </div>
                     </div>
                     {event.snippet && (
                       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">

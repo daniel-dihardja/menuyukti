@@ -8,10 +8,14 @@ from datetime import datetime
 from typing import Any, Dict
 
 import httpx
+from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
+from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph
 from tavily import TavilyClient
+
+_date_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 from agent.state import PlanningState, State
 
@@ -173,22 +177,62 @@ async def search_relevant_events(state: State, config: RunnableConfig) -> Dict[s
 
     # Step 5: compile results
     relevant_events: str | None = None
+    deduped: list[dict] = []
     if all_results:
-        lines: list[str] = []
+        # Deduplicate by title first
+        deduped: list[dict] = []
         seen_titles: set[str] = set()
         for r in all_results:
             title = r["title"].strip()
             if not title or title in seen_titles:
                 continue
             seen_titles.add(title)
+            deduped.append(r)
+
+        # Step 5.5: extract date hints via LLM (single batch call)
+        date_hints: list[str] = [""] * len(deduped)
+        if deduped and date_start and date_end:
+            try:
+                items_text = "\n".join(
+                    f"{i + 1}. Title: {r['title']}\nContent: {r['content'][:300]}"
+                    for i, r in enumerate(deduped)
+                )
+                prompt = (
+                    f"Campaign period: {date_start} to {date_end}.\n\n"
+                    f"For each event below extract the most specific date hint you can.\n"
+                    f"Rules:\n"
+                    f"- Use DD.MM for exact dates (e.g. 31.12)\n"
+                    f"- Use month name for month-only (e.g. Late April)\n"
+                    f"- Use a short range for multi-day events (e.g. Apr 1-7)\n"
+                    f"- Return an empty string if nothing identifiable\n"
+                    f"Reply ONLY with a numbered list matching the input order, one date hint per line "
+                    f"(e.g. '1. 31.12'). Do not include any other text.\n\n"
+                    f"{items_text}"
+                )
+                response = await _date_llm.ainvoke([HumanMessage(content=prompt)])
+                raw_lines = response.content.strip().split("\n")
+                parsed_hints: list[str] = []
+                for line in raw_lines:
+                    # Strip leading "N. " numbering
+                    parts = line.split(".", 1)
+                    hint = parts[-1].strip() if len(parts) > 1 else line.strip()
+                    parsed_hints.append(hint)
+                # Align hints to deduped list length (LLM may return fewer lines)
+                date_hints = (parsed_hints + [""] * len(deduped))[: len(deduped)]
+            except Exception:
+                pass
+
+        lines: list[str] = []
+        for i, r in enumerate(deduped):
             scope = r["scope"]
             content = r["content"].strip()
             snippet = content[:200].rstrip() + ("..." if len(content) > 200 else "")
-            lines.append(f"{title}|{scope}|{snippet}")
+            date_hint = date_hints[i] if i < len(date_hints) else ""
+            lines.append(f"{r['title'].strip()}|{scope}|{date_hint}|{snippet}")
         if lines:
             relevant_events = "\n".join(lines)
 
-    event_count = len({r["title"] for r in all_results if r["title"].strip()})
+    event_count = len(deduped) if all_results else 0
     if relevant_events:
         scope_label = city or country or "this region"
         await adispatch_custom_event(
