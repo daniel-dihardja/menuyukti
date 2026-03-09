@@ -15,7 +15,7 @@ from langgraph.graph import StateGraph
 from langgraph.prebuilt import create_react_agent
 from tavily import TavilyClient
 
-from agent.state import PlanningState, State
+from agent.state import NationalHoliday, PlanningState, State
 
 _LOCATION_QUERY = """
 query Location($id: ID!) {
@@ -108,7 +108,7 @@ async def _search_public_holidays(
     country: str,
     date_start: str,
     date_end: str,
-) -> list[dict[str, str]] | None:
+) -> list[NationalHoliday] | None:
     """Run a ReAct agent to find all public holidays in country within the date range."""
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
     agent = create_react_agent(
@@ -141,7 +141,7 @@ async def _search_public_holidays(
             return None
         start_dt = datetime.strptime(date_start, "%Y-%m-%d").date()
         end_dt = datetime.strptime(date_end, "%Y-%m-%d").date()
-        holidays: list[dict[str, str]] = []
+        holidays: list[NationalHoliday] = []
         for line in content.strip().splitlines():
             parts = line.split("|")
             if len(parts) < 3:
@@ -185,7 +185,7 @@ async def search_relevant_events(state: State, config: RunnableConfig) -> Dict[s
 
     _, country = await _fetch_location(config)
 
-    holidays: list[dict[str, str]] | None = None
+    holidays: list[NationalHoliday] | None = None
     if country and date_start and date_end and os.environ.get("TAVILY_API_KEY"):
         await _emit(
             "search_holidays", "running",
