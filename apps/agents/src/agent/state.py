@@ -1,7 +1,7 @@
 """Shared state for the agent graph and subgraphs."""
 
 from dataclasses import dataclass, field
-from typing import Literal, TypedDict
+from typing import Any, Literal, TypedDict
 
 # Intent category: top-level classification (extend with more later, e.g. "content")
 IntentCategory = Literal["planning"]
@@ -23,6 +23,7 @@ class PlanningState:
     dateStart: str | None = None
     dateEnd: str | None = None
     nationalHolidays: list[NationalHoliday] | None = field(default=None)
+    operatingProfile: dict[str, Any] | None = None
 
 
 @dataclass

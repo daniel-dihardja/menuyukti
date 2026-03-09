@@ -15,6 +15,14 @@ from menuyukti.core.analytics.calculate_menu_heatmaps import (
     calculate_menu_heatmaps,
     compute_menu_heatmaps_from_orders,
 )
+from menuyukti.core.analytics.calculate_operating_profile import (
+    DayOfWeekRow,
+    DayTypeRow,
+    MealPeriodRow,
+    OperatingProfileResult,
+    OrderRowForProfile,
+    compute_operating_profile_from_orders,
+)
 from menuyukti.core.analytics.calculate_popularity_index import (
     calculate_popularity_index,
 )
@@ -26,17 +34,23 @@ from menuyukti.core.analytics.utils import normalize_columns
 
 __all__ = [
     "DailyHeatmapRow",
+    "DayOfWeekRow",
+    "DayTypeRow",
+    "MealPeriodRow",
     "MenuEngineeringDistributionItem",
     "MenuEngineeringMatrixItem",
     "MenuEngineeringMatrixResult",
     "MenuEngineeringThresholds",
     "MenuHeatmapPayload",
+    "OperatingProfileResult",
     "OrderRowForMatrix",
     "OrderRowForHeatmap",
+    "OrderRowForProfile",
     "WeeklyHeatmapRow",
     "calculate_sales_analytics",
     "calculate_menu_heatmaps",
     "compute_menu_heatmaps_from_orders",
+    "compute_operating_profile_from_orders",
     "calculate_popularity_index",
     "calculate_menu_engineering_matrix",
     "compute_menu_engineering_from_orders",

@@ -39,6 +39,47 @@ query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) 
 }
 """
 
+_OPERATING_PROFILE_QUERY = """
+query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
+  operatingProfile(locationId: $locationId, analyticsRunId: $analyticsRunId) {
+    totalOrders
+    totalRevenue
+    activeDaysCount
+    avgDailyOrders
+    weekdayShare
+    weekendShare
+    peakDay
+    primaryMealPeriod
+    activeMealPeriods
+    operatingPattern
+    diningFocus
+    mealPeriodBreakdown {
+      period
+      label
+      orderCount
+      share
+      revenue
+      revenueShare
+    }
+    dayOfWeekBreakdown {
+      day
+      isWeekend
+      orderCount
+      share
+      revenue
+      isPeakDay
+    }
+    dayTypeBreakdown {
+      type
+      orderCount
+      share
+      revenue
+      revenueShare
+    }
+  }
+}
+"""
+
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -152,16 +193,68 @@ async def search_public_holidays(state: State, config: RunnableConfig) -> Dict[s
     return {"planning": updated_planning}
 
 
+async def fetch_operating_profile(state: State, config: RunnableConfig) -> Dict[str, Any]:
+    """Fetch the restaurant's operating profile from the GraphQL service."""
+    await _emit("fetch_operating_profile", "running", "Analysing restaurant operating pattern...", config)
+
+    planning = state.planning
+    profile: dict | None = None
+
+    configurable = config.get("configurable") or {}
+    location_id = configurable.get("location_id")
+    analytics_id = configurable.get("analytics_id")
+
+    if location_id is not None and analytics_id is not None:
+        try:
+            endpoint = os.environ["GRAPHQL_ENDPOINT"]
+            async with httpx.AsyncClient(timeout=10) as client:
+                res = await client.post(
+                    endpoint,
+                    json={
+                        "query": _OPERATING_PROFILE_QUERY,
+                        "variables": {
+                            "locationId": str(location_id),
+                            "analyticsRunId": str(analytics_id),
+                        },
+                    },
+                )
+            res.raise_for_status()
+            profile = res.json().get("data", {}).get("operatingProfile") or None
+        except Exception:
+            logger.exception(
+                "Failed to fetch operating profile for location_id=%s analytics_id=%s",
+                location_id,
+                analytics_id,
+            )
+
+    label = (
+        f"Operating pattern: {profile['operatingPattern']}, dining focus: {profile['diningFocus']}"
+        if profile
+        else "Operating profile unavailable"
+    )
+    await _emit("fetch_operating_profile", "done", label, config)
+
+    updated_planning = (
+        replace(planning, operatingProfile=profile)
+        if planning
+        else PlanningState(operatingProfile=profile)
+    )
+    return {"planning": updated_planning}
+
+
 # ---------------------------------------------------------------------------
 # Subgraph
 # ---------------------------------------------------------------------------
+
 
 planning_subgraph = (
     StateGraph(State)
     .add_node("generate_plan", generate_plan)
     .add_node("search_public_holidays", search_public_holidays)
+    .add_node("fetch_operating_profile", fetch_operating_profile)
     .add_edge("__start__", "generate_plan")
     .add_edge("generate_plan", "search_public_holidays")
-    .add_edge("search_public_holidays", "__end__")
+    .add_edge("search_public_holidays", "fetch_operating_profile")
+    .add_edge("fetch_operating_profile", "__end__")
     .compile()
 )
