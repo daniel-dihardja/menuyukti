@@ -179,9 +179,9 @@ async def search_relevant_events(state: State, config: RunnableConfig) -> Dict[s
         await _emit("search_holidays", "done", "No public holidays found", config)
 
     updated_planning = (
-        replace(planning, relevantEvents=holidays_str)
+        replace(planning, nationalHolidays=holidays_str)
         if planning
-        else PlanningState(relevantEvents=holidays_str)
+        else PlanningState(nationalHolidays=holidays_str)
     )
     return {"planning": updated_planning}
 

@@ -12,7 +12,7 @@ import { CalendarIcon, GlobeIcon } from "lucide-react";
 export type PlanningArtifact = {
   dateStart: string;
   dateEnd: string;
-  relevantEvents?: string | null;
+  nationalHolidays?: string | null;
 };
 
 type AiArtifactPanelProps = {
@@ -70,8 +70,8 @@ export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
   }
 
   const holidays =
-    planning.relevantEvents ? parseHolidays(planning.relevantEvents) : null;
-  const holidaysReady = planning.relevantEvents !== undefined;
+    planning.nationalHolidays ? parseHolidays(planning.nationalHolidays) : null;
+  const holidaysReady = planning.nationalHolidays !== undefined;
 
   return (
     <Artifact className="size-full">
