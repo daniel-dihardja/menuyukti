@@ -7,5 +7,4 @@ class NationalHolidayType:
     name: str
     localName: str
     holidayType: str
-    isPublicHoliday: bool
     isTentative: bool

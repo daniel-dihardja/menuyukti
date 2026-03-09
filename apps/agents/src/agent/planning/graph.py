@@ -34,7 +34,6 @@ query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) 
     name
     localName
     holidayType
-    isPublicHoliday
     isTentative
   }
 }
@@ -130,7 +129,6 @@ async def search_public_holidays(state: State, config: RunnableConfig) -> Dict[s
                     name=h["name"],
                     date=h["date"],
                     type=h["holidayType"],
-                    isPublicHoliday=h["isPublicHoliday"],
                 )
                 for h in raw
             ] or None

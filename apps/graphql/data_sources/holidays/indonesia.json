@@ -4,7 +4,6 @@
     "name": "New Year's Day",
     "localName": "Tahun Baru Masehi",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": false
   },
   {
@@ -12,7 +11,6 @@
     "name": "Chinese New Year",
     "localName": "Tahun Baru Imlek",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": false
   },
   {
@@ -20,7 +18,6 @@
     "name": "Isra Mi'raj",
     "localName": "Isra Mi'raj Nabi Muhammad SAW",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": true
   },
   {
@@ -28,7 +25,6 @@
     "name": "Bali's Day of Silence and Hindu New Year (Nyepi)",
     "localName": "Nyepi",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": false
   },
   {
@@ -36,7 +32,6 @@
     "name": "Idul Fitri",
     "localName": "Hari Raya Idul Fitri",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": true
   },
   {
@@ -44,7 +39,6 @@
     "name": "Idul Fitri Holiday",
     "localName": "Hari Raya Idul Fitri 2",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": true
   },
   {
@@ -52,7 +46,6 @@
     "name": "Good Friday",
     "localName": "Jumat Agung",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": false
   },
   {
@@ -60,7 +53,6 @@
     "name": "Easter Sunday",
     "localName": "Hari Paskah",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": false
   },
   {
@@ -68,7 +60,6 @@
     "name": "International Labor Day",
     "localName": "Hari Buruh Internasional",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": false
   },
   {
@@ -76,7 +67,6 @@
     "name": "Ascension Day of Jesus Christ",
     "localName": "Kenaikan Yesus Kristus",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": false
   },
   {
@@ -84,7 +74,6 @@
     "name": "Idul Adha",
     "localName": "Hari Raya Idul Adha",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": true
   },
   {
@@ -92,7 +81,6 @@
     "name": "Waisak Day (Buddha's Anniversary)",
     "localName": "Hari Raya Waisak",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": true
   },
   {
@@ -100,7 +88,6 @@
     "name": "Pancasila Day",
     "localName": "Hari Lahir Pancasila",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": false
   },
   {
@@ -108,7 +95,6 @@
     "name": "Muharram / Islamic New Year",
     "localName": "Tahun Baru Islam",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": true
   },
   {
@@ -116,7 +102,6 @@
     "name": "Indonesian Independence Day",
     "localName": "Hari Kemerdekaan Indonesia",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": false
   },
   {
@@ -124,7 +109,6 @@
     "name": "Maulid Nabi Muhammad",
     "localName": "Maulid Nabi Muhammad SAW",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": true
   },
   {
@@ -132,7 +116,6 @@
     "name": "Christmas Day",
     "localName": "Hari Raya Natal",
     "holidayType": "public",
-    "isPublicHoliday": true,
     "isTentative": false
   }
 ]
