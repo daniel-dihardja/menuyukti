@@ -7,7 +7,7 @@ import {
   ArtifactHeader,
   ArtifactTitle,
 } from "@workspace/ui/components/ai-elements/artifact";
-import { CalendarIcon, GlobeIcon } from "lucide-react";
+import { CalendarIcon, GlobeIcon, StoreIcon } from "lucide-react";
 
 export type NationalHoliday = {
   localName: string;
@@ -19,6 +19,7 @@ export type PlanningArtifact = {
   dateStart: string;
   dateEnd: string;
   nationalHolidays?: NationalHoliday[] | null;
+  locationSummary?: string | null;
 };
 
 type AiArtifactPanelProps = {
@@ -75,6 +76,27 @@ export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
       </ArtifactHeader>
       <ArtifactContent>
         <div className="space-y-4">
+          {/* Location Profile */}
+          {planning.locationSummary !== null && (
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <StoreIcon className="size-3.5" />
+                Location Profile
+              </div>
+              {planning.locationSummary === undefined ? (
+                <div className="space-y-2">
+                  <div className="h-3 w-full animate-pulse rounded bg-muted-foreground/20" />
+                  <div className="h-3 w-5/6 animate-pulse rounded bg-muted-foreground/20" />
+                  <div className="h-3 w-4/6 animate-pulse rounded bg-muted-foreground/10" />
+                </div>
+              ) : (
+                <p className="text-sm leading-relaxed text-foreground">
+                  {planning.locationSummary}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Campaign Period */}
           <div className="rounded-lg border bg-muted/30 p-4">
             <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">

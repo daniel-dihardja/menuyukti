@@ -47,7 +47,12 @@ const SSE_DONE = "[DONE]" as const;
 interface AgentSSEChunk {
   delta?: string;
   error?: string;
-  planning?: { dateStart: string; dateEnd: string; nationalHolidays?: string | null };
+  planning?: {
+    dateStart: string;
+    dateEnd: string;
+    nationalHolidays?: string | null;
+    locationSummary?: string | null;
+  };
   activity?: {
     step: string;
     status: "running" | "done";
@@ -103,6 +108,7 @@ async function parseAgentSSEAndForward(
                     dateStart: data.planning.dateStart,
                     dateEnd: data.planning.dateEnd,
                     nationalHolidays: data.planning.nationalHolidays ?? null,
+                    locationSummary: data.planning.locationSummary ?? null,
                   },
                 })
               )
