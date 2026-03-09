@@ -11,7 +11,6 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.graph import StateGraph
 
 from agent.planning.dates import _compute_campaign_dates
-from agent.planning.holidays import search_public_holidays
 from agent.state import NationalHoliday, PlanningState, State
 
 logger = logging.getLogger(__name__)
@@ -24,6 +23,19 @@ query Location($id: ID!) {
     street
     city
     country
+  }
+}
+"""
+
+_PUBLIC_HOLIDAYS_QUERY = """
+query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) {
+  publicHolidays(country: $country, startDate: $startDate, endDate: $endDate) {
+    date
+    name
+    localName
+    holidayType
+    isPublicHoliday
+    isTentative
   }
 }
 """
@@ -82,7 +94,7 @@ async def generate_plan(state: State) -> Dict[str, Any]:
 
 
 async def search_public_holidays(state: State, config: RunnableConfig) -> Dict[str, Any]:
-    """Search for public holidays in the campaign location's country within the campaign timeframe."""
+    """Fetch public holidays for the campaign location's country from the GraphQL service."""
     planning = state.planning
     date_start = planning.dateStart if planning else None
     date_end = planning.dateEnd if planning else None
@@ -90,13 +102,41 @@ async def search_public_holidays(state: State, config: RunnableConfig) -> Dict[s
     _, country = await _fetch_location(config)
 
     holidays: list[NationalHoliday] | None = None
-    if country and date_start and date_end and os.environ.get("TAVILY_API_KEY"):
+    if country and date_start and date_end:
         await _emit(
             "search_holidays", "running",
             f"Searching public holidays in {country}...",
             config,
         )
-        holidays = await search_public_holidays(country, date_start, date_end)
+        try:
+            endpoint = os.environ["GRAPHQL_ENDPOINT"]
+            async with httpx.AsyncClient(timeout=10) as client:
+                res = await client.post(
+                    endpoint,
+                    json={
+                        "query": _PUBLIC_HOLIDAYS_QUERY,
+                        "variables": {
+                            "country": country,
+                            "startDate": date_start,
+                            "endDate": date_end,
+                        },
+                    },
+                )
+            res.raise_for_status()
+            raw = res.json().get("data", {}).get("publicHolidays") or []
+            holidays = [
+                NationalHoliday(
+                    localName=h["localName"],
+                    name=h["name"],
+                    date=h["date"],
+                    type=h["holidayType"],
+                    isPublicHoliday=h["isPublicHoliday"],
+                )
+                for h in raw
+            ] or None
+        except Exception:
+            logger.exception("Failed to fetch public holidays for country=%s", country)
+
         holiday_count = len(holidays) if holidays else 0
         await _emit(
             "search_holidays", "done",

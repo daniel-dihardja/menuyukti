@@ -1,0 +1,138 @@
+[
+  {
+    "date": "2026-01-01",
+    "name": "New Year's Day",
+    "localName": "Tahun Baru Masehi",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": false
+  },
+  {
+    "date": "2026-01-29",
+    "name": "Chinese New Year",
+    "localName": "Tahun Baru Imlek",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": false
+  },
+  {
+    "date": "2026-02-18",
+    "name": "Isra Mi'raj",
+    "localName": "Isra Mi'raj Nabi Muhammad SAW",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": true
+  },
+  {
+    "date": "2026-03-19",
+    "name": "Bali's Day of Silence and Hindu New Year (Nyepi)",
+    "localName": "Nyepi",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": false
+  },
+  {
+    "date": "2026-03-21",
+    "name": "Idul Fitri",
+    "localName": "Hari Raya Idul Fitri",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": true
+  },
+  {
+    "date": "2026-03-22",
+    "name": "Idul Fitri Holiday",
+    "localName": "Hari Raya Idul Fitri 2",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": true
+  },
+  {
+    "date": "2026-04-03",
+    "name": "Good Friday",
+    "localName": "Jumat Agung",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": false
+  },
+  {
+    "date": "2026-04-05",
+    "name": "Easter Sunday",
+    "localName": "Hari Paskah",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": false
+  },
+  {
+    "date": "2026-05-01",
+    "name": "International Labor Day",
+    "localName": "Hari Buruh Internasional",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": false
+  },
+  {
+    "date": "2026-05-14",
+    "name": "Ascension Day of Jesus Christ",
+    "localName": "Kenaikan Yesus Kristus",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": false
+  },
+  {
+    "date": "2026-05-27",
+    "name": "Idul Adha",
+    "localName": "Hari Raya Idul Adha",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": true
+  },
+  {
+    "date": "2026-05-31",
+    "name": "Waisak Day (Buddha's Anniversary)",
+    "localName": "Hari Raya Waisak",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": true
+  },
+  {
+    "date": "2026-06-01",
+    "name": "Pancasila Day",
+    "localName": "Hari Lahir Pancasila",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": false
+  },
+  {
+    "date": "2026-06-16",
+    "name": "Muharram / Islamic New Year",
+    "localName": "Tahun Baru Islam",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": true
+  },
+  {
+    "date": "2026-08-17",
+    "name": "Indonesian Independence Day",
+    "localName": "Hari Kemerdekaan Indonesia",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": false
+  },
+  {
+    "date": "2026-08-25",
+    "name": "Maulid Nabi Muhammad",
+    "localName": "Maulid Nabi Muhammad SAW",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": true
+  },
+  {
+    "date": "2026-12-25",
+    "name": "Christmas Day",
+    "localName": "Hari Raya Natal",
+    "holidayType": "public",
+    "isPublicHoliday": true,
+    "isTentative": false
+  }
+]
