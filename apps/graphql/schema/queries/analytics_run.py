@@ -98,7 +98,26 @@ class AnalyticsRunType:
     menuItemCogs: list[MenuItemCogsType]
     orderMetrics: AnalyticsRunOrderMetricsType
     menu_heatmaps: list[MenuHeatmapType]
-    menuEngineeringMatrix: Optional[MenuEngineeringMatrixType]
+    _matrix: strawberry.Private[Optional[MenuEngineeringMatrixType]]
+
+    @strawberry.field
+    def menu_engineering_matrix(
+        self, categories: Optional[list[str]] = None
+    ) -> Optional[MenuEngineeringMatrixType]:
+        """Return the menu engineering matrix, optionally filtered to specific
+        categories (e.g. ["star", "puzzle"]). Thresholds and distribution always
+        reflect the full dataset regardless of the filter."""
+        if self._matrix is None:
+            return None
+        if not categories:
+            return self._matrix
+        category_set = set(categories)
+        filtered_items = [i for i in self._matrix.items if i.category in category_set]
+        return MenuEngineeringMatrixType(
+            thresholds=self._matrix.thresholds,
+            distribution=self._matrix.distribution,
+            items=filtered_items,
+        )
 
 
 def _compute_order_metrics(
@@ -305,7 +324,7 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
         menuItemCogs=menu_item_cogs,
         orderMetrics=order_metrics,
         menu_heatmaps=menu_heatmaps,
-        menuEngineeringMatrix=menu_engineering_matrix,
+        _matrix=menu_engineering_matrix,
     )
 
 

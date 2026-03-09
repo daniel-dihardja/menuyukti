@@ -8,6 +8,7 @@ __all__ = [
     "MenuItemCogs",
     "InstagramPost",
     "InstagramPostPromotedItem",
+    "OperatingProfileSummary",
     "SessionLocal",
     "engine",
     "init_db",

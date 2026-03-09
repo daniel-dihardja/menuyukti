@@ -54,6 +54,7 @@ query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
     activeMealPeriods
     operatingPattern
     diningFocus
+    operatingSummary
     mealPeriodBreakdown {
       period
       label
@@ -78,6 +79,26 @@ query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
       revenueShare
     }
   }
+}
+"""
+
+_SUMMARY_PROMPT_VERSION = "v1"
+
+_SAVE_OPERATING_SUMMARY_MUTATION = """
+mutation SaveOperatingSummary(
+  $locationId: ID!
+  $analyticsRunId: ID!
+  $operatingSummary: String!
+  $promptVersion: String!
+  $model: String!
+) {
+  saveOperatingSummary(
+    locationId: $locationId
+    analyticsRunId: $analyticsRunId
+    operatingSummary: $operatingSummary
+    promptVersion: $promptVersion
+    model: $model
+  )
 }
 """
 
@@ -307,6 +328,16 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> Dic
     profile = planning.operatingProfile if planning else None
     summary: str | None = None
 
+    if profile and profile.get("operatingSummary"):
+        await _emit("generate_location_summary", "done", "Location profile summary ready (cached)", config)
+        cached_summary = profile["operatingSummary"]
+        updated_planning = (
+            replace(planning, locationSummary=cached_summary)
+            if planning
+            else PlanningState(locationSummary=cached_summary)
+        )
+        return {"planning": updated_planning}
+
     if profile:
         location = await _fetch_full_location(config)
         name = location.get("name") or "this restaurant"
@@ -353,6 +384,33 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> Dic
             summary = result.content if hasattr(result, "content") else str(result)
         except Exception:
             logger.exception("Failed to generate location summary")
+
+        if summary:
+            configurable = config.get("configurable") or {}
+            location_id = configurable.get("location_id")
+            analytics_id = configurable.get("analytics_id")
+            try:
+                endpoint = os.environ["GRAPHQL_ENDPOINT"]
+                async with httpx.AsyncClient(timeout=10) as client:
+                    await client.post(
+                        endpoint,
+                        json={
+                            "query": _SAVE_OPERATING_SUMMARY_MUTATION,
+                            "variables": {
+                                "locationId": str(location_id),
+                                "analyticsRunId": str(analytics_id),
+                                "operatingSummary": summary,
+                                "promptVersion": _SUMMARY_PROMPT_VERSION,
+                                "model": _summary_llm.model_name,
+                            },
+                        },
+                    )
+            except Exception:
+                logger.exception(
+                    "Failed to persist operating summary for location_id=%s analytics_id=%s",
+                    location_id,
+                    analytics_id,
+                )
 
     await _emit("generate_location_summary", "done", "Location profile summary ready", config)
 
