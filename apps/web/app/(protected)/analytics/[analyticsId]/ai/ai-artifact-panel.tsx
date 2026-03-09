@@ -19,11 +19,10 @@ type AiArtifactPanelProps = {
   planning?: PlanningArtifact;
 };
 
-type EventItem = {
-  title: string;
-  scope: string;
+type HolidayItem = {
+  localName: string;
+  englishName: string;
   date?: string;
-  snippet: string;
 };
 
 function formatDate(dateStr: string): string {
@@ -36,23 +35,18 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function parseEvents(raw: string): EventItem[] {
-  const items: EventItem[] = [];
+function parseHolidays(raw: string): HolidayItem[] {
+  const items: HolidayItem[] = [];
   for (const line of raw.split("\n")) {
     const parts = line.split("|");
     if (parts.length < 2) continue;
-    const title = parts[0]?.trim() ?? "";
-    if (!title) continue;
-    const hasDateField = parts.length >= 4;
-    const item: EventItem = {
-      title,
-      scope: parts[1]?.trim() ?? "",
-      snippet: hasDateField
-        ? parts.slice(3).join("|").trim()
-        : parts.slice(2).join("|").trim(),
+    const localName = parts[0]?.trim() ?? "";
+    if (!localName) continue;
+    const item: HolidayItem = {
+      localName,
+      englishName: parts[1]?.trim() ?? "",
+      date: parts[2]?.trim() || undefined,
     };
-    const dateHint = hasDateField ? parts[2]?.trim() : undefined;
-    if (dateHint) item.date = dateHint;
     items.push(item);
   }
   return items;
@@ -75,9 +69,9 @@ export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
     );
   }
 
-  const events =
-    planning.relevantEvents ? parseEvents(planning.relevantEvents) : null;
-  const eventsReady = planning.relevantEvents !== undefined;
+  const holidays =
+    planning.relevantEvents ? parseHolidays(planning.relevantEvents) : null;
+  const holidaysReady = planning.relevantEvents !== undefined;
 
   return (
     <Artifact className="size-full">
@@ -141,14 +135,14 @@ export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
             </div>
           </div>
 
-          {/* Relevant Events */}
+          {/* National Holidays */}
           <div className="rounded-lg border bg-muted/30 p-4">
             <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               <GlobeIcon className="size-3.5" />
-              Relevant Events
+              National Holidays
             </div>
 
-            {!eventsReady ? (
+            {!holidaysReady ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="space-y-1.5">
@@ -158,38 +152,35 @@ export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
                   </div>
                 ))}
               </div>
-            ) : events && events.length > 0 ? (
+            ) : holidays && holidays.length > 0 ? (
               <div className="space-y-3">
-                {events.map((event, idx) => (
+                {holidays.map((holiday, idx) => (
                   <div key={idx}>
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-medium leading-snug text-foreground">
-                        {event.title}
-                      </p>
-                      <div className="mt-0.5 flex shrink-0 flex-wrap gap-1">
-                        {event.date && (
-                          <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                            <CalendarIcon className="size-3" />
-                            {event.date}
-                          </span>
+                      <div>
+                        <p className="text-sm font-medium leading-snug text-foreground">
+                          {holiday.localName}
+                        </p>
+                        {holiday.englishName && holiday.englishName !== holiday.localName && (
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {holiday.englishName}
+                          </p>
                         )}
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                          {event.scope}
-                        </span>
                       </div>
+                      {holiday.date && (
+                        <span className="mt-0.5 flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                          <CalendarIcon className="size-3" />
+                          {holiday.date}
+                        </span>
+                      )}
                     </div>
-                    {event.snippet && (
-                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                        {event.snippet}
-                      </p>
-                    )}
-                    {idx < events.length - 1 && <div className="mt-3 border-t" />}
+                    {idx < holidays.length - 1 && <div className="mt-3 border-t" />}
                   </div>
                 ))}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                No relevant events found for this period.
+                No national holidays found for this period.
               </p>
             )}
           </div>

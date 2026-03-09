@@ -1,6 +1,5 @@
 """Planning subgraph for the agent."""
 
-import asyncio
 import calendar
 import os
 from dataclasses import replace
@@ -9,11 +8,11 @@ from typing import Any, Dict
 
 import httpx
 from langchain_core.callbacks.manager import adispatch_custom_event
-from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph
+from langgraph.prebuilt import create_react_agent
 from tavily import TavilyClient
 
 from agent.state import PlanningState, State
@@ -30,8 +29,6 @@ query Location($id: ID!) {
 }
 """
 
-_date_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-
 
 # ---------------------------------------------------------------------------
 # Date helpers
@@ -40,7 +37,7 @@ _date_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 @tool
 def get_current_date() -> str:
-    """Returns today's date in YYYY-MM-DD format."""
+    """Return today's date in YYYY-MM-DD format."""
     return datetime.now().strftime("%Y-%m-%d")
 
 
@@ -98,101 +95,51 @@ async def _fetch_location(config: RunnableConfig) -> tuple[str | None, str | Non
     return city, country
 
 
-async def _search_scope(
-    client: TavilyClient,
-    scope_label: str,
-    query: str,
-    step_key: str,
-    config: RunnableConfig,
-) -> list[dict]:
-    """Run a single Tavily search for one geographic scope and return normalised results."""
-    await _emit(step_key, "running", f"Looking for relevant events in {scope_label}...", config)
-    results: list[dict] = []
-    try:
-        raw = await asyncio.to_thread(client.search, query=query, max_results=5)
-        for r in raw.get("results", []):
-            results.append({
-                "scope": scope_label,
-                "title": r.get("title", ""),
-                "content": r.get("content", ""),
-                "url": r.get("url", ""),
-            })
-    except Exception:
-        pass
-    await _emit(step_key, "done", f"Searched events in {scope_label}", config)
-    return results
+@tool
+def web_search(query: str) -> str:
+    """Search the web and return a summary of results for the given query."""
+    client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
+    raw = client.search(query=query, max_results=10)
+    results = raw.get("results", [])
+    return "\n\n".join(f"{r['title']}\n{r['content']}" for r in results)
 
 
-async def _extract_date_hints(
-    deduped: list[dict],
+async def _search_public_holidays(
+    country: str,
     date_start: str,
     date_end: str,
-) -> list[str]:
-    """Ask the LLM to extract a concise date hint for each event in one batch call."""
-    date_hints: list[str] = [""] * len(deduped)
-    if not deduped:
-        return date_hints
+) -> str | None:
+    """Run a ReAct agent to find all public holidays in country within the date range."""
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    agent = create_react_agent(
+        model=llm,
+        tools=[web_search],
+        prompt=(
+            "You are a public holiday research assistant. "
+            "Your task is to find ALL official public (national) holidays. "
+            "Run multiple targeted web searches until you are confident the list is complete. "
+            "If the date range spans multiple months or years, search per year and per month as needed. "
+            "Format your final answer ONLY as a newline-separated list with no extra commentary:\n"
+            "  Local Name|English Name|YYYY-MM-DD\n"
+            "Where 'Local Name' is the official name of the holiday in the local language of the country, "
+            "'English Name' is the English translation, and 'YYYY-MM-DD' is the exact date. "
+            "Only include holidays that fall within the requested date range."
+        ),
+    )
     try:
-        items_text = "\n".join(
-            f"{i + 1}. Title: {r['title']}\nContent: {r['content'][:300]}"
-            for i, r in enumerate(deduped)
-        )
-        prompt = (
-            f"Campaign period: {date_start} to {date_end}.\n\n"
-            f"For each event below extract the most specific date hint you can.\n"
-            f"Rules:\n"
-            f"- Use DD.MM for exact dates (e.g. 31.12)\n"
-            f"- Use month name for month-only (e.g. Late April)\n"
-            f"- Use a short range for multi-day events (e.g. Apr 1-7)\n"
-            f"- Return an empty string if nothing identifiable\n"
-            f"Reply ONLY with a numbered list matching the input order, one date hint per line "
-            f"(e.g. '1. 31.12'). Do not include any other text.\n\n"
-            f"{items_text}"
-        )
-        response = await _date_llm.ainvoke([HumanMessage(content=prompt)])
-        raw_lines = response.content.strip().split("\n")
-        parsed_hints: list[str] = []
-        for line in raw_lines:
-            parts = line.split(".", 1)
-            hint = parts[-1].strip() if len(parts) > 1 else line.strip()
-            parsed_hints.append(hint)
-        date_hints = (parsed_hints + [""] * len(deduped))[: len(deduped)]
+        result = await agent.ainvoke({
+            "messages": [{
+                "role": "user",
+                "content": (
+                    f"Find all public holidays in {country} "
+                    f"from {date_start} to {date_end}."
+                ),
+            }]
+        })
+        content = result["messages"][-1].content
+        return content.strip() if content else None
     except Exception:
-        pass
-    return date_hints
-
-
-async def _compile_events(
-    all_results: list[dict],
-    date_start: str | None,
-    date_end: str | None,
-) -> tuple[str | None, int]:
-    """Deduplicate results, extract date hints, and render the pipe-delimited event string."""
-    if not all_results:
-        return None, 0
-
-    seen_titles: set[str] = set()
-    deduped: list[dict] = []
-    for r in all_results:
-        title = r["title"].strip()
-        if not title or title in seen_titles:
-            continue
-        seen_titles.add(title)
-        deduped.append(r)
-
-    date_hints: list[str] = [""] * len(deduped)
-    if date_start and date_end:
-        date_hints = await _extract_date_hints(deduped, date_start, date_end)
-
-    lines: list[str] = []
-    for i, r in enumerate(deduped):
-        content = r["content"].strip()
-        snippet = content[:200].rstrip() + ("..." if len(content) > 200 else "")
-        date_hint = date_hints[i] if i < len(date_hints) else ""
-        lines.append(f"{r['title'].strip()}|{r['scope']}|{date_hint}|{snippet}")
-
-    relevant_events = "\n".join(lines) if lines else None
-    return relevant_events, len(deduped)
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -207,53 +154,34 @@ async def generate_plan(state: State) -> Dict[str, Any]:
 
 
 async def search_relevant_events(state: State, config: RunnableConfig) -> Dict[str, Any]:
-    """Search for relevant events in the campaign timeframe at city, country, and world level."""
+    """Search for public holidays in the campaign location's country within the campaign timeframe."""
     planning = state.planning
     date_start = planning.dateStart if planning else None
     date_end = planning.dateEnd if planning else None
-    date_context = f" between {date_start} and {date_end}" if date_start and date_end else ""
 
-    city, country = await _fetch_location(config)
+    _, country = await _fetch_location(config)
 
-    all_results: list[dict] = []
-    tavily_api_key = os.environ.get("TAVILY_API_KEY")
-    if tavily_api_key and date_start and date_end:
-        client = TavilyClient(api_key=tavily_api_key)
-        search_tasks = []
-        if city:
-            search_tasks.append(_search_scope(
-                client, city,
-                f"major events festivals holidays {city}{date_context}",
-                "search_city", config,
-            ))
-        if country:
-            search_tasks.append(_search_scope(
-                client, country,
-                f"national events public holidays sporting events {country}{date_context}",
-                "search_country", config,
-            ))
-        search_tasks.append(_search_scope(
-            client, "World",
-            f"major world events global holidays sporting tournaments cultural events{date_context}",
-            "search_world", config,
-        ))
-        gathered = await asyncio.gather(*search_tasks, return_exceptions=True)
-        for chunk in gathered:
-            if isinstance(chunk, list):
-                all_results.extend(chunk)
-
-    relevant_events, event_count = await _compile_events(all_results, date_start, date_end)
-
-    if relevant_events:
-        scope_label = city or country or "this region"
-        await _emit("search_events_done", "done", f"Found {event_count} relevant event(s) in {scope_label}", config)
+    holidays_str: str | None = None
+    if country and date_start and date_end and os.environ.get("TAVILY_API_KEY"):
+        await _emit(
+            "search_holidays", "running",
+            f"Searching public holidays in {country}...",
+            config,
+        )
+        holidays_str = await _search_public_holidays(country, date_start, date_end)
+        holiday_count = len([l for l in (holidays_str or "").splitlines() if l.strip()]) if holidays_str else 0
+        await _emit(
+            "search_holidays", "done",
+            f"Found {holiday_count} public holiday(s) in {country}",
+            config,
+        )
     else:
-        await _emit("search_events_done", "done", "No relevant events found", config)
+        await _emit("search_holidays", "done", "No public holidays found", config)
 
     updated_planning = (
-        replace(planning, relevantEvents=relevant_events)
+        replace(planning, relevantEvents=holidays_str)
         if planning
-        else PlanningState(relevantEvents=relevant_events)
+        else PlanningState(relevantEvents=holidays_str)
     )
     return {"planning": updated_planning}
 
