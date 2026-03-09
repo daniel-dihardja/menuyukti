@@ -137,7 +137,23 @@ async def _search_public_holidays(
             }]
         })
         content = result["messages"][-1].content
-        return content.strip() if content else None
+        if not content:
+            return None
+        start_dt = datetime.strptime(date_start, "%Y-%m-%d").date()
+        end_dt = datetime.strptime(date_end, "%Y-%m-%d").date()
+        filtered_lines = []
+        for line in content.strip().splitlines():
+            parts = line.split("|")
+            if len(parts) < 3:
+                continue
+            date_str = parts[2].strip()
+            try:
+                entry_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                if start_dt <= entry_date <= end_dt:
+                    filtered_lines.append(line)
+            except ValueError:
+                filtered_lines.append(line)
+        return "\n".join(filtered_lines) if filtered_lines else None
     except Exception:
         return None
 
