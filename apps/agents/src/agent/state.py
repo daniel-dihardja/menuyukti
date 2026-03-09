@@ -6,6 +6,8 @@ from typing import Literal, TypedDict
 # Intent category: top-level classification (extend with more later, e.g. "content")
 IntentCategory = Literal["planning"]
 
+HolidayType = Literal["public", "regional", "religious_observance", "unknown"]
+
 
 class NationalHoliday(TypedDict):
     """A single national/public holiday entry."""
@@ -13,6 +15,7 @@ class NationalHoliday(TypedDict):
     localName: str
     name: str
     date: str
+    type: HolidayType
 
 
 @dataclass
