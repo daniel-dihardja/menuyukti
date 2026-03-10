@@ -6,7 +6,6 @@ import os
 from dotenv import load_dotenv
 
 from sqlalchemy import (
-    Boolean,
     CheckConstraint,
     Column,
     Date,
@@ -237,32 +236,6 @@ class Campaign(Base):
         ),
     )
 
-
-class OperatingProfileSummary(Base):
-    """
-    Cache for LLM-generated operating profile summaries.
-
-    Keyed by (analytics_run_id, prompt_version) so bumping the prompt version
-    forces regeneration without losing prior summaries.
-    """
-
-    __tablename__ = "operating_profile_summary"
-
-    id = Column(Integer, primary_key=True)
-    location_id = Column(Integer, ForeignKey("location.id"), nullable=False, index=True)
-    analytics_run_id = Column(Integer, ForeignKey("analytics_run.id"), nullable=False)
-    operating_summary = Column(Text, nullable=False)
-    prompt_version = Column(String(32), nullable=False, default="v1")
-    model = Column(String(64), nullable=False, default="gpt-4o-mini")
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    __table_args__ = (
-        UniqueConstraint(
-            "analytics_run_id",
-            "prompt_version",
-            name="uq_ops_summary_run_prompt",
-        ),
-    )
 
 
 def init_db(target_engine=None) -> None:

@@ -2,10 +2,8 @@ from typing import Optional
 
 import strawberry
 
-from graphql.data_sources import AnalyticsRun, OperatingProfileSummary, OrderFact, SessionLocal
+from graphql.data_sources import AnalyticsRun, OrderFact, SessionLocal
 from menuyukti.core.analytics import compute_operating_profile_from_orders
-
-_CURRENT_PROMPT_VERSION = "v2"
 
 
 @strawberry.type
@@ -54,7 +52,6 @@ class OperatingProfileType:
     meal_period_breakdown: list[MealPeriodBreakdownType]
     operating_pattern: str
     dining_focus: str
-    operating_summary: Optional[str] = None
 
 
 def _result_to_type(result) -> OperatingProfileType:
@@ -145,15 +142,6 @@ class OperatingProfileQuery:
             if result is None:
                 return None
 
-            profile = _result_to_type(result)
-
-            cached = (
-                session.query(OperatingProfileSummary)
-                .filter_by(analytics_run_id=run.id, prompt_version=_CURRENT_PROMPT_VERSION)
-                .first()
-            )
-            profile.operating_summary = cached.operating_summary if cached else None
-
-            return profile
+            return _result_to_type(result)
         finally:
             session.close()

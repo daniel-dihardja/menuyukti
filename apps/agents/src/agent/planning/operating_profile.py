@@ -1,37 +1,16 @@
 """Planning nodes: fetch operating profile and generate LLM location summary."""
 
-import asyncio
 import logging
 from typing import Any
 
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 
-from agent.planning.utils import _emit, _gql, _update_planning
+from agent.planning.utils import _emit, _update_planning
 from agent.state import State
 
 logger = logging.getLogger(__name__)
 
-
-_SAVE_OPERATING_SUMMARY_MUTATION = """
-mutation SaveOperatingSummary(
-  $locationId: ID!
-  $analyticsRunId: ID!
-  $operatingSummary: String!
-  $promptVersion: String!
-  $model: String!
-) {
-  saveOperatingSummary(
-    locationId: $locationId
-    analyticsRunId: $analyticsRunId
-    operatingSummary: $operatingSummary
-    promptVersion: $promptVersion
-    model: $model
-  )
-}
-"""
-
-_SUMMARY_PROMPT_VERSION = "v2"
 
 _LOCATION_SUMMARY_PROMPT = """You are a marketing analyst helping a restaurant build an Instagram content strategy.
 
@@ -80,32 +59,6 @@ Menu sub-category breakdown:
 _summary_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.4)
 
 
-async def _persist_summary(
-    location_id: Any,
-    analytics_id: Any,
-    summary: str,
-    model_name: str,
-) -> None:
-    """Persist the generated operating summary to the database (fire-and-forget)."""
-    try:
-        await _gql(
-            _SAVE_OPERATING_SUMMARY_MUTATION,
-            {
-                "locationId": str(location_id),
-                "analyticsRunId": str(analytics_id),
-                "operatingSummary": summary,
-                "promptVersion": _SUMMARY_PROMPT_VERSION,
-                "model": model_name,
-            },
-        )
-    except Exception:
-        logger.exception(
-            "Failed to persist operating summary for location_id=%s analytics_id=%s",
-            location_id,
-            analytics_id,
-        )
-
-
 async def generate_location_summary(state: State, config: RunnableConfig) -> dict[str, Any]:
     """Generate a marketing-oriented semantic description of the restaurant using the LLM."""
     await _emit("generate_location_summary", "running", "Generating location profile summary...", config)
@@ -113,10 +66,6 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
     planning = state.planning
     profile = planning.operatingProfile if planning else None
     summary: str | None = None
-
-    if profile and profile.get("operatingSummary"):
-        await _emit("generate_location_summary", "done", "Location profile summary ready (cached)", config)
-        return {"planning": _update_planning(planning, locationSummary=profile["operatingSummary"])}
 
     if profile:
         location = (planning.location if planning else None) or {}
@@ -188,14 +137,6 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
             summary = result.content if hasattr(result, "content") else str(result)
         except Exception:
             logger.exception("Failed to generate location summary")
-
-        if summary:
-            configurable = config.get("configurable") or {}
-            location_id = configurable.get("location_id")
-            analytics_id = configurable.get("analytics_id")
-            asyncio.create_task(
-                _persist_summary(location_id, analytics_id, summary, _summary_llm.model_name)
-            )
 
     await _emit("generate_location_summary", "done", "Location profile summary ready", config)
     return {"planning": _update_planning(planning, locationSummary=summary)}
