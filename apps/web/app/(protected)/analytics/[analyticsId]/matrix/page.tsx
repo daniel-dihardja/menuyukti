@@ -9,7 +9,12 @@ import { notFound } from "next/navigation";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
 import { graphqlQuery } from "@/lib/graphql/client";
-import { ANALYTICS_RUN_QUERY, type AnalyticsRunData } from "@/lib/graphql/queries";
+import {
+  ANALYTICS_RUN_QUERY,
+  MENU_ENGINEERING_MATRIX_QUERY,
+  type AnalyticsRunData,
+  type MenuEngineeringMatrixData,
+} from "@/lib/graphql/queries";
 import { getAppCurrencyCode, getAppCurrencyLocale } from "@/lib/app-currency";
 import { matrixItemsToGroupedRows } from "@/lib/analytics/matrix-page-adapter";
 import { MatrixCategoryTables } from "./matrix-category-tables";
@@ -28,16 +33,19 @@ export default async function Page({ params }: PageProps) {
   const analyticsId = Number(analyticsIdParam);
   if (!Number.isInteger(analyticsId)) notFound();
 
-  const data = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, {
-    id: String(analyticsId),
-  });
-  const run = data.analyticsRun;
+  const id = String(analyticsId);
+  const [runData, matrixData] = await Promise.all([
+    graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }),
+    graphqlQuery<MenuEngineeringMatrixData>(MENU_ENGINEERING_MATRIX_QUERY, { id }),
+  ]);
+
+  const run = runData.analyticsRun;
   if (!run) notFound();
 
   const analyticsName =
     run.name ?? run.filename ?? `Analytics #${run.id}`;
 
-  const items = run.menuEngineeringMatrix?.items ?? null;
+  const items = matrixData.menuEngineeringMatrix?.items ?? null;
   const grouped = matrixItemsToGroupedRows(items);
   const totalItems =
     grouped.star.length +

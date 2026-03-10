@@ -9,7 +9,12 @@ import { PageHeading } from "@/components/page-heading";
 import { Button } from "@workspace/ui/components/button";
 import Link from "next/link";
 import { graphqlQuery } from "@/lib/graphql/client";
-import { ANALYTICS_RUN_QUERY, type AnalyticsRunData } from "@/lib/graphql/queries";
+import {
+  ANALYTICS_RUN_QUERY,
+  MENU_HEATMAPS_QUERY,
+  type AnalyticsRunData,
+  type MenuHeatmapsData,
+} from "@/lib/graphql/queries";
 import {
   DAILY_HEATMAP_END_HOUR,
   DAILY_HEATMAP_START_HOUR,
@@ -31,21 +36,25 @@ export default async function Page({ params }: PageProps) {
   const analyticsId = Number(analyticsIdParam);
   if (!Number.isInteger(analyticsId)) notFound();
 
-  const data = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, {
-    id: String(analyticsId),
-  });
-  const run = data.analyticsRun;
+  const id = String(analyticsId);
+  const [runData, heatmapsData] = await Promise.all([
+    graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }),
+    graphqlQuery<MenuHeatmapsData>(MENU_HEATMAPS_QUERY, { id }),
+  ]);
+
+  const run = runData.analyticsRun;
   if (!run) notFound();
 
   const analyticsName =
     run.name ?? run.filename ?? `Analytics #${run.id}`;
 
+  const menuHeatmaps = heatmapsData.menuHeatmaps ?? [];
   const dailyMatrix = adaptDailyHeatmapMatrix(
-    run.menuHeatmaps,
+    menuHeatmaps,
     DAILY_HEATMAP_START_HOUR,
     DAILY_HEATMAP_END_HOUR,
   );
-  const weeklyMatrix = adaptWeeklyHeatmapMatrix(run.menuHeatmaps);
+  const weeklyMatrix = adaptWeeklyHeatmapMatrix(menuHeatmaps);
 
   return (
     <AnalyticsPageShell

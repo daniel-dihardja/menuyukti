@@ -31,23 +31,17 @@ mutation UploadFile($file: Upload!, $locationId: ID!) {
 
 HEATMAPS_QUERY = """
 query AnalyticsRunMenuHeatmaps($id: ID!) {
-  analyticsRun(id: $id) {
-    id
-    filename
-    periodStart
-    periodEnd
-    menuHeatmaps {
-      menu
-      menuCategory
-      menuCategoryDetail
-      dailyHeatmap {
-        hour
-        quantity
-      }
-      weeklyHeatmap {
-        day
-        quantity
-      }
+  menuHeatmaps(analyticsRunId: $id) {
+    menu
+    menuCategory
+    menuCategoryDetail
+    dailyHeatmap {
+      hour
+      quantity
+    }
+    weeklyHeatmap {
+      day
+      quantity
     }
   }
 }
@@ -134,9 +128,8 @@ def test_menu_heatmaps_with_qa_data(analytics_run_with_qa_data):
     )
     assert not query_result.errors
 
-    run_data = query_result.data["analyticsRun"]
-    assert run_data is not None
-    menu_heatmaps = run_data["menuHeatmaps"]
+    menu_heatmaps = query_result.data["menuHeatmaps"]
+    assert menu_heatmaps is not None
     graphql_normalized = _normalize_graphql_heatmaps(menu_heatmaps)
 
     assert len(graphql_normalized) == len(expected_normalized)
@@ -233,11 +226,8 @@ def test_menu_heatmaps_match_menuyukti_calculation(tmp_path):
     )
     assert not query_result.errors
 
-    run_data = query_result.data["analyticsRun"]
-    assert run_data is not None, "Expected analyticsRun for uploaded report"
-    assert run_data["filename"] == REPORT_FILE.name
-
-    menu_heatmaps = run_data["menuHeatmaps"]
+    menu_heatmaps = query_result.data["menuHeatmaps"]
+    assert menu_heatmaps is not None, "Expected menuHeatmaps for uploaded report"
     graphql_normalized = _normalize_graphql_heatmaps(menu_heatmaps)
 
     # Expect the same number of menu heatmaps and identical ordering.

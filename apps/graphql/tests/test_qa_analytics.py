@@ -28,48 +28,41 @@ query AnalyticsRunOrderMetrics($id: ID!) {
     filename
     periodStart
     periodEnd
-    orderMetrics {
-      avgOrderSize
-      avgOrderRevenue
-    }
+  }
+  orderMetrics(analyticsRunId: $id) {
+    avgOrderSize
+    avgOrderRevenue
   }
 }
 """
 
 HEATMAPS_QUERY = """
 query AnalyticsRunMenuHeatmaps($id: ID!) {
-  analyticsRun(id: $id) {
-    id
-    filename
-    menuHeatmaps {
-      menu
-      menuCategory
-      menuCategoryDetail
-      dailyHeatmap { hour quantity }
-      weeklyHeatmap { day quantity }
-    }
+  menuHeatmaps(analyticsRunId: $id) {
+    menu
+    menuCategory
+    menuCategoryDetail
+    dailyHeatmap { hour quantity }
+    weeklyHeatmap { day quantity }
   }
 }
 """
 
 MENU_ENGINEERING_MATRIX_QUERY = """
 query MenuEngineeringMatrix($runId: ID!) {
-  analyticsRun(id: $runId) {
-    id
-    menuEngineeringMatrix {
-      thresholds {
-        avgPopularity
-        avgContributionMargin
-        totalCogs
-        totalProfit
-        totalMargin
-      }
-      distribution { category itemCount itemShare marginShare }
-      items {
-        menu quantity totalRevenue cogs totalCogs contributionMargin
-        contributionMarginPercentage marginPerUnit weValue category action
-        menuCategory menuCategoryDetail
-      }
+  menuEngineeringMatrix(analyticsRunId: $runId) {
+    thresholds {
+      avgPopularity
+      avgContributionMargin
+      totalCogs
+      totalProfit
+      totalMargin
+    }
+    distribution { category itemCount itemShare marginShare }
+    items {
+      menu quantity totalRevenue cogs totalCogs contributionMargin
+      contributionMarginPercentage marginPerUnit weValue category action
+      menuCategory menuCategoryDetail
     }
   }
 }
@@ -156,7 +149,7 @@ def test_qa_order_metrics(analytics_run_with_qa_data, qa_sales_rows):
 
     run_data = result.data["analyticsRun"]
     assert run_data is not None
-    metrics = run_data["orderMetrics"]
+    metrics = result.data["orderMetrics"]
     assert metrics is not None
 
     assert pytest.approx(float(metrics["avgOrderSize"]), rel=1e-6) == expected_avg_size
@@ -185,9 +178,8 @@ def test_qa_menu_heatmaps(analytics_run_with_qa_data, qa_sales_rows):
     )
     assert not result.errors
 
-    run_data = result.data["analyticsRun"]
-    assert run_data is not None
-    menu_heatmaps = run_data["menuHeatmaps"]
+    menu_heatmaps = result.data["menuHeatmaps"]
+    assert menu_heatmaps is not None
     got = _normalize_heatmaps(menu_heatmaps)
 
     assert len(got) == len(expected)
@@ -213,9 +205,7 @@ def test_qa_menu_engineering_matrix(analytics_run_with_qa_data, qa_cogs_by_menu)
     )
     assert not result.errors
 
-    run_data = result.data["analyticsRun"]
-    assert run_data is not None
-    matrix = run_data["menuEngineeringMatrix"]
+    matrix = result.data["menuEngineeringMatrix"]
     assert matrix is not None
 
     th = matrix["thresholds"]
@@ -260,9 +250,8 @@ def test_qa_menu_engineering_matrix_none_without_cogs(analytics_run_with_qa_sale
     )
     assert not result.errors
 
-    run_data = result.data["analyticsRun"]
-    assert run_data is not None
-    assert run_data["menuEngineeringMatrix"] is None
+    matrix = result.data["menuEngineeringMatrix"]
+    assert matrix is None
 
 
 def test_qa_menu_item_cogs(analytics_run_with_qa_data, qa_cogs_by_menu):

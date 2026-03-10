@@ -31,38 +31,34 @@ mutation UploadFile($file: Upload!, $locationId: ID!) {
 
 MENU_ENGINEERING_MATRIX_QUERY = """
 query MenuEngineeringMatrix($runId: ID!) {
-  analyticsRun(id: $runId) {
-    id
-    filename
-    menuEngineeringMatrix {
-      thresholds {
-        avgPopularity
-        avgContributionMargin
-        totalCogs
-        totalProfit
-        totalMargin
-      }
-      distribution {
-        category
-        itemCount
-        itemShare
-        marginShare
-      }
-      items {
-        menu
-        quantity
-        totalRevenue
-        cogs
-        totalCogs
-        contributionMargin
-        contributionMarginPercentage
-        marginPerUnit
-        weValue
-        category
-        action
-        menuCategory
-        menuCategoryDetail
-      }
+  menuEngineeringMatrix(analyticsRunId: $runId) {
+    thresholds {
+      avgPopularity
+      avgContributionMargin
+      totalCogs
+      totalProfit
+      totalMargin
+    }
+    distribution {
+      category
+      itemCount
+      itemShare
+      marginShare
+    }
+    items {
+      menu
+      quantity
+      totalRevenue
+      cogs
+      totalCogs
+      contributionMargin
+      contributionMarginPercentage
+      marginPerUnit
+      weValue
+      category
+      action
+      menuCategory
+      menuCategoryDetail
     }
   }
 }
@@ -101,9 +97,7 @@ def test_menu_engineering_matrix_with_qa_data(analytics_run_with_qa_data, qa_cog
     )
     assert not query_result.errors
 
-    run_data = query_result.data["analyticsRun"]
-    assert run_data is not None
-    matrix = run_data["menuEngineeringMatrix"]
+    matrix = query_result.data["menuEngineeringMatrix"]
     assert matrix is not None
 
     th = matrix["thresholds"]
@@ -132,9 +126,8 @@ def test_menu_engineering_matrix_none_without_cogs(analytics_run_with_qa_sales_o
     )
     assert not query_result.errors
 
-    run_data = query_result.data["analyticsRun"]
-    assert run_data is not None
-    assert run_data["menuEngineeringMatrix"] is None
+    matrix = query_result.data["menuEngineeringMatrix"]
+    assert matrix is None
 
 
 def test_menu_engineering_matrix_query_returns_matrix_with_cogs_from_json():
@@ -225,11 +218,7 @@ def test_menu_engineering_matrix_query_returns_matrix_with_cogs_from_json():
     )
     assert not query_result.errors, query_result.errors
 
-    run_data = query_result.data["analyticsRun"]
-    assert run_data is not None
-    assert run_data["filename"] == REPORT_FILE.name
-
-    matrix = run_data["menuEngineeringMatrix"]
+    matrix = query_result.data["menuEngineeringMatrix"]
     assert matrix is not None, "menuEngineeringMatrix should be computed when COGS are set"
 
     thresholds = matrix["thresholds"]

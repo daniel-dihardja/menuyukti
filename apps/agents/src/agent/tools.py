@@ -6,6 +6,7 @@ and therefore never visible to or controllable by the LLM.
 """
 
 import os
+from typing import Optional
 
 import httpx
 from langchain_core.runnables import RunnableConfig
@@ -65,6 +66,79 @@ query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
 }
 """
 
+_ORDER_METRICS_QUERY = """
+query OrderMetrics($analyticsRunId: ID!) {
+  orderMetrics(analyticsRunId: $analyticsRunId) {
+    avgOrderSize
+    avgOrderRevenue
+  }
+}
+"""
+
+_MENU_HEATMAPS_QUERY = """
+query MenuHeatmaps($analyticsRunId: ID!) {
+  menuHeatmaps(analyticsRunId: $analyticsRunId) {
+    menu
+    menuCategory
+    menuCategoryDetail
+    dailyHeatmap {
+      hour
+      quantity
+    }
+    weeklyHeatmap {
+      day
+      quantity
+    }
+  }
+}
+"""
+
+_MENU_ENGINEERING_MATRIX_QUERY = """
+query MenuEngineeringMatrix($analyticsRunId: ID!, $categories: [String!]) {
+  menuEngineeringMatrix(analyticsRunId: $analyticsRunId, categories: $categories) {
+    thresholds {
+      avgPopularity
+      avgContributionMargin
+      totalCogs
+      totalProfit
+      totalMargin
+    }
+    distribution {
+      category
+      itemCount
+      itemShare
+      marginShare
+    }
+    items {
+      menu
+      quantity
+      totalRevenue
+      cogs
+      totalCogs
+      contributionMargin
+      contributionMarginPercentage
+      marginPerUnit
+      weValue
+      category
+      action
+      menuCategory
+      menuCategoryDetail
+    }
+  }
+}
+"""
+
+
+def _graphql_post(query: str, variables: dict) -> dict:
+    endpoint = os.environ["GRAPHQL_ENDPOINT"]
+    res = httpx.post(
+        endpoint,
+        json={"query": query, "variables": variables},
+        timeout=30,
+    )
+    res.raise_for_status()
+    return res.json().get("data") or {}
+
 
 @tool
 def get_location(config: RunnableConfig) -> dict:
@@ -72,14 +146,8 @@ def get_location(config: RunnableConfig) -> dict:
     location_id = (config.get("configurable") or {}).get("location_id")
     if location_id is None:
         return {}
-    endpoint = os.environ["GRAPHQL_ENDPOINT"]
-    res = httpx.post(
-        endpoint,
-        json={"query": _LOCATION_QUERY, "variables": {"id": str(location_id)}},
-        timeout=10,
-    )
-    res.raise_for_status()
-    return res.json().get("data", {}).get("location") or {}
+    data = _graphql_post(_LOCATION_QUERY, {"id": str(location_id)})
+    return data.get("location") or {}
 
 
 @tool
@@ -90,17 +158,50 @@ def get_operating_profile(config: RunnableConfig) -> dict:
     analytics_id = configurable.get("analytics_id")
     if location_id is None or analytics_id is None:
         return {}
-    endpoint = os.environ["GRAPHQL_ENDPOINT"]
-    res = httpx.post(
-        endpoint,
-        json={
-            "query": _OPERATING_PROFILE_QUERY,
-            "variables": {
-                "locationId": str(location_id),
-                "analyticsRunId": str(analytics_id),
-            },
+    data = _graphql_post(
+        _OPERATING_PROFILE_QUERY,
+        {
+            "locationId": str(location_id),
+            "analyticsRunId": str(analytics_id),
         },
-        timeout=10,
     )
-    res.raise_for_status()
-    return res.json().get("data", {}).get("operatingProfile") or {}
+    return data.get("operatingProfile") or {}
+
+
+@tool
+def get_order_metrics(config: RunnableConfig) -> dict:
+    """Fetches average order size (number of items per bill) and average order revenue for the current analytics run."""
+    analytics_id = (config.get("configurable") or {}).get("analytics_id")
+    if analytics_id is None:
+        return {}
+    data = _graphql_post(_ORDER_METRICS_QUERY, {"analyticsRunId": str(analytics_id)})
+    return data.get("orderMetrics") or {}
+
+
+@tool
+def get_menu_heatmaps(config: RunnableConfig) -> list:
+    """Fetches hourly and day-of-week demand heatmaps for every menu item in the current analytics run. Use this to identify peak selling times per dish."""
+    analytics_id = (config.get("configurable") or {}).get("analytics_id")
+    if analytics_id is None:
+        return []
+    data = _graphql_post(_MENU_HEATMAPS_QUERY, {"analyticsRunId": str(analytics_id)})
+    return data.get("menuHeatmaps") or []
+
+
+@tool
+def get_menu_engineering_matrix(
+    config: RunnableConfig,
+    categories: Optional[list[str]] = None,
+) -> dict:
+    """Fetches the menu engineering BCG matrix for the current analytics run. Returns item-level classification (star, puzzle, plow_horse, low_end), portfolio thresholds, and recommended actions. Requires COGS to be configured. Optionally pass categories to filter items to a specific quadrant."""
+    analytics_id = (config.get("configurable") or {}).get("analytics_id")
+    if analytics_id is None:
+        return {}
+    data = _graphql_post(
+        _MENU_ENGINEERING_MATRIX_QUERY,
+        {
+            "analyticsRunId": str(analytics_id),
+            "categories": categories,
+        },
+    )
+    return data.get("menuEngineeringMatrix") or {}

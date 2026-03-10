@@ -17,25 +17,30 @@ from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
 )
 
 
-@strawberry.type
+@strawberry.type(description="Average order size and revenue for an analytics run.")
 class AnalyticsRunOrderMetricsType:
     avgOrderSize: float
     avgOrderRevenue: float
 
 
-@strawberry.type
+@strawberry.type(description="Hourly demand distribution for a menu item.")
 class DailyHeatmapType:
     hour: int
     quantity: int
 
 
-@strawberry.type
+@strawberry.type(description="Day-of-week demand distribution for a menu item.")
 class WeeklyHeatmapType:
     day: str
     quantity: int
 
 
-@strawberry.type
+@strawberry.type(
+    description=(
+        "Hourly and day-of-week demand heatmaps for a single menu item. "
+        "Use this to understand when a dish sells best."
+    )
+)
 class MenuHeatmapType:
     menu: str
     menu_category: Optional[str]
@@ -44,7 +49,12 @@ class MenuHeatmapType:
     weekly_heatmap: list[WeeklyHeatmapType]
 
 
-@strawberry.type
+@strawberry.type(
+    description=(
+        "Portfolio-level thresholds used to classify menu items in the engineering matrix. "
+        "avgPopularity and avgContributionMargin are the BCG quadrant cut-off values."
+    )
+)
 class MenuEngineeringThresholdsType:
     avgPopularity: float
     avgContributionMargin: float
@@ -53,7 +63,9 @@ class MenuEngineeringThresholdsType:
     totalMargin: float
 
 
-@strawberry.type
+@strawberry.type(
+    description="Share of items and margin contribution per BCG category (star, puzzle, plow_horse, low_end)."
+)
 class MenuEngineeringDistributionItemType:
     category: str
     itemCount: int
@@ -61,7 +73,12 @@ class MenuEngineeringDistributionItemType:
     marginShare: float
 
 
-@strawberry.type
+@strawberry.type(
+    description=(
+        "A single menu item's position in the menu engineering BCG matrix, including its "
+        "classification (star, puzzle, plow_horse, low_end) and recommended action."
+    )
+)
 class MenuEngineeringMatrixItemType:
     menu: str
     quantity: int
@@ -78,14 +95,24 @@ class MenuEngineeringMatrixItemType:
     menuCategoryDetail: Optional[str]
 
 
-@strawberry.type
+@strawberry.type(
+    description=(
+        "Full menu engineering BCG matrix for an analytics run. "
+        "Contains portfolio thresholds, per-category distribution, and per-item classification."
+    )
+)
 class MenuEngineeringMatrixType:
     thresholds: MenuEngineeringThresholdsType
     distribution: list[MenuEngineeringDistributionItemType]
     items: list[MenuEngineeringMatrixItemType]
 
 
-@strawberry.type
+@strawberry.type(
+    description=(
+        "Metadata for a single analytics run — period, POS system, and per-menu COGS records. "
+        "Use menuEngineeringMatrix, menuHeatmaps, or orderMetrics queries for computed analytics."
+    )
+)
 class AnalyticsRunType:
     id: strawberry.ID
     name: str
@@ -96,29 +123,18 @@ class AnalyticsRunType:
     createdAt: datetime
     locationId: int
     menuItemCogs: list[MenuItemCogsType]
-    orderMetrics: AnalyticsRunOrderMetricsType
-    menu_heatmaps: list[MenuHeatmapType]
-    _matrix: strawberry.Private[Optional[MenuEngineeringMatrixType]]
 
-    @strawberry.field
-    def menu_engineering_matrix(
-        self, categories: Optional[list[str]] = None
-    ) -> Optional[MenuEngineeringMatrixType]:
-        """Return the menu engineering matrix, optionally filtered to specific
-        categories (e.g. ["star", "puzzle"]). Thresholds and distribution always
-        reflect the full dataset regardless of the filter."""
-        if self._matrix is None:
-            return None
-        if not categories:
-            return self._matrix
-        category_set = set(categories)
-        filtered_items = [i for i in self._matrix.items if i.category in category_set]
-        return MenuEngineeringMatrixType(
-            thresholds=self._matrix.thresholds,
-            distribution=self._matrix.distribution,
-            items=filtered_items,
-        )
 
+@strawberry.type(description="Minimal fields for listing analytics runs by location.")
+class AnalyticsRunListItemType:
+    id: strawberry.ID
+    name: str
+    filename: str
+
+
+# ---------------------------------------------------------------------------
+# Private computation helpers
+# ---------------------------------------------------------------------------
 
 def _compute_order_metrics(
     session, run: AnalyticsRun
@@ -309,9 +325,6 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
         )
         for row in cogs_rows
     ]
-    order_metrics = _compute_order_metrics(session, run)
-    menu_heatmaps = _compute_menu_heatmaps(session, run)
-    menu_engineering_matrix = _compute_menu_engineering_matrix(session, run)
     return AnalyticsRunType(
         id=run.id,
         name=run.name,
@@ -322,23 +335,18 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
         createdAt=run.created_at,
         locationId=run.location_id,
         menuItemCogs=menu_item_cogs,
-        orderMetrics=order_metrics,
-        menu_heatmaps=menu_heatmaps,
-        _matrix=menu_engineering_matrix,
     )
 
 
-@strawberry.type
-class AnalyticsRunListItemType:
-    """Minimal fields for listing analytics runs by location."""
-    id: strawberry.ID
-    name: str
-    filename: str
-
+# ---------------------------------------------------------------------------
+# Query mixin
+# ---------------------------------------------------------------------------
 
 @strawberry.type
 class AnalyticsRunQuery:
-    @strawberry.field
+    @strawberry.field(
+        description="Fetch metadata and COGS for a single analytics run by ID."
+    )
     def analytics_run(self, id: strawberry.ID) -> Optional[AnalyticsRunType]:
         session = SessionLocal()
         try:
@@ -349,9 +357,10 @@ class AnalyticsRunQuery:
         finally:
             session.close()
 
-    @strawberry.field
+    @strawberry.field(
+        description="List analytics runs for a location, newest first."
+    )
     def analytics_runs(self, location_id: int) -> list[AnalyticsRunListItemType]:
-        """List analytics runs for a location, newest first."""
         session = SessionLocal()
         try:
             runs = (
@@ -368,5 +377,73 @@ class AnalyticsRunQuery:
                 )
                 for run in runs
             ]
+        finally:
+            session.close()
+
+    @strawberry.field(
+        description=(
+            "Compute average order size and revenue for an analytics run. "
+            "Returns None if the run has no order data."
+        )
+    )
+    def order_metrics(
+        self, analytics_run_id: strawberry.ID
+    ) -> Optional[AnalyticsRunOrderMetricsType]:
+        session = SessionLocal()
+        try:
+            run = session.get(AnalyticsRun, int(analytics_run_id))
+            if run is None:
+                return None
+            return _compute_order_metrics(session, run)
+        finally:
+            session.close()
+
+    @strawberry.field(
+        description=(
+            "Return hourly and day-of-week demand heatmaps for every menu item in an analytics run. "
+            "Use this to identify peak selling times per dish."
+        )
+    )
+    def menu_heatmaps(
+        self, analytics_run_id: strawberry.ID
+    ) -> list[MenuHeatmapType]:
+        session = SessionLocal()
+        try:
+            run = session.get(AnalyticsRun, int(analytics_run_id))
+            if run is None:
+                return []
+            return _compute_menu_heatmaps(session, run)
+        finally:
+            session.close()
+
+    @strawberry.field(
+        description=(
+            "Compute the menu engineering BCG matrix for an analytics run. "
+            "Requires COGS to be set; returns None if no COGS are available. "
+            "Optionally filter returned items to specific categories "
+            "(star, puzzle, plow_horse, low_end) — thresholds and distribution "
+            "always reflect the full dataset."
+        )
+    )
+    def menu_engineering_matrix(
+        self,
+        analytics_run_id: strawberry.ID,
+        categories: Optional[list[str]] = None,
+    ) -> Optional[MenuEngineeringMatrixType]:
+        session = SessionLocal()
+        try:
+            run = session.get(AnalyticsRun, int(analytics_run_id))
+            if run is None:
+                return None
+            matrix = _compute_menu_engineering_matrix(session, run)
+            if matrix is None or not categories:
+                return matrix
+            category_set = set(categories)
+            filtered_items = [i for i in matrix.items if i.category in category_set]
+            return MenuEngineeringMatrixType(
+                thresholds=matrix.thresholds,
+                distribution=matrix.distribution,
+                items=filtered_items,
+            )
         finally:
             session.close()

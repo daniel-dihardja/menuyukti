@@ -8,7 +8,12 @@ import { UpdateCogsForm } from "./update-cogs-form";
 import { getAppCurrencyCode } from "@/lib/app-currency";
 import { routes } from "@/lib/routes";
 import { graphqlQuery } from "@/lib/graphql/client";
-import { ANALYTICS_RUN_QUERY, type AnalyticsRunData } from "@/lib/graphql/queries";
+import {
+  ANALYTICS_RUN_QUERY,
+  MENU_ENGINEERING_MATRIX_QUERY,
+  type AnalyticsRunData,
+  type MenuEngineeringMatrixData,
+} from "@/lib/graphql/queries";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 
 type PageProps = {
@@ -21,30 +26,27 @@ export default async function Page({ params }: PageProps) {
   const t = await getTranslations("analytics");
   const tSales = await getTranslations("analytics.sales");
 
-  // --------------------------------------------------
-  // Params
-  // --------------------------------------------------
   const { analyticsId: analyticsIdParam } = await params;
   if (!analyticsIdParam) notFound();
 
   const analyticsId = Number(analyticsIdParam);
   if (!Number.isInteger(analyticsId)) notFound();
 
-  // --------------------------------------------------
-  // Fetch analytics run from GraphQL
-  // --------------------------------------------------
-  const data = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, {
-    id: String(analyticsId),
-  });
-  const run = data.analyticsRun;
+  const id = String(analyticsId);
+  const [runData, matrixData] = await Promise.all([
+    graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }),
+    graphqlQuery<MenuEngineeringMatrixData>(MENU_ENGINEERING_MATRIX_QUERY, { id }),
+  ]);
+
+  const run = runData.analyticsRun;
   if (!run) notFound();
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${analyticsId}`;
   const currencyCode = getAppCurrencyCode();
 
-  // Build menu items from menuItemCogs + menuEngineeringMatrix (for quantity/totalRevenue)
+  // Enrich COGS rows with quantity/totalRevenue from the matrix
   const byMenu = new Map(
-    run.menuEngineeringMatrix?.items.map((row) => [
+    matrixData.menuEngineeringMatrix?.items.map((row) => [
       row.menu,
       { quantity: row.quantity, totalRevenue: row.totalRevenue },
     ]) ?? [],
@@ -63,12 +65,8 @@ export default async function Page({ params }: PageProps) {
     })
     .sort((a, b) => b.quantity - a.quantity);
 
-  // No list of other runs from GraphQL yet; pass empty options
   const analyticsOptions: Array<{ id: number; name: string }> = [];
 
-  // --------------------------------------------------
-  // UI
-  // --------------------------------------------------
   return (
     <AnalyticsPageShell
       title={t("cogs.edit")}

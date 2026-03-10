@@ -221,7 +221,7 @@ def _derive_holiday_ids(
         else:
             slot = slot.model_copy(update={"holiday_id": hid})
         fixed_slots.append(slot)
-    return brief.model_copy(update={"post_slots": fixed_slots})
+    return brief.model_copy(update={"post_slots": sorted(fixed_slots, key=lambda s: s.scheduled_date)})
 
 
 # ---------------------------------------------------------------------------

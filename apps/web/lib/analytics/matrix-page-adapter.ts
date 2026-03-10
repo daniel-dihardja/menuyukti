@@ -3,7 +3,7 @@
  * rows and groups them by category. Does not depend on matrix-row-contract.
  */
 
-import type { AnalyticsRunData } from "@/lib/graphql/queries";
+import type { MenuEngineeringMatrixData } from "@/lib/graphql/queries";
 
 export type MatrixCategory = "star" | "plow_horse" | "puzzle" | "low_end";
 
@@ -40,7 +40,7 @@ export type MatrixDisplayRow = {
 };
 
 type MatrixItem = NonNullable<
-  NonNullable<AnalyticsRunData["analyticsRun"]>["menuEngineeringMatrix"]
+  MenuEngineeringMatrixData["menuEngineeringMatrix"]
 >["items"][number];
 
 function toDisplayRow(item: MatrixItem): MatrixDisplayRow {

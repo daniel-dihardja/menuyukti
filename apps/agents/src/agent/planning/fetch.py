@@ -68,24 +68,22 @@ query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
 
 _MENU_ENGINEERING_MATRIX_QUERY = """
 query MenuEngineeringMatrix($analyticsRunId: ID!, $categories: [String!]) {
-  analyticsRun(id: $analyticsRunId) {
-    menuEngineeringMatrix(categories: $categories) {
-      thresholds {
-        avgPopularity
-        avgContributionMargin
-      }
-      items {
-        menu
-        category
-        action
-        quantity
-        totalRevenue
-        contributionMargin
-        contributionMarginPercentage
-        marginPerUnit
-        menuCategory
-        menuCategoryDetail
-      }
+  menuEngineeringMatrix(analyticsRunId: $analyticsRunId, categories: $categories) {
+    thresholds {
+      avgPopularity
+      avgContributionMargin
+    }
+    items {
+      menu
+      category
+      action
+      quantity
+      totalRevenue
+      contributionMargin
+      contributionMarginPercentage
+      marginPerUnit
+      menuCategory
+      menuCategoryDetail
     }
   }
 }
@@ -137,7 +135,7 @@ async def fetch_all_data(state: State, config: RunnableConfig) -> dict[str, Any]
                 _MENU_ENGINEERING_MATRIX_QUERY,
                 {"analyticsRunId": str(analytics_id), "categories": _PROMOTION_CATEGORIES},
             )
-            matrix = (data.get("analyticsRun") or {}).get("menuEngineeringMatrix") or {}
+            matrix = data.get("menuEngineeringMatrix") or {}
             return matrix.get("items") or None
         except Exception:
             logger.exception(

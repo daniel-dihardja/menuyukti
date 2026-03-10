@@ -84,47 +84,6 @@ export const ANALYTICS_RUN_QUERY = `
         cogs
         currency
       }
-      orderMetrics {
-        avgOrderSize
-        avgOrderRevenue
-      }
-      menuHeatmaps {
-        menu
-        menuCategory
-        menuCategoryDetail
-        dailyHeatmap { hour quantity }
-        weeklyHeatmap { day quantity }
-      }
-      menuEngineeringMatrix {
-        thresholds {
-          avgPopularity
-          avgContributionMargin
-          totalCogs
-          totalProfit
-          totalMargin
-        }
-        distribution {
-          category
-          itemCount
-          itemShare
-          marginShare
-        }
-        items {
-          menu
-          quantity
-          totalRevenue
-          cogs
-          totalCogs
-          contributionMargin
-          contributionMarginPercentage
-          marginPerUnit
-          weValue
-          category
-          action
-          menuCategory
-          menuCategoryDetail
-        }
-      }
     }
   }
 `;
@@ -148,43 +107,95 @@ export type AnalyticsRunData = {
       cogs: number;
       currency: string | null;
     }>;
-    orderMetrics: { avgOrderSize: number; avgOrderRevenue: number };
-    menuHeatmaps: Array<{
+  } | null;
+};
+
+export const MENU_ENGINEERING_MATRIX_QUERY = `
+  query MenuEngineeringMatrix($id: ID!, $categories: [String!]) {
+    menuEngineeringMatrix(analyticsRunId: $id, categories: $categories) {
+      thresholds {
+        avgPopularity
+        avgContributionMargin
+        totalCogs
+        totalProfit
+        totalMargin
+      }
+      distribution {
+        category
+        itemCount
+        itemShare
+        marginShare
+      }
+      items {
+        menu
+        quantity
+        totalRevenue
+        cogs
+        totalCogs
+        contributionMargin
+        contributionMarginPercentage
+        marginPerUnit
+        weValue
+        category
+        action
+        menuCategory
+        menuCategoryDetail
+      }
+    }
+  }
+`;
+
+export type MenuEngineeringMatrixData = {
+  menuEngineeringMatrix: {
+    thresholds: {
+      avgPopularity: number;
+      avgContributionMargin: number;
+      totalCogs: number;
+      totalProfit: number;
+      totalMargin: number;
+    };
+    distribution: Array<{
+      category: string;
+      itemCount: number;
+      itemShare: number;
+      marginShare: number;
+    }>;
+    items: Array<{
       menu: string;
+      quantity: number;
+      totalRevenue: number;
+      cogs: number;
+      totalCogs: number;
+      contributionMargin: number;
+      contributionMarginPercentage: number;
+      marginPerUnit: number;
+      weValue: number;
+      category: string;
+      action: string;
       menuCategory: string | null;
       menuCategoryDetail: string | null;
-      dailyHeatmap: Array<{ hour: number; quantity: number }>;
-      weeklyHeatmap: Array<{ day: string; quantity: number }>;
     }>;
-    menuEngineeringMatrix: {
-      thresholds: {
-        avgPopularity: number;
-        avgContributionMargin: number;
-        totalCogs: number;
-        totalProfit: number;
-        totalMargin: number;
-      };
-      distribution: Array<{
-        category: string;
-        itemCount: number;
-        itemShare: number;
-        marginShare: number;
-      }>;
-      items: Array<{
-        menu: string;
-        quantity: number;
-        totalRevenue: number;
-        cogs: number;
-        totalCogs: number;
-        contributionMargin: number;
-        contributionMarginPercentage: number;
-        marginPerUnit: number;
-        weValue: number;
-        category: string;
-        action: string;
-        menuCategory: string | null;
-        menuCategoryDetail: string | null;
-      }>;
-    } | null;
   } | null;
+};
+
+export const MENU_HEATMAPS_QUERY = `
+  query MenuHeatmaps($id: ID!) {
+    menuHeatmaps(analyticsRunId: $id) {
+      menu
+      menuCategory
+      menuCategoryDetail
+      dailyHeatmap { hour quantity }
+      weeklyHeatmap { day quantity }
+    }
+  }
+`;
+
+export type MenuHeatmapsData = {
+  menuHeatmaps: Array<{
+    menu: string;
+    menuCategory: string | null;
+    menuCategoryDetail: string | null;
+    dailyHeatmap: Array<{ hour: number; quantity: number }>;
+    weeklyHeatmap: Array<{ day: string; quantity: number }>;
+  }>;
 };

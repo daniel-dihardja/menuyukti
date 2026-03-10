@@ -30,10 +30,10 @@ query AnalyticsRunOrderMetrics($id: ID!) {
     filename
     periodStart
     periodEnd
-    orderMetrics {
-      avgOrderSize
-      avgOrderRevenue
-    }
+  }
+  orderMetrics(analyticsRunId: $id) {
+    avgOrderSize
+    avgOrderRevenue
   }
 }
 """
@@ -124,7 +124,7 @@ def test_order_metrics_with_qa_data(analytics_run_with_qa_data, qa_sales_rows):
 
     run_data = result.data["analyticsRun"]
     assert run_data is not None
-    metrics = run_data["orderMetrics"]
+    metrics = result.data["orderMetrics"]
     assert metrics is not None
 
     assert pytest.approx(float(metrics["avgOrderSize"]), rel=1e-6) == expected_avg_size
@@ -196,7 +196,7 @@ def test_order_metrics_for_uploaded_run(tmp_path):
     assert run_data is not None, "Expected analyticsRun for uploaded report"
     assert run_data["filename"] == REPORT_FILE.name
 
-    metrics = run_data["orderMetrics"]
+    metrics = metrics_result.data["orderMetrics"]
     assert metrics is not None
 
     avg_order_size = float(metrics["avgOrderSize"])
