@@ -19,7 +19,7 @@ export type PostSlot = {
   scheduled_date: string;
   theme: "holiday" | "promotion" | "engagement";
   focus_item: string | null;
-  key_message: string;
+  caption_seed: string;
 };
 
 export type CampaignBrief = {
@@ -313,7 +313,8 @@ export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
                           )}
                         </div>
                         <p className="text-xs leading-relaxed text-muted-foreground">
-                          {slot.key_message}
+                          <span className="mr-1 font-medium text-muted-foreground/60">Caption seed:</span>
+                          {slot.caption_seed}
                         </p>
                       </div>
                     </div>

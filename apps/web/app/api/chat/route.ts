@@ -47,7 +47,7 @@ interface PostSlot {
   scheduled_date: string;
   theme: "holiday" | "promotion" | "engagement";
   focus_item: string | null;
-  key_message: string;
+  caption_seed: string;
 }
 
 interface CampaignBrief {

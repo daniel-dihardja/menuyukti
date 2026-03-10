@@ -26,7 +26,8 @@ class PostSlot(BaseModel):
     scheduled_date: str
     theme: Literal["holiday", "promotion", "engagement"]
     focus_item: str | None = None
-    key_message: str
+    caption_seed: str
+    """One-sentence directive seed. Will be expanded into a full caption by the executor."""
 
 
 class CampaignBrief(BaseModel):
