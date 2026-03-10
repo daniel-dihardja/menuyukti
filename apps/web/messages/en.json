@@ -234,7 +234,7 @@
         "index": "#",
         "fileName": "File Name",
         "action": "Actions",
-        "askAi": "AI Flow",
+        "askAi": "Campaign Planner",
         "cogs": "COGS",
         "report": "Report",
         "delete": "Delete",
@@ -327,9 +327,9 @@
       "weeklyTitle": "Weekly Sales (Mon–Fri)"
     },
     "ai": {
-      "reportTitle": "AI Flow",
-      "breadcrumb": "AI Flow",
-      "heading": "AI Flow",
+      "reportTitle": "Campaign Planner",
+      "breadcrumb": "Campaign Planner",
+      "heading": "Campaign Planner",
       "description": "Ask questions about this analytics snapshot."
     },
     "finance": {

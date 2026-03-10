@@ -35,8 +35,8 @@ Menu items available for promotion (star and puzzle items from menu engineering 
 
 Instructions:
 - Design a campaign theme and tone that fits the restaurant profile and the time period.
-- Recommend a posting cadence (e.g. "3x per week, heavier on weekends").
-- Create a list of specific post slots covering the full campaign window at the recommended cadence.
+- Choose a posting cadence of 3–5 posts per week (the sweet spot for restaurant accounts). Weight heavier days toward the peak operating day and weekends if weekend share is significant.
+- Create a list of specific post slots covering the full campaign window at the chosen cadence (must average 3–5 posts per week).
 - For each post slot assign a scheduled_date (ISO format), a theme ("holiday", "promotion", or "engagement"), a focus_item (menu item name or null), and a caption_seed — a one-sentence directive that will later be expanded into a full Instagram caption by the executor.
 - Anchor "holiday" posts to the public holidays provided where relevant.
 - Distribute "promotion" posts across the star and puzzle items so each item gets at least one post.
