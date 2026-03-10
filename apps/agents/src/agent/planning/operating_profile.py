@@ -1,61 +1,17 @@
 """Planning nodes: fetch operating profile and generate LLM location summary."""
 
+import asyncio
 import logging
-import os
-from dataclasses import replace
 from typing import Any
 
-import httpx
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 
-from agent.planning.holidays import fetch_full_location
-from agent.planning.utils import _emit
-from agent.state import PlanningState, State
+from agent.planning.utils import _emit, _gql, _update_planning
+from agent.state import State
 
 logger = logging.getLogger(__name__)
 
-_OPERATING_PROFILE_QUERY = """
-query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
-  operatingProfile(locationId: $locationId, analyticsRunId: $analyticsRunId) {
-    totalOrders
-    totalRevenue
-    activeDaysCount
-    avgDailyOrders
-    weekdayShare
-    weekendShare
-    peakDay
-    primaryMealPeriod
-    activeMealPeriods
-    operatingPattern
-    diningFocus
-    operatingSummary
-    mealPeriodBreakdown {
-      period
-      label
-      orderCount
-      share
-      revenue
-      revenueShare
-    }
-    dayOfWeekBreakdown {
-      day
-      isWeekend
-      orderCount
-      share
-      revenue
-      isPeakDay
-    }
-    dayTypeBreakdown {
-      type
-      orderCount
-      share
-      revenue
-      revenueShare
-    }
-  }
-}
-"""
 
 _SAVE_OPERATING_SUMMARY_MUTATION = """
 mutation SaveOperatingSummary(
@@ -114,53 +70,30 @@ Day-type breakdown (weekday / weekend / holiday):
 _summary_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.4)
 
 
-async def fetch_operating_profile(state: State, config: RunnableConfig) -> dict[str, Any]:
-    """Fetch the restaurant's operating profile from the GraphQL service."""
-    await _emit("fetch_operating_profile", "running", "Analysing restaurant operating pattern...", config)
-
-    planning = state.planning
-    profile: dict | None = None
-
-    configurable = config.get("configurable") or {}
-    location_id = configurable.get("location_id")
-    analytics_id = configurable.get("analytics_id")
-
-    if location_id is not None and analytics_id is not None:
-        try:
-            endpoint = os.environ["GRAPHQL_ENDPOINT"]
-            async with httpx.AsyncClient(timeout=10) as client:
-                res = await client.post(
-                    endpoint,
-                    json={
-                        "query": _OPERATING_PROFILE_QUERY,
-                        "variables": {
-                            "locationId": str(location_id),
-                            "analyticsRunId": str(analytics_id),
-                        },
-                    },
-                )
-            res.raise_for_status()
-            profile = res.json().get("data", {}).get("operatingProfile") or None
-        except Exception:
-            logger.exception(
-                "Failed to fetch operating profile for location_id=%s analytics_id=%s",
-                location_id,
-                analytics_id,
-            )
-
-    label = (
-        f"Operating pattern: {profile['operatingPattern']}, dining focus: {profile['diningFocus']}"
-        if profile
-        else "Operating profile unavailable"
-    )
-    await _emit("fetch_operating_profile", "done", label, config)
-
-    updated_planning = (
-        replace(planning, operatingProfile=profile)
-        if planning
-        else PlanningState(operatingProfile=profile)
-    )
-    return {"planning": updated_planning}
+async def _persist_summary(
+    location_id: Any,
+    analytics_id: Any,
+    summary: str,
+    model_name: str,
+) -> None:
+    """Persist the generated operating summary to the database (fire-and-forget)."""
+    try:
+        await _gql(
+            _SAVE_OPERATING_SUMMARY_MUTATION,
+            {
+                "locationId": str(location_id),
+                "analyticsRunId": str(analytics_id),
+                "operatingSummary": summary,
+                "promptVersion": _SUMMARY_PROMPT_VERSION,
+                "model": model_name,
+            },
+        )
+    except Exception:
+        logger.exception(
+            "Failed to persist operating summary for location_id=%s analytics_id=%s",
+            location_id,
+            analytics_id,
+        )
 
 
 async def generate_location_summary(state: State, config: RunnableConfig) -> dict[str, Any]:
@@ -173,16 +106,10 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
 
     if profile and profile.get("operatingSummary"):
         await _emit("generate_location_summary", "done", "Location profile summary ready (cached)", config)
-        cached_summary = profile["operatingSummary"]
-        updated_planning = (
-            replace(planning, locationSummary=cached_summary)
-            if planning
-            else PlanningState(locationSummary=cached_summary)
-        )
-        return {"planning": updated_planning}
+        return {"planning": _update_planning(planning, locationSummary=profile["operatingSummary"])}
 
     if profile:
-        location = await fetch_full_location(config)
+        location = (planning.location if planning else None) or {}
         name = location.get("name") or "this restaurant"
         city = location.get("city") or "unknown city"
         country = location.get("country") or "unknown country"
@@ -232,34 +159,9 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
             configurable = config.get("configurable") or {}
             location_id = configurable.get("location_id")
             analytics_id = configurable.get("analytics_id")
-            try:
-                endpoint = os.environ["GRAPHQL_ENDPOINT"]
-                async with httpx.AsyncClient(timeout=10) as client:
-                    await client.post(
-                        endpoint,
-                        json={
-                            "query": _SAVE_OPERATING_SUMMARY_MUTATION,
-                            "variables": {
-                                "locationId": str(location_id),
-                                "analyticsRunId": str(analytics_id),
-                                "operatingSummary": summary,
-                                "promptVersion": _SUMMARY_PROMPT_VERSION,
-                                "model": _summary_llm.model_name,
-                            },
-                        },
-                    )
-            except Exception:
-                logger.exception(
-                    "Failed to persist operating summary for location_id=%s analytics_id=%s",
-                    location_id,
-                    analytics_id,
-                )
+            asyncio.create_task(
+                _persist_summary(location_id, analytics_id, summary, _summary_llm.model_name)
+            )
 
     await _emit("generate_location_summary", "done", "Location profile summary ready", config)
-
-    updated_planning = (
-        replace(planning, locationSummary=summary)
-        if planning
-        else PlanningState(locationSummary=summary)
-    )
-    return {"planning": updated_planning}
+    return {"planning": _update_planning(planning, locationSummary=summary)}
