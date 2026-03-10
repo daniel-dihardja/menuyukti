@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 _PUBLIC_HOLIDAYS_QUERY = """
 query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) {
   publicHolidays(country: $country, startDate: $startDate, endDate: $endDate) {
+    id
     date
     name
     localName
@@ -46,6 +47,7 @@ async def search_public_holidays(state: State, config: RunnableConfig) -> dict[s
             raw = data.get("publicHolidays") or []
             holidays = [
                 NationalHoliday(
+                    id=h["id"],
                     localName=h["localName"],
                     name=h["name"],
                     date=h["date"],

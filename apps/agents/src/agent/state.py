@@ -14,6 +14,7 @@ HolidayType = Literal["public", "regional", "religious_observance", "unknown"]
 class NationalHoliday(TypedDict):
     """A single national/public holiday entry."""
 
+    id: str
     localName: str
     name: str
     date: str
@@ -26,6 +27,10 @@ class CandidateSlot(BaseModel):
     date: str
     day_name: str
     week_number: int
+    holiday_id: str | None = None
+    """Set when this date exactly matches a public holiday."""
+    proximity: str | None = None
+    """Set to 'day_before_HOLIDAY_ID' or 'day_after_HOLIDAY_ID' for adjacent dates."""
 
 
 class CandidateWeek(BaseModel):
@@ -59,6 +64,8 @@ class PostSlot(BaseModel):
     focus_item: str | None = None
     caption_seed: str
     """One-sentence directive seed. Will be expanded into a full caption by the executor."""
+    holiday_id: str | None = None
+    """Derived server-side from the canonical holiday map; never set by the LLM."""
 
 
 class CampaignBrief(BaseModel):

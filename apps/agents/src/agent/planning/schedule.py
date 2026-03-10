@@ -7,17 +7,28 @@ from typing import Any
 from langchain_core.runnables import RunnableConfig
 
 from agent.planning.utils import _emit, _update_planning
-from agent.state import CandidateSlot, CandidateWeek, State
+from agent.state import CandidateSlot, CandidateWeek, NationalHoliday, State
 
 logger = logging.getLogger(__name__)
 
 _MIN_DAYS_FOR_FULL_WEEK = 5
 
 
-def _build_candidate_weeks(date_start: str, date_end: str) -> list[CandidateWeek]:
-    """Generate all candidate posting dates grouped into campaign weeks."""
+def _build_candidate_weeks(
+    date_start: str,
+    date_end: str,
+    holidays: list[NationalHoliday] | None = None,
+) -> list[CandidateWeek]:
+    """Generate all candidate posting dates grouped into campaign weeks.
+
+    Each slot is annotated server-side with holiday context derived from the
+    canonical holiday map so the LLM receives pre-joined facts rather than
+    having to correlate two separate lists mentally.
+    """
     start = datetime.strptime(date_start, "%Y-%m-%d")
     end = datetime.strptime(date_end, "%Y-%m-%d")
+
+    holiday_by_date: dict[str, str] = {h["date"]: h["id"] for h in (holidays or [])}
 
     weeks: dict[int, list[datetime]] = {}
     current = start
@@ -28,14 +39,33 @@ def _build_candidate_weeks(date_start: str, date_end: str) -> list[CandidateWeek
 
     candidate_weeks: list[CandidateWeek] = []
     for week_num, days in weeks.items():
-        slots = [
-            CandidateSlot(
-                date=d.strftime("%Y-%m-%d"),
+        slots: list[CandidateSlot] = []
+        for d in days:
+            date_str = d.strftime("%Y-%m-%d")
+            prev_str = (d - timedelta(days=1)).strftime("%Y-%m-%d")
+            next_str = (d + timedelta(days=1)).strftime("%Y-%m-%d")
+
+            hid = holiday_by_date.get(date_str)
+            next_hid = holiday_by_date.get(next_str)
+            prev_hid = holiday_by_date.get(prev_str)
+
+            if hid:
+                proximity = None
+            elif next_hid:
+                proximity = f"day_before_{next_hid}"
+            elif prev_hid:
+                proximity = f"day_after_{prev_hid}"
+            else:
+                proximity = None
+
+            slots.append(CandidateSlot(
+                date=date_str,
                 day_name=d.strftime("%A"),
                 week_number=week_num,
-            )
-            for d in days
-        ]
+                holiday_id=hid,
+                proximity=proximity,
+            ))
+
         week_label = f"{days[0].strftime('%b')} {days[0].day} – {days[-1].strftime('%b')} {days[-1].day}"
         candidate_weeks.append(CandidateWeek(
             week_number=week_num,
@@ -58,7 +88,11 @@ async def generate_candidate_slots(state: State, config: RunnableConfig) -> dict
     candidate_weeks: list[CandidateWeek] = []
     if date_start and date_end:
         try:
-            candidate_weeks = _build_candidate_weeks(date_start, date_end)
+            candidate_weeks = _build_candidate_weeks(
+                date_start,
+                date_end,
+                holidays=planning.nationalHolidays if planning else None,
+            )
         except Exception:
             logger.exception(
                 "Failed to build candidate slots for %s – %s", date_start, date_end
