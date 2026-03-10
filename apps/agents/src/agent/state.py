@@ -31,6 +31,8 @@ class CandidateSlot(BaseModel):
     """Set when this date exactly matches a public holiday."""
     proximity: str | None = None
     """Set to 'day_before_HOLIDAY_ID' or 'day_after_HOLIDAY_ID' for adjacent dates."""
+    is_pinned: bool = False
+    """True when this date is a public holiday — slot is always included in the schedule."""
 
 
 class CandidateWeek(BaseModel):
@@ -46,8 +48,8 @@ class WeekSelection(BaseModel):
     """The LLM's date selection for a single campaign week."""
 
     week_number: int
-    selected_dates: list[str] = Field(max_length=5)
-    """Selected ISO dates from the candidate list. Capped at 5 by schema; minimum 3 enforced in validation for full weeks."""
+    selected_dates: list[str]
+    """Selected ISO dates from the candidate list. Capped at 5 non-pinned dates by _validate_and_clamp; minimum 3 enforced in validation for full weeks."""
 
 
 class PostSchedule(BaseModel):
@@ -66,6 +68,8 @@ class PostSlot(BaseModel):
     """One-sentence directive seed. Will be expanded into a full caption by the executor."""
     holiday_id: str | None = None
     """Derived server-side from the canonical holiday map; never set by the LLM."""
+    source: Literal["holiday_pinned", "llm_suggested"] = "llm_suggested"
+    """Derived server-side. Designed for extension: user_added / user_removed come in the refinement feature."""
 
 
 class CampaignBrief(BaseModel):

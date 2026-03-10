@@ -64,6 +64,7 @@ def _build_candidate_weeks(
                 week_number=week_num,
                 holiday_id=hid,
                 proximity=proximity,
+                is_pinned=bool(hid),
             ))
 
         week_label = f"{days[0].strftime('%b')} {days[0].day} – {days[-1].strftime('%b')} {days[-1].day}"

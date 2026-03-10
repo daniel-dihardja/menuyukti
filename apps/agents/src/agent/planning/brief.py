@@ -54,8 +54,9 @@ Operating data:
 - Primary meal period: {primary_meal_period}
 
 For each week below, select the best posting dates to maximise engagement:
-- Select exactly 3, 4, or 5 dates for full weeks.
-- For partial weeks (marked as such), select at least 1 date.
+- Dates marked [PINNED — HOLIDAY_ID] are public holidays and are already included in the schedule — do NOT re-select them.
+- For each full week, select only the additional dates indicated in the week header (e.g. "select 2 to 4 more").
+- For partial weeks (marked as such), select at least 1 more date.
 - Prefer peak days, weekends (if weekend share is significant), and days adjacent to public holidays.
 
 {candidate_weeks_section}"""
@@ -103,11 +104,20 @@ Instructions:
 def _format_candidate_weeks(weeks: list[CandidateWeek]) -> str:
     lines: list[str] = []
     for week in weeks:
-        partial_note = " (partial week — select at least 1)" if week.is_partial else f" (select {_MIN_POSTS_FULL_WEEK} to {_MAX_POSTS_PER_WEEK})"
-        lines.append(f"## Week {week.week_number} — {week.week_label}{partial_note}")
+        pinned_count = sum(1 for s in week.slots if s.is_pinned)
+        if week.is_partial:
+            note = " (partial week — select at least 1 more)"
+        else:
+            remaining_min = max(0, _MIN_POSTS_FULL_WEEK - pinned_count)
+            remaining_max = max(0, _MAX_POSTS_PER_WEEK - pinned_count)
+            if pinned_count:
+                note = f" (select {remaining_min} to {remaining_max} more; {pinned_count} holiday already pinned)"
+            else:
+                note = f" (select {_MIN_POSTS_FULL_WEEK} to {_MAX_POSTS_PER_WEEK})"
+        lines.append(f"## Week {week.week_number} — {week.week_label}{note}")
         for slot in week.slots:
-            if slot.holiday_id:
-                annotation = f"  [{slot.holiday_id}]"
+            if slot.is_pinned:
+                annotation = f"  [PINNED — {slot.holiday_id}]"
             elif slot.proximity:
                 annotation = f"  ({slot.proximity})"
             else:
@@ -155,19 +165,49 @@ def _format_items(items: list[dict] | None) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Post-parse validation
+# Post-parse validation and pinned-slot injection
 # ---------------------------------------------------------------------------
+
+def _inject_pinned_slots(
+    schedule: PostSchedule,
+    candidate_weeks: list[CandidateWeek],
+) -> PostSchedule:
+    """Guarantee all pinned (holiday) slots appear first in the selection.
+
+    Pinned dates are prepended before any LLM-selected dates and deduplicated,
+    so holidays are always present regardless of what the LLM returned.
+    """
+    pinned_by_week: dict[int, list[str]] = {
+        w.week_number: [s.date for s in w.slots if s.is_pinned]
+        for w in candidate_weeks
+    }
+    return PostSchedule(weeks=[
+        WeekSelection(
+            week_number=ws.week_number,
+            selected_dates=list(dict.fromkeys(
+                pinned_by_week.get(ws.week_number, []) + ws.selected_dates
+            )),
+        )
+        for ws in schedule.weeks
+    ])
+
 
 def _validate_and_clamp(
     schedule: PostSchedule,
     candidate_weeks: list[CandidateWeek],
 ) -> PostSchedule:
-    """
-    Validate selected dates against candidates, clamp to max, and enforce
+    """Validate selected dates against candidates, clamp non-pinned to max, and enforce
     the 3-minimum for full weeks by logging warnings (not raising).
+
+    Pinned (holiday) slots are never clamped out — they are preserved even if the total
+    exceeds _MAX_POSTS_PER_WEEK.
     """
     valid_dates_by_week: dict[int, set[str]] = {
         w.week_number: {s.date for s in w.slots}
+        for w in candidate_weeks
+    }
+    pinned_by_week: dict[int, set[str]] = {
+        w.week_number: {s.date for s in w.slots if s.is_pinned}
         for w in candidate_weeks
     }
     is_partial_by_week: dict[int, bool] = {
@@ -177,6 +217,7 @@ def _validate_and_clamp(
     cleaned_weeks: list[WeekSelection] = []
     for ws in schedule.weeks:
         valid = valid_dates_by_week.get(ws.week_number, set())
+        pinned = pinned_by_week.get(ws.week_number, set())
         # Filter out any dates the model hallucinated outside the candidate list
         filtered = [d for d in ws.selected_dates if d in valid]
         if len(filtered) != len(ws.selected_dates):
@@ -184,8 +225,11 @@ def _validate_and_clamp(
             logger.warning(
                 "Week %d: removed hallucinated dates %s", ws.week_number, hallucinated
             )
-        # Enforce max (Pydantic already does this, but defensive clamp)
-        clamped = filtered[:_MAX_POSTS_PER_WEEK]
+        # Clamp non-pinned dates to max; pinned dates are always kept
+        pinned_selected = [d for d in filtered if d in pinned]
+        non_pinned_selected = [d for d in filtered if d not in pinned]
+        remaining_cap = max(0, _MAX_POSTS_PER_WEEK - len(pinned_selected))
+        clamped = pinned_selected + non_pinned_selected[:remaining_cap]
         # Warn (don't raise) if a full week has fewer than 3
         if not is_partial_by_week.get(ws.week_number, False) and len(clamped) < _MIN_POSTS_FULL_WEEK:
             logger.warning(
@@ -217,9 +261,9 @@ def _derive_holiday_ids(
                 "downgrading theme to 'engagement'",
                 slot.scheduled_date,
             )
-            slot = slot.model_copy(update={"theme": "engagement", "holiday_id": None})
+            slot = slot.model_copy(update={"theme": "engagement", "holiday_id": None, "source": "llm_suggested"})
         else:
-            slot = slot.model_copy(update={"holiday_id": hid})
+            slot = slot.model_copy(update={"holiday_id": hid, "source": "holiday_pinned" if hid else "llm_suggested"})
         fixed_slots.append(slot)
     return brief.model_copy(update={"post_slots": sorted(fixed_slots, key=lambda s: s.scheduled_date)})
 
@@ -248,7 +292,8 @@ async def generate_post_schedule(state: State, config: RunnableConfig) -> dict[s
         )
         try:
             raw_schedule = await _schedule_llm_structured.ainvoke(prompt)
-            schedule = _validate_and_clamp(raw_schedule, planning.candidateWeeks)
+            injected = _inject_pinned_slots(raw_schedule, planning.candidateWeeks)
+            schedule = _validate_and_clamp(injected, planning.candidateWeeks)
         except Exception:
             logger.exception("Failed to generate post schedule")
 
