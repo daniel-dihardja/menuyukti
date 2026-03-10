@@ -4,6 +4,7 @@ The profile summarises:
 - weekday vs weekend split
 - meal-period breakdown (breakfast / lunch / afternoon / dinner / late_night)
 - peak day of week
+- average order size (items per order, proxy for party size: groups vs solo/pair)
 - categorical labels (operatingPattern, diningFocus) derived from fixed thresholds
 """
 
@@ -84,6 +85,7 @@ class OperatingProfileResult(TypedDict):
     total_revenue: float
     active_days_count: int
     avg_daily_orders: float
+    avg_order_size: float
     weekday_share: float
     weekend_share: float
     peak_day: str
@@ -136,7 +138,10 @@ def _classify_dining_focus(period_shares: dict[str, float]) -> str:
 
 
 class OrderRowForProfile(TypedDict):
-    """Minimum fields required from order_fact rows."""
+    """Minimum fields required from order_fact rows.
+
+    Optional: qty (int) — when present, used for avg_order_size; defaults to 1 per row.
+    """
     order_time: datetime
     bill_number: str
     total_after_bill_discount: float
@@ -152,21 +157,26 @@ def compute_operating_profile_from_orders(
     Args:
         order_rows: Each entry must contain order_time (datetime),
             bill_number (str), and total_after_bill_discount (float).
+            Optional qty (int) for avg_order_size; defaults to 1 per row when absent.
     """
     if not order_rows:
         return None
 
-    # Aggregate per bill (order-level revenue)
+    # Aggregate per bill (order-level revenue and item count)
     bill_revenue: dict[str, float] = {}
     bill_time: dict[str, datetime] = {}
+    bill_items: dict[str, int] = {}
     for row in order_rows:
         bn = row["bill_number"]
         if bn not in bill_time:
             bill_time[bn] = row["order_time"]
         bill_revenue[bn] = bill_revenue.get(bn, 0.0) + row["total_after_bill_discount"]
+        bill_items[bn] = bill_items.get(bn, 0) + row.get("qty", 1)
 
     total_orders = len(bill_time)
     total_revenue = sum(bill_revenue.values())
+    total_items = sum(bill_items.values())
+    avg_order_size = total_items / total_orders if total_orders else 0.0
 
     # Calendar days with at least one order
     active_dates: set[date] = {dt.date() for dt in bill_time.values()}
@@ -258,6 +268,7 @@ def compute_operating_profile_from_orders(
         total_revenue=round(total_revenue, 4),
         active_days_count=active_days_count,
         avg_daily_orders=round(avg_daily_orders, 4),
+        avg_order_size=round(avg_order_size, 4),
         weekday_share=round(weekday_share, 4),
         weekend_share=round(weekend_share, 4),
         peak_day=peak_day,

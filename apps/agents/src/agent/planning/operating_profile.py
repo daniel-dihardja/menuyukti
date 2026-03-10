@@ -31,12 +31,13 @@ mutation SaveOperatingSummary(
 }
 """
 
-_SUMMARY_PROMPT_VERSION = "v1"
+_SUMMARY_PROMPT_VERSION = "v2"
 
 _LOCATION_SUMMARY_PROMPT = """You are a marketing analyst helping a restaurant build an Instagram content strategy.
 
 Based on the following restaurant data, write a concise 2–3 sentence profile that gives a restaurant marketer a clear, actionable picture of the venue. Every data point below must be reflected in the profile — keep it short, but leave nothing out. Cover:
 - Dining experience: meal focus, operating pattern, busiest time windows
+- Customer mix: average items per order (proxy for party size — lower = more solo/pair, higher = more groups/families)
 - Customer activity patterns: peak day, primary meal period, day-of-week and meal-period distribution
 - Revenue concentration: which days and meal periods drive the most revenue
 - Any notable weekday/weekend/holiday split that should influence content scheduling
@@ -51,6 +52,7 @@ Operating profile:
 - Total revenue: {total_revenue}
 - Active days: {active_days_count}
 - Average daily orders: {avg_daily_orders:.1f}
+- Average items per order: {avg_order_size:.1f} (proxy for party size)
 - Weekday share: {weekday_share:.0%} | Weekend share: {weekend_share:.0%}
 - Peak day: {peak_day}
 - Primary meal period: {primary_meal_period}
@@ -137,6 +139,7 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
             total_revenue=profile.get("totalRevenue", 0),
             active_days_count=profile.get("activeDaysCount", "N/A"),
             avg_daily_orders=profile.get("avgDailyOrders", 0),
+            avg_order_size=profile.get("avgOrderSize", 0),
             weekday_share=profile.get("weekdayShare", 0),
             weekend_share=profile.get("weekendShare", 0),
             peak_day=profile.get("peakDay", "N/A"),

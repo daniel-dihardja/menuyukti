@@ -5,7 +5,7 @@ import strawberry
 from graphql.data_sources import AnalyticsRun, OperatingProfileSummary, OrderFact, SessionLocal
 from menuyukti.core.analytics import compute_operating_profile_from_orders
 
-_CURRENT_PROMPT_VERSION = "v1"
+_CURRENT_PROMPT_VERSION = "v2"
 
 
 @strawberry.type
@@ -43,6 +43,7 @@ class OperatingProfileType:
     total_revenue: float
     active_days_count: int
     avg_daily_orders: float
+    avg_order_size: float
     weekday_share: float
     weekend_share: float
     peak_day: str
@@ -62,6 +63,7 @@ def _result_to_type(result) -> OperatingProfileType:
         total_revenue=result["total_revenue"],
         active_days_count=result["active_days_count"],
         avg_daily_orders=result["avg_daily_orders"],
+        avg_order_size=result["avg_order_size"],
         weekday_share=result["weekday_share"],
         weekend_share=result["weekend_share"],
         peak_day=result["peak_day"],
@@ -134,6 +136,7 @@ class OperatingProfileQuery:
                     "order_time": r.order_time,
                     "bill_number": r.bill_number,
                     "total_after_bill_discount": r.total_after_bill_discount,
+                    "qty": r.qty,
                 }
                 for r in rows
             ]

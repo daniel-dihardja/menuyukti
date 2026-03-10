@@ -24,11 +24,12 @@ _BASE_SAT = datetime(2024, 6, 8)   # Saturday
 _BASE_SUN = datetime(2024, 6, 9)   # Sunday
 
 
-def _row(bill: str, dt: datetime, revenue: float = 10.0) -> dict:
+def _row(bill: str, dt: datetime, revenue: float = 10.0, qty: int = 1) -> dict:
     return {
         "bill_number": bill,
         "order_time": dt,
         "total_after_bill_discount": revenue,
+        "qty": qty,
     }
 
 
@@ -229,6 +230,33 @@ def test_total_orders_counts_unique_bills():
     assert result is not None
     assert result["total_orders"] == 2
     assert abs(result["total_revenue"] - 20.0) < 1e-4
+
+
+def test_avg_order_size():
+    # Bill A: 2 line items (qty 1 + 3 = 4 items), Bill B: 1 line item (qty 2)
+    # total_items = 4 + 2 = 6, total_orders = 2, avg_order_size = 3.0
+    rows = [
+        _row("A", _BASE_MON.replace(hour=12), 10.0, qty=1),
+        _row("A", _BASE_MON.replace(hour=12), 15.0, qty=3),
+        _row("B", _BASE_TUE.replace(hour=12), 20.0, qty=2),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["total_orders"] == 2
+    assert abs(result["avg_order_size"] - 3.0) < 1e-4
+
+
+def test_avg_order_size_defaults_to_one_when_qty_absent():
+    # Rows without qty: each line counts as 1 item (backward compat)
+    rows = [
+        {"bill_number": "B1", "order_time": _BASE_MON.replace(hour=12), "total_after_bill_discount": 10.0},
+        {"bill_number": "B1", "order_time": _BASE_MON.replace(hour=12), "total_after_bill_discount": 5.0},
+        {"bill_number": "B2", "order_time": _BASE_TUE.replace(hour=12), "total_after_bill_discount": 15.0},
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["total_orders"] == 2
+    assert result["avg_order_size"] == 1.5  # 3 items / 2 bills
 
 
 def test_active_meal_periods_threshold():

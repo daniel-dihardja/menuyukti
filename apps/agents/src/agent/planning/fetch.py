@@ -30,6 +30,7 @@ query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
     totalRevenue
     activeDaysCount
     avgDailyOrders
+    avgOrderSize
     weekdayShare
     weekendShare
     peakDay
