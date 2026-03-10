@@ -6,100 +6,16 @@ from typing import Any
 
 from langchain_core.runnables import RunnableConfig
 
-from agent.planning.utils import _emit, _gql, _update_planning
+from agent.gql_client import (
+    fetch_location,
+    fetch_menu_category_items,
+    fetch_menu_engineering_matrix,
+    fetch_operating_profile,
+)
+from agent.planning.utils import _emit, _update_planning
 from agent.state import State
 
 logger = logging.getLogger(__name__)
-
-_LOCATION_QUERY = """
-query Location($id: ID!) {
-  location(id: $id) {
-    id
-    name
-    street
-    city
-    country
-  }
-}
-"""
-
-_OPERATING_PROFILE_QUERY = """
-query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
-  operatingProfile(locationId: $locationId, analyticsRunId: $analyticsRunId) {
-    totalOrders
-    totalRevenue
-    activeDaysCount
-    avgDailyOrders
-    avgOrderSize
-    weekdayShare
-    weekendShare
-    peakDay
-    primaryMealPeriod
-    activeMealPeriods
-    operatingPattern
-    diningFocus
-    mealPeriodBreakdown {
-      period
-      label
-      orderCount
-      share
-      revenue
-      revenueShare
-    }
-    dayOfWeekBreakdown {
-      day
-      isWeekend
-      orderCount
-      share
-      revenue
-      isPeakDay
-    }
-    dayTypeBreakdown {
-      type
-      orderCount
-      share
-      revenue
-      revenueShare
-    }
-  }
-}
-"""
-
-_MENU_ENGINEERING_MATRIX_QUERY = """
-query MenuEngineeringMatrix($analyticsRunId: ID!, $categories: [String!]) {
-  menuEngineeringMatrix(analyticsRunId: $analyticsRunId, categories: $categories) {
-    thresholds {
-      avgPopularity
-      avgContributionMargin
-    }
-    items {
-      menu
-      category
-      action
-      quantity
-      totalRevenue
-      contributionMargin
-      contributionMarginPercentage
-      marginPerUnit
-      menuCategory
-      menuCategoryDetail
-    }
-  }
-}
-"""
-
-_MENU_CATEGORY_QUERY = """
-query MenuCategoryBreakdown($analyticsRunId: ID!) {
-  menuEngineeringMatrix(analyticsRunId: $analyticsRunId) {
-    items {
-      menuCategory
-      menuCategoryDetail
-      quantity
-      totalRevenue
-    }
-  }
-}
-"""
 
 _PROMOTION_CATEGORIES = ["star", "puzzle"]
 
@@ -161,8 +77,7 @@ async def fetch_all_data(state: State, config: RunnableConfig) -> dict[str, Any]
         if location_id is None:
             return {}
         try:
-            data = await _gql(_LOCATION_QUERY, {"id": str(location_id)})
-            return data.get("location") or {}
+            return await fetch_location(location_id)
         except Exception:
             logger.exception("Failed to fetch location for id=%s", location_id)
             return {}
@@ -171,11 +86,7 @@ async def fetch_all_data(state: State, config: RunnableConfig) -> dict[str, Any]
         if location_id is None or analytics_id is None:
             return None
         try:
-            data = await _gql(
-                _OPERATING_PROFILE_QUERY,
-                {"locationId": str(location_id), "analyticsRunId": str(analytics_id)},
-            )
-            return data.get("operatingProfile") or None
+            return await fetch_operating_profile(location_id, analytics_id)
         except Exception:
             logger.exception(
                 "Failed to fetch operating profile for location_id=%s analytics_id=%s",
@@ -188,11 +99,7 @@ async def fetch_all_data(state: State, config: RunnableConfig) -> dict[str, Any]
         if analytics_id is None:
             return None
         try:
-            data = await _gql(
-                _MENU_ENGINEERING_MATRIX_QUERY,
-                {"analyticsRunId": str(analytics_id), "categories": _PROMOTION_CATEGORIES},
-            )
-            matrix = data.get("menuEngineeringMatrix") or {}
+            matrix = await fetch_menu_engineering_matrix(analytics_id, _PROMOTION_CATEGORIES)
             return matrix.get("items") or None
         except Exception:
             logger.exception(
@@ -204,12 +111,8 @@ async def fetch_all_data(state: State, config: RunnableConfig) -> dict[str, Any]
         if analytics_id is None:
             return None
         try:
-            data = await _gql(
-                _MENU_CATEGORY_QUERY,
-                {"analyticsRunId": str(analytics_id)},
-            )
-            matrix = data.get("menuEngineeringMatrix") or {}
-            return matrix.get("items") or None
+            items = await fetch_menu_category_items(analytics_id)
+            return items or None
         except Exception:
             logger.exception(
                 "Failed to fetch all menu items for analytics_id=%s", analytics_id

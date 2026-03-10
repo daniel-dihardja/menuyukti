@@ -6,7 +6,6 @@ from pydantic import BaseModel
 
 from agent.planning import planning_subgraph
 from agent.state import IntentCategory, State
-from agent.tools import get_location
 
 
 class IntentResult(BaseModel):
@@ -15,13 +14,11 @@ class IntentResult(BaseModel):
     intent: Literal["create_instagram_campaign", "unknown"]
 
 
-# Create model
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0.7,
 )
 
-llm_with_tools = llm.bind_tools([get_location])
 intent_llm = llm.with_structured_output(IntentResult)
 
 INTENT_PROMPT = """Intent category: {intent_category}. Classify the user message into one of the following intents:
@@ -75,7 +72,7 @@ async def respond_with_plan(state: State) -> Dict[str, Any]:
         posting_cadence=brief.posting_cadence if brief else "N/A",
         post_count=len(brief.post_slots) if brief else 0,
     )
-    result = await llm_with_tools.ainvoke(prompt)
+    result = await llm.ainvoke(prompt)
     return {"response": result.content}
 
 

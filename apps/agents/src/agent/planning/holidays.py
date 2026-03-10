@@ -5,23 +5,11 @@ from typing import Any
 
 from langchain_core.runnables import RunnableConfig
 
-from agent.planning.utils import _emit, _gql, _update_planning
+from agent.gql_client import fetch_public_holidays
+from agent.planning.utils import _emit, _update_planning
 from agent.state import NationalHoliday, State
 
 logger = logging.getLogger(__name__)
-
-_PUBLIC_HOLIDAYS_QUERY = """
-query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) {
-  publicHolidays(country: $country, startDate: $startDate, endDate: $endDate) {
-    id
-    date
-    name
-    localName
-    holidayType
-    isTentative
-  }
-}
-"""
 
 
 async def search_public_holidays(state: State, config: RunnableConfig) -> dict[str, Any]:
@@ -29,7 +17,6 @@ async def search_public_holidays(state: State, config: RunnableConfig) -> dict[s
     planning = state.planning
     date_start = planning.dateStart if planning else None
     date_end = planning.dateEnd if planning else None
-
     country = (planning.location or {}).get("country") if planning else None
 
     holidays: list[NationalHoliday] | None = None
@@ -40,11 +27,7 @@ async def search_public_holidays(state: State, config: RunnableConfig) -> dict[s
             config,
         )
         try:
-            data = await _gql(
-                _PUBLIC_HOLIDAYS_QUERY,
-                {"country": country, "startDate": date_start, "endDate": date_end},
-            )
-            raw = data.get("publicHolidays") or []
+            raw = await fetch_public_holidays(country, date_start, date_end)
             holidays = [
                 NationalHoliday(
                     id=h["id"],
