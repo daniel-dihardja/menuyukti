@@ -89,7 +89,65 @@ query MenuEngineeringMatrix($analyticsRunId: ID!, $categories: [String!]) {
 }
 """
 
+_MENU_CATEGORY_QUERY = """
+query MenuCategoryBreakdown($analyticsRunId: ID!) {
+  menuEngineeringMatrix(analyticsRunId: $analyticsRunId) {
+    items {
+      menuCategory
+      menuCategoryDetail
+      quantity
+      totalRevenue
+    }
+  }
+}
+"""
+
 _PROMOTION_CATEGORIES = ["star", "puzzle"]
+
+
+def _compute_category_breakdown(items: list[dict]) -> dict:
+    """Aggregate menu items by menuCategory and menuCategoryDetail into share breakdowns."""
+    from collections import defaultdict
+
+    cat_totals: dict[str, dict] = defaultdict(lambda: {"quantity": 0, "revenue": 0.0})
+    detail_totals: dict[str, dict] = defaultdict(
+        lambda: {"quantity": 0, "revenue": 0.0, "menuCategory": ""}
+    )
+
+    total_qty = sum(i.get("quantity") or 0 for i in items)
+    total_rev = sum(i.get("totalRevenue") or 0.0 for i in items)
+
+    for item in items:
+        cat = item.get("menuCategory") or "UNKNOWN"
+        det = item.get("menuCategoryDetail") or "UNKNOWN"
+        qty = item.get("quantity") or 0
+        rev = item.get("totalRevenue") or 0.0
+
+        cat_totals[cat]["quantity"] += qty
+        cat_totals[cat]["revenue"] += rev
+        detail_totals[det]["quantity"] += qty
+        detail_totals[det]["revenue"] += rev
+        detail_totals[det]["menuCategory"] = cat
+
+    return {
+        "menuCategoryBreakdown": [
+            {
+                "category": k,
+                "quantityShare": v["quantity"] / total_qty if total_qty else 0.0,
+                "revenueShare": v["revenue"] / total_rev if total_rev else 0.0,
+            }
+            for k, v in sorted(cat_totals.items(), key=lambda x: -x[1]["quantity"])
+        ],
+        "menuCategoryDetailBreakdown": [
+            {
+                "detail": k,
+                "menuCategory": v["menuCategory"],
+                "quantityShare": v["quantity"] / total_qty if total_qty else 0.0,
+                "revenueShare": v["revenue"] / total_rev if total_rev else 0.0,
+            }
+            for k, v in sorted(detail_totals.items(), key=lambda x: -x[1]["quantity"])
+        ],
+    }
 
 
 async def fetch_all_data(state: State, config: RunnableConfig) -> dict[str, Any]:
@@ -143,11 +201,31 @@ async def fetch_all_data(state: State, config: RunnableConfig) -> dict[str, Any]
             )
             return None
 
-    location, profile, items = await asyncio.gather(
+    async def _fetch_all_menu_items() -> list[dict[str, Any]] | None:
+        if analytics_id is None:
+            return None
+        try:
+            data = await _gql(
+                _MENU_CATEGORY_QUERY,
+                {"analyticsRunId": str(analytics_id)},
+            )
+            matrix = data.get("menuEngineeringMatrix") or {}
+            return matrix.get("items") or None
+        except Exception:
+            logger.exception(
+                "Failed to fetch all menu items for analytics_id=%s", analytics_id
+            )
+            return None
+
+    location, profile, items, all_menu_items = await asyncio.gather(
         _fetch_location(),
         _fetch_profile(),
         _fetch_menu_matrix(),
+        _fetch_all_menu_items(),
     )
+
+    if profile and all_menu_items:
+        profile = {**profile, **_compute_category_breakdown(all_menu_items)}
 
     parts: list[str] = []
     if location:
@@ -156,6 +234,8 @@ async def fetch_all_data(state: State, config: RunnableConfig) -> dict[str, Any]
         parts.append(f"pattern: {profile.get('operatingPattern', 'N/A')}")
     if items:
         parts.append(f"{len(items)} promotion candidate(s)")
+    if all_menu_items:
+        parts.append(f"{len(all_menu_items)} menu item(s) analysed")
     await _emit("fetch_all_data", "done", " · ".join(parts) if parts else "No data available", config)
 
     planning = state.planning

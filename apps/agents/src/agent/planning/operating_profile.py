@@ -41,6 +41,7 @@ Based on the following restaurant data, write a concise 2–3 sentence profile t
 - Customer activity patterns: peak day, primary meal period, day-of-week and meal-period distribution
 - Revenue concentration: which days and meal periods drive the most revenue
 - Any notable weekday/weekend/holiday split that should influence content scheduling
+- Menu composition: dominant food/drink split and top sub-categories
 
 Keep the tone professional but approachable. Do not invent facts — only use the data provided.
 
@@ -59,6 +60,7 @@ Operating profile:
 - Active meal periods: {active_meal_periods}
 - Operating pattern: {operating_pattern}
 - Dining focus: {dining_focus}
+- Menu composition: {menu_category_summary}
 
 Meal period breakdown:
 {meal_period_breakdown}
@@ -67,7 +69,13 @@ Day-of-week breakdown:
 {day_of_week_breakdown}
 
 Day-type breakdown (weekday / weekend / holiday):
-{day_type_breakdown}"""
+{day_type_breakdown}
+
+Menu category breakdown (FOOD / DRINK):
+{menu_category_breakdown}
+
+Menu sub-category breakdown:
+{menu_category_detail_breakdown}"""
 
 _summary_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.4)
 
@@ -130,6 +138,26 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
             f"  {t.get('type', '?')}: {t.get('share', 0):.0%} of orders, {t.get('revenueShare', 0):.0%} of revenue"
             for t in (profile.get("dayTypeBreakdown") or [])
         ]
+        category_lines = [
+            f"  {c.get('category', '?')}: {c.get('quantityShare', 0):.0%} of orders, {c.get('revenueShare', 0):.0%} of revenue"
+            for c in (profile.get("menuCategoryBreakdown") or [])
+        ]
+        detail_lines = [
+            f"  {d.get('detail', '?')} ({d.get('menuCategory', '?')}): {d.get('quantityShare', 0):.0%} of orders, {d.get('revenueShare', 0):.0%} of revenue"
+            for d in (profile.get("menuCategoryDetailBreakdown") or [])
+        ]
+
+        _cat_breakdown = profile.get("menuCategoryBreakdown") or []
+        _top_cat = _cat_breakdown[0].get("category") if _cat_breakdown else None
+        _top_cat_share = _cat_breakdown[0].get("quantityShare", 0) if _cat_breakdown else 0
+        _detail_breakdown = profile.get("menuCategoryDetailBreakdown") or []
+        _top_detail = _detail_breakdown[0].get("detail") if _detail_breakdown else None
+        if _top_cat:
+            menu_category_summary = f"{_top_cat_share:.0%} {_top_cat}-led" + (
+                f", top sub-category: {_top_detail}" if _top_detail else ""
+            )
+        else:
+            menu_category_summary = "N/A"
 
         prompt = _LOCATION_SUMMARY_PROMPT.format(
             name=name,
@@ -147,9 +175,12 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
             active_meal_periods=", ".join(profile.get("activeMealPeriods") or []) or "N/A",
             operating_pattern=profile.get("operatingPattern", "N/A"),
             dining_focus=profile.get("diningFocus", "N/A"),
+            menu_category_summary=menu_category_summary,
             meal_period_breakdown="\n".join(meal_period_lines) or "  N/A",
             day_of_week_breakdown="\n".join(dow_lines) or "  N/A",
             day_type_breakdown="\n".join(day_type_lines) or "  N/A",
+            menu_category_breakdown="\n".join(category_lines) or "  N/A",
+            menu_category_detail_breakdown="\n".join(detail_lines) or "  N/A",
         )
 
         try:
