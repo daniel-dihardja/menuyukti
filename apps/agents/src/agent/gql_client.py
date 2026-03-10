@@ -57,7 +57,6 @@ query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
     activeMealPeriods
     operatingPattern
     diningFocus
-    operatingSummary
     mealPeriodBreakdown {
       period
       label

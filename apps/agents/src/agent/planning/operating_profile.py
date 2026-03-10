@@ -73,32 +73,35 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
         city = location.get("city") or "unknown city"
         country = location.get("country") or "unknown country"
 
+        # Use `or 0` / `or "N/A"` guards so that GQL null values don't produce
+        # None arguments into format specifiers like :.1f or :.0%, which would
+        # raise a TypeError and silently swallow the whole summary generation.
         meal_period_lines = [
             f"  {p.get('label') or p.get('period', '?')}: "
-            f"{p.get('share', 0):.0%} of orders, {p.get('revenueShare', 0):.0%} of revenue"
+            f"{p.get('share') or 0:.0%} of orders, {p.get('revenueShare') or 0:.0%} of revenue"
             for p in (profile.get("mealPeriodBreakdown") or [])
         ]
         dow_lines = [
-            f"  {d.get('day', '?')}: {d.get('share', 0):.0%} of orders"
+            f"  {d.get('day', '?')}: {d.get('share') or 0:.0%} of orders"
             + (", peak day" if d.get("isPeakDay") else "")
             for d in (profile.get("dayOfWeekBreakdown") or [])
         ]
         day_type_lines = [
-            f"  {t.get('type', '?')}: {t.get('share', 0):.0%} of orders, {t.get('revenueShare', 0):.0%} of revenue"
+            f"  {t.get('type', '?')}: {t.get('share') or 0:.0%} of orders, {t.get('revenueShare') or 0:.0%} of revenue"
             for t in (profile.get("dayTypeBreakdown") or [])
         ]
         category_lines = [
-            f"  {c.get('category', '?')}: {c.get('quantityShare', 0):.0%} of orders, {c.get('revenueShare', 0):.0%} of revenue"
+            f"  {c.get('category', '?')}: {c.get('quantityShare') or 0:.0%} of orders, {c.get('revenueShare') or 0:.0%} of revenue"
             for c in (profile.get("menuCategoryBreakdown") or [])
         ]
         detail_lines = [
-            f"  {d.get('detail', '?')} ({d.get('menuCategory', '?')}): {d.get('quantityShare', 0):.0%} of orders, {d.get('revenueShare', 0):.0%} of revenue"
+            f"  {d.get('detail', '?')} ({d.get('menuCategory', '?')}): {d.get('quantityShare') or 0:.0%} of orders, {d.get('revenueShare') or 0:.0%} of revenue"
             for d in (profile.get("menuCategoryDetailBreakdown") or [])
         ]
 
         _cat_breakdown = profile.get("menuCategoryBreakdown") or []
         _top_cat = _cat_breakdown[0].get("category") if _cat_breakdown else None
-        _top_cat_share = _cat_breakdown[0].get("quantityShare", 0) if _cat_breakdown else 0
+        _top_cat_share = (_cat_breakdown[0].get("quantityShare") or 0) if _cat_breakdown else 0
         _detail_breakdown = profile.get("menuCategoryDetailBreakdown") or []
         _top_detail = _detail_breakdown[0].get("detail") if _detail_breakdown else None
         if _top_cat:
@@ -112,18 +115,18 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
             name=name,
             city=city,
             country=country,
-            total_orders=profile.get("totalOrders", "N/A"),
-            total_revenue=profile.get("totalRevenue", 0),
-            active_days_count=profile.get("activeDaysCount", "N/A"),
-            avg_daily_orders=profile.get("avgDailyOrders", 0),
-            avg_order_size=profile.get("avgOrderSize", 0),
-            weekday_share=profile.get("weekdayShare", 0),
-            weekend_share=profile.get("weekendShare", 0),
-            peak_day=profile.get("peakDay", "N/A"),
-            primary_meal_period=profile.get("primaryMealPeriod", "N/A"),
+            total_orders=profile.get("totalOrders") or "N/A",
+            total_revenue=profile.get("totalRevenue") or 0,
+            active_days_count=profile.get("activeDaysCount") or "N/A",
+            avg_daily_orders=profile.get("avgDailyOrders") or 0,
+            avg_order_size=profile.get("avgOrderSize") or 0,
+            weekday_share=profile.get("weekdayShare") or 0,
+            weekend_share=profile.get("weekendShare") or 0,
+            peak_day=profile.get("peakDay") or "N/A",
+            primary_meal_period=profile.get("primaryMealPeriod") or "N/A",
             active_meal_periods=", ".join(profile.get("activeMealPeriods") or []) or "N/A",
-            operating_pattern=profile.get("operatingPattern", "N/A"),
-            dining_focus=profile.get("diningFocus", "N/A"),
+            operating_pattern=profile.get("operatingPattern") or "N/A",
+            dining_focus=profile.get("diningFocus") or "N/A",
             menu_category_summary=menu_category_summary,
             meal_period_breakdown="\n".join(meal_period_lines) or "  N/A",
             day_of_week_breakdown="\n".join(dow_lines) or "  N/A",
