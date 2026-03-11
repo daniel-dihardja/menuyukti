@@ -30,95 +30,6 @@ async def _gql(query: str, variables: dict[str, Any]) -> dict[str, Any]:
 # Query definitions
 # ---------------------------------------------------------------------------
 
-_LOCATION_QUERY = """
-query Location($id: ID!) {
-  location(id: $id) {
-    id
-    name
-    street
-    city
-    country
-  }
-}
-"""
-
-_OPERATING_PROFILE_QUERY = """
-query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
-  operatingProfile(locationId: $locationId, analyticsRunId: $analyticsRunId) {
-    totalOrders
-    totalRevenue
-    activeDaysCount
-    avgDailyOrders
-    avgOrderSize
-    weekdayShare
-    weekendShare
-    peakDay
-    primaryMealPeriod
-    activeMealPeriods
-    operatingPattern
-    diningFocus
-    mealPeriodBreakdown {
-      period
-      label
-      orderCount
-      share
-      revenue
-      revenueShare
-    }
-    dayOfWeekBreakdown {
-      day
-      isWeekend
-      orderCount
-      share
-      revenue
-      isPeakDay
-    }
-    dayTypeBreakdown {
-      type
-      orderCount
-      share
-      revenue
-      revenueShare
-    }
-  }
-}
-"""
-
-_MENU_ENGINEERING_MATRIX_QUERY = """
-query MenuEngineeringMatrix($analyticsRunId: ID!, $categories: [String!]) {
-  menuEngineeringMatrix(analyticsRunId: $analyticsRunId, categories: $categories) {
-    thresholds {
-      avgPopularity
-      avgContributionMargin
-      totalCogs
-      totalProfit
-      totalMargin
-    }
-    distribution {
-      category
-      itemCount
-      itemShare
-      marginShare
-    }
-    items {
-      menu
-      category
-      action
-      quantity
-      totalRevenue
-      cogs
-      totalCogs
-      contributionMargin
-      contributionMarginPercentage
-      marginPerUnit
-      weValue
-      menuCategory
-      menuCategoryDetail
-    }
-  }
-}
-"""
-
 _FETCH_CAMPAIGN_QUERY = """
 query FetchCampaignData($locationId: ID!, $analyticsRunId: ID!, $promotionCategories: [String!]) {
   location(id: $locationId) {
@@ -198,33 +109,6 @@ query FetchCampaignData($locationId: ID!, $analyticsRunId: ID!, $promotionCatego
 }
 """
 
-_ORDER_METRICS_QUERY = """
-query OrderMetrics($analyticsRunId: ID!) {
-  orderMetrics(analyticsRunId: $analyticsRunId) {
-    avgOrderSize
-    avgOrderRevenue
-  }
-}
-"""
-
-_MENU_HEATMAPS_QUERY = """
-query MenuHeatmaps($analyticsRunId: ID!) {
-  menuHeatmaps(analyticsRunId: $analyticsRunId) {
-    menu
-    menuCategory
-    menuCategoryDetail
-    dailyHeatmap {
-      hour
-      quantity
-    }
-    weeklyHeatmap {
-      day
-      quantity
-    }
-  }
-}
-"""
-
 _PUBLIC_HOLIDAYS_QUERY = """
 query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) {
   publicHolidays(country: $country, startDate: $startDate, endDate: $endDate) {
@@ -242,36 +126,6 @@ query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) 
 # ---------------------------------------------------------------------------
 # Typed fetch functions
 # ---------------------------------------------------------------------------
-
-async def fetch_location(location_id: int | str) -> dict[str, Any]:
-    """Return the location record for *location_id*, or an empty dict on failure."""
-    data = await _gql(_LOCATION_QUERY, {"id": str(location_id)})
-    return data.get("location") or {}
-
-
-async def fetch_operating_profile(
-    location_id: int | str,
-    analytics_id: int | str,
-) -> dict[str, Any] | None:
-    """Return the operating profile for the given IDs, or None on failure."""
-    data = await _gql(
-        _OPERATING_PROFILE_QUERY,
-        {"locationId": str(location_id), "analyticsRunId": str(analytics_id)},
-    )
-    return data.get("operatingProfile") or None
-
-
-async def fetch_menu_engineering_matrix(
-    analytics_id: int | str,
-    categories: list[str] | None = None,
-) -> dict[str, Any]:
-    """Return the full matrix payload (thresholds, distribution, items)."""
-    data = await _gql(
-        _MENU_ENGINEERING_MATRIX_QUERY,
-        {"analyticsRunId": str(analytics_id), "categories": categories},
-    )
-    return data.get("menuEngineeringMatrix") or {}
-
 
 async def fetch_campaign_data(
     location_id: int | str,
@@ -297,18 +151,6 @@ async def fetch_campaign_data(
     matrix = data.get("menuEngineeringMatrix") or {}
     matrix_items = matrix.get("items") or None
     return location, operating_profile, matrix_items
-
-
-async def fetch_order_metrics(analytics_id: int | str) -> dict[str, Any]:
-    """Return average order size and revenue for the analytics run."""
-    data = await _gql(_ORDER_METRICS_QUERY, {"analyticsRunId": str(analytics_id)})
-    return data.get("orderMetrics") or {}
-
-
-async def fetch_menu_heatmaps(analytics_id: int | str) -> list[dict[str, Any]]:
-    """Return hourly and weekly demand heatmaps for all menu items."""
-    data = await _gql(_MENU_HEATMAPS_QUERY, {"analyticsRunId": str(analytics_id)})
-    return data.get("menuHeatmaps") or []
 
 
 async def fetch_public_holidays(
