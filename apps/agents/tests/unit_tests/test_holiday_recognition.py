@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from agent.planning.schedule import _build_candidate_weeks
-from agent.planning.brief import _derive_holiday_ids, _format_candidate_weeks, _format_holidays
+from agent.ig_campaign.schedule import _build_candidate_weeks
+from agent.ig_campaign.brief import _derive_holiday_ids, _format_candidate_weeks, _format_holidays
 from agent.state import CampaignBrief, NationalHoliday, PostSlot
 
 

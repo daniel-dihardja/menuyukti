@@ -3,7 +3,7 @@ from dataclasses import asdict
 
 from agent import graph
 from agent.graph import State
-from agent.planning import planning_subgraph
+from agent.ig_campaign import planning_subgraph
 
 pytestmark = pytest.mark.anyio
 

@@ -6,7 +6,7 @@ from typing import Any
 from langchain_core.runnables import RunnableConfig
 
 from agent.gql_client import fetch_public_holidays
-from agent.planning.utils import _emit, _update_planning
+from agent.ig_campaign.utils import _emit, _update_planning
 from agent.state import NationalHoliday, State
 
 logger = logging.getLogger(__name__)

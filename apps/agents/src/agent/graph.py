@@ -5,7 +5,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
 from agent.config import LLM_MODEL
-from agent.planning import planning_subgraph
+from agent.ig_campaign import planning_subgraph
 from agent.state import IntentCategory, State
 
 

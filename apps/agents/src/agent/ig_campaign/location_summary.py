@@ -8,8 +8,8 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
 from agent.config import LLM_MODEL
-from agent.planning.reflect import reflect_loop
-from agent.planning.utils import _emit, _update_planning
+from agent.ig_campaign.reflect import reflect_loop
+from agent.ig_campaign.utils import _emit, _update_planning
 from agent.state import State
 
 logger = logging.getLogger(__name__)

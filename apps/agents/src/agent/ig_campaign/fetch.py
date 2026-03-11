@@ -12,7 +12,7 @@ from agent.gql_client import (
     fetch_menu_engineering_matrix,
     fetch_operating_profile,
 )
-from agent.planning.utils import _emit, _update_planning
+from agent.ig_campaign.utils import _emit, _update_planning
 from agent.state import State
 
 logger = logging.getLogger(__name__)
