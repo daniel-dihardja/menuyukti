@@ -9,7 +9,9 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
 from agent.config import LLM_MODEL
-from agent.ig_campaign.brief import assign_post_formats, generate_campaign_brief, generate_post_schedule
+from agent.ig_campaign.brief import generate_campaign_brief
+from agent.ig_campaign.post_format import assign_post_formats
+from agent.ig_campaign.post_schedule import generate_post_schedule
 from agent.ig_campaign.fetch import fetch_all_data
 from agent.ig_campaign.location_summary import generate_location_summary
 from agent.ig_campaign.schedule import generate_candidate_slots
