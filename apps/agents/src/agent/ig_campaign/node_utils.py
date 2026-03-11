@@ -32,14 +32,52 @@ def _format_holidays(holidays: list[NationalHoliday] | None) -> str:
     )
 
 
-def _format_items(items: list[dict] | None) -> str:
+def _sort_items(items: list[dict]) -> list[dict]:
+    """Sort items by contributionMargin × quantity descending (highest-value first)."""
+    def _priority(item: dict) -> float:
+        cm = item.get("contributionMargin") or 0
+        qty = item.get("quantity") or 0
+        return float(cm) * float(qty)
+    return sorted(items, key=_priority, reverse=True)
+
+
+def _format_items_for_selection(items: list[dict] | None) -> str:
+    """Full item context for the format-assignment LLM.
+
+    Includes quantity, menuCategoryDetail, and contributionMargin so the LLM
+    can make data-driven ranking, grouping, and distribution decisions.
+    """
     if not items:
         return "None available"
     lines = []
-    for item in items:
+    for item in _sort_items(items):
         name = item.get("menu", "Unknown item")
         action = item.get("action", "")
+        detail = item.get("menuCategoryDetail", "")
+        qty = item.get("quantity")
         cm = item.get("contributionMargin")
-        cm_str = f", contribution margin: {cm}" if cm is not None else ""
-        lines.append(f"- {name} (category: {action}{cm_str})")
+        detail_str = f" · {detail}" if detail else ""
+        qty_str = f" · qty: {qty}" if qty is not None else ""
+        cm_str = f" · CM: {cm}" if cm is not None else ""
+        lines.append(f"- {name} ({action}{detail_str}{qty_str}{cm_str})")
+    return "\n".join(lines)
+
+
+def _format_items_for_brief(items: list[dict] | None) -> str:
+    """Leaner item context for the campaign brief LLM.
+
+    Drops quantity (item selection already done). Keeps menuCategoryDetail for
+    culinary context and contributionMargin for caption tone calibration.
+    """
+    if not items:
+        return "None available"
+    lines = []
+    for item in _sort_items(items):
+        name = item.get("menu", "Unknown item")
+        action = item.get("action", "")
+        detail = item.get("menuCategoryDetail", "")
+        cm = item.get("contributionMargin")
+        detail_str = f" · {detail}" if detail else ""
+        cm_str = f" · CM: {cm}" if cm is not None else ""
+        lines.append(f"- {name} ({action}{detail_str}{cm_str})")
     return "\n".join(lines)

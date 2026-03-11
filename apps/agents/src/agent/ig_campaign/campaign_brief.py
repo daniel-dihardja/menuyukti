@@ -7,7 +7,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 
 from agent.config import LLM_MODEL
-from agent.ig_campaign.node_utils import _emit, _format_holidays, _format_items, _update_planning
+from agent.ig_campaign.node_utils import _emit, _format_holidays, _format_items_for_brief, _update_planning
 from agent.state import (
     CampaignBrief,
     FormatAssignment,
@@ -199,7 +199,7 @@ async def generate_campaign_brief(state: State, config: RunnableConfig) -> dict[
             date_end=planning.dateEnd or "unknown",
             location_summary=planning.locationSummary or "No profile available.",
             holidays=_format_holidays(planning.nationalHolidays),
-            promotion_items=_format_items(planning.promotionItems),
+            promotion_items=_format_items_for_brief(planning.promotionItems),
             post_dates_section=_format_post_dates(
                 planning.postSchedule.weeks,
                 holiday_by_date=holiday_by_date,

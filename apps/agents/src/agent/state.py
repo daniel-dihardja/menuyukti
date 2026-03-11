@@ -129,6 +129,7 @@ class PlanningState:
     candidateWeeks: list[CandidateWeek] | None = field(default=None)
     postSchedule: PostSchedule | None = None
     postFormatPlan: PostFormatPlan | None = None
+    postFormatReflectionLog: list[ReflectionIteration] | None = field(default=None)
     campaign_brief: CampaignBrief | None = None
     plan: list[str] | None = field(default=None)
     current_step: int = 0
