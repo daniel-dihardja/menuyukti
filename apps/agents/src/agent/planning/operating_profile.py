@@ -12,17 +12,48 @@ from agent.state import State
 logger = logging.getLogger(__name__)
 
 
-_LOCATION_SUMMARY_PROMPT = """You are a marketing analyst helping a restaurant build an Instagram content strategy.
+_LOCATION_SUMMARY_PROMPT = """You are a senior restaurant marketing strategist helping build an Instagram content strategy.
 
-Based on the following restaurant data, write a concise 2–3 sentence profile that gives a restaurant marketer a clear, actionable picture of the venue. Every data point below must be reflected in the profile — keep it short, but leave nothing out. Cover:
-- Dining experience: meal focus, operating pattern, busiest time windows
-- Customer mix: average items per order (proxy for party size — lower = more solo/pair, higher = more groups/families) and average spend per order (price-point signal)
-- Customer activity patterns: peak day, primary meal period, day-of-week and meal-period distribution
-- Revenue concentration: which days and meal periods drive the most revenue (use peak revenue day/period, not just order volume)
-- Any notable weekday/weekend/holiday split that should influence content scheduling
-- Menu composition: dominant food/drink split and top sub-categories
+Using the operating data below, write a marketing briefing for {name} ({city}, {country}). \
+Interpret the data — do not simply repeat it. Translate every signal into a clear implication \
+for Instagram content decisions. Do not invent facts; only draw conclusions the data supports.
 
-Keep the tone professional but approachable. Do not invent facts — only use the data provided.
+Structure your response as exactly four labelled paragraphs:
+
+**Venue Identity**
+What kind of place is this, and how should it position itself on Instagram? \
+Derive the venue type and positioning from the dining focus, operating pattern, average spend per \
+order (price-point signal), and dominant menu composition. \
+(e.g. "A mid-range weekday lunch café anchored by a food-led menu with strong coffee trade.")
+
+**Audience Persona**
+Who is the likely customer, and what content resonates with them? \
+Infer the social context from average items per order: ≤2 items = solo diners or pairs \
+(content themes: "me time", quick rituals, dates); 3–5 items = small groups or couples \
+(sharing, casual catch-ups); ≥6 items = families or large groups (celebrations, gatherings). \
+Layer in price sensitivity from average spend, and lifestyle from the weekday/weekend split \
+(weekday-heavy = office/commuter crowd; weekend-heavy = leisure diners, families, tourists). \
+Holiday share above 10% signals holiday-occasion sensitivity worth activating in content.
+
+**Traffic & Timing**
+When does this venue peak, and when should posts go live? \
+State the highest-traffic day and highest-revenue day (flag if they differ and why that matters). \
+Translate the primary meal period into a concrete Instagram posting window: post 1–2 hours \
+before the meal period opens to capture consideration (e.g. dinner peak → post mid-afternoon). \
+Note any meaningful weekday/weekend/holiday revenue concentration that should shape the \
+weekly posting cadence.
+
+**Content & Tone Signals**
+What visual aesthetic and brand voice should the marketer adopt? \
+Derive aesthetic direction from dining focus and top menu sub-categories \
+(e.g. breakfast café → warm morning light, flat lays, ritual framing; \
+late-night venue → moody, vibrant, nightlife energy). \
+Derive tone from price point: high average spend → aspirational, elevated copy; \
+low-to-mid spend → warm, accessible, everyday language. \
+Call out one or two specific content angles the data supports strongly \
+(e.g. "mid-week lunch promos", "Friday evening countdown posts", "holiday bundle features").
+
+---
 
 Restaurant name: {name}
 Location: {city}, {country}
@@ -33,8 +64,8 @@ Operating profile:
 - Active days: {active_days_count}
 - Average active days per week: {avg_active_days_per_week:.1f}
 - Average daily orders: {avg_daily_orders:.1f}
-- Average items per order: {avg_order_size:.1f} (proxy for party size)
-- Average revenue per order: {avg_revenue_per_order:.2f}
+- Average items per order: {avg_order_size:.1f} (proxy for party size and social context)
+- Average revenue per order: {avg_revenue_per_order:.2f} (price-point signal)
 - Weekday share: {weekday_share:.0%} | Weekend share: {weekend_share:.0%} | Holiday share: {holiday_share:.0%}
 - Peak day (by orders): {peak_day} | Peak day (by revenue): {peak_revenue_day}
 - Primary meal period (by orders): {primary_meal_period} | Peak meal period (by revenue): {peak_revenue_meal_period}
