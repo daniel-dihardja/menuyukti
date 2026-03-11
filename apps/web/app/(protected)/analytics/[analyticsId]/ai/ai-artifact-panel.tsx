@@ -8,7 +8,7 @@ import {
   ArtifactTitle,
 } from "@workspace/ui/components/ai-elements/artifact";
 import { MessageResponse } from "@workspace/ui/components/ai-elements/message";
-import { CalendarIcon, GlobeIcon, LayoutListIcon, SparklesIcon, StoreIcon } from "lucide-react";
+import { CalendarIcon, GalleryHorizontalIcon, GlobeIcon, LayoutListIcon, SparklesIcon, StoreIcon } from "lucide-react";
 
 export type NationalHoliday = {
   localName: string;
@@ -19,7 +19,10 @@ export type NationalHoliday = {
 export type PostSlot = {
   scheduled_date: string;
   theme: "holiday" | "promotion" | "engagement";
+  format: "single" | "carousel";
   focus_item: string | null;
+  carousel_items: string[] | null;
+  carousel_narrative: string | null;
   caption_seed: string;
 };
 
@@ -288,9 +291,17 @@ export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
                   <LayoutListIcon className="size-3.5" />
                   Post Schedule
                 </div>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                  {planning.campaignBrief.post_slots.length} posts
-                </span>
+                <div className="flex items-center gap-1.5">
+                  {planning.campaignBrief.post_slots.some((s) => s.format === "carousel") && (
+                    <span className="flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                      <GalleryHorizontalIcon className="size-3" />
+                      {planning.campaignBrief.post_slots.filter((s) => s.format === "carousel").length} carousel
+                    </span>
+                  )}
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                    {planning.campaignBrief.post_slots.length} posts
+                  </span>
+                </div>
               </div>
               <div className="space-y-3">
                 {planning.campaignBrief.post_slots.map((slot, idx) => (
@@ -302,18 +313,42 @@ export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="mb-1 flex items-center gap-1.5">
+                        <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
                           <span
                             className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${THEME_STYLES[slot.theme]}`}
                           >
                             {slot.theme}
                           </span>
-                          {slot.focus_item && (
-                            <span className="truncate text-xs text-muted-foreground">
-                              {slot.focus_item}
+                          {slot.format === "carousel" ? (
+                            <span className="flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                              <GalleryHorizontalIcon className="size-3" />
+                              Carousel
                             </span>
+                          ) : (
+                            slot.focus_item && (
+                              <span className="truncate text-xs text-muted-foreground">
+                                {slot.focus_item}
+                              </span>
+                            )
                           )}
                         </div>
+                        {slot.format === "carousel" && slot.carousel_items && slot.carousel_items.length > 0 && (
+                          <div className="mb-1.5 flex flex-wrap gap-1">
+                            {slot.carousel_items.map((item, i) => (
+                              <span
+                                key={i}
+                                className="rounded-md border bg-background px-1.5 py-0.5 text-xs font-medium text-foreground"
+                              >
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {slot.format === "carousel" && slot.carousel_narrative && (
+                          <p className="mb-1.5 text-xs italic text-muted-foreground">
+                            {slot.carousel_narrative}
+                          </p>
+                        )}
                         <p className="text-xs leading-relaxed text-muted-foreground">
                           <span className="mr-1 font-medium text-muted-foreground/60">Caption seed:</span>
                           {slot.caption_seed}

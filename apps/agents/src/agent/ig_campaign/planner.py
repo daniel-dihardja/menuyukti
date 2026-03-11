@@ -9,7 +9,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
 from agent.config import LLM_MODEL
-from agent.ig_campaign.brief import generate_campaign_brief, generate_post_schedule
+from agent.ig_campaign.brief import assign_post_formats, generate_campaign_brief, generate_post_schedule
 from agent.ig_campaign.fetch import fetch_all_data
 from agent.ig_campaign.location_summary import generate_location_summary
 from agent.ig_campaign.schedule import generate_candidate_slots
@@ -28,6 +28,7 @@ STEP_REGISTRY: dict[str, Any] = {
     "generate_location_summary": generate_location_summary,
     "generate_candidate_slots": generate_candidate_slots,
     "generate_post_schedule": generate_post_schedule,
+    "assign_post_formats": assign_post_formats,
     "generate_campaign_brief": generate_campaign_brief,
 }
 
@@ -36,6 +37,7 @@ _STEP_DESCRIPTIONS = """
 - generate_location_summary: Generate a concise marketing profile of the restaurant from operating data.
 - generate_candidate_slots: Build the candidate posting date calendar for the campaign window.
 - generate_post_schedule: Select the optimal 3–5 posting dates per week from the candidate calendar.
+- assign_post_formats: Decide single vs. carousel format for each promotion slot and group menu items into carousels where appropriate.
 - generate_campaign_brief: Annotate the post schedule with campaign theme, tone, and caption directives.
 """.strip()
 
@@ -54,7 +56,8 @@ Rules:
 - generate_candidate_slots requires fetch_all_data to run first.
 - generate_post_schedule requires generate_candidate_slots to run first.
 - generate_location_summary requires fetch_all_data to run first.
-- generate_campaign_brief requires generate_post_schedule and generate_location_summary to run first.
+- assign_post_formats requires generate_post_schedule and fetch_all_data to run first.
+- generate_campaign_brief requires assign_post_formats and generate_location_summary to run first.
 - Only include steps that are needed. If data is missing (e.g. no analytics_id), still include all steps — they handle missing data gracefully.
 
 Return an ordered list of step names to execute."""

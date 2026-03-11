@@ -11,7 +11,9 @@ from agent.ig_campaign.utils import _emit, _update_planning
 from agent.state import (
     CampaignBrief,
     CandidateWeek,
+    FormatAssignment,
     NationalHoliday,
+    PostFormatPlan,
     PostSchedule,
     PostSlot,
     State,
@@ -29,6 +31,9 @@ _BRIEF_PROMPT_VERSION = "v2"
 
 _schedule_llm = ChatOpenAI(model=LLM_MODEL, temperature=0.3)
 _schedule_llm_structured = _schedule_llm.with_structured_output(PostSchedule)
+
+_format_llm = ChatOpenAI(model=LLM_MODEL, temperature=0.2)
+_format_llm_structured = _format_llm.with_structured_output(PostFormatPlan)
 
 _brief_llm = ChatOpenAI(model=LLM_MODEL, temperature=0.5)
 _brief_llm_structured = _brief_llm.with_structured_output(CampaignBrief)
@@ -64,6 +69,36 @@ For each week below, select the best posting dates to maximise engagement:
 
 
 # ---------------------------------------------------------------------------
+# Post format assignment prompt
+# ---------------------------------------------------------------------------
+
+_FORMAT_ASSIGNMENT_PROMPT = """You are deciding Instagram post formats for a restaurant campaign.
+
+Your job is to assign a format (single post or carousel) to each promotion slot and decide which menu items to feature on it.
+
+Promotion slots (dates with theme=promotion):
+{promotion_slots}
+
+Menu items available for promotion:
+{promotion_items}
+
+Rules:
+- "star" category items must always be assigned as format="single" — they deserve a solo spotlight.
+- "puzzle" and "plow_horse" category items are carousel candidates if they share a menu category or customer theme (e.g. all drinks, all snacks, all value sets).
+- Holiday-pinned slots (marked [HOLIDAY]) must always be format="single".
+- A maximum of 2 carousel posts per week — if more than 2 promotion slots in a week could be carousels, pick the best 2 and make the rest "single".
+- Carousel posts must group 2 to 4 items. Each item should appear in at most one post across the whole campaign.
+- Every promotable item must appear in at least one post. If items cannot be grouped sensibly, give them their own single post.
+- For each assignment, provide:
+  - scheduled_date: the date string
+  - format: "single" or "carousel"
+  - items: list of exactly 1 item name (single) or 2–4 item names (carousel)
+  - carousel_narrative: a short angle explaining why these items belong together (carousel only, null for single)
+
+Return one assignment per promotion slot."""
+
+
+# ---------------------------------------------------------------------------
 # Campaign brief annotation prompt
 # ---------------------------------------------------------------------------
 
@@ -91,10 +126,11 @@ Instructions:
 - Design a campaign theme and tone that fits the restaurant profile and the time period.
 - For each post date, assign:
   - theme: "holiday" (only for dates marked [HOLIDAY_ID]), "promotion" (feature a menu item), or "engagement" (brand voice)
-  - focus_item: the menu item name for promotion posts, null otherwise
+  - focus_item: the promoted item name for single-format promotion posts, null otherwise
   - caption_seed: a one-sentence directive that will be expanded into a full caption by the executor
 - Anchor "holiday" posts only to dates explicitly marked with a [HOLIDAY_ID].
-- Distribute "promotion" posts across the star and puzzle items so each item gets at least one post.
+- For promotion slots marked [SINGLE: item], write a caption_seed focused on that one item.
+- For promotion slots marked [CAROUSEL: item1 · item2 · ...], write a caption_seed that introduces all items as a curated set using the provided narrative angle.
 - Fill remaining slots with "engagement" posts that reinforce brand voice."""
 
 
@@ -131,15 +167,47 @@ def _format_candidate_weeks(weeks: list[CandidateWeek]) -> str:
 def _format_post_dates(
     weeks: list[WeekSelection],
     holiday_by_date: dict[str, str] | None = None,
+    format_by_date: dict[str, FormatAssignment] | None = None,
 ) -> str:
     hmap = holiday_by_date or {}
+    fmap = format_by_date or {}
     lines: list[str] = []
     for week in weeks:
         lines.append(f"Week {week.week_number}:")
         for d in week.selected_dates:
             hid = hmap.get(d)
-            annotation = f"  [{hid}]" if hid else ""
-            lines.append(f"  - {d}{annotation}")
+            holiday_annotation = f"  [{hid}]" if hid else ""
+            assignment = fmap.get(d)
+            if assignment:
+                if assignment.format == "carousel":
+                    items_str = " · ".join(assignment.items)
+                    narrative = f" — {assignment.carousel_narrative}" if assignment.carousel_narrative else ""
+                    format_annotation = f"  [CAROUSEL: {items_str}{narrative}]"
+                else:
+                    item_str = assignment.items[0] if assignment.items else ""
+                    format_annotation = f"  [SINGLE: {item_str}]" if item_str else ""
+            else:
+                format_annotation = ""
+            lines.append(f"  - {d}{holiday_annotation}{format_annotation}")
+    return "\n".join(lines)
+
+
+def _format_promotion_slots(
+    weeks: list[WeekSelection],
+    holiday_by_date: dict[str, str] | None = None,
+) -> str:
+    """Format only the promotion-eligible slots for the format-assignment LLM."""
+    hmap = holiday_by_date or {}
+    lines: list[str] = []
+    for week in weeks:
+        week_slots = []
+        for d in week.selected_dates:
+            hid = hmap.get(d)
+            annotation = "  [HOLIDAY]" if hid else ""
+            week_slots.append(f"  - {d}{annotation}")
+        if week_slots:
+            lines.append(f"Week {week.week_number}:")
+            lines.extend(week_slots)
     return "\n".join(lines)
 
 
@@ -245,14 +313,18 @@ def _validate_and_clamp(
 def _derive_holiday_ids(
     brief: CampaignBrief,
     holidays: list[NationalHoliday] | None,
+    post_format_plan: PostFormatPlan | None = None,
 ) -> CampaignBrief:
-    """Populate PostSlot.holiday_id server-side from the canonical holiday map.
+    """Populate PostSlot.holiday_id and carousel fields server-side.
 
-    The LLM is never asked to set holiday_id; this function derives it
-    deterministically after the model returns. It also downgrades any slot
-    where the model assigned theme='holiday' on a non-holiday date.
+    holiday_id is derived deterministically from the canonical holiday map.
+    format/carousel_items/carousel_narrative are copied from postFormatPlan assignments.
+    The LLM is never asked to set these fields directly.
     """
     holiday_by_date: dict[str, str] = {h["date"]: h["id"] for h in (holidays or [])}
+    format_by_date: dict[str, FormatAssignment] = {
+        a.scheduled_date: a for a in (post_format_plan.assignments if post_format_plan else [])
+    }
     fixed_slots: list[PostSlot] = []
     for slot in brief.post_slots:
         hid = holiday_by_date.get(slot.scheduled_date)
@@ -265,6 +337,24 @@ def _derive_holiday_ids(
             slot = slot.model_copy(update={"theme": "engagement", "holiday_id": None, "source": "llm_suggested"})
         else:
             slot = slot.model_copy(update={"holiday_id": hid, "source": "holiday_pinned" if hid else "llm_suggested"})
+
+        assignment = format_by_date.get(slot.scheduled_date)
+        if assignment and slot.theme == "promotion":
+            if assignment.format == "carousel":
+                slot = slot.model_copy(update={
+                    "format": "carousel",
+                    "carousel_items": assignment.items,
+                    "carousel_narrative": assignment.carousel_narrative,
+                    "focus_item": None,
+                })
+            else:
+                slot = slot.model_copy(update={
+                    "format": "single",
+                    "focus_item": assignment.items[0] if assignment.items else slot.focus_item,
+                    "carousel_items": None,
+                    "carousel_narrative": None,
+                })
+
         fixed_slots.append(slot)
     return brief.model_copy(update={"post_slots": sorted(fixed_slots, key=lambda s: s.scheduled_date)})
 
@@ -272,6 +362,47 @@ def _derive_holiday_ids(
 # ---------------------------------------------------------------------------
 # Graph nodes
 # ---------------------------------------------------------------------------
+
+async def assign_post_formats(state: State, config: RunnableConfig) -> dict[str, Any]:
+    """LLM decides single vs. carousel format for each promotion slot and groups items."""
+    await _emit("assign_post_formats", "running", "Assigning post formats...", config)
+
+    planning = state.planning
+    post_format_plan: PostFormatPlan | None = None
+
+    if planning and planning.postSchedule and planning.promotionItems:
+        holiday_by_date: dict[str, str] = {
+            h["date"]: h["id"] for h in (planning.nationalHolidays or [])
+        }
+        promotion_slots_str = _format_promotion_slots(
+            planning.postSchedule.weeks,
+            holiday_by_date=holiday_by_date,
+        )
+        prompt = _FORMAT_ASSIGNMENT_PROMPT.format(
+            promotion_slots=promotion_slots_str,
+            promotion_items=_format_items(planning.promotionItems),
+        )
+        try:
+            post_format_plan = await _format_llm_structured.ainvoke(prompt)
+        except Exception:
+            logger.exception("Failed to assign post formats")
+
+    carousel_count = sum(
+        1 for a in (post_format_plan.assignments if post_format_plan else [])
+        if a.format == "carousel"
+    )
+    single_count = sum(
+        1 for a in (post_format_plan.assignments if post_format_plan else [])
+        if a.format == "single"
+    )
+    label = (
+        f"{single_count} single · {carousel_count} carousel post(s) assigned"
+        if post_format_plan
+        else "Post format assignment unavailable"
+    )
+    await _emit("assign_post_formats", "done", label, config)
+    return {"planning": _update_planning(planning, postFormatPlan=post_format_plan)}
+
 
 async def generate_post_schedule(state: State, config: RunnableConfig) -> dict[str, Any]:
     """LLM selects 3–5 posting dates per week from the pre-built candidate calendar."""
@@ -319,6 +450,10 @@ async def generate_campaign_brief(state: State, config: RunnableConfig) -> dict[
         holiday_by_date: dict[str, str] = {
             h["date"]: h["id"] for h in (planning.nationalHolidays or [])
         }
+        format_by_date: dict[str, FormatAssignment] = {
+            a.scheduled_date: a
+            for a in (planning.postFormatPlan.assignments if planning.postFormatPlan else [])
+        }
         prompt = _BRIEF_PROMPT.format(
             date_start=planning.dateStart or "unknown",
             date_end=planning.dateEnd or "unknown",
@@ -328,11 +463,12 @@ async def generate_campaign_brief(state: State, config: RunnableConfig) -> dict[
             post_dates_section=_format_post_dates(
                 planning.postSchedule.weeks,
                 holiday_by_date=holiday_by_date,
+                format_by_date=format_by_date,
             ),
         )
         try:
             raw_brief = await _brief_llm_structured.ainvoke(prompt)
-            brief = _derive_holiday_ids(raw_brief, planning.nationalHolidays)
+            brief = _derive_holiday_ids(raw_brief, planning.nationalHolidays, planning.postFormatPlan)
         except Exception:
             logger.exception("Failed to generate campaign brief")
 

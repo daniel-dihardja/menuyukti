@@ -58,12 +58,36 @@ class PostSchedule(BaseModel):
     weeks: list[WeekSelection]
 
 
+class FormatAssignment(BaseModel):
+    """Format decision for a single promotion slot, produced by the format-assignment LLM."""
+
+    scheduled_date: str
+    format: Literal["single", "carousel"]
+    items: list[str]
+    """Exactly 1 item name for single posts; 2–4 item names for carousels."""
+    carousel_narrative: str | None = None
+    """Brief framing angle explaining why these items belong together (carousel only)."""
+
+
+class PostFormatPlan(BaseModel):
+    """Full set of format assignments for all promotion slots in the campaign."""
+
+    assignments: list[FormatAssignment]
+
+
 class PostSlot(BaseModel):
     """A single planned Instagram post within a campaign."""
 
     scheduled_date: str
     theme: Literal["holiday", "promotion", "engagement"]
+    format: Literal["single", "carousel"] = "single"
+    """Post format: single image/video or multi-slide carousel."""
     focus_item: str | None = None
+    """The promoted menu item name for single-format promotion posts."""
+    carousel_items: list[str] | None = None
+    """Ordered list of item names for carousel posts (2–4 items)."""
+    carousel_narrative: str | None = None
+    """Framing angle explaining why these items belong together (carousel only)."""
     caption_seed: str
     """One-sentence directive seed. Will be expanded into a full caption by the executor."""
     holiday_id: str | None = None
@@ -102,6 +126,7 @@ class PlanningState:
     promotionItems: list[dict[str, Any]] | None = None
     candidateWeeks: list[CandidateWeek] | None = field(default=None)
     postSchedule: PostSchedule | None = None
+    postFormatPlan: PostFormatPlan | None = None
     campaign_brief: CampaignBrief | None = None
     plan: list[str] | None = field(default=None)
     current_step: int = 0
