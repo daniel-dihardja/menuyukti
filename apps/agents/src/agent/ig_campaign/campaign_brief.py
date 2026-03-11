@@ -40,9 +40,8 @@ Restaurant profile:
 Public holidays during this period (canonical list — do not invent or move dates):
 {holidays}
 
-Holiday-themed posts must anchor to dates marked with a [HOLIDAY_ID] in the post \
-dates list below. Do not assign theme="holiday" to a date that is not marked as a \
-holiday — use theme="engagement" or theme="promotion" for those dates instead.
+Holiday-themed posts must anchor to dates marked with a [HOLIDAY_ID] in the post dates list below.
+Do not assign theme="holiday" to a date that is not marked as a holiday — use theme="engagement" or theme="promotion" instead.
 
 Menu items available for promotion (star, plow_horse, and puzzle items):
 {promotion_items}
@@ -50,16 +49,29 @@ Menu items available for promotion (star, plow_horse, and puzzle items):
 Post dates to annotate:
 {post_dates_section}
 
+Promotion strategy:
+- Prioritize STAR items because they are profitable and popular.
+- Occasionally promote PUZZLE items to increase awareness and demand.
+- Use PLOW_HORSE items sparingly since they are popular but lower margin.
+- Aim roughly for this distribution across promotion posts:
+  - STAR ≈ 60–70%
+  - PUZZLE ≈ 20–30%
+  - PLOW_HORSE ≤ 10%
+- Avoid repeating the same item too frequently during the campaign window.
+
 Instructions:
 - Design a campaign theme and tone that fits the restaurant profile and the time period.
 - For each post date, assign:
   - theme: "holiday" (only for dates marked [HOLIDAY_ID]), "promotion" (feature a menu item), or "engagement" (brand voice)
   - focus_item: the promoted item name for single-format promotion posts, null otherwise
   - caption_seed: a one-sentence directive that will be expanded into a full caption by the executor
+
+Rules:
 - Anchor "holiday" posts only to dates explicitly marked with a [HOLIDAY_ID].
 - For promotion slots marked [SINGLE: item], write a caption_seed focused on that one item.
-- For promotion slots marked [CAROUSEL: item1 · item2 · ...], write a caption_seed that introduces all items as a curated set using the provided narrative angle.
-- Fill remaining slots with "engagement" posts that reinforce brand voice."""
+- For promotion slots marked [CAROUSEL: item1 · item2 · ...], write a caption_seed that introduces all items as a curated set (e.g., chef’s favorites, seasonal picks, tasting journey).
+- caption_seed must be a directive for the executor, not a finished caption.
+- Fill remaining slots with "engagement" posts that reinforce brand voice (e.g., chef moments, ingredient highlights, dining atmosphere, community interaction)."""
 
 
 # ---------------------------------------------------------------------------
