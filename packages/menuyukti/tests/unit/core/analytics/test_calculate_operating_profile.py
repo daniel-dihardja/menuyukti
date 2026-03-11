@@ -3,7 +3,7 @@
 All tests use inline order rows — no DB or file fixtures required.
 """
 
-from datetime import datetime
+from datetime import datetime, date
 
 import pytest
 
@@ -43,6 +43,76 @@ def test_empty_returns_none():
 
 
 # ---------------------------------------------------------------------------
+# Zero/negative revenue filtering
+# ---------------------------------------------------------------------------
+
+
+def test_zero_revenue_bill_excluded_from_total_orders():
+    rows = [
+        _row("PAID", _BASE_MON.replace(hour=12), revenue=20.0),
+        _row("FREE", _BASE_TUE.replace(hour=12), revenue=0.0),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["total_orders"] == 1
+    assert abs(result["total_revenue"] - 20.0) < 1e-4
+
+
+def test_negative_revenue_bill_excluded():
+    rows = [
+        _row("PAID", _BASE_MON.replace(hour=12), revenue=15.0),
+        _row("VOID", _BASE_TUE.replace(hour=12), revenue=-5.0),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["total_orders"] == 1
+    assert abs(result["total_revenue"] - 15.0) < 1e-4
+
+
+def test_all_zero_revenue_returns_none():
+    rows = [
+        _row("F1", _BASE_MON.replace(hour=12), revenue=0.0),
+        _row("F2", _BASE_TUE.replace(hour=12), revenue=0.0),
+    ]
+    assert compute_operating_profile_from_orders(rows) is None
+
+
+def test_zero_revenue_excluded_from_dow_distribution():
+    # Only the paid Monday order should count; Tuesday (free) must not affect shares
+    rows = [
+        _row("P1", _BASE_MON.replace(hour=12), revenue=10.0),
+        _row("P2", _BASE_MON.replace(hour=13), revenue=10.0),
+        _row("FREE", _BASE_TUE.replace(hour=12), revenue=0.0),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["total_orders"] == 2
+    assert result["peak_day"] == "mon"
+    mon_row = next(r for r in result["day_of_week_breakdown"] if r["day"] == "mon")
+    assert mon_row["order_count"] == 2
+    tue_row = next(r for r in result["day_of_week_breakdown"] if r["day"] == "tue")
+    assert tue_row["order_count"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Bill time uses earliest row, not first-seen
+# ---------------------------------------------------------------------------
+
+
+def test_bill_time_uses_minimum_order_time():
+    # Rows arrive in reverse chronological order within the same bill.
+    # The meal period should be classified by the earliest time (hour=12 → lunch),
+    # not the first-seen row (hour=19 → dinner).
+    rows = [
+        _row("B1", _BASE_MON.replace(hour=19), revenue=5.0),  # arrives first but later
+        _row("B1", _BASE_MON.replace(hour=12), revenue=5.0),  # arrives second but earlier
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["primary_meal_period"] == "lunch"
+
+
+# ---------------------------------------------------------------------------
 # Weekday / weekend classification
 # ---------------------------------------------------------------------------
 
@@ -78,21 +148,7 @@ def test_weekday_leaning():
 
 
 def test_all_week():
-    # 3 weekday, 2 weekend → 60% weekday, 40% weekend → all_week (weekday 0.40–0.64 is weekend_leaning... wait)
-    # Let me recalculate: weekday_share=0.6, weekend_share=0.4
-    # operating_pattern thresholds:
-    #   weekday_only >= 0.95: no
-    #   weekday_leaning >= 0.65: no (0.6 < 0.65)
-    #   weekend_focused >= 0.60: no (weekend=0.4)
-    #   weekend_leaning >= 0.40: yes (weekend=0.4)
-    # So this is weekend_leaning. Let's use 57%/43% for all_week
-    # weekday=4, weekend=3 → 4/7=0.571 → all_week (not >= 0.65, weekend not >= 0.40... 3/7=0.428 >= 0.40 → weekend_leaning)
-    # For all_week we need weekend_share < 0.40, weekday_share < 0.65
-    # weekday=3, weekend=2 → 3/5=0.60, weekend=2/5=0.40 → weekend_leaning
-    # weekday=3, weekend=1 → 3/4=0.75 → weekday_leaning
-    # Actually: all_week = weekday < 0.65 AND weekend < 0.40
-    # 0.60 weekday, 0.38 weekend → need 3 weekday, ~1.9 weekend → not integer
-    # Let's use: 8 weekday, 5 weekend → 8/13=0.615 weekday, 5/13=0.385 weekend → all_week
+    # 8 weekday, 5 weekend → 8/13=0.615 weekday, 5/13=0.385 weekend → all_week
     rows = (
         [_row(f"WD{i}", _BASE_MON.replace(hour=12), 10.0) for i in range(8)]
         + [_row(f"WE{i}", _BASE_SAT.replace(hour=12), 10.0) for i in range(5)]
@@ -118,7 +174,257 @@ def test_weekend_leaning():
 
 
 # ---------------------------------------------------------------------------
-# Meal period / dining focus classification
+# Holiday day-type classification
+# ---------------------------------------------------------------------------
+
+
+def test_holiday_order_creates_holiday_day_type_row():
+    holiday = date(2024, 6, 3)  # Monday is a public holiday
+    rows = [
+        _row("H1", _BASE_MON.replace(hour=12), revenue=20.0),
+        _row("WD1", _BASE_TUE.replace(hour=12), revenue=10.0),
+        _row("WE1", _BASE_SAT.replace(hour=12), revenue=10.0),
+    ]
+    result = compute_operating_profile_from_orders(rows, holiday_dates={holiday})
+    assert result is not None
+    types = {r["type"] for r in result["day_type_breakdown"]}
+    assert "holiday" in types
+
+
+def test_holiday_share_is_correct():
+    holiday = date(2024, 6, 3)  # Monday
+    rows = [
+        _row("H1", _BASE_MON.replace(hour=12), revenue=10.0),
+        _row("WD1", _BASE_TUE.replace(hour=12), revenue=10.0),
+        _row("WD2", _BASE_WED.replace(hour=12), revenue=10.0),
+        _row("WD3", _BASE_THU.replace(hour=12), revenue=10.0),
+    ]
+    result = compute_operating_profile_from_orders(rows, holiday_dates={holiday})
+    assert result is not None
+    assert abs(result["holiday_share"] - 0.25) < 1e-4
+
+
+def test_holiday_orders_excluded_from_weekday_weekend_shares():
+    # 1 holiday (Mon), 2 weekday (Tue, Wed), 1 weekend (Sat) → total=4
+    # weekday_share = 2/4 = 0.5, weekend_share = 1/4 = 0.25, holiday_share = 1/4 = 0.25
+    holiday = date(2024, 6, 3)  # Monday
+    rows = [
+        _row("H1", _BASE_MON.replace(hour=12), revenue=10.0),
+        _row("WD1", _BASE_TUE.replace(hour=12), revenue=10.0),
+        _row("WD2", _BASE_WED.replace(hour=12), revenue=10.0),
+        _row("WE1", _BASE_SAT.replace(hour=12), revenue=10.0),
+    ]
+    result = compute_operating_profile_from_orders(rows, holiday_dates={holiday})
+    assert result is not None
+    assert abs(result["weekday_share"] - 0.5) < 1e-4
+    assert abs(result["weekend_share"] - 0.25) < 1e-4
+    assert abs(result["holiday_share"] - 0.25) < 1e-4
+    # shares must sum to 1.0
+    total = result["weekday_share"] + result["weekend_share"] + result["holiday_share"]
+    assert abs(total - 1.0) < 1e-4
+
+
+def test_no_holiday_dates_produces_only_weekday_weekend():
+    rows = [
+        _row("B1", _BASE_MON.replace(hour=12)),
+        _row("B2", _BASE_SAT.replace(hour=12)),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    types = {r["type"] for r in result["day_type_breakdown"]}
+    assert types == {"weekday", "weekend"}
+    assert result["holiday_share"] == 0.0
+
+
+def test_holiday_day_type_row_absent_when_no_holiday_orders():
+    # holiday_dates provided but no orders fall on those dates
+    holiday = date(2024, 6, 10)  # a date not in the data
+    rows = [
+        _row("B1", _BASE_MON.replace(hour=12)),
+        _row("B2", _BASE_SAT.replace(hour=12)),
+    ]
+    result = compute_operating_profile_from_orders(rows, holiday_dates={holiday})
+    assert result is not None
+    types = {r["type"] for r in result["day_type_breakdown"]}
+    assert "holiday" not in types
+
+
+# ---------------------------------------------------------------------------
+# Revenue tiebreaker for peak day and primary meal period
+# ---------------------------------------------------------------------------
+
+
+def test_peak_day_revenue_tiebreaker():
+    # Mon and Tue both have 2 orders; Tue has higher revenue → Tue should win
+    rows = [
+        _row("M1", _BASE_MON.replace(hour=12), revenue=10.0),
+        _row("M2", _BASE_MON.replace(hour=13), revenue=10.0),
+        _row("T1", _BASE_TUE.replace(hour=12), revenue=50.0),
+        _row("T2", _BASE_TUE.replace(hour=13), revenue=50.0),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["peak_day"] == "tue"
+
+
+def test_primary_meal_period_revenue_tiebreaker():
+    # lunch and dinner both have 2 orders; dinner has higher revenue → dinner wins
+    rows = [
+        _row("L1", _BASE_MON.replace(hour=12), revenue=10.0),
+        _row("L2", _BASE_TUE.replace(hour=12), revenue=10.0),
+        _row("D1", _BASE_MON.replace(hour=19), revenue=50.0),
+        _row("D2", _BASE_TUE.replace(hour=19), revenue=50.0),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["primary_meal_period"] == "dinner"
+
+
+# ---------------------------------------------------------------------------
+# Explicit peak revenue fields
+# ---------------------------------------------------------------------------
+
+
+def test_peak_revenue_day_differs_from_peak_order_day():
+    # Mon has 3 orders (most) but low value; Fri has 1 order but high value
+    rows = [
+        _row("M1", _BASE_MON.replace(hour=12), revenue=5.0),
+        _row("M2", _BASE_MON.replace(hour=13), revenue=5.0),
+        _row("M3", _BASE_MON.replace(hour=14), revenue=5.0),
+        _row("F1", _BASE_FRI.replace(hour=12), revenue=100.0),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["peak_day"] == "mon"
+    assert result["peak_revenue_day"] == "fri"
+
+
+def test_peak_revenue_meal_period_differs_from_primary_meal_period():
+    # Lunch has 3 orders (most) but low ticket; dinner has 1 order but high revenue
+    rows = [
+        _row("L1", _BASE_MON.replace(hour=12), revenue=5.0),
+        _row("L2", _BASE_TUE.replace(hour=12), revenue=5.0),
+        _row("L3", _BASE_WED.replace(hour=12), revenue=5.0),
+        _row("D1", _BASE_MON.replace(hour=19), revenue=200.0),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["primary_meal_period"] == "lunch"
+    assert result["peak_revenue_meal_period"] == "dinner"
+
+
+# ---------------------------------------------------------------------------
+# revenue_share in DayOfWeekRow
+# ---------------------------------------------------------------------------
+
+
+def test_dow_row_has_revenue_share():
+    rows = [
+        _row("M1", _BASE_MON.replace(hour=12), revenue=30.0),
+        _row("T1", _BASE_TUE.replace(hour=12), revenue=70.0),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    mon_row = next(r for r in result["day_of_week_breakdown"] if r["day"] == "mon")
+    tue_row = next(r for r in result["day_of_week_breakdown"] if r["day"] == "tue")
+    assert "revenue_share" in mon_row
+    assert abs(mon_row["revenue_share"] - 0.30) < 1e-4
+    assert abs(tue_row["revenue_share"] - 0.70) < 1e-4
+
+
+def test_dow_revenue_shares_sum_to_one():
+    rows = [
+        _row("M1", _BASE_MON.replace(hour=12), revenue=20.0),
+        _row("T1", _BASE_TUE.replace(hour=12), revenue=30.0),
+        _row("S1", _BASE_SAT.replace(hour=12), revenue=50.0),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    total = sum(r["revenue_share"] for r in result["day_of_week_breakdown"])
+    assert abs(total - 1.0) < 1e-4
+
+
+# ---------------------------------------------------------------------------
+# avg_revenue_per_order in MealPeriodRow
+# ---------------------------------------------------------------------------
+
+
+def test_meal_period_row_has_avg_revenue_per_order():
+    rows = [
+        _row("L1", _BASE_MON.replace(hour=12), revenue=20.0),
+        _row("L2", _BASE_TUE.replace(hour=12), revenue=40.0),
+        _row("D1", _BASE_MON.replace(hour=19), revenue=100.0),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    lunch_row = next(r for r in result["meal_period_breakdown"] if r["period"] == "lunch")
+    dinner_row = next(r for r in result["meal_period_breakdown"] if r["period"] == "dinner")
+    assert "avg_revenue_per_order" in lunch_row
+    assert abs(lunch_row["avg_revenue_per_order"] - 30.0) < 1e-4
+    assert abs(dinner_row["avg_revenue_per_order"] - 100.0) < 1e-4
+
+
+def test_meal_period_avg_revenue_zero_when_no_orders():
+    rows = [_row("L1", _BASE_MON.replace(hour=12), revenue=10.0)]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    dinner_row = next(r for r in result["meal_period_breakdown"] if r["period"] == "dinner")
+    assert dinner_row["avg_revenue_per_order"] == 0.0
+
+
+# ---------------------------------------------------------------------------
+# Top-level avg_revenue_per_order
+# ---------------------------------------------------------------------------
+
+
+def test_avg_revenue_per_order_top_level():
+    rows = [
+        _row("B1", _BASE_MON.replace(hour=12), revenue=20.0),
+        _row("B2", _BASE_TUE.replace(hour=12), revenue=40.0),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert abs(result["avg_revenue_per_order"] - 30.0) < 1e-4
+
+
+# ---------------------------------------------------------------------------
+# avg_active_days_per_week
+# ---------------------------------------------------------------------------
+
+
+def test_avg_active_days_per_week_seven_days_in_one_week():
+    # All 7 days of one week active → avg = 7.0
+    rows = [
+        _row("M", _BASE_MON.replace(hour=12)),
+        _row("T", _BASE_TUE.replace(hour=12)),
+        _row("W", _BASE_WED.replace(hour=12)),
+        _row("TH", _BASE_THU.replace(hour=12)),
+        _row("F", _BASE_FRI.replace(hour=12)),
+        _row("SA", _BASE_SAT.replace(hour=12)),
+        _row("SU", _BASE_SUN.replace(hour=12)),
+    ]
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["avg_active_days_per_week"] <= 7.0
+
+
+def test_avg_active_days_per_week_five_days_over_two_weeks():
+    # Mon–Fri of week 1, Mon–Fri of week 2 → 10 active days over 11 calendar days
+    week2_mon = datetime(2024, 6, 10)
+    week2_fri = datetime(2024, 6, 14)
+    rows = (
+        [_row(f"W1{i}", _BASE_MON.replace(hour=12) + (datetime(2024, 6, 3 + i) - _BASE_MON), 10.0) for i in range(5)]
+        + [_row("W2M", week2_mon.replace(hour=12), 10.0)]
+        + [_row("W2F", week2_fri.replace(hour=12), 10.0)]
+    )
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["avg_active_days_per_week"] > 0
+    assert result["avg_active_days_per_week"] <= 7.0
+
+
+# ---------------------------------------------------------------------------
+# Dining focus classifier
 # ---------------------------------------------------------------------------
 
 
@@ -179,6 +485,42 @@ def test_lunch_and_dinner():
     assert result["dining_focus"] == "lunch_and_dinner"
 
 
+def test_breakfast_and_lunch():
+    # 7 breakfast (0.35) + 8 lunch (0.40) + 2 dinner (0.10) + 3 afternoon (0.15)
+    # breakfast < 0.40, lunch < 0.50, breakfast+lunch = 0.75 >= 0.70, dinner = 0.10 < 0.20
+    rows = (
+        [_row(f"B{i}", _BASE_MON.replace(hour=8)) for i in range(7)]
+        + [_row(f"L{i}", _BASE_TUE.replace(hour=12)) for i in range(8)]
+        + [_row(f"D{i}", _BASE_WED.replace(hour=19)) for i in range(2)]
+        + [_row(f"A{i}", _BASE_THU.replace(hour=15)) for i in range(3)]
+    )
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["dining_focus"] == "breakfast_and_lunch"
+
+
+def test_afternoon_cafe():
+    # 3 afternoon + 1 lunch: afternoon = 3/4 = 0.75 >= 0.30
+    rows = (
+        [_row(f"A{i}", _BASE_MON.replace(hour=15)) for i in range(3)]
+        + [_row("L1", _BASE_TUE.replace(hour=12))]
+    )
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["dining_focus"] == "afternoon_cafe"
+
+
+def test_late_night_venue():
+    # 3 late-night + 1 dinner: late_night = 3/4 = 0.75 >= 0.30
+    rows = (
+        [_row(f"LN{i}", _BASE_MON.replace(hour=23)) for i in range(3)]
+        + [_row("D1", _BASE_TUE.replace(hour=19))]
+    )
+    result = compute_operating_profile_from_orders(rows)
+    assert result is not None
+    assert result["dining_focus"] == "late_night_venue"
+
+
 # ---------------------------------------------------------------------------
 # Structural integrity
 # ---------------------------------------------------------------------------
@@ -192,7 +534,7 @@ def test_day_of_week_breakdown_is_complete():
     assert days == ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
 
-def test_day_type_breakdown_has_both_types():
+def test_day_type_breakdown_has_both_types_by_default():
     rows = [_row("B1", _BASE_MON.replace(hour=12))]
     result = compute_operating_profile_from_orders(rows)
     assert result is not None

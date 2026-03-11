@@ -16,9 +16,9 @@ _LOCATION_SUMMARY_PROMPT = """You are a marketing analyst helping a restaurant b
 
 Based on the following restaurant data, write a concise 2–3 sentence profile that gives a restaurant marketer a clear, actionable picture of the venue. Every data point below must be reflected in the profile — keep it short, but leave nothing out. Cover:
 - Dining experience: meal focus, operating pattern, busiest time windows
-- Customer mix: average items per order (proxy for party size — lower = more solo/pair, higher = more groups/families)
+- Customer mix: average items per order (proxy for party size — lower = more solo/pair, higher = more groups/families) and average spend per order (price-point signal)
 - Customer activity patterns: peak day, primary meal period, day-of-week and meal-period distribution
-- Revenue concentration: which days and meal periods drive the most revenue
+- Revenue concentration: which days and meal periods drive the most revenue (use peak revenue day/period, not just order volume)
 - Any notable weekday/weekend/holiday split that should influence content scheduling
 - Menu composition: dominant food/drink split and top sub-categories
 
@@ -31,11 +31,13 @@ Operating profile:
 - Total orders: {total_orders}
 - Total revenue: {total_revenue}
 - Active days: {active_days_count}
+- Average active days per week: {avg_active_days_per_week:.1f}
 - Average daily orders: {avg_daily_orders:.1f}
 - Average items per order: {avg_order_size:.1f} (proxy for party size)
-- Weekday share: {weekday_share:.0%} | Weekend share: {weekend_share:.0%}
-- Peak day: {peak_day}
-- Primary meal period: {primary_meal_period}
+- Average revenue per order: {avg_revenue_per_order:.2f}
+- Weekday share: {weekday_share:.0%} | Weekend share: {weekend_share:.0%} | Holiday share: {holiday_share:.0%}
+- Peak day (by orders): {peak_day} | Peak day (by revenue): {peak_revenue_day}
+- Primary meal period (by orders): {primary_meal_period} | Peak meal period (by revenue): {peak_revenue_meal_period}
 - Active meal periods: {active_meal_periods}
 - Operating pattern: {operating_pattern}
 - Dining focus: {dining_focus}
@@ -78,11 +80,13 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
         # raise a TypeError and silently swallow the whole summary generation.
         meal_period_lines = [
             f"  {p.get('label') or p.get('period', '?')}: "
-            f"{p.get('share') or 0:.0%} of orders, {p.get('revenueShare') or 0:.0%} of revenue"
+            f"{p.get('share') or 0:.0%} of orders, {p.get('revenueShare') or 0:.0%} of revenue, "
+            f"avg ticket {p.get('avgRevenuePerOrder') or 0:.2f}"
             for p in (profile.get("mealPeriodBreakdown") or [])
         ]
         dow_lines = [
-            f"  {d.get('day', '?')}: {d.get('share') or 0:.0%} of orders"
+            f"  {d.get('day', '?')}: {d.get('share') or 0:.0%} of orders, "
+            f"{d.get('revenueShare') or 0:.0%} of revenue"
             + (", peak day" if d.get("isPeakDay") else "")
             for d in (profile.get("dayOfWeekBreakdown") or [])
         ]
@@ -118,12 +122,17 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
             total_orders=profile.get("totalOrders") or "N/A",
             total_revenue=profile.get("totalRevenue") or 0,
             active_days_count=profile.get("activeDaysCount") or "N/A",
+            avg_active_days_per_week=profile.get("avgActiveDaysPerWeek") or 0,
             avg_daily_orders=profile.get("avgDailyOrders") or 0,
             avg_order_size=profile.get("avgOrderSize") or 0,
+            avg_revenue_per_order=profile.get("avgRevenuePerOrder") or 0,
             weekday_share=profile.get("weekdayShare") or 0,
             weekend_share=profile.get("weekendShare") or 0,
+            holiday_share=profile.get("holidayShare") or 0,
             peak_day=profile.get("peakDay") or "N/A",
+            peak_revenue_day=profile.get("peakRevenueDay") or "N/A",
             primary_meal_period=profile.get("primaryMealPeriod") or "N/A",
+            peak_revenue_meal_period=profile.get("peakRevenueMealPeriod") or "N/A",
             active_meal_periods=", ".join(profile.get("activeMealPeriods") or []) or "N/A",
             operating_pattern=profile.get("operatingPattern") or "N/A",
             dining_focus=profile.get("diningFocus") or "N/A",

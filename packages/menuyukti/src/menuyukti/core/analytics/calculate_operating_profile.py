@@ -1,10 +1,12 @@
 """Compute a deterministic operating profile for a restaurant from order_fact rows.
 
 The profile summarises:
-- weekday vs weekend split
+- weekday vs weekend vs holiday split
 - meal-period breakdown (breakfast / lunch / afternoon / dinner / late_night)
-- peak day of week
+- peak day of week (by orders and by revenue)
 - average order size (items per order, proxy for party size: groups vs solo/pair)
+- average revenue per order (price-point signal)
+- average active days per week (operating schedule density)
 - categorical labels (operatingPattern, diningFocus) derived from fixed thresholds
 """
 
@@ -60,11 +62,12 @@ class DayOfWeekRow(TypedDict):
     order_count: int
     share: float
     revenue: float
+    revenue_share: float
     is_peak_day: bool
 
 
 class DayTypeRow(TypedDict):
-    type: str           # "weekday" | "weekend"
+    type: str           # "weekday" | "weekend" | "holiday"
     order_count: int
     share: float
     revenue: float
@@ -78,6 +81,7 @@ class MealPeriodRow(TypedDict):
     share: float
     revenue: float
     revenue_share: float
+    avg_revenue_per_order: float
 
 
 class OperatingProfileResult(TypedDict):
@@ -86,10 +90,15 @@ class OperatingProfileResult(TypedDict):
     active_days_count: int
     avg_daily_orders: float
     avg_order_size: float
+    avg_revenue_per_order: float
+    avg_active_days_per_week: float
     weekday_share: float
     weekend_share: float
+    holiday_share: float
     peak_day: str
+    peak_revenue_day: str
     primary_meal_period: str
+    peak_revenue_meal_period: str
     active_meal_periods: list[str]
     day_of_week_breakdown: list[DayOfWeekRow]
     day_type_breakdown: list[DayTypeRow]
@@ -117,9 +126,11 @@ def _classify_operating_pattern(weekday_share: float) -> str:
 
 
 def _classify_dining_focus(period_shares: dict[str, float]) -> str:
-    breakfast = period_shares.get("breakfast", 0.0)
-    lunch = period_shares.get("lunch", 0.0)
-    dinner = period_shares.get("dinner", 0.0)
+    breakfast  = period_shares.get("breakfast", 0.0)
+    lunch      = period_shares.get("lunch", 0.0)
+    afternoon  = period_shares.get("afternoon", 0.0)
+    dinner     = period_shares.get("dinner", 0.0)
+    late_night = period_shares.get("late_night", 0.0)
 
     if breakfast >= 0.40:
         return "breakfast_cafe"
@@ -129,6 +140,12 @@ def _classify_dining_focus(period_shares: dict[str, float]) -> str:
         return "dinner_restaurant"
     if (lunch + dinner) >= 0.70:
         return "lunch_and_dinner"
+    if (breakfast + lunch) >= 0.70 and dinner < 0.20:
+        return "breakfast_and_lunch"
+    if afternoon >= 0.30:
+        return "afternoon_cafe"
+    if late_night >= 0.30:
+        return "late_night_venue"
     return "all_day_dining"
 
 
@@ -149,6 +166,7 @@ class OrderRowForProfile(TypedDict):
 
 def compute_operating_profile_from_orders(
     order_rows: list[OrderRowForProfile],
+    holiday_dates: set[date] | None = None,
 ) -> OperatingProfileResult | None:
     """Compute a deterministic operating profile from a list of order_fact rows.
 
@@ -158,64 +176,122 @@ def compute_operating_profile_from_orders(
         order_rows: Each entry must contain order_time (datetime),
             bill_number (str), and total_after_bill_discount (float).
             Optional qty (int) for avg_order_size; defaults to 1 per row when absent.
+        holiday_dates: Optional set of public holiday dates. When provided, holiday
+            orders are classified as a third day-type and excluded from the
+            weekday/weekend shares so those remain meaningful.
     """
     if not order_rows:
         return None
 
-    # Aggregate per bill (order-level revenue and item count)
+    # Aggregate per bill (order-level revenue, earliest time, and item count).
+    # Use min(order_time) per bill so meal period classification is correct
+    # regardless of row arrival order in raw POS exports.
     bill_revenue: dict[str, float] = {}
     bill_time: dict[str, datetime] = {}
     bill_items: dict[str, int] = {}
     for row in order_rows:
         bn = row["bill_number"]
-        if bn not in bill_time:
-            bill_time[bn] = row["order_time"]
+        t = row["order_time"]
+        if bn not in bill_time or t < bill_time[bn]:
+            bill_time[bn] = t
         bill_revenue[bn] = bill_revenue.get(bn, 0.0) + row["total_after_bill_discount"]
         bill_items[bn] = bill_items.get(bn, 0) + row.get("qty", 1)
+
+    # Exclude zero/negative revenue bills (promos, voids, staff meals) so they
+    # don't inflate total_orders or distort any downstream share calculation.
+    bill_revenue = {bn: rev for bn, rev in bill_revenue.items() if rev > 0}
+    bill_time    = {bn: dt  for bn, dt  in bill_time.items()    if bn in bill_revenue}
+    bill_items   = {bn: n   for bn, n   in bill_items.items()   if bn in bill_revenue}
+
+    if not bill_time:
+        return None
 
     total_orders = len(bill_time)
     total_revenue = sum(bill_revenue.values())
     total_items = sum(bill_items.values())
     avg_order_size = total_items / total_orders if total_orders else 0.0
+    avg_revenue_per_order = total_revenue / total_orders if total_orders else 0.0
 
     # Calendar days with at least one order
     active_dates: set[date] = {dt.date() for dt in bill_time.values()}
     active_days_count = len(active_dates)
     avg_daily_orders = total_orders / active_days_count if active_days_count else 0.0
 
-    # Day-of-week counts and revenue
+    # Average active days per week — how densely the venue operates.
+    # period_span_days is the calendar window covered by the data.
+    min_date = min(active_dates)
+    max_date = max(active_dates)
+    period_span_days = (max_date - min_date).days + 1
+    avg_active_days_per_week = round(
+        min(7.0, active_days_count / (period_span_days / 7)), 2
+    )
+
+    # Identify holiday bills
+    _holidays: set[date] = holiday_dates or set()
+    holiday_bill_numbers: set[str] = {
+        bn for bn, dt in bill_time.items() if dt.date() in _holidays
+    }
+
+    # Day-of-week counts and revenue (all orders, including holidays — used for DOW breakdown)
     dow_order_count: dict[str, int] = {d: 0 for d in _WEEKDAY_ORDER}
     dow_revenue: dict[str, float] = {d: 0.0 for d in _WEEKDAY_ORDER}
     for bn, dt in bill_time.items():
         abbr = _abbr(dt)
-        dow_order_count[abbr] = dow_order_count.get(abbr, 0) + 1
-        dow_revenue[abbr] = dow_revenue.get(abbr, 0.0) + bill_revenue[bn]
+        dow_order_count[abbr] += 1
+        dow_revenue[abbr] += bill_revenue[bn]
 
-    peak_day = max(_WEEKDAY_ORDER, key=lambda d: dow_order_count[d])
+    # Peak day: by orders first, revenue as tiebreaker
+    peak_day = max(_WEEKDAY_ORDER, key=lambda d: (dow_order_count[d], dow_revenue[d]))
+    # Peak revenue day: purely by revenue
+    peak_revenue_day = max(_WEEKDAY_ORDER, key=lambda d: dow_revenue[d])
 
-    weekday_orders = sum(dow_order_count[d] for d in _WEEKDAY_ORDER if d not in _WEEKEND_DAYS)
-    weekend_orders = sum(dow_order_count[d] for d in _WEEKDAY_ORDER if d in _WEEKEND_DAYS)
-    weekday_revenue = sum(dow_revenue[d] for d in _WEEKDAY_ORDER if d not in _WEEKEND_DAYS)
-    weekend_revenue = sum(dow_revenue[d] for d in _WEEKDAY_ORDER if d in _WEEKEND_DAYS)
+    # Weekday/weekend counts and revenue — holidays excluded so shares are meaningful
+    weekday_orders = sum(
+        1 for bn, dt in bill_time.items()
+        if _abbr(dt) not in _WEEKEND_DAYS and bn not in holiday_bill_numbers
+    )
+    weekend_orders = sum(
+        1 for bn, dt in bill_time.items()
+        if _abbr(dt) in _WEEKEND_DAYS and bn not in holiday_bill_numbers
+    )
+    holiday_orders = len(holiday_bill_numbers)
 
+    weekday_revenue = sum(
+        bill_revenue[bn] for bn, dt in bill_time.items()
+        if _abbr(dt) not in _WEEKEND_DAYS and bn not in holiday_bill_numbers
+    )
+    weekend_revenue = sum(
+        bill_revenue[bn] for bn, dt in bill_time.items()
+        if _abbr(dt) in _WEEKEND_DAYS and bn not in holiday_bill_numbers
+    )
+    holiday_revenue = sum(bill_revenue[bn] for bn in holiday_bill_numbers)
+
+    # Shares out of total_orders so weekday + weekend + holiday = 1.0
     weekday_share = weekday_orders / total_orders if total_orders else 0.0
     weekend_share = weekend_orders / total_orders if total_orders else 0.0
+    holiday_share = holiday_orders / total_orders if total_orders else 0.0
 
-    # Meal period counts and revenue — keyed by first order time per bill
+    # Meal period counts and revenue — keyed by earliest order time per bill
     mp_order_count: dict[str, int] = {p: 0 for p, _, _ in _MEAL_PERIODS}
     mp_revenue: dict[str, float] = {p: 0.0 for p, _, _ in _MEAL_PERIODS}
     for bn, dt in bill_time.items():
         period = _meal_period(dt.hour)
-        mp_order_count[period] = mp_order_count.get(period, 0) + 1
-        mp_revenue[period] = mp_revenue.get(period, 0.0) + bill_revenue[bn]
+        mp_order_count[period] += 1
+        mp_revenue[period] += bill_revenue[bn]
 
     period_shares = {
         p: (mp_order_count[p] / total_orders if total_orders else 0.0)
         for p, _, _ in _MEAL_PERIODS
     }
+    # Primary meal period: by orders first, revenue as tiebreaker
     primary_meal_period = max(
         (p for p, _, _ in _MEAL_PERIODS),
-        key=lambda p: mp_order_count[p],
+        key=lambda p: (mp_order_count[p], mp_revenue[p]),
+    )
+    # Peak revenue meal period: purely by revenue
+    peak_revenue_meal_period = max(
+        (p for p, _, _ in _MEAL_PERIODS),
+        key=lambda p: mp_revenue[p],
     )
     active_meal_periods = [
         p for p, _, _ in _MEAL_PERIODS if period_shares[p] >= 0.05
@@ -227,8 +303,9 @@ def compute_operating_profile_from_orders(
             day=d,
             is_weekend=d in _WEEKEND_DAYS,
             order_count=dow_order_count[d],
-            share=dow_order_count[d] / total_orders if total_orders else 0.0,
+            share=round(dow_order_count[d] / total_orders, 4) if total_orders else 0.0,
             revenue=round(dow_revenue[d], 4),
+            revenue_share=round(dow_revenue[d] / total_revenue, 4) if total_revenue else 0.0,
             is_peak_day=(d == peak_day),
         )
         for d in _WEEKDAY_ORDER
@@ -250,6 +327,16 @@ def compute_operating_profile_from_orders(
             revenue_share=round(weekend_revenue / total_revenue, 4) if total_revenue else 0.0,
         ),
     ]
+    if holiday_orders > 0:
+        day_type_breakdown.append(
+            DayTypeRow(
+                type="holiday",
+                order_count=holiday_orders,
+                share=round(holiday_share, 4),
+                revenue=round(holiday_revenue, 4),
+                revenue_share=round(holiday_revenue / total_revenue, 4) if total_revenue else 0.0,
+            )
+        )
 
     meal_period_breakdown: list[MealPeriodRow] = [
         MealPeriodRow(
@@ -259,9 +346,21 @@ def compute_operating_profile_from_orders(
             share=round(period_shares[p], 4),
             revenue=round(mp_revenue[p], 4),
             revenue_share=round(mp_revenue[p] / total_revenue, 4) if total_revenue else 0.0,
+            avg_revenue_per_order=round(
+                mp_revenue[p] / mp_order_count[p], 4
+            ) if mp_order_count[p] else 0.0,
         )
         for p, _, _ in _MEAL_PERIODS
     ]
+
+    # operating_pattern is based on non-holiday weekday/weekend distribution.
+    # Normalise shares to exclude holiday fraction so the classifier thresholds
+    # remain valid even when holiday_share is significant.
+    non_holiday_share = weekday_share + weekend_share
+    if non_holiday_share > 0:
+        wd_for_pattern = weekday_share / non_holiday_share
+    else:
+        wd_for_pattern = weekday_share
 
     return OperatingProfileResult(
         total_orders=total_orders,
@@ -269,14 +368,19 @@ def compute_operating_profile_from_orders(
         active_days_count=active_days_count,
         avg_daily_orders=round(avg_daily_orders, 4),
         avg_order_size=round(avg_order_size, 4),
+        avg_revenue_per_order=round(avg_revenue_per_order, 4),
+        avg_active_days_per_week=avg_active_days_per_week,
         weekday_share=round(weekday_share, 4),
         weekend_share=round(weekend_share, 4),
+        holiday_share=round(holiday_share, 4),
         peak_day=peak_day,
+        peak_revenue_day=peak_revenue_day,
         primary_meal_period=primary_meal_period,
+        peak_revenue_meal_period=peak_revenue_meal_period,
         active_meal_periods=active_meal_periods,
         day_of_week_breakdown=day_of_week_breakdown,
         day_type_breakdown=day_type_breakdown,
         meal_period_breakdown=meal_period_breakdown,
-        operating_pattern=_classify_operating_pattern(weekday_share),
+        operating_pattern=_classify_operating_pattern(wd_for_pattern),
         dining_focus=_classify_dining_focus(period_shares),
     )
