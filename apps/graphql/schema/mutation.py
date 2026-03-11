@@ -2,6 +2,7 @@ import strawberry
 
 from graphql.schema.mutations import (
     CreateLocationMutation,
+    SaveLocationProfileMutation,
     UpdateMenuItemCogsBulkMutation,
     UploadSalesReportMutation,
 )
@@ -12,5 +13,6 @@ class Mutation(
     UploadSalesReportMutation,
     CreateLocationMutation,
     UpdateMenuItemCogsBulkMutation,
+    SaveLocationProfileMutation,
 ):
     pass

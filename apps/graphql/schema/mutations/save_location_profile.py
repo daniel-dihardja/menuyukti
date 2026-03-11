@@ -1,0 +1,49 @@
+from datetime import datetime, timezone
+
+import strawberry
+
+from graphql.data_sources import LocationProfile, SessionLocal
+from graphql.schema.types import LocationProfileType
+
+
+@strawberry.type
+class SaveLocationProfileMutation:
+    @strawberry.mutation
+    def save_location_profile(
+        self,
+        location_id: strawberry.ID,
+        analytics_run_id: strawberry.ID,
+        summary: str,
+    ) -> LocationProfileType:
+        session = SessionLocal()
+        try:
+            row = (
+                session.query(LocationProfile)
+                .filter(
+                    LocationProfile.location_id == int(location_id),
+                    LocationProfile.analytics_run_id == int(analytics_run_id),
+                )
+                .first()
+            )
+            if row is None:
+                row = LocationProfile(
+                    location_id=int(location_id),
+                    analytics_run_id=int(analytics_run_id),
+                    summary=summary,
+                )
+                session.add(row)
+            else:
+                row.summary = summary
+                row.updated_at = datetime.now(tz=timezone.utc)
+            session.commit()
+            session.refresh(row)
+            return LocationProfileType(
+                id=row.id,
+                location_id=row.location_id,
+                analytics_run_id=row.analytics_run_id,
+                summary=row.summary,
+                created_at=row.created_at,
+                updated_at=row.updated_at,
+            )
+        finally:
+            session.close()

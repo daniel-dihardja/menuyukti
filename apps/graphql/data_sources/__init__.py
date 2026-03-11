@@ -4,6 +4,7 @@ __all__ = [
     "Base",
     "Location",
     "AnalyticsRun",
+    "LocationProfile",
     "OrderFact",
     "MenuItemCogs",
     "InstagramPost",

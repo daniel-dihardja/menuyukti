@@ -8,6 +8,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
 from agent.config import LLM_MODEL
+from agent.gql_client import fetch_location_profile, save_location_profile
 from agent.ig_campaign.reflect import reflect_loop
 from agent.ig_campaign.utils import _emit, _update_planning
 from agent.state import State
@@ -174,6 +175,19 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
     summary: str | None = None
     reflection_log = []
 
+    configurable = config.get("configurable", {}) if config else {}
+    location_id = configurable.get("location_id")
+    analytics_id = configurable.get("analytics_id")
+
+    if location_id and analytics_id:
+        try:
+            cached = await fetch_location_profile(location_id, analytics_id)
+            if cached:
+                await _emit("generate_location_summary", "done", "Using cached location profile", config)
+                return {"planning": _update_planning(planning, locationSummary=cached)}
+        except Exception:
+            logger.warning("Cache lookup for location profile failed; proceeding with generation")
+
     if profile:
         location = (planning.location if planning else None) or {}
         name = location.get("name") or "this restaurant"
@@ -293,6 +307,12 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
             )
         except Exception:
             logger.exception("Failed to generate location summary")
+
+    if summary and location_id and analytics_id:
+        try:
+            await save_location_profile(location_id, analytics_id, summary)
+        except Exception:
+            logger.warning("Failed to persist location profile; continuing without caching")
 
     await _emit("generate_location_summary", "done", "Location profile summary ready", config)
     return {"planning": _update_planning(planning, locationSummary=summary, reflectionLog=reflection_log or None)}

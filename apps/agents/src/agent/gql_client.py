@@ -164,3 +164,56 @@ async def fetch_public_holidays(
         {"country": country, "startDate": start_date, "endDate": end_date},
     )
     return data.get("publicHolidays") or []
+
+
+# ---------------------------------------------------------------------------
+# Location profile cache
+# ---------------------------------------------------------------------------
+
+_FETCH_LOCATION_PROFILE_QUERY = """
+query FetchLocationProfile($locationId: ID!, $analyticsRunId: ID!) {
+  locationProfile(locationId: $locationId, analyticsRunId: $analyticsRunId) {
+    id
+    summary
+  }
+}
+"""
+
+_SAVE_LOCATION_PROFILE_MUTATION = """
+mutation SaveLocationProfile($locationId: ID!, $analyticsRunId: ID!, $summary: String!) {
+  saveLocationProfile(locationId: $locationId, analyticsRunId: $analyticsRunId, summary: $summary) {
+    id
+  }
+}
+"""
+
+
+async def fetch_location_profile(
+    location_id: int | str,
+    analytics_run_id: int | str,
+) -> str | None:
+    """Return the cached location profile summary, or None if not yet stored."""
+    data = await _gql(
+        _FETCH_LOCATION_PROFILE_QUERY,
+        {"locationId": str(location_id), "analyticsRunId": str(analytics_run_id)},
+    )
+    profile = data.get("locationProfile")
+    if profile is None:
+        return None
+    return profile.get("summary") or None
+
+
+async def save_location_profile(
+    location_id: int | str,
+    analytics_run_id: int | str,
+    summary: str,
+) -> None:
+    """Persist (upsert) a location profile summary to the backend."""
+    await _gql(
+        _SAVE_LOCATION_PROFILE_MUTATION,
+        {
+            "locationId": str(location_id),
+            "analyticsRunId": str(analytics_run_id),
+            "summary": summary,
+        },
+    )

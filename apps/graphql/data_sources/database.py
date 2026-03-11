@@ -19,6 +19,7 @@ from sqlalchemy import (
     UniqueConstraint,
     create_engine,
     func,
+    text,
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
@@ -71,6 +72,46 @@ class AnalyticsRun(Base):
         ForeignKey("location.id"),
         nullable=False,
         index=True,
+    )
+
+
+class LocationProfile(Base):
+    """
+    Cached LLM-generated marketing profile for a (location, analytics_run) pair.
+
+    Keyed on (location_id, analytics_run_id) — one profile per pairing.
+    Re-used on subsequent campaign runs to skip the LLM generation step.
+    """
+
+    __tablename__ = "location_profile"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    location_id = Column(
+        Integer,
+        ForeignKey("location.id"),
+        nullable=False,
+        index=True,
+    )
+    analytics_run_id = Column(
+        Integer,
+        ForeignKey("analytics_run.id"),
+        nullable=False,
+        index=True,
+    )
+    summary = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "location_id",
+            "analytics_run_id",
+            name="uq_location_profile",
+        ),
     )
 
 
@@ -246,10 +287,21 @@ def init_db(target_engine=None) -> None:
 
 
 def drop_db(target_engine=None) -> None:
-    """Drop all tables for the configured models."""
+    """Drop all tables for the configured models.
 
+    On PostgreSQL the schema is reset via DROP SCHEMA ... CASCADE so that
+    stale tables (not in the current models) with FK dependencies don't block
+    the drop. SQLite falls back to the standard drop_all path.
+    """
     resolved_engine = target_engine or engine
-    Base.metadata.drop_all(bind=resolved_engine)
+    if resolved_engine.dialect.name == "postgresql":
+        with resolved_engine.connect() as conn:
+            conn.execute(text("DROP SCHEMA public CASCADE"))
+            conn.execute(text("CREATE SCHEMA public"))
+            conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
+            conn.commit()
+    else:
+        Base.metadata.drop_all(bind=resolved_engine)
 
 
 def main() -> None:
