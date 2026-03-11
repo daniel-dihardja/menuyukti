@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from agent.config import LLM_MODEL
 from agent.ig_campaign.brief import generate_campaign_brief, generate_post_schedule
 from agent.ig_campaign.fetch import fetch_all_data
-from agent.ig_campaign.holidays import search_public_holidays
 from agent.ig_campaign.location_summary import generate_location_summary
 from agent.ig_campaign.schedule import generate_candidate_slots
 from agent.ig_campaign.utils import _emit, _update_planning
@@ -26,7 +25,6 @@ logger = logging.getLogger(__name__)
 
 STEP_REGISTRY: dict[str, Any] = {
     "fetch_all_data": fetch_all_data,
-    "search_public_holidays": search_public_holidays,
     "generate_location_summary": generate_location_summary,
     "generate_candidate_slots": generate_candidate_slots,
     "generate_post_schedule": generate_post_schedule,
@@ -34,8 +32,7 @@ STEP_REGISTRY: dict[str, Any] = {
 }
 
 _STEP_DESCRIPTIONS = """
-- fetch_all_data: Fetch restaurant location info, operating profile, and menu items from the data service.
-- search_public_holidays: Fetch public holidays for the campaign country and date window.
+- fetch_all_data: Fetch restaurant location info, operating profile, menu items, and public holidays from the data service.
 - generate_location_summary: Generate a concise marketing profile of the restaurant from operating data.
 - generate_candidate_slots: Build the candidate posting date calendar for the campaign window.
 - generate_post_schedule: Select the optimal 3–5 posting dates per week from the candidate calendar.
@@ -54,7 +51,7 @@ Available steps (in their natural dependency order):
 
 Rules:
 - Always end with generate_campaign_brief — it is the required final output.
-- generate_candidate_slots requires fetch_all_data and search_public_holidays to run first.
+- generate_candidate_slots requires fetch_all_data to run first.
 - generate_post_schedule requires generate_candidate_slots to run first.
 - generate_location_summary requires fetch_all_data to run first.
 - generate_campaign_brief requires generate_post_schedule and generate_location_summary to run first.

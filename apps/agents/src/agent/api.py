@@ -38,6 +38,7 @@ class InvokeRequest(BaseModel):
     )
     location_id: int | None = Field(default=None, description="Location ID resolved server-side; never exposed to the LLM.")
     analytics_id: int | None = Field(default=None, description="Analytics run ID resolved server-side; never exposed to the LLM.")
+    country: str | None = Field(default=None, description="ISO country code for public holiday lookup; resolved server-side.")
 
 
 @app.get("/health")
@@ -71,7 +72,7 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
         try:
             async for event in graph.astream_events(
                 {"message": body.message, "intent_category": body.intent_category},
-                config={"configurable": {"location_id": body.location_id, "analytics_id": body.analytics_id}},
+                config={"configurable": {"location_id": body.location_id, "analytics_id": body.analytics_id, "country": body.country}},
                 version="v2",
             ):
                 kind = event["event"]
