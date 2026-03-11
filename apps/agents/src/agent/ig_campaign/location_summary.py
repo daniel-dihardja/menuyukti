@@ -160,7 +160,7 @@ Reviewer feedback — address every point:
 Write the improved version now, keeping the same four-section structure \
 (**Venue Identity**, **Audience Persona**, **Traffic & Timing**, **Content & Tone Signals**)."""
 
-_MAX_REFLECTION_ITERATIONS = 2
+from agent.config import REFLECT_MAX_ITERATIONS as _MAX_REFLECTION_ITERATIONS
 
 _summary_llm = ChatOpenAI(model=LLM_MODEL, temperature=0.4)
 _reflector_llm = ChatOpenAI(model=LLM_MODEL, temperature=0).with_structured_output(_ReflectionResult)
