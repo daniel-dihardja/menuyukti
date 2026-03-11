@@ -54,7 +54,7 @@ async def reflect_loop(
     reflection_log: list[ReflectionIteration] = []
 
     for iteration in range(max_iterations + 1):
-        await on_event("generating", f"Generating draft (attempt {iteration + 1} of {max_iterations + 1})...")
+        await on_event("generating", f"Generating location profile (attempt {iteration + 1} of {max_iterations + 1})...")
         draft = await generate() if iteration == 0 else await revise(draft, feedback_bullets)  # type: ignore[possibly-undefined]
 
         if iteration >= max_iterations:
@@ -63,7 +63,7 @@ async def reflect_loop(
             reflection_log.append(ReflectionIteration(iteration=iteration, verdict="pass", feedback=[], draft=draft))
             break
 
-        await on_event("reflecting", "Evaluating draft quality...")
+        await on_event("reflecting", "Evaluating location profile quality...")
         result = await reflect(draft)
 
         if result.verdict == "pass":
