@@ -8,7 +8,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
 from agent.planning.utils import _emit, _update_planning
-from agent.state import State
+from agent.state import ReflectionIteration, State
 
 logger = logging.getLogger(__name__)
 
@@ -232,9 +232,16 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
             menu_category_detail_breakdown="\n".join(detail_lines) or "  N/A",
         )
 
+        reflection_log: list[ReflectionIteration] = []
         try:
             current_prompt = prompt
             for iteration in range(_MAX_REFLECTION_ITERATIONS + 1):
+                await _emit(
+                    "generate_location_summary",
+                    "reflecting",
+                    f"Creating operation profile (iteration {iteration + 1} of {_MAX_REFLECTION_ITERATIONS + 1})...",
+                    config,
+                )
                 result = await _summary_llm.ainvoke(current_prompt)
                 summary = result.content if hasattr(result, "content") else str(result)
 
@@ -243,8 +250,28 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
                         "generate_location_summary: reached max reflection iterations (%d), accepting final draft",
                         _MAX_REFLECTION_ITERATIONS,
                     )
+                    await _emit(
+                        "generate_location_summary",
+                        "reflect_pass",
+                        f"Accepted final draft after {iteration} revision(s)",
+                        config,
+                    )
+                    reflection_log.append(
+                        ReflectionIteration(
+                            iteration=iteration,
+                            verdict="pass",
+                            feedback=[],
+                            draft=summary,
+                        )
+                    )
                     break
 
+                await _emit(
+                    "generate_location_summary",
+                    "reflecting",
+                    "Evaluating draft quality...",
+                    config,
+                )
                 reflection = await _reflector_llm.ainvoke(
                     _REFLECTION_PROMPT.format(
                         name=name,
@@ -267,13 +294,42 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
                     logger.info(
                         "generate_location_summary: passed reflection on iteration %d", iteration
                     )
+                    await _emit(
+                        "generate_location_summary",
+                        "reflect_pass",
+                        f"Summary passed quality review on iteration {iteration + 1}",
+                        config,
+                    )
+                    reflection_log.append(
+                        ReflectionIteration(
+                            iteration=iteration,
+                            verdict="pass",
+                            feedback=[],
+                            draft=summary,
+                        )
+                    )
                     break
 
-                feedback_text = "\n".join(f"- {f}" for f in (reflection.feedback or []))
+                feedback_bullets = reflection.feedback or []
+                feedback_text = "\n".join(f"- {f}" for f in feedback_bullets)
                 logger.info(
                     "generate_location_summary: revision requested on iteration %d:\n%s",
                     iteration,
                     feedback_text,
+                )
+                await _emit(
+                    "generate_location_summary",
+                    "reflect_revise",
+                    f"Revising: {'; '.join(feedback_bullets)}",
+                    config,
+                )
+                reflection_log.append(
+                    ReflectionIteration(
+                        iteration=iteration,
+                        verdict="revise",
+                        feedback=feedback_bullets,
+                        draft=summary,
+                    )
                 )
                 current_prompt = _REVISION_PROMPT.format(
                     original_generation_prompt=prompt,
@@ -284,4 +340,4 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
             logger.exception("Failed to generate location summary")
 
     await _emit("generate_location_summary", "done", "Location profile summary ready", config)
-    return {"planning": _update_planning(planning, locationSummary=summary)}
+    return {"planning": _update_planning(planning, locationSummary=summary, reflectionLog=reflection_log if reflection_log else None)}

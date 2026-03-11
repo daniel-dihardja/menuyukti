@@ -83,6 +83,14 @@ class CampaignBrief(BaseModel):
 
 
 @dataclass
+class ReflectionIteration:
+    iteration: int
+    verdict: str
+    feedback: list[str]
+    draft: str
+
+
+@dataclass
 class PlanningState:
     dateStart: str | None = None
     dateEnd: str | None = None
@@ -90,6 +98,7 @@ class PlanningState:
     nationalHolidays: list[NationalHoliday] | None = field(default=None)
     operatingProfile: dict[str, Any] | None = None
     locationSummary: str | None = None
+    reflectionLog: list[ReflectionIteration] | None = field(default=None)
     promotionItems: list[dict[str, Any]] | None = None
     candidateWeeks: list[CandidateWeek] | None = field(default=None)
     postSchedule: PostSchedule | None = None

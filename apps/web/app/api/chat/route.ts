@@ -71,7 +71,7 @@ interface AgentSSEChunk {
   };
   activity?: {
     step: string;
-    status: "running" | "done";
+    status: "running" | "done" | "reflecting" | "reflect_pass" | "reflect_revise";
     label: string;
     detail?: string;
   };

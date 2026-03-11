@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 
 export type ActivityStep = {
   step: string;
-  status: "running" | "done";
+  status: "running" | "done" | "reflecting" | "reflect_pass" | "reflect_revise";
   label: string;
   detail?: string;
 };
@@ -76,7 +76,7 @@ export function AgentActivityFeed({
               )}
             >
               <div className="mt-0.5 shrink-0">
-                {step.status === "running" ? (
+                {step.status !== "done" ? (
                   <Spinner className="size-3.5" />
                 ) : (
                   <CheckIcon className="size-3.5" />
