@@ -4,6 +4,7 @@ from langgraph.graph import StateGraph
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
+from agent.config import LLM_MODEL
 from agent.planning import planning_subgraph
 from agent.state import IntentCategory, State
 
@@ -15,11 +16,11 @@ class IntentResult(BaseModel):
 
 
 llm = ChatOpenAI(
-    model="gpt-4o-mini",
+    model=LLM_MODEL,
     temperature=0.7,
 )
 
-intent_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(IntentResult)
+intent_llm = ChatOpenAI(model=LLM_MODEL, temperature=0).with_structured_output(IntentResult)
 
 INTENT_PROMPT = """Intent category: {intent_category}. Classify the user message into one of the following intents:
 - 'create_instagram_campaign': user wants to create an Instagram campaign (strategy, goals, targeting, scheduling, campaign structure, etc.)

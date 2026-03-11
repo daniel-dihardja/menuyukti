@@ -7,6 +7,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
+from agent.config import LLM_MODEL
 from agent.planning.utils import _emit, _update_planning
 from agent.state import ReflectionIteration, State
 
@@ -95,10 +96,10 @@ Menu category breakdown (FOOD / DRINK):
 Menu sub-category breakdown:
 {menu_category_detail_breakdown}"""
 
-_summary_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.4)
+_summary_llm = ChatOpenAI(model=LLM_MODEL, temperature=0.4)
 
 _MAX_REFLECTION_ITERATIONS = 2
-_reflector_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(
+_reflector_llm = ChatOpenAI(model=LLM_MODEL, temperature=0).with_structured_output(
     _ReflectionResult
 )
 

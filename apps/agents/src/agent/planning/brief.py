@@ -6,6 +6,7 @@ from typing import Any
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 
+from agent.config import LLM_MODEL
 from agent.planning.utils import _emit, _update_planning
 from agent.state import (
     CampaignBrief,
@@ -26,10 +27,10 @@ _MIN_DAYS_FULL_WEEK = 5
 _SCHEDULE_PROMPT_VERSION = "v2"
 _BRIEF_PROMPT_VERSION = "v2"
 
-_schedule_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
+_schedule_llm = ChatOpenAI(model=LLM_MODEL, temperature=0.3)
 _schedule_llm_structured = _schedule_llm.with_structured_output(PostSchedule)
 
-_brief_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5)
+_brief_llm = ChatOpenAI(model=LLM_MODEL, temperature=0.5)
 _brief_llm_structured = _brief_llm.with_structured_output(CampaignBrief)
 
 # ---------------------------------------------------------------------------

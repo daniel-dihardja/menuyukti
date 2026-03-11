@@ -8,6 +8,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
+from agent.config import LLM_MODEL
 from agent.planning.brief import generate_campaign_brief, generate_post_schedule
 from agent.planning.fetch import fetch_all_data
 from agent.planning.holidays import search_public_holidays
@@ -68,7 +69,7 @@ class PlanResult(BaseModel):
     steps: list[str]
 
 
-_planner_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(PlanResult)
+_planner_llm = ChatOpenAI(model=LLM_MODEL, temperature=0).with_structured_output(PlanResult)
 
 
 # ---------------------------------------------------------------------------
