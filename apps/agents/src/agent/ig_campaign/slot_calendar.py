@@ -6,7 +6,7 @@ from typing import Any
 
 from langchain_core.runnables import RunnableConfig
 
-from agent.ig_campaign.utils import _emit, _update_planning
+from agent.ig_campaign.node_utils import _emit, _update_planning
 from agent.state import CandidateSlot, CandidateWeek, NationalHoliday, State
 
 logger = logging.getLogger(__name__)

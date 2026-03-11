@@ -9,13 +9,13 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
 from agent.config import LLM_MODEL
-from agent.ig_campaign.brief import generate_campaign_brief
+from agent.ig_campaign.campaign_brief import generate_campaign_brief
 from agent.ig_campaign.post_format import assign_post_formats
 from agent.ig_campaign.post_schedule import generate_post_schedule
-from agent.ig_campaign.fetch import fetch_all_data
-from agent.ig_campaign.location_summary import generate_location_summary
-from agent.ig_campaign.schedule import generate_candidate_slots
-from agent.ig_campaign.utils import _emit, _update_planning
+from agent.ig_campaign.data_fetch import fetch_all_data
+from agent.ig_campaign.venue_summary import generate_location_summary
+from agent.ig_campaign.slot_calendar import generate_candidate_slots
+from agent.ig_campaign.node_utils import _emit, _update_planning
 from agent.state import State
 
 logger = logging.getLogger(__name__)

@@ -8,14 +8,14 @@ from langchain_openai import ChatOpenAI
 
 from agent.config import LLM_MODEL, REFLECT_MAX_ITERATIONS as _MAX_REFLECTION_ITERATIONS
 from agent.gql_client import fetch_location_profile, save_location_profile
-from agent.ig_campaign.location_summary_reflection import (
+from agent.ig_campaign.venue_summary_reflect import (
     _ReflectionResult,
     _REFLECTION_PROMPT,
     _REVISION_PROMPT,
     _reflector_llm,
 )
-from agent.ig_campaign.reflect import reflect_loop
-from agent.ig_campaign.utils import _emit, _update_planning
+from agent.ig_campaign.reflect_loop import reflect_loop
+from agent.ig_campaign.node_utils import _emit, _update_planning
 from agent.state import State
 
 logger = logging.getLogger(__name__)

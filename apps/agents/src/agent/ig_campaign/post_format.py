@@ -7,7 +7,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 
 from agent.config import LLM_MODEL
-from agent.ig_campaign.utils import _emit, _format_items, _update_planning
+from agent.ig_campaign.node_utils import _emit, _format_items, _update_planning
 from agent.state import (
     PostFormatPlan,
     State,

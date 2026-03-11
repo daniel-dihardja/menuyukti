@@ -1,3 +1,3 @@
-from agent.ig_campaign.graph import planning_subgraph
+from agent.ig_campaign.plan_graph import planning_subgraph
 
 __all__ = ["planning_subgraph"]
