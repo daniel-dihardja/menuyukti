@@ -7,6 +7,7 @@ import {
   ArtifactHeader,
   ArtifactTitle,
 } from "@workspace/ui/components/ai-elements/artifact";
+import { MessageResponse } from "@workspace/ui/components/ai-elements/message";
 import { CalendarIcon, GlobeIcon, LayoutListIcon, SparklesIcon, StoreIcon } from "lucide-react";
 
 export type NationalHoliday = {
@@ -121,9 +122,9 @@ export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
                   <div className="h-3 w-4/6 animate-pulse rounded bg-muted-foreground/10" />
                 </div>
               ) : (
-                <p className="text-sm leading-relaxed text-foreground">
+                <MessageResponse className="text-sm leading-relaxed text-foreground">
                   {planning.locationSummary}
-                </p>
+                </MessageResponse>
               )}
             </div>
           )}
