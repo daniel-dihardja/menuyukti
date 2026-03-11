@@ -1,4 +1,4 @@
-"""Planning nodes: fetch operating profile and generate LLM location summary."""
+"""Planning node: generate a marketing-oriented location summary with quality reflection."""
 
 import logging
 from typing import Any, Literal
@@ -8,8 +8,9 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel
 
 from agent.config import LLM_MODEL
+from agent.planning.reflect import reflect_loop
 from agent.planning.utils import _emit, _update_planning
-from agent.state import ReflectionIteration, State
+from agent.state import State
 
 logger = logging.getLogger(__name__)
 
@@ -96,21 +97,14 @@ Menu category breakdown (FOOD / DRINK):
 Menu sub-category breakdown:
 {menu_category_detail_breakdown}"""
 
-_summary_llm = ChatOpenAI(model=LLM_MODEL, temperature=0.4)
-
-_MAX_REFLECTION_ITERATIONS = 2
-_reflector_llm = ChatOpenAI(model=LLM_MODEL, temperature=0).with_structured_output(
-    _ReflectionResult
-)
-
-
-_REFLECTION_PROMPT = """You are a quality reviewer for restaurant marketing briefs.
+_REFLECTION_PROMPT = """You are a quality reviewer for restaurant Instagram marketing briefs.
 
 Restaurant: {name} ({city}, {country})
 
 Source data snapshot:
 - Operating pattern: {operating_pattern}  |  Dining focus: {dining_focus}
-- Peak day (by orders): {peak_day}  |  Primary meal period: {primary_meal_period}
+- Peak day (by orders): {peak_day}  |  Peak day (by revenue): {peak_revenue_day}
+- Primary meal period: {primary_meal_period}
 - Weekday / weekend split: {weekday_share:.0%} weekday / {weekend_share:.0%} weekend
 - Average spend per order: {avg_revenue_per_order:.2f}  |  Average items per order: {avg_order_size:.1f}
 - Holiday share: {holiday_share:.0%}
@@ -123,16 +117,32 @@ if ANY criterion fails; return verdict="pass" only when all are met.
 
 1. All four sections are present with their exact headings: \
 **Venue Identity**, **Audience Persona**, **Traffic & Timing**, **Content & Tone Signals**
-2. Every factual claim is traceable to the source data snapshot above — no invented facts
-3. Traffic & Timing states a concrete Instagram posting window tied to the primary meal period \
-(e.g. "post by 2 pm for a dinner-led venue"), not a vague recommendation
-4. Content & Tone Signals names at least one specific content angle grounded in this restaurant's \
-data (not generic social-media advice)
-5. Audience Persona uses the party-size heuristic from avg items per order: \
-≤2 = solo/pairs, 3–5 = small groups, ≥6 = families/large groups
-6. If holiday share is above 10%, Audience Persona or Content & Tone Signals acknowledges \
-holiday-occasion sensitivity"""
 
+2. Every factual claim is traceable to the source data snapshot above — no invented facts
+
+3. Venue Identity explicitly states a price tier (budget / mid-range / premium) derived from \
+avg spend per order ({avg_revenue_per_order:.2f}), and names the dominant dining focus
+
+4. Audience Persona:
+   (a) applies the party-size heuristic from avg items per order ({avg_order_size:.1f}): \
+≤2 = solo/pairs, 3–5 = small groups, ≥6 = families/large groups
+   (b) derives the copy tone from price point: high avg spend → aspirational, elevated language; \
+low-to-mid avg spend → warm, accessible, everyday language
+
+5. Traffic & Timing:
+   (a) states a concrete posting window using the 1–2 hour lead-time rule tied to the primary \
+meal period ({primary_meal_period}) — e.g. "post by 11 am for a lunch-led venue", not a vague recommendation
+   (b) notes weekday vs weekend posting cadence implications from the revenue split \
+({weekday_share:.0%} weekday / {weekend_share:.0%} weekend)
+   (c) if peak order day ({peak_day}) and peak revenue day ({peak_revenue_day}) differ, \
+flags this and explains what it means for promotional timing
+
+6. Content & Tone Signals names at least two specific content angles, each tied to a concrete \
+data signal (a named day, meal period, or menu category) — generic advice like "showcase your \
+dishes" or "engage your audience" does not qualify
+
+7. If holiday share is above 10%, Audience Persona or Content & Tone Signals explicitly \
+acknowledges holiday-occasion sensitivity"""
 
 _REVISION_PROMPT = """You are a senior restaurant marketing strategist. \
 Revise the location summary below based on specific reviewer feedback.
@@ -149,6 +159,11 @@ Reviewer feedback — address every point:
 Write the improved version now, keeping the same four-section structure \
 (**Venue Identity**, **Audience Persona**, **Traffic & Timing**, **Content & Tone Signals**)."""
 
+_MAX_REFLECTION_ITERATIONS = 2
+
+_summary_llm = ChatOpenAI(model=LLM_MODEL, temperature=0.4)
+_reflector_llm = ChatOpenAI(model=LLM_MODEL, temperature=0).with_structured_output(_ReflectionResult)
+
 
 async def generate_location_summary(state: State, config: RunnableConfig) -> dict[str, Any]:
     """Generate a marketing-oriented semantic description of the restaurant using the LLM."""
@@ -157,6 +172,7 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
     planning = state.planning
     profile = planning.operatingProfile if planning else None
     summary: str | None = None
+    reflection_log = []
 
     if profile:
         location = (planning.location if planning else None) or {}
@@ -164,9 +180,6 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
         city = location.get("city") or "unknown city"
         country = location.get("country") or "unknown country"
 
-        # Use `or 0` / `or "N/A"` guards so that GQL null values don't produce
-        # None arguments into format specifiers like :.1f or :.0%, which would
-        # raise a TypeError and silently swallow the whole summary generation.
         meal_period_lines = [
             f"  {p.get('label') or p.get('period', '?')}: "
             f"{p.get('share') or 0:.0%} of orders, {p.get('revenueShare') or 0:.0%} of revenue, "
@@ -204,7 +217,7 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
         else:
             menu_category_summary = "N/A"
 
-        prompt = _LOCATION_SUMMARY_PROMPT.format(
+        generation_prompt = _LOCATION_SUMMARY_PROMPT.format(
             name=name,
             city=city,
             country=country,
@@ -233,112 +246,53 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
             menu_category_detail_breakdown="\n".join(detail_lines) or "  N/A",
         )
 
-        reflection_log: list[ReflectionIteration] = []
+        reflection_prompt = _REFLECTION_PROMPT.format(
+            name=name,
+            city=city,
+            country=country,
+            operating_pattern=profile.get("operatingPattern") or "N/A",
+            dining_focus=profile.get("diningFocus") or "N/A",
+            peak_day=profile.get("peakDay") or "N/A",
+            peak_revenue_day=profile.get("peakRevenueDay") or "N/A",
+            primary_meal_period=profile.get("primaryMealPeriod") or "N/A",
+            weekday_share=profile.get("weekdayShare") or 0,
+            weekend_share=profile.get("weekendShare") or 0,
+            avg_revenue_per_order=profile.get("avgRevenuePerOrder") or 0,
+            avg_order_size=profile.get("avgOrderSize") or 0,
+            holiday_share=profile.get("holidayShare") or 0,
+            summary="{summary}",
+        )
+
+        async def _generate() -> str:
+            result = await _summary_llm.ainvoke(generation_prompt)
+            return result.content if hasattr(result, "content") else str(result)
+
+        async def _reflect(draft: str) -> _ReflectionResult:
+            return await _reflector_llm.ainvoke(reflection_prompt.format(summary=draft))
+
+        async def _revise(draft: str, feedback: list[str]) -> str:
+            feedback_text = "\n".join(f"- {f}" for f in feedback)
+            prompt = _REVISION_PROMPT.format(
+                original_generation_prompt=generation_prompt,
+                previous_summary=draft,
+                feedback=feedback_text,
+            )
+            result = await _summary_llm.ainvoke(prompt)
+            return result.content if hasattr(result, "content") else str(result)
+
+        async def _on_event(status: str, label: str) -> None:
+            await _emit("generate_location_summary", status, label, config)
+
         try:
-            current_prompt = prompt
-            for iteration in range(_MAX_REFLECTION_ITERATIONS + 1):
-                await _emit(
-                    "generate_location_summary",
-                    "reflecting",
-                    f"Creating location profile (iteration {iteration + 1} of {_MAX_REFLECTION_ITERATIONS + 1})...",
-                    config,
-                )
-                result = await _summary_llm.ainvoke(current_prompt)
-                summary = result.content if hasattr(result, "content") else str(result)
-
-                if iteration >= _MAX_REFLECTION_ITERATIONS:
-                    logger.info(
-                        "generate_location_summary: reached max reflection iterations (%d), accepting final draft",
-                        _MAX_REFLECTION_ITERATIONS,
-                    )
-                    await _emit(
-                        "generate_location_summary",
-                        "reflect_pass",
-                        f"Accepted final draft after {iteration} revision(s)",
-                        config,
-                    )
-                    reflection_log.append(
-                        ReflectionIteration(
-                            iteration=iteration,
-                            verdict="pass",
-                            feedback=[],
-                            draft=summary,
-                        )
-                    )
-                    break
-
-                await _emit(
-                    "generate_location_summary",
-                    "reflecting",
-                    "Evaluating location profile quality...",
-                    config,
-                )
-                reflection = await _reflector_llm.ainvoke(
-                    _REFLECTION_PROMPT.format(
-                        name=name,
-                        city=city,
-                        country=country,
-                        operating_pattern=profile.get("operatingPattern") or "N/A",
-                        dining_focus=profile.get("diningFocus") or "N/A",
-                        peak_day=profile.get("peakDay") or "N/A",
-                        primary_meal_period=profile.get("primaryMealPeriod") or "N/A",
-                        weekday_share=profile.get("weekdayShare") or 0,
-                        weekend_share=profile.get("weekendShare") or 0,
-                        avg_revenue_per_order=profile.get("avgRevenuePerOrder") or 0,
-                        avg_order_size=profile.get("avgOrderSize") or 0,
-                        holiday_share=profile.get("holidayShare") or 0,
-                        summary=summary,
-                    )
-                )
-
-                if reflection.verdict == "pass":
-                    logger.info(
-                        "generate_location_summary: passed reflection on iteration %d", iteration
-                    )
-                    await _emit(
-                        "generate_location_summary",
-                        "reflect_pass",
-                        f"Summary passed quality review on iteration {iteration + 1}",
-                        config,
-                    )
-                    reflection_log.append(
-                        ReflectionIteration(
-                            iteration=iteration,
-                            verdict="pass",
-                            feedback=[],
-                            draft=summary,
-                        )
-                    )
-                    break
-
-                feedback_bullets = reflection.feedback or []
-                feedback_text = "\n".join(f"- {f}" for f in feedback_bullets)
-                logger.info(
-                    "generate_location_summary: revision requested on iteration %d:\n%s",
-                    iteration,
-                    feedback_text,
-                )
-                await _emit(
-                    "generate_location_summary",
-                    "reflect_revise",
-                    f"Revising: {'; '.join(feedback_bullets)}",
-                    config,
-                )
-                reflection_log.append(
-                    ReflectionIteration(
-                        iteration=iteration,
-                        verdict="revise",
-                        feedback=feedback_bullets,
-                        draft=summary,
-                    )
-                )
-                current_prompt = _REVISION_PROMPT.format(
-                    original_generation_prompt=prompt,
-                    previous_summary=summary,
-                    feedback=feedback_text,
-                )
+            summary, reflection_log = await reflect_loop(
+                generate=_generate,
+                reflect=_reflect,
+                revise=_revise,
+                on_event=_on_event,
+                max_iterations=_MAX_REFLECTION_ITERATIONS,
+            )
         except Exception:
             logger.exception("Failed to generate location summary")
 
     await _emit("generate_location_summary", "done", "Location profile summary ready", config)
-    return {"planning": _update_planning(planning, locationSummary=summary, reflectionLog=reflection_log if reflection_log else None)}
+    return {"planning": _update_planning(planning, locationSummary=summary, reflectionLog=reflection_log or None)}
