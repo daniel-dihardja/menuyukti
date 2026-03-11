@@ -119,14 +119,80 @@ query MenuEngineeringMatrix($analyticsRunId: ID!, $categories: [String!]) {
 }
 """
 
-_MENU_CATEGORY_QUERY = """
-query MenuCategoryBreakdown($analyticsRunId: ID!, $categories: [String!]) {
-  menuEngineeringMatrix(analyticsRunId: $analyticsRunId, categories: $categories) {
+_FETCH_CAMPAIGN_QUERY = """
+query FetchCampaignData($locationId: ID!, $analyticsRunId: ID!, $promotionCategories: [String!]) {
+  location(id: $locationId) {
+    id
+    name
+    street
+    city
+    country
+  }
+  operatingProfile(locationId: $locationId, analyticsRunId: $analyticsRunId) {
+    totalOrders
+    totalRevenue
+    activeDaysCount
+    avgDailyOrders
+    avgOrderSize
+    weekdayShare
+    weekendShare
+    peakDay
+    primaryMealPeriod
+    activeMealPeriods
+    operatingPattern
+    diningFocus
+    mealPeriodBreakdown {
+      period
+      label
+      orderCount
+      share
+      revenue
+      revenueShare
+    }
+    dayOfWeekBreakdown {
+      day
+      isWeekend
+      orderCount
+      share
+      revenue
+      isPeakDay
+    }
+    dayTypeBreakdown {
+      type
+      orderCount
+      share
+      revenue
+      revenueShare
+    }
+  }
+  menuEngineeringMatrix(analyticsRunId: $analyticsRunId, categories: $promotionCategories) {
+    thresholds {
+      avgPopularity
+      avgContributionMargin
+      totalCogs
+      totalProfit
+      totalMargin
+    }
+    distribution {
+      category
+      itemCount
+      itemShare
+      marginShare
+    }
     items {
-      menuCategory
-      menuCategoryDetail
+      menu
+      category
+      action
       quantity
       totalRevenue
+      cogs
+      totalCogs
+      contributionMargin
+      contributionMarginPercentage
+      marginPerUnit
+      weValue
+      menuCategory
+      menuCategoryDetail
     }
   }
 }
@@ -207,22 +273,30 @@ async def fetch_menu_engineering_matrix(
     return data.get("menuEngineeringMatrix") or {}
 
 
-async def fetch_menu_category_items(
+async def fetch_campaign_data(
+    location_id: int | str,
     analytics_id: int | str,
-    categories: list[str] | None = None,
-) -> list[dict[str, Any]]:
-    """Return menu items with category metadata for breakdown computation.
+    promotion_categories: list[str] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any] | None, list[dict[str, Any]] | None]:
+    """Fetch location, operating profile, and menu matrix in a single GraphQL request.
 
-    When *categories* is provided only items in those BCG categories are
-    returned (e.g. ["star", "plow_horse"] for campaign-relevant items).
-    When *categories* is None the backend returns all items.
+    Returns a 3-tuple of (location, operating_profile, matrix_items).
+    Any field that the server cannot resolve is returned as its zero value
+    (empty dict / None / None).
     """
     data = await _gql(
-        _MENU_CATEGORY_QUERY,
-        {"analyticsRunId": str(analytics_id), "categories": categories},
+        _FETCH_CAMPAIGN_QUERY,
+        {
+            "locationId": str(location_id),
+            "analyticsRunId": str(analytics_id),
+            "promotionCategories": promotion_categories,
+        },
     )
+    location = data.get("location") or {}
+    operating_profile = data.get("operatingProfile") or None
     matrix = data.get("menuEngineeringMatrix") or {}
-    return matrix.get("items") or []
+    matrix_items = matrix.get("items") or None
+    return location, operating_profile, matrix_items
 
 
 async def fetch_order_metrics(analytics_id: int | str) -> dict[str, Any]:
