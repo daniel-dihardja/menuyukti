@@ -240,7 +240,7 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
                 await _emit(
                     "generate_location_summary",
                     "reflecting",
-                    f"Creating operation profile (iteration {iteration + 1} of {_MAX_REFLECTION_ITERATIONS + 1})...",
+                    f"Creating location profile (iteration {iteration + 1} of {_MAX_REFLECTION_ITERATIONS + 1})...",
                     config,
                 )
                 result = await _summary_llm.ainvoke(current_prompt)
@@ -270,7 +270,7 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
                 await _emit(
                     "generate_location_summary",
                     "reflecting",
-                    "Evaluating draft quality...",
+                    "Evaluating location profile quality...",
                     config,
                 )
                 reflection = await _reflector_llm.ainvoke(
