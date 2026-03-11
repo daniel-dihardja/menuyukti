@@ -234,6 +234,18 @@ def _format_items(items: list[dict] | None) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Meal period → recommended posting time
+# ---------------------------------------------------------------------------
+
+_MEAL_PERIOD_TO_TIME: dict[str, str] = {
+    "breakfast":  "07:00",
+    "lunch":      "11:00",
+    "afternoon":  "14:00",
+    "dinner":     "17:00",
+    "late_night": "20:00",
+}
+
+# ---------------------------------------------------------------------------
 # Post-parse validation and pinned-slot injection
 # ---------------------------------------------------------------------------
 
@@ -314,17 +326,20 @@ def _derive_holiday_ids(
     brief: CampaignBrief,
     holidays: list[NationalHoliday] | None,
     post_format_plan: PostFormatPlan | None = None,
+    primary_meal_period: str | None = None,
 ) -> CampaignBrief:
-    """Populate PostSlot.holiday_id and carousel fields server-side.
+    """Populate PostSlot.holiday_id, carousel fields, and scheduled_time server-side.
 
     holiday_id is derived deterministically from the canonical holiday map.
     format/carousel_items/carousel_narrative are copied from postFormatPlan assignments.
+    scheduled_time is derived from primaryMealPeriod via _MEAL_PERIOD_TO_TIME.
     The LLM is never asked to set these fields directly.
     """
     holiday_by_date: dict[str, str] = {h["date"]: h["id"] for h in (holidays or [])}
     format_by_date: dict[str, FormatAssignment] = {
         a.scheduled_date: a for a in (post_format_plan.assignments if post_format_plan else [])
     }
+    scheduled_time = _MEAL_PERIOD_TO_TIME.get(primary_meal_period or "", "09:00")
     fixed_slots: list[PostSlot] = []
     for slot in brief.post_slots:
         hid = holiday_by_date.get(slot.scheduled_date)
@@ -334,9 +349,9 @@ def _derive_holiday_ids(
                 "downgrading theme to 'engagement'",
                 slot.scheduled_date,
             )
-            slot = slot.model_copy(update={"theme": "engagement", "holiday_id": None, "source": "llm_suggested"})
+            slot = slot.model_copy(update={"theme": "engagement", "holiday_id": None, "source": "llm_suggested", "scheduled_time": scheduled_time})
         else:
-            slot = slot.model_copy(update={"holiday_id": hid, "source": "holiday_pinned" if hid else "llm_suggested"})
+            slot = slot.model_copy(update={"holiday_id": hid, "source": "holiday_pinned" if hid else "llm_suggested", "scheduled_time": scheduled_time})
 
         assignment = format_by_date.get(slot.scheduled_date)
         if assignment and slot.theme == "promotion":
@@ -468,7 +483,8 @@ async def generate_campaign_brief(state: State, config: RunnableConfig) -> dict[
         )
         try:
             raw_brief = await _brief_llm_structured.ainvoke(prompt)
-            brief = _derive_holiday_ids(raw_brief, planning.nationalHolidays, planning.postFormatPlan)
+            primary_meal_period = (planning.operatingProfile or {}).get("primaryMealPeriod")
+            brief = _derive_holiday_ids(raw_brief, planning.nationalHolidays, planning.postFormatPlan, primary_meal_period)
         except Exception:
             logger.exception("Failed to generate campaign brief")
 

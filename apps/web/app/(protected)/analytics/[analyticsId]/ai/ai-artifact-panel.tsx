@@ -18,6 +18,7 @@ export type NationalHoliday = {
 
 export type PostSlot = {
   scheduled_date: string;
+  scheduled_time?: string;
   theme: "holiday" | "promotion" | "engagement";
   format: "single" | "carousel";
   focus_item: string | null;
@@ -311,6 +312,11 @@ export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
                         <span className="font-mono text-xs font-semibold text-foreground">
                           {formatShortDate(slot.scheduled_date)}
                         </span>
+                        {slot.scheduled_time && (
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {slot.scheduled_time}
+                          </span>
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="mb-1.5 flex flex-wrap items-center gap-1.5">

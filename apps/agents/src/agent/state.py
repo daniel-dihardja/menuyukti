@@ -79,6 +79,8 @@ class PostSlot(BaseModel):
     """A single planned Instagram post within a campaign."""
 
     scheduled_date: str
+    scheduled_time: str = "09:00"
+    """Recommended posting time derived server-side from primaryMealPeriod."""
     theme: Literal["holiday", "promotion", "engagement"]
     format: Literal["single", "carousel"] = "single"
     """Post format: single image/video or multi-slide carousel."""
