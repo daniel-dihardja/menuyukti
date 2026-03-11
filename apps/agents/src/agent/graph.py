@@ -19,7 +19,7 @@ llm = ChatOpenAI(
     temperature=0.7,
 )
 
-intent_llm = llm.with_structured_output(IntentResult)
+intent_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0).with_structured_output(IntentResult)
 
 INTENT_PROMPT = """Intent category: {intent_category}. Classify the user message into one of the following intents:
 - 'create_instagram_campaign': user wants to create an Instagram campaign (strategy, goals, targeting, scheduling, campaign structure, etc.)

@@ -94,6 +94,8 @@ class PlanningState:
     candidateWeeks: list[CandidateWeek] | None = field(default=None)
     postSchedule: PostSchedule | None = None
     campaign_brief: CampaignBrief | None = None
+    plan: list[str] | None = field(default=None)
+    current_step: int = 0
 
 
 @dataclass
