@@ -36,28 +36,33 @@ _revise_llm_structured = ChatOpenAI(model=LLM_MODEL, temperature=0.3).with_struc
 
 _FORMAT_ASSIGNMENT_PROMPT = """You are deciding Instagram post formats for a restaurant campaign.
 
-Your job is to assign a format (single post or carousel) to each promotion slot and decide which menu items to feature on it.
+Your job is to assign a format (single post or carousel) to each promotion date and decide which menu items to feature on it.
 
-Promotion slots (dates with theme=promotion):
+Available posting dates — {slot_count} dates total:
 {promotion_slots}
 
-Menu items available for promotion:
+Menu items available for promotion ({item_count} items):
 {promotion_items}
 
 Rules:
+- Use ONLY the dates listed above. Do NOT invent or add any dates not in the list.
+- You may use fewer than {slot_count} dates — unused dates will become engagement posts. But you MUST NOT exceed {slot_count} assignments.
+- Use carousels to group multiple items onto one date rather than adding extra dates.
 - "star" category items must always be assigned as format="single" — they deserve a solo spotlight.
 - "puzzle" and "plow_horse" category items are carousel candidates if they share a menu category or customer theme (e.g. all drinks, all snacks, all value sets).
-- Holiday-pinned slots (marked [HOLIDAY]) must always be format="single".
-- A maximum of 2 carousel posts per week — if more than 2 promotion slots in a week could be carousels, pick the best 2 and make the rest "single".
-- Carousel posts must group 2 to 4 items. Each item should appear in at most one post across the whole campaign.
-- Every promotable item must appear in at least one post. If items cannot be grouped sensibly, give them their own single post.
+- Holiday-pinned dates (marked [HOLIDAY]) must always be format="single".
+- A maximum of 2 carousel posts per week.
+- Carousel posts must group 2 to 4 items. Each item may appear in at most one post.
+- Fit as many items as possible, prioritising high-value items. Low-priority items may be left out if dates are insufficient.
+- Item distribution targets:
+  - STAR items ≈ 60–70% of assignments
+  - PUZZLE items ≈ 20–30% of assignments
+  - PLOW_HORSE items ≤ 10% of assignments
 - For each assignment, provide:
-  - scheduled_date: the date string
+  - scheduled_date: one of the dates listed above (exactly as written)
   - format: "single" or "carousel"
   - items: list of exactly 1 item name (single) or 2–4 item names (carousel)
-  - carousel_narrative: a short angle explaining why these items belong together (carousel only, null for single)
-
-Return one assignment per promotion slot."""
+  - carousel_narrative: a short angle explaining why these items belong together (carousel only, null for single)"""
 
 
 # ---------------------------------------------------------------------------
@@ -92,9 +97,30 @@ def _check_hard_constraints(
     promotion_items: list[dict],
     candidate_weeks: list[CandidateWeek],
     holiday_by_date: dict[str, str],
+    promotion_slot_dates: list[str],
 ) -> list[str]:
     """Return a list of constraint violation descriptions, empty if all pass."""
     failures: list[str] = []
+
+    slot_date_set = set(promotion_slot_dates)
+
+    if len(plan.assignments) > len(promotion_slot_dates):
+        failures.append(
+            f"Plan has {len(plan.assignments)} assignment(s) but only {len(promotion_slot_dates)} "
+            f"dates are available — do not exceed the available date count"
+        )
+
+    invalid_dates = [a.scheduled_date for a in plan.assignments if a.scheduled_date not in slot_date_set]
+    if invalid_dates:
+        failures.append(
+            f"Assignment(s) use date(s) not in the available list: {', '.join(sorted(set(invalid_dates)))}"
+        )
+
+    duplicate_dates = [d for d, c in ((d, sum(1 for a in plan.assignments if a.scheduled_date == d)) for d in {a.scheduled_date for a in plan.assignments}) if c > 1]
+    if duplicate_dates:
+        failures.append(
+            f"Multiple assignments share the same date: {', '.join(sorted(duplicate_dates))}"
+        )
 
     expected_names = {item.get("menu", "") for item in promotion_items if item.get("menu")}
     star_names = {item.get("menu", "") for item in promotion_items if item.get("action") == "star" and item.get("menu")}
@@ -177,6 +203,9 @@ async def assign_post_formats(state: State, config: RunnableConfig) -> dict[str,
         h["date"]: h["id"] for h in (planning.nationalHolidays or [])
     }
     candidate_weeks = planning.candidateWeeks or []
+    promotion_slot_dates: list[str] = [
+        d for week in planning.postSchedule.weeks for d in week.selected_dates
+    ]
     promotion_slots_str = _format_promotion_slots(
         planning.postSchedule.weeks,
         holiday_by_date=holiday_by_date,
@@ -188,6 +217,8 @@ async def assign_post_formats(state: State, config: RunnableConfig) -> dict[str,
     date_end = planning.dateEnd or "unknown"
 
     generation_prompt = _FORMAT_ASSIGNMENT_PROMPT.format(
+        slot_count=len(promotion_slot_dates),
+        item_count=len(planning.promotionItems),
         promotion_slots=promotion_slots_str,
         promotion_items=items_str,
     )
@@ -215,6 +246,7 @@ async def assign_post_formats(state: State, config: RunnableConfig) -> dict[str,
                 await _emit("assign_post_formats", "generating", f"Revising post format plan (attempt {iteration + 1})...", config)
                 feedback_text = "\n".join(f"- {f}" for f in feedback_bullets)
                 revision_prompt = _REVISION_PROMPT.format(
+                    slot_count=len(promotion_slot_dates),
                     location_summary=location_summary,
                     primary_meal_period=primary_meal_period,
                     date_start=date_start,
@@ -236,7 +268,7 @@ async def assign_post_formats(state: State, config: RunnableConfig) -> dict[str,
 
         # Hard constraint check — pure Python, no LLM cost
         hard_failures = _check_hard_constraints(
-            current_plan, planning.promotionItems, candidate_weeks, holiday_by_date
+            current_plan, planning.promotionItems, candidate_weeks, holiday_by_date, promotion_slot_dates
         )
 
         if hard_failures:

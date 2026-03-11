@@ -66,11 +66,10 @@ so the feed won't feel repetitive or relentlessly sales-heavy? \
 Flag if the same menu sub-category, item type, or promotional angle dominates \
 without relief, or if there are no engagement-adjacent posts mixed in.
 
-6. DISTRIBUTION INTENT — Given the venue profile and campaign window, does the \
-STAR / PUZZLE / PLOW_HORSE mix serve the campaign's goals? \
-A discovery-phase campaign should lean toward PUZZLE; a revenue-maximisation \
-campaign should lean toward STAR. Flag if the balance feels strategically misaligned \
-with what the venue profile implies."""
+6. DISTRIBUTION INTENT — Count the STAR / PUZZLE / PLOW_HORSE breakdown across all \
+assignments. The targets are STAR ≈ 60–70%, PUZZLE ≈ 20–30%, PLOW_HORSE ≤ 10% of \
+promotion slots. Flag if the actual distribution deviates materially from these \
+targets or feels strategically misaligned with what the venue profile implies."""
 
 
 _REVISION_PROMPT = """You are a senior Instagram restaurant marketing strategist. \
@@ -93,11 +92,14 @@ Reviewer feedback — address every point:
 
 Return an improved PostFormatPlan that resolves all feedback while respecting \
 these hard rules:
+- Use ONLY dates from the original slot list — do NOT invent new dates
+- Return AT MOST {slot_count} assignments — never more than the available date count
+- Each date may appear in at most one assignment
 - "star" category items must always be format="single"
 - Holiday-pinned slots must always be format="single"
 - Maximum 2 carousel posts per week
 - Each carousel must have 2–4 items and a carousel_narrative
-- Every item must appear in exactly one assignment
+- Use carousels to fit multiple items onto a single date when there are more items than dates
 - Each item may appear in at most one post"""
 
 

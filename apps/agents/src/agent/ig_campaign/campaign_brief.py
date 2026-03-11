@@ -49,15 +49,7 @@ Menu items available for promotion (star, plow_horse, and puzzle items):
 Post dates to annotate:
 {post_dates_section}
 
-Promotion strategy:
-- Prioritize STAR items because they are profitable and popular.
-- Occasionally promote PUZZLE items to increase awareness and demand.
-- Use PLOW_HORSE items sparingly since they are popular but lower margin.
-- Aim roughly for this distribution across promotion posts:
-  - STAR ≈ 60–70%
-  - PUZZLE ≈ 20–30%
-  - PLOW_HORSE ≤ 10%
-- Avoid repeating the same item too frequently during the campaign window.
+Promotion slots are pre-assigned — write caption directives for the item(s) shown in each slot.
 
 Instructions:
 - Design a campaign theme and tone that fits the restaurant profile and the time period.
