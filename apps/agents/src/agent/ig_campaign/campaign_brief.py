@@ -44,7 +44,7 @@ Holiday-themed posts must anchor to dates marked with a [HOLIDAY_ID] in the post
 dates list below. Do not assign theme="holiday" to a date that is not marked as a \
 holiday — use theme="engagement" or theme="promotion" for those dates instead.
 
-Menu items available for promotion (star and puzzle items):
+Menu items available for promotion (star, plow_horse, and puzzle items):
 {promotion_items}
 
 Post dates to annotate:
