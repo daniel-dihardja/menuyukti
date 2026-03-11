@@ -89,6 +89,37 @@ def _format_promotion_slots(
 
 
 # ---------------------------------------------------------------------------
+# Post-generation sanitiser (pure Python — no LLM needed)
+# ---------------------------------------------------------------------------
+
+def _sanitize_assignments(
+    plan: PostFormatPlan,
+    promotion_slot_dates: list[str],
+) -> PostFormatPlan:
+    """Drop assignments that use invalid or duplicate dates, then cap to slot count.
+
+    This runs deterministically after every LLM generation so the hard constraint
+    checker never sees overcounting caused by hallucinated dates.
+    """
+    slot_date_set = set(promotion_slot_dates)
+    seen_dates: set[str] = set()
+    kept = []
+    for a in plan.assignments:
+        if a.scheduled_date not in slot_date_set:
+            logger.debug("sanitize: dropping assignment for unknown date %s", a.scheduled_date)
+            continue
+        if a.scheduled_date in seen_dates:
+            logger.debug("sanitize: dropping duplicate assignment for date %s", a.scheduled_date)
+            continue
+        seen_dates.add(a.scheduled_date)
+        kept.append(a)
+    if len(kept) > len(promotion_slot_dates):
+        logger.debug("sanitize: trimming %d excess assignments", len(kept) - len(promotion_slot_dates))
+        kept = kept[: len(promotion_slot_dates)]
+    return PostFormatPlan(assignments=kept)
+
+
+# ---------------------------------------------------------------------------
 # Hard constraint checker (pure Python — no LLM needed)
 # ---------------------------------------------------------------------------
 
@@ -265,6 +296,9 @@ async def assign_post_formats(state: State, config: RunnableConfig) -> dict[str,
 
         if current_plan is None:
             break
+
+        # Deterministically drop hallucinated/duplicate/excess dates before checking
+        current_plan = _sanitize_assignments(current_plan, promotion_slot_dates)
 
         # Hard constraint check — pure Python, no LLM cost
         hard_failures = _check_hard_constraints(
