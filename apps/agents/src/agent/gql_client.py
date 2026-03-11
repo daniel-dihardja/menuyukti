@@ -120,8 +120,8 @@ query MenuEngineeringMatrix($analyticsRunId: ID!, $categories: [String!]) {
 """
 
 _MENU_CATEGORY_QUERY = """
-query MenuCategoryBreakdown($analyticsRunId: ID!) {
-  menuEngineeringMatrix(analyticsRunId: $analyticsRunId) {
+query MenuCategoryBreakdown($analyticsRunId: ID!, $categories: [String!]) {
+  menuEngineeringMatrix(analyticsRunId: $analyticsRunId, categories: $categories) {
     items {
       menuCategory
       menuCategoryDetail
@@ -207,9 +207,20 @@ async def fetch_menu_engineering_matrix(
     return data.get("menuEngineeringMatrix") or {}
 
 
-async def fetch_menu_category_items(analytics_id: int | str) -> list[dict[str, Any]]:
-    """Return all menu items with category metadata for breakdown computation."""
-    data = await _gql(_MENU_CATEGORY_QUERY, {"analyticsRunId": str(analytics_id)})
+async def fetch_menu_category_items(
+    analytics_id: int | str,
+    categories: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Return menu items with category metadata for breakdown computation.
+
+    When *categories* is provided only items in those BCG categories are
+    returned (e.g. ["star", "plow_horse"] for campaign-relevant items).
+    When *categories* is None the backend returns all items.
+    """
+    data = await _gql(
+        _MENU_CATEGORY_QUERY,
+        {"analyticsRunId": str(analytics_id), "categories": categories},
+    )
     matrix = data.get("menuEngineeringMatrix") or {}
     return matrix.get("items") or []
 

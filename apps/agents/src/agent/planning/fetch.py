@@ -18,6 +18,7 @@ from agent.state import State
 logger = logging.getLogger(__name__)
 
 _PROMOTION_CATEGORIES = ["star", "puzzle"]
+_CATEGORY_BREAKDOWN_CATEGORIES = ["star", "plow_horse"]
 
 
 def _compute_category_breakdown(items: list[dict]) -> dict:
@@ -111,7 +112,7 @@ async def fetch_all_data(state: State, config: RunnableConfig) -> dict[str, Any]
         if analytics_id is None:
             return None
         try:
-            items = await fetch_menu_category_items(analytics_id)
+            items = await fetch_menu_category_items(analytics_id, _CATEGORY_BREAKDOWN_CATEGORIES)
             return items or None
         except Exception:
             logger.exception(
