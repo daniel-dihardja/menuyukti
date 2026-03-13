@@ -267,6 +267,7 @@ class Campaign(Base):
     theme = Column(String(256), nullable=True)
     tone = Column(String(128), nullable=True)
     status = Column(String(32), nullable=False, default="draft")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
         Index("ix_campaign_status", "status"),

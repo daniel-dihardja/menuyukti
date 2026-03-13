@@ -70,6 +70,7 @@
     "analysis": "Analysis",
     "branches": "Locations",
     "sales": "Reports",
+    "campaigns": "Campaigns",
     "agents": "Agents",
     "cogs": "COGS",
     "fixedCosts": "Fixed Costs",
@@ -267,6 +268,34 @@
         "title": "No sales reports yet",
         "description": "Upload an Excel sales file to start analyzing menu performance.",
         "cta": "Upload New Sales Report"
+      }
+    },
+    "campaigns": {
+      "title": "Campaigns",
+      "description": "Manage and track your marketing campaigns by location.",
+      "create": "Create New Campaign",
+      "branchLabel": "Location",
+      "branchPlaceholder": "Select a location",
+      "selectBranch": "Please select a location to view campaigns.",
+      "loading": "Loading campaigns…",
+      "table": {
+        "index": "#",
+        "name": "Campaign Name",
+        "status": "Status",
+        "dates": "Dates",
+        "action": "Actions",
+        "view": "View",
+        "delete": "Delete"
+      },
+      "noCampaigns": {
+        "title": "No campaigns yet",
+        "description": "Create your first campaign to start planning your marketing schedule.",
+        "cta": "Create New Campaign"
+      },
+      "noBranches": {
+        "title": "No locations yet",
+        "description": "Please create a location before creating campaigns.",
+        "cta": "Create Location"
       }
     },
     "cogs": {

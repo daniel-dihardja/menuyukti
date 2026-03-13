@@ -25,6 +25,12 @@ export const routes = {
     cogs: (analyticsId: string | number) => `/analytics/${analyticsId}/cogs`,
   },
 
+  campaigns: {
+    list: "/campaigns",
+    create: "/campaigns/create",
+    detail: (id: string | number) => `/campaigns/${id}`,
+  },
+
   agents: {
     list: "/agents",
     detail: (agentId: string) => `/agents/${agentId}`,

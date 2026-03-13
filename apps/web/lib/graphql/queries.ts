@@ -178,6 +178,44 @@ export type MenuEngineeringMatrixData = {
   } | null;
 };
 
+export const DELETE_CAMPAIGN_MUTATION = `
+  mutation DeleteCampaign($id: ID!) {
+    deleteCampaign(id: $id)
+  }
+`;
+
+export type DeleteCampaignData = {
+  deleteCampaign: boolean;
+};
+
+export const CAMPAIGNS_BY_LOCATION_QUERY = `
+  query CampaignsByLocation($locationId: Int!) {
+    campaigns(locationId: $locationId) {
+      id
+      name
+      status
+      startDate
+      endDate
+      goal
+      createdAt
+    }
+  }
+`;
+
+export type CampaignListItem = {
+  id: string;
+  name: string;
+  status: string;
+  startDate: string | null;
+  endDate: string | null;
+  goal: string | null;
+  createdAt: string | null;
+};
+
+export type CampaignsByLocationData = {
+  campaigns: CampaignListItem[];
+};
+
 export const MENU_HEATMAPS_QUERY = `
   query MenuHeatmaps($id: ID!) {
     menuHeatmaps(analyticsRunId: $id) {

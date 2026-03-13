@@ -4,6 +4,7 @@ __all__ = [
     "Base",
     "Location",
     "AnalyticsRun",
+    "Campaign",
     "LocationProfile",
     "OrderFact",
     "MenuItemCogs",
