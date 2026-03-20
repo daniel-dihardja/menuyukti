@@ -350,7 +350,7 @@ export function AiArtifactPanel({
               </div>
 
               <Button
-                className="w-full"
+                className="w-auto"
                 onClick={onCreateCampaign}
                 disabled={isStreaming || !planning.locationSummary || selectedAnalyticsId === null || selectedAnalyticsId === undefined}
               >
