@@ -130,6 +130,10 @@ async def initialize_session(state: State, config: RunnableConfig) -> dict[str, 
     if date_start and date_end:
         planning = _update_planning(planning, dateStart=date_start, dateEnd=date_end)
 
+    national_holidays = configurable.get("national_holidays")
+    if national_holidays:
+        planning = _update_planning(planning, nationalHolidays=national_holidays)
+
     return {"planning": planning}
 
 

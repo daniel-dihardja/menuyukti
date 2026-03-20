@@ -73,11 +73,12 @@ export function AiChatPanel({
           threadId,
           dateStart: campaignDates.dateStart,
           dateEnd: campaignDates.dateEnd,
+          nationalHolidays: holidaysOverride ?? null,
           initialLocationSummary,
           ...(selectedAnalyticsId !== null ? { analyticsId: selectedAnalyticsId } : {}),
         },
       }),
-    [locationId, threadId, campaignDates, initialLocationSummary, selectedAnalyticsId]
+    [locationId, threadId, campaignDates, holidaysOverride, initialLocationSummary, selectedAnalyticsId]
   );
   const { messages, sendMessage, status, stop } = useChat({ transport });
 

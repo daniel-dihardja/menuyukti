@@ -43,9 +43,9 @@ class InvokeRequest(BaseModel):
     )
     location_id: int | None = Field(default=None, description="Location ID resolved server-side; never exposed to the LLM.")
     analytics_id: int | None = Field(default=None, description="Analytics run ID resolved server-side; never exposed to the LLM.")
-    country: str | None = Field(default=None, description="ISO country code for public holiday lookup; resolved server-side.")
     date_start: str | None = Field(default=None, description="Campaign start date (YYYY-MM-DD) set by the UI; takes precedence over agent-computed defaults.")
     date_end: str | None = Field(default=None, description="Campaign end date (YYYY-MM-DD) set by the UI; takes precedence over agent-computed defaults.")
+    national_holidays: list[dict] | None = Field(default=None, description="Public holidays for the campaign window, pre-fetched by the web app when dates change. Seeded into planning state so the agent never needs to fetch them.")
     initial_location_summary: str | None = Field(default=None, description="Pre-fetched venue profile summary from the SSR page load. Seeded into planning state to avoid a redundant DB call on the first turn.")
 
 
@@ -90,9 +90,9 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
                         "thread_id": body.thread_id,
                         "location_id": body.location_id,
                         "analytics_id": body.analytics_id,
-                        "country": body.country,
                         "date_start": body.date_start,
                         "date_end": body.date_end,
+                        "national_holidays": body.national_holidays,
                         "initial_location_summary": body.initial_location_summary,
                     }
                 },
@@ -118,7 +118,8 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
                     yield activity_sse("classify_intent", "done", "Request understood")
 
                 elif kind == "on_chain_start" and name == "run_planning_agent":
-                    yield activity_sse("run_planning_agent", "running", "Planning campaign dates...")
+                    label = "Planning campaign dates..." if body.analytics_id else "Generating location profile..."
+                    yield activity_sse("run_planning_agent", "running", label)
 
                 elif kind == "on_custom_event" and name == "activity":
                     data = event.get("data") or {}
@@ -140,7 +141,8 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
                     planning = output.get("planning")
                     if planning and hasattr(planning, "dateStart"):
                         detail = f"{planning.dateStart} – {planning.dateEnd}"
-                        yield activity_sse("run_planning_agent", "done", "Campaign dates planned", detail)
+                        done_label = "Campaign dates planned" if body.analytics_id else "Location profile ready"
+                        yield activity_sse("run_planning_agent", "done", done_label, detail)
                         yield f"data: {json.dumps({'planning': {'dateStart': planning.dateStart, 'dateEnd': planning.dateEnd, 'nationalHolidays': planning.nationalHolidays, 'locationSummary': planning.locationSummary, 'campaignBrief': planning.campaign_brief.model_dump() if planning.campaign_brief else None}})}\n\n".encode("utf-8")
 
                 elif kind == "on_chain_start" and name == "respond_with_plan":

@@ -11,6 +11,14 @@ const messageSchema = z.object({
   parts: z.array(messagePartSchema).optional(),
 }).passthrough();
 
+const nationalHolidaySchema = z.object({
+  id: z.string(),
+  localName: z.string(),
+  name: z.string(),
+  date: z.string(),
+  type: z.string(),
+}).passthrough();
+
 export const chatRequestBodySchema = z.object({
   messages: z.array(messageSchema).optional().default([]),
   analyticsId: z.number().optional(),
@@ -18,6 +26,7 @@ export const chatRequestBodySchema = z.object({
   threadId: z.string().optional(),
   dateStart: z.string().optional(),
   dateEnd: z.string().optional(),
+  nationalHolidays: z.array(nationalHolidaySchema).nullable().optional(),
   initialLocationSummary: z.string().nullable().optional(),
 });
 
