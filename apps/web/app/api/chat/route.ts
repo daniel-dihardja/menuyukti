@@ -186,6 +186,8 @@ export async function POST(req: Request) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message: userText,
+        thread_id: parsed.data.threadId ?? crypto.randomUUID(),
+        chat_mode: parsed.data.chatMode ?? "agent",
         analytics_id: parsed.data.analyticsId ?? null,
         location_id: parsed.data.locationId ?? null,
       }),

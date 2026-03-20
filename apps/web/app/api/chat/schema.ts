@@ -15,6 +15,8 @@ export const chatRequestBodySchema = z.object({
   messages: z.array(messageSchema).optional().default([]),
   analyticsId: z.number().optional(),
   locationId: z.number().optional(),
+  threadId: z.string().optional(),
+  chatMode: z.enum(["agent", "ask"]).default("agent"),
 });
 
 export type ChatRequestBody = z.infer<typeof chatRequestBodySchema>;

@@ -1,11 +1,14 @@
 from typing import Any, Dict, Literal
 
 from langgraph.graph import StateGraph
+from langgraph.checkpoint.memory import MemorySaver
 from langchain_openai import ChatOpenAI
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from pydantic import BaseModel
 
 from agent.config import LLM_MODEL
 from agent.ig_campaign import planning_subgraph
+from agent.ig_campaign.handle_ask import handle_ask
 from agent.state import IntentCategory, State
 
 
@@ -22,11 +25,27 @@ llm = ChatOpenAI(
 
 intent_llm = ChatOpenAI(model=LLM_MODEL, temperature=0).with_structured_output(IntentResult)
 
-INTENT_PROMPT = """Intent category: {intent_category}. Classify the user message into one of the following intents:
-- 'create_instagram_campaign': user wants to create an Instagram campaign (strategy, goals, targeting, scheduling, campaign structure, etc.)
-- 'unknown': the message does not clearly match either intent above
+INTENT_SYSTEM = (
+    "You are an intent classifier. Classify the user message into exactly one of:\n"
+    "- 'create_instagram_campaign': user is EXPLICITLY requesting to create, generate, "
+    "build, or start a new Instagram campaign or post schedule right now\n"
+    "- 'unknown': anything else — including questions about Instagram, how-to questions, "
+    "general conversation, follow-up questions, or requests for advice\n\n"
+    "Examples of 'create_instagram_campaign': "
+    "'create a campaign', 'generate my posts', 'build a schedule', 'start a campaign for next month'\n"
+    "Examples of 'unknown': "
+    "'how do I create posts?', 'what should I post?', 'tell me about my restaurant', "
+    "'how does this work?', 'what can you do?'\n\n"
+    "Intent category hint: {intent_category}"
+)
 
-User message: {message}"""
+HANDLE_UNKNOWN_SYSTEM = (
+    "You are a helpful Instagram marketing assistant for a restaurant. "
+    "Answer the user's question conversationally and helpfully. "
+    "If the user asks how to create posts or a campaign, explain that they can ask you to "
+    "'create a campaign' or 'generate my posts' and you will build a full content schedule. "
+    "Keep replies concise and friendly."
+)
 
 PLAN_RESPONSE_PROMPT = """The user asked: {message}
 
@@ -48,22 +67,42 @@ Respond briefly: confirm the location profile is ready and mention that adding a
 
 
 async def classify_intent(state: State) -> Dict[str, Any]:
-    """Classify user message into create_instagram_campaign or unknown."""
-    result = await intent_llm.ainvoke(
-        INTENT_PROMPT.format(message=state.message, intent_category=state.intent_category)
-    )
-    return {"intent": result.intent}
+    """Classify the latest user message, using conversation history for context."""
+    system = INTENT_SYSTEM.format(intent_category=state.intent_category)
+    history = list(state.messages)
+    messages = [SystemMessage(content=system)] + history + [HumanMessage(content=state.message)]
+    result = await intent_llm.ainvoke(messages)
+    return {
+        "intent": result.intent,
+        "messages": [HumanMessage(content=state.message)],
+    }
+
+
+def route_from_start(state: State) -> str:
+    """Skip classify_intent entirely in ask mode — route directly to handle_ask."""
+    if state.chat_mode == "ask":
+        return "handle_ask"
+    return "classify_intent"
 
 
 def route_by_intent(state: State) -> str:
-    """Route to handler based on classified intent."""
+    """Route after classify_intent based on the classified intent."""
     return state.intent if state.intent in ("create_instagram_campaign", "unknown") else "unknown"
 
 
 async def handle_unknown(state: State) -> Dict[str, Any]:
-    """Respond when intent is unknown."""
+    """Respond conversationally when the message doesn't trigger a planning intent."""
+    history = list(state.messages)
+    messages = (
+        [SystemMessage(content=HANDLE_UNKNOWN_SYSTEM)]
+        + history
+        + [HumanMessage(content=state.message)]
+    )
+    result = await llm.ainvoke(messages)
+    response_text = result.content if isinstance(result.content, str) else str(result.content)
     return {
-        "response": "I didn't understand. I can help you generate Instagram posts."
+        "response": response_text,
+        "messages": [AIMessage(content=response_text)],
     }
 
 
@@ -91,17 +130,28 @@ async def respond_with_plan(state: State) -> Dict[str, Any]:
         )
 
     result = await llm.ainvoke(prompt)
-    return {"response": result.content}
+    return {
+        "response": result.content,
+        "messages": [],
+    }
 
 
-# Build graph
+# Build graph with MemorySaver for multi-turn conversation memory
 graph = (
     StateGraph(State)
     .add_node("classify_intent", classify_intent)
     .add_node("run_planning_agent", planning_subgraph)
     .add_node("handle_unknown", handle_unknown)
+    .add_node("handle_ask", handle_ask)
     .add_node("respond_with_plan", respond_with_plan)
-    .add_edge("__start__", "classify_intent")
+    .add_conditional_edges(
+        "__start__",
+        route_from_start,
+        {
+            "classify_intent": "classify_intent",
+            "handle_ask": "handle_ask",
+        },
+    )
     .add_conditional_edges(
         "classify_intent",
         route_by_intent,
@@ -112,6 +162,7 @@ graph = (
     )
     .add_edge("run_planning_agent", "respond_with_plan")
     .add_edge("respond_with_plan", "__end__")
+    .add_edge("handle_ask", "__end__")
     .add_edge("handle_unknown", "__end__")
-    .compile()
+    .compile(checkpointer=MemorySaver())
 )

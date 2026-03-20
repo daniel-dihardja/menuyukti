@@ -1,9 +1,13 @@
 """Shared state for the agent graph and subgraphs."""
 
 from dataclasses import dataclass, field
-from typing import Any, Literal, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
+
+from langchain_core.messages import BaseMessage
+from langgraph.graph.message import add_messages
 
 ContextMode = Literal["full", "lite"]
+ChatMode = Literal["agent", "ask"]
 
 from pydantic import BaseModel, Field
 
@@ -141,7 +145,9 @@ class PlanningState:
 @dataclass
 class State:
     message: str
+    messages: Annotated[list[BaseMessage], add_messages] = field(default_factory=list)
     intent_category: IntentCategory = "planning"
+    chat_mode: ChatMode = "agent"
     response: str | None = None
     intent: str | None = None
     planning: PlanningState | None = None

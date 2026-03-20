@@ -30,7 +30,7 @@ import { Spinner } from "@workspace/ui/components/spinner";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { BotIcon, MessageCircleIcon } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { AiArtifactPanel, type PlanningArtifact } from "./ai-artifact-panel";
 import { AgentActivityFeed, type ActivityStep } from "./agent-activity-feed";
 
@@ -63,10 +63,15 @@ export function AiChatPanel({
 }) {
   const [text, setText] = useState("");
   const [chatMode, setChatMode] = useState<"agent" | "ask">("agent");
+  const threadId = useRef(crypto.randomUUID()).current;
 
   const transport = useMemo(
-    () => new DefaultChatTransport({ api: "/api/chat", body: { analyticsId, locationId } }),
-    [analyticsId, locationId]
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: { analyticsId, locationId, threadId, chatMode },
+      }),
+    [analyticsId, locationId, threadId, chatMode]
   );
   const { messages, sendMessage, status, stop } = useChat({ transport });
 
@@ -116,10 +121,12 @@ export function AiChatPanel({
     [messages]
   );
 
+  const isAskMode = chatMode === "ask";
+
   return (
-    <div className="grid size-full grid-cols-3 gap-4 overflow-hidden">
-      {/* Chat UI — 1/3 width */}
-      <div className="relative col-span-1 flex flex-col divide-y overflow-hidden rounded-lg border">
+    <div className={`grid size-full gap-4 overflow-hidden ${isAskMode ? "grid-cols-1" : "grid-cols-3"}`}>
+      {/* Chat UI — 1/3 width in agent mode, full width in ask mode */}
+      <div className={`relative flex flex-col divide-y overflow-hidden rounded-lg border ${isAskMode ? "col-span-1" : "col-span-1"}`}>
         <Conversation>
           <ConversationContent>
             {messages.length === 0 ? (
@@ -148,7 +155,7 @@ export function AiChatPanel({
                   return (
                     <Message key={msg.id} from={msg.role}>
                       <MessageContent>
-                        {msg.role === "assistant" && (
+                        {msg.role === "assistant" && !isAskMode && (
                           <AgentActivityFeed
                             steps={activitySteps}
                             hasText={msgText.length > 0}
@@ -224,10 +231,12 @@ export function AiChatPanel({
         </div>
       </div>
 
-      {/* Artifact — 2/3 width */}
-      <div className="col-span-2 overflow-hidden">
-        <AiArtifactPanel planning={planningArtifact} />
-      </div>
+      {/* Artifact — 2/3 width, only visible in agent mode */}
+      {!isAskMode && (
+        <div className="col-span-2 overflow-hidden">
+          <AiArtifactPanel planning={planningArtifact} />
+        </div>
+      )}
     </div>
   );
 }
