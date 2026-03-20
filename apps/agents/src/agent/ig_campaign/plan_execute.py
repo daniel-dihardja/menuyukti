@@ -11,14 +11,13 @@ from agent.ig_campaign.campaign_brief import generate_campaign_brief
 from agent.ig_campaign.post_format import assign_post_formats
 from agent.ig_campaign.post_schedule import generate_post_schedule
 from agent.ig_campaign.data_fetch import fetch_all_data
-from agent.ig_campaign.venue_summary import generate_location_summary
 from agent.ig_campaign.slot_calendar import generate_candidate_slots
 from agent.ig_campaign.node_utils import _emit, _update_planning
 from agent.state import State
 
 # Steps that produce a meaningful artifact-panel update and should stream
 # a planning_update event to the UI as soon as they complete.
-_PLANNING_UPDATE_STEPS = {"generate_location_summary", "generate_campaign_brief"}
+_PLANNING_UPDATE_STEPS = {"generate_campaign_brief"}
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +28,6 @@ logger = logging.getLogger(__name__)
 
 STEP_REGISTRY: dict[str, Any] = {
     "fetch_all_data": fetch_all_data,
-    "generate_location_summary": generate_location_summary,
     "generate_candidate_slots": generate_candidate_slots,
     "generate_post_schedule": generate_post_schedule,
     "assign_post_formats": assign_post_formats,
@@ -38,7 +36,6 @@ STEP_REGISTRY: dict[str, Any] = {
 
 CAMPAIGN_PLAN = [
     "fetch_all_data",
-    "generate_location_summary",
     "generate_candidate_slots",
     "generate_post_schedule",
     "assign_post_formats",

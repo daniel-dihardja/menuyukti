@@ -47,7 +47,12 @@ export function AgentActivityFeed({
   }, [isStreaming, steps.length]);
 
   // Transient "writing/thinking" indicators — hide them once streaming ends
-  const TRANSIENT_STEPS = new Set(["respond_with_plan", "handle_unknown"]);
+  const TRANSIENT_STEPS = new Set([
+    "respond_with_plan",
+    "respond_with_campaign",
+    "respond_with_location_profile",
+    "handle_unknown",
+  ]);
   const visibleSteps = isStreaming
     ? steps
     : steps.filter((s) => !TRANSIENT_STEPS.has(s.step));

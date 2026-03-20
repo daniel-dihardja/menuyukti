@@ -42,11 +42,11 @@ class InvokeRequest(BaseModel):
         description="Intent category for classification (e.g. planning).",
     )
     location_id: int | None = Field(default=None, description="Location ID resolved server-side; never exposed to the LLM.")
-    analytics_id: int | None = Field(default=None, description="Analytics run ID resolved server-side; never exposed to the LLM.")
-    date_start: str | None = Field(default=None, description="Campaign start date (YYYY-MM-DD) set by the UI; takes precedence over agent-computed defaults.")
-    date_end: str | None = Field(default=None, description="Campaign end date (YYYY-MM-DD) set by the UI; takes precedence over agent-computed defaults.")
-    national_holidays: list[dict] | None = Field(default=None, description="Public holidays for the campaign window, pre-fetched by the web app when dates change. Seeded into planning state so the agent never needs to fetch them.")
-    initial_location_summary: str | None = Field(default=None, description="Pre-fetched venue profile summary from the SSR page load. Seeded into planning state to avoid a redundant DB call on the first turn.")
+    analytics_id: int | None = Field(default=None, description="Analytics run ID resolved server-side; never exposed to the LLM. Required when intent is create_instagram_campaign.")
+    date_start: str | None = Field(default=None, description="Campaign start date (YYYY-MM-DD) set by the UI; takes precedence over agent-computed defaults. Required when intent is create_instagram_campaign.")
+    date_end: str | None = Field(default=None, description="Campaign end date (YYYY-MM-DD) set by the UI; takes precedence over agent-computed defaults. Required when intent is create_instagram_campaign.")
+    national_holidays: list[dict] | None = Field(default=None, description="Public holidays for the campaign window, pre-fetched by the web app when dates change. Seeded into planning state so the agent never needs to fetch them. Required when intent is create_instagram_campaign.")
+    initial_location_summary: str | None = Field(default=None, description="Location profile summary provided by the caller. Required when intent is create_instagram_campaign.")
 
 
 @app.get("/health")
@@ -160,6 +160,9 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
 
                 elif kind == "on_chain_start" and name in {"respond_with_campaign", "respond_with_location_profile"}:
                     yield activity_sse(name, "running", "Writing response...")
+
+                elif kind == "on_chain_end" and name in {"respond_with_campaign", "respond_with_location_profile"}:
+                    yield activity_sse(name, "done", "Response ready")
 
                 elif kind == "on_chain_start" and name == "handle_venue_edit":
                     yield activity_sse("handle_venue_edit", "running", "Updating venue profile...")

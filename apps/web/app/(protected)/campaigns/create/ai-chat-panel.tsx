@@ -64,21 +64,6 @@ export function AiChatPanel({
   const [selectedAnalyticsId, setSelectedAnalyticsId] = useState<number | null>(null);
   const threadId = useRef(crypto.randomUUID()).current;
 
-  // Keep the latest request body values in a ref so the transport always reads
-  // fresh state. Assigning synchronously here (not in a useEffect) guarantees
-  // the ref is up-to-date before any sendMessage call triggered by the same
-  // render cycle.
-  const latestBodyRef = useRef<Record<string, unknown>>({});
-  latestBodyRef.current = {
-    locationId,
-    threadId,
-    dateStart: campaignDates.dateStart,
-    dateEnd: campaignDates.dateEnd,
-    nationalHolidays: holidaysOverride ?? null,
-    initialLocationSummary,
-    ...(selectedAnalyticsId !== null ? { analyticsId: selectedAnalyticsId } : {}),
-  };
-
   // Stable transport — never recreated. prepareSendMessagesRequest is called
   // right before every fetch, so it always picks up the latest ref values.
   // messages must be explicitly included — the callback replaces the full body.
@@ -134,6 +119,23 @@ export function AiChatPanel({
     }),
     [planningArtifact, campaignDates, holidaysOverride]
   );
+
+  // Keep the latest request body values in a ref so the transport always reads
+  // fresh state. Assigning synchronously here (not in a useEffect) guarantees
+  // the ref is up-to-date before any sendMessage call triggered by the same
+  // render cycle.
+  const latestBodyRef = useRef<Record<string, unknown>>({});
+  latestBodyRef.current = {
+    locationId,
+    threadId,
+    dateStart: campaignDates.dateStart,
+    dateEnd: campaignDates.dateEnd,
+    nationalHolidays: holidaysOverride ?? null,
+    // Always send the latest profile available in the artifact state, so
+    // campaign creation can use a profile generated earlier in the same chat.
+    initialLocationSummary: displayedArtifact.locationSummary ?? initialLocationSummary,
+    ...(selectedAnalyticsId !== null ? { analyticsId: selectedAnalyticsId } : {}),
+  };
 
   const handleDatesChange = useCallback(
     async (dates: { dateStart: string; dateEnd: string }) => {

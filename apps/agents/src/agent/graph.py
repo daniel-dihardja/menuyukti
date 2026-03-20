@@ -178,14 +178,22 @@ async def run_location_profile_flow(state: State, config: RunnableConfig) -> Dic
 async def check_campaign_requirements(state: State, config: RunnableConfig) -> Dict[str, Any]:
     """Validate mandatory inputs for campaign creation."""
     configurable = config.get("configurable") or {}
-    analytics_id = configurable.get("analytics_id")
+    required_fields: list[tuple[str, Any]] = [
+        ("analytics_id", configurable.get("analytics_id")),
+        ("date_start", configurable.get("date_start")),
+        ("date_end", configurable.get("date_end")),
+        ("national_holidays", configurable.get("national_holidays")),
+        ("initial_location_summary", configurable.get("initial_location_summary")),
+    ]
+    missing = [name for name, value in required_fields if not value]
 
-    if analytics_id:
+    if not missing:
         return {"campaign_requirements_met": True}
 
+    missing_list = ", ".join(missing)
     msg = (
-        "I need an analytics run to create an Instagram campaign. "
-        "Please select an analytics run, or ask me to create the location profile first."
+        "I can't create an Instagram campaign yet. Missing required input(s): "
+        f"{missing_list}. Please provide all required campaign inputs and try again."
     )
     await adispatch_custom_event("response_delta", {"text": msg}, config=config)
     return {
