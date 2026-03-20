@@ -27,6 +27,44 @@ _brief_llm_structured = _brief_llm.with_structured_output(CampaignBrief)
 
 
 # ---------------------------------------------------------------------------
+# Lite campaign brief prompt (no menu items — engagement-focused archetypes)
+# ---------------------------------------------------------------------------
+
+_BRIEF_LITE_PROMPT = """You are a social media strategist for a restaurant. Annotate the post schedule below with campaign strategy and content directives.
+
+Campaign window: {date_start} to {date_end}
+
+Restaurant profile:
+{location_summary}
+
+Public holidays during this period (canonical list — do not invent or move dates):
+{holidays}
+
+Holiday-themed posts must anchor to dates marked with a [HOLIDAY_ID] in the post dates list below.
+Do not assign theme="holiday" to a date that is not marked as a holiday — use theme="engagement" instead.
+
+Post dates to annotate:
+{post_dates_section}
+
+No menu data is available for this campaign. All non-holiday posts should use theme="engagement".
+
+Instructions:
+- Design a campaign theme and tone that fits the restaurant profile and the time period.
+- For each post date, assign:
+  - theme: "holiday" (only for dates marked [HOLIDAY_ID]) or "engagement" (brand voice, atmosphere, community)
+  - focus_item: always null (no menu data available)
+  - caption_seed: a one-sentence directive that will be expanded into a full caption by the executor
+
+Rules:
+- Anchor "holiday" posts only to dates explicitly marked with a [HOLIDAY_ID].
+- caption_seed must be a directive for the executor, not a finished caption.
+- Vary engagement post angles across the schedule — draw from archetypes such as:
+  brand story (venue origin, team culture), atmosphere (ambience, space, vibe),
+  ingredient or culinary highlight, community interaction, occasion framing (weekend treat, mid-week break).
+- Each caption_seed should reflect the restaurant's city, culture, and tone from the profile above."""
+
+
+# ---------------------------------------------------------------------------
 # Campaign brief annotation prompt
 # ---------------------------------------------------------------------------
 
@@ -186,18 +224,32 @@ async def generate_campaign_brief(state: State, config: RunnableConfig) -> dict[
             a.scheduled_date: a
             for a in (planning.postFormatPlan.assignments if planning.postFormatPlan else [])
         }
-        prompt = _BRIEF_PROMPT.format(
-            date_start=planning.dateStart or "unknown",
-            date_end=planning.dateEnd or "unknown",
-            location_summary=planning.locationSummary or "No profile available.",
-            holidays=_format_holidays(planning.nationalHolidays),
-            promotion_items=_format_items_for_brief(planning.promotionItems),
-            post_dates_section=_format_post_dates(
-                planning.postSchedule.weeks,
-                holiday_by_date=holiday_by_date,
-                format_by_date=format_by_date,
-            ),
-        )
+
+        if planning.context_mode == "lite":
+            prompt = _BRIEF_LITE_PROMPT.format(
+                date_start=planning.dateStart or "unknown",
+                date_end=planning.dateEnd or "unknown",
+                location_summary=planning.locationSummary or "No profile available.",
+                holidays=_format_holidays(planning.nationalHolidays),
+                post_dates_section=_format_post_dates(
+                    planning.postSchedule.weeks,
+                    holiday_by_date=holiday_by_date,
+                ),
+            )
+        else:
+            prompt = _BRIEF_PROMPT.format(
+                date_start=planning.dateStart or "unknown",
+                date_end=planning.dateEnd or "unknown",
+                location_summary=planning.locationSummary or "No profile available.",
+                holidays=_format_holidays(planning.nationalHolidays),
+                promotion_items=_format_items_for_brief(planning.promotionItems),
+                post_dates_section=_format_post_dates(
+                    planning.postSchedule.weeks,
+                    holiday_by_date=holiday_by_date,
+                    format_by_date=format_by_date,
+                ),
+            )
+
         try:
             raw_brief = await _brief_llm_structured.ainvoke(prompt)
             primary_meal_period = (planning.operatingProfile or {}).get("primaryMealPeriod")

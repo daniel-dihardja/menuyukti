@@ -109,6 +109,18 @@ query FetchCampaignData($locationId: ID!, $analyticsRunId: ID!, $promotionCatego
 }
 """
 
+_FETCH_LOCATION_QUERY = """
+query FetchLocation($locationId: ID!) {
+  location(id: $locationId) {
+    id
+    name
+    street
+    city
+    country
+  }
+}
+"""
+
 _PUBLIC_HOLIDAYS_QUERY = """
 query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) {
   publicHolidays(country: $country, startDate: $startDate, endDate: $endDate) {
@@ -151,6 +163,12 @@ async def fetch_campaign_data(
     matrix = data.get("menuEngineeringMatrix") or {}
     matrix_items = matrix.get("items") or None
     return location, operating_profile, matrix_items
+
+
+async def fetch_location_only(location_id: int | str) -> dict[str, Any]:
+    """Fetch basic location info (name, city, country) by ID — no analytics required."""
+    data = await _gql(_FETCH_LOCATION_QUERY, {"locationId": str(location_id)})
+    return data.get("location") or {}
 
 
 async def fetch_public_holidays(

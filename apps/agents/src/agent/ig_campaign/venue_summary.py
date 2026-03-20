@@ -98,6 +98,41 @@ Menu category breakdown (FOOD / DRINK):
 Menu sub-category breakdown:
 {menu_category_detail_breakdown}"""
 
+_LOCATION_SUMMARY_LITE_PROMPT = """You are a senior restaurant marketing strategist helping build an Instagram content strategy.
+
+You have no sales or operating data for this restaurant. Using only the venue name and location, \
+infer reasonable defaults for a restaurant of this type in {city}, {country}. \
+Do not invent specific facts; draw only on what can be reasonably assumed for the market and city. \
+Clearly note where you are making assumptions.
+
+Structure your response as exactly four labelled paragraphs:
+
+**Venue Identity**
+What kind of place is this likely to be, and how should it position itself on Instagram? \
+Infer the probable venue type, price point, and content positioning from the name and city context.
+
+**Audience Persona**
+Who is the likely customer, and what content resonates with them? \
+Draw on the city and restaurant name to infer the most plausible demographic and social context \
+(e.g. urban professionals, families, students, tourists). \
+Suggest content themes that typically resonate with this audience.
+
+**Traffic & Timing**
+When does a restaurant of this type in this city likely peak? \
+Suggest a probable primary meal period and recommended Instagram posting window \
+(post 1–2 hours before the peak meal period to capture consideration). \
+Note that these are informed defaults — actual data would refine these recommendations.
+
+**Content & Tone Signals**
+What visual aesthetic and brand voice is most likely appropriate? \
+Derive direction from the city, probable cuisine type, and price positioning inferred from the name. \
+Call out one or two specific content angles likely to perform well.
+
+---
+
+Restaurant name: {name}
+Location: {city}, {country}"""
+
 _summary_llm = ChatOpenAI(model=LLM_MODEL, temperature=0.4)
 
 
@@ -114,17 +149,20 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
     location_id = configurable.get("location_id")
     analytics_id = configurable.get("analytics_id")
 
-    if location_id and analytics_id:
+    # Use analytics_id for cache key in full mode; sentinel "0" in lite mode
+    cache_analytics_id = analytics_id if analytics_id else "0"
+    if location_id:
         try:
-            cached = await fetch_location_profile(location_id, analytics_id)
+            cached = await fetch_location_profile(location_id, cache_analytics_id)
             if cached:
                 await _emit("generate_location_summary", "done", "Using cached location profile", config)
                 return {"planning": _update_planning(planning, locationSummary=cached)}
         except Exception:
             logger.warning("Cache lookup for location profile failed; proceeding with generation")
 
+    location = (planning.location if planning else None) or {}
+
     if profile:
-        location = (planning.location if planning else None) or {}
         name = location.get("name") or "this restaurant"
         city = location.get("city") or "unknown city"
         country = location.get("country") or "unknown country"
@@ -243,9 +281,28 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
         except Exception:
             logger.exception("Failed to generate location summary")
 
-    if summary and location_id and analytics_id:
+    elif not profile and location:
+        # Lite mode: generate a venue summary from name/city/country only
+        name = location.get("name") or "this restaurant"
+        city = location.get("city") or "unknown city"
+        country_val = location.get("country") or "unknown country"
+
+        lite_prompt = _LOCATION_SUMMARY_LITE_PROMPT.format(
+            name=name, city=city, country=country_val
+        )
+
+        async def _generate_lite() -> str:
+            result = await _summary_llm.ainvoke(lite_prompt)
+            return result.content if hasattr(result, "content") else str(result)
+
         try:
-            await save_location_profile(location_id, analytics_id, summary)
+            summary = await _generate_lite()
+        except Exception:
+            logger.exception("Failed to generate lite location summary")
+
+    if summary and location_id:
+        try:
+            await save_location_profile(location_id, cache_analytics_id, summary)
         except Exception:
             logger.warning("Failed to persist location profile; continuing without caching")
 

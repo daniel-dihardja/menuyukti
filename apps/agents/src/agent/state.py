@@ -3,6 +3,8 @@
 from dataclasses import dataclass, field
 from typing import Any, Literal, TypedDict
 
+ContextMode = Literal["full", "lite"]
+
 from pydantic import BaseModel, Field
 
 # Intent category: top-level classification (extend with more later, e.g. "content")
@@ -120,6 +122,7 @@ class ReflectionIteration:
 class PlanningState:
     dateStart: str | None = None
     dateEnd: str | None = None
+    context_mode: ContextMode | None = None
     location: dict[str, Any] | None = None
     nationalHolidays: list[NationalHoliday] | None = field(default=None)
     operatingProfile: dict[str, Any] | None = None
