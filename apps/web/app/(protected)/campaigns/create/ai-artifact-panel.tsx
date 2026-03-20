@@ -9,7 +9,8 @@ import {
 } from "@workspace/ui/components/ai-elements/artifact";
 import { MessageResponse } from "@workspace/ui/components/ai-elements/message";
 import { Button } from "@workspace/ui/components/button";
-import { CalendarIcon, GalleryHorizontalIcon, GlobeIcon, LayoutListIcon, SparklesIcon, StoreIcon } from "lucide-react";
+import { DatePicker } from "@workspace/ui/components/date-picker";
+import { GalleryHorizontalIcon, GlobeIcon, LayoutListIcon, SparklesIcon, StoreIcon, CalendarIcon } from "lucide-react";
 
 export type NationalHoliday = {
   localName: string;
@@ -46,6 +47,8 @@ export type PlanningArtifact = {
 
 type AiArtifactPanelProps = {
   planning?: PlanningArtifact;
+  campaignDates: { dateStart: string; dateEnd: string };
+  onDatesChange: (dates: { dateStart: string; dateEnd: string }) => void;
   onCreateLocationProfile?: () => void;
   isStreaming?: boolean;
 };
@@ -83,6 +86,8 @@ const THEME_STYLES: Record<PostSlot["theme"], string> = {
 
 export function AiArtifactPanel({
   planning,
+  campaignDates,
+  onDatesChange,
   onCreateLocationProfile,
   isStreaming,
 }: AiArtifactPanelProps) {
@@ -160,31 +165,33 @@ export function AiArtifactPanel({
               Campaign Period
             </div>
             <div className="space-y-3">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center justify-between gap-4">
                 <p className="text-xs font-medium text-muted-foreground">
                   Start Date
                 </p>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-foreground">
-                    {formatDate(planning.dateStart)}
-                  </p>
-                  <p className="font-mono text-xs text-muted-foreground">
-                    {planning.dateStart}
-                  </p>
+                <div className="w-52">
+                  <DatePicker
+                    value={campaignDates.dateStart}
+                    onChange={(date) =>
+                      onDatesChange({ ...campaignDates, dateStart: date })
+                    }
+                    disabled={isStreaming}
+                  />
                 </div>
               </div>
               <div className="border-t" />
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center justify-between gap-4">
                 <p className="text-xs font-medium text-muted-foreground">
                   End Date
                 </p>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-foreground">
-                    {formatDate(planning.dateEnd)}
-                  </p>
-                  <p className="font-mono text-xs text-muted-foreground">
-                    {planning.dateEnd}
-                  </p>
+                <div className="w-52">
+                  <DatePicker
+                    value={campaignDates.dateEnd}
+                    onChange={(date) =>
+                      onDatesChange({ ...campaignDates, dateEnd: date })
+                    }
+                    disabled={isStreaming}
+                  />
                 </div>
               </div>
               <div className="border-t" />
@@ -194,8 +201,8 @@ export function AiArtifactPanel({
                 </p>
                 <p className="text-sm font-semibold text-foreground">
                   {(() => {
-                    const start = new Date(planning.dateStart + "T00:00:00");
-                    const end = new Date(planning.dateEnd + "T00:00:00");
+                    const start = new Date(campaignDates.dateStart + "T00:00:00");
+                    const end = new Date(campaignDates.dateEnd + "T00:00:00");
                     const days =
                       Math.round(
                         (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)

@@ -23,8 +23,8 @@ import {
 import { Spinner } from "@workspace/ui/components/spinner";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { AiArtifactPanel, type PlanningArtifact } from "./ai-artifact-panel";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AiArtifactPanel, type PlanningArtifact, type NationalHoliday } from "./ai-artifact-panel";
 import { AgentActivityFeed, type ActivityStep } from "./agent-activity-feed";
 
 function getMessageText(message: UIMessage): string {
@@ -57,6 +57,8 @@ export function AiChatPanel({
   defaultDates: { dateStart: string; dateEnd: string };
 }) {
   const [text, setText] = useState("");
+  const [campaignDates, setCampaignDates] = useState(defaultDates);
+  const [holidaysOverride, setHolidaysOverride] = useState<NationalHoliday[] | null | undefined>(undefined);
   const threadId = useRef(crypto.randomUUID()).current;
 
   const transport = useMemo(
@@ -66,11 +68,11 @@ export function AiChatPanel({
         body: {
           locationId,
           threadId,
-          dateStart: defaultDates.dateStart,
-          dateEnd: defaultDates.dateEnd,
+          dateStart: campaignDates.dateStart,
+          dateEnd: campaignDates.dateEnd,
         },
       }),
-    [locationId, threadId, defaultDates]
+    [locationId, threadId, campaignDates]
   );
   const { messages, sendMessage, status, stop } = useChat({ transport });
 
@@ -97,6 +99,41 @@ export function AiChatPanel({
     }
     return defaultPlanning;
   }, [messages, defaultPlanning]);
+
+  const displayedArtifact = useMemo<PlanningArtifact>(
+    () => ({
+      ...planningArtifact,
+      dateStart: campaignDates.dateStart,
+      dateEnd: campaignDates.dateEnd,
+      nationalHolidays:
+        holidaysOverride !== undefined
+          ? holidaysOverride
+          : planningArtifact.nationalHolidays,
+    }),
+    [planningArtifact, campaignDates, holidaysOverride]
+  );
+
+  const handleDatesChange = useCallback(
+    async (dates: { dateStart: string; dateEnd: string }) => {
+      setCampaignDates(dates);
+      setHolidaysOverride(undefined);
+      try {
+        const res = await fetch(
+          `/api/holidays?locationId=${locationId}&dateStart=${dates.dateStart}&dateEnd=${dates.dateEnd}`
+        );
+        const json = (await res.json()) as { holidays?: NationalHoliday[]; error?: string };
+        setHolidaysOverride(json.holidays ?? null);
+      } catch {
+        setHolidaysOverride(null);
+      }
+    },
+    [locationId]
+  );
+
+  useEffect(() => {
+    handleDatesChange(campaignDates);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // fetch holidays once on mount with the initial dates
 
   const handleTextChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -231,7 +268,9 @@ export function AiChatPanel({
       {/* Artifact — always visible and pre-populated from server data */}
       <div className="col-span-2 overflow-hidden">
         <AiArtifactPanel
-          planning={planningArtifact}
+          planning={displayedArtifact}
+          campaignDates={campaignDates}
+          onDatesChange={handleDatesChange}
           onCreateLocationProfile={handleCreateLocationProfile}
           isStreaming={isStreaming}
         />

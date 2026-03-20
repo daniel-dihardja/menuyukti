@@ -250,3 +250,29 @@ export type MenuHeatmapsData = {
     weeklyHeatmap: Array<{ day: string; quantity: number }>;
   }>;
 };
+
+export const PUBLIC_HOLIDAYS_QUERY = `
+  query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) {
+    publicHolidays(country: $country, startDate: $startDate, endDate: $endDate) {
+      id
+      date
+      name
+      localName
+      holidayType
+      isTentative
+    }
+  }
+`;
+
+export type PublicHolidayItem = {
+  id: string;
+  date: string;
+  name: string;
+  localName: string;
+  holidayType: string;
+  isTentative: boolean;
+};
+
+export type PublicHolidaysData = {
+  publicHolidays: PublicHolidayItem[];
+};
