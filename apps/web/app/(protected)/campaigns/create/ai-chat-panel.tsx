@@ -70,9 +70,10 @@ export function AiChatPanel({
           threadId,
           dateStart: campaignDates.dateStart,
           dateEnd: campaignDates.dateEnd,
+          initialLocationSummary,
         },
       }),
-    [locationId, threadId, campaignDates]
+    [locationId, threadId, campaignDates, initialLocationSummary]
   );
   const { messages, sendMessage, status, stop } = useChat({ transport });
 

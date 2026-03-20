@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Dict, Literal
 
 from langgraph.graph import StateGraph
@@ -10,10 +11,14 @@ from pydantic import BaseModel
 from langchain_core.callbacks.manager import adispatch_custom_event
 
 from agent.config import LLM_MODEL
+from agent.gql_client import fetch_location_profile
 from agent.ig_campaign import planning_subgraph
+from agent.ig_campaign.data_fetch_lite import fetch_location_data
 from agent.ig_campaign.edit_venue_summary import edit_venue_summary
-from agent.ig_campaign.node_utils import _build_location_context
+from agent.ig_campaign.node_utils import _build_location_context, _update_planning
 from agent.state import IntentCategory, State
+
+logger = logging.getLogger(__name__)
 
 
 class IntentResult(BaseModel):
@@ -80,6 +85,47 @@ VENUE_EDIT_RESPONSE_PROMPT = """The user asked: {message}
 The venue profile has been updated successfully.
 
 Respond with a single friendly sentence confirming what was changed. Be specific about the addition or correction the user requested. Keep it concise."""
+
+
+async def initialize_session(state: State, config: RunnableConfig) -> dict[str, Any]:
+    """Hydrate planning state with location + profile before any reasoning node runs.
+
+    On turns 2+, MemorySaver has already restored state.planning — the guard at the
+    top makes this a no-op, adding zero latency to ongoing conversations.
+
+    On cold start (turn 1):
+      1. Fetch lite location data (name/city/country).
+      2. Seed locationSummary from the frontend-provided value (zero extra DB call)
+         or fall back to the DB cache under the sentinel key "0".
+    """
+    if state.planning and state.planning.location:
+        return {}
+
+    configurable = config.get("configurable") or {}
+    location_id = configurable.get("location_id")
+    if not location_id:
+        return {}
+
+    planning = state.planning
+    try:
+        result = await fetch_location_data(state, config)
+        planning = result.get("planning", planning)
+    except Exception:
+        logger.exception("initialize_session: failed to fetch location data")
+        return {}
+
+    initial_summary: str | None = configurable.get("initial_location_summary")
+    if initial_summary:
+        planning = _update_planning(planning, locationSummary=initial_summary)
+    elif planning and not planning.locationSummary:
+        try:
+            cached = await fetch_location_profile(location_id, "0")
+            if cached:
+                planning = _update_planning(planning, locationSummary=cached)
+        except Exception:
+            logger.warning("initialize_session: profile cache lookup failed; continuing without summary")
+
+    return {"planning": planning}
 
 
 async def classify_intent(state: State) -> Dict[str, Any]:
@@ -205,12 +251,14 @@ async def handle_venue_edit(state: State, config: RunnableConfig) -> Dict[str, A
 # Build graph with MemorySaver for multi-turn conversation memory
 graph = (
     StateGraph(State)
+    .add_node("initialize_session", initialize_session)
     .add_node("classify_intent", classify_intent)
     .add_node("run_planning_agent", planning_subgraph)
     .add_node("handle_unknown", handle_unknown)
     .add_node("handle_venue_edit", handle_venue_edit)
     .add_node("respond_with_plan", respond_with_plan)
-    .add_edge("__start__", "classify_intent")
+    .add_edge("__start__", "initialize_session")
+    .add_edge("initialize_session", "classify_intent")
     .add_conditional_edges(
         "classify_intent",
         route_by_intent,

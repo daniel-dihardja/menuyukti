@@ -18,6 +18,7 @@ export const chatRequestBodySchema = z.object({
   threadId: z.string().optional(),
   dateStart: z.string().optional(),
   dateEnd: z.string().optional(),
+  initialLocationSummary: z.string().nullable().optional(),
 });
 
 export type ChatRequestBody = z.infer<typeof chatRequestBodySchema>;

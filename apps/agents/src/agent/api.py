@@ -46,6 +46,7 @@ class InvokeRequest(BaseModel):
     country: str | None = Field(default=None, description="ISO country code for public holiday lookup; resolved server-side.")
     date_start: str | None = Field(default=None, description="Campaign start date (YYYY-MM-DD) set by the UI; takes precedence over agent-computed defaults.")
     date_end: str | None = Field(default=None, description="Campaign end date (YYYY-MM-DD) set by the UI; takes precedence over agent-computed defaults.")
+    initial_location_summary: str | None = Field(default=None, description="Pre-fetched venue profile summary from the SSR page load. Seeded into planning state to avoid a redundant DB call on the first turn.")
 
 
 @app.get("/health")
@@ -92,6 +93,7 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
                         "country": body.country,
                         "date_start": body.date_start,
                         "date_end": body.date_end,
+                        "initial_location_summary": body.initial_location_summary,
                     }
                 },
                 version="v2",
