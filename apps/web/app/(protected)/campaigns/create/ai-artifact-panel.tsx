@@ -10,7 +10,14 @@ import {
 import { MessageResponse } from "@workspace/ui/components/ai-elements/message";
 import { Button } from "@workspace/ui/components/button";
 import { DatePicker } from "@workspace/ui/components/date-picker";
-import { GalleryHorizontalIcon, GlobeIcon, LayoutListIcon, SparklesIcon, StoreIcon, CalendarIcon } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
+import { GalleryHorizontalIcon, GlobeIcon, LayoutListIcon, SparklesIcon, StoreIcon, CalendarIcon, DatabaseIcon, CheckCircle2Icon, CircleIcon } from "lucide-react";
 
 export type NationalHoliday = {
   localName: string;
@@ -45,11 +52,17 @@ export type PlanningArtifact = {
   campaignBrief?: CampaignBrief | null;
 };
 
+type AnalyticsRun = { id: string; name: string; filename: string };
+
 type AiArtifactPanelProps = {
   planning?: PlanningArtifact;
   campaignDates: { dateStart: string; dateEnd: string };
   onDatesChange: (dates: { dateStart: string; dateEnd: string }) => void;
   onCreateLocationProfile?: () => void;
+  onCreateCampaign?: () => void;
+  analyticsRuns?: AnalyticsRun[];
+  selectedAnalyticsId?: number | null;
+  onAnalyticsIdChange?: (id: number | null) => void;
   isStreaming?: boolean;
 };
 
@@ -89,6 +102,10 @@ export function AiArtifactPanel({
   campaignDates,
   onDatesChange,
   onCreateLocationProfile,
+  onCreateCampaign,
+  analyticsRuns,
+  selectedAnalyticsId,
+  onAnalyticsIdChange,
   isStreaming,
 }: AiArtifactPanelProps) {
   if (!planning) {
@@ -263,6 +280,85 @@ export function AiArtifactPanel({
               </p>
             )}
           </div>
+
+          {/* Create Post Schedule CTA */}
+          {!planning.campaignBrief && (
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <div className="mb-4 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <SparklesIcon className="size-3.5" />
+                Instagram Post Schedule
+              </div>
+
+              {/* Period */}
+              <div className="mb-4">
+                <p className="mb-1 text-xs font-medium text-muted-foreground">Period</p>
+                <p className="text-sm font-medium text-foreground">
+                  {formatDate(campaignDates.dateStart)}
+                  <span className="mx-2 text-muted-foreground">→</span>
+                  {formatDate(campaignDates.dateEnd)}
+                </p>
+              </div>
+
+              {/* Requirements checklist */}
+              <div className="mb-4 space-y-3">
+                <p className="text-xs font-medium text-muted-foreground">Requirements</p>
+
+                {/* Location profile row */}
+                <div className="flex items-center gap-2.5">
+                  {planning.locationSummary ? (
+                    <CheckCircle2Icon className="size-4 shrink-0 text-emerald-500" />
+                  ) : (
+                    <CircleIcon className="size-4 shrink-0 text-muted-foreground/40" />
+                  )}
+                  <span className={`text-sm ${planning.locationSummary ? "text-foreground" : "text-muted-foreground"}`}>
+                    Location profile
+                  </span>
+                </div>
+
+                {/* Sales data row */}
+                <div className="flex items-start gap-2.5">
+                  {selectedAnalyticsId !== null && selectedAnalyticsId !== undefined ? (
+                    <CheckCircle2Icon className="mt-2 size-4 shrink-0 text-emerald-500" />
+                  ) : (
+                    <CircleIcon className="mt-2 size-4 shrink-0 text-muted-foreground/40" />
+                  )}
+                  <div className="flex-1">
+                    <Select
+                      value={selectedAnalyticsId !== null && selectedAnalyticsId !== undefined ? String(selectedAnalyticsId) : undefined}
+                      onValueChange={(val) => onAnalyticsIdChange?.(Number(val))}
+                      disabled={isStreaming}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a sales data source…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {analyticsRuns && analyticsRuns.length > 0 ? (
+                          analyticsRuns.map((run) => (
+                            <SelectItem key={run.id} value={run.id}>
+                              {run.name || run.filename}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="px-2 py-3 text-center text-xs text-muted-foreground">
+                            No sales data available for this location.
+                          </div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                className="w-full"
+                onClick={onCreateCampaign}
+                disabled={isStreaming || !planning.locationSummary || selectedAnalyticsId === null || selectedAnalyticsId === undefined}
+              >
+                <SparklesIcon className="size-4" />
+                Create Post Schedule
+              </Button>
+            </div>
+          )}
 
           {/* Campaign Brief */}
           {planning.campaignBrief !== null && (

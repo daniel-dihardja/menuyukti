@@ -125,6 +125,11 @@ async def initialize_session(state: State, config: RunnableConfig) -> dict[str, 
         except Exception:
             logger.warning("initialize_session: profile cache lookup failed; continuing without summary")
 
+    date_start = configurable.get("date_start")
+    date_end = configurable.get("date_end")
+    if date_start and date_end:
+        planning = _update_planning(planning, dateStart=date_start, dateEnd=date_end)
+
     return {"planning": planning}
 
 

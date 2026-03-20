@@ -50,15 +50,18 @@ function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
 export function AiChatPanel({
   locationId,
   initialLocationSummary,
+  analyticsRuns,
   defaultDates,
 }: {
   locationId: number;
   initialLocationSummary: string | null;
+  analyticsRuns: Array<{ id: string; name: string; filename: string }>;
   defaultDates: { dateStart: string; dateEnd: string };
 }) {
   const [text, setText] = useState("");
   const [campaignDates, setCampaignDates] = useState(defaultDates);
   const [holidaysOverride, setHolidaysOverride] = useState<NationalHoliday[] | null | undefined>(undefined);
+  const [selectedAnalyticsId, setSelectedAnalyticsId] = useState<number | null>(null);
   const threadId = useRef(crypto.randomUUID()).current;
 
   const transport = useMemo(
@@ -71,9 +74,10 @@ export function AiChatPanel({
           dateStart: campaignDates.dateStart,
           dateEnd: campaignDates.dateEnd,
           initialLocationSummary,
+          ...(selectedAnalyticsId !== null ? { analyticsId: selectedAnalyticsId } : {}),
         },
       }),
-    [locationId, threadId, campaignDates, initialLocationSummary]
+    [locationId, threadId, campaignDates, initialLocationSummary, selectedAnalyticsId]
   );
   const { messages, sendMessage, status, stop } = useChat({ transport });
 
@@ -164,6 +168,10 @@ export function AiChatPanel({
 
   const handleCreateLocationProfile = useCallback(async () => {
     await sendMessage({ text: "Create location profile" });
+  }, [sendMessage]);
+
+  const handleCreateCampaign = useCallback(async () => {
+    await sendMessage({ text: "create instagram campaign" });
   }, [sendMessage]);
 
   const isSubmitDisabled = useMemo(
@@ -273,6 +281,10 @@ export function AiChatPanel({
           campaignDates={campaignDates}
           onDatesChange={handleDatesChange}
           onCreateLocationProfile={handleCreateLocationProfile}
+          onCreateCampaign={handleCreateCampaign}
+          analyticsRuns={analyticsRuns}
+          selectedAnalyticsId={selectedAnalyticsId}
+          onAnalyticsIdChange={setSelectedAnalyticsId}
           isStreaming={isStreaming}
         />
       </div>

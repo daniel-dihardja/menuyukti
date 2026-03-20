@@ -45,7 +45,14 @@ export default async function Page({ searchParams }: PageProps) {
   const defaultDates = computeDefaultDates();
 
   let initialLocationSummary: string | null = null;
+  let analyticsRuns: Array<{ id: string; name: string; filename: string }> = [];
   try {
+    const runsData = await graphqlQuery<AnalyticsRunsByLocationData>(
+      ANALYTICS_RUNS_BY_LOCATION_QUERY,
+      { locationId: locationId }
+    );
+    analyticsRuns = runsData.analyticsRuns;
+
     // Try the canonical foundation cache key first ("0" = no analytics run)
     const profileData = await graphqlQuery<LocationProfileData>(
       LOCATION_PROFILE_QUERY,
@@ -56,11 +63,7 @@ export default async function Page({ searchParams }: PageProps) {
     // Profiles created via the full campaign flow are stored under the real
     // analytics run ID, not "0". Fall back by checking any existing runs.
     if (initialLocationSummary === null) {
-      const runsData = await graphqlQuery<AnalyticsRunsByLocationData>(
-        ANALYTICS_RUNS_BY_LOCATION_QUERY,
-        { locationId: locationId }
-      );
-      for (const run of runsData.analyticsRuns) {
+      for (const run of analyticsRuns) {
         const runProfile = await graphqlQuery<LocationProfileData>(
           LOCATION_PROFILE_QUERY,
           { locationId: String(locationId), analyticsRunId: run.id }
@@ -88,6 +91,7 @@ export default async function Page({ searchParams }: PageProps) {
       <AiChatPanel
         locationId={locationId}
         initialLocationSummary={initialLocationSummary}
+        analyticsRuns={analyticsRuns}
         defaultDates={defaultDates}
       />
     </AnalyticsPageShell>
