@@ -25,6 +25,7 @@ import type { CampaignItem } from "./campaigns-client";
 interface CampaignsTableProps {
   campaigns: CampaignItem[];
   onDelete: (id: number) => void;
+  createHref: string;
 }
 
 function formatDateRange(
@@ -37,7 +38,7 @@ function formatDateRange(
   return `Until ${endDate}`;
 }
 
-export function CampaignsTable({ campaigns, onDelete }: CampaignsTableProps) {
+export function CampaignsTable({ campaigns, onDelete, createHref }: CampaignsTableProps) {
   const t = useTranslations("analytics.campaigns");
 
   if (campaigns.length === 0) {
@@ -46,7 +47,7 @@ export function CampaignsTable({ campaigns, onDelete }: CampaignsTableProps) {
         <h2 className="text-lg font-medium">{t("noCampaigns.title")}</h2>
         <p className="text-muted-foreground">{t("noCampaigns.description")}</p>
         <Button asChild>
-          <Link href={routes.campaigns.create}>{t("noCampaigns.cta")}</Link>
+          <Link href={createHref}>{t("noCampaigns.cta")}</Link>
         </Button>
       </div>
     );

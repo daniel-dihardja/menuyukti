@@ -54,7 +54,13 @@ function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
   return Array.from(stepMap.values());
 }
 
-export function AiChatPanel({ analyticsId, locationId }: { analyticsId: number; locationId: number }) {
+export function AiChatPanel({
+  analyticsId,
+  locationId,
+}: {
+  analyticsId?: number;
+  locationId: number;
+}) {
   const [text, setText] = useState("");
   const [chatMode, setChatMode] = useState<"agent" | "ask">("agent");
 

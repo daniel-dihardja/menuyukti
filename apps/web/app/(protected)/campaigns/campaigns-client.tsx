@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useAnalytics } from "../analytics/use-analytics";
 import { LocationSelect } from "../analytics/sales/location-select";
 import { CampaignsTable } from "./campaigns-table";
+import { Button } from "@workspace/ui/components/button";
+import { routes } from "@/lib/routes";
 
 type Branch = {
   id: number;
@@ -60,6 +63,7 @@ function useCampaigns(locationId: number | null) {
 export function CampaignsClient({ branches }: Props) {
   const t = useTranslations("analytics.campaigns");
   const { locationId, setLocationId } = useAnalytics();
+  const router = useRouter();
 
   useEffect(() => {
     if (locationId !== null) return;
@@ -91,9 +95,13 @@ export function CampaignsClient({ branches }: Props) {
     [refetch]
   );
 
+  const createHref = locationId
+    ? routes.campaigns.createWithLocation(locationId)
+    : routes.campaigns.create;
+
   return (
     <div className="space-y-6">
-      <section className="space-y-4">
+      <section className="flex flex-wrap items-end gap-3">
         <LocationSelect
           branches={branches}
           id="campaigns-location-select"
@@ -101,6 +109,14 @@ export function CampaignsClient({ branches }: Props) {
           placeholder={branches.length > 1 ? t("branchPlaceholder") : undefined}
           className="w-full max-w-none sm:max-w-xs"
         />
+        <Button
+          onClick={() => {
+            if (locationId) router.push(routes.campaigns.createWithLocation(locationId));
+          }}
+          disabled={!locationId}
+        >
+          {t("create")}
+        </Button>
       </section>
 
       {!locationId ? (
@@ -110,7 +126,7 @@ export function CampaignsClient({ branches }: Props) {
       ) : loading ? (
         <div className="border rounded-md p-8 text-left">{t("loading")}</div>
       ) : (
-        <CampaignsTable campaigns={campaigns} onDelete={handleDelete} />
+        <CampaignsTable campaigns={campaigns} onDelete={handleDelete} createHref={createHref} />
       )}
     </div>
   );
