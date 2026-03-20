@@ -7,7 +7,6 @@ from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 
 ContextMode = Literal["full", "lite"]
-ChatMode = Literal["agent", "ask"]
 
 from pydantic import BaseModel, Field
 
@@ -147,7 +146,6 @@ class State:
     message: str
     messages: Annotated[list[BaseMessage], add_messages] = field(default_factory=list)
     intent_category: IntentCategory = "planning"
-    chat_mode: ChatMode = "agent"
     response: str | None = None
     intent: str | None = None
     planning: PlanningState | None = None

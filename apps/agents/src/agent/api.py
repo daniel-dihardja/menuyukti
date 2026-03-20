@@ -13,7 +13,6 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from agent.graph import IntentCategory, graph
-from agent.state import ChatMode
 
 app = FastAPI(
     title="Agent API",
@@ -37,10 +36,6 @@ class InvokeRequest(BaseModel):
     thread_id: str = Field(
         default_factory=lambda: str(uuid4()),
         description="Conversation thread ID for LangGraph checkpointing. Stable per session.",
-    )
-    chat_mode: ChatMode = Field(
-        default="agent",
-        description="Interaction mode: 'agent' runs the full planning pipeline, 'ask' is conversational.",
     )
     intent_category: IntentCategory = Field(
         default="planning",
@@ -78,7 +73,7 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
     Stream ends with: data: [DONE]
     """
 
-    _STREAMING_NODES = {"respond_with_plan", "handle_ask", "handle_unknown"}
+    _STREAMING_NODES = {"respond_with_plan", "handle_unknown"}
 
     async def generate():
         try:
@@ -86,7 +81,6 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
                 {
                     "message": body.message,
                     "intent_category": body.intent_category,
-                    "chat_mode": body.chat_mode,
                 },
                 config={
                     "configurable": {

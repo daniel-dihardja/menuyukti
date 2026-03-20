@@ -17,19 +17,12 @@ import {
   PromptInput,
   PromptInputBody,
   PromptInputFooter,
-  PromptInputSelect,
-  PromptInputSelectContent,
-  PromptInputSelectItem,
-  PromptInputSelectTrigger,
-  PromptInputSelectValue,
   PromptInputSubmit,
   PromptInputTextarea,
-  PromptInputTools,
 } from "@workspace/ui/components/ai-elements/prompt-input";
 import { Spinner } from "@workspace/ui/components/spinner";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { BotIcon, MessageCircleIcon } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { AiArtifactPanel, type PlanningArtifact } from "./ai-artifact-panel";
 import { AgentActivityFeed, type ActivityStep } from "./agent-activity-feed";
@@ -62,16 +55,15 @@ export function AiChatPanel({
   locationId: number;
 }) {
   const [text, setText] = useState("");
-  const [chatMode, setChatMode] = useState<"agent" | "ask">("agent");
   const threadId = useRef(crypto.randomUUID()).current;
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: { analyticsId, locationId, threadId, chatMode },
+        body: { analyticsId, locationId, threadId },
       }),
-    [analyticsId, locationId, threadId, chatMode]
+    [analyticsId, locationId, threadId]
   );
   const { messages, sendMessage, status, stop } = useChat({ transport });
 
@@ -121,8 +113,6 @@ export function AiChatPanel({
     [messages]
   );
 
-  const isAskMode = chatMode === "ask";
-
   return (
     <div className="grid size-full grid-cols-3 gap-4 overflow-hidden">
       {/* Chat UI — always 1/3 width */}
@@ -155,7 +145,7 @@ export function AiChatPanel({
                   return (
                     <Message key={msg.id} from={msg.role}>
                       <MessageContent>
-                        {msg.role === "assistant" && !isAskMode && (
+                        {msg.role === "assistant" && (
                           <AgentActivityFeed
                             steps={activitySteps}
                             hasText={msgText.length > 0}
@@ -201,26 +191,6 @@ export function AiChatPanel({
               />
             </PromptInputBody>
             <PromptInputFooter>
-              <PromptInputTools>
-                <PromptInputSelect
-                  value={chatMode}
-                  onValueChange={(v) => setChatMode(v as "agent" | "ask")}
-                >
-                  <PromptInputSelectTrigger className="h-7 text-xs">
-                    <PromptInputSelectValue />
-                  </PromptInputSelectTrigger>
-                  <PromptInputSelectContent>
-                    <PromptInputSelectItem value="agent">
-                      <BotIcon className="size-3.5" />
-                      Agent
-                    </PromptInputSelectItem>
-                    <PromptInputSelectItem value="ask">
-                      <MessageCircleIcon className="size-3.5" />
-                      Ask
-                    </PromptInputSelectItem>
-                  </PromptInputSelectContent>
-                </PromptInputSelect>
-              </PromptInputTools>
               <PromptInputSubmit
                 disabled={isSubmitDisabled}
                 status={status}

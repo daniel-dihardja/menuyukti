@@ -8,7 +8,6 @@ from pydantic import BaseModel
 
 from agent.config import LLM_MODEL
 from agent.ig_campaign import planning_subgraph
-from agent.ig_campaign.handle_ask import handle_ask
 from agent.state import IntentCategory, State
 
 
@@ -78,13 +77,6 @@ async def classify_intent(state: State) -> Dict[str, Any]:
     }
 
 
-def route_from_start(state: State) -> str:
-    """Skip classify_intent entirely in ask mode — route directly to handle_ask."""
-    if state.chat_mode == "ask":
-        return "handle_ask"
-    return "classify_intent"
-
-
 def route_by_intent(state: State) -> str:
     """Route after classify_intent based on the classified intent."""
     return state.intent if state.intent in ("create_instagram_campaign", "unknown") else "unknown"
@@ -142,16 +134,8 @@ graph = (
     .add_node("classify_intent", classify_intent)
     .add_node("run_planning_agent", planning_subgraph)
     .add_node("handle_unknown", handle_unknown)
-    .add_node("handle_ask", handle_ask)
     .add_node("respond_with_plan", respond_with_plan)
-    .add_conditional_edges(
-        "__start__",
-        route_from_start,
-        {
-            "classify_intent": "classify_intent",
-            "handle_ask": "handle_ask",
-        },
-    )
+    .add_edge("__start__", "classify_intent")
     .add_conditional_edges(
         "classify_intent",
         route_by_intent,
@@ -162,7 +146,6 @@ graph = (
     )
     .add_edge("run_planning_agent", "respond_with_plan")
     .add_edge("respond_with_plan", "__end__")
-    .add_edge("handle_ask", "__end__")
     .add_edge("handle_unknown", "__end__")
     .compile(checkpointer=MemorySaver())
 )
