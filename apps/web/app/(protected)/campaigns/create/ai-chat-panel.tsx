@@ -48,11 +48,13 @@ function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
 }
 
 export function AiChatPanel({
-  analyticsId,
   locationId,
+  initialLocationSummary,
+  defaultDates,
 }: {
-  analyticsId?: number;
   locationId: number;
+  initialLocationSummary: string | null;
+  defaultDates: { dateStart: string; dateEnd: string };
 }) {
   const [text, setText] = useState("");
   const threadId = useRef(crypto.randomUUID()).current;
@@ -61,21 +63,40 @@ export function AiChatPanel({
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: { analyticsId, locationId, threadId },
+        body: {
+          locationId,
+          threadId,
+          dateStart: defaultDates.dateStart,
+          dateEnd: defaultDates.dateEnd,
+        },
       }),
-    [analyticsId, locationId, threadId]
+    [locationId, threadId, defaultDates]
   );
   const { messages, sendMessage, status, stop } = useChat({ transport });
 
-  const planningArtifact = useMemo<PlanningArtifact | undefined>(() => {
+  // Pre-populated artifact state — shown immediately on page load before the
+  // LLM runs. The data-planning SSE events from the agent will override this
+  // naturally once a conversation starts.
+  const defaultPlanning = useMemo<PlanningArtifact>(
+    () => ({
+      dateStart: defaultDates.dateStart,
+      dateEnd: defaultDates.dateEnd,
+      nationalHolidays: undefined,
+      locationSummary: initialLocationSummary,
+      campaignBrief: null,
+    }),
+    [defaultDates, initialLocationSummary]
+  );
+
+  const planningArtifact = useMemo<PlanningArtifact>(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
       if (msg?.role !== "assistant") continue;
       const part = msg.parts?.find((p) => p.type === "data-planning");
       if (part && "data" in part) return part.data as PlanningArtifact;
     }
-    return undefined;
-  }, [messages]);
+    return defaultPlanning;
+  }, [messages, defaultPlanning]);
 
   const handleTextChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -103,10 +124,16 @@ export function AiChatPanel({
     [sendMessage]
   );
 
+  const handleCreateLocationProfile = useCallback(async () => {
+    await sendMessage({ text: "Create location profile" });
+  }, [sendMessage]);
+
   const isSubmitDisabled = useMemo(
     () => !text.trim() || status === "streaming" || status === "submitted",
     [text, status]
   );
+
+  const isStreaming = status === "streaming" || status === "submitted";
 
   const visibleMessages = useMemo(
     () => messages.filter((msg) => msg.role !== "system"),
@@ -201,9 +228,13 @@ export function AiChatPanel({
         </div>
       </div>
 
-      {/* Artifact — always visible so users can review and refine the campaign in both modes */}
+      {/* Artifact — always visible and pre-populated from server data */}
       <div className="col-span-2 overflow-hidden">
-        <AiArtifactPanel planning={planningArtifact} />
+        <AiArtifactPanel
+          planning={planningArtifact}
+          onCreateLocationProfile={handleCreateLocationProfile}
+          isStreaming={isStreaming}
+        />
       </div>
     </div>
   );

@@ -44,6 +44,8 @@ class InvokeRequest(BaseModel):
     location_id: int | None = Field(default=None, description="Location ID resolved server-side; never exposed to the LLM.")
     analytics_id: int | None = Field(default=None, description="Analytics run ID resolved server-side; never exposed to the LLM.")
     country: str | None = Field(default=None, description="ISO country code for public holiday lookup; resolved server-side.")
+    date_start: str | None = Field(default=None, description="Campaign start date (YYYY-MM-DD) set by the UI; takes precedence over agent-computed defaults.")
+    date_end: str | None = Field(default=None, description="Campaign end date (YYYY-MM-DD) set by the UI; takes precedence over agent-computed defaults.")
 
 
 @app.get("/health")
@@ -88,6 +90,8 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
                         "location_id": body.location_id,
                         "analytics_id": body.analytics_id,
                         "country": body.country,
+                        "date_start": body.date_start,
+                        "date_end": body.date_end,
                     }
                 },
                 version="v2",

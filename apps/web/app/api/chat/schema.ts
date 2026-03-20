@@ -16,6 +16,8 @@ export const chatRequestBodySchema = z.object({
   analyticsId: z.number().optional(),
   locationId: z.number().optional(),
   threadId: z.string().optional(),
+  dateStart: z.string().optional(),
+  dateEnd: z.string().optional(),
 });
 
 export type ChatRequestBody = z.infer<typeof chatRequestBodySchema>;

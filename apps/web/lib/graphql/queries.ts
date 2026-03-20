@@ -178,6 +178,19 @@ export type MenuEngineeringMatrixData = {
   } | null;
 };
 
+export const LOCATION_PROFILE_QUERY = `
+  query LocationProfile($locationId: ID!, $analyticsRunId: ID!) {
+    locationProfile(locationId: $locationId, analyticsRunId: $analyticsRunId) {
+      id
+      summary
+    }
+  }
+`;
+
+export type LocationProfileData = {
+  locationProfile: { id: string; summary: string | null } | null;
+};
+
 export const DELETE_CAMPAIGN_MUTATION = `
   mutation DeleteCampaign($id: ID!) {
     deleteCampaign(id: $id)

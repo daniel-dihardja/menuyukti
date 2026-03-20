@@ -303,6 +303,10 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
     if summary and location_id:
         try:
             await save_location_profile(location_id, cache_analytics_id, summary)
+            # Always write a copy under "0" so the foundation check in the UI
+            # can find the profile regardless of which analytics run generated it.
+            if cache_analytics_id != "0":
+                await save_location_profile(location_id, "0", summary)
         except Exception:
             logger.warning("Failed to persist location profile; continuing without caching")
 

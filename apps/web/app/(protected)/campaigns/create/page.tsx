@@ -7,37 +7,73 @@ import { routes } from "@/lib/routes";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { AiChatPanel } from "./ai-chat-panel";
 import { graphqlQuery } from "@/lib/graphql/client";
-import { ANALYTICS_RUN_QUERY, type AnalyticsRunData } from "@/lib/graphql/queries";
+import {
+  LOCATION_PROFILE_QUERY,
+  ANALYTICS_RUNS_BY_LOCATION_QUERY,
+  type LocationProfileData,
+  type AnalyticsRunsByLocationData,
+} from "@/lib/graphql/queries";
 
 type PageProps = {
-  searchParams: Promise<{ analyticsId?: string; locationId?: string }>;
+  searchParams: Promise<{ locationId?: string }>;
 };
+
+function computeDefaultDates(): { dateStart: string; dateEnd: string } {
+  const today = new Date();
+  const y =
+    today.getMonth() === 11 ? today.getFullYear() + 1 : today.getFullYear();
+  const m = today.getMonth() === 11 ? 0 : today.getMonth() + 1;
+  const lastDay = new Date(y, m + 1, 0).getDate();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return {
+    dateStart: `${y}-${pad(m + 1)}-01`,
+    dateEnd: `${y}-${pad(m + 1)}-${pad(lastDay)}`,
+  };
+}
 
 export default async function Page({ searchParams }: PageProps) {
   const tCampaigns = await getTranslations("analytics.campaigns");
   const tAi = await getTranslations("analytics.ai");
 
-  const { analyticsId: analyticsIdParam, locationId: locationIdParam } =
-    await searchParams;
+  const { locationId: locationIdParam } = await searchParams;
 
-  let analyticsId: number | undefined;
-  let locationId: number;
+  if (!locationIdParam) notFound();
 
-  if (analyticsIdParam) {
-    analyticsId = Number(analyticsIdParam);
-    if (!Number.isInteger(analyticsId) || isNaN(analyticsId)) notFound();
+  const locationId = Number(locationIdParam);
+  if (!Number.isInteger(locationId) || isNaN(locationId)) notFound();
 
-    const data = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, {
-      id: String(analyticsId),
-    });
-    const run = data.analyticsRun;
-    if (!run) notFound();
-    locationId = run.locationId;
-  } else if (locationIdParam) {
-    locationId = Number(locationIdParam);
-    if (!Number.isInteger(locationId) || isNaN(locationId)) notFound();
-  } else {
-    notFound();
+  const defaultDates = computeDefaultDates();
+
+  let initialLocationSummary: string | null = null;
+  try {
+    // Try the canonical foundation cache key first ("0" = no analytics run)
+    const profileData = await graphqlQuery<LocationProfileData>(
+      LOCATION_PROFILE_QUERY,
+      { locationId: String(locationId), analyticsRunId: "0" }
+    );
+    initialLocationSummary = profileData.locationProfile?.summary ?? null;
+
+    // Profiles created via the full campaign flow are stored under the real
+    // analytics run ID, not "0". Fall back by checking any existing runs.
+    if (initialLocationSummary === null) {
+      const runsData = await graphqlQuery<AnalyticsRunsByLocationData>(
+        ANALYTICS_RUNS_BY_LOCATION_QUERY,
+        { locationId: locationId }
+      );
+      for (const run of runsData.analyticsRuns) {
+        const runProfile = await graphqlQuery<LocationProfileData>(
+          LOCATION_PROFILE_QUERY,
+          { locationId: String(locationId), analyticsRunId: run.id }
+        );
+        const summary = runProfile.locationProfile?.summary ?? null;
+        if (summary) {
+          initialLocationSummary = summary;
+          break;
+        }
+      }
+    }
+  } catch {
+    // If any fetch fails, fall through with null — the button will still show
   }
 
   return (
@@ -49,7 +85,11 @@ export default async function Page({ searchParams }: PageProps) {
       ]}
       mainClassName="max-w-none w-full h-[calc(100vh-4rem)] min-h-[24rem]"
     >
-      <AiChatPanel analyticsId={analyticsId} locationId={locationId} />
+      <AiChatPanel
+        locationId={locationId}
+        initialLocationSummary={initialLocationSummary}
+        defaultDates={defaultDates}
+      />
     </AnalyticsPageShell>
   );
 }

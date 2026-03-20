@@ -8,6 +8,7 @@ import {
   ArtifactTitle,
 } from "@workspace/ui/components/ai-elements/artifact";
 import { MessageResponse } from "@workspace/ui/components/ai-elements/message";
+import { Button } from "@workspace/ui/components/button";
 import { CalendarIcon, GalleryHorizontalIcon, GlobeIcon, LayoutListIcon, SparklesIcon, StoreIcon } from "lucide-react";
 
 export type NationalHoliday = {
@@ -45,6 +46,8 @@ export type PlanningArtifact = {
 
 type AiArtifactPanelProps = {
   planning?: PlanningArtifact;
+  onCreateLocationProfile?: () => void;
+  isStreaming?: boolean;
 };
 
 type HolidayItem = {
@@ -78,7 +81,11 @@ const THEME_STYLES: Record<PostSlot["theme"], string> = {
   engagement: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
 };
 
-export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
+export function AiArtifactPanel({
+  planning,
+  onCreateLocationProfile,
+  isStreaming,
+}: AiArtifactPanelProps) {
   if (!planning) {
     return (
       <div className="flex size-full items-center justify-center rounded-lg border border-dashed">
@@ -113,25 +120,38 @@ export function AiArtifactPanel({ planning }: AiArtifactPanelProps) {
       <ArtifactContent>
         <div className="space-y-4">
           {/* Location Profile */}
-          {planning.locationSummary !== null && (
-            <div className="rounded-lg border bg-muted/30 p-4">
-              <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <StoreIcon className="size-3.5" />
-                Location Profile
-              </div>
-              {planning.locationSummary === undefined ? (
-                <div className="space-y-2">
-                  <div className="h-3 w-full animate-pulse rounded bg-muted-foreground/20" />
-                  <div className="h-3 w-5/6 animate-pulse rounded bg-muted-foreground/20" />
-                  <div className="h-3 w-4/6 animate-pulse rounded bg-muted-foreground/10" />
-                </div>
-              ) : (
-                <MessageResponse className="text-sm leading-relaxed text-foreground">
-                  {planning.locationSummary}
-                </MessageResponse>
-              )}
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <StoreIcon className="size-3.5" />
+              Location Profile
             </div>
-          )}
+            {planning.locationSummary === undefined ? (
+              <div className="space-y-2">
+                <div className="h-3 w-full animate-pulse rounded bg-muted-foreground/20" />
+                <div className="h-3 w-5/6 animate-pulse rounded bg-muted-foreground/20" />
+                <div className="h-3 w-4/6 animate-pulse rounded bg-muted-foreground/10" />
+              </div>
+            ) : planning.locationSummary === null ? (
+              <div className="flex flex-col items-start gap-3">
+                <p className="text-sm text-muted-foreground">
+                  No location profile found. Generate one to power smarter campaign content.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onCreateLocationProfile}
+                  disabled={isStreaming}
+                >
+                  <SparklesIcon className="mr-2 size-3.5" />
+                  Create Location Profile
+                </Button>
+              </div>
+            ) : (
+              <MessageResponse className="text-sm leading-relaxed text-foreground">
+                {planning.locationSummary}
+              </MessageResponse>
+            )}
+          </div>
 
           {/* Campaign Period */}
           <div className="rounded-lg border bg-muted/30 p-4">

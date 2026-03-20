@@ -33,7 +33,7 @@ STEP_REGISTRY: dict[str, Any] = {
     "generate_campaign_brief": generate_campaign_brief,
 }
 
-FULL_PLAN = [
+CAMPAIGN_PLAN = [
     "fetch_all_data",
     "generate_location_summary",
     "generate_candidate_slots",
@@ -42,7 +42,7 @@ FULL_PLAN = [
     "generate_campaign_brief",
 ]
 
-LITE_PLAN = [
+FOUNDATION_PLAN = [
     "fetch_location_data",
     "generate_location_summary",
 ]
@@ -59,7 +59,7 @@ async def create_plan(state: State, config: RunnableConfig) -> dict[str, Any]:
     analytics_id = configurable.get("analytics_id")
 
     mode: ContextMode = "full" if analytics_id else "lite"
-    plan = FULL_PLAN if mode == "full" else LITE_PLAN
+    plan = CAMPAIGN_PLAN if mode == "full" else FOUNDATION_PLAN
 
     step_labels = " → ".join(plan)
     await _emit("create_plan", "done", f"Plan ({mode}): {step_labels}", config)

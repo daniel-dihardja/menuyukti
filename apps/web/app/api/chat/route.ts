@@ -189,6 +189,8 @@ export async function POST(req: Request) {
         thread_id: parsed.data.threadId ?? crypto.randomUUID(),
         analytics_id: parsed.data.analyticsId ?? null,
         location_id: parsed.data.locationId ?? null,
+        date_start: parsed.data.dateStart ?? null,
+        date_end: parsed.data.dateEnd ?? null,
       }),
       signal: req.signal,
     });
