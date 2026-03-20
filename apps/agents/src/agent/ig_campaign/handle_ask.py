@@ -8,7 +8,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
 
 from agent.config import LLM_MODEL
-from agent.ig_campaign.node_utils import _update_planning
+from agent.ig_campaign.node_utils import _build_location_context, _update_planning
 from agent.state import State
 
 logger = logging.getLogger(__name__)
@@ -23,52 +23,6 @@ Be conversational, concise, and specific to the data you have. \
 If relevant data isn't available, say so clearly and suggest what would help.
 
 {location_context}"""
-
-_NO_LOCATION_CONTEXT = "No restaurant data has been loaded yet for this session."
-
-
-def _build_location_context(planning: Any) -> str:
-    """Summarise available planning data as a compact context block for the system prompt."""
-    if not planning:
-        return _NO_LOCATION_CONTEXT
-
-    parts: list[str] = []
-
-    location = planning.location
-    if location:
-        name = location.get("name", "")
-        city = location.get("city", "")
-        country = location.get("country", "")
-        description = location.get("description", "")
-        parts.append(f"Restaurant: {name}" + (f" ({city}, {country})" if city else ""))
-        if description:
-            parts.append(f"Description: {description}")
-
-    if planning.locationSummary:
-        parts.append(f"\nMarketing Profile:\n{planning.locationSummary}")
-
-    if planning.nationalHolidays:
-        holiday_names = [h.get("name") for h in planning.nationalHolidays if h.get("name")]
-        if holiday_names:
-            parts.append(f"Upcoming public holidays: {', '.join(holiday_names[:5])}")
-
-    operating = planning.operatingProfile
-    if operating:
-        primary_period = operating.get("primaryMealPeriod", "")
-        peak_days = operating.get("peakDays", [])
-        if primary_period:
-            parts.append(f"Primary meal period: {primary_period}")
-        if peak_days:
-            parts.append(f"Busiest days: {', '.join(peak_days)}")
-
-    if planning.campaign_brief:
-        brief = planning.campaign_brief
-        parts.append(
-            f"\nActive campaign brief: {brief.campaign_theme} | {brief.tone} | "
-            f"{len(brief.post_slots)} posts from {planning.dateStart} to {planning.dateEnd}"
-        )
-
-    return "\n".join(parts) if parts else _NO_LOCATION_CONTEXT
 
 
 async def _lazy_fetch_location(state: State, config: RunnableConfig) -> dict[str, Any] | None:

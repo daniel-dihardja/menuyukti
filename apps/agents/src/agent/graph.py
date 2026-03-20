@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from agent.config import LLM_MODEL
 from agent.ig_campaign import planning_subgraph
+from agent.ig_campaign.node_utils import _build_location_context
 from agent.state import IntentCategory, State
 
 
@@ -40,10 +41,10 @@ INTENT_SYSTEM = (
 
 HANDLE_UNKNOWN_SYSTEM = (
     "You are a helpful Instagram marketing assistant for a restaurant. "
-    "Answer the user's question conversationally and helpfully. "
-    "If the user asks how to create posts or a campaign, explain that they can ask you to "
-    "'create a campaign' or 'generate my posts' and you will build a full content schedule. "
-    "Keep replies concise and friendly."
+    "Answer the user's question conversationally and helpfully using the restaurant "
+    "data below when relevant. If the user asks to create a campaign, explain they can "
+    "ask you to 'create a campaign' or 'generate my posts' and you will build a full "
+    "content schedule. Keep replies concise and friendly.\n\n{context}"
 )
 
 PLAN_RESPONSE_PROMPT = """The user asked: {message}
@@ -84,9 +85,11 @@ def route_by_intent(state: State) -> str:
 
 async def handle_unknown(state: State) -> Dict[str, Any]:
     """Respond conversationally when the message doesn't trigger a planning intent."""
+    context = _build_location_context(state.planning)
+    system = HANDLE_UNKNOWN_SYSTEM.format(context=context)
     history = list(state.messages)
     messages = (
-        [SystemMessage(content=HANDLE_UNKNOWN_SYSTEM)]
+        [SystemMessage(content=system)]
         + history
         + [HumanMessage(content=state.message)]
     )
@@ -124,7 +127,7 @@ async def respond_with_plan(state: State) -> Dict[str, Any]:
     result = await llm.ainvoke(prompt)
     return {
         "response": result.content,
-        "messages": [],
+        "messages": [AIMessage(content=result.content)],
     }
 
 
