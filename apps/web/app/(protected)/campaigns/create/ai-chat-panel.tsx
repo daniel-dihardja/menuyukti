@@ -124,9 +124,9 @@ export function AiChatPanel({
   const isAskMode = chatMode === "ask";
 
   return (
-    <div className={`grid size-full gap-4 overflow-hidden ${isAskMode ? "grid-cols-1" : "grid-cols-3"}`}>
-      {/* Chat UI — 1/3 width in agent mode, full width in ask mode */}
-      <div className={`relative flex flex-col divide-y overflow-hidden rounded-lg border ${isAskMode ? "col-span-1" : "col-span-1"}`}>
+    <div className="grid size-full grid-cols-3 gap-4 overflow-hidden">
+      {/* Chat UI — always 1/3 width */}
+      <div className="relative col-span-1 flex flex-col divide-y overflow-hidden rounded-lg border">
         <Conversation>
           <ConversationContent>
             {messages.length === 0 ? (
@@ -231,12 +231,10 @@ export function AiChatPanel({
         </div>
       </div>
 
-      {/* Artifact — 2/3 width, only visible in agent mode */}
-      {!isAskMode && (
-        <div className="col-span-2 overflow-hidden">
-          <AiArtifactPanel planning={planningArtifact} />
-        </div>
-      )}
+      {/* Artifact — always visible so users can review and refine the campaign in both modes */}
+      <div className="col-span-2 overflow-hidden">
+        <AiArtifactPanel planning={planningArtifact} />
+      </div>
     </div>
   );
 }
