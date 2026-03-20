@@ -44,7 +44,7 @@ export default async function Page({ searchParams }: PageProps) {
 
   const defaultDates = computeDefaultDates();
 
-  let initialLocationSummary: string | null = null;
+  let locationProfile: string | null = null;
   let analyticsRuns: Array<{ id: string; name: string; filename: string }> = [];
   try {
     const runsData = await graphqlQuery<AnalyticsRunsByLocationData>(
@@ -57,7 +57,7 @@ export default async function Page({ searchParams }: PageProps) {
       LOCATION_PROFILE_QUERY,
       { locationId: String(locationId), analyticsRunId: "0" }
     );
-    initialLocationSummary = profileData.locationProfile?.summary ?? null;
+    locationProfile = profileData.locationProfile?.summary ?? null;
   } catch {
     // If any fetch fails, fall through with null — the button will still show
   }
@@ -73,7 +73,7 @@ export default async function Page({ searchParams }: PageProps) {
     >
       <AiChatPanel
         locationId={locationId}
-        initialLocationSummary={initialLocationSummary}
+        locationProfile={locationProfile}
         analyticsRuns={analyticsRuns}
         defaultDates={defaultDates}
       />

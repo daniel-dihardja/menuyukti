@@ -136,9 +136,9 @@ async def initialize_session(state: State, config: RunnableConfig) -> dict[str, 
         logger.exception("initialize_session: failed to fetch location data")
         return {}
 
-    initial_summary: str | None = configurable.get("initial_location_summary")
-    if initial_summary:
-        planning = _update_planning(planning, locationSummary=initial_summary)
+    location_profile: str | None = configurable.get("location_profile")
+    if location_profile:
+        planning = _update_planning(planning, locationSummary=location_profile)
 
     return {"planning": planning}
 
@@ -183,7 +183,7 @@ async def check_campaign_requirements(state: State, config: RunnableConfig) -> D
         ("date_start", configurable.get("date_start")),
         ("date_end", configurable.get("date_end")),
         ("national_holidays", configurable.get("national_holidays")),
-        ("initial_location_summary", configurable.get("initial_location_summary")),
+        ("location_profile", configurable.get("location_profile")),
     ]
     missing = [name for name, value in required_fields if not value]
 

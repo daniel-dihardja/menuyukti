@@ -49,12 +49,12 @@ function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
 
 export function AiChatPanel({
   locationId,
-  initialLocationSummary,
+  locationProfile,
   analyticsRuns,
   defaultDates,
 }: {
   locationId: number;
-  initialLocationSummary: string | null;
+  locationProfile: string | null;
   analyticsRuns: Array<{ id: string; name: string; filename: string }>;
   defaultDates: { dateStart: string; dateEnd: string };
 }) {
@@ -63,6 +63,11 @@ export function AiChatPanel({
   const [holidaysOverride, setHolidaysOverride] = useState<NationalHoliday[] | null | undefined>(undefined);
   const [selectedAnalyticsId, setSelectedAnalyticsId] = useState<number | null>(null);
   const threadId = useRef(crypto.randomUUID()).current;
+  const requestBodyRef = useRef<Record<string, unknown>>({});
+  requestBodyRef.current = {
+    locationId,
+    threadId,
+  };
 
   // Stable transport — never recreated. prepareSendMessagesRequest is called
   // right before every fetch, so it always picks up the latest ref values.
@@ -72,7 +77,7 @@ export function AiChatPanel({
       new DefaultChatTransport({
         api: "/api/chat",
         prepareSendMessagesRequest: ({ messages, body }) => ({
-          body: { messages, ...body, ...latestBodyRef.current },
+          body: { messages, ...requestBodyRef.current, ...body },
         }),
       }),
     [] // eslint-disable-line react-hooks/exhaustive-deps
@@ -87,10 +92,10 @@ export function AiChatPanel({
       dateStart: defaultDates.dateStart,
       dateEnd: defaultDates.dateEnd,
       nationalHolidays: undefined,
-      locationSummary: initialLocationSummary,
+      locationSummary: locationProfile,
       campaignBrief: null,
     }),
-    [defaultDates, initialLocationSummary]
+    [defaultDates, locationProfile]
   );
 
   const planningArtifact = useMemo<PlanningArtifact>(() => {
@@ -119,23 +124,6 @@ export function AiChatPanel({
     }),
     [planningArtifact, campaignDates, holidaysOverride]
   );
-
-  // Keep the latest request body values in a ref so the transport always reads
-  // fresh state. Assigning synchronously here (not in a useEffect) guarantees
-  // the ref is up-to-date before any sendMessage call triggered by the same
-  // render cycle.
-  const latestBodyRef = useRef<Record<string, unknown>>({});
-  latestBodyRef.current = {
-    locationId,
-    threadId,
-    dateStart: campaignDates.dateStart,
-    dateEnd: campaignDates.dateEnd,
-    nationalHolidays: holidaysOverride ?? null,
-    // Always send the latest profile available in the artifact state, so
-    // campaign creation can use a profile generated earlier in the same chat.
-    initialLocationSummary: displayedArtifact.locationSummary ?? initialLocationSummary,
-    ...(selectedAnalyticsId !== null ? { analyticsId: selectedAnalyticsId } : {}),
-  };
 
   const handleDatesChange = useCallback(
     async (dates: { dateStart: string; dateEnd: string }) => {
@@ -198,8 +186,28 @@ export function AiChatPanel({
   }, [sendMessage]);
 
   const handleCreateCampaign = useCallback(async () => {
-    await sendMessage({ text: "create instagram campaign" });
-  }, [sendMessage]);
+    await sendMessage(
+      { text: "create instagram campaign" },
+      {
+        body: {
+          analyticsId: selectedAnalyticsId,
+          dateStart: campaignDates.dateStart,
+          dateEnd: campaignDates.dateEnd,
+          nationalHolidays: holidaysOverride ?? displayedArtifact.nationalHolidays ?? null,
+          locationProfile: displayedArtifact.locationSummary ?? locationProfile,
+        },
+      }
+    );
+  }, [
+    campaignDates.dateEnd,
+    campaignDates.dateStart,
+    displayedArtifact.locationSummary,
+    displayedArtifact.nationalHolidays,
+    holidaysOverride,
+    locationProfile,
+    selectedAnalyticsId,
+    sendMessage,
+  ]);
 
   const isSubmitDisabled = useMemo(
     () => !text.trim() || status === "streaming" || status === "submitted",

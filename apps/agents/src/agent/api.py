@@ -46,7 +46,7 @@ class InvokeRequest(BaseModel):
     date_start: str | None = Field(default=None, description="Campaign start date (YYYY-MM-DD) set by the UI; takes precedence over agent-computed defaults. Required when intent is create_instagram_campaign.")
     date_end: str | None = Field(default=None, description="Campaign end date (YYYY-MM-DD) set by the UI; takes precedence over agent-computed defaults. Required when intent is create_instagram_campaign.")
     national_holidays: list[dict] | None = Field(default=None, description="Public holidays for the campaign window, pre-fetched by the web app when dates change. Seeded into planning state so the agent never needs to fetch them. Required when intent is create_instagram_campaign.")
-    initial_location_summary: str | None = Field(default=None, description="Location profile summary provided by the caller. Required when intent is create_instagram_campaign.")
+    location_profile: str | None = Field(default=None, description="Location profile summary provided by the caller. Required when intent is create_instagram_campaign.")
 
 
 @app.get("/health")
@@ -97,7 +97,7 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
                         "date_start": body.date_start,
                         "date_end": body.date_end,
                         "national_holidays": body.national_holidays,
-                        "initial_location_summary": body.initial_location_summary,
+                        "location_profile": body.location_profile,
                     }
                 },
                 version="v2",

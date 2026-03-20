@@ -27,7 +27,7 @@ export const chatRequestBodySchema = z.object({
   dateStart: z.string().optional(),
   dateEnd: z.string().optional(),
   nationalHolidays: z.array(nationalHolidaySchema).nullable().optional(),
-  initialLocationSummary: z.string().nullable().optional(),
+  locationProfile: z.string().nullable().optional(),
 });
 
 export type ChatRequestBody = z.infer<typeof chatRequestBodySchema>;
