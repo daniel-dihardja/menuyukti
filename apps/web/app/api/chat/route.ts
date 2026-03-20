@@ -3,8 +3,9 @@ import type { UIMessage } from "ai";
 import { getAgentsBaseUrl } from "@/lib/config";
 import { chatRequestBodySchema } from "./schema";
 
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
+// Allow streaming responses up to 180 seconds — the full campaign pipeline
+// runs 4 LLM steps with two reflection loops and can take 40–120 seconds.
+export const maxDuration = 180;
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
@@ -45,8 +46,12 @@ const SSE_DONE = "[DONE]" as const;
 
 interface PostSlot {
   scheduled_date: string;
+  scheduled_time?: string;
   theme: "holiday" | "promotion" | "engagement";
+  format: "single" | "carousel";
   focus_item: string | null;
+  carousel_items: string[] | null;
+  carousel_narrative: string | null;
   caption_seed: string;
 }
 

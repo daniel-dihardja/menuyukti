@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from langchain_core.callbacks.manager import adispatch_custom_event
 
 from agent.config import LLM_MODEL
-from agent.gql_client import fetch_location_profile
 from agent.ig_campaign import planning_subgraph
 from agent.ig_campaign.data_fetch_lite import fetch_location_data
 from agent.ig_campaign.edit_venue_summary import edit_venue_summary
@@ -90,23 +89,34 @@ Respond with a single friendly sentence confirming what was changed. Be specific
 async def initialize_session(state: State, config: RunnableConfig) -> dict[str, Any]:
     """Hydrate planning state with location + profile before any reasoning node runs.
 
-    On turns 2+, MemorySaver has already restored state.planning — the guard at the
-    top makes this a no-op, adding zero latency to ongoing conversations.
+    Dates and holidays are refreshed from the UI on every turn so that changes
+    made in the artifact panel (date pickers, re-fetched holidays) are always
+    reflected in the next agent run.
 
-    On cold start (turn 1):
-      1. Fetch lite location data (name/city/country).
-      2. Seed locationSummary from the frontend-provided value (zero extra DB call)
-         or fall back to the DB cache under the sentinel key "0".
+    Location data and locationSummary are fetched only on the first turn (cold
+    start) — MemorySaver persists them across turns at zero extra cost.
     """
-    if state.planning and state.planning.location:
-        return {}
-
     configurable = config.get("configurable") or {}
     location_id = configurable.get("location_id")
     if not location_id:
         return {}
 
     planning = state.planning
+
+    # Always refresh campaign window and holidays from the current UI values.
+    date_start = configurable.get("date_start")
+    date_end = configurable.get("date_end")
+    if date_start and date_end:
+        planning = _update_planning(planning, dateStart=date_start, dateEnd=date_end)
+
+    national_holidays = configurable.get("national_holidays")
+    if national_holidays:
+        planning = _update_planning(planning, nationalHolidays=national_holidays)
+
+    # Location data and profile are only fetched once (cold start).
+    if state.planning and state.planning.location:
+        return {"planning": planning} if planning is not state.planning else {}
+
     try:
         result = await fetch_location_data(state, config)
         planning = result.get("planning", planning)
@@ -117,22 +127,6 @@ async def initialize_session(state: State, config: RunnableConfig) -> dict[str, 
     initial_summary: str | None = configurable.get("initial_location_summary")
     if initial_summary:
         planning = _update_planning(planning, locationSummary=initial_summary)
-    elif planning and not planning.locationSummary:
-        try:
-            cached = await fetch_location_profile(location_id, "0")
-            if cached:
-                planning = _update_planning(planning, locationSummary=cached)
-        except Exception:
-            logger.warning("initialize_session: profile cache lookup failed; continuing without summary")
-
-    date_start = configurable.get("date_start")
-    date_end = configurable.get("date_end")
-    if date_start and date_end:
-        planning = _update_planning(planning, dateStart=date_start, dateEnd=date_end)
-
-    national_holidays = configurable.get("national_holidays")
-    if national_holidays:
-        planning = _update_planning(planning, nationalHolidays=national_holidays)
 
     return {"planning": planning}
 

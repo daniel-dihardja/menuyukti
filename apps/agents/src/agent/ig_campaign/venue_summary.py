@@ -149,6 +149,12 @@ async def generate_location_summary(state: State, config: RunnableConfig) -> dic
     location_id = configurable.get("location_id")
     analytics_id = configurable.get("analytics_id")
 
+    # If a summary is already in state (seeded from SSR or a prior run), use it
+    # directly — no DB round-trip needed.
+    if planning and planning.locationSummary:
+        await _emit("generate_location_summary", "done", "Using cached location profile", config)
+        return {"planning": planning}
+
     # Use analytics_id for cache key in full mode; sentinel "0" in lite mode
     cache_analytics_id = analytics_id if analytics_id else "0"
     if location_id:

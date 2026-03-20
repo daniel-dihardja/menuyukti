@@ -53,28 +53,11 @@ export default async function Page({ searchParams }: PageProps) {
     );
     analyticsRuns = runsData.analyticsRuns;
 
-    // Try the canonical foundation cache key first ("0" = no analytics run)
     const profileData = await graphqlQuery<LocationProfileData>(
       LOCATION_PROFILE_QUERY,
       { locationId: String(locationId), analyticsRunId: "0" }
     );
     initialLocationSummary = profileData.locationProfile?.summary ?? null;
-
-    // Profiles created via the full campaign flow are stored under the real
-    // analytics run ID, not "0". Fall back by checking any existing runs.
-    if (initialLocationSummary === null) {
-      for (const run of analyticsRuns) {
-        const runProfile = await graphqlQuery<LocationProfileData>(
-          LOCATION_PROFILE_QUERY,
-          { locationId: String(locationId), analyticsRunId: run.id }
-        );
-        const summary = runProfile.locationProfile?.summary ?? null;
-        if (summary) {
-          initialLocationSummary = summary;
-          break;
-        }
-      }
-    }
   } catch {
     // If any fetch fails, fall through with null — the button will still show
   }

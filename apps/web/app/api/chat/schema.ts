@@ -16,7 +16,7 @@ const nationalHolidaySchema = z.object({
   localName: z.string(),
   name: z.string(),
   date: z.string(),
-  type: z.string(),
+  type: z.string().optional(),
 }).passthrough();
 
 export const chatRequestBodySchema = z.object({

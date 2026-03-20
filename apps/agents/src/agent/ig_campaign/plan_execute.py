@@ -4,6 +4,7 @@ import logging
 from dataclasses import replace
 from typing import Any, Literal
 
+from langchain_core.callbacks.manager import adispatch_custom_event
 from langchain_core.runnables import RunnableConfig
 
 from agent.ig_campaign.campaign_brief import generate_campaign_brief
@@ -15,6 +16,10 @@ from agent.ig_campaign.venue_summary import generate_location_summary
 from agent.ig_campaign.slot_calendar import generate_candidate_slots
 from agent.ig_campaign.node_utils import _emit, _update_planning
 from agent.state import ContextMode, State
+
+# Steps that produce a meaningful artifact-panel update and should stream
+# a planning_update event to the UI as soon as they complete.
+_PLANNING_UPDATE_STEPS = {"generate_location_summary", "generate_campaign_brief"}
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +95,20 @@ async def execute_step(state: State, config: RunnableConfig) -> dict[str, Any]:
     # Merge: take the returned planning state and advance the step pointer
     returned_planning = result.get("planning", planning)
     advanced = replace(returned_planning, current_step=current_step + 1)
+
+    # Push an intermediate artifact-panel update for steps that produce visible
+    # UI output (location profile, campaign brief) so the panel updates live
+    # without waiting for the entire pipeline to finish.
+    if step_name in _PLANNING_UPDATE_STEPS:
+        try:
+            await adispatch_custom_event(
+                "planning_update",
+                {"planning": advanced},
+                config=config,
+            )
+        except Exception:
+            logger.warning("planning_update dispatch failed for step '%s'", step_name)
+
     return {"planning": advanced}
 
 

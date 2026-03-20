@@ -20,9 +20,11 @@ import {
 import { GalleryHorizontalIcon, GlobeIcon, LayoutListIcon, SparklesIcon, StoreIcon, CalendarIcon, DatabaseIcon, CheckCircle2Icon, CircleIcon } from "lucide-react";
 
 export type NationalHoliday = {
+  id: string;
   localName: string;
   name: string;
   date: string;
+  type?: string;
 };
 
 export type PostSlot = {

@@ -64,21 +64,33 @@ export function AiChatPanel({
   const [selectedAnalyticsId, setSelectedAnalyticsId] = useState<number | null>(null);
   const threadId = useRef(crypto.randomUUID()).current;
 
+  // Keep the latest request body values in a ref so the transport always reads
+  // fresh state. Assigning synchronously here (not in a useEffect) guarantees
+  // the ref is up-to-date before any sendMessage call triggered by the same
+  // render cycle.
+  const latestBodyRef = useRef<Record<string, unknown>>({});
+  latestBodyRef.current = {
+    locationId,
+    threadId,
+    dateStart: campaignDates.dateStart,
+    dateEnd: campaignDates.dateEnd,
+    nationalHolidays: holidaysOverride ?? null,
+    initialLocationSummary,
+    ...(selectedAnalyticsId !== null ? { analyticsId: selectedAnalyticsId } : {}),
+  };
+
+  // Stable transport — never recreated. prepareSendMessagesRequest is called
+  // right before every fetch, so it always picks up the latest ref values.
+  // messages must be explicitly included — the callback replaces the full body.
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: {
-          locationId,
-          threadId,
-          dateStart: campaignDates.dateStart,
-          dateEnd: campaignDates.dateEnd,
-          nationalHolidays: holidaysOverride ?? null,
-          initialLocationSummary,
-          ...(selectedAnalyticsId !== null ? { analyticsId: selectedAnalyticsId } : {}),
-        },
+        prepareSendMessagesRequest: ({ messages, body }) => ({
+          body: { messages, ...body, ...latestBodyRef.current },
+        }),
       }),
-    [locationId, threadId, campaignDates, holidaysOverride, initialLocationSummary, selectedAnalyticsId]
+    [] // eslint-disable-line react-hooks/exhaustive-deps
   );
   const { messages, sendMessage, status, stop } = useChat({ transport });
 
@@ -100,8 +112,12 @@ export function AiChatPanel({
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
       if (msg?.role !== "assistant") continue;
-      const part = msg.parts?.find((p) => p.type === "data-planning");
-      if (part && "data" in part) return part.data as PlanningArtifact;
+      const parts = msg.parts ?? [];
+      for (let j = parts.length - 1; j >= 0; j--) {
+        const part = parts[j];
+        if (part?.type === "data-planning" && "data" in part)
+          return part.data as PlanningArtifact;
+      }
     }
     return defaultPlanning;
   }, [messages, defaultPlanning]);
@@ -127,8 +143,16 @@ export function AiChatPanel({
         const res = await fetch(
           `/api/holidays?locationId=${locationId}&dateStart=${dates.dateStart}&dateEnd=${dates.dateEnd}`
         );
-        const json = (await res.json()) as { holidays?: NationalHoliday[]; error?: string };
-        setHolidaysOverride(json.holidays ?? null);
+        const json = (await res.json()) as {
+          holidays?: Array<NationalHoliday & { holidayType?: string }>;
+          error?: string;
+        };
+        // Normalize holidayType → type to match the Python agent's NationalHoliday schema
+        const holidays = json.holidays?.map(({ holidayType, ...h }) => ({
+          ...h,
+          type: h.type ?? holidayType,
+        })) ?? null;
+        setHolidaysOverride(holidays);
       } catch {
         setHolidaysOverride(null);
       }
