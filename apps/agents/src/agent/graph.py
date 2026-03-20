@@ -4,10 +4,14 @@ from langgraph.graph import StateGraph
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel
+
+from langchain_core.callbacks.manager import adispatch_custom_event
 
 from agent.config import LLM_MODEL
 from agent.ig_campaign import planning_subgraph
+from agent.ig_campaign.edit_venue_summary import edit_venue_summary
 from agent.ig_campaign.node_utils import _build_location_context
 from agent.state import IntentCategory, State
 
@@ -15,7 +19,7 @@ from agent.state import IntentCategory, State
 class IntentResult(BaseModel):
     """Structured result for intent classification."""
 
-    intent: Literal["create_instagram_campaign", "unknown"]
+    intent: Literal["create_instagram_campaign", "edit_venue_profile", "unknown"]
 
 
 llm = ChatOpenAI(
@@ -29,10 +33,15 @@ INTENT_SYSTEM = (
     "You are an intent classifier. Classify the user message into exactly one of:\n"
     "- 'create_instagram_campaign': user is EXPLICITLY requesting to create, generate, "
     "build, or start a new Instagram campaign or post schedule right now\n"
+    "- 'edit_venue_profile': user wants to update, add to, or correct the venue/restaurant "
+    "profile or location summary\n"
     "- 'unknown': anything else — including questions about Instagram, how-to questions, "
     "general conversation, follow-up questions, or requests for advice\n\n"
     "Examples of 'create_instagram_campaign': "
     "'create a campaign', 'generate my posts', 'build a schedule', 'start a campaign for next month'\n"
+    "Examples of 'edit_venue_profile': "
+    "'add that we have a summer garden', 'update the profile to mention our kids menu', "
+    "'the venue description is missing our terrace', 'include that we serve brunch on weekends'\n"
     "Examples of 'unknown': "
     "'how do I create posts?', 'what should I post?', 'tell me about my restaurant', "
     "'how does this work?', 'what can you do?'\n\n"
@@ -65,6 +74,12 @@ Campaign window: {date_start} to {date_end}
 
 Respond briefly: confirm the location profile is ready and mention that adding an analytics run would unlock a full post schedule with menu-specific format assignments."""
 
+VENUE_EDIT_RESPONSE_PROMPT = """The user asked: {message}
+
+The venue profile has been updated successfully.
+
+Respond with a single friendly sentence confirming what was changed. Be specific about the addition or correction the user requested. Keep it concise."""
+
 
 async def classify_intent(state: State) -> Dict[str, Any]:
     """Classify the latest user message, using conversation history for context."""
@@ -80,7 +95,8 @@ async def classify_intent(state: State) -> Dict[str, Any]:
 
 def route_by_intent(state: State) -> str:
     """Route after classify_intent based on the classified intent."""
-    return state.intent if state.intent in ("create_instagram_campaign", "unknown") else "unknown"
+    valid = ("create_instagram_campaign", "edit_venue_profile", "unknown")
+    return state.intent if state.intent in valid else "unknown"
 
 
 async def handle_unknown(state: State) -> Dict[str, Any]:
@@ -131,12 +147,67 @@ async def respond_with_plan(state: State) -> Dict[str, Any]:
     }
 
 
+async def handle_venue_edit(state: State, config: RunnableConfig) -> Dict[str, Any]:
+    """Edit the venue profile summary based on the user's natural language instruction.
+
+    Explicit event order (all text sent via response_delta, not on_chat_model_stream,
+    so that we fully control what appears in the chat and when):
+      1. response_delta: short acknowledgement ("On it...")
+      2. edit_venue_summary tool runs (activity events)
+      3. planning_update: artifact panel refreshes
+      4. response_delta: LLM-generated closing confirmation
+    """
+    if not (state.planning and state.planning.locationSummary):
+        msg = (
+            "I don't have a venue profile loaded yet. "
+            "Please create a campaign first and I'll be able to update the profile."
+        )
+        await adispatch_custom_event("response_delta", {"text": msg}, config=config)
+        return {
+            "response": msg,
+            "messages": [AIMessage(content=msg)],
+        }
+
+    # Step 1 — short acknowledgement before the tool runs
+    await adispatch_custom_event(
+        "response_delta",
+        {"text": "On it, updating your venue profile..."},
+        config=config,
+    )
+
+    # Step 2 — run the edit tool
+    edit_result = await edit_venue_summary(state, config)
+    updated_planning = edit_result.get("planning")
+
+    # Step 3 — push updated artifact to the panel
+    if updated_planning:
+        await adispatch_custom_event(
+            "planning_update",
+            {"planning": updated_planning},
+            config=config,
+        )
+
+    # Step 4 — LLM-generated closing confirmation (awaited fully; no streaming needed
+    # since the interesting update already happened via the artifact)
+    prompt = VENUE_EDIT_RESPONSE_PROMPT.format(message=state.message)
+    result = await llm.ainvoke(prompt)
+    response_text = result.content if isinstance(result.content, str) else str(result.content)
+    await adispatch_custom_event("response_delta", {"text": "\n\n" + response_text}, config=config)
+
+    return {
+        **edit_result,
+        "response": response_text,
+        "messages": [AIMessage(content=response_text)],
+    }
+
+
 # Build graph with MemorySaver for multi-turn conversation memory
 graph = (
     StateGraph(State)
     .add_node("classify_intent", classify_intent)
     .add_node("run_planning_agent", planning_subgraph)
     .add_node("handle_unknown", handle_unknown)
+    .add_node("handle_venue_edit", handle_venue_edit)
     .add_node("respond_with_plan", respond_with_plan)
     .add_edge("__start__", "classify_intent")
     .add_conditional_edges(
@@ -144,11 +215,13 @@ graph = (
         route_by_intent,
         {
             "create_instagram_campaign": "run_planning_agent",
+            "edit_venue_profile": "handle_venue_edit",
             "unknown": "handle_unknown",
         },
     )
     .add_edge("run_planning_agent", "respond_with_plan")
     .add_edge("respond_with_plan", "__end__")
+    .add_edge("handle_venue_edit", "__end__")
     .add_edge("handle_unknown", "__end__")
     .compile(checkpointer=MemorySaver())
 )

@@ -119,6 +119,16 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
                     if data.get("step") and data.get("status") and data.get("label"):
                         yield activity_sse(data["step"], data["status"], data["label"], data.get("detail"))
 
+                elif kind == "on_custom_event" and name == "response_delta":
+                    text = (event.get("data") or {}).get("text", "")
+                    if text:
+                        yield f"data: {json.dumps({'delta': text})}\n\n".encode("utf-8")
+
+                elif kind == "on_custom_event" and name == "planning_update":
+                    planning = (event.get("data") or {}).get("planning")
+                    if planning and hasattr(planning, "locationSummary"):
+                        yield f"data: {json.dumps({'planning': {'dateStart': planning.dateStart, 'dateEnd': planning.dateEnd, 'nationalHolidays': planning.nationalHolidays, 'locationSummary': planning.locationSummary, 'campaignBrief': planning.campaign_brief.model_dump() if planning.campaign_brief else None}})}\n\n".encode("utf-8")
+
                 elif kind == "on_chain_end" and name == "run_planning_agent":
                     output = event["data"].get("output") or {}
                     planning = output.get("planning")
@@ -129,6 +139,9 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
 
                 elif kind == "on_chain_start" and name == "respond_with_plan":
                     yield activity_sse("respond_with_plan", "running", "Writing response...")
+
+                elif kind == "on_chain_start" and name == "handle_venue_edit":
+                    yield activity_sse("handle_venue_edit", "running", "Updating venue profile...")
 
                 elif kind == "on_chain_start" and name == "handle_unknown":
                     yield activity_sse("handle_unknown", "running", "Thinking...")
