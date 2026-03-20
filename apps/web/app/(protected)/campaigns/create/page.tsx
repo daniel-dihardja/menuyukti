@@ -2,26 +2,26 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 import { getTranslations } from "next-intl/server";
-import { routes } from "@/lib/routes";
 import { notFound } from "next/navigation";
+import { routes } from "@/lib/routes";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { AiChatPanel } from "./ai-chat-panel";
 import { graphqlQuery } from "@/lib/graphql/client";
 import { ANALYTICS_RUN_QUERY, type AnalyticsRunData } from "@/lib/graphql/queries";
 
 type PageProps = {
-  params: Promise<{ analyticsId?: string }>;
+  searchParams: Promise<{ analyticsId?: string }>;
 };
 
-export default async function Page({ params }: PageProps) {
-  const tSales = await getTranslations("analytics.sales");
+export default async function Page({ searchParams }: PageProps) {
+  const tCampaigns = await getTranslations("analytics.campaigns");
   const tAi = await getTranslations("analytics.ai");
 
-  const { analyticsId: analyticsIdParam } = await params;
+  const { analyticsId: analyticsIdParam } = await searchParams;
   if (!analyticsIdParam) notFound();
 
   const analyticsId = Number(analyticsIdParam);
-  if (!Number.isInteger(analyticsId)) notFound();
+  if (!Number.isInteger(analyticsId) || isNaN(analyticsId)) notFound();
 
   const data = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, {
     id: String(analyticsId),
@@ -29,15 +29,11 @@ export default async function Page({ params }: PageProps) {
   const run = data.analyticsRun;
   if (!run) notFound();
 
-  const analyticsName =
-    run.name ?? run.filename ?? `Analytics #${run.id}`;
-
   return (
     <AnalyticsPageShell
       title={tAi("reportTitle")}
       breadcrumbs={[
-        { label: tSales("title"), href: routes.analytics.sales },
-        { label: analyticsName },
+        { label: tCampaigns("title"), href: routes.campaigns.list },
         { label: tAi("breadcrumb") },
       ]}
       mainClassName="max-w-none w-full h-[calc(100vh-4rem)] min-h-[24rem]"

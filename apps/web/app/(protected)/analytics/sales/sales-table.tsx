@@ -59,7 +59,7 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
                       <Link
-                        href={routes.analytics.ai(row.id)}
+                        href={routes.campaigns.createWithAnalytics(row.id)}
                         className="flex items-center gap-2"
                       >
                         <Sparkles className="h-4 w-4" />

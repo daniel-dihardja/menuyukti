@@ -20,14 +20,14 @@ export const routes = {
     heatmap: (analyticsId: string | number) =>
       `/analytics/${analyticsId}/heatmap`,
 
-    ai: (analyticsId: string | number) => `/analytics/${analyticsId}/ai`,
-
     cogs: (analyticsId: string | number) => `/analytics/${analyticsId}/cogs`,
   },
 
   campaigns: {
     list: "/campaigns",
     create: "/campaigns/create",
+    createWithAnalytics: (analyticsId: string | number) =>
+      `/campaigns/create?analyticsId=${analyticsId}`,
     detail: (id: string | number) => `/campaigns/${id}`,
   },
 
