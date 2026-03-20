@@ -1,8 +1,8 @@
-"""Plan-and-Execute planner: context-aware step sequence, executor dispatches each step."""
+"""Plan-and-Execute planner: static campaign step sequence + executor dispatch."""
 
 import logging
 from dataclasses import replace
-from typing import Any, Literal
+from typing import Any
 
 from langchain_core.callbacks.manager import adispatch_custom_event
 from langchain_core.runnables import RunnableConfig
@@ -11,11 +11,10 @@ from agent.ig_campaign.campaign_brief import generate_campaign_brief
 from agent.ig_campaign.post_format import assign_post_formats
 from agent.ig_campaign.post_schedule import generate_post_schedule
 from agent.ig_campaign.data_fetch import fetch_all_data
-from agent.ig_campaign.data_fetch_lite import fetch_location_data
 from agent.ig_campaign.venue_summary import generate_location_summary
 from agent.ig_campaign.slot_calendar import generate_candidate_slots
 from agent.ig_campaign.node_utils import _emit, _update_planning
-from agent.state import ContextMode, State
+from agent.state import State
 
 # Steps that produce a meaningful artifact-panel update and should stream
 # a planning_update event to the UI as soon as they complete.
@@ -30,7 +29,6 @@ logger = logging.getLogger(__name__)
 
 STEP_REGISTRY: dict[str, Any] = {
     "fetch_all_data": fetch_all_data,
-    "fetch_location_data": fetch_location_data,
     "generate_location_summary": generate_location_summary,
     "generate_candidate_slots": generate_candidate_slots,
     "generate_post_schedule": generate_post_schedule,
@@ -47,28 +45,16 @@ CAMPAIGN_PLAN = [
     "generate_campaign_brief",
 ]
 
-FOUNDATION_PLAN = [
-    "fetch_location_data",
-    "generate_location_summary",
-]
-
-
 # ---------------------------------------------------------------------------
 # Graph nodes
 # ---------------------------------------------------------------------------
 
 async def create_plan(state: State, config: RunnableConfig) -> dict[str, Any]:
-    """Select the appropriate step sequence based on available context (full vs. lite)."""
+    """Create a static campaign plan sequence for plan-and-execute."""
     planning = state.planning
-    configurable = config.get("configurable") or {}
-    analytics_id = configurable.get("analytics_id")
-
-    mode: ContextMode = "full" if analytics_id else "lite"
-    plan = CAMPAIGN_PLAN if mode == "full" else FOUNDATION_PLAN
-
-    step_labels = " → ".join(plan)
-    await _emit("create_plan", "done", f"Plan ({mode}): {step_labels}", config)
-    return {"planning": _update_planning(planning, context_mode=mode, plan=plan, current_step=0)}
+    step_labels = " → ".join(CAMPAIGN_PLAN)
+    await _emit("create_plan", "done", f"Plan: {step_labels}", config)
+    return {"planning": _update_planning(planning, plan=CAMPAIGN_PLAN, current_step=0)}
 
 
 async def execute_step(state: State, config: RunnableConfig) -> dict[str, Any]:

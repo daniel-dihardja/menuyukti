@@ -6,8 +6,6 @@ from typing import Annotated, Any, Literal, TypedDict
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 
-ContextMode = Literal["full", "lite"]
-
 from pydantic import BaseModel, Field
 
 # Intent category: top-level classification (extend with more later, e.g. "content")
@@ -125,7 +123,6 @@ class ReflectionIteration:
 class PlanningState:
     dateStart: str | None = None
     dateEnd: str | None = None
-    context_mode: ContextMode | None = None
     location: dict[str, Any] | None = None
     nationalHolidays: list[NationalHoliday] | None = field(default=None)
     operatingProfile: dict[str, Any] | None = None
@@ -146,6 +143,7 @@ class State:
     message: str
     messages: Annotated[list[BaseMessage], add_messages] = field(default_factory=list)
     intent_category: IntentCategory = "planning"
+    campaign_requirements_met: bool = False
     response: str | None = None
     intent: str | None = None
     planning: PlanningState | None = None

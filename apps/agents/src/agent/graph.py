@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 from typing import Any, Dict, Literal
 
 from langgraph.graph import StateGraph
@@ -14,6 +15,7 @@ from agent.config import LLM_MODEL
 from agent.ig_campaign import planning_subgraph
 from agent.ig_campaign.data_fetch_lite import fetch_location_data
 from agent.ig_campaign.edit_venue_summary import edit_venue_summary
+from agent.ig_campaign.venue_summary import generate_location_summary
 from agent.ig_campaign.node_utils import _build_location_context, _update_planning
 from agent.state import IntentCategory, State
 
@@ -23,7 +25,12 @@ logger = logging.getLogger(__name__)
 class IntentResult(BaseModel):
     """Structured result for intent classification."""
 
-    intent: Literal["create_instagram_campaign", "edit_venue_profile", "unknown"]
+    intent: Literal[
+        "create_location_profile",
+        "create_instagram_campaign",
+        "edit_venue_profile",
+        "unknown",
+    ]
 
 
 llm = ChatOpenAI(
@@ -35,15 +42,20 @@ intent_llm = ChatOpenAI(model=LLM_MODEL, temperature=0).with_structured_output(I
 
 INTENT_SYSTEM = (
     "You are an intent classifier. Classify the user message into exactly one of:\n"
+    "- 'create_location_profile': user is explicitly requesting to create, generate, build, "
+    "or refresh the venue/location profile only (no post schedule)\n"
     "- 'create_instagram_campaign': user is EXPLICITLY requesting to create, generate, "
     "build, or start a new Instagram campaign or post schedule right now\n"
     "- 'edit_venue_profile': user wants to update, add to, or correct the venue/restaurant "
     "profile or location summary\n"
     "- 'unknown': anything else — including questions about Instagram, how-to questions, "
     "general conversation, follow-up questions, or requests for advice\n\n"
+    "Examples of 'create_location_profile': "
+    "'create location profile', 'generate location summary', 'build my venue profile', "
+    "'refresh our location profile'\n"
     "Examples of 'create_instagram_campaign': "
-    "'create a campaign', 'generate my posts', 'build a schedule', 'start a campaign for next month', "
-    "'create location profile', 'generate location summary', 'build my venue profile'\n"
+    "'create a campaign', 'generate my posts', 'build a schedule', "
+    "'start a campaign for next month', 'make an instagram campaign brief'\n"
     "Examples of 'edit_venue_profile': "
     "'add that we have a summer garden', 'update the profile to mention our kids menu', "
     "'the venue description is missing our terrace', 'include that we serve brunch on weekends'\n"
@@ -72,7 +84,7 @@ A campaign brief has been created:
 
 Respond to the user with a short, friendly confirmation of the campaign concept."""
 
-PLAN_RESPONSE_PROMPT_LITE = """The user asked: {message}
+LOCATION_PROFILE_RESPONSE_PROMPT = """The user asked: {message}
 
 A location profile has been generated for this restaurant.
 Campaign window: {date_start} to {date_end}
@@ -87,14 +99,14 @@ Respond with a single friendly sentence confirming what was changed. Be specific
 
 
 async def initialize_session(state: State, config: RunnableConfig) -> dict[str, Any]:
-    """Hydrate planning state with location + profile before any reasoning node runs.
+    """Hydrate planning state with location and UI-seeded values before reasoning.
 
     Dates and holidays are refreshed from the UI on every turn so that changes
     made in the artifact panel (date pickers, re-fetched holidays) are always
     reflected in the next agent run.
 
-    Location data and locationSummary are fetched only on the first turn (cold
-    start) — MemorySaver persists them across turns at zero extra cost.
+    Location data is fetched only on the first turn (cold start) — MemorySaver
+    persists it across turns at zero extra cost.
     """
     configurable = config.get("configurable") or {}
     location_id = configurable.get("location_id")
@@ -113,7 +125,7 @@ async def initialize_session(state: State, config: RunnableConfig) -> dict[str, 
     if national_holidays:
         planning = _update_planning(planning, nationalHolidays=national_holidays)
 
-    # Location data and profile are only fetched once (cold start).
+    # Location data is fetched only once (cold start).
     if state.planning and state.planning.location:
         return {"planning": planning} if planning is not state.planning else {}
 
@@ -145,8 +157,47 @@ async def classify_intent(state: State) -> Dict[str, Any]:
 
 def route_by_intent(state: State) -> str:
     """Route after classify_intent based on the classified intent."""
-    valid = ("create_instagram_campaign", "edit_venue_profile", "unknown")
+    valid = (
+        "create_location_profile",
+        "create_instagram_campaign",
+        "edit_venue_profile",
+        "unknown",
+    )
     return state.intent if state.intent in valid else "unknown"
+
+
+async def run_location_profile_flow(state: State, config: RunnableConfig) -> Dict[str, Any]:
+    """Generate or refresh location profile outside the campaign planning subgraph."""
+    fetched = await fetch_location_data(state, config)
+    planning_after_fetch = fetched.get("planning", state.planning)
+    summary_input_state = replace(state, planning=planning_after_fetch)
+    summarized = await generate_location_summary(summary_input_state, config)
+    return {"planning": summarized.get("planning", planning_after_fetch)}
+
+
+async def check_campaign_requirements(state: State, config: RunnableConfig) -> Dict[str, Any]:
+    """Validate mandatory inputs for campaign creation."""
+    configurable = config.get("configurable") or {}
+    analytics_id = configurable.get("analytics_id")
+
+    if analytics_id:
+        return {"campaign_requirements_met": True}
+
+    msg = (
+        "I need an analytics run to create an Instagram campaign. "
+        "Please select an analytics run, or ask me to create the location profile first."
+    )
+    await adispatch_custom_event("response_delta", {"text": msg}, config=config)
+    return {
+        "campaign_requirements_met": False,
+        "response": msg,
+        "messages": [AIMessage(content=msg)],
+    }
+
+
+def route_campaign_requirements(state: State) -> str:
+    """Route campaign flow depending on required input availability."""
+    return "run" if state.campaign_requirements_met else "blocked"
 
 
 async def handle_unknown(state: State) -> Dict[str, Any]:
@@ -167,29 +218,35 @@ async def handle_unknown(state: State) -> Dict[str, Any]:
     }
 
 
-async def respond_with_plan(state: State) -> Dict[str, Any]:
-    """Format a user-facing response from the campaign brief (full) or location profile (lite)."""
+async def respond_with_campaign(state: State) -> Dict[str, Any]:
+    """Format a user-facing response from the campaign brief."""
     planning = state.planning
-    context_mode = planning.context_mode if planning else None
+    brief = planning.campaign_brief if planning else None
+    prompt = PLAN_RESPONSE_PROMPT.format(
+        message=state.message,
+        date_start=planning.dateStart if planning else "unknown",
+        date_end=planning.dateEnd if planning else "unknown",
+        campaign_theme=brief.campaign_theme if brief else "N/A",
+        tone=brief.tone if brief else "N/A",
+        posting_cadence=brief.posting_cadence if brief else "N/A",
+        post_count=len(brief.post_slots) if brief else 0,
+    )
 
-    if context_mode == "lite":
-        prompt = PLAN_RESPONSE_PROMPT_LITE.format(
-            message=state.message,
-            date_start=planning.dateStart if planning else "unknown",
-            date_end=planning.dateEnd if planning else "unknown",
-        )
-    else:
-        brief = planning.campaign_brief if planning else None
-        prompt = PLAN_RESPONSE_PROMPT.format(
-            message=state.message,
-            date_start=planning.dateStart if planning else "unknown",
-            date_end=planning.dateEnd if planning else "unknown",
-            campaign_theme=brief.campaign_theme if brief else "N/A",
-            tone=brief.tone if brief else "N/A",
-            posting_cadence=brief.posting_cadence if brief else "N/A",
-            post_count=len(brief.post_slots) if brief else 0,
-        )
+    result = await llm.ainvoke(prompt)
+    return {
+        "response": result.content,
+        "messages": [AIMessage(content=result.content)],
+    }
 
+
+async def respond_with_location_profile(state: State) -> Dict[str, Any]:
+    """Format a user-facing confirmation for location profile generation."""
+    planning = state.planning
+    prompt = LOCATION_PROFILE_RESPONSE_PROMPT.format(
+        message=state.message,
+        date_start=planning.dateStart if planning else "unknown",
+        date_end=planning.dateEnd if planning else "unknown",
+    )
     result = await llm.ainvoke(prompt)
     return {
         "response": result.content,
@@ -210,7 +267,7 @@ async def handle_venue_edit(state: State, config: RunnableConfig) -> Dict[str, A
     if not (state.planning and state.planning.locationSummary):
         msg = (
             "I don't have a venue profile loaded yet. "
-            "Please create a campaign first and I'll be able to update the profile."
+            "Please create a location profile first and I'll be able to update it."
         )
         await adispatch_custom_event("response_delta", {"text": msg}, config=config)
         return {
@@ -256,23 +313,37 @@ graph = (
     StateGraph(State)
     .add_node("initialize_session", initialize_session)
     .add_node("classify_intent", classify_intent)
-    .add_node("run_planning_agent", planning_subgraph)
+    .add_node("run_location_profile_flow", run_location_profile_flow)
+    .add_node("check_campaign_requirements", check_campaign_requirements)
+    .add_node("run_campaign_agent", planning_subgraph)
     .add_node("handle_unknown", handle_unknown)
     .add_node("handle_venue_edit", handle_venue_edit)
-    .add_node("respond_with_plan", respond_with_plan)
+    .add_node("respond_with_campaign", respond_with_campaign)
+    .add_node("respond_with_location_profile", respond_with_location_profile)
     .add_edge("__start__", "initialize_session")
     .add_edge("initialize_session", "classify_intent")
     .add_conditional_edges(
         "classify_intent",
         route_by_intent,
         {
-            "create_instagram_campaign": "run_planning_agent",
+            "create_location_profile": "run_location_profile_flow",
+            "create_instagram_campaign": "check_campaign_requirements",
             "edit_venue_profile": "handle_venue_edit",
             "unknown": "handle_unknown",
         },
     )
-    .add_edge("run_planning_agent", "respond_with_plan")
-    .add_edge("respond_with_plan", "__end__")
+    .add_conditional_edges(
+        "check_campaign_requirements",
+        route_campaign_requirements,
+        {
+            "run": "run_campaign_agent",
+            "blocked": "__end__",
+        },
+    )
+    .add_edge("run_campaign_agent", "respond_with_campaign")
+    .add_edge("run_location_profile_flow", "respond_with_location_profile")
+    .add_edge("respond_with_campaign", "__end__")
+    .add_edge("respond_with_location_profile", "__end__")
     .add_edge("handle_venue_edit", "__end__")
     .add_edge("handle_unknown", "__end__")
     .compile(checkpointer=MemorySaver())

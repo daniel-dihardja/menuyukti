@@ -70,13 +70,17 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
 
     Uses astream_events (v2) to emit events as each node runs:
     - activity events emitted on node start/end for agent transparency
-    - planning data emitted immediately when run_planning_agent completes
-    - LLM tokens streamed word-by-word from respond_with_plan
+    - planning data emitted immediately when campaign/location generation completes
+    - LLM tokens streamed word-by-word from response formatter nodes
     - static fallback emitted on handle_unknown completion
     Stream ends with: data: [DONE]
     """
 
-    _STREAMING_NODES = {"respond_with_plan", "handle_unknown"}
+    _STREAMING_NODES = {
+        "respond_with_campaign",
+        "respond_with_location_profile",
+        "handle_unknown",
+    }
 
     async def generate():
         try:
@@ -117,9 +121,11 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
                 elif kind == "on_chain_end" and name == "classify_intent":
                     yield activity_sse("classify_intent", "done", "Request understood")
 
-                elif kind == "on_chain_start" and name == "run_planning_agent":
-                    label = "Planning campaign dates..." if body.analytics_id else "Generating location profile..."
-                    yield activity_sse("run_planning_agent", "running", label)
+                elif kind == "on_chain_start" and name == "run_campaign_agent":
+                    yield activity_sse("run_campaign_agent", "running", "Planning campaign dates...")
+
+                elif kind == "on_chain_start" and name == "run_location_profile_flow":
+                    yield activity_sse("run_location_profile_flow", "running", "Generating location profile...")
 
                 elif kind == "on_custom_event" and name == "activity":
                     data = event.get("data") or {}
@@ -136,17 +142,24 @@ async def invoke_stream(body: InvokeRequest) -> StreamingResponse:
                     if planning and hasattr(planning, "locationSummary"):
                         yield f"data: {json.dumps({'planning': {'dateStart': planning.dateStart, 'dateEnd': planning.dateEnd, 'nationalHolidays': planning.nationalHolidays, 'locationSummary': planning.locationSummary, 'campaignBrief': planning.campaign_brief.model_dump() if planning.campaign_brief else None}})}\n\n".encode("utf-8")
 
-                elif kind == "on_chain_end" and name == "run_planning_agent":
+                elif kind == "on_chain_end" and name == "run_campaign_agent":
                     output = event["data"].get("output") or {}
                     planning = output.get("planning")
                     if planning and hasattr(planning, "dateStart"):
                         detail = f"{planning.dateStart} – {planning.dateEnd}"
-                        done_label = "Campaign dates planned" if body.analytics_id else "Location profile ready"
-                        yield activity_sse("run_planning_agent", "done", done_label, detail)
+                        yield activity_sse("run_campaign_agent", "done", "Campaign dates planned", detail)
                         yield f"data: {json.dumps({'planning': {'dateStart': planning.dateStart, 'dateEnd': planning.dateEnd, 'nationalHolidays': planning.nationalHolidays, 'locationSummary': planning.locationSummary, 'campaignBrief': planning.campaign_brief.model_dump() if planning.campaign_brief else None}})}\n\n".encode("utf-8")
 
-                elif kind == "on_chain_start" and name == "respond_with_plan":
-                    yield activity_sse("respond_with_plan", "running", "Writing response...")
+                elif kind == "on_chain_end" and name == "run_location_profile_flow":
+                    output = event["data"].get("output") or {}
+                    planning = output.get("planning")
+                    if planning and hasattr(planning, "dateStart"):
+                        detail = f"{planning.dateStart} – {planning.dateEnd}"
+                        yield activity_sse("run_location_profile_flow", "done", "Location profile ready", detail)
+                        yield f"data: {json.dumps({'planning': {'dateStart': planning.dateStart, 'dateEnd': planning.dateEnd, 'nationalHolidays': planning.nationalHolidays, 'locationSummary': planning.locationSummary, 'campaignBrief': planning.campaign_brief.model_dump() if planning.campaign_brief else None}})}\n\n".encode("utf-8")
+
+                elif kind == "on_chain_start" and name in {"respond_with_campaign", "respond_with_location_profile"}:
+                    yield activity_sse(name, "running", "Writing response...")
 
                 elif kind == "on_chain_start" and name == "handle_venue_edit":
                     yield activity_sse("handle_venue_edit", "running", "Updating venue profile...")
