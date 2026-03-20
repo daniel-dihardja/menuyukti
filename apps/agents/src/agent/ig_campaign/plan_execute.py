@@ -45,9 +45,6 @@ FULL_PLAN = [
 LITE_PLAN = [
     "fetch_location_data",
     "generate_location_summary",
-    "generate_candidate_slots",
-    "generate_post_schedule",
-    "generate_campaign_brief",
 ]
 
 

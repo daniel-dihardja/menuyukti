@@ -39,6 +39,13 @@ A campaign brief has been created:
 
 Respond to the user with a short, friendly confirmation of the campaign concept."""
 
+PLAN_RESPONSE_PROMPT_LITE = """The user asked: {message}
+
+A location profile has been generated for this restaurant.
+Campaign window: {date_start} to {date_end}
+
+Respond briefly: confirm the location profile is ready and mention that adding an analytics run would unlock a full post schedule with menu-specific format assignments."""
+
 
 async def classify_intent(state: State) -> Dict[str, Any]:
     """Classify user message into create_instagram_campaign or unknown."""
@@ -61,18 +68,28 @@ async def handle_unknown(state: State) -> Dict[str, Any]:
 
 
 async def respond_with_plan(state: State) -> Dict[str, Any]:
-    """Format a user-facing response from the campaign brief."""
+    """Format a user-facing response from the campaign brief (full) or location profile (lite)."""
     planning = state.planning
-    brief = planning.campaign_brief if planning else None
-    prompt = PLAN_RESPONSE_PROMPT.format(
-        message=state.message,
-        date_start=planning.dateStart if planning else "unknown",
-        date_end=planning.dateEnd if planning else "unknown",
-        campaign_theme=brief.campaign_theme if brief else "N/A",
-        tone=brief.tone if brief else "N/A",
-        posting_cadence=brief.posting_cadence if brief else "N/A",
-        post_count=len(brief.post_slots) if brief else 0,
-    )
+    context_mode = planning.context_mode if planning else None
+
+    if context_mode == "lite":
+        prompt = PLAN_RESPONSE_PROMPT_LITE.format(
+            message=state.message,
+            date_start=planning.dateStart if planning else "unknown",
+            date_end=planning.dateEnd if planning else "unknown",
+        )
+    else:
+        brief = planning.campaign_brief if planning else None
+        prompt = PLAN_RESPONSE_PROMPT.format(
+            message=state.message,
+            date_start=planning.dateStart if planning else "unknown",
+            date_end=planning.dateEnd if planning else "unknown",
+            campaign_theme=brief.campaign_theme if brief else "N/A",
+            tone=brief.tone if brief else "N/A",
+            posting_cadence=brief.posting_cadence if brief else "N/A",
+            post_count=len(brief.post_slots) if brief else 0,
+        )
+
     result = await llm.ainvoke(prompt)
     return {"response": result.content}
 
