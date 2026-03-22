@@ -2,6 +2,8 @@
 
 **Agentic AI platform for data-driven restaurant marketing automation**
 
+![Menuyukti screenshot](./screenshot.png)
+
 Menuyukti turns restaurant sales data into targeted Instagram campaigns. It analyzes historical performance and generates social content for future periods—so restaurants can grow visibility and revenue with less manual work.
 
 ## Key features
