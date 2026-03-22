@@ -26,6 +26,4 @@ Menuyukti turns restaurant sales data into targeted Instagram campaigns. It anal
 - **Frontend:** React, Next.js, TypeScript, Node.js.
 - **AI:** LangChain, LangGraph, AI SDK, AI Elements — multi-agent orchestration and real-time chat.
 
-## Repo
 
-https://github.com/daniel-dihardja/menuyukti
