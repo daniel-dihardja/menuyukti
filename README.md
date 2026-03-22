@@ -21,6 +21,10 @@ Menuyukti is split into three cooperating services:
 2. **Web app** — The user-facing application: conversational chat, artifact review and editing, and CRUD-style forms for entities the product manages.
 3. **Agent service** — A LangChain/LangGraph agentic stack served over **FastAPI**. It handles multi-step reasoning, tool use, and content generation while calling the GraphQL provider as needed.
 
+## Examples
+
+For real-world use cases, browse the examples under the **`advanced/`** and **`applications/`** directories in this repository—they illustrate end-to-end workflows and applied patterns.
+
 ## Agentic patterns
 
 - **Intent routing** — The main LangGraph classifies each user turn with structured output (e.g. create campaign, location profile, edit venue, or general chat), then **conditionally routes** to the right subgraph or handler—so long-running flows stay separate from Q&A.
