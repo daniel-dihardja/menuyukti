@@ -14,8 +14,8 @@ Menuyukti turns restaurant sales data into targeted Instagram campaigns. It anal
 ## Agentic patterns
 
 - **Intent routing** — The main LangGraph classifies each user turn with structured output (e.g. create campaign, location profile, edit venue, or general chat), then **conditionally routes** to the right subgraph or handler—so long-running flows stay separate from Q&A.
-- **Planning** — Campaign work runs inside a **plan-and-execute** subgraph: the agent first materializes an explicit multi-step plan (data → slots → schedule → formats → brief), then walks that plan in order.
-- **ReAct-style execution** — The planning subgraph **loops over plan steps**: each step invokes the right “tool” (fetch analytics, build schedule, assign formats, etc.), updates shared state, and continues until the plan is finished—an act/observe loop over a fixed strategy.
+- **Planning** — **Plan-and-execute** for the campaign pipeline: the system builds an explicit multi-step plan (data → slots → schedule → formats → brief), then runs a loop that executes each step in order until the plan completes.
+- **ReAct** — The **ReAct** pattern (Reason + Act): interleaved reasoning, tool calls, and observation—the model chooses actions step by step from what tools return. This is implemented in addition to plan-and-execute; the two patterns cover different roles in the agent stack.
 - **Reflect** — Draft outputs (e.g. location profiles and format plans) pass through **generate → reflect → revise** cycles: a critic step scores or critiques the draft, and the model revises until quality checks pass or a max iteration bound is hit.
 
 ## Tech stack
