@@ -19,7 +19,7 @@ Menuyukti is split into three cooperating services:
 
 1. **GraphQL data provider** — A Python backend that exposes GraphQL for structured data, analytics, and persistence. The web app and the agents both use this API as the single source of truth for reads and writes.
 2. **Web app** — The user-facing application: conversational chat, artifact review and editing, and CRUD-style forms for entities the product manages.
-3. **Agent service** — A LangChain/LangGraph agentic stack served over **FastAPI**. It handles multi-step reasoning, tool use, and content generation while calling the GraphQL provider (and other integrations) as needed.
+3. **Agent service** — A LangChain/LangGraph agentic stack served over **FastAPI**. It handles multi-step reasoning, tool use, and content generation while calling the GraphQL provider as needed.
 
 ## Agentic patterns
 
@@ -33,5 +33,3 @@ Menuyukti is split into three cooperating services:
 - **Backend:** Python, GraphQL, PostgreSQL — GraphQL API for structured data and analytics.
 - **Frontend:** React, Next.js, TypeScript, Node.js.
 - **AI:** LangChain, LangGraph, AI SDK, AI Elements — multi-agent orchestration and real-time chat.
-
-
