@@ -1,3 +1,3 @@
 package agent
 
-// Run is the main entry point for agent execution.
+// Orchestrator: classify → route → execute flow → return result.

@@ -1,3 +1,3 @@
 package handler
 
-// RunAgent handles the single /run endpoint.
+// POST /run — validates input, calls agent layer, writes response.

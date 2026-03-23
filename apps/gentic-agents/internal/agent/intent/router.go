@@ -1,3 +1,3 @@
 package intent
 
-// Router maps intent to the corresponding flow.
+// Maps classified intent → Flow. Returns error for unknown intents.
