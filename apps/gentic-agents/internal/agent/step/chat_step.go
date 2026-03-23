@@ -1,0 +1,32 @@
+package step
+
+import (
+	"github.com/daniel-dihardja/gentic/pkg/gentic"
+	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
+)
+
+// ChatStep runs a single non-streaming OpenAI chat completion and writes the reply to state.
+type ChatStep struct {
+	Model        string
+	SystemPrompt string
+}
+
+// Run implements gentic.Step.
+func (c ChatStep) Run(s *gentic.State) error {
+	resp, err := openai.Chat(openai.ChatCompletionRequest{
+		Model: c.Model,
+		Messages: []openai.ChatMessage{
+			{Role: "system", Content: c.SystemPrompt},
+			{Role: "user", Content: s.Input},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	if len(resp.Choices) == 0 {
+		s.Output = ""
+		return nil
+	}
+	s.Output = resp.Choices[0].Message.Content
+	return nil
+}

@@ -11,59 +11,32 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/daniel-dihardja/gentic/pkg/gentic"
-	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent"
+	"github.com/daniel-dihardja/gentic-agents/internal/api"
+	"github.com/daniel-dihardja/gentic-agents/internal/platform/config"
 	"github.com/joho/godotenv"
 )
-
-const defaultAddr = ":7000"
-
-type AskStep struct{}
-
-func (a AskStep) Run(s *gentic.State) error {
-	resp, err := openai.Chat(openai.ChatCompletionRequest{
-		Model: "gpt-4o-mini",
-		Messages: []openai.ChatMessage{
-			{Role: "user", Content: s.Input},
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	s.Output = resp.Choices[0].Message.Content
-	return nil
-}
-
-type MyResolver struct{}
-
-func (r MyResolver) Resolve(s *gentic.State) gentic.Flow {
-	return gentic.NewFlow(
-		AskStep{},
-	)
-}
 
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Printf("godotenv: %v (continuing with process env)", err)
 	}
 
-	agent := gentic.Agent{
-		Resolver: MyResolver{},
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("config: %v", err)
 	}
 
-	addr := os.Getenv("ADDR")
-	if addr == "" {
-		addr = defaultAddr
-	}
+	runner := agent.NewRunner(cfg.Model, cfg.SystemPrompt)
+	handler := api.NewRouter(runner)
 
 	mux := http.NewServeMux()
+	mux.Handle("/", handler)
 	mux.HandleFunc("POST /api/v1/echo", echoHandler)
-	mux.HandleFunc("POST /api/v1/invoke", invokeHandler(&agent))
 
 	srv := &http.Server{
-		Addr:              addr,
-		Handler:           logRequest(mux),
+		Addr:              cfg.Addr,
+		Handler:           mux,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      120 * time.Second,
@@ -71,7 +44,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("listening on %s", addr)
+		log.Printf("listening on %s", cfg.Addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server: %v", err)
 		}
@@ -98,12 +71,6 @@ type echoResponse struct {
 	Error string `json:"error,omitempty"`
 }
 
-type invokeResponse struct {
-	OK     bool   `json:"ok"`
-	Output string `json:"output,omitempty"`
-	Error  string `json:"error,omitempty"`
-}
-
 func echoHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Body != nil {
 		defer r.Body.Close()
@@ -113,53 +80,17 @@ func echoHandler(w http.ResponseWriter, r *http.Request) {
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, echoResponse{OK: false, Error: "invalid JSON body"})
+		writeJSONEcho(w, http.StatusBadRequest, echoResponse{OK: false, Error: "invalid JSON body"})
 		return
 	}
 
-	writeJSON(w, http.StatusOK, echoResponse{OK: true, Echo: req.Message})
+	writeJSONEcho(w, http.StatusOK, echoResponse{OK: true, Echo: req.Message})
 }
 
-func invokeHandler(agent *gentic.Agent) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Body != nil {
-			defer r.Body.Close()
-		}
-
-		var req echoRequest
-		dec := json.NewDecoder(r.Body)
-		dec.DisallowUnknownFields()
-		if err := dec.Decode(&req); err != nil {
-			writeJSON(w, http.StatusBadRequest, invokeResponse{OK: false, Error: "invalid JSON body"})
-			return
-		}
-		if req.Message == "" {
-			writeJSON(w, http.StatusBadRequest, invokeResponse{OK: false, Error: "message is required"})
-			return
-		}
-
-		result, err := agent.Run(req.Message)
-		if err != nil {
-			log.Printf("agent run: %v", err)
-			writeJSON(w, http.StatusInternalServerError, invokeResponse{OK: false, Error: "agent run failed"})
-			return
-		}
-
-		writeJSON(w, http.StatusOK, invokeResponse{OK: true, Output: result.Output})
-	}
-}
-
-func writeJSON(w http.ResponseWriter, status int, v any) {
+func writeJSONEcho(w http.ResponseWriter, status int, v echoResponse) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(v); err != nil {
 		log.Printf("encode response: %v", err)
 	}
-}
-
-func logRequest(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("%s %s", r.Method, r.URL.Path)
-		next.ServeHTTP(w, r)
-	})
 }
