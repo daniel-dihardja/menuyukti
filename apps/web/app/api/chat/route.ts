@@ -3,8 +3,8 @@ import type { UIMessage } from "ai";
 import { getAgentsBaseUrl } from "@/lib/config";
 import { chatRequestBodySchema } from "./schema";
 
-// Batch agent invoke is fast; keep headroom for slow networks / cold starts.
-export const maxDuration = 120;
+// Streaming can run for a while (LLM + network).
+export const maxDuration = 180;
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
@@ -37,16 +37,123 @@ const SSE_EVENT = {
   TEXT_END: "text-end",
   FINISH: "finish",
   ERROR: "error",
+  DATA_PLANNING: "data-planning",
+  DATA_ACTIVITY: "data-activity",
 } as const;
 
 const SSE_DONE = "[DONE]" as const;
 
-/** JSON body from gentic-agents POST /invoke */
-interface AgentInvokeResponse {
-  ok: boolean;
-  output?: string;
-  intent?: string;
+interface PostSlot {
+  scheduled_date: string;
+  scheduled_time?: string;
+  theme: "holiday" | "promotion" | "engagement";
+  format: "single" | "carousel";
+  focus_item: string | null;
+  carousel_items: string[] | null;
+  carousel_narrative: string | null;
+  caption_seed: string;
+}
+
+interface CampaignBrief {
+  campaign_theme: string;
+  tone: string;
+  target_audience: string;
+  posting_cadence: string;
+  post_slots: PostSlot[];
+}
+
+/** Chunk shape from gentic-agents SSE stream (POST /invoke/stream) */
+interface AgentSSEChunk {
+  delta?: string;
   error?: string;
+  planning?: {
+    dateStart: string;
+    dateEnd: string;
+    nationalHolidays?: string | null;
+    locationSummary?: string | null;
+    campaignBrief?: CampaignBrief | null;
+  };
+  activity?: {
+    step: string;
+    status: "running" | "done" | "reflecting" | "reflect_pass" | "reflect_revise";
+    label: string;
+    detail?: string;
+  };
+}
+
+async function parseAgentSSEAndForward(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  controller: ReadableStreamDefaultController<Uint8Array>,
+  textPartId: string,
+  encoder: TextEncoder
+): Promise<void> {
+  const decoder = new TextDecoder();
+  let buffer = "";
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n\n");
+      const remainder = lines.pop();
+      buffer = remainder !== undefined ? remainder : "";
+      for (const line of lines) {
+        const match = line.match(/^data: (.+)$/m);
+        const payload = match?.[1]?.trim();
+        if (!payload) continue;
+        if (payload === SSE_DONE) continue;
+        try {
+          const data = JSON.parse(payload) as AgentSSEChunk;
+          if (data.error) {
+            controller.enqueue(
+              encoder.encode(
+                sseLine({ type: SSE_EVENT.ERROR, errorText: data.error })
+              )
+            );
+            return;
+          }
+          if (data.activity) {
+            controller.enqueue(
+              encoder.encode(
+                sseLine({ type: SSE_EVENT.DATA_ACTIVITY, data: data.activity })
+              )
+            );
+          }
+          if (data.planning) {
+            controller.enqueue(
+              encoder.encode(
+                sseLine({
+                  type: SSE_EVENT.DATA_PLANNING,
+                  data: {
+                    dateStart: data.planning.dateStart,
+                    dateEnd: data.planning.dateEnd,
+                    nationalHolidays: data.planning.nationalHolidays ?? null,
+                    locationSummary: data.planning.locationSummary ?? null,
+                    campaignBrief: data.planning.campaignBrief ?? null,
+                  },
+                })
+              )
+            );
+          }
+          if (typeof data.delta === "string" && data.delta) {
+            controller.enqueue(
+              encoder.encode(
+                sseLine({
+                  type: SSE_EVENT.TEXT_DELTA,
+                  id: textPartId,
+                  delta: data.delta,
+                })
+              )
+            );
+          }
+        } catch {
+          // ignore malformed JSON
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 export async function POST(req: Request) {
@@ -78,7 +185,7 @@ export async function POST(req: Request) {
 
   let agentRes: Response;
   try {
-    agentRes = await fetch(`${baseUrl}/invoke`, {
+    agentRes = await fetch(`${baseUrl}/invoke/stream`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -99,47 +206,40 @@ export async function POST(req: Request) {
     return jsonError(message, 502);
   }
 
-  const raw = await agentRes.text();
-  let body: AgentInvokeResponse;
-  try {
-    body = JSON.parse(raw) as AgentInvokeResponse;
-  } catch {
+  if (!agentRes.ok) {
+    const text = await agentRes.text();
     return jsonError(
-      `Agents service error (${agentRes.status}): ${raw || agentRes.statusText}`,
-      agentRes.ok ? 502 : agentRes.status
+      `Agents service error (${agentRes.status}): ${text || agentRes.statusText}`,
+      502
     );
   }
 
-  if (!agentRes.ok || !body.ok) {
-    const errMsg =
-      body.error?.trim() || `Agents service error (${agentRes.status})`;
-    return jsonError(errMsg, agentRes.ok ? 502 : agentRes.status);
-  }
-
-  const output = body.output ?? "";
   const messageId = crypto.randomUUID();
   const textPartId = crypto.randomUUID();
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
-    start(controller) {
+    async start(controller) {
       controller.enqueue(
         encoder.encode(sseLine({ type: SSE_EVENT.START, messageId }))
       );
       controller.enqueue(
         encoder.encode(sseLine({ type: SSE_EVENT.TEXT_START, id: textPartId }))
       );
-      if (output) {
+
+      const reader = agentRes.body?.getReader();
+      if (!reader) {
         controller.enqueue(
-          encoder.encode(
-            sseLine({
-              type: SSE_EVENT.TEXT_DELTA,
-              id: textPartId,
-              delta: output,
-            })
-          )
+          encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId }))
         );
+        controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.FINISH })));
+        controller.enqueue(encoder.encode(sseLine(SSE_DONE)));
+        controller.close();
+        return;
       }
+
+      await parseAgentSSEAndForward(reader, controller, textPartId, encoder);
+
       controller.enqueue(
         encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId }))
       );

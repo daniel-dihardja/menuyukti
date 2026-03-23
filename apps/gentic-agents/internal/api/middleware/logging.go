@@ -25,3 +25,10 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 	lrw.status = code
 	lrw.ResponseWriter.WriteHeader(code)
 }
+
+// Flush implements http.Flusher so SSE handlers (e.g. POST /invoke/stream) work through this middleware.
+func (lrw *loggingResponseWriter) Flush() {
+	if f, ok := lrw.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}

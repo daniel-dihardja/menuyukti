@@ -6,6 +6,7 @@ import (
 	"github.com/daniel-dihardja/gentic-agents/internal/api/dto"
 	genticadapter "github.com/daniel-dihardja/gentic-agents/internal/gentic"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
+	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
 )
 
 // Runner executes the Gentic agent with request-scoped metadata.
@@ -26,6 +27,38 @@ func NewRunner(model, systemPrompt string) *Runner {
 func (r *Runner) Invoke(_ context.Context, req dto.InvokeRequest) (*dto.InvokeResponse, error) {
 	agent := genticadapter.BuildAgent(r.model, r.systemPrompt)
 
+	input := gen.AgentInput{
+		Query:    req.Message,
+		Metadata: metadataFromInvoke(req),
+	}
+
+	state, err := agent.RunWithContext(input)
+	if err != nil {
+		return nil, err
+	}
+
+	out := &dto.InvokeResponse{
+		OK:     true,
+		Output: state.Output,
+		Intent: state.Intent,
+	}
+	return out, nil
+}
+
+// Stream runs a token stream via Gentic StreamWithContext + OpenAI streaming.
+func (r *Runner) Stream(ctx context.Context, req dto.InvokeRequest) (<-chan gen.StreamEvent, error) {
+	agent := genticadapter.BuildStreamingAgent()
+	meta := metadataFromInvoke(req)
+	input := gen.AgentInput{
+		Query:        req.Message,
+		Metadata:     meta,
+		Model:        r.model,
+		SystemPrompt: r.systemPrompt,
+	}
+	return agent.StreamWithContext(ctx, input, openai.Provider{})
+}
+
+func metadataFromInvoke(req dto.InvokeRequest) map[string]interface{} {
 	meta := map[string]interface{}{
 		"thread_id": req.ThreadID,
 	}
@@ -47,21 +80,5 @@ func (r *Runner) Invoke(_ context.Context, req dto.InvokeRequest) (*dto.InvokeRe
 	if req.LocationProfile != nil {
 		meta["location_profile"] = *req.LocationProfile
 	}
-
-	input := gen.AgentInput{
-		Query:    req.Message,
-		Metadata: meta,
-	}
-
-	state, err := agent.RunWithContext(input)
-	if err != nil {
-		return nil, err
-	}
-
-	out := &dto.InvokeResponse{
-		OK:     true,
-		Output: state.Output,
-		Intent: state.Intent,
-	}
-	return out, nil
+	return meta
 }

@@ -12,6 +12,7 @@ import (
 func NewRouter(runner *agent.Runner) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /invoke", handler.Invoke(runner))
+	mux.HandleFunc("POST /invoke/stream", handler.InvokeStream(runner))
 
 	chain := middleware.Chain(
 		mux,
