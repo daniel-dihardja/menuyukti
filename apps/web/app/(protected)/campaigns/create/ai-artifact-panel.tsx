@@ -7,7 +7,6 @@ import {
   ArtifactHeader,
   ArtifactTitle,
 } from "@workspace/ui/components/ai-elements/artifact";
-import { MessageResponse } from "@workspace/ui/components/ai-elements/message";
 import { Button } from "@workspace/ui/components/button";
 import { DatePicker } from "@workspace/ui/components/date-picker";
 import {
@@ -17,7 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
-import { GalleryHorizontalIcon, GlobeIcon, LayoutListIcon, SparklesIcon, StoreIcon, CalendarIcon, DatabaseIcon, CheckCircle2Icon, CircleIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  DatabaseIcon,
+  GalleryHorizontalIcon,
+  GlobeIcon,
+  LayoutListIcon,
+  SparklesIcon,
+} from "lucide-react";
 
 export type NationalHoliday = {
   id: string;
@@ -60,13 +66,24 @@ type AiArtifactPanelProps = {
   planning?: PlanningArtifact;
   campaignDates: { dateStart: string; dateEnd: string };
   onDatesChange: (dates: { dateStart: string; dateEnd: string }) => void;
-  onCreateLocationProfile?: () => void;
   onCreateCampaign?: () => void;
   analyticsRuns?: AnalyticsRun[];
   selectedAnalyticsId?: number | null;
   onAnalyticsIdChange?: (id: number | null) => void;
   isStreaming?: boolean;
 };
+
+function selectedReportLabel(
+  analyticsRuns: AnalyticsRun[] | undefined,
+  selectedAnalyticsId: number | null | undefined
+): string {
+  if (selectedAnalyticsId === null || selectedAnalyticsId === undefined || !analyticsRuns?.length) {
+    return "No report selected";
+  }
+  const run = analyticsRuns.find((r) => r.id === String(selectedAnalyticsId));
+  if (!run) return "No report selected";
+  return run.name || run.filename;
+}
 
 type HolidayItem = {
   localName: string;
@@ -103,7 +120,6 @@ export function AiArtifactPanel({
   planning,
   campaignDates,
   onDatesChange,
-  onCreateLocationProfile,
   onCreateCampaign,
   analyticsRuns,
   selectedAnalyticsId,
@@ -139,54 +155,52 @@ export function AiArtifactPanel({
     <Artifact className="size-full">
       <ArtifactHeader>
         <ArtifactTitle>Campaign Plan</ArtifactTitle>
-        <ArtifactDescription>Scheduled campaign dates</ArtifactDescription>
+        <ArtifactDescription>Sales data, dates, and schedule</ArtifactDescription>
       </ArtifactHeader>
       <ArtifactContent>
         <div className="space-y-4">
-          {/* Location Profile */}
+          {/* Campaign Setup */}
           <div className="rounded-lg border bg-muted/30 p-4">
             <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              <StoreIcon className="size-3.5" />
-              Location Profile
-            </div>
-            {planning.locationSummary === undefined ? (
-              <div className="space-y-2">
-                <div className="h-3 w-full animate-pulse rounded bg-muted-foreground/20" />
-                <div className="h-3 w-5/6 animate-pulse rounded bg-muted-foreground/20" />
-                <div className="h-3 w-4/6 animate-pulse rounded bg-muted-foreground/10" />
-              </div>
-            ) : planning.locationSummary === null ? (
-              <div className="flex flex-col items-start gap-3">
-                <p className="text-sm text-muted-foreground">
-                  No location profile found. Generate one to power smarter campaign content.
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onCreateLocationProfile}
-                  disabled={isStreaming}
-                >
-                  <SparklesIcon className="mr-2 size-3.5" />
-                  Create Location Profile
-                </Button>
-              </div>
-            ) : (
-              <MessageResponse className="text-sm leading-relaxed text-foreground">
-                {planning.locationSummary}
-              </MessageResponse>
-            )}
-          </div>
-
-          {/* Campaign Period */}
-          <div className="rounded-lg border bg-muted/30 p-4">
-            <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              <CalendarIcon className="size-3.5" />
-              Campaign Period
+              <DatabaseIcon className="size-3.5" />
+              Campaign Setup
             </div>
             <div className="space-y-3">
+              <div>
+                <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                  Sales report
+                </p>
+                <Select
+                  value={
+                    selectedAnalyticsId !== null && selectedAnalyticsId !== undefined
+                      ? String(selectedAnalyticsId)
+                      : undefined
+                  }
+                  onValueChange={(val) => onAnalyticsIdChange?.(Number(val))}
+                  disabled={isStreaming}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a sales data source…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {analyticsRuns && analyticsRuns.length > 0 ? (
+                      analyticsRuns.map((run) => (
+                        <SelectItem key={run.id} value={run.id}>
+                          {run.name || run.filename}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-3 text-center text-xs text-muted-foreground">
+                        No sales data available for this location.
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="border-t" />
               <div className="flex items-center justify-between gap-4">
                 <p className="text-xs font-medium text-muted-foreground">
-                  Start Date
+                  Start date
                 </p>
                 <div className="w-52">
                   <DatePicker
@@ -201,7 +215,7 @@ export function AiArtifactPanel({
               <div className="border-t" />
               <div className="flex items-center justify-between gap-4">
                 <p className="text-xs font-medium text-muted-foreground">
-                  End Date
+                  End date
                 </p>
                 <div className="w-52">
                   <DatePicker
@@ -212,23 +226,6 @@ export function AiArtifactPanel({
                     disabled={isStreaming}
                   />
                 </div>
-              </div>
-              <div className="border-t" />
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Duration
-                </p>
-                <p className="text-sm font-semibold text-foreground">
-                  {(() => {
-                    const start = new Date(campaignDates.dateStart + "T00:00:00");
-                    const end = new Date(campaignDates.dateEnd + "T00:00:00");
-                    const days =
-                      Math.round(
-                        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
-                      ) + 1;
-                    return `${days} day${days !== 1 ? "s" : ""}`;
-                  })()}
-                </p>
               </div>
             </div>
           </div>
@@ -283,81 +280,30 @@ export function AiArtifactPanel({
             )}
           </div>
 
-          {/* Create Post Schedule CTA */}
+          {/* Summary + Create Campaign */}
           {!planning.campaignBrief && (
             <div className="rounded-lg border bg-muted/30 p-4">
               <div className="mb-4 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 <SparklesIcon className="size-3.5" />
-                Instagram Post Schedule
+                Ready to generate
               </div>
-
-              {/* Period */}
-              <div className="mb-4">
-                <p className="mb-1 text-xs font-medium text-muted-foreground">Period</p>
+              <div className="mb-4 space-y-2">
                 <p className="text-sm font-medium text-foreground">
+                  {selectedReportLabel(analyticsRuns, selectedAnalyticsId)}
+                </p>
+                <p className="text-sm text-muted-foreground">
                   {formatDate(campaignDates.dateStart)}
-                  <span className="mx-2 text-muted-foreground">→</span>
+                  <span className="mx-2 text-muted-foreground/80">→</span>
                   {formatDate(campaignDates.dateEnd)}
                 </p>
               </div>
-
-              {/* Requirements checklist */}
-              <div className="mb-4 space-y-3">
-                <p className="text-xs font-medium text-muted-foreground">Requirements</p>
-
-                {/* Location profile row */}
-                <div className="flex items-center gap-2.5">
-                  {planning.locationSummary ? (
-                    <CheckCircle2Icon className="size-4 shrink-0 text-emerald-500" />
-                  ) : (
-                    <CircleIcon className="size-4 shrink-0 text-muted-foreground/40" />
-                  )}
-                  <span className={`text-sm ${planning.locationSummary ? "text-foreground" : "text-muted-foreground"}`}>
-                    Location profile
-                  </span>
-                </div>
-
-                {/* Sales data row */}
-                <div className="flex items-start gap-2.5">
-                  {selectedAnalyticsId !== null && selectedAnalyticsId !== undefined ? (
-                    <CheckCircle2Icon className="mt-2 size-4 shrink-0 text-emerald-500" />
-                  ) : (
-                    <CircleIcon className="mt-2 size-4 shrink-0 text-muted-foreground/40" />
-                  )}
-                  <div className="flex-1">
-                    <Select
-                      value={selectedAnalyticsId !== null && selectedAnalyticsId !== undefined ? String(selectedAnalyticsId) : undefined}
-                      onValueChange={(val) => onAnalyticsIdChange?.(Number(val))}
-                      disabled={isStreaming}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a sales data source…" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {analyticsRuns && analyticsRuns.length > 0 ? (
-                          analyticsRuns.map((run) => (
-                            <SelectItem key={run.id} value={run.id}>
-                              {run.name || run.filename}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="px-2 py-3 text-center text-xs text-muted-foreground">
-                            No sales data available for this location.
-                          </div>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
               <Button
                 className="w-auto"
                 onClick={onCreateCampaign}
-                disabled={isStreaming || !planning.locationSummary || selectedAnalyticsId === null || selectedAnalyticsId === undefined}
+                disabled={isStreaming}
               >
                 <SparklesIcon className="size-4" />
-                Create Post Schedule
+                Create Campaign
               </Button>
             </div>
           )}
