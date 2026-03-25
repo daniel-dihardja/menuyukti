@@ -8,4 +8,4 @@ require (
 )
 
 // Point at local gentic checkout (streaming, ChatStream). Remove when a tagged release includes streaming.
-replace github.com/daniel-dihardja/gentic => ../../../../gentic
+replace github.com/daniel-dihardja/gentic => ../../packages/gentic
