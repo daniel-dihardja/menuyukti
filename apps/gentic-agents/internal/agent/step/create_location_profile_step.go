@@ -27,20 +27,16 @@ type CreateLocationProfileStep struct {
 }
 
 // Run implements gentic.Step.
-func (s CreateLocationProfileStep) Run(state *gen.State) error {
+// Prefer wiring this step behind [gen.If]([NeedsLocationProfileCreation], ...) after [CheckLocationProfileStep].
+// If a valid profile is already in metadata, we no-op (defense in depth if the flow and predicate
+// ever drift).
+func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) error {
 	if state.Metadata == nil {
 		state.Metadata = make(map[string]interface{})
 	}
 
-	if v, ok := state.Metadata[metadataKeyLocationProfile]; ok {
-		if p, ok := v.(*graphql.LocationProfile); ok && p != nil && strings.TrimSpace(p.Summary) != "" {
-			state.Output = fmt.Sprintf(
-				"A location profile exists (id=%s). Summary: %s",
-				string(p.ID),
-				p.Summary,
-			)
-			return nil
-		}
+	if hasValidPersistedLocationProfile(state) {
+		return nil
 	}
 
 	meta := state.SecureMetadata()
@@ -55,7 +51,7 @@ func (s CreateLocationProfileStep) Run(state *gen.State) error {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
 	loc, op, err := graphql.FetchLocationData(ctx, s.GraphQLEndpoint, locationID, analyticsID)
@@ -78,7 +74,7 @@ func (s CreateLocationProfileStep) Run(state *gen.State) error {
 	if op != nil {
 		genPrompt := buildOperatingDataLocationSummaryPrompt(loc, op)
 		refSnap := buildReflectionSnapshot(loc, op)
-		summary, err = reflect.RunReflectLoop(reflect.ReflectLoopParams{
+		summary, err = reflect.RunReflectLoop(ctx, reflect.ReflectLoopParams{
 			LLM:                    llm,
 			Model:                  model,
 			MaxIterations:          s.MaxReflectionIterations,
@@ -93,7 +89,7 @@ func (s CreateLocationProfileStep) Run(state *gen.State) error {
 			return err
 		}
 	} else {
-		summary, err = llm.Chat(model, generationSystemPrompt, buildInferenceOnlyLocationSummaryPrompt(loc))
+		summary, err = llm.Chat(ctx, model, generationSystemPrompt, buildInferenceOnlyLocationSummaryPrompt(loc))
 		if err != nil {
 			return err
 		}
@@ -106,7 +102,7 @@ func (s CreateLocationProfileStep) Run(state *gen.State) error {
 		_ = graphql.SaveLocationProfile(ctx, s.GraphQLEndpoint, locationID, "0", summary)
 	}
 
-	notify, err := llm.Chat(model, profileCreatedNotifySystem, buildProfileCreatedNotificationUserPrompt(loc))
+	notify, err := llm.Chat(ctx, model, profileCreatedNotifySystem, buildProfileCreatedNotificationUserPrompt(loc))
 	if err != nil {
 		notify = fallbackProfileCreatedMessage(loc)
 	} else {

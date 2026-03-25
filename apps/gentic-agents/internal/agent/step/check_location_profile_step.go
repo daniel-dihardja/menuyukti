@@ -9,12 +9,14 @@ import (
 )
 
 // CheckLocationProfileStep loads the location profile for the request's location and analytics run.
+// It is the source of truth for metadata["_location_profile"]: set when the API returns a profile,
+// deleted when none exists; [NeedsLocationProfileCreation] and [CreateLocationProfileStep] rely on that.
 type CheckLocationProfileStep struct {
 	GraphQLEndpoint string
 }
 
 // Run implements gentic.Step.
-func (s CheckLocationProfileStep) Run(state *gentic.State) error {
+func (s CheckLocationProfileStep) Run(ctx context.Context, state *gentic.State) error {
 	meta := state.SecureMetadata()
 	locationID, err := meta.GetID("location_id")
 	if err != nil {
@@ -31,7 +33,6 @@ func (s CheckLocationProfileStep) Run(state *gentic.State) error {
 		state.Metadata = make(map[string]interface{})
 	}
 
-	ctx := context.Background()
 	profile, err := graphql.FetchLocationProfile(ctx, s.GraphQLEndpoint, locationID, analyticsID)
 	if err != nil {
 		return err

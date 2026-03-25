@@ -17,11 +17,11 @@ func BuildAgent(model, systemPrompt, graphqlEndpoint string, maxReflectionIterat
 		step.CheckLocationProfileStep{
 			GraphQLEndpoint: graphqlEndpoint,
 		},
-		step.CreateLocationProfileStep{
+		gen.If(step.NeedsLocationProfileCreation, step.CreateLocationProfileStep{
 			GraphQLEndpoint:         graphqlEndpoint,
 			Model:                   model,
 			MaxReflectionIterations: maxReflectionIterations,
-		},
+		}),
 	)
 	resolver := intent.NewRouter("chat", "create_campaign").
 		On("create_campaign", campaignFlow).
