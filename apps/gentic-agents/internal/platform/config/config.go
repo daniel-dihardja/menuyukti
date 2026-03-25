@@ -13,10 +13,11 @@ const (
 
 // Config holds runtime settings loaded from the environment.
 type Config struct {
-	Addr         string
-	OpenAIAPIKey string
-	Model        string
-	SystemPrompt string
+	Addr            string
+	OpenAIAPIKey    string
+	Model           string
+	SystemPrompt    string
+	GraphQLEndpoint string // optional; used by internal/services/locationprofile when wired
 }
 
 // Load reads configuration from process environment (after optional godotenv in main).
@@ -42,9 +43,10 @@ func Load() (Config, error) {
 	}
 
 	return Config{
-		Addr:         addr,
-		OpenAIAPIKey: apiKey,
-		Model:        model,
-		SystemPrompt: system,
+		Addr:            addr,
+		OpenAIAPIKey:    apiKey,
+		Model:           model,
+		SystemPrompt:    system,
+		GraphQLEndpoint: os.Getenv("GRAPHQL_ENDPOINT"),
 	}, nil
 }
