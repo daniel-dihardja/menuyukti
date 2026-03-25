@@ -11,9 +11,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/daniel-dihardja/gentic-agents/internal/agent"
-	"github.com/daniel-dihardja/gentic-agents/internal/api"
+	genticadapter "github.com/daniel-dihardja/gentic-agents/internal/gentic"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/config"
+	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
+	"github.com/daniel-dihardja/gentic/pkg/server"
 	"github.com/joho/godotenv"
 )
 
@@ -27,8 +28,13 @@ func main() {
 		log.Fatalf("config: %v", err)
 	}
 
-	runner := agent.NewRunner(cfg.Model, cfg.SystemPrompt, cfg.GraphQLEndpoint, cfg.MaxReflectionIterations)
-	handler := api.NewRouter(runner)
+	ag := genticadapter.BuildAgent(cfg.Model, cfg.SystemPrompt, cfg.GraphQLEndpoint, cfg.MaxReflectionIterations)
+	handler := server.NewRouter(server.Config{
+		Agent:        ag,
+		StreamingLLM: openai.Provider{},
+		Model:        cfg.Model,
+		SystemPrompt: cfg.SystemPrompt,
+	})
 
 	mux := http.NewServeMux()
 	mux.Handle("/", handler)

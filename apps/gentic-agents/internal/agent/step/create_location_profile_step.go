@@ -8,6 +8,7 @@ import (
 
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
+	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
 	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
 )
 
@@ -43,21 +44,14 @@ func (s CreateLocationProfileStep) Run(state *gen.State) error {
 	}
 
 	meta := state.SecureMetadata()
-	locVal, okLoc := meta.Get("location_id")
-	anaVal, okAna := meta.Get("analytics_id")
-	if !okLoc || !okAna {
+	locationID, err := meta.GetID("location_id")
+	if err != nil {
 		state.Output = "Cannot create location profile: location_id and analytics_id are required in the request."
 		return nil
 	}
-
-	locationID, err := formatID(locVal)
+	analyticsID, err := meta.GetID("analytics_id")
 	if err != nil {
-		state.Output = fmt.Sprintf("Invalid location_id: %v", err)
-		return nil
-	}
-	analyticsID, err := formatID(anaVal)
-	if err != nil {
-		state.Output = fmt.Sprintf("Invalid analytics_id: %v", err)
+		state.Output = "Cannot create location profile: location_id and analytics_id are required in the request."
 		return nil
 	}
 
@@ -84,7 +78,17 @@ func (s CreateLocationProfileStep) Run(state *gen.State) error {
 	if op != nil {
 		genPrompt := buildOperatingDataLocationSummaryPrompt(loc, op)
 		refSnap := buildReflectionSnapshot(loc, op)
-		summary, err = runReflectLoop(llm, model, s.MaxReflectionIterations, genPrompt, refSnap)
+		summary, err = reflect.RunReflectLoop(reflect.ReflectLoopParams{
+			LLM:                    llm,
+			Model:                  model,
+			MaxIterations:          s.MaxReflectionIterations,
+			GenerationSystemPrompt: generationSystemPrompt,
+			ReflectionSystemPrompt: reflectionSystemPrefix,
+			GenerationPrompt:       genPrompt,
+			BuildReflectionUser: func(draft string) string {
+				return buildReflectionUser(refSnap, draft)
+			},
+		})
 		if err != nil {
 			return err
 		}
@@ -384,88 +388,6 @@ Criteria:
 6. Content & Tone Signals names at least two specific content angles, each tied to a concrete data signal
 
 7. If holiday share is above 10%, Audience Persona or Content & Tone Signals explicitly acknowledges holiday-occasion sensitivity`
-}
-
-func buildRevisionPrompt(originalGenerationPrompt, previousSummary, feedback string) string {
-	return fmt.Sprintf(`You are a senior restaurant marketing strategist. Revise the location summary below based on specific reviewer feedback.
-
-%s
-
----
-Previous draft (to be improved):
-%s
-
-Reviewer feedback — address every point:
-%s
-
-Write the improved version now, keeping the same four-section structure (**Venue Identity**, **Audience Persona**, **Traffic & Timing**, **Content & Tone Signals**).`,
-		originalGenerationPrompt,
-		previousSummary,
-		feedback,
-	)
-}
-
-func runReflectLoop(llm gen.LLM, model string, maxIterations int, generationPrompt, reflectionSnapshot string) (string, error) {
-	var draft string
-	var feedbackBullets []string
-
-	for iteration := 0; iteration <= maxIterations; iteration++ {
-		var err error
-		if iteration == 0 {
-			draft, err = llm.Chat(model, generationSystemPrompt, generationPrompt)
-		} else {
-			fb := strings.Join(feedbackBullets, "\n")
-			draft, err = llm.Chat(model, generationSystemPrompt, buildRevisionPrompt(generationPrompt, draft, fb))
-		}
-		if err != nil {
-			return "", err
-		}
-
-		if iteration >= maxIterations {
-			return draft, nil
-		}
-
-		refUser := buildReflectionUser(reflectionSnapshot, draft)
-		raw, err := llm.Chat(model, reflectionSystemPrefix, refUser)
-		if err != nil {
-			return "", err
-		}
-
-		pass, fb := parseReflectionVerdict(raw)
-		if pass {
-			return draft, nil
-		}
-		feedbackBullets = fb
-		if len(feedbackBullets) == 0 {
-			feedbackBullets = []string{strings.TrimSpace(raw)}
-		}
-	}
-	return draft, nil
-}
-
-func parseReflectionVerdict(raw string) (pass bool, feedback []string) {
-	s := strings.TrimSpace(raw)
-	upper := strings.ToUpper(s)
-	if upper == "PASS" {
-		return true, nil
-	}
-	if idx := strings.Index(upper, "IMPROVE:"); idx >= 0 {
-		prefixLen := idx + len("IMPROVE:")
-		if prefixLen > len(s) {
-			return false, []string{s}
-		}
-		rest := strings.TrimSpace(s[prefixLen:])
-		for _, line := range strings.Split(rest, "\n") {
-			line = strings.TrimSpace(line)
-			line = strings.TrimPrefix(line, "-")
-			line = strings.TrimSpace(line)
-			if line != "" {
-				feedback = append(feedback, line)
-			}
-		}
-		return false, feedback
-	}
-	return false, []string{s}
 }
 
 func nullableStr(s string) string {

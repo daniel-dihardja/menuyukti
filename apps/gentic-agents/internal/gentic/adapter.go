@@ -4,11 +4,12 @@ import (
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/intent"
+	"github.com/daniel-dihardja/gentic/pkg/steps"
 )
 
 // BuildAgent wires the Gentic SDK with a default chat flow behind intent routing.
 func BuildAgent(model, systemPrompt, graphqlEndpoint string, maxReflectionIterations int) gen.Agent {
-	chatFlow := gen.NewFlow(step.ChatStep{
+	chatFlow := gen.NewFlow(steps.ChatStep{
 		Model:        model,
 		SystemPrompt: systemPrompt,
 	})
