@@ -17,37 +17,26 @@ type CheckLocationProfileStep struct {
 
 // Run implements gentic.Step.
 func (s CheckLocationProfileStep) Run(ctx context.Context, state *gentic.State) error {
-	meta := state.SecureMetadata()
-	locationID, err := meta.GetID("location_id")
-	if err != nil {
-		state.Output = "Cannot check location profile: location_id and analytics_id are required in the request."
-		return nil
-	}
-	analyticsID, err := meta.GetID("analytics_id")
-	if err != nil {
-		state.Output = "Cannot check location profile: location_id and analytics_id are required in the request."
+	locationID, analyticsID, ok := requiredLocationIDs(state, "check location profile")
+	if !ok {
 		return nil
 	}
 
 	n := gentic.NotifierFromContext(ctx)
 	n.Notify("check_location_profile", gentic.ActivityRunning, "Checking location profile", gentic.WithTransient(true))
 
-	if state.Metadata == nil {
-		state.Metadata = make(map[string]interface{})
-	}
-
 	profile, err := graphql.FetchLocationProfile(ctx, s.GraphQLEndpoint, locationID, analyticsID)
 	if err != nil {
 		return err
 	}
 	if profile == nil {
-		delete(state.Metadata, "_location_profile")
+		state.DeleteMetadata(metadataKeyLocationProfile)
 		state.Output = "No location profile found for this location and analytics run."
 		n.Notify("check_location_profile", gentic.ActivityDone, "No saved profile for this run")
 		return nil
 	}
 
-	state.Metadata["_location_profile"] = profile
+	state.SetMetadata(metadataKeyLocationProfile, profile)
 	state.Output = fmt.Sprintf(
 		"A location profile exists (id=%s). Summary: %s",
 		string(profile.ID),

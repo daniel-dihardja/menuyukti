@@ -13,10 +13,9 @@ import (
 )
 
 const (
-	metadataKeyLocationProfile = "_location_profile"
 	generationSystemPrompt     = "You are a senior restaurant marketing strategist. Follow the instructions precisely."
-	reflectionSystemPrefix     = "You are a quality reviewer for restaurant Instagram marketing briefs."
-	profileCreatedNotifySystem = "You are a helpful assistant for restaurant and menu planning. Write concise, clear, friendly messages for users."
+	reflectionSystemPrefix       = "You are a quality reviewer for restaurant Instagram marketing briefs."
+	profileCreatedNotifySystem   = "You are a helpful assistant for restaurant and menu planning. Write concise, clear, friendly messages for users."
 )
 
 // CreateLocationProfileStep generates and persists a location profile when none exists (after CheckLocationProfileStep).
@@ -31,23 +30,12 @@ type CreateLocationProfileStep struct {
 // If a valid profile is already in metadata, we no-op (defense in depth if the flow and predicate
 // ever drift).
 func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) error {
-	if state.Metadata == nil {
-		state.Metadata = make(map[string]interface{})
-	}
-
 	if hasValidPersistedLocationProfile(state) {
 		return nil
 	}
 
-	meta := state.SecureMetadata()
-	locationID, err := meta.GetID("location_id")
-	if err != nil {
-		state.Output = "Cannot create location profile: location_id and analytics_id are required in the request."
-		return nil
-	}
-	analyticsID, err := meta.GetID("analytics_id")
-	if err != nil {
-		state.Output = "Cannot create location profile: location_id and analytics_id are required in the request."
+	locationID, analyticsID, ok := requiredLocationIDs(state, "create location profile")
+	if !ok {
 		return nil
 	}
 
@@ -91,6 +79,7 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) er
 			BuildReflectionUser: func(draft string) string {
 				return buildReflectionUser(refSnap, draft)
 			},
+			BuildRevisionPrompt: buildRestaurantLocationRevisionPrompt,
 			OnIteration: func(ctx context.Context, current, total int) {
 				nn := gen.NotifierFromContext(ctx)
 				nn.Notify("profile_refinement", gen.ActivityReflecting,
@@ -131,6 +120,26 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) er
 	// Separate step id so the feed order stays: check → create → refine → saved (Map insertion order).
 	n.Notify("location_profile_saved", gen.ActivityDone, "Location profile saved", gen.WithDetail(loc.Name))
 	return nil
+}
+
+// buildRestaurantLocationRevisionPrompt is the domain-specific refinement prompt for location marketing summaries.
+func buildRestaurantLocationRevisionPrompt(originalGenerationPrompt, previousDraft, feedback string) string {
+	return fmt.Sprintf(`You are a senior restaurant marketing strategist. Revise the location summary below based on specific reviewer feedback.
+
+%s
+
+---
+Previous draft (to be improved):
+%s
+
+Reviewer feedback — address every point:
+%s
+
+Write the improved version now, keeping the same four-section structure (**Venue Identity**, **Audience Persona**, **Traffic & Timing**, **Content & Tone Signals**).`,
+		originalGenerationPrompt,
+		previousDraft,
+		feedback,
+	)
 }
 
 func buildProfileCreatedNotificationUserPrompt(loc *graphql.Location) string {
