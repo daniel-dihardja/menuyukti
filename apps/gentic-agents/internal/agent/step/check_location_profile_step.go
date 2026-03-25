@@ -35,19 +35,25 @@ func (s CheckLocationProfileStep) Run(state *gentic.State) error {
 		return nil
 	}
 
+	if state.Metadata == nil {
+		state.Metadata = make(map[string]interface{})
+	}
+
 	ctx := context.Background()
 	profile, err := graphql.FetchLocationProfile(ctx, s.GraphQLEndpoint, locationID, analyticsID)
 	if err != nil {
 		return err
 	}
 	if profile == nil {
+		delete(state.Metadata, "_location_profile")
 		state.Output = "No location profile found for this location and analytics run."
 		return nil
 	}
 
+	state.Metadata["_location_profile"] = profile
 	state.Output = fmt.Sprintf(
-		"A location profile exists (id=%d). Summary: %s",
-		profile.ID,
+		"A location profile exists (id=%s). Summary: %s",
+		string(profile.ID),
 		profile.Summary,
 	)
 	return nil

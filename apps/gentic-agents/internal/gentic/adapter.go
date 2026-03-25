@@ -7,14 +7,21 @@ import (
 )
 
 // BuildAgent wires the Gentic SDK with a default chat flow behind intent routing.
-func BuildAgent(model, systemPrompt, graphqlEndpoint string) gen.Agent {
+func BuildAgent(model, systemPrompt, graphqlEndpoint string, maxReflectionIterations int) gen.Agent {
 	chatFlow := gen.NewFlow(step.ChatStep{
 		Model:        model,
 		SystemPrompt: systemPrompt,
 	})
-	campaignFlow := gen.NewFlow(step.CheckLocationProfileStep{
-		GraphQLEndpoint: graphqlEndpoint,
-	})
+	campaignFlow := gen.NewFlow(
+		step.CheckLocationProfileStep{
+			GraphQLEndpoint: graphqlEndpoint,
+		},
+		step.CreateLocationProfileStep{
+			GraphQLEndpoint:         graphqlEndpoint,
+			Model:                   model,
+			MaxReflectionIterations: maxReflectionIterations,
+		},
+	)
 	resolver := intent.NewRouter("chat", "create_campaign").
 		On("create_campaign", campaignFlow).
 		Default(chatFlow)

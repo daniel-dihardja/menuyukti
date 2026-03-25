@@ -16,9 +16,9 @@ type Runner struct {
 }
 
 // NewRunner constructs a Runner with a shared agent and streaming provider.
-func NewRunner(model, systemPrompt, graphqlEndpoint string) *Runner {
+func NewRunner(model, systemPrompt, graphqlEndpoint string, maxReflectionIterations int) *Runner {
 	return &Runner{
-		agent: genticadapter.BuildAgent(model, systemPrompt, graphqlEndpoint),
+		agent: genticadapter.BuildAgent(model, systemPrompt, graphqlEndpoint, maxReflectionIterations),
 		sllm:  openai.Provider{},
 	}
 }
