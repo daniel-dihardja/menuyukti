@@ -196,7 +196,6 @@ export async function POST(req: Request) {
         date_start: parsed.data.dateStart ?? null,
         date_end: parsed.data.dateEnd ?? null,
         national_holidays: parsed.data.nationalHolidays ?? null,
-        location_profile: parsed.data.locationProfile ?? null,
       }),
       signal: req.signal,
     });

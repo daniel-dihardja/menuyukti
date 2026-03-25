@@ -8,9 +8,7 @@ import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { AiChatPanel } from "./ai-chat-panel";
 import { graphqlQuery } from "@/lib/graphql/client";
 import {
-  LOCATION_PROFILE_QUERY,
   ANALYTICS_RUNS_BY_LOCATION_QUERY,
-  type LocationProfileData,
   type AnalyticsRunsByLocationData,
 } from "@/lib/graphql/queries";
 
@@ -44,7 +42,6 @@ export default async function Page({ searchParams }: PageProps) {
 
   const defaultDates = computeDefaultDates();
 
-  let locationProfile: string | null = null;
   let analyticsRuns: Array<{ id: string; name: string; filename: string }> = [];
   try {
     const runsData = await graphqlQuery<AnalyticsRunsByLocationData>(
@@ -52,12 +49,6 @@ export default async function Page({ searchParams }: PageProps) {
       { locationId: locationId }
     );
     analyticsRuns = runsData.analyticsRuns;
-
-    const profileData = await graphqlQuery<LocationProfileData>(
-      LOCATION_PROFILE_QUERY,
-      { locationId: String(locationId), analyticsRunId: "0" }
-    );
-    locationProfile = profileData.locationProfile?.summary ?? null;
   } catch {
     // If any fetch fails, fall through with null — the button will still show
   }
@@ -73,7 +64,6 @@ export default async function Page({ searchParams }: PageProps) {
     >
       <AiChatPanel
         locationId={locationId}
-        locationProfile={locationProfile}
         analyticsRuns={analyticsRuns}
         defaultDates={defaultDates}
       />

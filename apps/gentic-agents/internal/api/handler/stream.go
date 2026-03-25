@@ -19,17 +19,17 @@ func InvokeStream(runner *agent.Runner) http.HandlerFunc {
 
 		var req dto.InvokeRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "invalid JSON body", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
 		if req.Message == "" {
-			http.Error(w, "message is required", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "message is required")
 			return
 		}
 
 		flusher, ok := w.(http.Flusher)
 		if !ok {
-			http.Error(w, "streaming not supported", http.StatusInternalServerError)
+			writeError(w, http.StatusInternalServerError, "streaming not supported")
 			return
 		}
 

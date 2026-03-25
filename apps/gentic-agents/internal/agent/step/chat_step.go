@@ -1,6 +1,8 @@
 package step
 
 import (
+	"context"
+
 	"github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
 )
@@ -9,6 +11,15 @@ import (
 type ChatStep struct {
 	Model        string
 	SystemPrompt string
+}
+
+// Stream implements gentic.StreamingStep — streams tokens from the configured model.
+func (c ChatStep) Stream(ctx context.Context, s *gentic.State, sllm gentic.StreamingLLM) (<-chan gentic.StreamEvent, error) {
+	model := c.Model
+	if model == "" {
+		model = openai.DefaultModel
+	}
+	return sllm.ChatStream(ctx, model, c.SystemPrompt, s.Input)
 }
 
 // Run implements gentic.Step.

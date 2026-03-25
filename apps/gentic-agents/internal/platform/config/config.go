@@ -16,8 +16,7 @@ type Config struct {
 	Addr            string
 	OpenAIAPIKey    string
 	Model           string
-	SystemPrompt    string
-	GraphQLEndpoint string // optional; used by internal/services/locationprofile when wired
+	SystemPrompt string
 }
 
 // Load reads configuration from process environment (after optional godotenv in main).
@@ -43,10 +42,9 @@ func Load() (Config, error) {
 	}
 
 	return Config{
-		Addr:            addr,
-		OpenAIAPIKey:    apiKey,
-		Model:           model,
-		SystemPrompt:    system,
-		GraphQLEndpoint: os.Getenv("GRAPHQL_ENDPOINT"),
+		Addr:         addr,
+		OpenAIAPIKey: apiKey,
+		Model:        model,
+		SystemPrompt: system,
 	}, nil
 }

@@ -49,12 +49,10 @@ function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
 
 export function AiChatPanel({
   locationId,
-  locationProfile,
   analyticsRuns,
   defaultDates,
 }: {
   locationId: number;
-  locationProfile: string | null;
   analyticsRuns: Array<{ id: string; name: string; filename: string }>;
   defaultDates: { dateStart: string; dateEnd: string };
 }) {
@@ -92,10 +90,10 @@ export function AiChatPanel({
       dateStart: defaultDates.dateStart,
       dateEnd: defaultDates.dateEnd,
       nationalHolidays: undefined,
-      locationSummary: locationProfile,
+      locationSummary: null,
       campaignBrief: null,
     }),
-    [defaultDates, locationProfile]
+    [defaultDates]
   );
 
   const planningArtifact = useMemo<PlanningArtifact>(() => {
@@ -194,17 +192,14 @@ export function AiChatPanel({
           dateStart: campaignDates.dateStart,
           dateEnd: campaignDates.dateEnd,
           nationalHolidays: holidaysOverride ?? displayedArtifact.nationalHolidays ?? null,
-          locationProfile: displayedArtifact.locationSummary ?? locationProfile,
         },
       }
     );
   }, [
     campaignDates.dateEnd,
     campaignDates.dateStart,
-    displayedArtifact.locationSummary,
     displayedArtifact.nationalHolidays,
     holidaysOverride,
-    locationProfile,
     selectedAnalyticsId,
     sendMessage,
   ]);

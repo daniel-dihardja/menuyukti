@@ -5,6 +5,7 @@ import (
 )
 
 // CreateCampaignStep is a static flow for the create_campaign intent (no LLM).
+// Location profile is fetched or created later inside the campaign flow.
 type CreateCampaignStep struct{}
 
 // Run implements gentic.Step.
