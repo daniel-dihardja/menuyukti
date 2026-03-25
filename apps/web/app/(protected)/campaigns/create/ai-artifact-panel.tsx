@@ -152,6 +152,9 @@ export function AiArtifactPanel({
     : null;
   const holidaysReady = planning.nationalHolidays !== undefined;
 
+  const hasSalesReportSelected =
+    selectedAnalyticsId !== null && selectedAnalyticsId !== undefined;
+
   return (
     <Artifact className="size-full">
       <ArtifactHeader>
@@ -297,11 +300,21 @@ export function AiArtifactPanel({
                   <span className="mx-2 text-muted-foreground/80">→</span>
                   {formatDate(campaignDates.dateEnd)}
                 </p>
+                {!hasSalesReportSelected && !isStreaming && (
+                  <p className="text-xs text-amber-700 dark:text-amber-400">
+                    Select a sales report above to enable campaign creation.
+                  </p>
+                )}
               </div>
               <Button
                 className="w-auto"
                 onClick={onCreateCampaign}
-                disabled={isStreaming}
+                disabled={isStreaming || !hasSalesReportSelected}
+                title={
+                  !hasSalesReportSelected
+                    ? "Select a sales report first"
+                    : undefined
+                }
               >
                 <SparklesIcon className="size-4" />
                 Create Campaign
