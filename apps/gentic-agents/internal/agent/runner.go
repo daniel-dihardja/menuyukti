@@ -45,17 +45,38 @@ func (r *Runner) Invoke(_ context.Context, req dto.InvokeRequest) (*dto.InvokeRe
 	return out, nil
 }
 
-// Stream runs a token stream via Gentic StreamWithContext + OpenAI streaming.
+// Stream resolves intent via the router only (no chat LLM run yet). For create_campaign,
+// runs CreateCampaignStep once and returns a synthetic token stream. Otherwise uses
+// StreamWithContext + OpenAI streaming (single LLM call for chat).
 func (r *Runner) Stream(ctx context.Context, req dto.InvokeRequest) (<-chan gen.StreamEvent, error) {
-	agent := genticadapter.BuildStreamingAgent()
 	meta := metadataFromInvoke(req)
+	a := genticadapter.BuildAgent(r.model, r.systemPrompt)
+	state := &gen.State{
+		Input:    req.Message,
+		Metadata: meta,
+	}
+	flow := a.Resolver.Resolve(state)
+	if state.Intent == "create_campaign" {
+		if err := flow.Run(state); err != nil {
+			return nil, err
+		}
+		out := make(chan gen.StreamEvent, 2)
+		go func() {
+			defer close(out)
+			out <- gen.StreamEvent{Token: gen.StreamToken{Text: state.Output}}
+			out <- gen.StreamEvent{Token: gen.StreamToken{Done: true}}
+		}()
+		return out, nil
+	}
+
+	streamAgent := genticadapter.BuildStreamingAgent()
 	input := gen.AgentInput{
 		Query:        req.Message,
 		Metadata:     meta,
 		Model:        r.model,
 		SystemPrompt: r.systemPrompt,
 	}
-	return agent.StreamWithContext(ctx, input, openai.Provider{})
+	return streamAgent.StreamWithContext(ctx, input, openai.Provider{})
 }
 
 func metadataFromInvoke(req dto.InvokeRequest) map[string]interface{} {

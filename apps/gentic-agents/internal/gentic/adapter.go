@@ -7,13 +7,13 @@ import (
 )
 
 // BuildAgent wires the Gentic SDK with a default chat flow behind intent routing.
-// Specialized branches can be added later with router.On("label", flow).
 func BuildAgent(model, systemPrompt string) gen.Agent {
 	chatFlow := gen.NewFlow(step.ChatStep{
 		Model:        model,
 		SystemPrompt: systemPrompt,
 	})
-	resolver := intent.NewRouter("chat").
+	resolver := intent.NewRouter("chat", "create_campaign").
+		On("create_campaign", gen.NewFlow(step.CreateCampaignStep{})).
 		Default(chatFlow)
 	return gen.Agent{Resolver: resolver}
 }

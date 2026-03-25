@@ -187,7 +187,7 @@ export function AiChatPanel({
 
   const handleCreateCampaign = useCallback(async () => {
     await sendMessage(
-      { text: "create instagram campaign" },
+      { text: "create campaign" },
       {
         body: {
           analyticsId: selectedAnalyticsId,

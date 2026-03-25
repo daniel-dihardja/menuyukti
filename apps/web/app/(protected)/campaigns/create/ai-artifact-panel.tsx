@@ -66,6 +66,7 @@ type AiArtifactPanelProps = {
   planning?: PlanningArtifact;
   campaignDates: { dateStart: string; dateEnd: string };
   onDatesChange: (dates: { dateStart: string; dateEnd: string }) => void;
+  onCreateLocationProfile?: () => void;
   onCreateCampaign?: () => void;
   analyticsRuns?: AnalyticsRun[];
   selectedAnalyticsId?: number | null;

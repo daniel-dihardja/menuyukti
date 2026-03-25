@@ -11,4 +11,5 @@ type InvokeRequest struct {
 	DateStart         *string         `json:"date_start"`
 	DateEnd           *string         `json:"date_end"`
 	NationalHolidays  json.RawMessage `json:"national_holidays,omitempty"`
+	LocationProfile   *string         `json:"location_profile,omitempty"`
 }
