@@ -54,12 +54,16 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) er
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
+	n := gen.NotifierFromContext(ctx)
+	n.Notify("create_location_profile", gen.ActivityRunning, "Create a location profile")
+
 	loc, op, err := graphql.FetchLocationData(ctx, s.GraphQLEndpoint, locationID, analyticsID)
 	if err != nil {
 		return err
 	}
 	if loc == nil || strings.TrimSpace(loc.Name) == "" {
 		state.Output = "Cannot create location profile: location data could not be loaded."
+		n.Notify("create_location_profile", gen.ActivityDone, "Could not load location data")
 		return nil
 	}
 
@@ -72,6 +76,7 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) er
 	var summary string
 
 	if op != nil {
+		totalRefine := s.MaxReflectionIterations + 1
 		genPrompt := buildOperatingDataLocationSummaryPrompt(loc, op)
 		refSnap := buildReflectionSnapshot(loc, op)
 		summary, err = reflect.RunReflectLoop(ctx, reflect.ReflectLoopParams{
@@ -84,10 +89,17 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) er
 			BuildReflectionUser: func(draft string) string {
 				return buildReflectionUser(refSnap, draft)
 			},
+			OnIteration: func(ctx context.Context, current, total int) {
+				nn := gen.NotifierFromContext(ctx)
+				nn.Notify("profile_refinement", gen.ActivityReflecting,
+					fmt.Sprintf("Refining (%d/%d)", current, total))
+			},
 		})
 		if err != nil {
 			return err
 		}
+		n.Notify("profile_refinement", gen.ActivityDone,
+			fmt.Sprintf("Refining (%d/%d)", totalRefine, totalRefine))
 	} else {
 		summary, err = llm.Chat(ctx, model, generationSystemPrompt, buildInferenceOnlyLocationSummaryPrompt(loc))
 		if err != nil {
@@ -113,6 +125,7 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) er
 	}
 
 	state.Output = notify + "\n\n" + summary
+	n.Notify("create_location_profile", gen.ActivityDone, "Location profile saved", gen.WithDetail(loc.Name))
 	return nil
 }
 

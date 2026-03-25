@@ -78,6 +78,7 @@ interface AgentSSEChunk {
     status: "running" | "done" | "reflecting" | "reflect_pass" | "reflect_revise";
     label: string;
     detail?: string;
+    transient?: boolean;
   };
 }
 

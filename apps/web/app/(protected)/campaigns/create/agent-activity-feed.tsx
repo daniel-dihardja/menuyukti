@@ -15,6 +15,8 @@ export type ActivityStep = {
   status: "running" | "done" | "reflecting" | "reflect_pass" | "reflect_revise";
   label: string;
   detail?: string;
+  /** When true, hide this row after the stream ends (protocol-driven; no hardcoded step lists). */
+  transient?: boolean;
 };
 
 type AgentActivityFeedProps = {
@@ -46,16 +48,9 @@ export function AgentActivityFeed({
     }
   }, [isStreaming, steps.length]);
 
-  // Transient "writing/thinking" indicators — hide them once streaming ends
-  const TRANSIENT_STEPS = new Set([
-    "respond_with_plan",
-    "respond_with_campaign",
-    "respond_with_location_profile",
-    "handle_unknown",
-  ]);
   const visibleSteps = isStreaming
     ? steps
-    : steps.filter((s) => !TRANSIENT_STEPS.has(s.step));
+    : steps.filter((s) => !s.transient);
 
   if (visibleSteps.length === 0) return null;
 
@@ -63,7 +58,7 @@ export function AgentActivityFeed({
   const hasRunning = visibleSteps.some((s) => s.status === "running");
 
   const headerLabel = hasRunning
-    ? steps.find((s) => s.status === "running")?.label ?? "Working..."
+    ? visibleSteps.find((s) => s.status === "running")?.label ?? "Working..."
     : `${doneCount} step${doneCount !== 1 ? "s" : ""} completed`;
 
   return (

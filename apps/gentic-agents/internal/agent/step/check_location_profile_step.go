@@ -29,6 +29,9 @@ func (s CheckLocationProfileStep) Run(ctx context.Context, state *gentic.State) 
 		return nil
 	}
 
+	n := gentic.NotifierFromContext(ctx)
+	n.Notify("check_location_profile", gentic.ActivityRunning, "Checking location profile", gentic.WithTransient(true))
+
 	if state.Metadata == nil {
 		state.Metadata = make(map[string]interface{})
 	}
@@ -40,6 +43,7 @@ func (s CheckLocationProfileStep) Run(ctx context.Context, state *gentic.State) 
 	if profile == nil {
 		delete(state.Metadata, "_location_profile")
 		state.Output = "No location profile found for this location and analytics run."
+		n.Notify("check_location_profile", gentic.ActivityDone, "No saved profile for this run")
 		return nil
 	}
 
@@ -49,5 +53,6 @@ func (s CheckLocationProfileStep) Run(ctx context.Context, state *gentic.State) 
 		string(profile.ID),
 		profile.Summary,
 	)
+	n.Notify("check_location_profile", gentic.ActivityDone, "Location profile loaded", gentic.WithDetail(string(profile.ID)))
 	return nil
 }
