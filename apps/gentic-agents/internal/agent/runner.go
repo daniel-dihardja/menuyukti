@@ -16,9 +16,9 @@ type Runner struct {
 }
 
 // NewRunner constructs a Runner with a shared agent and streaming provider.
-func NewRunner(model, systemPrompt string) *Runner {
+func NewRunner(model, systemPrompt, graphqlEndpoint string) *Runner {
 	return &Runner{
-		agent: genticadapter.BuildAgent(model, systemPrompt),
+		agent: genticadapter.BuildAgent(model, systemPrompt, graphqlEndpoint),
 		sllm:  openai.Provider{},
 	}
 }
@@ -44,7 +44,7 @@ func (r *Runner) Invoke(_ context.Context, req dto.InvokeRequest) (*dto.InvokeRe
 }
 
 // Stream uses the same Resolver → Flow pipeline as Invoke; chat streams via ChatStep.Stream,
-// create_campaign streams synthetic tokens after CreateCampaignStep.Run.
+// create_campaign streams synthetic tokens after CheckLocationProfileStep.Run.
 func (r *Runner) Stream(ctx context.Context, req dto.InvokeRequest) (<-chan gen.StreamEvent, error) {
 	input := gen.AgentInput{
 		Query:    req.Message,

@@ -27,7 +27,7 @@ func main() {
 		log.Fatalf("config: %v", err)
 	}
 
-	runner := agent.NewRunner(cfg.Model, cfg.SystemPrompt)
+	runner := agent.NewRunner(cfg.Model, cfg.SystemPrompt, cfg.GraphQLEndpoint)
 	handler := api.NewRouter(runner)
 
 	mux := http.NewServeMux()
