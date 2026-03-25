@@ -76,6 +76,8 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) er
 	var summary string
 
 	if op != nil {
+		n.Notify("create_location_profile", gen.ActivityDone, "Create a location profile")
+
 		totalRefine := s.MaxReflectionIterations + 1
 		genPrompt := buildOperatingDataLocationSummaryPrompt(loc, op)
 		refSnap := buildReflectionSnapshot(loc, op)
@@ -105,6 +107,7 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) er
 		if err != nil {
 			return err
 		}
+		n.Notify("create_location_profile", gen.ActivityDone, "Create a location profile")
 	}
 
 	if err := graphql.SaveLocationProfile(ctx, s.GraphQLEndpoint, locationID, analyticsID, summary); err != nil {
@@ -125,7 +128,8 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) er
 	}
 
 	state.Output = notify + "\n\n" + summary
-	n.Notify("create_location_profile", gen.ActivityDone, "Location profile saved", gen.WithDetail(loc.Name))
+	// Separate step id so the feed order stays: check → create → refine → saved (Map insertion order).
+	n.Notify("location_profile_saved", gen.ActivityDone, "Location profile saved", gen.WithDetail(loc.Name))
 	return nil
 }
 

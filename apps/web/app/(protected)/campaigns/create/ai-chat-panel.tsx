@@ -36,6 +36,14 @@ function getMessageText(message: UIMessage): string {
   );
 }
 
+/** Keeps agent activity rows in pipeline order (not Map insertion / SSE part order). */
+const ACTIVITY_STEP_ORDER: Record<string, number> = {
+  check_location_profile: 0,
+  create_location_profile: 1,
+  profile_refinement: 2,
+  location_profile_saved: 3,
+};
+
 function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
   const stepMap = new Map<string, ActivityStep>();
   for (const part of parts ?? []) {
@@ -44,7 +52,11 @@ function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
       stepMap.set(a.step, a);
     }
   }
-  return Array.from(stepMap.values());
+  return Array.from(stepMap.values()).sort((a, b) => {
+    const oa = ACTIVITY_STEP_ORDER[a.step] ?? 100;
+    const ob = ACTIVITY_STEP_ORDER[b.step] ?? 100;
+    return oa - ob;
+  });
 }
 
 export function AiChatPanel({
