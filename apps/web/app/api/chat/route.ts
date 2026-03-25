@@ -159,7 +159,10 @@ async function parseAgentSSEAndForward(
 export async function POST(req: Request) {
   const baseUrl = getAgentsBaseUrl();
   if (!baseUrl) {
-    return jsonError("AGENTS_URL is not configured", 500);
+    return jsonError(
+      "AGENTS_URL is not configured. Add AGENTS_URL (or AGENTS_API_URL) to apps/web/.env.local pointing at gentic-agents, e.g. http://127.0.0.1:7000",
+      500
+    );
   }
 
   let json: unknown;
@@ -200,9 +203,11 @@ export async function POST(req: Request) {
       signal: req.signal,
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Failed to reach agents service";
-    return jsonError(message, 502);
+    const detail = err instanceof Error ? err.message : String(err);
+    return jsonError(
+      `Cannot connect to gentic-agents at ${baseUrl} (${detail}). Start the Go server (apps/gentic-agents: make run or go run ./cmd/server), ensure ADDR matches this URL, and use 127.0.0.1 instead of localhost if you see connection issues.`,
+      502
+    );
   }
 
   if (!agentRes.ok) {
