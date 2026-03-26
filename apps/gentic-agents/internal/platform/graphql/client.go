@@ -16,6 +16,26 @@ const fetchLocationProfileQuery = `query FetchLocationProfile($locationId: ID!, 
   }
 }`
 
+const fetchMenuEngineeringMatrixQuery = `query FetchMenuEngineeringMatrix($analyticsRunId: ID!, $categories: [String!]) {
+  menuEngineeringMatrix(analyticsRunId: $analyticsRunId, categories: $categories) {
+    items {
+      menu
+      category
+      action
+      quantity
+      totalRevenue
+      cogs
+      totalCogs
+      contributionMargin
+      contributionMarginPercentage
+      marginPerUnit
+      weValue
+      menuCategory
+      menuCategoryDetail
+    }
+  }
+}`
+
 const fetchLocationDataQuery = `query FetchLocationData($locationId: ID!, $analyticsRunId: ID!) {
   location(id: $locationId) {
     id
@@ -193,6 +213,31 @@ type locationDataWrapper struct {
 	OperatingProfile  *OperatingProfile   `json:"operatingProfile"`
 }
 
+type menuEngineeringMatrixDataWrapper struct {
+	MenuEngineeringMatrix *menuEngineeringMatrixPayload `json:"menuEngineeringMatrix"`
+}
+
+type menuEngineeringMatrixPayload struct {
+	Items []MenuEngineeringItem `json:"items"`
+}
+
+// MenuEngineeringItem is one row from menuEngineeringMatrix.items (BCG classification).
+type MenuEngineeringItem struct {
+	Menu                         string   `json:"menu"`
+	Category                     string   `json:"category"`
+	Action                       string   `json:"action"`
+	Quantity                     int      `json:"quantity"`
+	TotalRevenue                 float64  `json:"totalRevenue"`
+	Cogs                         float64  `json:"cogs"`
+	TotalCogs                    float64  `json:"totalCogs"`
+	ContributionMargin           float64  `json:"contributionMargin"`
+	ContributionMarginPercentage float64  `json:"contributionMarginPercentage"`
+	MarginPerUnit                float64  `json:"marginPerUnit"`
+	WeValue                      float64  `json:"weValue"`
+	MenuCategory                 *string  `json:"menuCategory"`
+	MenuCategoryDetail           *string  `json:"menuCategoryDetail"`
+}
+
 type saveLocationProfileDataWrapper struct {
 	SaveLocationProfile *struct {
 		ID ID `json:"id"`
@@ -230,6 +275,26 @@ func FetchLocationProfile(ctx context.Context, endpoint, locationID, analyticsRu
 		return nil, err
 	}
 	return data.LocationProfile, nil
+}
+
+// FetchMenuEngineeringMatrix loads filtered BCG matrix items for promotion planning.
+// Returns nil, nil when the server returns null (e.g. no COGS / matrix unavailable).
+func FetchMenuEngineeringMatrix(ctx context.Context, endpoint, analyticsRunID string, categories []string) ([]MenuEngineeringItem, error) {
+	raw, err := postGQL(ctx, endpoint, fetchMenuEngineeringMatrixQuery, map[string]interface{}{
+		"analyticsRunId": analyticsRunID,
+		"categories":     categories,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var data menuEngineeringMatrixDataWrapper
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return nil, err
+	}
+	if data.MenuEngineeringMatrix == nil {
+		return nil, nil
+	}
+	return data.MenuEngineeringMatrix.Items, nil
 }
 
 // FetchLocationData loads location and operating profile for profile generation.

@@ -145,6 +145,8 @@ func (s CreatePostScheduleStep) Run(ctx context.Context, state *gen.State) error
 
 	state.SetMetadata(metadataKeyPostSchedule, final)
 
+	EmitPlanningProgress(ctx, state)
+
 	notify, err := llm.Chat(ctx, model, scheduleNotifySystem, buildPostScheduleNotifyPrompt(final))
 	if err != nil {
 		notify = fallbackPostScheduleMessage(final)

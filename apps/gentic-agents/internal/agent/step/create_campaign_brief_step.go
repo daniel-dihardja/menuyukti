@@ -104,6 +104,8 @@ func (s CreateCampaignBriefStep) Run(ctx context.Context, state *gen.State) erro
 		PostingCadence: strings.TrimSpace(payload.PostingCadence),
 	})
 
+	EmitPlanningProgress(ctx, state)
+
 	notify, err := llm.Chat(ctx, model, campaignBriefNotifySystem, buildCampaignBriefNotifyPrompt(payload))
 	if err != nil {
 		notify = fallbackCampaignBriefMessage(payload)
@@ -124,10 +126,10 @@ func (s CreateCampaignBriefStep) Run(ctx context.Context, state *gen.State) erro
 }
 
 func locationProfileFromMetadata(state *gen.State) (*graphql.LocationProfile, bool) {
-	if state == nil || state.Metadata == nil {
+	if state == nil {
 		return nil, false
 	}
-	v, ok := state.Metadata[metadataKeyLocationProfile]
+	v, ok := state.GetMetadata(metadataKeyLocationProfile)
 	if !ok {
 		return nil, false
 	}

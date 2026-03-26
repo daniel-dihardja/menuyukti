@@ -24,10 +24,10 @@ func campaignIDFromMetadata(state *gen.State) string {
 }
 
 func hasValidPersistedCampaignBrief(state *gen.State) bool {
-	if state == nil || state.Metadata == nil {
+	if state == nil {
 		return false
 	}
-	v, ok := state.Metadata[metadataKeyCampaignBrief]
+	v, ok := state.GetMetadata(metadataKeyCampaignBrief)
 	if !ok {
 		return false
 	}

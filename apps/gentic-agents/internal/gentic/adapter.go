@@ -26,7 +26,20 @@ func BuildAgent(model, systemPrompt, graphqlEndpoint string, maxReflectionIterat
 			Model:                   model,
 			MaxReflectionIterations: maxReflectionIterations,
 		},
-		step.CreatePostScheduleStep{
+		gen.Parallel(
+			step.CreatePostScheduleStep{
+				Model:                   model,
+				MaxReflectionIterations: maxReflectionIterations,
+			},
+			step.FetchPromotionItemsStep{
+				GraphQLEndpoint: graphqlEndpoint,
+			},
+		),
+		step.SelectPromotionItemsStep{
+			Model:                   model,
+			MaxReflectionIterations: maxReflectionIterations,
+		},
+		step.AssignPostFormatsStep{
 			Model:                   model,
 			MaxReflectionIterations: maxReflectionIterations,
 		},

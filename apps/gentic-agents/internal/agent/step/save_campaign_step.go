@@ -24,7 +24,7 @@ func (s SaveCampaignStep) Run(ctx context.Context, state *gen.State) error {
 	if state == nil {
 		return nil
 	}
-	if v, ok := state.Metadata[metadataKeySavedCampaignID]; ok {
+	if v, ok := state.GetMetadata(metadataKeySavedCampaignID); ok {
 		if id, ok := v.(string); ok && strings.TrimSpace(id) != "" {
 			return nil
 		}
@@ -39,7 +39,11 @@ func (s SaveCampaignStep) Run(ctx context.Context, state *gen.State) error {
 		return nil
 	}
 
-	brief, ok := state.Metadata[metadataKeyCampaignBrief].(*graphql.CampaignBrief)
+	briefVal, ok := state.GetMetadata(metadataKeyCampaignBrief)
+	if !ok {
+		return nil
+	}
+	brief, ok := briefVal.(*graphql.CampaignBrief)
 	if !ok || brief == nil {
 		return nil
 	}
@@ -52,6 +56,7 @@ func (s SaveCampaignStep) Run(ctx context.Context, state *gen.State) error {
 	dateStart := strings.TrimSpace(meta.GetString("date_start"))
 	dateEnd := strings.TrimSpace(meta.GetString("date_end"))
 	if dateStart == "" || dateEnd == "" {
+		state.Output = "Cannot save campaign: date_start and date_end are required. Ensure the chat request includes your campaign date range."
 		return nil
 	}
 
@@ -61,6 +66,9 @@ func (s SaveCampaignStep) Run(ctx context.Context, state *gen.State) error {
 	}
 
 	n := gen.NotifierFromContext(ctx)
+	if n != nil {
+		n.Notify("save_campaign", gen.ActivityRunning, "Save campaign to database")
+	}
 
 	name := strings.TrimSpace(brief.CampaignTheme)
 	if len(name) > 256 {
@@ -85,15 +93,22 @@ func (s SaveCampaignStep) Run(ctx context.Context, state *gen.State) error {
 		endPtr = &dateEnd
 	}
 
+	payload, ok := BuildPlanningPayloadWire(state)
+	if !ok || payload.CampaignBrief == nil {
+		state.Output = "Cannot save campaign: planning snapshot is incomplete (brief or dates missing)."
+		if n != nil {
+			n.Notify("save_campaign", gen.ActivityDone, "Save failed — incomplete planning state")
+		}
+		return nil
+	}
+	postSlotsJSON, err := json.Marshal(payload.CampaignBrief.PostSlots)
+	if err != nil {
+		return fmt.Errorf("save campaign: marshal post slots: %w", err)
+	}
+
 	campaignID, err := graphql.CreateCampaign(ctx, s.GraphQLEndpoint, locID, name, nil, startPtr, endPtr, themePtr, tonePtr)
 	if err != nil {
 		return fmt.Errorf("save campaign: createCampaign: %w", err)
-	}
-
-	postSlots := buildPostSlotsWire(ps, meta.GetString("national_holidays"))
-	postSlotsJSON, err := json.Marshal(postSlots)
-	if err != nil {
-		return fmt.Errorf("save campaign: marshal post slots: %w", err)
 	}
 	slotsStr := string(postSlotsJSON)
 	schedulePtr := &slotsStr
@@ -117,29 +132,9 @@ func (s SaveCampaignStep) Run(ctx context.Context, state *gen.State) error {
 	state.SetMetadata(metadataKeySavedCampaignID, campaignID)
 	state.SetMetadata("campaign_id", campaignID)
 
-	holidaysWire := parseNationalHolidaysWire(meta.GetString("national_holidays"))
-	var locSummary *string
-	if p, ok := locationProfileFromMetadata(state); ok && p != nil && strings.TrimSpace(p.Summary) != "" {
-		s := strings.TrimSpace(p.Summary)
-		locSummary = &s
-	}
-
-	payload := planningPayloadWire{
-		DateStart:        dateStart,
-		DateEnd:          dateEnd,
-		NationalHolidays: holidaysWire,
-		LocationSummary:  locSummary,
-		CampaignBrief: campaignBriefWire{
-			CampaignTheme:  strings.TrimSpace(brief.CampaignTheme),
-			Tone:           strings.TrimSpace(brief.Tone),
-			TargetAudience: strings.TrimSpace(brief.TargetAudience),
-			PostingCadence: strings.TrimSpace(brief.PostingCadence),
-			PostSlots:      postSlots,
-		},
-	}
-
 	if n != nil {
 		n.EmitData("planning", payload)
+		n.Notify("save_campaign", gen.ActivityDone, "Campaign saved", gen.WithDetail(campaignID))
 	}
 
 	// Short chat reply only — brief and post schedule live in the artifact panel.
@@ -149,11 +144,11 @@ func (s SaveCampaignStep) Run(ctx context.Context, state *gen.State) error {
 
 // planningPayloadWire matches the shape expected by apps/web/app/api/chat/route.ts (AgentSSEChunk.planning).
 type planningPayloadWire struct {
-	DateStart        string                 `json:"dateStart"`
-	DateEnd          string                 `json:"dateEnd"`
-	NationalHolidays []nationalHolidayWire  `json:"nationalHolidays,omitempty"`
-	LocationSummary  *string                `json:"locationSummary,omitempty"`
-	CampaignBrief    campaignBriefWire      `json:"campaignBrief"`
+	DateStart          string                 `json:"dateStart"`
+	DateEnd            string                 `json:"dateEnd"`
+	NationalHolidays   []nationalHolidayWire  `json:"nationalHolidays,omitempty"`
+	LocationSummary    *string                `json:"locationSummary,omitempty"`
+	CampaignBrief *campaignBriefWire `json:"campaignBrief,omitempty"`
 }
 
 type campaignBriefWire struct {
@@ -195,7 +190,7 @@ func parseNationalHolidaysWire(raw string) []nationalHolidayWire {
 	return out
 }
 
-func buildPostSlotsWire(ps *PostSchedule, nationalHolidaysJSON string) []PostSlotWire {
+func buildPostSlotsWire(ps *PostSchedule, nationalHolidaysJSON string, plan *PostFormatPlan) []PostSlotWire {
 	holidayDates := map[string]struct{}{}
 	raw := strings.TrimSpace(nationalHolidaysJSON)
 	if raw != "" && raw != "null" {
@@ -208,6 +203,13 @@ func buildPostSlotsWire(ps *PostSchedule, nationalHolidaysJSON string) []PostSlo
 					holidayDates[h.Date] = struct{}{}
 				}
 			}
+		}
+	}
+
+	byDate := map[string]PostFormatAssignment{}
+	if plan != nil {
+		for _, a := range plan.Assignments {
+			byDate[strings.TrimSpace(a.ScheduledDate)] = a
 		}
 	}
 
@@ -231,13 +233,38 @@ func buildPostSlotsWire(ps *PostSchedule, nationalHolidaysJSON string) []PostSlo
 			theme = "holiday"
 		}
 		cap := fmt.Sprintf("%s post — highlight your best dishes and offers.", theme)
-		out = append(out, PostSlotWire{
+
+		slot := PostSlotWire{
 			ScheduledDate: d,
 			Theme:         theme,
 			Format:        "single",
 			FocusItem:     nil,
 			CaptionSeed:   cap,
-		})
+		}
+
+		if a, ok := byDate[d]; ok {
+			if normalizePostFormat(a.Format) == "carousel" {
+				slot.Format = "carousel"
+				slot.CarouselItems = append([]string(nil), a.Items...)
+				slot.CarouselNarrative = a.CarouselNarrative
+				slot.FocusItem = nil
+				if a.CarouselNarrative != nil && strings.TrimSpace(*a.CarouselNarrative) != "" {
+					slot.CaptionSeed = strings.TrimSpace(*a.CarouselNarrative)
+				}
+			} else {
+				slot.Format = "single"
+				if len(a.Items) > 0 {
+					f := strings.TrimSpace(a.Items[0])
+					if f != "" {
+						slot.FocusItem = &f
+					}
+				}
+				slot.CarouselItems = nil
+				slot.CarouselNarrative = nil
+			}
+		}
+
+		out = append(out, slot)
 	}
 	return out
 }

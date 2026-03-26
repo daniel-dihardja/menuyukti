@@ -18,10 +18,10 @@ type PostSchedule struct {
 }
 
 func hasValidPostSchedule(state *gen.State) bool {
-	if state == nil || state.Metadata == nil {
+	if state == nil {
 		return false
 	}
-	v, ok := state.Metadata[metadataKeyPostSchedule]
+	v, ok := state.GetMetadata(metadataKeyPostSchedule)
 	if !ok {
 		return false
 	}
@@ -41,10 +41,10 @@ func hasValidPostSchedule(state *gen.State) bool {
 }
 
 func postScheduleFromMetadata(state *gen.State) (*PostSchedule, bool) {
-	if state == nil || state.Metadata == nil {
+	if state == nil {
 		return nil, false
 	}
-	v, ok := state.Metadata[metadataKeyPostSchedule]
+	v, ok := state.GetMetadata(metadataKeyPostSchedule)
 	if !ok {
 		return nil, false
 	}

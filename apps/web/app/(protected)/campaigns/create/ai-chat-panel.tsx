@@ -45,6 +45,15 @@ const ACTIVITY_STEP_ORDER: Record<string, number> = {
   create_campaign_brief: 4,
   campaign_brief_refinement: 5,
   campaign_brief_ready: 6,
+  create_post_schedule: 7,
+  post_schedule_refinement: 8,
+  post_schedule_ready: 9,
+  fetch_promotion_items: 10,
+  select_promotion_items: 11,
+  select_promotion_refinement: 12,
+  assign_post_formats: 13,
+  assign_post_formats_refinement: 14,
+  save_campaign: 15,
 };
 
 function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
