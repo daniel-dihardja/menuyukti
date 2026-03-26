@@ -424,7 +424,6 @@ export function AiArtifactPanel({
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium leading-snug text-foreground">
-                          <span className="text-muted-foreground">→</span>{" "}
                           {slotPromotedItemsLine(slot)}
                         </p>
                         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
