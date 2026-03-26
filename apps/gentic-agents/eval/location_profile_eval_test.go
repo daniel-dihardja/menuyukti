@@ -70,6 +70,15 @@ func meta(loc, analytics string) map[string]interface{} {
 	}
 }
 
+// stubReloadProfile avoids HTTP after save in [step.CreateLocationProfileStep] (reload row).
+func stubReloadProfile() stubProfileLoader {
+	return stubProfileLoader{
+		fn: func(ctx context.Context, endpoint, locationID, analyticsID string) (*graphql.LocationProfile, error) {
+			return &graphql.LocationProfile{ID: "lp-stub", Summary: "stub"}, nil
+		},
+	}
+}
+
 func TestEvalSuite_LocationProfile(t *testing.T) {
 	t.Parallel()
 
@@ -82,11 +91,11 @@ func TestEvalSuite_LocationProfile(t *testing.T) {
 		}
 		agent := gen.Agent{
 			Resolver: fixedFlowResolver{f: gen.NewFlow(
-				step.CheckLocationProfileStep{Loader: loader, GraphQLEndpoint: "http://unused"},
-				gen.If(step.NeedsLocationProfileCreation, step.CreateLocationProfileStep{
+				ge.WrapWithEval("check_location_profile", step.CheckLocationProfileStep{Loader: loader, GraphQLEndpoint: "http://unused"}),
+				gen.If(step.NeedsLocationProfileCreation, ge.WrapWithEval("create_location_profile", step.CreateLocationProfileStep{
 					GraphQLEndpoint: "http://unused",
 					LLM:             ge.ReplyChat("should-not-run", nil),
-				}),
+				})),
 			)},
 		}
 		runner := ge.Runner{Agent: agent}
@@ -113,7 +122,7 @@ func TestEvalSuite_LocationProfile(t *testing.T) {
 		t.Parallel()
 		agent := gen.Agent{
 			Resolver: fixedFlowResolver{f: gen.NewFlow(
-				step.CheckLocationProfileStep{GraphQLEndpoint: "http://unused"},
+				ge.WrapWithEval("check_location_profile", step.CheckLocationProfileStep{GraphQLEndpoint: "http://unused"}),
 			)},
 		}
 		runner := ge.Runner{Agent: agent}
@@ -153,14 +162,15 @@ func TestEvalSuite_LocationProfile(t *testing.T) {
 		saver := &stubProfileSaver{}
 		agent := gen.Agent{
 			Resolver: fixedFlowResolver{f: gen.NewFlow(
-				step.CheckLocationProfileStep{Loader: checkLoader, GraphQLEndpoint: "http://unused"},
-				gen.If(step.NeedsLocationProfileCreation, step.CreateLocationProfileStep{
+				ge.WrapWithEval("check_location_profile", step.CheckLocationProfileStep{Loader: checkLoader, GraphQLEndpoint: "http://unused"}),
+				gen.If(step.NeedsLocationProfileCreation, ge.WrapWithEval("create_location_profile", step.CreateLocationProfileStep{
 					GraphQLEndpoint:         "http://unused",
 					DataLoader:              dataLoader,
 					Saver:                   saver,
+					ReloadProfile:           stubReloadProfile(),
 					LLM:                     profilePipelineLLM(),
 					MaxReflectionIterations: 0,
-				}),
+				})),
 			)},
 		}
 		runner := ge.Runner{Agent: agent}
@@ -205,14 +215,15 @@ func TestEvalSuite_LocationProfile(t *testing.T) {
 		saver := &stubProfileSaver{}
 		agent := gen.Agent{
 			Resolver: fixedFlowResolver{f: gen.NewFlow(
-				step.CheckLocationProfileStep{Loader: checkLoader, GraphQLEndpoint: "http://unused"},
-				gen.If(step.NeedsLocationProfileCreation, step.CreateLocationProfileStep{
+				ge.WrapWithEval("check_location_profile", step.CheckLocationProfileStep{Loader: checkLoader, GraphQLEndpoint: "http://unused"}),
+				gen.If(step.NeedsLocationProfileCreation, ge.WrapWithEval("create_location_profile", step.CreateLocationProfileStep{
 					GraphQLEndpoint:         "http://unused",
 					DataLoader:              dataLoader,
 					Saver:                   saver,
+					ReloadProfile:           stubReloadProfile(),
 					LLM:                     profilePipelineLLM(),
 					MaxReflectionIterations: 0,
-				}),
+				})),
 			)},
 		}
 		runner := ge.Runner{Agent: agent}

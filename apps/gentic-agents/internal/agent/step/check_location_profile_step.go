@@ -3,11 +3,9 @@ package step
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	"github.com/daniel-dihardja/gentic/pkg/gentic"
-	"github.com/daniel-dihardja/gentic/pkg/gentic/eval"
 )
 
 // ProfileLoader loads a location profile for [CheckLocationProfileStep]. When nil, [graphql.FetchLocationProfile] is used.
@@ -31,10 +29,7 @@ func (s CheckLocationProfileStep) loadProfile(ctx context.Context, endpoint, loc
 }
 
 // Run implements gentic.Step.
-func (s CheckLocationProfileStep) Run(ctx context.Context, state *gentic.State) (err error) {
-	start := time.Now()
-	defer func() { eval.Record(ctx, "check_location_profile", start, err) }()
-
+func (s CheckLocationProfileStep) Run(ctx context.Context, state *gentic.State) error {
 	locationID, analyticsID, ok := requiredLocationIDs(state, "check location profile")
 	if !ok {
 		return nil

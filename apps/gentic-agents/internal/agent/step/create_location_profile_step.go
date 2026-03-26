@@ -8,7 +8,6 @@ import (
 
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
-	"github.com/daniel-dihardja/gentic/pkg/gentic/eval"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
 	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
 )
@@ -37,6 +36,15 @@ type CreateLocationProfileStep struct {
 	DataLoader              LocationDataLoader
 	Saver                   ProfileSaver
 	LLM                     gen.LLM
+	// ReloadProfile loads the persisted row after save. When nil, [graphql.FetchLocationProfile] is used.
+	ReloadProfile ProfileLoader
+}
+
+func (s CreateLocationProfileStep) reloadProfile(ctx context.Context, endpoint, locationID, analyticsID string) (*graphql.LocationProfile, error) {
+	if s.ReloadProfile != nil {
+		return s.ReloadProfile.Load(ctx, endpoint, locationID, analyticsID)
+	}
+	return graphql.FetchLocationProfile(ctx, endpoint, locationID, analyticsID)
 }
 
 // Run implements gentic.Step.
@@ -44,9 +52,6 @@ type CreateLocationProfileStep struct {
 // If a valid profile is already in metadata, we no-op (defense in depth if the flow and predicate
 // ever drift).
 func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) (err error) {
-	start := time.Now()
-	defer func() { eval.Record(ctx, "create_location_profile", start, err) }()
-
 	if hasValidPersistedLocationProfile(state) {
 		return nil
 	}
@@ -140,7 +145,7 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) (e
 	}
 
 	// So downstream steps (e.g. campaign brief) see the same metadata as after CheckLocationProfileStep.
-	profileRow, err := graphql.FetchLocationProfile(ctx, s.GraphQLEndpoint, locationID, analyticsID)
+	profileRow, err := s.reloadProfile(ctx, s.GraphQLEndpoint, locationID, analyticsID)
 	if err != nil {
 		return err
 	}

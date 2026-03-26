@@ -3,6 +3,7 @@ package gentic
 import (
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
+	"github.com/daniel-dihardja/gentic/pkg/gentic/eval"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/intent"
 	"github.com/daniel-dihardja/gentic/pkg/steps"
 )
@@ -14,38 +15,46 @@ func BuildAgent(model, systemPrompt, graphqlEndpoint string, maxReflectionIterat
 		SystemPrompt: systemPrompt,
 	})
 	campaignFlow := gen.NewFlow(
-		step.CheckLocationProfileStep{
-			GraphQLEndpoint: graphqlEndpoint,
-		},
-		gen.If(step.NeedsLocationProfileCreation, step.CreateLocationProfileStep{
-			GraphQLEndpoint:         graphqlEndpoint,
-			Model:                   model,
-			MaxReflectionIterations: maxReflectionIterations,
-		}),
-		step.CreateCampaignBriefStep{
-			Model:                   model,
-			MaxReflectionIterations: maxReflectionIterations,
-		},
-		gen.Parallel(
-			step.CreatePostScheduleStep{
+		eval.WrapWithEval("check_location_profile",
+			step.CheckLocationProfileStep{
+				GraphQLEndpoint: graphqlEndpoint,
+			}),
+		gen.If(step.NeedsLocationProfileCreation, eval.WrapWithEval("create_location_profile",
+			step.CreateLocationProfileStep{
+				GraphQLEndpoint:         graphqlEndpoint,
 				Model:                   model,
 				MaxReflectionIterations: maxReflectionIterations,
-			},
-			step.FetchPromotionItemsStep{
-				GraphQLEndpoint: graphqlEndpoint,
-			},
+			})),
+		eval.WrapWithEval("create_campaign_brief",
+			step.CreateCampaignBriefStep{
+				Model:                   model,
+				MaxReflectionIterations: maxReflectionIterations,
+			}),
+		gen.Parallel(
+			eval.WrapWithEval("create_post_schedule",
+				step.CreatePostScheduleStep{
+					Model:                   model,
+					MaxReflectionIterations: maxReflectionIterations,
+				}),
+			eval.WrapWithEval("fetch_promotion_items",
+				step.FetchPromotionItemsStep{
+					GraphQLEndpoint: graphqlEndpoint,
+				}),
 		),
-		step.SelectPromotionItemsStep{
-			Model:                   model,
-			MaxReflectionIterations: maxReflectionIterations,
-		},
-		step.AssignPostFormatsStep{
-			Model:                   model,
-			MaxReflectionIterations: maxReflectionIterations,
-		},
-		step.SaveCampaignStep{
-			GraphQLEndpoint: graphqlEndpoint,
-		},
+		eval.WrapWithEval("select_promotion_items",
+			step.SelectPromotionItemsStep{
+				Model:                   model,
+				MaxReflectionIterations: maxReflectionIterations,
+			}),
+		eval.WrapWithEval("assign_post_formats",
+			step.AssignPostFormatsStep{
+				Model:                   model,
+				MaxReflectionIterations: maxReflectionIterations,
+			}),
+		eval.WrapWithEval("save_campaign",
+			step.SaveCampaignStep{
+				GraphQLEndpoint: graphqlEndpoint,
+			}),
 	)
 	resolver := intent.NewRouter("chat", "create_campaign").
 		On("create_campaign", campaignFlow).
