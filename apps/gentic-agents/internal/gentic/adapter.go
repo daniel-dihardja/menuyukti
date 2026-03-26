@@ -26,6 +26,10 @@ func BuildAgent(model, systemPrompt, graphqlEndpoint string, maxReflectionIterat
 			Model:                   model,
 			MaxReflectionIterations: maxReflectionIterations,
 		},
+		step.CreatePostScheduleStep{
+			Model:                   model,
+			MaxReflectionIterations: maxReflectionIterations,
+		},
 	)
 	resolver := intent.NewRouter("chat", "create_campaign").
 		On("create_campaign", campaignFlow).
