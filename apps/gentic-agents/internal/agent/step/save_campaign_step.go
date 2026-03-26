@@ -228,6 +228,11 @@ func buildPostSlotsWire(ps *PostSchedule, nationalHolidaysJSON string, plan *Pos
 
 	out := make([]PostSlotWire, 0, len(dates))
 	for _, d := range dates {
+		a, ok := byDate[d]
+		if !ok {
+			continue
+		}
+
 		theme := "promotion"
 		if _, ok := holidayDates[d]; ok {
 			theme = "holiday"
@@ -242,26 +247,24 @@ func buildPostSlotsWire(ps *PostSchedule, nationalHolidaysJSON string, plan *Pos
 			CaptionSeed:   cap,
 		}
 
-		if a, ok := byDate[d]; ok {
-			if normalizePostFormat(a.Format) == "carousel" {
-				slot.Format = "carousel"
-				slot.CarouselItems = append([]string(nil), a.Items...)
-				slot.CarouselNarrative = a.CarouselNarrative
-				slot.FocusItem = nil
-				if a.CarouselNarrative != nil && strings.TrimSpace(*a.CarouselNarrative) != "" {
-					slot.CaptionSeed = strings.TrimSpace(*a.CarouselNarrative)
-				}
-			} else {
-				slot.Format = "single"
-				if len(a.Items) > 0 {
-					f := strings.TrimSpace(a.Items[0])
-					if f != "" {
-						slot.FocusItem = &f
-					}
-				}
-				slot.CarouselItems = nil
-				slot.CarouselNarrative = nil
+		if normalizePostFormat(a.Format) == "carousel" {
+			slot.Format = "carousel"
+			slot.CarouselItems = append([]string(nil), a.Items...)
+			slot.CarouselNarrative = a.CarouselNarrative
+			slot.FocusItem = nil
+			if a.CarouselNarrative != nil && strings.TrimSpace(*a.CarouselNarrative) != "" {
+				slot.CaptionSeed = strings.TrimSpace(*a.CarouselNarrative)
 			}
+		} else {
+			slot.Format = "single"
+			if len(a.Items) > 0 {
+				f := strings.TrimSpace(a.Items[0])
+				if f != "" {
+					slot.FocusItem = &f
+				}
+			}
+			slot.CarouselItems = nil
+			slot.CarouselNarrative = nil
 		}
 
 		out = append(out, slot)
