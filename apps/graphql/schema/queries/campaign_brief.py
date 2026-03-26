@@ -29,6 +29,7 @@ class CampaignBriefQuery:
                 tone=row.tone,
                 target_audience=row.target_audience,
                 posting_cadence=row.posting_cadence,
+                post_schedule_json=row.post_schedule_json,
                 created_at=row.created_at,
                 updated_at=row.updated_at,
             )

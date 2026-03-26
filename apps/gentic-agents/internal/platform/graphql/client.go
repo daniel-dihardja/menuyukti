@@ -82,8 +82,15 @@ const fetchCampaignBriefQuery = `query FetchCampaignBrief($campaignId: ID!) {
   }
 }`
 
-const saveCampaignBriefMutation = `mutation SaveCampaignBrief($campaignId: ID!, $locationId: ID!, $analyticsRunId: ID!, $campaignTheme: String!, $tone: String!, $targetAudience: String!, $postingCadence: String!) {
-  saveCampaignBrief(campaignId: $campaignId, locationId: $locationId, analyticsRunId: $analyticsRunId, campaignTheme: $campaignTheme, tone: $tone, targetAudience: $targetAudience, postingCadence: $postingCadence) {
+const createCampaignMutation = `mutation CreateCampaign($locationId: Int!, $name: String!, $goal: String, $startDate: Date, $endDate: Date, $theme: String, $tone: String) {
+  createCampaign(locationId: $locationId, name: $name, goal: $goal, startDate: $startDate, endDate: $endDate, theme: $theme, tone: $tone) {
+    id
+    name
+  }
+}`
+
+const saveCampaignBriefMutation = `mutation SaveCampaignBrief($campaignId: ID!, $locationId: ID!, $analyticsRunId: ID!, $campaignTheme: String!, $tone: String!, $targetAudience: String!, $postingCadence: String!, $postScheduleJson: String) {
+  saveCampaignBrief(campaignId: $campaignId, locationId: $locationId, analyticsRunId: $analyticsRunId, campaignTheme: $campaignTheme, tone: $tone, targetAudience: $targetAudience, postingCadence: $postingCadence, postScheduleJson: $postScheduleJson) {
     id
   }
 }`
@@ -202,6 +209,12 @@ type saveCampaignBriefDataWrapper struct {
 	} `json:"saveCampaignBrief"`
 }
 
+type createCampaignDataWrapper struct {
+	CreateCampaign *struct {
+		ID ID `json:"id"`
+	} `json:"createCampaign"`
+}
+
 // FetchLocationProfile calls locationProfile(locationId, analyticsRunId).
 // Returns nil, nil when the server returns null (profile not yet created).
 func FetchLocationProfile(ctx context.Context, endpoint, locationID, analyticsRunID string) (*LocationProfile, error) {
@@ -271,17 +284,59 @@ func FetchCampaignBrief(ctx context.Context, endpoint, campaignID string) (*Camp
 	return data.CampaignBrief, nil
 }
 
+// CreateCampaign inserts a campaign row and returns the new campaign id as a string.
+func CreateCampaign(ctx context.Context, endpoint string, locationID int, name string, goal *string, startDate, endDate *string, theme, tone *string) (string, error) {
+	vars := map[string]interface{}{
+		"locationId": locationID,
+		"name":       name,
+	}
+	if goal != nil {
+		vars["goal"] = *goal
+	}
+	if startDate != nil {
+		vars["startDate"] = *startDate
+	}
+	if endDate != nil {
+		vars["endDate"] = *endDate
+	}
+	if theme != nil {
+		vars["theme"] = *theme
+	}
+	if tone != nil {
+		vars["tone"] = *tone
+	}
+	raw, err := postGQL(ctx, endpoint, createCampaignMutation, vars)
+	if err != nil {
+		return "", err
+	}
+	var data createCampaignDataWrapper
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return "", err
+	}
+	if data.CreateCampaign == nil {
+		return "", fmt.Errorf("graphql: createCampaign returned no data")
+	}
+	return string(data.CreateCampaign.ID), nil
+}
+
 // SaveCampaignBrief upserts a campaign brief for the given campaign.
-func SaveCampaignBrief(ctx context.Context, endpoint, campaignID, locationID, analyticsRunID, campaignTheme, tone, targetAudience, postingCadence string) error {
-	raw, err := postGQL(ctx, endpoint, saveCampaignBriefMutation, map[string]interface{}{
-		"campaignId":      campaignID,
-		"locationId":      locationID,
-		"analyticsRunId":  analyticsRunID,
-		"campaignTheme":   campaignTheme,
-		"tone":            tone,
-		"targetAudience":  targetAudience,
-		"postingCadence":  postingCadence,
-	})
+// postScheduleJSON is optional JSON text (e.g. serialized post_slots array).
+func SaveCampaignBrief(ctx context.Context, endpoint, campaignID, locationID, analyticsRunID, campaignTheme, tone, targetAudience, postingCadence string, postScheduleJSON *string) error {
+	vars := map[string]interface{}{
+		"campaignId":     campaignID,
+		"locationId":     locationID,
+		"analyticsRunId": analyticsRunID,
+		"campaignTheme":  campaignTheme,
+		"tone":           tone,
+		"targetAudience": targetAudience,
+		"postingCadence": postingCadence,
+	}
+	if postScheduleJSON != nil {
+		vars["postScheduleJson"] = *postScheduleJSON
+	} else {
+		vars["postScheduleJson"] = nil
+	}
+	raw, err := postGQL(ctx, endpoint, saveCampaignBriefMutation, vars)
 	if err != nil {
 		return err
 	}

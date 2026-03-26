@@ -13,5 +13,6 @@ class CampaignBriefType:
     tone: str
     target_audience: str
     posting_cadence: str
+    post_schedule_json: str | None
     created_at: datetime | None
     updated_at: datetime | None

@@ -18,6 +18,7 @@ class SaveCampaignBriefMutation:
         tone: str,
         target_audience: str,
         posting_cadence: str,
+        post_schedule_json: str | None = None,
     ) -> CampaignBriefType:
         session = SessionLocal()
         try:
@@ -35,6 +36,7 @@ class SaveCampaignBriefMutation:
                     tone=tone,
                     target_audience=target_audience,
                     posting_cadence=posting_cadence,
+                    post_schedule_json=post_schedule_json,
                 )
                 session.add(row)
             else:
@@ -44,6 +46,7 @@ class SaveCampaignBriefMutation:
                 row.tone = tone
                 row.target_audience = target_audience
                 row.posting_cadence = posting_cadence
+                row.post_schedule_json = post_schedule_json
                 row.updated_at = datetime.now(tz=timezone.utc)
             session.commit()
             session.refresh(row)
@@ -56,6 +59,7 @@ class SaveCampaignBriefMutation:
                 tone=row.tone,
                 target_audience=row.target_audience,
                 posting_cadence=row.posting_cadence,
+                post_schedule_json=row.post_schedule_json,
                 created_at=row.created_at,
                 updated_at=row.updated_at,
             )

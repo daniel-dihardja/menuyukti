@@ -1,0 +1,243 @@
+package step
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"sort"
+	"strconv"
+	"strings"
+
+	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
+	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
+)
+
+const metadataKeySavedCampaignID = "_saved_campaign_id"
+
+// SaveCampaignStep persists campaign + brief + post schedule to GraphQL and emits a planning SSE payload for the UI.
+type SaveCampaignStep struct {
+	GraphQLEndpoint string
+}
+
+// Run implements gentic.Step.
+func (s SaveCampaignStep) Run(ctx context.Context, state *gen.State) error {
+	if state == nil {
+		return nil
+	}
+	if v, ok := state.Metadata[metadataKeySavedCampaignID]; ok {
+		if id, ok := v.(string); ok && strings.TrimSpace(id) != "" {
+			return nil
+		}
+	}
+
+	if !hasValidPersistedCampaignBrief(state) || !hasValidPostSchedule(state) {
+		return nil
+	}
+
+	locationID, analyticsID, ok := requiredLocationIDs(state, "save campaign")
+	if !ok {
+		return nil
+	}
+
+	brief, ok := state.Metadata[metadataKeyCampaignBrief].(*graphql.CampaignBrief)
+	if !ok || brief == nil {
+		return nil
+	}
+	ps, ok := postScheduleFromMetadata(state)
+	if !ok || ps == nil {
+		return nil
+	}
+
+	meta := state.SecureMetadata()
+	dateStart := strings.TrimSpace(meta.GetString("date_start"))
+	dateEnd := strings.TrimSpace(meta.GetString("date_end"))
+	if dateStart == "" || dateEnd == "" {
+		return nil
+	}
+
+	locID, err := strconv.Atoi(locationID)
+	if err != nil {
+		return fmt.Errorf("save campaign: location id: %w", err)
+	}
+
+	n := gen.NotifierFromContext(ctx)
+
+	name := strings.TrimSpace(brief.CampaignTheme)
+	if len(name) > 256 {
+		name = name[:256]
+	}
+	if name == "" {
+		name = "Campaign"
+	}
+
+	var themePtr, tonePtr *string
+	if t := strings.TrimSpace(brief.CampaignTheme); t != "" {
+		themePtr = &t
+	}
+	if t := strings.TrimSpace(brief.Tone); t != "" {
+		tonePtr = &t
+	}
+	var startPtr, endPtr *string
+	if dateStart != "" {
+		startPtr = &dateStart
+	}
+	if dateEnd != "" {
+		endPtr = &dateEnd
+	}
+
+	campaignID, err := graphql.CreateCampaign(ctx, s.GraphQLEndpoint, locID, name, nil, startPtr, endPtr, themePtr, tonePtr)
+	if err != nil {
+		return fmt.Errorf("save campaign: createCampaign: %w", err)
+	}
+
+	postSlots := buildPostSlotsWire(ps, meta.GetString("national_holidays"))
+	postSlotsJSON, err := json.Marshal(postSlots)
+	if err != nil {
+		return fmt.Errorf("save campaign: marshal post slots: %w", err)
+	}
+	slotsStr := string(postSlotsJSON)
+	schedulePtr := &slotsStr
+
+	err = graphql.SaveCampaignBrief(
+		ctx,
+		s.GraphQLEndpoint,
+		campaignID,
+		locationID,
+		analyticsID,
+		strings.TrimSpace(brief.CampaignTheme),
+		strings.TrimSpace(brief.Tone),
+		strings.TrimSpace(brief.TargetAudience),
+		strings.TrimSpace(brief.PostingCadence),
+		schedulePtr,
+	)
+	if err != nil {
+		return fmt.Errorf("save campaign: saveCampaignBrief: %w", err)
+	}
+
+	state.SetMetadata(metadataKeySavedCampaignID, campaignID)
+	state.SetMetadata("campaign_id", campaignID)
+
+	holidaysWire := parseNationalHolidaysWire(meta.GetString("national_holidays"))
+	var locSummary *string
+	if p, ok := locationProfileFromMetadata(state); ok && p != nil && strings.TrimSpace(p.Summary) != "" {
+		s := strings.TrimSpace(p.Summary)
+		locSummary = &s
+	}
+
+	payload := planningPayloadWire{
+		DateStart:        dateStart,
+		DateEnd:          dateEnd,
+		NationalHolidays: holidaysWire,
+		LocationSummary:  locSummary,
+		CampaignBrief: campaignBriefWire{
+			CampaignTheme:  strings.TrimSpace(brief.CampaignTheme),
+			Tone:           strings.TrimSpace(brief.Tone),
+			TargetAudience: strings.TrimSpace(brief.TargetAudience),
+			PostingCadence: strings.TrimSpace(brief.PostingCadence),
+			PostSlots:      postSlots,
+		},
+	}
+
+	if n != nil {
+		n.EmitData("planning", payload)
+	}
+
+	// Short chat reply only — brief and post schedule live in the artifact panel.
+	state.Output = "Your campaign is ready."
+	return nil
+}
+
+// planningPayloadWire matches the shape expected by apps/web/app/api/chat/route.ts (AgentSSEChunk.planning).
+type planningPayloadWire struct {
+	DateStart        string                 `json:"dateStart"`
+	DateEnd          string                 `json:"dateEnd"`
+	NationalHolidays []nationalHolidayWire  `json:"nationalHolidays,omitempty"`
+	LocationSummary  *string                `json:"locationSummary,omitempty"`
+	CampaignBrief    campaignBriefWire      `json:"campaignBrief"`
+}
+
+type campaignBriefWire struct {
+	CampaignTheme   string          `json:"campaign_theme"`
+	Tone            string          `json:"tone"`
+	TargetAudience  string          `json:"target_audience"`
+	PostingCadence  string          `json:"posting_cadence"`
+	PostSlots       []PostSlotWire `json:"post_slots"`
+}
+
+type PostSlotWire struct {
+	ScheduledDate      string   `json:"scheduled_date"`
+	ScheduledTime      *string  `json:"scheduled_time,omitempty"`
+	Theme              string   `json:"theme"`
+	Format             string   `json:"format"`
+	FocusItem          *string  `json:"focus_item"`
+	CarouselItems      []string `json:"carousel_items,omitempty"`
+	CarouselNarrative  *string  `json:"carousel_narrative,omitempty"`
+	CaptionSeed        string   `json:"caption_seed"`
+}
+
+type nationalHolidayWire struct {
+	ID        string `json:"id"`
+	LocalName string `json:"localName"`
+	Name      string `json:"name"`
+	Date      string `json:"date"`
+	Type      string `json:"type,omitempty"`
+}
+
+func parseNationalHolidaysWire(raw string) []nationalHolidayWire {
+	raw = strings.TrimSpace(raw)
+	if raw == "" || raw == "null" {
+		return nil
+	}
+	var out []nationalHolidayWire
+	if err := json.Unmarshal([]byte(raw), &out); err != nil {
+		return nil
+	}
+	return out
+}
+
+func buildPostSlotsWire(ps *PostSchedule, nationalHolidaysJSON string) []PostSlotWire {
+	holidayDates := map[string]struct{}{}
+	raw := strings.TrimSpace(nationalHolidaysJSON)
+	if raw != "" && raw != "null" {
+		var holidays []struct {
+			Date string `json:"date"`
+		}
+		if err := json.Unmarshal([]byte(raw), &holidays); err == nil {
+			for _, h := range holidays {
+				if h.Date != "" {
+					holidayDates[h.Date] = struct{}{}
+				}
+			}
+		}
+	}
+
+	var dates []string
+	seen := map[string]struct{}{}
+	for _, w := range ps.Weeks {
+		for _, d := range w.SelectedDates {
+			if _, ok := seen[d]; ok {
+				continue
+			}
+			seen[d] = struct{}{}
+			dates = append(dates, d)
+		}
+	}
+	sort.Strings(dates)
+
+	out := make([]PostSlotWire, 0, len(dates))
+	for _, d := range dates {
+		theme := "promotion"
+		if _, ok := holidayDates[d]; ok {
+			theme = "holiday"
+		}
+		cap := fmt.Sprintf("%s post — highlight your best dishes and offers.", theme)
+		out = append(out, PostSlotWire{
+			ScheduledDate: d,
+			Theme:         theme,
+			Format:        "single",
+			FocusItem:     nil,
+			CaptionSeed:   cap,
+		})
+	}
+	return out
+}

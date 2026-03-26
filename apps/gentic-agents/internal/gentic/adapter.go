@@ -30,6 +30,9 @@ func BuildAgent(model, systemPrompt, graphqlEndpoint string, maxReflectionIterat
 			Model:                   model,
 			MaxReflectionIterations: maxReflectionIterations,
 		},
+		step.SaveCampaignStep{
+			GraphQLEndpoint: graphqlEndpoint,
+		},
 	)
 	resolver := intent.NewRouter("chat", "create_campaign").
 		On("create_campaign", campaignFlow).
