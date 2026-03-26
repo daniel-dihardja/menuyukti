@@ -102,13 +102,22 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function formatShortDate(dateStr: string): string {
+/** e.g. Fri, 03.04. — weekday plus day.month with dots */
+function formatPostScheduleDateLabel(dateStr: string): string {
   const date = new Date(dateStr + "T00:00:00");
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
+  const wd = date.toLocaleDateString("en-US", { weekday: "short" });
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  return `${wd}, ${dd}.${mm}.`;
+}
+
+function slotPromotedItemsLine(slot: PostSlot): string {
+  const fmt = (slot.format ?? "single").toLowerCase();
+  if (fmt === "carousel" && slot.carousel_items && slot.carousel_items.length > 0) {
+    return slot.carousel_items.join(" · ");
+  }
+  if (slot.focus_item) return slot.focus_item;
+  return "—";
 }
 
 const THEME_STYLES: Record<PostSlot["theme"], string> = {
@@ -378,10 +387,17 @@ export function AiArtifactPanel({
                   Post Schedule
                 </div>
                 <div className="flex items-center gap-1.5">
-                  {planning.campaignBrief.post_slots.some((s) => s.format === "carousel") && (
+                  {planning.campaignBrief.post_slots.some(
+                    (s) => (s.format ?? "single").toLowerCase() === "carousel"
+                  ) && (
                     <span className="flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
                       <GalleryHorizontalIcon className="size-3" />
-                      {planning.campaignBrief.post_slots.filter((s) => s.format === "carousel").length} carousel
+                      {
+                        planning.campaignBrief.post_slots.filter(
+                          (s) => (s.format ?? "single").toLowerCase() === "carousel"
+                        ).length
+                      }{" "}
+                      carousel
                     </span>
                   )}
                   <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
@@ -390,12 +406,15 @@ export function AiArtifactPanel({
                 </div>
               </div>
               <div className="space-y-3">
-                {planning.campaignBrief.post_slots.map((slot, idx) => (
+                {planning.campaignBrief.post_slots.map((slot, idx) => {
+                  const isCarousel =
+                    (slot.format ?? "single").toLowerCase() === "carousel";
+                  return (
                   <div key={idx}>
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex w-14 shrink-0 flex-col items-center">
-                        <span className="font-mono text-xs font-semibold text-foreground">
-                          {formatShortDate(slot.scheduled_date)}
+                      <div className="mt-0.5 flex w-[5.5rem] shrink-0 flex-col">
+                        <span className="text-xs font-semibold leading-tight text-foreground">
+                          {formatPostScheduleDateLabel(slot.scheduled_date)}
                         </span>
                         {slot.scheduled_time && (
                           <span className="font-mono text-xs text-muted-foreground">
@@ -404,43 +423,32 @@ export function AiArtifactPanel({
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+                        <p className="text-sm font-medium leading-snug text-foreground">
+                          {slotPromotedItemsLine(slot)}
+                        </p>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                           <span
                             className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${THEME_STYLES[slot.theme]}`}
                           >
                             {slot.theme}
                           </span>
-                          {slot.format === "carousel" ? (
+                          {isCarousel ? (
                             <span className="flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
                               <GalleryHorizontalIcon className="size-3" />
                               Carousel
                             </span>
                           ) : (
-                            slot.focus_item && (
-                              <span className="truncate text-xs text-muted-foreground">
-                                {slot.focus_item}
-                              </span>
-                            )
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                              Single
+                            </span>
                           )}
                         </div>
-                        {slot.format === "carousel" && slot.carousel_items && slot.carousel_items.length > 0 && (
-                          <div className="mb-1.5 flex flex-wrap gap-1">
-                            {slot.carousel_items.map((item, i) => (
-                              <span
-                                key={i}
-                                className="rounded-md border bg-background px-1.5 py-0.5 text-xs font-medium text-foreground"
-                              >
-                                {item}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        {slot.format === "carousel" && slot.carousel_narrative && (
-                          <p className="mb-1.5 text-xs italic text-muted-foreground">
+                        {isCarousel && slot.carousel_narrative && (
+                          <p className="mt-1.5 text-xs italic text-muted-foreground">
                             {slot.carousel_narrative}
                           </p>
                         )}
-                        <p className="text-xs leading-relaxed text-muted-foreground">
+                        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                           <span className="mr-1 font-medium text-muted-foreground/60">Caption seed:</span>
                           {slot.caption_seed}
                         </p>
@@ -450,7 +458,8 @@ export function AiArtifactPanel({
                       <div className="mt-3 border-t" />
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

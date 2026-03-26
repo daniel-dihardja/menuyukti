@@ -13,6 +13,9 @@ const metadataKeyLocationProfile = "_location_profile"
 // requiredLocationIDs extracts location_id and analytics_id from state metadata.
 // On failure it sets state.Output and returns ok false.
 func requiredLocationIDs(state *gen.State, operation string) (locationID, analyticsID string, ok bool) {
+	if state == nil {
+		return "", "", false
+	}
 	meta := state.SecureMetadata()
 	locationID, err := meta.GetID("location_id")
 	if err != nil {
@@ -31,10 +34,10 @@ func requiredLocationIDs(state *gen.State, operation string) (locationID, analyt
 // [CheckLocationProfileStep]: a non-nil *graphql.LocationProfile with non-empty Summary
 // under metadataKeyLocationProfile means the backend already has a usable profile.
 func hasValidPersistedLocationProfile(state *gen.State) bool {
-	if state == nil || state.Metadata == nil {
+	if state == nil {
 		return false
 	}
-	v, ok := state.Metadata[metadataKeyLocationProfile]
+	v, ok := state.GetMetadata(metadataKeyLocationProfile)
 	if !ok {
 		return false
 	}

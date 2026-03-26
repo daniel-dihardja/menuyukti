@@ -139,6 +139,17 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) (e
 		_ = saveProfile(ctx, s.GraphQLEndpoint, locationID, "0", summary)
 	}
 
+	// So downstream steps (e.g. campaign brief) see the same metadata as after CheckLocationProfileStep.
+	profileRow, err := graphql.FetchLocationProfile(ctx, s.GraphQLEndpoint, locationID, analyticsID)
+	if err != nil {
+		return err
+	}
+	if profileRow != nil {
+		state.SetMetadata(metadataKeyLocationProfile, profileRow)
+	} else {
+		state.SetMetadata(metadataKeyLocationProfile, &graphql.LocationProfile{Summary: summary})
+	}
+
 	notify, err := llm.Chat(ctx, model, profileCreatedNotifySystem, buildProfileCreatedNotificationUserPrompt(loc))
 	if err != nil {
 		notify = fallbackProfileCreatedMessage(loc)

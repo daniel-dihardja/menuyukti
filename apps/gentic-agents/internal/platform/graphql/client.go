@@ -16,6 +16,26 @@ const fetchLocationProfileQuery = `query FetchLocationProfile($locationId: ID!, 
   }
 }`
 
+const fetchMenuEngineeringMatrixQuery = `query FetchMenuEngineeringMatrix($analyticsRunId: ID!, $categories: [String!]) {
+  menuEngineeringMatrix(analyticsRunId: $analyticsRunId, categories: $categories) {
+    items {
+      menu
+      category
+      action
+      quantity
+      totalRevenue
+      cogs
+      totalCogs
+      contributionMargin
+      contributionMarginPercentage
+      marginPerUnit
+      weValue
+      menuCategory
+      menuCategoryDetail
+    }
+  }
+}`
+
 const fetchLocationDataQuery = `query FetchLocationData($locationId: ID!, $analyticsRunId: ID!) {
   location(id: $locationId) {
     id
@@ -69,10 +89,48 @@ const saveLocationProfileMutation = `mutation SaveLocationProfile($locationId: I
   }
 }`
 
+const fetchCampaignBriefQuery = `query FetchCampaignBrief($campaignId: ID!) {
+  campaignBrief(campaignId: $campaignId) {
+    id
+    campaignId
+    locationId
+    analyticsRunId
+    campaignTheme
+    tone
+    targetAudience
+    postingCadence
+  }
+}`
+
+const createCampaignMutation = `mutation CreateCampaign($locationId: Int!, $name: String!, $goal: String, $startDate: Date, $endDate: Date, $theme: String, $tone: String) {
+  createCampaign(locationId: $locationId, name: $name, goal: $goal, startDate: $startDate, endDate: $endDate, theme: $theme, tone: $tone) {
+    id
+    name
+  }
+}`
+
+const saveCampaignBriefMutation = `mutation SaveCampaignBrief($campaignId: ID!, $locationId: ID!, $analyticsRunId: ID!, $campaignTheme: String!, $tone: String!, $targetAudience: String!, $postingCadence: String!, $postScheduleJson: String) {
+  saveCampaignBrief(campaignId: $campaignId, locationId: $locationId, analyticsRunId: $analyticsRunId, campaignTheme: $campaignTheme, tone: $tone, targetAudience: $targetAudience, postingCadence: $postingCadence, postScheduleJson: $postScheduleJson) {
+    id
+  }
+}`
+
 // LocationProfile is the subset of fields returned by locationProfile.
 type LocationProfile struct {
 	ID      ID     `json:"id"`
 	Summary string `json:"summary"`
+}
+
+// CampaignBrief is the subset of fields returned by campaignBrief.
+type CampaignBrief struct {
+	ID              ID     `json:"id"`
+	CampaignID      ID     `json:"campaignId"`
+	LocationID      ID     `json:"locationId"`
+	AnalyticsRunID  ID     `json:"analyticsRunId"`
+	CampaignTheme   string `json:"campaignTheme"`
+	Tone            string `json:"tone"`
+	TargetAudience  string `json:"targetAudience"`
+	PostingCadence  string `json:"postingCadence"`
 }
 
 // Location is basic venue info from the GraphQL API.
@@ -155,10 +213,51 @@ type locationDataWrapper struct {
 	OperatingProfile  *OperatingProfile   `json:"operatingProfile"`
 }
 
+type menuEngineeringMatrixDataWrapper struct {
+	MenuEngineeringMatrix *menuEngineeringMatrixPayload `json:"menuEngineeringMatrix"`
+}
+
+type menuEngineeringMatrixPayload struct {
+	Items []MenuEngineeringItem `json:"items"`
+}
+
+// MenuEngineeringItem is one row from menuEngineeringMatrix.items (BCG classification).
+type MenuEngineeringItem struct {
+	Menu                         string   `json:"menu"`
+	Category                     string   `json:"category"`
+	Action                       string   `json:"action"`
+	Quantity                     int      `json:"quantity"`
+	TotalRevenue                 float64  `json:"totalRevenue"`
+	Cogs                         float64  `json:"cogs"`
+	TotalCogs                    float64  `json:"totalCogs"`
+	ContributionMargin           float64  `json:"contributionMargin"`
+	ContributionMarginPercentage float64  `json:"contributionMarginPercentage"`
+	MarginPerUnit                float64  `json:"marginPerUnit"`
+	WeValue                      float64  `json:"weValue"`
+	MenuCategory                 *string  `json:"menuCategory"`
+	MenuCategoryDetail           *string  `json:"menuCategoryDetail"`
+}
+
 type saveLocationProfileDataWrapper struct {
 	SaveLocationProfile *struct {
 		ID ID `json:"id"`
 	} `json:"saveLocationProfile"`
+}
+
+type campaignBriefDataWrapper struct {
+	CampaignBrief *CampaignBrief `json:"campaignBrief"`
+}
+
+type saveCampaignBriefDataWrapper struct {
+	SaveCampaignBrief *struct {
+		ID ID `json:"id"`
+	} `json:"saveCampaignBrief"`
+}
+
+type createCampaignDataWrapper struct {
+	CreateCampaign *struct {
+		ID ID `json:"id"`
+	} `json:"createCampaign"`
 }
 
 // FetchLocationProfile calls locationProfile(locationId, analyticsRunId).
@@ -176,6 +275,26 @@ func FetchLocationProfile(ctx context.Context, endpoint, locationID, analyticsRu
 		return nil, err
 	}
 	return data.LocationProfile, nil
+}
+
+// FetchMenuEngineeringMatrix loads filtered BCG matrix items for promotion planning.
+// Returns nil, nil when the server returns null (e.g. no COGS / matrix unavailable).
+func FetchMenuEngineeringMatrix(ctx context.Context, endpoint, analyticsRunID string, categories []string) ([]MenuEngineeringItem, error) {
+	raw, err := postGQL(ctx, endpoint, fetchMenuEngineeringMatrixQuery, map[string]interface{}{
+		"analyticsRunId": analyticsRunID,
+		"categories":     categories,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var data menuEngineeringMatrixDataWrapper
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return nil, err
+	}
+	if data.MenuEngineeringMatrix == nil {
+		return nil, nil
+	}
+	return data.MenuEngineeringMatrix.Items, nil
 }
 
 // FetchLocationData loads location and operating profile for profile generation.
@@ -211,6 +330,87 @@ func SaveLocationProfile(ctx context.Context, endpoint, locationID, analyticsRun
 	}
 	if data.SaveLocationProfile == nil {
 		return fmt.Errorf("graphql: saveLocationProfile returned no data")
+	}
+	return nil
+}
+
+// FetchCampaignBrief calls campaignBrief(campaignId). Returns nil, nil when not found.
+func FetchCampaignBrief(ctx context.Context, endpoint, campaignID string) (*CampaignBrief, error) {
+	raw, err := postGQL(ctx, endpoint, fetchCampaignBriefQuery, map[string]interface{}{
+		"campaignId": campaignID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var data campaignBriefDataWrapper
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return nil, err
+	}
+	return data.CampaignBrief, nil
+}
+
+// CreateCampaign inserts a campaign row and returns the new campaign id as a string.
+func CreateCampaign(ctx context.Context, endpoint string, locationID int, name string, goal *string, startDate, endDate *string, theme, tone *string) (string, error) {
+	vars := map[string]interface{}{
+		"locationId": locationID,
+		"name":       name,
+	}
+	if goal != nil {
+		vars["goal"] = *goal
+	}
+	if startDate != nil {
+		vars["startDate"] = *startDate
+	}
+	if endDate != nil {
+		vars["endDate"] = *endDate
+	}
+	if theme != nil {
+		vars["theme"] = *theme
+	}
+	if tone != nil {
+		vars["tone"] = *tone
+	}
+	raw, err := postGQL(ctx, endpoint, createCampaignMutation, vars)
+	if err != nil {
+		return "", err
+	}
+	var data createCampaignDataWrapper
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return "", err
+	}
+	if data.CreateCampaign == nil {
+		return "", fmt.Errorf("graphql: createCampaign returned no data")
+	}
+	return string(data.CreateCampaign.ID), nil
+}
+
+// SaveCampaignBrief upserts a campaign brief for the given campaign.
+// postScheduleJSON is optional JSON text (e.g. serialized post_slots array).
+func SaveCampaignBrief(ctx context.Context, endpoint, campaignID, locationID, analyticsRunID, campaignTheme, tone, targetAudience, postingCadence string, postScheduleJSON *string) error {
+	vars := map[string]interface{}{
+		"campaignId":     campaignID,
+		"locationId":     locationID,
+		"analyticsRunId": analyticsRunID,
+		"campaignTheme":  campaignTheme,
+		"tone":           tone,
+		"targetAudience": targetAudience,
+		"postingCadence": postingCadence,
+	}
+	if postScheduleJSON != nil {
+		vars["postScheduleJson"] = *postScheduleJSON
+	} else {
+		vars["postScheduleJson"] = nil
+	}
+	raw, err := postGQL(ctx, endpoint, saveCampaignBriefMutation, vars)
+	if err != nil {
+		return err
+	}
+	var data saveCampaignBriefDataWrapper
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return err
+	}
+	if data.SaveCampaignBrief == nil {
+		return fmt.Errorf("graphql: saveCampaignBrief returned no data")
 	}
 	return nil
 }

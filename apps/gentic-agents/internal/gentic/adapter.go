@@ -22,6 +22,30 @@ func BuildAgent(model, systemPrompt, graphqlEndpoint string, maxReflectionIterat
 			Model:                   model,
 			MaxReflectionIterations: maxReflectionIterations,
 		}),
+		step.CreateCampaignBriefStep{
+			Model:                   model,
+			MaxReflectionIterations: maxReflectionIterations,
+		},
+		gen.Parallel(
+			step.CreatePostScheduleStep{
+				Model:                   model,
+				MaxReflectionIterations: maxReflectionIterations,
+			},
+			step.FetchPromotionItemsStep{
+				GraphQLEndpoint: graphqlEndpoint,
+			},
+		),
+		step.SelectPromotionItemsStep{
+			Model:                   model,
+			MaxReflectionIterations: maxReflectionIterations,
+		},
+		step.AssignPostFormatsStep{
+			Model:                   model,
+			MaxReflectionIterations: maxReflectionIterations,
+		},
+		step.SaveCampaignStep{
+			GraphQLEndpoint: graphqlEndpoint,
+		},
 	)
 	resolver := intent.NewRouter("chat", "create_campaign").
 		On("create_campaign", campaignFlow).
