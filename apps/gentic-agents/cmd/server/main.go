@@ -13,8 +13,8 @@ import (
 
 	genticadapter "github.com/daniel-dihardja/gentic-agents/internal/gentic"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/config"
+	appserver "github.com/daniel-dihardja/gentic-agents/internal/server"
 	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
-	"github.com/daniel-dihardja/gentic/pkg/server"
 	"github.com/joho/godotenv"
 )
 
@@ -29,7 +29,7 @@ func main() {
 	}
 
 	ag := genticadapter.BuildAgent(cfg.Model, cfg.SystemPrompt, cfg.GraphQLEndpoint, cfg.MaxReflectionIterations)
-	handler := server.NewRouter(server.Config{
+	handler := appserver.NewRouter(appserver.Config{
 		Agent:        ag,
 		StreamingLLM: openai.Provider{},
 		Model:        cfg.Model,
