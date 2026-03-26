@@ -8,6 +8,7 @@ import (
 
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
+	"github.com/daniel-dihardja/gentic/pkg/gentic/eval"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
 	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
 )
@@ -18,18 +19,34 @@ const (
 	profileCreatedNotifySystem   = "You are a helpful assistant for restaurant and menu planning. Write concise, clear, friendly messages for users."
 )
 
+// LocationDataLoader loads venue + operating data for [CreateLocationProfileStep]. When nil, [graphql.FetchLocationData] is used.
+type LocationDataLoader interface {
+	FetchLocationData(ctx context.Context, endpoint, locationID, analyticsID string) (*graphql.Location, *graphql.OperatingProfile, error)
+}
+
+// ProfileSaver persists a location profile summary. When nil, [graphql.SaveLocationProfile] is used.
+type ProfileSaver interface {
+	SaveLocationProfile(ctx context.Context, endpoint, locationID, analyticsID, summary string) error
+}
+
 // CreateLocationProfileStep generates and persists a location profile when none exists (after CheckLocationProfileStep).
 type CreateLocationProfileStep struct {
 	GraphQLEndpoint         string
 	Model                   string
 	MaxReflectionIterations int
+	DataLoader              LocationDataLoader
+	Saver                   ProfileSaver
+	LLM                     gen.LLM
 }
 
 // Run implements gentic.Step.
 // Prefer wiring this step behind [gen.If]([NeedsLocationProfileCreation], ...) after [CheckLocationProfileStep].
 // If a valid profile is already in metadata, we no-op (defense in depth if the flow and predicate
 // ever drift).
-func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) error {
+func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) (err error) {
+	start := time.Now()
+	defer func() { eval.Record(ctx, "create_location_profile", start, err) }()
+
 	if hasValidPersistedLocationProfile(state) {
 		return nil
 	}
@@ -45,7 +62,13 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) er
 	n := gen.NotifierFromContext(ctx)
 	n.Notify("create_location_profile", gen.ActivityRunning, "Create a location profile")
 
-	loc, op, err := graphql.FetchLocationData(ctx, s.GraphQLEndpoint, locationID, analyticsID)
+	var loc *graphql.Location
+	var op *graphql.OperatingProfile
+	if s.DataLoader != nil {
+		loc, op, err = s.DataLoader.FetchLocationData(ctx, s.GraphQLEndpoint, locationID, analyticsID)
+	} else {
+		loc, op, err = graphql.FetchLocationData(ctx, s.GraphQLEndpoint, locationID, analyticsID)
+	}
 	if err != nil {
 		return err
 	}
@@ -55,10 +78,20 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) er
 		return nil
 	}
 
-	llm := openai.Provider{}
+	llm := s.LLM
+	if llm == nil {
+		llm = openai.Provider{}
+	}
 	model := s.Model
 	if model == "" {
 		model = openai.DefaultModel
+	}
+
+	saveProfile := func(ctx context.Context, endpoint, lid, aid, summary string) error {
+		if s.Saver != nil {
+			return s.Saver.SaveLocationProfile(ctx, endpoint, lid, aid, summary)
+		}
+		return graphql.SaveLocationProfile(ctx, endpoint, lid, aid, summary)
 	}
 
 	var summary string
@@ -99,11 +132,11 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) er
 		n.Notify("create_location_profile", gen.ActivityDone, "Create a location profile")
 	}
 
-	if err := graphql.SaveLocationProfile(ctx, s.GraphQLEndpoint, locationID, analyticsID, summary); err != nil {
+	if err := saveProfile(ctx, s.GraphQLEndpoint, locationID, analyticsID, summary); err != nil {
 		return err
 	}
 	if analyticsID != "0" {
-		_ = graphql.SaveLocationProfile(ctx, s.GraphQLEndpoint, locationID, "0", summary)
+		_ = saveProfile(ctx, s.GraphQLEndpoint, locationID, "0", summary)
 	}
 
 	notify, err := llm.Chat(ctx, model, profileCreatedNotifySystem, buildProfileCreatedNotificationUserPrompt(loc))
