@@ -42,6 +42,9 @@ const ACTIVITY_STEP_ORDER: Record<string, number> = {
   create_location_profile: 1,
   profile_refinement: 2,
   location_profile_saved: 3,
+  create_campaign_brief: 4,
+  campaign_brief_refinement: 5,
+  campaign_brief_ready: 6,
 };
 
 function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {

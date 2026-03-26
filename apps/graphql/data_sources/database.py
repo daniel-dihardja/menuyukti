@@ -259,6 +259,12 @@ class Campaign(Base):
         back_populates="campaign",
         cascade="all, delete-orphan",
     )
+    campaign_brief = relationship(
+        "CampaignBrief",
+        back_populates="campaign",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
     name = Column(String(256), nullable=False)
     goal = Column(String(512), nullable=True)
@@ -278,6 +284,50 @@ class Campaign(Base):
         ),
     )
 
+
+class CampaignBrief(Base):
+    """
+    LLM-generated strategic campaign brief for a campaign (theme, tone, audience, cadence).
+    One brief per campaign (unique on campaign_id).
+    """
+
+    __tablename__ = "campaign_brief"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    campaign_id = Column(
+        Integer,
+        ForeignKey("campaign.id"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    campaign = relationship("Campaign", back_populates="campaign_brief")
+    location_id = Column(
+        Integer,
+        ForeignKey("location.id"),
+        nullable=False,
+        index=True,
+    )
+    analytics_run_id = Column(
+        Integer,
+        ForeignKey("analytics_run.id"),
+        nullable=False,
+        index=True,
+    )
+    campaign_theme = Column(Text, nullable=False)
+    tone = Column(String(256), nullable=False)
+    target_audience = Column(Text, nullable=False)
+    posting_cadence = Column(String(256), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    __table_args__ = (
+        UniqueConstraint("campaign_id", name="uq_campaign_brief_campaign"),
+    )
 
 
 def init_db(target_engine=None) -> None:

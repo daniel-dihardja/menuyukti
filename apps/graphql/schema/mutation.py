@@ -4,6 +4,7 @@ from graphql.schema.mutations import (
     CreateCampaignMutation,
     CreateLocationMutation,
     DeleteCampaignMutation,
+    SaveCampaignBriefMutation,
     SaveLocationProfileMutation,
     UpdateMenuItemCogsBulkMutation,
     UploadSalesReportMutation,
@@ -18,5 +19,6 @@ class Mutation(
     DeleteCampaignMutation,
     UpdateMenuItemCogsBulkMutation,
     SaveLocationProfileMutation,
+    SaveCampaignBriefMutation,
 ):
     pass

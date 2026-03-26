@@ -69,10 +69,41 @@ const saveLocationProfileMutation = `mutation SaveLocationProfile($locationId: I
   }
 }`
 
+const fetchCampaignBriefQuery = `query FetchCampaignBrief($campaignId: ID!) {
+  campaignBrief(campaignId: $campaignId) {
+    id
+    campaignId
+    locationId
+    analyticsRunId
+    campaignTheme
+    tone
+    targetAudience
+    postingCadence
+  }
+}`
+
+const saveCampaignBriefMutation = `mutation SaveCampaignBrief($campaignId: ID!, $locationId: ID!, $analyticsRunId: ID!, $campaignTheme: String!, $tone: String!, $targetAudience: String!, $postingCadence: String!) {
+  saveCampaignBrief(campaignId: $campaignId, locationId: $locationId, analyticsRunId: $analyticsRunId, campaignTheme: $campaignTheme, tone: $tone, targetAudience: $targetAudience, postingCadence: $postingCadence) {
+    id
+  }
+}`
+
 // LocationProfile is the subset of fields returned by locationProfile.
 type LocationProfile struct {
 	ID      ID     `json:"id"`
 	Summary string `json:"summary"`
+}
+
+// CampaignBrief is the subset of fields returned by campaignBrief.
+type CampaignBrief struct {
+	ID              ID     `json:"id"`
+	CampaignID      ID     `json:"campaignId"`
+	LocationID      ID     `json:"locationId"`
+	AnalyticsRunID  ID     `json:"analyticsRunId"`
+	CampaignTheme   string `json:"campaignTheme"`
+	Tone            string `json:"tone"`
+	TargetAudience  string `json:"targetAudience"`
+	PostingCadence  string `json:"postingCadence"`
 }
 
 // Location is basic venue info from the GraphQL API.
@@ -161,6 +192,16 @@ type saveLocationProfileDataWrapper struct {
 	} `json:"saveLocationProfile"`
 }
 
+type campaignBriefDataWrapper struct {
+	CampaignBrief *CampaignBrief `json:"campaignBrief"`
+}
+
+type saveCampaignBriefDataWrapper struct {
+	SaveCampaignBrief *struct {
+		ID ID `json:"id"`
+	} `json:"saveCampaignBrief"`
+}
+
 // FetchLocationProfile calls locationProfile(locationId, analyticsRunId).
 // Returns nil, nil when the server returns null (profile not yet created).
 func FetchLocationProfile(ctx context.Context, endpoint, locationID, analyticsRunID string) (*LocationProfile, error) {
@@ -211,6 +252,45 @@ func SaveLocationProfile(ctx context.Context, endpoint, locationID, analyticsRun
 	}
 	if data.SaveLocationProfile == nil {
 		return fmt.Errorf("graphql: saveLocationProfile returned no data")
+	}
+	return nil
+}
+
+// FetchCampaignBrief calls campaignBrief(campaignId). Returns nil, nil when not found.
+func FetchCampaignBrief(ctx context.Context, endpoint, campaignID string) (*CampaignBrief, error) {
+	raw, err := postGQL(ctx, endpoint, fetchCampaignBriefQuery, map[string]interface{}{
+		"campaignId": campaignID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var data campaignBriefDataWrapper
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return nil, err
+	}
+	return data.CampaignBrief, nil
+}
+
+// SaveCampaignBrief upserts a campaign brief for the given campaign.
+func SaveCampaignBrief(ctx context.Context, endpoint, campaignID, locationID, analyticsRunID, campaignTheme, tone, targetAudience, postingCadence string) error {
+	raw, err := postGQL(ctx, endpoint, saveCampaignBriefMutation, map[string]interface{}{
+		"campaignId":      campaignID,
+		"locationId":      locationID,
+		"analyticsRunId":  analyticsRunID,
+		"campaignTheme":   campaignTheme,
+		"tone":            tone,
+		"targetAudience":  targetAudience,
+		"postingCadence":  postingCadence,
+	})
+	if err != nil {
+		return err
+	}
+	var data saveCampaignBriefDataWrapper
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return err
+	}
+	if data.SaveCampaignBrief == nil {
+		return fmt.Errorf("graphql: saveCampaignBrief returned no data")
 	}
 	return nil
 }
