@@ -512,23 +512,27 @@ func validateAndClamp(schedule *PostSchedule, candidateWeeks []candidateWeek) *P
 	return &PostSchedule{Weeks: cleaned}
 }
 
-func buildPostScheduleNotifyPrompt(ps *PostSchedule) string {
-	total := 0
-	for _, w := range ps.Weeks {
-		total += len(w.SelectedDates)
+func postScheduleStats(ps *PostSchedule) (posts, weeks int) {
+	if ps == nil {
+		return 0, 0
 	}
+	for _, w := range ps.Weeks {
+		posts += len(w.SelectedDates)
+	}
+	return posts, len(ps.Weeks)
+}
+
+func buildPostScheduleNotifyPrompt(ps *PostSchedule) string {
+	posts, weeks := postScheduleStats(ps)
 	return fmt.Sprintf(`An Instagram post schedule was just prepared with %d post date(s) across %d week(s).
 
 Write 2–3 short sentences confirming the schedule is ready. Do not list every date.`,
-		total, len(ps.Weeks))
+		posts, weeks)
 }
 
 func fallbackPostScheduleMessage(ps *PostSchedule) string {
-	total := 0
-	for _, w := range ps.Weeks {
-		total += len(w.SelectedDates)
-	}
-	return fmt.Sprintf("Your Instagram post schedule is ready with %d post date(s) across %d week(s). Details are below.", total, len(ps.Weeks))
+	posts, weeks := postScheduleStats(ps)
+	return fmt.Sprintf("Your Instagram post schedule is ready with %d post date(s) across %d week(s). Details are below.", posts, weeks)
 }
 
 func formatPostScheduleForUser(ps *PostSchedule) string {
