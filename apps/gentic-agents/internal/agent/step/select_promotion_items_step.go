@@ -21,6 +21,7 @@ const (
 
 // SelectPromotionItemsStep curates matrix rows into a promotion shortlist using an LLM with reflection.
 type SelectPromotionItemsStep struct {
+	LLM                     gen.LLM // nil → openai.Provider{}
 	Model                   string
 	MaxReflectionIterations int
 }
@@ -79,7 +80,10 @@ func (s SelectPromotionItemsStep) Run(ctx context.Context, state *gen.State) err
 	n := gen.NotifierFromContext(ctx)
 	n.Notify("select_promotion_items", gen.ActivityRunning, "Select items to promote")
 
-	llm := openai.Provider{}
+	llm := s.LLM
+	if llm == nil {
+		llm = openai.Provider{}
+	}
 	model := s.Model
 	if model == "" {
 		model = openai.DefaultModel

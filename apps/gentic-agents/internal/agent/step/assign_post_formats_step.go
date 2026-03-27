@@ -21,6 +21,7 @@ const (
 
 // AssignPostFormatsStep assigns single vs carousel and item groupings per promotion date.
 type AssignPostFormatsStep struct {
+	LLM                     gen.LLM // nil → openai.Provider{}
 	Model                   string
 	MaxReflectionIterations int
 }
@@ -68,7 +69,10 @@ func (s AssignPostFormatsStep) Run(ctx context.Context, state *gen.State) error 
 	n := gen.NotifierFromContext(ctx)
 	n.Notify("assign_post_formats", gen.ActivityRunning, "Assign post formats")
 
-	llm := openai.Provider{}
+	llm := s.LLM
+	if llm == nil {
+		llm = openai.Provider{}
+	}
 	model := s.Model
 	if model == "" {
 		model = openai.DefaultModel
