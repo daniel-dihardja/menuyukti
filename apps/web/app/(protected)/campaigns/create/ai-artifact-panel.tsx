@@ -7,6 +7,7 @@ import {
   ArtifactHeader,
   ArtifactTitle,
 } from "@workspace/ui/components/ai-elements/artifact";
+import { MessageResponse } from "@workspace/ui/components/ai-elements/message";
 import { Button } from "@workspace/ui/components/button";
 import { DatePicker } from "@workspace/ui/components/date-picker";
 import {
@@ -22,6 +23,7 @@ import {
   GalleryHorizontalIcon,
   GlobeIcon,
   LayoutListIcon,
+  MapPinIcon,
   SparklesIcon,
 } from "lucide-react";
 
@@ -66,7 +68,6 @@ type AiArtifactPanelProps = {
   planning?: PlanningArtifact;
   campaignDates: { dateStart: string; dateEnd: string };
   onDatesChange: (dates: { dateStart: string; dateEnd: string }) => void;
-  onCreateLocationProfile?: () => void;
   onCreateCampaign?: () => void;
   analyticsRuns?: AnalyticsRun[];
   selectedAnalyticsId?: number | null;
@@ -328,6 +329,19 @@ export function AiArtifactPanel({
                 <SparklesIcon className="size-4" />
                 Create Campaign
               </Button>
+            </div>
+          )}
+
+          {/* Location profile — populated during campaign flow (check/create profile steps); planning SSE */}
+          {planning.locationSummary && planning.locationSummary.trim().length > 0 && (
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <MapPinIcon className="size-3.5" />
+                Location profile
+              </div>
+              <MessageResponse className="text-sm leading-relaxed text-foreground">
+                {planning.locationSummary.trim()}
+              </MessageResponse>
             </div>
           )}
 

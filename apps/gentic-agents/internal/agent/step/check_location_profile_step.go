@@ -56,5 +56,6 @@ func (s CheckLocationProfileStep) Run(ctx context.Context, state *gentic.State) 
 		profile.Summary,
 	)
 	n.Notify("check_location_profile", gentic.ActivityDone, "Location profile loaded", gentic.WithDetail(string(profile.ID)))
+	EmitPlanningProgress(ctx, state)
 	return nil
 }

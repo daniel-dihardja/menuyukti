@@ -203,10 +203,6 @@ export function AiChatPanel({
     [sendMessage]
   );
 
-  const handleCreateLocationProfile = useCallback(async () => {
-    await sendMessage({ text: "Create location profile" });
-  }, [sendMessage]);
-
   const handleCreateCampaign = useCallback(async () => {
     await sendMessage(
       { text: "create campaign" },
@@ -334,7 +330,6 @@ export function AiChatPanel({
           planning={displayedArtifact}
           campaignDates={campaignDates}
           onDatesChange={handleDatesChange}
-          onCreateLocationProfile={handleCreateLocationProfile}
           onCreateCampaign={handleCreateCampaign}
           analyticsRuns={analyticsRuns}
           selectedAnalyticsId={selectedAnalyticsId}

@@ -168,6 +168,7 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) (e
 	state.Output = notify + "\n\n" + summary
 	// Separate step id so the feed order stays: check → create → refine → saved (Map insertion order).
 	n.Notify("location_profile_saved", gen.ActivityDone, "Location profile saved", gen.WithDetail(loc.Name))
+	EmitPlanningProgress(ctx, state)
 	return nil
 }
 
