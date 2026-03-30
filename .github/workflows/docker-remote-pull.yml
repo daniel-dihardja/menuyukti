@@ -1,0 +1,61 @@
+# Copy docker-compose.yml to the server and run `docker compose pull` so all stack images update.
+# Run manually after you have pushed the images you need (Docker — web / graphql / gentic-agents).
+#
+# Secrets: SSH_PRIVATE_KEY, SSH_HOST (or user@host); optional SSH_USER when host has no @ (default: deploy).
+
+name: Docker — remote compose pull
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  remote-compose-pull:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy compose and pull all images on server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST_VALUE: ${{ secrets.SSH_HOST }}
+          SSH_USER_OVERRIDE: ${{ secrets.SSH_USER }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keygen -y -f ~/.ssh/deploy_key >/dev/null 2>&1 || {
+            echo "SSH_PRIVATE_KEY is not a valid private key (check newlines in the GitHub secret)." >&2
+            exit 1
+          }
+          # Trim; avoid bare hostname (OpenSSH would use local user "runner" on GHA).
+          raw="${SSH_HOST_VALUE:?SSH_HOST secret is not set}"
+          host_spec=$(printf '%s' "$raw" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          if [[ "$host_spec" == *@* ]]; then
+            ssh_user="${host_spec%%@*}"
+            ssh_host="${host_spec#*@}"
+            if [[ -z "$ssh_user" ]]; then
+              ssh_user="${SSH_USER_OVERRIDE:-deploy}"
+            fi
+          else
+            ssh_user="${SSH_USER_OVERRIDE:-deploy}"
+            ssh_host="$host_spec"
+          fi
+          if [[ -z "$ssh_host" ]]; then
+            echo "After parsing SSH_HOST, hostname is empty. Set SSH_HOST to host or user@host." >&2
+            exit 1
+          fi
+          common_ssh_opts=(-i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=accept-new)
+          remote_dir=/opt/menuyukti
+          compose_file="${remote_dir}/docker-compose.yml"
+          ssh "${common_ssh_opts[@]}" -l "$ssh_user" "$ssh_host" "mkdir -p '${remote_dir}'"
+          scp "${common_ssh_opts[@]}" docker-compose.yml "${ssh_user}@${ssh_host}:${compose_file}"
+          printf '%s\n' \
+            'set -euo pipefail' \
+            "cd '${remote_dir}'" \
+            'docker compose pull' \
+            | ssh "${common_ssh_opts[@]}" -l "$ssh_user" "$ssh_host" bash -s

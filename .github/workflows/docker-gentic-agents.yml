@@ -1,6 +1,5 @@
-# Build and push gentic-agents image (menuyukti-agents). Independent of graphql/web.
-#
-# Manual run: Actions → this workflow → "Run workflow" (optional tag input).
+# Build and push gentic-agents image (menuyukti-agents). Manual only — Actions → Run workflow (optional tag).
+# Server: run "Docker — remote compose pull" after images exist on Docker Hub.
 #
 # Secrets: DOCKERHUB_USERNAME, DOCKERHUB_PASSWORD (see docker-build-push.reusable.yml)
 # Optional variable: DOCKER_IMAGE_PREFIX (default johngoyason)
@@ -15,13 +14,6 @@ on:
         required: false
         type: string
         default: ""
-  push:
-    branches:
-      - main
-      - gentic # integration branch for image builds — use `develop` here instead if you switch back
-    paths:
-      - "apps/gentic-agents/**"
-      - "packages/gentic/**"
 
 jobs:
   build-push:
@@ -31,4 +23,4 @@ jobs:
       service: agents
       dockerfile: apps/gentic-agents/Dockerfile
       image_repository: ${{ format('{0}/menuyukti-agents', vars.DOCKER_IMAGE_PREFIX != '' && vars.DOCKER_IMAGE_PREFIX || 'johngoyason') }}
-      custom_tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || '' }}
+      custom_tag: ${{ github.event.inputs.tag }}

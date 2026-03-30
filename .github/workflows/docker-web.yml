@@ -1,6 +1,5 @@
-# Build and push web image (menuyukti-web). Independent of graphql/agents.
-#
-# Manual run: Actions → this workflow → "Run workflow" (optional tag input).
+# Build and push web image (menuyukti-web). Manual only — Actions → Run workflow (optional tag).
+# Server: run "Docker — remote compose pull" after images exist on Docker Hub.
 #
 # Secrets: DOCKERHUB_USERNAME, DOCKERHUB_PASSWORD, DATABASE_URL (see docker-build-push.reusable.yml)
 # Optional variable: DOCKER_IMAGE_PREFIX (default johngoyason)
@@ -15,18 +14,6 @@ on:
         required: false
         type: string
         default: ""
-  push:
-    branches:
-      - main
-      - gentic # integration branch for image builds — use `develop` here instead if you switch back
-    paths:
-      - "apps/web/**"
-      - "packages/ui/**"
-      - "packages/typescript-config/**"
-      - "packages/eslint-config/**"
-      - "package.json"
-      - "pnpm-lock.yaml"
-      - "pnpm-workspace.yaml"
 
 jobs:
   build-push:
@@ -36,4 +23,4 @@ jobs:
       service: web
       dockerfile: apps/web/Dockerfile
       image_repository: ${{ format('{0}/menuyukti-web', vars.DOCKER_IMAGE_PREFIX != '' && vars.DOCKER_IMAGE_PREFIX || 'johngoyason') }}
-      custom_tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || '' }}
+      custom_tag: ${{ github.event.inputs.tag }}
