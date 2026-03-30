@@ -1,6 +1,6 @@
 # Build and push gentic-agents image (menuyukti-agents). Independent of graphql/web.
 #
-# Secrets: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN (see docker-build-push.reusable.yml)
+# Secrets: DOCKERHUB_USERNAME, DOCKERHUB_PASSWORD (see docker-build-push.reusable.yml)
 # Optional variable: DOCKER_IMAGE_PREFIX (default johngoyason)
 
 name: Docker — gentic-agents
@@ -16,7 +16,7 @@ on:
   push:
     branches:
       - main
-      - develop
+      - gentic # integration branch for image builds — use `develop` here instead if you switch back
     paths:
       - "apps/gentic-agents/**"
       - "packages/gentic/**"
