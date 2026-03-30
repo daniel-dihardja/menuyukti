@@ -8,7 +8,6 @@ FROM golang:1.26-bookworm AS build
 WORKDIR /src
 
 COPY apps/gentic-agents/ ./apps/gentic-agents/
-COPY packages/gentic/ ./packages/gentic/
 
 WORKDIR /src/apps/gentic-agents
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /server ./cmd/server
