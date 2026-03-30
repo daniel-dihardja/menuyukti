@@ -4,7 +4,7 @@
 #   DOCKERHUB_USERNAME — Docker Hub user or org
 #   DOCKERHUB_PASSWORD — Docker Hub password or access token
 #   DATABASE_URL       — required when service=web (Next/Prisma build)
-#   SSH_HOST           — hostname or IP, OR full user@host (see remote-pull step)
+#   SSH_HOST           — hostname or IP, OR user@host (remote-pull uses ssh -l so login is never "runner")
 #   SSH_PRIVATE_KEY    — private key matching the server (PEM/OpenSSH), for remote-pull
 #   SSH_USER           — optional; used only when SSH_HOST has no @ (default: deploy).
 #                        GitHub’s runner user is not your server user—bare IPs need user@.
@@ -170,15 +170,26 @@ jobs:
             echo "SSH_PRIVATE_KEY is not a valid private key (check newlines in the GitHub secret)." >&2
             exit 1
           }
-          case "${SSH_HOST_VALUE:?SSH_HOST secret is not set}" in
-            *@*) SSH_TARGET="$SSH_HOST_VALUE" ;;
-            *)
-              USER="${SSH_USER_OVERRIDE:-deploy}"
-              SSH_TARGET="${USER}@${SSH_HOST_VALUE}"
-              ;;
-          esac
+          # Trim; avoid bare hostname (OpenSSH would use local user "runner" on GHA).
+          raw="${SSH_HOST_VALUE:?SSH_HOST secret is not set}"
+          host_spec=$(printf '%s' "$raw" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+          if [[ "$host_spec" == *@* ]]; then
+            ssh_user="${host_spec%%@*}"
+            ssh_host="${host_spec#*@}"
+            if [[ -z "$ssh_user" ]]; then
+              ssh_user="${SSH_USER_OVERRIDE:-deploy}"
+            fi
+          else
+            ssh_user="${SSH_USER_OVERRIDE:-deploy}"
+            ssh_host="$host_spec"
+          fi
+          if [[ -z "$ssh_host" ]]; then
+            echo "After parsing SSH_HOST, hostname is empty. Set SSH_HOST to host or user@host." >&2
+            exit 1
+          fi
           ssh -i ~/.ssh/deploy_key \
+            -l "$ssh_user" \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=accept-new \
-            "$SSH_TARGET" \
+            "$ssh_host" \
             'cd /var/www/menuyukti && docker compose pull'
