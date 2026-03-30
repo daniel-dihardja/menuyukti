@@ -1,0 +1,37 @@
+# Build and push web image (menuyukti-web). Independent of graphql/agents.
+#
+# Secrets: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN, DATABASE_URL (see docker-build-push.reusable.yml)
+# Optional variable: DOCKER_IMAGE_PREFIX (default johngoyason)
+
+name: Docker — web
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Optional single tag (empty = sha-* + latest on default branch)"
+        required: false
+        type: string
+        default: ""
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "apps/web/**"
+      - "packages/ui/**"
+      - "packages/typescript-config/**"
+      - "packages/eslint-config/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+
+jobs:
+  build-push:
+    uses: ./.github/workflows/docker-build-push.reusable.yml
+    secrets: inherit
+    with:
+      service: web
+      dockerfile: apps/web/Dockerfile
+      image_repository: ${{ format('{0}/menuyukti-web', vars.DOCKER_IMAGE_PREFIX != '' && vars.DOCKER_IMAGE_PREFIX || 'johngoyason') }}
+      custom_tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || '' }}

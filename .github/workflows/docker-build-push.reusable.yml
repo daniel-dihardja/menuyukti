@@ -1,0 +1,97 @@
+# Reusable: build and push a Menuyukti service image to Docker Hub.
+#
+# Repository secrets (callers use secrets: inherit):
+#   DOCKERHUB_USERNAME — Docker Hub user or org
+#   DOCKERHUB_TOKEN    — Docker Hub access token (not password)
+#   DATABASE_URL       — required when service=web (Next/Prisma build)
+#
+# Optional repository variable:
+#   DOCKER_IMAGE_PREFIX — image namespace (default johngoyason), set in callers if empty
+
+name: Reusable Docker build and push
+
+on:
+  workflow_call:
+    inputs:
+      service:
+        required: true
+        type: string
+        description: "graphql | agents | web"
+      dockerfile:
+        required: true
+        type: string
+      image_repository:
+        required: true
+        type: string
+        description: "Registry path without tag, e.g. johngoyason/menuyukti-graphql"
+      custom_tag:
+        required: false
+        type: string
+        default: ""
+        description: "If non-empty, push only this tag. Otherwise sha-* and latest on default branch."
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: meta
+        env:
+          REPO: ${{ inputs.image_repository }}
+          CUSTOM_TAG: ${{ inputs.custom_tag }}
+          SHA: ${{ github.sha }}
+          REF: ${{ github.ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          tag="${CUSTOM_TAG#"${CUSTOM_TAG%%[![:space:]]*}"}"
+          tag="${tag%"${tag##*[![:space:]]}"}"
+          {
+            echo 'list<<EOF'
+            if [ -n "$tag" ]; then
+              echo "${REPO}:${tag}"
+            else
+              short=$(echo "$SHA" | cut -c1-7)
+              echo "${REPO}:sha-${short}"
+              if [ "$REF" = "refs/heads/${DEFAULT_BRANCH}" ]; then
+                echo "${REPO}:latest"
+              fi
+            fi
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push (web)
+        if: inputs.service == 'web'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ inputs.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.list }}
+          build-args: |
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            ANALYTICS_API_URL=http://127.0.0.1:8000
+
+      - name: Build and push
+        if: inputs.service != 'web'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ inputs.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.list }}
