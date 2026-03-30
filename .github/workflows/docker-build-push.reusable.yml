@@ -4,6 +4,8 @@
 #   DOCKERHUB_USERNAME — Docker Hub user or org
 #   DOCKERHUB_PASSWORD — Docker Hub password or access token
 #   DATABASE_URL       — required when service=web (Next/Prisma build)
+#   SSH_HOST           — full SSH destination, e.g. root@hostname-or-ip (for remote-pull)
+#   SSH_PRIVATE_KEY    — private key matching the server (PEM/OpenSSH), for remote-pull
 #
 # Optional repository variable:
 #   DOCKER_IMAGE_PREFIX — image namespace (default johngoyason), set in callers if empty
@@ -147,3 +149,19 @@ jobs:
           file: ${{ steps.params.outputs.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.list }}
+
+  remote-pull:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull images on server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_TARGET: ${{ secrets.SSH_HOST }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "$SSH_TARGET" \
+            'cd /var/www/menuyukti && docker compose pull'
