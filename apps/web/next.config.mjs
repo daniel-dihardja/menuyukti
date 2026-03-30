@@ -2,6 +2,7 @@
 import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig = {
+  output: "standalone",
   transpilePackages: ["@workspace/ui"],
   images: {
     remotePatterns: [
