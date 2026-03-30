@@ -58,6 +58,8 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    outputs:
+      image_repository: ${{ steps.params.outputs.image_repository }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -160,7 +162,7 @@ jobs:
           tags: ${{ steps.meta.outputs.list }}
 
   remote-pull:
-    needs: build-and-push
+    needs: [build-and-push]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -203,11 +205,10 @@ jobs:
           compose_file="${remote_dir}/docker-compose.yml"
           ssh "${common_ssh_opts[@]}" -l "$ssh_user" "$ssh_host" "mkdir -p '${remote_dir}'"
           scp "${common_ssh_opts[@]}" docker-compose.yml "${ssh_user}@${ssh_host}:${compose_file}"
-          # Use docker pull, not compose pull: Snap / confined Docker often cannot read compose files
-          # under /opt even when they exist; pulling by image ref only talks to the daemon.
+          # Pull only the image that was just built in this workflow run.
+          # Pulling all three would fail when the other services haven't been rebuilt yet (still old arch).
+          image_repo="${{ needs.build-and-push.outputs.image_repository }}"
           printf '%s\n' \
             'set -euo pipefail' \
-            "docker pull ${DOCKER_IMAGE_PREFIX}/menuyukti-graphql:latest" \
-            "docker pull ${DOCKER_IMAGE_PREFIX}/menuyukti-agents:latest" \
-            "docker pull ${DOCKER_IMAGE_PREFIX}/menuyukti-web:latest" \
+            "docker pull ${image_repo}:latest" \
             | ssh "${common_ssh_opts[@]}" -l "$ssh_user" "$ssh_host" bash -s
