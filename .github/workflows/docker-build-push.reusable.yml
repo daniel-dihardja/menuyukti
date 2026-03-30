@@ -191,6 +191,6 @@ jobs:
             exit 1
           fi
           common_ssh_opts=(-i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=accept-new)
-          scp "${common_ssh_opts[@]}" docker-compose.yml "${ssh_user}@${ssh_host}:/var/www/menuyukti/docker-compose.yml"
+          scp "${common_ssh_opts[@]}" docker-compose.yml "${ssh_user}@${ssh_host}:/opt/menuyukti/docker-compose.yml"
           ssh "${common_ssh_opts[@]}" -l "$ssh_user" "$ssh_host" \
-            'cd /var/www/menuyukti && docker compose pull'
+            'cd /opt/menuyukti && docker compose pull'
