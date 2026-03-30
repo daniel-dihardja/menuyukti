@@ -10,7 +10,8 @@
 #                        GitHub’s runner user is not your server user—bare IPs need user@.
 #
 # Optional repository variable:
-#   DOCKER_IMAGE_PREFIX — image namespace (default johngoyason), set in callers if empty
+#   DOCKER_IMAGE_PREFIX — image namespace (default johngoyason), set in callers if empty;
+#                        must match image: names in docker-compose.yml (remote pull uses it for docker pull).
 #
 # Manual run: Actions → "Reusable Docker build and push" → choose preset (web | graphql | agents).
 
@@ -164,6 +165,7 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST_VALUE: ${{ secrets.SSH_HOST }}
           SSH_USER_OVERRIDE: ${{ secrets.SSH_USER }}
+          DOCKER_IMAGE_PREFIX: ${{ vars.DOCKER_IMAGE_PREFIX != '' && vars.DOCKER_IMAGE_PREFIX || 'johngoyason' }}
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh
@@ -195,5 +197,11 @@ jobs:
           compose_file="${remote_dir}/docker-compose.yml"
           ssh "${common_ssh_opts[@]}" -l "$ssh_user" "$ssh_host" "mkdir -p '${remote_dir}'"
           scp "${common_ssh_opts[@]}" docker-compose.yml "${ssh_user}@${ssh_host}:${compose_file}"
-          ssh "${common_ssh_opts[@]}" -l "$ssh_user" "$ssh_host" \
-            "docker compose -f '${compose_file}' --project-directory '${remote_dir}' pull"
+          # Use docker pull, not compose pull: Snap / confined Docker often cannot read compose files
+          # under /opt even when they exist; pulling by image ref only talks to the daemon.
+          printf '%s\n' \
+            'set -euo pipefail' \
+            "docker pull ${DOCKER_IMAGE_PREFIX}/menuyukti-graphql:latest" \
+            "docker pull ${DOCKER_IMAGE_PREFIX}/menuyukti-agents:latest" \
+            "docker pull ${DOCKER_IMAGE_PREFIX}/menuyukti-web:latest" \
+            | ssh "${common_ssh_opts[@]}" -l "$ssh_user" "$ssh_host" bash -s
