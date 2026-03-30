@@ -1,5 +1,14 @@
-# Copy docker-compose.yml to the server and run `docker compose pull` so all stack images update.
+# Copy docker-compose.yml to the server, pull images, recreate containers with `docker compose up -d`,
+# then prune unused Docker objects (stopped containers, unused networks, dangling images, and any image
+# not referenced by a container).
+#
+# Pruning: we do NOT pass `--volumes` so named/anonymous volumes are left intact. If this host runs other
+# stacks, replace `docker image prune -af` with `docker image prune -f` (dangling only) so unused
+# tagged images from other projects are kept.
+#
 # Run manually after you have pushed the images you need (Docker — web / graphql / gentic-agents).
+#
+# Server: place a `.env` next to `docker-compose.yml` under /opt/menuyukti (not copied by this workflow).
 #
 # Secrets: SSH_PRIVATE_KEY, SSH_HOST (or user@host); optional SSH_USER when host has no @ (default: deploy).
 
@@ -18,7 +27,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Copy compose and pull all images on server
+      - name: Copy compose, pull, up, and prune on server
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST_VALUE: ${{ secrets.SSH_HOST }}
@@ -58,4 +67,7 @@ jobs:
             'set -euo pipefail' \
             "cd '${remote_dir}'" \
             'docker compose pull' \
+            'docker compose up -d --remove-orphans' \
+            'docker system prune -f' \
+            'docker image prune -af' \
             | ssh "${common_ssh_opts[@]}" -l "$ssh_user" "$ssh_host" bash -s
