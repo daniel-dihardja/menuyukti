@@ -80,5 +80,3 @@ go test ./eval -run 'TestEvalSuite_LocationProfile/missing_location_ids' -count=
 The `-run` argument is a regular expression; anchor with `^` / `$` if you need an exact match.
 
 ---
-
-123
