@@ -61,5 +61,3 @@ mutation UploadFile($file: Upload!) {
 5. Unsupported POS systems return a GraphQL `ValueError` mentioning the detected POS name, so clients can fall back to another workflow until a normalizer is available.
 
 ---
-
-Test
