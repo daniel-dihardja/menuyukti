@@ -4,8 +4,10 @@
 #   DOCKERHUB_USERNAME — Docker Hub user or org
 #   DOCKERHUB_PASSWORD — Docker Hub password or access token
 #   DATABASE_URL       — required when service=web (Next/Prisma build)
-#   SSH_HOST           — full SSH destination, e.g. root@hostname-or-ip (for remote-pull)
+#   SSH_HOST           — hostname or IP, OR full user@host (see remote-pull step)
 #   SSH_PRIVATE_KEY    — private key matching the server (PEM/OpenSSH), for remote-pull
+#   SSH_USER           — optional; used only when SSH_HOST has no @ (default: deploy).
+#                        GitHub’s runner user is not your server user—bare IPs need user@.
 #
 # Optional repository variable:
 #   DOCKER_IMAGE_PREFIX — image namespace (default johngoyason), set in callers if empty
@@ -157,11 +159,26 @@ jobs:
       - name: Pull images on server
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_TARGET: ${{ secrets.SSH_HOST }}
+          SSH_HOST_VALUE: ${{ secrets.SSH_HOST }}
+          SSH_USER_OVERRIDE: ${{ secrets.SSH_USER }}
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "$SSH_TARGET" \
+          ssh-keygen -y -f ~/.ssh/deploy_key >/dev/null 2>&1 || {
+            echo "SSH_PRIVATE_KEY is not a valid private key (check newlines in the GitHub secret)." >&2
+            exit 1
+          }
+          case "${SSH_HOST_VALUE:?SSH_HOST secret is not set}" in
+            *@*) SSH_TARGET="$SSH_HOST_VALUE" ;;
+            *)
+              USER="${SSH_USER_OVERRIDE:-deploy}"
+              SSH_TARGET="${USER}@${SSH_HOST_VALUE}"
+              ;;
+          esac
+          ssh -i ~/.ssh/deploy_key \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=accept-new \
+            "$SSH_TARGET" \
             'cd /var/www/menuyukti && docker compose pull'
