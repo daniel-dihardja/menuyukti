@@ -63,10 +63,19 @@ jobs:
         id: params
         env:
           PREFIX: ${{ vars.DOCKER_IMAGE_PREFIX != '' && vars.DOCKER_IMAGE_PREFIX || 'johngoyason' }}
-          EVENT: ${{ github.event_name }}
+          CALL_SERVICE: ${{ inputs.service }}
+          CALL_DOCKERFILE: ${{ inputs.dockerfile }}
+          CALL_IMAGE_REPOSITORY: ${{ inputs.image_repository }}
         run: |
           set -euo pipefail
-          if [ "$EVENT" = "workflow_dispatch" ]; then
+          # workflow_call: caller passes service/dockerfile/image_repository (github.event_name may still be
+          # workflow_dispatch on the parent — do not branch on event name). workflow_dispatch on this workflow
+          # only sets preset; call inputs are empty.
+          if [ -n "$CALL_SERVICE" ]; then
+            echo "service=${CALL_SERVICE}" >> "$GITHUB_OUTPUT"
+            echo "dockerfile=${CALL_DOCKERFILE}" >> "$GITHUB_OUTPUT"
+            echo "image_repository=${CALL_IMAGE_REPOSITORY}" >> "$GITHUB_OUTPUT"
+          else
             case "${{ inputs.preset }}" in
               web)
                 echo "service=web" >> "$GITHUB_OUTPUT"
@@ -84,14 +93,10 @@ jobs:
                 echo "image_repository=${PREFIX}/menuyukti-agents" >> "$GITHUB_OUTPUT"
                 ;;
               *)
-                echo "Invalid preset" >&2
+                echo "Invalid preset (run from Actions UI on this workflow and choose web, graphql, or agents)" >&2
                 exit 1
                 ;;
             esac
-          else
-            echo "service=${{ inputs.service }}" >> "$GITHUB_OUTPUT"
-            echo "dockerfile=${{ inputs.dockerfile }}" >> "$GITHUB_OUTPUT"
-            echo "image_repository=${{ inputs.image_repository }}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Set up QEMU (multi-arch builds on amd64 runners)
