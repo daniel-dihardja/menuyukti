@@ -1,0 +1,54 @@
+# Start the stack from the repo root:
+#   docker compose up --build
+#
+# In `.env` next to this file, set:
+#   DATABASE_URL   — Neon Postgres URL (web + GraphQL), e.g. postgresql://user:pass@...neon.tech/neondb?sslmode=require
+#   OPENAI_API_KEY — for gentic-agents
+#
+# Initialize or migrate the GraphQL schema against Neon when needed:
+#   docker compose run --rm graphql uv run python -m graphql.data_sources.database
+
+name: menuyukti
+
+services:
+  graphql:
+    build:
+      context: .
+      dockerfile: apps/graphql/Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    ports:
+      - "8000:8000"
+
+  gentic-agents:
+    build:
+      context: .
+      dockerfile: apps/gentic-agents/Dockerfile
+    environment:
+      ADDR: :7000
+      GRAPHQL_ENDPOINT: http://graphql:8000/graphql
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on:
+      - graphql
+    ports:
+      - "7000:7000"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        DATABASE_URL: ${DATABASE_URL}
+        ANALYTICS_API_URL: http://graphql:8000
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      GRAPHQL_ENDPOINT: http://graphql:8000/graphql
+      AGENTS_URL: http://gentic-agents:7000
+      ANALYTICS_API_URL: http://graphql:8000
+    depends_on:
+      graphql:
+        condition: service_started
+      gentic-agents:
+        condition: service_started
+    ports:
+      - "3000:3000"
