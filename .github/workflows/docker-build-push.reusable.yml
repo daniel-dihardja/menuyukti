@@ -99,9 +99,6 @@ jobs:
             esac
           fi
 
-      - name: Set up QEMU (multi-arch builds on amd64 runners)
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -144,8 +141,7 @@ jobs:
           context: .
           file: ${{ steps.params.outputs.dockerfile }}
           push: true
-          # Typical VPS is amd64; arm64 covers Apple Silicon / ARM hosts (manifest list on Hub).
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: ${{ steps.meta.outputs.list }}
           build-args: |
             DATABASE_URL=${{ secrets.DATABASE_URL }}
@@ -158,5 +154,5 @@ jobs:
           context: .
           file: ${{ steps.params.outputs.dockerfile }}
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: ${{ steps.meta.outputs.list }}
