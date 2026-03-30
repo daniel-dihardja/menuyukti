@@ -13,6 +13,9 @@ node_modules
 .env.test.local
 .env.production.local
 
+# Cloud / CLI credential dirs (do not commit)
+.aws/
+
 # Testing
 coverage
 

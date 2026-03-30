@@ -1,6 +1,16 @@
 .git
 .github
 .cursor
+
+# Credentials and local secrets (must never enter image build context)
+creds
+**/creds
+**/.aws/
+**/*.pem
+**/id_rsa
+**/id_ed25519
+**/id_ecdsa
+
 **/.env
 **/.env.*
 !.env.example
