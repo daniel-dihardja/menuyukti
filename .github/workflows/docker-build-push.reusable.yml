@@ -156,7 +156,10 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Pull images on server
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy compose file and pull images on server
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_HOST_VALUE: ${{ secrets.SSH_HOST }}
@@ -187,9 +190,7 @@ jobs:
             echo "After parsing SSH_HOST, hostname is empty. Set SSH_HOST to host or user@host." >&2
             exit 1
           fi
-          ssh -i ~/.ssh/deploy_key \
-            -l "$ssh_user" \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=accept-new \
-            "$ssh_host" \
+          common_ssh_opts=(-i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=accept-new)
+          scp "${common_ssh_opts[@]}" docker-compose.yml "${ssh_user}@${ssh_host}:/var/www/menuyukti/docker-compose.yml"
+          ssh "${common_ssh_opts[@]}" -l "$ssh_user" "$ssh_host" \
             'cd /var/www/menuyukti && docker compose pull'

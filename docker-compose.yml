@@ -12,6 +12,7 @@ name: menuyukti
 
 services:
   graphql:
+    image: johngoyason/menuyukti-graphql:latest
     build:
       context: .
       dockerfile: apps/graphql/Dockerfile
@@ -21,6 +22,7 @@ services:
       - "8000:8000"
 
   gentic-agents:
+    image: johngoyason/menuyukti-agents:latest
     build:
       context: .
       dockerfile: apps/gentic-agents/Dockerfile
@@ -34,6 +36,7 @@ services:
       - "7000:7000"
 
   web:
+    image: johngoyason/menuyukti-web:latest
     build:
       context: .
       dockerfile: apps/web/Dockerfile
