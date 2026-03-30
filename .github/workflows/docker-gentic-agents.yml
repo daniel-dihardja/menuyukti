@@ -1,5 +1,7 @@
 # Build and push gentic-agents image (menuyukti-agents). Independent of graphql/web.
 #
+# Manual run: Actions → this workflow → "Run workflow" (optional tag input).
+#
 # Secrets: DOCKERHUB_USERNAME, DOCKERHUB_PASSWORD (see docker-build-push.reusable.yml)
 # Optional variable: DOCKER_IMAGE_PREFIX (default johngoyason)
 

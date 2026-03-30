@@ -1,5 +1,7 @@
 # Build and push web image (menuyukti-web). Independent of graphql/agents.
 #
+# Manual run: Actions → this workflow → "Run workflow" (optional tag input).
+#
 # Secrets: DOCKERHUB_USERNAME, DOCKERHUB_PASSWORD, DATABASE_URL (see docker-build-push.reusable.yml)
 # Optional variable: DOCKER_IMAGE_PREFIX (default johngoyason)
 

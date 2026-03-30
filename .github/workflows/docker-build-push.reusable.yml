@@ -7,6 +7,8 @@
 #
 # Optional repository variable:
 #   DOCKER_IMAGE_PREFIX — image namespace (default johngoyason), set in callers if empty
+#
+# Manual run: Actions → "Reusable Docker build and push" → choose preset (web | graphql | agents).
 
 name: Reusable Docker build and push
 
@@ -29,6 +31,21 @@ on:
         type: string
         default: ""
         description: "If non-empty, push only this tag. Otherwise sha-* and latest on default branch."
+  workflow_dispatch:
+    inputs:
+      preset:
+        description: "Which image to build and push (same mapping as Docker — web/graphql/gentic-agents)"
+        required: true
+        type: choice
+        options:
+          - web
+          - graphql
+          - agents
+      custom_tag:
+        description: "Optional single tag (empty = sha-* + latest on default branch)"
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -39,6 +56,41 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Resolve build parameters
+        id: params
+        env:
+          PREFIX: ${{ vars.DOCKER_IMAGE_PREFIX != '' && vars.DOCKER_IMAGE_PREFIX || 'johngoyason' }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            case "${{ inputs.preset }}" in
+              web)
+                echo "service=web" >> "$GITHUB_OUTPUT"
+                echo "dockerfile=apps/web/Dockerfile" >> "$GITHUB_OUTPUT"
+                echo "image_repository=${PREFIX}/menuyukti-web" >> "$GITHUB_OUTPUT"
+                ;;
+              graphql)
+                echo "service=graphql" >> "$GITHUB_OUTPUT"
+                echo "dockerfile=apps/graphql/Dockerfile" >> "$GITHUB_OUTPUT"
+                echo "image_repository=${PREFIX}/menuyukti-graphql" >> "$GITHUB_OUTPUT"
+                ;;
+              agents)
+                echo "service=agents" >> "$GITHUB_OUTPUT"
+                echo "dockerfile=apps/gentic-agents/Dockerfile" >> "$GITHUB_OUTPUT"
+                echo "image_repository=${PREFIX}/menuyukti-agents" >> "$GITHUB_OUTPUT"
+                ;;
+              *)
+                echo "Invalid preset" >&2
+                exit 1
+                ;;
+            esac
+          else
+            echo "service=${{ inputs.service }}" >> "$GITHUB_OUTPUT"
+            echo "dockerfile=${{ inputs.dockerfile }}" >> "$GITHUB_OUTPUT"
+            echo "image_repository=${{ inputs.image_repository }}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -52,7 +104,7 @@ jobs:
       - name: Compute image tags
         id: meta
         env:
-          REPO: ${{ inputs.image_repository }}
+          REPO: ${{ steps.params.outputs.image_repository }}
           CUSTOM_TAG: ${{ inputs.custom_tag }}
           SHA: ${{ github.sha }}
           REF: ${{ github.ref }}
@@ -76,11 +128,11 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Build and push (web)
-        if: inputs.service == 'web'
+        if: steps.params.outputs.service == 'web'
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ${{ inputs.dockerfile }}
+          file: ${{ steps.params.outputs.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.list }}
           build-args: |
@@ -88,10 +140,10 @@ jobs:
             ANALYTICS_API_URL=http://127.0.0.1:8000
 
       - name: Build and push
-        if: inputs.service != 'web'
+        if: steps.params.outputs.service != 'web'
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ${{ inputs.dockerfile }}
+          file: ${{ steps.params.outputs.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.list }}
