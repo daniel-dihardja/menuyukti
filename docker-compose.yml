@@ -4,6 +4,8 @@
 # In `.env` next to this file, set:
 #   DATABASE_URL   — Neon Postgres URL (web + GraphQL), e.g. postgresql://user:pass@...neon.tech/neondb?sslmode=require
 #   OPENAI_API_KEY — for gentic-agents
+#   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — Clerk publishable key (web; also used at image build time)
+#   CLERK_SECRET_KEY — Clerk secret key (web)
 #
 # Initialize or migrate the GraphQL schema against Neon when needed:
 #   docker compose run --rm graphql uv run python -m graphql.data_sources.database
@@ -56,11 +58,15 @@ services:
       args:
         DATABASE_URL: ${DATABASE_URL}
         ANALYTICS_API_URL: http://graphql:8000
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
+        CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-}
     environment:
       DATABASE_URL: ${DATABASE_URL}
       GRAPHQL_ENDPOINT: http://graphql:8000/graphql
       AGENTS_URL: http://gentic-agents:7000
       ANALYTICS_API_URL: http://graphql:8000
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-}
     depends_on:
       graphql:
         condition: service_started
