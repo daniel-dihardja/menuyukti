@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -429,6 +430,12 @@ func postGQL(ctx context.Context, endpoint, query string, variables map[string]i
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	if uid := UserIDFromContext(ctx); uid != "" {
+		req.Header.Set("X-User-Id", uid)
+	}
+	if key := os.Getenv("GRAPHQL_INTERNAL_API_KEY"); key != "" {
+		req.Header.Set("X-Internal-Api-Key", key)
+	}
 
 	client := &http.Client{Timeout: 15 * time.Second}
 	res, err := client.Do(req)

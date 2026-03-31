@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import strawberry
 
 from graphql.data_sources import CampaignBrief, SessionLocal
+from graphql.schema.auth import get_campaign_if_owner, user_id_from_info
 from graphql.schema.types import CampaignBriefType
 
 
@@ -11,6 +12,7 @@ class SaveCampaignBriefMutation:
     @strawberry.mutation
     def save_campaign_brief(
         self,
+        info: strawberry.Info,
         campaign_id: strawberry.ID,
         location_id: strawberry.ID,
         analytics_run_id: strawberry.ID,
@@ -20,8 +22,14 @@ class SaveCampaignBriefMutation:
         posting_cadence: str,
         post_schedule_json: str | None = None,
     ) -> CampaignBriefType:
+        user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
+            campaign = get_campaign_if_owner(session, int(campaign_id), user_id)
+            if campaign is None:
+                raise PermissionError("Access denied")
+            if campaign.location_id != int(location_id):
+                raise ValueError("Campaign does not belong to the given location")
             row = (
                 session.query(CampaignBrief)
                 .filter(CampaignBrief.campaign_id == int(campaign_id))

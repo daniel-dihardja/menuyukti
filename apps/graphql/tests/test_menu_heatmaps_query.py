@@ -10,6 +10,7 @@ from graphql.data_sources import AnalyticsRun, Location, OrderFact, SessionLocal
 from graphql.reports import normalize_sales_report
 from graphql.reports.transform import line_items_to_dataframe
 from graphql.schema import schema
+from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 from menuyukti.core.analytics.calculate_menu_heatmaps import (
     calculate_menu_heatmaps,
     compute_menu_heatmaps_from_orders,
@@ -124,6 +125,7 @@ def test_menu_heatmaps_with_qa_data(analytics_run_with_qa_data):
         schema.execute(
             HEATMAPS_QUERY,
             variable_values={"id": str(run_id)},
+            context_value=graphql_auth_context(),
         )
     )
     assert not query_result.errors
@@ -194,7 +196,7 @@ def test_menu_heatmaps_match_menuyukti_calculation(tmp_path):
         session.query(Location).delete()
         session.commit()
 
-        location = Location(name="Test Location")
+        location = Location(name="Test Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
         session.add(location)
         session.commit()
         session.refresh(location)
@@ -206,6 +208,7 @@ def test_menu_heatmaps_match_menuyukti_calculation(tmp_path):
         schema.execute(
             UPLOAD_MUTATION,
             variable_values={"file": upload, "locationId": str(location_id)},
+            context_value=graphql_auth_context(),
         )
     )
     assert not upload_result.errors
@@ -222,6 +225,7 @@ def test_menu_heatmaps_match_menuyukti_calculation(tmp_path):
         schema.execute(
             HEATMAPS_QUERY,
             variable_values={"id": str(run_id)},
+            context_value=graphql_auth_context(),
         )
     )
     assert not query_result.errors

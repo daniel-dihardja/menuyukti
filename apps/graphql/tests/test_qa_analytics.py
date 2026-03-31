@@ -11,6 +11,7 @@ from datetime import date, datetime
 import pytest
 
 from graphql.schema import schema
+from graphql.tests.auth_context import graphql_auth_context
 from graphql.tests.fixtures.qa_data import (
     qa_order_rows_for_heatmap,
     qa_order_rows_for_matrix,
@@ -143,7 +144,11 @@ def test_qa_order_metrics(analytics_run_with_qa_data, qa_sales_rows):
     )
 
     result = asyncio.run(
-        schema.execute(METRICS_QUERY, variable_values={"id": str(run_id)})
+        schema.execute(
+            METRICS_QUERY,
+            variable_values={"id": str(run_id)},
+            context_value=graphql_auth_context(),
+        )
     )
     assert not result.errors
 
@@ -174,7 +179,11 @@ def test_qa_menu_heatmaps(analytics_run_with_qa_data, qa_sales_rows):
     expected = _normalize_expected_heatmap_payloads(expected_payloads)
 
     result = asyncio.run(
-        schema.execute(HEATMAPS_QUERY, variable_values={"id": str(run_id)})
+        schema.execute(
+            HEATMAPS_QUERY,
+            variable_values={"id": str(run_id)},
+            context_value=graphql_auth_context(),
+        )
     )
     assert not result.errors
 
@@ -201,6 +210,7 @@ def test_qa_menu_engineering_matrix(analytics_run_with_qa_data, qa_cogs_by_menu)
         schema.execute(
             MENU_ENGINEERING_MATRIX_QUERY,
             variable_values={"runId": str(run_id)},
+            context_value=graphql_auth_context(),
         )
     )
     assert not result.errors
@@ -246,6 +256,7 @@ def test_qa_menu_engineering_matrix_none_without_cogs(analytics_run_with_qa_sale
         schema.execute(
             MENU_ENGINEERING_MATRIX_QUERY,
             variable_values={"runId": str(run_id)},
+            context_value=graphql_auth_context(),
         )
     )
     assert not result.errors
@@ -259,7 +270,11 @@ def test_qa_menu_item_cogs(analytics_run_with_qa_data, qa_cogs_by_menu):
     run_id = analytics_run_with_qa_data
 
     result = asyncio.run(
-        schema.execute(COGS_QUERY, variable_values={"id": str(run_id)})
+        schema.execute(
+            COGS_QUERY,
+            variable_values={"id": str(run_id)},
+            context_value=graphql_auth_context(),
+        )
     )
     assert not result.errors
 

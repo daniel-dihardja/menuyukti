@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+import { auth } from "@clerk/nextjs/server";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
@@ -23,6 +24,11 @@ type PageProps = {
 };
 
 export default async function Page({ params }: PageProps) {
+  const { userId } = await auth();
+  if (!userId) {
+    notFound();
+  }
+
   const t = await getTranslations("analytics");
   const tSales = await getTranslations("analytics.sales");
 
@@ -34,8 +40,12 @@ export default async function Page({ params }: PageProps) {
 
   const id = String(analyticsId);
   const [runData, matrixData] = await Promise.all([
-    graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }),
-    graphqlQuery<MenuEngineeringMatrixData>(MENU_ENGINEERING_MATRIX_QUERY, { id }),
+    graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }, userId),
+    graphqlQuery<MenuEngineeringMatrixData>(
+      MENU_ENGINEERING_MATRIX_QUERY,
+      { id },
+      userId
+    ),
   ]);
 
   const run = runData.analyticsRun;

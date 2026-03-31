@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+import { auth } from "@clerk/nextjs/server";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routes } from "@/lib/routes";
@@ -30,6 +31,11 @@ function computeDefaultDates(): { dateStart: string; dateEnd: string } {
 }
 
 export default async function Page({ searchParams }: PageProps) {
+  const { userId } = await auth();
+  if (!userId) {
+    notFound();
+  }
+
   const tCampaigns = await getTranslations("analytics.campaigns");
   const tAi = await getTranslations("analytics.ai");
 
@@ -46,7 +52,8 @@ export default async function Page({ searchParams }: PageProps) {
   try {
     const runsData = await graphqlQuery<AnalyticsRunsByLocationData>(
       ANALYTICS_RUNS_BY_LOCATION_QUERY,
-      { locationId: locationId }
+      { locationId: locationId },
+      userId
     );
     analyticsRuns = runsData.analyticsRuns;
   } catch {

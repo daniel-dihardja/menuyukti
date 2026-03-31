@@ -18,6 +18,7 @@ import asyncio
 
 from graphql.data_sources import AnalyticsRun, SessionLocal
 from graphql.schema import schema
+from graphql.tests.auth_context import graphql_auth_context
 
 
 _OPERATING_PROFILE_QUERY = """
@@ -83,6 +84,7 @@ def test_operating_profile_returns_expected_values(analytics_run_with_qa_data):
                 "locationId": str(location_id),
                 "analyticsRunId": str(run_id),
             },
+            context_value=graphql_auth_context(),
         )
     )
     assert not result.errors
@@ -115,6 +117,7 @@ def test_operating_profile_meal_period_breakdown(analytics_run_with_qa_data):
                 "locationId": str(location_id),
                 "analyticsRunId": str(run_id),
             },
+            context_value=graphql_auth_context(),
         )
     )
     assert not result.errors
@@ -151,6 +154,7 @@ def test_operating_profile_day_of_week_breakdown(analytics_run_with_qa_data):
                 "locationId": str(location_id),
                 "analyticsRunId": str(run_id),
             },
+            context_value=graphql_auth_context(),
         )
     )
     assert not result.errors
@@ -183,6 +187,7 @@ def test_operating_profile_day_type_breakdown(analytics_run_with_qa_data):
                 "locationId": str(location_id),
                 "analyticsRunId": str(run_id),
             },
+            context_value=graphql_auth_context(),
         )
     )
     assert not result.errors
@@ -206,6 +211,7 @@ def test_operating_profile_wrong_location_returns_none(analytics_run_with_qa_dat
                 "locationId": "99999",
                 "analyticsRunId": str(run_id),
             },
+            context_value=graphql_auth_context(),
         )
     )
     assert not result.errors
@@ -224,6 +230,7 @@ def test_operating_profile_nonexistent_run_returns_none(analytics_run_with_qa_da
                 "locationId": str(location_id),
                 "analyticsRunId": "99999",
             },
+            context_value=graphql_auth_context(),
         )
     )
     assert not result.errors

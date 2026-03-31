@@ -1,6 +1,7 @@
 import strawberry
 
 from graphql.data_sources import CampaignBrief, SessionLocal
+from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types import CampaignBriefType
 
 
@@ -9,8 +10,10 @@ class CampaignBriefQuery:
     @strawberry.field
     def campaign_brief(
         self,
+        info: strawberry.Info,
         campaign_id: strawberry.ID,
     ) -> CampaignBriefType | None:
+        user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
             row = (
@@ -19,6 +22,8 @@ class CampaignBriefQuery:
                 .first()
             )
             if row is None:
+                return None
+            if not is_location_owner(session, row.location_id, user_id):
                 return None
             return CampaignBriefType(
                 id=row.id,

@@ -13,6 +13,8 @@ os.environ["DATABASE_URL"] = f"sqlite+pysqlite:///{TEST_DB}"
 
 import pytest
 
+from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID
+
 
 @pytest.fixture(scope="session", autouse=True)
 def _graphql_test_db():
@@ -63,7 +65,7 @@ def analytics_run_with_qa_data(qa_sales_rows, qa_cogs_by_menu):
         session.query(Location).delete()
         session.commit()
 
-        location = Location(name="QA Test Location")
+        location = Location(name="QA Test Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
         session.add(location)
         session.commit()
         session.refresh(location)
@@ -142,7 +144,9 @@ def analytics_run_with_qa_sales_only(qa_sales_rows):
         session.query(Location).delete()
         session.commit()
 
-        location = Location(name="QA Test Location (no COGS)")
+        location = Location(
+            name="QA Test Location (no COGS)", clerk_user_id=GRAPHQL_TEST_USER_ID
+        )
         session.add(location)
         session.commit()
         session.refresh(location)

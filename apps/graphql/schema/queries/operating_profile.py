@@ -3,6 +3,7 @@ from typing import Optional
 import strawberry
 
 from graphql.data_sources import AnalyticsRun, OrderFact, SessionLocal
+from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
 from menuyukti.core.analytics import compute_operating_profile_from_orders
 
 
@@ -108,6 +109,7 @@ class OperatingProfileQuery:
     @strawberry.field
     def operating_profile(
         self,
+        info: strawberry.Info,
         location_id: strawberry.ID,
         analytics_run_id: strawberry.ID,
     ) -> Optional[OperatingProfileType]:
@@ -116,9 +118,10 @@ class OperatingProfileQuery:
         Returns None if the analytics run does not exist or does not belong to
         the given location_id.
         """
+        user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
-            run = session.get(AnalyticsRun, int(analytics_run_id))
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
             if run is None or run.location_id != int(location_id):
                 return None
 

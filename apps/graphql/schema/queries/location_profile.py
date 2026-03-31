@@ -1,6 +1,7 @@
 import strawberry
 
 from graphql.data_sources import LocationProfile, SessionLocal
+from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types import LocationProfileType
 
 
@@ -9,11 +10,15 @@ class LocationProfileQuery:
     @strawberry.field
     def location_profile(
         self,
+        info: strawberry.Info,
         location_id: strawberry.ID,
         analytics_run_id: strawberry.ID,
     ) -> LocationProfileType | None:
+        user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
+            if not is_location_owner(session, int(location_id), user_id):
+                return None
             row = (
                 session.query(LocationProfile)
                 .filter(

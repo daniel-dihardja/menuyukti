@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+import { auth } from "@clerk/nextjs/server";
 import { getTranslations } from "next-intl/server";
 import { routes } from "@/lib/routes";
 import { notFound } from "next/navigation";
@@ -27,6 +28,11 @@ type PageProps = {
 };
 
 export default async function Page({ params }: PageProps) {
+  const { userId } = await auth();
+  if (!userId) {
+    notFound();
+  }
+
   const tSales = await getTranslations("analytics.sales");
   const tHeatmap = await getTranslations("analytics.heatmap");
 
@@ -38,8 +44,8 @@ export default async function Page({ params }: PageProps) {
 
   const id = String(analyticsId);
   const [runData, heatmapsData] = await Promise.all([
-    graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }),
-    graphqlQuery<MenuHeatmapsData>(MENU_HEATMAPS_QUERY, { id }),
+    graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }, userId),
+    graphqlQuery<MenuHeatmapsData>(MENU_HEATMAPS_QUERY, { id }, userId),
   ]);
 
   const run = runData.analyticsRun;

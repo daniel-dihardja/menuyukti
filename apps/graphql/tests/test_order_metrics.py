@@ -9,6 +9,7 @@ import pytest
 from graphql.data_sources import AnalyticsRun, Location, OrderFact, SessionLocal
 from graphql.reports import normalize_sales_report
 from graphql.schema import schema
+from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 from starlette.datastructures import Headers, UploadFile
 
 
@@ -118,7 +119,11 @@ def test_order_metrics_with_qa_data(analytics_run_with_qa_data, qa_sales_rows):
     )
 
     result = asyncio.run(
-        schema.execute(METRICS_QUERY, variable_values={"id": str(run_id)})
+        schema.execute(
+            METRICS_QUERY,
+            variable_values={"id": str(run_id)},
+            context_value=graphql_auth_context(),
+        )
     )
     assert not result.errors
 
@@ -163,7 +168,7 @@ def test_order_metrics_for_uploaded_run(tmp_path):
         session.query(Location).delete()
         session.commit()
 
-        location = Location(name="Test Location")
+        location = Location(name="Test Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
         session.add(location)
         session.commit()
         session.refresh(location)
@@ -175,6 +180,7 @@ def test_order_metrics_for_uploaded_run(tmp_path):
         schema.execute(
             UPLOAD_MUTATION,
             variable_values={"file": upload, "locationId": str(location_id)},
+            context_value=graphql_auth_context(),
         )
     )
     assert not upload_result.errors
@@ -188,7 +194,11 @@ def test_order_metrics_for_uploaded_run(tmp_path):
         session.close()
 
     metrics_result = asyncio.run(
-        schema.execute(METRICS_QUERY, variable_values={"id": str(run_id)})
+        schema.execute(
+            METRICS_QUERY,
+            variable_values={"id": str(run_id)},
+            context_value=graphql_auth_context(),
+        )
     )
     assert not metrics_result.errors
 

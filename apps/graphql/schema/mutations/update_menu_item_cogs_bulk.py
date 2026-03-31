@@ -1,6 +1,7 @@
 import strawberry
 
-from graphql.data_sources import MenuItemCogs, SessionLocal
+from graphql.data_sources import AnalyticsRun, MenuItemCogs, SessionLocal
+from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types import MenuItemCogsType
 
 
@@ -15,8 +16,10 @@ class UpdateMenuItemCogsBulkMutation:
     @strawberry.mutation
     def update_menu_item_cogs_bulk(
         self,
+        info: strawberry.Info,
         updates: list[MenuItemCogsUpdateInput],
     ) -> list[MenuItemCogsType]:
+        user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
             updated_ids: list[int] = []
@@ -24,6 +27,9 @@ class UpdateMenuItemCogsBulkMutation:
                 row = session.get(MenuItemCogs, int(item.id))
                 if row is None:
                     continue
+                run = session.get(AnalyticsRun, row.analytics_run_id)
+                if run is None or not is_location_owner(session, run.location_id, user_id):
+                    raise PermissionError("Access denied")
                 row.cogs = item.cogs
                 updated_ids.append(row.id)
             session.commit()

@@ -2,15 +2,19 @@ import strawberry
 from sqlalchemy import nulls_last
 
 from graphql.data_sources import Campaign, SessionLocal
+from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types.campaign import CampaignType
 
 
 @strawberry.type
 class CampaignsQuery:
     @strawberry.field
-    def campaigns(self, location_id: int) -> list[CampaignType]:
+    def campaigns(self, info: strawberry.Info, location_id: int) -> list[CampaignType]:
+        user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
+            if not is_location_owner(session, location_id, user_id):
+                return []
             rows = (
                 session.query(Campaign)
                 .filter(Campaign.location_id == location_id)

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { graphqlQuery } from "@/lib/graphql/client";
 import {
   DELETE_CAMPAIGN_MUTATION,
@@ -11,6 +12,11 @@ import {
  */
 export async function DELETE(req: Request) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const id = body?.id;
 
@@ -23,7 +29,8 @@ export async function DELETE(req: Request) {
 
     const data = await graphqlQuery<DeleteCampaignData>(
       DELETE_CAMPAIGN_MUTATION,
-      { id: String(id) }
+      { id: String(id) },
+      userId
     );
 
     if (!data.deleteCampaign) {

@@ -9,6 +9,7 @@ from strawberry.file_uploads import Upload
 from strawberry.scalars import JSON
 
 from graphql.data_sources import AnalyticsRun, Location, SessionLocal
+from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.reports import (
     Order,
     line_items_to_orders,
@@ -81,9 +82,11 @@ class UploadSalesReportMutation:
     @strawberry.mutation
     async def upload_sales_report(
         self,
+        info: strawberry.Info,
         file: Upload,
         location_id: strawberry.ID,
     ) -> ExcelUploadResult:
+        user_id = user_id_from_info(info)
         payload = await file.read()
         normalized_rows_data, detected_pos = normalize_sales_report(payload)
         session = SessionLocal()
@@ -103,6 +106,7 @@ class UploadSalesReportMutation:
             loc = session.get(Location, int(location_id))
             if loc is None:
                 raise ValueError(f"Location {location_id} not found")
+            require_location_owner(session, int(location_id), user_id)
 
             analytics_run = AnalyticsRun(
                 name=file.filename or "sales_report",

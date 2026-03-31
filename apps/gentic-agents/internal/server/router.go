@@ -13,6 +13,21 @@ type Config struct {
 	Agent        gentic.Agent
 	StreamingLLM gentic.StreamingLLM
 	AllowOrigins []string
+	// AgentsAPIKey when non-empty requires matching X-Internal-Api-Key on /invoke and /invoke/stream.
+	AgentsAPIKey string
+}
+
+func agentsAPIKeyMiddleware(next http.Handler, apiKey string) http.Handler {
+	if apiKey == "" {
+		return next
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Internal-Api-Key") != apiKey {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // NewRouter wires POST /invoke and POST /invoke/stream with recovery → logging → request ID.
@@ -23,8 +38,11 @@ func NewRouter(cfg Config) http.Handler {
 	mux.HandleFunc("POST /invoke", InvokeHandler(runner))
 	mux.HandleFunc("POST /invoke/stream", StreamHandler(runner))
 
+	var h http.Handler = mux
+	h = agentsAPIKeyMiddleware(h, cfg.AgentsAPIKey)
+
 	return middleware.Chain(
-		mux,
+		h,
 		middleware.Recovery,
 		middleware.Logging,
 		middleware.RequestID,

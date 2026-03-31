@@ -9,6 +9,7 @@ import pytest
 from graphql.data_sources import Location, OrderFact, SessionLocal
 from graphql.reports import normalize_sales_report
 from graphql.schema import schema
+from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 from starlette.datastructures import Headers, UploadFile
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
@@ -60,7 +61,7 @@ def test_upload_excel_creates_metadata(tmp_path):
         session.commit()
 
         # Ensure a test location exists
-        location = Location(name="Test Location")
+        location = Location(name="Test Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
         session.add(location)
         session.commit()
         session.refresh(location)
@@ -72,6 +73,7 @@ def test_upload_excel_creates_metadata(tmp_path):
         schema.execute(
             MUTATION,
             variable_values={"file": upload, "locationId": str(location_id)},
+            context_value=graphql_auth_context(),
         )
     )
     assert not result.errors

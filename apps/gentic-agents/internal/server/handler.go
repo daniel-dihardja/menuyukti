@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gensrv "github.com/daniel-dihardja/gentic/pkg/server"
 	"github.com/daniel-dihardja/gentic/pkg/sse"
 )
@@ -33,7 +34,8 @@ func InvokeHandler(runner *gensrv.Runner) http.HandlerFunc {
 			Metadata: input.Metadata,
 		}
 
-		resp, err := runner.Invoke(r.Context(), fwReq)
+		ctx := graphql.ContextWithUserID(r.Context(), r.Header.Get("X-Menuyukti-User-Id"))
+		resp, err := runner.Invoke(ctx, fwReq)
 		if err != nil {
 			log.Printf("invoke: %v", err)
 			writeError(w, http.StatusInternalServerError, "agent run failed")
@@ -67,13 +69,15 @@ func StreamHandler(runner *gensrv.Runner) http.HandlerFunc {
 			Metadata: input.Metadata,
 		}
 
+		ctx := graphql.ContextWithUserID(r.Context(), r.Header.Get("X-Menuyukti-User-Id"))
+
 		sw, err := sse.New(w)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "streaming not supported")
 			return
 		}
 
-		events := runner.Stream(r.Context(), fwReq)
+		events := runner.Stream(ctx, fwReq)
 
 		if err := sw.Drain(r.Context(), events); err != nil {
 			log.Printf("stream drain: %v", err)

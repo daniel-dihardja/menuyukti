@@ -10,6 +10,11 @@ from graphql.data_sources import (
     OrderFact,
     SessionLocal,
 )
+from graphql.schema.auth import (
+    get_analytics_run_if_owner,
+    is_location_owner,
+    user_id_from_info,
+)
 from graphql.schema.types import MenuItemCogsType
 from menuyukti.core.analytics import compute_menu_heatmaps_from_orders
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
@@ -347,10 +352,13 @@ class AnalyticsRunQuery:
     @strawberry.field(
         description="Fetch metadata and COGS for a single analytics run by ID."
     )
-    def analytics_run(self, id: strawberry.ID) -> Optional[AnalyticsRunType]:
+    def analytics_run(
+        self, info: strawberry.Info, id: strawberry.ID
+    ) -> Optional[AnalyticsRunType]:
+        user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
-            run = session.get(AnalyticsRun, int(id))
+            run = get_analytics_run_if_owner(session, int(id), user_id)
             if run is None:
                 return None
             return _run_to_type(session, run)
@@ -360,9 +368,14 @@ class AnalyticsRunQuery:
     @strawberry.field(
         description="List analytics runs for a location, newest first."
     )
-    def analytics_runs(self, location_id: int) -> list[AnalyticsRunListItemType]:
+    def analytics_runs(
+        self, info: strawberry.Info, location_id: int
+    ) -> list[AnalyticsRunListItemType]:
+        user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
+            if not is_location_owner(session, location_id, user_id):
+                return []
             runs = (
                 session.query(AnalyticsRun)
                 .where(AnalyticsRun.location_id == location_id)
@@ -387,11 +400,12 @@ class AnalyticsRunQuery:
         )
     )
     def order_metrics(
-        self, analytics_run_id: strawberry.ID
+        self, info: strawberry.Info, analytics_run_id: strawberry.ID
     ) -> Optional[AnalyticsRunOrderMetricsType]:
+        user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
-            run = session.get(AnalyticsRun, int(analytics_run_id))
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
             if run is None:
                 return None
             return _compute_order_metrics(session, run)
@@ -405,11 +419,12 @@ class AnalyticsRunQuery:
         )
     )
     def menu_heatmaps(
-        self, analytics_run_id: strawberry.ID
+        self, info: strawberry.Info, analytics_run_id: strawberry.ID
     ) -> list[MenuHeatmapType]:
+        user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
-            run = session.get(AnalyticsRun, int(analytics_run_id))
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
             if run is None:
                 return []
             return _compute_menu_heatmaps(session, run)
@@ -427,12 +442,14 @@ class AnalyticsRunQuery:
     )
     def menu_engineering_matrix(
         self,
+        info: strawberry.Info,
         analytics_run_id: strawberry.ID,
         categories: Optional[list[str]] = None,
     ) -> Optional[MenuEngineeringMatrixType]:
+        user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
-            run = session.get(AnalyticsRun, int(analytics_run_id))
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
             if run is None:
                 return None
             matrix = _compute_menu_engineering_matrix(session, run)

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import type { UIMessage } from "ai";
 import { getAgentsBaseUrl } from "@/lib/config";
 import { chatRequestBodySchema } from "./schema";
@@ -158,6 +159,11 @@ async function parseAgentSSEAndForward(
 }
 
 export async function POST(req: Request) {
+  const { userId } = await auth();
+  if (!userId) {
+    return jsonError("Unauthorized", 401);
+  }
+
   const baseUrl = getAgentsBaseUrl();
   if (!baseUrl) {
     return jsonError(
@@ -189,9 +195,18 @@ export async function POST(req: Request) {
 
   let agentRes: Response;
   try {
+    const streamHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      "X-Menuyukti-User-Id": userId,
+    };
+    const agentsKey = process.env.AGENTS_API_KEY;
+    if (agentsKey) {
+      streamHeaders["X-Internal-Api-Key"] = agentsKey;
+    }
+
     agentRes = await fetch(`${baseUrl}/invoke/stream`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: streamHeaders,
       body: JSON.stringify({
         message: userText,
         thread_id: parsed.data.threadId ?? crypto.randomUUID(),

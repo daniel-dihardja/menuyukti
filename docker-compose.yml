@@ -7,8 +7,9 @@
 #   CLERK_SECRET_KEY — Clerk secret key (also passed into the web container via `environment:`)
 #   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — Clerk publishable key (pk_…); used at `next build` and, for the web
 #       container, mapped to env var CLERK_PUBLISHABLE_KEY at runtime (see `web` service `environment:`)
-#   GRAPHQL_INTERNAL_API_KEY — optional shared secret; when set, web sends it as X-Internal-Api-Key and graphql
-#       requires it (same value as apps/graphql INTERNAL_API_KEY).
+#   GRAPHQL_INTERNAL_API_KEY — optional shared secret; when set, web and gentic-agents send it as
+#       X-Internal-Api-Key to GraphQL (same value as apps/graphql INTERNAL_API_KEY).
+#   AGENTS_API_KEY — optional; when set, web must send it to gentic-agents /invoke and /invoke/stream.
 #
 # The `web` service loads `.env` via `env_file`. Rebuild after changing build-time vars:
 #   docker compose build --no-cache web && docker compose up -d web
@@ -38,6 +39,8 @@ services:
     environment:
       ADDR: :7000
       GRAPHQL_ENDPOINT: http://graphql:8000/graphql
+      GRAPHQL_INTERNAL_API_KEY: ${GRAPHQL_INTERNAL_API_KEY:-}
+      AGENTS_API_KEY: ${AGENTS_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     depends_on:
       - graphql
@@ -73,6 +76,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       GRAPHQL_ENDPOINT: http://graphql:8000/graphql
       GRAPHQL_INTERNAL_API_KEY: ${GRAPHQL_INTERNAL_API_KEY:-}
+      AGENTS_API_KEY: ${AGENTS_API_KEY:-}
       AGENTS_URL: http://gentic-agents:7000
       ANALYTICS_API_URL: http://graphql:8000
       CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}

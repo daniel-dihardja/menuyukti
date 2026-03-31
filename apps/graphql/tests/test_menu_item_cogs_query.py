@@ -12,6 +12,7 @@ from graphql.data_sources import (
     SessionLocal,
 )
 from graphql.schema import schema
+from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 from starlette.datastructures import Headers, UploadFile
 
 
@@ -54,7 +55,11 @@ def test_menu_item_cogs_with_qa_data(analytics_run_with_qa_data, qa_cogs_by_menu
     run_id = analytics_run_with_qa_data
 
     result = asyncio.run(
-        schema.execute(COGS_QUERY, variable_values={"id": str(run_id)})
+        schema.execute(
+            COGS_QUERY,
+            variable_values={"id": str(run_id)},
+            context_value=graphql_auth_context(),
+        )
     )
     assert not result.errors
 
@@ -95,7 +100,7 @@ def test_menu_item_cogs_query_returns_cogs_for_run(tmp_path):
         session.query(Location).delete()
         session.commit()
 
-        location = Location(name="Test Location")
+        location = Location(name="Test Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
         session.add(location)
         session.commit()
         session.refresh(location)
@@ -107,6 +112,7 @@ def test_menu_item_cogs_query_returns_cogs_for_run(tmp_path):
         schema.execute(
             UPLOAD_MUTATION,
             variable_values={"file": upload, "locationId": str(location_id)},
+            context_value=graphql_auth_context(),
         )
     )
     assert not upload_result.errors
@@ -142,7 +148,11 @@ def test_menu_item_cogs_query_returns_cogs_for_run(tmp_path):
 
     run_id = run.id
     query_result = asyncio.run(
-        schema.execute(COGS_QUERY, variable_values={"id": str(run_id)})
+        schema.execute(
+            COGS_QUERY,
+            variable_values={"id": str(run_id)},
+            context_value=graphql_auth_context(),
+        )
     )
     assert not query_result.errors
 

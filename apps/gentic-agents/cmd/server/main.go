@@ -32,6 +32,7 @@ func main() {
 	handler := appserver.NewRouter(appserver.Config{
 		Agent:        ag,
 		StreamingLLM: openai.Provider{},
+		AgentsAPIKey: os.Getenv("AGENTS_API_KEY"),
 	})
 
 	mux := http.NewServeMux()

@@ -3,6 +3,7 @@ from datetime import date
 import strawberry
 
 from graphql.data_sources import Campaign, SessionLocal
+from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.types.campaign import CampaignType
 
 
@@ -11,6 +12,7 @@ class CreateCampaignMutation:
     @strawberry.mutation
     def create_campaign(
         self,
+        info: strawberry.Info,
         location_id: int,
         name: str,
         goal: str | None = None,
@@ -19,8 +21,10 @@ class CreateCampaignMutation:
         theme: str | None = None,
         tone: str | None = None,
     ) -> CampaignType:
+        user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
+            require_location_owner(session, location_id, user_id)
             campaign = Campaign(
                 location_id=location_id,
                 name=name,
