@@ -1,7 +1,10 @@
 # Build and push web image (menuyukti-web). Manual only — Actions → Run workflow (optional tag).
+# After changing this workflow or Clerk build-args: push to default branch, add repo secrets if missing,
+#   run this workflow, then run "Docker — remote compose pull" to deploy.
 # Server: run "Docker — remote compose pull" after images exist on Docker Hub.
 #
-# Secrets: DOCKERHUB_USERNAME, DOCKERHUB_PASSWORD, DATABASE_URL (see docker-build-push.reusable.yml)
+# Secrets: DOCKERHUB_USERNAME, DOCKERHUB_PASSWORD, DATABASE_URL, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+#   CLERK_SECRET_KEY (see docker-build-push.reusable.yml)
 # Optional variable: DOCKER_IMAGE_PREFIX (default johngoyason)
 
 name: Docker — web

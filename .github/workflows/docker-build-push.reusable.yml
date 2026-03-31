@@ -4,6 +4,8 @@
 #   DOCKERHUB_USERNAME — Docker Hub user or org
 #   DOCKERHUB_PASSWORD — Docker Hub password or access token
 #   DATABASE_URL       — required when service=web (Next/Prisma build)
+#   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — required when service=web (baked into Next.js at build)
+#   CLERK_SECRET_KEY   — required when service=web (Dockerfile build arg for Clerk)
 #
 # Optional repository variable:
 #   DOCKER_IMAGE_PREFIX — image namespace (default johngoyason); should match image: names in docker-compose.yml.
@@ -146,6 +148,8 @@ jobs:
           build-args: |
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             ANALYTICS_API_URL=http://127.0.0.1:8000
+            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+            CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}
 
       - name: Build and push
         if: steps.params.outputs.service != 'web'

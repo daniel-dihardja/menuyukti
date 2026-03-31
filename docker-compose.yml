@@ -4,10 +4,9 @@
 # In `.env` next to this file, set:
 #   DATABASE_URL   — Neon Postgres URL (web + GraphQL), e.g. postgresql://user:pass@...neon.tech/neondb?sslmode=require
 #   OPENAI_API_KEY — for gentic-agents
-#   CLERK_SECRET_KEY — Clerk secret key
-#   CLERK_PUBLISHABLE_KEY — same value as Clerk publishable key (pk_…); read at runtime (required for Docker if the
-#       image was built without NEXT_PUBLIC_* baked in)
-#   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — optional; same pk; used at `next build` for client bundles (local dev)
+#   CLERK_SECRET_KEY — Clerk secret key (also passed into the web container via `environment:`)
+#   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — Clerk publishable key (pk_…); used at `next build` and, for the web
+#       container, mapped to env var CLERK_PUBLISHABLE_KEY at runtime (see `web` service `environment:`)
 #
 # The `web` service loads `.env` via `env_file`. Rebuild after changing build-time vars:
 #   docker compose build --no-cache web && docker compose up -d web
@@ -72,6 +71,8 @@ services:
       GRAPHQL_ENDPOINT: http://graphql:8000/graphql
       AGENTS_URL: http://gentic-agents:7000
       ANALYTICS_API_URL: http://graphql:8000
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
+      CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
     depends_on:
       graphql:
         condition: service_started
