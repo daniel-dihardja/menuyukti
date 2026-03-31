@@ -20,6 +20,10 @@
     "verify": "Verify",
     "resendCode": "Send a new code",
     "additionalVerificationRequired": "Additional verification is required to finish signing in.",
+    "mfaHintSms": "Enter the code we sent to your phone.",
+    "mfaHintEmail": "Enter the code we sent to your email.",
+    "mfaHintTotp": "Enter the code from your authenticator app.",
+    "useBackupCode": "Use a backup code",
     "genericError": "Something went wrong. Please try again.",
     "startOver": "Start over"
   },

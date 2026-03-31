@@ -8,9 +8,26 @@ import { routes } from "@/lib/routes";
 import { cn } from "@workspace/ui/lib/utils";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-type Step = "password" | "client_trust";
+type Step = "password" | "second_factor" | "client_trust";
+
+/** Primary MFA strategy to drive send + verify (Clerk custom MFA flow). */
+function getPrimarySecondFactor(signIn: {
+  supportedSecondFactors?: Array<{ strategy: string }> | null;
+}): string | null {
+  const factors = signIn.supportedSecondFactors ?? [];
+  if (factors.length === 0) {
+    return null;
+  }
+  const order = ["phone_code", "email_code", "totp", "backup_code"];
+  for (const s of order) {
+    if (factors.some((f) => f.strategy === s)) {
+      return s;
+    }
+  }
+  return factors[0]?.strategy ?? null;
+}
 
 export function CustomLoginForm({ className }: { className?: string }) {
   const t = useTranslations("login");
@@ -18,6 +35,11 @@ export function CustomLoginForm({ className }: { className?: string }) {
   const { signIn, errors, fetchStatus } = useSignIn();
   const [step, setStep] = useState<Step>("password");
   const [busy, setBusy] = useState(false);
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [primarySecondFactor, setPrimarySecondFactor] = useState<string | null>(
+    null,
+  );
+  const lastPreparedSignInId = useRef<string | null>(null);
 
   const finalizeAndRedirect = useCallback(async () => {
     if (!signIn) return;
@@ -35,6 +57,40 @@ export function CustomLoginForm({ className }: { className?: string }) {
       },
     });
   }, [router, signIn]);
+
+  const prepareSecondFactor = useCallback(async () => {
+    if (!signIn) return;
+    const primary = getPrimarySecondFactor(signIn);
+    setPrimarySecondFactor(primary);
+    if (primary === "phone_code") {
+      await signIn.mfa.sendPhoneCode();
+    } else if (primary === "email_code") {
+      await signIn.mfa.sendEmailCode();
+    }
+  }, [signIn]);
+
+  useEffect(() => {
+    if (!signIn || signIn.status !== "needs_second_factor") {
+      return;
+    }
+    if (step !== "password") {
+      return;
+    }
+    if (lastPreparedSignInId.current === signIn.id) {
+      return;
+    }
+
+    setMfaLoading(true);
+    void (async () => {
+      try {
+        await prepareSecondFactor();
+        lastPreparedSignInId.current = signIn.id ?? null;
+        setStep("second_factor");
+      } finally {
+        setMfaLoading(false);
+      }
+    })();
+  }, [signIn, signIn?.id, signIn?.status, step, prepareSecondFactor]);
 
   const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -60,6 +116,9 @@ export function CustomLoginForm({ className }: { className?: string }) {
       }
 
       if (signIn.status === "needs_second_factor") {
+        await prepareSecondFactor();
+        lastPreparedSignInId.current = signIn.id ?? null;
+        setStep("second_factor");
         return;
       }
 
@@ -72,6 +131,42 @@ export function CustomLoginForm({ className }: { className?: string }) {
         }
         setStep("client_trust");
         return;
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSecondFactorSubmit = async (
+    e: React.FormEvent<HTMLFormElement>,
+  ) => {
+    e.preventDefault();
+    if (!signIn || busy) return;
+
+    const form = e.currentTarget;
+    const code = (form.elements.namedItem("mfa-code") as HTMLInputElement).value
+      .trim();
+    const useBackup = (
+      form.elements.namedItem("useBackup") as HTMLInputElement | null
+    )?.checked;
+
+    setBusy(true);
+    try {
+      if (
+        useBackup ||
+        primarySecondFactor === "backup_code"
+      ) {
+        await signIn.mfa.verifyBackupCode({ code });
+      } else if (primarySecondFactor === "phone_code") {
+        await signIn.mfa.verifyPhoneCode({ code });
+      } else if (primarySecondFactor === "email_code") {
+        await signIn.mfa.verifyEmailCode({ code });
+      } else {
+        await signIn.mfa.verifyTOTP({ code });
+      }
+
+      if (signIn.status === "complete") {
+        await finalizeAndRedirect();
       }
     } finally {
       setBusy(false);
@@ -102,6 +197,8 @@ export function CustomLoginForm({ className }: { className?: string }) {
     setBusy(true);
     try {
       await signIn.reset();
+      lastPreparedSignInId.current = null;
+      setPrimarySecondFactor(null);
       setStep("password");
     } finally {
       setBusy(false);
@@ -111,6 +208,15 @@ export function CustomLoginForm({ className }: { className?: string }) {
   const loading = busy || fetchStatus === "fetching";
   const isSigningIn = loading;
 
+  const mfaHint =
+    primarySecondFactor === "phone_code"
+      ? t("mfaHintSms")
+      : primarySecondFactor === "email_code"
+        ? t("mfaHintEmail")
+        : primarySecondFactor === "backup_code"
+          ? t("useBackupCode")
+          : t("mfaHintTotp");
+
   if (!signIn) {
     return (
       <div
@@ -118,6 +224,109 @@ export function CustomLoginForm({ className }: { className?: string }) {
         aria-live="polite"
       >
         {t("signingIn")}
+      </div>
+    );
+  }
+
+  if (mfaLoading) {
+    return (
+      <div
+        className={cn("text-sm text-muted-foreground", className)}
+        aria-live="polite"
+      >
+        {t("signingIn")}
+      </div>
+    );
+  }
+
+  if (step === "second_factor") {
+    return (
+      <div className={cn("space-y-6", className)}>
+        <p className="text-sm text-muted-foreground" role="status">
+          {mfaHint}
+        </p>
+        <form onSubmit={handleSecondFactorSubmit} className="space-y-4">
+          <FieldGroup>
+            {primarySecondFactor !== "backup_code" ? (
+              <Field className="flex flex-row items-center gap-2">
+                <input
+                  id="use-backup"
+                  name="useBackup"
+                  type="checkbox"
+                  className="size-4 rounded border"
+                />
+                <label htmlFor="use-backup" className="text-sm text-foreground">
+                  {t("useBackupCode")}
+                </label>
+              </Field>
+            ) : null}
+            <Field>
+              <FieldLabel htmlFor="mfa-code">{t("verificationCodeLabel")}</FieldLabel>
+              <Input
+                id="mfa-code"
+                name="mfa-code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder={t("verificationCodePlaceholder")}
+                required
+                disabled={!signIn || isSigningIn}
+                className="text-base py-2"
+              />
+              {errors?.fields?.code?.message ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {errors.fields.code.message}
+                </p>
+              ) : null}
+            </Field>
+            <Field>
+              <Button
+                type="submit"
+                className="w-full text-base py-3"
+                disabled={isSigningIn}
+              >
+                {isSigningIn ? t("signingIn") : t("verify")}
+              </Button>
+            </Field>
+          </FieldGroup>
+        </form>
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-between">
+          {primarySecondFactor === "phone_code" ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              disabled={isSigningIn}
+              onClick={() => signIn.mfa.sendPhoneCode()}
+            >
+              {t("resendCode")}
+            </Button>
+          ) : primarySecondFactor === "email_code" ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              disabled={isSigningIn}
+              onClick={() => signIn.mfa.sendEmailCode()}
+            >
+              {t("resendCode")}
+            </Button>
+          ) : (
+            <span />
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            disabled={isSigningIn}
+            onClick={handleStartOver}
+          >
+            {t("startOver")}
+          </Button>
+        </div>
       </div>
     );
   }
@@ -179,19 +388,6 @@ export function CustomLoginForm({ className }: { className?: string }) {
             {t("startOver")}
           </Button>
         </div>
-      </div>
-    );
-  }
-
-  if (signIn.status === "needs_second_factor") {
-    return (
-      <div className={cn("space-y-4", className)}>
-        <p className="text-sm text-muted-foreground" role="status">
-          {t("additionalVerificationRequired")}
-        </p>
-        <Button type="button" variant="outline" onClick={handleStartOver}>
-          {t("startOver")}
-        </Button>
       </div>
     );
   }
