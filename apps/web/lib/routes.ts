@@ -1,5 +1,6 @@
 export const routes = {
   login: "/login",
+  signUp: "/sign-up",
   news: "/news",
 
   analytics: {
