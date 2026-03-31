@@ -1,6 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-import { getClerkPublishableKey, getClerkSecretKey } from "@/lib/clerk-env";
 import { routes } from "@/lib/routes";
 
 const isProtectedRoute = createRouteMatcher([
@@ -8,19 +7,16 @@ const isProtectedRoute = createRouteMatcher([
   "/campaigns(.*)",
 ]);
 
-export default clerkMiddleware(
-  async (auth, req) => {
-    if (!isProtectedRoute(req)) {
-      return;
-    }
-    const signInUrl = new URL(routes.login, req.url).href;
-    await auth.protect({ unauthenticatedUrl: signInUrl });
-  },
-  () => ({
-    publishableKey: getClerkPublishableKey(),
-    secretKey: getClerkSecretKey(),
-  }),
-);
+// Use default env resolution (CLERK_SECRET_KEY, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY). Do not pass
+// secretKey/publishableKey via the dynamic-keys callback unless CLERK_ENCRYPTION_KEY is set — see
+// https://clerk.com/docs/references/nextjs/clerk-middleware#dynamic-keys
+export default clerkMiddleware(async (auth, req) => {
+  if (!isProtectedRoute(req)) {
+    return;
+  }
+  const signInUrl = new URL(routes.login, req.url).href;
+  await auth.protect({ unauthenticatedUrl: signInUrl });
+});
 
 export const config = {
   matcher: [
