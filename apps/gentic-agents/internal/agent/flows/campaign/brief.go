@@ -1,4 +1,4 @@
-package step
+package campaign
 
 import (
 	"context"
@@ -8,16 +8,17 @@ import (
 	"time"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowutil"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
-	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
 )
 
 const (
-	campaignBriefGenerationSystem = "You are a senior restaurant social media strategist. Follow the instructions precisely. Reply with valid JSON only, no markdown."
-	campaignBriefReflectionSystem = "You are a quality reviewer for restaurant Instagram campaign strategy briefs."
-	campaignBriefNotifySystem     = "You are a helpful assistant for restaurant marketing. Write concise, friendly user-facing confirmations."
+	briefGenerationSystem = "You are a senior restaurant social media strategist. Follow the instructions precisely. Reply with valid JSON only, no markdown."
+	briefReflectionSystem = "You are a quality reviewer for restaurant Instagram campaign strategy briefs."
+	briefNotifySystem     = "You are a helpful assistant for restaurant marketing. Write concise, friendly user-facing confirmations."
 )
 
 // llmBriefPayload is the JSON shape expected from the generation model.
@@ -28,14 +29,14 @@ type llmBriefPayload struct {
 	PostingCadence string `json:"posting_cadence"`
 }
 
-// CreateCampaignBriefStep generates a campaign brief (with reflection) and stores it in state only.
-type CreateCampaignBriefStep struct {
+// CreateBriefStep generates a campaign brief (with reflection) and stores it in state only.
+type CreateBriefStep struct {
 	Model                   string
 	MaxReflectionIterations int
 }
 
-// Run implements gentic.Step.
-func (s CreateCampaignBriefStep) Run(ctx context.Context, state *gen.State) error {
+// Run implements gen.Step.
+func (s CreateBriefStep) Run(ctx context.Context, state *gen.State) error {
 	if flowstate.HasValidPersistedCampaignBrief(state) {
 		return nil
 	}
@@ -58,14 +59,15 @@ func (s CreateCampaignBriefStep) Run(ctx context.Context, state *gen.State) erro
 	n := gen.NotifierFromContext(ctx)
 	n.Notify("create_campaign_brief", gen.ActivityRunning, "Create a campaign brief")
 
-	llm := openai.Provider{}
-	model := s.Model
-	if model == "" {
-		model = openai.DefaultModel
+	cfg := flowutil.ReflectConfig{
+		Model:                   s.Model,
+		MaxReflectionIterations: s.MaxReflectionIterations,
 	}
+	llm := cfg.DefaultLLM()
+	model := cfg.DefaultModel()
 
-	genPrompt := buildCampaignBriefUserPrompt(profile.Summary)
-	refSnap := buildCampaignBriefReflectionSnapshot(profile.Summary)
+	genPrompt := buildUserPrompt(profile.Summary)
+	refSnap := buildReflectionSnapshot(profile.Summary)
 
 	n.Notify("create_campaign_brief", gen.ActivityDone, "Create a campaign brief")
 
@@ -74,18 +76,14 @@ func (s CreateCampaignBriefStep) Run(ctx context.Context, state *gen.State) erro
 		LLM:                    llm,
 		Model:                  model,
 		MaxIterations:          s.MaxReflectionIterations,
-		GenerationSystemPrompt: campaignBriefGenerationSystem,
-		ReflectionSystemPrompt: campaignBriefReflectionSystem,
+		GenerationSystemPrompt: briefGenerationSystem,
+		ReflectionSystemPrompt: briefReflectionSystem,
 		GenerationPrompt:       genPrompt,
 		BuildReflectionUser: func(draft string) string {
-			return buildCampaignBriefReflectionUser(refSnap, draft)
+			return buildReflectionUser(refSnap, draft)
 		},
-		BuildRevisionPrompt: buildCampaignBriefRevisionPrompt,
-		OnIteration: func(ctx context.Context, current, total int) {
-			nn := gen.NotifierFromContext(ctx)
-			nn.Notify("campaign_brief_refinement", gen.ActivityReflecting,
-				fmt.Sprintf("Refining (%d/%d)", current, total))
-		},
+		BuildRevisionPrompt: buildRevisionPrompt,
+		OnIteration:         flowutil.NotifyRefining("campaign_brief_refinement"),
 	})
 	if err != nil {
 		return err
@@ -105,19 +103,19 @@ func (s CreateCampaignBriefStep) Run(ctx context.Context, state *gen.State) erro
 		PostingCadence: strings.TrimSpace(payload.PostingCadence),
 	})
 
-	EmitPlanningProgress(ctx, state)
+	step.EmitPlanningProgress(ctx, state)
 
-	notify, err := llm.Chat(ctx, model, campaignBriefNotifySystem, buildCampaignBriefNotifyPrompt(payload))
+	notify, err := llm.Chat(ctx, model, briefNotifySystem, buildNotifyPrompt(payload))
 	if err != nil {
-		notify = fallbackCampaignBriefMessage(payload)
+		notify = fallbackMessage(payload)
 	} else {
 		notify = strings.TrimSpace(notify)
 		if notify == "" {
-			notify = fallbackCampaignBriefMessage(payload)
+			notify = fallbackMessage(payload)
 		}
 	}
 
-	state.Output = notify + "\n\n" + formatCampaignBriefForUser(payload)
+	state.Output = notify + "\n\n" + formatForUser(payload)
 	detail := campaignID
 	if detail == "" {
 		detail = state.SecureMetadata().GetString("thread_id")
@@ -126,7 +124,7 @@ func (s CreateCampaignBriefStep) Run(ctx context.Context, state *gen.State) erro
 	return nil
 }
 
-func buildCampaignBriefUserPrompt(locationSummary string) string {
+func buildUserPrompt(locationSummary string) string {
 	return fmt.Sprintf(`Based on this restaurant marketing / location profile, produce a concise Instagram campaign strategy brief.
 
 Location profile:
@@ -145,7 +143,7 @@ Return a single JSON object with exactly these keys (use double quotes, no trail
 Do not include post-level schedules or specific dates. Do not repeat the full profile text.`, locationSummary)
 }
 
-func buildCampaignBriefReflectionSnapshot(locationSummary string) string {
+func buildReflectionSnapshot(locationSummary string) string {
 	s := locationSummary
 	if len(s) > 400 {
 		s = s[:400] + "…"
@@ -153,7 +151,7 @@ func buildCampaignBriefReflectionSnapshot(locationSummary string) string {
 	return "Location profile excerpt (for traceability):\n" + s
 }
 
-func buildCampaignBriefReflectionUser(snapshot, draft string) string {
+func buildReflectionUser(snapshot, draft string) string {
 	return snapshot + `
 
 Generated JSON brief to review:
@@ -182,7 +180,7 @@ Criteria:
 6. Values are non-empty strings after trimming`
 }
 
-func buildCampaignBriefRevisionPrompt(originalGenerationPrompt, previousDraft, feedback string) string {
+func buildRevisionPrompt(originalGenerationPrompt, previousDraft, feedback string) string {
 	return fmt.Sprintf(`You are a senior restaurant social media strategist. Revise the JSON campaign brief below based on reviewer feedback.
 
 %s
@@ -221,17 +219,17 @@ func parseBriefJSON(raw string) (llmBriefPayload, error) {
 	return payload, nil
 }
 
-func buildCampaignBriefNotifyPrompt(p llmBriefPayload) string {
+func buildNotifyPrompt(p llmBriefPayload) string {
 	return fmt.Sprintf(`A campaign brief was just prepared (in this session) with theme: %q, tone: %q.
 
 Write 2–3 short sentences to the user confirming the brief is ready. Mention theme and tone briefly. Do not paste the full JSON or all fields verbatim.`, p.CampaignTheme, p.Tone)
 }
 
-func fallbackCampaignBriefMessage(p llmBriefPayload) string {
+func fallbackMessage(p llmBriefPayload) string {
 	return fmt.Sprintf("Your campaign brief is ready. Theme: %s", p.CampaignTheme)
 }
 
-func formatCampaignBriefForUser(p llmBriefPayload) string {
+func formatForUser(p llmBriefPayload) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "**Theme:** %s\n\n", p.CampaignTheme)
 	fmt.Fprintf(&b, "**Tone:** %s\n\n", p.Tone)

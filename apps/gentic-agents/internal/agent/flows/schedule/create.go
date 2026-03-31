@@ -1,4 +1,4 @@
-package step
+package schedule
 
 import (
 	"context"
@@ -10,11 +10,10 @@ import (
 	"time"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowutil"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
-
-	
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
-	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
 )
 
 const (
@@ -50,14 +49,14 @@ type candidateWeek struct {
 	Slots      []candidateSlot
 }
 
-// CreatePostScheduleStep selects posting dates from a candidate calendar (with reflection) and stores the result in metadata only.
-type CreatePostScheduleStep struct {
+// CreateStep selects posting dates from a candidate calendar (with reflection) and stores the result in metadata only.
+type CreateStep struct {
 	Model                   string
 	MaxReflectionIterations int
 }
 
-// Run implements gentic.Step.
-func (s CreatePostScheduleStep) Run(ctx context.Context, state *gen.State) error {
+// Run implements gen.Step.
+func (s CreateStep) Run(ctx context.Context, state *gen.State) error {
 	if flowstate.HasValidPostSchedule(state) {
 		return nil
 	}
@@ -103,11 +102,12 @@ func (s CreatePostScheduleStep) Run(ctx context.Context, state *gen.State) error
 	n := gen.NotifierFromContext(ctx)
 	n.Notify("create_post_schedule", gen.ActivityRunning, "Create Instagram post schedule")
 
-	llm := openai.Provider{}
-	model := s.Model
-	if model == "" {
-		model = openai.DefaultModel
+	cfg := flowutil.ReflectConfig{
+		Model:                   s.Model,
+		MaxReflectionIterations: s.MaxReflectionIterations,
 	}
+	llm := cfg.DefaultLLM()
+	model := cfg.DefaultModel()
 
 	refSnap := buildScheduleReflectionSnapshot(candidateWeeks, holidays)
 	genPrompt := buildScheduleGenerationPrompt(profile.Summary, holidays, candidateWeeks)
@@ -126,11 +126,7 @@ func (s CreatePostScheduleStep) Run(ctx context.Context, state *gen.State) error
 			return buildScheduleReflectionUser(refSnap, draft)
 		},
 		BuildRevisionPrompt: buildScheduleRevisionPrompt,
-		OnIteration: func(ctx context.Context, current, total int) {
-			nn := gen.NotifierFromContext(ctx)
-			nn.Notify("post_schedule_refinement", gen.ActivityReflecting,
-				fmt.Sprintf("Refining (%d/%d)", current, total))
-		},
+		OnIteration:         flowutil.NotifyRefining("post_schedule_refinement"),
 	})
 	if err != nil {
 		return err
@@ -148,7 +144,7 @@ func (s CreatePostScheduleStep) Run(ctx context.Context, state *gen.State) error
 
 	state.SetMetadata(flowstate.KeyPostSchedule, final)
 
-	EmitPlanningProgress(ctx, state)
+	step.EmitPlanningProgress(ctx, state)
 
 	notify, err := llm.Chat(ctx, model, scheduleNotifySystem, buildPostScheduleNotifyPrompt(final))
 	if err != nil {
@@ -412,7 +408,7 @@ Write the improved JSON object now, with the same structure: {"weeks":[{"week_nu
 	)
 }
 
-func parseScheduleJSON(raw string) (*PostSchedule, error) {
+func parseScheduleJSON(raw string) (*flowstate.PostSchedule, error) {
 	s := strings.TrimSpace(raw)
 	s = strings.TrimPrefix(s, "```json")
 	s = strings.TrimPrefix(s, "```JSON")
@@ -422,7 +418,7 @@ func parseScheduleJSON(raw string) (*PostSchedule, error) {
 		s = strings.TrimSpace(s[:i])
 	}
 
-	var payload PostSchedule
+	var payload flowstate.PostSchedule
 	if err := json.Unmarshal([]byte(s), &payload); err != nil {
 		return nil, err
 	}
@@ -432,7 +428,7 @@ func parseScheduleJSON(raw string) (*PostSchedule, error) {
 	return &payload, nil
 }
 
-func injectPinnedSlots(schedule *PostSchedule, candidateWeeks []candidateWeek) *PostSchedule {
+func injectPinnedSlots(schedule *flowstate.PostSchedule, candidateWeeks []candidateWeek) *flowstate.PostSchedule {
 	pinnedByWeek := make(map[int][]string)
 	for _, w := range candidateWeeks {
 		var pinned []string
@@ -444,7 +440,7 @@ func injectPinnedSlots(schedule *PostSchedule, candidateWeeks []candidateWeek) *
 		pinnedByWeek[w.WeekNumber] = pinned
 	}
 
-	var weeks []WeekSelection
+	var weeks []flowstate.WeekSelection
 	for _, ws := range schedule.Weeks {
 		pinned := pinnedByWeek[ws.WeekNumber]
 		merged := append(append([]string{}, pinned...), ws.SelectedDates...)
@@ -457,15 +453,15 @@ func injectPinnedSlots(schedule *PostSchedule, candidateWeeks []candidateWeek) *
 			seen[d] = struct{}{}
 			dedup = append(dedup, d)
 		}
-		weeks = append(weeks, WeekSelection{
+		weeks = append(weeks, flowstate.WeekSelection{
 			WeekNumber:    ws.WeekNumber,
 			SelectedDates: dedup,
 		})
 	}
-	return &PostSchedule{Weeks: weeks}
+	return &flowstate.PostSchedule{Weeks: weeks}
 }
 
-func validateAndClamp(schedule *PostSchedule, candidateWeeks []candidateWeek) *PostSchedule {
+func validateAndClamp(schedule *flowstate.PostSchedule, candidateWeeks []candidateWeek) *flowstate.PostSchedule {
 	validDatesByWeek := make(map[int]map[string]struct{})
 	pinnedByWeek := make(map[int]map[string]struct{})
 	isPartialByWeek := make(map[int]bool)
@@ -483,7 +479,7 @@ func validateAndClamp(schedule *PostSchedule, candidateWeeks []candidateWeek) *P
 		isPartialByWeek[w.WeekNumber] = w.IsPartial
 	}
 
-	var cleaned []WeekSelection
+	var cleaned []flowstate.WeekSelection
 	for _, ws := range schedule.Weeks {
 		valid := validDatesByWeek[ws.WeekNumber]
 		pinned := pinnedByWeek[ws.WeekNumber]
@@ -509,15 +505,15 @@ func validateAndClamp(schedule *PostSchedule, candidateWeeks []candidateWeek) *P
 		if !isPartialByWeek[ws.WeekNumber] && len(clamped) < minPostsFullWeek {
 			log.Printf("post schedule: week %d only %d dates (min %d for full week)", ws.WeekNumber, len(clamped), minPostsFullWeek)
 		}
-		cleaned = append(cleaned, WeekSelection{
+		cleaned = append(cleaned, flowstate.WeekSelection{
 			WeekNumber:    ws.WeekNumber,
 			SelectedDates: clamped,
 		})
 	}
-	return &PostSchedule{Weeks: cleaned}
+	return &flowstate.PostSchedule{Weeks: cleaned}
 }
 
-func postScheduleStats(ps *PostSchedule) (posts, weeks int) {
+func postScheduleStats(ps *flowstate.PostSchedule) (posts, weeks int) {
 	if ps == nil {
 		return 0, 0
 	}
@@ -527,7 +523,7 @@ func postScheduleStats(ps *PostSchedule) (posts, weeks int) {
 	return posts, len(ps.Weeks)
 }
 
-func buildPostScheduleNotifyPrompt(ps *PostSchedule) string {
+func buildPostScheduleNotifyPrompt(ps *flowstate.PostSchedule) string {
 	posts, weeks := postScheduleStats(ps)
 	return fmt.Sprintf(`An Instagram post schedule was just prepared with %d post date(s) across %d week(s).
 
@@ -535,12 +531,12 @@ Write 2–3 short sentences confirming the schedule is ready. Do not list every 
 		posts, weeks)
 }
 
-func fallbackPostScheduleMessage(ps *PostSchedule) string {
+func fallbackPostScheduleMessage(ps *flowstate.PostSchedule) string {
 	posts, weeks := postScheduleStats(ps)
 	return fmt.Sprintf("Your Instagram post schedule is ready with %d post date(s) across %d week(s). Details are below.", posts, weeks)
 }
 
-func formatPostScheduleForUser(ps *PostSchedule) string {
+func formatPostScheduleForUser(ps *flowstate.PostSchedule) string {
 	var b strings.Builder
 	b.WriteString("**Post schedule**\n\n")
 	for _, w := range ps.Weeks {

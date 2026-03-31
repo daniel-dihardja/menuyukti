@@ -1,4 +1,4 @@
-package step
+package promotion
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
@@ -20,19 +21,19 @@ const (
 	assignPostFormatReflectionSystem = "You are a quality reviewer for Instagram promotion post format plans."
 )
 
-// AssignPostFormatsStep assigns single vs carousel and item groupings per promotion date.
-type AssignPostFormatsStep struct {
+// FormatsStep assigns single vs carousel and item groupings per promotion date.
+type FormatsStep struct {
 	LLM                     gen.LLM // nil → openai.Provider{}
 	Model                   string
 	MaxReflectionIterations int
 }
 
 type postFormatPlanWire struct {
-	Assignments []PostFormatAssignment `json:"assignments"`
+	Assignments []flowstate.PostFormatAssignment `json:"assignments"`
 }
 
-// Run implements gentic.Step.
-func (s AssignPostFormatsStep) Run(ctx context.Context, state *gen.State) error {
+// Run implements gen.Step.
+func (s FormatsStep) Run(ctx context.Context, state *gen.State) error {
 	if flowstate.HasPostFormatPlan(state) {
 		return nil
 	}
@@ -106,7 +107,7 @@ func (s AssignPostFormatsStep) Run(ctx context.Context, state *gen.State) error 
 			nn.Notify("assign_post_formats_refinement", gen.ActivityReflecting,
 				fmt.Sprintf("Refining formats (%d/%d)", current, total))
 		},
-	}, func(draft string) (*PostFormatPlan, error) {
+	}, func(draft string) (*flowstate.PostFormatPlan, error) {
 		return parseAndValidatePostFormatPlan(draft, ctxParams)
 	})
 	if err != nil {
@@ -124,7 +125,7 @@ func (s AssignPostFormatsStep) Run(ctx context.Context, state *gen.State) error 
 
 	state.SetMetadata(flowstate.KeyPostFormatPlan, plan)
 
-	EmitPlanningProgress(ctx, state)
+	step.EmitPlanningProgress(ctx, state)
 
 	var singleN, carouselN int
 	for _, a := range plan.Assignments {
@@ -145,7 +146,7 @@ type assignFormatContext struct {
 	holidayByDate  map[string]struct{}
 }
 
-func distinctSortedDates(ps *PostSchedule) []string {
+func distinctSortedDates(ps *flowstate.PostSchedule) []string {
 	seen := map[string]struct{}{}
 	for _, w := range ps.Weeks {
 		for _, d := range w.SelectedDates {
@@ -162,7 +163,7 @@ func distinctSortedDates(ps *PostSchedule) []string {
 	return dates
 }
 
-func dateToWeekNumber(ps *PostSchedule) map[string]int {
+func dateToWeekNumber(ps *flowstate.PostSchedule) map[string]int {
 	m := map[string]int{}
 	for _, w := range ps.Weeks {
 		for _, d := range w.SelectedDates {
@@ -194,7 +195,7 @@ func holidayDatesByDate(nationalHolidaysJSON string) map[string]struct{} {
 	return out
 }
 
-func formatPromotionSlotsForPrompt(ps *PostSchedule, holidayByDate map[string]struct{}) string {
+func formatPromotionSlotsForPrompt(ps *flowstate.PostSchedule, holidayByDate map[string]struct{}) string {
 	var b strings.Builder
 	for _, w := range ps.Weeks {
 		if len(w.SelectedDates) == 0 {
@@ -314,13 +315,13 @@ Write the improved JSON object now.`,
 	)
 }
 
-func parseAndValidatePostFormatPlan(raw string, ctx assignFormatContext) (*PostFormatPlan, error) {
+func parseAndValidatePostFormatPlan(raw string, ctx assignFormatContext) (*flowstate.PostFormatPlan, error) {
 	s := stripJSONFences(raw)
 	var w postFormatPlanWire
 	if err := json.Unmarshal([]byte(s), &w); err != nil {
 		return nil, err
 	}
-	plan := &PostFormatPlan{Assignments: w.Assignments}
+	plan := &flowstate.PostFormatPlan{Assignments: w.Assignments}
 	plan.Assignments = sanitizeAssignments(plan.Assignments, ctx.promotionDates)
 	repairAssignmentCoverage(plan, ctx)
 	maybeMergeSinglesIntoCarousels(plan, ctx)
@@ -342,7 +343,7 @@ func normalizePostFormat(s string) string {
 
 // repairAssignmentCoverage fixes common LLM mistakes: duplicate items across dates, missing dishes,
 // invalid star/holiday carousels, so parseAndValidatePostFormatPlan can succeed without another LLM round.
-func repairAssignmentCoverage(plan *PostFormatPlan, ctx assignFormatContext) {
+func repairAssignmentCoverage(plan *flowstate.PostFormatPlan, ctx assignFormatContext) {
 	if plan == nil {
 		return
 	}
@@ -358,13 +359,13 @@ func repairAssignmentCoverage(plan *PostFormatPlan, ctx assignFormatContext) {
 			starNames[n] = struct{}{}
 		}
 	}
-	assignments := append([]PostFormatAssignment(nil), plan.Assignments...)
+	assignments := append([]flowstate.PostFormatAssignment(nil), plan.Assignments...)
 	sort.Slice(assignments, func(i, j int) bool {
 		return assignments[i].ScheduledDate < assignments[j].ScheduledDate
 	})
 
 	seen := map[string]struct{}{}
-	var out []PostFormatAssignment
+	var out []flowstate.PostFormatAssignment
 	var spill []string
 
 	for _, a := range assignments {
@@ -449,28 +450,28 @@ func defaultCarouselNarrative() *string {
 }
 
 // reshapeItemsForDate returns one assignment for this date and items that must be placed elsewhere.
-func reshapeItemsForDate(date string, items []string, starNames map[string]struct{}, holiday bool) (PostFormatAssignment, []string) {
+func reshapeItemsForDate(date string, items []string, starNames map[string]struct{}, holiday bool) (flowstate.PostFormatAssignment, []string) {
 	var spill []string
 	if len(items) == 0 {
-		return PostFormatAssignment{}, nil
+		return flowstate.PostFormatAssignment{}, nil
 	}
 	if holiday {
 		if len(items) == 1 {
-			return PostFormatAssignment{
+			return flowstate.PostFormatAssignment{
 				ScheduledDate: date,
 				Format:        "single",
 				Items:         items,
 			}, nil
 		}
 		spill = append(spill, items[1:]...)
-		return PostFormatAssignment{
+		return flowstate.PostFormatAssignment{
 			ScheduledDate: date,
 			Format:        "single",
 			Items:         []string{items[0]},
 		}, spill
 	}
 	if len(items) == 1 {
-		return PostFormatAssignment{
+		return flowstate.PostFormatAssignment{
 			ScheduledDate: date,
 			Format:        "single",
 			Items:         items,
@@ -485,7 +486,7 @@ func reshapeItemsForDate(date string, items []string, starNames map[string]struc
 	}
 	if hasStar {
 		spill = append(spill, items[1:]...)
-		return PostFormatAssignment{
+		return flowstate.PostFormatAssignment{
 			ScheduledDate: date,
 			Format:        "single",
 			Items:         []string{items[0]},
@@ -495,7 +496,7 @@ func reshapeItemsForDate(date string, items []string, starNames map[string]struc
 		spill = append(spill, items[4:]...)
 		items = items[:4]
 	}
-	return PostFormatAssignment{
+	return flowstate.PostFormatAssignment{
 		ScheduledDate:     date,
 		Format:            "carousel",
 		Items:             items,
@@ -523,17 +524,17 @@ func packSpillChunk(rest []string, starNames map[string]struct{}) (items []strin
 	return []string{rest[0]}, 1
 }
 
-func placeSpillOnFreeDates(spill []string, freeDates []string, starNames map[string]struct{}, holidayByDate map[string]struct{}) []PostFormatAssignment {
+func placeSpillOnFreeDates(spill []string, freeDates []string, starNames map[string]struct{}, holidayByDate map[string]struct{}) []flowstate.PostFormatAssignment {
 	spill = dedupeStringsPreserveOrder(spill)
 	if len(spill) == 0 || len(freeDates) == 0 {
 		return nil
 	}
-	var out []PostFormatAssignment
+	var out []flowstate.PostFormatAssignment
 	si := 0
 	for fi := 0; fi < len(freeDates) && si < len(spill); fi++ {
 		d := freeDates[fi]
 		if _, hol := holidayByDate[d]; hol {
-			out = append(out, PostFormatAssignment{
+			out = append(out, flowstate.PostFormatAssignment{
 				ScheduledDate: d,
 				Format:        "single",
 				Items:         []string{spill[si]},
@@ -543,13 +544,13 @@ func placeSpillOnFreeDates(spill []string, freeDates []string, starNames map[str
 		}
 		items, consumed := packSpillChunk(spill[si:], starNames)
 		if len(items) == 1 {
-			out = append(out, PostFormatAssignment{
+			out = append(out, flowstate.PostFormatAssignment{
 				ScheduledDate: d,
 				Format:        "single",
 				Items:         items,
 			})
 		} else {
-			out = append(out, PostFormatAssignment{
+			out = append(out, flowstate.PostFormatAssignment{
 				ScheduledDate:     d,
 				Format:            "carousel",
 				Items:             items,
@@ -563,7 +564,7 @@ func placeSpillOnFreeDates(spill []string, freeDates []string, starNames map[str
 
 // maybeMergeSinglesIntoCarousels pairs two non-star singles on non-holiday dates in the same week into one
 // carousel when the model returned only singles but carousel posts are valid — keeps hard constraints satisfied.
-func maybeMergeSinglesIntoCarousels(plan *PostFormatPlan, ctx assignFormatContext) {
+func maybeMergeSinglesIntoCarousels(plan *flowstate.PostFormatPlan, ctx assignFormatContext) {
 	if plan == nil || len(plan.Assignments) < 2 {
 		return
 	}
@@ -573,11 +574,11 @@ func maybeMergeSinglesIntoCarousels(plan *PostFormatPlan, ctx assignFormatContex
 		}
 	}
 	starNames := starMenuNamesFromMatrix(ctx.selectedItems)
-	assignments := append([]PostFormatAssignment(nil), plan.Assignments...)
+	assignments := append([]flowstate.PostFormatAssignment(nil), plan.Assignments...)
 	sort.Slice(assignments, func(i, j int) bool {
 		return assignments[i].ScheduledDate < assignments[j].ScheduledDate
 	})
-	byWeek := map[int][]PostFormatAssignment{}
+	byWeek := map[int][]flowstate.PostFormatAssignment{}
 	for _, a := range assignments {
 		if normalizePostFormat(a.Format) != "single" || len(a.Items) != 1 {
 			continue
@@ -592,7 +593,7 @@ func maybeMergeSinglesIntoCarousels(plan *PostFormatPlan, ctx assignFormatContex
 		wk := ctx.dateToWeek[a.ScheduledDate]
 		byWeek[wk] = append(byWeek[wk], a)
 	}
-	merged := map[string]PostFormatAssignment{}
+	merged := map[string]flowstate.PostFormatAssignment{}
 	consumed := map[string]struct{}{}
 	for _, list := range byWeek {
 		if len(list) < 2 {
@@ -608,7 +609,7 @@ func maybeMergeSinglesIntoCarousels(plan *PostFormatPlan, ctx assignFormatContex
 			continue
 		}
 		narr := "Two highlights in one scroll."
-		merged[a0.ScheduledDate] = PostFormatAssignment{
+		merged[a0.ScheduledDate] = flowstate.PostFormatAssignment{
 			ScheduledDate:     a0.ScheduledDate,
 			Format:            "carousel",
 			Items:             []string{n0, n1},
@@ -619,7 +620,7 @@ func maybeMergeSinglesIntoCarousels(plan *PostFormatPlan, ctx assignFormatContex
 	if len(merged) == 0 {
 		return
 	}
-	var out []PostFormatAssignment
+	var out []flowstate.PostFormatAssignment
 	for _, a := range assignments {
 		if _, ok := consumed[a.ScheduledDate]; ok {
 			continue
@@ -650,13 +651,13 @@ func starMenuNamesFromMatrix(items []graphql.MenuEngineeringItem) map[string]str
 	return out
 }
 
-func sanitizeAssignments(assignments []PostFormatAssignment, validDates []string) []PostFormatAssignment {
+func sanitizeAssignments(assignments []flowstate.PostFormatAssignment, validDates []string) []flowstate.PostFormatAssignment {
 	slotSet := map[string]struct{}{}
 	for _, d := range validDates {
 		slotSet[d] = struct{}{}
 	}
 	seen := map[string]struct{}{}
-	var kept []PostFormatAssignment
+	var kept []flowstate.PostFormatAssignment
 	for _, a := range assignments {
 		d := strings.TrimSpace(a.ScheduledDate)
 		if _, ok := slotSet[d]; !ok {
@@ -676,7 +677,7 @@ func sanitizeAssignments(assignments []PostFormatAssignment, validDates []string
 	return kept
 }
 
-func checkHardConstraints(plan *PostFormatPlan, ctx assignFormatContext) []string {
+func checkHardConstraints(plan *flowstate.PostFormatPlan, ctx assignFormatContext) []string {
 	var failures []string
 	slotSet := map[string]struct{}{}
 	for _, d := range ctx.promotionDates {

@@ -1,13 +1,15 @@
 package gentic
 
 import (
-	"context"
-
-	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flows/campaign"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flows/locationprofile"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flows/promotion"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flows/save"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flows/schedule"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/eval"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/intent"
-	"github.com/daniel-dihardja/gentic/pkg/gentic/react"
 	"github.com/daniel-dihardja/gentic/pkg/steps"
 )
 
@@ -16,58 +18,51 @@ import (
 func BuildAgent(model, graphqlEndpoint string, maxReflectionIterations int) gen.Agent {
 	chatFlow := gen.NewFlow(steps.ChatStep{
 		Model:        model,
-		SystemPrompt: step.DefaultChatSystemPrompt,
+		SystemPrompt: "You are a helpful assistant.",
 	})
 	campaignFlow := gen.NewFlow(
 		eval.WrapWithEval("check_location_profile",
-			step.CheckLocationProfileStep{
+			locationprofile.CheckStep{
 				GraphQLEndpoint: graphqlEndpoint,
 			}),
-		gen.If(step.NeedsLocationProfileCreation, eval.WrapWithEval("create_location_profile",
-			step.CreateLocationProfileStep{
+		gen.If(flowstate.NeedsLocationProfileCreation, eval.WrapWithEval("create_location_profile",
+			locationprofile.CreateStep{
 				GraphQLEndpoint:         graphqlEndpoint,
 				Model:                   model,
 				MaxReflectionIterations: maxReflectionIterations,
 			})),
 		eval.WrapWithEval("create_campaign_brief",
-			step.CreateCampaignBriefStep{
+			campaign.CreateBriefStep{
 				Model:                   model,
 				MaxReflectionIterations: maxReflectionIterations,
 			}),
 		gen.Parallel(
 			eval.WrapWithEval("create_post_schedule",
-				step.CreatePostScheduleStep{
+				schedule.CreateStep{
 					Model:                   model,
 					MaxReflectionIterations: maxReflectionIterations,
 				}),
 			eval.WrapWithEval("fetch_promotion_items",
-				step.FetchPromotionItemsStep{
+				promotion.FetchStep{
 					GraphQLEndpoint: graphqlEndpoint,
 				}),
 		),
 		eval.WrapWithEval("select_promotion_items",
-			step.SelectPromotionItemsStep{
+			promotion.SelectStep{
 				Model:                   model,
 				MaxReflectionIterations: maxReflectionIterations,
 			}),
 		eval.WrapWithEval("assign_post_formats",
-			step.AssignPostFormatsStep{
+			promotion.FormatsStep{
 				Model:                   model,
 				MaxReflectionIterations: maxReflectionIterations,
 			}),
 		eval.WrapWithEval("save_campaign",
-			step.SaveCampaignStep{
+			save.Step{
 				GraphQLEndpoint: graphqlEndpoint,
 			}),
 	)
-	locationProfileChatFlow := react.NewReactActor(
-		react.WithModel(model),
-		react.WithSystemPrompt(step.LocationProfileChatSystemPrompt),
-		react.WithTools(
-			step.FetchLocationProfileTool(graphqlEndpoint),
-			step.UpdateLocationProfileTool(graphqlEndpoint),
-		),
-	).Resolve(context.Background(), nil)
+	locationProfileChatFlow := locationprofile.NewChatReactActor(model, graphqlEndpoint)
 	resolver := intent.NewRouter("chat", "create_campaign", "location_profile_chat").
 		On("create_campaign", campaignFlow).
 		On("location_profile_chat", locationProfileChatFlow).

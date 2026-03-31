@@ -1,21 +1,21 @@
-package step
+package promotion
 
 import (
 	"context"
 	"fmt"
 
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
+)
 
-	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate")
-
-// FetchPromotionItemsStep loads menu engineering matrix rows (star / plow_horse / puzzle) for promotion planning.
-type FetchPromotionItemsStep struct {
+// FetchStep loads menu engineering matrix rows (star / plow_horse / puzzle) for promotion planning.
+type FetchStep struct {
 	GraphQLEndpoint string
 }
 
-// Run implements gentic.Step.
-func (s FetchPromotionItemsStep) Run(ctx context.Context, state *gen.State) error {
+// Run implements gen.Step.
+func (s FetchStep) Run(ctx context.Context, state *gen.State) error {
 	if flowstate.HasFetchedPromotionItems(state) {
 		return nil
 	}

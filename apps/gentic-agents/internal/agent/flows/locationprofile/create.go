@@ -1,4 +1,4 @@
-package step
+package locationprofile
 
 import (
 	"context"
@@ -7,52 +7,48 @@ import (
 	"time"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowutil"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
-	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
 )
 
 const (
 	generationSystemPrompt     = "You are a senior restaurant marketing strategist. Follow the instructions precisely."
-	reflectionSystemPrefix       = "You are a quality reviewer for restaurant Instagram marketing briefs."
-	profileCreatedNotifySystem   = "You are a helpful assistant for restaurant and menu planning. Write concise, clear, friendly messages for users."
+	reflectionSystemPrefix     = "You are a quality reviewer for restaurant Instagram marketing briefs."
+	profileCreatedNotifySystem = "You are a helpful assistant for restaurant and menu planning. Write concise, clear, friendly messages for users."
 )
 
-// LocationDataLoader loads venue + operating data for [CreateLocationProfileStep]. When nil, [graphql.FetchLocationData] is used.
+// LocationDataLoader loads venue + operating data for CreateStep. When nil, graphql.FetchLocationData is used.
 type LocationDataLoader interface {
 	FetchLocationData(ctx context.Context, endpoint, locationID, analyticsID string) (*graphql.Location, *graphql.OperatingProfile, error)
 }
 
-// ProfileSaver persists a location profile summary. When nil, [graphql.SaveLocationProfile] is used.
+// ProfileSaver persists a location profile summary. When nil, graphql.SaveLocationProfile is used.
 type ProfileSaver interface {
 	SaveLocationProfile(ctx context.Context, endpoint, locationID, analyticsID, summary string) error
 }
 
-// CreateLocationProfileStep generates and persists a location profile when none exists (after CheckLocationProfileStep).
-type CreateLocationProfileStep struct {
+// CreateStep generates and persists a location profile when none exists (after CheckStep).
+type CreateStep struct {
 	GraphQLEndpoint         string
 	Model                   string
 	MaxReflectionIterations int
 	DataLoader              LocationDataLoader
 	Saver                   ProfileSaver
 	LLM                     gen.LLM
-	// ReloadProfile loads the persisted row after save. When nil, [graphql.FetchLocationProfile] is used.
-	ReloadProfile ProfileLoader
+	ReloadProfile           ProfileLoader
 }
 
-func (s CreateLocationProfileStep) reloadProfile(ctx context.Context, endpoint, locationID, analyticsID string) (*graphql.LocationProfile, error) {
+func (s CreateStep) reloadProfile(ctx context.Context, endpoint, locationID, analyticsID string) (*graphql.LocationProfile, error) {
 	if s.ReloadProfile != nil {
 		return s.ReloadProfile.Load(ctx, endpoint, locationID, analyticsID)
 	}
 	return graphql.FetchLocationProfile(ctx, endpoint, locationID, analyticsID)
 }
 
-// Run implements gentic.Step.
-// Prefer wiring this step behind [gen.If]([NeedsLocationProfileCreation], ...) after [CheckLocationProfileStep].
-// If a valid profile is already in metadata, we no-op (defense in depth if the flow and predicate
-// ever drift).
-func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) (err error) {
+// Run implements gen.Step.
+func (s CreateStep) Run(ctx context.Context, state *gen.State) (err error) {
 	if flowstate.HasValidPersistedLocationProfile(state) {
 		return nil
 	}
@@ -84,14 +80,13 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) (e
 		return nil
 	}
 
-	llm := s.LLM
-	if llm == nil {
-		llm = openai.Provider{}
+	cfg := flowutil.ReflectConfig{
+		LLM:                     s.LLM,
+		Model:                   s.Model,
+		MaxReflectionIterations: s.MaxReflectionIterations,
 	}
-	model := s.Model
-	if model == "" {
-		model = openai.DefaultModel
-	}
+	llm := cfg.DefaultLLM()
+	model := cfg.DefaultModel()
 
 	saveProfile := func(ctx context.Context, endpoint, lid, aid, summary string) error {
 		if s.Saver != nil {
@@ -119,11 +114,7 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) (e
 				return buildReflectionUser(refSnap, draft)
 			},
 			BuildRevisionPrompt: buildRestaurantLocationRevisionPrompt,
-			OnIteration: func(ctx context.Context, current, total int) {
-				nn := gen.NotifierFromContext(ctx)
-				nn.Notify("profile_refinement", gen.ActivityReflecting,
-					fmt.Sprintf("Refining (%d/%d)", current, total))
-			},
+			OnIteration:         flowutil.NotifyRefining("profile_refinement"),
 		})
 		if err != nil {
 			return err
@@ -142,7 +133,7 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) (e
 		return err
 	}
 
-	// So downstream steps (e.g. campaign brief) see the same metadata as after CheckLocationProfileStep.
+	// So downstream steps (e.g. campaign brief) see the same metadata as after CheckStep.
 	profileRow, err := s.reloadProfile(ctx, s.GraphQLEndpoint, locationID, analyticsID)
 	if err != nil {
 		return err
@@ -164,13 +155,11 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) (e
 	}
 
 	state.Output = notify + "\n\n" + summary
-	// Separate step id so the feed order stays: check → create → refine → saved (Map insertion order).
 	n.Notify("location_profile_saved", gen.ActivityDone, "Location profile saved", gen.WithDetail(loc.Name))
 	EmitPlanningProgress(ctx, state)
 	return nil
 }
 
-// buildRestaurantLocationRevisionPrompt is the domain-specific refinement prompt for location marketing summaries.
 func buildRestaurantLocationRevisionPrompt(originalGenerationPrompt, previousDraft, feedback string) string {
 	return fmt.Sprintf(`You are a senior restaurant marketing strategist. Revise the location summary below based on specific reviewer feedback.
 
@@ -224,8 +213,6 @@ func fallbackProfileCreatedMessage(loc *graphql.Location) string {
 	return fmt.Sprintf("Your new location marketing profile for %s has been created and saved. The full profile is below.", name)
 }
 
-// buildInferenceOnlyLocationSummaryPrompt builds the user prompt when there is no operating profile:
-// name, address, and city/country only (inference defaults; matches legacy Python _LOCATION_SUMMARY_LITE_PROMPT).
 func buildInferenceOnlyLocationSummaryPrompt(loc *graphql.Location) string {
 	name := loc.Name
 	if name == "" {
@@ -254,7 +241,6 @@ You have no sales or operating data for this restaurant. Using only the venue na
 	return strings.TrimSpace(intro + "\n\n" + locationSummaryInferenceSections + "\n\n" + header)
 }
 
-// locationSummaryInferenceSections is the four-section structure for inference-only summaries (no sales data).
 const locationSummaryInferenceSections = `
 
 Structure your response as exactly four labelled paragraphs:
@@ -271,7 +257,6 @@ When does a restaurant of this type in this city likely peak? Suggest a probable
 **Content & Tone Signals**
 What visual aesthetic and brand voice is most likely appropriate? Derive direction from the city, probable cuisine type, and price positioning inferred from the name. Call out one or two specific content angles likely to perform well.`
 
-// buildOperatingDataLocationSummaryPrompt builds the user prompt from location + operating profile (matches legacy _LOCATION_SUMMARY_PROMPT).
 func buildOperatingDataLocationSummaryPrompt(loc *graphql.Location, op *graphql.OperatingProfile) string {
 	name := loc.Name
 	if name == "" {
@@ -300,8 +285,6 @@ func buildOperatingDataLocationSummaryPrompt(loc *graphql.Location, op *graphql.
 		avgActiveDaysPerWeek = float64(activeDays) / 4.33
 	}
 
-	menuSummary := "N/A"
-
 	header := fmt.Sprintf("Restaurant name: %s\nLocation: %s, %s", name, city, country)
 	if addr != "" {
 		header += fmt.Sprintf("\nAddress: %s", addr)
@@ -324,7 +307,7 @@ func buildOperatingDataLocationSummaryPrompt(loc *graphql.Location, op *graphql.
 		joinOrNA(op.ActiveMealPeriods),
 		nullableStr(op.OperatingPattern),
 		nullableStr(op.DiningFocus),
-		menuSummary,
+		"N/A",
 		formatMealPeriodLines(op.MealPeriodBreakdown),
 		formatDayOfWeekLines(op.DayOfWeekBreakdown),
 		formatDayTypeLines(op.DayTypeBreakdown),
@@ -504,7 +487,6 @@ func formatDayOfWeekLines(rows []graphql.DayOfWeekBreakdownRow) string {
 		if d.IsPeakDay {
 			peak = ", peak day"
 		}
-		// API does not expose revenueShare per day; show order share for both columns when unavailable.
 		fmt.Fprintf(&b, "  %s: %.0f%% of orders, %.0f%% of revenue%s\n",
 			d.Day, d.Share*100, d.Share*100, peak)
 	}

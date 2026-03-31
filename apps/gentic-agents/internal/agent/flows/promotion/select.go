@@ -1,4 +1,4 @@
-package step
+package promotion
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
@@ -20,8 +21,8 @@ const (
 	selectPromotionReflectionSystem = "You are a quality reviewer for Instagram promotion item selection."
 )
 
-// SelectPromotionItemsStep curates matrix rows into a promotion shortlist using an LLM with reflection.
-type SelectPromotionItemsStep struct {
+// SelectStep curates matrix rows into a promotion shortlist using an LLM with reflection.
+type SelectStep struct {
 	LLM                     gen.LLM // nil → openai.Provider{}
 	Model                   string
 	MaxReflectionIterations int
@@ -31,8 +32,8 @@ type llmSelectedMenuNames struct {
 	SelectedMenuNames []string `json:"selected_menu_names"`
 }
 
-// Run implements gentic.Step.
-func (s SelectPromotionItemsStep) Run(ctx context.Context, state *gen.State) error {
+// Run implements gen.Step.
+func (s SelectStep) Run(ctx context.Context, state *gen.State) error {
 	if flowstate.HasSelectedPromotionItems(state) {
 		return nil
 	}
@@ -48,7 +49,7 @@ func (s SelectPromotionItemsStep) Run(ctx context.Context, state *gen.State) err
 	}
 	if len(raw) == 0 {
 		state.SetMetadata(flowstate.KeySelectedPromotionItems, []graphql.MenuEngineeringItem{})
-		EmitPlanningProgress(ctx, state)
+		step.EmitPlanningProgress(ctx, state)
 		return nil
 	}
 
@@ -127,13 +128,13 @@ func (s SelectPromotionItemsStep) Run(ctx context.Context, state *gen.State) err
 
 	state.SetMetadata(flowstate.KeySelectedPromotionItems, selected)
 
-	EmitPlanningProgress(ctx, state)
+	step.EmitPlanningProgress(ctx, state)
 
 	n.Notify("select_promotion_items", gen.ActivityDone, fmt.Sprintf("%d item(s) selected", len(selected)))
 	return nil
 }
 
-func countDistinctScheduleDates(ps *PostSchedule) int {
+func countDistinctScheduleDates(ps *flowstate.PostSchedule) int {
 	seen := map[string]struct{}{}
 	for _, w := range ps.Weeks {
 		for _, d := range w.SelectedDates {

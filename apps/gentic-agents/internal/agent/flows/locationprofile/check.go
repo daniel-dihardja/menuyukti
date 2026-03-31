@@ -1,4 +1,4 @@
-package step
+package locationprofile
 
 import (
 	"context"
@@ -6,38 +6,38 @@ import (
 
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
-	"github.com/daniel-dihardja/gentic/pkg/gentic"
+	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 )
 
-// ProfileLoader loads a location profile for [CheckLocationProfileStep]. When nil, [graphql.FetchLocationProfile] is used.
+// ProfileLoader loads a location profile. When nil, [graphql.FetchLocationProfile] is used.
 type ProfileLoader interface {
 	Load(ctx context.Context, endpoint, locationID, analyticsID string) (*graphql.LocationProfile, error)
 }
 
-// CheckLocationProfileStep loads the location profile for the request's location and analytics run.
-// It is the source of truth for metadata["_location_profile"]: set when the API returns a profile,
-// deleted when none exists; [NeedsLocationProfileCreation] and [CreateLocationProfileStep] rely on that.
-type CheckLocationProfileStep struct {
+// CheckStep loads the location profile for the request's location and analytics run.
+// It is the source of truth for the location profile metadata: set when the API returns a profile,
+// deleted when none exists; [flowstate.NeedsLocationProfileCreation] and [CreateStep] rely on that.
+type CheckStep struct {
 	GraphQLEndpoint string
 	Loader          ProfileLoader
 }
 
-func (s CheckLocationProfileStep) loadProfile(ctx context.Context, endpoint, locationID, analyticsID string) (*graphql.LocationProfile, error) {
+func (s CheckStep) loadProfile(ctx context.Context, endpoint, locationID, analyticsID string) (*graphql.LocationProfile, error) {
 	if s.Loader != nil {
 		return s.Loader.Load(ctx, endpoint, locationID, analyticsID)
 	}
 	return graphql.FetchLocationProfile(ctx, endpoint, locationID, analyticsID)
 }
 
-// Run implements gentic.Step.
-func (s CheckLocationProfileStep) Run(ctx context.Context, state *gentic.State) error {
+// Run implements gen.Step.
+func (s CheckStep) Run(ctx context.Context, state *gen.State) error {
 	locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "check location profile")
 	if !ok {
 		return nil
 	}
 
-	n := gentic.NotifierFromContext(ctx)
-	n.Notify("check_location_profile", gentic.ActivityRunning, "Checking location profile", gentic.WithTransient(true))
+	n := gen.NotifierFromContext(ctx)
+	n.Notify("check_location_profile", gen.ActivityRunning, "Checking location profile", gen.WithTransient(true))
 
 	profile, err := s.loadProfile(ctx, s.GraphQLEndpoint, locationID, analyticsID)
 	if err != nil {
@@ -46,7 +46,7 @@ func (s CheckLocationProfileStep) Run(ctx context.Context, state *gentic.State) 
 	if profile == nil {
 		state.DeleteMetadata(flowstate.KeyLocationProfile)
 		state.Output = "No location profile found for this location and analytics run."
-		n.Notify("check_location_profile", gentic.ActivityDone, "No saved profile for this run")
+		n.Notify("check_location_profile", gen.ActivityDone, "No saved profile for this run")
 		return nil
 	}
 
@@ -56,7 +56,7 @@ func (s CheckLocationProfileStep) Run(ctx context.Context, state *gentic.State) 
 		string(profile.ID),
 		profile.Summary,
 	)
-	n.Notify("check_location_profile", gentic.ActivityDone, "Location profile loaded", gentic.WithDetail(string(profile.ID)))
+	n.Notify("check_location_profile", gen.ActivityDone, "Location profile loaded", gen.WithDetail(string(profile.ID)))
 	EmitPlanningProgress(ctx, state)
 	return nil
 }

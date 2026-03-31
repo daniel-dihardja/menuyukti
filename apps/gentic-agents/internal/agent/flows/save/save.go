@@ -1,4 +1,4 @@
-package step
+package save
 
 import (
 	"context"
@@ -8,20 +8,20 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
-
-	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate")
+)
 
 const metadataKeySavedCampaignID = "_saved_campaign_id"
 
-// SaveCampaignStep persists campaign + brief + post schedule to GraphQL and emits a planning SSE payload for the UI.
-type SaveCampaignStep struct {
+// Step persists campaign + brief + post schedule to GraphQL and emits a planning SSE payload for the UI.
+type Step struct {
 	GraphQLEndpoint string
 }
 
-// Run implements gentic.Step.
-func (s SaveCampaignStep) Run(ctx context.Context, state *gen.State) error {
+// Run implements gen.Step.
+func (s Step) Run(ctx context.Context, state *gen.State) error {
 	if state == nil {
 		return nil
 	}
@@ -149,15 +149,15 @@ type planningPayloadWire struct {
 	DateEnd            string                 `json:"dateEnd"`
 	NationalHolidays   []nationalHolidayWire  `json:"nationalHolidays,omitempty"`
 	LocationSummary    *string                `json:"locationSummary,omitempty"`
-	CampaignBrief *campaignBriefWire `json:"campaignBrief,omitempty"`
+	CampaignBrief      *campaignBriefWire     `json:"campaignBrief,omitempty"`
 }
 
 type campaignBriefWire struct {
-	CampaignTheme   string          `json:"campaign_theme"`
-	Tone            string          `json:"tone"`
-	TargetAudience  string          `json:"target_audience"`
-	PostingCadence  string          `json:"posting_cadence"`
-	PostSlots       []PostSlotWire `json:"post_slots"`
+	CampaignTheme   string            `json:"campaign_theme"`
+	Tone            string            `json:"tone"`
+	TargetAudience  string            `json:"target_audience"`
+	PostingCadence  string            `json:"posting_cadence"`
+	PostSlots       []PostSlotWire    `json:"post_slots"`
 }
 
 type PostSlotWire struct {
@@ -191,7 +191,7 @@ func parseNationalHolidaysWire(raw string) []nationalHolidayWire {
 	return out
 }
 
-func buildPostSlotsWire(ps *PostSchedule, nationalHolidaysJSON string, plan *PostFormatPlan) []PostSlotWire {
+func buildPostSlotsWire(ps *flowstate.PostSchedule, nationalHolidaysJSON string, plan *flowstate.PostFormatPlan) []PostSlotWire {
 	holidayDates := map[string]struct{}{}
 	raw := strings.TrimSpace(nationalHolidaysJSON)
 	if raw != "" && raw != "null" {
@@ -207,7 +207,7 @@ func buildPostSlotsWire(ps *PostSchedule, nationalHolidaysJSON string, plan *Pos
 		}
 	}
 
-	byDate := map[string]PostFormatAssignment{}
+	byDate := map[string]flowstate.PostFormatAssignment{}
 	if plan != nil {
 		for _, a := range plan.Assignments {
 			byDate[strings.TrimSpace(a.ScheduledDate)] = a
@@ -271,4 +271,63 @@ func buildPostSlotsWire(ps *PostSchedule, nationalHolidaysJSON string, plan *Pos
 		out = append(out, slot)
 	}
 	return out
+}
+
+func normalizePostFormat(s string) string {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "carousel":
+		return "carousel"
+	default:
+		return "single"
+	}
+}
+
+// BuildPlanningPayloadWire constructs the planning payload wire from the current state.
+func BuildPlanningPayloadWire(state *gen.State) (*planningPayloadWire, bool) {
+	meta := state.SecureMetadata()
+	dateStart := strings.TrimSpace(meta.GetString("date_start"))
+	dateEnd := strings.TrimSpace(meta.GetString("date_end"))
+	if dateStart == "" || dateEnd == "" {
+		return nil, false
+	}
+
+	brief, ok := state.GetMetadata(flowstate.KeyCampaignBrief)
+	if !ok {
+		return nil, false
+	}
+	b, ok := brief.(*graphql.CampaignBrief)
+	if !ok || b == nil {
+		return nil, false
+	}
+
+	ps, ok := flowstate.PostScheduleFromMetadata(state)
+	if !ok || ps == nil {
+		return nil, false
+	}
+
+	plan, _ := flowstate.PostFormatPlanFromMetadata(state)
+
+	payload := &planningPayloadWire{
+		DateStart:        dateStart,
+		DateEnd:          dateEnd,
+		NationalHolidays: parseNationalHolidaysWire(meta.GetString("national_holidays")),
+	}
+
+	locProfile, ok := flowstate.LocationProfileFromMetadata(state)
+	if ok && locProfile != nil {
+		summary := strings.TrimSpace(locProfile.Summary)
+		if summary != "" {
+			payload.LocationSummary = &summary
+		}
+	}
+
+	payload.CampaignBrief = &campaignBriefWire{
+		CampaignTheme:  strings.TrimSpace(b.CampaignTheme),
+		Tone:           strings.TrimSpace(b.Tone),
+		TargetAudience: strings.TrimSpace(b.TargetAudience),
+		PostingCadence: strings.TrimSpace(b.PostingCadence),
+		PostSlots:      buildPostSlotsWire(ps, meta.GetString("national_holidays"), plan),
+	}
+
+	return payload, true
 }
