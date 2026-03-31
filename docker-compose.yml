@@ -4,8 +4,12 @@
 # In `.env` next to this file, set:
 #   DATABASE_URL   — Neon Postgres URL (web + GraphQL), e.g. postgresql://user:pass@...neon.tech/neondb?sslmode=require
 #   OPENAI_API_KEY — for gentic-agents
-#   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — Clerk publishable key (web; also used at image build time)
-#   CLERK_SECRET_KEY — Clerk secret key (web)
+#   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — Clerk publishable key (exact name; no quotes unless the value needs them)
+#   CLERK_SECRET_KEY — Clerk secret key
+#
+# The `web` service loads `.env` via `env_file` so Clerk keys are not overwritten by empty ${VAR:-} substitution.
+# After adding or changing Clerk keys, rebuild the web image so `next build` embeds NEXT_PUBLIC_*:
+#   docker compose build --no-cache web && docker compose up -d web
 #
 # Initialize or migrate the GraphQL schema against Neon when needed:
 #   docker compose run --rm graphql uv run python -m graphql.data_sources.database
@@ -52,21 +56,21 @@ services:
 
   web:
     image: johngoyason/menuyukti-web:latest
+    env_file:
+      - .env
     build:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
         DATABASE_URL: ${DATABASE_URL}
         ANALYTICS_API_URL: http://graphql:8000
-        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
-        CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-}
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+        CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
     environment:
       DATABASE_URL: ${DATABASE_URL}
       GRAPHQL_ENDPOINT: http://graphql:8000/graphql
       AGENTS_URL: http://gentic-agents:7000
       ANALYTICS_API_URL: http://graphql:8000
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
-      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-}
     depends_on:
       graphql:
         condition: service_started
