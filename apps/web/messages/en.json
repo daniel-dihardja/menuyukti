@@ -13,14 +13,22 @@
     "loginButton": "Log In",
     "loginWithGoogle": "Log in with Google",
     "signupDescription": "Don’t have an account?",
-    "signupLink": "Sign up now"
+    "signupLink": "Sign up now",
+    "signingIn": "Signing in…",
+    "verificationCodeLabel": "Verification code",
+    "verificationCodePlaceholder": "Enter the code sent to your email",
+    "verify": "Verify",
+    "resendCode": "Send a new code",
+    "additionalVerificationRequired": "Additional verification is required to finish signing in.",
+    "genericError": "Something went wrong. Please try again.",
+    "startOver": "Start over"
   },
   "landing": {
     "brand": "Menuyukti",
     "hero": {
       "headline": "Restaurant marketing SaaS for marketers and agencies",
       "subtitle": "An agentic AI system that turns sales data into Instagram schedules with post concepts and copy.",
-      "ctaPrimary": "Get Started"
+      "ctaPrimary": "Sign in"
     },
     "problem": "Restaurant marketers and agencies still rely on gut feel to decide what to promote. That leads to missed demand signals, wasted budget, and underperforming campaigns.",
     "solution": "Menuyukti turns sales data into marketing intelligence and AI workflows that create Instagram schedules with post concepts and copy, then measures the real impact of those posts.",
@@ -54,7 +62,7 @@
     "cta": {
       "title": "Ready to market smarter?",
       "description": "Get a free analysis and see which menu items to promote plus Instagram post schedules with content.",
-      "primary": "Get Started"
+      "primary": "Sign in"
     },
     "footer": {
       "about": "About",
@@ -63,7 +71,7 @@
       "copyright": "© 2025 Menuyukti"
     },
     "mobileCta": {
-      "primary": "Get Started",
+      "primary": "Sign in",
       "secondary": "Learn More"
     }
   },

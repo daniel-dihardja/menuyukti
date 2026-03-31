@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@workspace/ui/components/button";
+import { routes } from "@/lib/routes";
 import { getTranslations } from "next-intl/server";
 import {
   Upload,
@@ -40,8 +41,8 @@ export default async function LandingPage() {
           </p>
 
           <div className="mt-8 hidden md:flex w-full justify-center">
-            <Button size="lg" variant="default">
-              {t("hero.ctaPrimary")}
+            <Button size="lg" variant="default" asChild>
+              <Link href={routes.login}>{t("hero.ctaPrimary")}</Link>
             </Button>
           </div>
         </div>
@@ -187,8 +188,9 @@ export default async function LandingPage() {
           <Button
             size="lg"
             className="px-8 py-6 w-full md:w-auto hidden md:inline-flex"
+            asChild
           >
-            {t("cta.primary")}
+            <Link href={routes.login}>{t("cta.primary")}</Link>
           </Button>
         </div>
       </section>
@@ -217,8 +219,8 @@ export default async function LandingPage() {
       </footer>
 
       <div className="fixed bottom-0 left-0 w-full  backdrop-blur-md p-4 flex md:hidden gap-4 z-50">
-        <Button className="w-full" size="lg">
-          {t("mobileCta.primary")}
+        <Button className="w-full" size="lg" asChild>
+          <Link href={routes.login}>{t("mobileCta.primary")}</Link>
         </Button>
         <Button className="w-full" size="lg" variant="outline">
           {t("mobileCta.secondary")}

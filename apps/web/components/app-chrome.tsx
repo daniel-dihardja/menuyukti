@@ -1,21 +1,31 @@
 "use client";
 
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import {
+  Show,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+  useAuth,
+} from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 
-const HIDE_HEADER_PREFIXES = ["/login", "/sign-up"];
+const HIDE_HEADER_PREFIXES = ["/login", "/sign-up", "/sso-callback"];
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { isSignedIn } = useAuth();
   const hideHeader =
     pathname != null &&
     HIDE_HEADER_PREFIXES.some(
       (p) => pathname === p || pathname.startsWith(`${p}/`),
     );
+  const isRootPage = pathname === "/" || pathname === "";
+  const showChromeHeader =
+    !hideHeader && (isSignedIn || !isRootPage);
 
   return (
     <>
-      {!hideHeader && (
+      {showChromeHeader && (
         <header className="flex items-center justify-end gap-2 border-b px-4 py-2">
           <Show when="signed-out">
             <SignInButton />

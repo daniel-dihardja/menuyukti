@@ -1,6 +1,8 @@
 export const routes = {
   login: "/login",
   signUp: "/sign-up",
+  /** OAuth / SSO return URL (Clerk custom social sign-in). */
+  ssoCallback: "/sso-callback",
   news: "/news",
 
   analytics: {
