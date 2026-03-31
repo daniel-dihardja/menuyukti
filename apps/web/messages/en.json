@@ -1,11 +1,10 @@
 {
   "login": {
     "title": "Menuyukti",
-    "slogan": "Smart Menus, Less Waste",
+    "slogan": "AI-powered restaurant marketing",
     "backToHome": "Back to home",
     "signUpTitle": "Join Menuyukti",
     "signUpDescription": "Create an account to connect your locations and campaigns.",
-    "description": "Enter your email below to log in to your account.",
     "emailLabel": "Email",
     "emailPlaceholder": "m@example.com",
     "passwordLabel": "Password",

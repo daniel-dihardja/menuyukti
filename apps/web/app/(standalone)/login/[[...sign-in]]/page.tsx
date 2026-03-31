@@ -39,7 +39,6 @@ export default async function LoginPage() {
             <p className="text-lg leading-snug text-foreground/90 md:text-xl">
               {t("slogan")}
             </p>
-            <p className="text-sm text-muted-foreground">{t("description")}</p>
           </CardHeader>
           <CardContent className="pt-2">
             <MenuyuktiSignIn />
