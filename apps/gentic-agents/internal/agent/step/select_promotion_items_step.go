@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
@@ -32,26 +33,26 @@ type llmSelectedMenuNames struct {
 
 // Run implements gentic.Step.
 func (s SelectPromotionItemsStep) Run(ctx context.Context, state *gen.State) error {
-	if hasSelectedPromotionItems(state) {
+	if flowstate.HasSelectedPromotionItems(state) {
 		return nil
 	}
 
-	if _, _, ok := requiredLocationIDs(state, "select promotion items"); !ok {
+	if _, _, ok := flowstate.RequiredLocationIDs(state, "select promotion items"); !ok {
 		return nil
 	}
 
-	raw, ok := promotionItemsFromMetadata(state)
+	raw, ok := flowstate.PromotionItemsFromMetadata(state)
 	if !ok {
 		state.Output = "Cannot select promotion items: load menu data first."
 		return nil
 	}
 	if len(raw) == 0 {
-		state.SetMetadata(metadataKeySelectedPromotionItems, []graphql.MenuEngineeringItem{})
+		state.SetMetadata(flowstate.KeySelectedPromotionItems, []graphql.MenuEngineeringItem{})
 		EmitPlanningProgress(ctx, state)
 		return nil
 	}
 
-	briefVal, ok := state.GetMetadata(metadataKeyCampaignBrief)
+	briefVal, ok := state.GetMetadata(flowstate.KeyCampaignBrief)
 	if !ok {
 		state.Output = "Cannot select promotion items: campaign brief is missing."
 		return nil
@@ -62,8 +63,8 @@ func (s SelectPromotionItemsStep) Run(ctx context.Context, state *gen.State) err
 		return nil
 	}
 
-	ps, ok := postScheduleFromMetadata(state)
-	if !ok || ps == nil || !hasValidPostSchedule(state) {
+	ps, ok := flowstate.PostScheduleFromMetadata(state)
+	if !ok || ps == nil || !flowstate.HasValidPostSchedule(state) {
 		state.Output = "Cannot select promotion items: post schedule is missing."
 		return nil
 	}
@@ -89,7 +90,7 @@ func (s SelectPromotionItemsStep) Run(ctx context.Context, state *gen.State) err
 		model = openai.DefaultModel
 	}
 
-	itemsBlock := formatItemsForPrompt(raw)
+	itemsBlock := flowstate.FormatItemsForPrompt(raw)
 	genPrompt := buildSelectPromotionUserPrompt(brief, slotCount, itemsBlock)
 	refSnap := buildSelectPromotionReflectionSnapshot(brief, slotCount, itemsBlock)
 
@@ -124,7 +125,7 @@ func (s SelectPromotionItemsStep) Run(ctx context.Context, state *gen.State) err
 	n.Notify("select_promotion_refinement", gen.ActivityDone,
 		fmt.Sprintf("Refining selection (%d/%d)", totalRefine, totalRefine))
 
-	state.SetMetadata(metadataKeySelectedPromotionItems, selected)
+	state.SetMetadata(flowstate.KeySelectedPromotionItems, selected)
 
 	EmitPlanningProgress(ctx, state)
 

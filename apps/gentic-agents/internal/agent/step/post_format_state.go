@@ -1,38 +1,14 @@
 package step
 
-import gen "github.com/daniel-dihardja/gentic/pkg/gentic"
+// This file is deprecated. Use github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate instead.
+// Keeping type aliases for backward compatibility during migration.
 
-const metadataKeyPostFormatPlan = "_post_format_plan"
+import (
+	fs "github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
+)
 
-// PostFormatAssignment mirrors Python FormatAssignment / ig_campaign post format plan rows.
-type PostFormatAssignment struct {
-	ScheduledDate      string   `json:"scheduled_date"`
-	Format             string   `json:"format"` // "single" | "carousel"
-	Items              []string `json:"items"`
-	CarouselNarrative  *string  `json:"carousel_narrative,omitempty"`
-}
+// Deprecated: use flowstate.PostFormatAssignment
+type PostFormatAssignment = fs.PostFormatAssignment
 
-// PostFormatPlan is the LLM output for assigning formats to promotion dates.
-type PostFormatPlan struct {
-	Assignments []PostFormatAssignment `json:"assignments"`
-}
-
-func hasPostFormatPlan(state *gen.State) bool {
-	p, ok := postFormatPlanFromMetadata(state)
-	return ok && p != nil && len(p.Assignments) > 0
-}
-
-func postFormatPlanFromMetadata(state *gen.State) (*PostFormatPlan, bool) {
-	if state == nil {
-		return nil, false
-	}
-	v, ok := state.GetMetadata(metadataKeyPostFormatPlan)
-	if !ok {
-		return nil, false
-	}
-	p, ok := v.(*PostFormatPlan)
-	if !ok || p == nil {
-		return nil, false
-	}
-	return p, true
-}
+// Deprecated: use flowstate.PostFormatPlan
+type PostFormatPlan = fs.PostFormatPlan

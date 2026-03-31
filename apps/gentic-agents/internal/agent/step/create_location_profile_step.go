@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
@@ -52,11 +53,11 @@ func (s CreateLocationProfileStep) reloadProfile(ctx context.Context, endpoint, 
 // If a valid profile is already in metadata, we no-op (defense in depth if the flow and predicate
 // ever drift).
 func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) (err error) {
-	if hasValidPersistedLocationProfile(state) {
+	if flowstate.HasValidPersistedLocationProfile(state) {
 		return nil
 	}
 
-	locationID, analyticsID, ok := requiredLocationIDs(state, "create location profile")
+	locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "create location profile")
 	if !ok {
 		return nil
 	}
@@ -147,9 +148,9 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) (e
 		return err
 	}
 	if profileRow != nil {
-		state.SetMetadata(metadataKeyLocationProfile, profileRow)
+		state.SetMetadata(flowstate.KeyLocationProfile, profileRow)
 	} else {
-		state.SetMetadata(metadataKeyLocationProfile, &graphql.LocationProfile{Summary: summary})
+		state.SetMetadata(flowstate.KeyLocationProfile, &graphql.LocationProfile{Summary: summary})
 	}
 
 	notify, err := llm.Chat(ctx, model, profileCreatedNotifySystem, buildProfileCreatedNotificationUserPrompt(loc))

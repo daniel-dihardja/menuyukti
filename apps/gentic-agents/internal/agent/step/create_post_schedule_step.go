@@ -9,7 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
+
+	
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
 	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
 )
@@ -55,16 +58,16 @@ type CreatePostScheduleStep struct {
 
 // Run implements gentic.Step.
 func (s CreatePostScheduleStep) Run(ctx context.Context, state *gen.State) error {
-	if hasValidPostSchedule(state) {
+	if flowstate.HasValidPostSchedule(state) {
 		return nil
 	}
 
-	_, _, ok := requiredLocationIDs(state, "create post schedule")
+	_, _, ok := flowstate.RequiredLocationIDs(state, "create post schedule")
 	if !ok {
 		return nil
 	}
 
-	profile, ok := locationProfileFromMetadata(state)
+	profile, ok := flowstate.LocationProfileFromMetadata(state)
 	if !ok || strings.TrimSpace(profile.Summary) == "" {
 		state.Output = "Cannot create post schedule: location profile is missing. Complete the location profile step first."
 		return nil
@@ -143,7 +146,7 @@ func (s CreatePostScheduleStep) Run(ctx context.Context, state *gen.State) error
 	injected := injectPinnedSlots(schedule, candidateWeeks)
 	final := validateAndClamp(injected, candidateWeeks)
 
-	state.SetMetadata(metadataKeyPostSchedule, final)
+	state.SetMetadata(flowstate.KeyPostSchedule, final)
 
 	EmitPlanningProgress(ctx, state)
 
@@ -159,7 +162,7 @@ func (s CreatePostScheduleStep) Run(ctx context.Context, state *gen.State) error
 
 	state.Output = notify + "\n\n" + formatPostScheduleForUser(final)
 
-	detail := campaignIDFromMetadata(state)
+	detail := flowstate.CampaignIDFromMetadata(state)
 	if detail == "" {
 		detail = state.SecureMetadata().GetString("thread_id")
 	}

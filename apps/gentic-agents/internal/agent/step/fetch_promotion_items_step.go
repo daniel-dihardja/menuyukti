@@ -6,7 +6,8 @@ import (
 
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
-)
+
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate")
 
 // FetchPromotionItemsStep loads menu engineering matrix rows (star / plow_horse / puzzle) for promotion planning.
 type FetchPromotionItemsStep struct {
@@ -15,11 +16,11 @@ type FetchPromotionItemsStep struct {
 
 // Run implements gentic.Step.
 func (s FetchPromotionItemsStep) Run(ctx context.Context, state *gen.State) error {
-	if hasFetchedPromotionItems(state) {
+	if flowstate.HasFetchedPromotionItems(state) {
 		return nil
 	}
 
-	_, analyticsID, ok := requiredLocationIDs(state, "fetch promotion items")
+	_, analyticsID, ok := flowstate.RequiredLocationIDs(state, "fetch promotion items")
 	if !ok {
 		return nil
 	}
@@ -27,7 +28,7 @@ func (s FetchPromotionItemsStep) Run(ctx context.Context, state *gen.State) erro
 	n := gen.NotifierFromContext(ctx)
 	n.Notify("fetch_promotion_items", gen.ActivityRunning, "Load menu promotion candidates")
 
-	items, err := graphql.FetchMenuEngineeringMatrix(ctx, s.GraphQLEndpoint, analyticsID, promotionMatrixCategories)
+	items, err := graphql.FetchMenuEngineeringMatrix(ctx, s.GraphQLEndpoint, analyticsID, flowstate.PromotionMatrixCategories)
 	if err != nil {
 		return fmt.Errorf("fetch promotion items: %w", err)
 	}
@@ -35,7 +36,7 @@ func (s FetchPromotionItemsStep) Run(ctx context.Context, state *gen.State) erro
 		items = []graphql.MenuEngineeringItem{}
 	}
 
-	state.SetMetadata(metadataKeyPromotionItems, items)
+	state.SetMetadata(flowstate.KeyPromotionItems, items)
 
 	label := fmt.Sprintf("%d promotion candidate(s)", len(items))
 	if len(items) == 0 {

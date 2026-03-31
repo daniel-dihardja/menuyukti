@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/react"
@@ -58,7 +59,7 @@ func FetchLocationProfileTool(graphqlEndpoint string) react.Tool {
 		json.RawMessage(fetchLocationProfileInputSchema),
 		func(state *gen.State, input json.RawMessage) (json.RawMessage, error) {
 			_ = input
-			locationID, analyticsID, ok := requiredLocationIDs(state, "fetch location profile")
+			locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "fetch location profile")
 			if !ok {
 				return nil, fmt.Errorf("location_id and analytics_id are required in the request")
 			}
@@ -68,14 +69,14 @@ func FetchLocationProfileTool(graphqlEndpoint string) react.Tool {
 				return nil, err
 			}
 			if profile == nil || strings.TrimSpace(profile.Summary) == "" {
-				state.DeleteMetadata(metadataKeyLocationProfile)
+				state.DeleteMetadata(flowstate.KeyLocationProfile)
 				return json.Marshal(map[string]interface{}{
 					"exists":  false,
 					"id":      "",
 					"summary": "",
 				})
 			}
-			state.SetMetadata(metadataKeyLocationProfile, profile)
+			state.SetMetadata(flowstate.KeyLocationProfile, profile)
 			return json.Marshal(map[string]interface{}{
 				"exists":  true,
 				"id":      string(profile.ID),
@@ -102,7 +103,7 @@ func UpdateLocationProfileTool(graphqlEndpoint string) react.Tool {
 			if summary == "" {
 				return nil, fmt.Errorf("summary must be non-empty")
 			}
-			locationID, analyticsID, ok := requiredLocationIDs(state, "update location profile")
+			locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "update location profile")
 			if !ok {
 				return nil, fmt.Errorf("location_id and analytics_id are required in the request")
 			}
@@ -115,9 +116,9 @@ func UpdateLocationProfileTool(graphqlEndpoint string) react.Tool {
 				return nil, err
 			}
 			if profileRow != nil {
-				state.SetMetadata(metadataKeyLocationProfile, profileRow)
+				state.SetMetadata(flowstate.KeyLocationProfile, profileRow)
 			} else {
-				state.SetMetadata(metadataKeyLocationProfile, &graphql.LocationProfile{Summary: summary})
+				state.SetMetadata(flowstate.KeyLocationProfile, &graphql.LocationProfile{Summary: summary})
 			}
 			idStr := ""
 			if profileRow != nil {

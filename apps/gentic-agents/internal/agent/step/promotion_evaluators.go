@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	ge "github.com/daniel-dihardja/gentic/pkg/gentic/eval"
@@ -14,7 +15,7 @@ import (
 type SelectedItemsNotEmptyEval struct{}
 
 func (SelectedItemsNotEmptyEval) Evaluate(ctx context.Context, s *gen.State) ge.EvalResult {
-	return ge.MetadataSliceNotEmpty{Key: metadataKeySelectedPromotionItems, Name: "selected_items_not_empty"}.Evaluate(ctx, s)
+	return ge.MetadataSliceNotEmpty{Key: flowstate.KeySelectedPromotionItems, Name: "selected_items_not_empty"}.Evaluate(ctx, s)
 }
 
 // SelectedItemsBCGMixEval checks approximate BCG distribution: star ≈60–70%, puzzle ≈20–30%, plow_horse ≤10%.
@@ -25,7 +26,7 @@ func (SelectedItemsBCGMixEval) Evaluate(_ context.Context, s *gen.State) ge.Eval
 	if s == nil {
 		return ge.EvalResult{Name: name, Pass: false, Reason: "nil state"}
 	}
-	v, ok := s.GetMetadata(metadataKeySelectedPromotionItems)
+	v, ok := s.GetMetadata(flowstate.KeySelectedPromotionItems)
 	if !ok || v == nil {
 		return ge.EvalResult{Name: name, Pass: false, Reason: "missing selected promotion items"}
 	}
@@ -83,7 +84,7 @@ func (PostFormatPlanNotEmptyEval) Evaluate(_ context.Context, s *gen.State) ge.E
 	if s == nil {
 		return ge.EvalResult{Name: name, Pass: false, Reason: "nil state"}
 	}
-	p, ok := postFormatPlanFromMetadata(s)
+	p, ok := flowstate.PostFormatPlanFromMetadata(s)
 	if !ok || p == nil {
 		return ge.EvalResult{Name: name, Pass: false, Reason: "missing post format plan"}
 	}
@@ -101,15 +102,15 @@ func (PostFormatConstraintsEval) Evaluate(_ context.Context, s *gen.State) ge.Ev
 	if s == nil {
 		return ge.EvalResult{Name: name, Pass: false, Reason: "nil state"}
 	}
-	plan, ok := postFormatPlanFromMetadata(s)
+	plan, ok := flowstate.PostFormatPlanFromMetadata(s)
 	if !ok || plan == nil {
 		return ge.EvalResult{Name: name, Pass: false, Reason: "missing post format plan"}
 	}
-	selected, ok := selectedPromotionItemsFromMetadata(s)
+	selected, ok := flowstate.SelectedPromotionItemsFromMetadata(s)
 	if !ok {
 		return ge.EvalResult{Name: name, Pass: false, Reason: "missing selected promotion items"}
 	}
-	ps, ok := postScheduleFromMetadata(s)
+	ps, ok := flowstate.PostScheduleFromMetadata(s)
 	if !ok || ps == nil {
 		return ge.EvalResult{Name: name, Pass: false, Reason: "missing post schedule"}
 	}

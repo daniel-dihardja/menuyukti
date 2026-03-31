@@ -39,7 +39,7 @@ func TestHasValidPersistedLocationProfile(t *testing.T) {
 			name: "wrong type",
 			state: &gen.State{
 				Metadata: map[string]interface{}{
-					metadataKeyLocationProfile: "not-a-profile",
+					flowstate.KeyLocationProfile: "not-a-profile",
 				},
 			},
 			want: false,
@@ -48,7 +48,7 @@ func TestHasValidPersistedLocationProfile(t *testing.T) {
 			name: "nil profile pointer",
 			state: &gen.State{
 				Metadata: map[string]interface{}{
-					metadataKeyLocationProfile: (*graphql.LocationProfile)(nil),
+					flowstate.KeyLocationProfile: (*graphql.LocationProfile)(nil),
 				},
 			},
 			want: false,
@@ -57,7 +57,7 @@ func TestHasValidPersistedLocationProfile(t *testing.T) {
 			name: "empty summary",
 			state: &gen.State{
 				Metadata: map[string]interface{}{
-					metadataKeyLocationProfile: &graphql.LocationProfile{
+					flowstate.KeyLocationProfile: &graphql.LocationProfile{
 						ID:      id,
 						Summary: "   ",
 					},
@@ -69,7 +69,7 @@ func TestHasValidPersistedLocationProfile(t *testing.T) {
 			name: "valid profile",
 			state: &gen.State{
 				Metadata: map[string]interface{}{
-					metadataKeyLocationProfile: &graphql.LocationProfile{
+					flowstate.KeyLocationProfile: &graphql.LocationProfile{
 						ID:      id,
 						Summary: summary,
 					},
@@ -82,12 +82,12 @@ func TestHasValidPersistedLocationProfile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			if got := hasValidPersistedLocationProfile(tt.state); got != tt.want {
-				t.Fatalf("hasValidPersistedLocationProfile() = %v, want %v", got, tt.want)
+			if got := flowstate.HasValidPersistedLocationProfile(tt.state); got != tt.want {
+				t.Fatalf("flowstate.HasValidPersistedLocationProfile() = %v, want %v", got, tt.want)
 			}
 			wantNeeds := !tt.want
-			if got := NeedsLocationProfileCreation(tt.state); got != wantNeeds {
-				t.Fatalf("NeedsLocationProfileCreation() = %v, want %v", got, wantNeeds)
+			if got := flowstate.NeedsLocationProfileCreation(tt.state); got != wantNeeds {
+				t.Fatalf("flowstate.NeedsLocationProfileCreation() = %v, want %v", got, wantNeeds)
 			}
 		})
 	}
@@ -97,16 +97,16 @@ func TestNeedsLocationProfileCreation_negation(t *testing.T) {
 	t.Parallel()
 	state := &gen.State{
 		Metadata: map[string]interface{}{
-			metadataKeyLocationProfile: &graphql.LocationProfile{
+			flowstate.KeyLocationProfile: &graphql.LocationProfile{
 				ID:      graphql.ID("x"),
 				Summary: "ok",
 			},
 		},
 	}
-	if !hasValidPersistedLocationProfile(state) {
+	if !flowstate.HasValidPersistedLocationProfile(state) {
 		t.Fatal("want valid profile")
 	}
-	if NeedsLocationProfileCreation(state) {
+	if flowstate.NeedsLocationProfileCreation(state) {
 		t.Fatal("should not need creation when valid profile present")
 	}
 }

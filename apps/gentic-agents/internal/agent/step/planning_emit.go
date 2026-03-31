@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 )
 
@@ -36,13 +37,13 @@ func BuildPlanningPayloadWire(state *gen.State) (planningPayloadWire, bool) {
 
 	holidaysWire := parseNationalHolidaysWire(meta.GetString("national_holidays"))
 	var locSummary *string
-	if p, ok := locationProfileFromMetadata(state); ok && p != nil && strings.TrimSpace(p.Summary) != "" {
+	if p, ok := flowstate.LocationProfileFromMetadata(state); ok && p != nil && strings.TrimSpace(p.Summary) != "" {
 		s := strings.TrimSpace(p.Summary)
 		locSummary = &s
 	}
 
 	var briefPtr *campaignBriefWire
-	if briefVal, ok := state.GetMetadata(metadataKeyCampaignBrief); ok {
+	if briefVal, ok := state.GetMetadata(flowstate.KeyCampaignBrief); ok {
 		if brief, ok := briefVal.(*graphql.CampaignBrief); ok && brief != nil {
 			cw := &campaignBriefWire{
 				CampaignTheme:  strings.TrimSpace(brief.CampaignTheme),
@@ -51,9 +52,9 @@ func BuildPlanningPayloadWire(state *gen.State) (planningPayloadWire, bool) {
 				PostingCadence: strings.TrimSpace(brief.PostingCadence),
 				PostSlots:      []PostSlotWire{},
 			}
-			ps, psOk := postScheduleFromMetadata(state)
+			ps, psOk := flowstate.PostScheduleFromMetadata(state)
 			var formatPlan *PostFormatPlan
-			if fp, ok := postFormatPlanFromMetadata(state); ok {
+			if fp, ok := flowstate.PostFormatPlanFromMetadata(state); ok {
 				formatPlan = fp
 			}
 			if psOk && ps != nil {

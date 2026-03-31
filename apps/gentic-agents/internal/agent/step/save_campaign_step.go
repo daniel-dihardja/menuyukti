@@ -10,7 +10,8 @@ import (
 
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
-)
+
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate")
 
 const metadataKeySavedCampaignID = "_saved_campaign_id"
 
@@ -30,16 +31,16 @@ func (s SaveCampaignStep) Run(ctx context.Context, state *gen.State) error {
 		}
 	}
 
-	if !hasValidPersistedCampaignBrief(state) || !hasValidPostSchedule(state) {
+	if !flowstate.HasValidPersistedCampaignBrief(state) || !flowstate.HasValidPostSchedule(state) {
 		return nil
 	}
 
-	locationID, analyticsID, ok := requiredLocationIDs(state, "save campaign")
+	locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "save campaign")
 	if !ok {
 		return nil
 	}
 
-	briefVal, ok := state.GetMetadata(metadataKeyCampaignBrief)
+	briefVal, ok := state.GetMetadata(flowstate.KeyCampaignBrief)
 	if !ok {
 		return nil
 	}
@@ -47,7 +48,7 @@ func (s SaveCampaignStep) Run(ctx context.Context, state *gen.State) error {
 	if !ok || brief == nil {
 		return nil
 	}
-	ps, ok := postScheduleFromMetadata(state)
+	ps, ok := flowstate.PostScheduleFromMetadata(state)
 	if !ok || ps == nil {
 		return nil
 	}

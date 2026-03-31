@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	"github.com/daniel-dihardja/gentic/pkg/gentic"
 )
@@ -30,7 +31,7 @@ func (s CheckLocationProfileStep) loadProfile(ctx context.Context, endpoint, loc
 
 // Run implements gentic.Step.
 func (s CheckLocationProfileStep) Run(ctx context.Context, state *gentic.State) error {
-	locationID, analyticsID, ok := requiredLocationIDs(state, "check location profile")
+	locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "check location profile")
 	if !ok {
 		return nil
 	}
@@ -43,13 +44,13 @@ func (s CheckLocationProfileStep) Run(ctx context.Context, state *gentic.State) 
 		return err
 	}
 	if profile == nil {
-		state.DeleteMetadata(metadataKeyLocationProfile)
+		state.DeleteMetadata(flowstate.KeyLocationProfile)
 		state.Output = "No location profile found for this location and analytics run."
 		n.Notify("check_location_profile", gentic.ActivityDone, "No saved profile for this run")
 		return nil
 	}
 
-	state.SetMetadata(metadataKeyLocationProfile, profile)
+	state.SetMetadata(flowstate.KeyLocationProfile, profile)
 	state.Output = fmt.Sprintf(
 		"A location profile exists (id=%s). Summary: %s",
 		string(profile.ID),

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
@@ -35,17 +36,17 @@ type CreateCampaignBriefStep struct {
 
 // Run implements gentic.Step.
 func (s CreateCampaignBriefStep) Run(ctx context.Context, state *gen.State) error {
-	if hasValidPersistedCampaignBrief(state) {
+	if flowstate.HasValidPersistedCampaignBrief(state) {
 		return nil
 	}
 
-	campaignID := campaignIDFromMetadata(state)
-	_, _, ok := requiredLocationIDs(state, "create campaign brief")
+	campaignID := flowstate.CampaignIDFromMetadata(state)
+	_, _, ok := flowstate.RequiredLocationIDs(state, "create campaign brief")
 	if !ok {
 		return nil
 	}
 
-	profile, ok := locationProfileFromMetadata(state)
+	profile, ok := flowstate.LocationProfileFromMetadata(state)
 	if !ok || strings.TrimSpace(profile.Summary) == "" {
 		state.Output = "Cannot create campaign brief: location profile is missing. Complete the location profile step first."
 		return nil
@@ -97,7 +98,7 @@ func (s CreateCampaignBriefStep) Run(ctx context.Context, state *gen.State) erro
 		return fmt.Errorf("campaign brief: parse LLM output: %w", err)
 	}
 
-	state.SetMetadata(metadataKeyCampaignBrief, &graphql.CampaignBrief{
+	state.SetMetadata(flowstate.KeyCampaignBrief, &graphql.CampaignBrief{
 		CampaignTheme:  strings.TrimSpace(payload.CampaignTheme),
 		Tone:           strings.TrimSpace(payload.Tone),
 		TargetAudience: strings.TrimSpace(payload.TargetAudience),
@@ -123,21 +124,6 @@ func (s CreateCampaignBriefStep) Run(ctx context.Context, state *gen.State) erro
 	}
 	n.Notify("campaign_brief_ready", gen.ActivityDone, "Campaign brief ready", gen.WithDetail(detail))
 	return nil
-}
-
-func locationProfileFromMetadata(state *gen.State) (*graphql.LocationProfile, bool) {
-	if state == nil {
-		return nil, false
-	}
-	v, ok := state.GetMetadata(metadataKeyLocationProfile)
-	if !ok {
-		return nil, false
-	}
-	p, ok := v.(*graphql.LocationProfile)
-	if !ok || p == nil {
-		return nil, false
-	}
-	return p, true
 }
 
 func buildCampaignBriefUserPrompt(locationSummary string) string {

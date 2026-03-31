@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
@@ -32,20 +33,20 @@ type postFormatPlanWire struct {
 
 // Run implements gentic.Step.
 func (s AssignPostFormatsStep) Run(ctx context.Context, state *gen.State) error {
-	if hasPostFormatPlan(state) {
+	if flowstate.HasPostFormatPlan(state) {
 		return nil
 	}
 
-	if _, _, ok := requiredLocationIDs(state, "assign post formats"); !ok {
+	if _, _, ok := flowstate.RequiredLocationIDs(state, "assign post formats"); !ok {
 		return nil
 	}
 
-	selected, ok := selectedPromotionItemsFromMetadata(state)
+	selected, ok := flowstate.SelectedPromotionItemsFromMetadata(state)
 	if !ok || len(selected) == 0 {
 		return nil
 	}
 
-	ps, ok := postScheduleFromMetadata(state)
+	ps, ok := flowstate.PostScheduleFromMetadata(state)
 	if !ok || ps == nil {
 		state.Output = "Cannot assign post formats: post schedule is missing."
 		return nil
@@ -61,7 +62,7 @@ func (s AssignPostFormatsStep) Run(ctx context.Context, state *gen.State) error 
 	dateToWeek := dateToWeekNumber(ps)
 
 	slotsBlock := formatPromotionSlotsForPrompt(ps, holidayByDate)
-	itemsBlock := formatItemsForPrompt(selected)
+	itemsBlock := flowstate.FormatItemsForPrompt(selected)
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
@@ -121,7 +122,7 @@ func (s AssignPostFormatsStep) Run(ctx context.Context, state *gen.State) error 
 	n.Notify("assign_post_formats_refinement", gen.ActivityDone,
 		fmt.Sprintf("Refining formats (%d/%d)", totalRefine, totalRefine))
 
-	state.SetMetadata(metadataKeyPostFormatPlan, plan)
+	state.SetMetadata(flowstate.KeyPostFormatPlan, plan)
 
 	EmitPlanningProgress(ctx, state)
 
