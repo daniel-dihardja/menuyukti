@@ -110,9 +110,6 @@ func UpdateLocationProfileTool(graphqlEndpoint string) react.Tool {
 			if err := graphql.SaveLocationProfile(ctx, graphqlEndpoint, locationID, analyticsID, summary); err != nil {
 				return nil, err
 			}
-			if analyticsID != "0" {
-				_ = graphql.SaveLocationProfile(ctx, graphqlEndpoint, locationID, "0", summary)
-			}
 			profileRow, err := graphql.FetchLocationProfile(ctx, graphqlEndpoint, locationID, analyticsID)
 			if err != nil {
 				return nil, err

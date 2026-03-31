@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import strawberry
 
 from graphql.data_sources import LocationProfile, SessionLocal
-from graphql.schema.auth import require_location_owner, user_id_from_info
+from graphql.schema.auth import get_analytics_run_if_owner, require_location_owner, user_id_from_info
 from graphql.schema.types import LocationProfileType
 
 
@@ -18,9 +18,15 @@ class SaveLocationProfileMutation:
         summary: str,
     ) -> LocationProfileType:
         user_id = user_id_from_info(info)
+        aid = int(analytics_run_id)
+        if aid <= 0:
+            raise ValueError("analyticsRunId must be a positive existing analytics run id")
         session = SessionLocal()
         try:
             require_location_owner(session, int(location_id), user_id)
+            run = get_analytics_run_if_owner(session, aid, user_id)
+            if run is None or run.location_id != int(location_id):
+                raise ValueError("Analytics run does not exist or does not belong to this location")
             row = (
                 session.query(LocationProfile)
                 .filter(

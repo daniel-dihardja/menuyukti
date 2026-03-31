@@ -140,9 +140,6 @@ func (s CreateLocationProfileStep) Run(ctx context.Context, state *gen.State) (e
 	if err := saveProfile(ctx, s.GraphQLEndpoint, locationID, analyticsID, summary); err != nil {
 		return err
 	}
-	if analyticsID != "0" {
-		_ = saveProfile(ctx, s.GraphQLEndpoint, locationID, "0", summary)
-	}
 
 	// So downstream steps (e.g. campaign brief) see the same metadata as after CheckLocationProfileStep.
 	profileRow, err := s.reloadProfile(ctx, s.GraphQLEndpoint, locationID, analyticsID)
