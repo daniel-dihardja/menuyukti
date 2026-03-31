@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import "@workspace/ui/globals.css";
 import { AppChrome } from "@/components/app-chrome";
+import { getClerkPublishableKey } from "@/lib/clerk-env";
 import { Providers } from "@/components/providers";
 import { routes } from "@/lib/routes";
 import { getLocale, getMessages } from "next-intl/server";
@@ -54,12 +55,17 @@ export default async function RootLayout({
 }>) {
   const messages = await getMessages();
   const locale = await getLocale();
+  const publishableKey = getClerkPublishableKey();
   return (
     <html lang={locale} suppressHydrationWarning>
       <body
         className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased `}
       >
-        <ClerkProvider signInUrl={routes.login} signUpUrl={routes.signUp}>
+        <ClerkProvider
+          {...(publishableKey ? { publishableKey } : {})}
+          signInUrl={routes.login}
+          signUpUrl={routes.signUp}
+        >
           <NextIntlClientProvider locale={locale} messages={messages}>
             <Providers>
               <AppChrome>{children}</AppChrome>
