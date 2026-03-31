@@ -1,3 +1,13 @@
+/** URL prefixes for the signed-in app shell (sidebar + header row). User profile lives in that header, not the global AppChrome bar. */
+export const PROTECTED_APP_SHELL_PREFIXES = ["/analytics", "/campaigns"] as const;
+
+export function isProtectedAppShellPath(pathname: string | null): boolean {
+  if (pathname == null) return false;
+  return PROTECTED_APP_SHELL_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+}
+
 export const routes = {
   login: "/login",
   signUp: "/sign-up",

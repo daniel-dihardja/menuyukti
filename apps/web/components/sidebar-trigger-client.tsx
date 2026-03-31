@@ -1,5 +1,6 @@
 "use client";
 
+import { Show, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
 import { SidebarTrigger } from "@workspace/ui/components/sidebar";
@@ -162,6 +163,12 @@ export function SidebarTriggerClient({
           </Breadcrumb>
         </>
       ) : null}
+
+      <div className="ml-auto flex shrink-0 items-center">
+        <Show when="signed-in">
+          <UserButton />
+        </Show>
+      </div>
     </div>
   );
 }

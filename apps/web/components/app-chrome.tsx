@@ -8,6 +8,7 @@ import {
   useAuth,
 } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
+import { isProtectedAppShellPath } from "@/lib/routes";
 
 const HIDE_HEADER_PREFIXES = ["/login", "/sign-up", "/sso-callback"];
 
@@ -22,10 +23,12 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const isRootPage = pathname === "/" || pathname === "";
   const showChromeHeader =
     !hideHeader && (isSignedIn || !isRootPage);
+  const profileInSidebarHeader =
+    isSignedIn && isProtectedAppShellPath(pathname);
 
   return (
     <>
-      {showChromeHeader && (
+      {showChromeHeader && !profileInSidebarHeader && (
         <header className="flex items-center justify-end gap-2 border-b px-4 py-2">
           <Show when="signed-out">
             <SignInButton />
