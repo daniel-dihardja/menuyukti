@@ -6,6 +6,7 @@ import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
+import { auth } from "@clerk/nextjs/server";
 import { graphqlQuery } from "@/lib/graphql/client";
 import { LOCATIONS_QUERY, type LocationsData } from "@/lib/graphql/queries";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
@@ -14,8 +15,12 @@ import { CampaignsClient } from "./campaigns-client";
 
 export default async function Page() {
   const t = await getTranslations("analytics.campaigns");
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
 
-  const data = await graphqlQuery<LocationsData>(LOCATIONS_QUERY);
+  const data = await graphqlQuery<LocationsData>(LOCATIONS_QUERY, undefined, userId);
   const branches = data.locations.map((loc) => ({
     id: Number(loc.id),
     name: loc.name,

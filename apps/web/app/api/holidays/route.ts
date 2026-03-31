@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { graphqlQuery } from "@/lib/graphql/client";
 import {
   LOCATION_QUERY,
@@ -17,6 +18,11 @@ import {
  */
 export async function GET(req: Request) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
 
     const locationIdParam = searchParams.get("locationId");
@@ -38,9 +44,13 @@ export async function GET(req: Request) {
       );
     }
 
-    const locationData = await graphqlQuery<LocationData>(LOCATION_QUERY, {
-      id: String(locationId),
-    });
+    const locationData = await graphqlQuery<LocationData>(
+      LOCATION_QUERY,
+      {
+        id: String(locationId),
+      },
+      userId,
+    );
 
     const country = locationData.location?.country;
     if (!country) {
@@ -52,7 +62,8 @@ export async function GET(req: Request) {
 
     const holidaysData = await graphqlQuery<PublicHolidaysData>(
       PUBLIC_HOLIDAYS_QUERY,
-      { country, startDate: dateStart, endDate: dateEnd }
+      { country, startDate: dateStart, endDate: dateEnd },
+      userId,
     );
 
     const holidays: PublicHolidayItem[] = holidaysData.publicHolidays ?? [];
