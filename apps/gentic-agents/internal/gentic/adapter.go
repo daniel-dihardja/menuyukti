@@ -1,10 +1,13 @@
 package gentic
 
 import (
+	"context"
+
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/eval"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/intent"
+	"github.com/daniel-dihardja/gentic/pkg/gentic/react"
 	"github.com/daniel-dihardja/gentic/pkg/steps"
 )
 
@@ -56,8 +59,17 @@ func BuildAgent(model, systemPrompt, graphqlEndpoint string, maxReflectionIterat
 				GraphQLEndpoint: graphqlEndpoint,
 			}),
 	)
-	resolver := intent.NewRouter("chat", "create_campaign").
+	locationProfileChatFlow := react.NewReactActor(
+		react.WithModel(model),
+		react.WithSystemPrompt(step.LocationProfileChatSystemPrompt),
+		react.WithTools(
+			step.FetchLocationProfileTool(graphqlEndpoint),
+			step.UpdateLocationProfileTool(graphqlEndpoint),
+		),
+	).Resolve(context.Background(), nil)
+	resolver := intent.NewRouter("chat", "create_campaign", "location_profile_chat").
 		On("create_campaign", campaignFlow).
+		On("location_profile_chat", locationProfileChatFlow).
 		Default(chatFlow)
 	return gen.Agent{Resolver: resolver}
 }
