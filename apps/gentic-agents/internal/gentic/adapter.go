@@ -12,10 +12,11 @@ import (
 )
 
 // BuildAgent wires the Gentic SDK with a default chat flow behind intent routing.
-func BuildAgent(model, systemPrompt, graphqlEndpoint string, maxReflectionIterations int) gen.Agent {
+// The default chat uses step.DefaultChatSystemPrompt.
+func BuildAgent(model, graphqlEndpoint string, maxReflectionIterations int) gen.Agent {
 	chatFlow := gen.NewFlow(steps.ChatStep{
 		Model:        model,
-		SystemPrompt: systemPrompt,
+		SystemPrompt: step.DefaultChatSystemPrompt,
 	})
 	campaignFlow := gen.NewFlow(
 		eval.WrapWithEval("check_location_profile",

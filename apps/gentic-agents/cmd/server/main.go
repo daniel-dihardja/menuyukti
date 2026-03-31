@@ -28,12 +28,10 @@ func main() {
 		log.Fatalf("config: %v", err)
 	}
 
-	ag := genticadapter.BuildAgent(cfg.Model, cfg.SystemPrompt, cfg.GraphQLEndpoint, cfg.MaxReflectionIterations)
+	ag := genticadapter.BuildAgent(cfg.Model, cfg.GraphQLEndpoint, cfg.MaxReflectionIterations)
 	handler := appserver.NewRouter(appserver.Config{
 		Agent:        ag,
 		StreamingLLM: openai.Provider{},
-		Model:        cfg.Model,
-		SystemPrompt: cfg.SystemPrompt,
 	})
 
 	mux := http.NewServeMux()

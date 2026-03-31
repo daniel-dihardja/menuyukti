@@ -12,8 +12,6 @@ import (
 type Config struct {
 	Agent        gentic.Agent
 	StreamingLLM gentic.StreamingLLM
-	Model        string
-	SystemPrompt string
 	AllowOrigins []string
 }
 

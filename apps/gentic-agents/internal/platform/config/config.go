@@ -9,7 +9,6 @@ import (
 const (
 	defaultAddr                    = ":7000"
 	defaultModel                   = "gpt-4o-mini"
-	defaultSystemPrompt            = "You are a helpful assistant for restaurant and menu planning. Answer clearly and concisely."
 	defaultMaxReflectionIterations = 1
 	envMaxReflectionIterations     = "MAX_REFLECTION_ITERATIONS"
 )
@@ -19,7 +18,6 @@ type Config struct {
 	Addr                    string
 	OpenAIAPIKey            string
 	Model                   string
-	SystemPrompt            string
 	GraphQLEndpoint         string
 	MaxReflectionIterations int
 }
@@ -46,11 +44,6 @@ func Load() (Config, error) {
 		model = defaultModel
 	}
 
-	system := os.Getenv("SYSTEM_PROMPT")
-	if system == "" {
-		system = defaultSystemPrompt
-	}
-
 	maxReflect := defaultMaxReflectionIterations
 	if v := os.Getenv(envMaxReflectionIterations); v != "" {
 		n, err := strconv.Atoi(v)
@@ -67,7 +60,6 @@ func Load() (Config, error) {
 		Addr:                    addr,
 		OpenAIAPIKey:            apiKey,
 		Model:                   model,
-		SystemPrompt:            system,
 		GraphQLEndpoint:         gqlEndpoint,
 		MaxReflectionIterations: maxReflect,
 	}, nil

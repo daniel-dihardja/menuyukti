@@ -2,7 +2,7 @@
 #   docker build -f apps/gentic-agents/Dockerfile -t gentic-agents .
 #
 # Required env at runtime: OPENAI_API_KEY, GRAPHQL_ENDPOINT
-# Optional: ADDR (default :7000), OPENAI_MODEL, SYSTEM_PROMPT, MAX_REFLECTION_ITERATIONS
+# Optional: ADDR (default :7000), OPENAI_MODEL, MAX_REFLECTION_ITERATIONS
 
 FROM golang:1.26-bookworm AS build
 WORKDIR /src
