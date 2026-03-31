@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -24,6 +25,15 @@ ROOT_DIR = Path(__file__).resolve().parents[3]
 DEFAULT_EXCEL = ROOT_DIR / "reports" / "Sales_Recapitulation_Detail_Report_Jan-Mar_2025.xlsx"
 DEFAULT_COGS = ROOT_DIR / "notebooks" / "data" / "menu_cogs.json"
 
+# Must match the Clerk user id used by the web app (X-User-Id) so resolvers allow access.
+_DEFAULT_DEV_CLERK_USER_ID = "dev_local_user"
+
+
+def _resolve_clerk_user_id(cli_value: str | None) -> str:
+    if cli_value:
+        return cli_value
+    return os.environ.get("DEV_CLERK_USER_ID", _DEFAULT_DEV_CLERK_USER_ID)
+
 
 def _load_cogs_by_menu(cogs_path: Path) -> dict[str, float]:
     """Load menu_cogs.json and return a dict menu -> cogs (first occurrence per menu)."""
@@ -36,7 +46,7 @@ def _load_cogs_by_menu(cogs_path: Path) -> dict[str, float]:
     return by_menu
 
 
-def main(excel_path: str, cogs_path: str | None) -> int:
+def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
     path = Path(excel_path)
     if not path.exists():
         print(f"ERROR: Excel file not found: {path}")
@@ -57,7 +67,12 @@ def main(excel_path: str, cogs_path: str | None) -> int:
 
     session = SessionLocal()
     try:
-        location = Location(name="Dev (Jan-Mar 2025)", city="Jakarta", country="Indonesia")
+        location = Location(
+            name="Dev (Jan-Mar 2025)",
+            city="Jakarta",
+            country="Indonesia",
+            clerk_user_id=clerk_user_id,
+        )
         session.add(location)
         session.commit()
         session.refresh(location)
@@ -132,6 +147,16 @@ def main(excel_path: str, cogs_path: str | None) -> int:
         else:
             print(f"Loaded {len(normalized_rows)} rows from {path}. (No COGS file provided; run with --cogs to add COGS.)")
 
+    print(
+        f"Location owner clerk_user_id={clerk_user_id!r}. "
+        "Set DEV_CLERK_USER_ID or --clerk-user-id to your Clerk user id so the web app can query this data."
+    )
+    if clerk_user_id == _DEFAULT_DEV_CLERK_USER_ID and not os.environ.get("DEV_CLERK_USER_ID"):
+        print(
+            "Hint: export DEV_CLERK_USER_ID=<your Clerk user id> before make dev-data, "
+            "or pass --clerk-user-id, to match the signed-in user in the UI."
+        )
+
     return 0
 
 
@@ -150,8 +175,18 @@ if __name__ == "__main__":
         metavar="PATH",
         help=f"Path to menu_cogs.json (default: {DEFAULT_COGS}; omit to skip COGS)",
     )
+    parser.add_argument(
+        "--clerk-user-id",
+        default=None,
+        metavar="ID",
+        help=(
+            "Clerk user id stored on Location.clerk_user_id (default: DEV_CLERK_USER_ID env or "
+            f"{_DEFAULT_DEV_CLERK_USER_ID!r})"
+        ),
+    )
     args = parser.parse_args()
 
     excel_path = args.excel
     cogs_path = args.cogs if args.cogs is not None else str(DEFAULT_COGS) if DEFAULT_COGS.exists() else None
-    sys.exit(main(excel_path, cogs_path))
+    clerk_user_id = _resolve_clerk_user_id(args.clerk_user_id)
+    sys.exit(main(excel_path, cogs_path, clerk_user_id))

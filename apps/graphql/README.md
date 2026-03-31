@@ -18,6 +18,8 @@ To import a specific Excel report directly into `order_fact`, run `make load-rep
 
 To populate the dev database with the Jan–Mar 2025 report and menu COGS for manual or explorative testing, run `make dev-data` from `apps/graphql`. This uses `reports/Sales_Recapitulation_Detail_Report_Jan-Mar_2025.xlsx` and `notebooks/data/menu_cogs.json` by default; ensure those files exist, or pass `--excel` / `--cogs` when running the script directly. From the repo root: `make -C apps/graphql dev-data`.
 
+The seeded `Location` row gets `clerk_user_id` from `DEV_CLERK_USER_ID` (or `--clerk-user-id` on the script), defaulting to `dev_local_user`. **Set `DEV_CLERK_USER_ID` to your Clerk user id** (the same value the web app sends as `X-User-Id`) so GraphQL ownership checks allow the location, analytics runs, and related data to appear when you are signed in. Example: `DEV_CLERK_USER_ID=user_xxx make dev-data`.
+
 ## Orders fact schema (next step)
 
 The normalized upload mutation now feeds a dedicated Orders fact table (`apps/graphql/data_sources/database.py::OrderFact`). Each record captures the `POSTransactionLineItem` contract, plus a `pos_system` column so you can trace the ingestion source. The column definitions are:

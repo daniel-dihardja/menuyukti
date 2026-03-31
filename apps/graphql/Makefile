@@ -44,6 +44,7 @@ load-report:
 	@if [ -z "$(REPORT_PATH)" ]; then echo "REPORT_PATH is required"; exit 1; fi
 	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_sales_report "$(REPORT_PATH)"
 
+# Seeds Location with clerk_user_id from DEV_CLERK_USER_ID (default dev_local_user); see README.
 dev-data:
 	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_dev_data
 
