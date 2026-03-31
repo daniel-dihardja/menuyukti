@@ -71,25 +71,38 @@ function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
   });
 }
 
+export type AiChatPanelProps = {
+  locationId: number;
+  analyticsRuns: Array<{ id: string; name: string; filename: string }>;
+  defaultDates: { dateStart: string; dateEnd: string };
+  /** Pre-fill artifact (e.g. loaded campaign) before any chat message. */
+  initialPlanning?: Partial<PlanningArtifact> | null;
+  initialAnalyticsId?: number | null;
+  /** When set, requests include campaign id so the agent can load/refine an existing campaign. */
+  campaignId?: number | null;
+};
+
 export function AiChatPanel({
   locationId,
   analyticsRuns,
   defaultDates,
-}: {
-  locationId: number;
-  analyticsRuns: Array<{ id: string; name: string; filename: string }>;
-  defaultDates: { dateStart: string; dateEnd: string };
-}) {
+  initialPlanning = null,
+  initialAnalyticsId = null,
+  campaignId = null,
+}: AiChatPanelProps) {
   const [text, setText] = useState("");
   const [campaignDates, setCampaignDates] = useState(defaultDates);
   const [holidaysOverride, setHolidaysOverride] = useState<NationalHoliday[] | null | undefined>(undefined);
-  const [selectedAnalyticsId, setSelectedAnalyticsId] = useState<number | null>(null);
+  const [selectedAnalyticsId, setSelectedAnalyticsId] = useState<number | null>(
+    initialAnalyticsId ?? null
+  );
   const threadId = useRef(crypto.randomUUID()).current;
   const requestBodyRef = useRef<Record<string, unknown>>({});
   requestBodyRef.current = {
     locationId,
     threadId,
     analyticsId: selectedAnalyticsId ?? undefined,
+    ...(campaignId != null ? { campaignId } : {}),
   };
 
   // Stable transport — never recreated. prepareSendMessagesRequest is called
@@ -103,7 +116,7 @@ export function AiChatPanel({
           body: { messages, ...requestBodyRef.current, ...body },
         }),
       }),
-    [] // eslint-disable-line react-hooks/exhaustive-deps
+    []
   );
   const { messages, sendMessage, status, stop } = useChat({ transport });
 
@@ -112,13 +125,13 @@ export function AiChatPanel({
   // naturally once a conversation starts.
   const defaultPlanning = useMemo<PlanningArtifact>(
     () => ({
-      dateStart: defaultDates.dateStart,
-      dateEnd: defaultDates.dateEnd,
-      nationalHolidays: undefined,
-      locationSummary: null,
-      campaignBrief: null,
+      dateStart: initialPlanning?.dateStart ?? defaultDates.dateStart,
+      dateEnd: initialPlanning?.dateEnd ?? defaultDates.dateEnd,
+      nationalHolidays: initialPlanning?.nationalHolidays ?? undefined,
+      locationSummary: initialPlanning?.locationSummary ?? null,
+      campaignBrief: initialPlanning?.campaignBrief ?? null,
     }),
-    [defaultDates]
+    [defaultDates, initialPlanning]
   );
 
   const planningArtifact = useMemo<PlanningArtifact>(() => {
@@ -173,10 +186,11 @@ export function AiChatPanel({
     [locationId]
   );
 
+  // Initial holidays fetch for the default/saved campaign date range (mount only).
   useEffect(() => {
-    handleDatesChange(campaignDates);
+    void handleDatesChange(campaignDates);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // fetch holidays once on mount with the initial dates
+  }, []);
 
   const handleTextChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {

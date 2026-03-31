@@ -212,6 +212,10 @@ export async function POST(req: Request) {
         thread_id: parsed.data.threadId ?? crypto.randomUUID(),
         analytics_id: parsed.data.analyticsId ?? null,
         location_id: parsed.data.locationId ?? null,
+        campaign_id:
+          parsed.data.campaignId != null
+            ? Number(parsed.data.campaignId)
+            : null,
         date_start: parsed.data.dateStart ?? null,
         date_end: parsed.data.dateEnd ?? null,
         national_holidays: parsed.data.nationalHolidays ?? null,

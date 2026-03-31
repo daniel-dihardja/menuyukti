@@ -3,6 +3,7 @@ import strawberry
 from graphql.schema.queries import (
     AnalyticsRunQuery,
     CampaignBriefQuery,
+    CampaignQuery,
     CampaignsQuery,
     LocationProfileQuery,
     LocationsQuery,
@@ -15,6 +16,7 @@ from graphql.schema.queries import (
 class Query(
     LocationsQuery,
     AnalyticsRunQuery,
+    CampaignQuery,
     CampaignsQuery,
     NationalHolidaysQuery,
     OperatingProfileQuery,

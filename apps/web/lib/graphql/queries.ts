@@ -229,6 +229,74 @@ export type CampaignsByLocationData = {
   campaigns: CampaignListItem[];
 };
 
+export const CAMPAIGN_DETAIL_QUERY = `
+  query CampaignDetail($id: ID!) {
+    campaign(id: $id) {
+      id
+      name
+      status
+      startDate
+      endDate
+      locationId
+      theme
+      tone
+      goal
+    }
+  }
+`;
+
+export type CampaignDetailItem = {
+  id: string;
+  name: string;
+  status: string;
+  startDate: string | null;
+  endDate: string | null;
+  locationId: number;
+  theme: string | null;
+  tone: string | null;
+  goal: string | null;
+};
+
+export type CampaignDetailData = {
+  campaign: CampaignDetailItem | null;
+};
+
+export const CAMPAIGN_BRIEF_QUERY = `
+  query CampaignBriefByCampaign($campaignId: ID!) {
+    campaignBrief(campaignId: $campaignId) {
+      id
+      campaignId
+      locationId
+      analyticsRunId
+      campaignTheme
+      tone
+      targetAudience
+      postingCadence
+      postScheduleJson
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export type CampaignBriefItem = {
+  id: string;
+  campaignId: number;
+  locationId: number;
+  analyticsRunId: number;
+  campaignTheme: string;
+  tone: string;
+  targetAudience: string;
+  postingCadence: string;
+  postScheduleJson: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type CampaignBriefData = {
+  campaignBrief: CampaignBriefItem | null;
+};
+
 export const MENU_HEATMAPS_QUERY = `
   query MenuHeatmaps($id: ID!) {
     menuHeatmaps(analyticsRunId: $id) {

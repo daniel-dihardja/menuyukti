@@ -23,6 +23,8 @@ export const chatRequestBodySchema = z.object({
   messages: z.array(messageSchema).optional().default([]),
   analyticsId: z.number().optional(),
   locationId: z.number().optional(),
+  /** When set, agent loads/refines an existing campaign (gentic-agents metadata). */
+  campaignId: z.number().optional(),
   threadId: z.string().optional(),
   dateStart: z.string().optional(),
   dateEnd: z.string().optional(),

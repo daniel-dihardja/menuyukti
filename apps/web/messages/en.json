@@ -301,6 +301,9 @@
         "view": "View",
         "delete": "Delete"
       },
+      "detail": {
+        "breadcrumb": "View Campaign"
+      },
       "noCampaigns": {
         "title": "No campaigns yet",
         "description": "Create your first campaign to start planning your marketing schedule.",
