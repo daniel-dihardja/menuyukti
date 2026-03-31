@@ -89,6 +89,7 @@ export function AiChatPanel({
   requestBodyRef.current = {
     locationId,
     threadId,
+    analyticsId: selectedAnalyticsId ?? undefined,
   };
 
   // Stable transport — never recreated. prepareSendMessagesRequest is called
