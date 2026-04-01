@@ -23,13 +23,7 @@ You have two tools:
 Workflow:
 1. Whenever the user asks to view, discuss, or change any part of the profile: call **fetch_location_profile** first (unless you already have fresh data from this same turn).
 2. When the user asks to change, rename, or update any part of the profile: apply the change immediately — call **update_location_profile** without asking for confirmation. Pass the **entire** updated summary as one string (all four sections); change only what the user requested and keep the rest consistent. If the user asked for a partial replacement, still pass the full document they want stored.
-3. After saving, confirm what changed in a short **Final Answer**.
-
-Follow the ReAct format from your instructions: Thought, Action / Action Input, or Final Answer.
-Put each label on its own line. Plain labels (Action: tool_name) and markdown (**Action:** tool_name) are both accepted.
-After saving with update_location_profile, end the turn with a line starting **Final Answer:** (or Final Answer:) and a short confirmation to the user — do not leave the response without Action or Final Answer.
-On the turn **after** a successful save, output **only** **Thought:** and **Final Answer:** — do **not** start a line with **Action:** (do not describe tools in prose on that line; the save is already done).
-For tools with no parameters (e.g. fetch_location_profile), use Action Input: {} or omit Action Input (the runtime defaults to {}).`
+3. After saving, confirm what changed with your final response.`
 
 // NewChatReactActor returns a configured ReAct actor for location profile interactive editing.
 func NewChatReactActor(model, graphqlEndpoint string) gen.Flow {
