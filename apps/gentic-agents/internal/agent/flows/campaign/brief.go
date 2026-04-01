@@ -71,7 +71,7 @@ func (s CreateBriefStep) Run(ctx context.Context, state *gen.State) error {
 
 	n.Notify("create_campaign_brief", gen.ActivityDone, "Create a campaign brief")
 
-	totalRefine := s.MaxReflectionIterations + 1
+	refineTotal := reflect.ReflectUILabelTotal(s.MaxReflectionIterations)
 	rawDraft, err := reflect.RunReflectLoop(ctx, reflect.ReflectLoopParams{
 		LLM:                    llm,
 		Model:                  model,
@@ -89,7 +89,7 @@ func (s CreateBriefStep) Run(ctx context.Context, state *gen.State) error {
 		return err
 	}
 	n.Notify("campaign_brief_refinement", gen.ActivityDone,
-		fmt.Sprintf("Refining (%d/%d)", totalRefine, totalRefine))
+		fmt.Sprintf("Refining (%d/%d)", refineTotal, refineTotal))
 
 	payload, err := parseBriefJSON(rawDraft)
 	if err != nil {

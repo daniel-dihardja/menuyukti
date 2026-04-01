@@ -9,16 +9,22 @@ import (
 const (
 	defaultAddr                    = ":7000"
 	defaultModel                   = "gpt-4o-mini"
+	// defaultMaxReflectionIterations allows one revision round after the first draft at most
+	// (initial generation + critique + optional one refine). Activity labels treat 1 as one
+	// user-facing reflection step (1/1), not two numbered slots; see reflect.ReflectUILabelTotal.
 	defaultMaxReflectionIterations = 1
 	envMaxReflectionIterations     = "MAX_REFLECTION_ITERATIONS"
 )
 
 // Config holds runtime settings loaded from the environment.
 type Config struct {
-	Addr                    string
-	OpenAIAPIKey            string
-	Model                   string
-	GraphQLEndpoint         string
+	Addr            string
+	OpenAIAPIKey    string
+	Model           string
+	GraphQLEndpoint string
+	// MaxReflectionIterations is the maximum generation-iteration index in reflect.RunReflectLoop
+	// (0 = first draft only with no critique; 1 = up to two generations / one revision pass).
+	// MAX_REFLECTION_ITERATIONS overrides the default.
 	MaxReflectionIterations int
 }
 
