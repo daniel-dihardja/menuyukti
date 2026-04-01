@@ -93,6 +93,7 @@ export function AiChatPanel({
   const [text, setText] = useState("");
   const [campaignDates, setCampaignDates] = useState(defaultDates);
   const [holidaysOverride, setHolidaysOverride] = useState<NationalHoliday[] | null | undefined>(undefined);
+  const [isLoadingHolidays, setIsLoadingHolidays] = useState(true);
   const [selectedAnalyticsId, setSelectedAnalyticsId] = useState<number | null>(
     initialAnalyticsId ?? null
   );
@@ -189,6 +190,7 @@ export function AiChatPanel({
     async (dates: { dateStart: string; dateEnd: string }) => {
       setCampaignDates(dates);
       setHolidaysOverride(undefined);
+      setIsLoadingHolidays(true);
       try {
         const res = await fetch(
           `/api/holidays?locationId=${locationId}&dateStart=${dates.dateStart}&dateEnd=${dates.dateEnd}`
@@ -205,6 +207,8 @@ export function AiChatPanel({
         setHolidaysOverride(holidays);
       } catch {
         setHolidaysOverride(null);
+      } finally {
+        setIsLoadingHolidays(false);
       }
     },
     [locationId]
@@ -245,6 +249,27 @@ export function AiChatPanel({
   const handleCreateCampaign = useCallback(async () => {
     await sendMessage(
       { text: "create campaign" },
+      {
+        body: {
+          analyticsId: selectedAnalyticsId,
+          dateStart: campaignDates.dateStart,
+          dateEnd: campaignDates.dateEnd,
+          nationalHolidays: holidaysOverride ?? displayedArtifact.nationalHolidays ?? null,
+        },
+      }
+    );
+  }, [
+    campaignDates.dateEnd,
+    campaignDates.dateStart,
+    displayedArtifact.nationalHolidays,
+    holidaysOverride,
+    selectedAnalyticsId,
+    sendMessage,
+  ]);
+
+  const handleCreateLocationProfile = useCallback(async () => {
+    await sendMessage(
+      { text: "create location profile" },
       {
         body: {
           analyticsId: selectedAnalyticsId,
@@ -379,11 +404,13 @@ export function AiChatPanel({
           campaignDates={campaignDates}
           onDatesChange={handleDatesChange}
           onCreateCampaign={handleCreateCampaign}
+          onCreateLocationProfile={handleCreateLocationProfile}
           onLocationFeedback={handleLocationFeedback}
           analyticsRuns={analyticsRuns}
           selectedAnalyticsId={selectedAnalyticsId}
           onAnalyticsIdChange={setSelectedAnalyticsId}
           isStreaming={isStreaming}
+          isLoadingHolidays={isLoadingHolidays}
         />
       </div>
     </div>

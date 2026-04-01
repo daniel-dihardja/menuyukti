@@ -71,10 +71,12 @@ type AiArtifactPanelProps = {
   campaignDates: { dateStart: string; dateEnd: string };
   onDatesChange: (dates: { dateStart: string; dateEnd: string }) => void;
   onCreateCampaign?: () => void;
+  onCreateLocationProfile?: () => void;
   analyticsRuns?: AnalyticsRun[];
   selectedAnalyticsId?: number | null;
   onAnalyticsIdChange?: (id: number | null) => void;
   isStreaming?: boolean;
+  isLoadingHolidays?: boolean;
   onLocationFeedback?: (feedback: string) => void;
 };
 
@@ -135,36 +137,21 @@ export function AiArtifactPanel({
   campaignDates,
   onDatesChange,
   onCreateCampaign,
+  onCreateLocationProfile,
   analyticsRuns,
   selectedAnalyticsId,
   onAnalyticsIdChange,
   isStreaming,
+  isLoadingHolidays,
   onLocationFeedback,
 }: AiArtifactPanelProps) {
-  if (!planning) {
-    return (
-      <div className="flex size-full items-center justify-center rounded-lg border border-dashed">
-        <div className="text-center">
-          <CalendarIcon className="mx-auto mb-3 size-8 text-muted-foreground/40" />
-          <p className="text-sm font-medium text-muted-foreground">
-            No plan generated yet
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground/60">
-            Ask me to create an Instagram campaign to see the plan here
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const holidays = planning.nationalHolidays
+  const holidays = planning?.nationalHolidays
     ? planning.nationalHolidays.map((h) => ({
         localName: h.localName,
         englishName: h.name,
         date: h.date || undefined,
       }))
     : null;
-  const holidaysReady = planning.nationalHolidays !== undefined;
 
   const hasSalesReportSelected =
     selectedAnalyticsId !== null && selectedAnalyticsId !== undefined;
@@ -179,45 +166,13 @@ export function AiArtifactPanel({
       </ArtifactHeader>
       <ArtifactContent>
         <div className="space-y-4">
-          {/* Campaign Setup */}
+          {/* Section 1: Campaign Dates */}
           <div className="rounded-lg border bg-muted/30 p-4">
             <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              <DatabaseIcon className="size-3.5" />
-              Campaign Setup
+              <CalendarIcon className="size-3.5" />
+              Campaign Dates
             </div>
             <div className="space-y-3">
-              <div>
-                <p className="mb-1.5 text-xs font-medium text-muted-foreground">
-                  Sales report
-                </p>
-                <Select
-                  value={
-                    selectedAnalyticsId !== null && selectedAnalyticsId !== undefined
-                      ? String(selectedAnalyticsId)
-                      : undefined
-                  }
-                  onValueChange={(val) => onAnalyticsIdChange?.(Number(val))}
-                  disabled={isStreaming}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a sales data source…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {analyticsRuns && analyticsRuns.length > 0 ? (
-                      analyticsRuns.map((run) => (
-                        <SelectItem key={run.id} value={run.id}>
-                          {run.name || run.filename}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <div className="px-2 py-3 text-center text-xs text-muted-foreground">
-                        No sales data available for this location.
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="border-t" />
               <div className="flex items-center justify-between gap-4">
                 <p className="text-xs font-medium text-muted-foreground">
                   Start date
@@ -250,14 +205,14 @@ export function AiArtifactPanel({
             </div>
           </div>
 
-          {/* National Holidays */}
+          {/* Section 2: National Holidays */}
           <div className="rounded-lg border bg-muted/30 p-4">
             <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
               <GlobeIcon className="size-3.5" />
               National Holidays
             </div>
 
-            {!holidaysReady ? (
+            {isLoadingHolidays ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="space-y-1.5">
@@ -300,46 +255,71 @@ export function AiArtifactPanel({
             )}
           </div>
 
-          {/* Summary + Create Campaign */}
-          {!planning.campaignBrief && (
+          {/* Section 3: Analytics Run */}
+          <div className="rounded-lg border bg-muted/30 p-4">
+            <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <DatabaseIcon className="size-3.5" />
+              Analytics Run
+            </div>
+            <div>
+              <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                Sales report
+              </p>
+              <Select
+                value={
+                  selectedAnalyticsId !== null && selectedAnalyticsId !== undefined
+                    ? String(selectedAnalyticsId)
+                    : undefined
+                }
+                onValueChange={(val) => onAnalyticsIdChange?.(Number(val))}
+                disabled={isStreaming}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a sales data source…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {analyticsRuns && analyticsRuns.length > 0 ? (
+                    analyticsRuns.map((run) => (
+                      <SelectItem key={run.id} value={run.id}>
+                        {run.name || run.filename}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-3 text-center text-xs text-muted-foreground">
+                      No sales data available for this location.
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Create Location Profile Button */}
+          {!planning?.locationSummary && !planning?.campaignBrief && (
             <div className="rounded-lg border bg-muted/30 p-4">
-              <div className="mb-4 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <SparklesIcon className="size-3.5" />
-                Ready to generate
-              </div>
-              <div className="mb-4 space-y-2">
-                <p className="text-sm font-medium text-foreground">
-                  {selectedReportLabel(analyticsRuns, selectedAnalyticsId)}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {formatDate(campaignDates.dateStart)}
-                  <span className="mx-2 text-muted-foreground/80">→</span>
-                  {formatDate(campaignDates.dateEnd)}
-                </p>
-                {!hasSalesReportSelected && !isStreaming && (
-                  <p className="text-xs text-amber-700 dark:text-amber-400">
-                    Select a sales report above to enable campaign creation.
-                  </p>
-                )}
-              </div>
               <Button
-                className="w-auto"
-                onClick={onCreateCampaign}
+                className="w-full"
+                onClick={onCreateLocationProfile}
                 disabled={isStreaming || !hasSalesReportSelected}
                 title={
                   !hasSalesReportSelected
-                    ? "Select a sales report first"
+                    ? "Select an analytics run first"
                     : undefined
                 }
               >
-                <SparklesIcon className="size-4" />
-                Create Campaign
+                <MapPinIcon className="size-4" />
+                Create location profile
               </Button>
+              {!hasSalesReportSelected && !isStreaming && (
+                <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
+                  Select an analytics run above to enable this step.
+                </p>
+              )}
             </div>
           )}
 
           {/* Location profile — populated during campaign flow (check/create profile steps); planning SSE */}
-          {planning.locationSummary && planning.locationSummary.trim().length > 0 && (
+          {planning?.locationSummary && planning.locationSummary.trim().length > 0 && (
             <div className="rounded-lg border bg-muted/30 p-4">
               <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 <MapPinIcon className="size-3.5" />
@@ -377,13 +357,13 @@ export function AiArtifactPanel({
           )}
 
           {/* Campaign Brief */}
-          {planning.campaignBrief !== null && (
+          {planning?.campaignBrief !== null && (
             <div className="rounded-lg border bg-muted/30 p-4">
               <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 <SparklesIcon className="size-3.5" />
                 Campaign Brief
               </div>
-              {planning.campaignBrief === undefined ? (
+              {planning?.campaignBrief === undefined ? (
                 <div className="space-y-2">
                   <div className="h-3 w-3/4 animate-pulse rounded bg-muted-foreground/20" />
                   <div className="h-3 w-1/2 animate-pulse rounded bg-muted-foreground/20" />
@@ -394,28 +374,28 @@ export function AiArtifactPanel({
                   <div className="flex items-start justify-between gap-4">
                     <p className="text-xs font-medium text-muted-foreground">Theme</p>
                     <p className="text-right text-sm font-medium text-foreground">
-                      {planning.campaignBrief.campaign_theme}
+                      {planning?.campaignBrief?.campaign_theme}
                     </p>
                   </div>
                   <div className="border-t" />
                   <div className="flex items-start justify-between gap-4">
                     <p className="text-xs font-medium text-muted-foreground">Tone</p>
                     <p className="text-right text-sm text-foreground">
-                      {planning.campaignBrief.tone}
+                      {planning?.campaignBrief?.tone}
                     </p>
                   </div>
                   <div className="border-t" />
                   <div className="flex items-start justify-between gap-4">
                     <p className="text-xs font-medium text-muted-foreground">Audience</p>
                     <p className="text-right text-sm text-foreground">
-                      {planning.campaignBrief.target_audience}
+                      {planning?.campaignBrief?.target_audience}
                     </p>
                   </div>
                   <div className="border-t" />
                   <div className="flex items-start justify-between gap-4">
                     <p className="text-xs font-medium text-muted-foreground">Cadence</p>
                     <p className="text-right text-sm text-foreground">
-                      {planning.campaignBrief.posting_cadence}
+                      {planning?.campaignBrief?.posting_cadence}
                     </p>
                   </div>
                 </div>
@@ -424,7 +404,7 @@ export function AiArtifactPanel({
           )}
 
           {/* Post Schedule */}
-          {planning.campaignBrief && planning.campaignBrief.post_slots.length > 0 && (
+          {planning?.campaignBrief && planning.campaignBrief.post_slots.length > 0 && (
             <div className="rounded-lg border bg-muted/30 p-4">
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -432,13 +412,13 @@ export function AiArtifactPanel({
                   Post Schedule
                 </div>
                 <div className="flex items-center gap-1.5">
-                  {planning.campaignBrief.post_slots.some(
+                  {planning?.campaignBrief?.post_slots.some(
                     (s) => (s.format ?? "single").toLowerCase() === "carousel"
                   ) && (
                     <span className="flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
                       <GalleryHorizontalIcon className="size-3" />
                       {
-                        planning.campaignBrief.post_slots.filter(
+                        planning?.campaignBrief?.post_slots.filter(
                           (s) => (s.format ?? "single").toLowerCase() === "carousel"
                         ).length
                       }{" "}
@@ -446,12 +426,12 @@ export function AiArtifactPanel({
                     </span>
                   )}
                   <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                    {planning.campaignBrief.post_slots.length} posts
+                    {planning?.campaignBrief?.post_slots.length} posts
                   </span>
                 </div>
               </div>
               <div className="space-y-3">
-                {planning.campaignBrief.post_slots.map((slot, idx) => {
+                {planning?.campaignBrief?.post_slots.map((slot, idx) => {
                   const isCarousel =
                     (slot.format ?? "single").toLowerCase() === "carousel";
                   return (
@@ -499,7 +479,7 @@ export function AiArtifactPanel({
                         </p>
                       </div>
                     </div>
-                    {idx < planning.campaignBrief!.post_slots.length - 1 && (
+                    {idx < (planning?.campaignBrief?.post_slots.length ?? 0) - 1 && (
                       <div className="mt-3 border-t" />
                     )}
                   </div>
