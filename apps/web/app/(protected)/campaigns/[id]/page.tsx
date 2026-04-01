@@ -42,7 +42,8 @@ function buildInitialPlanning(
   campaign: NonNullable<CampaignDetailData["campaign"]>,
   brief: CampaignBriefData["campaignBrief"],
   fallbackDates: { dateStart: string; dateEnd: string },
-  locationSummary: string | null
+  locationSummary: string | null,
+  locationProfileId?: number | null
 ): Partial<PlanningArtifact> {
   const dateStart = campaign.startDate ?? fallbackDates.dateStart;
   const dateEnd = campaign.endDate ?? fallbackDates.dateEnd;
@@ -52,6 +53,7 @@ function buildInitialPlanning(
       dateStart,
       dateEnd,
       locationSummary,
+      locationProfileId,
       nationalHolidays: undefined,
       campaignBrief: null,
     };
@@ -63,6 +65,7 @@ function buildInitialPlanning(
     dateStart,
     dateEnd,
     locationSummary,
+    locationProfileId,
     nationalHolidays: undefined,
     campaignBrief: {
       campaign_theme: brief.campaignTheme,
@@ -148,6 +151,9 @@ export default async function Page({ params }: PageProps) {
   const rawSummary = profileData?.locationProfile?.summary?.trim();
   const locationSummary =
     rawSummary && rawSummary.length > 0 ? rawSummary : null;
+  const locationProfileId = profileData?.locationProfile?.id
+    ? parseInt(profileData.locationProfile.id, 10)
+    : undefined;
 
   const analyticsRuns = runsData.analyticsRuns;
 
@@ -155,7 +161,8 @@ export default async function Page({ params }: PageProps) {
     campaign,
     briefData.campaignBrief,
     fallbackDates,
-    locationSummary
+    locationSummary,
+    locationProfileId
   );
 
   const brief = briefData.campaignBrief;

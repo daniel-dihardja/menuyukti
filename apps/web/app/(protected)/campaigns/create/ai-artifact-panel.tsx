@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Artifact,
   ArtifactContent,
@@ -27,6 +27,7 @@ import {
   LayoutListIcon,
   MapPinIcon,
   SparklesIcon,
+  XIcon,
 } from "lucide-react";
 
 export type NationalHoliday = {
@@ -61,6 +62,7 @@ export type PlanningArtifact = {
   dateEnd: string;
   nationalHolidays?: NationalHoliday[] | null;
   locationSummary?: string | null;
+  locationProfileId?: number | null;
   campaignBrief?: CampaignBrief | null;
 };
 
@@ -72,6 +74,7 @@ type AiArtifactPanelProps = {
   onDatesChange: (dates: { dateStart: string; dateEnd: string }) => void;
   onCreateCampaign?: () => void;
   onCreateLocationProfile?: () => void;
+  onDeleteLocationProfile?: () => void;
   analyticsRuns?: AnalyticsRun[];
   selectedAnalyticsId?: number | null;
   onAnalyticsIdChange?: (id: number | null) => void;
@@ -138,6 +141,7 @@ export function AiArtifactPanel({
   onDatesChange,
   onCreateCampaign,
   onCreateLocationProfile,
+  onDeleteLocationProfile,
   analyticsRuns,
   selectedAnalyticsId,
   onAnalyticsIdChange,
@@ -157,6 +161,13 @@ export function AiArtifactPanel({
     selectedAnalyticsId !== null && selectedAnalyticsId !== undefined;
 
   const [locationFeedback, setLocationFeedback] = useState("");
+
+  // Clear feedback when location profile is deleted/disappears
+  useEffect(() => {
+    if (!planning?.locationSummary || planning.locationSummary.trim().length === 0) {
+      setLocationFeedback("");
+    }
+  }, [planning?.locationSummary]);
 
   return (
     <Artifact className="size-full">
@@ -324,6 +335,20 @@ export function AiArtifactPanel({
               <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 <MapPinIcon className="size-3.5" />
                 Location profile
+                <Button
+                  onClick={() => {
+                    if (window.confirm("Delete this location profile? This cannot be undone.")) {
+                      onDeleteLocationProfile?.();
+                    }
+                  }}
+                  disabled={isStreaming}
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto h-6 w-6 p-0"
+                  title="Delete location profile"
+                >
+                  <XIcon className="size-4" />
+                </Button>
               </div>
               <MessageResponse className="text-sm leading-relaxed text-foreground">
                 {planning.locationSummary.trim()}

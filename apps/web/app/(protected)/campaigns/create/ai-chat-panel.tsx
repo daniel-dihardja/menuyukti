@@ -56,6 +56,49 @@ const ACTIVITY_STEP_ORDER: Record<string, number> = {
   save_campaign: 15,
 };
 
+/** Removes persisted location profile from assistant message parts (DB row is gone). */
+function stripLocationProfileFromMessageParts(
+  parts: NonNullable<UIMessage["parts"]>
+): UIMessage["parts"] {
+  const out: UIMessage["parts"] = [];
+  for (const part of parts) {
+    if (part.type === "data-location-profile") {
+      continue;
+    }
+    if (part.type === "data-planning" && "data" in part) {
+      const d = part.data as PlanningArtifact;
+      out.push({
+        ...part,
+        data: {
+          ...d,
+          locationSummary: null,
+          locationProfileId: null,
+        },
+      } as (typeof parts)[number]);
+      continue;
+    }
+    out.push(part);
+  }
+  return out;
+}
+
+function stripLocationProfileFromMessages(messages: UIMessage[]): UIMessage[] {
+  return messages.map((msg) => {
+    if (msg.role !== "assistant" || !msg.parts?.length) return msg;
+    return { ...msg, parts: stripLocationProfileFromMessageParts(msg.parts) };
+  });
+}
+
+function findLastUserMessageIndex(messages: UIMessage[], needle: string): number {
+  const n = needle.trim().toLowerCase();
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg?.role !== "user") continue;
+    if (getMessageText(msg).trim().toLowerCase() === n) return i;
+  }
+  return -1;
+}
+
 function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
   const stepMap = new Map<string, ActivityStep>();
   for (const part of parts ?? []) {
@@ -97,6 +140,11 @@ export function AiChatPanel({
   const [selectedAnalyticsId, setSelectedAnalyticsId] = useState<number | null>(
     initialAnalyticsId ?? null
   );
+  const [locationProfileDeleted, setLocationProfileDeleted] = useState(false);
+  /** Hides stale location data from prior turns until the new "create location profile" response includes fresh parts. */
+  const [awaitingNewLocationProfile, setAwaitingNewLocationProfile] = useState(false);
+  /** After delete, ignore server `initialPlanning` location until a new profile is streamed. */
+  const [suppressInitialLocationSnapshot, setSuppressInitialLocationSnapshot] = useState(false);
   const threadId = useRef(crypto.randomUUID()).current;
   const requestBodyRef = useRef<Record<string, unknown>>({});
   requestBodyRef.current = {
@@ -119,7 +167,7 @@ export function AiChatPanel({
       }),
     []
   );
-  const { messages, sendMessage, status, stop } = useChat({ transport });
+  const { messages, sendMessage, setMessages, status, stop } = useChat({ transport });
 
   // Pre-populated artifact state — shown immediately on page load before the
   // LLM runs. The data-planning SSE events from the agent will override this
@@ -129,10 +177,15 @@ export function AiChatPanel({
       dateStart: initialPlanning?.dateStart ?? defaultDates.dateStart,
       dateEnd: initialPlanning?.dateEnd ?? defaultDates.dateEnd,
       nationalHolidays: initialPlanning?.nationalHolidays ?? undefined,
-      locationSummary: initialPlanning?.locationSummary ?? null,
+      locationSummary: suppressInitialLocationSnapshot
+        ? null
+        : (initialPlanning?.locationSummary ?? null),
+      locationProfileId: suppressInitialLocationSnapshot
+        ? null
+        : (initialPlanning?.locationProfileId ?? null),
       campaignBrief: initialPlanning?.campaignBrief ?? null,
     }),
-    [defaultDates, initialPlanning]
+    [defaultDates, initialPlanning, suppressInitialLocationSnapshot]
   );
 
   const planningArtifact = useMemo<PlanningArtifact>(() => {
@@ -168,10 +221,18 @@ export function AiChatPanel({
     }
 
     const base = planningBase ?? defaultPlanning;
-    return locationSummaryOverride !== undefined
-      ? { ...base, locationSummary: locationSummaryOverride }
-      : base;
-  }, [messages, defaultPlanning]);
+    const withLocationOverride =
+      locationSummaryOverride !== undefined
+        ? { ...base, locationSummary: locationSummaryOverride }
+        : base;
+
+    // Deleted or mid–re-create: do not show location from older assistant messages
+    if (locationProfileDeleted || awaitingNewLocationProfile) {
+      return { ...withLocationOverride, locationSummary: null, locationProfileId: null };
+    }
+
+    return withLocationOverride;
+  }, [messages, defaultPlanning, locationProfileDeleted, awaitingNewLocationProfile]);
 
   const displayedArtifact = useMemo<PlanningArtifact>(
     () => ({
@@ -219,6 +280,40 @@ export function AiChatPanel({
     void handleDatesChange(campaignDates);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // After "Create location profile", drop suppression once this turn's assistant streams location data.
+  useEffect(() => {
+    if (!awaitingNewLocationProfile) return;
+
+    const lastCreateIdx = findLastUserMessageIndex(messages, "create location profile");
+    if (lastCreateIdx === -1) return;
+
+    for (let i = lastCreateIdx + 1; i < messages.length; i++) {
+      const msg = messages[i];
+      if (msg?.role !== "assistant") continue;
+      for (const part of msg.parts ?? []) {
+        if (part.type === "data-planning" && part && "data" in part) {
+          const data = part.data as PlanningArtifact;
+          const ls = data.locationSummary;
+          if (ls != null && String(ls).trim() !== "") {
+            setAwaitingNewLocationProfile(false);
+            setLocationProfileDeleted(false);
+            setSuppressInitialLocationSnapshot(false);
+            return;
+          }
+        }
+        if (part.type === "data-location-profile" && part && "data" in part) {
+          const ls = (part.data as { locationSummary: string }).locationSummary;
+          if (ls != null && String(ls).trim() !== "") {
+            setAwaitingNewLocationProfile(false);
+            setLocationProfileDeleted(false);
+            setSuppressInitialLocationSnapshot(false);
+            return;
+          }
+        }
+      }
+    }
+  }, [messages, awaitingNewLocationProfile]);
 
   const handleTextChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -268,6 +363,7 @@ export function AiChatPanel({
   ]);
 
   const handleCreateLocationProfile = useCallback(async () => {
+    setAwaitingNewLocationProfile(true);
     await sendMessage(
       { text: "create location profile" },
       {
@@ -296,6 +392,32 @@ export function AiChatPanel({
     },
     [sendMessage]
   );
+
+  const handleDeleteLocationProfile = useCallback(async () => {
+    const profileId = displayedArtifact.locationProfileId;
+    if (!profileId) return;
+
+    try {
+      const response = await fetch("/api/location-profile/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: String(profileId) }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Failed to delete location profile:", errorData);
+        return;
+      }
+
+      setMessages((prev) => stripLocationProfileFromMessages(prev));
+      setLocationProfileDeleted(true);
+      setAwaitingNewLocationProfile(false);
+      setSuppressInitialLocationSnapshot(true);
+    } catch (err) {
+      console.error("Error deleting location profile:", err);
+    }
+  }, [displayedArtifact.locationProfileId, setMessages]);
 
   const isSubmitDisabled = useMemo(
     () => !text.trim() || status === "streaming" || status === "submitted",
@@ -405,6 +527,7 @@ export function AiChatPanel({
           onDatesChange={handleDatesChange}
           onCreateCampaign={handleCreateCampaign}
           onCreateLocationProfile={handleCreateLocationProfile}
+          onDeleteLocationProfile={handleDeleteLocationProfile}
           onLocationFeedback={handleLocationFeedback}
           analyticsRuns={analyticsRuns}
           selectedAnalyticsId={selectedAnalyticsId}
