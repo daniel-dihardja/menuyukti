@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gensrv "github.com/daniel-dihardja/gentic/pkg/server"
 	"github.com/daniel-dihardja/gentic/pkg/sse"
@@ -29,6 +30,12 @@ func InvokeHandler(runner *gensrv.Runner) http.HandlerFunc {
 		}
 
 		input := req.AgentInput()
+		if uid := r.Header.Get("X-Menuyukti-User-Id"); uid != "" {
+			if input.Metadata == nil {
+				input.Metadata = make(map[string]interface{})
+			}
+			input.Metadata[flowstate.KeyUserID] = uid
+		}
 		fwReq := gensrv.InvokeRequest{
 			Message:  input.Query,
 			Metadata: input.Metadata,
@@ -64,6 +71,12 @@ func StreamHandler(runner *gensrv.Runner) http.HandlerFunc {
 		}
 
 		input := req.AgentInput()
+		if uid := r.Header.Get("X-Menuyukti-User-Id"); uid != "" {
+			if input.Metadata == nil {
+				input.Metadata = make(map[string]interface{})
+			}
+			input.Metadata[flowstate.KeyUserID] = uid
+		}
 		fwReq := gensrv.InvokeRequest{
 			Message:  input.Query,
 			Metadata: input.Metadata,

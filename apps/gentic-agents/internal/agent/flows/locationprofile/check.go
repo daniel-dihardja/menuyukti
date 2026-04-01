@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 )
@@ -57,6 +58,6 @@ func (s CheckStep) Run(ctx context.Context, state *gen.State) error {
 		profile.Summary,
 	)
 	n.Notify("check_location_profile", gen.ActivityDone, "Location profile loaded", gen.WithDetail(string(profile.ID)))
-	EmitPlanningProgress(ctx, state)
+	step.EmitPlanningProgress(ctx, state)
 	return nil
 }

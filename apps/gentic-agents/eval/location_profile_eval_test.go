@@ -31,9 +31,9 @@ type stubProfileSaver struct {
 	Saves int
 }
 
-func (s *stubProfileSaver) SaveLocationProfile(ctx context.Context, endpoint, locationID, analyticsID, summary string) error {
+func (s *stubProfileSaver) SaveLocationProfile(ctx context.Context, endpoint, locationID, analyticsID, summary string) (string, error) {
 	s.Saves++
-	return nil
+	return "stub-profile-id", nil
 }
 
 func profilePipelineLLM() *ge.MockLLM {

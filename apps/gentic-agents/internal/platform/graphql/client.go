@@ -315,24 +315,24 @@ func FetchLocationData(ctx context.Context, endpoint, locationID, analyticsRunID
 	return data.Location, data.OperatingProfile, nil
 }
 
-// SaveLocationProfile persists (upserts) a location profile summary.
-func SaveLocationProfile(ctx context.Context, endpoint, locationID, analyticsRunID, summary string) error {
+// SaveLocationProfile persists (upserts) a location profile summary and returns the saved row id.
+func SaveLocationProfile(ctx context.Context, endpoint, locationID, analyticsRunID, summary string) (string, error) {
 	raw, err := postGQL(ctx, endpoint, saveLocationProfileMutation, map[string]interface{}{
 		"locationId":       locationID,
-		"analyticsRunId":   analyticsRunID,
+		"analyticsRunId": analyticsRunID,
 		"summary":          summary,
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 	var data saveLocationProfileDataWrapper
 	if err := json.Unmarshal(raw, &data); err != nil {
-		return err
+		return "", err
 	}
 	if data.SaveLocationProfile == nil {
-		return fmt.Errorf("graphql: saveLocationProfile returned no data")
+		return "", fmt.Errorf("graphql: saveLocationProfile returned no data")
 	}
-	return nil
+	return string(data.SaveLocationProfile.ID), nil
 }
 
 // FetchCampaignBrief calls campaignBrief(campaignId). Returns nil, nil when not found.
