@@ -97,7 +97,6 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) (err error) {
 	if op != nil {
 		n.Notify("create_location_profile", gen.ActivityDone, "Create a location profile")
 
-		totalRefine := s.MaxReflectionIterations + 1
 		genPrompt := buildOperatingDataLocationSummaryPrompt(loc, op)
 		refSnap := buildReflectionSnapshot(loc, op)
 		summary, err = reflect.RunReflectLoop(ctx, reflect.ReflectLoopParams{
@@ -111,13 +110,18 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) (err error) {
 				return buildReflectionUser(refSnap, draft)
 			},
 			BuildRevisionPrompt: buildRestaurantLocationRevisionPrompt,
-			OnIteration:         flowutil.NotifyRefining("profile_refinement"),
+			OnIteration: func(ctx context.Context, current, total int) {
+				nn := gen.NotifierFromContext(ctx)
+				if nn != nil {
+					nn.Notify("profile_refinement", gen.ActivityReflecting,
+						fmt.Sprintf("Refining (%d/%d)", current, total), gen.WithTransient(true))
+				}
+			},
 		})
 		if err != nil {
 			return err
 		}
-		n.Notify("profile_refinement", gen.ActivityDone,
-			fmt.Sprintf("Refining (%d/%d)", totalRefine, totalRefine))
+		n.Notify("profile_refinement", gen.ActivityDone, "Profile refined")
 	} else {
 		summary, err = llm.Chat(ctx, model, generationSystemPrompt, buildInferenceOnlyLocationSummaryPrompt(loc))
 		if err != nil {
@@ -151,8 +155,10 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) (err error) {
 		}
 	}
 
-	state.Output = notify + "\n\n" + summary
+	// Emit planning progress (SSE data-location-profile) for artifact panel
 	n.Notify("location_profile_saved", gen.ActivityDone, "Location profile saved", gen.WithDetail(loc.Name))
 	step.EmitPlanningProgress(ctx, state)
+	// Set output to the confirmation message so the LLM responds to the user
+	state.Output = notify
 	return nil
 }
