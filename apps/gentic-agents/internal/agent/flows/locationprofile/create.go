@@ -145,15 +145,9 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) (err error) {
 		state.SetMetadata(flowstate.KeyLocationProfile, &graphql.LocationProfile{Summary: summary})
 	}
 
-	notify, err := llm.Chat(ctx, model, profileCreatedNotifySystem, buildProfileCreatedNotificationUserPrompt(loc))
-	if err != nil {
-		notify = fallbackProfileCreatedMessage(loc)
-	} else {
-		notify = strings.TrimSpace(notify)
-		if notify == "" {
-			notify = fallbackProfileCreatedMessage(loc)
-		}
-	}
+	// Short, deterministic copy — full profile is streamed to the artifact; avoid a second LLM turn
+	// that could add long recap text to state.Output (e.g. campaign pipeline).
+	notify := fallbackProfileCreatedMessage(loc)
 
 	// Emit planning progress (SSE data-location-profile) for artifact panel
 	n.Notify("location_profile_saved", gen.ActivityDone, "Location profile saved", gen.WithDetail(loc.Name))

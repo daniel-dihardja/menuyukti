@@ -40,10 +40,11 @@ func createProfileHandler(endpoint, model string, maxReflectionIterations int) f
 				"created": false,
 			})
 		}
+		// Omit summary: the full profile is streamed to the artifact (data-planning).
+		// Including it here makes the ReAct model repeat the entire brief in chat.
 		return json.Marshal(map[string]interface{}{
 			"created": true,
 			"id":      string(profile.ID),
-			"summary": profile.Summary,
 		})
 	}
 }
