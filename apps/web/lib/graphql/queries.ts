@@ -183,12 +183,17 @@ export const LOCATION_PROFILE_QUERY = `
     locationProfile(locationId: $locationId, analyticsRunId: $analyticsRunId) {
       id
       summary
+      updatedAt
     }
   }
 `;
 
 export type LocationProfileData = {
-  locationProfile: { id: string; summary: string | null } | null;
+  locationProfile: {
+    id: string;
+    summary: string | null;
+    updatedAt: string | null;
+  } | null;
 };
 
 export const DELETE_LOCATION_PROFILE_MUTATION = `
@@ -209,6 +214,19 @@ export const DELETE_CAMPAIGN_MUTATION = `
 
 export type DeleteCampaignData = {
   deleteCampaign: boolean;
+};
+
+export const CREATE_CAMPAIGN_MUTATION = `
+  mutation CreateCampaign($locationId: Int!, $name: String!) {
+    createCampaign(locationId: $locationId, name: $name) {
+      id
+      name
+    }
+  }
+`;
+
+export type CreateCampaignData = {
+  createCampaign: { id: string; name: string };
 };
 
 export const CAMPAIGNS_BY_LOCATION_QUERY = `

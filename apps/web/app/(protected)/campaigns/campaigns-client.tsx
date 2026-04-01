@@ -75,6 +75,35 @@ export function CampaignsClient({ branches }: Props) {
 
   const { campaigns, loading, refetch } = useCampaigns(locationId);
 
+  const [isCreating, setIsCreating] = useState(false);
+
+  const handleCreateCampaign = useCallback(async () => {
+    if (!locationId) return;
+    setIsCreating(true);
+    try {
+      const res = await fetch("/api/campaigns/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locationId }),
+      });
+      const body = (await res.json()) as { id?: number; error?: string };
+      if (!res.ok) {
+        throw new Error(body?.error || "Failed to create campaign");
+      }
+      if (body.id == null || !Number.isFinite(Number(body.id))) {
+        throw new Error("Invalid response from server");
+      }
+      router.push(routes.campaigns.detail(body.id));
+    } catch (err) {
+      console.error("Failed to create campaign:", err);
+      alert(
+        err instanceof Error ? err.message : "Failed to create campaign."
+      );
+    } finally {
+      setIsCreating(false);
+    }
+  }, [locationId, router]);
+
   const handleDelete = useCallback(
     async (id: number) => {
       const confirmed = confirm("Are you sure you want to delete this campaign?");
@@ -95,10 +124,6 @@ export function CampaignsClient({ branches }: Props) {
     [refetch]
   );
 
-  const createHref = locationId
-    ? routes.campaigns.createWithLocation(locationId)
-    : routes.campaigns.create;
-
   return (
     <div className="space-y-6">
       <section className="flex flex-wrap items-end gap-3">
@@ -111,11 +136,11 @@ export function CampaignsClient({ branches }: Props) {
         />
         <Button
           onClick={() => {
-            if (locationId) router.push(routes.campaigns.createWithLocation(locationId));
+            void handleCreateCampaign();
           }}
-          disabled={!locationId}
+          disabled={!locationId || isCreating}
         >
-          {t("create")}
+          {isCreating ? t("loading") : t("create")}
         </Button>
       </section>
 
@@ -126,7 +151,12 @@ export function CampaignsClient({ branches }: Props) {
       ) : loading ? (
         <div className="border rounded-md p-8 text-left">{t("loading")}</div>
       ) : (
-        <CampaignsTable campaigns={campaigns} onDelete={handleDelete} createHref={createHref} />
+        <CampaignsTable
+          campaigns={campaigns}
+          onDelete={handleDelete}
+          onCreateCampaign={handleCreateCampaign}
+          isCreating={isCreating}
+        />
       )}
     </div>
   );

@@ -78,10 +78,11 @@ function buildInitialPlanning(
 }
 
 export default async function Page({ params }: PageProps) {
-  const { userId } = await auth();
-  if (!userId) {
+  const { userId: authUserId } = await auth();
+  if (!authUserId) {
     notFound();
   }
+  const userId = authUserId;
 
   const { id: rawId } = await params;
   const campaignIdNum = Number(rawId);
@@ -125,37 +126,109 @@ export default async function Page({ params }: PageProps) {
   }
 
   const briefForProfile = briefData.campaignBrief;
-  const canLoadProfile =
+  const briefAnalyticsId =
     briefForProfile != null &&
     briefForProfile.analyticsRunId != null &&
-    Number.isFinite(Number(briefForProfile.analyticsRunId));
+    Number.isFinite(Number(briefForProfile.analyticsRunId))
+      ? Number(briefForProfile.analyticsRunId)
+      : null;
 
-  const [profileData, runsData] = await Promise.all([
-    canLoadProfile
-      ? graphqlQuery<LocationProfileData>(
-          LOCATION_PROFILE_QUERY,
-          {
-            locationId: String(locationId),
-            analyticsRunId: String(briefForProfile!.analyticsRunId),
-          },
-          userId
-        ).catch(() => null)
-      : Promise.resolve<LocationProfileData | null>(null),
-    graphqlQuery<AnalyticsRunsByLocationData>(
-      ANALYTICS_RUNS_BY_LOCATION_QUERY,
-      { locationId },
-      userId
-    ).catch(() => ({ analyticsRuns: [] as AnalyticsRunsByLocationData["analyticsRuns"] })),
-  ]);
-
-  const rawSummary = profileData?.locationProfile?.summary?.trim();
-  const locationSummary =
-    rawSummary && rawSummary.length > 0 ? rawSummary : null;
-  const locationProfileId = profileData?.locationProfile?.id
-    ? parseInt(profileData.locationProfile.id, 10)
-    : undefined;
+  const runsData = await graphqlQuery<AnalyticsRunsByLocationData>(
+    ANALYTICS_RUNS_BY_LOCATION_QUERY,
+    { locationId },
+    userId
+  ).catch(() => ({ analyticsRuns: [] as AnalyticsRunsByLocationData["analyticsRuns"] }));
 
   const analyticsRuns = runsData.analyticsRuns;
+
+  type ResolvedLocationProfile = {
+    id: string;
+    summary: string;
+    updatedAt: string | null;
+    analyticsRunId: number;
+  };
+
+  async function fetchProfileForAnalyticsRun(
+    analyticsRunId: number
+  ): Promise<ResolvedLocationProfile | null> {
+    try {
+      const data = await graphqlQuery<LocationProfileData>(
+        LOCATION_PROFILE_QUERY,
+        {
+          locationId: String(locationId),
+          analyticsRunId: String(analyticsRunId),
+        },
+        userId
+      );
+      const p = data.locationProfile;
+      const summary = p?.summary?.trim();
+      if (!p || !summary) return null;
+      return {
+        id: p.id,
+        summary,
+        updatedAt: p.updatedAt ?? null,
+        analyticsRunId,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Without a campaign brief row, the server still has no analyticsRunId on the campaign.
+   * Location profiles are stored per (location, analytics run); load any existing profile
+   * for this venue so revisits show the artifact after "Create location profile".
+   */
+  async function resolveLocationProfileFromRuns(): Promise<ResolvedLocationProfile | null> {
+    if (analyticsRuns.length === 0) return null;
+    const rows = (
+      await Promise.all(
+        analyticsRuns.map(async (run) => {
+          const id = Number(run.id);
+          if (!Number.isFinite(id)) return null;
+          return fetchProfileForAnalyticsRun(id);
+        })
+      )
+    ).filter((row): row is ResolvedLocationProfile => row != null);
+    if (rows.length === 0) return null;
+    if (rows.length === 1) return rows[0] ?? null;
+    const sorted = [...rows].sort((a, b) => {
+      const ta = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+      const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+      if (tb !== ta) return tb - ta;
+      return Number(b.id) - Number(a.id);
+    });
+    return sorted[0] ?? null;
+  }
+
+  let locationSummary: string | null = null;
+  let locationProfileId: number | undefined = undefined;
+  let profileAnalyticsRunId: number | null = briefAnalyticsId;
+
+  if (briefAnalyticsId != null) {
+    const profileData = await graphqlQuery<LocationProfileData>(
+      LOCATION_PROFILE_QUERY,
+      {
+        locationId: String(locationId),
+        analyticsRunId: String(briefAnalyticsId),
+      },
+      userId
+    ).catch(() => null);
+
+    const rawSummary = profileData?.locationProfile?.summary?.trim();
+    locationSummary =
+      rawSummary && rawSummary.length > 0 ? rawSummary : null;
+    locationProfileId = profileData?.locationProfile?.id
+      ? parseInt(profileData.locationProfile.id, 10)
+      : undefined;
+  } else {
+    const resolved = await resolveLocationProfileFromRuns();
+    if (resolved) {
+      locationSummary = resolved.summary;
+      locationProfileId = parseInt(resolved.id, 10);
+      profileAnalyticsRunId = resolved.analyticsRunId;
+    }
+  }
 
   const initialPlanning = buildInitialPlanning(
     campaign,
@@ -169,7 +242,7 @@ export default async function Page({ params }: PageProps) {
   const initialAnalyticsId =
     brief != null && brief.analyticsRunId != null
       ? Number(brief.analyticsRunId)
-      : null;
+      : profileAnalyticsRunId;
 
   const defaultDates = {
     dateStart: campaign.startDate ?? fallbackDates.dateStart,
