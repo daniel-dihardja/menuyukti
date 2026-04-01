@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Artifact,
   ArtifactContent,
@@ -10,6 +11,7 @@ import {
 import { MessageResponse } from "@workspace/ui/components/ai-elements/message";
 import { Button } from "@workspace/ui/components/button";
 import { DatePicker } from "@workspace/ui/components/date-picker";
+import { Textarea } from "@workspace/ui/components/textarea";
 import {
   Select,
   SelectContent,
@@ -73,6 +75,7 @@ type AiArtifactPanelProps = {
   selectedAnalyticsId?: number | null;
   onAnalyticsIdChange?: (id: number | null) => void;
   isStreaming?: boolean;
+  onLocationFeedback?: (feedback: string) => void;
 };
 
 function selectedReportLabel(
@@ -136,6 +139,7 @@ export function AiArtifactPanel({
   selectedAnalyticsId,
   onAnalyticsIdChange,
   isStreaming,
+  onLocationFeedback,
 }: AiArtifactPanelProps) {
   if (!planning) {
     return (
@@ -164,6 +168,8 @@ export function AiArtifactPanel({
 
   const hasSalesReportSelected =
     selectedAnalyticsId !== null && selectedAnalyticsId !== undefined;
+
+  const [locationFeedback, setLocationFeedback] = useState("");
 
   return (
     <Artifact className="size-full">
@@ -342,6 +348,31 @@ export function AiArtifactPanel({
               <MessageResponse className="text-sm leading-relaxed text-foreground">
                 {planning.locationSummary.trim()}
               </MessageResponse>
+              <div className="mt-4 border-t pt-4 space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Have feedback on this profile? Describe any corrections or additions and the AI will update it.
+                </p>
+                <Textarea
+                  placeholder="e.g. The restaurant focuses on vegan cuisine, not general Italian…"
+                  value={locationFeedback}
+                  onChange={(e) => setLocationFeedback(e.target.value)}
+                  disabled={isStreaming}
+                  className="resize-none text-sm"
+                  rows={3}
+                />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={isStreaming || !locationFeedback.trim()}
+                  onClick={() => {
+                    if (!locationFeedback.trim()) return;
+                    onLocationFeedback?.(locationFeedback.trim());
+                    setLocationFeedback("");
+                  }}
+                >
+                  Send Feedback
+                </Button>
+              </div>
             </div>
           )}
 

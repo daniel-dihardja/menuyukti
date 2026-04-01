@@ -263,6 +263,15 @@ export function AiChatPanel({
     sendMessage,
   ]);
 
+  const handleLocationFeedback = useCallback(
+    async (feedback: string) => {
+      await sendMessage({
+        text: `Please consider this feedback for the location profile, update the profile if needed: ${feedback}`,
+      });
+    },
+    [sendMessage]
+  );
+
   const isSubmitDisabled = useMemo(
     () => !text.trim() || status === "streaming" || status === "submitted",
     [text, status]
@@ -370,6 +379,7 @@ export function AiChatPanel({
           campaignDates={campaignDates}
           onDatesChange={handleDatesChange}
           onCreateCampaign={handleCreateCampaign}
+          onLocationFeedback={handleLocationFeedback}
           analyticsRuns={analyticsRuns}
           selectedAnalyticsId={selectedAnalyticsId}
           onAnalyticsIdChange={setSelectedAnalyticsId}
