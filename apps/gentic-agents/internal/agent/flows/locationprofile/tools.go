@@ -20,6 +20,34 @@ type UpdateProfileInput struct {
 	Summary string `json:"summary" schema:"required"`
 }
 
+// CreateProfileInput has no parameters; location/analytics context comes from the request.
+type CreateProfileInput struct{}
+
+func createProfileHandler(endpoint, model string, maxReflectionIterations int) func(context.Context, *gen.State, json.RawMessage) (json.RawMessage, error) {
+	step := CreateStep{
+		GraphQLEndpoint:         endpoint,
+		Model:                   model,
+		MaxReflectionIterations: maxReflectionIterations,
+	}
+	return func(ctx context.Context, state *gen.State, _ json.RawMessage) (json.RawMessage, error) {
+		state.DeleteMetadata(flowstate.KeyLocationProfile)
+		if err := step.Run(ctx, state); err != nil {
+			return nil, err
+		}
+		profile, ok := flowstate.LocationProfileFromMetadata(state)
+		if !ok {
+			return json.Marshal(map[string]interface{}{
+				"created": false,
+			})
+		}
+		return json.Marshal(map[string]interface{}{
+			"created": true,
+			"id":      string(profile.ID),
+			"summary": profile.Summary,
+		})
+	}
+}
+
 func fetchProfileHandler(endpoint string) func(context.Context, *gen.State, json.RawMessage) (json.RawMessage, error) {
 	return func(ctx context.Context, state *gen.State, _ json.RawMessage) (json.RawMessage, error) {
 		locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "fetch location profile")
