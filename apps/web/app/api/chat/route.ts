@@ -40,6 +40,7 @@ const SSE_EVENT = {
   ERROR: "error",
   DATA_PLANNING: "data-planning",
   DATA_ACTIVITY: "data-activity",
+  DATA_LOCATION_PROFILE: "data-location-profile",
 } as const;
 
 const SSE_DONE = "[DONE]" as const;
@@ -81,6 +82,7 @@ interface AgentSSEChunk {
     detail?: string;
     transient?: boolean;
   };
+  location_profile_update?: { summary: string };
 }
 
 async function parseAgentSSEAndForward(
@@ -132,6 +134,18 @@ async function parseAgentSSEAndForward(
                     nationalHolidays: data.planning.nationalHolidays ?? null,
                     locationSummary: data.planning.locationSummary ?? null,
                     campaignBrief: data.planning.campaignBrief ?? null,
+                  },
+                })
+              )
+            );
+          }
+          if (data.location_profile_update?.summary != null) {
+            controller.enqueue(
+              encoder.encode(
+                sseLine({
+                  type: SSE_EVENT.DATA_LOCATION_PROFILE,
+                  data: {
+                    locationSummary: data.location_profile_update.summary,
                   },
                 })
               )

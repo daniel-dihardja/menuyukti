@@ -135,17 +135,41 @@ export function AiChatPanel({
   );
 
   const planningArtifact = useMemo<PlanningArtifact>(() => {
+    let planningBase: PlanningArtifact | null = null;
+    let locationSummaryOverride: string | undefined = undefined;
+
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
       if (msg?.role !== "assistant") continue;
       const parts = msg.parts ?? [];
       for (let j = parts.length - 1; j >= 0; j--) {
         const part = parts[j];
-        if (part?.type === "data-planning" && "data" in part)
-          return part.data as PlanningArtifact;
+        if (
+          !planningBase &&
+          part?.type === "data-planning" &&
+          "data" in part
+        ) {
+          planningBase = part.data as PlanningArtifact;
+        }
+        if (
+          locationSummaryOverride === undefined &&
+          part?.type === "data-location-profile" &&
+          "data" in part
+        ) {
+          locationSummaryOverride = (
+            part.data as { locationSummary: string }
+          ).locationSummary;
+        }
+      }
+      if (planningBase !== null && locationSummaryOverride !== undefined) {
+        break;
       }
     }
-    return defaultPlanning;
+
+    const base = planningBase ?? defaultPlanning;
+    return locationSummaryOverride !== undefined
+      ? { ...base, locationSummary: locationSummaryOverride }
+      : base;
   }, [messages, defaultPlanning]);
 
   const displayedArtifact = useMemo<PlanningArtifact>(
