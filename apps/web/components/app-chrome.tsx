@@ -20,7 +20,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
     HIDE_HEADER_PREFIXES.some(
       (p) => pathname === p || pathname.startsWith(`${p}/`),
     );
-  const isRootPage = pathname === "/" || pathname === "";
+  const isRootPage = pathname === "/" || pathname === "" || pathname === "/shop";
   const showChromeHeader =
     !hideHeader && (isSignedIn || !isRootPage);
   const profileInSidebarHeader =

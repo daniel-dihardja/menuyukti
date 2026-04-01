@@ -76,6 +76,77 @@
     "mobileCta": {
       "primary": "Sign in",
       "secondary": "Learn More"
+    },
+    "shopLink": "Print Shop"
+  },
+  "shop": {
+    "hero": {
+      "headline": "Brand Every Corner of Your Restaurant",
+      "subtitle": "Custom print-on-demand products designed for restaurants. From wall art to takeaway packaging, get your brand on everything.",
+      "ctaPrimary": "Browse Products"
+    },
+    "intro": "Great food deserves great presentation. Our restaurant print shop handles everything from ambiance-setting wall prints to branded packaging — with no minimum order and fast turnaround.",
+    "categories": {
+      "title": "Product Categories",
+      "subtitle": "Everything your restaurant needs, printed and delivered."
+    },
+    "products": {
+      "wallPosters": {
+        "title": "Wall Posters & Art Prints",
+        "description": "Set the mood. Large-format prints and framed art that define your restaurant's character and aesthetic."
+      },
+      "menuBackgrounds": {
+        "title": "Menu Backgrounds & Templates",
+        "description": "Beautiful, print-ready menu background images and layout templates sized for standard menu boards and inserts."
+      },
+      "tableCards": {
+        "title": "Table Cards & Tent Cards",
+        "description": "Promote specials, QR codes, and loyalty programs right at the table — double-sided, glossy or matte."
+      },
+      "windowGraphics": {
+        "title": "Window Graphics & Storefront Decals",
+        "description": "Turn your windows into a visual statement. Frosted, perforated, and full-color vinyl for storefronts."
+      },
+      "uniforms": {
+        "title": "Staff Uniforms & Branded Apparel",
+        "description": "Aprons, polo shirts, and caps with your logo. Consistent, professional, and built for daily kitchen and floor use."
+      },
+      "packaging": {
+        "title": "Branded Packaging",
+        "description": "Paper bags, napkins, takeaway boxes, and cups with your brand identity — reinforcing recognition on every order."
+      }
+    },
+    "howItWorks": {
+      "title": "How it works",
+      "steps": {
+        "choose": {
+          "title": "1. Choose your product",
+          "description": "Pick from our restaurant-specific catalog. Every product is sized and spec'd for food service."
+        },
+        "upload": {
+          "title": "2. Upload your brand assets",
+          "description": "Add your logo, colors, and artwork. Our templates make it simple — no design agency required."
+        },
+        "deliver": {
+          "title": "3. We print and deliver",
+          "description": "Production starts immediately. Fast turnaround with tracked shipping to your restaurant."
+        }
+      }
+    },
+    "cta": {
+      "title": "Ready to brand every touchpoint?",
+      "description": "No minimum orders. Restaurant-grade print quality. Delivered fast.",
+      "primary": "Get Started"
+    },
+    "footer": {
+      "about": "About",
+      "contact": "Contact",
+      "privacy": "Privacy Policy",
+      "copyright": "© 2025 Menuyukti Print"
+    },
+    "mobileCta": {
+      "primary": "Browse Products",
+      "secondary": "Learn More"
     }
   },
   "sidebar": {

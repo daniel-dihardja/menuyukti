@@ -58,4 +58,6 @@ export const routes = {
   },
 
   docs: "/docs",
+
+  shop: "/shop",
 };

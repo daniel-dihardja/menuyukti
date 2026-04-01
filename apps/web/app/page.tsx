@@ -27,6 +27,14 @@ export default async function LandingPage() {
               {t("brand")}
             </h1>
           </div>
+          <div className="hidden md:flex items-center gap-6">
+            <Link
+              href={routes.shop}
+              className="text-sm text-foreground/70 hover:text-foreground transition-colors"
+            >
+              {t("shopLink")}
+            </Link>
+          </div>
         </div>
       </header>
 
