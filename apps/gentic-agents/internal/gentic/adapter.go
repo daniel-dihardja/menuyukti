@@ -63,10 +63,17 @@ func BuildAgent(model, graphqlEndpoint string, maxReflectionIterations int) gen.
 			}),
 	)
 	locationProfileChatFlow := locationprofile.NewChatReactActor(model, graphqlEndpoint, maxReflectionIterations)
-	resolver := intent.NewRouter("chat", "create_campaign", "location_profile_chat", "create_location_profile").
+	campaignBriefChatFlow := campaign.NewChatReactActor(model, graphqlEndpoint, maxReflectionIterations)
+	resolver := intent.NewRouter(
+		"chat", "create_campaign",
+		"location_profile_chat", "create_location_profile",
+		"campaign_brief_chat", "update_campaign_brief",
+	).
 		On("create_campaign", campaignFlow).
 		On("location_profile_chat", locationProfileChatFlow).
 		On("create_location_profile", locationProfileChatFlow).
+		On("campaign_brief_chat", campaignBriefChatFlow).
+		On("update_campaign_brief", campaignBriefChatFlow).
 		Default(chatFlow)
 	return gen.Agent{Resolver: resolver}
 }
