@@ -1,0 +1,10 @@
+.shop-glass-nav {
+  background: rgba(250, 249, 246, 0.8);
+  backdrop-filter: blur(12px);
+}
+
+.shop-editorial-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2rem;
+}
