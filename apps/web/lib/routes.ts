@@ -60,4 +60,5 @@ export const routes = {
   docs: "/docs",
 
   shop: "/shop",
+  shopProduct: (slug: string) => `/shop/${slug}`,
 };
