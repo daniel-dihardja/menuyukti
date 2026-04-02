@@ -23,7 +23,7 @@ import {
 import { Spinner } from "@workspace/ui/components/spinner";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AiArtifactPanel, type PlanningArtifact, type NationalHoliday } from "./ai-artifact-panel";
 import { AgentActivityFeed, type ActivityStep } from "./agent-activity-feed";
 
@@ -145,7 +145,18 @@ export function AiChatPanel({
   const [awaitingNewLocationProfile, setAwaitingNewLocationProfile] = useState(false);
   /** After delete, ignore server `initialPlanning` location until a new profile is streamed. */
   const [suppressInitialLocationSnapshot, setSuppressInitialLocationSnapshot] = useState(false);
-  const threadId = useRef(crypto.randomUUID()).current;
+  const [threadId, setThreadId] = useState("");
+  useLayoutEffect(() => {
+    const key = `chat-thread-${campaignId ?? "default"}`;
+    const stored = sessionStorage.getItem(key);
+    if (stored) {
+      setThreadId(stored);
+      return;
+    }
+    const id = crypto.randomUUID();
+    sessionStorage.setItem(key, id);
+    setThreadId(id);
+  }, [campaignId]);
   const requestBodyRef = useRef<Record<string, unknown>>({});
   requestBodyRef.current = {
     locationId,
