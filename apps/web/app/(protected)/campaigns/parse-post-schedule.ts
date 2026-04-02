@@ -1,4 +1,4 @@
-import type { PostSlot } from "./create/ai-artifact-panel";
+import type { PostSlot } from "./_components/ai-artifact-panel";
 
 function normalizeTheme(
   raw: unknown

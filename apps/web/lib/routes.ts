@@ -38,11 +38,6 @@ export const routes = {
 
   campaigns: {
     list: "/campaigns",
-    create: "/campaigns/create",
-    createWithAnalytics: (analyticsId: string | number) =>
-      `/campaigns/create?analyticsId=${analyticsId}`,
-    createWithLocation: (locationId: string | number) =>
-      `/campaigns/create?locationId=${locationId}`,
     detail: (id: string | number) => `/campaigns/${id}`,
   },
 

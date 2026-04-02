@@ -6,8 +6,8 @@ import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routes } from "@/lib/routes";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
-import { AiChatPanel } from "../create/ai-chat-panel";
-import type { PlanningArtifact } from "../create/ai-artifact-panel";
+import { AiChatPanel } from "../_components/ai-chat-panel";
+import type { PlanningArtifact } from "../_components/ai-artifact-panel";
 import { graphqlQuery } from "@/lib/graphql/client";
 import {
   ANALYTICS_RUNS_BY_LOCATION_QUERY,

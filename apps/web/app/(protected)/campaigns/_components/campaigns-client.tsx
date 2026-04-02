@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useAnalytics } from "../analytics/use-analytics";
-import { LocationSelect } from "../analytics/sales/location-select";
+import { useAnalytics } from "../../analytics/use-analytics";
+import { LocationSelect } from "../../analytics/sales/location-select";
 import { CampaignsTable } from "./campaigns-table";
 import { Button } from "@workspace/ui/components/button";
 import { routes } from "@/lib/routes";
