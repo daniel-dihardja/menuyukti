@@ -1,0 +1,18 @@
+{
+  "collections": [
+    { "id": "all", "label": "All Collections" },
+    { "id": "posters", "label": "Posters" },
+    { "id": "menu-backgrounds", "label": "Menu Backgrounds" },
+    { "id": "custom-prints", "label": "Custom Prints" },
+    { "id": "limited-edition", "label": "Limited Edition" }
+  ],
+  "sortOptions": [
+    { "id": "newest", "label": "Newest" },
+    { "id": "price-asc", "label": "Price: Low to High" },
+    { "id": "price-desc", "label": "Price: High to Low" },
+    { "id": "popularity", "label": "Popularity" }
+  ],
+  "labels": {
+    "sortBy": "Sort By:"
+  }
+}

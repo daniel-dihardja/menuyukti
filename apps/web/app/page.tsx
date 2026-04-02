@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@workspace/ui/components/button";
+import { CopyrightFooter } from "@/components/copyright-footer";
 import { routes } from "@/lib/routes";
 import { getTranslations } from "next-intl/server";
 import {
@@ -18,7 +19,7 @@ export default async function LandingPage() {
   const t = await getTranslations("landing");
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative pb-24 md:pb-0">
+    <div className="relative flex min-h-screen flex-col bg-background pb-24 text-foreground md:pb-0">
       <header className="w-full sticky top-0 z-50  backdrop-blur-md border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -203,28 +204,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <footer className="bg-card border-t border-border py-6">
-        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-center gap-6 text-center text-sm text-foreground/80">
-          <Link href="/docs" className="hover:text-foreground transition-colors">
-            {t("footer.about")}
-          </Link>
-
-          <a
-            href="mailto:hello@menuyukti.com"
-            className="hover:text-foreground transition-colors"
-          >
-            {t("footer.contact")}
-          </a>
-
-          <Link href="/docs" className="hover:text-foreground transition-colors">
-            {t("footer.privacy")}
-          </Link>
-
-          <span className="text-foreground/60">
-            {t("footer.copyright")}
-          </span>
-        </div>
-      </footer>
+      <CopyrightFooter />
 
       <div className="fixed bottom-0 left-0 w-full  backdrop-blur-md p-4 flex md:hidden gap-4 z-50">
         <Button className="w-full" size="lg" asChild>
