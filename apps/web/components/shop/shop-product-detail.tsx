@@ -89,22 +89,19 @@ export function ShopProductDetail({ product }: Props) {
   return (
     <div className="mb-24">
       <nav
-        className="mb-10 text-sm text-[#5c605c]"
+        className="mb-10 text-sm text-muted-foreground"
         aria-label="Breadcrumb"
       >
         <ol className="flex flex-wrap items-center gap-2">
           <li>
-            <Link
-              href={routes.shop}
-              className="font-medium text-[#934b28] underline-offset-4 hover:underline"
-            >
+            <Link href={routes.shop} className="font-medium text-primary">
               Shop
             </Link>
           </li>
-          <li aria-hidden className="text-[#b0b3ae]">
+          <li aria-hidden className="text-muted-foreground/70">
             /
           </li>
-          <li className="font-[family-name:var(--font-shop-headline)] text-[#2f3430]">
+          <li className="font-[family-name:var(--font-shop-headline)] text-foreground">
             {product.title}
           </li>
         </ol>
@@ -112,7 +109,7 @@ export function ShopProductDetail({ product }: Props) {
 
       <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
         <div className="lg:col-span-7">
-          <div className="relative overflow-hidden rounded-xl bg-[#f4f4f0] aspect-[4/5] sm:aspect-[3/4]">
+          <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-muted sm:aspect-[3/4]">
             {active ? (
               <Image
                 src={active.src}
@@ -123,7 +120,7 @@ export function ShopProductDetail({ product }: Props) {
                 priority
               />
             ) : null}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/35 to-transparent pt-24 pb-4 px-4">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/35 to-transparent px-4 pb-4 pt-24">
               <p className="text-xs font-medium uppercase tracking-widest text-white/90">
                 {active?.label}
               </p>
@@ -131,7 +128,7 @@ export function ShopProductDetail({ product }: Props) {
             <button
               type="button"
               onClick={goPrev}
-              className="absolute left-3 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-[#faf9f6]/90 text-[#2f3430] shadow-sm transition hover:bg-white"
+              className="absolute left-3 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm transition hover:bg-muted"
               aria-label="Previous image"
             >
               <ChevronLeft className="size-5" />
@@ -139,7 +136,7 @@ export function ShopProductDetail({ product }: Props) {
             <button
               type="button"
               onClick={goNext}
-              className="absolute right-3 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-[#faf9f6]/90 text-[#2f3430] shadow-sm transition hover:bg-white"
+              className="absolute right-3 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm transition hover:bg-muted"
               aria-label="Next image"
             >
               <ChevronRight className="size-5" />
@@ -152,9 +149,9 @@ export function ShopProductDetail({ product }: Props) {
                 key={`${product.slug}-thumb-${i}`}
                 type="button"
                 onClick={() => setImageIndex(i)}
-                className={`relative size-20 shrink-0 overflow-hidden rounded-lg ring-2 ring-offset-2 ring-offset-[#faf9f6] transition ${
+                className={`relative size-20 shrink-0 overflow-hidden rounded-lg ring-2 ring-offset-2 ring-offset-background transition ${
                   i === imageIndex
-                    ? "ring-[#56642b]"
+                    ? "ring-ring"
                     : "ring-transparent opacity-80 hover:opacity-100"
                 }`}
                 aria-label={`Show ${img.label}`}
@@ -173,25 +170,25 @@ export function ShopProductDetail({ product }: Props) {
         </div>
 
         <div className="lg:col-span-5">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#934b28]">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
             Print on demand
           </p>
-          <h1 className="mt-2 font-[family-name:var(--font-shop-headline)] text-3xl font-extrabold tracking-tight text-[#2f3430] md:text-4xl">
+          <h1 className="mt-2 font-[family-name:var(--font-shop-headline)] text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
             {product.title}
           </h1>
-          <p className="mt-2 text-lg text-[#5c605c]">{product.subtitle}</p>
+          <p className="mt-2 text-lg text-muted-foreground">{product.subtitle}</p>
 
-          <div className="mt-8 flex flex-wrap items-end gap-4 border-b border-[#e8e6e1] pb-8">
+          <div className="mt-8 flex flex-wrap items-end gap-4 border-b border-border pb-8">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#5c605c]">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 From
               </p>
-              <p className="font-[family-name:var(--font-shop-headline)] text-3xl font-bold text-[#56642b]">
+              <p className="font-[family-name:var(--font-shop-headline)] text-3xl font-bold text-primary">
                 {selectedSize?.price ?? "—"}
               </p>
-              <p className="mt-1 text-sm text-[#5c605c]">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Line total ({quantity}):{" "}
-                <span className="font-semibold text-[#2f3430]">
+                <span className="font-semibold text-foreground">
                   {lineTotal}
                 </span>
               </p>
@@ -200,7 +197,7 @@ export function ShopProductDetail({ product }: Props) {
               type="button"
               variant="outline"
               size="sm"
-              className="ml-auto border-[#d4d1ca] text-[#2f3430]"
+              className="ml-auto"
               onClick={handleShare}
             >
               <Share2 className="mr-2 size-4" />
@@ -211,16 +208,13 @@ export function ShopProductDetail({ product }: Props) {
           <div className="mt-8 space-y-6">
             <div className="space-y-2">
               <label
-                className="text-xs font-bold uppercase tracking-wider text-[#2f3430]"
+                className="text-xs font-bold uppercase tracking-wider text-foreground"
                 htmlFor="shop-size"
               >
                 Size or license
               </label>
               <Select value={sizeId} onValueChange={setSizeId}>
-                <SelectTrigger
-                  id="shop-size"
-                  className="w-full border-[#d4d1ca] bg-white"
-                >
+                <SelectTrigger id="shop-size" className="w-full">
                   <SelectValue placeholder="Choose" />
                 </SelectTrigger>
                 <SelectContent>
@@ -235,16 +229,13 @@ export function ShopProductDetail({ product }: Props) {
 
             <div className="space-y-2">
               <label
-                className="text-xs font-bold uppercase tracking-wider text-[#2f3430]"
+                className="text-xs font-bold uppercase tracking-wider text-foreground"
                 htmlFor="shop-finish"
               >
                 Finish / color profile
               </label>
               <Select value={finishId} onValueChange={setFinishId}>
-                <SelectTrigger
-                  id="shop-finish"
-                  className="w-full border-[#d4d1ca] bg-white"
-                >
+                <SelectTrigger id="shop-finish" className="w-full">
                   <SelectValue placeholder="Choose" />
                 </SelectTrigger>
                 <SelectContent>
@@ -258,13 +249,13 @@ export function ShopProductDetail({ product }: Props) {
             </div>
 
             <div className="flex items-center gap-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#2f3430]">
+              <span className="text-xs font-bold uppercase tracking-wider text-foreground">
                 Quantity
               </span>
-              <div className="flex items-center rounded-lg border border-[#d4d1ca] bg-white">
+              <div className="flex items-center rounded-lg border border-border bg-background">
                 <button
                   type="button"
-                  className="flex size-10 items-center justify-center text-[#2f3430] transition hover:bg-[#f4f4f0]"
+                  className="flex size-10 items-center justify-center text-foreground transition hover:bg-muted"
                   onClick={() => bumpQty(-1)}
                   aria-label="Decrease quantity"
                 >
@@ -275,7 +266,7 @@ export function ShopProductDetail({ product }: Props) {
                 </span>
                 <button
                   type="button"
-                  className="flex size-10 items-center justify-center text-[#2f3430] transition hover:bg-[#f4f4f0]"
+                  className="flex size-10 items-center justify-center text-foreground transition hover:bg-muted"
                   onClick={() => bumpQty(1)}
                   aria-label="Increase quantity"
                 >
@@ -286,20 +277,20 @@ export function ShopProductDetail({ product }: Props) {
 
             <Button
               type="button"
-              className="h-12 w-full bg-[#56642b] text-[#faf9f6] hover:bg-[#465522]"
+              className="h-12 w-full"
               onClick={handleAddToCart}
             >
               {added ? "Added (demo)" : "Add to cart"}
             </Button>
             {added ? (
-              <p className="text-center text-sm text-[#5c605c]">
+              <p className="text-center text-sm text-muted-foreground">
                 Checkout is not connected yet—this is a preview.
               </p>
             ) : null}
           </div>
 
-          <div className="mt-10 space-y-4 text-[#5c605c]">
-            <h2 className="font-[family-name:var(--font-shop-headline)] text-lg font-bold text-[#2f3430]">
+          <div className="mt-10 space-y-4 text-muted-foreground">
+            <h2 className="font-[family-name:var(--font-shop-headline)] text-lg font-bold text-foreground">
               About this piece
             </h2>
             <p className="leading-relaxed">{product.description}</p>
@@ -308,23 +299,23 @@ export function ShopProductDetail({ product }: Props) {
           <Accordion
             type="single"
             collapsible
-            className="mt-10 w-full border-t border-[#e8e6e1]"
+            className="mt-10 w-full border-t border-border"
           >
             <AccordionItem value="shipping">
-              <AccordionTrigger className="font-[family-name:var(--font-shop-headline)] text-[#2f3430] hover:no-underline">
+              <AccordionTrigger className="font-[family-name:var(--font-shop-headline)] hover:no-underline">
                 Production and shipping
               </AccordionTrigger>
-              <AccordionContent className="text-[#5c605c] leading-relaxed">
+              <AccordionContent className="leading-relaxed text-muted-foreground">
                 Each order is printed after checkout—allow 3–5 business days for
                 production plus transit time. Tracking is sent when your package
                 leaves our partner lab. International delivery may incur duties.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="returns">
-              <AccordionTrigger className="font-[family-name:var(--font-shop-headline)] text-[#2f3430] hover:no-underline">
+              <AccordionTrigger className="font-[family-name:var(--font-shop-headline)] hover:no-underline">
                 Returns and reprints
               </AccordionTrigger>
-              <AccordionContent className="text-[#5c605c] leading-relaxed">
+              <AccordionContent className="leading-relaxed text-muted-foreground">
                 Because pieces are made to order, returns are limited to damage
                 in transit or print defects—contact us within 14 days with
                 photos of the packaging and item. Color variation up to 10%
@@ -332,10 +323,10 @@ export function ShopProductDetail({ product }: Props) {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="care">
-              <AccordionTrigger className="font-[family-name:var(--font-shop-headline)] text-[#2f3430] hover:no-underline">
+              <AccordionTrigger className="font-[family-name:var(--font-shop-headline)] hover:no-underline">
                 Care
               </AccordionTrigger>
-              <AccordionContent className="text-[#5c605c] leading-relaxed">
+              <AccordionContent className="leading-relaxed text-muted-foreground">
                 Handle framed and canvas works with clean, dry hands. Dust
                 lightly with a soft microfiber cloth; avoid household cleaners
                 on the print surface. Keep out of direct sunlight to preserve
@@ -346,7 +337,7 @@ export function ShopProductDetail({ product }: Props) {
 
           <Link
             href={routes.shop}
-            className="mt-10 inline-flex items-center gap-2 text-sm font-semibold text-[#934b28] underline-offset-4 hover:underline"
+            className="mt-10 inline-flex items-center gap-2 text-sm font-semibold text-primary underline-offset-4 hover:underline"
           >
             <ChevronLeft className="size-4" />
             Back to shop

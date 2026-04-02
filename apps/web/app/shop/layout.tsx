@@ -25,7 +25,7 @@ export default function ShopLayout({
 }>) {
   return (
     <div
-      className={`${manrope.variable} ${workSans.variable} flex min-h-screen flex-col bg-[#faf9f6] font-[family-name:var(--font-shop-body),sans-serif] text-[#2f3430] selection:bg-[#d9eaa3] selection:text-[#37440e]`}
+      className={`${manrope.variable} ${workSans.variable} flex min-h-screen flex-col bg-background font-[family-name:var(--font-shop-body),sans-serif] text-foreground`}
     >
       {children}
     </div>

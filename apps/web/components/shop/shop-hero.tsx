@@ -17,7 +17,7 @@ export function ShopHero() {
         />
       </div>
       <div className="absolute inset-0 flex items-center bg-gradient-to-r from-black/40 to-transparent px-8 md:px-16">
-        <div className="max-w-2xl text-[#faf9f6]">
+        <div className="max-w-2xl text-white">
           <span className="mb-4 block font-[family-name:var(--font-shop-headline)] text-sm font-bold uppercase tracking-[0.2em] opacity-80">
             Editorial Collection
           </span>
