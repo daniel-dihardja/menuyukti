@@ -81,6 +81,7 @@ type AiArtifactPanelProps = {
   isStreaming?: boolean;
   isLoadingHolidays?: boolean;
   onLocationFeedback?: (feedback: string) => void;
+  onCreateCampaignBrief?: (theme?: string) => void;
 };
 
 function selectedReportLabel(
@@ -148,6 +149,7 @@ export function AiArtifactPanel({
   isStreaming,
   isLoadingHolidays,
   onLocationFeedback,
+  onCreateCampaignBrief,
 }: AiArtifactPanelProps) {
   const holidays = planning?.nationalHolidays
     ? planning.nationalHolidays.map((h) => ({
@@ -161,6 +163,7 @@ export function AiArtifactPanel({
     selectedAnalyticsId !== null && selectedAnalyticsId !== undefined;
 
   const [locationFeedback, setLocationFeedback] = useState("");
+  const [campaignTheme, setCampaignTheme] = useState("");
 
   // Clear feedback when location profile is deleted/disappears
   useEffect(() => {
@@ -168,6 +171,17 @@ export function AiArtifactPanel({
       setLocationFeedback("");
     }
   }, [planning?.locationSummary]);
+
+  // Clear campaign theme when brief exists or location profile disappears
+  useEffect(() => {
+    if (!planning?.locationSummary || planning.locationSummary.trim().length === 0) {
+      setCampaignTheme("");
+      return;
+    }
+    if (planning?.campaignBrief != null) {
+      setCampaignTheme("");
+    }
+  }, [planning?.locationSummary, planning?.campaignBrief]);
 
   return (
     <Artifact className="size-full">
@@ -380,6 +394,38 @@ export function AiArtifactPanel({
               </div>
             </div>
           )}
+
+          {/* Create campaign brief — after location profile, before brief exists */}
+          {planning?.locationSummary &&
+            planning.locationSummary.trim().length > 0 &&
+            !planning?.campaignBrief && (
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <SparklesIcon className="size-3.5" />
+                  Campaign theme
+                </div>
+                <Textarea
+                  placeholder="Campaign theme"
+                  value={campaignTheme}
+                  onChange={(e) => setCampaignTheme(e.target.value)}
+                  disabled={isStreaming}
+                  className="resize-none text-sm"
+                  rows={3}
+                />
+                <Button
+                  className="mt-3 w-full"
+                  onClick={() => {
+                    const trimmed = campaignTheme.trim();
+                    onCreateCampaignBrief?.(trimmed || undefined);
+                    setCampaignTheme("");
+                  }}
+                  disabled={isStreaming}
+                >
+                  <SparklesIcon className="size-4" />
+                  Create campaign brief
+                </Button>
+              </div>
+            )}
 
           {/* Campaign Brief */}
           {planning?.campaignBrief !== null && (

@@ -393,6 +393,17 @@ export function AiChatPanel({
     [sendMessage]
   );
 
+  const handleCreateCampaignBrief = useCallback(
+    async (theme?: string) => {
+      const base = "create campaign brief";
+      const text = theme
+        ? `${base}. Please consider the following as additional input for the campaign theme: ${theme}`
+        : base;
+      await sendMessage({ text });
+    },
+    [sendMessage]
+  );
+
   const handleDeleteLocationProfile = useCallback(async () => {
     const profileId = displayedArtifact.locationProfileId;
     if (!profileId) return;
@@ -529,6 +540,7 @@ export function AiChatPanel({
           onCreateLocationProfile={handleCreateLocationProfile}
           onDeleteLocationProfile={handleDeleteLocationProfile}
           onLocationFeedback={handleLocationFeedback}
+          onCreateCampaignBrief={handleCreateCampaignBrief}
           analyticsRuns={analyticsRuns}
           selectedAnalyticsId={selectedAnalyticsId}
           onAnalyticsIdChange={setSelectedAnalyticsId}
