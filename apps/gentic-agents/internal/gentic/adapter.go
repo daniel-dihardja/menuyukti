@@ -72,11 +72,11 @@ func BuildAgent(model, graphqlEndpoint string, maxReflectionIterations int, stor
 	// create_campaign_brief and update_campaign_brief both use the same ReAct brief agent (tools decide create vs fetch vs update).
 	resolver := intent.NewRouter(
 		"chat",
-		"location_profile_chat", "create_location_profile",
+		"create_location_profile", "update_location_profile",
 		"create_campaign_brief", "update_campaign_brief",
 	).
-		On("location_profile_chat", locationProfileChatFlow).
 		On("create_location_profile", locationProfileChatFlow).
+		On("update_location_profile", locationProfileChatFlow).
 		On("create_campaign_brief", campaignBriefChatFlow).
 		On("update_campaign_brief", campaignBriefChatFlow).
 		Default(chatFlow)
