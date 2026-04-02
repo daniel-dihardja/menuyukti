@@ -82,6 +82,7 @@ type AiArtifactPanelProps = {
   isLoadingHolidays?: boolean;
   onLocationFeedback?: (feedback: string) => void;
   onCreateCampaignBrief?: (theme?: string) => void;
+  onDeleteCampaignBrief?: () => void;
 };
 
 function selectedReportLabel(
@@ -150,6 +151,7 @@ export function AiArtifactPanel({
   isLoadingHolidays,
   onLocationFeedback,
   onCreateCampaignBrief,
+  onDeleteCampaignBrief,
 }: AiArtifactPanelProps) {
   const holidays = planning?.nationalHolidays
     ? planning.nationalHolidays.map((h) => ({
@@ -433,6 +435,26 @@ export function AiArtifactPanel({
               <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 <SparklesIcon className="size-3.5" />
                 Campaign Brief
+                {planning?.campaignBrief != null && onDeleteCampaignBrief && (
+                  <Button
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          "Delete this campaign brief? Post schedule data saved on the brief will be removed. This cannot be undone."
+                        )
+                      ) {
+                        onDeleteCampaignBrief();
+                      }
+                    }}
+                    disabled={isStreaming}
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto h-6 w-6 p-0"
+                    title="Delete campaign brief"
+                  >
+                    <XIcon className="size-4" />
+                  </Button>
+                )}
               </div>
               {planning?.campaignBrief === undefined ? (
                 <div className="space-y-2">

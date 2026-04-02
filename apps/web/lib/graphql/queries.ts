@@ -206,6 +206,16 @@ export type DeleteLocationProfileData = {
   deleteLocationProfile: boolean;
 };
 
+export const DELETE_CAMPAIGN_BRIEF_MUTATION = `
+  mutation DeleteCampaignBrief($campaignId: ID!) {
+    deleteCampaignBrief(campaignId: $campaignId)
+  }
+`;
+
+export type DeleteCampaignBriefData = {
+  deleteCampaignBrief: boolean;
+};
+
 export const DELETE_CAMPAIGN_MUTATION = `
   mutation DeleteCampaign($id: ID!) {
     deleteCampaign(id: $id)

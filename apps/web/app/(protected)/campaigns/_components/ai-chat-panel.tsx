@@ -89,6 +89,35 @@ function stripLocationProfileFromMessages(messages: UIMessage[]): UIMessage[] {
   });
 }
 
+/** Clears campaign brief from streamed planning parts after DB delete. */
+function stripCampaignBriefFromMessageParts(
+  parts: NonNullable<UIMessage["parts"]>
+): UIMessage["parts"] {
+  const out: UIMessage["parts"] = [];
+  for (const part of parts) {
+    if (part.type === "data-planning" && "data" in part) {
+      const d = part.data as PlanningArtifact;
+      out.push({
+        ...part,
+        data: {
+          ...d,
+          campaignBrief: null,
+        },
+      } as (typeof parts)[number]);
+      continue;
+    }
+    out.push(part);
+  }
+  return out;
+}
+
+function stripCampaignBriefFromMessages(messages: UIMessage[]): UIMessage[] {
+  return messages.map((msg) => {
+    if (msg.role !== "assistant" || !msg.parts?.length) return msg;
+    return { ...msg, parts: stripCampaignBriefFromMessageParts(msg.parts) };
+  });
+}
+
 function findLastUserMessageIndex(messages: UIMessage[], needle: string): number {
   const n = needle.trim().toLowerCase();
   for (let i = messages.length - 1; i >= 0; i--) {
@@ -145,6 +174,8 @@ export function AiChatPanel({
   const [awaitingNewLocationProfile, setAwaitingNewLocationProfile] = useState(false);
   /** After delete, ignore server `initialPlanning` location until a new profile is streamed. */
   const [suppressInitialLocationSnapshot, setSuppressInitialLocationSnapshot] = useState(false);
+  /** After delete, ignore server `initialPlanning` brief until a new brief is streamed. */
+  const [suppressInitialCampaignBrief, setSuppressInitialCampaignBrief] = useState(false);
   const [threadId, setThreadId] = useState("");
   useLayoutEffect(() => {
     const key = `chat-thread-${campaignId ?? "default"}`;
@@ -158,12 +189,6 @@ export function AiChatPanel({
     setThreadId(id);
   }, [campaignId]);
   const requestBodyRef = useRef<Record<string, unknown>>({});
-  requestBodyRef.current = {
-    locationId,
-    threadId,
-    analyticsId: selectedAnalyticsId ?? undefined,
-    ...(campaignId != null ? { campaignId } : {}),
-  };
 
   // Stable transport — never recreated. prepareSendMessagesRequest is called
   // right before every fetch, so it always picks up the latest ref values.
@@ -194,9 +219,11 @@ export function AiChatPanel({
       locationProfileId: suppressInitialLocationSnapshot
         ? null
         : (initialPlanning?.locationProfileId ?? null),
-      campaignBrief: initialPlanning?.campaignBrief ?? null,
+      campaignBrief: suppressInitialCampaignBrief
+        ? null
+        : (initialPlanning?.campaignBrief ?? null),
     }),
-    [defaultDates, initialPlanning, suppressInitialLocationSnapshot]
+    [defaultDates, initialPlanning, suppressInitialLocationSnapshot, suppressInitialCampaignBrief]
   );
 
   const planningArtifact = useMemo<PlanningArtifact>(() => {
@@ -257,6 +284,28 @@ export function AiChatPanel({
     }),
     [planningArtifact, campaignDates, holidaysOverride]
   );
+
+  // Every invoke must send date range + holidays so gentic-agents can emit
+  // `planning` SSE (EmitPlanningProgress requires date_start/date_end in metadata).
+  useLayoutEffect(() => {
+    requestBodyRef.current = {
+      locationId,
+      threadId,
+      analyticsId: selectedAnalyticsId ?? undefined,
+      ...(campaignId != null ? { campaignId } : {}),
+      dateStart: campaignDates.dateStart,
+      dateEnd: campaignDates.dateEnd,
+      nationalHolidays: displayedArtifact.nationalHolidays ?? null,
+    };
+  }, [
+    locationId,
+    threadId,
+    selectedAnalyticsId,
+    campaignId,
+    campaignDates.dateStart,
+    campaignDates.dateEnd,
+    displayedArtifact.nationalHolidays,
+  ]);
 
   const handleDatesChange = useCallback(
     async (dates: { dateStart: string; dateEnd: string }) => {
@@ -415,6 +464,29 @@ export function AiChatPanel({
     [sendMessage]
   );
 
+  const handleDeleteCampaignBrief = useCallback(async () => {
+    if (campaignId == null || !Number.isFinite(Number(campaignId))) return;
+
+    try {
+      const response = await fetch("/api/campaign-brief/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campaignId: Number(campaignId) }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Failed to delete campaign brief:", errorData);
+        return;
+      }
+
+      setMessages((prev) => stripCampaignBriefFromMessages(prev));
+      setSuppressInitialCampaignBrief(true);
+    } catch (err) {
+      console.error("Error deleting campaign brief:", err);
+    }
+  }, [campaignId, setMessages]);
+
   const handleDeleteLocationProfile = useCallback(async () => {
     const profileId = displayedArtifact.locationProfileId;
     if (!profileId) return;
@@ -552,6 +624,9 @@ export function AiChatPanel({
           onDeleteLocationProfile={handleDeleteLocationProfile}
           onLocationFeedback={handleLocationFeedback}
           onCreateCampaignBrief={handleCreateCampaignBrief}
+          onDeleteCampaignBrief={
+            campaignId != null ? handleDeleteCampaignBrief : undefined
+          }
           analyticsRuns={analyticsRuns}
           selectedAnalyticsId={selectedAnalyticsId}
           onAnalyticsIdChange={setSelectedAnalyticsId}
