@@ -74,15 +74,6 @@ func createBriefHandler(endpoint, model string, maxReflectionIterations int) fun
 	return func(ctx context.Context, state *gen.State, _ json.RawMessage) (json.RawMessage, error) {
 		state.DeleteMetadata(flowstate.KeyCampaignBrief)
 		ctx = graphql.GraphQLContext(ctx, state)
-		// Lazy-load location profile into working memory if not already present.
-		// Mirrors locationprofile.CheckStep but inline so the tool is self-sufficient.
-		if !flowstate.HasValidPersistedLocationProfile(state) {
-			if locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "load location profile"); ok {
-				if profile, err := graphql.FetchLocationProfile(ctx, endpoint, locationID, analyticsID); err == nil && profile != nil {
-					state.SetMetadata(flowstate.KeyLocationProfile, profile)
-				}
-			}
-		}
 		if err := s.Run(ctx, state); err != nil {
 			return nil, err
 		}

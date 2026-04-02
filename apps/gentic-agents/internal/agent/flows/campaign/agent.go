@@ -45,6 +45,7 @@ func NewChatReactActor(model, graphqlEndpoint string, maxReflectionIterations in
 				"Generates a new campaign brief from the location profile and saves it to the database for the current campaign_id, location_id, and analytics_id. On success returns created=true and id only; full values are shown in the UI artifact, not in this response.",
 				toolutil.SchemaFromStruct(CreateBriefInput{}),
 				createBriefHandler(graphqlEndpoint, model, maxReflectionIterations),
+				EnsureLocationProfile(graphqlEndpoint),
 			),
 			react.NewToolWithState(
 				"update_campaign_brief",
