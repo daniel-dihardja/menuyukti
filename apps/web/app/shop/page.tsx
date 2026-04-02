@@ -1,21 +1,19 @@
+import { CopyrightFooter } from "@/components/copyright-footer";
 import {
-  ShopFeatured,
   ShopFilterBar,
-  ShopFooter,
   ShopHero,
   ShopProductGrid,
 } from "@/components/shop";
 
 export default function ShopPage() {
   return (
-    <>
-      <main className="mx-auto max-w-[1440px] px-6 md:px-12">
+    <div className="flex flex-1 flex-col">
+      <main className="mx-auto w-full max-w-[1440px] flex-1 px-6 md:px-12">
         <ShopHero />
         <ShopFilterBar />
         <ShopProductGrid />
-        <ShopFeatured />
       </main>
-      <ShopFooter />
-    </>
+      <CopyrightFooter />
+    </div>
   );
 }
