@@ -351,20 +351,22 @@ export function AiArtifactPanel({
               <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 <MapPinIcon className="size-3.5" />
                 Location profile
-                <Button
-                  onClick={() => {
-                    if (window.confirm("Delete this location profile? This cannot be undone.")) {
-                      onDeleteLocationProfile?.();
-                    }
-                  }}
-                  disabled={isStreaming}
-                  variant="ghost"
-                  size="sm"
-                  className="ml-auto h-6 w-6 p-0"
-                  title="Delete location profile"
-                >
-                  <XIcon className="size-4" />
-                </Button>
+                {!planning?.campaignBrief && (
+                  <Button
+                    onClick={() => {
+                      if (window.confirm("Delete this location profile? This cannot be undone.")) {
+                        onDeleteLocationProfile?.();
+                      }
+                    }}
+                    disabled={isStreaming}
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto h-6 w-6 p-0"
+                    title="Delete location profile"
+                  >
+                    <XIcon className="size-4" />
+                  </Button>
+                )}
               </div>
               <MessageResponse className="text-sm leading-relaxed text-foreground">
                 {planning.locationSummary.trim()}
