@@ -1,54 +1,68 @@
-const filters = [
-  "All Collections",
-  "Posters",
-  "Menu Backgrounds",
-  "Custom Prints",
-  "Limited Edition",
-];
+"use client";
 
-const sortOptions = [
-  "Newest",
-  "Price: Low to High",
-  "Price: High to Low",
-  "Popularity",
-];
+import { useState } from "react";
+import { Button } from "@workspace/ui/components/button";
+import {
+  Card,
+  CardContent,
+} from "@workspace/ui/components/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
+
+import filterData from "./shop-filter-data.json";
+
+const defaultCollectionId = filterData.collections[0]?.id ?? "all";
+const defaultSortId = filterData.sortOptions[0]?.id ?? "newest";
 
 export function ShopFilterBar() {
+  const [activeCollectionId, setActiveCollectionId] =
+    useState(defaultCollectionId);
+  const [sortId, setSortId] = useState(defaultSortId);
+
   return (
-    <section className="mb-16 flex flex-col items-end justify-between gap-8 md:flex-row">
-      <div className="flex flex-wrap gap-4">
-        {filters.map((label, i) => (
-          <button
-            key={label}
-            type="button"
-            className={
-              i === 0
-                ? "rounded-full bg-[#56642b] px-8 py-3 text-sm font-medium text-[#efffbc] shadow-sm transition-all"
-                : "rounded-full bg-[#f4f4f0] px-8 py-3 text-sm font-medium text-[#5c605c] transition-all hover:bg-[#e6e9e4]"
-            }
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <div className="relative inline-block w-full text-left md:w-auto">
-        <div className="flex items-center gap-2 rounded-full bg-[#f4f4f0] px-6 py-3">
-          <span className="text-xs font-bold uppercase tracking-widest text-[#5c605c]">
-            Sort By:
-          </span>
-          <select
-            className="cursor-pointer border-none bg-transparent py-0 pr-8 text-sm font-semibold focus:ring-0"
-            aria-label="Sort products"
-            defaultValue={sortOptions[0]}
-          >
-            {sortOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
+    <section className="mb-16">
+      <Card>
+        <CardContent className="flex flex-col items-stretch justify-between gap-8 md:flex-row md:items-center">
+          <div className="flex flex-wrap gap-2">
+            {filterData.collections.map((c) => (
+              <Button
+                key={c.id}
+                type="button"
+                variant={
+                  activeCollectionId === c.id ? "default" : "outline"
+                }
+                onClick={() => setActiveCollectionId(c.id)}
+              >
+                {c.label}
+              </Button>
             ))}
-          </select>
-        </div>
-      </div>
+          </div>
+          <div className="flex w-full flex-col gap-2 md:w-auto md:items-end">
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 md:w-auto">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {filterData.labels.sortBy}
+              </span>
+              <Select value={sortId} onValueChange={setSortId}>
+                <SelectTrigger aria-label="Sort products" className="w-full md:w-auto">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {filterData.sortOptions.map((opt) => (
+                    <SelectItem key={opt.id} value={opt.id}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </section>
   );
 }
