@@ -4,7 +4,9 @@ import { randomUUID } from "crypto";
 import fs from "fs/promises";
 import sharp from "sharp";
 
+import flows from "@/lib/assets/flows.json";
 import { ASSETS_PUBLIC_PREFIX, ensureUserAssetsDir } from "@/lib/assets/storage";
+import { type NanoBananaFlowConfig, runRemoveBackground } from "@/lib/leonardo";
 
 const ALLOWED_TYPES = new Set([
   "image/jpeg",
@@ -17,17 +19,32 @@ const ALLOWED_TYPES = new Set([
 
 const ALLOWED_FLOWS = new Set(["none", "remove-background"]);
 
+function truncateStack(stack: string, max = 4000): string {
+  if (stack.length <= max) return stack;
+  return `${stack.slice(0, max)}…(truncated)`;
+}
+
 function normalizeFlow(raw: unknown): string {
   const s = typeof raw === "string" ? raw.trim() : "";
   if (ALLOWED_FLOWS.has(s)) return s;
   return "none";
 }
 
+type RemoveBackgroundFlowConfig = NanoBananaFlowConfig;
+
 /** Flow-specific post-processing after resize + WebP encode. */
-async function applyFlow(flow: string, buffer: Buffer): Promise<Buffer> {
+async function applyFlow(
+  flow: string,
+  buffer: Buffer,
+  width: number,
+  height: number,
+): Promise<Buffer> {
   if (flow === "remove-background") {
-    // Placeholder — returns image unchanged until real implementation
-    return buffer;
+    const cfg = (flows as Record<string, RemoveBackgroundFlowConfig>)["remove-background"];
+    if (!cfg?.prompt || !cfg?.model) {
+      throw new Error("remove-background flow is not configured");
+    }
+    return runRemoveBackground(buffer, cfg, width, height);
   }
   return buffer;
 }
@@ -74,8 +91,45 @@ export async function POST(req: Request) {
   );
 
   const resizedWebp = await resized.webp({ quality: 85 }).toBuffer();
+  const resizedMeta = await sharp(resizedWebp).metadata();
+  const rw = resizedMeta.width ?? width;
+  const rh = resizedMeta.height ?? height;
   const flow = normalizeFlow(formData.get("flow"));
-  const webpBuffer = await applyFlow(flow, resizedWebp);
+
+  let webpBuffer: Buffer;
+  try {
+    webpBuffer = await applyFlow(flow, resizedWebp, rw, rh);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Processing failed";
+    const stack = err instanceof Error ? err.stack : undefined;
+    const isLeonardo =
+      flow === "remove-background" &&
+      (message.includes("Leonardo") ||
+        message.includes("LEONARDO_API_KEY") ||
+        /insufficient tokens/i.test(message));
+    const isInsufficientTokens = /insufficient tokens/i.test(message);
+    console.error("[assets/upload] flow processing failed", {
+      flow,
+      userIdPrefix: userId.slice(0, 8),
+      isLeonardo,
+      isInsufficientTokens,
+      message,
+      ...(stack ? { stack: truncateStack(stack) } : {}),
+    });
+    return NextResponse.json(
+      {
+        message,
+        ...(isLeonardo
+          ? {
+              code: isInsufficientTokens
+                ? ("leonardo_tokens" as const)
+                : ("leonardo" as const),
+            }
+          : {}),
+      },
+      { status: isLeonardo ? 502 : 500 },
+    );
+  }
 
   const id = randomUUID();
   const filename = `${id}.webp`;

@@ -92,14 +92,34 @@ export function AssetsClient() {
             body: fd,
           });
           if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error((err as { message?: string }).message ?? "upload");
+            const err = (await res.json().catch(() => ({}))) as {
+              message?: string;
+              code?: string;
+            };
+            const e = new Error(err.message ?? "upload") as Error & { code?: string };
+            if (err.code === "leonardo" || err.code === "leonardo_tokens") e.code = err.code;
+            throw e;
           }
           return res.json() as Promise<AssetItem>;
         }),
       );
       const ok = results.filter((r) => r.status === "fulfilled").length;
       const fail = results.length - ok;
+      const leonardoOnly =
+        fail > 0 &&
+        ok === 0 &&
+        results.every((r) => {
+          if (r.status !== "rejected") return false;
+          const reason = r.reason as Error & { code?: string };
+          return reason?.code === "leonardo" || reason?.code === "leonardo_tokens";
+        });
+      const leonardoTokensOnly =
+        leonardoOnly &&
+        results.every((r) => {
+          if (r.status !== "rejected") return false;
+          const reason = r.reason as Error & { code?: string };
+          return reason?.code === "leonardo_tokens";
+        });
       if (ok > 0) {
         await load(true);
       }
@@ -107,6 +127,10 @@ export function AssetsClient() {
         showToast("success", t("toast.uploaded"));
       } else if (ok > 0) {
         showToast("error", t("toast.uploadPartial"));
+      } else if (leonardoTokensOnly) {
+        showToast("error", t("toast.leonardoInsufficientTokens"));
+      } else if (leonardoOnly) {
+        showToast("error", t("toast.leonardoError"));
       } else {
         showToast("error", t("toast.uploadError"));
       }

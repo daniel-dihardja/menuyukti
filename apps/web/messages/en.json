@@ -191,6 +191,8 @@
     "toast": {
       "uploaded": "Saved to your library",
       "uploadError": "Couldn’t upload that file. Try again.",
+      "leonardoError": "AI processing failed. Check your Leonardo API key and model, then try again.",
+      "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
       "uploadPartial": "Some files couldn’t be uploaded. Check your images and try again.",
       "loadError": "Couldn’t load your library. Refresh the page.",
       "deleted": "Image removed",
