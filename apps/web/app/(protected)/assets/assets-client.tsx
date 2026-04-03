@@ -2,10 +2,23 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ImageIcon, Loader2, Sparkles, Trash2, Upload } from "lucide-react";
+import {
+  Download,
+  ImageIcon,
+  Loader2,
+  Maximize2,
+  Sparkles,
+  Trash2,
+  Upload,
+} from "lucide-react";
 
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@workspace/ui/components/dialog";
 import { Label } from "@workspace/ui/components/label";
 import {
   Select,
@@ -36,6 +49,10 @@ function formatBytes(n: number): string {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function assetDownloadHref(name: string): string {
+  return `/api/assets/download?name=${encodeURIComponent(name)}`;
+}
+
 export function AssetsClient() {
   const t = useTranslations("assets");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -46,6 +63,8 @@ export function AssetsClient() {
   const [toast, setToast] = useState<ToastState>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [selectedFlow, setSelectedFlow] = useState<AssetFlow>("none");
+  const [previewItem, setPreviewItem] = useState<AssetItem | null>(null);
+  const [previewImgLoaded, setPreviewImgLoaded] = useState(false);
 
   const showToast = useCallback((kind: "success" | "error", message: string) => {
     setToast({ kind, message });
@@ -73,6 +92,10 @@ export function AssetsClient() {
   useEffect(() => {
     void load(false);
   }, [load]);
+
+  useEffect(() => {
+    setPreviewImgLoaded(false);
+  }, [previewItem?.name]);
 
   const uploadFiles = async (files: FileList | File[]) => {
     const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
@@ -163,6 +186,7 @@ export function AssetsClient() {
       if (!res.ok) throw new Error("delete");
       showToast("success", t("toast.deleted"));
       setItems((prev) => prev.filter((i) => i.name !== name));
+      setPreviewItem((p) => (p?.name === name ? null : p));
     } catch {
       showToast("error", t("toast.deleteError"));
     } finally {
@@ -185,6 +209,63 @@ export function AssetsClient() {
           {toast.message}
         </div>
       ) : null}
+
+      <Dialog open={previewItem !== null} onOpenChange={(open) => !open && setPreviewItem(null)}>
+        {previewItem ? (
+          <DialogContent
+            key={previewItem.name}
+            overlayClassName="bg-black/80 backdrop-blur-sm"
+            showCloseButton
+            className={cn(
+              "flex max-h-[90vh] w-full max-w-[min(96vw,1400px)] flex-col gap-0 overflow-hidden border border-border/50 bg-background p-0 shadow-2xl",
+              "sm:max-w-[min(96vw,1400px)]",
+            )}
+          >
+            <DialogTitle className="sr-only">{previewItem.name}</DialogTitle>
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border/60 bg-background/90 px-4 py-3 pr-14 backdrop-blur-md">
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium tracking-tight">{previewItem.name}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {formatBytes(previewItem.size)}
+                  <span className="mx-1.5 text-border">·</span>
+                  <time dateTime={previewItem.createdAt}>
+                    {new Date(previewItem.createdAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </time>
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Button type="button" variant="secondary" size="sm" className="rounded-full shadow-sm" asChild>
+                  <a href={assetDownloadHref(previewItem.name)} download={previewItem.name}>
+                    <Download className="mr-1.5 h-4 w-4" aria-hidden />
+                    {t("grid.download")}
+                  </a>
+                </Button>
+              </div>
+            </div>
+            <div className="relative flex min-h-[min(60vh,720px)] max-h-[calc(90vh-5rem)] items-center justify-center bg-gradient-to-b from-muted/25 via-muted/10 to-black/[0.06] px-4 py-8 dark:to-black/30">
+              {!previewImgLoaded ? (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" aria-hidden />
+                </div>
+              ) : null}
+              {/* eslint-disable-next-line @next/next/no-img-element -- dynamic user uploads; dimensions vary */}
+              <img
+                src={previewItem.url}
+                alt=""
+                className={cn(
+                  "max-h-[calc(90vh-5.5rem)] w-auto max-w-full object-contain shadow-[0_24px_64px_-12px_rgba(0,0,0,0.35)] transition-opacity duration-300",
+                  previewImgLoaded ? "opacity-100" : "opacity-0",
+                )}
+                onLoad={() => setPreviewImgLoaded(true)}
+              />
+            </div>
+          </DialogContent>
+        ) : null}
+      </Dialog>
 
       <section>
         <input
@@ -328,7 +409,19 @@ export function AssetsClient() {
                 key={item.name}
                 className="group/tile mb-4 break-inside-avoid overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md sm:mb-5"
               >
-                <div className="relative bg-muted/30">
+                <div
+                  className="relative cursor-zoom-in bg-muted/30 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={t("grid.viewLarge")}
+                  onClick={() => setPreviewItem(item)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setPreviewItem(item);
+                    }
+                  }}
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element -- dynamic user uploads; dimensions vary */}
                   <img
                     src={item.url}
@@ -336,26 +429,60 @@ export function AssetsClient() {
                     loading="lazy"
                     className="w-full h-auto object-cover transition duration-300 group-hover/tile:scale-[1.02]"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100" />
-                  <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-2 p-3 opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100">
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100" />
+                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex items-end justify-between gap-2 p-3 opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100">
                     <figcaption className="min-w-0 flex-1 truncate text-left text-xs font-medium text-white drop-shadow">
                       {item.name}
                     </figcaption>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="secondary"
-                      className="h-8 w-8 shrink-0 rounded-full bg-white/90 text-destructive shadow hover:bg-white"
-                      disabled={deleting === item.name}
-                      aria-label={t("grid.delete")}
-                      onClick={() => void onDelete(item.name)}
-                    >
-                      {deleting === item.name ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </Button>
+                    <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        className="h-9 w-9 rounded-full bg-white/95 text-foreground shadow-md hover:bg-white"
+                        aria-label={t("grid.viewLarge")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewItem(item);
+                        }}
+                      >
+                        <Maximize2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        className="h-9 w-9 rounded-full bg-white/95 text-foreground shadow-md hover:bg-white"
+                        aria-label={t("grid.download")}
+                        asChild
+                      >
+                        <a
+                          href={assetDownloadHref(item.name)}
+                          download={item.name}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        className="h-9 w-9 shrink-0 rounded-full bg-white/95 text-destructive shadow-md hover:bg-white"
+                        disabled={deleting === item.name}
+                        aria-label={t("grid.delete")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void onDelete(item.name);
+                        }}
+                      >
+                        {deleting === item.name ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center justify-between border-t border-border/50 px-3 py-2 text-xs text-muted-foreground">

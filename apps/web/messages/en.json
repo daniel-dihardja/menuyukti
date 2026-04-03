@@ -186,7 +186,9 @@
         "description": "Upload your first restaurant photo, logo, or campaign visual to keep everything in one place."
       },
       "delete": "Remove",
-      "deleteConfirm": "Remove this image?"
+      "deleteConfirm": "Remove this image?",
+      "viewLarge": "View larger",
+      "download": "Download"
     },
     "toast": {
       "uploaded": "Saved to your library",
