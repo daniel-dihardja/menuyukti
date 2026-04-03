@@ -1,0 +1,41 @@
+---
+description: pnpm workspaces, Turbo, uv, and Go module conventions for this monorepo
+alwaysApply: true
+---
+
+# Monorepo conventions
+
+## Package manager (Node / TypeScript)
+
+- Use **pnpm** only — **`packageManager`: `pnpm@10.4.1`** at the repo root. Do not suggest `npm install` or `yarn` for workspace packages.
+- Workspaces are defined in `pnpm-workspace.yaml`: **`apps/*`** and **`packages/*`**.
+- **Node:** `>=20` (see root `package.json` `engines`).
+- **Root `devDependencies`** are shared tooling (ESLint, TypeScript, Prettier, Turbo). Only add a root devDependency if it is truly shared across packages; otherwise add it to the specific app/package.
+
+## Turborepo
+
+- Orchestration via `turbo.json`. Common scripts from root:
+  - `pnpm build` — `turbo build` (depends on `^build`, Next outputs under `.next/**`)
+  - `pnpm dev` — `turbo dev` (persistent, not cached)
+  - `pnpm lint` — `turbo lint` (depends on `^lint`)
+  - `pnpm check-types` — `turbo check-types` (depends on `^check-types`; individual packages must define the script where applicable)
+- `db:generate`, `db:migrate`, `db:deploy` are defined in Turbo with `cache: false` when a workspace package exposes those scripts. For Prisma today, run **`pnpm exec prisma …` from `apps/web`** unless a package adds `db:*` scripts.
+
+## Python (GraphQL and shared packages)
+
+- Workspace is managed with **uv** — see root `pyproject.toml` (`[tool.uv.workspace]`) and `uv.lock`.
+- Prefer **`uv sync`**, **`uv add`**, and **`uv run`** in app directories — do not suggest raw `pip install` for this repo.
+- **Ruff** is used for lint/format in Python apps (see app `Makefile` and `pyproject.toml` files).
+
+## Go
+
+- **`apps/gentic-agents`** has its own `go.mod` / `go.sum`. Build and test from that directory or via documented Make targets.
+- Shared Gentic library may live under **`packages/gentic`** (see `go.mod` replace directives). Respect module boundaries and `go.work` if present.
+
+## Secrets and env
+
+- Per-app **`.env`** files are local; never commit secrets. Root `.gitignore` includes `.env`, `creds`, `apps/web/e2e-artifacts/`, etc.
+
+## Formatting
+
+- **Prettier** (root) for TS/MD/CSS as configured; **Ruff** for Python; **`go fmt`** for Go.

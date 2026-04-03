@@ -1,0 +1,43 @@
+---
+description: Next.js, Clerk, Prisma, shadcn, i18n, and testing for apps/web
+globs: apps/web/**
+---
+
+# Web app (`apps/web`) — conventions
+
+## Framework
+
+- **Next.js** with **App Router** — routes and layouts under `app/`.
+- Prefer **React Server Components** by default. Add **`"use client"`** only when you need hooks, browser-only APIs, or event handlers in that module.
+
+## Auth
+
+- **Clerk** (`@clerk/nextjs`) — use established patterns: middleware, `auth()` / session helpers. Do not introduce ad-hoc cookie sessions or custom auth for product routes.
+
+## Database
+
+- **Prisma** with **`prisma.config.ts`** and generated client — use typed queries; avoid raw SQL unless justified.
+- Migrations / generate: run **Prisma CLI from `apps/web`** (e.g. `pnpm exec prisma migrate dev`, `pnpm exec prisma generate`). Root `turbo.json` defines `db:*` tasks for packages that expose matching `package.json` scripts.
+
+## UI
+
+- **shadcn/ui** — configuration in `components.json`. Extend via **`components/ui/`** and local components; avoid copying unstable forked primitives.
+
+## i18n
+
+- **next-intl** — user-facing copy belongs in **`messages/`** and message keys; avoid hardcoding English (or other) strings in components when a key exists or should exist.
+
+## Testing
+
+- **Vitest** (`vitest.config.ts`) — `pnpm test` from `apps/web`.
+- E2E artifacts may land in **`e2e-artifacts/`** (gitignored) — do not commit.
+
+## TypeScript
+
+- Prefer **strict typing** — avoid `any`; export explicit return types for public functions and server actions where applicable.
+
+## Scripts
+
+- **`pnpm dev`** — `next dev --turbopack`
+- **`pnpm build`** / **`pnpm start`** — production
+- **`pnpm lint`** / **`pnpm typecheck`** — quality gates (`typecheck` maps to `tsc --noEmit`)

@@ -1,0 +1,42 @@
+---
+description: Go conventions for apps/gentic-agents (Gentic SDK, flows, flowstate, HTTP)
+globs: apps/gentic-agents/**
+---
+
+# Gentic agents (`apps/gentic-agents`) — Go conventions
+
+## Layout
+
+- **Entry:** `cmd/server/main.go` — wires dependencies (config, OpenAI provider, Gentic adapter, HTTP server). Prefer **dependency injection** here; avoid new package-level globals.
+- **HTTP:** `internal/server/` — router, handlers, request/invoke mapping.
+- **Agent domain:** `internal/agent/` — `flows/` (per-feature flows), `flowstate/` (shared state types), `step/`, `flowutil/`, `toolutil/`, etc.
+- **Gentic integration:** `internal/gentic/adapter.go` — builds the wired `gentic.Agent` (orchestration). New top-level wiring or provider setup should stay cohesive with this package.
+- **Platform:** `internal/platform/` — config, GraphQL client, shared metadata keys.
+
+## Gentic SDK usage
+
+- The **`github.com/daniel-dihardja/gentic`** module provides `gentic.Agent`, streaming LLM, **intent** routing, **steps**, **react**, **reflect**, and server utilities.
+- **Do not re-implement** the **ReAct** event loop — use **`gentic/pkg/gentic/react`** (see `packages/gentic/pkg/gentic/react/` in the workspace) and existing flow patterns.
+- Flows may import `gentic` types (`AgentInput`, tools, reflect helpers) — keep imports purposeful; avoid duplicating logic that already exists in `internal/gentic` or shared packages.
+
+## Package naming
+
+- Prefer **singular** directory names where idiomatic: `flow`-related packages as `flows` is acceptable when it groups multiple flow packages; follow existing structure (`internal/agent/flows/campaign`, etc.).
+
+## Stateful multi-step flows
+
+- Use **`internal/agent/flowstate/`** for shared state structs (e.g. campaign brief, location profile) keyed consistently with GraphQL/platform metadata.
+
+## Errors
+
+- Wrap errors with context: `fmt.Errorf("operation: %w", err)` so callers can unwrap.
+
+## Testing and quality
+
+- **`make test`** — `go test ./...`
+- **`make vet`** / **`make fmt`** — standard Go tooling
+- **`eval/`** — agent eval tests; some targets need `-tags=integration` and API keys (see `Makefile` and `eval/*_test.go`).
+
+## GraphQL
+
+- Agents call the Menuyukti GraphQL API via **`internal/platform/graphql`** — keep HTTP/GraphQL client concerns there, not inside pure domain helpers when avoidable.

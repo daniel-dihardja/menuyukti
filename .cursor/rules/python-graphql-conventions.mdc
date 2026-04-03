@@ -1,0 +1,36 @@
+---
+description: Python and GraphQL conventions for apps/graphql (Strawberry, Ruff, uv)
+globs: apps/graphql/**
+---
+
+# GraphQL API (`apps/graphql`) — Python conventions
+
+## Stack
+
+- **Strawberry** for GraphQL schema and resolvers.
+- **ASGI app** exposed as `graphql.server:app` (see `Makefile` — `uvicorn graphql.server:app`).
+- Organize code by concern:
+  - **`schema/`** — GraphQL types and schema definitions
+  - **`resolvers/`** — resolver functions / query & mutation handlers
+  - **`data_sources/`** — database and external integrations
+  - **`scripts/`** — one-off scripts (e.g. dev data, load report)
+
+## Tooling
+
+- Use **uv** from the app (or workspace root): `uv sync`, `uv run`, `uv add`. Do not use ad-hoc `pip install` as the primary workflow.
+- **Ruff** for lint and format: `make lint` / `make format` (see `Makefile`).
+- Prefer **explicit type annotations** on public functions and resolver methods.
+
+## Running and testing
+
+- **`make dev`** — uvicorn with reload, `PYTHONPATH=../..` (monorepo import path).
+- **`make test`** — `uv run pytest tests/ -v`
+- **`make migrate-db`** / **`make drop-db`** — database lifecycle via `graphql.data_sources.database`
+
+## Tests
+
+- Place tests under **`tests/`** with `pytest`. Use focused `make test-*` targets where defined for specific suites.
+
+## Imports
+
+- Respect **`PYTHONPATH=../..`** so the `graphql` package resolves from the repo root when running via Make.

@@ -1,0 +1,37 @@
+---
+description: Menuyukti product context, service map, and agentic architecture
+alwaysApply: true
+---
+
+# Menuyukti — project overview
+
+## Product
+
+Menuyukti is an **agentic AI platform for data-driven restaurant marketing automation**. It turns restaurant sales data into targeted Instagram campaigns: analytics, content generation, and campaign workflows with less manual work.
+
+## Services (three main apps)
+
+| App | Path | Role |
+|-----|------|------|
+| **GraphQL API** | `apps/graphql` | Python backend: structured data, analytics, persistence. **Single source of truth** for reads/writes used by the web app and agent services. |
+| **Web** | `apps/web` | Next.js user-facing app: chat, artifacts, CRUD for product entities. Calls GraphQL. |
+| **Gentic agents** | `apps/gentic-agents` | Go HTTP service: intent routing, multi-step flows, LLM + tools; calls GraphQL when it needs platform data. |
+
+Do not assume LangGraph for `gentic-agents` — that stack may live under other apps (e.g. `apps/agents`). This repo’s Go agent service uses the **Gentic** library and patterns below.
+
+## Agentic patterns in use
+
+- **ReAct (Reason + Act)** — interleaved reasoning, tool calls, and observations; implemented via `packages/gentic/pkg/gentic/react` — do not re-implement the loop.
+- **Plan-and-execute** — explicit multi-step plans for pipelines (e.g. campaign: data → slots → schedule → formats → brief).
+- **Reflect** — generate → critique → revise for drafts (e.g. location profiles, format plans) with iteration bounds.
+
+## Layering and boundaries
+
+- **HTTP handlers** validate input, map DTOs ↔ domain types, and delegate — no heavy business logic in handlers alone.
+- **Agent logic** lives under `internal/agent/` (flows, flowstate, steps, tools).
+- **Platform concerns** (config, GraphQL client, DB) stay in `internal/platform/` or equivalent — not mixed into flow business rules without clear boundaries.
+
+## Further reading
+
+- Root [`README.md`](../../README.md) — features and high-level architecture.
+- [`project-structure.md`](../../project-structure.md) — intended Go layout (handlers, agent, gentic adapter, platform).
