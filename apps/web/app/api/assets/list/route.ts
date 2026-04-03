@@ -1,12 +1,14 @@
+import { ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import fs from "fs/promises";
-import path from "path";
 
 import {
-  ASSETS_PUBLIC_PREFIX,
-  getUserAssetsDir,
+  getPresignedGetUrl,
+  getS3Bucket,
+  getS3Client,
+  isObjectKeyForUser,
   isSafeAssetFilename,
+  userPrefix,
 } from "@/lib/assets/storage";
 
 export const runtime = "nodejs";
@@ -17,32 +19,52 @@ export async function GET() {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const dir = getUserAssetsDir(userId);
-  let names: string[];
+  const bucket = getS3Bucket();
+  const s3 = getS3Client();
+  const prefix = userPrefix(userId);
+
+  type Row = { name: string; url: string; size: number; createdAt: string };
+
+  const rows: Row[] = [];
+  let continuationToken: string | undefined;
+
   try {
-    names = await fs.readdir(dir);
-  } catch (e) {
-    const err = e as NodeJS.ErrnoException;
-    if (err.code === "ENOENT") {
-      return NextResponse.json({ items: [] });
-    }
-    throw e;
+    do {
+      const listed = await s3.send(
+        new ListObjectsV2Command({
+          Bucket: bucket,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        }),
+      );
+
+      for (const obj of listed.Contents ?? []) {
+        const key = obj.Key;
+        if (!key || !obj.LastModified) continue;
+        if (!isObjectKeyForUser(key, userId)) continue;
+        const name = key.slice(prefix.length);
+        if (!isSafeAssetFilename(name)) continue;
+
+        const url = await getPresignedGetUrl(key);
+        rows.push({
+          name,
+          url,
+          size: obj.Size ?? 0,
+          createdAt: obj.LastModified.toISOString(),
+        });
+      }
+
+      continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined;
+    } while (continuationToken);
+  } catch (err) {
+    console.error("[assets/list] S3 list failed", {
+      userIdPrefix: userId.slice(0, 8),
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return NextResponse.json({ message: "Failed to list assets" }, { status: 502 });
   }
 
-  const items = await Promise.all(
-    names.filter((n) => n.endsWith(".webp") && isSafeAssetFilename(n)).map(async (name) => {
-      const filePath = path.join(dir, name);
-      const stat = await fs.stat(filePath);
-      return {
-        name,
-        url: `${ASSETS_PUBLIC_PREFIX}/${encodeURIComponent(userId)}/${name}`,
-        size: stat.size,
-        createdAt: stat.mtime.toISOString(),
-      };
-    }),
-  );
+  rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-
-  return NextResponse.json({ items });
+  return NextResponse.json({ items: rows });
 }

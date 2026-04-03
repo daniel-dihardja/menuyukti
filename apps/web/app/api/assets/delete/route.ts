@@ -1,10 +1,9 @@
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import fs from "fs/promises";
-import path from "path";
 import { z } from "zod";
 
-import { getUserAssetsDir, isSafeAssetFilename } from "@/lib/assets/storage";
+import { getS3Bucket, getS3Client, isSafeAssetFilename, userObjectKey } from "@/lib/assets/storage";
 
 export const runtime = "nodejs";
 
@@ -35,22 +34,23 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ message: "Invalid filename" }, { status: 400 });
   }
 
-  const dir = getUserAssetsDir(userId);
-  const filePath = path.join(dir, name);
-  const resolvedDir = path.resolve(dir);
-  const resolvedFile = path.resolve(filePath);
-  if (!resolvedFile.startsWith(resolvedDir + path.sep)) {
-    return NextResponse.json({ message: "Invalid path" }, { status: 400 });
-  }
+  const key = userObjectKey(userId, name);
+  const s3 = getS3Client();
+  const bucket = getS3Bucket();
 
   try {
-    await fs.unlink(filePath);
-  } catch (e) {
-    const err = e as NodeJS.ErrnoException;
-    if (err.code === "ENOENT") {
-      return NextResponse.json({ message: "Not found" }, { status: 404 });
-    }
-    throw e;
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      }),
+    );
+  } catch (err) {
+    console.error("[assets/delete] S3 DeleteObject failed", {
+      userIdPrefix: userId.slice(0, 8),
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return NextResponse.json({ message: "Delete failed" }, { status: 502 });
   }
 
   return NextResponse.json({ success: true });

@@ -1,11 +1,16 @@
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { randomUUID } from "crypto";
-import fs from "fs/promises";
 import sharp from "sharp";
 
 import flows from "@/lib/assets/flows.json";
-import { ASSETS_PUBLIC_PREFIX, ensureUserAssetsDir } from "@/lib/assets/storage";
+import {
+  getPresignedGetUrl,
+  getS3Bucket,
+  getS3Client,
+  userObjectKey,
+} from "@/lib/assets/storage";
 import { type NanoBananaFlowConfig, runRemoveBackground } from "@/lib/leonardo";
 
 const ALLOWED_TYPES = new Set([
@@ -133,18 +138,34 @@ export async function POST(req: Request) {
 
   const id = randomUUID();
   const filename = `${id}.webp`;
-  const dir = await ensureUserAssetsDir(userId);
-  const filePath = `${dir}/${filename}`;
-  await fs.writeFile(filePath, webpBuffer);
+  const key = userObjectKey(userId, filename);
+  const s3 = getS3Client();
+  const bucket = getS3Bucket();
 
-  const stat = await fs.stat(filePath);
-  const createdAt = stat.mtime.toISOString();
-  const url = `${ASSETS_PUBLIC_PREFIX}/${encodeURIComponent(userId)}/${filename}`;
+  try {
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: webpBuffer,
+        ContentType: "image/webp",
+      }),
+    );
+  } catch (err) {
+    console.error("[assets/upload] S3 PutObject failed", {
+      userIdPrefix: userId.slice(0, 8),
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return NextResponse.json({ message: "Storage upload failed" }, { status: 502 });
+  }
+
+  const url = await getPresignedGetUrl(key);
+  const createdAt = new Date().toISOString();
 
   return NextResponse.json({
     url,
     name: filename,
-    size: stat.size,
+    size: webpBuffer.byteLength,
     createdAt,
   });
 }
