@@ -16,18 +16,9 @@ export default async function Page() {
   }
 
   return (
-    <AnalyticsPageShell
-      title={t("title")}
-      breadcrumbs={[{ label: t("title") }]}
-      mainClassName="max-w-none w-full p-0 space-y-0"
-      triggerWrapperClassName="px-4 pt-4 sm:px-6 lg:px-8"
-    >
-      <div className="space-y-8">
-        <div className="px-4 sm:px-6 lg:px-8 pt-2">
-          <PageHeading title={t("title")} description={t("description")} />
-        </div>
-        <AssetsClient />
-      </div>
+    <AnalyticsPageShell title={t("title")} breadcrumbs={[{ label: t("title") }]}>
+      <PageHeading title={t("title")} description={t("description")} />
+      <AssetsClient />
     </AnalyticsPageShell>
   );
 }

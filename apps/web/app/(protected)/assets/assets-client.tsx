@@ -171,7 +171,7 @@ export function AssetsClient() {
   };
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-6">
       {toast ? (
         <div
           role="status"
@@ -186,7 +186,7 @@ export function AssetsClient() {
         </div>
       ) : null}
 
-      <section className="px-4 sm:px-6 lg:px-8">
+      <section>
         <input
           ref={inputRef}
           type="file"
@@ -295,7 +295,7 @@ export function AssetsClient() {
         </Card>
       </section>
 
-      <section className="w-full px-4 sm:px-6 lg:px-8">
+      <section className="w-full">
         {loading ? (
           <div className="columns-2 gap-4 sm:columns-3 sm:gap-5 lg:columns-4 xl:columns-5 2xl:columns-6">
             {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
