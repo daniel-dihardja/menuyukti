@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  BookOpenText,
-  Bot,
   ChevronRight,
   FileUp,
   Images,
@@ -46,18 +44,6 @@ const NAV_ITEMS: NavItem[] = [
   //   icon: <Newspaper className="w-4 h-4" />,
   // },
   {
-    key: "branches",
-    labelKey: "branches",
-    href: routes.analytics.branches,
-    icon: <MapPin className="w-4 h-4" />,
-  },
-  {
-    key: "sales",
-    labelKey: "sales",
-    icon: <FileUp className="w-4 h-4" />,
-    href: routes.analytics.sales,
-  },
-  {
     key: "campaigns",
     labelKey: "campaigns",
     href: routes.campaigns.list,
@@ -68,6 +54,18 @@ const NAV_ITEMS: NavItem[] = [
     labelKey: "assets",
     href: routes.assets,
     icon: <Images className="w-4 h-4" />,
+  },
+  {
+    key: "reports",
+    labelKey: "reports",
+    icon: <FileUp className="w-4 h-4" />,
+    href: routes.analytics.sales,
+  },
+  {
+    key: "branches",
+    labelKey: "branches",
+    href: routes.analytics.branches,
+    icon: <MapPin className="w-4 h-4" />,
   },
   // {
   //   key: "sales_children",
