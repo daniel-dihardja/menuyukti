@@ -1,0 +1,85 @@
+---
+description: Go engineering and agentic AI best practices for developing the packages/gentic framework library
+globs: packages/gentic/**
+alwaysApply: false
+---
+
+# `packages/gentic` — framework conventions
+
+`packages/gentic` is the **Gentic agentic AI framework** (`github.com/daniel-dihardja/gentic`). It is a standalone Go module consumed by `apps/gentic-agents`. Changes here must preserve backward compatibility and stay true to its minimal, composable design.
+
+## Core abstractions — never bypass or duplicate
+
+| Type | File | Role |
+|------|------|------|
+| `gentic.Step` / `gentic.StreamingStep` | `pkg/gentic/step.go` | Atomic unit of a flow |
+| `gentic.Flow` | `pkg/gentic/flow.go` | Ordered sequence of steps; supports `Run` and `Stream` |
+| `gentic.State` | `pkg/gentic/state.go` | Shared mutable context threaded through every step |
+| `gentic.Agent` | `pkg/gentic/agent.go` | Entry point; owns the `Resolver → Flow → State` pipeline |
+| `gentic.IntentResolver` | `pkg/gentic/resolver.go` | Routes a run to the right `Flow`; implement once per pattern |
+
+## Agentic pattern packages
+
+- **`pkg/gentic/intent`** — label-based routing; add flows via `On` / `Default`.
+- **`pkg/gentic/plan`** — planning and task-pool execution; use `WithPool` + `WithStaticPlanGroups` for fixed pipelines.
+- **`pkg/gentic/react`** — ReAct (Thought → Tool → Observe) loop; **do not re-implement the loop** — extend via `Option` funcs or new `Tool` helpers.
+- **`pkg/gentic/reflect`** — generate → critique → refine; use `WithMaxIterations`, `WithGeneratePrompt`, `WithCritiquePrompt`.
+- **`pkg/gentic/eval`** — eval harness; add cases here when changing agent-level behavior.
+
+## State and metadata rules
+
+- **Read metadata via `state.SecureMetadata()`** in tools and integrations — never from `state.Metadata` directly when passing to untrusted code.
+- **Private keys** use a `_` prefix (e.g. `_api_key`) and are excluded by `SecureMetadata()`.
+- **Concurrent steps** must use `state.GetMetadata` / `state.SetMetadata` / `state.DeleteMetadata` — never read `state.Metadata` map directly inside `Parallel`.
+
+```go
+// ✅ Safe in parallel steps
+val, ok := state.GetMetadata("tenant_id")
+state.SetMetadata("result", myValue)
+
+// ❌ Unsafe – direct map access races in Parallel
+val := state.Metadata["tenant_id"]
+```
+
+## Tool authorship (ReAct)
+
+- Use `react.NewTool` for pure input/output tools; use `react.NewToolWithState` when the handler needs ambient metadata.
+- Register `GuardFunc`s for prerequisites (auth checks, lazy-loading shared data) rather than embedding guards inside the handler.
+- Tools must return **structured JSON** (`json.RawMessage`); validate inputs before side effects.
+
+```go
+// ✅ Tool with metadata access and a guard
+react.NewToolWithState("fetch_menu", "...", inputSchema,
+    func(ctx context.Context, s *gentic.State, in json.RawMessage) (json.RawMessage, error) {
+        tenantID := s.SecureMetadata().GetString("tenant_id")
+        // ...
+    },
+    func(ctx context.Context, s *gentic.State) error {
+        if s.SecureMetadata().GetString("tenant_id") == "" {
+            return fmt.Errorf("tenant_id required")
+        }
+        return nil
+    },
+)
+```
+
+## Go engineering principles
+
+- **Small interfaces** — new LLM providers implement `gentic.LLM` or `gentic.ToolCallingLLM`; keep interfaces in the root `gentic` package minimal.
+- **Functional options** — configure resolvers and actors with `Option func(*T)` patterns (see `react.Option`); avoid expanding struct fields that are public.
+- **No package-level mutable state** — wire defaults in constructors; never init-time globals for LLM clients.
+- **Context through I/O** — every exported function that calls an LLM or external service must accept `context.Context` as the first argument.
+- **Errors wrapped** — `fmt.Errorf("react: step %d: %w", n, err)`; return errors, no silent swallows.
+- **Bounded loops** — every agent loop (ReAct, reflect, plan waves) must have an explicit `maxSteps` / `maxIterations` cap; log at `Warn` when the limit is hit.
+- **Streaming** — implement `gentic.StreamingStep` when a step produces LLM token output; emit `StreamToken{Done: true}` unconditionally at the end; drain the output channel or cancel ctx to avoid goroutine leaks.
+
+## Testing
+
+- Unit tests live in `*_test.go` next to the source; table-driven style preferred.
+- Eval tests belong under `pkg/gentic/eval/`; use build tag `-tags=integration` for tests that require live API keys.
+- Run: `go test ./...` from `packages/gentic`; `go vet ./...` before committing.
+
+## Module boundary
+
+- `packages/gentic` has its own `go.mod` (`github.com/daniel-dihardja/gentic`). Keep dependencies minimal.
+- `apps/gentic-agents` references this module via a `replace` directive in its `go.work` / `go.mod`. Do not add heavy external dependencies to the framework that would force consumer upgrades.
