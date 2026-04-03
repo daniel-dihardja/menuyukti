@@ -1,9 +1,31 @@
 ---
-description: Go conventions for apps/gentic-agents (Gentic SDK, flows, flowstate, HTTP)
+description: Go engineering, agentic AI best practices, and Gentic SDK usage for apps/gentic-agents
 globs: apps/gentic-agents/**
 ---
 
-# Gentic agents (`apps/gentic-agents`) — Go conventions
+# Gentic agents (`apps/gentic-agents`) — conventions
+
+Implementations should **stay aligned with agentic AI best practices** and **idiomatic Go engineering** — not only “make it compile.”
+
+## Agentic AI best practices
+
+- **Clear roles** — separate **routing/intent**, **planning or step emission**, **tool execution**, and **reflection/critique** along existing package boundaries (`internal/agent/flows/*`, `flowstate/`, `step/`, `flowutil/`). Do not collapse unrelated concerns into one giant function.
+- **Bounded behavior** — loops (ReAct, reflect, plan-and-execute) must have **explicit limits** (max iterations, timeouts, or early exit on success) consistent with existing patterns; never unbounded LLM/tool cycles.
+- **Tool and API contracts** — tools return **structured, parseable outcomes**; inputs are validated before side effects. Prefer idempotent or clearly named mutating operations when calling GraphQL.
+- **Observable flow** — preserve structured logging and metadata keys already used in flows (e.g. component labels, request correlation via platform metadata) so runs stay debuggable in production.
+- **Grounding** — fetch platform truth via **`internal/platform/graphql`** (and flowstate) before inventing assumptions; the model should **reason over retrieved data**, not substitute hallucinated IDs or state.
+- **Evals** — meaningful agent behavior changes should be **testable**: extend or add cases under **`eval/`** where appropriate; expensive or LLM-backed paths stay behind `-tags=integration` and documented env requirements.
+- **Reuse library primitives** — use Gentic’s **react**, **reflect**, **intent**, and **steps** packages rather than re-building equivalent control flow.
+
+## Go engineering principles
+
+- **Dependency injection** — construct dependencies in **`cmd/server/main.go`** (or narrow constructors); **no new package-level mutable state** for config, clients, or agents.
+- **Context** — pass **`context.Context`** through exported APIs that do I/O, cancellation, or deadlines; do not store context in structs long-term except as documented patterns already in the codebase.
+- **Interfaces at boundaries** — depend on **small interfaces** where tests and swaps matter; keep HTTP and Gentic wiring thin — **handlers validate and map**; heavy logic stays in `internal/agent/` and platform packages.
+- **Errors** — wrap with **`fmt.Errorf("...: %w", err)`**; return errors rather than silent failure; avoid string-matching errors for control flow unless matching existing eval/test patterns.
+- **Concurrency** — if adding goroutines, channels, or shared maps: **document ownership**, use sync primitives correctly, and prefer existing server/request scoping over ad-hoc globals.
+- **Package layout** — follow **`internal/`** rules: public API surface is **`cmd/`** and what you intentionally export; keep packages **focused and shallow** — one primary responsibility per package.
+- **Consistency** — match **naming**, **file organization**, and **testing style** of neighboring code (`*_test.go` next to code, table-driven tests where used elsewhere).
 
 ## Layout
 
@@ -26,10 +48,6 @@ globs: apps/gentic-agents/**
 ## Stateful multi-step flows
 
 - Use **`internal/agent/flowstate/`** for shared state structs (e.g. campaign brief, location profile) keyed consistently with GraphQL/platform metadata.
-
-## Errors
-
-- Wrap errors with context: `fmt.Errorf("operation: %w", err)` so callers can unwrap.
 
 ## Testing and quality
 

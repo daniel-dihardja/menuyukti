@@ -1,5 +1,5 @@
 ---
-description: Next.js, Clerk, Prisma, shadcn, i18n, and testing for apps/web
+description: Next.js, Clerk, shadcn, i18n, UX/UI quality bar, and testing for apps/web
 globs: apps/web/**
 ---
 
@@ -14,14 +14,26 @@ globs: apps/web/**
 
 - **Clerk** (`@clerk/nextjs`) — use established patterns: middleware, `auth()` / session helpers. Do not introduce ad-hoc cookie sessions or custom auth for product routes.
 
-## Database
+## Data and persistence
 
-- **Prisma** with **`prisma.config.ts`** and generated client — use typed queries; avoid raw SQL unless justified.
-- Migrations / generate: run **Prisma CLI from `apps/web`** (e.g. `pnpm exec prisma migrate dev`, `pnpm exec prisma generate`). Root `turbo.json` defines `db:*` tasks for packages that expose matching `package.json` scripts.
+- **Database access, schema, and migrations belong in `apps/graphql`** — the web app talks to the platform through the **GraphQL API** only. Do not add or document direct database or ORM workflows in `apps/web`.
 
 ## UI
 
 - **shadcn/ui** — configuration in `components.json`. Extend via **`components/ui/`** and local components; avoid copying unstable forked primitives.
+
+## UX / UI quality (apply on every UI change)
+
+When implementing or changing UI, **do not stop at “it works”** — treat the work as if reviewed by a **UX/UI specialist** and aim for the best practical solution within existing patterns.
+
+- **Clarity** — obvious primary action, scannable hierarchy (headings, spacing, grouping), labels that match user mental models.
+- **Feedback** — loading, empty, and error states; success confirmation where it reduces doubt; disabled vs loading vs error are visually distinct.
+- **Accessibility** — semantic HTML, focus order, keyboard use for interactive controls, sufficient contrast; pair icons with text where meaning isn’t obvious.
+- **Consistency** — align with nearby screens and **`@workspace/ui`** / shadcn tokens (spacing, typography, radius); avoid one-off styling unless intentional.
+- **Resilience** — sensible defaults, safe destructive actions (confirm or undo), mobile-friendly touch targets and layout.
+- **i18n** — new copy goes through **next-intl** (`messages/`), including button labels and error strings.
+
+Prefer small, purposeful improvements over decorative churn; when tradeoffs exist, choose what helps **task completion and comprehension** first.
 
 ## i18n
 

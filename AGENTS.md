@@ -6,7 +6,7 @@ This file helps AI coding agents (Cursor, Claude Code, Codex, etc.) run the righ
 
 | Area | Path | Stack |
 |------|------|--------|
-| Web | `apps/web` | Next.js, React, TypeScript, Clerk, Prisma, Vitest, next-intl |
+| Web | `apps/web` | Next.js, React, TypeScript, Clerk, Vitest, next-intl (data via GraphQL) |
 | GraphQL API | `apps/graphql` | Python, Strawberry, uv, Ruff, pytest |
 | Gentic agents | `apps/gentic-agents` | Go, Gentic SDK, HTTP API |
 
@@ -66,16 +66,7 @@ pnpm check-types    # turbo; packages must define a check-types script to partic
 pnpm format         # Prettier (TS/MD per config)
 ```
 
-## Prisma (web)
-
-Run from **`apps/web`**:
-
-```bash
-cd apps/web && pnpm exec prisma generate
-cd apps/web && pnpm exec prisma migrate dev
-```
-
-Adjust flags as needed; schema lives under `apps/web/prisma/`.
+Database schema, migrations, and persistence are implemented in **`apps/graphql`** (see that app’s `Makefile`, `data_sources/`, and docs).
 
 ## Off-limits or discouraged patterns
 

@@ -19,7 +19,7 @@ alwaysApply: true
   - `pnpm dev` — `turbo dev` (persistent, not cached)
   - `pnpm lint` — `turbo lint` (depends on `^lint`)
   - `pnpm check-types` — `turbo check-types` (depends on `^check-types`; individual packages must define the script where applicable)
-- `db:generate`, `db:migrate`, `db:deploy` are defined in Turbo with `cache: false` when a workspace package exposes those scripts. For Prisma today, run **`pnpm exec prisma …` from `apps/web`** unless a package adds `db:*` scripts.
+- `db:generate`, `db:migrate`, `db:deploy` may appear in Turbo when a workspace package exposes matching scripts. **Database ownership** is in **`apps/graphql`** — not the web app.
 
 ## Python (GraphQL and shared packages)
 
