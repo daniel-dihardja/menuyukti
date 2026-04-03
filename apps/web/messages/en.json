@@ -159,7 +159,38 @@
     "agents": "Agents",
     "cogs": "COGS",
     "fixedCosts": "Fixed Costs",
-    "docs": "Docs"
+    "docs": "Docs",
+    "assets": "Assets"
+  },
+  "assets": {
+    "title": "Brand assets",
+    "description": "Upload and organize images for campaigns and creative. Files are normalized to 1024px on the shortest side and saved as WebP.",
+    "upload": {
+      "title": "Upload images",
+      "hint": "Drag and drop or browse — PNG, JPEG, WebP, GIF, AVIF",
+      "browse": "Browse files",
+      "uploading": "Processing…",
+      "success": "Image uploaded",
+      "error": "Upload failed",
+      "invalidType": "Please choose an image file."
+    },
+    "grid": {
+      "loading": "Loading…",
+      "empty": {
+        "title": "No images yet",
+        "description": "Upload your first restaurant photo, logo, or campaign visual to keep everything in one place."
+      },
+      "delete": "Remove",
+      "deleteConfirm": "Remove this image?"
+    },
+    "toast": {
+      "uploaded": "Saved to your library",
+      "uploadError": "Couldn’t upload that file. Try again.",
+      "uploadPartial": "Some files couldn’t be uploaded. Check your images and try again.",
+      "loadError": "Couldn’t load your library. Refresh the page.",
+      "deleted": "Image removed",
+      "deleteError": "Couldn’t remove the image"
+    }
   },
   "agents": {
     "title": "Agents",

@@ -1,6 +1,14 @@
 "use client";
 
-import { BookOpenText, Bot, ChevronRight, FileUp, MapPin, Megaphone } from "lucide-react";
+import {
+  BookOpenText,
+  Bot,
+  ChevronRight,
+  FileUp,
+  Images,
+  MapPin,
+  Megaphone,
+} from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -54,6 +62,12 @@ const NAV_ITEMS: NavItem[] = [
     labelKey: "campaigns",
     href: routes.campaigns.list,
     icon: <Megaphone className="w-4 h-4" />,
+  },
+  {
+    key: "assets",
+    labelKey: "assets",
+    href: routes.assets,
+    icon: <Images className="w-4 h-4" />,
   },
   // {
   //   key: "sales_children",

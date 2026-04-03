@@ -5,6 +5,7 @@ import { routes } from "@/lib/routes";
 const isProtectedRoute = createRouteMatcher([
   "/analytics(.*)",
   "/campaigns(.*)",
+  "/assets(.*)",
 ]);
 
 // Use default env resolution (CLERK_SECRET_KEY, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY). Do not pass

@@ -10,3 +10,6 @@ node_modules
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Local asset uploads (filesystem storage; created at runtime)
+/public/uploads/assets/
