@@ -10,6 +10,7 @@ Implementations should **stay aligned with agentic AI best practices** and **idi
 ## Agentic AI best practices
 
 - **Clear roles** — separate **routing/intent**, **planning or step emission**, **tool execution**, and **reflection/critique** along existing package boundaries (`internal/agent/flows/*`, `flowstate/`, `step/`, `flowutil/`). Do not collapse unrelated concerns into one giant function.
+- **Structured LLM output** — use **`gentic.SchemaFromStruct`**, **`gentic.SchemaFor[T]`**, **`gentic.TypedChat`**, and **`reflect.RunTypedReflectLoop`** from `packages/gentic` for JSON-schema-backed calls; do not reintroduce ad-hoc “parse JSON from Chat” helpers in the agent app.
 - **Bounded behavior** — loops (ReAct, reflect, plan-and-execute) must have **explicit limits** (max iterations, timeouts, or early exit on success) consistent with existing patterns; never unbounded LLM/tool cycles.
 - **Tool and API contracts** — tools return **structured, parseable outcomes**; inputs are validated before side effects. Prefer idempotent or clearly named mutating operations when calling GraphQL.
 - **Observable flow** — preserve structured logging and metadata keys already used in flows (e.g. component labels, request correlation via platform metadata) so runs stay debuggable in production.
@@ -31,7 +32,7 @@ Implementations should **stay aligned with agentic AI best practices** and **idi
 
 - **Entry:** `cmd/server/main.go` — wires dependencies (config, OpenAI provider, Gentic adapter, HTTP server). Prefer **dependency injection** here; avoid new package-level globals.
 - **HTTP:** `internal/server/` — router, handlers, request/invoke mapping.
-- **Agent domain:** `internal/agent/` — `flows/` (per-feature flows), `flowstate/` (shared state types), `step/`, `flowutil/`, `toolutil/`, etc.
+- **Agent domain:** `internal/agent/` — `flows/` (per-feature flows), `flowstate/` (shared state types), `step/`, `flowutil/`, etc.
 - **Gentic integration:** `internal/gentic/adapter.go` — builds the wired `gentic.Agent` (orchestration). New top-level wiring or provider setup should stay cohesive with this package.
 - **Platform:** `internal/platform/` — config, GraphQL client, shared metadata keys.
 
@@ -40,6 +41,7 @@ Implementations should **stay aligned with agentic AI best practices** and **idi
 - The **`github.com/daniel-dihardja/gentic`** module provides `gentic.Agent`, streaming LLM, **intent** routing, **steps**, **react**, **reflect**, and server utilities.
 - **Do not re-implement** the **ReAct** event loop — use **`gentic/pkg/gentic/react`** (see `packages/gentic/pkg/gentic/react/` in the workspace) and existing flow patterns.
 - Flows may import `gentic` types (`AgentInput`, tools, reflect helpers) — keep imports purposeful; avoid duplicating logic that already exists in `internal/gentic` or shared packages.
+- **Tool parameter schemas** (ReAct `react.NewTool` / `NewToolWithState`) — build JSON Schema from structs with **`gentic.SchemaFromStruct`** (or **`gentic.SchemaFor[T]`**); do not add a separate agent-local schema package.
 
 ## Package naming
 

@@ -2,7 +2,6 @@ package campaign
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -16,7 +15,7 @@ import (
 )
 
 const (
-	briefGenerationSystem = "You are a senior restaurant social media strategist. Follow the instructions precisely. Reply with valid JSON only, no markdown."
+	briefGenerationSystem = "You are a senior restaurant social media strategist. Follow the instructions precisely."
 	briefReflectionSystem = "You are a quality reviewer for restaurant Instagram campaign strategy briefs."
 	briefNotifySystem     = "You are a helpful assistant for restaurant marketing. Write concise, friendly user-facing confirmations."
 )
@@ -72,7 +71,7 @@ func (s CreateBriefStep) Run(ctx context.Context, state *gen.State) error {
 	n.Notify("create_campaign_brief", gen.ActivityDone, "Create a campaign brief")
 
 	totalRefine := s.MaxReflectionIterations + 1
-	rawDraft, err := reflect.RunReflectLoop(ctx, reflect.ReflectLoopParams{
+	payload, err := reflect.RunTypedReflectLoop[llmBriefPayload](ctx, reflect.ReflectLoopParams{
 		LLM:                    llm,
 		Model:                  model,
 		MaxIterations:          s.MaxReflectionIterations,
@@ -91,9 +90,8 @@ func (s CreateBriefStep) Run(ctx context.Context, state *gen.State) error {
 	n.Notify("campaign_brief_refinement", gen.ActivityDone,
 		fmt.Sprintf("Refining (%d/%d)", totalRefine, totalRefine))
 
-	payload, err := parseBriefJSON(rawDraft)
-	if err != nil {
-		return fmt.Errorf("campaign brief: parse LLM output: %w", err)
+	if strings.TrimSpace(payload.CampaignTheme) == "" {
+		return fmt.Errorf("campaign brief: empty campaign_theme")
 	}
 
 	state.SetMetadata(flowstate.KeyCampaignBrief, &graphql.CampaignBrief{
@@ -197,26 +195,6 @@ Write the improved JSON object now, with the same four keys as specified in the 
 		previousDraft,
 		feedback,
 	)
-}
-
-func parseBriefJSON(raw string) (llmBriefPayload, error) {
-	s := strings.TrimSpace(raw)
-	s = strings.TrimPrefix(s, "```json")
-	s = strings.TrimPrefix(s, "```JSON")
-	s = strings.TrimPrefix(s, "```")
-	s = strings.TrimSpace(s)
-	if i := strings.LastIndex(s, "```"); i >= 0 {
-		s = strings.TrimSpace(s[:i])
-	}
-
-	var payload llmBriefPayload
-	if err := json.Unmarshal([]byte(s), &payload); err != nil {
-		return payload, err
-	}
-	if strings.TrimSpace(payload.CampaignTheme) == "" {
-		return payload, fmt.Errorf("empty campaign_theme")
-	}
-	return payload, nil
 }
 
 func buildNotifyPrompt(p llmBriefPayload) string {

@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	assignPostFormatGenerationSystem = "You are deciding Instagram post formats for a restaurant campaign. Follow the instructions precisely. Reply with valid JSON only, no markdown."
+	assignPostFormatGenerationSystem = "You are deciding Instagram post formats for a restaurant campaign. Follow the instructions precisely."
 	assignPostFormatReflectionSystem = "You are a quality reviewer for Instagram promotion post format plans."
 )
 
@@ -26,10 +26,6 @@ type FormatsStep struct {
 	LLM                     gen.LLM // nil → openai.Provider{}
 	Model                   string
 	MaxReflectionIterations int
-}
-
-type postFormatPlanWire struct {
-	Assignments []flowstate.PostFormatAssignment `json:"assignments"`
 }
 
 // Run implements gen.Step.
@@ -85,13 +81,13 @@ func (s FormatsStep) Run(ctx context.Context, state *gen.State) error {
 
 	totalRefine := s.MaxReflectionIterations + 1
 	ctxParams := assignFormatContext{
-		promotionDates:  promotionDates,
-		selectedItems:   selected,
-		dateToWeek:      dateToWeek,
-		holidayByDate:   holidayByDate,
+		promotionDates: promotionDates,
+		selectedItems:  selected,
+		dateToWeek:     dateToWeek,
+		holidayByDate:  holidayByDate,
 	}
 
-	plan, err := reflect.RunStructuredReflectLoop(ctx, reflect.ReflectLoopParams{
+	planVal, err := reflect.RunTypedReflectLoop[flowstate.PostFormatPlan](ctx, reflect.ReflectLoopParams{
 		LLM:                    llm,
 		Model:                  model,
 		MaxIterations:          s.MaxReflectionIterations,
@@ -107,9 +103,17 @@ func (s FormatsStep) Run(ctx context.Context, state *gen.State) error {
 			nn.Notify("assign_post_formats_refinement", gen.ActivityReflecting,
 				fmt.Sprintf("Refining formats (%d/%d)", current, total))
 		},
-	}, func(draft string) (*flowstate.PostFormatPlan, error) {
-		return parseAndValidatePostFormatPlan(draft, ctxParams)
 	})
+	if err != nil {
+		n.Notify("assign_post_formats_refinement", gen.ActivityDone, "Refining formats (failed)")
+		msg := err.Error()
+		if len(msg) > 180 {
+			msg = msg[:180] + "…"
+		}
+		n.Notify("assign_post_formats", gen.ActivityDone, "Assign post formats failed: "+msg)
+		return fmt.Errorf("assign post formats: %w", err)
+	}
+	plan, err := validatePostFormatPlan(&planVal, ctxParams)
 	if err != nil {
 		n.Notify("assign_post_formats_refinement", gen.ActivityDone, "Refining formats (failed)")
 		msg := err.Error()
@@ -315,13 +319,10 @@ Write the improved JSON object now.`,
 	)
 }
 
-func parseAndValidatePostFormatPlan(raw string, ctx assignFormatContext) (*flowstate.PostFormatPlan, error) {
-	s := stripJSONFences(raw)
-	var w postFormatPlanWire
-	if err := json.Unmarshal([]byte(s), &w); err != nil {
-		return nil, err
+func validatePostFormatPlan(plan *flowstate.PostFormatPlan, ctx assignFormatContext) (*flowstate.PostFormatPlan, error) {
+	if plan == nil {
+		return nil, fmt.Errorf("nil plan")
 	}
-	plan := &flowstate.PostFormatPlan{Assignments: w.Assignments}
 	plan.Assignments = sanitizeAssignments(plan.Assignments, ctx.promotionDates)
 	repairAssignmentCoverage(plan, ctx)
 	maybeMergeSinglesIntoCarousels(plan, ctx)
@@ -342,7 +343,7 @@ func normalizePostFormat(s string) string {
 }
 
 // repairAssignmentCoverage fixes common LLM mistakes: duplicate items across dates, missing dishes,
-// invalid star/holiday carousels, so parseAndValidatePostFormatPlan can succeed without another LLM round.
+// invalid star/holiday carousels, so validatePostFormatPlan can succeed without another LLM round.
 func repairAssignmentCoverage(plan *flowstate.PostFormatPlan, ctx assignFormatContext) {
 	if plan == nil {
 		return

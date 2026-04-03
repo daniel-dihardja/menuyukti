@@ -21,7 +21,7 @@ const (
 	maxPostsPerWeek  = 5
 	minDaysFullWeek  = 5
 
-	scheduleGenerationSystem = "You are scheduling Instagram posts for a restaurant. Follow the instructions precisely. Reply with valid JSON only, no markdown."
+	scheduleGenerationSystem = "You are scheduling Instagram posts for a restaurant. Follow the instructions precisely."
 	scheduleReflectionSystem = "You are a quality reviewer for restaurant Instagram posting schedules."
 	scheduleNotifySystem     = "You are a helpful assistant for restaurant marketing. Write concise, friendly user-facing confirmations."
 )
@@ -115,7 +115,7 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) error {
 	n.Notify("create_post_schedule", gen.ActivityDone, "Create Instagram post schedule")
 
 	totalRefine := s.MaxReflectionIterations + 1
-	rawDraft, err := reflect.RunReflectLoop(ctx, reflect.ReflectLoopParams{
+	scheduleVal, err := reflect.RunTypedReflectLoop[flowstate.PostSchedule](ctx, reflect.ReflectLoopParams{
 		LLM:                    llm,
 		Model:                  model,
 		MaxIterations:          s.MaxReflectionIterations,
@@ -134,10 +134,10 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) error {
 	n.Notify("post_schedule_refinement", gen.ActivityDone,
 		fmt.Sprintf("Refining (%d/%d)", totalRefine, totalRefine))
 
-	schedule, err := parseScheduleJSON(rawDraft)
-	if err != nil {
-		return fmt.Errorf("post schedule: parse LLM output: %w", err)
+	if len(scheduleVal.Weeks) == 0 {
+		return fmt.Errorf("post schedule: empty weeks")
 	}
+	schedule := &scheduleVal
 
 	injected := injectPinnedSlots(schedule, candidateWeeks)
 	final := validateAndClamp(injected, candidateWeeks)
@@ -406,26 +406,6 @@ Write the improved JSON object now, with the same structure: {"weeks":[{"week_nu
 		previousDraft,
 		feedback,
 	)
-}
-
-func parseScheduleJSON(raw string) (*flowstate.PostSchedule, error) {
-	s := strings.TrimSpace(raw)
-	s = strings.TrimPrefix(s, "```json")
-	s = strings.TrimPrefix(s, "```JSON")
-	s = strings.TrimPrefix(s, "```")
-	s = strings.TrimSpace(s)
-	if i := strings.LastIndex(s, "```"); i >= 0 {
-		s = strings.TrimSpace(s[:i])
-	}
-
-	var payload flowstate.PostSchedule
-	if err := json.Unmarshal([]byte(s), &payload); err != nil {
-		return nil, err
-	}
-	if len(payload.Weeks) == 0 {
-		return nil, fmt.Errorf("empty weeks")
-	}
-	return &payload, nil
 }
 
 func injectPinnedSlots(schedule *flowstate.PostSchedule, candidateWeeks []candidateWeek) *flowstate.PostSchedule {

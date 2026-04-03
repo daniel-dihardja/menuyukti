@@ -2,7 +2,6 @@ package promotion
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -17,7 +16,7 @@ import (
 )
 
 const (
-	selectPromotionGenerationSystem = "You are a senior restaurant marketer. Follow the instructions precisely. Reply with valid JSON only, no markdown."
+	selectPromotionGenerationSystem = "You are a senior restaurant marketer. Follow the instructions precisely."
 	selectPromotionReflectionSystem = "You are a quality reviewer for Instagram promotion item selection."
 )
 
@@ -96,7 +95,7 @@ func (s SelectStep) Run(ctx context.Context, state *gen.State) error {
 	refSnap := buildSelectPromotionReflectionSnapshot(brief, slotCount, itemsBlock)
 
 	totalRefine := s.MaxReflectionIterations + 1
-	selected, err := reflect.RunStructuredReflectLoop(ctx, reflect.ReflectLoopParams{
+	payload, err := reflect.RunTypedReflectLoop[llmSelectedMenuNames](ctx, reflect.ReflectLoopParams{
 		LLM:                    llm,
 		Model:                  model,
 		MaxIterations:          s.MaxReflectionIterations,
@@ -112,16 +111,15 @@ func (s SelectStep) Run(ctx context.Context, state *gen.State) error {
 			nn.Notify("select_promotion_refinement", gen.ActivityReflecting,
 				fmt.Sprintf("Refining selection (%d/%d)", current, total))
 		},
-	}, func(draft string) ([]graphql.MenuEngineeringItem, error) {
-		sel, err := parseSelectedPromotionItems(draft, raw)
-		if err != nil {
-			return nil, err
-		}
-		return ensureNonStarCarouselCandidates(sel, raw), nil
 	})
 	if err != nil {
 		return fmt.Errorf("select promotion items: %w", err)
 	}
+	selected, err := resolveSelectedMenuNames(payload, raw)
+	if err != nil {
+		return fmt.Errorf("select promotion items: %w", err)
+	}
+	selected = ensureNonStarCarouselCandidates(selected, raw)
 
 	n.Notify("select_promotion_refinement", gen.ActivityDone,
 		fmt.Sprintf("Refining selection (%d/%d)", totalRefine, totalRefine))
@@ -227,12 +225,7 @@ Write the improved JSON object now, with the same key as specified in the origin
 	)
 }
 
-func parseSelectedPromotionItems(raw string, candidates []graphql.MenuEngineeringItem) ([]graphql.MenuEngineeringItem, error) {
-	s := stripJSONFences(raw)
-	var payload llmSelectedMenuNames
-	if err := json.Unmarshal([]byte(s), &payload); err != nil {
-		return nil, err
-	}
+func resolveSelectedMenuNames(payload llmSelectedMenuNames, candidates []graphql.MenuEngineeringItem) ([]graphql.MenuEngineeringItem, error) {
 	if len(payload.SelectedMenuNames) == 0 {
 		return nil, fmt.Errorf("selected_menu_names must be non-empty")
 	}
@@ -313,16 +306,4 @@ func ensureNonStarCarouselCandidates(selected []graphql.MenuEngineeringItem, raw
 
 func isStarCategory(cat string) bool {
 	return strings.EqualFold(strings.TrimSpace(cat), "star")
-}
-
-func stripJSONFences(s string) string {
-	s = strings.TrimSpace(s)
-	s = strings.TrimPrefix(s, "```json")
-	s = strings.TrimPrefix(s, "```JSON")
-	s = strings.TrimPrefix(s, "```")
-	s = strings.TrimSpace(s)
-	if i := strings.LastIndex(s, "```"); i >= 0 {
-		s = strings.TrimSpace(s[:i])
-	}
-	return s
 }

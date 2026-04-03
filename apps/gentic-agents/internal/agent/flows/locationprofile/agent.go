@@ -3,7 +3,6 @@ package locationprofile
 import (
 	"context"
 
-	"github.com/daniel-dihardja/gentic-agents/internal/agent/toolutil"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/react"
 )
@@ -35,13 +34,13 @@ func NewChatReactActor(model, graphqlEndpoint string) gen.Flow {
 			react.NewToolWithState(
 				"fetch_location_profile",
 				"Loads the saved location profile summary for the current location_id and analytics_id from the request context.",
-				toolutil.SchemaFromStruct(FetchProfileInput{}),
+				gen.SchemaFromStruct(FetchProfileInput{}),
 				fetchProfileHandler(graphqlEndpoint),
 			),
 			react.NewToolWithState(
 				"update_location_profile",
 				"Saves the full location profile summary to the database for the current location and analytics run.",
-				toolutil.SchemaFromStruct(UpdateProfileInput{}),
+				gen.SchemaFromStruct(UpdateProfileInput{}),
 				updateProfileHandler(graphqlEndpoint),
 			),
 		),
