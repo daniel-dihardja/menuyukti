@@ -172,7 +172,12 @@
       "uploading": "Processing…",
       "success": "Image uploaded",
       "error": "Upload failed",
-      "invalidType": "Please choose an image file."
+      "invalidType": "Please choose an image file.",
+      "flow": {
+        "label": "AI Flow",
+        "none": "No flow",
+        "removeBackground": "Remove background"
+      }
     },
     "grid": {
       "loading": "Loading…",

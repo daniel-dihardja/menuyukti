@@ -15,6 +15,23 @@ const ALLOWED_TYPES = new Set([
   "image/tiff",
 ]);
 
+const ALLOWED_FLOWS = new Set(["none", "remove-background"]);
+
+function normalizeFlow(raw: unknown): string {
+  const s = typeof raw === "string" ? raw.trim() : "";
+  if (ALLOWED_FLOWS.has(s)) return s;
+  return "none";
+}
+
+/** Flow-specific post-processing after resize + WebP encode. */
+async function applyFlow(flow: string, buffer: Buffer): Promise<Buffer> {
+  if (flow === "remove-background") {
+    // Placeholder — returns image unchanged until real implementation
+    return buffer;
+  }
+  return buffer;
+}
+
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
@@ -56,7 +73,9 @@ export async function POST(req: Request) {
       : { width: 1024, withoutEnlargement: false },
   );
 
-  const webpBuffer = await resized.webp({ quality: 85 }).toBuffer();
+  const resizedWebp = await resized.webp({ quality: 85 }).toBuffer();
+  const flow = normalizeFlow(formData.get("flow"));
+  const webpBuffer = await applyFlow(flow, resizedWebp);
 
   const id = randomUUID();
   const filename = `${id}.webp`;

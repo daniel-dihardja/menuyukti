@@ -2,10 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
+import { ImageIcon, Loader2, Sparkles, Trash2, Upload } from "lucide-react";
 
 import { Button } from "@workspace/ui/components/button";
 import { Card } from "@workspace/ui/components/card";
+import { Label } from "@workspace/ui/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
 import { cn } from "@workspace/ui/lib/utils";
 
 type AssetItem = {
@@ -16,6 +24,9 @@ type AssetItem = {
 };
 
 type ToastState = { kind: "success" | "error"; message: string } | null;
+
+/** Post-upload processing flow; sent with FormData as `flow`. */
+type AssetFlow = "none" | "remove-background";
 
 const SKELETON_COUNT = 8;
 
@@ -34,6 +45,7 @@ export function AssetsClient() {
   const [dragActive, setDragActive] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [selectedFlow, setSelectedFlow] = useState<AssetFlow>("none");
 
   const showToast = useCallback((kind: "success" | "error", message: string) => {
     setToast({ kind, message });
@@ -74,6 +86,7 @@ export function AssetsClient() {
         list.map(async (file) => {
           const fd = new FormData();
           fd.set("file", file);
+          fd.set("flow", selectedFlow);
           const res = await fetch("/api/assets/upload", {
             method: "POST",
             body: fd,
@@ -197,6 +210,43 @@ export function AssetsClient() {
             <div className="space-y-1">
               <h2 className="text-lg font-semibold tracking-tight">{t("upload.title")}</h2>
               <p className="text-sm text-muted-foreground max-w-md">{t("upload.hint")}</p>
+            </div>
+            <div className="flex w-full max-w-sm flex-col items-stretch gap-2.5">
+              <Label
+                htmlFor="asset-upload-flow"
+                className="text-center text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
+              >
+                {t("upload.flow.label")}
+              </Label>
+              <Select
+                value={selectedFlow}
+                onValueChange={(v) => setSelectedFlow(v as AssetFlow)}
+                disabled={uploading}
+              >
+                <SelectTrigger
+                  id="asset-upload-flow"
+                  size="default"
+                  className={cn(
+                    "h-11 w-full justify-between rounded-lg border-border/80 bg-background/90 px-4 shadow-sm transition-[box-shadow,border-color] duration-200",
+                    "hover:border-primary/30 hover:bg-background",
+                    "data-[state=open]:border-primary/40 data-[state=open]:shadow-[0_0_0_3px_hsl(var(--ring)/0.25)]",
+                  )}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="center" position="popper" className="min-w-[var(--radix-select-trigger-width)]">
+                  <SelectItem value="none">{t("upload.flow.none")}</SelectItem>
+                  <SelectItem value="remove-background" className="cursor-pointer">
+                    <span className="flex w-full items-center gap-2">
+                      <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
+                      <span className="flex-1">{t("upload.flow.removeBackground")}</span>
+                      <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-primary">
+                        AI
+                      </span>
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Button
               type="button"
