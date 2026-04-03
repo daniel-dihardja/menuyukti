@@ -15,7 +15,7 @@ import (
 
 // BuildAgent wires the Gentic SDK with a default chat flow behind intent routing.
 // The default chat uses step.DefaultChatSystemPrompt.
-func BuildAgent(model, graphqlEndpoint string, maxReflectionIterations int) gen.Agent {
+func BuildAgent(model, graphqlEndpoint string, maxReflectionIterations int, store gen.ThreadStore) gen.Agent {
 	chatFlow := gen.NewFlow(steps.ChatStep{
 		Model:        model,
 		SystemPrompt: "You are a helpful assistant.",
@@ -62,10 +62,23 @@ func BuildAgent(model, graphqlEndpoint string, maxReflectionIterations int) gen.
 				GraphQLEndpoint: graphqlEndpoint,
 			}),
 	)
-	locationProfileChatFlow := locationprofile.NewChatReactActor(model, graphqlEndpoint)
-	resolver := intent.NewRouter("chat", "create_campaign", "location_profile_chat").
-		On("create_campaign", campaignFlow).
-		On("location_profile_chat", locationProfileChatFlow).
+	// Legacy full pipeline: location profile → brief → schedule → promotions → save.
+	// Not registered on the intent router (collides with campaign brief chat); kept as reference only.
+	var _ gen.Flow = campaignFlow
+
+	locationProfileChatFlow := locationprofile.NewChatReactActor(model, graphqlEndpoint, maxReflectionIterations)
+	campaignBriefChatFlow := campaign.NewChatReactActor(model, graphqlEndpoint, maxReflectionIterations)
+	// Intent labels are chosen so they stay distinct from the removed "create_campaign" pipeline intent.
+	// create_campaign_brief and update_campaign_brief both use the same ReAct brief agent (tools decide create vs fetch vs update).
+	resolver := intent.NewRouter(
+		"chat",
+		"create_location_profile", "update_location_profile",
+		"create_campaign_brief", "update_campaign_brief",
+	).
+		On("create_location_profile", locationProfileChatFlow).
+		On("update_location_profile", locationProfileChatFlow).
+		On("create_campaign_brief", campaignBriefChatFlow).
+		On("update_campaign_brief", campaignBriefChatFlow).
 		Default(chatFlow)
-	return gen.Agent{Resolver: resolver}
+	return gen.Agent{Resolver: resolver, MemoryStore: store}
 }

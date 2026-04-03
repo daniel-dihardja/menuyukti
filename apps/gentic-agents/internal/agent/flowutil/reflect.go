@@ -43,11 +43,13 @@ func (c ReflectConfig) WithTimeout(ctx context.Context) (context.Context, contex
 }
 
 // NotifyRefining returns an OnIteration callback that emits refinement activity notifications.
+// stepID must match the final ActivityDone step name (e.g. "campaign_brief_refinement") so the
+// same row updates from reflecting to done instead of leaving a duplicate stuck row.
 func NotifyRefining(stepID string) func(ctx context.Context, current, total int) {
 	return func(ctx context.Context, current, total int) {
 		n := gen.NotifierFromContext(ctx)
 		if n != nil {
-			n.Notify(stepID+"_refinement", gen.ActivityReflecting,
+			n.Notify(stepID, gen.ActivityReflecting,
 				fmt.Sprintf("Refining (%d/%d)", current, total))
 		}
 	}

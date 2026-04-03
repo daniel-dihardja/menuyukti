@@ -39,6 +39,7 @@ func InvokeHandler(runner *gensrv.Runner) http.HandlerFunc {
 		fwReq := gensrv.InvokeRequest{
 			Message:  input.Query,
 			Metadata: input.Metadata,
+			ThreadID: req.ThreadID,
 		}
 
 		ctx := graphql.ContextWithUserID(r.Context(), r.Header.Get("X-Menuyukti-User-Id"))
@@ -80,6 +81,7 @@ func StreamHandler(runner *gensrv.Runner) http.HandlerFunc {
 		fwReq := gensrv.InvokeRequest{
 			Message:  input.Query,
 			Metadata: input.Metadata,
+			ThreadID: req.ThreadID,
 		}
 
 		ctx := graphql.ContextWithUserID(r.Context(), r.Header.Get("X-Menuyukti-User-Id"))

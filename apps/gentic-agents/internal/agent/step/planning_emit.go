@@ -29,6 +29,7 @@ type planningPayloadWire struct {
 	DateEnd            string                 `json:"dateEnd"`
 	NationalHolidays   []nationalHolidayWire  `json:"nationalHolidays,omitempty"`
 	LocationSummary    *string                `json:"locationSummary,omitempty"`
+	LocationProfileId  *string                `json:"locationProfileId,omitempty"`
 	CampaignBrief      *campaignBriefWire     `json:"campaignBrief,omitempty"`
 }
 
@@ -74,9 +75,14 @@ func buildPlanningPayloadWire(state *gen.State) (planningPayloadWire, bool) {
 
 	holidaysWire := parseNationalHolidaysWire(meta.GetString("national_holidays"))
 	var locSummary *string
+	var locProfileId *string
 	if p, ok := flowstate.LocationProfileFromMetadata(state); ok && p != nil && strings.TrimSpace(p.Summary) != "" {
 		s := strings.TrimSpace(p.Summary)
 		locSummary = &s
+		if p.ID != "" {
+			idStr := string(p.ID)
+			locProfileId = &idStr
+		}
 	}
 
 	var briefPtr *campaignBriefWire
@@ -102,11 +108,12 @@ func buildPlanningPayloadWire(state *gen.State) (planningPayloadWire, bool) {
 	}
 
 	return planningPayloadWire{
-		DateStart:        dateStart,
-		DateEnd:          dateEnd,
-		NationalHolidays: holidaysWire,
-		LocationSummary:  locSummary,
-		CampaignBrief:    briefPtr,
+		DateStart:         dateStart,
+		DateEnd:           dateEnd,
+		NationalHolidays:  holidaysWire,
+		LocationSummary:   locSummary,
+		LocationProfileId: locProfileId,
+		CampaignBrief:     briefPtr,
 	}, true
 }
 

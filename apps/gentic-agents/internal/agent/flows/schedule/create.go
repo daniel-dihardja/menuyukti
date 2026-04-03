@@ -114,7 +114,7 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) error {
 
 	n.Notify("create_post_schedule", gen.ActivityDone, "Create Instagram post schedule")
 
-	totalRefine := s.MaxReflectionIterations + 1
+	refineTotal := reflect.ReflectUILabelTotal(s.MaxReflectionIterations)
 	scheduleVal, err := reflect.RunTypedReflectLoop[flowstate.PostSchedule](ctx, reflect.ReflectLoopParams{
 		LLM:                    llm,
 		Model:                  model,
@@ -132,7 +132,7 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) error {
 		return err
 	}
 	n.Notify("post_schedule_refinement", gen.ActivityDone,
-		fmt.Sprintf("Refining (%d/%d)", totalRefine, totalRefine))
+		fmt.Sprintf("Refining (%d/%d)", refineTotal, refineTotal))
 
 	if len(scheduleVal.Weeks) == 0 {
 		return fmt.Errorf("post schedule: empty weeks")

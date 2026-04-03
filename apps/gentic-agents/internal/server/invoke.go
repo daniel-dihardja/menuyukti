@@ -45,5 +45,6 @@ func (req InvokeRequest) AgentInput() gentic.AgentInput {
 	return gentic.AgentInput{
 		Query:    req.Message,
 		Metadata: meta,
+		ThreadID: req.ThreadID,
 	}
 }

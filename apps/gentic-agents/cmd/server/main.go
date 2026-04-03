@@ -14,6 +14,7 @@ import (
 	genticadapter "github.com/daniel-dihardja/gentic-agents/internal/gentic"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/config"
 	appserver "github.com/daniel-dihardja/gentic-agents/internal/server"
+	"github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
 	"github.com/joho/godotenv"
 )
@@ -28,7 +29,8 @@ func main() {
 		log.Fatalf("config: %v", err)
 	}
 
-	ag := genticadapter.BuildAgent(cfg.Model, cfg.GraphQLEndpoint, cfg.MaxReflectionIterations)
+	store := gentic.NewInMemoryThreadStore()
+	ag := genticadapter.BuildAgent(cfg.Model, cfg.GraphQLEndpoint, cfg.MaxReflectionIterations, store)
 	handler := appserver.NewRouter(appserver.Config{
 		Agent:        ag,
 		StreamingLLM: openai.Provider{},

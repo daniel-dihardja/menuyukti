@@ -73,6 +73,7 @@ interface AgentSSEChunk {
     dateEnd: string;
     nationalHolidays?: string | null;
     locationSummary?: string | null;
+    locationProfileId?: string | null;
     campaignBrief?: CampaignBrief | null;
   };
   activity?: {
@@ -133,6 +134,7 @@ async function parseAgentSSEAndForward(
                     dateEnd: data.planning.dateEnd,
                     nationalHolidays: data.planning.nationalHolidays ?? null,
                     locationSummary: data.planning.locationSummary ?? null,
+                    locationProfileId: data.planning.locationProfileId ?? null,
                     campaignBrief: data.planning.campaignBrief ?? null,
                   },
                 })

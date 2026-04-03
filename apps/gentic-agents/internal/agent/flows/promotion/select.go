@@ -94,7 +94,7 @@ func (s SelectStep) Run(ctx context.Context, state *gen.State) error {
 	genPrompt := buildSelectPromotionUserPrompt(brief, slotCount, itemsBlock)
 	refSnap := buildSelectPromotionReflectionSnapshot(brief, slotCount, itemsBlock)
 
-	totalRefine := s.MaxReflectionIterations + 1
+	refineTotal := reflect.ReflectUILabelTotal(s.MaxReflectionIterations)
 	payload, err := reflect.RunTypedReflectLoop[llmSelectedMenuNames](ctx, reflect.ReflectLoopParams{
 		LLM:                    llm,
 		Model:                  model,
@@ -122,7 +122,7 @@ func (s SelectStep) Run(ctx context.Context, state *gen.State) error {
 	selected = ensureNonStarCarouselCandidates(selected, raw)
 
 	n.Notify("select_promotion_refinement", gen.ActivityDone,
-		fmt.Sprintf("Refining selection (%d/%d)", totalRefine, totalRefine))
+		fmt.Sprintf("Refining selection (%d/%d)", refineTotal, refineTotal))
 
 	state.SetMetadata(flowstate.KeySelectedPromotionItems, selected)
 

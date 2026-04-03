@@ -79,7 +79,7 @@ func (s FormatsStep) Run(ctx context.Context, state *gen.State) error {
 	genPrompt := buildAssignPostFormatsUserPrompt(len(promotionDates), len(selected), slotsBlock, itemsBlock)
 	refSnap := buildAssignPostFormatsReflectionSnapshot(itemsBlock)
 
-	totalRefine := s.MaxReflectionIterations + 1
+	refineTotal := reflect.ReflectUILabelTotal(s.MaxReflectionIterations)
 	ctxParams := assignFormatContext{
 		promotionDates: promotionDates,
 		selectedItems:  selected,
@@ -125,7 +125,7 @@ func (s FormatsStep) Run(ctx context.Context, state *gen.State) error {
 	}
 
 	n.Notify("assign_post_formats_refinement", gen.ActivityDone,
-		fmt.Sprintf("Refining formats (%d/%d)", totalRefine, totalRefine))
+		fmt.Sprintf("Refining formats (%d/%d)", refineTotal, refineTotal))
 
 	state.SetMetadata(flowstate.KeyPostFormatPlan, plan)
 

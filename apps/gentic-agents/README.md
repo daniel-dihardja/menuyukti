@@ -1,6 +1,6 @@
 # gentic-agents
 
-HTTP service that runs the Menuyukti agent built on [gentic](https://github.com/daniel-dihardja/gentic) (`github.com/daniel-dihardja/gentic`): intent routing (`chat` vs `create_campaign`) and a campaign flow that checks or creates a location profile.
+HTTP service that runs the Menuyukti agent built on [gentic](https://github.com/daniel-dihardja/gentic) (`github.com/daniel-dihardja/gentic`): intent routing among `chat`, `location_profile_chat`, `create_location_profile`, `create_campaign_brief`, and `update_campaign_brief`. The legacy full create-campaign pipeline is still built in [`internal/gentic/adapter.go`](internal/gentic/adapter.go) as a reference but is not registered on the router.
 
 ## Agent evals
 

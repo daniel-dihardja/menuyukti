@@ -11,7 +11,7 @@ import { graphqlQuery } from "@/lib/graphql/client";
 import { LOCATIONS_QUERY, type LocationsData } from "@/lib/graphql/queries";
 import { AnalyticsPageShell } from "@/components/analytics-page-shell";
 import { PageHeading } from "@/components/page-heading";
-import { CampaignsClient } from "./campaigns-client";
+import { CampaignsClient } from "./_components/campaigns-client";
 
 export default async function Page() {
   const t = await getTranslations("analytics.campaigns");

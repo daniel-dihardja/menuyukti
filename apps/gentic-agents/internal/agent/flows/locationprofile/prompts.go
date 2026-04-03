@@ -8,9 +8,8 @@ import (
 )
 
 const (
-	generationSystemPrompt     = "You are a senior restaurant marketing strategist. Follow the instructions precisely."
-	reflectionSystemPrefix     = "You are a quality reviewer for restaurant Instagram marketing briefs."
-	profileCreatedNotifySystem = "You are a helpful assistant for restaurant and menu planning. Write concise, clear, friendly messages for users."
+	generationSystemPrompt = "You are a senior restaurant marketing strategist. Follow the instructions precisely."
+	reflectionSystemPrefix = "You are a quality reviewer for restaurant Instagram marketing briefs."
 )
 
 const locationSummaryInferenceSections = `
@@ -101,38 +100,12 @@ Write the improved version now, keeping the same four-section structure (**Venue
 	)
 }
 
-func buildProfileCreatedNotificationUserPrompt(loc *graphql.Location) string {
-	name := loc.Name
-	if name == "" {
-		name = "this restaurant"
-	}
-	city := loc.City
-	if city == "" {
-		city = "unknown city"
-	}
-	country := loc.Country
-	if country == "" {
-		country = "unknown country"
-	}
-	addr := strings.TrimSpace(loc.Street)
-	venue := fmt.Sprintf("%s — %s, %s", name, city, country)
-	if addr != "" {
-		venue += fmt.Sprintf(" (%s)", addr)
-	}
-	return fmt.Sprintf(`A new Instagram-oriented marketing location profile was just generated for this venue and saved to the database:
-
-%s
-
-Write 2–4 short sentences addressed to the user confirming that their profile is ready and saved. Explain briefly what kind of marketing brief it is (venue positioning, audience, timing, tone). Do not paste or repeat the full profile text in your reply — only the confirmation and framing.`,
-		venue)
-}
-
 func fallbackProfileCreatedMessage(loc *graphql.Location) string {
 	name := loc.Name
 	if name == "" {
 		name = "this venue"
 	}
-	return fmt.Sprintf("Your new location marketing profile for %s has been created and saved. The full profile is below.", name)
+	return fmt.Sprintf("Your location marketing profile for %s has been created and saved — open the Location profile panel to read the full brief.", name)
 }
 
 func buildInferenceOnlyLocationSummaryPrompt(loc *graphql.Location) string {
