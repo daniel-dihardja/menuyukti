@@ -11,10 +11,10 @@ Shared **persistence** (schema, migrations, SQLAlchemy models) stays in `apps/gr
 
 ## Layout
 
-| Area | Role |
-|------|------|
+| Area              | Role                                                                                                                                           |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `core/analytics/` | Analytics modules (`calculate_*.py`), helpers (`extract_*`, `pos_detector`, `registry`, `utils`), and POS-specific normalization (e.g. `esb/`) |
-| `core/models/` | Shared data shapes (e.g. POS line items, mapping config) consumed by analytics and ingestion |
+| `core/models/`    | Shared data shapes (e.g. POS line items, mapping config) consumed by analytics and ingestion                                                   |
 
 Prefer **`compute_*_from_orders`** (or similar) entry points when the API has order rows and the core wants a `DataFrame` or structured rows internally.
 

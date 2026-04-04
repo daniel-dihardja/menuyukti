@@ -1,4 +1,4 @@
-What you’re building is a *perfect* use case for an agentic workflow—because it’s not just generation, it’s **planning → reasoning → selection → generation → validation**.
+What you’re building is a _perfect_ use case for an agentic workflow—because it’s not just generation, it’s **planning → reasoning → selection → generation → validation**.
 
 If you try to do this in one prompt, the quality will be inconsistent. The key is to **separate thinking from writing**.
 
@@ -22,16 +22,15 @@ Each layer should be handled by a **specialized agent or chain**.
 
 **Input:**
 
-* Sales data (your matrix, Pareto, etc.)
+- Sales data (your matrix, Pareto, etc.)
 
 **Output:**
 
-* Structured insights like:
-
-  * Top performers (Stars)
-  * Hidden gems (Puzzles)
-  * Low performers to push
-  * Seasonal/day-of-week trends
+- Structured insights like:
+  - Top performers (Stars)
+  - Hidden gems (Puzzles)
+  - Low performers to push
+  - Seasonal/day-of-week trends
 
 👉 Example output:
 
@@ -57,21 +56,18 @@ This is where most systems fail—they skip this.
 
 **Input:**
 
-* Insights from Analytics Agent
+- Insights from Analytics Agent
 
 **Output:**
 
-* Campaign logic for the month
+- Campaign logic for the month
 
 👉 Example:
 
 ```json
 {
   "posting_frequency": 4,
-  "goals": [
-    "Promote high-margin items",
-    "Boost puzzle items"
-  ],
+  "goals": ["Promote high-margin items", "Boost puzzle items"],
   "content_mix": {
     "stars": 0.4,
     "puzzles": 0.3,
@@ -95,7 +91,7 @@ Now generate:
 
 **Input:**
 
-* Strategy + calendar constraints
+- Strategy + calendar constraints
 
 **Output:**
 
@@ -118,8 +114,8 @@ Now generate:
 
 💡 Important:
 
-* This agent should NOT write captions
-* Only planning decisions
+- This agent should NOT write captions
+- Only planning decisions
 
 ---
 
@@ -131,7 +127,7 @@ Now generate:
 
 **Input:**
 
-* Single planned post
+- Single planned post
 
 **Output:**
 
@@ -152,8 +148,8 @@ Now generate:
 
 Generate:
 
-* Multiple caption variants
-* Different tones (funny, premium, minimal)
+- Multiple caption variants
+- Different tones (funny, premium, minimal)
 
 ---
 
@@ -163,10 +159,10 @@ VERY important for quality.
 
 Checks:
 
-* Too many posts of same item?
-* Balanced strategy?
-* Repetition in hooks?
-* Timing reasonable?
+- Too many posts of same item?
+- Balanced strategy?
+- Repetition in hooks?
+- Timing reasonable?
 
 ---
 
@@ -198,8 +194,8 @@ FINAL OUTPUT
 
 ## 1. Separate “Thinking” from “Writing”
 
-* Planning ≠ Content generation
-* This alone improves quality massively
+- Planning ≠ Content generation
+- This alone improves quality massively
 
 ---
 
@@ -209,9 +205,9 @@ You’re already doing this in your analytics—perfect.
 
 Stick to JSON schemas like:
 
-* `CampaignStrategy`
-* `PostPlan`
-* `CaptionSeed`
+- `CampaignStrategy`
+- `PostPlan`
+- `CaptionSeed`
 
 ---
 
@@ -229,15 +225,15 @@ Stick to JSON schemas like:
 
 You already have:
 
-* Matrix (Star, Dog, Puzzle, Plow Horse)
-* Heatmaps
-* Sales distributions
+- Matrix (Star, Dog, Puzzle, Plow Horse)
+- Heatmaps
+- Sales distributions
 
 👉 Use them like:
 
-* **Stars → prime time posts**
-* **Puzzles → storytelling posts**
-* **Plow horses → bundle promotions**
+- **Stars → prime time posts**
+- **Puzzles → storytelling posts**
+- **Plow horses → bundle promotions**
 
 ---
 
@@ -245,9 +241,9 @@ You already have:
 
 Store:
 
-* Past campaigns
-* Past captions
-* Engagement results (later)
+- Past campaigns
+- Past captions
+- Engagement results (later)
 
 Then:
 👉 Avoid repetition
@@ -283,17 +279,17 @@ Given your background (LangChain + Graph + Analytics), next-level ideas:
 
 ### 🔥 1. Feedback Loop Agent
 
-* After campaign → analyze performance → update strategy
+- After campaign → analyze performance → update strategy
 
 ### 🔥 2. Context-Aware Posting
 
-* Weather API → promote cozy food on cold days
-* Events → weekend spikes
+- Weather API → promote cozy food on cold days
+- Events → weekend spikes
 
 ### 🔥 3. Multi-Agent Debate
 
-* One agent proposes plan
-* Another critiques it
+- One agent proposes plan
+- Another critiques it
   → significantly better outputs
 
 ---
@@ -302,16 +298,16 @@ Given your background (LangChain + Graph + Analytics), next-level ideas:
 
 If an agent has to:
 
-* **decide something** → separate agent
-* **generate text** → separate agent
-* **validate quality** → separate agent
+- **decide something** → separate agent
+- **generate text** → separate agent
+- **validate quality** → separate agent
 
 ---
 
 If you want, I can design:
 
-* exact JSON schemas
-* LangGraph node structure
-* or prompts for each agent
+- exact JSON schemas
+- LangGraph node structure
+- or prompts for each agent
 
 This is a very strong product idea—especially combined with your menu analytics.
