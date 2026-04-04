@@ -51,7 +51,7 @@ jobs:
           go-version-file: go.work
       - run: go test ./...
         working-directory: apps/gentic-agents
-      - uses: golangci/golangci-lint-action@v6
+      - uses: golangci/golangci-lint-action@v7
         with:
           version: v2.11.4
           working-directory: apps/gentic-agents
@@ -67,7 +67,7 @@ jobs:
           go-version-file: go.work
       - run: go test ./...
         working-directory: packages/gentic
-      - uses: golangci/golangci-lint-action@v6
+      - uses: golangci/golangci-lint-action@v7
         with:
           version: v2.11.4
           working-directory: packages/gentic
