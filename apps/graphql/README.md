@@ -3,6 +3,10 @@
 A minimal starter for the Strawberry GraphQL endpoint. The service currently exposes the schema from
 `apps/graphql/schema` and can be launched with `uvicorn server:app` (see the Makefile for shortcuts).
 
+## Analytics and the `menuyukti` package
+
+Keep this app **light**: resolvers should load data, enforce ownership/auth, and map results to GraphQL types. **Sales and menu analytics** (aggregations, metrics, matrix/heatmap logic, etc.) live in the shared Python package **`packages/menuyukti`** — add new calculations there and call them from here. Database schema and migrations remain in this app; see [`packages/menuyukti/README.md`](../../packages/menuyukti/README.md) for boundaries and layout.
+
 ## Database schema (for AWS/SQLAlchemy testing)
 
 1. Install dependencies with `make install` (`uv sync --all-groups`, including Ruff and mypy) or your normal workflow.
