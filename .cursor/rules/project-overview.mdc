@@ -35,4 +35,3 @@ Do not assume LangGraph for `gentic-agents` — that stack may live under other 
 ## Further reading
 
 - Root [`README.md`](../../README.md) — features and high-level architecture.
-- [`project-structure.md`](../../project-structure.md) — intended Go layout (handlers, agent, gentic adapter, platform).

@@ -85,5 +85,4 @@ Database schema, migrations, and persistence are implemented in **`apps/graphql`
 ## Where to read more
 
 - [`README.md`](README.md) — product and architecture overview
-- [`project-structure.md`](project-structure.md) — Go agent API layout (reference)
 - App READMEs: `apps/gentic-agents/README.md`, `apps/graphql/README.md`, `apps/web/README.md`
