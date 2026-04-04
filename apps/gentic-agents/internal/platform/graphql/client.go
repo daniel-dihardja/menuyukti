@@ -134,6 +134,13 @@ const saveCampaignBriefMutation = `mutation SaveCampaignBrief($campaignId: ID!, 
   }
 }`
 
+const savePromotionCandidatesMutation = `mutation SavePromotionCandidates($campaignId: ID!, $candidatesJson: JSON!) {
+  savePromotionCandidates(campaignId: $campaignId, candidatesJson: $candidatesJson) {
+    id
+    campaignId
+  }
+}`
+
 // LocationProfile is the subset of fields returned by locationProfile.
 type LocationProfile struct {
 	ID      ID     `json:"id"`
@@ -480,6 +487,33 @@ func SaveCampaignBrief(ctx context.Context, endpoint, campaignID, locationID, an
 	}
 	if data.SaveCampaignBrief == nil {
 		return fmt.Errorf("graphql: saveCampaignBrief returned no data")
+	}
+	return nil
+}
+
+type savePromotionCandidatesDataWrapper struct {
+	SavePromotionCandidates *struct {
+		ID         int `json:"id"`
+		CampaignID int `json:"campaignId"`
+	} `json:"savePromotionCandidates"`
+}
+
+// SavePromotionCandidates upserts JSON promotion/analytics payload for a campaign (menu insights + matrix rows).
+// candidatesJSON must JSON-serialize to an object (e.g. map or struct with json tags).
+func SavePromotionCandidates(ctx context.Context, endpoint, campaignID string, candidatesJSON interface{}) error {
+	raw, err := postGQL(ctx, endpoint, savePromotionCandidatesMutation, map[string]interface{}{
+		"campaignId":     campaignID,
+		"candidatesJson": candidatesJSON,
+	})
+	if err != nil {
+		return err
+	}
+	var data savePromotionCandidatesDataWrapper
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return err
+	}
+	if data.SavePromotionCandidates == nil {
+		return fmt.Errorf("graphql: savePromotionCandidates returned no data")
 	}
 	return nil
 }
