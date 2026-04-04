@@ -1,5 +1,4 @@
-export type ShopProductImage = {
-  src: string
+export type ShopProductImageHint = {
   alt: string
   label: string
 }
@@ -28,27 +27,13 @@ export type ShopProduct = {
   subtitle: string
   /** Price shown on the shop grid (matches hero SKU). */
   displayPrice: string
-  images: ShopProductImage[]
+  /** Alt/label hints merged with S3 images by index (see `resolveShopImages`). */
+  imageHints: ShopProductImageHint[]
   description: string
   sizes: ShopSizeVariant[]
   finishes: ShopFinishVariant[]
   grid: ShopProductGridLayout
 }
-
-const IMG_FARM =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuDummuV71jm-AxhFQiQY5EPlVt_FpNdtIkgfjONTCWKPjfA2mmVN6GW_NmepoU_tW0L2FekljTbwwS8Cc9XDfN6A6gx5_6QLcFMhVoB6xozTQ8m35m3FDpjNTOS39Mcn1-VoIQrT1XQ6YDWc_rZLLNyx8SDKmN8k8tzRVRBKe9QKZMT8KWLL5mpWoNnPt3eB1onyGsfAXcWh71RUWmX6vBwDZb5JlcbMTm3ayV-eaQ917IrGoayei7WbmJh8YVmKi-PhCTvLBwCpd-S'
-
-const IMG_SLATE =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuB24Ib5PeI1XZ4RzWnOqkdX8ZeJ9aHECYNhJCL6Zwy0W75nqC7EmbP0JEfvvKOtM7iUtLxMAG7orkL4Gar3_EqJOjR59_4fs8iFluUmklCyB2l_8wYdi-rIv0FJhoEI4hKTO1TsdpMnpxWzNzll3F9cQCUgKPZOSwVpUz7JbBbcMFDuD97kakPwuDEqUFMRaUC-QSbGBFwre-vydZcdb9pi3qJNmDlqxJA9jK9QOFe2_Aq2H46jqa5HLtVzT27DkaOhwDj-qin8yydu'
-
-const IMG_TUSCANY =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuCNg9F1cdzWiNDCxcUgLATGdEllfxszdPLEDF4v8hnwv2dY3pfocG8W_v-0cZ1FW7AoUd4x6PmypDsT_La-UjixrzVcAwr4gpDM5iECudVubWGuoh3jjiDrpHh1s3eRx_snMM9Bj0UepDoi4X2Ko_8HDOMAgBFD7EZdgNQuZL5-rfZATYQCYhVGep4191QrEn7v_K_mwzKPgDuQlBpaBOynHOccJq8_-HM2tcIcKPoz2AZN9RMnQ4eVQ_8Kd5b491yVKQBgA5bhOi7H'
-
-const IMG_SPICE =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuAiaTjdjNKFDBx1-9mRAxfRr8AjVgvcSfYnpywAxFjLmm_A6aKS1b2ylJEhDRqDQ4tdBENafSJ-8wn2WTmlfNiJjbDuahV_47aTy5CVfMhke54in_9gq_N1xeqCTBglUW0GmLM_UeoxOot9V6fs77_5fyY8wWSnzZXTu5sKWCe3xjFWKSv18cnCs-PdkQiohMaMsF72A4V_BYc3cOuCLkCUuGZzi-sbJNFQJKzt8YoeOko6uF2VxDxuW27Z1e714HbII2lmwok_N0QY'
-
-const IMG_CAFE =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuAuIwVc5bP74DCQO5JNFT1VEp9u2sAzK1k20E_F1NHQRwjP5NRjNdHbDFG7YfH76ow2VP72ziayaGfCdMDXibjXK_PMz_u6a-PkTADA8qCLwZ5gyK2dBfUL1Wjtq1Ne1MqELPknp-3eZu6PbR4YYSkUYSkrErz-gjP6mraPfLnbkf8uenvp5U0jyVZyhx_2-MN1JKLxiKbV9Zurfx7yBlyvvCTTupcDgjEPB_mrLHFzJM3lS_tL0laSaoWoW2W9vufQEQW7g440NDTi'
 
 const FINISHES_PRINT: ShopFinishVariant[] = [
   { id: 'matte', label: 'Fine art matte' },
@@ -69,19 +54,16 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     displayPrice: '$185.00',
     description:
       'A warm, editorial photograph celebrating seasonal produce and honest plating—ideal for dining rooms, open kitchens, and farm-to-table concepts. Printed on archival paper with rich color fidelity and a soft matte surface that minimizes glare under restaurant lighting.',
-    images: [
+    imageHints: [
       {
-        src: IMG_FARM,
         alt: 'Full artwork: rustic farm-to-table vegetable arrangement',
         label: 'Full artwork',
       },
       {
-        src: IMG_FARM,
         alt: 'Detail: texture and color on the poster surface',
         label: 'Paper detail',
       },
       {
-        src: IMG_FARM,
         alt: 'Lifestyle: artwork in a bright dining space',
         label: 'In-room preview',
       },
@@ -107,19 +89,16 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     displayPrice: '$45.00',
     description:
       'A versatile slate-toned backdrop pack for menus, specials boards, and social posts. Includes layered files and high-resolution exports so your brand team can drop in typography fast. Licensed for use across your restaurant group’s digital and print touchpoints.',
-    images: [
+    imageHints: [
       {
-        src: IMG_SLATE,
         alt: 'Minimalist slate grey background — full frame',
         label: 'Full frame',
       },
       {
-        src: IMG_SLATE,
         alt: 'Texture detail of the slate surface',
         label: 'Texture detail',
       },
       {
-        src: IMG_SLATE,
         alt: 'Mockup: background behind sample menu type',
         label: 'Menu mockup',
       },
@@ -144,19 +123,16 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     displayPrice: '$320.00',
     description:
       'Golden-hour light over a quiet terrace—this piece brings depth and travel romance to intimate dining rooms. Each print is numbered, signed in the margin, and produced on museum-grade cotton rag for longevity in climate-controlled hospitality spaces.',
-    images: [
+    imageHints: [
       {
-        src: IMG_TUSCANY,
         alt: 'Tuscany terrace at golden hour — full image',
         label: 'Full artwork',
       },
       {
-        src: IMG_TUSCANY,
         alt: 'Cropped detail of terrace architecture',
         label: 'Architectural detail',
       },
       {
-        src: IMG_TUSCANY,
         alt: 'Framed preview in a neutral interior',
         label: 'Framed preview',
       },
@@ -181,19 +157,16 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     displayPrice: '$120.00',
     description:
       'Rich tones and careful composition make this print a natural fit for open kitchens and chef’s counters. The square format balances shelving and tile lines, and pairs well with brass, wood, and stone interiors.',
-    images: [
+    imageHints: [
       {
-        src: IMG_SPICE,
         alt: 'Artisan spice still life — full composition',
         label: 'Full artwork',
       },
       {
-        src: IMG_SPICE,
         alt: 'Close-up of spices and surfaces',
         label: 'Ingredient detail',
       },
       {
-        src: IMG_SPICE,
         alt: 'Hanging in a kitchen pass',
         label: 'Pass preview',
       },
@@ -218,19 +191,16 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     displayPrice: '$155.00',
     description:
       'Part of our Modern Café series: aerial-inspired composition with calm neutrals for coffee bars and all-day cafés. Stretched on thick gallery canvas with tight corners and a protective matte coating suited to high-traffic seating areas.',
-    images: [
+    imageHints: [
       {
-        src: IMG_CAFE,
         alt: 'Modern café artwork — full composition',
         label: 'Full artwork',
       },
       {
-        src: IMG_CAFE,
         alt: 'Texture of matte canvas weave',
         label: 'Canvas texture',
       },
       {
-        src: IMG_CAFE,
         alt: 'Above a marble counter with cups',
         label: 'Counter styling',
       },

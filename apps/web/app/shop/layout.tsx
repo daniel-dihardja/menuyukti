@@ -2,6 +2,9 @@ import { Manrope, Work_Sans } from 'next/font/google'
 
 import '@/components/shop/shop.css'
 
+/** Presigned S3 URLs must not be frozen at build time. */
+export const dynamic = 'force-dynamic'
+
 const manrope = Manrope({
   subsets: ['latin'],
   variable: '--font-shop-headline',

@@ -80,6 +80,7 @@
     "shopLink": "Print Shop"
   },
   "shop": {
+    "noImagesAvailable": "No images are currently available.",
     "hero": {
       "headline": "Brand Every Corner of Your Restaurant",
       "subtitle": "Custom print-on-demand products designed for restaurants. From wall art to takeaway packaging, get your brand on everything.",

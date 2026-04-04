@@ -1,18 +1,42 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 
 import { routes } from '@/lib/routes'
+import { listShopImagesForSlug } from '@/lib/shop/s3-shop-images'
+import { resolveShopImages } from '@/lib/shop/resolve-shop-images'
 
 import { getAllShopProducts } from './shop-catalog'
 
-export function ShopProductGrid() {
+export async function ShopProductGrid() {
   const products = getAllShopProducts()
+  const t = await getTranslations('shop')
+
+  const rows = await Promise.all(
+    products.map(async (p) => {
+      const s3 = await listShopImagesForSlug(p.slug)
+      const resolved = resolveShopImages(p, s3)
+      return { product: p, resolved }
+    }),
+  )
+
+  const withImages = rows.filter((r) => r.resolved.length > 0)
+
+  if (withImages.length === 0) {
+    return (
+      <section
+        className="mb-32 flex min-h-[280px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 px-6 py-16 text-center"
+        aria-live="polite"
+      >
+        <p className="max-w-md text-muted-foreground">{t('noImagesAvailable')}</p>
+      </section>
+    )
+  }
 
   return (
     <section className="shop-editorial-grid mb-32">
-      {products.map((p) => {
-        const hero = p.images[0]
-        if (!hero) return null
+      {withImages.map(({ product: p, resolved }) => {
+        const hero = resolved[0]!
         return (
           <Link
             key={p.slug}
