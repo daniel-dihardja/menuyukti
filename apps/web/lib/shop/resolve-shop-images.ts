@@ -16,7 +16,10 @@ function humanizeFilename(filename: string): string {
 /**
  * Pairs S3 objects (sorted) with catalog alt/label hints by index.
  */
-export function resolveShopImages(product: ShopProduct, s3Images: ShopS3Image[]): ResolvedShopImage[] {
+export function resolveShopImages(
+  product: ShopProduct,
+  s3Images: ShopS3Image[],
+): ResolvedShopImage[] {
   const hints = product.imageHints
   return s3Images.map((img, i) => {
     const hint = hints[i]
