@@ -18,7 +18,7 @@ Menuyukti is an **agentic AI platform for data-driven restaurant marketing autom
 | **Gentic agents** | `apps/gentic-agents` | Go HTTP service: intent routing, multi-step flows, LLM + tools; calls GraphQL when it needs platform data. |
 | **Gentic framework** | `packages/gentic` | In-repo Go module (steps, flows, ReAct, reflect, intent, providers). Consumed by `apps/gentic-agents` via root **`go.work`** and a local **`replace`** in `apps/gentic-agents/go.mod` — not fetched from the upstream GitHub module for day-to-day work. |
 
-Do not assume LangGraph for `gentic-agents` — that stack may live under other apps (e.g. `apps/agents`). This repo’s Go agent service is built on **in-repo Gentic** (`packages/gentic`) and the patterns below.
+The **`gentic-agents`** service is built on **in-repo Gentic** (`packages/gentic`) and the patterns below.
 
 ## Agentic patterns in use
 

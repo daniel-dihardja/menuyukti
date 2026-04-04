@@ -19,7 +19,6 @@ menuyukti = { workspace = true }
 [dependency-groups]
 dev = [
   "ipykernel>=7.1.0",
-  "langgraph-cli[inmem]>=0.4.12",
   "matplotlib>=3.10.8",
   "openpyxl>=3.1.5",
   "pandas>=2.3.3",

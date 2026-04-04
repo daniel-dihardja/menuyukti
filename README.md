@@ -32,4 +32,4 @@ Menuyukti is split into three cooperating services:
 
 - **Backend:** Python, GraphQL, PostgreSQL — GraphQL API for structured data and analytics.
 - **Frontend:** React, Next.js, TypeScript, Node.js.
-- **AI:** Gentic (Go) for the production agent HTTP service; **Vercel AI SDK** / **AI Elements** on the web for chat UI; optional Python LangChain/LangGraph in other apps where present.
+- **AI:** Gentic (Go) for the production agent HTTP service; **Vercel AI SDK** / **AI Elements** on the web for chat UI.
