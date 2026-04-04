@@ -11,6 +11,7 @@
     "format-check": "prettier --check \"**/*.{ts,tsx,md,css}\"",
     "format-fix": "prettier --write \"**/*.{ts,tsx,md,css}\"",
     "check-types": "turbo check-types",
+    "prepare": "husky",
     "docker:build:graphql": "docker build -f apps/graphql/Dockerfile -t johngoyason/menuyukti-graphql:${DOCKER_TAG:-latest} .",
     "docker:build:web": "docker build -f apps/web/Dockerfile -t johngoyason/menuyukti-web:${DOCKER_TAG:-latest} --build-arg DATABASE_URL=\\\"$DATABASE_URL\\\" --build-arg ANALYTICS_API_URL=\\\"${ANALYTICS_API_URL:-http://graphql:8000}\\\" .",
     "docker:build:agents": "docker build -f apps/gentic-agents/Dockerfile -t johngoyason/menuyukti-agents:${DOCKER_TAG:-latest} .",
@@ -27,6 +28,8 @@
     "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "eslint": "^9.32.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
     "prettier": "^3.6.2",
     "turbo": "^2.5.5",
     "typescript": "5.7.3"

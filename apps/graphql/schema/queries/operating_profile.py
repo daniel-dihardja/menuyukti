@@ -1,10 +1,9 @@
-from typing import Optional
 
 import strawberry
-
-from graphql.data_sources import AnalyticsRun, OrderFact, SessionLocal
-from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
 from menuyukti.core.analytics import compute_operating_profile_from_orders
+
+from graphql.data_sources import OrderFact, SessionLocal
+from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
 
 
 @strawberry.type
@@ -112,7 +111,7 @@ class OperatingProfileQuery:
         info: strawberry.Info,
         location_id: strawberry.ID,
         analytics_run_id: strawberry.ID,
-    ) -> Optional[OperatingProfileType]:
+    ) -> OperatingProfileType | None:
         """Return the operating profile for an analytics run scoped to a location.
 
         Returns None if the analytics run does not exist or does not belong to

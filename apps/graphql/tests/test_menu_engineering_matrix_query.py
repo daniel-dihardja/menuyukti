@@ -4,7 +4,6 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
-
 from graphql.data_sources import (
     AnalyticsRun,
     Location,
@@ -15,7 +14,6 @@ from graphql.data_sources import (
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 from starlette.datastructures import Headers, UploadFile
-
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 REPORT_FILE = ROOT_DIR / "reports" / "Sales_Recapitulation_Detail_Report_Test.xlsx"

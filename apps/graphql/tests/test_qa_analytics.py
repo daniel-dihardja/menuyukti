@@ -9,7 +9,6 @@ from collections import defaultdict
 from datetime import date, datetime
 
 import pytest
-
 from graphql.schema import schema
 from graphql.tests.auth_context import graphql_auth_context
 from graphql.tests.fixtures.qa_data import (
@@ -20,7 +19,6 @@ from menuyukti.core.analytics import compute_menu_heatmaps_from_orders
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
     compute_menu_engineering_from_orders,
 )
-
 
 METRICS_QUERY = """
 query AnalyticsRunOrderMetrics($id: ID!) {
@@ -192,7 +190,7 @@ def test_qa_menu_heatmaps(analytics_run_with_qa_data, qa_sales_rows):
     got = _normalize_heatmaps(menu_heatmaps)
 
     assert len(got) == len(expected)
-    for g, e in zip(got, expected):
+    for g, e in zip(got, expected, strict=False):
         assert g["menu"] == e["menu"]
         assert g["menu_category"] == e["menu_category"]
         assert g["menu_category_detail"] == e["menu_category_detail"]

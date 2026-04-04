@@ -1,128 +1,126 @@
-"use client";
+'use client'
 
-import { useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import { useAnalytics } from "../../analytics/use-analytics";
-import { LocationSelect } from "../../analytics/sales/location-select";
-import { CampaignsTable } from "./campaigns-table";
-import { Button } from "@workspace/ui/components/button";
-import { routes } from "@/lib/routes";
+import { useCallback, useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
+import { useRouter } from 'next/navigation'
+import { useAnalytics } from '../../analytics/use-analytics'
+import { LocationSelect } from '../../analytics/sales/location-select'
+import { CampaignsTable } from './campaigns-table'
+import { Button } from '@workspace/ui/components/button'
+import { routes } from '@/lib/routes'
 
 type Branch = {
-  id: number;
-  name: string;
-};
+  id: number
+  name: string
+}
 
 export type CampaignItem = {
-  id: number;
-  name: string;
-  status: string;
-  startDate: string | null;
-  endDate: string | null;
-  goal: string | null;
-};
+  id: number
+  name: string
+  status: string
+  startDate: string | null
+  endDate: string | null
+  goal: string | null
+}
 
 type Props = {
-  branches: Branch[];
-};
+  branches: Branch[]
+}
 
 function useCampaigns(locationId: number | null) {
-  const [campaigns, setCampaigns] = useState<CampaignItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [campaigns, setCampaigns] = useState<CampaignItem[]>([])
+  const [loading, setLoading] = useState(false)
 
   const fetchCampaigns = useCallback(async () => {
     if (!locationId) {
-      setCampaigns([]);
-      setLoading(false);
-      return;
+      setCampaigns([])
+      setLoading(false)
+      return
     }
-    setLoading(true);
+    setLoading(true)
     try {
-      const res = await fetch(`/api/campaigns/list?locationId=${locationId}`);
-      const body = await res.json();
+      const res = await fetch(`/api/campaigns/list?locationId=${locationId}`)
+      const body = await res.json()
       if (!res.ok) {
-        throw new Error((body?.error as string) || "Failed to load campaigns");
+        throw new Error((body?.error as string) || 'Failed to load campaigns')
       }
-      setCampaigns(body as CampaignItem[]);
+      setCampaigns(body as CampaignItem[])
     } catch (err) {
-      console.error("Failed to fetch campaigns:", err);
-      setCampaigns([]);
+      console.error('Failed to fetch campaigns:', err)
+      setCampaigns([])
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [locationId]);
+  }, [locationId])
 
   useEffect(() => {
-    fetchCampaigns();
-  }, [fetchCampaigns]);
+    fetchCampaigns()
+  }, [fetchCampaigns])
 
-  return { campaigns, loading, refetch: fetchCampaigns };
+  return { campaigns, loading, refetch: fetchCampaigns }
 }
 
 export function CampaignsClient({ branches }: Props) {
-  const t = useTranslations("analytics.campaigns");
-  const { locationId, setLocationId } = useAnalytics();
-  const router = useRouter();
+  const t = useTranslations('analytics.campaigns')
+  const { locationId, setLocationId } = useAnalytics()
+  const router = useRouter()
 
   useEffect(() => {
-    if (locationId !== null) return;
-    if (branches.length !== 1) return;
-    const [onlyBranch] = branches;
-    if (!onlyBranch) return;
-    setLocationId(onlyBranch.id);
-  }, [locationId, branches, setLocationId]);
+    if (locationId !== null) return
+    if (branches.length !== 1) return
+    const [onlyBranch] = branches
+    if (!onlyBranch) return
+    setLocationId(onlyBranch.id)
+  }, [locationId, branches, setLocationId])
 
-  const { campaigns, loading, refetch } = useCampaigns(locationId);
+  const { campaigns, loading, refetch } = useCampaigns(locationId)
 
-  const [isCreating, setIsCreating] = useState(false);
+  const [isCreating, setIsCreating] = useState(false)
 
   const handleCreateCampaign = useCallback(async () => {
-    if (!locationId) return;
-    setIsCreating(true);
+    if (!locationId) return
+    setIsCreating(true)
     try {
-      const res = await fetch("/api/campaigns/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/campaigns/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ locationId }),
-      });
-      const body = (await res.json()) as { id?: number; error?: string };
+      })
+      const body = (await res.json()) as { id?: number; error?: string }
       if (!res.ok) {
-        throw new Error(body?.error || "Failed to create campaign");
+        throw new Error(body?.error || 'Failed to create campaign')
       }
       if (body.id == null || !Number.isFinite(Number(body.id))) {
-        throw new Error("Invalid response from server");
+        throw new Error('Invalid response from server')
       }
-      router.push(routes.campaigns.detail(body.id));
+      router.push(routes.campaigns.detail(body.id))
     } catch (err) {
-      console.error("Failed to create campaign:", err);
-      alert(
-        err instanceof Error ? err.message : "Failed to create campaign."
-      );
+      console.error('Failed to create campaign:', err)
+      alert(err instanceof Error ? err.message : 'Failed to create campaign.')
     } finally {
-      setIsCreating(false);
+      setIsCreating(false)
     }
-  }, [locationId, router]);
+  }, [locationId, router])
 
   const handleDelete = useCallback(
     async (id: number) => {
-      const confirmed = confirm("Are you sure you want to delete this campaign?");
-      if (!confirmed) return;
+      const confirmed = confirm('Are you sure you want to delete this campaign?')
+      if (!confirmed) return
       try {
         const res = await fetch(`/api/campaigns/delete`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id }),
-        });
-        if (!res.ok) throw new Error("Delete failed");
-        refetch();
+        })
+        if (!res.ok) throw new Error('Delete failed')
+        refetch()
       } catch (err) {
-        console.error("Failed to delete campaign:", err);
-        alert("Failed to delete campaign.");
+        console.error('Failed to delete campaign:', err)
+        alert('Failed to delete campaign.')
       }
     },
-    [refetch]
-  );
+    [refetch],
+  )
 
   return (
     <div className="space-y-6">
@@ -130,26 +128,26 @@ export function CampaignsClient({ branches }: Props) {
         <LocationSelect
           branches={branches}
           id="campaigns-location-select"
-          label={t("branchLabel")}
-          placeholder={branches.length > 1 ? t("branchPlaceholder") : undefined}
+          label={t('branchLabel')}
+          placeholder={branches.length > 1 ? t('branchPlaceholder') : undefined}
           className="w-full max-w-none sm:max-w-xs"
         />
         <Button
           onClick={() => {
-            void handleCreateCampaign();
+            void handleCreateCampaign()
           }}
           disabled={!locationId || isCreating}
         >
-          {isCreating ? t("loading") : t("create")}
+          {isCreating ? t('loading') : t('create')}
         </Button>
       </section>
 
       {!locationId ? (
         <div className="border rounded-md p-8 text-left text-muted-foreground">
-          {t("selectBranch")}
+          {t('selectBranch')}
         </div>
       ) : loading ? (
-        <div className="border rounded-md p-8 text-left">{t("loading")}</div>
+        <div className="border rounded-md p-8 text-left">{t('loading')}</div>
       ) : (
         <CampaignsTable
           campaigns={campaigns}
@@ -159,5 +157,5 @@ export function CampaignsClient({ branches }: Props) {
         />
       )}
     </div>
-  );
+  )
 }

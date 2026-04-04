@@ -1,128 +1,122 @@
-import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import type { UIMessage } from "ai";
-import { getAgentsBaseUrl } from "@/lib/config";
-import { chatRequestBodySchema } from "./schema";
+import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
+import type { UIMessage } from 'ai'
+import { getAgentsBaseUrl } from '@/lib/config'
+import { chatRequestBodySchema } from './schema'
 
 // Streaming can run for a while (LLM + network).
-export const maxDuration = 180;
+export const maxDuration = 180
 
 function jsonError(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status });
+  return NextResponse.json({ error: message }, { status })
 }
 
 function getLastUserMessageText(messages: UIMessage[]): string | null {
   for (let i = messages.length - 1; i >= 0; i--) {
-    const msg = messages[i];
-    if (!msg || msg.role !== "user") continue;
+    const msg = messages[i]
+    if (!msg || msg.role !== 'user') continue
     const text =
       msg.parts
-        ?.filter(
-          (p): p is { type: "text"; text: string } => p.type === "text"
-        )
+        ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
         .map((p) => p.text)
-        .join("") ?? "";
-    if (text.trim()) return text;
+        .join('') ?? ''
+    if (text.trim()) return text
   }
-  return null;
+  return null
 }
 
-function sseLine(data: object | "[DONE]"): string {
-  return `data: ${data === "[DONE]" ? "[DONE]" : JSON.stringify(data)}\n\n`;
+function sseLine(data: object | '[DONE]'): string {
+  return `data: ${data === '[DONE]' ? '[DONE]' : JSON.stringify(data)}\n\n`
 }
 
 const SSE_EVENT = {
-  START: "start",
-  TEXT_START: "text-start",
-  TEXT_DELTA: "text-delta",
-  TEXT_END: "text-end",
-  FINISH: "finish",
-  ERROR: "error",
-  DATA_PLANNING: "data-planning",
-  DATA_ACTIVITY: "data-activity",
-  DATA_LOCATION_PROFILE: "data-location-profile",
-} as const;
+  START: 'start',
+  TEXT_START: 'text-start',
+  TEXT_DELTA: 'text-delta',
+  TEXT_END: 'text-end',
+  FINISH: 'finish',
+  ERROR: 'error',
+  DATA_PLANNING: 'data-planning',
+  DATA_ACTIVITY: 'data-activity',
+  DATA_LOCATION_PROFILE: 'data-location-profile',
+} as const
 
-const SSE_DONE = "[DONE]" as const;
+const SSE_DONE = '[DONE]' as const
 
 interface PostSlot {
-  scheduled_date: string;
-  scheduled_time?: string;
-  theme: "holiday" | "promotion" | "engagement";
-  format: "single" | "carousel";
-  focus_item: string | null;
-  carousel_items: string[] | null;
-  carousel_narrative: string | null;
-  caption_seed: string;
+  scheduled_date: string
+  scheduled_time?: string
+  theme: 'holiday' | 'promotion' | 'engagement'
+  format: 'single' | 'carousel'
+  focus_item: string | null
+  carousel_items: string[] | null
+  carousel_narrative: string | null
+  caption_seed: string
 }
 
 interface CampaignBrief {
-  campaign_theme: string;
-  tone: string;
-  target_audience: string;
-  posting_cadence: string;
-  post_slots: PostSlot[];
+  campaign_theme: string
+  tone: string
+  target_audience: string
+  posting_cadence: string
+  post_slots: PostSlot[]
 }
 
 /** Chunk shape from gentic-agents SSE stream (POST /invoke/stream) */
 interface AgentSSEChunk {
-  delta?: string;
-  error?: string;
+  delta?: string
+  error?: string
   planning?: {
-    dateStart: string;
-    dateEnd: string;
-    nationalHolidays?: string | null;
-    locationSummary?: string | null;
-    locationProfileId?: string | null;
-    campaignBrief?: CampaignBrief | null;
-  };
+    dateStart: string
+    dateEnd: string
+    nationalHolidays?: string | null
+    locationSummary?: string | null
+    locationProfileId?: string | null
+    campaignBrief?: CampaignBrief | null
+  }
   activity?: {
-    step: string;
-    status: "running" | "done" | "reflecting" | "reflect_pass" | "reflect_revise";
-    label: string;
-    detail?: string;
-    transient?: boolean;
-  };
-  location_profile_update?: { summary: string };
+    step: string
+    status: 'running' | 'done' | 'reflecting' | 'reflect_pass' | 'reflect_revise'
+    label: string
+    detail?: string
+    transient?: boolean
+  }
+  location_profile_update?: { summary: string }
 }
 
 async function parseAgentSSEAndForward(
   reader: ReadableStreamDefaultReader<Uint8Array>,
   controller: ReadableStreamDefaultController<Uint8Array>,
   textPartId: string,
-  encoder: TextEncoder
+  encoder: TextEncoder,
 ): Promise<void> {
-  const decoder = new TextDecoder();
-  let buffer = "";
+  const decoder = new TextDecoder()
+  let buffer = ''
   try {
     while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n\n");
-      const remainder = lines.pop();
-      buffer = remainder !== undefined ? remainder : "";
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n\n')
+      const remainder = lines.pop()
+      buffer = remainder !== undefined ? remainder : ''
       for (const line of lines) {
-        const match = line.match(/^data: (.+)$/m);
-        const payload = match?.[1]?.trim();
-        if (!payload) continue;
-        if (payload === SSE_DONE) continue;
+        const match = line.match(/^data: (.+)$/m)
+        const payload = match?.[1]?.trim()
+        if (!payload) continue
+        if (payload === SSE_DONE) continue
         try {
-          const data = JSON.parse(payload) as AgentSSEChunk;
+          const data = JSON.parse(payload) as AgentSSEChunk
           if (data.error) {
             controller.enqueue(
-              encoder.encode(
-                sseLine({ type: SSE_EVENT.ERROR, errorText: data.error })
-              )
-            );
-            return;
+              encoder.encode(sseLine({ type: SSE_EVENT.ERROR, errorText: data.error })),
+            )
+            return
           }
           if (data.activity) {
             controller.enqueue(
-              encoder.encode(
-                sseLine({ type: SSE_EVENT.DATA_ACTIVITY, data: data.activity })
-              )
-            );
+              encoder.encode(sseLine({ type: SSE_EVENT.DATA_ACTIVITY, data: data.activity })),
+            )
           }
           if (data.planning) {
             controller.enqueue(
@@ -137,9 +131,9 @@ async function parseAgentSSEAndForward(
                     locationProfileId: data.planning.locationProfileId ?? null,
                     campaignBrief: data.planning.campaignBrief ?? null,
                   },
-                })
-              )
-            );
+                }),
+              ),
+            )
           }
           if (data.location_profile_update?.summary != null) {
             controller.enqueue(
@@ -149,20 +143,20 @@ async function parseAgentSSEAndForward(
                   data: {
                     locationSummary: data.location_profile_update.summary,
                   },
-                })
-              )
-            );
+                }),
+              ),
+            )
           }
-          if (typeof data.delta === "string" && data.delta) {
+          if (typeof data.delta === 'string' && data.delta) {
             controller.enqueue(
               encoder.encode(
                 sseLine({
                   type: SSE_EVENT.TEXT_DELTA,
                   id: textPartId,
                   delta: data.delta,
-                })
-              )
-            );
+                }),
+              ),
+            )
           }
         } catch {
           // ignore malformed JSON
@@ -170,132 +164,117 @@ async function parseAgentSSEAndForward(
       }
     }
   } finally {
-    reader.releaseLock();
+    reader.releaseLock()
   }
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
+  const { userId } = await auth()
   if (!userId) {
-    return jsonError("Unauthorized", 401);
+    return jsonError('Unauthorized', 401)
   }
 
-  const baseUrl = getAgentsBaseUrl();
+  const baseUrl = getAgentsBaseUrl()
   if (!baseUrl) {
     return jsonError(
-      "AGENTS_URL is not configured. Add AGENTS_URL (or AGENTS_API_URL) to apps/web/.env.local pointing at gentic-agents, e.g. http://127.0.0.1:7000",
-      500
-    );
+      'AGENTS_URL is not configured. Add AGENTS_URL (or AGENTS_API_URL) to apps/web/.env.local pointing at gentic-agents, e.g. http://127.0.0.1:7000',
+      500,
+    )
   }
 
-  let json: unknown;
+  let json: unknown
   try {
-    json = await req.json();
+    json = await req.json()
   } catch {
-    return jsonError("Invalid JSON body", 400);
+    return jsonError('Invalid JSON body', 400)
   }
 
-  const parsed = chatRequestBodySchema.safeParse(json);
+  const parsed = chatRequestBodySchema.safeParse(json)
   if (!parsed.success) {
-    const message =
-      parsed.error.issues.map((i) => i.message).join("; ") ||
-      "Invalid request body";
-    return jsonError(message, 400);
+    const message = parsed.error.issues.map((i) => i.message).join('; ') || 'Invalid request body'
+    return jsonError(message, 400)
   }
 
-  const messages = parsed.data.messages as UIMessage[];
-  const userText = getLastUserMessageText(messages);
+  const messages = parsed.data.messages as UIMessage[]
+  const userText = getLastUserMessageText(messages)
   if (!userText) {
-    return jsonError("No user message found in request", 400);
+    return jsonError('No user message found in request', 400)
   }
 
-  let agentRes: Response;
+  let agentRes: Response
   try {
     const streamHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
-      "X-Menuyukti-User-Id": userId,
-    };
-    const agentsKey = process.env.AGENTS_API_KEY;
+      'Content-Type': 'application/json',
+      'X-Menuyukti-User-Id': userId,
+    }
+    const agentsKey = process.env.AGENTS_API_KEY
     if (agentsKey) {
-      streamHeaders["X-Internal-Api-Key"] = agentsKey;
+      streamHeaders['X-Internal-Api-Key'] = agentsKey
     }
 
     agentRes = await fetch(`${baseUrl}/invoke/stream`, {
-      method: "POST",
+      method: 'POST',
       headers: streamHeaders,
       body: JSON.stringify({
         message: userText,
         thread_id: parsed.data.threadId ?? crypto.randomUUID(),
         analytics_id: parsed.data.analyticsId ?? null,
         location_id: parsed.data.locationId ?? null,
-        campaign_id:
-          parsed.data.campaignId != null
-            ? Number(parsed.data.campaignId)
-            : null,
+        campaign_id: parsed.data.campaignId != null ? Number(parsed.data.campaignId) : null,
         date_start: parsed.data.dateStart ?? null,
         date_end: parsed.data.dateEnd ?? null,
         national_holidays: parsed.data.nationalHolidays ?? null,
       }),
       signal: req.signal,
-    });
+    })
   } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
+    const detail = err instanceof Error ? err.message : String(err)
     return jsonError(
       `Cannot connect to gentic-agents at ${baseUrl} (${detail}). Start the Go server (apps/gentic-agents: make run or go run ./cmd/server), ensure ADDR matches this URL, and use 127.0.0.1 instead of localhost if you see connection issues.`,
-      502
-    );
+      502,
+    )
   }
 
   if (!agentRes.ok) {
-    const text = await agentRes.text();
+    const text = await agentRes.text()
     return jsonError(
       `Agents service error (${agentRes.status}): ${text || agentRes.statusText}`,
-      502
-    );
+      502,
+    )
   }
 
-  const messageId = crypto.randomUUID();
-  const textPartId = crypto.randomUUID();
-  const encoder = new TextEncoder();
+  const messageId = crypto.randomUUID()
+  const textPartId = crypto.randomUUID()
+  const encoder = new TextEncoder()
 
   const stream = new ReadableStream({
     async start(controller) {
-      controller.enqueue(
-        encoder.encode(sseLine({ type: SSE_EVENT.START, messageId }))
-      );
-      controller.enqueue(
-        encoder.encode(sseLine({ type: SSE_EVENT.TEXT_START, id: textPartId }))
-      );
+      controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.START, messageId })))
+      controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.TEXT_START, id: textPartId })))
 
-      const reader = agentRes.body?.getReader();
+      const reader = agentRes.body?.getReader()
       if (!reader) {
-        controller.enqueue(
-          encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId }))
-        );
-        controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.FINISH })));
-        controller.enqueue(encoder.encode(sseLine(SSE_DONE)));
-        controller.close();
-        return;
+        controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId })))
+        controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.FINISH })))
+        controller.enqueue(encoder.encode(sseLine(SSE_DONE)))
+        controller.close()
+        return
       }
 
-      await parseAgentSSEAndForward(reader, controller, textPartId, encoder);
+      await parseAgentSSEAndForward(reader, controller, textPartId, encoder)
 
-      controller.enqueue(
-        encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId }))
-      );
-      controller.enqueue(
-        encoder.encode(sseLine({ type: SSE_EVENT.FINISH }))
-      );
-      controller.enqueue(encoder.encode(sseLine(SSE_DONE)));
-      controller.close();
+      controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.TEXT_END, id: textPartId })))
+      controller.enqueue(encoder.encode(sseLine({ type: SSE_EVENT.FINISH })))
+      controller.enqueue(encoder.encode(sseLine(SSE_DONE)))
+      controller.close()
     },
-  });
+  })
 
   return new NextResponse(stream, {
     headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-store",
-      "x-vercel-ai-ui-message-stream": "v1",
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-store',
+      'x-vercel-ai-ui-message-stream': 'v1',
     },
-  });
+  })
 }

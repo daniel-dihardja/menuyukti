@@ -1,5 +1,5 @@
-import { SsoCallbackView } from "@/components/clerk/sso-callback-view";
+import { SsoCallbackView } from '@/components/clerk/sso-callback-view'
 
 export default function SsoCallbackPage() {
-  return <SsoCallbackView />;
+  return <SsoCallbackView />
 }

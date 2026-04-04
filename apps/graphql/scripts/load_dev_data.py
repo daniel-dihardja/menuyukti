@@ -20,7 +20,6 @@ from graphql.data_sources import (
 )
 from graphql.reports import normalize_sales_report, persist_sales_report
 
-
 ROOT_DIR = Path(__file__).resolve().parents[3]
 DEFAULT_EXCEL = ROOT_DIR / "reports" / "Sales_Recapitulation_Detail_Report_Jan-Mar_2025.xlsx"
 DEFAULT_COGS = ROOT_DIR / "notebooks" / "data" / "menu_cogs.json"

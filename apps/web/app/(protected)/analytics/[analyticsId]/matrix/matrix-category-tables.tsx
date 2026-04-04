@@ -1,17 +1,17 @@
-"use client";
+'use client'
 
 import {
   CATEGORY_ORDER,
   type GroupedByCategory,
   type MatrixCategory,
-} from "@/lib/analytics/matrix-page-adapter";
-import { MatrixCategoryTable } from "./matrix-category-table";
+} from '@/lib/analytics/matrix-page-adapter'
+import { MatrixCategoryTable } from './matrix-category-table'
 
 type Props = {
-  grouped: GroupedByCategory;
-  locale: string;
-  currency: string;
-};
+  grouped: GroupedByCategory
+  locale: string
+  currency: string
+}
 
 export function MatrixCategoryTables({ grouped, locale, currency }: Props) {
   return (
@@ -26,5 +26,5 @@ export function MatrixCategoryTables({ grouped, locale, currency }: Props) {
         />
       ))}
     </div>
-  );
+  )
 }

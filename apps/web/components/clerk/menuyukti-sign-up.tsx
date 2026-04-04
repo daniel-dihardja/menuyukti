@@ -1,8 +1,8 @@
-"use client";
+'use client'
 
-import { SignUp } from "@clerk/nextjs";
-import { routes } from "@/lib/routes";
-import { menuyuktiClerkAppearance } from "./menuyukti-appearance";
+import { SignUp } from '@clerk/nextjs'
+import { routes } from '@/lib/routes'
+import { menuyuktiClerkAppearance } from './menuyukti-appearance'
 
 export function MenuyuktiSignUp() {
   return (
@@ -13,5 +13,5 @@ export function MenuyuktiSignUp() {
       forceRedirectUrl={routes.campaigns.list}
       appearance={menuyuktiClerkAppearance}
     />
-  );
+  )
 }

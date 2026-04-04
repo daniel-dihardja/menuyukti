@@ -1,0 +1,13 @@
+.PHONY: test vet fmt lint
+
+test:
+	go test ./...
+
+vet:
+	go vet ./...
+
+fmt:
+	go fmt ./...
+
+lint:
+	golangci-lint run ./...

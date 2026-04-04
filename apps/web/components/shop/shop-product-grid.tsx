@@ -1,18 +1,18 @@
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image'
+import Link from 'next/link'
 
-import { routes } from "@/lib/routes";
+import { routes } from '@/lib/routes'
 
-import { getAllShopProducts } from "./shop-catalog";
+import { getAllShopProducts } from './shop-catalog'
 
 export function ShopProductGrid() {
-  const products = getAllShopProducts();
+  const products = getAllShopProducts()
 
   return (
     <section className="shop-editorial-grid mb-32">
       {products.map((p) => {
-        const hero = p.images[0];
-        if (!hero) return null;
+        const hero = p.images[0]
+        if (!hero) return null
         return (
           <Link
             key={p.slug}
@@ -38,14 +38,14 @@ export function ShopProductGrid() {
                   {p.title}
                 </h3>
                 <p
-                  className={`mt-1 text-muted-foreground ${p.grid.titleClass.includes("text-2xl") ? "" : "text-sm"}`}
+                  className={`mt-1 text-muted-foreground ${p.grid.titleClass.includes('text-2xl') ? '' : 'text-sm'}`}
                 >
                   {p.subtitle}
                 </p>
               </div>
               <div className="shrink-0 text-right">
                 <p
-                  className={`font-[family-name:var(--font-shop-headline)] font-bold text-primary ${p.grid.titleClass.includes("text-2xl") ? "text-xl" : "text-lg"}`}
+                  className={`font-[family-name:var(--font-shop-headline)] font-bold text-primary ${p.grid.titleClass.includes('text-2xl') ? 'text-xl' : 'text-lg'}`}
                 >
                   {p.displayPrice}
                 </p>
@@ -57,8 +57,8 @@ export function ShopProductGrid() {
               </div>
             </div>
           </Link>
-        );
+        )
       })}
     </section>
-  );
+  )
 }

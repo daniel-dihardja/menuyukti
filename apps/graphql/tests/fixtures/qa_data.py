@@ -10,7 +10,6 @@ from datetime import datetime
 
 from graphql.reports.ingest import NormalizedLineItemData
 
-
 # Base datetime: Monday and Friday, hours 10, 14, 20 for heatmap variety.
 _MON_10 = datetime(2024, 6, 3, 10, 0, 0)
 _MON_14 = datetime(2024, 6, 3, 14, 0, 0)

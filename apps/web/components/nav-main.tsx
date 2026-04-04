@@ -1,17 +1,11 @@
-"use client";
+'use client'
 
-import {
-  ChevronRight,
-  FileUp,
-  Images,
-  MapPin,
-  Megaphone,
-} from "lucide-react";
+import { ChevronRight, FileUp, Images, MapPin, Megaphone } from 'lucide-react'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@workspace/ui/components/collapsible";
+} from '@workspace/ui/components/collapsible'
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -21,20 +15,20 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@workspace/ui/components/sidebar";
-import Link from "next/link";
-import { useTranslations } from "next-intl";
-import { usePathname } from "next/navigation";
-import { routes } from "@/lib/routes";
-import { ReactNode } from "react";
+} from '@workspace/ui/components/sidebar'
+import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { usePathname } from 'next/navigation'
+import { routes } from '@/lib/routes'
+import type { ReactNode } from 'react'
 
 type NavItem = {
-  key: string;
-  labelKey: string;
-  href?: string;
-  icon?: ReactNode;
-  children?: NavItem[];
-};
+  key: string
+  labelKey: string
+  href?: string
+  icon?: ReactNode
+  children?: NavItem[]
+}
 
 const NAV_ITEMS: NavItem[] = [
   // {
@@ -44,26 +38,26 @@ const NAV_ITEMS: NavItem[] = [
   //   icon: <Newspaper className="w-4 h-4" />,
   // },
   {
-    key: "campaigns",
-    labelKey: "campaigns",
+    key: 'campaigns',
+    labelKey: 'campaigns',
     href: routes.campaigns.list,
     icon: <Megaphone className="w-4 h-4" />,
   },
   {
-    key: "assets",
-    labelKey: "assets",
+    key: 'assets',
+    labelKey: 'assets',
     href: routes.assets,
     icon: <Images className="w-4 h-4" />,
   },
   {
-    key: "reports",
-    labelKey: "reports",
+    key: 'reports',
+    labelKey: 'reports',
     icon: <FileUp className="w-4 h-4" />,
     href: routes.analytics.sales,
   },
   {
-    key: "branches",
-    labelKey: "branches",
+    key: 'branches',
+    labelKey: 'branches',
     href: routes.analytics.branches,
     icon: <MapPin className="w-4 h-4" />,
   },
@@ -86,24 +80,23 @@ const NAV_ITEMS: NavItem[] = [
   //   href: routes.agents.list,
   //   icon: <Bot className="w-4 h-4" />,
   // },
-];
+]
 
 export function NavMain() {
-  const t = useTranslations("sidebar");
-  const pathname = usePathname();
+  const t = useTranslations('sidebar')
+  const pathname = usePathname()
 
-  const isActive = (url?: string) => (url ? pathname.startsWith(url) : false);
+  const isActive = (url?: string) => (url ? pathname.startsWith(url) : false)
 
   return (
     <SidebarGroup>
       <SidebarGroupLabel className="text-xs uppercase text-muted-foreground tracking-wider">
-        {t("groupLabel")}
+        {t('groupLabel')}
       </SidebarGroupLabel>
 
       <SidebarMenu>
         {NAV_ITEMS.map((item) => {
-          const active =
-            isActive(item.href) || item.children?.some((c) => isActive(c.href));
+          const active = isActive(item.href) || item.children?.some((c) => isActive(c.href))
 
           if (item.children) {
             return (
@@ -120,14 +113,11 @@ export function NavMain() {
                       tooltip={t(item.labelKey)}
                       className={`flex items-center gap-2 flex-1 ${
                         active
-                          ? "bg-sidebar-accent/60 text-sidebar-accent-foreground"
-                          : "text-muted-foreground hover:text-foreground"
+                          ? 'bg-sidebar-accent/60 text-sidebar-accent-foreground'
+                          : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
-                      <Link
-                        href={item.href!}
-                        className="flex items-center gap-2 w-full"
-                      >
+                      <Link href={item.href!} className="flex items-center gap-2 w-full">
                         {item.icon}
                         <span>{t(item.labelKey)}</span>
                       </Link>
@@ -152,8 +142,8 @@ export function NavMain() {
                             asChild
                             className={`transition-colors ${
                               isActive(child.href)
-                                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                                : "text-muted-foreground hover:text-foreground"
+                                ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+                                : 'text-muted-foreground hover:text-foreground'
                             }`}
                           >
                             <Link href={child.href!}>
@@ -166,7 +156,7 @@ export function NavMain() {
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
-            );
+            )
           }
           return (
             <SidebarMenuItem key={item.key}>
@@ -176,8 +166,8 @@ export function NavMain() {
                 data-active={isActive(item.href)}
                 className={`text-sm transition-colors rounded-none ${
                   isActive(item.href)
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <Link href={item.href!} className="flex items-center gap-2">
@@ -186,9 +176,9 @@ export function NavMain() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          );
+          )
         })}
       </SidebarMenu>
     </SidebarGroup>
-  );
+  )
 }

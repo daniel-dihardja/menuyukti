@@ -1,27 +1,27 @@
-import { Manrope, Work_Sans } from "next/font/google";
+import { Manrope, Work_Sans } from 'next/font/google'
 
-import "@/components/shop/shop.css";
+import '@/components/shop/shop.css'
 
 const manrope = Manrope({
-  subsets: ["latin"],
-  variable: "--font-shop-headline",
-});
+  subsets: ['latin'],
+  variable: '--font-shop-headline',
+})
 
 const workSans = Work_Sans({
-  subsets: ["latin"],
-  variable: "--font-shop-body",
-});
+  subsets: ['latin'],
+  variable: '--font-shop-body',
+})
 
 export const metadata = {
-  title: "The Digital Curator | Art for Your Restaurant",
+  title: 'The Digital Curator | Art for Your Restaurant',
   description:
-    "Elevate your culinary space with bespoke prints designed for the modern restaurateur.",
-};
+    'Elevate your culinary space with bespoke prints designed for the modern restaurateur.',
+}
 
 export default function ShopLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
     <div
@@ -29,5 +29,5 @@ export default function ShopLayout({
     >
       {children}
     </div>
-  );
+  )
 }

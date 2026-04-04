@@ -1,7 +1,7 @@
-from pathlib import Path
 import argparse
 import sys
 from datetime import datetime
+from pathlib import Path
 
 from graphql.data_sources import AnalyticsRun, Location, SessionLocal, drop_db, init_db
 from graphql.reports import normalize_sales_report, persist_sales_report

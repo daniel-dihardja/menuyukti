@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Select,
@@ -6,43 +6,39 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select";
-import {
-  Field,
-  FieldDescription,
-  FieldLabel,
-} from "@workspace/ui/components/field";
-import { cn } from "@workspace/ui/lib/utils";
-import { useAnalytics } from "../use-analytics";
+} from '@workspace/ui/components/select'
+import { Field, FieldDescription, FieldLabel } from '@workspace/ui/components/field'
+import { cn } from '@workspace/ui/lib/utils'
+import { useAnalytics } from '../use-analytics'
 
 type Branch = {
-  id: number;
-  name: string;
-};
+  id: number
+  name: string
+}
 
 interface LocationSelectProps {
-  branches: Branch[];
-  placeholder?: string;
-  id?: string;
-  label?: string;
-  description?: string;
-  className?: string;
+  branches: Branch[]
+  placeholder?: string
+  id?: string
+  label?: string
+  description?: string
+  className?: string
 }
 
 export function LocationSelect({
   branches,
-  placeholder = "Select location",
+  placeholder = 'Select location',
   id,
   label,
   description,
   className,
 }: LocationSelectProps) {
-  const { locationId, setLocationId } = useAnalytics();
-  const selectId = id ?? "location-select";
-  const descriptionId = description ? `${selectId}-description` : undefined;
+  const { locationId, setLocationId } = useAnalytics()
+  const selectId = id ?? 'location-select'
+  const descriptionId = description ? `${selectId}-description` : undefined
 
   return (
-    <Field className={cn("max-w-xs space-y-2", className)}>
+    <Field className={cn('max-w-xs space-y-2', className)}>
       {label ? <FieldLabel htmlFor={selectId}>{label}</FieldLabel> : null}
       <Select
         value={locationId !== null ? String(locationId) : undefined}
@@ -64,9 +60,7 @@ export function LocationSelect({
           ))}
         </SelectContent>
       </Select>
-      {description ? (
-        <FieldDescription id={descriptionId}>{description}</FieldDescription>
-      ) : null}
+      {description ? <FieldDescription id={descriptionId}>{description}</FieldDescription> : null}
     </Field>
-  );
+  )
 }

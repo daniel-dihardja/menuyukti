@@ -1,65 +1,59 @@
-"use client";
+'use client'
 
 import {
   ChainOfThought,
   ChainOfThoughtContent,
   ChainOfThoughtHeader,
-} from "@workspace/ui/components/ai-elements/chain-of-thought";
-import { Spinner } from "@workspace/ui/components/spinner";
-import { cn } from "@workspace/ui/lib/utils";
-import { CheckIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+} from '@workspace/ui/components/ai-elements/chain-of-thought'
+import { Spinner } from '@workspace/ui/components/spinner'
+import { cn } from '@workspace/ui/lib/utils'
+import { CheckIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 export type ActivityStep = {
-  step: string;
-  status: "running" | "done" | "reflecting" | "reflect_pass" | "reflect_revise";
-  label: string;
-  detail?: string;
+  step: string
+  status: 'running' | 'done' | 'reflecting' | 'reflect_pass' | 'reflect_revise'
+  label: string
+  detail?: string
   /** When true, hide this row after the stream ends (protocol-driven; no hardcoded step lists). */
-  transient?: boolean;
-};
+  transient?: boolean
+}
 
 type AgentActivityFeedProps = {
-  steps: ActivityStep[];
-  hasText: boolean;
-  isStreaming: boolean;
-};
+  steps: ActivityStep[]
+  hasText: boolean
+  isStreaming: boolean
+}
 
-export function AgentActivityFeed({
-  steps,
-  hasText,
-  isStreaming,
-}: AgentActivityFeedProps) {
-  const [isOpen, setIsOpen] = useState(true);
-  const [hasAutoCollapsed, setHasAutoCollapsed] = useState(false);
+export function AgentActivityFeed({ steps, hasText, isStreaming }: AgentActivityFeedProps) {
+  const [isOpen, setIsOpen] = useState(true)
+  const [hasAutoCollapsed, setHasAutoCollapsed] = useState(false)
 
   useEffect(() => {
     if (hasText && !hasAutoCollapsed) {
-      setIsOpen(false);
-      setHasAutoCollapsed(true);
+      setIsOpen(false)
+      setHasAutoCollapsed(true)
     }
-  }, [hasText, hasAutoCollapsed]);
+  }, [hasText, hasAutoCollapsed])
 
   // Reset collapse state when a new stream starts
   useEffect(() => {
     if (isStreaming && steps.length === 0) {
-      setIsOpen(true);
-      setHasAutoCollapsed(false);
+      setIsOpen(true)
+      setHasAutoCollapsed(false)
     }
-  }, [isStreaming, steps.length]);
+  }, [isStreaming, steps.length])
 
-  const visibleSteps = isStreaming
-    ? steps
-    : steps.filter((s) => !s.transient);
+  const visibleSteps = isStreaming ? steps : steps.filter((s) => !s.transient)
 
-  if (visibleSteps.length === 0) return null;
+  if (visibleSteps.length === 0) return null
 
-  const doneCount = visibleSteps.filter((s) => s.status === "done").length;
-  const hasRunning = visibleSteps.some((s) => s.status === "running");
+  const doneCount = visibleSteps.filter((s) => s.status === 'done').length
+  const hasRunning = visibleSteps.some((s) => s.status === 'running')
 
   const headerLabel = hasRunning
-    ? visibleSteps.find((s) => s.status === "running")?.label ?? "Working..."
-    : `${doneCount} step${doneCount !== 1 ? "s" : ""} completed`;
+    ? (visibleSteps.find((s) => s.status === 'running')?.label ?? 'Working...')
+    : `${doneCount} step${doneCount !== 1 ? 's' : ''} completed`
 
   return (
     <div className="mb-3">
@@ -70,14 +64,12 @@ export function AgentActivityFeed({
             <div
               key={step.step}
               className={cn(
-                "flex items-start gap-2 text-sm fade-in-0 slide-in-from-top-2 animate-in",
-                step.status === "done"
-                  ? "text-muted-foreground"
-                  : "text-foreground"
+                'flex items-start gap-2 text-sm fade-in-0 slide-in-from-top-2 animate-in',
+                step.status === 'done' ? 'text-muted-foreground' : 'text-foreground',
               )}
             >
               <div className="mt-0.5 shrink-0">
-                {step.status !== "done" ? (
+                {step.status !== 'done' ? (
                   <Spinner className="size-3.5" />
                 ) : (
                   <CheckIcon className="size-3.5" />
@@ -96,5 +88,5 @@ export function AgentActivityFeed({
         </ChainOfThoughtContent>
       </ChainOfThought>
     </div>
-  );
+  )
 }

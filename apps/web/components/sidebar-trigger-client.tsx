@@ -1,10 +1,10 @@
-"use client";
+'use client'
 
-import { Show, UserButton } from "@clerk/nextjs";
-import Link from "next/link";
-import { Fragment, useEffect, useState } from "react";
-import { SidebarTrigger } from "@workspace/ui/components/sidebar";
-import { Separator } from "@workspace/ui/components/separator";
+import { Show, UserButton } from '@clerk/nextjs'
+import Link from 'next/link'
+import { Fragment, useEffect, useState } from 'react'
+import { SidebarTrigger } from '@workspace/ui/components/sidebar'
+import { Separator } from '@workspace/ui/components/separator'
 import {
   Breadcrumb,
   BreadcrumbEllipsis,
@@ -13,46 +13,44 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@workspace/ui/components/breadcrumb";
+} from '@workspace/ui/components/breadcrumb'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
-import { Button, buttonVariants } from "@workspace/ui/components/button";
-import { cn } from "@workspace/ui/lib/utils";
+} from '@workspace/ui/components/dropdown-menu'
+import { Button, buttonVariants } from '@workspace/ui/components/button'
+import { cn } from '@workspace/ui/lib/utils'
 
 interface SidebarTriggerClientProps {
-  title: string;
-  breadcrumbs?: Array<{ label: string; href?: string }>;
-  showBreadcrumb?: boolean;
+  title: string
+  breadcrumbs?: Array<{ label: string; href?: string }>
+  showBreadcrumb?: boolean
 }
 
 export function SidebarTriggerClient({
-  title,
+  title: _title,
   breadcrumbs,
   showBreadcrumb,
 }: SidebarTriggerClientProps) {
-  const [mounted, setMounted] = useState(false);
+  void _title
+  const [mounted, setMounted] = useState(false)
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    setMounted(true)
+  }, [])
 
-  const items = breadcrumbs ?? [];
-  const shouldShowBreadcrumb = showBreadcrumb ?? items.length > 0;
-  const firstItem = items[0];
-  const currentItem = items[items.length - 1];
-  const middleItems = items.slice(1, -1);
+  const items = breadcrumbs ?? []
+  const shouldShowBreadcrumb = showBreadcrumb ?? items.length > 0
+  const firstItem = items[0]
+  const currentItem = items[items.length - 1]
+  const middleItems = items.slice(1, -1)
 
   return (
     <div className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
       <SidebarTrigger className="-ml-1" />
 
-      <Separator
-        orientation="vertical"
-        className="mr-2 data-[orientation=vertical]:h-4"
-      />
+      <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
 
       {shouldShowBreadcrumb && items.length > 0 ? (
         <>
@@ -87,10 +85,7 @@ export function SidebarTriggerClient({
                         </Link>
                       </BreadcrumbLink>
                     ) : (
-                      <BreadcrumbPage
-                        className="max-w-[96px] truncate"
-                        title={firstItem.label}
-                      >
+                      <BreadcrumbPage className="max-w-[96px] truncate" title={firstItem.label}>
                         {firstItem.label}
                       </BreadcrumbPage>
                     )}
@@ -117,28 +112,20 @@ export function SidebarTriggerClient({
                         <DropdownMenuContent align="start">
                           {middleItems.map((item, index) =>
                             item.href ? (
-                              <DropdownMenuItem
-                                key={`${item.label}-${index}`}
-                                asChild
-                              >
+                              <DropdownMenuItem key={`${item.label}-${index}`} asChild>
                                 <Link href={item.href}>{item.label}</Link>
                               </DropdownMenuItem>
                             ) : (
-                              <DropdownMenuItem
-                                key={`${item.label}-${index}`}
-                                disabled
-                              >
+                              <DropdownMenuItem key={`${item.label}-${index}`} disabled>
                                 {item.label}
                               </DropdownMenuItem>
-                            )
+                            ),
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     ) : (
                       <span
-                        className={cn(
-                          buttonVariants({ variant: "ghost", size: "icon-sm" })
-                        )}
+                        className={cn(buttonVariants({ variant: 'ghost', size: 'icon-sm' }))}
                         aria-hidden
                       >
                         <BreadcrumbEllipsis className="size-7" />
@@ -151,10 +138,7 @@ export function SidebarTriggerClient({
 
               {currentItem ? (
                 <BreadcrumbItem className="min-w-0">
-                  <BreadcrumbPage
-                    className="max-w-[160px] truncate"
-                    title={currentItem.label}
-                  >
+                  <BreadcrumbPage className="max-w-[160px] truncate" title={currentItem.label}>
                     {currentItem.label}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
@@ -170,5 +154,5 @@ export function SidebarTriggerClient({
         </Show>
       </div>
     </div>
-  );
+  )
 }

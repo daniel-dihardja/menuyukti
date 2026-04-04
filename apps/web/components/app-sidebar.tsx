@@ -1,14 +1,10 @@
-"use client";
+'use client'
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-} from "@workspace/ui/components/sidebar";
-import { Leaf } from "lucide-react";
-import Link from "next/link";
-import * as React from "react";
-import { NavMain } from "./nav-main";
+import { Sidebar, SidebarContent, SidebarHeader } from '@workspace/ui/components/sidebar'
+import { Leaf } from 'lucide-react'
+import Link from 'next/link'
+import * as React from 'react'
+import { NavMain } from './nav-main'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -28,5 +24,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain />
       </SidebarContent>
     </Sidebar>
-  );
+  )
 }

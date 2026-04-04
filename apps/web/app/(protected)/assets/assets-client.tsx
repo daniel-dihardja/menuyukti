@@ -1,198 +1,186 @@
-"use client";
+'use client'
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
-import {
-  Download,
-  ImageIcon,
-  Loader2,
-  Maximize2,
-  Sparkles,
-  Trash2,
-  Upload,
-} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
+import { Download, ImageIcon, Loader2, Maximize2, Sparkles, Trash2, Upload } from 'lucide-react'
 
-import { Button } from "@workspace/ui/components/button";
-import { Card } from "@workspace/ui/components/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@workspace/ui/components/dialog";
-import { Label } from "@workspace/ui/components/label";
+import { Button } from '@workspace/ui/components/button'
+import { Card } from '@workspace/ui/components/card'
+import { Dialog, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
+import { Label } from '@workspace/ui/components/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select";
-import { cn } from "@workspace/ui/lib/utils";
+} from '@workspace/ui/components/select'
+import { cn } from '@workspace/ui/lib/utils'
 
 type AssetItem = {
-  name: string;
-  url: string;
-  size: number;
-  createdAt: string;
-};
+  name: string
+  url: string
+  size: number
+  createdAt: string
+}
 
-type ToastState = { kind: "success" | "error"; message: string } | null;
+type ToastState = { kind: 'success' | 'error'; message: string } | null
 
 /** Post-upload processing flow; sent with FormData as `flow`. */
-type AssetFlow = "none" | "remove-background";
+type AssetFlow = 'none' | 'remove-background'
 
-const SKELETON_COUNT = 8;
+const SKELETON_COUNT = 8
 
 function formatBytes(n: number): string {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+  if (n < 1024) return `${n} B`
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`
 }
 
 function assetDownloadHref(name: string): string {
-  return `/api/assets/download?name=${encodeURIComponent(name)}`;
+  return `/api/assets/download?name=${encodeURIComponent(name)}`
 }
 
 export function AssetsClient() {
-  const t = useTranslations("assets");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [items, setItems] = useState<AssetItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  const [toast, setToast] = useState<ToastState>(null);
-  const [deleting, setDeleting] = useState<string | null>(null);
-  const [selectedFlow, setSelectedFlow] = useState<AssetFlow>("none");
-  const [previewItem, setPreviewItem] = useState<AssetItem | null>(null);
-  const [previewImgLoaded, setPreviewImgLoaded] = useState(false);
+  const t = useTranslations('assets')
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [items, setItems] = useState<AssetItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [dragActive, setDragActive] = useState(false)
+  const [toast, setToast] = useState<ToastState>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const [selectedFlow, setSelectedFlow] = useState<AssetFlow>('none')
+  const [previewItem, setPreviewItem] = useState<AssetItem | null>(null)
+  const [previewImgLoaded, setPreviewImgLoaded] = useState(false)
 
-  const showToast = useCallback((kind: "success" | "error", message: string) => {
-    setToast({ kind, message });
-    window.setTimeout(() => setToast(null), 4200);
-  }, []);
+  const showToast = useCallback((kind: 'success' | 'error', message: string) => {
+    setToast({ kind, message })
+    window.setTimeout(() => setToast(null), 4200)
+  }, [])
 
   const load = useCallback(
     async (silent = false) => {
-      if (!silent) setLoading(true);
+      if (!silent) setLoading(true)
       try {
-        const res = await fetch("/api/assets/list");
-        if (!res.ok) throw new Error("list failed");
-        const data = (await res.json()) as { items: AssetItem[] };
-        setItems(data.items ?? []);
+        const res = await fetch('/api/assets/list')
+        if (!res.ok) throw new Error('list failed')
+        const data = (await res.json()) as { items: AssetItem[] }
+        setItems(data.items ?? [])
       } catch {
-        setItems([]);
-        showToast("error", t("toast.loadError"));
+        setItems([])
+        showToast('error', t('toast.loadError'))
       } finally {
-        if (!silent) setLoading(false);
+        if (!silent) setLoading(false)
       }
     },
     [showToast, t],
-  );
+  )
 
   useEffect(() => {
-    void load(false);
-  }, [load]);
+    void load(false)
+  }, [load])
 
   useEffect(() => {
-    setPreviewImgLoaded(false);
-  }, [previewItem?.name]);
+    setPreviewImgLoaded(false)
+  }, [previewItem?.name])
 
   const uploadFiles = async (files: FileList | File[]) => {
-    const list = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const list = Array.from(files).filter((f) => f.type.startsWith('image/'))
     if (list.length === 0) {
-      showToast("error", t("upload.invalidType"));
-      return;
+      showToast('error', t('upload.invalidType'))
+      return
     }
-    setUploading(true);
+    setUploading(true)
     try {
       const results = await Promise.allSettled(
         list.map(async (file) => {
-          const fd = new FormData();
-          fd.set("file", file);
-          fd.set("flow", selectedFlow);
-          const res = await fetch("/api/assets/upload", {
-            method: "POST",
+          const fd = new FormData()
+          fd.set('file', file)
+          fd.set('flow', selectedFlow)
+          const res = await fetch('/api/assets/upload', {
+            method: 'POST',
             body: fd,
-          });
+          })
           if (!res.ok) {
             const err = (await res.json().catch(() => ({}))) as {
-              message?: string;
-              code?: string;
-            };
-            const e = new Error(err.message ?? "upload") as Error & { code?: string };
-            if (err.code === "leonardo" || err.code === "leonardo_tokens") e.code = err.code;
-            throw e;
+              message?: string
+              code?: string
+            }
+            const e = new Error(err.message ?? 'upload') as Error & { code?: string }
+            if (err.code === 'leonardo' || err.code === 'leonardo_tokens') e.code = err.code
+            throw e
           }
-          return res.json() as Promise<AssetItem>;
+          return res.json() as Promise<AssetItem>
         }),
-      );
-      const ok = results.filter((r) => r.status === "fulfilled").length;
-      const fail = results.length - ok;
+      )
+      const ok = results.filter((r) => r.status === 'fulfilled').length
+      const fail = results.length - ok
       const leonardoOnly =
         fail > 0 &&
         ok === 0 &&
         results.every((r) => {
-          if (r.status !== "rejected") return false;
-          const reason = r.reason as Error & { code?: string };
-          return reason?.code === "leonardo" || reason?.code === "leonardo_tokens";
-        });
+          if (r.status !== 'rejected') return false
+          const reason = r.reason as Error & { code?: string }
+          return reason?.code === 'leonardo' || reason?.code === 'leonardo_tokens'
+        })
       const leonardoTokensOnly =
         leonardoOnly &&
         results.every((r) => {
-          if (r.status !== "rejected") return false;
-          const reason = r.reason as Error & { code?: string };
-          return reason?.code === "leonardo_tokens";
-        });
+          if (r.status !== 'rejected') return false
+          const reason = r.reason as Error & { code?: string }
+          return reason?.code === 'leonardo_tokens'
+        })
       if (ok > 0) {
-        await load(true);
+        await load(true)
       }
       if (fail === 0) {
-        showToast("success", t("toast.uploaded"));
+        showToast('success', t('toast.uploaded'))
       } else if (ok > 0) {
-        showToast("error", t("toast.uploadPartial"));
+        showToast('error', t('toast.uploadPartial'))
       } else if (leonardoTokensOnly) {
-        showToast("error", t("toast.leonardoInsufficientTokens"));
+        showToast('error', t('toast.leonardoInsufficientTokens'))
       } else if (leonardoOnly) {
-        showToast("error", t("toast.leonardoError"));
+        showToast('error', t('toast.leonardoError'))
       } else {
-        showToast("error", t("toast.uploadError"));
+        showToast('error', t('toast.uploadError'))
       }
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
-  };
+  }
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files?.length) void uploadFiles(files);
-    e.target.value = "";
-  };
+    const files = e.target.files
+    if (files?.length) void uploadFiles(files)
+    e.target.value = ''
+  }
 
   const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragActive(false);
-    if (e.dataTransfer.files?.length) void uploadFiles(e.dataTransfer.files);
-  };
+    e.preventDefault()
+    setDragActive(false)
+    if (e.dataTransfer.files?.length) void uploadFiles(e.dataTransfer.files)
+  }
 
   const onDelete = async (name: string) => {
-    if (!window.confirm(t("grid.deleteConfirm"))) return;
-    setDeleting(name);
+    if (!window.confirm(t('grid.deleteConfirm'))) return
+    setDeleting(name)
     try {
-      const res = await fetch("/api/assets/delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/assets/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
-      });
-      if (!res.ok) throw new Error("delete");
-      showToast("success", t("toast.deleted"));
-      setItems((prev) => prev.filter((i) => i.name !== name));
-      setPreviewItem((p) => (p?.name === name ? null : p));
+      })
+      if (!res.ok) throw new Error('delete')
+      showToast('success', t('toast.deleted'))
+      setItems((prev) => prev.filter((i) => i.name !== name))
+      setPreviewItem((p) => (p?.name === name ? null : p))
     } catch {
-      showToast("error", t("toast.deleteError"));
+      showToast('error', t('toast.deleteError'))
     } finally {
-      setDeleting(null);
+      setDeleting(null)
     }
-  };
+  }
 
   return (
     <div className="w-full space-y-6">
@@ -200,10 +188,10 @@ export function AssetsClient() {
         <div
           role="status"
           className={cn(
-            "fixed top-4 right-4 z-50 max-w-sm rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300",
-            toast.kind === "success"
-              ? "border-emerald-500/30 bg-emerald-950/90 text-emerald-50"
-              : "border-red-500/30 bg-red-950/90 text-red-50",
+            'fixed top-4 right-4 z-50 max-w-sm rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300',
+            toast.kind === 'success'
+              ? 'border-emerald-500/30 bg-emerald-950/90 text-emerald-50'
+              : 'border-red-500/30 bg-red-950/90 text-red-50',
           )}
         >
           {toast.message}
@@ -217,8 +205,8 @@ export function AssetsClient() {
             overlayClassName="bg-black/80 backdrop-blur-sm"
             showCloseButton
             className={cn(
-              "flex max-h-[90vh] w-full max-w-[min(96vw,1400px)] flex-col gap-0 overflow-hidden border border-border/50 bg-background p-0 shadow-2xl",
-              "sm:max-w-[min(96vw,1400px)]",
+              'flex max-h-[90vh] w-full max-w-[min(96vw,1400px)] flex-col gap-0 overflow-hidden border border-border/50 bg-background p-0 shadow-2xl',
+              'sm:max-w-[min(96vw,1400px)]',
             )}
           >
             <DialogTitle className="sr-only">{previewItem.name}</DialogTitle>
@@ -230,18 +218,24 @@ export function AssetsClient() {
                   <span className="mx-1.5 text-border">·</span>
                   <time dateTime={previewItem.createdAt}>
                     {new Date(previewItem.createdAt).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
                     })}
                   </time>
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <Button type="button" variant="secondary" size="sm" className="rounded-full shadow-sm" asChild>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="rounded-full shadow-sm"
+                  asChild
+                >
                   <a href={assetDownloadHref(previewItem.name)} download={previewItem.name}>
                     <Download className="mr-1.5 h-4 w-4" aria-hidden />
-                    {t("grid.download")}
+                    {t('grid.download')}
                   </a>
                 </Button>
               </div>
@@ -257,8 +251,8 @@ export function AssetsClient() {
                 src={previewItem.url}
                 alt=""
                 className={cn(
-                  "max-h-[calc(90vh-5.5rem)] w-auto max-w-full object-contain shadow-[0_24px_64px_-12px_rgba(0,0,0,0.35)] transition-opacity duration-300",
-                  previewImgLoaded ? "opacity-100" : "opacity-0",
+                  'max-h-[calc(90vh-5.5rem)] w-auto max-w-full object-contain shadow-[0_24px_64px_-12px_rgba(0,0,0,0.35)] transition-opacity duration-300',
+                  previewImgLoaded ? 'opacity-100' : 'opacity-0',
                 )}
                 onLoad={() => setPreviewImgLoaded(true)}
               />
@@ -278,23 +272,23 @@ export function AssetsClient() {
         />
         <Card
           className={cn(
-            "group relative overflow-hidden border-2 border-dashed transition-all duration-300",
+            'group relative overflow-hidden border-2 border-dashed transition-all duration-300',
             dragActive
-              ? "border-primary bg-primary/5 shadow-[0_0_0_1px_hsl(var(--primary)/0.2)]"
-              : "border-muted-foreground/25 bg-gradient-to-br from-muted/40 via-background to-muted/20 hover:border-primary/40 hover:shadow-md",
-            uploading && "pointer-events-none opacity-80",
+              ? 'border-primary bg-primary/5 shadow-[0_0_0_1px_hsl(var(--primary)/0.2)]'
+              : 'border-muted-foreground/25 bg-gradient-to-br from-muted/40 via-background to-muted/20 hover:border-primary/40 hover:shadow-md',
+            uploading && 'pointer-events-none opacity-80',
           )}
           onDragEnter={(e) => {
-            e.preventDefault();
-            setDragActive(true);
+            e.preventDefault()
+            setDragActive(true)
           }}
           onDragLeave={(e) => {
-            e.preventDefault();
-            if (e.currentTarget === e.target) setDragActive(false);
+            e.preventDefault()
+            if (e.currentTarget === e.target) setDragActive(false)
           }}
           onDragOver={(e) => {
-            e.preventDefault();
-            setDragActive(true);
+            e.preventDefault()
+            setDragActive(true)
           }}
           onDrop={onDrop}
         >
@@ -302,8 +296,8 @@ export function AssetsClient() {
           <div className="relative flex flex-col items-center justify-center gap-4 px-6 py-14 text-center sm:py-16">
             <div
               className={cn(
-                "flex h-14 w-14 items-center justify-center rounded-2xl border bg-background/80 shadow-sm transition-transform duration-300",
-                dragActive ? "scale-110 border-primary/50 text-primary" : "text-muted-foreground",
+                'flex h-14 w-14 items-center justify-center rounded-2xl border bg-background/80 shadow-sm transition-transform duration-300',
+                dragActive ? 'scale-110 border-primary/50 text-primary' : 'text-muted-foreground',
               )}
             >
               {uploading ? (
@@ -313,15 +307,15 @@ export function AssetsClient() {
               )}
             </div>
             <div className="space-y-1">
-              <h2 className="text-lg font-semibold tracking-tight">{t("upload.title")}</h2>
-              <p className="text-sm text-muted-foreground max-w-md">{t("upload.hint")}</p>
+              <h2 className="text-lg font-semibold tracking-tight">{t('upload.title')}</h2>
+              <p className="text-sm text-muted-foreground max-w-md">{t('upload.hint')}</p>
             </div>
             <div className="flex w-full max-w-sm flex-col items-stretch gap-2.5">
               <Label
                 htmlFor="asset-upload-flow"
                 className="text-center text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
               >
-                {t("upload.flow.label")}
+                {t('upload.flow.label')}
               </Label>
               <Select
                 value={selectedFlow}
@@ -332,19 +326,23 @@ export function AssetsClient() {
                   id="asset-upload-flow"
                   size="default"
                   className={cn(
-                    "h-11 w-full justify-between rounded-lg border-border/80 bg-background/90 px-4 shadow-sm transition-[box-shadow,border-color] duration-200",
-                    "hover:border-primary/30 hover:bg-background",
-                    "data-[state=open]:border-primary/40 data-[state=open]:shadow-[0_0_0_3px_hsl(var(--ring)/0.25)]",
+                    'h-11 w-full justify-between rounded-lg border-border/80 bg-background/90 px-4 shadow-sm transition-[box-shadow,border-color] duration-200',
+                    'hover:border-primary/30 hover:bg-background',
+                    'data-[state=open]:border-primary/40 data-[state=open]:shadow-[0_0_0_3px_hsl(var(--ring)/0.25)]',
                   )}
                 >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent align="center" position="popper" className="min-w-[var(--radix-select-trigger-width)]">
-                  <SelectItem value="none">{t("upload.flow.none")}</SelectItem>
+                <SelectContent
+                  align="center"
+                  position="popper"
+                  className="min-w-[var(--radix-select-trigger-width)]"
+                >
+                  <SelectItem value="none">{t('upload.flow.none')}</SelectItem>
                   <SelectItem value="remove-background" className="cursor-pointer">
                     <span className="flex w-full items-center gap-2">
                       <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
-                      <span className="flex-1">{t("upload.flow.removeBackground")}</span>
+                      <span className="flex-1">{t('upload.flow.removeBackground')}</span>
                       <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-primary">
                         AI
                       </span>
@@ -363,12 +361,12 @@ export function AssetsClient() {
               {uploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("upload.uploading")}
+                  {t('upload.uploading')}
                 </>
               ) : (
                 <>
                   <ImageIcon className="mr-2 h-4 w-4" />
-                  {t("upload.browse")}
+                  {t('upload.browse')}
                 </>
               )}
             </Button>
@@ -398,8 +396,8 @@ export function AssetsClient() {
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                 <ImageIcon className="h-6 w-6 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-medium">{t("grid.empty.title")}</h3>
-              <p className="text-sm text-muted-foreground">{t("grid.empty.description")}</p>
+              <h3 className="text-lg font-medium">{t('grid.empty.title')}</h3>
+              <p className="text-sm text-muted-foreground">{t('grid.empty.description')}</p>
             </div>
           </Card>
         ) : (
@@ -413,12 +411,12 @@ export function AssetsClient() {
                   className="relative cursor-zoom-in bg-muted/30 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   role="button"
                   tabIndex={0}
-                  aria-label={t("grid.viewLarge")}
+                  aria-label={t('grid.viewLarge')}
                   onClick={() => setPreviewItem(item)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setPreviewItem(item);
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setPreviewItem(item)
                     }
                   }}
                 >
@@ -440,10 +438,10 @@ export function AssetsClient() {
                         size="icon"
                         variant="secondary"
                         className="h-9 w-9 rounded-full bg-white/95 text-foreground shadow-md hover:bg-white"
-                        aria-label={t("grid.viewLarge")}
+                        aria-label={t('grid.viewLarge')}
                         onClick={(e) => {
-                          e.stopPropagation();
-                          setPreviewItem(item);
+                          e.stopPropagation()
+                          setPreviewItem(item)
                         }}
                       >
                         <Maximize2 className="h-4 w-4" />
@@ -453,7 +451,7 @@ export function AssetsClient() {
                         size="icon"
                         variant="secondary"
                         className="h-9 w-9 rounded-full bg-white/95 text-foreground shadow-md hover:bg-white"
-                        aria-label={t("grid.download")}
+                        aria-label={t('grid.download')}
                         asChild
                       >
                         <a
@@ -470,10 +468,10 @@ export function AssetsClient() {
                         variant="secondary"
                         className="h-9 w-9 shrink-0 rounded-full bg-white/95 text-destructive shadow-md hover:bg-white"
                         disabled={deleting === item.name}
-                        aria-label={t("grid.delete")}
+                        aria-label={t('grid.delete')}
                         onClick={(e) => {
-                          e.stopPropagation();
-                          void onDelete(item.name);
+                          e.stopPropagation()
+                          void onDelete(item.name)
                         }}
                       >
                         {deleting === item.name ? (
@@ -489,9 +487,9 @@ export function AssetsClient() {
                   <span>{formatBytes(item.size)}</span>
                   <time dateTime={item.createdAt}>
                     {new Date(item.createdAt).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
                     })}
                   </time>
                 </div>
@@ -501,5 +499,5 @@ export function AssetsClient() {
         )}
       </section>
     </div>
-  );
+  )
 }

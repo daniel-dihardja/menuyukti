@@ -1,11 +1,10 @@
+import asyncio
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 
-import asyncio
 import pandas as pd
 import pytest
-
 from graphql.data_sources import AnalyticsRun, Location, OrderFact, SessionLocal
 from graphql.reports import normalize_sales_report
 from graphql.reports.transform import line_items_to_dataframe
@@ -16,7 +15,6 @@ from menuyukti.core.analytics.calculate_menu_heatmaps import (
     compute_menu_heatmaps_from_orders,
 )
 from starlette.datastructures import Headers, UploadFile
-
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 REPORT_FILE = ROOT_DIR / "reports" / "Sales_Recapitulation_Detail_Report_Test.xlsx"
@@ -99,7 +97,7 @@ def test_compute_menu_heatmaps_from_orders_matches_calculate_menu_heatmaps():
     expected = _normalize_expected_heatmaps(from_df)
     got = _normalize_expected_heatmaps(from_orders)
     assert len(got) == len(expected)
-    for g, e in zip(got, expected):
+    for g, e in zip(got, expected, strict=False):
         assert g["menu"] == e["menu"]
         assert g["menu_category"] == e["menu_category"]
         assert g["menu_category_detail"] == e["menu_category_detail"]
@@ -135,7 +133,7 @@ def test_menu_heatmaps_with_qa_data(analytics_run_with_qa_data):
     graphql_normalized = _normalize_graphql_heatmaps(menu_heatmaps)
 
     assert len(graphql_normalized) == len(expected_normalized)
-    for got, expected in zip(graphql_normalized, expected_normalized):
+    for got, expected in zip(graphql_normalized, expected_normalized, strict=False):
         assert got["menu"] == expected["menu"]
         assert got["menu_category"] == expected["menu_category"]
         assert got["menu_category_detail"] == expected["menu_category_detail"]
@@ -237,7 +235,7 @@ def test_menu_heatmaps_match_menuyukti_calculation(tmp_path):
     # Expect the same number of menu heatmaps and identical ordering.
     assert len(graphql_normalized) == len(expected_normalized)
 
-    for got, expected in zip(graphql_normalized, expected_normalized):
+    for got, expected in zip(graphql_normalized, expected_normalized, strict=False):
         assert got["menu"] == expected["menu"]
         assert got["menu_category"] == expected["menu_category"]
         assert got["menu_category_detail"] == expected["menu_category_detail"]

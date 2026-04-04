@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import Link from "next/link";
+import Link from 'next/link'
 import {
   Table,
   TableBody,
@@ -8,35 +8,32 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table";
-import { Button } from "@workspace/ui/components/button";
+} from '@workspace/ui/components/table'
+import { Button } from '@workspace/ui/components/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
-import { Eye, MoreHorizontal, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { routes } from "@/lib/routes";
-import type { CampaignItem } from "./campaigns-client";
+} from '@workspace/ui/components/dropdown-menu'
+import { Eye, MoreHorizontal, Trash2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { routes } from '@/lib/routes'
+import type { CampaignItem } from './campaigns-client'
 
 interface CampaignsTableProps {
-  campaigns: CampaignItem[];
-  onDelete: (id: number) => void;
-  onCreateCampaign: () => void | Promise<void>;
-  isCreating?: boolean;
+  campaigns: CampaignItem[]
+  onDelete: (id: number) => void
+  onCreateCampaign: () => void | Promise<void>
+  isCreating?: boolean
 }
 
-function formatDateRange(
-  startDate: string | null,
-  endDate: string | null
-): string {
-  if (!startDate && !endDate) return "—";
-  if (startDate && endDate) return `${startDate} – ${endDate}`;
-  if (startDate) return `From ${startDate}`;
-  return `Until ${endDate}`;
+function formatDateRange(startDate: string | null, endDate: string | null): string {
+  if (!startDate && !endDate) return '—'
+  if (startDate && endDate) return `${startDate} – ${endDate}`
+  if (startDate) return `From ${startDate}`
+  return `Until ${endDate}`
 }
 
 export function CampaignsTable({
@@ -45,23 +42,23 @@ export function CampaignsTable({
   onCreateCampaign,
   isCreating = false,
 }: CampaignsTableProps) {
-  const t = useTranslations("analytics.campaigns");
+  const t = useTranslations('analytics.campaigns')
 
   if (campaigns.length === 0) {
     return (
       <div className="border rounded-md p-8 text-left space-y-4">
-        <h2 className="text-lg font-medium">{t("noCampaigns.title")}</h2>
-        <p className="text-muted-foreground">{t("noCampaigns.description")}</p>
+        <h2 className="text-lg font-medium">{t('noCampaigns.title')}</h2>
+        <p className="text-muted-foreground">{t('noCampaigns.description')}</p>
         <Button
           onClick={() => {
-            void onCreateCampaign();
+            void onCreateCampaign()
           }}
           disabled={isCreating}
         >
-          {isCreating ? t("loading") : t("noCampaigns.cta")}
+          {isCreating ? t('loading') : t('noCampaigns.cta')}
         </Button>
       </div>
-    );
+    )
   }
 
   return (
@@ -69,13 +66,11 @@ export function CampaignsTable({
       <Table className="w-full">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[60px]">{t("table.index")}</TableHead>
-            <TableHead>{t("table.name")}</TableHead>
-            <TableHead className="w-[120px]">{t("table.status")}</TableHead>
-            <TableHead className="w-[220px]">{t("table.dates")}</TableHead>
-            <TableHead className="text-right w-[80px]">
-              {t("table.action")}
-            </TableHead>
+            <TableHead className="w-[60px]">{t('table.index')}</TableHead>
+            <TableHead>{t('table.name')}</TableHead>
+            <TableHead className="w-[120px]">{t('table.status')}</TableHead>
+            <TableHead className="w-[220px]">{t('table.dates')}</TableHead>
+            <TableHead className="text-right w-[80px]">{t('table.action')}</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -107,7 +102,7 @@ export function CampaignsTable({
                         className="flex items-center gap-2"
                       >
                         <Eye className="h-4 w-4" />
-                        {t("table.view")}
+                        {t('table.view')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -116,7 +111,7 @@ export function CampaignsTable({
                       onClick={() => onDelete(row.id)}
                     >
                       <Trash2 className="h-4 w-4" />
-                      {t("table.delete")}
+                      {t('table.delete')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -126,5 +121,5 @@ export function CampaignsTable({
         </TableBody>
       </Table>
     </div>
-  );
+  )
 }

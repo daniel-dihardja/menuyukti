@@ -1,0 +1,76 @@
+# Lint, typecheck, and test on every PR and push to main/develop.
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node:
+    name: Node (Prettier, types, ESLint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format-check
+      - run: pnpm check-types
+      - run: pnpm lint
+
+  graphql:
+    name: GraphQL (Ruff, mypy, pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --all-groups
+        working-directory: apps/graphql
+      - run: make lint
+        working-directory: apps/graphql
+      - run: make typecheck
+        working-directory: apps/graphql
+      - run: make test
+        working-directory: apps/graphql
+
+  go-agents:
+    name: Go gentic-agents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.work
+      - run: go test ./...
+        working-directory: apps/gentic-agents
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64.5
+          working-directory: apps/gentic-agents
+          args: --timeout=5m
+
+  go-gentic:
+    name: Go packages/gentic
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.work
+      - run: go test ./...
+        working-directory: packages/gentic
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64.5
+          working-directory: packages/gentic
+          args: --timeout=5m

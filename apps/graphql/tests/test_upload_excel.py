@@ -1,11 +1,10 @@
+import asyncio
 from dataclasses import asdict
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 
-import asyncio
 import pytest
-
 from graphql.data_sources import Location, OrderFact, SessionLocal
 from graphql.reports import normalize_sales_report
 from graphql.schema import schema

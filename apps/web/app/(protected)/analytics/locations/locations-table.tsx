@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Table,
@@ -7,18 +7,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table";
+} from '@workspace/ui/components/table'
 
 interface Branch {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 interface LocationsTableProps {
-  branches: Branch[];
-  emptyLabel: string;
-  indexLabel: string;
-  branchNameLabel: string;
+  branches: Branch[]
+  emptyLabel: string
+  indexLabel: string
+  branchNameLabel: string
 }
 
 export function LocationsTable({
@@ -40,10 +40,7 @@ export function LocationsTable({
         <TableBody>
           {branches.length === 0 && (
             <TableRow>
-              <TableCell
-                colSpan={2}
-                className="text-center text-muted-foreground"
-              >
+              <TableCell colSpan={2} className="text-center text-muted-foreground">
                 {emptyLabel}
               </TableCell>
             </TableRow>
@@ -58,5 +55,5 @@ export function LocationsTable({
         </TableBody>
       </Table>
     </div>
-  );
+  )
 }

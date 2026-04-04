@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import pandas as pd
+from menuyukti.core.analytics import calculate_sales_analytics
 
 from graphql.reports.ingest import NormalizedLineItemData
-from menuyukti.core.analytics import calculate_sales_analytics
 
 
 @dataclass

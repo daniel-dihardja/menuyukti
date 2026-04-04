@@ -6,15 +6,15 @@
  * publishable key) so Node reads it at runtime from the container environment.
  */
 export function getClerkPublishableKey(): string | undefined {
-  const fromRuntime = process.env.CLERK_PUBLISHABLE_KEY?.trim();
+  const fromRuntime = process.env.CLERK_PUBLISHABLE_KEY?.trim()
   if (fromRuntime) {
-    return fromRuntime;
+    return fromRuntime
   }
-  const fromPublic = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim();
-  return fromPublic || undefined;
+  const fromPublic = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim()
+  return fromPublic || undefined
 }
 
 export function getClerkSecretKey(): string | undefined {
-  const v = process.env.CLERK_SECRET_KEY?.trim();
-  return v || undefined;
+  const v = process.env.CLERK_SECRET_KEY?.trim()
+  return v || undefined
 }

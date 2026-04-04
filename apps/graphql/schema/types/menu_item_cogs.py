@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 import strawberry
 
@@ -9,9 +8,9 @@ class MenuItemCogsType:
     id: strawberry.ID
     analyticsRunId: int
     menu: str
-    menuCategory: Optional[str]
-    menuCategoryDetail: Optional[str]
+    menuCategory: str | None
+    menuCategoryDetail: str | None
     cogs: float
-    currency: Optional[str]
+    currency: str | None
     createdAt: datetime
     updatedAt: datetime

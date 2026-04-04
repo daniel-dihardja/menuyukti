@@ -9,11 +9,11 @@ export const LOCATIONS_QUERY = `
       name
     }
   }
-`;
+`
 
 export type LocationsData = {
-  locations: Array<{ id: string; name: string }>;
-};
+  locations: Array<{ id: string; name: string }>
+}
 
 export const LOCATION_QUERY = `
   query Location($id: ID!) {
@@ -25,17 +25,17 @@ export const LOCATION_QUERY = `
       country
     }
   }
-`;
+`
 
 export type LocationData = {
   location: {
-    id: string;
-    name: string;
-    street: string | null;
-    city: string | null;
-    country: string | null;
-  } | null;
-};
+    id: string
+    name: string
+    street: string | null
+    city: string | null
+    country: string | null
+  } | null
+}
 
 export const CREATE_LOCATION_MUTATION = `
   mutation CreateLocation($name: String!) {
@@ -44,11 +44,11 @@ export const CREATE_LOCATION_MUTATION = `
       name
     }
   }
-`;
+`
 
 export type CreateLocationData = {
-  createLocation: { id: string; name: string };
-};
+  createLocation: { id: string; name: string }
+}
 
 export const ANALYTICS_RUNS_BY_LOCATION_QUERY = `
   query AnalyticsRunsByLocation($locationId: Int!) {
@@ -58,11 +58,11 @@ export const ANALYTICS_RUNS_BY_LOCATION_QUERY = `
       filename
     }
   }
-`;
+`
 
 export type AnalyticsRunsByLocationData = {
-  analyticsRuns: Array<{ id: string; name: string; filename: string }>;
-};
+  analyticsRuns: Array<{ id: string; name: string; filename: string }>
+}
 
 export const ANALYTICS_RUN_QUERY = `
   query AnalyticsRun($id: ID!) {
@@ -86,29 +86,29 @@ export const ANALYTICS_RUN_QUERY = `
       }
     }
   }
-`;
+`
 
 export type AnalyticsRunData = {
   analyticsRun: {
-    id: string;
-    name: string;
-    filename: string;
-    posSystem: string;
-    periodStart: string | null;
-    periodEnd: string | null;
-    createdAt: string;
-    locationId: number;
+    id: string
+    name: string
+    filename: string
+    posSystem: string
+    periodStart: string | null
+    periodEnd: string | null
+    createdAt: string
+    locationId: number
     menuItemCogs: Array<{
-      id: number;
-      analyticsRunId: number;
-      menu: string;
-      menuCategory: string | null;
-      menuCategoryDetail: string | null;
-      cogs: number;
-      currency: string | null;
-    }>;
-  } | null;
-};
+      id: number
+      analyticsRunId: number
+      menu: string
+      menuCategory: string | null
+      menuCategoryDetail: string | null
+      cogs: number
+      currency: string | null
+    }>
+  } | null
+}
 
 export const MENU_ENGINEERING_MATRIX_QUERY = `
   query MenuEngineeringMatrix($id: ID!, $categories: [String!]) {
@@ -143,40 +143,40 @@ export const MENU_ENGINEERING_MATRIX_QUERY = `
       }
     }
   }
-`;
+`
 
 export type MenuEngineeringMatrixData = {
   menuEngineeringMatrix: {
     thresholds: {
-      avgPopularity: number;
-      avgContributionMargin: number;
-      totalCogs: number;
-      totalProfit: number;
-      totalMargin: number;
-    };
+      avgPopularity: number
+      avgContributionMargin: number
+      totalCogs: number
+      totalProfit: number
+      totalMargin: number
+    }
     distribution: Array<{
-      category: string;
-      itemCount: number;
-      itemShare: number;
-      marginShare: number;
-    }>;
+      category: string
+      itemCount: number
+      itemShare: number
+      marginShare: number
+    }>
     items: Array<{
-      menu: string;
-      quantity: number;
-      totalRevenue: number;
-      cogs: number;
-      totalCogs: number;
-      contributionMargin: number;
-      contributionMarginPercentage: number;
-      marginPerUnit: number;
-      weValue: number;
-      category: string;
-      action: string;
-      menuCategory: string | null;
-      menuCategoryDetail: string | null;
-    }>;
-  } | null;
-};
+      menu: string
+      quantity: number
+      totalRevenue: number
+      cogs: number
+      totalCogs: number
+      contributionMargin: number
+      contributionMarginPercentage: number
+      marginPerUnit: number
+      weValue: number
+      category: string
+      action: string
+      menuCategory: string | null
+      menuCategoryDetail: string | null
+    }>
+  } | null
+}
 
 export const LOCATION_PROFILE_QUERY = `
   query LocationProfile($locationId: ID!, $analyticsRunId: ID!) {
@@ -186,45 +186,45 @@ export const LOCATION_PROFILE_QUERY = `
       updatedAt
     }
   }
-`;
+`
 
 export type LocationProfileData = {
   locationProfile: {
-    id: string;
-    summary: string | null;
-    updatedAt: string | null;
-  } | null;
-};
+    id: string
+    summary: string | null
+    updatedAt: string | null
+  } | null
+}
 
 export const DELETE_LOCATION_PROFILE_MUTATION = `
   mutation DeleteLocationProfile($id: ID!) {
     deleteLocationProfile(id: $id)
   }
-`;
+`
 
 export type DeleteLocationProfileData = {
-  deleteLocationProfile: boolean;
-};
+  deleteLocationProfile: boolean
+}
 
 export const DELETE_CAMPAIGN_BRIEF_MUTATION = `
   mutation DeleteCampaignBrief($campaignId: ID!) {
     deleteCampaignBrief(campaignId: $campaignId)
   }
-`;
+`
 
 export type DeleteCampaignBriefData = {
-  deleteCampaignBrief: boolean;
-};
+  deleteCampaignBrief: boolean
+}
 
 export const DELETE_CAMPAIGN_MUTATION = `
   mutation DeleteCampaign($id: ID!) {
     deleteCampaign(id: $id)
   }
-`;
+`
 
 export type DeleteCampaignData = {
-  deleteCampaign: boolean;
-};
+  deleteCampaign: boolean
+}
 
 export const CREATE_CAMPAIGN_MUTATION = `
   mutation CreateCampaign($locationId: Int!, $name: String!) {
@@ -233,11 +233,11 @@ export const CREATE_CAMPAIGN_MUTATION = `
       name
     }
   }
-`;
+`
 
 export type CreateCampaignData = {
-  createCampaign: { id: string; name: string };
-};
+  createCampaign: { id: string; name: string }
+}
 
 export const CAMPAIGNS_BY_LOCATION_QUERY = `
   query CampaignsByLocation($locationId: Int!) {
@@ -251,21 +251,21 @@ export const CAMPAIGNS_BY_LOCATION_QUERY = `
       createdAt
     }
   }
-`;
+`
 
 export type CampaignListItem = {
-  id: string;
-  name: string;
-  status: string;
-  startDate: string | null;
-  endDate: string | null;
-  goal: string | null;
-  createdAt: string | null;
-};
+  id: string
+  name: string
+  status: string
+  startDate: string | null
+  endDate: string | null
+  goal: string | null
+  createdAt: string | null
+}
 
 export type CampaignsByLocationData = {
-  campaigns: CampaignListItem[];
-};
+  campaigns: CampaignListItem[]
+}
 
 export const CAMPAIGN_DETAIL_QUERY = `
   query CampaignDetail($id: ID!) {
@@ -281,23 +281,23 @@ export const CAMPAIGN_DETAIL_QUERY = `
       goal
     }
   }
-`;
+`
 
 export type CampaignDetailItem = {
-  id: string;
-  name: string;
-  status: string;
-  startDate: string | null;
-  endDate: string | null;
-  locationId: number;
-  theme: string | null;
-  tone: string | null;
-  goal: string | null;
-};
+  id: string
+  name: string
+  status: string
+  startDate: string | null
+  endDate: string | null
+  locationId: number
+  theme: string | null
+  tone: string | null
+  goal: string | null
+}
 
 export type CampaignDetailData = {
-  campaign: CampaignDetailItem | null;
-};
+  campaign: CampaignDetailItem | null
+}
 
 export const CAMPAIGN_BRIEF_QUERY = `
   query CampaignBriefByCampaign($campaignId: ID!) {
@@ -315,25 +315,25 @@ export const CAMPAIGN_BRIEF_QUERY = `
       updatedAt
     }
   }
-`;
+`
 
 export type CampaignBriefItem = {
-  id: string;
-  campaignId: number;
-  locationId: number;
-  analyticsRunId: number;
-  campaignTheme: string;
-  tone: string;
-  targetAudience: string;
-  postingCadence: string;
-  postScheduleJson: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
-};
+  id: string
+  campaignId: number
+  locationId: number
+  analyticsRunId: number
+  campaignTheme: string
+  tone: string
+  targetAudience: string
+  postingCadence: string
+  postScheduleJson: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
 
 export type CampaignBriefData = {
-  campaignBrief: CampaignBriefItem | null;
-};
+  campaignBrief: CampaignBriefItem | null
+}
 
 export const MENU_HEATMAPS_QUERY = `
   query MenuHeatmaps($id: ID!) {
@@ -345,17 +345,17 @@ export const MENU_HEATMAPS_QUERY = `
       weeklyHeatmap { day quantity }
     }
   }
-`;
+`
 
 export type MenuHeatmapsData = {
   menuHeatmaps: Array<{
-    menu: string;
-    menuCategory: string | null;
-    menuCategoryDetail: string | null;
-    dailyHeatmap: Array<{ hour: number; quantity: number }>;
-    weeklyHeatmap: Array<{ day: string; quantity: number }>;
-  }>;
-};
+    menu: string
+    menuCategory: string | null
+    menuCategoryDetail: string | null
+    dailyHeatmap: Array<{ hour: number; quantity: number }>
+    weeklyHeatmap: Array<{ day: string; quantity: number }>
+  }>
+}
 
 export const PUBLIC_HOLIDAYS_QUERY = `
   query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) {
@@ -368,17 +368,17 @@ export const PUBLIC_HOLIDAYS_QUERY = `
       isTentative
     }
   }
-`;
+`
 
 export type PublicHolidayItem = {
-  id: string;
-  date: string;
-  name: string;
-  localName: string;
-  holidayType: string;
-  isTentative: boolean;
-};
+  id: string
+  date: string
+  name: string
+  localName: string
+  holidayType: string
+  isTentative: boolean
+}
 
 export type PublicHolidaysData = {
-  publicHolidays: PublicHolidayItem[];
-};
+  publicHolidays: PublicHolidayItem[]
+}

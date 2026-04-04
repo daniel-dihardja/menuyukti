@@ -15,6 +15,12 @@ dependencies = [
     "menuyukti",
 ]
 
+[dependency-groups]
+dev = [
+    "mypy>=1.13.0",
+    "ruff>=0.9.0",
+]
+
 [build-system]
 requires = ["setuptools>=70.0", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -34,3 +40,37 @@ packages = [
 "graphql.resolvers" = "resolvers"
 "graphql.data_sources" = "data_sources"
 "graphql.reports" = "reports"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["."]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+# DATABASE_URL must be set before importing graphql.* (import side effects).
+"tests/conftest.py" = ["E402"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_configs = true
+ignore_missing_imports = true
+explicit_package_bases = true
+exclude = [
+    "^tests/",
+    "^scripts/",
+]
+
+[[tool.mypy.overrides]]
+module = ["strawberry.*", "sqlalchemy.*", "uvicorn.*"]
+ignore_missing_imports = true
+
+# Tighten gradually: SQLAlchemy declarative Base typing + Strawberry Upload need plugins or stubs.
+[[tool.mypy.overrides]]
+module = ["data_sources.database", "schema.mutations.upload_sales_report"]
+ignore_errors = true

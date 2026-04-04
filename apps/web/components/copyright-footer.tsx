@@ -1,5 +1,5 @@
 export function CopyrightFooter() {
-  const year = new Date().getFullYear();
+  const year = new Date().getFullYear()
 
   return (
     <footer className="mt-auto border-t border-border bg-card py-6">
@@ -7,5 +7,5 @@ export function CopyrightFooter() {
         © {year} Menuyukti
       </div>
     </footer>
-  );
+  )
 }

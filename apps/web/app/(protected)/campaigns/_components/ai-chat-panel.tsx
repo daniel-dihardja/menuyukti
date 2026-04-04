@@ -1,39 +1,39 @@
-"use client";
+'use client'
 
-import type { UIMessage } from "ai";
-import type { PromptInputMessage } from "@workspace/ui/components/ai-elements/prompt-input";
+import type { UIMessage } from 'ai'
+import type { PromptInputMessage } from '@workspace/ui/components/ai-elements/prompt-input'
 import {
   Conversation,
   ConversationContent,
   ConversationEmptyState,
   ConversationScrollButton,
-} from "@workspace/ui/components/ai-elements/conversation";
+} from '@workspace/ui/components/ai-elements/conversation'
 import {
   Message,
   MessageContent,
   MessageResponse,
-} from "@workspace/ui/components/ai-elements/message";
+} from '@workspace/ui/components/ai-elements/message'
 import {
   PromptInput,
   PromptInputBody,
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
-} from "@workspace/ui/components/ai-elements/prompt-input";
-import { Spinner } from "@workspace/ui/components/spinner";
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { AiArtifactPanel, type PlanningArtifact, type NationalHoliday } from "./ai-artifact-panel";
-import { AgentActivityFeed, type ActivityStep } from "./agent-activity-feed";
+} from '@workspace/ui/components/ai-elements/prompt-input'
+import { Spinner } from '@workspace/ui/components/spinner'
+import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport } from 'ai'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { AiArtifactPanel, type PlanningArtifact, type NationalHoliday } from './ai-artifact-panel'
+import { AgentActivityFeed, type ActivityStep } from './agent-activity-feed'
 
 function getMessageText(message: UIMessage): string {
   return (
     message.parts
-      ?.filter((p): p is { type: "text"; text: string } => p.type === "text")
+      ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
       .map((p) => p.text)
-      .join("") ?? ""
-  );
+      .join('') ?? ''
+  )
 }
 
 /** Keeps agent activity rows in pipeline order (not Map insertion / SSE part order). */
@@ -54,19 +54,19 @@ const ACTIVITY_STEP_ORDER: Record<string, number> = {
   assign_post_formats: 13,
   assign_post_formats_refinement: 14,
   save_campaign: 15,
-};
+}
 
 /** Removes persisted location profile from assistant message parts (DB row is gone). */
 function stripLocationProfileFromMessageParts(
-  parts: NonNullable<UIMessage["parts"]>
-): UIMessage["parts"] {
-  const out: UIMessage["parts"] = [];
+  parts: NonNullable<UIMessage['parts']>,
+): UIMessage['parts'] {
+  const out: UIMessage['parts'] = []
   for (const part of parts) {
-    if (part.type === "data-location-profile") {
-      continue;
+    if (part.type === 'data-location-profile') {
+      continue
     }
-    if (part.type === "data-planning" && "data" in part) {
-      const d = part.data as PlanningArtifact;
+    if (part.type === 'data-planning' && 'data' in part) {
+      const d = part.data as PlanningArtifact
       out.push({
         ...part,
         data: {
@@ -74,85 +74,85 @@ function stripLocationProfileFromMessageParts(
           locationSummary: null,
           locationProfileId: null,
         },
-      } as (typeof parts)[number]);
-      continue;
+      } as (typeof parts)[number])
+      continue
     }
-    out.push(part);
+    out.push(part)
   }
-  return out;
+  return out
 }
 
 function stripLocationProfileFromMessages(messages: UIMessage[]): UIMessage[] {
   return messages.map((msg) => {
-    if (msg.role !== "assistant" || !msg.parts?.length) return msg;
-    return { ...msg, parts: stripLocationProfileFromMessageParts(msg.parts) };
-  });
+    if (msg.role !== 'assistant' || !msg.parts?.length) return msg
+    return { ...msg, parts: stripLocationProfileFromMessageParts(msg.parts) }
+  })
 }
 
 /** Clears campaign brief from streamed planning parts after DB delete. */
 function stripCampaignBriefFromMessageParts(
-  parts: NonNullable<UIMessage["parts"]>
-): UIMessage["parts"] {
-  const out: UIMessage["parts"] = [];
+  parts: NonNullable<UIMessage['parts']>,
+): UIMessage['parts'] {
+  const out: UIMessage['parts'] = []
   for (const part of parts) {
-    if (part.type === "data-planning" && "data" in part) {
-      const d = part.data as PlanningArtifact;
+    if (part.type === 'data-planning' && 'data' in part) {
+      const d = part.data as PlanningArtifact
       out.push({
         ...part,
         data: {
           ...d,
           campaignBrief: null,
         },
-      } as (typeof parts)[number]);
-      continue;
+      } as (typeof parts)[number])
+      continue
     }
-    out.push(part);
+    out.push(part)
   }
-  return out;
+  return out
 }
 
 function stripCampaignBriefFromMessages(messages: UIMessage[]): UIMessage[] {
   return messages.map((msg) => {
-    if (msg.role !== "assistant" || !msg.parts?.length) return msg;
-    return { ...msg, parts: stripCampaignBriefFromMessageParts(msg.parts) };
-  });
+    if (msg.role !== 'assistant' || !msg.parts?.length) return msg
+    return { ...msg, parts: stripCampaignBriefFromMessageParts(msg.parts) }
+  })
 }
 
 function findLastUserMessageIndex(messages: UIMessage[], needle: string): number {
-  const n = needle.trim().toLowerCase();
+  const n = needle.trim().toLowerCase()
   for (let i = messages.length - 1; i >= 0; i--) {
-    const msg = messages[i];
-    if (msg?.role !== "user") continue;
-    if (getMessageText(msg).trim().toLowerCase() === n) return i;
+    const msg = messages[i]
+    if (msg?.role !== 'user') continue
+    if (getMessageText(msg).trim().toLowerCase() === n) return i
   }
-  return -1;
+  return -1
 }
 
-function getActivitySteps(parts: UIMessage["parts"]): ActivityStep[] {
-  const stepMap = new Map<string, ActivityStep>();
+function getActivitySteps(parts: UIMessage['parts']): ActivityStep[] {
+  const stepMap = new Map<string, ActivityStep>()
   for (const part of parts ?? []) {
-    if (part.type === "data-activity" && "data" in part) {
-      const a = part.data as ActivityStep;
-      stepMap.set(a.step, a);
+    if (part.type === 'data-activity' && 'data' in part) {
+      const a = part.data as ActivityStep
+      stepMap.set(a.step, a)
     }
   }
   return Array.from(stepMap.values()).sort((a, b) => {
-    const oa = ACTIVITY_STEP_ORDER[a.step] ?? 100;
-    const ob = ACTIVITY_STEP_ORDER[b.step] ?? 100;
-    return oa - ob;
-  });
+    const oa = ACTIVITY_STEP_ORDER[a.step] ?? 100
+    const ob = ACTIVITY_STEP_ORDER[b.step] ?? 100
+    return oa - ob
+  })
 }
 
 export type AiChatPanelProps = {
-  locationId: number;
-  analyticsRuns: Array<{ id: string; name: string; filename: string }>;
-  defaultDates: { dateStart: string; dateEnd: string };
+  locationId: number
+  analyticsRuns: Array<{ id: string; name: string; filename: string }>
+  defaultDates: { dateStart: string; dateEnd: string }
   /** Pre-fill artifact (e.g. loaded campaign) before any chat message. */
-  initialPlanning?: Partial<PlanningArtifact> | null;
-  initialAnalyticsId?: number | null;
+  initialPlanning?: Partial<PlanningArtifact> | null
+  initialAnalyticsId?: number | null
   /** When set, requests include campaign id so the agent can load/refine an existing campaign. */
-  campaignId?: number | null;
-};
+  campaignId?: number | null
+}
 
 export function AiChatPanel({
   locationId,
@@ -162,33 +162,35 @@ export function AiChatPanel({
   initialAnalyticsId = null,
   campaignId = null,
 }: AiChatPanelProps) {
-  const [text, setText] = useState("");
-  const [campaignDates, setCampaignDates] = useState(defaultDates);
-  const [holidaysOverride, setHolidaysOverride] = useState<NationalHoliday[] | null | undefined>(undefined);
-  const [isLoadingHolidays, setIsLoadingHolidays] = useState(true);
+  const [text, setText] = useState('')
+  const [campaignDates, setCampaignDates] = useState(defaultDates)
+  const [holidaysOverride, setHolidaysOverride] = useState<NationalHoliday[] | null | undefined>(
+    undefined,
+  )
+  const [isLoadingHolidays, setIsLoadingHolidays] = useState(true)
   const [selectedAnalyticsId, setSelectedAnalyticsId] = useState<number | null>(
-    initialAnalyticsId ?? null
-  );
-  const [locationProfileDeleted, setLocationProfileDeleted] = useState(false);
+    initialAnalyticsId ?? null,
+  )
+  const [locationProfileDeleted, setLocationProfileDeleted] = useState(false)
   /** Hides stale location data from prior turns until the new "create location profile" response includes fresh parts. */
-  const [awaitingNewLocationProfile, setAwaitingNewLocationProfile] = useState(false);
+  const [awaitingNewLocationProfile, setAwaitingNewLocationProfile] = useState(false)
   /** After delete, ignore server `initialPlanning` location until a new profile is streamed. */
-  const [suppressInitialLocationSnapshot, setSuppressInitialLocationSnapshot] = useState(false);
+  const [suppressInitialLocationSnapshot, setSuppressInitialLocationSnapshot] = useState(false)
   /** After delete, ignore server `initialPlanning` brief until a new brief is streamed. */
-  const [suppressInitialCampaignBrief, setSuppressInitialCampaignBrief] = useState(false);
-  const [threadId, setThreadId] = useState("");
+  const [suppressInitialCampaignBrief, setSuppressInitialCampaignBrief] = useState(false)
+  const [threadId, setThreadId] = useState('')
   useLayoutEffect(() => {
-    const key = `chat-thread-${campaignId ?? "default"}`;
-    const stored = sessionStorage.getItem(key);
+    const key = `chat-thread-${campaignId ?? 'default'}`
+    const stored = sessionStorage.getItem(key)
     if (stored) {
-      setThreadId(stored);
-      return;
+      setThreadId(stored)
+      return
     }
-    const id = crypto.randomUUID();
-    sessionStorage.setItem(key, id);
-    setThreadId(id);
-  }, [campaignId]);
-  const requestBodyRef = useRef<Record<string, unknown>>({});
+    const id = crypto.randomUUID()
+    sessionStorage.setItem(key, id)
+    setThreadId(id)
+  }, [campaignId])
+  const requestBodyRef = useRef<Record<string, unknown>>({})
 
   // Stable transport — never recreated. prepareSendMessagesRequest is called
   // right before every fetch, so it always picks up the latest ref values.
@@ -196,14 +198,14 @@ export function AiChatPanel({
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
-        api: "/api/chat",
+        api: '/api/chat',
         prepareSendMessagesRequest: ({ messages, body }) => ({
           body: { messages, ...requestBodyRef.current, ...body },
         }),
       }),
-    []
-  );
-  const { messages, sendMessage, setMessages, status, stop } = useChat({ transport });
+    [],
+  )
+  const { messages, sendMessage, setMessages, status, stop } = useChat({ transport })
 
   // Pre-populated artifact state — shown immediately on page load before the
   // LLM runs. The data-planning SSE events from the agent will override this
@@ -219,58 +221,50 @@ export function AiChatPanel({
       locationProfileId: suppressInitialLocationSnapshot
         ? null
         : (initialPlanning?.locationProfileId ?? null),
-      campaignBrief: suppressInitialCampaignBrief
-        ? null
-        : (initialPlanning?.campaignBrief ?? null),
+      campaignBrief: suppressInitialCampaignBrief ? null : (initialPlanning?.campaignBrief ?? null),
     }),
-    [defaultDates, initialPlanning, suppressInitialLocationSnapshot, suppressInitialCampaignBrief]
-  );
+    [defaultDates, initialPlanning, suppressInitialLocationSnapshot, suppressInitialCampaignBrief],
+  )
 
   const planningArtifact = useMemo<PlanningArtifact>(() => {
-    let planningBase: PlanningArtifact | null = null;
-    let locationSummaryOverride: string | undefined = undefined;
+    let planningBase: PlanningArtifact | null = null
+    let locationSummaryOverride: string | undefined = undefined
 
     for (let i = messages.length - 1; i >= 0; i--) {
-      const msg = messages[i];
-      if (msg?.role !== "assistant") continue;
-      const parts = msg.parts ?? [];
+      const msg = messages[i]
+      if (msg?.role !== 'assistant') continue
+      const parts = msg.parts ?? []
       for (let j = parts.length - 1; j >= 0; j--) {
-        const part = parts[j];
-        if (
-          !planningBase &&
-          part?.type === "data-planning" &&
-          "data" in part
-        ) {
-          planningBase = part.data as PlanningArtifact;
+        const part = parts[j]
+        if (!planningBase && part?.type === 'data-planning' && 'data' in part) {
+          planningBase = part.data as PlanningArtifact
         }
         if (
           locationSummaryOverride === undefined &&
-          part?.type === "data-location-profile" &&
-          "data" in part
+          part?.type === 'data-location-profile' &&
+          'data' in part
         ) {
-          locationSummaryOverride = (
-            part.data as { locationSummary: string }
-          ).locationSummary;
+          locationSummaryOverride = (part.data as { locationSummary: string }).locationSummary
         }
       }
       if (planningBase !== null && locationSummaryOverride !== undefined) {
-        break;
+        break
       }
     }
 
-    const base = planningBase ?? defaultPlanning;
+    const base = planningBase ?? defaultPlanning
     const withLocationOverride =
       locationSummaryOverride !== undefined
         ? { ...base, locationSummary: locationSummaryOverride }
-        : base;
+        : base
 
     // Deleted or mid–re-create: do not show location from older assistant messages
     if (locationProfileDeleted || awaitingNewLocationProfile) {
-      return { ...withLocationOverride, locationSummary: null, locationProfileId: null };
+      return { ...withLocationOverride, locationSummary: null, locationProfileId: null }
     }
 
-    return withLocationOverride;
-  }, [messages, defaultPlanning, locationProfileDeleted, awaitingNewLocationProfile]);
+    return withLocationOverride
+  }, [messages, defaultPlanning, locationProfileDeleted, awaitingNewLocationProfile])
 
   const displayedArtifact = useMemo<PlanningArtifact>(
     () => ({
@@ -278,12 +272,10 @@ export function AiChatPanel({
       dateStart: campaignDates.dateStart,
       dateEnd: campaignDates.dateEnd,
       nationalHolidays:
-        holidaysOverride !== undefined
-          ? holidaysOverride
-          : planningArtifact.nationalHolidays,
+        holidaysOverride !== undefined ? holidaysOverride : planningArtifact.nationalHolidays,
     }),
-    [planningArtifact, campaignDates, holidaysOverride]
-  );
+    [planningArtifact, campaignDates, holidaysOverride],
+  )
 
   // Every invoke must send date range + holidays so gentic-agents can emit
   // `planning` SSE (EmitPlanningProgress requires date_start/date_end in metadata).
@@ -296,7 +288,7 @@ export function AiChatPanel({
       dateStart: campaignDates.dateStart,
       dateEnd: campaignDates.dateEnd,
       nationalHolidays: displayedArtifact.nationalHolidays ?? null,
-    };
+    }
   }, [
     locationId,
     threadId,
@@ -305,105 +297,103 @@ export function AiChatPanel({
     campaignDates.dateStart,
     campaignDates.dateEnd,
     displayedArtifact.nationalHolidays,
-  ]);
+  ])
 
   const handleDatesChange = useCallback(
     async (dates: { dateStart: string; dateEnd: string }) => {
-      setCampaignDates(dates);
-      setHolidaysOverride(undefined);
-      setIsLoadingHolidays(true);
+      setCampaignDates(dates)
+      setHolidaysOverride(undefined)
+      setIsLoadingHolidays(true)
       try {
         const res = await fetch(
-          `/api/holidays?locationId=${locationId}&dateStart=${dates.dateStart}&dateEnd=${dates.dateEnd}`
-        );
+          `/api/holidays?locationId=${locationId}&dateStart=${dates.dateStart}&dateEnd=${dates.dateEnd}`,
+        )
         const json = (await res.json()) as {
-          holidays?: Array<NationalHoliday & { holidayType?: string }>;
-          error?: string;
-        };
+          holidays?: Array<NationalHoliday & { holidayType?: string }>
+          error?: string
+        }
         // Normalize holidayType → type to match the Python agent's NationalHoliday schema
-        const holidays = json.holidays?.map(({ holidayType, ...h }) => ({
-          ...h,
-          type: h.type ?? holidayType,
-        })) ?? null;
-        setHolidaysOverride(holidays);
+        const holidays =
+          json.holidays?.map(({ holidayType, ...h }) => ({
+            ...h,
+            type: h.type ?? holidayType,
+          })) ?? null
+        setHolidaysOverride(holidays)
       } catch {
-        setHolidaysOverride(null);
+        setHolidaysOverride(null)
       } finally {
-        setIsLoadingHolidays(false);
+        setIsLoadingHolidays(false)
       }
     },
-    [locationId]
-  );
+    [locationId],
+  )
 
   // Initial holidays fetch for the default/saved campaign date range (mount only).
   useEffect(() => {
-    void handleDatesChange(campaignDates);
+    void handleDatesChange(campaignDates)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [])
 
   // After "Create location profile", drop suppression once this turn's assistant streams location data.
   useEffect(() => {
-    if (!awaitingNewLocationProfile) return;
+    if (!awaitingNewLocationProfile) return
 
-    const lastCreateIdx = findLastUserMessageIndex(messages, "create location profile");
-    if (lastCreateIdx === -1) return;
+    const lastCreateIdx = findLastUserMessageIndex(messages, 'create location profile')
+    if (lastCreateIdx === -1) return
 
     for (let i = lastCreateIdx + 1; i < messages.length; i++) {
-      const msg = messages[i];
-      if (msg?.role !== "assistant") continue;
+      const msg = messages[i]
+      if (msg?.role !== 'assistant') continue
       for (const part of msg.parts ?? []) {
-        if (part.type === "data-planning" && part && "data" in part) {
-          const data = part.data as PlanningArtifact;
-          const ls = data.locationSummary;
-          if (ls != null && String(ls).trim() !== "") {
-            setAwaitingNewLocationProfile(false);
-            setLocationProfileDeleted(false);
-            setSuppressInitialLocationSnapshot(false);
-            return;
+        if (part.type === 'data-planning' && part && 'data' in part) {
+          const data = part.data as PlanningArtifact
+          const ls = data.locationSummary
+          if (ls != null && String(ls).trim() !== '') {
+            setAwaitingNewLocationProfile(false)
+            setLocationProfileDeleted(false)
+            setSuppressInitialLocationSnapshot(false)
+            return
           }
         }
-        if (part.type === "data-location-profile" && part && "data" in part) {
-          const ls = (part.data as { locationSummary: string }).locationSummary;
-          if (ls != null && String(ls).trim() !== "") {
-            setAwaitingNewLocationProfile(false);
-            setLocationProfileDeleted(false);
-            setSuppressInitialLocationSnapshot(false);
-            return;
+        if (part.type === 'data-location-profile' && part && 'data' in part) {
+          const ls = (part.data as { locationSummary: string }).locationSummary
+          if (ls != null && String(ls).trim() !== '') {
+            setAwaitingNewLocationProfile(false)
+            setLocationProfileDeleted(false)
+            setSuppressInitialLocationSnapshot(false)
+            return
           }
         }
       }
     }
-  }, [messages, awaitingNewLocationProfile]);
+  }, [messages, awaitingNewLocationProfile])
 
-  const handleTextChange = useCallback(
-    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setText(event.target.value);
-    },
-    []
-  );
+  const handleTextChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setText(event.target.value)
+  }, [])
 
   const handleSubmit = useCallback(
     async (message: PromptInputMessage) => {
-      const hasText = Boolean(message.text?.trim());
-      const hasAttachments = Boolean(message.files?.length);
+      const hasText = Boolean(message.text?.trim())
+      const hasAttachments = Boolean(message.files?.length)
 
       if (!(hasText || hasAttachments)) {
-        return;
+        return
       }
 
-      const content = message.text?.trim() || "Sent with attachments";
-      setText("");
+      const content = message.text?.trim() || 'Sent with attachments'
+      setText('')
       await sendMessage({
         text: content,
         ...(message.files?.length ? { files: message.files } : {}),
-      });
+      })
     },
-    [sendMessage]
-  );
+    [sendMessage],
+  )
 
   const handleCreateCampaign = useCallback(async () => {
     await sendMessage(
-      { text: "create campaign" },
+      { text: 'create campaign' },
       {
         body: {
           analyticsId: selectedAnalyticsId,
@@ -411,8 +401,8 @@ export function AiChatPanel({
           dateEnd: campaignDates.dateEnd,
           nationalHolidays: holidaysOverride ?? displayedArtifact.nationalHolidays ?? null,
         },
-      }
-    );
+      },
+    )
   }, [
     campaignDates.dateEnd,
     campaignDates.dateStart,
@@ -420,12 +410,12 @@ export function AiChatPanel({
     holidaysOverride,
     selectedAnalyticsId,
     sendMessage,
-  ]);
+  ])
 
   const handleCreateLocationProfile = useCallback(async () => {
-    setAwaitingNewLocationProfile(true);
+    setAwaitingNewLocationProfile(true)
     await sendMessage(
-      { text: "create location profile" },
+      { text: 'create location profile' },
       {
         body: {
           analyticsId: selectedAnalyticsId,
@@ -433,8 +423,8 @@ export function AiChatPanel({
           dateEnd: campaignDates.dateEnd,
           nationalHolidays: holidaysOverride ?? displayedArtifact.nationalHolidays ?? null,
         },
-      }
-    );
+      },
+    )
   }, [
     campaignDates.dateEnd,
     campaignDates.dateStart,
@@ -442,88 +432,85 @@ export function AiChatPanel({
     holidaysOverride,
     selectedAnalyticsId,
     sendMessage,
-  ]);
+  ])
 
   const handleLocationFeedback = useCallback(
     async (feedback: string) => {
       await sendMessage({
         text: `Please consider this feedback for the location profile, update the profile if needed: ${feedback}`,
-      });
+      })
     },
-    [sendMessage]
-  );
+    [sendMessage],
+  )
 
   const handleCreateCampaignBrief = useCallback(
     async (theme?: string) => {
-      const base = "create campaign brief";
+      const base = 'create campaign brief'
       const text = theme
         ? `${base}. Please consider the following as additional input for the campaign theme: ${theme}`
-        : base;
-      await sendMessage({ text });
+        : base
+      await sendMessage({ text })
     },
-    [sendMessage]
-  );
+    [sendMessage],
+  )
 
   const handleDeleteCampaignBrief = useCallback(async () => {
-    if (campaignId == null || !Number.isFinite(Number(campaignId))) return;
+    if (campaignId == null || !Number.isFinite(Number(campaignId))) return
 
     try {
-      const response = await fetch("/api/campaign-brief/delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/campaign-brief/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ campaignId: Number(campaignId) }),
-      });
+      })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Failed to delete campaign brief:", errorData);
-        return;
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Failed to delete campaign brief:', errorData)
+        return
       }
 
-      setMessages((prev) => stripCampaignBriefFromMessages(prev));
-      setSuppressInitialCampaignBrief(true);
+      setMessages((prev) => stripCampaignBriefFromMessages(prev))
+      setSuppressInitialCampaignBrief(true)
     } catch (err) {
-      console.error("Error deleting campaign brief:", err);
+      console.error('Error deleting campaign brief:', err)
     }
-  }, [campaignId, setMessages]);
+  }, [campaignId, setMessages])
 
   const handleDeleteLocationProfile = useCallback(async () => {
-    const profileId = displayedArtifact.locationProfileId;
-    if (!profileId) return;
+    const profileId = displayedArtifact.locationProfileId
+    if (!profileId) return
 
     try {
-      const response = await fetch("/api/location-profile/delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/location-profile/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: String(profileId) }),
-      });
+      })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Failed to delete location profile:", errorData);
-        return;
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Failed to delete location profile:', errorData)
+        return
       }
 
-      setMessages((prev) => stripLocationProfileFromMessages(prev));
-      setLocationProfileDeleted(true);
-      setAwaitingNewLocationProfile(false);
-      setSuppressInitialLocationSnapshot(true);
+      setMessages((prev) => stripLocationProfileFromMessages(prev))
+      setLocationProfileDeleted(true)
+      setAwaitingNewLocationProfile(false)
+      setSuppressInitialLocationSnapshot(true)
     } catch (err) {
-      console.error("Error deleting location profile:", err);
+      console.error('Error deleting location profile:', err)
     }
-  }, [displayedArtifact.locationProfileId, setMessages]);
+  }, [displayedArtifact.locationProfileId, setMessages])
 
   const isSubmitDisabled = useMemo(
-    () => !text.trim() || status === "streaming" || status === "submitted",
-    [text, status]
-  );
+    () => !text.trim() || status === 'streaming' || status === 'submitted',
+    [text, status],
+  )
 
-  const isStreaming = status === "streaming" || status === "submitted";
+  const isStreaming = status === 'streaming' || status === 'submitted'
 
-  const visibleMessages = useMemo(
-    () => messages.filter((msg) => msg.role !== "system"),
-    [messages]
-  );
+  const visibleMessages = useMemo(() => messages.filter((msg) => msg.role !== 'system'), [messages])
 
   return (
     <div className="grid size-full grid-cols-3 gap-4 overflow-hidden">
@@ -539,25 +526,22 @@ export function AiChatPanel({
             ) : (
               <>
                 {visibleMessages.map((msg) => {
-                  const isLast = msg === visibleMessages[visibleMessages.length - 1];
+                  const isLast = msg === visibleMessages[visibleMessages.length - 1]
                   const isActiveStream =
-                    isLast && (status === "submitted" || status === "streaming");
-                  const msgText = getMessageText(msg);
-                  const activitySteps =
-                    msg.role === "assistant"
-                      ? getActivitySteps(msg.parts)
-                      : [];
-                  const hasActivity = activitySteps.length > 0;
+                    isLast && (status === 'submitted' || status === 'streaming')
+                  const msgText = getMessageText(msg)
+                  const activitySteps = msg.role === 'assistant' ? getActivitySteps(msg.parts) : []
+                  const hasActivity = activitySteps.length > 0
                   const showFallbackSpinner =
                     isActiveStream &&
-                    msg.role === "assistant" &&
+                    msg.role === 'assistant' &&
                     msgText.length === 0 &&
-                    !hasActivity;
+                    !hasActivity
 
                   return (
                     <Message key={msg.id} from={msg.role}>
                       <MessageContent>
-                        {msg.role === "assistant" && (
+                        {msg.role === 'assistant' && (
                           <AgentActivityFeed
                             steps={activitySteps}
                             hasText={msgText.length > 0}
@@ -574,11 +558,11 @@ export function AiChatPanel({
                         )}
                       </MessageContent>
                     </Message>
-                  );
+                  )
                 })}
                 {visibleMessages.length > 0 &&
-                  (status === "submitted" || status === "streaming") &&
-                  visibleMessages[visibleMessages.length - 1]?.role === "user" && (
+                  (status === 'submitted' || status === 'streaming') &&
+                  visibleMessages[visibleMessages.length - 1]?.role === 'user' && (
                     <Message from="assistant">
                       <MessageContent>
                         <div className="flex items-center gap-2 text-muted-foreground text-sm">
@@ -603,11 +587,7 @@ export function AiChatPanel({
               />
             </PromptInputBody>
             <PromptInputFooter>
-              <PromptInputSubmit
-                disabled={isSubmitDisabled}
-                status={status}
-                onStop={stop}
-              />
+              <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />
             </PromptInputFooter>
           </PromptInput>
         </div>
@@ -624,9 +604,7 @@ export function AiChatPanel({
           onDeleteLocationProfile={handleDeleteLocationProfile}
           onLocationFeedback={handleLocationFeedback}
           onCreateCampaignBrief={handleCreateCampaignBrief}
-          onDeleteCampaignBrief={
-            campaignId != null ? handleDeleteCampaignBrief : undefined
-          }
+          onDeleteCampaignBrief={campaignId != null ? handleDeleteCampaignBrief : undefined}
           analyticsRuns={analyticsRuns}
           selectedAnalyticsId={selectedAnalyticsId}
           onAnalyticsIdChange={setSelectedAnalyticsId}
@@ -635,5 +613,5 @@ export function AiChatPanel({
         />
       </div>
     </div>
-  );
+  )
 }

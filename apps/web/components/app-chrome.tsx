@@ -1,33 +1,21 @@
-"use client";
+'use client'
 
-import {
-  Show,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-  useAuth,
-} from "@clerk/nextjs";
-import { usePathname } from "next/navigation";
-import { isProtectedAppShellPath } from "@/lib/routes";
+import { Show, SignInButton, SignUpButton, UserButton, useAuth } from '@clerk/nextjs'
+import { usePathname } from 'next/navigation'
+import { isProtectedAppShellPath } from '@/lib/routes'
 
-const HIDE_HEADER_PREFIXES = ["/login", "/sign-up", "/sso-callback"];
+const HIDE_HEADER_PREFIXES = ['/login', '/sign-up', '/sso-callback']
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const { isSignedIn } = useAuth();
+  const pathname = usePathname()
+  const { isSignedIn } = useAuth()
   const hideHeader =
     pathname != null &&
-    HIDE_HEADER_PREFIXES.some(
-      (p) => pathname === p || pathname.startsWith(`${p}/`),
-    );
+    HIDE_HEADER_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
   const isRootPage =
-    pathname === "/" ||
-    pathname === "" ||
-    (pathname != null && pathname.startsWith("/shop"));
-  const showChromeHeader =
-    !hideHeader && (isSignedIn || !isRootPage);
-  const profileInSidebarHeader =
-    isSignedIn && isProtectedAppShellPath(pathname);
+    pathname === '/' || pathname === '' || (pathname != null && pathname.startsWith('/shop'))
+  const showChromeHeader = !hideHeader && (isSignedIn || !isRootPage)
+  const profileInSidebarHeader = isSignedIn && isProtectedAppShellPath(pathname)
 
   return (
     <>
@@ -44,5 +32,5 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
       )}
       {children}
     </>
-  );
+  )
 }

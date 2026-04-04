@@ -2,10 +2,10 @@ PYTHON=uv run python
 UV=uv run
 UVICORN=uv run uvicorn
 
-.PHONY: install run dev migrate-db drop-db test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report dev-data lint format clean
+.PHONY: install run dev migrate-db drop-db test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report dev-data lint format typecheck clean
 
 install:
-	uv sync
+	uv sync --all-groups
 
 run:
 	PYTHONPATH=../.. $(UVICORN) graphql.server:app --host 0.0.0.0 --port 8000
@@ -49,10 +49,13 @@ dev-data:
 	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_dev_data
 
 lint:
-	uv run ruff check .
+	uv run --group dev ruff check .
 
 format:
-	uv run ruff format .
+	uv run --group dev ruff format .
+
+typecheck:
+	uv run --group dev mypy server.py main.py schema resolvers data_sources reports
 
 clean:
 	rm -rf __pycache__

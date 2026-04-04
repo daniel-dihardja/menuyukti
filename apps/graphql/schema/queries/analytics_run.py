@@ -1,8 +1,11 @@
 from collections import defaultdict
 from datetime import date, datetime
-from typing import Optional
 
 import strawberry
+from menuyukti.core.analytics import compute_menu_heatmaps_from_orders
+from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
+    compute_menu_engineering_from_orders,
+)
 
 from graphql.data_sources import (
     AnalyticsRun,
@@ -16,10 +19,6 @@ from graphql.schema.auth import (
     user_id_from_info,
 )
 from graphql.schema.types import MenuItemCogsType
-from menuyukti.core.analytics import compute_menu_heatmaps_from_orders
-from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
-    compute_menu_engineering_from_orders,
-)
 
 
 @strawberry.type(description="Average order size and revenue for an analytics run.")
@@ -48,8 +47,8 @@ class WeeklyHeatmapType:
 )
 class MenuHeatmapType:
     menu: str
-    menu_category: Optional[str]
-    menu_category_detail: Optional[str]
+    menu_category: str | None
+    menu_category_detail: str | None
     daily_heatmap: list[DailyHeatmapType]
     weekly_heatmap: list[WeeklyHeatmapType]
 
@@ -96,8 +95,8 @@ class MenuEngineeringMatrixItemType:
     weValue: float
     category: str
     action: str
-    menuCategory: Optional[str]
-    menuCategoryDetail: Optional[str]
+    menuCategory: str | None
+    menuCategoryDetail: str | None
 
 
 @strawberry.type(
@@ -123,8 +122,8 @@ class AnalyticsRunType:
     name: str
     filename: str
     posSystem: str
-    periodStart: Optional[date]
-    periodEnd: Optional[date]
+    periodStart: date | None
+    periodEnd: date | None
     createdAt: datetime
     locationId: int
     menuItemCogs: list[MenuItemCogsType]
@@ -232,7 +231,7 @@ def _compute_menu_heatmaps(
 
 def _compute_menu_engineering_matrix(
     session, run: AnalyticsRun
-) -> Optional[MenuEngineeringMatrixType]:
+) -> MenuEngineeringMatrixType | None:
     rows = (
         session.query(OrderFact)
         .where(OrderFact.analytics_run_id == run.id)
@@ -354,7 +353,7 @@ class AnalyticsRunQuery:
     )
     def analytics_run(
         self, info: strawberry.Info, id: strawberry.ID
-    ) -> Optional[AnalyticsRunType]:
+    ) -> AnalyticsRunType | None:
         user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
@@ -401,7 +400,7 @@ class AnalyticsRunQuery:
     )
     def order_metrics(
         self, info: strawberry.Info, analytics_run_id: strawberry.ID
-    ) -> Optional[AnalyticsRunOrderMetricsType]:
+    ) -> AnalyticsRunOrderMetricsType | None:
         user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
@@ -444,8 +443,8 @@ class AnalyticsRunQuery:
         self,
         info: strawberry.Info,
         analytics_run_id: strawberry.ID,
-        categories: Optional[list[str]] = None,
-    ) -> Optional[MenuEngineeringMatrixType]:
+        categories: list[str] | None = None,
+    ) -> MenuEngineeringMatrixType | None:
         user_id = user_id_from_info(info)
         session = SessionLocal()
         try:

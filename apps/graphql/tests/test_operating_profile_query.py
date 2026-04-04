@@ -9,7 +9,7 @@ Expected profile:
   - total_orders: 3  (3 unique bills)
   - weekday_share: 1.0  (all 3 bills are Mon/Fri)
   - operating_pattern: "weekday_only"
-  - primary_meal_period: "breakfast"  (three-way tie; "breakfast" wins as first in MEAL_PERIODS)
+  - primary_meal_period: "lunch"  (three-way tie on order count; revenue tie-breaker: lunch 90 > breakfast 72 > dinner 23.5)
   - dining_focus: "all_day_dining"  (no period >= 50%; lunch+dinner = 0.667 < 0.70)
   - peak_day: "mon"  (2 bills on Mon vs 1 on Fri)
 """
@@ -19,7 +19,6 @@ import asyncio
 from graphql.data_sources import AnalyticsRun, SessionLocal
 from graphql.schema import schema
 from graphql.tests.auth_context import graphql_auth_context
-
 
 _OPERATING_PROFILE_QUERY = """
 query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
@@ -101,7 +100,7 @@ def test_operating_profile_returns_expected_values(analytics_run_with_qa_data):
     assert profile["operatingPattern"] == "weekday_only"
 
     assert profile["peakDay"] == "mon"
-    assert profile["primaryMealPeriod"] == "breakfast"
+    assert profile["primaryMealPeriod"] == "lunch"
     assert set(profile["activeMealPeriods"]) == {"breakfast", "lunch", "dinner"}
     assert profile["diningFocus"] == "all_day_dining"
 

@@ -1,7 +1,7 @@
-import Image from "next/image";
+import Image from 'next/image'
 
 const HERO_SRC =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuBG2RJcuH_QtDl2XUX2CJ_UheN3y5EHQ4KhdXOYo4H5mPj3FBSXrPv9hY7PRXsBudv2KLmqsPdmStxcqTCb0dagNtS8X_1PAgQeq49fdcTkABdXLBrFuHZ8ArbpyPM6QYClGbXTR0eMk2lLrE0TQteovzbglWJEYEBjUjF_8qT6wQUCBhdKPauuYvN3mgMRCrsmKWB2VXtKilSye3PHRTW4rMfpGWN8ncYbp9mbmbWjYVavNrKyH3_-aCqwlQPNTYtkdxmEStZ070UK";
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuBG2RJcuH_QtDl2XUX2CJ_UheN3y5EHQ4KhdXOYo4H5mPj3FBSXrPv9hY7PRXsBudv2KLmqsPdmStxcqTCb0dagNtS8X_1PAgQeq49fdcTkABdXLBrFuHZ8ArbpyPM6QYClGbXTR0eMk2lLrE0TQteovzbglWJEYEBjUjF_8qT6wQUCBhdKPauuYvN3mgMRCrsmKWB2VXtKilSye3PHRTW4rMfpGWN8ncYbp9mbmbWjYVavNrKyH3_-aCqwlQPNTYtkdxmEStZ070UK'
 
 export function ShopHero() {
   return (
@@ -25,11 +25,10 @@ export function ShopHero() {
             The Digital Curator: Art for Your Restaurant
           </h1>
           <p className="mt-6 max-w-lg text-xl font-light leading-relaxed text-white">
-            Elevate your culinary space with bespoke prints designed for the
-            modern restaurateur.
+            Elevate your culinary space with bespoke prints designed for the modern restaurateur.
           </p>
         </div>
       </div>
     </section>
-  );
+  )
 }

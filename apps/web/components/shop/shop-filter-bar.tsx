@@ -1,28 +1,24 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { Button } from "@workspace/ui/components/button";
-import {
-  Card,
-  CardContent,
-} from "@workspace/ui/components/card";
+import { useState } from 'react'
+import { Button } from '@workspace/ui/components/button'
+import { Card, CardContent } from '@workspace/ui/components/card'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select";
+} from '@workspace/ui/components/select'
 
-import filterData from "./shop-filter-data.json";
+import filterData from './shop-filter-data.json'
 
-const defaultCollectionId = filterData.collections[0]?.id ?? "all";
-const defaultSortId = filterData.sortOptions[0]?.id ?? "newest";
+const defaultCollectionId = filterData.collections[0]?.id ?? 'all'
+const defaultSortId = filterData.sortOptions[0]?.id ?? 'newest'
 
 export function ShopFilterBar() {
-  const [activeCollectionId, setActiveCollectionId] =
-    useState(defaultCollectionId);
-  const [sortId, setSortId] = useState(defaultSortId);
+  const [activeCollectionId, setActiveCollectionId] = useState(defaultCollectionId)
+  const [sortId, setSortId] = useState(defaultSortId)
 
   return (
     <section className="mb-16">
@@ -33,9 +29,7 @@ export function ShopFilterBar() {
               <Button
                 key={c.id}
                 type="button"
-                variant={
-                  activeCollectionId === c.id ? "default" : "outline"
-                }
+                variant={activeCollectionId === c.id ? 'default' : 'outline'}
                 onClick={() => setActiveCollectionId(c.id)}
               >
                 {c.label}
@@ -64,5 +58,5 @@ export function ShopFilterBar() {
         </CardContent>
       </Card>
     </section>
-  );
+  )
 }

@@ -1,46 +1,46 @@
-"use client";
+'use client'
 
-import { useRef } from "react";
-import { Button } from "@workspace/ui/components/button";
-import { useTranslations } from "next-intl";
+import { useRef } from 'react'
+import { Button } from '@workspace/ui/components/button'
+import { useTranslations } from 'next-intl'
 
-export type UploadStatus = "idle" | "success" | "error";
+export type UploadStatus = 'idle' | 'success' | 'error'
 
 interface UploadExcelClientProps {
-  disabled?: boolean;
-  uploading?: boolean;
+  disabled?: boolean
+  uploading?: boolean
 
-  status?: UploadStatus;
-  message?: string | null;
-  pos?: string | null;
+  status?: UploadStatus
+  message?: string | null
+  pos?: string | null
 
-  onFileSelected: (file: File) => void;
+  onFileSelected: (file: File) => void
 }
 
 export default function UploadExcelClient({
   disabled = false,
   uploading = false,
-  status = "idle",
+  status = 'idle',
   message = null,
   pos = null,
   onFileSelected,
 }: UploadExcelClientProps) {
-  const t = useTranslations("analytics.sales.upload");
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const fileInputId = "analytics-upload-xlsx";
+  const t = useTranslations('analytics.sales.upload')
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const fileInputId = 'analytics-upload-xlsx'
 
   function openFileDialog() {
-    fileInputRef.current?.click();
+    fileInputRef.current?.click()
   }
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const file = event.target.files?.[0]
+    if (!file) return
 
-    onFileSelected(file);
+    onFileSelected(file)
 
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = ''
     }
   }
 
@@ -64,29 +64,29 @@ export default function UploadExcelClient({
         disabled={disabled || uploading}
         className="w-full sm:w-auto"
       >
-        {uploading ? t("uploading") : t("cta")}
+        {uploading ? t('uploading') : t('cta')}
       </Button>
 
       {message && (
         <p
           role="status"
-          aria-live={status === "error" ? "assertive" : "polite"}
+          aria-live={status === 'error' ? 'assertive' : 'polite'}
           className={`text-left text-sm ${
-            status === "success" ? "text-green-600" : "text-red-600"
+            status === 'success' ? 'text-green-600' : 'text-red-600'
           }`}
         >
           {message}
 
-          {status === "success" && pos && (
+          {status === 'success' && pos && (
             <>
               <br />
               <span className="text-muted-foreground">
-                {t("detectedPos")} <strong>{pos.toUpperCase()}</strong>
+                {t('detectedPos')} <strong>{pos.toUpperCase()}</strong>
               </span>
             </>
           )}
         </p>
       )}
     </div>
-  );
+  )
 }

@@ -1,9 +1,5 @@
-import { CopyrightFooter } from "@/components/copyright-footer";
-import {
-  ShopFilterBar,
-  ShopHero,
-  ShopProductGrid,
-} from "@/components/shop";
+import { CopyrightFooter } from '@/components/copyright-footer'
+import { ShopFilterBar, ShopHero, ShopProductGrid } from '@/components/shop'
 
 export default function ShopPage() {
   return (
@@ -15,5 +11,5 @@ export default function ShopPage() {
       </main>
       <CopyrightFooter />
     </div>
-  );
+  )
 }

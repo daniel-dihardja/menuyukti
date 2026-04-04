@@ -21,8 +21,6 @@ Menuyukti is split into three cooperating services:
 2. **Web app** — The user-facing application: conversational chat, artifact review and editing, and CRUD-style forms for entities the product manages.
 3. **Agent service** — A **Go** HTTP service (**`apps/gentic-agents`**) built on the **Gentic** library: intent routing, ReAct, tools, and campaign/location flows. It calls the GraphQL API when it needs platform data.
 
-
-
 ## Agentic patterns
 
 - **Intent routing** — The agent service classifies each user turn (e.g. campaign brief, location profile, or general chat), then **routes** to the matching Gentic flow so long-running work stays separate from Q&A.

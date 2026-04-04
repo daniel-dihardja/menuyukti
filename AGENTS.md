@@ -4,11 +4,11 @@ This file helps AI coding agents (Cursor, Claude Code, Codex, etc.) run the righ
 
 ## Repository layout
 
-| Area | Path | Stack |
-|------|------|--------|
-| Web | `apps/web` | Next.js, React, TypeScript, Clerk, Vitest, next-intl (data via GraphQL) |
-| GraphQL API | `apps/graphql` | Python, Strawberry, uv, Ruff, pytest |
-| Gentic agents | `apps/gentic-agents` | Go, Gentic SDK, HTTP API |
+| Area          | Path                 | Stack                                                                   |
+| ------------- | -------------------- | ----------------------------------------------------------------------- |
+| Web           | `apps/web`           | Next.js, React, TypeScript, Clerk, Vitest, next-intl (data via GraphQL) |
+| GraphQL API   | `apps/graphql`       | Python, Strawberry, uv, Ruff, pytest                                    |
+| Gentic agents | `apps/gentic-agents` | Go, Gentic SDK, HTTP API                                                |
 
 **pnpm workspaces:** `apps/*`, `packages/*`. **Python (uv):** root `pyproject.toml` + `apps/graphql`, `packages/menuyukti`.
 
@@ -28,18 +28,18 @@ cd apps/web && pnpm dev
 ```
 
 - Production build: `pnpm build` then `pnpm start`
-- Lint: `pnpm lint` — Typecheck: `pnpm typecheck` — Tests: `pnpm test`
+- Lint: `pnpm lint` — Typecheck: `pnpm typecheck` / `pnpm check-types` (same as typecheck) — Tests: `pnpm test`
 
 ### GraphQL (`apps/graphql`)
 
 From `apps/graphql` (requires `uv`):
 
 ```bash
-make install   # uv sync
+make install   # uv sync --all-groups (includes Ruff + mypy dev tools)
 make dev       # uvicorn with reload, port 8000
 ```
 
-- Tests: `make test` — Lint/format: `make lint` / `make format`
+- Tests: `make test` — Lint/format: `make lint` / `make format` — Types: `make typecheck` (mypy)
 
 ### Gentic agents (`apps/gentic-agents`)
 
@@ -49,7 +49,7 @@ From `apps/gentic-agents`:
 make run       # go run ./cmd/server (default ADDR=:7777)
 ```
 
-- Build binary: `make build` — Tests: `make test` — Vet/fmt: `make vet` / `make fmt`
+- Build binary: `make build` — Tests: `make test` — Vet/fmt: `make vet` / `make fmt` — Lint: `make lint` ([golangci-lint](https://golangci-lint.run/welcome/install/); also used in CI)
 - Evals: `make eval`, `make eval-live` (integration; needs keys — see `Makefile`)
 
 ### All services
@@ -63,10 +63,17 @@ pnpm install
 pnpm build
 pnpm lint
 pnpm check-types    # turbo; packages must define a check-types script to participate
-pnpm format         # Prettier (TS/MD per config)
+pnpm format         # Prettier (TS/MD/CSS; see `.prettierrc.json` and `.prettierignore`)
+pnpm format-check   # Prettier check only (CI uses this)
 ```
 
 Database schema, migrations, and persistence are implemented in **`apps/graphql`** (see that app’s `Makefile`, `data_sources/`, and docs).
+
+## Quality gates and CI
+
+- **GitHub Actions:** `.github/workflows/ci.yml` runs on pushes and pull requests to `main` and `develop` (Prettier check, Turbo `check-types` + `lint`, GraphQL Ruff/mypy/pytest, Go tests + golangci-lint for `apps/gentic-agents` and `packages/gentic`).
+- **Pre-commit:** Husky runs [lint-staged](https://github.com/lint-staged/lint-staged) (`lint-staged.config.mjs`): Prettier on staged TS/MD/CSS, Ruff on `apps/graphql` Python, ESLint on `apps/web` and `packages/ui`. After `pnpm install`, the `prepare` script registers Husky (requires a writable `.git` in dev).
+- **Suggested checks before a PR:** from the repo root run `pnpm format-check`, `pnpm check-types`, `pnpm lint`; from `apps/graphql` run `make lint`, `make typecheck`, `make test`; from `apps/gentic-agents` and `packages/gentic` run `go test ./...` and `make lint` (or rely on CI for golangci-lint).
 
 ## Off-limits or discouraged patterns
 

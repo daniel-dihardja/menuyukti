@@ -1,4 +1,4 @@
-.PHONY: help run build test vet fmt clean \
+.PHONY: help run build test vet fmt lint clean \
 	eval eval-live eval-intent eval-intent-campaign eval-intent-chat eval-intent-unknown eval-intent-ambiguous \
 	eval-location eval-location-profile-exists eval-location-missing-ids eval-location-inference eval-location-operating
 
@@ -21,6 +21,7 @@ help:
 	@echo "  make eval-location-profile-exists|missing-ids|inference|operating - single location eval case"
 	@echo "  make vet          - go vet ./..."
 	@echo "  make fmt          - go fmt ./..."
+	@echo "  make lint         - golangci-lint run ./... (install: https://golangci-lint.run/welcome/install/)"
 	@echo "  make clean        - remove $(BIN)"
 
 run:
@@ -74,6 +75,9 @@ vet:
 
 fmt:
 	go fmt ./...
+
+lint:
+	golangci-lint run ./...
 
 clean:
 	rm -f $(BIN)

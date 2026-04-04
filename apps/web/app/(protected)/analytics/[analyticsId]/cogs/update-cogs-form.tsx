@@ -1,83 +1,69 @@
-"use client";
+'use client'
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 
-import { Button } from "@workspace/ui/components/button";
-import { Input } from "@workspace/ui/components/input";
-import { Label } from "@workspace/ui/components/label";
+import { Button } from '@workspace/ui/components/button'
+import { Input } from '@workspace/ui/components/input'
+import { Label } from '@workspace/ui/components/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card";
-import {
-  formatCurrencyInput,
-  getCurrencyLocale,
-  parseCurrencyInput,
-} from "@/lib/currency";
+} from '@workspace/ui/components/select'
+import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
+import { formatCurrencyInput, getCurrencyLocale, parseCurrencyInput } from '@/lib/currency'
 
 type MenuItem = {
-  id: number;
-  menuName: string;
-  cogs: number | null;
-  quantity: number;
-  totalRevenue: number;
-  menuCategory: string | null;
-};
+  id: number
+  menuName: string
+  cogs: number | null
+  quantity: number
+  totalRevenue: number
+  menuCategory: string | null
+}
 
 type Props = {
-  analyticsId: number;
-  menuItems: MenuItem[];
-  analyticsOptions: Array<{ id: number; name: string }>;
-  currencyCode: string;
-};
+  analyticsId: number
+  menuItems: MenuItem[]
+  analyticsOptions: Array<{ id: number; name: string }>
+  currencyCode: string
+}
 
-export function UpdateCogsForm({
-  analyticsId,
-  menuItems,
-  analyticsOptions,
-  currencyCode,
-}: Props) {
-  const router = useRouter();
-  const t = useTranslations("analytics.cogsForm");
-  const locale = getCurrencyLocale(currencyCode);
+export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, currencyCode }: Props) {
+  const router = useRouter()
+  const t = useTranslations('analytics.cogsForm')
+  const locale = getCurrencyLocale(currencyCode)
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [importId, setImportId] = useState<number | null>(() => {
-    return analyticsOptions[0]?.id ?? null;
-  });
-  const [importing, setImporting] = useState(false);
+    return analyticsOptions[0]?.id ?? null
+  })
+  const [importing, setImporting] = useState(false)
   const [cogsValues, setCogsValues] = useState<Record<number, string>>(() => {
-    const initial: Record<number, string> = {};
+    const initial: Record<number, string> = {}
     for (const item of menuItems) {
-      initial[item.id] = item.cogs === null ? "" : String(item.cogs);
+      initial[item.id] = item.cogs === null ? '' : String(item.cogs)
     }
-    return initial;
-  });
-  const [activeInputId, setActiveInputId] = useState<number | null>(null);
+    return initial
+  })
+  const [activeInputId, setActiveInputId] = useState<number | null>(null)
 
-  const options = useMemo(() => analyticsOptions, [analyticsOptions]);
+  const options = useMemo(() => analyticsOptions, [analyticsOptions])
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
 
     // Correctly normalize values
     const items = menuItems.map((item) => {
-      const raw = cogsValues[item.id] ?? "";
-      const value = parseCurrencyInput(raw, currencyCode, locale);
+      const raw = cogsValues[item.id] ?? ''
+      const value = parseCurrencyInput(raw, currencyCode, locale)
 
       return {
         id: item.id,
@@ -85,49 +71,45 @@ export function UpdateCogsForm({
         quantity: item.quantity,
         totalRevenue: item.totalRevenue,
         menuName: item.menuName,
-      };
-    });
+      }
+    })
 
     try {
       const res = await fetch(`/api/analytics/${analyticsId}/cogs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items }),
-      });
+      })
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message ?? t("errors.updateFailed"));
+        const data = await res.json()
+        throw new Error(data.message ?? t('errors.updateFailed'))
       }
 
-      router.refresh();
+      router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("errors.unknown"));
+      setError(err instanceof Error ? err.message : t('errors.unknown'))
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   function formatDisplayValue(raw: string) {
-    const parsed = parseCurrencyInput(raw, currencyCode, locale);
-    if (parsed === null) return "";
-    return formatCurrencyInput(parsed, currencyCode, locale);
+    const parsed = parseCurrencyInput(raw, currencyCode, locale)
+    if (parsed === null) return ''
+    return formatCurrencyInput(parsed, currencyCode, locale)
   }
 
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
       <section className="space-y-1">
-        <h1 className="text-2xl font-semibold">{t("heading")}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t("description")}
-        </p>
+        <h1 className="text-2xl font-semibold">{t('heading')}</h1>
+        <p className="text-sm text-muted-foreground">{t('description')}</p>
       </section>
 
       {options.length > 0 && (
         <div className="space-y-2">
-          <Label htmlFor="import-analytics-select">
-            {t("import.label")}
-          </Label>
+          <Label htmlFor="import-analytics-select">{t('import.label')}</Label>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <Select
               value={importId !== null ? String(importId) : undefined}
@@ -135,7 +117,7 @@ export function UpdateCogsForm({
               disabled={loading || importing}
             >
               <SelectTrigger id="import-analytics-select" className="w-full sm:w-[260px]">
-                <SelectValue placeholder={t("import.placeholder")} />
+                <SelectValue placeholder={t('import.placeholder')} />
               </SelectTrigger>
               <SelectContent>
                 {options.map((option) => (
@@ -151,40 +133,40 @@ export function UpdateCogsForm({
               variant="secondary"
               disabled={!importId || importing || loading}
               onClick={async () => {
-                if (!importId) return;
-                setImporting(true);
-                setError(null);
+                if (!importId) return
+                setImporting(true)
+                setError(null)
                 try {
-                    const res = await fetch(`/api/analytics/${importId}/cogs`);
-                    if (!res.ok) {
-                      throw new Error(t("errors.loadImportFailed"));
-                    }
+                  const res = await fetch(`/api/analytics/${importId}/cogs`)
+                  if (!res.ok) {
+                    throw new Error(t('errors.loadImportFailed'))
+                  }
                   const data = (await res.json()) as {
-                    items: Array<{ menuName: string; cogs: number | null }>;
-                  };
+                    items: Array<{ menuName: string; cogs: number | null }>
+                  }
 
                   const cogsByName = new Map(
                     data.items.map((item) => [item.menuName.toLowerCase(), item.cogs]),
-                  );
+                  )
 
                   setCogsValues((prev) => {
-                    const next = { ...prev };
+                    const next = { ...prev }
                     for (const item of menuItems) {
-                      const value = cogsByName.get(item.menuName.toLowerCase());
+                      const value = cogsByName.get(item.menuName.toLowerCase())
                       if (value !== undefined && value !== null) {
-                        next[item.id] = String(value);
+                        next[item.id] = String(value)
                       }
                     }
-                    return next;
-                  });
+                    return next
+                  })
                 } catch (err) {
-                  setError(err instanceof Error ? err.message : t("errors.unknown"));
+                  setError(err instanceof Error ? err.message : t('errors.unknown'))
                 } finally {
-                  setImporting(false);
+                  setImporting(false)
                 }
               }}
             >
-              {importing ? t("import.importing") : t("import.action")}
+              {importing ? t('import.importing') : t('import.action')}
             </Button>
           </div>
         </div>
@@ -192,7 +174,7 @@ export function UpdateCogsForm({
 
       <Card>
         <CardHeader>
-          <CardTitle>{t("table.title")}</CardTitle>
+          <CardTitle>{t('table.title')}</CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -208,9 +190,7 @@ export function UpdateCogsForm({
               "
             >
               <div className="mb-2 flex min-w-0 items-center gap-2 sm:mb-0">
-                <span className="text-sm text-muted-foreground tabular-nums">
-                  {index + 1}.
-                </span>
+                <span className="text-sm text-muted-foreground tabular-nums">{index + 1}.</span>
 
                 <Label htmlFor={`cogs-${item.id}`} className="truncate">
                   {item.menuName}
@@ -229,8 +209,8 @@ export function UpdateCogsForm({
                   inputMode="decimal"
                   value={
                     activeInputId === item.id
-                      ? (cogsValues[item.id] ?? "")
-                      : formatDisplayValue(cogsValues[item.id] ?? "")
+                      ? (cogsValues[item.id] ?? '')
+                      : formatDisplayValue(cogsValues[item.id] ?? '')
                   }
                   onChange={(event) =>
                     setCogsValues((prev) => ({
@@ -258,9 +238,9 @@ export function UpdateCogsForm({
 
       <div className="flex justify-end">
         <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-          {loading ? t("actions.saving") : t("actions.save")}
+          {loading ? t('actions.saving') : t('actions.save')}
         </Button>
       </div>
     </form>
-  );
+  )
 }

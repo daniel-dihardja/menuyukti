@@ -3,8 +3,8 @@ import strawberry
 from graphql.schema.mutations import (
     CreateCampaignMutation,
     CreateLocationMutation,
-    DeleteCampaignMutation,
     DeleteCampaignBriefMutation,
+    DeleteCampaignMutation,
     DeleteLocationProfileMutation,
     SaveCampaignBriefMutation,
     SaveLocationProfileMutation,

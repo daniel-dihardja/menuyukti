@@ -3,28 +3,28 @@
  */
 
 const getEndpoint = (): string => {
-  const endpoint = process.env.GRAPHQL_ENDPOINT;
+  const endpoint = process.env.GRAPHQL_ENDPOINT
   if (!endpoint) {
-    throw new Error("GRAPHQL_ENDPOINT is not set");
+    throw new Error('GRAPHQL_ENDPOINT is not set')
   }
-  return endpoint;
-};
+  return endpoint
+}
 
 export type GraphQLResponse<T> = {
-  data?: T;
-  errors?: Array<{ message: string }>;
-};
+  data?: T
+  errors?: Array<{ message: string }>
+}
 
 function buildHeaders(userId?: string): Record<string, string> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const apiKey = process.env.GRAPHQL_INTERNAL_API_KEY;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const apiKey = process.env.GRAPHQL_INTERNAL_API_KEY
   if (apiKey) {
-    headers["X-Internal-Api-Key"] = apiKey;
+    headers['X-Internal-Api-Key'] = apiKey
   }
   if (userId) {
-    headers["X-User-Id"] = userId;
+    headers['X-User-Id'] = userId
   }
-  return headers;
+  return headers
 }
 
 export async function graphqlQuery<T>(
@@ -33,23 +33,23 @@ export async function graphqlQuery<T>(
   userId?: string,
 ): Promise<T> {
   const res = await fetch(getEndpoint(), {
-    method: "POST",
+    method: 'POST',
     headers: buildHeaders(userId),
     body: JSON.stringify({ query, variables }),
-  });
+  })
 
   if (!res.ok) {
-    throw new Error(`GraphQL request failed: ${res.status} ${await res.text()}`);
+    throw new Error(`GraphQL request failed: ${res.status} ${await res.text()}`)
   }
 
-  const json = (await res.json()) as GraphQLResponse<T>;
+  const json = (await res.json()) as GraphQLResponse<T>
   if (json.errors?.length) {
-    throw new Error(json.errors[0]?.message ?? "GraphQL error");
+    throw new Error(json.errors[0]?.message ?? 'GraphQL error')
   }
 
   if (json.data == null) {
-    throw new Error("GraphQL returned no data");
+    throw new Error('GraphQL returned no data')
   }
 
-  return json.data;
+  return json.data
 }

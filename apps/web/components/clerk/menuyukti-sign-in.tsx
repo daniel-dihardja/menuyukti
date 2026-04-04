@@ -1,1 +1,1 @@
-export { CustomLoginForm as MenuyuktiSignIn } from "./custom-login-form";
+export { CustomLoginForm as MenuyuktiSignIn } from './custom-login-form'

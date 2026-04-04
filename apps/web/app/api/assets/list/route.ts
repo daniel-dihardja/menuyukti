@@ -1,6 +1,6 @@
-import { ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { ListObjectsV2Command } from '@aws-sdk/client-s3'
+import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 
 import {
   getPresignedGetUrl,
@@ -9,24 +9,24 @@ import {
   isObjectKeyForUser,
   isSafeAssetFilename,
   userPrefix,
-} from "@/lib/assets/storage";
+} from '@/lib/assets/storage'
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs'
 
 export async function GET() {
-  const { userId } = await auth();
+  const { userId } = await auth()
   if (!userId) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
   }
 
-  const bucket = getS3Bucket();
-  const s3 = getS3Client();
-  const prefix = userPrefix(userId);
+  const bucket = getS3Bucket()
+  const s3 = getS3Client()
+  const prefix = userPrefix(userId)
 
-  type Row = { name: string; url: string; size: number; createdAt: string };
+  type Row = { name: string; url: string; size: number; createdAt: string }
 
-  const rows: Row[] = [];
-  let continuationToken: string | undefined;
+  const rows: Row[] = []
+  let continuationToken: string | undefined
 
   try {
     do {
@@ -36,35 +36,35 @@ export async function GET() {
           Prefix: prefix,
           ContinuationToken: continuationToken,
         }),
-      );
+      )
 
       for (const obj of listed.Contents ?? []) {
-        const key = obj.Key;
-        if (!key || !obj.LastModified) continue;
-        if (!isObjectKeyForUser(key, userId)) continue;
-        const name = key.slice(prefix.length);
-        if (!isSafeAssetFilename(name)) continue;
+        const key = obj.Key
+        if (!key || !obj.LastModified) continue
+        if (!isObjectKeyForUser(key, userId)) continue
+        const name = key.slice(prefix.length)
+        if (!isSafeAssetFilename(name)) continue
 
-        const url = await getPresignedGetUrl(key);
+        const url = await getPresignedGetUrl(key)
         rows.push({
           name,
           url,
           size: obj.Size ?? 0,
           createdAt: obj.LastModified.toISOString(),
-        });
+        })
       }
 
-      continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined;
-    } while (continuationToken);
+      continuationToken = listed.IsTruncated ? listed.NextContinuationToken : undefined
+    } while (continuationToken)
   } catch (err) {
-    console.error("[assets/list] S3 list failed", {
+    console.error('[assets/list] S3 list failed', {
       userIdPrefix: userId.slice(0, 8),
       message: err instanceof Error ? err.message : String(err),
-    });
-    return NextResponse.json({ message: "Failed to list assets" }, { status: 502 });
+    })
+    return NextResponse.json({ message: 'Failed to list assets' }, { status: 502 })
   }
 
-  rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
-  return NextResponse.json({ items: rows });
+  return NextResponse.json({ items: rows })
 }

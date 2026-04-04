@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import strawberry
 
@@ -55,7 +55,7 @@ class SaveCampaignBriefMutation:
                 row.target_audience = target_audience
                 row.posting_cadence = posting_cadence
                 row.post_schedule_json = post_schedule_json
-                row.updated_at = datetime.now(tz=timezone.utc)
+                row.updated_at = datetime.now(tz=UTC)
             session.commit()
             session.refresh(row)
             return CampaignBriefType(

@@ -1,14 +1,14 @@
-"use client";
+'use client'
 
-import { useContext } from "react";
-import { AnalyticsContext } from "./analytics-provider";
+import { useContext } from 'react'
+import { AnalyticsContext } from './analytics-provider'
 
 export function useAnalytics() {
-  const context = useContext(AnalyticsContext);
+  const context = useContext(AnalyticsContext)
 
   if (!context) {
-    throw new Error("useAnalytics must be used within an AnalyticsProvider");
+    throw new Error('useAnalytics must be used within an AnalyticsProvider')
   }
 
-  return context;
+  return context
 }

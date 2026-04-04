@@ -12,7 +12,6 @@ TEST_DB = Path(__file__).resolve().parent.parent / "test.db"
 os.environ["DATABASE_URL"] = f"sqlite+pysqlite:///{TEST_DB}"
 
 import pytest
-
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID
 
 

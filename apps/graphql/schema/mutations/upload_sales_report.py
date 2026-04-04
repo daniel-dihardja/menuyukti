@@ -9,7 +9,6 @@ from strawberry.file_uploads import Upload
 from strawberry.scalars import JSON
 
 from graphql.data_sources import AnalyticsRun, Location, SessionLocal
-from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.reports import (
     Order,
     line_items_to_orders,
@@ -17,6 +16,7 @@ from graphql.reports import (
     persist_sales_report,
     run_sales_analytics,
 )
+from graphql.schema.auth import require_location_owner, user_id_from_info
 
 
 @strawberry.type

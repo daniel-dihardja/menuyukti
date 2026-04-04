@@ -1,9 +1,13 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import strawberry
 
 from graphql.data_sources import LocationProfile, SessionLocal
-from graphql.schema.auth import get_analytics_run_if_owner, require_location_owner, user_id_from_info
+from graphql.schema.auth import (
+    get_analytics_run_if_owner,
+    require_location_owner,
+    user_id_from_info,
+)
 from graphql.schema.types import LocationProfileType
 
 
@@ -44,7 +48,7 @@ class SaveLocationProfileMutation:
                 session.add(row)
             else:
                 row.summary = summary
-                row.updated_at = datetime.now(tz=timezone.utc)
+                row.updated_at = datetime.now(tz=UTC)
             session.commit()
             session.refresh(row)
             return LocationProfileType(

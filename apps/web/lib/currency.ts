@@ -1,47 +1,39 @@
 const CURRENCY_LOCALES: Record<string, string> = {
-  IDR: "id-ID",
-  USD: "en-US",
-  EUR: "de-DE",
-  GBP: "en-GB",
-  SGD: "en-SG",
-  AUD: "en-AU",
-  JPY: "ja-JP",
-};
+  IDR: 'id-ID',
+  USD: 'en-US',
+  EUR: 'de-DE',
+  GBP: 'en-GB',
+  SGD: 'en-SG',
+  AUD: 'en-AU',
+  JPY: 'ja-JP',
+}
 
 export function getCurrencyLocale(currency: string): string {
-  return CURRENCY_LOCALES[currency] ?? "en-US";
+  return CURRENCY_LOCALES[currency] ?? 'en-US'
 }
 
-export function formatCurrency(
-  value: number,
-  currency: string,
-  locale?: string,
-): string {
+export function formatCurrency(value: number, currency: string, locale?: string): string {
   return new Intl.NumberFormat(locale ?? getCurrencyLocale(currency), {
-    style: "currency",
+    style: 'currency',
     currency,
     minimumFractionDigits: 0,
-  }).format(value);
+  }).format(value)
 }
 
-export function formatCurrencyWithCode(
-  value: number,
-  currency: string,
-  locale?: string,
-): string {
-  const resolvedLocale = locale ?? getCurrencyLocale(currency);
+export function formatCurrencyWithCode(value: number, currency: string, locale?: string): string {
+  const resolvedLocale = locale ?? getCurrencyLocale(currency)
   const amount = new Intl.NumberFormat(resolvedLocale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(value);
-  return `${currency} ${amount}`;
+  }).format(value)
+  return `${currency} ${amount}`
 }
 
 function getNumberSeparators(locale: string) {
-  const parts = new Intl.NumberFormat(locale).formatToParts(12345.6);
-  const group = parts.find((part) => part.type === "group")?.value ?? ",";
-  const decimal = parts.find((part) => part.type === "decimal")?.value ?? ".";
-  return { group, decimal };
+  const parts = new Intl.NumberFormat(locale).formatToParts(12345.6)
+  const group = parts.find((part) => part.type === 'group')?.value ?? ','
+  const decimal = parts.find((part) => part.type === 'decimal')?.value ?? '.'
+  return { group, decimal }
 }
 
 export function parseCurrencyInput(
@@ -49,47 +41,41 @@ export function parseCurrencyInput(
   currency: string,
   locale?: string,
 ): number | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
+  const trimmed = input.trim()
+  if (!trimmed) return null
 
-  const resolvedLocale = locale ?? getCurrencyLocale(currency);
-  const { group, decimal } = getNumberSeparators(resolvedLocale);
-  const cleaned = trimmed.replace(/[^0-9,.\-]/g, "");
-  if (!cleaned || cleaned === "-" || cleaned === "." || cleaned === ",") {
-    return null;
+  const resolvedLocale = locale ?? getCurrencyLocale(currency)
+  const { group, decimal } = getNumberSeparators(resolvedLocale)
+  const cleaned = trimmed.replace(/[^0-9,.-]/g, '')
+  if (!cleaned || cleaned === '-' || cleaned === '.' || cleaned === ',') {
+    return null
   }
 
-  const lastDot = cleaned.lastIndexOf(".");
-  const lastComma = cleaned.lastIndexOf(",");
+  const lastDot = cleaned.lastIndexOf('.')
+  const lastComma = cleaned.lastIndexOf(',')
 
-  let normalized = cleaned;
+  let normalized = cleaned
   if (lastDot !== -1 || lastComma !== -1) {
     // Infer decimal separator by the rightmost punctuation.
-    const inferredDecimal = lastDot > lastComma ? "." : ",";
-    const inferredGroup = inferredDecimal === "." ? "," : ".";
-    normalized = normalized
-      .replaceAll(inferredGroup, "")
-      .replaceAll(inferredDecimal, ".");
+    const inferredDecimal = lastDot > lastComma ? '.' : ','
+    const inferredGroup = inferredDecimal === '.' ? ',' : '.'
+    normalized = normalized.replaceAll(inferredGroup, '').replaceAll(inferredDecimal, '.')
   } else {
     // No punctuation; keep locale cleanup behavior for completeness.
-    normalized = normalized.replaceAll(group, "").replaceAll(decimal, ".");
+    normalized = normalized.replaceAll(group, '').replaceAll(decimal, '.')
   }
 
-  normalized = normalized.replace(/[^0-9.-]/g, "");
+  normalized = normalized.replace(/[^0-9.-]/g, '')
 
-  if (!normalized || normalized === "-" || normalized === ".") return null;
+  if (!normalized || normalized === '-' || normalized === '.') return null
 
-  const value = Number(normalized);
-  return Number.isFinite(value) ? value : null;
+  const value = Number(normalized)
+  return Number.isFinite(value) ? value : null
 }
 
-export function formatCurrencyInput(
-  value: number,
-  currency: string,
-  locale?: string,
-): string {
+export function formatCurrencyInput(value: number, currency: string, locale?: string): string {
   return new Intl.NumberFormat(locale ?? getCurrencyLocale(currency), {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(value);
+  }).format(value)
 }

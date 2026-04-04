@@ -5,7 +5,6 @@ node_modules
 
 
 
-/generated/prisma
 /e2e-artifacts/**
 
 # clerk configuration (can include secrets)

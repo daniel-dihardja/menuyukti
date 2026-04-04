@@ -1,10 +1,9 @@
 """Database helpers for the GraphQL service."""
 
-from pathlib import Path
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
-
 from sqlalchemy import (
     CheckConstraint,
     Column,
@@ -22,7 +21,6 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env", override=False)

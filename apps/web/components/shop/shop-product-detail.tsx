@@ -1,97 +1,93 @@
-"use client";
+'use client'
 
-import Image from "next/image";
-import Link from "next/link";
-import { ChevronLeft, ChevronRight, Minus, Plus, Share2 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import Image from 'next/image'
+import Link from 'next/link'
+import { ChevronLeft, ChevronRight, Minus, Plus, Share2 } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
 
-import { Button } from "@workspace/ui/components/button";
+import { Button } from '@workspace/ui/components/button'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@workspace/ui/components/accordion";
+} from '@workspace/ui/components/accordion'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select";
+} from '@workspace/ui/components/select'
 
-import { routes } from "@/lib/routes";
+import { routes } from '@/lib/routes'
 
-import type { ShopProduct } from "./shop-catalog";
+import type { ShopProduct } from './shop-catalog'
 
 type Props = {
-  product: ShopProduct;
-};
+  product: ShopProduct
+}
 
 export function ShopProductDetail({ product }: Props) {
-  const [imageIndex, setImageIndex] = useState(0);
-  const [sizeId, setSizeId] = useState(product.sizes[0]?.id ?? "");
-  const [finishId, setFinishId] = useState(product.finishes[0]?.id ?? "");
-  const [quantity, setQuantity] = useState(1);
-  const [added, setAdded] = useState(false);
+  const [imageIndex, setImageIndex] = useState(0)
+  const [sizeId, setSizeId] = useState(product.sizes[0]?.id ?? '')
+  const [finishId, setFinishId] = useState(product.finishes[0]?.id ?? '')
+  const [quantity, setQuantity] = useState(1)
+  const [added, setAdded] = useState(false)
 
-  const images = product.images;
-  const active = images[imageIndex] ?? images[0];
+  const images = product.images
+  const active = images[imageIndex] ?? images[0]
 
   const selectedSize = useMemo(
     () => product.sizes.find((s) => s.id === sizeId) ?? product.sizes[0],
     [product.sizes, sizeId],
-  );
+  )
 
   const lineTotal = useMemo(() => {
-    if (!selectedSize) return "—";
-    const n = Number.parseFloat(selectedSize.price.replace(/[^0-9.]/g, ""));
-    if (Number.isNaN(n)) return selectedSize.price;
-    const total = n * quantity;
-    return `$${total.toFixed(2)}`;
-  }, [quantity, selectedSize]);
+    if (!selectedSize) return '—'
+    const n = Number.parseFloat(selectedSize.price.replace(/[^0-9.]/g, ''))
+    if (Number.isNaN(n)) return selectedSize.price
+    const total = n * quantity
+    return `$${total.toFixed(2)}`
+  }, [quantity, selectedSize])
 
   const goPrev = useCallback(() => {
-    setImageIndex((i) => (i === 0 ? images.length - 1 : i - 1));
-  }, [images.length]);
+    setImageIndex((i) => (i === 0 ? images.length - 1 : i - 1))
+  }, [images.length])
 
   const goNext = useCallback(() => {
-    setImageIndex((i) => (i === images.length - 1 ? 0 : i + 1));
-  }, [images.length]);
+    setImageIndex((i) => (i === images.length - 1 ? 0 : i + 1))
+  }, [images.length])
 
   const handleShare = useCallback(async () => {
-    const url =
-      typeof window !== "undefined" ? window.location.href : "";
+    const url = typeof window !== 'undefined' ? window.location.href : ''
     try {
       if (navigator.share) {
         await navigator.share({
           title: product.title,
           text: product.subtitle,
           url,
-        });
+        })
       } else {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(url)
       }
     } catch {
       /* user cancelled or clipboard denied */
     }
-  }, [product.subtitle, product.title]);
+  }, [product.subtitle, product.title])
 
   const handleAddToCart = useCallback(() => {
-    setAdded(true);
-    window.setTimeout(() => setAdded(false), 2500);
-  }, []);
+    setAdded(true)
+    window.setTimeout(() => setAdded(false), 2500)
+  }, [])
 
   const bumpQty = (delta: number) => {
-    setQuantity((q) => Math.min(20, Math.max(1, q + delta)));
-  };
+    setQuantity((q) => Math.min(20, Math.max(1, q + delta)))
+  }
 
   return (
     <div className="mb-24">
-      <nav
-        className="mb-10 text-sm text-muted-foreground"
-        aria-label="Breadcrumb"
-      >
+      <nav className="mb-10 text-sm text-muted-foreground" aria-label="Breadcrumb">
         <ol className="flex flex-wrap items-center gap-2">
           <li>
             <Link href={routes.shop} className="font-medium text-primary">
@@ -150,20 +146,12 @@ export function ShopProductDetail({ product }: Props) {
                 type="button"
                 onClick={() => setImageIndex(i)}
                 className={`relative size-20 shrink-0 overflow-hidden rounded-lg ring-2 ring-offset-2 ring-offset-background transition ${
-                  i === imageIndex
-                    ? "ring-ring"
-                    : "ring-transparent opacity-80 hover:opacity-100"
+                  i === imageIndex ? 'ring-ring' : 'ring-transparent opacity-80 hover:opacity-100'
                 }`}
                 aria-label={`Show ${img.label}`}
                 aria-pressed={i === imageIndex}
               >
-                <Image
-                  src={img.src}
-                  alt=""
-                  fill
-                  className="object-cover"
-                  sizes="80px"
-                />
+                <Image src={img.src} alt="" fill className="object-cover" sizes="80px" />
               </button>
             ))}
           </div>
@@ -184,13 +172,11 @@ export function ShopProductDetail({ product }: Props) {
                 From
               </p>
               <p className="font-[family-name:var(--font-shop-headline)] text-3xl font-bold text-primary">
-                {selectedSize?.price ?? "—"}
+                {selectedSize?.price ?? '—'}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Line total ({quantity}):{" "}
-                <span className="font-semibold text-foreground">
-                  {lineTotal}
-                </span>
+                Line total ({quantity}):{' '}
+                <span className="font-semibold text-foreground">{lineTotal}</span>
               </p>
             </div>
             <Button
@@ -275,12 +261,8 @@ export function ShopProductDetail({ product }: Props) {
               </div>
             </div>
 
-            <Button
-              type="button"
-              className="h-12 w-full"
-              onClick={handleAddToCart}
-            >
-              {added ? "Added (demo)" : "Add to cart"}
+            <Button type="button" className="h-12 w-full" onClick={handleAddToCart}>
+              {added ? 'Added (demo)' : 'Add to cart'}
             </Button>
             {added ? (
               <p className="text-center text-sm text-muted-foreground">
@@ -296,19 +278,15 @@ export function ShopProductDetail({ product }: Props) {
             <p className="leading-relaxed">{product.description}</p>
           </div>
 
-          <Accordion
-            type="single"
-            collapsible
-            className="mt-10 w-full border-t border-border"
-          >
+          <Accordion type="single" collapsible className="mt-10 w-full border-t border-border">
             <AccordionItem value="shipping">
               <AccordionTrigger className="font-[family-name:var(--font-shop-headline)] hover:no-underline">
                 Production and shipping
               </AccordionTrigger>
               <AccordionContent className="leading-relaxed text-muted-foreground">
-                Each order is printed after checkout—allow 3–5 business days for
-                production plus transit time. Tracking is sent when your package
-                leaves our partner lab. International delivery may incur duties.
+                Each order is printed after checkout—allow 3–5 business days for production plus
+                transit time. Tracking is sent when your package leaves our partner lab.
+                International delivery may incur duties.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="returns">
@@ -316,10 +294,9 @@ export function ShopProductDetail({ product }: Props) {
                 Returns and reprints
               </AccordionTrigger>
               <AccordionContent className="leading-relaxed text-muted-foreground">
-                Because pieces are made to order, returns are limited to damage
-                in transit or print defects—contact us within 14 days with
-                photos of the packaging and item. Color variation up to 10%
-                versus your screen is normal for giclée and canvas.
+                Because pieces are made to order, returns are limited to damage in transit or print
+                defects—contact us within 14 days with photos of the packaging and item. Color
+                variation up to 10% versus your screen is normal for giclée and canvas.
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="care">
@@ -327,10 +304,9 @@ export function ShopProductDetail({ product }: Props) {
                 Care
               </AccordionTrigger>
               <AccordionContent className="leading-relaxed text-muted-foreground">
-                Handle framed and canvas works with clean, dry hands. Dust
-                lightly with a soft microfiber cloth; avoid household cleaners
-                on the print surface. Keep out of direct sunlight to preserve
-                color for years in hospitality environments.
+                Handle framed and canvas works with clean, dry hands. Dust lightly with a soft
+                microfiber cloth; avoid household cleaners on the print surface. Keep out of direct
+                sunlight to preserve color for years in hospitality environments.
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -345,5 +321,5 @@ export function ShopProductDetail({ product }: Props) {
         </div>
       </div>
     </div>
-  );
+  )
 }

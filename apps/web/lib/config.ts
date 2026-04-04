@@ -5,8 +5,7 @@
  * `AGENTS_API_URL` is accepted as an alias for older / e2e configs.
  */
 export function getAgentsBaseUrl(): string | null {
-  const raw =
-    process.env.AGENTS_URL?.trim() || process.env.AGENTS_API_URL?.trim();
-  if (!raw) return null;
-  return raw.replace(/\/$/, "");
+  const raw = process.env.AGENTS_URL?.trim() || process.env.AGENTS_API_URL?.trim()
+  if (!raw) return null
+  return raw.replace(/\/$/, '')
 }

@@ -1,47 +1,40 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs";
-import {
-  DAILY_HEATMAP_END_HOUR,
-  DAILY_HEATMAP_START_HOUR,
-} from "@/lib/heatmap-config";
-import { HeatmapMatrix } from "./heatmap-matrix";
-import type { HeatmapMatrixResult } from "./heatmap.adapters";
+import { useState } from 'react'
+import { useTranslations } from 'next-intl'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
+import { DAILY_HEATMAP_END_HOUR, DAILY_HEATMAP_START_HOUR } from '@/lib/heatmap-config'
+import { HeatmapMatrix } from './heatmap-matrix'
+import type { HeatmapMatrixResult } from './heatmap.adapters'
 
 type HeatmapViewProps = {
-  dailyMatrix: HeatmapMatrixResult;
-  weeklyMatrix: HeatmapMatrixResult;
-};
+  dailyMatrix: HeatmapMatrixResult
+  weeklyMatrix: HeatmapMatrixResult
+}
 
 export function HeatmapView({ dailyMatrix, weeklyMatrix }: HeatmapViewProps) {
-  const t = useTranslations("analytics.heatmap");
-  const [view, setView] = useState<"daily" | "weekly">("daily");
+  const t = useTranslations('analytics.heatmap')
+  const [view, setView] = useState<'daily' | 'weekly'>('daily')
 
-  const dailyEmpty = dailyMatrix.rows.length === 0;
-  const weeklyEmpty = weeklyMatrix.rows.length === 0;
+  const dailyEmpty = dailyMatrix.rows.length === 0
+  const weeklyEmpty = weeklyMatrix.rows.length === 0
 
   if (dailyEmpty && weeklyEmpty) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No heatmap data for this run.
-      </p>
-    );
+    return <p className="text-sm text-muted-foreground">No heatmap data for this run.</p>
   }
 
-  const dailyTitle = t("dailyTitle", {
+  const dailyTitle = t('dailyTitle', {
     startHour: DAILY_HEATMAP_START_HOUR,
     endHour: DAILY_HEATMAP_END_HOUR,
-  });
-  const weeklyTitle = t("weeklyTitle");
+  })
+  const weeklyTitle = t('weeklyTitle')
 
   return (
     <div className="space-y-4">
-      <Tabs value={view} onValueChange={(v) => setView(v as "daily" | "weekly")}>
+      <Tabs value={view} onValueChange={(v) => setView(v as 'daily' | 'weekly')}>
         <TabsList>
-          <TabsTrigger value="daily">{t("tabs.daily")}</TabsTrigger>
-          <TabsTrigger value="weekly">{t("tabs.weekly")}</TabsTrigger>
+          <TabsTrigger value="daily">{t('tabs.daily')}</TabsTrigger>
+          <TabsTrigger value="weekly">{t('tabs.weekly')}</TabsTrigger>
         </TabsList>
         <TabsContent value="daily" className="mt-4">
           {dailyEmpty ? (
@@ -73,5 +66,5 @@ export function HeatmapView({ dailyMatrix, weeklyMatrix }: HeatmapViewProps) {
         </TabsContent>
       </Tabs>
     </div>
-  );
+  )
 }

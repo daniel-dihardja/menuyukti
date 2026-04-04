@@ -1,24 +1,24 @@
-"use client";
+'use client'
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react'
 import {
   Artifact,
   ArtifactContent,
   ArtifactDescription,
   ArtifactHeader,
   ArtifactTitle,
-} from "@workspace/ui/components/ai-elements/artifact";
-import { MessageResponse } from "@workspace/ui/components/ai-elements/message";
-import { Button } from "@workspace/ui/components/button";
-import { DatePicker } from "@workspace/ui/components/date-picker";
-import { Textarea } from "@workspace/ui/components/textarea";
+} from '@workspace/ui/components/ai-elements/artifact'
+import { MessageResponse } from '@workspace/ui/components/ai-elements/message'
+import { Button } from '@workspace/ui/components/button'
+import { DatePicker } from '@workspace/ui/components/date-picker'
+import { Textarea } from '@workspace/ui/components/textarea'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select";
+} from '@workspace/ui/components/select'
 import {
   CalendarIcon,
   DatabaseIcon,
@@ -28,120 +28,92 @@ import {
   MapPinIcon,
   SparklesIcon,
   XIcon,
-} from "lucide-react";
+} from 'lucide-react'
 
 export type NationalHoliday = {
-  id: string;
-  localName: string;
-  name: string;
-  date: string;
-  type?: string;
-};
-
-export type PostSlot = {
-  scheduled_date: string;
-  scheduled_time?: string;
-  theme: "holiday" | "promotion" | "engagement";
-  format: "single" | "carousel";
-  focus_item: string | null;
-  carousel_items: string[] | null;
-  carousel_narrative: string | null;
-  caption_seed: string;
-};
-
-export type CampaignBrief = {
-  campaign_theme: string;
-  tone: string;
-  target_audience: string;
-  posting_cadence: string;
-  post_slots: PostSlot[];
-};
-
-export type PlanningArtifact = {
-  dateStart: string;
-  dateEnd: string;
-  nationalHolidays?: NationalHoliday[] | null;
-  locationSummary?: string | null;
-  locationProfileId?: number | null;
-  campaignBrief?: CampaignBrief | null;
-};
-
-type AnalyticsRun = { id: string; name: string; filename: string };
-
-type AiArtifactPanelProps = {
-  planning?: PlanningArtifact;
-  campaignDates: { dateStart: string; dateEnd: string };
-  onDatesChange: (dates: { dateStart: string; dateEnd: string }) => void;
-  onCreateCampaign?: () => void;
-  onCreateLocationProfile?: () => void;
-  onDeleteLocationProfile?: () => void;
-  analyticsRuns?: AnalyticsRun[];
-  selectedAnalyticsId?: number | null;
-  onAnalyticsIdChange?: (id: number | null) => void;
-  isStreaming?: boolean;
-  isLoadingHolidays?: boolean;
-  onLocationFeedback?: (feedback: string) => void;
-  onCreateCampaignBrief?: (theme?: string) => void;
-  onDeleteCampaignBrief?: () => void;
-};
-
-function selectedReportLabel(
-  analyticsRuns: AnalyticsRun[] | undefined,
-  selectedAnalyticsId: number | null | undefined
-): string {
-  if (selectedAnalyticsId === null || selectedAnalyticsId === undefined || !analyticsRuns?.length) {
-    return "No report selected";
-  }
-  const run = analyticsRuns.find((r) => r.id === String(selectedAnalyticsId));
-  if (!run) return "No report selected";
-  return run.name || run.filename;
+  id: string
+  localName: string
+  name: string
+  date: string
+  type?: string
 }
 
-type HolidayItem = {
-  localName: string;
-  englishName: string;
-  date?: string;
-};
+export type PostSlot = {
+  scheduled_date: string
+  scheduled_time?: string
+  theme: 'holiday' | 'promotion' | 'engagement'
+  format: 'single' | 'carousel'
+  focus_item: string | null
+  carousel_items: string[] | null
+  carousel_narrative: string | null
+  caption_seed: string
+}
 
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr + "T00:00:00");
-  return date.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+export type CampaignBrief = {
+  campaign_theme: string
+  tone: string
+  target_audience: string
+  posting_cadence: string
+  post_slots: PostSlot[]
+}
+
+export type PlanningArtifact = {
+  dateStart: string
+  dateEnd: string
+  nationalHolidays?: NationalHoliday[] | null
+  locationSummary?: string | null
+  locationProfileId?: number | null
+  campaignBrief?: CampaignBrief | null
+}
+
+type AnalyticsRun = { id: string; name: string; filename: string }
+
+type AiArtifactPanelProps = {
+  planning?: PlanningArtifact
+  campaignDates: { dateStart: string; dateEnd: string }
+  onDatesChange: (dates: { dateStart: string; dateEnd: string }) => void
+  onCreateCampaign?: () => void
+  onCreateLocationProfile?: () => void
+  onDeleteLocationProfile?: () => void
+  analyticsRuns?: AnalyticsRun[]
+  selectedAnalyticsId?: number | null
+  onAnalyticsIdChange?: (id: number | null) => void
+  isStreaming?: boolean
+  isLoadingHolidays?: boolean
+  onLocationFeedback?: (feedback: string) => void
+  onCreateCampaignBrief?: (theme?: string) => void
+  onDeleteCampaignBrief?: () => void
 }
 
 /** e.g. Fri, 03.04. — weekday plus day.month with dots */
 function formatPostScheduleDateLabel(dateStr: string): string {
-  const date = new Date(dateStr + "T00:00:00");
-  const wd = date.toLocaleDateString("en-US", { weekday: "short" });
-  const dd = String(date.getDate()).padStart(2, "0");
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  return `${wd}, ${dd}.${mm}.`;
+  const date = new Date(dateStr + 'T00:00:00')
+  const wd = date.toLocaleDateString('en-US', { weekday: 'short' })
+  const dd = String(date.getDate()).padStart(2, '0')
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  return `${wd}, ${dd}.${mm}.`
 }
 
 function slotPromotedItemsLine(slot: PostSlot): string {
-  const fmt = (slot.format ?? "single").toLowerCase();
-  if (fmt === "carousel" && slot.carousel_items && slot.carousel_items.length > 0) {
-    return slot.carousel_items.join(" · ");
+  const fmt = (slot.format ?? 'single').toLowerCase()
+  if (fmt === 'carousel' && slot.carousel_items && slot.carousel_items.length > 0) {
+    return slot.carousel_items.join(' · ')
   }
-  if (slot.focus_item) return slot.focus_item;
-  return "—";
+  if (slot.focus_item) return slot.focus_item
+  return '—'
 }
 
-const THEME_STYLES: Record<PostSlot["theme"], string> = {
-  holiday: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  promotion: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  engagement: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-};
+const THEME_STYLES: Record<PostSlot['theme'], string> = {
+  holiday: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  promotion: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  engagement: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+}
 
 export function AiArtifactPanel({
   planning,
   campaignDates,
   onDatesChange,
-  onCreateCampaign,
+  onCreateCampaign: _onCreateCampaign,
   onCreateLocationProfile,
   onDeleteLocationProfile,
   analyticsRuns,
@@ -153,37 +125,37 @@ export function AiArtifactPanel({
   onCreateCampaignBrief,
   onDeleteCampaignBrief,
 }: AiArtifactPanelProps) {
+  void _onCreateCampaign
   const holidays = planning?.nationalHolidays
     ? planning.nationalHolidays.map((h) => ({
         localName: h.localName,
         englishName: h.name,
         date: h.date || undefined,
       }))
-    : null;
+    : null
 
-  const hasSalesReportSelected =
-    selectedAnalyticsId !== null && selectedAnalyticsId !== undefined;
+  const hasSalesReportSelected = selectedAnalyticsId !== null && selectedAnalyticsId !== undefined
 
-  const [locationFeedback, setLocationFeedback] = useState("");
-  const [campaignTheme, setCampaignTheme] = useState("");
+  const [locationFeedback, setLocationFeedback] = useState('')
+  const [campaignTheme, setCampaignTheme] = useState('')
 
   // Clear feedback when location profile is deleted/disappears
   useEffect(() => {
     if (!planning?.locationSummary || planning.locationSummary.trim().length === 0) {
-      setLocationFeedback("");
+      setLocationFeedback('')
     }
-  }, [planning?.locationSummary]);
+  }, [planning?.locationSummary])
 
   // Clear campaign theme when brief exists or location profile disappears
   useEffect(() => {
     if (!planning?.locationSummary || planning.locationSummary.trim().length === 0) {
-      setCampaignTheme("");
-      return;
+      setCampaignTheme('')
+      return
     }
     if (planning?.campaignBrief != null) {
-      setCampaignTheme("");
+      setCampaignTheme('')
     }
-  }, [planning?.locationSummary, planning?.campaignBrief]);
+  }, [planning?.locationSummary, planning?.campaignBrief])
 
   return (
     <Artifact className="size-full">
@@ -201,30 +173,22 @@ export function AiArtifactPanel({
             </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-4">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Start date
-                </p>
+                <p className="text-xs font-medium text-muted-foreground">Start date</p>
                 <div className="w-52">
                   <DatePicker
                     value={campaignDates.dateStart}
-                    onChange={(date) =>
-                      onDatesChange({ ...campaignDates, dateStart: date })
-                    }
+                    onChange={(date) => onDatesChange({ ...campaignDates, dateStart: date })}
                     disabled={isStreaming}
                   />
                 </div>
               </div>
               <div className="border-t" />
               <div className="flex items-center justify-between gap-4">
-                <p className="text-xs font-medium text-muted-foreground">
-                  End date
-                </p>
+                <p className="text-xs font-medium text-muted-foreground">End date</p>
                 <div className="w-52">
                   <DatePicker
                     value={campaignDates.dateEnd}
-                    onChange={(date) =>
-                      onDatesChange({ ...campaignDates, dateEnd: date })
-                    }
+                    onChange={(date) => onDatesChange({ ...campaignDates, dateEnd: date })}
                     disabled={isStreaming}
                   />
                 </div>
@@ -289,9 +253,7 @@ export function AiArtifactPanel({
               Analytics Run
             </div>
             <div>
-              <p className="mb-1.5 text-xs font-medium text-muted-foreground">
-                Sales report
-              </p>
+              <p className="mb-1.5 text-xs font-medium text-muted-foreground">Sales report</p>
               <Select
                 value={
                   selectedAnalyticsId !== null && selectedAnalyticsId !== undefined
@@ -328,11 +290,7 @@ export function AiArtifactPanel({
                 className="w-full"
                 onClick={onCreateLocationProfile}
                 disabled={isStreaming || !hasSalesReportSelected}
-                title={
-                  !hasSalesReportSelected
-                    ? "Select an analytics run first"
-                    : undefined
-                }
+                title={!hasSalesReportSelected ? 'Select an analytics run first' : undefined}
               >
                 <MapPinIcon className="size-4" />
                 Create location profile
@@ -354,8 +312,8 @@ export function AiArtifactPanel({
                 {!planning?.campaignBrief && (
                   <Button
                     onClick={() => {
-                      if (window.confirm("Delete this location profile? This cannot be undone.")) {
-                        onDeleteLocationProfile?.();
+                      if (window.confirm('Delete this location profile? This cannot be undone.')) {
+                        onDeleteLocationProfile?.()
                       }
                     }}
                     disabled={isStreaming}
@@ -373,7 +331,8 @@ export function AiArtifactPanel({
               </MessageResponse>
               <div className="mt-4 border-t pt-4 space-y-2">
                 <p className="text-xs text-muted-foreground">
-                  Have feedback on this profile? Describe any corrections or additions and the AI will update it.
+                  Have feedback on this profile? Describe any corrections or additions and the AI
+                  will update it.
                 </p>
                 <Textarea
                   placeholder="e.g. The restaurant focuses on vegan cuisine, not general Italian…"
@@ -388,9 +347,9 @@ export function AiArtifactPanel({
                   variant="secondary"
                   disabled={isStreaming || !locationFeedback.trim()}
                   onClick={() => {
-                    if (!locationFeedback.trim()) return;
-                    onLocationFeedback?.(locationFeedback.trim());
-                    setLocationFeedback("");
+                    if (!locationFeedback.trim()) return
+                    onLocationFeedback?.(locationFeedback.trim())
+                    setLocationFeedback('')
                   }}
                 >
                   Send Feedback
@@ -419,9 +378,9 @@ export function AiArtifactPanel({
                 <Button
                   className="mt-3 w-full"
                   onClick={() => {
-                    const trimmed = campaignTheme.trim();
-                    onCreateCampaignBrief?.(trimmed || undefined);
-                    setCampaignTheme("");
+                    const trimmed = campaignTheme.trim()
+                    onCreateCampaignBrief?.(trimmed || undefined)
+                    setCampaignTheme('')
                   }}
                   disabled={isStreaming}
                 >
@@ -442,10 +401,10 @@ export function AiArtifactPanel({
                     onClick={() => {
                       if (
                         window.confirm(
-                          "Delete this campaign brief? Post schedule data saved on the brief will be removed. This cannot be undone."
+                          'Delete this campaign brief? Post schedule data saved on the brief will be removed. This cannot be undone.',
                         )
                       ) {
-                        onDeleteCampaignBrief();
+                        onDeleteCampaignBrief()
                       }
                     }}
                     disabled={isStreaming}
@@ -508,15 +467,15 @@ export function AiArtifactPanel({
                 </div>
                 <div className="flex items-center gap-1.5">
                   {planning?.campaignBrief?.post_slots.some(
-                    (s) => (s.format ?? "single").toLowerCase() === "carousel"
+                    (s) => (s.format ?? 'single').toLowerCase() === 'carousel',
                   ) && (
                     <span className="flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
                       <GalleryHorizontalIcon className="size-3" />
                       {
                         planning?.campaignBrief?.post_slots.filter(
-                          (s) => (s.format ?? "single").toLowerCase() === "carousel"
+                          (s) => (s.format ?? 'single').toLowerCase() === 'carousel',
                         ).length
-                      }{" "}
+                      }{' '}
                       carousel
                     </span>
                   )}
@@ -527,58 +486,59 @@ export function AiArtifactPanel({
               </div>
               <div className="space-y-3">
                 {planning?.campaignBrief?.post_slots.map((slot, idx) => {
-                  const isCarousel =
-                    (slot.format ?? "single").toLowerCase() === "carousel";
+                  const isCarousel = (slot.format ?? 'single').toLowerCase() === 'carousel'
                   return (
-                  <div key={idx}>
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex w-[5.5rem] shrink-0 flex-col">
-                        <span className="text-xs font-semibold leading-tight text-foreground">
-                          {formatPostScheduleDateLabel(slot.scheduled_date)}
-                        </span>
-                        {slot.scheduled_time && (
-                          <span className="font-mono text-xs text-muted-foreground">
-                            {slot.scheduled_time}
+                    <div key={idx}>
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5 flex w-[5.5rem] shrink-0 flex-col">
+                          <span className="text-xs font-semibold leading-tight text-foreground">
+                            {formatPostScheduleDateLabel(slot.scheduled_date)}
                           </span>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium leading-snug text-foreground">
-                          {slotPromotedItemsLine(slot)}
-                        </p>
-                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${THEME_STYLES[slot.theme]}`}
-                          >
-                            {slot.theme}
-                          </span>
-                          {isCarousel ? (
-                            <span className="flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
-                              <GalleryHorizontalIcon className="size-3" />
-                              Carousel
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                              Single
+                          {slot.scheduled_time && (
+                            <span className="font-mono text-xs text-muted-foreground">
+                              {slot.scheduled_time}
                             </span>
                           )}
                         </div>
-                        {isCarousel && slot.carousel_narrative && (
-                          <p className="mt-1.5 text-xs italic text-muted-foreground">
-                            {slot.carousel_narrative}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium leading-snug text-foreground">
+                            {slotPromotedItemsLine(slot)}
                           </p>
-                        )}
-                        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                          <span className="mr-1 font-medium text-muted-foreground/60">Caption seed:</span>
-                          {slot.caption_seed}
-                        </p>
+                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${THEME_STYLES[slot.theme]}`}
+                            >
+                              {slot.theme}
+                            </span>
+                            {isCarousel ? (
+                              <span className="flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                                <GalleryHorizontalIcon className="size-3" />
+                                Carousel
+                              </span>
+                            ) : (
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                Single
+                              </span>
+                            )}
+                          </div>
+                          {isCarousel && slot.carousel_narrative && (
+                            <p className="mt-1.5 text-xs italic text-muted-foreground">
+                              {slot.carousel_narrative}
+                            </p>
+                          )}
+                          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                            <span className="mr-1 font-medium text-muted-foreground/60">
+                              Caption seed:
+                            </span>
+                            {slot.caption_seed}
+                          </p>
+                        </div>
                       </div>
+                      {idx < (planning?.campaignBrief?.post_slots.length ?? 0) - 1 && (
+                        <div className="mt-3 border-t" />
+                      )}
                     </div>
-                    {idx < (planning?.campaignBrief?.post_slots.length ?? 0) - 1 && (
-                      <div className="mt-3 border-t" />
-                    )}
-                  </div>
-                  );
+                  )
                 })}
               </div>
             </div>
@@ -586,5 +546,5 @@ export function AiArtifactPanel({
         </div>
       </ArtifactContent>
     </Artifact>
-  );
+  )
 }

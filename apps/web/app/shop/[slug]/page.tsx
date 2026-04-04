@@ -1,52 +1,43 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 
-import { CopyrightFooter } from "@/components/copyright-footer";
-import { ShopProductDetail } from "@/components/shop/shop-product-detail";
-import {
-  getShopProductBySlug,
-  getShopProductSlugs,
-} from "@/components/shop/shop-catalog";
+import { CopyrightFooter } from '@/components/copyright-footer'
+import { ShopProductDetail } from '@/components/shop/shop-product-detail'
+import { getShopProductBySlug, getShopProductSlugs } from '@/components/shop/shop-catalog'
 
 type PageProps = {
-  params: Promise<{ slug: string }>;
-};
-
-export function generateStaticParams() {
-  return getShopProductSlugs().map((slug) => ({ slug }));
+  params: Promise<{ slug: string }>
 }
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const product = getShopProductBySlug(slug);
+export function generateStaticParams() {
+  return getShopProductSlugs().map((slug) => ({ slug }))
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params
+  const product = getShopProductBySlug(slug)
   if (!product) {
-    return { title: "Product | The Digital Curator" };
+    return { title: 'Product | The Digital Curator' }
   }
-  const hero = product.images[0];
+  const hero = product.images[0]
   const description =
-    product.description.length > 155
-      ? `${product.description.slice(0, 152)}…`
-      : product.description;
+    product.description.length > 155 ? `${product.description.slice(0, 152)}…` : product.description
   return {
     title: `${product.title} | The Digital Curator`,
     description,
     openGraph: {
       title: product.title,
       description,
-      images: hero
-        ? [{ url: hero.src, alt: hero.alt }]
-        : undefined,
+      images: hero ? [{ url: hero.src, alt: hero.alt }] : undefined,
     },
-  };
+  }
 }
 
 export default async function ShopProductPage({ params }: PageProps) {
-  const { slug } = await params;
-  const product = getShopProductBySlug(slug);
+  const { slug } = await params
+  const product = getShopProductBySlug(slug)
   if (!product) {
-    notFound();
+    notFound()
   }
 
   return (
@@ -56,5 +47,5 @@ export default async function ShopProductPage({ params }: PageProps) {
       </main>
       <CopyrightFooter />
     </div>
-  );
+  )
 }

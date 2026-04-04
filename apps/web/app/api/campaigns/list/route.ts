@@ -1,10 +1,7 @@
-import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { graphqlQuery } from "@/lib/graphql/client";
-import {
-  CAMPAIGNS_BY_LOCATION_QUERY,
-  type CampaignsByLocationData,
-} from "@/lib/graphql/queries";
+import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
+import { graphqlQuery } from '@/lib/graphql/client'
+import { CAMPAIGNS_BY_LOCATION_QUERY, type CampaignsByLocationData } from '@/lib/graphql/queries'
 
 /**
  * GET /api/campaigns/list?locationId=...
@@ -12,27 +9,27 @@ import {
  */
 export async function GET(req: Request) {
   try {
-    const { userId } = await auth();
+    const { userId } = await auth()
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { searchParams } = new URL(req.url);
-    const locationIdParam = searchParams.get("locationId");
-    const locationId = locationIdParam ? Number(locationIdParam) : null;
+    const { searchParams } = new URL(req.url)
+    const locationIdParam = searchParams.get('locationId')
+    const locationId = locationIdParam ? Number(locationIdParam) : null
 
     if (locationId == null || !Number.isInteger(locationId)) {
       return NextResponse.json(
-        { error: "locationId is required and must be an integer" },
-        { status: 400 }
-      );
+        { error: 'locationId is required and must be an integer' },
+        { status: 400 },
+      )
     }
 
     const data = await graphqlQuery<CampaignsByLocationData>(
       CAMPAIGNS_BY_LOCATION_QUERY,
       { locationId },
-      userId
-    );
+      userId,
+    )
 
     const campaigns = (data.campaigns ?? []).map((c) => ({
       id: Number(c.id),
@@ -41,13 +38,12 @@ export async function GET(req: Request) {
       startDate: c.startDate ?? null,
       endDate: c.endDate ?? null,
       goal: c.goal ?? null,
-    }));
+    }))
 
-    return NextResponse.json(campaigns);
+    return NextResponse.json(campaigns)
   } catch (err) {
-    console.error("Campaigns list failed:", err);
-    const message =
-      err instanceof Error ? err.message : "Failed to load campaigns";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('Campaigns list failed:', err)
+    const message = err instanceof Error ? err.message : 'Failed to load campaigns'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

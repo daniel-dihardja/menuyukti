@@ -1,85 +1,74 @@
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
-import { auth } from "@clerk/nextjs/server";
-import { Button } from "@workspace/ui/components/button";
-import { getTranslations } from "next-intl/server";
-import Link from "next/link";
-import { routes } from "@/lib/routes";
-import { notFound } from "next/navigation";
-import { AnalyticsPageShell } from "@/components/analytics-page-shell";
-import { PageHeading } from "@/components/page-heading";
-import { graphqlQuery } from "@/lib/graphql/client";
+import { auth } from '@clerk/nextjs/server'
+import { Button } from '@workspace/ui/components/button'
+import { getTranslations } from 'next-intl/server'
+import Link from 'next/link'
+import { routes } from '@/lib/routes'
+import { notFound } from 'next/navigation'
+import { AnalyticsPageShell } from '@/components/analytics-page-shell'
+import { PageHeading } from '@/components/page-heading'
+import { graphqlQuery } from '@/lib/graphql/client'
 import {
   ANALYTICS_RUN_QUERY,
   MENU_ENGINEERING_MATRIX_QUERY,
   type AnalyticsRunData,
   type MenuEngineeringMatrixData,
-} from "@/lib/graphql/queries";
-import { getAppCurrencyCode, getAppCurrencyLocale } from "@/lib/app-currency";
-import { matrixItemsToGroupedRows } from "@/lib/analytics/matrix-page-adapter";
-import { MatrixCategoryTables } from "./matrix-category-tables";
+} from '@/lib/graphql/queries'
+import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
+import { matrixItemsToGroupedRows } from '@/lib/analytics/matrix-page-adapter'
+import { MatrixCategoryTables } from './matrix-category-tables'
 
 type PageProps = {
-  params: Promise<{ analyticsId?: string }>;
-};
+  params: Promise<{ analyticsId?: string }>
+}
 
 export default async function Page({ params }: PageProps) {
-  const { userId } = await auth();
+  const { userId } = await auth()
   if (!userId) {
-    notFound();
+    notFound()
   }
 
-  const tSales = await getTranslations("analytics.sales");
-  const tMatrix = await getTranslations("analytics.matrix");
+  const tSales = await getTranslations('analytics.sales')
+  const tMatrix = await getTranslations('analytics.matrix')
 
-  const { analyticsId: analyticsIdParam } = await params;
-  if (!analyticsIdParam) notFound();
+  const { analyticsId: analyticsIdParam } = await params
+  if (!analyticsIdParam) notFound()
 
-  const analyticsId = Number(analyticsIdParam);
-  if (!Number.isInteger(analyticsId)) notFound();
+  const analyticsId = Number(analyticsIdParam)
+  if (!Number.isInteger(analyticsId)) notFound()
 
-  const id = String(analyticsId);
+  const id = String(analyticsId)
   const [runData, matrixData] = await Promise.all([
     graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }, userId),
-    graphqlQuery<MenuEngineeringMatrixData>(
-      MENU_ENGINEERING_MATRIX_QUERY,
-      { id },
-      userId
-    ),
-  ]);
+    graphqlQuery<MenuEngineeringMatrixData>(MENU_ENGINEERING_MATRIX_QUERY, { id }, userId),
+  ])
 
-  const run = runData.analyticsRun;
-  if (!run) notFound();
+  const run = runData.analyticsRun
+  if (!run) notFound()
 
-  const analyticsName =
-    run.name ?? run.filename ?? `Analytics #${run.id}`;
+  const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
 
-  const items = matrixData.menuEngineeringMatrix?.items ?? null;
-  const grouped = matrixItemsToGroupedRows(items);
+  const items = matrixData.menuEngineeringMatrix?.items ?? null
+  const grouped = matrixItemsToGroupedRows(items)
   const totalItems =
-    grouped.star.length +
-    grouped.plow_horse.length +
-    grouped.puzzle.length +
-    grouped.low_end.length;
+    grouped.star.length + grouped.plow_horse.length + grouped.puzzle.length + grouped.low_end.length
 
-  const locale = getAppCurrencyLocale();
-  const currency = getAppCurrencyCode();
+  const locale = getAppCurrencyLocale()
+  const currency = getAppCurrencyCode()
 
   return (
     <AnalyticsPageShell
-      title={tMatrix("reportTitle")}
+      title={tMatrix('reportTitle')}
       breadcrumbs={[
-        { label: tSales("title"), href: routes.analytics.sales },
+        { label: tSales('title'), href: routes.analytics.sales },
         { label: analyticsName },
-        { label: tMatrix("breadcrumb") },
+        { label: tMatrix('breadcrumb') },
       ]}
     >
       <section className="border rounded-md p-6 space-y-4">
-        <PageHeading
-          title={tMatrix("heading")}
-          description={tMatrix("description")}
-        />
+        <PageHeading title={tMatrix('heading')} description={tMatrix('description')} />
         <Button asChild>
           <Link href={routes.analytics.sales}>Back to Sales</Link>
         </Button>
@@ -89,13 +78,9 @@ export default async function Page({ params }: PageProps) {
             No matrix data for this run.
           </div>
         ) : (
-          <MatrixCategoryTables
-            grouped={grouped}
-            locale={locale}
-            currency={currency}
-          />
+          <MatrixCategoryTables grouped={grouped} locale={locale} currency={currency} />
         )}
       </section>
     </AnalyticsPageShell>
-  );
+  )
 }

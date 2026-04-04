@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import Link from "next/link";
+import Link from 'next/link'
 import {
   Table,
   TableBody,
@@ -8,36 +8,36 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table";
-import { Button } from "@workspace/ui/components/button";
+} from '@workspace/ui/components/table'
+import { Button } from '@workspace/ui/components/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
-import { Coins, Flame, MoreHorizontal, Sparkles, Table2, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { routes } from "@/lib/routes";
+} from '@workspace/ui/components/dropdown-menu'
+import { Coins, Flame, MoreHorizontal, Sparkles, Table2, Trash2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { routes } from '@/lib/routes'
 
 interface SalesTableProps {
-  uploads: Array<{ id: number; name: string }>;
-  onDelete: (analyticsId: number) => void;
-  onCogs: (analyticsId: number) => void;
+  uploads: Array<{ id: number; name: string }>
+  onDelete: (analyticsId: number) => void
+  onCogs: (analyticsId: number) => void
 }
 
 export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
-  const t = useTranslations("analytics.sales.table");
+  const t = useTranslations('analytics.sales.table')
 
   return (
     <div className="border w-full">
       <Table className="w-full">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[60px]">{t("index")}</TableHead>
-            <TableHead>{t("fileName")}</TableHead>
-            <TableHead className="text-right w-[80px]">{t("action")}</TableHead>
+            <TableHead className="w-[60px]">{t('index')}</TableHead>
+            <TableHead>{t('fileName')}</TableHead>
+            <TableHead className="text-right w-[80px]">{t('action')}</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -58,12 +58,9 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
 
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.campaigns.list}
-                        className="flex items-center gap-2"
-                      >
+                      <Link href={routes.campaigns.list} className="flex items-center gap-2">
                         <Sparkles className="h-4 w-4" />
-                        {t("askAi")}
+                        {t('askAi')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -71,7 +68,7 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                       className="flex items-center gap-2"
                     >
                       <Coins className="h-4 w-4" />
-                      {t("cogs")}
+                      {t('cogs')}
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link
@@ -79,7 +76,7 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                         className="flex items-center gap-2"
                       >
                         <Table2 className="h-4 w-4" />
-                        {t("matrix")}
+                        {t('matrix')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -88,7 +85,7 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                         className="flex items-center gap-2"
                       >
                         <Flame className="h-4 w-4" />
-                        {t("heatmap")}
+                        {t('heatmap')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -97,7 +94,7 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                       onClick={() => onDelete(row.id)}
                     >
                       <Trash2 className="h-4 w-4" />
-                      {t("delete")}
+                      {t('delete')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -107,5 +104,5 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
         </TableBody>
       </Table>
     </div>
-  );
+  )
 }

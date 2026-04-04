@@ -48,20 +48,20 @@ make test
 
 ### Makefile targets (per suite / per case)
 
-| Target | What it runs |
-|--------|----------------|
-| `make eval` | All tests in `./eval/...` |
-| `make eval-intent` | Intent routing suite |
-| `make eval-intent-campaign` | `campaign_intent` |
-| `make eval-intent-chat` | `chat_intent` |
-| `make eval-intent-unknown` | `unknown_label_falls_back_to_default_chat` |
-| `make eval-intent-ambiguous` | `ambiguous_defaults_to_chat` |
-| `make eval-location` | Location profile suite (all subtests) |
-| `make eval-location-profile-exists` | Existing profile skips create |
-| `make eval-location-missing-ids` | Missing `location_id` / `analytics_id` |
-| `make eval-location-inference` | Inference-only profile creation (mocked LLM + saver) |
-| `make eval-location-operating` | Profile creation with operating data (`MaxReflectionIterations: 0`) |
-| `make eval-live` | Live LLM tests (`-tags=integration`, needs `OPENAI_API_KEY`) |
+| Target                              | What it runs                                                        |
+| ----------------------------------- | ------------------------------------------------------------------- |
+| `make eval`                         | All tests in `./eval/...`                                           |
+| `make eval-intent`                  | Intent routing suite                                                |
+| `make eval-intent-campaign`         | `campaign_intent`                                                   |
+| `make eval-intent-chat`             | `chat_intent`                                                       |
+| `make eval-intent-unknown`          | `unknown_label_falls_back_to_default_chat`                          |
+| `make eval-intent-ambiguous`        | `ambiguous_defaults_to_chat`                                        |
+| `make eval-location`                | Location profile suite (all subtests)                               |
+| `make eval-location-profile-exists` | Existing profile skips create                                       |
+| `make eval-location-missing-ids`    | Missing `location_id` / `analytics_id`                              |
+| `make eval-location-inference`      | Inference-only profile creation (mocked LLM + saver)                |
+| `make eval-location-operating`      | Profile creation with operating data (`MaxReflectionIterations: 0`) |
+| `make eval-live`                    | Live LLM tests (`-tags=integration`, needs `OPENAI_API_KEY`)        |
 
 ### Running a single test with `go test`
 
