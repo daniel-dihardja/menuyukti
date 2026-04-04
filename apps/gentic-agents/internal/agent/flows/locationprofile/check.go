@@ -32,8 +32,9 @@ func (s CheckStep) loadProfile(ctx context.Context, endpoint, locationID, analyt
 
 // Run implements gen.Step.
 func (s CheckStep) Run(ctx context.Context, state *gen.State) error {
-	locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "check location profile")
-	if !ok {
+	locationID, analyticsID, reqErr := flowstate.RequiredLocationIDs(state, "check location profile")
+	if reqErr != nil {
+		state.Output = reqErr.Error()
 		return nil
 	}
 

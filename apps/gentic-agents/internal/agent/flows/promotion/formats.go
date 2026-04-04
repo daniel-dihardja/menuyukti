@@ -34,7 +34,8 @@ func (s FormatsStep) Run(ctx context.Context, state *gen.State) error {
 		return nil
 	}
 
-	if _, _, ok := flowstate.RequiredLocationIDs(state, "assign post formats"); !ok {
+	if _, _, err := flowstate.RequiredLocationIDs(state, "assign post formats"); err != nil {
+		state.Output = err.Error()
 		return nil
 	}
 

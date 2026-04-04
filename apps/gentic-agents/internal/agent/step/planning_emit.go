@@ -3,12 +3,25 @@ package step
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 )
+
+// NotifyRefiningIteration returns an OnIteration callback for reflect.RunReflectLoop / RunTypedReflectLoop.
+// stepID must match the final ActivityDone step name so the same row updates from reflecting to done.
+func NotifyRefiningIteration(stepID string) func(ctx context.Context, current, total int) {
+	return func(ctx context.Context, current, total int) {
+		n := gen.NotifierFromContext(ctx)
+		if n != nil {
+			n.Notify(stepID, gen.ActivityReflecting,
+				fmt.Sprintf("Refining (%d/%d)", current, total))
+		}
+	}
+}
 
 // EmitPlanningProgress sends a data-planning SSE payload so the web artifact updates before save completes.
 func EmitPlanningProgress(ctx context.Context, state *gen.State) {

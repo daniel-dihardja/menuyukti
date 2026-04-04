@@ -37,7 +37,8 @@ func (s SelectStep) Run(ctx context.Context, state *gen.State) error {
 		return nil
 	}
 
-	if _, _, ok := flowstate.RequiredLocationIDs(state, "select promotion items"); !ok {
+	if _, _, err := flowstate.RequiredLocationIDs(state, "select promotion items"); err != nil {
+		state.Output = err.Error()
 		return nil
 	}
 

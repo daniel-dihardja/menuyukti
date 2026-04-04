@@ -35,8 +35,9 @@ func (s Step) Run(ctx context.Context, state *gen.State) error {
 		return nil
 	}
 
-	locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "save campaign")
-	if !ok {
+	locationID, analyticsID, err := flowstate.RequiredLocationIDs(state, "save campaign")
+	if err != nil {
+		state.Output = err.Error()
 		return nil
 	}
 

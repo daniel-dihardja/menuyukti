@@ -20,16 +20,17 @@ alwaysApply: false
 
 ## Agentic pattern packages
 
-- **`pkg/gentic/intent`** — label-based routing; add flows via `On` / `Default`.
+- **`pkg/gentic/intent`** — label-based routing; add flows via `On` / `Default`. Use **`Router.WithLLM`** / **`WithModel`** for the classifier (override the default OpenAI provider and model).
 - **`pkg/gentic/plan`** — planning and task-pool execution; use `WithPool` + `WithStaticPlanGroups` for fixed pipelines.
-- **`pkg/gentic/react`** — ReAct (Thought → Tool → Observe) loop; **do not re-implement the loop** — extend via `Option` funcs or new `Tool` helpers.
+- **`pkg/gentic/react`** — ReAct (Thought → Tool → Observe) loop; **do not re-implement the loop** — extend via `Option` funcs or new `Tool` helpers. Configure the tool-calling backend with **`react.WithLLM(gentic.ToolCallingLLM)`** (defaults to `openai.Provider{}`).
 - **`pkg/gentic/reflect`** — generate → critique → refine; use `WithMaxIterations`, `WithGeneratePrompt`, `WithCritiquePrompt`.
 - **`pkg/gentic/eval`** — eval harness; add cases here when changing agent-level behavior.
 
 ## State and metadata rules
 
+- **`State.Input`** is the **current user message** only. **Conversation history** for a run lives in **`State.Messages`** (and is threaded into ReAct via `initialToolMessages` in `pkg/gentic/react` — not by concatenating history into `Input`).
 - **Read metadata via `state.SecureMetadata()`** in tools and integrations — never from `state.Metadata` directly when passing to untrusted code.
-- **Private keys** use a `_` prefix (e.g. `_api_key`) and are excluded by `SecureMetadata()`.
+- **Private keys** use a `_` prefix (e.g. `_api_key`) and are excluded by `SecureMetadata()`; additional names are blocked via the package-sensitive key blocklist in `state.go`.
 - **Concurrent steps** must use `state.GetMetadata` / `state.SetMetadata` / `state.DeleteMetadata` — never read `state.Metadata` map directly inside `Parallel`.
 
 ```go

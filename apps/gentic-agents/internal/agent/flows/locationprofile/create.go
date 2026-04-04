@@ -2,16 +2,15 @@ package locationprofile
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
-	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowutil"
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
+	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
 )
 
 // LocationDataLoader loads venue + operating data for CreateStep. When nil, graphql.FetchLocationData is used.
@@ -48,8 +47,9 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) (err error) {
 		return nil
 	}
 
-	locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "create location profile")
-	if !ok {
+	locationID, analyticsID, err := flowstate.RequiredLocationIDs(state, "create location profile")
+	if err != nil {
+		state.Output = err.Error()
 		return nil
 	}
 
@@ -75,13 +75,14 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) (err error) {
 		return nil
 	}
 
-	cfg := flowutil.ReflectConfig{
-		LLM:                     s.LLM,
-		Model:                   s.Model,
-		MaxReflectionIterations: s.MaxReflectionIterations,
+	llm := s.LLM
+	if llm == nil {
+		llm = openai.Provider{}
 	}
-	llm := cfg.DefaultLLM()
-	model := cfg.DefaultModel()
+	model := s.Model
+	if model == "" {
+		model = openai.DefaultModel
+	}
 
 	saveProfile := func(ctx context.Context, endpoint, lid, aid, summary string) error {
 		if s.Saver != nil {
@@ -110,13 +111,7 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) (err error) {
 				return buildReflectionUser(refSnap, draft)
 			},
 			BuildRevisionPrompt: buildRestaurantLocationRevisionPrompt,
-			OnIteration: func(ctx context.Context, current, total int) {
-				nn := gen.NotifierFromContext(ctx)
-				if nn != nil {
-					nn.Notify("profile_refinement", gen.ActivityReflecting,
-						fmt.Sprintf("Refining (%d/%d)", current, total), gen.WithTransient(true))
-				}
-			},
+			OnIteration: step.NotifyRefiningIteration("profile_refinement"),
 		})
 		if err != nil {
 			return err

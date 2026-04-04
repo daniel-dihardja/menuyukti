@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
-	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowutil"
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
+	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
 )
 
 const (
@@ -61,8 +61,8 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) error {
 		return nil
 	}
 
-	_, _, ok := flowstate.RequiredLocationIDs(state, "create post schedule")
-	if !ok {
+	if _, _, err := flowstate.RequiredLocationIDs(state, "create post schedule"); err != nil {
+		state.Output = err.Error()
 		return nil
 	}
 
@@ -102,12 +102,11 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) error {
 	n := gen.NotifierFromContext(ctx)
 	n.Notify("create_post_schedule", gen.ActivityRunning, "Create Instagram post schedule")
 
-	cfg := flowutil.ReflectConfig{
-		Model:                   s.Model,
-		MaxReflectionIterations: s.MaxReflectionIterations,
+	llm := openai.Provider{}
+	model := s.Model
+	if model == "" {
+		model = openai.DefaultModel
 	}
-	llm := cfg.DefaultLLM()
-	model := cfg.DefaultModel()
 
 	refSnap := buildScheduleReflectionSnapshot(candidateWeeks, holidays)
 	genPrompt := buildScheduleGenerationPrompt(profile.Summary, holidays, candidateWeeks)
@@ -126,7 +125,7 @@ func (s CreateStep) Run(ctx context.Context, state *gen.State) error {
 			return buildScheduleReflectionUser(refSnap, draft)
 		},
 		BuildRevisionPrompt: buildScheduleRevisionPrompt,
-		OnIteration:         flowutil.NotifyRefining("post_schedule_refinement"),
+		OnIteration:         step.NotifyRefiningIteration("post_schedule_refinement"),
 	})
 	if err != nil {
 		return err

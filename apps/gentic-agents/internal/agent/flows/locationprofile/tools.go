@@ -51,11 +51,11 @@ func createProfileHandler(endpoint, model string, maxReflectionIterations int) f
 
 func fetchProfileHandler(endpoint string) func(context.Context, *gen.State, json.RawMessage) (json.RawMessage, error) {
 	return func(ctx context.Context, state *gen.State, _ json.RawMessage) (json.RawMessage, error) {
-		locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "fetch location profile")
-		if !ok {
+		locationID, analyticsID, err := flowstate.RequiredLocationIDs(state, "fetch location profile")
+		if err != nil {
 			slog.Warn("locationprofile tool: fetch_location_profile missing ids",
 				"component", "gentic-agents.locationprofile")
-			return nil, fmt.Errorf("location_id and analytics_id are required in the request")
+			return nil, err
 		}
 		ctx = graphql.GraphQLContext(ctx, state)
 		profile, err := graphql.FetchLocationProfile(ctx, endpoint, locationID, analyticsID)
@@ -99,11 +99,11 @@ func updateProfileHandler(endpoint string) func(context.Context, *gen.State, jso
 		if summary == "" {
 			return nil, fmt.Errorf("summary must be non-empty")
 		}
-		locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "update location profile")
-		if !ok {
+		locationID, analyticsID, err := flowstate.RequiredLocationIDs(state, "update location profile")
+		if err != nil {
 			slog.Warn("locationprofile tool: update_location_profile missing ids",
 				"component", "gentic-agents.locationprofile")
-			return nil, fmt.Errorf("location_id and analytics_id are required in the request")
+			return nil, err
 		}
 		ctx = graphql.GraphQLContext(ctx, state)
 		slog.Info("locationprofile tool: update_location_profile saving",

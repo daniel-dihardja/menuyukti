@@ -93,12 +93,12 @@ func createBriefHandler(endpoint, model string, maxReflectionIterations int) fun
 		if campaignID == "" {
 			return nil, fmt.Errorf("campaign_id is required in the request to save the brief")
 		}
-		locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "save campaign brief")
-		if !ok {
-			return nil, fmt.Errorf("%s", state.Output)
+		locationID, analyticsID, err := flowstate.RequiredLocationIDs(state, "save campaign brief")
+		if err != nil {
+			return nil, err
 		}
 
-		err := graphql.SaveCampaignBrief(ctx, endpoint, campaignID, locationID, analyticsID,
+		err = graphql.SaveCampaignBrief(ctx, endpoint, campaignID, locationID, analyticsID,
 			strings.TrimSpace(brief.CampaignTheme),
 			strings.TrimSpace(brief.Tone),
 			strings.TrimSpace(brief.TargetAudience),
@@ -163,9 +163,9 @@ func updateBriefHandler(endpoint string) func(context.Context, *gen.State, json.
 				"component", "gentic-agents.campaign")
 			return nil, fmt.Errorf("campaign_id is required in the request")
 		}
-		locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "update campaign brief")
-		if !ok {
-			return nil, fmt.Errorf("%s", state.Output)
+		locationID, analyticsID, err := flowstate.RequiredLocationIDs(state, "update campaign brief")
+		if err != nil {
+			return nil, err
 		}
 
 		theme := strings.TrimSpace(params.CampaignTheme)
@@ -181,7 +181,7 @@ func updateBriefHandler(endpoint string) func(context.Context, *gen.State, json.
 			"component", "gentic-agents.campaign",
 			"campaign_id", campaignID, "theme_len", len(theme))
 
-		err := graphql.SaveCampaignBrief(ctx, endpoint, campaignID, locationID, analyticsID,
+		err = graphql.SaveCampaignBrief(ctx, endpoint, campaignID, locationID, analyticsID,
 			theme, tone, audience, cadence, nil)
 		if err != nil {
 			slog.Error("campaign tool: update_campaign_brief save failed",

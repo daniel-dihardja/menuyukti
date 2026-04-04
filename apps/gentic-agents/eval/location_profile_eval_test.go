@@ -5,7 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flows/locationprofile"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	ge "github.com/daniel-dihardja/gentic/pkg/gentic/eval"
@@ -70,7 +71,7 @@ func meta(loc, analytics string) map[string]interface{} {
 	}
 }
 
-// stubReloadProfile avoids HTTP after save in [step.CreateLocationProfileStep] (reload row).
+// stubReloadProfile avoids HTTP after save in [locationprofile.CreateStep] (reload row).
 func stubReloadProfile() stubProfileLoader {
 	return stubProfileLoader{
 		fn: func(ctx context.Context, endpoint, locationID, analyticsID string) (*graphql.LocationProfile, error) {
@@ -91,8 +92,8 @@ func TestEvalSuite_LocationProfile(t *testing.T) {
 		}
 		agent := gen.Agent{
 			Resolver: fixedFlowResolver{f: gen.NewFlow(
-				ge.WrapWithEval("check_location_profile", step.CheckLocationProfileStep{Loader: loader, GraphQLEndpoint: "http://unused"}),
-				gen.If(step.NeedsLocationProfileCreation, ge.WrapWithEval("create_location_profile", step.CreateLocationProfileStep{
+				ge.WrapWithEval("check_location_profile", locationprofile.CheckStep{Loader: loader, GraphQLEndpoint: "http://unused"}),
+				gen.If(flowstate.NeedsLocationProfileCreation, ge.WrapWithEval("create_location_profile", locationprofile.CreateStep{
 					GraphQLEndpoint: "http://unused",
 					LLM:             ge.ReplyChat("should-not-run", nil),
 				})),
@@ -122,7 +123,7 @@ func TestEvalSuite_LocationProfile(t *testing.T) {
 		t.Parallel()
 		agent := gen.Agent{
 			Resolver: fixedFlowResolver{f: gen.NewFlow(
-				ge.WrapWithEval("check_location_profile", step.CheckLocationProfileStep{GraphQLEndpoint: "http://unused"}),
+				ge.WrapWithEval("check_location_profile", locationprofile.CheckStep{GraphQLEndpoint: "http://unused"}),
 			)},
 		}
 		runner := ge.Runner{Agent: agent}
@@ -162,8 +163,8 @@ func TestEvalSuite_LocationProfile(t *testing.T) {
 		saver := &stubProfileSaver{}
 		agent := gen.Agent{
 			Resolver: fixedFlowResolver{f: gen.NewFlow(
-				ge.WrapWithEval("check_location_profile", step.CheckLocationProfileStep{Loader: checkLoader, GraphQLEndpoint: "http://unused"}),
-				gen.If(step.NeedsLocationProfileCreation, ge.WrapWithEval("create_location_profile", step.CreateLocationProfileStep{
+				ge.WrapWithEval("check_location_profile", locationprofile.CheckStep{Loader: checkLoader, GraphQLEndpoint: "http://unused"}),
+				gen.If(flowstate.NeedsLocationProfileCreation, ge.WrapWithEval("create_location_profile", locationprofile.CreateStep{
 					GraphQLEndpoint:         "http://unused",
 					DataLoader:              dataLoader,
 					Saver:                   saver,
@@ -181,16 +182,16 @@ func TestEvalSuite_LocationProfile(t *testing.T) {
 				Input: gen.AgentInput{Query: "run", Metadata: meta("9", "8")},
 				Scorers: []ge.Scorer{
 					ge.NoError{},
-					ge.OutputContains{Substr: "**Venue Identity**"},
-					ge.OutputContains{Substr: "marketing profile is ready"},
+					ge.OutputContains{Substr: "created and saved"},
+					ge.OutputContains{Substr: "Location profile"},
 				},
 			}},
 		})
 		if len(res) != 1 || !res[0].Pass {
 			t.Fatalf("expected pass, got %+v trace=%+v scores=%+v", res, res[0].Trace, res[0].Scores)
 		}
-		if saver.Saves < 2 {
-			t.Fatalf("expected at least two saves (analytics + 0), got %d", saver.Saves)
+		if saver.Saves < 1 {
+			t.Fatalf("expected at least one save, got %d", saver.Saves)
 		}
 	})
 
@@ -215,8 +216,8 @@ func TestEvalSuite_LocationProfile(t *testing.T) {
 		saver := &stubProfileSaver{}
 		agent := gen.Agent{
 			Resolver: fixedFlowResolver{f: gen.NewFlow(
-				ge.WrapWithEval("check_location_profile", step.CheckLocationProfileStep{Loader: checkLoader, GraphQLEndpoint: "http://unused"}),
-				gen.If(step.NeedsLocationProfileCreation, ge.WrapWithEval("create_location_profile", step.CreateLocationProfileStep{
+				ge.WrapWithEval("check_location_profile", locationprofile.CheckStep{Loader: checkLoader, GraphQLEndpoint: "http://unused"}),
+				gen.If(flowstate.NeedsLocationProfileCreation, ge.WrapWithEval("create_location_profile", locationprofile.CreateStep{
 					GraphQLEndpoint:         "http://unused",
 					DataLoader:              dataLoader,
 					Saver:                   saver,
@@ -234,16 +235,16 @@ func TestEvalSuite_LocationProfile(t *testing.T) {
 				Input: gen.AgentInput{Query: "run", Metadata: meta("3", "4")},
 				Scorers: []ge.Scorer{
 					ge.NoError{},
-					ge.OutputContains{Substr: "Venue Identity"},
-					ge.OutputContains{Substr: "marketing profile is ready"},
+					ge.OutputContains{Substr: "created and saved"},
+					ge.OutputContains{Substr: "Location profile"},
 				},
 			}},
 		})
 		if len(res) != 1 || !res[0].Pass {
 			t.Fatalf("expected pass, got %+v trace=%+v scores=%+v", res, res[0].Trace, res[0].Scores)
 		}
-		if saver.Saves < 2 {
-			t.Fatalf("expected at least two saves, got %d", saver.Saves)
+		if saver.Saves < 1 {
+			t.Fatalf("expected at least one save, got %d", saver.Saves)
 		}
 	})
 }

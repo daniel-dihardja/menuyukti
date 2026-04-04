@@ -7,21 +7,18 @@ import (
 )
 
 // RequiredLocationIDs extracts location_id and analytics_id from state metadata.
-// On failure it sets state.Output and returns ok false.
-func RequiredLocationIDs(state *gen.State, operation string) (locationID, analyticsID string, ok bool) {
+func RequiredLocationIDs(state *gen.State, operation string) (locationID, analyticsID string, err error) {
 	if state == nil {
-		return "", "", false
+		return "", "", fmt.Errorf("cannot %s: invalid state", operation)
 	}
 	meta := state.SecureMetadata()
-	locationID, err := meta.GetID("location_id")
+	locationID, err = meta.GetID("location_id")
 	if err != nil {
-		state.Output = fmt.Sprintf("Cannot %s: location_id and analytics_id are required in the request.", operation)
-		return "", "", false
+		return "", "", fmt.Errorf("cannot %s: location_id and analytics_id are required in the request", operation)
 	}
 	analyticsID, err = meta.GetID("analytics_id")
 	if err != nil {
-		state.Output = fmt.Sprintf("Cannot %s: location_id and analytics_id are required in the request.", operation)
-		return "", "", false
+		return "", "", fmt.Errorf("cannot %s: location_id and analytics_id are required in the request", operation)
 	}
-	return locationID, analyticsID, true
+	return locationID, analyticsID, nil
 }

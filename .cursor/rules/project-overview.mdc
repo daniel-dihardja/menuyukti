@@ -28,7 +28,7 @@ Do not assume LangGraph for `gentic-agents` — that stack may live under other 
 ## Layering and boundaries
 
 - **HTTP handlers** validate input, map DTOs ↔ domain types, and delegate — no heavy business logic in handlers alone.
-- **Agent logic** lives under `internal/agent/` (flows, flowstate, steps, tools).
+- **Agent logic** lives under `internal/agent/` (`flows/*` per feature, `flowstate/`, shared `step/` helpers, tools).
 - **Platform concerns** (config, GraphQL client, DB) stay in `internal/platform/` or equivalent — not mixed into flow business rules without clear boundaries.
 
 ## Further reading

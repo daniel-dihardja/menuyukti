@@ -20,8 +20,8 @@ func (s FetchStep) Run(ctx context.Context, state *gen.State) error {
 		return nil
 	}
 
-	_, analyticsID, ok := flowstate.RequiredLocationIDs(state, "fetch promotion items")
-	if !ok {
+	_, analyticsID, err := flowstate.RequiredLocationIDs(state, "fetch promotion items")
+	if err != nil {
 		return nil
 	}
 

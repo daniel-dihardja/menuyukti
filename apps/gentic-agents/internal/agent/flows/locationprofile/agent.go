@@ -1,8 +1,6 @@
 package locationprofile
 
 import (
-	"context"
-
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/react"
 )
@@ -53,5 +51,5 @@ func NewChatReactActor(model, graphqlEndpoint string, maxReflectionIterations in
 			),
 		),
 	)
-	return actor.Resolve(context.Background(), nil)
+	return actor.Flow()
 }

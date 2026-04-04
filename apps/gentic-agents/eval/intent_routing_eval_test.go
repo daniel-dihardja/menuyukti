@@ -5,7 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flows/locationprofile"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	ge "github.com/daniel-dihardja/gentic/pkg/gentic/eval"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/intent"
@@ -42,8 +43,8 @@ func buildIntentEvalAgent(t *testing.T) gen.Agent {
 		SystemPrompt: "You are a helpful assistant.",
 	})
 	campaignFlow := gen.NewFlow(
-		step.CheckLocationProfileStep{GraphQLEndpoint: "http://unused"},
-		gen.If(step.NeedsLocationProfileCreation, step.CreateLocationProfileStep{
+		locationprofile.CheckStep{GraphQLEndpoint: "http://unused"},
+		gen.If(flowstate.NeedsLocationProfileCreation, locationprofile.CreateStep{
 			GraphQLEndpoint: "http://unused",
 		}),
 	)

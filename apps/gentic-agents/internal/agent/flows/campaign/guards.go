@@ -18,8 +18,8 @@ func EnsureLocationProfile(endpoint string) react.GuardFunc {
 			return nil
 		}
 		ctx = graphql.GraphQLContext(ctx, state)
-		locationID, analyticsID, ok := flowstate.RequiredLocationIDs(state, "load location profile")
-		if !ok {
+		locationID, analyticsID, err := flowstate.RequiredLocationIDs(state, "load location profile")
+		if err != nil {
 			return nil
 		}
 		profile, err := graphql.FetchLocationProfile(ctx, endpoint, locationID, analyticsID)

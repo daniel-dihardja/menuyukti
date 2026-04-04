@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
-	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowutil"
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
+	"github.com/daniel-dihardja/gentic/pkg/providers/openai"
 )
 
 const (
@@ -41,8 +41,8 @@ func (s CreateBriefStep) Run(ctx context.Context, state *gen.State) error {
 	}
 
 	campaignID := flowstate.CampaignIDFromMetadata(state)
-	_, _, ok := flowstate.RequiredLocationIDs(state, "create campaign brief")
-	if !ok {
+	if _, _, err := flowstate.RequiredLocationIDs(state, "create campaign brief"); err != nil {
+		state.Output = err.Error()
 		return nil
 	}
 
@@ -58,12 +58,11 @@ func (s CreateBriefStep) Run(ctx context.Context, state *gen.State) error {
 	n := gen.NotifierFromContext(ctx)
 	n.Notify("create_campaign_brief", gen.ActivityRunning, "Create a campaign brief")
 
-	cfg := flowutil.ReflectConfig{
-		Model:                   s.Model,
-		MaxReflectionIterations: s.MaxReflectionIterations,
+	llm := openai.Provider{}
+	model := s.Model
+	if model == "" {
+		model = openai.DefaultModel
 	}
-	llm := cfg.DefaultLLM()
-	model := cfg.DefaultModel()
 
 	genPrompt := buildUserPrompt(profile.Summary)
 	refSnap := buildReflectionSnapshot(profile.Summary)
@@ -82,7 +81,7 @@ func (s CreateBriefStep) Run(ctx context.Context, state *gen.State) error {
 			return buildReflectionUser(refSnap, draft)
 		},
 		BuildRevisionPrompt: buildRevisionPrompt,
-		OnIteration:         flowutil.NotifyRefining("campaign_brief_refinement"),
+		OnIteration:         step.NotifyRefiningIteration("campaign_brief_refinement"),
 	})
 	if err != nil {
 		return err
