@@ -1,9 +1,7 @@
 # Shared by apps/gentic-agents and packages/gentic (run golangci-lint from each module root).
-run:
-  timeout: 5m
-
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
     - govet
@@ -11,6 +9,23 @@ linters:
     - misspell
     - staticcheck
     - unused
-
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
   max-same-issues: 50
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

@@ -353,7 +353,7 @@ func buildScheduleReflectionSnapshot(candidateWeeks []candidateWeek, holidays []
 		for _, s := range w.Slots {
 			dates = append(dates, s.Date)
 		}
-		b.WriteString(fmt.Sprintf("- week %d: %s\n", w.WeekNumber, strings.Join(dates, ", ")))
+		fmt.Fprintf(&b, "- week %d: %s\n", w.WeekNumber, strings.Join(dates, ", "))
 	}
 	return b.String()
 }

@@ -53,7 +53,7 @@ jobs:
         working-directory: apps/gentic-agents
       - uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.64.5
+          version: v2.11.4
           working-directory: apps/gentic-agents
           args: --timeout=5m
 
@@ -69,6 +69,6 @@ jobs:
         working-directory: packages/gentic
       - uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.64.5
+          version: v2.11.4
           working-directory: packages/gentic
           args: --timeout=5m
