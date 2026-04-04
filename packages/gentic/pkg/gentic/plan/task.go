@@ -47,7 +47,7 @@ type LLMTaskConfig struct {
 // NewTask creates a Task with a plain function — no LLM involved.
 // Use this for API calls, data fetching, persistence, or any deterministic operation.
 func NewTask(cfg TaskConfig) Task {
-	return Task{ID: cfg.ID, Description: cfg.Description, Function: cfg.Function}
+	return Task(cfg)
 }
 
 // NewLLMTask creates a Task whose implementation calls the LLM with the given
