@@ -29,11 +29,12 @@ mutation UploadFile($file: Upload!, $locationId: ID!) {
 """
 
 HEATMAPS_QUERY = """
-query AnalyticsRunMenuHeatmaps($id: ID!) {
-  menuHeatmaps(analyticsRunId: $id) {
+query AnalyticsRunMenuHeatmaps($id: ID!, $locationId: ID) {
+  menuHeatmaps(analyticsRunId: $id, locationId: $locationId) {
     menu
     menuCategory
     menuCategoryDetail
+    reportingPeriod
     dailyHeatmap {
       hour
       quantity
@@ -58,6 +59,7 @@ def _normalize_graphql_heatmaps(menu_heatmaps):
                 "menu": m["menu"],
                 "menu_category": m["menuCategory"],
                 "menu_category_detail": m["menuCategoryDetail"],
+                "reporting_period": m["reportingPeriod"],
                 "daily": daily,
                 "weekly": weekly,
             }
@@ -137,6 +139,7 @@ def test_menu_heatmaps_with_qa_data(analytics_run_with_qa_data):
         assert got["menu"] == expected["menu"]
         assert got["menu_category"] == expected["menu_category"]
         assert got["menu_category_detail"] == expected["menu_category_detail"]
+        assert got["reporting_period"] == expected["reporting_period"]
         assert got["daily"] == expected["daily"]
         assert got["weekly"] == expected["weekly"]
 
@@ -157,11 +160,62 @@ def _normalize_expected_heatmaps(expected_payloads):
                 "menu": payload["menu"],
                 "menu_category": payload["menu_category"],
                 "menu_category_detail": payload["menu_category_detail"],
+                "reporting_period": payload["reporting_period"],
                 "daily": daily,
                 "weekly": weekly,
             }
         )
     return normalized
+
+
+def _get_location_id_for_run(run_id: int) -> int:
+    session = SessionLocal()
+    try:
+        run = session.get(AnalyticsRun, run_id)
+        assert run is not None
+        return run.location_id
+    finally:
+        session.close()
+
+
+def test_menu_heatmaps_wrong_location_returns_empty(analytics_run_with_qa_data):
+    """When locationId does not match the run's location, returns []."""
+    run_id = analytics_run_with_qa_data
+    result = asyncio.run(
+        schema.execute(
+            HEATMAPS_QUERY,
+            variable_values={"id": str(run_id), "locationId": "99999"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not result.errors
+    assert result.data["menuHeatmaps"] == []
+
+
+def test_menu_heatmaps_with_matching_location_id(analytics_run_with_qa_data):
+    """Explicit locationId matching the run returns the same heatmaps as when omitted."""
+    run_id = analytics_run_with_qa_data
+    location_id = _get_location_id_for_run(run_id)
+    from graphql.tests.fixtures.qa_data import qa_order_rows_for_heatmap
+
+    order_rows = qa_order_rows_for_heatmap()
+    expected_payloads = compute_menu_heatmaps_from_orders(order_rows)
+    expected_normalized = _normalize_expected_heatmaps(expected_payloads)
+
+    query_result = asyncio.run(
+        schema.execute(
+            HEATMAPS_QUERY,
+            variable_values={"id": str(run_id), "locationId": str(location_id)},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not query_result.errors
+    graphql_normalized = _normalize_graphql_heatmaps(query_result.data["menuHeatmaps"])
+    assert len(graphql_normalized) == len(expected_normalized)
+    for got, expected in zip(graphql_normalized, expected_normalized, strict=False):
+        assert got["reporting_period"] == expected["reporting_period"]
+        assert got["daily"] == expected["daily"]
+        assert got["weekly"] == expected["weekly"]
 
 
 def test_menu_heatmaps_match_menuyukti_calculation(tmp_path):
@@ -239,6 +293,7 @@ def test_menu_heatmaps_match_menuyukti_calculation(tmp_path):
         assert got["menu"] == expected["menu"]
         assert got["menu_category"] == expected["menu_category"]
         assert got["menu_category_detail"] == expected["menu_category_detail"]
+        assert got["reporting_period"] == expected["reporting_period"]
         assert got["daily"] == expected["daily"]
         assert got["weekly"] == expected["weekly"]
 

@@ -15,6 +15,13 @@ globs: apps/graphql/**
   - **`data_sources/`** — database and external integrations
   - **`scripts/`** — one-off scripts (e.g. dev data, load report)
 
+## Query modules (`schema/queries/`)
+
+- **One top-level query field per file** — each root field (e.g. `operatingProfile`, `menuHeatmaps`, `menuEngineeringMatrix`) should live in its own module under `schema/queries/`, named after the field (e.g. `operating_profile.py`, `menu_heatmaps.py`, `menu_engineering_matrix.py`). That module holds the Strawberry `@strawberry.type` query mixin class, any GraphQL output types used only by that resolver, and private helpers that load data and map to GraphQL types.
+- **Exception:** a small group of fields that only make sense together for one resource may share a file (e.g. `analytics_run.py` for `analyticsRun`, `analyticsRuns`, and `orderMetrics`). Prefer splitting when a field grows large or is unrelated to the rest.
+- The root `Query` type in `schema/query.py` merges these mixins via multiple inheritance. Re-export query mixins from `schema/queries/__init__.py` and add new mixins to the `Query` bases list.
+- Shared types used across several queries stay in `schema/types/` (or a small shared module) rather than duplicating.
+
 ## Tooling
 
 - Use **uv** from the app (or workspace root): `uv sync`, `uv run`, `uv add`. Do not use ad-hoc `pip install` as the primary workflow.

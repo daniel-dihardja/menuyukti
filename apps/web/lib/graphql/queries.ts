@@ -111,8 +111,8 @@ export type AnalyticsRunData = {
 }
 
 export const MENU_ENGINEERING_MATRIX_QUERY = `
-  query MenuEngineeringMatrix($id: ID!, $categories: [String!]) {
-    menuEngineeringMatrix(analyticsRunId: $id, categories: $categories) {
+  query MenuEngineeringMatrix($id: ID!, $categories: [String!], $locationId: ID) {
+    menuEngineeringMatrix(analyticsRunId: $id, categories: $categories, locationId: $locationId) {
       thresholds {
         avgPopularity
         avgContributionMargin
@@ -336,11 +336,12 @@ export type CampaignBriefData = {
 }
 
 export const MENU_HEATMAPS_QUERY = `
-  query MenuHeatmaps($id: ID!) {
-    menuHeatmaps(analyticsRunId: $id) {
+  query MenuHeatmaps($id: ID!, $locationId: ID) {
+    menuHeatmaps(analyticsRunId: $id, locationId: $locationId) {
       menu
       menuCategory
       menuCategoryDetail
+      reportingPeriod
       dailyHeatmap { hour quantity }
       weeklyHeatmap { day quantity }
     }
@@ -352,6 +353,7 @@ export type MenuHeatmapsData = {
     menu: string
     menuCategory: string | null
     menuCategoryDetail: string | null
+    reportingPeriod: string
     dailyHeatmap: Array<{ hour: number; quantity: number }>
     weeklyHeatmap: Array<{ day: string; quantity: number }>
   }>

@@ -13,6 +13,10 @@ from graphql.data_sources import (
 )
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
+from graphql.tests.fixtures.qa_data import qa_order_rows_for_matrix
+from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
+    compute_menu_engineering_from_orders,
+)
 from starlette.datastructures import Headers, UploadFile
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
@@ -29,8 +33,8 @@ mutation UploadFile($file: Upload!, $locationId: ID!) {
 """
 
 MENU_ENGINEERING_MATRIX_QUERY = """
-query MenuEngineeringMatrix($runId: ID!) {
-  menuEngineeringMatrix(analyticsRunId: $runId) {
+query MenuEngineeringMatrix($runId: ID!, $locationId: ID) {
+  menuEngineeringMatrix(analyticsRunId: $runId, locationId: $locationId) {
     thresholds {
       avgPopularity
       avgContributionMargin
@@ -79,11 +83,6 @@ def _load_cogs_by_menu():
 
 def test_menu_engineering_matrix_with_qa_data(analytics_run_with_qa_data, qa_cogs_by_menu):
     """Menu engineering matrix from GraphQL matches menuyukti for QA data (no Excel/JSON)."""
-    from graphql.tests.fixtures.qa_data import qa_order_rows_for_matrix
-    from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
-        compute_menu_engineering_from_orders,
-    )
-
     run_id = analytics_run_with_qa_data
     order_rows = qa_order_rows_for_matrix()
     expected = compute_menu_engineering_from_orders(order_rows, qa_cogs_by_menu)
@@ -112,6 +111,51 @@ def test_menu_engineering_matrix_with_qa_data(analytics_run_with_qa_data, qa_cog
         assert got_item["category"] == exp_item["category"]
         assert got_item["action"] == exp_item["action"]
         assert pytest.approx(float(got_item["contributionMarginPercentage"]), rel=1e-5) == exp_item["contribution_margin_percentage"]
+
+
+def _get_location_id_for_run(run_id: int) -> int:
+    session = SessionLocal()
+    try:
+        run = session.get(AnalyticsRun, run_id)
+        assert run is not None
+        return run.location_id
+    finally:
+        session.close()
+
+
+def test_menu_engineering_matrix_wrong_location_returns_none(analytics_run_with_qa_data):
+    """Returns null when locationId does not match the run's location."""
+    run_id = analytics_run_with_qa_data
+    result = asyncio.run(
+        schema.execute(
+            MENU_ENGINEERING_MATRIX_QUERY,
+            variable_values={"runId": str(run_id), "locationId": "99999"},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not result.errors
+    assert result.data["menuEngineeringMatrix"] is None
+
+
+def test_menu_engineering_matrix_with_matching_location_id(analytics_run_with_qa_data, qa_cogs_by_menu):
+    """Explicit locationId matching the run returns the same matrix as when omitted."""
+    run_id = analytics_run_with_qa_data
+    location_id = _get_location_id_for_run(run_id)
+    order_rows = qa_order_rows_for_matrix()
+    expected = compute_menu_engineering_from_orders(order_rows, qa_cogs_by_menu)
+
+    query_result = asyncio.run(
+        schema.execute(
+            MENU_ENGINEERING_MATRIX_QUERY,
+            variable_values={"runId": str(run_id), "locationId": str(location_id)},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not query_result.errors
+    matrix = query_result.data["menuEngineeringMatrix"]
+    assert matrix is not None
+    th = matrix["thresholds"]
+    assert pytest.approx(float(th["avgPopularity"]), rel=1e-6) == expected["thresholds"]["avg_popularity"]
 
 
 def test_menu_engineering_matrix_none_without_cogs(analytics_run_with_qa_sales_only):

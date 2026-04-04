@@ -40,13 +40,15 @@ export default async function Page({ params }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound()
 
   const id = String(analyticsId)
-  const [runData, matrixData] = await Promise.all([
-    graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }, userId),
-    graphqlQuery<MenuEngineeringMatrixData>(MENU_ENGINEERING_MATRIX_QUERY, { id }, userId),
-  ])
-
+  const runData = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }, userId)
   const run = runData.analyticsRun
   if (!run) notFound()
+
+  const matrixData = await graphqlQuery<MenuEngineeringMatrixData>(
+    MENU_ENGINEERING_MATRIX_QUERY,
+    { id, locationId: String(run.locationId) },
+    userId,
+  )
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
 

@@ -2,17 +2,8 @@ from collections import defaultdict
 from datetime import date, datetime
 
 import strawberry
-from menuyukti.core.analytics import compute_menu_heatmaps_from_orders
-from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
-    compute_menu_engineering_from_orders,
-)
 
-from graphql.data_sources import (
-    AnalyticsRun,
-    MenuItemCogs,
-    OrderFact,
-    SessionLocal,
-)
+from graphql.data_sources import AnalyticsRun, MenuItemCogs, OrderFact, SessionLocal
 from graphql.schema.auth import (
     get_analytics_run_if_owner,
     is_location_owner,
@@ -25,90 +16,6 @@ from graphql.schema.types import MenuItemCogsType
 class AnalyticsRunOrderMetricsType:
     avgOrderSize: float
     avgOrderRevenue: float
-
-
-@strawberry.type(description="Hourly demand distribution for a menu item.")
-class DailyHeatmapType:
-    hour: int
-    quantity: int
-
-
-@strawberry.type(description="Day-of-week demand distribution for a menu item.")
-class WeeklyHeatmapType:
-    day: str
-    quantity: int
-
-
-@strawberry.type(
-    description=(
-        "Hourly and day-of-week demand heatmaps for a single menu item. "
-        "Use this to understand when a dish sells best."
-    )
-)
-class MenuHeatmapType:
-    menu: str
-    menu_category: str | None
-    menu_category_detail: str | None
-    daily_heatmap: list[DailyHeatmapType]
-    weekly_heatmap: list[WeeklyHeatmapType]
-
-
-@strawberry.type(
-    description=(
-        "Portfolio-level thresholds used to classify menu items in the engineering matrix. "
-        "avgPopularity and avgContributionMargin are the BCG quadrant cut-off values."
-    )
-)
-class MenuEngineeringThresholdsType:
-    avgPopularity: float
-    avgContributionMargin: float
-    totalCogs: float
-    totalProfit: float
-    totalMargin: float
-
-
-@strawberry.type(
-    description="Share of items and margin contribution per BCG category (star, puzzle, plow_horse, low_end)."
-)
-class MenuEngineeringDistributionItemType:
-    category: str
-    itemCount: int
-    itemShare: float
-    marginShare: float
-
-
-@strawberry.type(
-    description=(
-        "A single menu item's position in the menu engineering BCG matrix, including its "
-        "classification (star, puzzle, plow_horse, low_end) and recommended action."
-    )
-)
-class MenuEngineeringMatrixItemType:
-    menu: str
-    quantity: int
-    totalRevenue: float
-    cogs: float
-    totalCogs: float
-    contributionMargin: float
-    contributionMarginPercentage: float
-    marginPerUnit: float
-    weValue: float
-    category: str
-    action: str
-    menuCategory: str | None
-    menuCategoryDetail: str | None
-
-
-@strawberry.type(
-    description=(
-        "Full menu engineering BCG matrix for an analytics run. "
-        "Contains portfolio thresholds, per-category distribution, and per-item classification."
-    )
-)
-class MenuEngineeringMatrixType:
-    thresholds: MenuEngineeringThresholdsType
-    distribution: list[MenuEngineeringDistributionItemType]
-    items: list[MenuEngineeringMatrixItemType]
 
 
 @strawberry.type(
@@ -135,10 +42,6 @@ class AnalyticsRunListItemType:
     name: str
     filename: str
 
-
-# ---------------------------------------------------------------------------
-# Private computation helpers
-# ---------------------------------------------------------------------------
 
 def _compute_order_metrics(
     session, run: AnalyticsRun
@@ -176,139 +79,6 @@ def _compute_order_metrics(
     )
 
 
-def _compute_menu_heatmaps(
-    session, run: AnalyticsRun
-) -> list[MenuHeatmapType]:
-    rows = (
-        session.query(OrderFact)
-        .where(OrderFact.analytics_run_id == run.id)
-        .all()
-    )
-
-    if not rows:
-        return []
-
-    order_rows = [
-        {
-            "menu": r.menu,
-            "qty": r.qty,
-            "order_time": r.order_time,
-            "menu_category": r.menu_category,
-            "menu_category_detail": r.menu_category_detail,
-        }
-        for r in rows
-    ]
-    payloads = compute_menu_heatmaps_from_orders(order_rows)
-
-    result: list[MenuHeatmapType] = []
-    for payload in payloads:
-        daily_heatmap = [
-            DailyHeatmapType(
-                hour=row["hour"],
-                quantity=row["quantity"],
-            )
-            for row in payload["daily_heatmap"]
-        ]
-        weekly_heatmap = [
-            WeeklyHeatmapType(
-                day=row["day"],
-                quantity=row["quantity"],
-            )
-            for row in payload["weekly_heatmap"]
-        ]
-        result.append(
-            MenuHeatmapType(
-                menu=payload["menu"],
-                menu_category=payload["menu_category"],
-                menu_category_detail=payload["menu_category_detail"],
-                daily_heatmap=daily_heatmap,
-                weekly_heatmap=weekly_heatmap,
-            )
-        )
-
-    return result
-
-
-def _compute_menu_engineering_matrix(
-    session, run: AnalyticsRun
-) -> MenuEngineeringMatrixType | None:
-    rows = (
-        session.query(OrderFact)
-        .where(OrderFact.analytics_run_id == run.id)
-        .all()
-    )
-
-    if not rows:
-        return None
-
-    order_rows = [
-        {
-            "menu": r.menu,
-            "qty": r.qty,
-            "total_after_bill_discount": r.total_after_bill_discount,
-            "menu_category": r.menu_category,
-            "menu_category_detail": r.menu_category_detail,
-        }
-        for r in rows
-    ]
-
-    cogs_rows = (
-        session.query(MenuItemCogs)
-        .where(MenuItemCogs.analytics_run_id == run.id)
-        .all()
-    )
-    cogs_by_menu = {r.menu: float(r.cogs) for r in cogs_rows}
-
-    try:
-        result = compute_menu_engineering_from_orders(order_rows, cogs_by_menu)
-    except ValueError:
-        return None
-
-    thresholds = result["thresholds"]
-    thresholds_type = MenuEngineeringThresholdsType(
-        avgPopularity=thresholds["avg_popularity"],
-        avgContributionMargin=thresholds["avg_contribution_margin"],
-        totalCogs=thresholds["total_cogs"],
-        totalProfit=thresholds["total_profit"],
-        totalMargin=thresholds["total_margin"],
-    )
-
-    distribution_type = [
-        MenuEngineeringDistributionItemType(
-            category=d["category"],
-            itemCount=d["item_count"],
-            itemShare=d["item_share"],
-            marginShare=d["margin_share"],
-        )
-        for d in result["distribution"]
-    ]
-
-    items_type = [
-        MenuEngineeringMatrixItemType(
-            menu=item["menu"],
-            quantity=item["quantity"],
-            totalRevenue=item["total_revenue"],
-            cogs=item["cogs"],
-            totalCogs=item["total_cogs"],
-            contributionMargin=item["contribution_margin"],
-            contributionMarginPercentage=item["contribution_margin_percentage"],
-            marginPerUnit=item["margin_per_unit"],
-            weValue=item["we_value"],
-            category=item["category"],
-            action=item["action"],
-            menuCategory=item.get("menu_category"),
-            menuCategoryDetail=item.get("menu_category_detail"),
-        )
-        for item in result["items"]
-    ]
-
-    return MenuEngineeringMatrixType(
-        thresholds=thresholds_type,
-        distribution=distribution_type,
-        items=items_type,
-    )
-
-
 def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
     cogs_rows = (
         session.query(MenuItemCogs)
@@ -341,10 +111,6 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
         menuItemCogs=menu_item_cogs,
     )
 
-
-# ---------------------------------------------------------------------------
-# Query mixin
-# ---------------------------------------------------------------------------
 
 @strawberry.type
 class AnalyticsRunQuery:
@@ -408,58 +174,5 @@ class AnalyticsRunQuery:
             if run is None:
                 return None
             return _compute_order_metrics(session, run)
-        finally:
-            session.close()
-
-    @strawberry.field(
-        description=(
-            "Return hourly and day-of-week demand heatmaps for every menu item in an analytics run. "
-            "Use this to identify peak selling times per dish."
-        )
-    )
-    def menu_heatmaps(
-        self, info: strawberry.Info, analytics_run_id: strawberry.ID
-    ) -> list[MenuHeatmapType]:
-        user_id = user_id_from_info(info)
-        session = SessionLocal()
-        try:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
-            if run is None:
-                return []
-            return _compute_menu_heatmaps(session, run)
-        finally:
-            session.close()
-
-    @strawberry.field(
-        description=(
-            "Compute the menu engineering BCG matrix for an analytics run. "
-            "Requires COGS to be set; returns None if no COGS are available. "
-            "Optionally filter returned items to specific categories "
-            "(star, puzzle, plow_horse, low_end) — thresholds and distribution "
-            "always reflect the full dataset."
-        )
-    )
-    def menu_engineering_matrix(
-        self,
-        info: strawberry.Info,
-        analytics_run_id: strawberry.ID,
-        categories: list[str] | None = None,
-    ) -> MenuEngineeringMatrixType | None:
-        user_id = user_id_from_info(info)
-        session = SessionLocal()
-        try:
-            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
-            if run is None:
-                return None
-            matrix = _compute_menu_engineering_matrix(session, run)
-            if matrix is None or not categories:
-                return matrix
-            category_set = set(categories)
-            filtered_items = [i for i in matrix.items if i.category in category_set]
-            return MenuEngineeringMatrixType(
-                thresholds=matrix.thresholds,
-                distribution=matrix.distribution,
-                items=filtered_items,
-            )
         finally:
             session.close()

@@ -7,6 +7,8 @@ from graphql.schema.queries import (
     CampaignsQuery,
     LocationProfileQuery,
     LocationsQuery,
+    MenuEngineeringMatrixQuery,
+    MenuHeatmapsQuery,
     NationalHolidaysQuery,
     OperatingProfileQuery,
 )
@@ -16,6 +18,8 @@ from graphql.schema.queries import (
 class Query(
     LocationsQuery,
     AnalyticsRunQuery,
+    MenuHeatmapsQuery,
+    MenuEngineeringMatrixQuery,
     CampaignQuery,
     CampaignsQuery,
     NationalHolidaysQuery,
