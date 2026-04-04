@@ -1,0 +1,185 @@
+# Gentic
+
+Gentic is an lightweight agentic AI framework. It provides a minimal, composable set of patterns that enable complex agent behaviors without unnecessary overhead.
+
+## Core Patterns
+
+Gentic implements five essential agentic AI patterns:
+
+- **Intent Routing** — Intelligently route requests to different agent strategies based on user intent
+- **Planning and Execution** — Break down complex tasks into actionable steps and execute them sequentially or in parallel.
+- **Metadata / Ambient Context** — Thread contextual information through agent execution for stateful interactions
+- **ReAct (Reasoning & Acting)** — Thought→Observation→Action loops that combine reasoning with tool use
+- **Reflection** — Enable agents to evaluate their work, identify mistakes, and improve iteratively
+
+Sections follow that order: **Intent Routing** → **Planning and Execution** → **Metadata / Ambient Context** → **ReAct (Reasoning & Acting)** → **Reflection**. After those five, **[Memory](#memory)** (optional multi-turn storage) and **[Security Features](#security-features)** describe agent-level capabilities that compose with any pattern.
+
+For **real-world scenarios**, see **[examples/advanced](./examples/advanced)** and **[examples/applications](./examples/applications)** (each folder has its own overview).
+
+## Intent Routing
+
+Intent routing is the “front door” for specialized behavior: the model classifies what the user wants, Gentic records that label on the run, and the matching **flow** runs—so greetings, math questions, and everything else can each get their own prompts or steps without one giant system prompt.
+
+Define labels, attach a `gentic.Flow` per label (and a `Default` fallback), then hand the router to `gentic.Agent`. Each flow can be as small as one step that sets `s.Output` after calling your model:
+
+```go
+import (
+	"github.com/daniel-dihardja/gentic/pkg/gentic"
+	"github.com/daniel-dihardja/gentic/pkg/gentic/intent"
+)
+
+resolver := intent.NewRouter("greeting", "math", "general").
+	On("greeting", gentic.NewFlow(RespondStep{
+		systemPrompt: "You are a warm, friendly assistant.",
+	})).
+	On("math", gentic.NewFlow(RespondStep{
+		systemPrompt: "You are a precise math tutor; show your working.",
+	})).
+	Default(gentic.NewFlow(RespondStep{
+		systemPrompt: "You are a helpful assistant.",
+	}))
+
+agent := gentic.Agent{Resolver: resolver}
+result, err := agent.Run("What is 347 × 19?")
+// result.Intent → "math"; result.Output → that flow’s reply
+```
+
+`RespondStep` here is any type that implements `gentic.Step` (the example uses one struct with a `systemPrompt` field and `Run` calling OpenAI chat).
+
+The runnable sample wires each branch to a small LLM step with different system prompts—see **[examples/simple/intent-routing](./examples/simple/intent-routing)** (`go run ./examples/simple/intent-routing/main.go`).
+
+## Planning and Execution
+
+Planning separates **what to run** from **how each step works**. You build a **task pool**: each task has an ID, a human-readable description (the planner only sees those—not your implementations), and a function that runs on `*gentic.State` and can append **observations**. A **`plan.Planner`** is wired as the agent resolver and runs a fixed two-phase flow: build `state.ActionPlan`, then execute it wave by wave. Comma-separated task IDs on one line of the plan are one **parallel wave**; each line is a sequential step after the previous wave finishes. The final answer is taken from the **last observation**.
+
+**LLM planning (default):** the model picks a minimal sequence of task IDs from the pool for the user’s request. **Static planning:** you pass ordered waves with `WithStaticPlanGroups`—no planning call; useful for fixed pipelines or when you already know the shape (including parallel waves).
+
+```go
+import (
+	"github.com/daniel-dihardja/gentic/pkg/gentic"
+	"github.com/daniel-dihardja/gentic/pkg/gentic/plan"
+)
+
+// LLM chooses which tasks to run and in what order (planning-01).
+llmResolver := plan.NewPlanner(plan.WithPool(taskPool...))
+
+// You define the waves—comma-separated IDs in one wave run concurrently (planning-02, planning-03).
+staticResolver := plan.NewPlanner(
+	plan.WithPool(taskPool...),
+	plan.WithStaticPlanGroups(
+		[]string{"fetch-preferences"},
+		[]string{"boil-water", "steep-tea"},
+	),
+)
+
+agent := gentic.Agent{Resolver: llmResolver} // or staticResolver
+result, err := agent.Run("How do I make a cup of tea?")
+// result.ActionPlan — waves of task IDs; result.Observations — merged results; result.Output — last observation
+```
+
+Step through the tea examples: **[planning-01](./examples/simple/planning-01)** (LLM plan), **[planning-02](./examples/simple/planning-02)** (static sequence), **[planning-03](./examples/simple/planning-03)** (static with a parallel wave)—`go run ./examples/simple/planning-01/main.go` (and `-02`, `-03`).
+
+## Metadata / Ambient Context
+
+Thread **ambient context** (user id, tenant, request id, feature flags) through a run without baking it into the prompt. Use **`RunWithContext`** with **`AgentInput`**: **`Metadata`** is available on **`state.Metadata`** for your steps. Prefer **`state.SecureMetadata()`** in tools and integrations—only **public** keys are visible; keys prefixed with **`'_'`** are **private** (credentials stay off tool-facing APIs). See [SECURITY_METADATA.md](docs/SECURITY_METADATA.md) for the private-key rules and blocklist.
+
+```go
+import "github.com/daniel-dihardja/gentic/pkg/gentic"
+
+agent := gentic.Agent{Resolver: yourResolver}
+
+result, err := agent.RunWithContext(gentic.AgentInput{
+	Query: "What is the capital of Germany?",
+	Metadata: map[string]interface{}{
+		"user_id":      "user_12345",
+		"tenant_id":    "tenant_abc",
+		"request_id":   "req_xyz789",
+		"_api_key":     "secret-not-for-tools", // '_' prefix — private; use SecureMetadata() for safe reads
+	},
+})
+// In tools: state.SecureMetadata().GetString("user_id") — not raw Metadata for secrets
+```
+
+Minimal walkthrough: **[examples/applications/with-metadata](./examples/applications/with-metadata)** (`go run ./examples/applications/with-metadata/main.go`).
+
+## ReAct (Reasoning & Acting)
+
+ReAct interleaves **reasoning** with **tool use**: the model emits a structured turn (`Thought` / `Action` / `Action Input` …), Gentic runs the named tool, feeds the JSON result back as an **observation**, and repeats until the model answers with **`Final Answer:`** or **`WithMaxSteps`** is hit. **`result.Thoughts`** holds each full model reply; **`result.Observations`** records tool outputs (with the tool name as task ID); **`result.Output`** is the extracted final answer.
+
+Register tools with a name, description, JSON **input schema**, and either **`react.NewTool`** (input/output only) or **`react.NewToolWithState`** when the handler needs `*gentic.State` (for example to read ambient metadata). A **`react.ReactActor`** is another `IntentResolver` whose `Resolve` returns a single step that runs the whole loop.
+
+```go
+import (
+	"github.com/daniel-dihardja/gentic/pkg/gentic"
+	"github.com/daniel-dihardja/gentic/pkg/gentic/react"
+)
+
+resolver := react.NewReactActor(
+	react.WithMaxSteps(10),
+	react.WithTools(
+		react.NewTool("calculator", "Adds two numbers", inputSchema, runCalculator),
+		// react.NewToolWithState("fetch_analytics", "...", schema, runWithMetadata),
+	),
+)
+
+agent := gentic.Agent{Resolver: resolver}
+result, err := agent.Run("What is 347 × 19?")
+// result.Thoughts — reasoning turns; result.Observations — tool JSON; result.Output — final answer
+```
+
+## Reflection
+
+Reflection adds a **generate → critique → refine** loop: one model pass produces a draft, another judges it against the original request. If the critic answers with exactly `PASS`, the loop stops; otherwise it feeds structured feedback into the next draft (up to a configurable cap). That keeps quality work from being “one shot” without hand-writing orchestration.
+
+A **`reflect.Reflector`** is used like other resolvers: it resolves to a single flow step that runs the whole loop. Drafts land in **`result.Observations`** (task ID `generate`), critiques in **`result.Thoughts`**, and **`result.Output`** is the last accepted or final draft. Defaults encourage `PASS` / `IMPROVE:`-style replies; you can swap **`WithGeneratePrompt`** and **`WithCritiquePrompt`** for domain-specific writing or code review (see **reflection-02**).
+
+```go
+import (
+	"github.com/daniel-dihardja/gentic/pkg/gentic"
+	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
+)
+
+resolver := reflect.NewReflector(
+	reflect.WithMaxIterations(3),
+	// Optional: reflect.WithGeneratePrompt(...), reflect.WithCritiquePrompt(...)
+)
+
+agent := gentic.Agent{Resolver: resolver}
+result, err := agent.Run("Write a concise cover letter for a backend role.")
+// result.Observations — drafts; result.Thoughts — critiques; result.Output — final text
+```
+
+Try **[reflection-01](./examples/simple/reflection-01)** (default prompts) and **[reflection-02](./examples/simple/reflection-02)** (custom Go-focused generate/critique)—`go run ./examples/simple/reflection-01/main.go` and `reflection-02`.
+
+## Memory
+
+**MemoryStore** is optional **multi-turn** context for `gentic.Agent`. With **`MemoryStore: nil`**, each run only sees what you pass in **`AgentInput`** (no persisted thread). When you set a **`gentic.ThreadStore`** (e.g. **`NewInMemoryThreadStore()`**) and a non-empty **`AgentInput.ThreadID`**, the agent loads prior messages from that thread when **`AgentInput.Messages`** is empty, then runs the resolver. After a successful run it **appends** the current user turn and assistant **`Output`** to thread memory.
+
+**`State.Input`** is always the **current user text** (last user message), not a concatenated history string. Prior turns live in **`State.Messages`** (Vercel AI SDK–compatible). Flows that need full history (for example **ReAct**) build the model thread from **`State.Messages`** plus the current turn—see **`react.initialToolMessages`** in `pkg/gentic/react/loop.go`.
+
+Implement **`Memory`** yourself (`Append`, **`Messages`**, **`Clear`**) for a database-backed cache, or use **`NewInMemoryThreadStore()`** so each **thread ID** gets an isolated **`InMemoryStorage`**. Alternatively, **`RunWithContext(gentic.AgentInput{ Messages: ... })`** passes a full message list from the client; the last user message becomes **`State.Input`**, and **`State.Messages`** carries the conversation for that run.
+
+```go
+import "github.com/daniel-dihardja/gentic/pkg/gentic"
+
+store := gentic.NewInMemoryThreadStore()
+
+agent := gentic.Agent{
+	Resolver:    yourResolver,
+	MemoryStore: store,
+}
+
+_, err := agent.RunWithContext(ctx, gentic.AgentInput{Query: "What is the capital of France?", ThreadID: "user-1"})
+_, err = agent.RunWithContext(ctx, gentic.AgentInput{Query: "What is the population of that city?", ThreadID: "user-1"}) // prior user/assistant turns are in State.Messages; State.Input is the new question
+```
+
+Walk through multi-turn ReAct and the **`Messages`** path in **[examples/simple/with-memory](./examples/simple/with-memory)**—`go run ./examples/simple/with-memory/main.go`.
+
+## Security Features
+
+🔒 **Production-ready patterns** for metadata:
+
+- **Public vs private keys** — use **`state.SecureMetadata()`** in tools; **`_`-prefixed** keys and a small **blocklist** (e.g. `token`, `password`) are hidden from that view.
+- Tools should return only what the user needs; keep secrets out of tool JSON by design.
+
+See [SECURITY_METADATA.md](docs/SECURITY_METADATA.md) for rules and blocklists, and [examples/applications/instagram-post-generator/](examples/applications/instagram-post-generator/) for a production-oriented pattern.
