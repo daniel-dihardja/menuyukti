@@ -28,7 +28,7 @@ cd apps/web && pnpm dev
 ```
 
 - Production build: `pnpm build` then `pnpm start`
-- Lint: `pnpm lint` — Typecheck: `pnpm typecheck` / `pnpm check-types` (same as typecheck) — Tests: `pnpm test`
+- Lint: `pnpm lint` — Typecheck: `pnpm typecheck` / `pnpm check-types` (same as typecheck) — Format: `pnpm format:check` / `pnpm format` (includes `messages/*.json`) — Tests: `pnpm test`
 
 ### GraphQL (`apps/graphql`)
 

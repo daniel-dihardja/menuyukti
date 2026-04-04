@@ -8,6 +8,7 @@ function stripPrefix(filenames, prefix) {
 
 export default {
   '*.{ts,tsx,md,css}': 'prettier --write',
+  'apps/web/**/*.json': 'prettier --write',
   'apps/graphql/**/*.py': (filenames) => {
     if (filenames.length === 0) return []
     const args = stripPrefix(filenames, 'apps/graphql').join(' ')
