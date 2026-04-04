@@ -30,16 +30,19 @@ export function getS3Client(): S3Client {
   return s3Client
 }
 
+/** Top-level segment for per-user asset keys: `users/<userId>/<filename>`. */
+const ASSET_USERS_PREFIX = 'users'
+
 export function userPrefix(userId: string): string {
-  return `${userId}/`
+  return `${ASSET_USERS_PREFIX}/${userId}/`
 }
 
 export function userObjectKey(userId: string, filename: string): string {
-  return `${userId}/${filename}`
+  return `${ASSET_USERS_PREFIX}/${userId}/${filename}`
 }
 
 /**
- * Verify that `key` is exactly `{userId}/{safe-filename}` (no traversal, no other prefixes).
+ * Verify that `key` is exactly `users/{userId}/{safe-filename}` (no traversal, no other prefixes).
  */
 export function isObjectKeyForUser(key: string, userId: string): boolean {
   const prefix = userPrefix(userId)

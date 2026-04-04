@@ -2,7 +2,7 @@
 
 ## Assets storage (S3)
 
-User uploads on the Assets page are stored under `AWS_S3_BUCKET` (default `menuyukti`) with keys `{clerkUserId}/{uuid}.webp`. Configure:
+User uploads on the Assets page are stored under `AWS_S3_BUCKET` (default `menuyukti`) with keys `users/{clerkUserId}/{uuid}.webp`. Configure:
 
 - `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (or IAM role where the app runs)
 - `AWS_REGION` — region of the bucket
