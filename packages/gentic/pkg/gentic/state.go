@@ -116,6 +116,25 @@ type State struct {
 	metaMu       sync.Mutex             // serializes Metadata reads/writes (e.g. [Parallel] steps)
 }
 
+// CloneForParallelExecution returns a shallow copy of s for running one task in a parallel plan wave.
+// It clears Observations and leaves a fresh metaMu; other fields (including the Metadata map pointer)
+// match the previous behavior of copying *s by value. Do not copy [State] by value — it contains a [sync.Mutex].
+func (s *State) CloneForParallelExecution() *State {
+	if s == nil {
+		return &State{}
+	}
+	return &State{
+		Input:        s.Input,
+		Intent:       s.Intent,
+		ActionPlan:   s.ActionPlan,
+		Thoughts:     s.Thoughts,
+		Observations: nil,
+		Output:       s.Output,
+		Messages:     s.Messages,
+		Metadata:     s.Metadata,
+	}
+}
+
 // SecureMetadata returns a restricted accessor for public metadata only.
 // Use this when passing the state to tools or external systems.
 // Private keys (starting with '_' or in the sensitive blocklist) are not accessible.

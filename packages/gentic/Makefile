@@ -1,5 +1,7 @@
 .PHONY: test vet fmt lint
 
+GOLANGCI_LINT ?= golangci-lint
+
 test:
 	go test ./...
 
@@ -10,4 +12,4 @@ fmt:
 	go fmt ./...
 
 lint:
-	golangci-lint run ./...
+	$(GOLANGCI_LINT) run ./...

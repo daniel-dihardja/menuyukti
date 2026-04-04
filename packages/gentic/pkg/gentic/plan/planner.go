@@ -216,12 +216,12 @@ func (e executeStep) Run(ctx context.Context, state *gentic.State) error {
 			wg.Add(1)
 			go func(idx int, t Task, taskID string) {
 				defer wg.Done()
-				// Each goroutine gets its own state copy with empty Observations to avoid data races
-				localState := *state
-				localState.Observations = nil
+				// Each goroutine gets its own state shard with empty Observations to avoid data races
+				// (must not copy State by value — it embeds sync.Mutex).
+				localState := state.CloneForParallelExecution()
 				fmt.Printf("Executing [wave %d, parallel %d/%d] %s...\n",
 					waveIdx+1, idx+1, len(group), t.ID)
-				err := t.Function(ctx, &localState)
+				err := t.Function(ctx, localState)
 				ch <- result{index: idx, observations: localState.Observations, err: err}
 			}(i, task, id)
 		}

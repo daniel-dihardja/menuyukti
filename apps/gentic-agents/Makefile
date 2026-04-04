@@ -5,6 +5,7 @@
 BIN ?= bin/gentic-agents
 ADDR ?= :7777
 EVAL_PKG := ./eval
+GOLANGCI_LINT ?= golangci-lint
 
 help:
 	@echo "gentic-agents (Go)"
@@ -77,7 +78,7 @@ fmt:
 	go fmt ./...
 
 lint:
-	golangci-lint run ./...
+	$(GOLANGCI_LINT) run ./...
 
 clean:
 	rm -f $(BIN)
