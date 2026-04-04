@@ -5,6 +5,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from sqlalchemy import (
+    JSON,
     CheckConstraint,
     Column,
     Date,
@@ -264,6 +265,12 @@ class Campaign(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    promotion_candidates = relationship(
+        "PromotionCandidates",
+        back_populates="campaign",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
     name = Column(String(256), nullable=False)
     goal = Column(String(512), nullable=True)
@@ -325,8 +332,32 @@ class CampaignBrief(Base):
         onupdate=func.now(),
     )
 
-    __table_args__ = (
-        UniqueConstraint("campaign_id", name="uq_campaign_brief_campaign"),
+    __table_args__ = (UniqueConstraint("campaign_id", name="uq_campaign_brief_campaign"),)
+
+
+class PromotionCandidates(Base):
+    """
+    Stored promotion candidate items for a campaign (JSON payload from menu engineering / agent flows).
+    One row per campaign.
+    """
+
+    __tablename__ = "promotion_candidates"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    campaign_id = Column(
+        Integer,
+        ForeignKey("campaign.id"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    campaign = relationship("Campaign", back_populates="promotion_candidates")
+    candidates_json = Column(JSON, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
 

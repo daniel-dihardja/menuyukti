@@ -5,6 +5,7 @@ from .delete_campaign_brief import DeleteCampaignBriefMutation
 from .delete_location_profile import DeleteLocationProfileMutation
 from .save_campaign_brief import SaveCampaignBriefMutation
 from .save_location_profile import SaveLocationProfileMutation
+from .save_promotion_candidates import SavePromotionCandidatesMutation
 from .update_menu_item_cogs_bulk import UpdateMenuItemCogsBulkMutation
 from .upload_sales_report import UploadSalesReportMutation
 
@@ -16,6 +17,7 @@ __all__ = [
     "DeleteLocationProfileMutation",
     "SaveCampaignBriefMutation",
     "SaveLocationProfileMutation",
+    "SavePromotionCandidatesMutation",
     "UpdateMenuItemCogsBulkMutation",
     "UploadSalesReportMutation",
 ]
