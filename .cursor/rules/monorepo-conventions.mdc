@@ -30,7 +30,7 @@ alwaysApply: true
 ## Go
 
 - **`apps/gentic-agents`** has its own `go.mod` / `go.sum`. Build and test from that directory or via documented Make targets.
-- Shared Gentic library may live under **`packages/gentic`** (see `go.mod` replace directives). Respect module boundaries and `go.work` if present.
+- The **Gentic** framework lives under **`packages/gentic`**; **`apps/gentic-agents`** depends on it via root **`go.work`** and a **`replace`** in its `go.mod`. Respect module boundaries.
 
 ## Secrets and env
 
