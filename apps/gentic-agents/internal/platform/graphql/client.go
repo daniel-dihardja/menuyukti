@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -33,6 +34,23 @@ const fetchMenuEngineeringMatrixQuery = `query FetchMenuEngineeringMatrix($analy
       weValue
       menuCategory
       menuCategoryDetail
+    }
+  }
+}`
+
+const fetchMenuHeatmapsQuery = `query FetchMenuHeatmaps($analyticsRunId: ID!, $locationId: ID) {
+  menuHeatmaps(analyticsRunId: $analyticsRunId, locationId: $locationId) {
+    menu
+    menuCategory
+    menuCategoryDetail
+    reportingPeriod
+    dailyHeatmap {
+      hour
+      quantity
+    }
+    weeklyHeatmap {
+      day
+      quantity
     }
   }
 }`
@@ -124,14 +142,14 @@ type LocationProfile struct {
 
 // CampaignBrief is the subset of fields returned by campaignBrief.
 type CampaignBrief struct {
-	ID              ID     `json:"id"`
-	CampaignID      ID     `json:"campaignId"`
-	LocationID      ID     `json:"locationId"`
-	AnalyticsRunID  ID     `json:"analyticsRunId"`
-	CampaignTheme   string `json:"campaignTheme"`
-	Tone            string `json:"tone"`
-	TargetAudience  string `json:"targetAudience"`
-	PostingCadence  string `json:"postingCadence"`
+	ID             ID     `json:"id"`
+	CampaignID     ID     `json:"campaignId"`
+	LocationID     ID     `json:"locationId"`
+	AnalyticsRunID ID     `json:"analyticsRunId"`
+	CampaignTheme  string `json:"campaignTheme"`
+	Tone           string `json:"tone"`
+	TargetAudience string `json:"targetAudience"`
+	PostingCadence string `json:"postingCadence"`
 }
 
 // Location is basic venue info from the GraphQL API.
@@ -145,12 +163,12 @@ type Location struct {
 
 // MealPeriodBreakdownRow matches operatingProfile.mealPeriodBreakdown items.
 type MealPeriodBreakdownRow struct {
-	Period        string  `json:"period"`
-	Label         string  `json:"label"`
-	OrderCount    int     `json:"orderCount"`
-	Share         float64 `json:"share"`
-	Revenue       float64 `json:"revenue"`
-	RevenueShare  float64 `json:"revenueShare"`
+	Period       string  `json:"period"`
+	Label        string  `json:"label"`
+	OrderCount   int     `json:"orderCount"`
+	Share        float64 `json:"share"`
+	Revenue      float64 `json:"revenue"`
+	RevenueShare float64 `json:"revenueShare"`
 }
 
 // DayOfWeekBreakdownRow matches operatingProfile.dayOfWeekBreakdown items.
@@ -165,11 +183,11 @@ type DayOfWeekBreakdownRow struct {
 
 // DayTypeBreakdownRow matches operatingProfile.dayTypeBreakdown items.
 type DayTypeBreakdownRow struct {
-	Type           string  `json:"type"`
-	OrderCount     int     `json:"orderCount"`
-	Share          float64 `json:"share"`
-	Revenue        float64 `json:"revenue"`
-	RevenueShare   float64 `json:"revenueShare"`
+	Type         string  `json:"type"`
+	OrderCount   int     `json:"orderCount"`
+	Share        float64 `json:"share"`
+	Revenue      float64 `json:"revenue"`
+	RevenueShare float64 `json:"revenueShare"`
 }
 
 // OperatingProfile holds analytics fields used for the location summary prompt.
@@ -210,8 +228,8 @@ type profileDataWrapper struct {
 }
 
 type locationDataWrapper struct {
-	Location          *Location           `json:"location"`
-	OperatingProfile  *OperatingProfile   `json:"operatingProfile"`
+	Location         *Location         `json:"location"`
+	OperatingProfile *OperatingProfile `json:"operatingProfile"`
 }
 
 type menuEngineeringMatrixDataWrapper struct {
@@ -224,19 +242,45 @@ type menuEngineeringMatrixPayload struct {
 
 // MenuEngineeringItem is one row from menuEngineeringMatrix.items (BCG classification).
 type MenuEngineeringItem struct {
-	Menu                         string   `json:"menu"`
-	Category                     string   `json:"category"`
-	Action                       string   `json:"action"`
-	Quantity                     int      `json:"quantity"`
-	TotalRevenue                 float64  `json:"totalRevenue"`
-	Cogs                         float64  `json:"cogs"`
-	TotalCogs                    float64  `json:"totalCogs"`
-	ContributionMargin           float64  `json:"contributionMargin"`
-	ContributionMarginPercentage float64  `json:"contributionMarginPercentage"`
-	MarginPerUnit                float64  `json:"marginPerUnit"`
-	WeValue                      float64  `json:"weValue"`
-	MenuCategory                 *string  `json:"menuCategory"`
-	MenuCategoryDetail           *string  `json:"menuCategoryDetail"`
+	Menu                         string  `json:"menu"`
+	Category                     string  `json:"category"`
+	Action                       string  `json:"action"`
+	Quantity                     int     `json:"quantity"`
+	TotalRevenue                 float64 `json:"totalRevenue"`
+	Cogs                         float64 `json:"cogs"`
+	TotalCogs                    float64 `json:"totalCogs"`
+	ContributionMargin           float64 `json:"contributionMargin"`
+	ContributionMarginPercentage float64 `json:"contributionMarginPercentage"`
+	MarginPerUnit                float64 `json:"marginPerUnit"`
+	WeValue                      float64 `json:"weValue"`
+	MenuCategory                 *string `json:"menuCategory"`
+	MenuCategoryDetail           *string `json:"menuCategoryDetail"`
+}
+
+type menuHeatmapsDataWrapper struct {
+	MenuHeatmaps []MenuHeatmap `json:"menuHeatmaps"`
+}
+
+// DailyHeatmapPoint is one hour bucket from menuHeatmaps.dailyHeatmap.
+type DailyHeatmapPoint struct {
+	Hour     int `json:"hour"`
+	Quantity int `json:"quantity"`
+}
+
+// WeeklyHeatmapPoint is one weekday bucket from menuHeatmaps.weeklyHeatmap.
+type WeeklyHeatmapPoint struct {
+	Day      string `json:"day"`
+	Quantity int    `json:"quantity"`
+}
+
+// MenuHeatmap is demand heatmaps for one menu item from menuHeatmaps.
+type MenuHeatmap struct {
+	Menu               string               `json:"menu"`
+	MenuCategory       *string              `json:"menuCategory"`
+	MenuCategoryDetail *string              `json:"menuCategoryDetail"`
+	ReportingPeriod    string               `json:"reportingPeriod"`
+	DailyHeatmap       []DailyHeatmapPoint  `json:"dailyHeatmap"`
+	WeeklyHeatmap      []WeeklyHeatmapPoint `json:"weeklyHeatmap"`
 }
 
 type saveLocationProfileDataWrapper struct {
@@ -265,7 +309,7 @@ type createCampaignDataWrapper struct {
 // Returns nil, nil when the server returns null (profile not yet created).
 func FetchLocationProfile(ctx context.Context, endpoint, locationID, analyticsRunID string) (*LocationProfile, error) {
 	raw, err := postGQL(ctx, endpoint, fetchLocationProfileQuery, map[string]interface{}{
-		"locationId":       locationID,
+		"locationId":     locationID,
 		"analyticsRunId": analyticsRunID,
 	})
 	if err != nil {
@@ -298,11 +342,35 @@ func FetchMenuEngineeringMatrix(ctx context.Context, endpoint, analyticsRunID st
 	return data.MenuEngineeringMatrix.Items, nil
 }
 
+// FetchMenuHeatmaps loads hourly and day-of-week heatmaps for every menu item in an analytics run.
+// When locationID is non-empty, the run must belong to that location (otherwise the server returns an empty list).
+func FetchMenuHeatmaps(ctx context.Context, endpoint, analyticsRunID, locationID string) ([]MenuHeatmap, error) {
+	vars := map[string]interface{}{
+		"analyticsRunId": analyticsRunID,
+		"locationId":     nil,
+	}
+	if strings.TrimSpace(locationID) != "" {
+		vars["locationId"] = locationID
+	}
+	raw, err := postGQL(ctx, endpoint, fetchMenuHeatmapsQuery, vars)
+	if err != nil {
+		return nil, err
+	}
+	var data menuHeatmapsDataWrapper
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return nil, err
+	}
+	if data.MenuHeatmaps == nil {
+		return []MenuHeatmap{}, nil
+	}
+	return data.MenuHeatmaps, nil
+}
+
 // FetchLocationData loads location and operating profile for profile generation.
 // operatingProfile may be nil when the analytics run is invalid or has no data.
 func FetchLocationData(ctx context.Context, endpoint, locationID, analyticsRunID string) (*Location, *OperatingProfile, error) {
 	raw, err := postGQL(ctx, endpoint, fetchLocationDataQuery, map[string]interface{}{
-		"locationId":       locationID,
+		"locationId":     locationID,
 		"analyticsRunId": analyticsRunID,
 	})
 	if err != nil {
@@ -318,9 +386,9 @@ func FetchLocationData(ctx context.Context, endpoint, locationID, analyticsRunID
 // SaveLocationProfile persists (upserts) a location profile summary and returns the saved row id.
 func SaveLocationProfile(ctx context.Context, endpoint, locationID, analyticsRunID, summary string) (string, error) {
 	raw, err := postGQL(ctx, endpoint, saveLocationProfileMutation, map[string]interface{}{
-		"locationId":       locationID,
+		"locationId":     locationID,
 		"analyticsRunId": analyticsRunID,
-		"summary":          summary,
+		"summary":        summary,
 	})
 	if err != nil {
 		return "", err

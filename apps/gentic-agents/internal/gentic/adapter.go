@@ -1,6 +1,7 @@
 package gentic
 
 import (
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/flows/analytics"
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flows/campaign"
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flows/locationprofile"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
@@ -17,16 +18,19 @@ func BuildAgent(model, graphqlEndpoint string, maxReflectionIterations int, stor
 	})
 	locationProfileChatFlow := locationprofile.NewChatReactActor(model, graphqlEndpoint, maxReflectionIterations)
 	campaignBriefChatFlow := campaign.NewChatReactActor(model, graphqlEndpoint, maxReflectionIterations)
+	analyticsFlow := analytics.NewFlow(model, graphqlEndpoint)
 	// create_campaign_brief and update_campaign_brief both use the same ReAct brief agent (tools decide create vs fetch vs update).
 	resolver := intent.NewRouter(
 		"chat",
 		"create_location_profile", "update_location_profile",
 		"create_campaign_brief", "update_campaign_brief",
+		"create_promotion_candidates",
 	).
 		On("create_location_profile", locationProfileChatFlow).
 		On("update_location_profile", locationProfileChatFlow).
 		On("create_campaign_brief", campaignBriefChatFlow).
 		On("update_campaign_brief", campaignBriefChatFlow).
+		On("create_promotion_candidates", analyticsFlow).
 		Default(chatFlow)
 	return gen.Agent{Resolver: resolver, MemoryStore: store}
 }
