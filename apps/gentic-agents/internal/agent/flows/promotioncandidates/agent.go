@@ -7,21 +7,22 @@ import (
 
 const promotionCandidatesReActSystemPrompt = `You help restaurant marketers work with **promotion candidates** derived from menu engineering data (BCG-style matrix) and weekly demand heatmaps.
 
-You have three tools:
+The **saved campaign brief** (theme, tone, target audience, posting cadence) is the strategic context for this campaign when it exists in the system. Creation loads it automatically when possible so candidate lists and day patterns align with that strategy—without inventing menu items.
+
+You have two tools:
 
 - **fetch_promotion_candidates** — Load **saved** promotion candidates (insights + matrix rows) for this chat's **campaign_id** from the database. Use when the user asks about previously saved candidates or you need grounded data without regenerating.
-- **generate_promotion_candidates** — Run the structured analysis to produce **stars**, **plow_horses**, **puzzles**, and **day_patterns**. The server loads matrix and heatmaps automatically when needed. Do not invent menu items.
-- **save_promotion_candidates** — Persist insights and matrix rows to the campaign when **campaign_id** is present in the request. If campaign_id is missing, explain that saving is not possible until the client provides it.
+- **create_promotion_candidates** — Derive **stars**, **plow_horses**, **puzzles**, and **day_patterns** from matrix and heatmaps, then **save** them to this campaign in one step. Requires **campaign_id** in the request. The server loads the **campaign brief** (when available), then matrix and heatmaps. Do not invent menu items.
 
 Workflow:
 
-1. When the user wants to **create**, **generate**, or **refresh** promotion candidates: call **generate_promotion_candidates**, then **save_promotion_candidates** if they need the results stored (and campaign_id is available).
-2. When the user asks about **saved** candidates: call **fetch_promotion_candidates** first.
+1. When the user wants to **create**, **generate**, or **refresh** promotion candidates: call **create_promotion_candidates** once (it saves to the campaign automatically).
+2. When the user asks about **saved** candidates only: call **fetch_promotion_candidates** first.
 3. Keep chat replies **short**; full structured lists are in tool results and the UI artifact where applicable.
 
 If a tool returns an **error** field, explain what went wrong and what the user can do next.`
 
-// NewChatReactActor returns a ReAct flow for interactive promotion-candidate analytics (fetch saved / generate / save).
+// NewChatReactActor returns a ReAct flow for interactive promotion-candidate analytics (fetch saved / create).
 func NewChatReactActor(model, graphqlEndpoint string) gen.Flow {
 	actor := react.NewReactActor(
 		react.WithModel(model),
@@ -35,17 +36,12 @@ func NewChatReactActor(model, graphqlEndpoint string) gen.Flow {
 				fetchPromotionCandidatesHandler(graphqlEndpoint),
 			),
 			react.NewToolWithState(
-				"generate_promotion_candidates",
-				"Derives structured promotion insights from menu engineering matrix and heatmaps (loaded automatically if needed).",
-				gen.SchemaFromStruct(GenerateCandidatesInput{}),
-				generateCandidatesHandler(model),
+				"create_promotion_candidates",
+				"Derives promotion insights from menu engineering matrix and heatmaps, then saves them to the campaign. Requires campaign_id. When a campaign brief exists for that campaign, analysis aligns with it.",
+				gen.SchemaFromStruct(CreatePromotionCandidatesInput{}),
+				createPromotionCandidatesHandler(model, graphqlEndpoint),
+				EnsureCampaignBrief(graphqlEndpoint),
 				EnsureAnalyticsInput(graphqlEndpoint),
-			),
-			react.NewToolWithState(
-				"save_promotion_candidates",
-				"Saves insights and matrix rows to the campaign when campaign_id is in the request metadata.",
-				gen.SchemaFromStruct(SaveCandidatesInput{}),
-				saveCandidatesHandler(graphqlEndpoint),
 			),
 		),
 	)

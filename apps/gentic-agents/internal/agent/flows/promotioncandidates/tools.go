@@ -15,11 +15,8 @@ import (
 // FetchPromotionCandidatesInput has no parameters; campaign_id comes from request metadata.
 type FetchPromotionCandidatesInput struct{}
 
-// GenerateCandidatesInput has no parameters; uses matrix and heatmaps from state after the analytics guard.
-type GenerateCandidatesInput struct{}
-
-// SaveCandidatesInput has no parameters; campaign_id and insights come from request metadata and state.
-type SaveCandidatesInput struct{}
+// CreatePromotionCandidatesInput has no parameters; uses request metadata and analytics guards.
+type CreatePromotionCandidatesInput struct{}
 
 func fetchPromotionCandidatesHandler(endpoint string) func(context.Context, *gen.State, json.RawMessage) (json.RawMessage, error) {
 	return func(ctx context.Context, state *gen.State, _ json.RawMessage) (json.RawMessage, error) {
@@ -59,7 +56,7 @@ func fetchPromotionCandidatesHandler(endpoint string) func(context.Context, *gen
 	}
 }
 
-func generateCandidatesHandler(model string) func(context.Context, *gen.State, json.RawMessage) (json.RawMessage, error) {
+func createPromotionCandidatesHandler(model, endpoint string) func(context.Context, *gen.State, json.RawMessage) (json.RawMessage, error) {
 	return func(ctx context.Context, state *gen.State, _ json.RawMessage) (json.RawMessage, error) {
 		ctx = graphql.GraphQLContext(ctx, state)
 
@@ -82,54 +79,48 @@ func generateCandidatesHandler(model string) func(context.Context, *gen.State, j
 			return json.Marshal(map[string]any{"error": "Invalid analytics insights in state."})
 		}
 
+		campaignID := strings.TrimSpace(flowstate.CampaignIDFromMetadata(state))
+		if campaignID == "" {
+			return nil, fmt.Errorf("campaign_id is required in the request to create and save promotion candidates")
+		}
+
+		items, ok := flowstate.MatrixItemsFromMetadata(state)
+		if !ok {
+			items = []graphql.MenuEngineeringItem{}
+		}
+
+		n := gen.NotifierFromContext(ctx)
+		if n != nil {
+			n.Notify("create_promotion_candidates", gen.ActivityRunning, "Save promotion candidates")
+		}
+
+		payload := promotionCandidatesPayload{
+			Insights:    insights,
+			MatrixItems: items,
+		}
+		if err := graphql.SavePromotionCandidates(ctx, endpoint, campaignID, payload); err != nil {
+			return nil, fmt.Errorf("save promotion candidates: %w", err)
+		}
+
+		if n != nil {
+			n.Notify("create_promotion_candidates", gen.ActivityDone, "Promotion candidates saved")
+		}
+
 		state.Output = ""
-		slog.Info("promotioncandidates tool: generate_promotion_candidates ok",
+		slog.Info("promotioncandidates tool: create_promotion_candidates ok",
 			"component", "gentic-agents.promotioncandidates",
+			"campaign_id", campaignID,
 			"stars", len(insights.Stars), "plow_horses", len(insights.PlowHorses), "puzzles", len(insights.Puzzles))
 
 		return json.Marshal(map[string]any{
-			"generated":             true,
+			"created":               true,
+			"saved":                 true,
+			"campaign_id":           campaignID,
 			"stars_count":           len(insights.Stars),
 			"plow_horses_count":     len(insights.PlowHorses),
 			"puzzles_count":         len(insights.Puzzles),
 			"day_patterns_weekdays": len(insights.DayPatterns),
-		})
-	}
-}
-
-func saveCandidatesHandler(endpoint string) func(context.Context, *gen.State, json.RawMessage) (json.RawMessage, error) {
-	return func(ctx context.Context, state *gen.State, _ json.RawMessage) (json.RawMessage, error) {
-		ctx = graphql.GraphQLContext(ctx, state)
-
-		campaignID := strings.TrimSpace(flowstate.CampaignIDFromMetadata(state))
-		if campaignID == "" {
-			return json.Marshal(map[string]any{
-				"saved":  false,
-				"reason": "campaign_id is required in the request to save promotion candidates.",
-			})
-		}
-
-		if _, ok := state.GetMetadata(flowstate.KeyAnalyticsInsights); !ok {
-			return json.Marshal(map[string]any{
-				"saved":  false,
-				"reason": "No analytics insights in state; call generate_promotion_candidates or fetch_promotion_candidates first.",
-			})
-		}
-
-		state.Output = ""
-		step := SavePromotionCandidatesStep{GraphQLEndpoint: endpoint}
-		if err := step.Run(ctx, state); err != nil {
-			return nil, fmt.Errorf("save promotion candidates: %w", err)
-		}
-		state.Output = ""
-
-		slog.Info("promotioncandidates tool: save_promotion_candidates ok",
-			"component", "gentic-agents.promotioncandidates",
-			"campaign_id", campaignID)
-
-		return json.Marshal(map[string]any{
-			"saved":       true,
-			"campaign_id": campaignID,
+			"matrix_rows":           len(items),
 		})
 	}
 }

@@ -16,6 +16,8 @@ const analyticsSystemPrompt = `You are a restaurant data analyst for marketing i
 
 You are given menu engineering matrix rows (BCG-style categories: star, plow_horse, puzzle, low_end) and per-item weekly heatmaps (day codes: mon, tue, wed, thu, fri, sat, sun with quantities).
 
+When a **Campaign brief** section appears in the user message, use it to prioritize which items you include in each list and to interpret **day_patterns** in line with that campaign's theme, tone, target audience, and posting cadence. You must still ground every menu item name in the matrix or heatmaps—never invent names.
+
 Produce insights only:
 - stars, plow_horses, puzzles: lists of menu item names (strings) grounded in the matrix categories. Prefer notable or representative items; you may omit crowded tails.
 - day_patterns: keys are lowercase English weekday names (monday, tuesday, wednesday, thursday, friday, saturday, sunday). Values are menu item names that meaningfully peak or concentrate demand on that weekday according to the heatmaps (relative to that item's week or to other items).
@@ -58,7 +60,11 @@ func (s AnalyzeStep) Run(ctx context.Context, state *gen.State) error {
 	}
 
 	llm := openai.Provider{}
-	user := buildAnalyticsUserPrompt(items, heatmaps)
+	var brief *graphql.CampaignBrief
+	if b, ok := flowstate.CampaignBriefFromMetadata(state); ok && b != nil {
+		brief = b
+	}
+	user := buildAnalyticsUserPrompt(items, heatmaps, brief)
 
 	insights, err := gen.TypedChat[flowstate.AnalyticsInsights](ctx, llm, model, analyticsSystemPrompt, user)
 	if err != nil {
@@ -77,8 +83,16 @@ func (s AnalyzeStep) Run(ctx context.Context, state *gen.State) error {
 	return nil
 }
 
-func buildAnalyticsUserPrompt(items []graphql.MenuEngineeringItem, heatmaps []graphql.MenuHeatmap) string {
+func buildAnalyticsUserPrompt(items []graphql.MenuEngineeringItem, heatmaps []graphql.MenuHeatmap, brief *graphql.CampaignBrief) string {
 	var b strings.Builder
+	if brief != nil && strings.TrimSpace(brief.CampaignTheme) != "" {
+		b.WriteString("## Campaign brief (strategy—use only menu names from the data below)\n\n")
+		fmt.Fprintf(&b, "- campaign_theme: %s\n", strings.TrimSpace(brief.CampaignTheme))
+		fmt.Fprintf(&b, "- tone: %s\n", strings.TrimSpace(brief.Tone))
+		fmt.Fprintf(&b, "- target_audience: %s\n", strings.TrimSpace(brief.TargetAudience))
+		fmt.Fprintf(&b, "- posting_cadence: %s\n", strings.TrimSpace(brief.PostingCadence))
+		b.WriteString("\n")
+	}
 	b.WriteString("## Menu engineering matrix (items)\n\n")
 	if len(items) == 0 {
 		b.WriteString("No matrix rows (missing COGS or no sales in period).\n\n")

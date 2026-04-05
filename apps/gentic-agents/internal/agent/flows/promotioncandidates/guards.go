@@ -30,3 +30,28 @@ func EnsureAnalyticsInput(endpoint string) react.GuardFunc {
 		return nil
 	}
 }
+
+// EnsureCampaignBrief loads the saved campaign brief into state when missing so
+// create_promotion_candidates can align analytics with campaign strategy.
+func EnsureCampaignBrief(endpoint string) react.GuardFunc {
+	return func(ctx context.Context, state *gen.State) error {
+		if flowstate.HasValidPersistedCampaignBrief(state) {
+			return nil
+		}
+		campaignID := flowstate.CampaignIDFromMetadata(state)
+		if campaignID == "" {
+			return nil
+		}
+		ctx = graphql.GraphQLContext(ctx, state)
+		brief, err := graphql.FetchCampaignBrief(ctx, endpoint, campaignID)
+		if err != nil {
+			return nil
+		}
+		if brief == nil || strings.TrimSpace(brief.CampaignTheme) == "" {
+			state.DeleteMetadata(flowstate.KeyCampaignBrief)
+			return nil
+		}
+		state.SetMetadata(flowstate.KeyCampaignBrief, brief)
+		return nil
+	}
+}
