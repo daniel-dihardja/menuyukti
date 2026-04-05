@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
-	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/planning"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 	"github.com/daniel-dihardja/gentic/pkg/gentic/reflect"
@@ -81,7 +81,7 @@ func (s CreateBriefStep) Run(ctx context.Context, state *gen.State) error {
 			return buildReflectionUser(refSnap, draft)
 		},
 		BuildRevisionPrompt: buildRevisionPrompt,
-		OnIteration:         step.NotifyRefiningIteration("campaign_brief_refinement"),
+		OnIteration:         planning.NotifyRefiningIteration("campaign_brief_refinement"),
 	})
 	if err != nil {
 		return err
@@ -100,7 +100,7 @@ func (s CreateBriefStep) Run(ctx context.Context, state *gen.State) error {
 		PostingCadence: strings.TrimSpace(payload.PostingCadence),
 	})
 
-	step.EmitPlanningProgress(ctx, state)
+	planning.EmitPlanningProgress(ctx, state)
 
 	notify, err := llm.Chat(ctx, model, briefNotifySystem, buildNotifyPrompt(payload))
 	if err != nil {

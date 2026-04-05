@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/daniel-dihardja/gentic-agents/internal/agent/flowstate"
-	"github.com/daniel-dihardja/gentic-agents/internal/agent/step"
+	"github.com/daniel-dihardja/gentic-agents/internal/agent/planning"
 	"github.com/daniel-dihardja/gentic-agents/internal/platform/graphql"
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 )
@@ -120,7 +120,7 @@ func createBriefHandler(endpoint, model string, maxReflectionIterations int) fun
 			state.SetMetadata(flowstate.KeyCampaignBrief, row)
 		}
 
-		step.EmitPlanningProgress(ctx, state)
+		planning.EmitPlanningProgress(ctx, state)
 
 		n := gen.NotifierFromContext(ctx)
 		if n != nil {
@@ -208,7 +208,7 @@ func updateBriefHandler(endpoint string) func(context.Context, *gen.State, json.
 			})
 		}
 
-		step.EmitPlanningProgress(ctx, state)
+		planning.EmitPlanningProgress(ctx, state)
 
 		n := gen.NotifierFromContext(ctx)
 		if n != nil {

@@ -10,7 +10,7 @@ import (
 )
 
 // BuildAgent wires the Gentic SDK with a default chat flow behind intent routing.
-// The default chat uses step.DefaultChatSystemPrompt.
+// The default chat uses a simple assistant system prompt.
 func BuildAgent(model, graphqlEndpoint string, maxReflectionIterations int, store gen.ThreadStore) gen.Agent {
 	chatFlow := gen.NewFlow(steps.ChatStep{
 		Model:        model,
