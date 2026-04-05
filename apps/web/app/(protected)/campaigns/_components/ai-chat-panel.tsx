@@ -67,6 +67,19 @@ function findLastUserMessageIndex(messages: UIMessage[], needle: string): number
   return -1
 }
 
+/** Nearest assistant message strictly before `beforeIndex` (used to detect stale assistant rows after user "create location profile"). */
+function getLastAssistantBeforeIndex(
+  messages: UIMessage[],
+  beforeIndex: number,
+): UIMessage | undefined {
+  for (let i = beforeIndex - 1; i >= 0; i--) {
+    if (messages[i]?.role === 'assistant') {
+      return messages[i]
+    }
+  }
+  return undefined
+}
+
 function getActivitySteps(parts: UIMessage['parts']): ActivityStep[] {
   const stepMap = new Map<string, ActivityStep>()
   for (const part of parts ?? []) {
@@ -166,9 +179,27 @@ export function AiChatPanel({
     let planningBase: PlanningArtifact | null = null
     let locationSummaryOverride: string | undefined = undefined
 
+    const lastCreateIdx = findLastUserMessageIndex(messages, 'create location profile')
+    const lastAssistantBeforeCreate =
+      lastCreateIdx !== -1 ? getLastAssistantBeforeIndex(messages, lastCreateIdx) : undefined
+    const staleAssistantId = lastAssistantBeforeCreate?.id
+
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i]
       if (msg?.role !== 'assistant') continue
+
+      // While waiting for a new profile, ignore planning parts from older assistant turns only.
+      if (awaitingNewLocationProfile && lastCreateIdx !== -1) {
+        if (i < lastCreateIdx + 1) continue
+        if (
+          staleAssistantId != null &&
+          staleAssistantId !== '' &&
+          msg.id === staleAssistantId
+        ) {
+          continue
+        }
+      }
+
       const parts = msg.parts ?? []
       for (let j = parts.length - 1; j >= 0; j--) {
         const part = parts[j]
@@ -276,9 +307,19 @@ export function AiChatPanel({
     const lastCreateIdx = findLastUserMessageIndex(messages, 'create location profile')
     if (lastCreateIdx === -1) return
 
+    const lastAssistantBeforeCreate = getLastAssistantBeforeIndex(messages, lastCreateIdx)
+    const staleAssistantId = lastAssistantBeforeCreate?.id
+
     for (let i = lastCreateIdx + 1; i < messages.length; i++) {
       const msg = messages[i]
       if (msg?.role !== 'assistant') continue
+      if (
+        staleAssistantId != null &&
+        staleAssistantId !== '' &&
+        msg.id === staleAssistantId
+      ) {
+        continue
+      }
       for (const part of msg.parts ?? []) {
         if (part.type === 'data-planning' && part && 'data' in part) {
           const data = part.data as PlanningArtifact
