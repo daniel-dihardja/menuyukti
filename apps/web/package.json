@@ -16,6 +16,8 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@xyflow/react": "^12.10.1",
+    "d3-force": "^3.0.0",
     "@aws-sdk/client-s3": "^3.1023.0",
     "@aws-sdk/s3-request-presigner": "^3.1023.0",
     "@ai-sdk/openai": "^3.0.30",
@@ -37,6 +39,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/d3-force": "^3.0.10",
     "@types/node": "^20.19.9",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",

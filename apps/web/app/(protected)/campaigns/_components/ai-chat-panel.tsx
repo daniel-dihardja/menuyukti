@@ -24,7 +24,8 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { AiArtifactPanel, type PlanningArtifact, type NationalHoliday } from './ai-artifact-panel'
+import type { PlanningArtifact, NationalHoliday } from './ai-artifact-panel'
+import { AgentFlowPanel } from './agent-flow-panel'
 import { AgentActivityFeed, type ActivityStep } from './agent-activity-feed'
 
 function getMessageText(message: UIMessage): string {
@@ -54,68 +55,6 @@ const ACTIVITY_STEP_ORDER: Record<string, number> = {
   assign_post_formats: 13,
   assign_post_formats_refinement: 14,
   save_campaign: 15,
-}
-
-/** Removes persisted location profile from assistant message parts (DB row is gone). */
-function stripLocationProfileFromMessageParts(
-  parts: NonNullable<UIMessage['parts']>,
-): UIMessage['parts'] {
-  const out: UIMessage['parts'] = []
-  for (const part of parts) {
-    if (part.type === 'data-location-profile') {
-      continue
-    }
-    if (part.type === 'data-planning' && 'data' in part) {
-      const d = part.data as PlanningArtifact
-      out.push({
-        ...part,
-        data: {
-          ...d,
-          locationSummary: null,
-          locationProfileId: null,
-        },
-      } as (typeof parts)[number])
-      continue
-    }
-    out.push(part)
-  }
-  return out
-}
-
-function stripLocationProfileFromMessages(messages: UIMessage[]): UIMessage[] {
-  return messages.map((msg) => {
-    if (msg.role !== 'assistant' || !msg.parts?.length) return msg
-    return { ...msg, parts: stripLocationProfileFromMessageParts(msg.parts) }
-  })
-}
-
-/** Clears campaign brief from streamed planning parts after DB delete. */
-function stripCampaignBriefFromMessageParts(
-  parts: NonNullable<UIMessage['parts']>,
-): UIMessage['parts'] {
-  const out: UIMessage['parts'] = []
-  for (const part of parts) {
-    if (part.type === 'data-planning' && 'data' in part) {
-      const d = part.data as PlanningArtifact
-      out.push({
-        ...part,
-        data: {
-          ...d,
-          campaignBrief: null,
-        },
-      } as (typeof parts)[number])
-      continue
-    }
-    out.push(part)
-  }
-  return out
-}
-
-function stripCampaignBriefFromMessages(messages: UIMessage[]): UIMessage[] {
-  return messages.map((msg) => {
-    if (msg.role !== 'assistant' || !msg.parts?.length) return msg
-    return { ...msg, parts: stripCampaignBriefFromMessageParts(msg.parts) }
-  })
 }
 
 function findLastUserMessageIndex(messages: UIMessage[], needle: string): number {
@@ -156,28 +95,25 @@ export type AiChatPanelProps = {
 
 export function AiChatPanel({
   locationId,
-  analyticsRuns,
+  analyticsRuns: _analyticsRuns,
   defaultDates,
   initialPlanning = null,
   initialAnalyticsId = null,
   campaignId,
 }: AiChatPanelProps) {
+  void _analyticsRuns
   const [text, setText] = useState('')
   const [campaignDates, setCampaignDates] = useState(defaultDates)
   const [holidaysOverride, setHolidaysOverride] = useState<NationalHoliday[] | null | undefined>(
     undefined,
   )
-  const [isLoadingHolidays, setIsLoadingHolidays] = useState(true)
-  const [selectedAnalyticsId, setSelectedAnalyticsId] = useState<number | null>(
-    initialAnalyticsId ?? null,
-  )
+  const [selectedAnalyticsId] = useState<number | null>(initialAnalyticsId ?? null)
   const [locationProfileDeleted, setLocationProfileDeleted] = useState(false)
   /** Hides stale location data from prior turns until the new "create location profile" response includes fresh parts. */
   const [awaitingNewLocationProfile, setAwaitingNewLocationProfile] = useState(false)
   /** After delete, ignore server `initialPlanning` location until a new profile is streamed. */
   const [suppressInitialLocationSnapshot, setSuppressInitialLocationSnapshot] = useState(false)
   /** After delete, ignore server `initialPlanning` brief until a new brief is streamed. */
-  const [suppressInitialCampaignBrief, setSuppressInitialCampaignBrief] = useState(false)
   const [threadId, setThreadId] = useState('')
   useLayoutEffect(() => {
     const key = `chat-thread-${campaignId}`
@@ -205,7 +141,7 @@ export function AiChatPanel({
       }),
     [],
   )
-  const { messages, sendMessage, setMessages, status, stop } = useChat({ transport })
+  const { messages, sendMessage, status, stop } = useChat({ transport })
 
   // Pre-populated artifact state — shown immediately on page load before the
   // LLM runs. The data-planning SSE events from the agent will override this
@@ -221,9 +157,9 @@ export function AiChatPanel({
       locationProfileId: suppressInitialLocationSnapshot
         ? null
         : (initialPlanning?.locationProfileId ?? null),
-      campaignBrief: suppressInitialCampaignBrief ? null : (initialPlanning?.campaignBrief ?? null),
+      campaignBrief: initialPlanning?.campaignBrief ?? null,
     }),
-    [defaultDates, initialPlanning, suppressInitialLocationSnapshot, suppressInitialCampaignBrief],
+    [defaultDates, initialPlanning, suppressInitialLocationSnapshot],
   )
 
   const planningArtifact = useMemo<PlanningArtifact>(() => {
@@ -303,7 +239,6 @@ export function AiChatPanel({
     async (dates: { dateStart: string; dateEnd: string }) => {
       setCampaignDates(dates)
       setHolidaysOverride(undefined)
-      setIsLoadingHolidays(true)
       try {
         const res = await fetch(
           `/api/holidays?locationId=${locationId}&dateStart=${dates.dateStart}&dateEnd=${dates.dateEnd}`,
@@ -321,8 +256,6 @@ export function AiChatPanel({
         setHolidaysOverride(holidays)
       } catch {
         setHolidaysOverride(null)
-      } finally {
-        setIsLoadingHolidays(false)
       }
     },
     [locationId],
@@ -391,124 +324,10 @@ export function AiChatPanel({
     [sendMessage],
   )
 
-  const handleCreateCampaign = useCallback(async () => {
-    await sendMessage(
-      { text: 'create campaign' },
-      {
-        body: {
-          analyticsId: selectedAnalyticsId,
-          dateStart: campaignDates.dateStart,
-          dateEnd: campaignDates.dateEnd,
-          nationalHolidays: holidaysOverride ?? displayedArtifact.nationalHolidays ?? null,
-        },
-      },
-    )
-  }, [
-    campaignDates.dateEnd,
-    campaignDates.dateStart,
-    displayedArtifact.nationalHolidays,
-    holidaysOverride,
-    selectedAnalyticsId,
-    sendMessage,
-  ])
-
-  const handleCreateLocationProfile = useCallback(async () => {
-    setAwaitingNewLocationProfile(true)
-    await sendMessage(
-      { text: 'create location profile' },
-      {
-        body: {
-          analyticsId: selectedAnalyticsId,
-          dateStart: campaignDates.dateStart,
-          dateEnd: campaignDates.dateEnd,
-          nationalHolidays: holidaysOverride ?? displayedArtifact.nationalHolidays ?? null,
-        },
-      },
-    )
-  }, [
-    campaignDates.dateEnd,
-    campaignDates.dateStart,
-    displayedArtifact.nationalHolidays,
-    holidaysOverride,
-    selectedAnalyticsId,
-    sendMessage,
-  ])
-
-  const handleLocationFeedback = useCallback(
-    async (feedback: string) => {
-      await sendMessage({
-        text: `Please consider this feedback for the location profile, update the profile if needed: ${feedback}`,
-      })
-    },
-    [sendMessage],
-  )
-
-  const handleCreateCampaignBrief = useCallback(
-    async (theme?: string) => {
-      const base = 'create campaign brief'
-      const text = theme
-        ? `${base}. Please consider the following as additional input for the campaign theme: ${theme}`
-        : base
-      await sendMessage({ text })
-    },
-    [sendMessage],
-  )
-
-  const handleDeleteCampaignBrief = useCallback(async () => {
-    if (campaignId == null || !Number.isFinite(Number(campaignId))) return
-
-    try {
-      const response = await fetch('/api/campaign-brief/delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ campaignId: Number(campaignId) }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        console.error('Failed to delete campaign brief:', errorData)
-        return
-      }
-
-      setMessages((prev) => stripCampaignBriefFromMessages(prev))
-      setSuppressInitialCampaignBrief(true)
-    } catch (err) {
-      console.error('Error deleting campaign brief:', err)
-    }
-  }, [campaignId, setMessages])
-
-  const handleDeleteLocationProfile = useCallback(async () => {
-    const profileId = displayedArtifact.locationProfileId
-    if (!profileId) return
-
-    try {
-      const response = await fetch('/api/location-profile/delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: String(profileId) }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        console.error('Failed to delete location profile:', errorData)
-        return
-      }
-
-      setMessages((prev) => stripLocationProfileFromMessages(prev))
-      setLocationProfileDeleted(true)
-      setAwaitingNewLocationProfile(false)
-      setSuppressInitialLocationSnapshot(true)
-    } catch (err) {
-      console.error('Error deleting location profile:', err)
-    }
-  }, [displayedArtifact.locationProfileId, setMessages])
-
   const isSubmitDisabled = useMemo(
     () => !text.trim() || status === 'streaming' || status === 'submitted',
     [text, status],
   )
-
-  const isStreaming = status === 'streaming' || status === 'submitted'
 
   const visibleMessages = useMemo(() => messages.filter((msg) => msg.role !== 'system'), [messages])
 
@@ -593,24 +412,9 @@ export function AiChatPanel({
         </div>
       </div>
 
-      {/* Artifact — always visible and pre-populated from server data */}
-      <div className="col-span-2 overflow-hidden">
-        <AiArtifactPanel
-          planning={displayedArtifact}
-          campaignDates={campaignDates}
-          onDatesChange={handleDatesChange}
-          onCreateCampaign={handleCreateCampaign}
-          onCreateLocationProfile={handleCreateLocationProfile}
-          onDeleteLocationProfile={handleDeleteLocationProfile}
-          onLocationFeedback={handleLocationFeedback}
-          onCreateCampaignBrief={handleCreateCampaignBrief}
-          onDeleteCampaignBrief={campaignId != null ? handleDeleteCampaignBrief : undefined}
-          analyticsRuns={analyticsRuns}
-          selectedAnalyticsId={selectedAnalyticsId}
-          onAnalyticsIdChange={setSelectedAnalyticsId}
-          isStreaming={isStreaming}
-          isLoadingHolidays={isLoadingHolidays}
-        />
+      {/* Artifact — agent dependency graph */}
+      <div className="col-span-2 min-h-0 overflow-hidden">
+        <AgentFlowPanel />
       </div>
     </div>
   )
