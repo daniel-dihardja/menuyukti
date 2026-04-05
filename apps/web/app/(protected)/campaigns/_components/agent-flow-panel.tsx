@@ -29,25 +29,42 @@ import {
 import { MessageResponse } from '@workspace/ui/components/ai-elements/message'
 import { Button } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
-import { MapPinIcon, XIcon } from 'lucide-react'
+import { CheckCircle2Icon, CircleDashedIcon, MapPinIcon, XIcon } from 'lucide-react'
 import { agentEdges, agentNodes, type AgentNodeData as AgentNodeMeta } from './agent-flow-data'
 
 /** Approximate node box for centering in force layout (matches Tailwind max-w + padding). */
 const NODE_WIDTH = 220
 const NODE_HEIGHT = 96
 
-type AgentNodeData = { label: string; description: string }
+type AgentNodeData = { label: string; description: string; hasProfile?: boolean }
 
 function AgentNode({ data, selected }: NodeProps<Node<AgentNodeData, 'agent'>>) {
   return (
     <div
       className={cn(
-        'max-w-[220px] rounded-lg border px-3 py-2.5 shadow-sm transition-colors',
+        'relative max-w-[220px] rounded-lg border px-3 py-2.5 shadow-sm transition-colors',
         selected
           ? 'border-primary bg-primary/5 ring-2 ring-primary/30'
           : 'border-border bg-card',
       )}
     >
+      {data.hasProfile !== undefined && (
+        <span
+          className={cn(
+            'absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full shadow-sm ring-1 ring-border',
+            data.hasProfile
+              ? 'bg-emerald-500 text-white'
+              : 'bg-muted text-muted-foreground',
+          )}
+          aria-hidden
+        >
+          {data.hasProfile ? (
+            <CheckCircle2Icon className="size-3.5" strokeWidth={2.5} />
+          ) : (
+            <CircleDashedIcon className="size-3.5" strokeWidth={2.5} />
+          )}
+        </span>
+      )}
       <Handle type="target" position={Position.Left} className="!size-2 !border-2 !bg-primary" />
       <p className="text-sm font-semibold leading-snug text-foreground">{data.label}</p>
       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{data.description}</p>
@@ -81,7 +98,11 @@ type SimNode = (typeof agentNodes)[number] &
 
 type SimLink = SimulationLinkDatum<SimNode>
 
-function runForceLayout(width: number, height: number): Node<AgentNodeData, 'agent'>[] {
+function runForceLayout(
+  width: number,
+  height: number,
+  hasLocationProfile: boolean,
+): Node<AgentNodeData, 'agent'>[] {
   const simNodes: SimNode[] = agentNodes.map((n, i) => ({
     ...n,
     x: width / 2 + (i - 1) * (width * 0.12),
@@ -119,7 +140,11 @@ function runForceLayout(width: number, height: number): Node<AgentNodeData, 'age
       id: n.id,
       type: 'agent' as const,
       position: { x, y },
-      data: { label: n.label, description: n.description },
+      data: {
+        label: n.label,
+        description: n.description,
+        ...(n.id === 'location-profile' ? { hasProfile: hasLocationProfile } : {}),
+      },
     }
   })
 }
@@ -137,13 +162,21 @@ function applySelection(
 type AgentFlowCanvasProps = {
   selectedNodeId: string | null
   onNodeSelect: (id: string) => void
+  hasLocationProfile: boolean
 }
 
-function AgentFlowCanvas({ selectedNodeId, onNodeSelect }: AgentFlowCanvasProps) {
+function AgentFlowCanvas({
+  selectedNodeId,
+  onNodeSelect,
+  hasLocationProfile,
+}: AgentFlowCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   /** Keeps selection when relayout runs without adding selectedNodeId to layout deps (avoids relayout on every click). */
   const selectedNodeIdRef = useRef(selectedNodeId)
   selectedNodeIdRef.current = selectedNodeId
+  /** Keeps profile badge in sync on resize without re-running layout deps when only profile state changes. */
+  const hasLocationProfileRef = useRef(hasLocationProfile)
+  hasLocationProfileRef.current = hasLocationProfile
 
   const { fitView } = useReactFlow()
   const initialEdges = useMemo(() => buildEdges(), [])
@@ -155,7 +188,12 @@ function AgentFlowCanvas({ selectedNodeId, onNodeSelect }: AgentFlowCanvasProps)
     if (!el) return
     const { width, height } = el.getBoundingClientRect()
     if (width < 32 || height < 32) return
-    setNodes(applySelection(runForceLayout(width, height), selectedNodeIdRef.current))
+    setNodes(
+      applySelection(
+        runForceLayout(width, height, hasLocationProfileRef.current),
+        selectedNodeIdRef.current,
+      ),
+    )
     requestAnimationFrame(() => {
       fitView({ padding: 0.12, duration: 200 })
     })
@@ -163,7 +201,7 @@ function AgentFlowCanvas({ selectedNodeId, onNodeSelect }: AgentFlowCanvasProps)
 
   useEffect(() => {
     layoutAndFit()
-  }, [layoutAndFit])
+  }, [layoutAndFit, hasLocationProfile])
 
   useEffect(() => {
     const el = containerRef.current
@@ -307,6 +345,8 @@ export function AgentFlowPanel({
     () => agentNodes.find((n) => n.id === selectedNodeId) ?? null,
     [selectedNodeId],
   )
+  const hasLocationProfile =
+    typeof locationSummary === 'string' && locationSummary.trim().length > 0
 
   return (
     <Artifact className="flex size-full min-h-0 flex-col">
@@ -318,7 +358,11 @@ export function AgentFlowPanel({
         <ReactFlowProvider>
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="relative flex min-h-0 min-h-[8rem] flex-[4] flex-col">
-              <AgentFlowCanvas selectedNodeId={selectedNodeId} onNodeSelect={setSelectedNodeId} />
+              <AgentFlowCanvas
+                selectedNodeId={selectedNodeId}
+                onNodeSelect={setSelectedNodeId}
+                hasLocationProfile={hasLocationProfile}
+              />
             </div>
             <AgentDetail
               selectedAgent={selectedAgent}

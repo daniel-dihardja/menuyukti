@@ -140,6 +140,13 @@ export function AiChatPanel({
     setThreadId(id)
   }, [campaignId])
   const requestBodyRef = useRef<Record<string, unknown>>({})
+  /**
+   * `messages.length` at the moment the user triggers "create location profile" (before the new user
+   * message is appended). Used to ignore stale assistant rows until the new user message exists and
+   * to avoid matching the previous turn's assistant when `findLastUserMessageIndex` still points at
+   * an older "create location profile" message.
+   */
+  const locationProfileCreateThreadLengthRef = useRef(0)
 
   // Stable transport — never recreated. prepareSendMessagesRequest is called
   // right before every fetch, so it always picks up the latest ref values.
@@ -191,6 +198,12 @@ export function AiChatPanel({
       // While waiting for a new profile, ignore planning parts from older assistant turns only.
       if (awaitingNewLocationProfile && lastCreateIdx !== -1) {
         if (i < lastCreateIdx + 1) continue
+        if (
+          locationProfileCreateThreadLengthRef.current > 0 &&
+          i < locationProfileCreateThreadLengthRef.current
+        ) {
+          continue
+        }
         if (
           staleAssistantId != null &&
           staleAssistantId !== '' &&
@@ -303,6 +316,12 @@ export function AiChatPanel({
     if (!awaitingNewLocationProfile) return
     // Do not resurrect profile from stale message parts after user deleted the profile.
     if (locationProfileDeleted) return
+    if (
+      locationProfileCreateThreadLengthRef.current > 0 &&
+      messages.length <= locationProfileCreateThreadLengthRef.current
+    ) {
+      return
+    }
 
     const lastCreateIdx = findLastUserMessageIndex(messages, 'create location profile')
     if (lastCreateIdx === -1) return
@@ -368,11 +387,12 @@ export function AiChatPanel({
   )
 
   const handleCreateLocationProfile = useCallback(() => {
+    locationProfileCreateThreadLengthRef.current = messages.length
     setLocationProfileDeleted(false)
     setAwaitingNewLocationProfile(true)
     setSuppressInitialLocationSnapshot(true)
     void sendMessage({ text: 'create location profile' })
-  }, [sendMessage])
+  }, [messages.length, sendMessage])
 
   const handleDeleteLocationProfile = useCallback(async () => {
     const id = displayedArtifact.locationProfileId
