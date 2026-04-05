@@ -134,6 +134,16 @@ const saveCampaignBriefMutation = `mutation SaveCampaignBrief($campaignId: ID!, 
   }
 }`
 
+const fetchPromotionCandidatesQuery = `query FetchPromotionCandidates($campaignId: ID!) {
+  promotionCandidates(campaignId: $campaignId) {
+    id
+    campaignId
+    candidatesJson
+    createdAt
+    updatedAt
+  }
+}`
+
 const savePromotionCandidatesMutation = `mutation SavePromotionCandidates($campaignId: ID!, $candidatesJson: JSON!) {
   savePromotionCandidates(campaignId: $campaignId, candidatesJson: $candidatesJson) {
     id
@@ -496,6 +506,35 @@ type savePromotionCandidatesDataWrapper struct {
 		ID         int `json:"id"`
 		CampaignID int `json:"campaignId"`
 	} `json:"savePromotionCandidates"`
+}
+
+type fetchPromotionCandidatesDataWrapper struct {
+	PromotionCandidates *struct {
+		ID             int             `json:"id"`
+		CampaignID     int             `json:"campaignId"`
+		CandidatesJSON json.RawMessage `json:"candidatesJson"`
+	} `json:"promotionCandidates"`
+}
+
+// FetchPromotionCandidates loads saved promotion candidates JSON for a campaign, or (nil, false, nil) if none.
+func FetchPromotionCandidates(ctx context.Context, endpoint, campaignID string) (candidatesJSON json.RawMessage, ok bool, err error) {
+	raw, err := postGQL(ctx, endpoint, fetchPromotionCandidatesQuery, map[string]interface{}{
+		"campaignId": campaignID,
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	var data fetchPromotionCandidatesDataWrapper
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return nil, false, err
+	}
+	if data.PromotionCandidates == nil {
+		return nil, false, nil
+	}
+	if len(data.PromotionCandidates.CandidatesJSON) == 0 {
+		return nil, false, nil
+	}
+	return data.PromotionCandidates.CandidatesJSON, true, nil
 }
 
 // SavePromotionCandidates upserts JSON promotion/analytics payload for a campaign (menu insights + matrix rows).

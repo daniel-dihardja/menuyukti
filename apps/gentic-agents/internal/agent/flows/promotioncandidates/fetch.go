@@ -15,6 +15,7 @@ type FetchStep struct {
 }
 
 // Run implements gen.Step.
+// Loads missing pieces only: if matrix was hydrated from saved promotion candidates, only heatmaps are fetched.
 func (s FetchStep) Run(ctx context.Context, state *gen.State) error {
 	if flowstate.HasFetchedAnalyticsData(state) {
 		return nil
@@ -29,23 +30,37 @@ func (s FetchStep) Run(ctx context.Context, state *gen.State) error {
 	n := gen.NotifierFromContext(ctx)
 	n.Notify("fetch_analytics", gen.ActivityRunning, "Load menu engineering matrix and heatmaps")
 
-	items, err := graphql.FetchMenuEngineeringMatrix(ctx, s.GraphQLEndpoint, analyticsID, nil)
-	if err != nil {
-		return fmt.Errorf("fetch menu engineering matrix: %w", err)
+	_, hasMatrix := state.GetMetadata(flowstate.KeyAnalyticsMatrixItems)
+	_, hasHeatmaps := state.GetMetadata(flowstate.KeyAnalyticsHeatmaps)
+
+	if !hasMatrix {
+		items, err := graphql.FetchMenuEngineeringMatrix(ctx, s.GraphQLEndpoint, analyticsID, nil)
+		if err != nil {
+			return fmt.Errorf("fetch menu engineering matrix: %w", err)
+		}
+		if items == nil {
+			items = []graphql.MenuEngineeringItem{}
+		}
+		state.SetMetadata(flowstate.KeyAnalyticsMatrixItems, items)
 	}
-	if items == nil {
-		items = []graphql.MenuEngineeringItem{}
+	if !hasHeatmaps {
+		heatmaps, err := graphql.FetchMenuHeatmaps(ctx, s.GraphQLEndpoint, analyticsID, locationID)
+		if err != nil {
+			return fmt.Errorf("fetch menu heatmaps: %w", err)
+		}
+		state.SetMetadata(flowstate.KeyAnalyticsHeatmaps, heatmaps)
 	}
 
-	heatmaps, err := graphql.FetchMenuHeatmaps(ctx, s.GraphQLEndpoint, analyticsID, locationID)
-	if err != nil {
-		return fmt.Errorf("fetch menu heatmaps: %w", err)
+	items, _ := flowstate.MatrixItemsFromMetadata(state)
+	hms, _ := flowstate.HeatmapsFromMetadata(state)
+	mi, mh := 0, 0
+	if items != nil {
+		mi = len(items)
 	}
-
-	state.SetMetadata(flowstate.KeyAnalyticsMatrixItems, items)
-	state.SetMetadata(flowstate.KeyAnalyticsHeatmaps, heatmaps)
-
+	if hms != nil {
+		mh = len(hms)
+	}
 	n.Notify("fetch_analytics", gen.ActivityDone,
-		fmt.Sprintf("%d matrix row(s), %d heatmap(s)", len(items), len(heatmaps)))
+		fmt.Sprintf("%d matrix row(s), %d heatmap(s)", mi, mh))
 	return nil
 }

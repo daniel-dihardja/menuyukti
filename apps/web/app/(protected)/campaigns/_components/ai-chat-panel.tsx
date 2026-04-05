@@ -150,8 +150,8 @@ export type AiChatPanelProps = {
   /** Pre-fill artifact (e.g. loaded campaign) before any chat message. */
   initialPlanning?: Partial<PlanningArtifact> | null
   initialAnalyticsId?: number | null
-  /** When set, requests include campaign id so the agent can load/refine an existing campaign. */
-  campaignId?: number | null
+  /** Campaign id sent on every chat request (gentic-agents metadata). */
+  campaignId: number
 }
 
 export function AiChatPanel({
@@ -160,7 +160,7 @@ export function AiChatPanel({
   defaultDates,
   initialPlanning = null,
   initialAnalyticsId = null,
-  campaignId = null,
+  campaignId,
 }: AiChatPanelProps) {
   const [text, setText] = useState('')
   const [campaignDates, setCampaignDates] = useState(defaultDates)
@@ -180,7 +180,7 @@ export function AiChatPanel({
   const [suppressInitialCampaignBrief, setSuppressInitialCampaignBrief] = useState(false)
   const [threadId, setThreadId] = useState('')
   useLayoutEffect(() => {
-    const key = `chat-thread-${campaignId ?? 'default'}`
+    const key = `chat-thread-${campaignId}`
     const stored = sessionStorage.getItem(key)
     if (stored) {
       setThreadId(stored)
@@ -284,7 +284,7 @@ export function AiChatPanel({
       locationId,
       threadId,
       analyticsId: selectedAnalyticsId ?? undefined,
-      ...(campaignId != null ? { campaignId } : {}),
+      campaignId,
       dateStart: campaignDates.dateStart,
       dateEnd: campaignDates.dateEnd,
       nationalHolidays: displayedArtifact.nationalHolidays ?? null,

@@ -11,6 +11,7 @@ from graphql.schema.queries import (
     MenuHeatmapsQuery,
     NationalHolidaysQuery,
     OperatingProfileQuery,
+    PromotionCandidatesQuery,
 )
 
 
@@ -26,5 +27,6 @@ class Query(
     OperatingProfileQuery,
     LocationProfileQuery,
     CampaignBriefQuery,
+    PromotionCandidatesQuery,
 ):
     pass

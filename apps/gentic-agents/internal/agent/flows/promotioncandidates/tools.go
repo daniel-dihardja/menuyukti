@@ -12,47 +12,49 @@ import (
 	gen "github.com/daniel-dihardja/gentic/pkg/gentic"
 )
 
-// FetchAnalyticsInput has no parameters; location and analytics IDs come from request metadata.
-type FetchAnalyticsInput struct{}
+// FetchPromotionCandidatesInput has no parameters; campaign_id comes from request metadata.
+type FetchPromotionCandidatesInput struct{}
 
-// GenerateCandidatesInput has no parameters; uses matrix and heatmaps from state after fetch.
+// GenerateCandidatesInput has no parameters; uses matrix and heatmaps from state after the analytics guard.
 type GenerateCandidatesInput struct{}
 
 // SaveCandidatesInput has no parameters; campaign_id and insights come from request metadata and state.
 type SaveCandidatesInput struct{}
 
-func fetchAnalyticsHandler(endpoint string) func(context.Context, *gen.State, json.RawMessage) (json.RawMessage, error) {
+func fetchPromotionCandidatesHandler(endpoint string) func(context.Context, *gen.State, json.RawMessage) (json.RawMessage, error) {
 	return func(ctx context.Context, state *gen.State, _ json.RawMessage) (json.RawMessage, error) {
-		ctx = graphql.GraphQLContext(ctx, state)
-
-		if flowstate.HasFetchedAnalyticsData(state) {
-			items, _ := flowstate.MatrixItemsFromMetadata(state)
-			hms, _ := flowstate.HeatmapsFromMetadata(state)
+		campaignID := strings.TrimSpace(flowstate.CampaignIDFromMetadata(state))
+		if campaignID == "" {
 			return json.Marshal(map[string]any{
-				"skipped":     true,
-				"matrix_rows": len(items),
-				"heatmaps":    len(hms),
-				"message":     "Analytics input data already loaded in this session.",
+				"error": "campaign_id is required in the request to load saved promotion candidates.",
 			})
 		}
-
-		step := FetchStep{GraphQLEndpoint: endpoint}
-		if err := step.Run(ctx, state); err != nil {
+		ctx = graphql.GraphQLContext(ctx, state)
+		raw, ok, err := graphql.FetchPromotionCandidates(ctx, endpoint, campaignID)
+		if err != nil {
 			return nil, err
 		}
-		if msg := strings.TrimSpace(state.Output); msg != "" {
-			state.Output = ""
-			return json.Marshal(map[string]any{"error": msg})
+		if !ok || len(raw) == 0 {
+			return json.Marshal(map[string]any{"exists": false})
 		}
-
-		items, _ := flowstate.MatrixItemsFromMetadata(state)
-		hms, _ := flowstate.HeatmapsFromMetadata(state)
-		slog.Info("promotioncandidates tool: fetch_analytics_data ok",
+		var payload promotionCandidatesPayload
+		if err := json.Unmarshal(raw, &payload); err != nil {
+			return nil, fmt.Errorf("promotion candidates JSON: %w", err)
+		}
+		state.SetMetadata(flowstate.KeyAnalyticsInsights, payload.Insights)
+		state.SetMetadata(flowstate.KeyAnalyticsMatrixItems, payload.MatrixItems)
+		state.Output = ""
+		slog.Info("promotioncandidates tool: fetch_promotion_candidates ok",
 			"component", "gentic-agents.promotioncandidates",
-			"matrix_rows", len(items), "heatmaps", len(hms))
+			"campaign_id", campaignID,
+			"matrix_rows", len(payload.MatrixItems))
 		return json.Marshal(map[string]any{
-			"matrix_rows": len(items),
-			"heatmaps":    len(hms),
+			"exists":                true,
+			"stars_count":           len(payload.Insights.Stars),
+			"plow_horses_count":     len(payload.Insights.PlowHorses),
+			"puzzles_count":         len(payload.Insights.Puzzles),
+			"day_patterns_weekdays": len(payload.Insights.DayPatterns),
+			"matrix_rows":           len(payload.MatrixItems),
 		})
 	}
 }
@@ -60,12 +62,6 @@ func fetchAnalyticsHandler(endpoint string) func(context.Context, *gen.State, js
 func generateCandidatesHandler(model string) func(context.Context, *gen.State, json.RawMessage) (json.RawMessage, error) {
 	return func(ctx context.Context, state *gen.State, _ json.RawMessage) (json.RawMessage, error) {
 		ctx = graphql.GraphQLContext(ctx, state)
-
-		if !flowstate.HasFetchedAnalyticsData(state) {
-			return json.Marshal(map[string]any{
-				"error": "Load analytics input first by calling fetch_analytics_data.",
-			})
-		}
 
 		step := AnalyzeStep{Model: model}
 		if err := step.Run(ctx, state); err != nil {
@@ -116,7 +112,7 @@ func saveCandidatesHandler(endpoint string) func(context.Context, *gen.State, js
 		if _, ok := state.GetMetadata(flowstate.KeyAnalyticsInsights); !ok {
 			return json.Marshal(map[string]any{
 				"saved":  false,
-				"reason": "No analytics insights in state; call generate_promotion_candidates first.",
+				"reason": "No analytics insights in state; call generate_promotion_candidates or fetch_promotion_candidates first.",
 			})
 		}
 

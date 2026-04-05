@@ -8,6 +8,7 @@ from .menu_engineering_matrix import MenuEngineeringMatrixQuery
 from .menu_heatmaps import MenuHeatmapsQuery
 from .national_holidays import NationalHolidaysQuery
 from .operating_profile import OperatingProfileQuery
+from .promotion_candidates import PromotionCandidatesQuery
 
 __all__ = [
     "AnalyticsRunQuery",
@@ -20,4 +21,5 @@ __all__ = [
     "MenuHeatmapsQuery",
     "NationalHolidaysQuery",
     "OperatingProfileQuery",
+    "PromotionCandidatesQuery",
 ]
