@@ -230,7 +230,7 @@ function AgentDetail({
     typeof locationSummary === 'string' && locationSummary.trim().length > 0
 
   return (
-    <div className="flex min-h-0 min-h-[12rem] flex-1 basis-0 flex-col overflow-auto border-t border-border p-4">
+    <div className="flex min-h-0 flex-[6] flex-col overflow-auto border-t border-border p-4">
       {!selectedAgent ? (
         <p className="text-sm text-muted-foreground">{t('selectAgent')}</p>
       ) : isLocationProfile ? (
@@ -317,7 +317,7 @@ export function AgentFlowPanel({
       <ArtifactContent className="flex min-h-0 flex-1 flex-col p-0">
         <ReactFlowProvider>
           <div className="flex min-h-0 flex-1 flex-col">
-            <div className="relative flex min-h-0 min-h-[12rem] flex-1 basis-0 flex-col">
+            <div className="relative flex min-h-0 min-h-[8rem] flex-[4] flex-col">
               <AgentFlowCanvas selectedNodeId={selectedNodeId} onNodeSelect={setSelectedNodeId} />
             </div>
             <AgentDetail
