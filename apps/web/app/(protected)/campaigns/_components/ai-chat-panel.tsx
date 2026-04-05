@@ -270,6 +270,8 @@ export function AiChatPanel({
   // After "Create location profile", drop suppression once this turn's assistant streams location data.
   useEffect(() => {
     if (!awaitingNewLocationProfile) return
+    // Do not resurrect profile from stale message parts after user deleted the profile.
+    if (locationProfileDeleted) return
 
     const lastCreateIdx = findLastUserMessageIndex(messages, 'create location profile')
     if (lastCreateIdx === -1) return
@@ -299,7 +301,7 @@ export function AiChatPanel({
         }
       }
     }
-  }, [messages, awaitingNewLocationProfile])
+  }, [messages, awaitingNewLocationProfile, locationProfileDeleted])
 
   const handleTextChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value)
@@ -323,6 +325,31 @@ export function AiChatPanel({
     },
     [sendMessage],
   )
+
+  const handleCreateLocationProfile = useCallback(() => {
+    setLocationProfileDeleted(false)
+    setAwaitingNewLocationProfile(true)
+    setSuppressInitialLocationSnapshot(true)
+    void sendMessage({ text: 'create location profile' })
+  }, [sendMessage])
+
+  const handleDeleteLocationProfile = useCallback(async () => {
+    const id = displayedArtifact.locationProfileId
+    if (!id) return
+    try {
+      const res = await fetch('/api/location-profile/delete', {
+        method: 'DELETE',
+        body: JSON.stringify({ id }),
+        headers: { 'Content-Type': 'application/json' },
+      })
+      if (!res.ok) return
+      setAwaitingNewLocationProfile(false)
+      setLocationProfileDeleted(true)
+      setSuppressInitialLocationSnapshot(true)
+    } catch {
+      // ignore; user can retry
+    }
+  }, [displayedArtifact.locationProfileId])
 
   const isSubmitDisabled = useMemo(
     () => !text.trim() || status === 'streaming' || status === 'submitted',
@@ -414,7 +441,13 @@ export function AiChatPanel({
 
       {/* Artifact — agent dependency graph */}
       <div className="col-span-2 min-h-0 overflow-hidden">
-        <AgentFlowPanel />
+        <AgentFlowPanel
+          locationSummary={displayedArtifact.locationSummary}
+          locationProfileId={displayedArtifact.locationProfileId}
+          onCreateLocationProfile={handleCreateLocationProfile}
+          onDeleteLocationProfile={handleDeleteLocationProfile}
+          isStreaming={status === 'streaming' || status === 'submitted'}
+        />
       </div>
     </div>
   )

@@ -425,6 +425,13 @@
         "title": "No locations yet",
         "description": "Please create a location before creating campaigns.",
         "cta": "Create Location"
+      },
+      "agentPipeline": {
+        "selectAgent": "Select an agent to see details",
+        "createLocationProfile": "Create location profile",
+        "deleteLocationProfile": "Delete location profile",
+        "deleteLocationProfileConfirm": "Delete this location profile? This cannot be undone.",
+        "locationProfileEmpty": "No location profile yet. Create one to start building campaigns."
       }
     },
     "cogs": {
