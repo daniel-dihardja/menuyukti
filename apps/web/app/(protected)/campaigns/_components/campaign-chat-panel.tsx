@@ -80,7 +80,7 @@ export function CampaignChatPanel({ campaignId }: CampaignChatPanelProps) {
   const visibleMessages = messages.filter((msg) => msg.role !== 'system')
 
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-3 grid-rows-[minmax(0,1fr)] gap-4 overflow-hidden">
+    <div className="grid h-full min-h-0 flex-1 grid-cols-3 grid-rows-[minmax(0,1fr)] gap-4 overflow-hidden">
       <div className="relative col-span-1 flex min-h-0 flex-col divide-y overflow-hidden rounded-lg border">
         <Conversation aria-live="polite">
           <ConversationContent>
@@ -163,7 +163,7 @@ export function CampaignChatPanel({ campaignId }: CampaignChatPanelProps) {
         </div>
       </div>
 
-      <div className="col-span-2 flex min-h-0 flex-col overflow-hidden rounded-lg border bg-background shadow-sm">
+      <div className="col-span-2 flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
         <CampaignMilestoneTimeline />
       </div>
     </div>

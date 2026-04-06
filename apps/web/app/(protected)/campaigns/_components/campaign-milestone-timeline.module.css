@@ -1,44 +1,40 @@
-/* Direct flex child of the right column — grows to fill all remaining height. */
-.root {
+/*
+  react-chrono sets .timeline-wrapper to height: 100% when layout.timelineHeight is not applied
+  to the inner Timeline (library quirk). Percent height collapses unless ancestors have height.
+  We measure the host and set --chrono-h in px so .timeline-wrapper gets a real height.
+*/
+.host {
   position: relative;
   flex: 1;
   align-self: stretch;
   min-height: 0;
   min-width: 0;
   width: 100%;
-  /* Set from ResizeObserver in TS — drives overrides below */
-  --campaign-chrono-height: 100%;
+  --chrono-h: 320px;
 }
 
-/* Absolute fill so chronoHostRef always has a concrete pixel rect for ResizeObserver. */
-.fill {
+.measure {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  overflow: auto;
 }
 
-/* Chrono root (#testette) fills the host */
-.fill > div {
+/* Chrono root (#testette) */
+.measure > div {
   height: 100%;
   width: 100%;
 }
 
-/*
-  react-chrono 3.3.x: layout.timelineHeight is mapped in Lr() but never passed to the inner
-  Timeline, so the outer .timeline-wrapper only gets height: 100% and the scroll area
-  (#timeline-main-wrapper) keeps library min-height: 500px — looks “stuck” at 500px.
-  Override using the measured height from our ResizeObserver (--campaign-chrono-height).
-*/
-.root :global(.timeline-wrapper) {
-  height: var(--campaign-chrono-height) !important;
+.host :global(.timeline-wrapper) {
+  height: var(--chrono-h) !important;
   min-height: 0 !important;
   max-height: none !important;
   box-sizing: border-box;
 }
 
-.root :global(#timeline-main-wrapper) {
+/* Library default min-height: 500px on vertical mode — blocks filling the cell */
+.host :global(#timeline-main-wrapper) {
   min-height: 0 !important;
   height: 100% !important;
-  max-height: 100% !important;
   box-sizing: border-box;
 }
