@@ -49,7 +49,11 @@ function MilestoneStatusIcon({
 
   if (status === 'complete') {
     return (
-      <span aria-label={label} className="mt-0.5 shrink-0 text-primary" role="img">
+      <span
+        aria-label={label}
+        className="mt-0.5 shrink-0 text-green-600 dark:text-green-500"
+        role="img"
+      >
         <CheckCircle2 aria-hidden className="size-5" />
       </span>
     )
@@ -124,6 +128,7 @@ function TimelineToolbar({ title, count, expandLabel, settingsLabel }: TimelineT
 
 type TimelineItemProps = {
   milestone: TimelineMilestone
+  isFirst: boolean
   isLast: boolean
   expandDetailsLabel: string
   collapseDetailsLabel: string
@@ -132,6 +137,7 @@ type TimelineItemProps = {
 
 function TimelineItem({
   milestone,
+  isFirst,
   isLast,
   expandDetailsLabel,
   collapseDetailsLabel,
@@ -143,12 +149,21 @@ function TimelineItem({
   return (
     <div className="flex gap-4">
       <div className="flex w-10 shrink-0 flex-col items-center">
-        {/* Match card py-4 + status icon row (h-5 + mt-0.5) so the rail dot aligns with MilestoneStatusIcon */}
-        <div className="flex w-full shrink-0 flex-col items-center pt-4">
-          <div className="mt-0.5 flex h-5 w-full items-center justify-center">
-            <TimelineRailDot status={status} />
+        {/* Match card py-4 + status icon row (h-5 + mt-0.5). After the first step, draw the dashed line through the same vertical band instead of empty pt-4 so it connects to the previous row. */}
+        {isFirst ? (
+          <div className="flex w-full shrink-0 flex-col items-center pt-4">
+            <div className="mt-0.5 flex h-5 w-full items-center justify-center">
+              <TimelineRailDot status={status} />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex w-full shrink-0 flex-col items-center">
+            <div className="h-4 w-px shrink-0 border-l border-dashed border-border" />
+            <div className="mt-0.5 flex h-5 w-full items-center justify-center">
+              <TimelineRailDot status={status} />
+            </div>
+          </div>
+        )}
         {isLast ? null : (
           <div className="min-h-0 w-px flex-1 border-l border-dashed border-border" />
         )}
@@ -216,6 +231,7 @@ function TimelineBody({
               key={milestone.id}
               collapseDetailsLabel={collapseDetailsLabel}
               expandDetailsLabel={expandDetailsLabel}
+              isFirst={index === 0}
               isLast={index === milestones.length - 1}
               milestone={milestone}
               statusLabels={statusLabels}
