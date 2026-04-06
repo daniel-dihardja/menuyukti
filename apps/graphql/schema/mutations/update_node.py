@@ -3,23 +3,8 @@ from strawberry.scalars import JSON
 
 from graphql.data_sources import Node, SessionLocal
 from graphql.schema.auth import require_location_owner, user_id_from_info
+from graphql.schema.node_handlers import get_handler
 from graphql.schema.types import NodeType
-
-_PASS_CRITERIA_STATUSES = frozenset({"pass", "fail", "open"})
-
-
-def _validate_passcriteria_merged_payload(data: dict) -> None:
-    requirement = data.get("requirement")
-    status = data.get("status")
-    if not isinstance(requirement, str):
-        raise ValueError("passcriteria requirement must be a string")
-    if status not in _PASS_CRITERIA_STATUSES:
-        raise ValueError("passcriteria status must be pass, fail, or open")
-
-
-def _validate_data_is_object(data: object) -> None:
-    if not isinstance(data, dict):
-        raise ValueError("data must be a JSON object")
 
 
 def _node_to_gql(node: Node) -> NodeType:
@@ -76,52 +61,17 @@ class UpdateNodeMutation:
 
             require_location_owner(session, node.location_id, user_id)
 
-            if node.node_type == "milestone":
-                if data is not None:
-                    _validate_data_is_object(data)
-
-                if node.parent_id is None:
-                    raise ValueError("Milestone has no parent")
-
+            parent: Node | None = None
+            if node.parent_id is not None:
                 parent = session.get(Node, node.parent_id)
-                if parent is None:
-                    raise ValueError("Parent node not found")
-                if parent.node_type != "campaign":
-                    raise ValueError("Milestone parent must be a campaign")
-                if parent.location_id != node.location_id:
-                    raise ValueError("Node location mismatch")
 
-                if display_name is not None:
-                    node.name = display_name
-                if data is not None:
-                    base = dict(node.data) if isinstance(node.data, dict) else {}
-                    base.update(data)
-                    node.data = base
+            handler = get_handler(node.node_type)
+            handler.validate_update(node, parent, data)
 
-            elif node.node_type == "passcriteria":
-                if data is not None:
-                    _validate_data_is_object(data)
-
-                if node.parent_id is None:
-                    raise ValueError("passcriteria has no parent")
-
-                parent = session.get(Node, node.parent_id)
-                if parent is None:
-                    raise ValueError("Parent node not found")
-                if parent.node_type != "milestone":
-                    raise ValueError("passcriteria parent must be a milestone")
-                if parent.location_id != node.location_id:
-                    raise ValueError("Node location mismatch")
-
-                if display_name is not None:
-                    node.name = display_name
-                if data is not None:
-                    base = dict(node.data) if isinstance(node.data, dict) else {}
-                    base.update(data)
-                    _validate_passcriteria_merged_payload(base)
-                    node.data = base
-            else:
-                raise ValueError("Only milestones and passcriteria can be updated with this mutation")
+            if display_name is not None:
+                node.name = display_name
+            if data is not None:
+                node.data = handler.merge_update_data(node, data)
 
             session.commit()
             session.refresh(node)
