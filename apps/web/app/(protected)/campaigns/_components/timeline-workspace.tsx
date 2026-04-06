@@ -41,7 +41,7 @@ import {
 } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
 
-export type TimelineMilestoneStatus = 'complete' | 'pending' | 'empty'
+export type TimelineMilestoneStatus = 'complete' | 'failed' | 'pending' | 'empty'
 
 export type PassCriteriaStatus = 'pass' | 'fail' | 'open'
 
@@ -67,6 +67,7 @@ export type TimelineMilestone = {
 
 type MilestoneStatusLabels = {
   complete: string
+  failed: string
   pending: string
   empty: string
 }
@@ -108,6 +109,21 @@ function TimelineRailMarker({
         role="img"
       >
         <Check aria-hidden className={TIMELINE_RAIL_ICON_CHECK} />
+      </span>
+    )
+  }
+
+  if (status === 'failed') {
+    return (
+      <span
+        aria-label={labels.failed}
+        className={cn(
+          TIMELINE_RAIL_MARKER_BOX,
+          'rounded-full bg-amber-600 text-white dark:bg-amber-600',
+        )}
+        role="img"
+      >
+        <X aria-hidden className={TIMELINE_RAIL_ICON_CHECK} />
       </span>
     )
   }
@@ -1194,6 +1210,7 @@ export function TimelineWorkspace({
           statusLabels={{
             complete: t('milestoneStatusComplete'),
             empty: t('milestoneStatusEmpty'),
+            failed: t('milestoneStatusFailed'),
             pending: t('milestoneStatusPending'),
           }}
         />

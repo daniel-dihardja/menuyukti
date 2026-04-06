@@ -7,7 +7,25 @@ import {
 } from '@/lib/graphql/node-schemas'
 import type { AnyNode } from '@/lib/graphql/queries'
 
-import type { PassCriteriaRow, TimelineMilestone } from './timeline-workspace'
+import type { PassCriteriaRow, TimelineMilestone, TimelineMilestoneStatus } from './timeline-workspace'
+
+/** Rail icon state from persisted pass criteria + optional result (single source for SSR + client). */
+export function deriveMilestoneRailStatus(
+  passCriteria: PassCriteriaRow[],
+  resultMarkdown?: string,
+): TimelineMilestoneStatus {
+  const rows = passCriteria
+  if (rows.length === 0) {
+    return resultMarkdown?.trim() ? 'complete' : 'empty'
+  }
+  if (rows.some((r) => r.status === 'fail')) {
+    return 'failed'
+  }
+  if (rows.every((r) => r.status === 'pass')) {
+    return 'complete'
+  }
+  return 'pending'
+}
 
 export type MilestoneNodeDto = {
   id: string
@@ -109,14 +127,16 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   const legacyGoal = parsed.success ? parsed.data.goal : undefined
   const goal = goalFromChildNodes(node.goalNodes) ?? legacyGoal
   const data = milestoneDataFromChildNodes(node.milestonedataNodes)
+  const passCriteria = passCriteriaFromChildNodes(node.passCriteriaNodes)
+  const resultMarkdown = resultMarkdownFromChildNodes(node.resultNodes)
 
   return {
     id: node.id,
     title: node.name,
     goal,
     data,
-    passCriteria: passCriteriaFromChildNodes(node.passCriteriaNodes),
-    resultMarkdown: resultMarkdownFromChildNodes(node.resultNodes),
-    status: 'empty',
+    passCriteria,
+    resultMarkdown,
+    status: deriveMilestoneRailStatus(passCriteria, resultMarkdown),
   }
 }

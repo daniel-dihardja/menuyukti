@@ -461,6 +461,7 @@
         "milestoneExpandDetails": "Expand details",
         "milestoneCollapseDetails": "Collapse details",
         "milestoneStatusComplete": "Complete",
+        "milestoneStatusFailed": "Not all criteria passed",
         "milestoneStatusPending": "In progress",
         "milestoneStatusEmpty": "Not started",
         "milestone1Title": "Location Profile",

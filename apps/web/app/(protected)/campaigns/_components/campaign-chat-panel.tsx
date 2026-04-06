@@ -28,7 +28,7 @@ import { TimelineWorkspace } from './timeline-workspace'
 import { ChatMessageParts } from './chat-message-parts'
 import { milestoneDataSchema } from '@/lib/graphql/node-schemas'
 
-import { milestoneNodeToTimelineMilestone } from './milestone-map'
+import { deriveMilestoneRailStatus, milestoneNodeToTimelineMilestone } from './milestone-map'
 
 export type CampaignChatPanelProps = {
   campaignId: string
@@ -224,7 +224,16 @@ export function CampaignChatPanel({ campaignId, initialMilestones, locationId }:
         }
         const nextCriteria = body?.passCriteria ?? passCriteria
         setMilestones((prev) =>
-          prev.map((m) => (m.id === milestoneId ? { ...m, passCriteria: nextCriteria } : m)),
+          prev.map((m) => {
+            if (m.id !== milestoneId) {
+              return m
+            }
+            return {
+              ...m,
+              passCriteria: nextCriteria,
+              status: deriveMilestoneRailStatus(nextCriteria, m.resultMarkdown),
+            }
+          }),
         )
         return true
       } catch (err) {
@@ -378,9 +387,10 @@ export function CampaignChatPanel({ campaignId, initialMilestones, locationId }:
                     }
                     return row
                   })
+                  const hasFail = nextPass.some((row) => row.status === 'fail')
                   return {
                     ...milestone,
-                    status: 'complete' as const,
+                    status: hasFail ? ('failed' as const) : ('complete' as const),
                     passCriteria: nextPass,
                     resultMarkdown: summary || milestone.resultMarkdown,
                   }
