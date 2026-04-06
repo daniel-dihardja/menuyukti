@@ -7,14 +7,14 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import MessagesState
 
 
-def _system_prompt(campaign_id: int | None) -> str:
+def _system_prompt(campaign_id: str | None) -> str:
     text = CHAT_SYSTEM_PROMPT
     if campaign_id is not None:
-        text += f"\n\nCampaign context: The user is discussing campaign ID {campaign_id}."
+        text += f"\n\nCampaign context: The user is discussing campaign node id {campaign_id}."
     return text
 
 
-async def _chat_node(state: MessagesState, *, campaign_id: int | None = None) -> dict[str, list[BaseMessage]]:
+async def _chat_node(state: MessagesState, *, campaign_id: str | None = None) -> dict[str, list[BaseMessage]]:
     """Stream tokens from the model; LangGraph surfaces them via astream_events."""
     llm = get_llm()
     system = SystemMessage(content=_system_prompt(campaign_id))
@@ -30,7 +30,7 @@ async def _chat_node(state: MessagesState, *, campaign_id: int | None = None) ->
     return {"messages": [AIMessage(content=full_content)]}
 
 
-def build_chat_graph(campaign_id: int | None = None):
+def build_chat_graph(campaign_id: str | None = None):
     """Compile a stateless chat graph (no checkpointer)."""
     builder = StateGraph(MessagesState)
 

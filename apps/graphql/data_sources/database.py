@@ -48,6 +48,7 @@ class Location(Base):
     clerk_user_id = Column(String(128), nullable=True, index=True)
 
     instagram_posts = relationship("InstagramPost", back_populates="location")
+    nodes = relationship("Node", back_populates="location")
 
 
 class AnalyticsRun(Base):
@@ -182,6 +183,19 @@ class Node(Base):
     )
     name = Column(Text, nullable=False)
     path = Column(Text, nullable=False)
+    node_type = Column(
+        "type",
+        Text,
+        nullable=False,
+        default="unknown",
+        server_default=text("'unknown'"),
+    )
+    location_id = Column(
+        Integer,
+        ForeignKey("location.id"),
+        nullable=True,
+        index=True,
+    )
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True),
@@ -191,6 +205,9 @@ class Node(Base):
 
     parent = relationship("Node", remote_side=[id], back_populates="children")
     children = relationship("Node", back_populates="parent")
+    location = relationship("Location", back_populates="nodes")
+
+    __table_args__ = (Index("ix_node_location_type", "location_id", "type"),)
 
 
 def init_db(target_engine=None) -> None:

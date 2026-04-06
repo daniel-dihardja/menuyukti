@@ -15,6 +15,15 @@ Keep this app **light**: resolvers should load data, enforce ownership/auth, and
 4. The script falls back to the on-disk SQLite file (`sqlite+pysqlite:///./graphql.db`) when the env var is missing, keeping the workflow safe for quick local tests.
 5. After the tables exist, import `SessionLocal` from `graphql.data_sources` inside your resolvers to read or write Neon rows via SQLAlchemy sessions.
 
+**Existing databases** (already created before a schema change): `make migrate-db` only runs `create_all` and does not add columns. To align an older `node` table with the current models, run:
+
+```sql
+ALTER TABLE node ADD COLUMN type TEXT NOT NULL DEFAULT 'unknown';
+ALTER TABLE node ADD COLUMN location_id INTEGER REFERENCES location(id);
+CREATE INDEX IF NOT EXISTS ix_node_location_id ON node(location_id);
+CREATE INDEX IF NOT EXISTS ix_node_location_type ON node(location_id, type);
+```
+
 Need a clean slate? Run `make drop-db` (or `uv run python -m graphql.data_sources.database drop`) to drop every table before recreating the schema with `make migrate-db`.  
 To import a specific Excel report directly into `order_fact`, run `make load-report REPORT_PATH=../../reports/Sales_Recapitulation_Detail_Report_Test.xlsx`; this drops/recreates the database, normalizes the specified workbook with Menyukti, and loads the rows so the analytics schema mirrors that report.
 

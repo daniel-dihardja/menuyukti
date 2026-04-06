@@ -405,6 +405,8 @@
         "note": "You can still open an existing campaign chat URL if you have one bookmarked; list and create flows will return when the new backend is ready."
       },
       "create": "Create New Campaign",
+      "creating": "Creating…",
+      "createFailed": "Could not create a campaign. Please try again.",
       "branchLabel": "Location",
       "branchPlaceholder": "Select a location",
       "selectBranch": "Please select a location to view campaigns.",

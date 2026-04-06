@@ -27,7 +27,7 @@ import { TimelineWorkspace } from './timeline-workspace'
 import { ChatMessageParts } from './chat-message-parts'
 
 export type CampaignChatPanelProps = {
-  campaignId: number
+  campaignId: string
 }
 
 export function CampaignChatPanel({ campaignId }: CampaignChatPanelProps) {

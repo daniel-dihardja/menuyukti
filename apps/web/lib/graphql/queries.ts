@@ -50,6 +50,30 @@ export type CreateLocationData = {
   createLocation: { id: string; name: string }
 }
 
+export const CREATE_CAMPAIGN_MUTATION = `
+  mutation CreateCampaign($locationId: Int!) {
+    createCampaign(locationId: $locationId) {
+      id
+      name
+      nodeType
+      path
+      parentId
+      locationId
+    }
+  }
+`
+
+export type CreateCampaignData = {
+  createCampaign: {
+    id: string
+    name: string
+    nodeType: string
+    path: string
+    parentId: string | null
+    locationId: number | null
+  }
+}
+
 export const ANALYTICS_RUNS_BY_LOCATION_QUERY = `
   query AnalyticsRunsByLocation($locationId: Int!) {
     analyticsRuns(locationId: $locationId) {
