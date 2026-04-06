@@ -23,7 +23,7 @@ import { DefaultChatTransport } from 'ai'
 import { useTranslations } from 'next-intl'
 import { useCallback, useMemo, useState } from 'react'
 
-import { CampaignMilestoneTimeline } from './campaign-milestone-timeline'
+import { TimelineWorkspace } from './timeline-workspace'
 import { ChatMessageParts } from './chat-message-parts'
 
 export type CampaignChatPanelProps = {
@@ -164,7 +164,7 @@ export function CampaignChatPanel({ campaignId }: CampaignChatPanelProps) {
       </div>
 
       <div className="col-span-2 flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-        <CampaignMilestoneTimeline />
+        <TimelineWorkspace />
       </div>
     </div>
   )

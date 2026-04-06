@@ -89,9 +89,6 @@ importers:
       react:
         specifier: ^19.2.3
         version: 19.2.3
-      react-chrono:
-        specifier: ^3.3.3
-        version: 3.3.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom:
         specifier: ^19.2.3
         version: 19.2.3(react@19.2.3)
@@ -2991,9 +2988,6 @@ packages:
   classcat@5.0.5:
     resolution: {integrity: sha512-JhZUT7JFcQy/EzW605k/ktHtncoo9vnyW/2GspNYwFlN1C/WmjuV/xtS04e9SOkL2sTdw0VAZ2UGCcQ9lR6p6w==}
 
-  classnames@2.5.1:
-    resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
-
   clean-stack@2.2.0:
     resolution: {integrity: sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==}
     engines: {node: '>=6'}
@@ -3066,9 +3060,6 @@ packages:
     resolution: {integrity: sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==}
     engines: {node: '>=18'}
 
-  commander@2.20.3:
-    resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
-
   commander@7.2.0:
     resolution: {integrity: sha512-QrWXB+ZQSVPmIWIhtEO9H+gwHaMGYiF5ChvoJ+K9ZGHG/sVsa6yiesAD1GC/x46sET00Xlwo1u49RVVVzvcSkw==}
     engines: {node: '>= 10'}
@@ -3111,9 +3102,6 @@ packages:
     resolution: {integrity: sha512-/Tb/JcjK111nNScGob5MNtsntNM1aCNUDipB/TkwZFhyDrrE47SOx/18wF2bbjgc3ZzCSKW1T5nt5EbFoAz/Vg==}
     engines: {node: '>=4'}
     hasBin: true
-
-  cssfilter@0.0.10:
-    resolution: {integrity: sha512-FAaLDaplstoRsDR8XGYH51znUN0UY7nMc6Z9/fvE8EXGwvJE9hu7W2vHwx1+bd6gCYnln9nLbzxFTrcO9YQDZw==}
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
@@ -4964,13 +4952,6 @@ packages:
     resolution: {integrity: sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw==}
     hasBin: true
 
-  react-chrono@3.3.3:
-    resolution: {integrity: sha512-0R6MsJAhTjJtdQDO/pE/OveTrM/dVF0/xhkU7+ikX+FcIMhYo4Vl6nS2oBdmiijjvmnu38dDWkOn+y8WdRQRIw==}
-    engines: {node: '>=22'}
-    peerDependencies:
-      react: ^19.2.3
-      react-dom: ^19.2.3
-
   react-day-picker@9.14.0:
     resolution: {integrity: sha512-tBaoDWjPwe0M5pGrum4H0SR6Lyk+BO9oHnp9JbKpGKW2mlraNPgP9BMfsg5pWpwrssARmeqk7YBl2oXutZTaHA==}
     engines: {node: '>=18'}
@@ -5685,12 +5666,6 @@ packages:
       '@types/react':
         optional: true
 
-  use-debounce@10.1.1:
-    resolution: {integrity: sha512-kvds8BHR2k28cFsxW8k3nc/tRga2rs1RHYCqmmGqb90MEeE++oALwzh2COiuBLO1/QXiOuShXoSN2ZpWnMmvuQ==}
-    engines: {node: '>= 16.0.0'}
-    peerDependencies:
-      react: '*'
-
   use-intl@4.5.6:
     resolution: {integrity: sha512-SzxrUH/X3LatVcgWVqz8ifoBK01LC3fzc8Y29Vj0QfrjLIXfGwxvJ3aapyWumBIIHsZmCR0Rx5FpKDWCc9JiOg==}
     peerDependencies:
@@ -5894,11 +5869,6 @@ packages:
   xlsx@0.18.5:
     resolution: {integrity: sha512-dmg3LCjBPHZnQp5/F/+nnTa+miPJxUXB6vtk42YjBBKayDNagxGEeIdWApkYPOf3Z3pm3k62Knjzp7lMeTEtFQ==}
     engines: {node: '>=0.8'}
-    hasBin: true
-
-  xss@1.0.15:
-    resolution: {integrity: sha512-FVdlVVC67WOIPvfOwhoMETV72f6GbW7aOabBC3WxN/oUdoEMDyLz4OgRv5/gck2ZeNqEQu+Tb0kloovXOfpYVg==}
-    engines: {node: '>= 0.10.0'}
     hasBin: true
 
   yaml@2.8.3:
@@ -9105,8 +9075,6 @@ snapshots:
 
   classcat@5.0.5: {}
 
-  classnames@2.5.1: {}
-
   clean-stack@2.2.0: {}
 
   cli-cursor@3.1.0:
@@ -9166,8 +9134,6 @@ snapshots:
 
   commander@13.1.0: {}
 
-  commander@2.20.3: {}
-
   commander@7.2.0: {}
 
   commander@8.3.0: {}
@@ -9202,8 +9168,6 @@ snapshots:
       which: 2.0.2
 
   cssesc@3.0.0: {}
-
-  cssfilter@0.0.10: {}
 
   csstype@3.2.3: {}
 
@@ -11622,15 +11586,6 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
-  react-chrono@3.3.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
-    dependencies:
-      classnames: 2.5.1
-      dayjs: 1.11.19
-      react: 19.2.3
-      react-dom: 19.2.3(react@19.2.3)
-      use-debounce: 10.1.1(react@19.2.3)
-      xss: 1.0.15
-
   react-day-picker@9.14.0(react@19.2.3):
     dependencies:
       '@date-fns/tz': 1.4.1
@@ -12534,10 +12489,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.7
 
-  use-debounce@10.1.1(react@19.2.3):
-    dependencies:
-      react: 19.2.3
-
   use-intl@4.5.6(react@19.2.3):
     dependencies:
       '@formatjs/fast-memoize': 2.2.7
@@ -12743,11 +12694,6 @@ snapshots:
       ssf: 0.11.2
       wmf: 1.0.2
       word: 0.3.0
-
-  xss@1.0.15:
-    dependencies:
-      commander: 2.20.3
-      cssfilter: 0.0.10
 
   yaml@2.8.3: {}
 
