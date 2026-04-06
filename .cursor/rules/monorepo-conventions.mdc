@@ -21,11 +21,12 @@ alwaysApply: true
   - `pnpm check-types` — `turbo check-types` (depends on `^check-types`; individual packages must define the script where applicable)
 - `db:generate`, `db:migrate`, `db:deploy` may appear in Turbo when a workspace package exposes matching scripts. **Database ownership** is in **`apps/graphql`** — not the web app.
 
-## Python (GraphQL and shared packages)
+## Python (GraphQL, LangGraph agents, and shared packages)
 
-- Workspace is managed with **uv** — see root `pyproject.toml` (`[tool.uv.workspace]`) and `uv.lock`.
+- Workspace is managed with **uv** — see root `pyproject.toml` (`[tool.uv.workspace]`) and `uv.lock`. The root project lists **`menuyukti`**, **`graphql`**, and **`agents-app`** as workspace dependencies so a single **`uv sync`** from the repo root installs GraphQL and **`apps/agents`** tooling together.
 - Prefer **`uv sync`**, **`uv add`**, and **`uv run`** in app directories — do not suggest raw `pip install` for this repo.
 - **Ruff** is used for lint/format in Python apps (see app `Makefile` and `pyproject.toml` files).
+- **`apps/agents`** — FastAPI + LangChain / LangGraph; default dev port **8001** (see `Makefile`). Follow `.cursor/rules/langchain.mdc` and `.cursor/rules/langgraph.mdc`.
 
 ## Go
 
