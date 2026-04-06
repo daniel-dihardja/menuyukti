@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { graphqlQuery } from '@/lib/graphql/client'
-import { DELETE_NODE_MUTATION, NODE_QUERY, type DeleteNodeData, type NodeData } from '@/lib/graphql/queries'
-import { campaignIdParamSchema, milestoneIdParamSchema } from '../schema'
+import {
+  DELETE_NODE_MUTATION,
+  NODE_QUERY,
+  UPDATE_NODE_MUTATION,
+  type DeleteNodeData,
+  type NodeData,
+  type UpdateNodeData,
+} from '@/lib/graphql/queries'
+import { campaignIdParamSchema, milestoneIdParamSchema, patchMilestoneNameSchema } from '../schema'
 
 type RouteContext = {
   params: Promise<{ id: string; milestoneId: string }>
@@ -21,6 +28,87 @@ async function loadCampaignOrThrow(campaignId: string, userId: string) {
     return { error: NextResponse.json({ message: 'Campaign has no location' }, { status: 400 }) }
   }
   return { node, locationId: node.locationId }
+}
+
+async function validateMilestoneUnderCampaign(
+  campaignId: string,
+  milestoneId: string,
+  userId: string,
+) {
+  const milestoneData = await graphqlQuery<NodeData>(NODE_QUERY, { id: milestoneId }, userId)
+  const milestoneNode = milestoneData.node
+  if (!milestoneNode) {
+    return { error: NextResponse.json({ message: 'Milestone not found' }, { status: 404 }) }
+  }
+  if (milestoneNode.nodeType !== 'milestone') {
+    return { error: NextResponse.json({ message: 'Not a milestone' }, { status: 400 }) }
+  }
+  if (milestoneNode.parentId !== campaignId) {
+    return {
+      error: NextResponse.json(
+        { message: 'Milestone does not belong to this campaign' },
+        { status: 400 },
+      ),
+    }
+  }
+  return { milestoneNode }
+}
+
+export async function PATCH(req: Request, context: RouteContext) {
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id: rawCampaignId, milestoneId: rawMilestoneId } = await context.params
+
+    const campaignParsed = campaignIdParamSchema.safeParse(rawCampaignId)
+    const milestoneParsed = milestoneIdParamSchema.safeParse(rawMilestoneId)
+    if (!campaignParsed.success || !milestoneParsed.success) {
+      return NextResponse.json({ message: 'Invalid id' }, { status: 400 })
+    }
+    const campaignId = campaignParsed.data
+    const milestoneId = milestoneParsed.data
+
+    const campaign = await loadCampaignOrThrow(campaignId, userId)
+    if ('error' in campaign) {
+      return campaign.error
+    }
+
+    let json: unknown
+    try {
+      json = await req.json()
+    } catch {
+      return NextResponse.json({ message: 'Invalid JSON body' }, { status: 400 })
+    }
+
+    const parsed = patchMilestoneNameSchema.safeParse(json)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { message: 'Invalid input', issues: parsed.error.issues },
+        { status: 400 },
+      )
+    }
+
+    const validated = await validateMilestoneUnderCampaign(campaignId, milestoneId, userId)
+    if ('error' in validated) {
+      return validated.error
+    }
+
+    const data = await graphqlQuery<UpdateNodeData>(
+      UPDATE_NODE_MUTATION,
+      { id: milestoneId, name: parsed.data.name },
+      userId,
+    )
+
+    const node = data.updateNode
+    return NextResponse.json(node, { status: 200 })
+  } catch (error) {
+    console.error(error)
+    const message = error instanceof Error ? error.message : 'Failed to update milestone'
+    return NextResponse.json({ message }, { status: 500 })
+  }
 }
 
 export async function DELETE(_req: Request, context: RouteContext) {
@@ -45,16 +133,9 @@ export async function DELETE(_req: Request, context: RouteContext) {
       return campaign.error
     }
 
-    const milestoneData = await graphqlQuery<NodeData>(NODE_QUERY, { id: milestoneId }, userId)
-    const milestoneNode = milestoneData.node
-    if (!milestoneNode) {
-      return NextResponse.json({ message: 'Milestone not found' }, { status: 404 })
-    }
-    if (milestoneNode.nodeType !== 'milestone') {
-      return NextResponse.json({ message: 'Not a milestone' }, { status: 400 })
-    }
-    if (milestoneNode.parentId !== campaignId) {
-      return NextResponse.json({ message: 'Milestone does not belong to this campaign' }, { status: 400 })
+    const validated = await validateMilestoneUnderCampaign(campaignId, milestoneId, userId)
+    if ('error' in validated) {
+      return validated.error
     }
 
     try {

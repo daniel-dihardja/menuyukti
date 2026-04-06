@@ -41,12 +41,16 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
   const [createError, setCreateError] = useState<string | null>(null)
   const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [renamingMilestoneId, setRenamingMilestoneId] = useState<string | null>(null)
+  const [renameError, setRenameError] = useState<string | null>(null)
 
   useEffect(() => {
     setMilestones(initialMilestones)
     setCreateError(null)
     setDeleteError(null)
     setDeletingMilestoneId(null)
+    setRenameError(null)
+    setRenamingMilestoneId(null)
   }, [campaignId, initialMilestones])
 
   const transport = useMemo(
@@ -136,6 +140,38 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
         setDeleteError(err instanceof Error ? err.message : t('milestonesDeleteError'))
       } finally {
         setDeletingMilestoneId(null)
+      }
+    },
+    [campaignId, t],
+  )
+
+  const handleRenameMilestone = useCallback(
+    async (milestoneId: string, name: string): Promise<boolean> => {
+      setRenameError(null)
+      setRenamingMilestoneId(milestoneId)
+      try {
+        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name }),
+        })
+        const body = (await res.json().catch(() => null)) as { message?: string; name?: string } | null
+        if (!res.ok) {
+          throw new Error(body?.message ?? t('milestonesRenameError'))
+        }
+        const newName = body?.name
+        if (typeof newName === 'string') {
+          setMilestones((prev) =>
+            prev.map((m) => (m.id === milestoneId ? { ...m, title: newName } : m)),
+          )
+          return true
+        }
+        return false
+      } catch (err) {
+        setRenameError(err instanceof Error ? err.message : t('milestonesRenameError'))
+        return false
+      } finally {
+        setRenamingMilestoneId(null)
       }
     },
     [campaignId, t],
@@ -238,6 +274,9 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
           milestones={milestones}
           onCreateMilestone={handleCreateMilestone}
           onDeleteMilestone={handleDeleteMilestone}
+          onRenameMilestone={handleRenameMilestone}
+          renameError={renameError}
+          renamingMilestoneId={renamingMilestoneId}
         />
       </div>
     </div>

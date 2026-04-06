@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Check, ChevronDown, Circle, Clock, Maximize2, Settings, Trash2, X } from 'lucide-react'
+import { Check, ChevronDown, Circle, Clock, Maximize2, Pencil, Settings, Trash2, X } from 'lucide-react'
 
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Badge } from '@workspace/ui/components/badge'
@@ -198,6 +198,8 @@ type TimelineItemProps = {
   isDeleting: boolean
   deleteButtonLabel: string
   deleteMilestoneAriaLabel: string
+  onRenameMilestone?: (id: string, name: string) => Promise<boolean>
+  renamingMilestoneId: string | null
 }
 
 function TimelineItem({
@@ -214,8 +216,14 @@ function TimelineItem({
   isDeleting,
   deleteButtonLabel,
   deleteMilestoneAriaLabel,
+  onRenameMilestone,
+  renamingMilestoneId,
 }: TimelineItemProps) {
   const [open, setOpen] = useState(true)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [draftTitle, setDraftTitle] = useState(milestone.title)
+  const titleEditInputId = `milestone-title-edit-${milestone.id}`
+  const titleEditContainerRef = useRef<HTMLDivElement>(null)
   const t = useTranslations('analytics.campaigns.chat')
   const status: TimelineMilestoneStatus = milestone.status ?? 'empty'
   const [criteriaRows, setCriteriaRows] = useState<PassCriteriaRow[]>(() =>
@@ -226,6 +234,62 @@ function TimelineItem({
   useEffect(() => {
     setCriteriaRows(parsePassCriteriaLines(milestone.passCriteria))
   }, [milestone.id, milestone.passCriteria])
+
+  useEffect(() => {
+    if (!editingTitle) {
+      setDraftTitle(milestone.title)
+    }
+  }, [milestone.id, milestone.title, editingTitle])
+
+  useEffect(() => {
+    setEditingTitle(false)
+  }, [milestone.id])
+
+  useEffect(() => {
+    if (!editingTitle) {
+      return
+    }
+    const el = document.getElementById(titleEditInputId)
+    if (el instanceof HTMLInputElement) {
+      el.focus()
+      el.select()
+    }
+  }, [editingTitle, titleEditInputId])
+
+  useEffect(() => {
+    if (!editingTitle) {
+      return
+    }
+    const onPointerDownCapture = (e: PointerEvent) => {
+      if (renamingMilestoneId === milestone.id) {
+        return
+      }
+      const target = e.target
+      if (!(target instanceof Node)) {
+        return
+      }
+      if (titleEditContainerRef.current?.contains(target)) {
+        return
+      }
+      setEditingTitle(false)
+      setDraftTitle(milestone.title)
+    }
+    document.addEventListener('pointerdown', onPointerDownCapture, true)
+    return () => document.removeEventListener('pointerdown', onPointerDownCapture, true)
+  }, [editingTitle, milestone.id, milestone.title, renamingMilestoneId])
+
+  const renaming = renamingMilestoneId === milestone.id
+
+  const handleSaveTitle = async () => {
+    const trimmed = draftTitle.trim()
+    if (!trimmed || !onRenameMilestone) {
+      return
+    }
+    const ok = await onRenameMilestone(milestone.id, trimmed)
+    if (ok) {
+      setEditingTitle(false)
+    }
+  }
 
   const inputId = `milestone-input-${milestone.id}`
   const hasResult = Boolean(milestone.resultMarkdown?.trim())
@@ -277,13 +341,78 @@ function TimelineItem({
             )}
           >
             <CardHeader className="gap-1.5">
-              <CardTitle className="text-base leading-snug">{milestone.title}</CardTitle>
+              <CardTitle className="flex min-w-0 items-center gap-1 text-base leading-snug">
+                {editingTitle ? (
+                  <div
+                    className="flex min-w-0 flex-1 items-center gap-1"
+                    ref={titleEditContainerRef}
+                  >
+                    <Input
+                      id={titleEditInputId}
+                      aria-label={t('editMilestoneTitleAriaLabel')}
+                      className="h-8 min-w-0 flex-1 text-base font-semibold"
+                      disabled={renaming}
+                      onChange={(e) => setDraftTitle(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => {
+                        e.stopPropagation()
+                        if (e.key === 'Escape') {
+                          setEditingTitle(false)
+                          setDraftTitle(milestone.title)
+                        }
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          void handleSaveTitle()
+                        }
+                      }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      value={draftTitle}
+                    />
+                    <Button
+                      aria-label={t('saveMilestoneTitleAriaLabel')}
+                      className="size-9 shrink-0"
+                      disabled={renaming || !draftTitle.trim()}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void handleSaveTitle()
+                      }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      size="icon"
+                      type="button"
+                      variant="default"
+                    >
+                      <Check className="size-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <span className="min-w-0 flex-1 truncate">{milestone.title}</span>
+                    {onRenameMilestone ? (
+                      <Button
+                        aria-label={t('editMilestoneTitleAriaLabel')}
+                        className="size-8 shrink-0 text-muted-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setDraftTitle(milestone.title)
+                          setEditingTitle(true)
+                        }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                    ) : null}
+                  </>
+                )}
+              </CardTitle>
               <CardAction className="flex items-center gap-1">
                 {showDelete && onDeleteMilestone ? (
                   <Button
                     aria-label={deleteMilestoneAriaLabel}
                     className="size-9 shrink-0 text-muted-foreground hover:text-destructive"
-                    disabled={isDeleting}
+                    disabled={isDeleting || editingTitle}
                     onClick={(e) => {
                       e.stopPropagation()
                       void onDeleteMilestone(milestone.id)
@@ -302,6 +431,7 @@ function TimelineItem({
                     aria-expanded={open}
                     aria-label={open ? collapseDetailsLabel : expandDetailsLabel}
                     className="size-9 shrink-0"
+                    disabled={editingTitle}
                     onClick={(e) => e.stopPropagation()}
                     size="icon"
                     type="button"
@@ -448,6 +578,8 @@ type TimelineBodyProps = {
   deletingMilestoneId: string | null
   deleteButtonLabel: string
   deleteMilestoneAriaLabel: string
+  onRenameMilestone?: (id: string, name: string) => Promise<boolean>
+  renamingMilestoneId: string | null
 }
 
 function TimelineBody({
@@ -462,6 +594,8 @@ function TimelineBody({
   deletingMilestoneId,
   deleteButtonLabel,
   deleteMilestoneAriaLabel,
+  onRenameMilestone,
+  renamingMilestoneId,
 }: TimelineBodyProps) {
   return (
     <div className="min-h-0 flex-1">
@@ -483,7 +617,9 @@ function TimelineBody({
                 isSelected={milestone.id === selectedId}
                 milestone={milestone}
                 onDeleteMilestone={onDeleteMilestone}
+                onRenameMilestone={onRenameMilestone}
                 onSelect={onSelectMilestone}
+                renamingMilestoneId={renamingMilestoneId}
                 showDelete={showDelete}
                 statusLabels={statusLabels}
               />
@@ -505,6 +641,9 @@ export type TimelineWorkspaceProps = {
   deletingMilestoneId?: string | null
   onCreateMilestone: () => void | Promise<void>
   onDeleteMilestone?: (id: string) => void | Promise<void>
+  onRenameMilestone?: (id: string, name: string) => Promise<boolean>
+  renamingMilestoneId?: string | null
+  renameError?: string | null
 }
 
 export function TimelineWorkspace({
@@ -513,10 +652,13 @@ export function TimelineWorkspace({
   loadError = null,
   createError = null,
   deleteError = null,
+  renameError = null,
   creating = false,
   deletingMilestoneId = null,
+  renamingMilestoneId = null,
   onCreateMilestone,
   onDeleteMilestone,
+  onRenameMilestone,
 }: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
 
@@ -574,6 +716,11 @@ export function TimelineWorkspace({
           {deleteError}
         </p>
       ) : null}
+      {renameError && showTimeline ? (
+        <p className="border-b px-4 py-2 text-destructive text-sm" role="alert">
+          {renameError}
+        </p>
+      ) : null}
       {isLoading ? (
         <div
           aria-busy="true"
@@ -624,7 +771,9 @@ export function TimelineWorkspace({
           listLabel={t('timelineListLabel')}
           milestones={milestones}
           onDeleteMilestone={onDeleteMilestone}
+          onRenameMilestone={onRenameMilestone}
           onSelectMilestone={setSelectedId}
+          renamingMilestoneId={renamingMilestoneId}
           selectedId={selectedId}
           statusLabels={{
             complete: t('milestoneStatusComplete'),

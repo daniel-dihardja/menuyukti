@@ -88,6 +88,34 @@ export type DeleteNodeData = {
   deleteNode: boolean
 }
 
+export const UPDATE_NODE_MUTATION = `
+  mutation UpdateNode($id: ID!, $name: String!) {
+    updateNode(id: $id, name: $name) {
+      id
+      name
+      description
+      nodeType
+      path
+      parentId
+      locationId
+      data
+    }
+  }
+`
+
+export type UpdateNodeData = {
+  updateNode: {
+    id: string
+    name: string
+    description: string | null
+    nodeType: string
+    path: string
+    parentId: string | null
+    locationId: number | null
+    data: unknown | null
+  }
+}
+
 export const NODES_QUERY = `
   query Nodes($locationId: Int!, $nodeType: String, $parentId: ID) {
     nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId) {

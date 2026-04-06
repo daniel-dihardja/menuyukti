@@ -7,3 +7,7 @@ export const milestoneIdParamSchema = z.string().regex(/^\d+$/, 'Invalid milesto
 export const createMilestoneBodySchema = z.object({
   name: z.string().trim().min(1).max(500).optional(),
 })
+
+export const patchMilestoneNameSchema = z.object({
+  name: z.string().trim().min(1).max(500),
+})

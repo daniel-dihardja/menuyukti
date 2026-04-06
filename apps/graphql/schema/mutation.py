@@ -5,6 +5,7 @@ from graphql.schema.mutations import (
     CreateNodeMutation,
     DeleteNodeMutation,
     UpdateMenuItemCogsBulkMutation,
+    UpdateNodeMutation,
     UploadSalesReportMutation,
 )
 
@@ -14,6 +15,7 @@ class Mutation(
     UploadSalesReportMutation,
     CreateNodeMutation,
     DeleteNodeMutation,
+    UpdateNodeMutation,
     CreateLocationMutation,
     UpdateMenuItemCogsBulkMutation,
 ):

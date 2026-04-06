@@ -1,0 +1,94 @@
+import asyncio
+
+from graphql.data_sources import Location, Node, SessionLocal
+from graphql.schema import schema
+from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
+
+CREATE_NODE = """
+mutation CreateNode(
+  $locationId: Int!
+  $nodeType: String!
+  $name: String
+  $parentId: ID
+) {
+  createNode(
+    locationId: $locationId
+    nodeType: $nodeType
+    name: $name
+    parentId: $parentId
+  ) {
+    id
+    name
+    nodeType
+  }
+}
+"""
+
+UPDATE_NODE = """
+mutation UpdateNode($id: ID!, $name: String!) {
+  updateNode(id: $id, name: $name) {
+    id
+    name
+    nodeType
+  }
+}
+"""
+
+
+def test_update_milestone_name():
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(name="Update Node Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    campaign = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "campaign",
+                "name": "Campaign",
+                "parentId": None,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not campaign.errors, campaign.errors
+    campaign_id = campaign.data["createNode"]["id"]
+
+    first = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "name": "Original",
+                "parentId": campaign_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not first.errors, first.errors
+    milestone_id = first.data["createNode"]["id"]
+
+    updated = asyncio.run(
+        schema.execute(
+            UPDATE_NODE,
+            variable_values={"id": milestone_id, "name": "  Renamed title  "},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not updated.errors, updated.errors
+    data = updated.data["updateNode"]
+    assert data["id"] == milestone_id
+    assert data["name"] == "Renamed title"
+    assert data["nodeType"] == "milestone"
