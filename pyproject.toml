@@ -5,16 +5,21 @@ requires-python = ">=3.12"
 
 dependencies = [
   "menuyukti",
+  "graphql",
+  "agents-app",
 ]
 
 [tool.uv.workspace]
 members = [
   "packages/menuyukti",
   "apps/graphql",
+  "apps/agents",
 ]
 
 [tool.uv.sources]
 menuyukti = { workspace = true }
+graphql = { workspace = true }
+agents-app = { workspace = true }
 
 [dependency-groups]
 dev = [
