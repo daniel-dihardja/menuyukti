@@ -70,7 +70,7 @@ def test_create_node_inserts_root_campaign_node():
         session.close()
 
 
-def test_create_milestone_has_default_pass_criteria_data():
+def test_create_milestone_has_no_default_pass_criteria_json():
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -114,7 +114,97 @@ def test_create_milestone_has_default_pass_criteria_data():
     )
     assert not milestone.errors, milestone.errors
     data = milestone.data["createNode"]
-    assert data["data"] == {"passCriteria": []}
+    assert data["data"] is None
+
+
+def test_create_passcriteria_requires_milestone_parent():
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(name="Passcriteria Parent Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    bad = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "passcriteria",
+                "name": "PC",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert bad.errors
+
+    campaign = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "campaign",
+                "name": "Campaign",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not campaign.errors, campaign.errors
+    campaign_id = campaign.data["createNode"]["id"]
+
+    bad_parent = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "passcriteria",
+                "name": "PC",
+                "parentId": campaign_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert bad_parent.errors
+
+    milestone = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "name": "M1",
+                "parentId": campaign_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not milestone.errors, milestone.errors
+    milestone_id = milestone.data["createNode"]["id"]
+
+    pc = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "passcriteria",
+                "name": "Criterion A",
+                "parentId": milestone_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not pc.errors, pc.errors
+    data = pc.data["createNode"]
+    assert data["parentId"] == milestone_id
+    assert data["nodeType"] == "passcriteria"
+    assert data["data"] == {"requirement": "", "status": "open"}
 
 
 def test_create_node_with_json_data():

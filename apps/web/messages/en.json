@@ -469,7 +469,7 @@
         "milestoneTabPassCriteria": "Pass criteria",
         "milestonePassCriteriaAddPlaceholder": "New criterion…",
         "milestonePassCriteriaAddButton": "Add criteria",
-        "milestonePassCriteriaNeutralLabel": "Not validated yet",
+        "milestonePassCriteriaOpenLabel": "Not validated yet",
         "milestonePassCriteriaRemoveLabel": "Remove criterion",
         "milestonePassCriteriaEmpty": "No criteria yet.",
         "milestoneTabInput": "Input",

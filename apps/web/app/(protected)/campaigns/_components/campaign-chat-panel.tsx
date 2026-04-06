@@ -193,12 +193,16 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ passCriteria }),
         })
-        const body = (await res.json().catch(() => null)) as { message?: string } | null
+        const body = (await res.json().catch(() => null)) as {
+          message?: string
+          passCriteria?: PassCriteriaRow[]
+        } | null
         if (!res.ok) {
           throw new Error(body?.message ?? t('milestonesPassCriteriaError'))
         }
+        const nextCriteria = body?.passCriteria ?? passCriteria
         setMilestones((prev) =>
-          prev.map((m) => (m.id === milestoneId ? { ...m, passCriteria } : m)),
+          prev.map((m) => (m.id === milestoneId ? { ...m, passCriteria: nextCriteria } : m)),
         )
         return true
       } catch (err) {

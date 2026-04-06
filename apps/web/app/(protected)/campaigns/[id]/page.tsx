@@ -11,7 +11,8 @@ import { graphqlQuery } from '@/lib/graphql/client'
 import { NODE_QUERY, NODES_QUERY, type NodeData, type NodesData } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { CampaignChatPanel } from '../_components/campaign-chat-panel'
-import { passCriteriaFromNodeData } from '../_components/milestone-map'
+import { milestoneNodeToTimelineMilestone } from '../_components/milestone-map'
+import type { MilestoneNodeDto } from '../_components/milestone-map'
 import type { TimelineMilestone } from '../_components/timeline-workspace'
 
 const campaignIdParamSchema = z.string().regex(/^\d+$/, 'Invalid campaign id')
@@ -65,12 +66,30 @@ export default async function Page({ params }: PageProps) {
     authUserId,
   )
 
-  const initialMilestones: TimelineMilestone[] = milestonesData.nodes.map((n) => ({
-    id: n.id,
-    title: n.name,
-    passCriteria: passCriteriaFromNodeData(n.data),
-    status: 'empty',
-  }))
+  const initialMilestones: TimelineMilestone[] = await Promise.all(
+    milestonesData.nodes.map(async (n) => {
+      const passCriteriaChildren = await graphqlQuery<NodesData>(
+        NODES_QUERY,
+        {
+          locationId,
+          nodeType: 'passcriteria',
+          parentId: n.id,
+        },
+        authUserId,
+      )
+      const dto: MilestoneNodeDto = {
+        id: n.id,
+        name: n.name,
+        data: n.data,
+        passCriteriaNodes: passCriteriaChildren.nodes.map((row) => ({
+          id: row.id,
+          nodeType: row.nodeType,
+          data: row.data,
+        })),
+      }
+      return milestoneNodeToTimelineMilestone(dto)
+    }),
+  )
 
   const tCampaigns = await getTranslations('analytics.campaigns')
   const tChat = await getTranslations('analytics.campaigns.chat')

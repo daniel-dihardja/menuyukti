@@ -1,33 +1,42 @@
 import type { PassCriteriaRow, TimelineMilestone } from './timeline-workspace'
 
+export type PassCriteriaNodeDto = {
+  id: string
+  nodeType?: string
+  data?: unknown | null
+}
+
 export type MilestoneNodeDto = {
   id: string
   name: string
   data?: unknown | null
+  passCriteriaNodes?: PassCriteriaNodeDto[]
 }
 
-export function passCriteriaFromNodeData(data: unknown | null | undefined): PassCriteriaRow[] {
-  if (data == null || typeof data !== 'object') {
-    return []
-  }
-  const raw = (data as { passCriteria?: unknown }).passCriteria
-  if (!Array.isArray(raw)) {
+export function passCriteriaFromChildNodes(
+  nodes: PassCriteriaNodeDto[] | undefined | null,
+): PassCriteriaRow[] {
+  if (nodes == null || !Array.isArray(nodes)) {
     return []
   }
   const out: PassCriteriaRow[] = []
-  for (const item of raw) {
-    if (!item || typeof item !== 'object') {
+  for (const n of nodes) {
+    if (n.nodeType != null && n.nodeType !== 'passcriteria') {
       continue
     }
-    const text = (item as { text?: unknown }).text
-    const status = (item as { status?: unknown }).status
-    if (typeof text !== 'string') {
+    const d = n.data
+    if (d == null || typeof d !== 'object') {
       continue
     }
-    if (status !== 'pass' && status !== 'fail' && status !== 'neutral') {
+    const requirement = (d as { requirement?: unknown }).requirement
+    const status = (d as { status?: unknown }).status
+    if (typeof requirement !== 'string') {
       continue
     }
-    out.push({ text, status })
+    if (status !== 'pass' && status !== 'fail' && status !== 'open') {
+      continue
+    }
+    out.push({ id: n.id, requirement, status })
   }
   return out
 }
@@ -36,7 +45,7 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   return {
     id: node.id,
     title: node.name,
-    passCriteria: passCriteriaFromNodeData(node.data),
+    passCriteria: passCriteriaFromChildNodes(node.passCriteriaNodes),
     status: 'empty',
   }
 }

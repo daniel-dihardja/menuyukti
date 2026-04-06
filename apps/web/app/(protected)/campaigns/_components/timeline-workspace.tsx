@@ -23,9 +23,13 @@ import { cn } from '@workspace/ui/lib/utils'
 
 export type TimelineMilestoneStatus = 'complete' | 'pending' | 'empty'
 
-export type PassCriteriaStatus = 'pass' | 'fail' | 'neutral'
+export type PassCriteriaStatus = 'pass' | 'fail' | 'open'
 
-export type PassCriteriaRow = { text: string; status: PassCriteriaStatus }
+export type PassCriteriaRow = {
+  id?: string
+  requirement: string
+  status: PassCriteriaStatus
+}
 
 export type TimelineMilestone = {
   id: string
@@ -283,7 +287,7 @@ function TimelineItem({
     if (!raw) {
       return
     }
-    const next = [...criteriaRows, { text: raw, status: 'neutral' as const }]
+    const next = [...criteriaRows, { requirement: raw, status: 'open' as const }]
     const ok = await onUpdatePassCriteria(milestone.id, next)
     if (ok && el instanceof HTMLInputElement) {
       el.value = ''
@@ -478,7 +482,7 @@ function TimelineItem({
                         {criteriaRows.map((row, index) => (
                           <li
                             className="flex items-start gap-2 text-sm"
-                            key={`${milestone.id}-criteria-${index}`}
+                            key={row.id ?? `${milestone.id}-criteria-${index}`}
                           >
                             <div className="flex min-w-0 flex-1 gap-2 text-muted-foreground">
                               {row.status === 'pass' ? (
@@ -493,7 +497,7 @@ function TimelineItem({
                                 />
                               ) : (
                                 <span
-                                  aria-label={t('milestonePassCriteriaNeutralLabel')}
+                                  aria-label={t('milestonePassCriteriaOpenLabel')}
                                   className="mt-0.5 inline-flex shrink-0"
                                   role="img"
                                 >
@@ -503,7 +507,7 @@ function TimelineItem({
                                   />
                                 </span>
                               )}
-                              <span className="min-w-0 leading-snug">{row.text}</span>
+                              <span className="min-w-0 leading-snug">{row.requirement}</span>
                             </div>
                             <Button
                               aria-label={t('milestonePassCriteriaRemoveLabel')}

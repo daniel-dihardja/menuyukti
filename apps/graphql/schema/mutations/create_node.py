@@ -15,6 +15,18 @@ def _random_default_name() -> str:
     return f"{secrets.choice(_ADJECTIVES)} {secrets.choice(_NOUNS)} {secrets.token_hex(2).upper()}"
 
 
+_PASS_CRITERIA_STATUSES = frozenset({"pass", "fail", "open"})
+
+
+def _validate_passcriteria_payload(data: dict) -> None:
+    requirement = data.get("requirement")
+    status = data.get("status")
+    if not isinstance(requirement, str):
+        raise ValueError("passcriteria requirement must be a string")
+    if status not in _PASS_CRITERIA_STATUSES:
+        raise ValueError("passcriteria status must be pass, fail, or open")
+
+
 def _node_to_gql(node: Node) -> NodeType:
     return NodeType(
         id=str(node.id),
@@ -66,8 +78,20 @@ class CreateNodeMutation:
                 resolved_parent_id = parent_pk
 
             resolved_data = data
-            if node_type == "milestone" and resolved_data is None:
-                resolved_data = {"passCriteria": []}
+            if node_type == "passcriteria":
+                if parent is None:
+                    raise ValueError("passcriteria nodes must have a parent milestone")
+                if parent.node_type != "milestone":
+                    raise ValueError("passcriteria parent must be a milestone")
+                if resolved_data is None:
+                    resolved_data = {"requirement": "", "status": "open"}
+                elif isinstance(resolved_data, dict):
+                    base_pc = {"requirement": "", "status": "open"}
+                    base_pc.update(resolved_data)
+                    _validate_passcriteria_payload(base_pc)
+                    resolved_data = base_pc
+                else:
+                    raise ValueError("passcriteria data must be a JSON object")
 
             node = Node(
                 parent_id=resolved_parent_id,

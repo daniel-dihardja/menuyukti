@@ -9,8 +9,9 @@ export const createMilestoneBodySchema = z.object({
 })
 
 export const passCriteriaRowSchema = z.object({
-  text: z.string(),
-  status: z.enum(['pass', 'fail', 'neutral']),
+  id: z.string().regex(/^\d+$/).optional(),
+  requirement: z.string(),
+  status: z.enum(['pass', 'fail', 'open']),
 })
 
 export const patchMilestoneSchema = z

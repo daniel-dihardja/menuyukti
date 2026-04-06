@@ -136,3 +136,106 @@ def test_delete_node_only_last_milestone():
     assert len(nodes) == 1
     assert nodes[0]["id"] == first_id
     assert nodes[0]["name"] == "First"
+
+
+def test_delete_passcriteria_node():
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(name="Delete PC Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    campaign = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "campaign",
+                "name": "Campaign",
+                "parentId": None,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not campaign.errors, campaign.errors
+    campaign_id = campaign.data["createNode"]["id"]
+
+    milestone = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "name": "M",
+                "parentId": campaign_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not milestone.errors, milestone.errors
+    milestone_id = milestone.data["createNode"]["id"]
+
+    first_pc = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "passcriteria",
+                "name": "A",
+                "parentId": milestone_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not first_pc.errors, first_pc.errors
+    first_pc_id = first_pc.data["createNode"]["id"]
+
+    second_pc = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "passcriteria",
+                "name": "B",
+                "parentId": milestone_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not second_pc.errors, second_pc.errors
+    second_pc_id = second_pc.data["createNode"]["id"]
+
+    del_first = asyncio.run(
+        schema.execute(
+            DELETE_NODE,
+            variable_values={"id": first_pc_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not del_first.errors, del_first.errors
+    assert del_first.data["deleteNode"] is True
+
+    listed = asyncio.run(
+        schema.execute(
+            NODES_BY_PARENT,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "passcriteria",
+                "parentId": milestone_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not listed.errors, listed.errors
+    nodes = listed.data["nodes"]
+    assert len(nodes) == 1
+    assert nodes[0]["id"] == second_pc_id
+    assert nodes[0]["name"] == "B"
