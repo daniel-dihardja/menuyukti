@@ -5,7 +5,7 @@ from __future__ import annotations
 import strawberry
 from sqlalchemy.orm import Session
 
-from graphql.data_sources import AnalyticsRun, Campaign, Location
+from graphql.data_sources import AnalyticsRun, Location
 
 
 def user_id_from_info(info: strawberry.Info) -> str:
@@ -42,16 +42,3 @@ def get_analytics_run_if_owner(
     if not is_location_owner(session, run.location_id, user_id):
         return None
     return run
-
-
-def get_campaign_if_owner(
-    session: Session, campaign_id: int, user_id: str
-) -> Campaign | None:
-    if not user_id:
-        return None
-    camp = session.get(Campaign, campaign_id)
-    if camp is None:
-        return None
-    if not is_location_owner(session, camp.location_id, user_id):
-        return None
-    return camp

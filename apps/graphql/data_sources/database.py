@@ -6,8 +6,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from sqlalchemy import (
-    JSON,
-    CheckConstraint,
     Column,
     Date,
     DateTime,
@@ -50,7 +48,6 @@ class Location(Base):
     clerk_user_id = Column(String(128), nullable=True, index=True)
 
     instagram_posts = relationship("InstagramPost", back_populates="location")
-    campaigns = relationship("Campaign", back_populates="location")
 
 
 class AnalyticsRun(Base):
@@ -74,46 +71,6 @@ class AnalyticsRun(Base):
         ForeignKey("location.id"),
         nullable=False,
         index=True,
-    )
-
-
-class LocationProfile(Base):
-    """
-    Cached LLM-generated marketing profile for a (location, analytics_run) pair.
-
-    Keyed on (location_id, analytics_run_id) — one profile per pairing.
-    Re-used on subsequent campaign runs to skip the LLM generation step.
-    """
-
-    __tablename__ = "location_profile"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    location_id = Column(
-        Integer,
-        ForeignKey("location.id"),
-        nullable=False,
-        index=True,
-    )
-    analytics_run_id = Column(
-        Integer,
-        ForeignKey("analytics_run.id"),
-        nullable=False,
-        index=True,
-    )
-    summary = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    __table_args__ = (
-        UniqueConstraint(
-            "location_id",
-            "analytics_run_id",
-            name="uq_location_profile",
-        ),
     )
 
 
@@ -175,7 +132,7 @@ class MenuItemCogs(Base):
 
 class InstagramPost(Base):
     """
-    Instagram post (content plan / published post) scoped to a location and optional campaign.
+    Instagram post (content plan / published post) scoped to a location.
 
     Holds platform, platform post id, status, media type, caption, and published_at.
     """
@@ -190,13 +147,6 @@ class InstagramPost(Base):
         index=True,
     )
     location = relationship("Location", back_populates="instagram_posts")
-    campaign_id = Column(
-        Integer,
-        ForeignKey("campaign.id"),
-        nullable=True,
-        index=True,
-    )
-    campaign = relationship("Campaign", back_populates="instagram_posts")
     platform = Column(String(32), nullable=False, default="instagram")
     platform_post_id = Column(String(256), nullable=True, index=True)
     status = Column(String(64), nullable=False, default="draft")
@@ -210,156 +160,9 @@ class InstagramPost(Base):
         onupdate=func.now(),
     )
 
-    promoted_items = relationship(
-        "InstagramPostPromotedItem",
-        back_populates="instagram_post",
-        cascade="all, delete-orphan",
-    )
-
     __table_args__ = (
         Index("ix_instagram_post_location_published_at", "location_id", "published_at"),
         Index("ix_instagram_post_platform_post_id", "platform_post_id"),
-    )
-
-
-class InstagramPostPromotedItem(Base):
-    """
-    A menu item promoted in an Instagram post (many per post).
-    """
-
-    __tablename__ = "instagram_post_promoted_items"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    instagram_post_id = Column(
-        Integer,
-        ForeignKey("instagram_posts.id"),
-        nullable=False,
-        index=True,
-    )
-    instagram_post = relationship("InstagramPost", back_populates="promoted_items")
-
-    canonical_menu_name = Column(String(256), nullable=False)
-
-
-class Campaign(Base):
-    """
-    Marketing campaign with goal, dates, theme, tone, and status.
-    Belongs to a location; has many Instagram posts.
-    """
-
-    __tablename__ = "campaign"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    location_id = Column(
-        Integer,
-        ForeignKey("location.id"),
-        nullable=False,
-    )
-    location = relationship("Location", back_populates="campaigns")
-    instagram_posts = relationship(
-        "InstagramPost",
-        back_populates="campaign",
-        cascade="all, delete-orphan",
-    )
-    campaign_brief = relationship(
-        "CampaignBrief",
-        back_populates="campaign",
-        uselist=False,
-        cascade="all, delete-orphan",
-    )
-    promotion_candidates = relationship(
-        "PromotionCandidates",
-        back_populates="campaign",
-        uselist=False,
-        cascade="all, delete-orphan",
-    )
-
-    name = Column(String(256), nullable=False)
-    goal = Column(String(512), nullable=True)
-    start_date = Column(Date, nullable=True)
-    end_date = Column(Date, nullable=True)
-    theme = Column(String(256), nullable=True)
-    tone = Column(String(128), nullable=True)
-    status = Column(String(32), nullable=False, default="draft")
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    __table_args__ = (
-        Index("ix_campaign_status", "status"),
-        Index("ix_campaign_location_id", "location_id"),
-        CheckConstraint(
-            "status IN ('draft', 'approved', 'active', 'completed')",
-            name="ck_campaign_status",
-        ),
-    )
-
-
-class CampaignBrief(Base):
-    """
-    LLM-generated strategic campaign brief for a campaign (theme, tone, audience, cadence).
-    One brief per campaign (unique on campaign_id).
-    """
-
-    __tablename__ = "campaign_brief"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    campaign_id = Column(
-        Integer,
-        ForeignKey("campaign.id"),
-        nullable=False,
-        unique=True,
-        index=True,
-    )
-    campaign = relationship("Campaign", back_populates="campaign_brief")
-    location_id = Column(
-        Integer,
-        ForeignKey("location.id"),
-        nullable=False,
-        index=True,
-    )
-    analytics_run_id = Column(
-        Integer,
-        ForeignKey("analytics_run.id"),
-        nullable=False,
-        index=True,
-    )
-    campaign_theme = Column(Text, nullable=False)
-    tone = Column(String(256), nullable=False)
-    target_audience = Column(Text, nullable=False)
-    posting_cadence = Column(String(256), nullable=False)
-    post_schedule_json = Column(Text, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    __table_args__ = (UniqueConstraint("campaign_id", name="uq_campaign_brief_campaign"),)
-
-
-class PromotionCandidates(Base):
-    """
-    Stored promotion candidate items for a campaign (JSON payload from menu engineering / agent flows).
-    One row per campaign.
-    """
-
-    __tablename__ = "promotion_candidates"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    campaign_id = Column(
-        Integer,
-        ForeignKey("campaign.id"),
-        nullable=False,
-        unique=True,
-        index=True,
-    )
-    campaign = relationship("Campaign", back_populates="promotion_candidates")
-    candidates_json = Column(JSON, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
     )
 
 

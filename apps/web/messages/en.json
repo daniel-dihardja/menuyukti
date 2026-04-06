@@ -398,7 +398,12 @@
     },
     "campaigns": {
       "title": "Campaigns",
-      "description": "Manage and track your marketing campaigns by location.",
+      "description": "Campaign workspace is being rebuilt on a new data model.",
+      "dataRedesign": {
+        "title": "Campaign data is being redesigned",
+        "description": "Saved campaigns, briefs, location profiles, and promotion candidates from the previous schema are no longer stored. A new model will replace them.",
+        "note": "You can still open an existing campaign chat URL if you have one bookmarked; list and create flows will return when the new backend is ready."
+      },
       "create": "Create New Campaign",
       "branchLabel": "Location",
       "branchPlaceholder": "Select a location",

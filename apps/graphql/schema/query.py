@@ -2,16 +2,11 @@ import strawberry
 
 from graphql.schema.queries import (
     AnalyticsRunQuery,
-    CampaignBriefQuery,
-    CampaignQuery,
-    CampaignsQuery,
-    LocationProfileQuery,
     LocationsQuery,
     MenuEngineeringMatrixQuery,
     MenuHeatmapsQuery,
     NationalHolidaysQuery,
     OperatingProfileQuery,
-    PromotionCandidatesQuery,
 )
 
 
@@ -21,12 +16,7 @@ class Query(
     AnalyticsRunQuery,
     MenuHeatmapsQuery,
     MenuEngineeringMatrixQuery,
-    CampaignQuery,
-    CampaignsQuery,
     NationalHolidaysQuery,
     OperatingProfileQuery,
-    LocationProfileQuery,
-    CampaignBriefQuery,
-    PromotionCandidatesQuery,
 ):
     pass
