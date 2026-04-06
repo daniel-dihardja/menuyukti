@@ -7,6 +7,7 @@ from graphql.schema.node_handlers.base import NodeHandler
 from graphql.schema.node_handlers.campaign import CampaignHandler
 from graphql.schema.node_handlers.goal import GoalHandler
 from graphql.schema.node_handlers.milestone import MilestoneHandler
+from graphql.schema.node_handlers.milestonedata import MilestoneDataHandler
 from graphql.schema.node_handlers.passcriteria import PassCriteriaHandler
 
 _GENERIC_HANDLER = GenericHandler()
@@ -16,18 +17,25 @@ _REGISTRY: dict[str, NodeHandler] = {
     "milestone": MilestoneHandler(),
     "passcriteria": PassCriteriaHandler(),
     "goal": GoalHandler(),
+    "milestonedata": MilestoneDataHandler(),
 }
 
 
-def get_handler(node_type: str) -> NodeHandler:
+def get_handler(node_type: str | None) -> NodeHandler:
     """Return the handler for `node_type`, or the generic fallback."""
-    return _REGISTRY.get(node_type, _GENERIC_HANDLER)
+    if node_type is None:
+        return _GENERIC_HANDLER
+    key = node_type.strip()
+    if not key:
+        return _GENERIC_HANDLER
+    return _REGISTRY.get(key, _GENERIC_HANDLER)
 
 
 __all__ = [
     "CampaignHandler",
     "GenericHandler",
     "GoalHandler",
+    "MilestoneDataHandler",
     "MilestoneHandler",
     "NodeHandler",
     "PassCriteriaHandler",

@@ -1,4 +1,9 @@
-import { goalDataSchema, milestoneDataSchema, passCriteriaDataSchema } from '@/lib/graphql/node-schemas'
+import {
+  goalDataSchema,
+  milestoneDataSchema,
+  milestonedataDataSchema,
+  passCriteriaDataSchema,
+} from '@/lib/graphql/node-schemas'
 import type { AnyNode } from '@/lib/graphql/queries'
 
 import type { PassCriteriaRow, TimelineMilestone } from './timeline-workspace'
@@ -9,6 +14,7 @@ export type MilestoneNodeDto = {
   data?: unknown | null
   passCriteriaNodes?: AnyNode[]
   goalNodes?: AnyNode[]
+  milestonedataNodes?: AnyNode[]
 }
 
 export function passCriteriaFromChildNodes(nodes: AnyNode[] | undefined | null): PassCriteriaRow[] {
@@ -54,15 +60,38 @@ export function goalFromChildNodes(nodes: AnyNode[] | undefined | null): string 
   return undefined
 }
 
+/** First valid `milestonedata` child wins (at most one is expected). */
+export function milestoneDataFromChildNodes(nodes: AnyNode[] | undefined | null): string | undefined {
+  if (nodes == null || !Array.isArray(nodes)) {
+    return undefined
+  }
+  for (const n of nodes) {
+    if (n.nodeType !== 'milestonedata') {
+      continue
+    }
+    const d = n.data
+    if (d == null || typeof d !== 'object') {
+      continue
+    }
+    const parsed = milestonedataDataSchema.safeParse(d)
+    if (parsed.success) {
+      return parsed.data.data
+    }
+  }
+  return undefined
+}
+
 export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): TimelineMilestone {
   const parsed = milestoneDataSchema.safeParse(node.data)
   const legacyGoal = parsed.success ? parsed.data.goal : undefined
   const goal = goalFromChildNodes(node.goalNodes) ?? legacyGoal
+  const data = milestoneDataFromChildNodes(node.milestonedataNodes)
 
   return {
     id: node.id,
     title: node.name,
     goal,
+    data,
     passCriteria: passCriteriaFromChildNodes(node.passCriteriaNodes),
     status: 'empty',
   }

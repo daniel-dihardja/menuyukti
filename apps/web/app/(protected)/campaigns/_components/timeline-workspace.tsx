@@ -57,6 +57,8 @@ export type TimelineMilestone = {
   passCriteria: PassCriteriaRow[]
   /** Free-form goal text for the Goal tab (stored on the milestone node). */
   goal?: string
+  /** Data tab text; stored on a child `milestonedata` node as `{ data: string }`. */
+  data?: string
   /** Markdown body for the Result tab. */
   resultMarkdown?: string
   /** Defaults to `empty` when omitted. */
@@ -220,6 +222,8 @@ type TimelineItemProps = {
   savingPassCriteriaMilestoneId: string | null
   onUpdateMilestoneGoal?: (id: string, goal: string) => Promise<boolean>
   savingGoalMilestoneId: string | null
+  onUpdateMilestoneData?: (id: string, milestoneData: string) => Promise<boolean>
+  savingDataMilestoneId: string | null
   onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
   isMoving: boolean
   onRunMilestone?: (id: string) => void | Promise<void>
@@ -250,6 +254,8 @@ function TimelineItem({
   savingPassCriteriaMilestoneId,
   onUpdateMilestoneGoal,
   savingGoalMilestoneId,
+  onUpdateMilestoneData,
+  savingDataMilestoneId,
   onMoveMilestone,
   isMoving,
   onRunMilestone,
@@ -260,6 +266,7 @@ function TimelineItem({
   const [editingTitle, setEditingTitle] = useState(false)
   const [draftTitle, setDraftTitle] = useState(milestone.title)
   const [goalDraft, setGoalDraft] = useState(() => milestone.goal ?? '')
+  const [dataDraft, setDataDraft] = useState(() => milestone.data ?? '')
   const titleEditInputId = `milestone-title-edit-${milestone.id}`
   const titleEditContainerRef = useRef<HTMLDivElement>(null)
   const t = useTranslations('analytics.campaigns.chat')
@@ -273,10 +280,15 @@ function TimelineItem({
 
   const savingPassCriteria = savingPassCriteriaMilestoneId === milestone.id
   const savingGoal = savingGoalMilestoneId === milestone.id
+  const savingData = savingDataMilestoneId === milestone.id
 
   useEffect(() => {
     setGoalDraft(milestone.goal ?? '')
   }, [milestone.id, milestone.goal])
+
+  useEffect(() => {
+    setDataDraft(milestone.data ?? '')
+  }, [milestone.id, milestone.data])
 
   useEffect(() => {
     if (!editingTitle) {
@@ -359,6 +371,7 @@ function TimelineItem({
   }
 
   const goalFieldId = `milestone-goal-${milestone.id}`
+  const dataFieldId = `milestone-data-${milestone.id}`
   const hasResult = Boolean(milestone.resultMarkdown?.trim())
 
   const handleGoalBlur = () => {
@@ -373,6 +386,22 @@ function TimelineItem({
       const ok = await onUpdateMilestoneGoal(milestone.id, goalDraft)
       if (!ok) {
         setGoalDraft(server)
+      }
+    })()
+  }
+
+  const handleDataBlur = () => {
+    if (!onUpdateMilestoneData || savingData) {
+      return
+    }
+    const server = milestone.data ?? ''
+    if (dataDraft === server) {
+      return
+    }
+    void (async () => {
+      const ok = await onUpdateMilestoneData(milestone.id, dataDraft)
+      if (!ok) {
+        setDataDraft(server)
       }
     })()
   }
@@ -619,6 +648,9 @@ function TimelineItem({
                     <TabsTrigger className="flex-1" value="pass">
                       {t('milestoneTabPassCriteria')}
                     </TabsTrigger>
+                    <TabsTrigger className="flex-1" value="data">
+                      {t('milestoneTabData')}
+                    </TabsTrigger>
                     <TabsTrigger className="flex-1" value="result">
                       {t('milestoneTabResult')}
                     </TabsTrigger>
@@ -725,6 +757,25 @@ function TimelineItem({
                       </Button>
                     </div>
                   </TabsContent>
+                  <TabsContent value="data">
+                    <FieldGroup className="gap-4">
+                      <Field>
+                        <FieldLabel htmlFor={dataFieldId}>{t('milestoneDataLabel')}</FieldLabel>
+                        <FieldDescription>{t('milestoneDataDescription')}</FieldDescription>
+                        <Textarea
+                          className="min-h-[120px] resize-y whitespace-pre-wrap"
+                          disabled={savingData}
+                          id={dataFieldId}
+                          onChange={(e) => setDataDraft(e.target.value)}
+                          onBlur={handleDataBlur}
+                          onClick={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          placeholder={t('milestoneDataPlaceholder')}
+                          value={dataDraft}
+                        />
+                      </Field>
+                    </FieldGroup>
+                  </TabsContent>
                   <TabsContent value="result">
                     {hasResult ? (
                       <MarkdownMessage content={milestone.resultMarkdown ?? ''} />
@@ -760,6 +811,8 @@ type TimelineBodyProps = {
   savingPassCriteriaMilestoneId: string | null
   onUpdateMilestoneGoal?: (id: string, goal: string) => Promise<boolean>
   savingGoalMilestoneId: string | null
+  onUpdateMilestoneData?: (id: string, milestoneData: string) => Promise<boolean>
+  savingDataMilestoneId: string | null
   onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
   movingMilestoneId: string | null
   onRunMilestone?: (id: string) => void | Promise<void>
@@ -785,6 +838,8 @@ function TimelineBody({
   savingPassCriteriaMilestoneId,
   onUpdateMilestoneGoal,
   savingGoalMilestoneId,
+  onUpdateMilestoneData,
+  savingDataMilestoneId,
   onMoveMilestone,
   movingMilestoneId,
   onRunMilestone,
@@ -818,11 +873,13 @@ function TimelineBody({
                   onRenameMilestone={onRenameMilestone}
                   onRunMilestone={onRunMilestone}
                   onSelect={onSelectMilestone}
+                  onUpdateMilestoneData={onUpdateMilestoneData}
                   onUpdateMilestoneGoal={onUpdateMilestoneGoal}
                   onUpdatePassCriteria={onUpdatePassCriteria}
                   positionIndex={index + 1}
                   renamingMilestoneId={renamingMilestoneId}
                   runningMilestoneId={runningMilestoneId}
+                  savingDataMilestoneId={savingDataMilestoneId}
                   savingGoalMilestoneId={savingGoalMilestoneId}
                   savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
                   showDelete={showDelete}
@@ -859,6 +916,9 @@ export type TimelineWorkspaceProps = {
   onUpdateMilestoneGoal?: (id: string, goal: string) => Promise<boolean>
   savingGoalMilestoneId?: string | null
   goalError?: string | null
+  onUpdateMilestoneData?: (id: string, milestoneData: string) => Promise<boolean>
+  savingDataMilestoneId?: string | null
+  milestoneDataError?: string | null
   onRunMilestone?: (id: string) => void | Promise<void>
   isChatBusy?: boolean
   runningMilestoneId?: string | null
@@ -874,18 +934,21 @@ export function TimelineWorkspace({
   renameError = null,
   passCriteriaError = null,
   goalError = null,
+  milestoneDataError = null,
   creating = false,
   deletingMilestoneId = null,
   movingMilestoneId = null,
   renamingMilestoneId = null,
   savingPassCriteriaMilestoneId = null,
   savingGoalMilestoneId = null,
+  savingDataMilestoneId = null,
   onCreateMilestone,
   onDeleteMilestone,
   onRenameMilestone,
   onMoveMilestone,
   onUpdatePassCriteria,
   onUpdateMilestoneGoal,
+  onUpdateMilestoneData,
   onRunMilestone,
   isChatBusy = false,
   runningMilestoneId = null,
@@ -966,6 +1029,11 @@ export function TimelineWorkspace({
           {goalError}
         </p>
       ) : null}
+      {milestoneDataError && showTimeline ? (
+        <p className="border-b px-4 py-2 text-destructive text-sm" role="alert">
+          {milestoneDataError}
+        </p>
+      ) : null}
       {isLoading ? (
         <div
           aria-busy="true"
@@ -1022,10 +1090,12 @@ export function TimelineWorkspace({
           onRenameMilestone={onRenameMilestone}
           onRunMilestone={onRunMilestone}
           onSelectMilestone={setSelectedId}
+          onUpdateMilestoneData={onUpdateMilestoneData}
           onUpdateMilestoneGoal={onUpdateMilestoneGoal}
           onUpdatePassCriteria={onUpdatePassCriteria}
           renamingMilestoneId={renamingMilestoneId}
           runningMilestoneId={runningMilestoneId}
+          savingDataMilestoneId={savingDataMilestoneId}
           savingGoalMilestoneId={savingGoalMilestoneId}
           savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
           selectedId={selectedId}

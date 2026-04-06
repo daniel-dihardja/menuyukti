@@ -93,3 +93,8 @@ class MilestoneHandler(NodeHandler):
             Node.parent_id == node.id,
             Node.node_type == "passcriteria",
         ).delete(synchronize_session=False)
+
+        session.query(Node).filter(
+            Node.parent_id == node.id,
+            Node.node_type == "milestonedata",
+        ).delete(synchronize_session=False)

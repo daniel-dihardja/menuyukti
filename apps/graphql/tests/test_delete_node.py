@@ -317,3 +317,83 @@ def test_delete_milestone_removes_goal_child():
         assert session.get(Node, goal_id) is None
     finally:
         session.close()
+
+
+def test_delete_milestone_removes_milestonedata_child():
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(
+            name="Delete MilestoneData Cascade Location", clerk_user_id=GRAPHQL_TEST_USER_ID
+        )
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    campaign = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "campaign",
+                "name": "Campaign",
+                "parentId": None,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not campaign.errors, campaign.errors
+    campaign_id = campaign.data["createNode"]["id"]
+
+    milestone = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "name": "Only",
+                "parentId": campaign_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not milestone.errors, milestone.errors
+    milestone_id = milestone.data["createNode"]["id"]
+
+    md = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestonedata",
+                "name": "Data",
+                "parentId": milestone_id,
+                "data": {"data": "Keep me"},
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not md.errors, md.errors
+    md_id = int(md.data["createNode"]["id"])
+
+    deleted = asyncio.run(
+        schema.execute(
+            DELETE_NODE,
+            variable_values={"id": milestone_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not deleted.errors, deleted.errors
+    assert deleted.data["deleteNode"] is True
+
+    session = SessionLocal()
+    try:
+        assert session.get(Node, md_id) is None
+    finally:
+        session.close()

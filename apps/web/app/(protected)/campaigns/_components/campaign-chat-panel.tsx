@@ -51,6 +51,8 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
   const [passCriteriaError, setPassCriteriaError] = useState<string | null>(null)
   const [savingGoalMilestoneId, setSavingGoalMilestoneId] = useState<string | null>(null)
   const [goalError, setGoalError] = useState<string | null>(null)
+  const [savingDataMilestoneId, setSavingDataMilestoneId] = useState<string | null>(null)
+  const [milestoneDataError, setMilestoneDataError] = useState<string | null>(null)
   const [moveError, setMoveError] = useState<string | null>(null)
   const [movingMilestoneId, setMovingMilestoneId] = useState<string | null>(null)
   const [runningMilestoneId, setRunningMilestoneId] = useState<string | null>(null)
@@ -66,6 +68,8 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
     setSavingPassCriteriaMilestoneId(null)
     setGoalError(null)
     setSavingGoalMilestoneId(null)
+    setMilestoneDataError(null)
+    setSavingDataMilestoneId(null)
     setMoveError(null)
     setMovingMilestoneId(null)
     setRunningMilestoneId(null)
@@ -272,6 +276,34 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
     [campaignId, t],
   )
 
+  const handleUpdateMilestoneData = useCallback(
+    async (milestoneId: string, milestoneData: string): Promise<boolean> => {
+      setMilestoneDataError(null)
+      setSavingDataMilestoneId(milestoneId)
+      try {
+        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ milestoneData }),
+        })
+        const body = (await res.json().catch(() => null)) as { message?: string } | null
+        if (!res.ok) {
+          throw new Error(body?.message ?? t('milestonesMilestoneDataError'))
+        }
+        setMilestones((prev) =>
+          prev.map((m) => (m.id === milestoneId ? { ...m, data: milestoneData } : m)),
+        )
+        return true
+      } catch (err) {
+        setMilestoneDataError(err instanceof Error ? err.message : t('milestonesMilestoneDataError'))
+        return false
+      } finally {
+        setSavingDataMilestoneId(null)
+      }
+    },
+    [campaignId, t],
+  )
+
   const handleRunMilestone = useCallback(
     async (milestoneId: string) => {
       setRunningMilestoneId(milestoneId)
@@ -430,6 +462,7 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
           deletingMilestoneId={deletingMilestoneId}
           goalError={goalError}
           isChatBusy={isChatBusy}
+          milestoneDataError={milestoneDataError}
           milestones={milestones}
           moveError={moveError}
           movingMilestoneId={movingMilestoneId}
@@ -438,12 +471,14 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
           onMoveMilestone={handleMoveMilestone}
           onRenameMilestone={handleRenameMilestone}
           onRunMilestone={handleRunMilestone}
+          onUpdateMilestoneData={handleUpdateMilestoneData}
           onUpdateMilestoneGoal={handleUpdateMilestoneGoal}
           onUpdatePassCriteria={handleUpdatePassCriteria}
           passCriteriaError={passCriteriaError}
           renameError={renameError}
           renamingMilestoneId={renamingMilestoneId}
           runningMilestoneId={runningMilestoneId}
+          savingDataMilestoneId={savingDataMilestoneId}
           savingGoalMilestoneId={savingGoalMilestoneId}
           savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
         />

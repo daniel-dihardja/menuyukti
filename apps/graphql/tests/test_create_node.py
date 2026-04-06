@@ -388,3 +388,142 @@ def test_create_second_goal_rejected():
         )
     )
     assert second.errors
+
+
+def test_create_milestonedata_under_milestone():
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(name="MilestoneData Node Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    campaign = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "campaign",
+                "name": "Campaign",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not campaign.errors, campaign.errors
+    campaign_id = campaign.data["createNode"]["id"]
+
+    milestone = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "name": "M1",
+                "parentId": campaign_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not milestone.errors, milestone.errors
+    milestone_id = milestone.data["createNode"]["id"]
+
+    md = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestonedata",
+                "name": "Data",
+                "parentId": milestone_id,
+                "data": {"data": "context blob"},
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not md.errors, md.errors
+    data = md.data["createNode"]
+    assert data["parentId"] == milestone_id
+    assert data["nodeType"] == "milestonedata"
+    assert data["data"] == {"data": "context blob"}
+
+
+def test_create_second_milestonedata_rejected():
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(name="MilestoneData Dup Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    campaign = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "campaign",
+                "name": "Campaign",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not campaign.errors, campaign.errors
+    campaign_id = campaign.data["createNode"]["id"]
+
+    milestone = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "name": "M1",
+                "parentId": campaign_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not milestone.errors, milestone.errors
+    milestone_id = milestone.data["createNode"]["id"]
+
+    first = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestonedata",
+                "name": "Data",
+                "parentId": milestone_id,
+                "data": {"data": "A"},
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not first.errors, first.errors
+
+    second = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestonedata",
+                "name": "Data2",
+                "parentId": milestone_id,
+                "data": {"data": "B"},
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert second.errors

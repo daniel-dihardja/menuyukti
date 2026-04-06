@@ -19,6 +19,8 @@ export const patchMilestoneSchema = z
     name: z.string().trim().min(1).max(500).optional(),
     /** Free-form text; not trimmed so spaces inside and at edges are preserved. */
     goal: z.string().optional(),
+    /** Milestone Data tab; persisted on a child `milestonedata` node as `{ data: string }`. */
+    milestoneData: z.string().optional(),
     passCriteria: z.array(passCriteriaRowSchema).optional(),
     move: z.enum(['up', 'down']).optional(),
   })
@@ -26,9 +28,10 @@ export const patchMilestoneSchema = z
     (v) =>
       v.name !== undefined ||
       v.goal !== undefined ||
+      v.milestoneData !== undefined ||
       v.passCriteria !== undefined ||
       v.move !== undefined,
     {
-      message: 'Provide at least one of name, goal, passCriteria, or move',
+      message: 'Provide at least one of name, goal, milestoneData, passCriteria, or move',
     },
   )

@@ -29,7 +29,7 @@ class NodeHandler(ABC):
 
     def validate_update(self, node: Node, parent: Node | None, data: dict | None) -> None:
         """Raise ValueError if update is not allowed or parent context is invalid."""
-        raise ValueError("Only milestones and passcriteria can be updated with this mutation")
+        raise ValueError("This node type does not allow updates with this mutation")
 
     def merge_update_data(self, node: Node, patch: dict) -> dict:
         """Merge patch into existing node.data and return the new payload."""

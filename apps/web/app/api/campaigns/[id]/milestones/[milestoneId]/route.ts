@@ -85,6 +85,62 @@ async function assertPassCriteriaBelongsToMilestone(
   }
 }
 
+/** Persist Data tab text on a child `milestonedata` node; empty string removes node(s). */
+async function syncMilestonedataChild(
+  locationId: number,
+  milestoneId: string,
+  dataText: string,
+  userId: string,
+) {
+  const existing = parseNodesData(
+    await graphqlQuery<NodesDataRaw>(
+      NODES_QUERY,
+      {
+        locationId,
+        nodeType: 'milestonedata',
+        parentId: milestoneId,
+      },
+      userId,
+    ),
+  )
+  const rows = existing.nodes.filter((n) => n.nodeType === 'milestonedata')
+  if (dataText === '') {
+    for (const g of rows) {
+      await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: g.id }, userId)
+    }
+    return
+  }
+  if (rows.length === 0) {
+    parseCreateNodeData(
+      await graphqlQuery<CreateNodeDataRaw>(
+        CREATE_NODE_MUTATION,
+        {
+          locationId,
+          nodeType: 'milestonedata',
+          parentId: milestoneId,
+          name: 'Data',
+          data: { data: dataText },
+        },
+        userId,
+      ),
+    )
+    return
+  }
+  const [primary, ...rest] = rows
+  for (const g of rest) {
+    await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: g.id }, userId)
+  }
+  if (primary) {
+    parseUpdateNodeData(
+      await graphqlQuery<UpdateNodeDataRaw>(
+        UPDATE_NODE_MUTATION,
+        { id: primary.id, data: { data: dataText } },
+        userId,
+      ),
+    )
+  }
+}
+
 /** Persist goal text on a child `goal` node; empty string removes goal node(s). */
 async function syncGoalChild(
   locationId: number,
@@ -237,6 +293,9 @@ export async function PATCH(req: Request, context: RouteContext) {
     if (body.passCriteria === undefined) {
       if (body.goal !== undefined) {
         await syncGoalChild(campaign.locationId, milestoneId, body.goal, userId)
+      }
+      if (body.milestoneData !== undefined) {
+        await syncMilestonedataChild(campaign.locationId, milestoneId, body.milestoneData, userId)
       }
       if (body.name !== undefined) {
         parseUpdateNodeData(
