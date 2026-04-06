@@ -2,23 +2,22 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { CheckCircle2, ChevronDown, Circle, Clock, Maximize2, Settings } from 'lucide-react'
+import { Check, ChevronDown, Circle, Clock, Maximize2, Settings, Trash2, X } from 'lucide-react'
 
+import { MarkdownMessage } from '@/components/markdown-message'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card'
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@workspace/ui/components/collapsible'
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
+import { Input } from '@workspace/ui/components/input'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
+import { Textarea } from '@workspace/ui/components/textarea'
 import { cn } from '@workspace/ui/lib/utils'
 
 export type TimelineMilestoneStatus = 'complete' | 'pending' | 'empty'
@@ -26,7 +25,15 @@ export type TimelineMilestoneStatus = 'complete' | 'pending' | 'empty'
 export type TimelineMilestone = {
   id: string
   title: string
-  description: string
+  /**
+   * Pass criteria copy: newline-separated lines. After trim: `!` prefix = not met (X), `?` =
+   * not validated yet (neutral circle), otherwise pass (check).
+   */
+  passCriteria: string
+  /** Default text for the Input tab textarea. */
+  input?: string
+  /** Markdown body for the Result tab. */
+  resultMarkdown?: string
   /** Defaults to `empty` when omitted. */
   status?: TimelineMilestoneStatus
 }
@@ -37,54 +44,55 @@ type MilestoneStatusLabels = {
   empty: string
 }
 
-function MilestoneStatusIcon({
+/** Shared layout box for every timeline status marker. */
+const TIMELINE_RAIL_MARKER_BOX = 'flex size-7 shrink-0 items-center justify-center'
+/** Same nominal size; Check is scaled down — its SVG reads larger than Clock/Circle at identical `size-*`. */
+const TIMELINE_RAIL_ICON = 'size-7 origin-center stroke-[2]'
+const TIMELINE_RAIL_ICON_CHECK = cn(TIMELINE_RAIL_ICON, 'scale-[0.7]')
+
+function TimelineRailMarker({
+   
   status,
   labels,
 }: {
   status: TimelineMilestoneStatus
   labels: MilestoneStatusLabels
 }) {
-  const label =
-    status === 'complete' ? labels.complete : status === 'pending' ? labels.pending : labels.empty
-
   if (status === 'complete') {
     return (
       <span
-        aria-label={label}
-        className="mt-0.5 shrink-0 text-green-600 dark:text-green-500"
+        aria-label={labels.complete}
+        className={cn(
+          TIMELINE_RAIL_MARKER_BOX,
+          'rounded-full bg-green-600 text-white dark:bg-green-600',
+        )}
         role="img"
       >
-        <CheckCircle2 aria-hidden className="size-5" />
+        <Check aria-hidden className={TIMELINE_RAIL_ICON_CHECK} />
       </span>
     )
   }
 
   if (status === 'pending') {
     return (
-      <span aria-label={label} className="mt-0.5 shrink-0 text-muted-foreground" role="img">
-        <Clock aria-hidden className="size-5" />
+      <span
+        aria-label={labels.pending}
+        className={cn(TIMELINE_RAIL_MARKER_BOX, 'text-muted-foreground')}
+        role="img"
+      >
+        <Clock aria-hidden className={TIMELINE_RAIL_ICON} />
       </span>
     )
   }
 
   return (
-    <span aria-label={label} className="mt-0.5 shrink-0 text-muted-foreground/80" role="img">
-      <Circle aria-hidden className="size-5" />
+    <span
+      aria-label={labels.empty}
+      className={cn(TIMELINE_RAIL_MARKER_BOX, 'text-muted-foreground/80')}
+      role="img"
+    >
+      <Circle aria-hidden className={TIMELINE_RAIL_ICON} />
     </span>
-  )
-}
-
-function TimelineRailDot({ status }: { status: TimelineMilestoneStatus }) {
-  return (
-    <div
-      aria-hidden
-      className={cn(
-        'size-3 shrink-0 rounded-full border-2',
-        status === 'complete' && 'border-primary bg-primary',
-        status === 'pending' && 'border-primary bg-background',
-        status === 'empty' && 'border-muted-foreground/40 bg-muted',
-      )}
-    />
   )
 }
 
@@ -126,6 +134,27 @@ function TimelineToolbar({ title, count, expandLabel, settingsLabel }: TimelineT
   )
 }
 
+export type PassCriteriaStatus = 'pass' | 'fail' | 'neutral'
+
+export type PassCriteriaRow = { text: string; status: PassCriteriaStatus }
+
+/** `!` = fail, `?` = neutral (unvalidated), else pass. */
+function parsePassCriteriaLines(passCriteria: string): PassCriteriaRow[] {
+  return passCriteria
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      if (line.startsWith('!')) {
+        return { text: line.slice(1).trim(), status: 'fail' satisfies PassCriteriaStatus }
+      }
+      if (line.startsWith('?')) {
+        return { text: line.slice(1).trim(), status: 'neutral' satisfies PassCriteriaStatus }
+      }
+      return { text: line, status: 'pass' satisfies PassCriteriaStatus }
+    })
+}
+
 type TimelineItemProps = {
   milestone: TimelineMilestone
   isFirst: boolean
@@ -148,7 +177,19 @@ function TimelineItem({
   statusLabels,
 }: TimelineItemProps) {
   const [open, setOpen] = useState(true)
+  const t = useTranslations('analytics.campaigns.chat')
   const status: TimelineMilestoneStatus = milestone.status ?? 'empty'
+  const [criteriaRows, setCriteriaRows] = useState<PassCriteriaRow[]>(() =>
+    parsePassCriteriaLines(milestone.passCriteria),
+  )
+  const addCriteriaInputId = `milestone-pass-criteria-add-${milestone.id}`
+
+  useEffect(() => {
+    setCriteriaRows(parsePassCriteriaLines(milestone.passCriteria))
+  }, [milestone.id, milestone.passCriteria])
+
+  const inputId = `milestone-input-${milestone.id}`
+  const hasResult = Boolean(milestone.resultMarkdown?.trim())
 
   return (
     <div
@@ -167,19 +208,18 @@ function TimelineItem({
       role="option"
       tabIndex={0}
     >
-      <div className="flex w-10 shrink-0 flex-col items-center">
-        {/* Match card py-4 + status icon row (h-5 + mt-0.5). After the first step, draw the dashed line through the same vertical band instead of empty pt-4 so it connects to the previous row. */}
+      <div className="flex w-12 shrink-0 flex-col items-center">
         {isFirst ? (
           <div className="flex w-full shrink-0 flex-col items-center pt-4">
-            <div className="mt-0.5 flex h-5 w-full items-center justify-center">
-              <TimelineRailDot status={status} />
+            <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
+              <TimelineRailMarker labels={statusLabels} status={status} />
             </div>
           </div>
         ) : (
           <div className="flex w-full shrink-0 flex-col items-center">
             <div className="h-4 w-px shrink-0 border-l border-dashed border-border" />
-            <div className="mt-0.5 flex h-5 w-full items-center justify-center">
-              <TimelineRailDot status={status} />
+            <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
+              <TimelineRailMarker labels={statusLabels} status={status} />
             </div>
           </div>
         )}
@@ -198,10 +238,7 @@ function TimelineItem({
             )}
           >
             <CardHeader className="gap-1.5">
-              <CardTitle className="flex items-start gap-2 text-base">
-                <MilestoneStatusIcon labels={statusLabels} status={status} />
-                <span className="min-w-0 flex-1 leading-snug">{milestone.title}</span>
-              </CardTitle>
+              <CardTitle className="text-base leading-snug">{milestone.title}</CardTitle>
               <CardAction>
                 <CollapsibleTrigger asChild>
                   <Button
@@ -223,12 +260,118 @@ function TimelineItem({
                   </Button>
                 </CollapsibleTrigger>
               </CardAction>
-              <CollapsibleContent className="col-span-2 min-w-0">
-                <CardDescription className="whitespace-pre-wrap pt-0">
-                  {milestone.description}
-                </CardDescription>
-              </CollapsibleContent>
             </CardHeader>
+            <CollapsibleContent
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <CardContent className="border-border/60 border-t px-6 pt-4 pb-0">
+                <Tabs className="gap-4" defaultValue="pass">
+                  <TabsList className="w-full" variant="line">
+                    <TabsTrigger className="flex-1" value="pass">
+                      {t('milestoneTabPassCriteria')}
+                    </TabsTrigger>
+                    <TabsTrigger className="flex-1" value="input">
+                      {t('milestoneTabInput')}
+                    </TabsTrigger>
+                    <TabsTrigger className="flex-1" value="result">
+                      {t('milestoneTabResult')}
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent className="flex flex-col gap-4" value="pass">
+                    {criteriaRows.length > 0 ? (
+                      <ul className="flex flex-col gap-2">
+                        {criteriaRows.map((row, index) => (
+                          <li
+                            className="flex items-start gap-2 text-sm"
+                            key={`${milestone.id}-criteria-${index}`}
+                          >
+                            <div className="flex min-w-0 flex-1 gap-2 text-muted-foreground">
+                              {row.status === 'pass' ? (
+                                <Check
+                                  aria-hidden
+                                  className="mt-0.5 size-4 shrink-0 text-primary stroke-[2.5]"
+                                />
+                              ) : row.status === 'fail' ? (
+                                <X
+                                  aria-hidden
+                                  className="mt-0.5 size-4 shrink-0 text-destructive stroke-[2.5]"
+                                />
+                              ) : (
+                                <span
+                                  aria-label={t('milestonePassCriteriaNeutralLabel')}
+                                  className="mt-0.5 inline-flex shrink-0"
+                                  role="img"
+                                >
+                                  <Circle
+                                    aria-hidden
+                                    className="size-4 text-muted-foreground stroke-[2.5]"
+                                  />
+                                </span>
+                              )}
+                              <span className="min-w-0 leading-snug">{row.text}</span>
+                            </div>
+                            <Button
+                              aria-label={t('milestonePassCriteriaRemoveLabel')}
+                              className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setCriteriaRows((rows) => rows.filter((_, i) => i !== index))
+                              }}
+                              size="icon"
+                              type="button"
+                              variant="ghost"
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground text-sm">{t('milestonePassCriteriaEmpty')}</p>
+                    )}
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <Input
+                        aria-label={t('milestonePassCriteriaAddPlaceholder')}
+                        className="flex-1"
+                        id={addCriteriaInputId}
+                        placeholder={t('milestonePassCriteriaAddPlaceholder')}
+                        type="text"
+                      />
+                      <Button
+                        className="shrink-0 sm:w-auto"
+                        onClick={(e) => e.stopPropagation()}
+                        type="button"
+                        variant="secondary"
+                      >
+                        {t('milestonePassCriteriaAddButton')}
+                      </Button>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="input">
+                    <FieldGroup className="gap-4">
+                      <Field>
+                        <FieldLabel htmlFor={inputId}>{t('milestoneInputLabel')}</FieldLabel>
+                        <FieldDescription>{t('milestoneInputDescription')}</FieldDescription>
+                        <Textarea
+                          className="min-h-[120px] resize-y"
+                          defaultValue={milestone.input ?? ''}
+                          id={inputId}
+                          placeholder={t('milestoneInputPlaceholder')}
+                        />
+                      </Field>
+                    </FieldGroup>
+                  </TabsContent>
+                  <TabsContent value="result">
+                    {hasResult ? (
+                      <MarkdownMessage content={milestone.resultMarkdown ?? ''} />
+                    ) : (
+                      <p className="text-muted-foreground text-sm">{t('milestoneResultEmpty')}</p>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </CollapsibleContent>
           </Card>
         </Collapsible>
       </div>
@@ -295,17 +438,17 @@ export function TimelineWorkspace({ milestones: milestonesProp }: TimelineWorksp
       {
         id: '1',
         title: t('milestone1Title'),
-        description: [t('milestone1Detail'), t('milestone1Body1'), t('milestone1Body2')].join(
-          '\n\n',
-        ),
+        passCriteria: t('milestone1PassCriteria'),
+        input: t('milestone1Input'),
+        resultMarkdown: t('milestone1ResultMarkdown'),
         status: 'complete' satisfies TimelineMilestoneStatus,
       },
       {
         id: '2',
         title: t('milestone2Title'),
-        description: [t('milestone2Detail'), t('milestone2Body1'), t('milestone2Body2')].join(
-          '\n\n',
-        ),
+        passCriteria: t('milestone2PassCriteria'),
+        input: t('milestone2Input'),
+        resultMarkdown: t('milestone2ResultMarkdown'),
         status: 'pending' satisfies TimelineMilestoneStatus,
       },
     ]
