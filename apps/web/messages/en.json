@@ -428,6 +428,7 @@
         "artifactPlaceholder": "Content will appear here as you work with the assistant.",
         "artifactPanelPlaceholder": "Milestone content will appear here.",
         "timelineToolbarTitle": "Milestones",
+        "timelineListLabel": "Milestone timeline",
         "timelineExpandLabel": "Expand panel",
         "timelineSettingsLabel": "Timeline settings",
         "milestoneExpandDetails": "Expand details",

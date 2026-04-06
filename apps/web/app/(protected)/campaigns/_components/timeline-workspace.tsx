@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { CheckCircle2, ChevronDown, Circle, Clock, Maximize2, Settings } from 'lucide-react'
 
@@ -130,6 +130,8 @@ type TimelineItemProps = {
   milestone: TimelineMilestone
   isFirst: boolean
   isLast: boolean
+  isSelected: boolean
+  onSelect: (id: string) => void
   expandDetailsLabel: string
   collapseDetailsLabel: string
   statusLabels: MilestoneStatusLabels
@@ -139,6 +141,8 @@ function TimelineItem({
   milestone,
   isFirst,
   isLast,
+  isSelected,
+  onSelect,
   expandDetailsLabel,
   collapseDetailsLabel,
   statusLabels,
@@ -147,7 +151,22 @@ function TimelineItem({
   const status: TimelineMilestoneStatus = milestone.status ?? 'empty'
 
   return (
-    <div className="flex gap-4">
+    <div
+      aria-selected={isSelected}
+      className="flex cursor-pointer gap-4 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+      data-timeline-card=""
+      onClick={() => {
+        onSelect(milestone.id)
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect(milestone.id)
+        }
+      }}
+      role="option"
+      tabIndex={0}
+    >
       <div className="flex w-10 shrink-0 flex-col items-center">
         {/* Match card py-4 + status icon row (h-5 + mt-0.5). After the first step, draw the dashed line through the same vertical band instead of empty pt-4 so it connects to the previous row. */}
         {isFirst ? (
@@ -170,7 +189,14 @@ function TimelineItem({
       </div>
       <div className={cn('min-w-0 flex-1', !isLast && 'pb-8')}>
         <Collapsible onOpenChange={setOpen} open={open}>
-          <Card className="gap-0 py-4 shadow-none">
+          <Card
+            className={cn(
+              'gap-0 border py-4 shadow-none transition-[background-color,box-shadow,border-color]',
+              isSelected
+                ? 'border-primary bg-accent/50 ring-2 ring-ring/50'
+                : 'hover:bg-accent/30',
+            )}
+          >
             <CardHeader className="gap-1.5">
               <CardTitle className="flex items-start gap-2 text-base">
                 <MilestoneStatusIcon labels={statusLabels} status={status} />
@@ -182,6 +208,7 @@ function TimelineItem({
                     aria-expanded={open}
                     aria-label={open ? collapseDetailsLabel : expandDetailsLabel}
                     className="size-9 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
                     size="icon"
                     type="button"
                     variant="ghost"
@@ -211,6 +238,9 @@ function TimelineItem({
 
 type TimelineBodyProps = {
   milestones: TimelineMilestone[]
+  selectedId: string | null
+  onSelectMilestone: (id: string) => void
+  listLabel: string
   expandDetailsLabel: string
   collapseDetailsLabel: string
   statusLabels: MilestoneStatusLabels
@@ -218,6 +248,9 @@ type TimelineBodyProps = {
 
 function TimelineBody({
   milestones,
+  selectedId,
+  onSelectMilestone,
+  listLabel,
   expandDetailsLabel,
   collapseDetailsLabel,
   statusLabels,
@@ -225,7 +258,7 @@ function TimelineBody({
   return (
     <div className="min-h-0 flex-1">
       <ScrollArea className="h-full">
-        <div className="flex flex-col p-4 pr-3">
+        <div aria-label={listLabel} className="flex flex-col p-4 pr-3" role="listbox">
           {milestones.map((milestone, index) => (
             <TimelineItem
               key={milestone.id}
@@ -233,7 +266,9 @@ function TimelineBody({
               expandDetailsLabel={expandDetailsLabel}
               isFirst={index === 0}
               isLast={index === milestones.length - 1}
+              isSelected={milestone.id === selectedId}
               milestone={milestone}
+              onSelect={onSelectMilestone}
               statusLabels={statusLabels}
             />
           ))}
@@ -249,6 +284,8 @@ export type TimelineWorkspaceProps = {
 
 export function TimelineWorkspace({ milestones: milestonesProp }: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
+
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const milestones = useMemo<TimelineMilestone[]>(() => {
     if (milestonesProp?.length) {
@@ -274,6 +311,33 @@ export function TimelineWorkspace({ milestones: milestonesProp }: TimelineWorksp
     ]
   }, [milestonesProp, t])
 
+  useEffect(() => {
+    setSelectedId((prev) => {
+      if (milestones.length === 0) {
+        return null
+      }
+      if (prev !== null && milestones.some((m) => m.id === prev)) {
+        return prev
+      }
+      return milestones[0]?.id ?? null
+    })
+  }, [milestones])
+
+  useEffect(() => {
+    const onPointerDownCapture = (e: PointerEvent) => {
+      const node = e.target
+      if (!(node instanceof Element)) {
+        return
+      }
+      if (node.closest('[data-timeline-card]')) {
+        return
+      }
+      setSelectedId(null)
+    }
+    document.addEventListener('pointerdown', onPointerDownCapture, true)
+    return () => document.removeEventListener('pointerdown', onPointerDownCapture, true)
+  }, [])
+
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-background">
       <TimelineToolbar
@@ -285,7 +349,10 @@ export function TimelineWorkspace({ milestones: milestonesProp }: TimelineWorksp
       <TimelineBody
         collapseDetailsLabel={t('milestoneCollapseDetails')}
         expandDetailsLabel={t('milestoneExpandDetails')}
+        listLabel={t('timelineListLabel')}
         milestones={milestones}
+        onSelectMilestone={setSelectedId}
+        selectedId={selectedId}
         statusLabels={{
           complete: t('milestoneStatusComplete'),
           empty: t('milestoneStatusEmpty'),
