@@ -183,6 +183,9 @@ export async function PATCH(req: Request, context: RouteContext) {
       if (body.name !== undefined) {
         variables.name = body.name
       }
+      if (body.goal !== undefined) {
+        variables.data = { goal: body.goal }
+      }
       const data = parseUpdateNodeData(
         await graphqlQuery<UpdateNodeDataRaw>(UPDATE_NODE_MUTATION, variables, userId),
       )

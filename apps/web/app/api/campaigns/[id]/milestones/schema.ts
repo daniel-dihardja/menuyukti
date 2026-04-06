@@ -17,9 +17,18 @@ export const passCriteriaRowSchema = passCriteriaDataSchema.extend({
 export const patchMilestoneSchema = z
   .object({
     name: z.string().trim().min(1).max(500).optional(),
+    /** Free-form text; not trimmed so spaces inside and at edges are preserved. */
+    goal: z.string().optional(),
     passCriteria: z.array(passCriteriaRowSchema).optional(),
     move: z.enum(['up', 'down']).optional(),
   })
-  .refine((v) => v.name !== undefined || v.passCriteria !== undefined || v.move !== undefined, {
-    message: 'Provide at least one of name, passCriteria, or move',
-  })
+  .refine(
+    (v) =>
+      v.name !== undefined ||
+      v.goal !== undefined ||
+      v.passCriteria !== undefined ||
+      v.move !== undefined,
+    {
+      message: 'Provide at least one of name, goal, passCriteria, or move',
+    },
+  )

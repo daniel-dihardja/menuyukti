@@ -26,6 +26,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { PassCriteriaRow, TimelineMilestone } from './timeline-workspace'
 import { TimelineWorkspace } from './timeline-workspace'
 import { ChatMessageParts } from './chat-message-parts'
+import { milestoneDataSchema } from '@/lib/graphql/node-schemas'
+
 import { milestoneNodeToTimelineMilestone } from './milestone-map'
 
 export type CampaignChatPanelProps = {
@@ -47,6 +49,8 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
     null,
   )
   const [passCriteriaError, setPassCriteriaError] = useState<string | null>(null)
+  const [savingGoalMilestoneId, setSavingGoalMilestoneId] = useState<string | null>(null)
+  const [goalError, setGoalError] = useState<string | null>(null)
   const [moveError, setMoveError] = useState<string | null>(null)
   const [movingMilestoneId, setMovingMilestoneId] = useState<string | null>(null)
   const [runningMilestoneId, setRunningMilestoneId] = useState<string | null>(null)
@@ -60,6 +64,8 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
     setRenamingMilestoneId(null)
     setPassCriteriaError(null)
     setSavingPassCriteriaMilestoneId(null)
+    setGoalError(null)
+    setSavingGoalMilestoneId(null)
     setMoveError(null)
     setMovingMilestoneId(null)
     setRunningMilestoneId(null)
@@ -227,6 +233,45 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
     [campaignId, t],
   )
 
+  const handleUpdateMilestoneGoal = useCallback(
+    async (milestoneId: string, goal: string): Promise<boolean> => {
+      setGoalError(null)
+      setSavingGoalMilestoneId(milestoneId)
+      try {
+        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ goal }),
+        })
+        const body = (await res.json().catch(() => null)) as {
+          message?: string
+          data?: unknown
+        } | null
+        if (!res.ok) {
+          throw new Error(body?.message ?? t('milestonesGoalError'))
+        }
+        const rawData = body?.data
+        let nextGoal: string | undefined
+        if (rawData != null && typeof rawData === 'object') {
+          const parsed = milestoneDataSchema.safeParse(rawData)
+          if (parsed.success) {
+            nextGoal = parsed.data.goal
+          }
+        }
+        setMilestones((prev) =>
+          prev.map((m) => (m.id === milestoneId ? { ...m, goal: nextGoal ?? goal } : m)),
+        )
+        return true
+      } catch (err) {
+        setGoalError(err instanceof Error ? err.message : t('milestonesGoalError'))
+        return false
+      } finally {
+        setSavingGoalMilestoneId(null)
+      }
+    },
+    [campaignId, t],
+  )
+
   const handleRunMilestone = useCallback(
     async (milestoneId: string) => {
       setRunningMilestoneId(milestoneId)
@@ -383,6 +428,7 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
           creating={creating}
           deleteError={deleteError}
           deletingMilestoneId={deletingMilestoneId}
+          goalError={goalError}
           isChatBusy={isChatBusy}
           milestones={milestones}
           moveError={moveError}
@@ -392,11 +438,13 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
           onMoveMilestone={handleMoveMilestone}
           onRenameMilestone={handleRenameMilestone}
           onRunMilestone={handleRunMilestone}
+          onUpdateMilestoneGoal={handleUpdateMilestoneGoal}
           onUpdatePassCriteria={handleUpdatePassCriteria}
           passCriteriaError={passCriteriaError}
           renameError={renameError}
           renamingMilestoneId={renamingMilestoneId}
           runningMilestoneId={runningMilestoneId}
+          savingGoalMilestoneId={savingGoalMilestoneId}
           savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
         />
       </div>

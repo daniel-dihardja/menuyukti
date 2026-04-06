@@ -1,4 +1,4 @@
-import { passCriteriaDataSchema } from '@/lib/graphql/node-schemas'
+import { milestoneDataSchema, passCriteriaDataSchema } from '@/lib/graphql/node-schemas'
 import type { AnyNode } from '@/lib/graphql/queries'
 
 import type { PassCriteriaRow, TimelineMilestone } from './timeline-workspace'
@@ -33,9 +33,13 @@ export function passCriteriaFromChildNodes(nodes: AnyNode[] | undefined | null):
 }
 
 export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): TimelineMilestone {
+  const parsed = milestoneDataSchema.safeParse(node.data)
+  const goal = parsed.success ? parsed.data.goal : undefined
+
   return {
     id: node.id,
     title: node.name,
+    goal,
     passCriteria: passCriteriaFromChildNodes(node.passCriteriaNodes),
     status: 'empty',
   }

@@ -13,10 +13,12 @@ export const passCriteriaDataSchema = z.object({
 
 export type PassCriteriaData = z.infer<typeof passCriteriaDataSchema>
 
-/** Milestone `data` JSON — `order` is the display sequence; other keys allowed. */
+/** Milestone `data` JSON — `order` is the display sequence; `goal` is free-form milestone goal text. */
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
+    /** User-authored goal text; leading/trailing whitespace is preserved. */
+    goal: z.string().optional(),
   })
   .passthrough()
 
