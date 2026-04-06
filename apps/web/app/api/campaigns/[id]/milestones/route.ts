@@ -5,9 +5,12 @@ import {
   CREATE_NODE_MUTATION,
   NODE_QUERY,
   NODES_QUERY,
-  type CreateNodeData,
-  type NodeData,
-  type NodesData,
+  parseCreateNodeData,
+  parseNodeData,
+  parseNodesData,
+  type CreateNodeDataRaw,
+  type NodeDataRaw,
+  type NodesDataRaw,
 } from '@/lib/graphql/queries'
 import { campaignIdParamSchema, createMilestoneBodySchema } from './schema'
 
@@ -16,7 +19,7 @@ type RouteContext = {
 }
 
 async function loadCampaignOrThrow(campaignId: string, userId: string) {
-  const data = await graphqlQuery<NodeData>(NODE_QUERY, { id: campaignId }, userId)
+  const data = parseNodeData(await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: campaignId }, userId))
   const node = data.node
   if (!node) {
     return { error: NextResponse.json({ message: 'Campaign not found' }, { status: 404 }) }
@@ -49,14 +52,16 @@ export async function GET(_req: Request, context: RouteContext) {
       return campaign.error
     }
 
-    const list = await graphqlQuery<NodesData>(
-      NODES_QUERY,
-      {
-        locationId: campaign.locationId,
-        nodeType: 'milestone',
-        parentId: campaignId,
-      },
-      userId,
+    const list = parseNodesData(
+      await graphqlQuery<NodesDataRaw>(
+        NODES_QUERY,
+        {
+          locationId: campaign.locationId,
+          nodeType: 'milestone',
+          parentId: campaignId,
+        },
+        userId,
+      ),
     )
 
     return NextResponse.json({ milestones: list.nodes })
@@ -106,15 +111,17 @@ export async function POST(req: Request, context: RouteContext) {
 
     const name = input.data.name
 
-    const data = await graphqlQuery<CreateNodeData>(
-      CREATE_NODE_MUTATION,
-      {
-        locationId: campaign.locationId,
-        nodeType: 'milestone',
-        parentId: campaignId,
-        ...(name !== undefined ? { name } : {}),
-      },
-      userId,
+    const data = parseCreateNodeData(
+      await graphqlQuery<CreateNodeDataRaw>(
+        CREATE_NODE_MUTATION,
+        {
+          locationId: campaign.locationId,
+          nodeType: 'milestone',
+          parentId: campaignId,
+          ...(name !== undefined ? { name } : {}),
+        },
+        userId,
+      ),
     )
 
     const node = data.createNode

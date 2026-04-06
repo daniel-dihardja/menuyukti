@@ -1,42 +1,33 @@
-import type { PassCriteriaRow, TimelineMilestone } from './timeline-workspace'
+import { passCriteriaDataSchema } from '@/lib/graphql/node-schemas'
+import type { AnyNode } from '@/lib/graphql/queries'
 
-export type PassCriteriaNodeDto = {
-  id: string
-  nodeType?: string
-  data?: unknown | null
-}
+import type { PassCriteriaRow, TimelineMilestone } from './timeline-workspace'
 
 export type MilestoneNodeDto = {
   id: string
   name: string
   data?: unknown | null
-  passCriteriaNodes?: PassCriteriaNodeDto[]
+  passCriteriaNodes?: AnyNode[]
 }
 
-export function passCriteriaFromChildNodes(
-  nodes: PassCriteriaNodeDto[] | undefined | null,
-): PassCriteriaRow[] {
+export function passCriteriaFromChildNodes(nodes: AnyNode[] | undefined | null): PassCriteriaRow[] {
   if (nodes == null || !Array.isArray(nodes)) {
     return []
   }
   const out: PassCriteriaRow[] = []
   for (const n of nodes) {
-    if (n.nodeType != null && n.nodeType !== 'passcriteria') {
+    if (n.nodeType !== 'passcriteria') {
       continue
     }
     const d = n.data
     if (d == null || typeof d !== 'object') {
       continue
     }
-    const requirement = (d as { requirement?: unknown }).requirement
-    const status = (d as { status?: unknown }).status
-    if (typeof requirement !== 'string') {
+    const parsed = passCriteriaDataSchema.safeParse(d)
+    if (!parsed.success) {
       continue
     }
-    if (status !== 'pass' && status !== 'fail' && status !== 'open') {
-      continue
-    }
-    out.push({ id: n.id, requirement, status })
+    out.push({ id: n.id, requirement: parsed.data.requirement, status: parsed.data.status })
   }
   return out
 }

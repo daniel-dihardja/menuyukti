@@ -2,6 +2,37 @@
  * GraphQL query and mutation strings and response types used by the web app.
  */
 
+import {
+  parseNode,
+  parseNodeNullable,
+  parseNodes,
+  type AnyNode,
+} from './node-schemas'
+
+export type { AnyNode, KnownNode, PassCriteriaData, PassCriteriaNode, MilestoneNode } from './node-schemas'
+
+/** Wire payload from `graphqlQuery` before parsing — use `parseNodeData` / `parseNodesData`. */
+export type NodeDataRaw = { node: unknown | null }
+export type NodesDataRaw = { nodes: unknown[] }
+export type CreateNodeDataRaw = { createNode: unknown }
+export type UpdateNodeDataRaw = { updateNode: unknown }
+
+export function parseNodeData(data: NodeDataRaw): { node: AnyNode | null } {
+  return { node: parseNodeNullable(data.node) }
+}
+
+export function parseNodesData(data: NodesDataRaw): { nodes: AnyNode[] } {
+  return { nodes: parseNodes(data.nodes) }
+}
+
+export function parseCreateNodeData(data: CreateNodeDataRaw): { createNode: AnyNode } {
+  return { createNode: parseNode(data.createNode) }
+}
+
+export function parseUpdateNodeData(data: UpdateNodeDataRaw): { updateNode: AnyNode } {
+  return { updateNode: parseNode(data.updateNode) }
+}
+
 export const LOCATIONS_QUERY = `
   query Locations {
     locations {
@@ -70,16 +101,7 @@ export const CREATE_NODE_MUTATION = `
 `
 
 export type CreateNodeData = {
-  createNode: {
-    id: string
-    name: string
-    description: string | null
-    nodeType: string
-    path: string
-    parentId: string | null
-    locationId: number | null
-    data: unknown | null
-  }
+  createNode: AnyNode
 }
 
 export const DELETE_NODE_MUTATION = `
@@ -108,16 +130,7 @@ export const UPDATE_NODE_MUTATION = `
 `
 
 export type UpdateNodeData = {
-  updateNode: {
-    id: string
-    name: string
-    description: string | null
-    nodeType: string
-    path: string
-    parentId: string | null
-    locationId: number | null
-    data: unknown | null
-  }
+  updateNode: AnyNode
 }
 
 export const NODES_QUERY = `
@@ -136,16 +149,7 @@ export const NODES_QUERY = `
 `
 
 export type NodesData = {
-  nodes: Array<{
-    id: string
-    name: string
-    description: string | null
-    nodeType: string
-    path: string
-    parentId: string | null
-    locationId: number | null
-    data: unknown | null
-  }>
+  nodes: AnyNode[]
 }
 
 export const NODE_QUERY = `
@@ -164,16 +168,7 @@ export const NODE_QUERY = `
 `
 
 export type NodeData = {
-  node: {
-    id: string
-    name: string
-    description: string | null
-    nodeType: string
-    path: string
-    parentId: string | null
-    locationId: number | null
-    data: unknown | null
-  } | null
+  node: AnyNode | null
 }
 
 export const ANALYTICS_RUNS_BY_LOCATION_QUERY = `

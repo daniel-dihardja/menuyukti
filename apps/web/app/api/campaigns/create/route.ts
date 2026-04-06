@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { ZodError } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
-import { CREATE_NODE_MUTATION, type CreateNodeData } from '@/lib/graphql/queries'
+import { CREATE_NODE_MUTATION, parseCreateNodeData, type CreateNodeDataRaw } from '@/lib/graphql/queries'
 import { createCampaignSchema } from './schema'
 
 export async function POST(req: Request) {
@@ -15,10 +15,12 @@ export async function POST(req: Request) {
     const json = await req.json()
     const { locationId, locationNodeId } = createCampaignSchema.parse(json)
 
-    const data = await graphqlQuery<CreateNodeData>(
-      CREATE_NODE_MUTATION,
-      { locationId, nodeType: 'campaign', parentId: locationNodeId },
-      userId,
+    const data = parseCreateNodeData(
+      await graphqlQuery<CreateNodeDataRaw>(
+        CREATE_NODE_MUTATION,
+        { locationId, nodeType: 'campaign', parentId: locationNodeId },
+        userId,
+      ),
     )
 
     const node = data.createNode

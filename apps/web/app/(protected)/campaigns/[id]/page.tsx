@@ -8,7 +8,14 @@ import { notFound, redirect } from 'next/navigation'
 import { z } from 'zod'
 import { routes } from '@/lib/routes'
 import { graphqlQuery } from '@/lib/graphql/client'
-import { NODE_QUERY, NODES_QUERY, type NodeData, type NodesData } from '@/lib/graphql/queries'
+import {
+  NODE_QUERY,
+  NODES_QUERY,
+  parseNodeData,
+  parseNodesData,
+  type NodeDataRaw,
+  type NodesDataRaw,
+} from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { CampaignChatPanel } from '../_components/campaign-chat-panel'
 import { milestoneNodeToTimelineMilestone } from '../_components/milestone-map'
@@ -46,7 +53,9 @@ export default async function Page({ params }: PageProps) {
   }
   const campaignId = parsed.data
 
-  const nodeData = await graphqlQuery<NodeData>(NODE_QUERY, { id: campaignId }, authUserId)
+  const nodeData = parseNodeData(
+    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: campaignId }, authUserId),
+  )
   const campaignNode = nodeData.node
   if (!campaignNode || campaignNode.nodeType !== 'campaign') {
     notFound()
@@ -56,36 +65,36 @@ export default async function Page({ params }: PageProps) {
     notFound()
   }
 
-  const milestonesData = await graphqlQuery<NodesData>(
-    NODES_QUERY,
-    {
-      locationId,
-      nodeType: 'milestone',
-      parentId: campaignId,
-    },
-    authUserId,
+  const milestonesData = parseNodesData(
+    await graphqlQuery<NodesDataRaw>(
+      NODES_QUERY,
+      {
+        locationId,
+        nodeType: 'milestone',
+        parentId: campaignId,
+      },
+      authUserId,
+    ),
   )
 
   const initialMilestones: TimelineMilestone[] = await Promise.all(
     milestonesData.nodes.map(async (n) => {
-      const passCriteriaChildren = await graphqlQuery<NodesData>(
-        NODES_QUERY,
-        {
-          locationId,
-          nodeType: 'passcriteria',
-          parentId: n.id,
-        },
-        authUserId,
+      const passCriteriaChildren = parseNodesData(
+        await graphqlQuery<NodesDataRaw>(
+          NODES_QUERY,
+          {
+            locationId,
+            nodeType: 'passcriteria',
+            parentId: n.id,
+          },
+          authUserId,
+        ),
       )
       const dto: MilestoneNodeDto = {
         id: n.id,
         name: n.name,
         data: n.data,
-        passCriteriaNodes: passCriteriaChildren.nodes.map((row) => ({
-          id: row.id,
-          nodeType: row.nodeType,
-          data: row.data,
-        })),
+        passCriteriaNodes: passCriteriaChildren.nodes,
       }
       return milestoneNodeToTimelineMilestone(dto)
     }),

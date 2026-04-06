@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { graphqlQuery } from '@/lib/graphql/client'
-import { NODES_QUERY, type NodesData } from '@/lib/graphql/queries'
+import { NODES_QUERY, parseNodesData, type NodesDataRaw } from '@/lib/graphql/queries'
 
 export async function GET(req: Request) {
   try {
@@ -21,10 +21,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: 'Invalid locationId' }, { status: 400 })
     }
 
-    const data = await graphqlQuery<NodesData>(
-      NODES_QUERY,
-      { locationId, nodeType: 'campaign' },
-      userId,
+    const data = parseNodesData(
+      await graphqlQuery<NodesDataRaw>(
+        NODES_QUERY,
+        { locationId, nodeType: 'campaign' },
+        userId,
+      ),
     )
 
     return NextResponse.json({ nodes: data.nodes })

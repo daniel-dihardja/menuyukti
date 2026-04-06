@@ -1,17 +1,22 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { passCriteriaDataSchema } from '@/lib/graphql/node-schemas'
 import {
   CREATE_NODE_MUTATION,
   DELETE_NODE_MUTATION,
   NODE_QUERY,
   NODES_QUERY,
   UPDATE_NODE_MUTATION,
-  type CreateNodeData,
+  parseCreateNodeData,
+  parseNodeData,
+  parseNodesData,
+  parseUpdateNodeData,
+  type CreateNodeDataRaw,
   type DeleteNodeData,
-  type NodeData,
-  type NodesData,
-  type UpdateNodeData,
+  type NodeDataRaw,
+  type NodesDataRaw,
+  type UpdateNodeDataRaw,
 } from '@/lib/graphql/queries'
 import { campaignIdParamSchema, milestoneIdParamSchema, patchMilestoneSchema } from '../schema'
 
@@ -28,7 +33,7 @@ function passCriterionDisplayName(requirement: string): string {
 }
 
 async function loadCampaignOrThrow(campaignId: string, userId: string) {
-  const data = await graphqlQuery<NodeData>(NODE_QUERY, { id: campaignId }, userId)
+  const data = parseNodeData(await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: campaignId }, userId))
   const node = data.node
   if (!node) {
     return { error: NextResponse.json({ message: 'Campaign not found' }, { status: 404 }) }
@@ -47,7 +52,9 @@ async function validateMilestoneUnderCampaign(
   milestoneId: string,
   userId: string,
 ) {
-  const milestoneData = await graphqlQuery<NodeData>(NODE_QUERY, { id: milestoneId }, userId)
+  const milestoneData = parseNodeData(
+    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: milestoneId }, userId),
+  )
   const milestoneNode = milestoneData.node
   if (!milestoneNode) {
     return { error: NextResponse.json({ message: 'Milestone not found' }, { status: 404 }) }
@@ -71,7 +78,7 @@ async function assertPassCriteriaBelongsToMilestone(
   milestoneId: string,
   userId: string,
 ) {
-  const data = await graphqlQuery<NodeData>(NODE_QUERY, { id: passCriteriaId }, userId)
+  const data = parseNodeData(await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: passCriteriaId }, userId))
   const n = data.node
   if (!n || n.nodeType !== 'passcriteria' || n.parentId !== milestoneId) {
     throw new Error('Invalid pass criterion id')
@@ -127,26 +134,31 @@ export async function PATCH(req: Request, context: RouteContext) {
       if (body.name !== undefined) {
         variables.name = body.name
       }
-      const data = await graphqlQuery<UpdateNodeData>(UPDATE_NODE_MUTATION, variables, userId)
+      const data = parseUpdateNodeData(
+        await graphqlQuery<UpdateNodeDataRaw>(UPDATE_NODE_MUTATION, variables, userId),
+      )
       return NextResponse.json(data.updateNode, { status: 200 })
     }
 
     if (body.name !== undefined) {
-      await graphqlQuery<UpdateNodeData>(
+      const u = await graphqlQuery<UpdateNodeDataRaw>(
         UPDATE_NODE_MUTATION,
         { id: milestoneId, name: body.name },
         userId,
       )
+      parseUpdateNodeData(u)
     }
 
-    const existing = await graphqlQuery<NodesData>(
-      NODES_QUERY,
-      {
-        locationId: campaign.locationId,
-        nodeType: 'passcriteria',
-        parentId: milestoneId,
-      },
-      userId,
+    const existing = parseNodesData(
+      await graphqlQuery<NodesDataRaw>(
+        NODES_QUERY,
+        {
+          locationId: campaign.locationId,
+          nodeType: 'passcriteria',
+          parentId: milestoneId,
+        },
+        userId,
+      ),
     )
 
     const incoming = body.passCriteria
@@ -162,49 +174,62 @@ export async function PATCH(req: Request, context: RouteContext) {
       const displayName = passCriterionDisplayName(row.requirement)
       if (row.id) {
         await assertPassCriteriaBelongsToMilestone(row.id, milestoneId, userId)
-        await graphqlQuery<UpdateNodeData>(
-          UPDATE_NODE_MUTATION,
-          {
-            id: row.id,
-            name: displayName,
-            data: { requirement: row.requirement, status: row.status },
-          },
-          userId,
+        parseUpdateNodeData(
+          await graphqlQuery<UpdateNodeDataRaw>(
+            UPDATE_NODE_MUTATION,
+            {
+              id: row.id,
+              name: displayName,
+              data: { requirement: row.requirement, status: row.status },
+            },
+            userId,
+          ),
         )
       } else {
-        await graphqlQuery<CreateNodeData>(
-          CREATE_NODE_MUTATION,
-          {
-            locationId: campaign.locationId,
-            nodeType: 'passcriteria',
-            parentId: milestoneId,
-            name: displayName,
-            data: { requirement: row.requirement, status: row.status },
-          },
-          userId,
+        parseCreateNodeData(
+          await graphqlQuery<CreateNodeDataRaw>(
+            CREATE_NODE_MUTATION,
+            {
+              locationId: campaign.locationId,
+              nodeType: 'passcriteria',
+              parentId: milestoneId,
+              name: displayName,
+              data: { requirement: row.requirement, status: row.status },
+            },
+            userId,
+          ),
         )
       }
     }
 
-    const milestoneAfter = await graphqlQuery<NodeData>(NODE_QUERY, { id: milestoneId }, userId)
-    const passCriteriaAfter = await graphqlQuery<NodesData>(
-      NODES_QUERY,
-      {
-        locationId: campaign.locationId,
-        nodeType: 'passcriteria',
-        parentId: milestoneId,
-      },
-      userId,
+    const milestoneAfter = parseNodeData(
+      await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: milestoneId }, userId),
+    )
+    const passCriteriaAfter = parseNodesData(
+      await graphqlQuery<NodesDataRaw>(
+        NODES_QUERY,
+        {
+          locationId: campaign.locationId,
+          nodeType: 'passcriteria',
+          parentId: milestoneId,
+        },
+        userId,
+      ),
     )
 
     const m = milestoneAfter.node
     const passCriteria = passCriteriaAfter.nodes.map((n) => {
-      const d = n.data as { requirement?: unknown; status?: unknown } | null | undefined
-      const requirement = typeof d?.requirement === 'string' ? d.requirement : ''
-      const status = d?.status
-      const st =
-        status === 'pass' || status === 'fail' || status === 'open' ? status : ('open' as const)
-      return { id: n.id, requirement, status: st }
+      if (n.nodeType !== 'passcriteria') {
+        return { id: n.id, requirement: '', status: 'open' as const }
+      }
+      if (n.data == null) {
+        return { id: n.id, requirement: '', status: 'open' as const }
+      }
+      const parsed = passCriteriaDataSchema.safeParse(n.data)
+      if (parsed.success) {
+        return { id: n.id, requirement: parsed.data.requirement, status: parsed.data.status }
+      }
+      return { id: n.id, requirement: '', status: 'open' as const }
     })
 
     return NextResponse.json(
