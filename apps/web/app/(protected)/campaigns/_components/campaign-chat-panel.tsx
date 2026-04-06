@@ -39,10 +39,14 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
   const [milestones, setMilestones] = useState<TimelineMilestone[]>(initialMilestones)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     setMilestones(initialMilestones)
     setCreateError(null)
+    setDeleteError(null)
+    setDeletingMilestoneId(null)
   }, [campaignId, initialMilestones])
 
   const transport = useMemo(
@@ -113,6 +117,29 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
       setCreating(false)
     }
   }, [campaignId, t])
+
+  const handleDeleteMilestone = useCallback(
+    async (milestoneId: string) => {
+      setDeleteError(null)
+      setDeletingMilestoneId(milestoneId)
+      try {
+        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+          method: 'DELETE',
+        })
+        if (res.status === 204) {
+          setMilestones((prev) => prev.filter((m) => m.id !== milestoneId))
+          return
+        }
+        const body = (await res.json().catch(() => null)) as { message?: string } | null
+        throw new Error(body?.message ?? t('milestonesDeleteError'))
+      } catch (err) {
+        setDeleteError(err instanceof Error ? err.message : t('milestonesDeleteError'))
+      } finally {
+        setDeletingMilestoneId(null)
+      }
+    },
+    [campaignId, t],
+  )
 
   const isSubmitDisabled = !text.trim() || status === 'streaming' || status === 'submitted'
 
@@ -206,8 +233,11 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
         <TimelineWorkspace
           createError={createError}
           creating={creating}
+          deleteError={deleteError}
+          deletingMilestoneId={deletingMilestoneId}
           milestones={milestones}
           onCreateMilestone={handleCreateMilestone}
+          onDeleteMilestone={handleDeleteMilestone}
         />
       </div>
     </div>

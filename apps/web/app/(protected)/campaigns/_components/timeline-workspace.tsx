@@ -193,6 +193,11 @@ type TimelineItemProps = {
   expandDetailsLabel: string
   collapseDetailsLabel: string
   statusLabels: MilestoneStatusLabels
+  showDelete: boolean
+  onDeleteMilestone?: (id: string) => void | Promise<void>
+  isDeleting: boolean
+  deleteButtonLabel: string
+  deleteMilestoneAriaLabel: string
 }
 
 function TimelineItem({
@@ -204,6 +209,11 @@ function TimelineItem({
   expandDetailsLabel,
   collapseDetailsLabel,
   statusLabels,
+  showDelete,
+  onDeleteMilestone,
+  isDeleting,
+  deleteButtonLabel,
+  deleteMilestoneAriaLabel,
 }: TimelineItemProps) {
   const [open, setOpen] = useState(true)
   const t = useTranslations('analytics.campaigns.chat')
@@ -268,7 +278,25 @@ function TimelineItem({
           >
             <CardHeader className="gap-1.5">
               <CardTitle className="text-base leading-snug">{milestone.title}</CardTitle>
-              <CardAction>
+              <CardAction className="flex items-center gap-1">
+                {showDelete && onDeleteMilestone ? (
+                  <Button
+                    aria-label={deleteMilestoneAriaLabel}
+                    className="size-9 shrink-0 text-muted-foreground hover:text-destructive"
+                    disabled={isDeleting}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void onDeleteMilestone(milestone.id)
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    size="icon"
+                    title={deleteButtonLabel}
+                    type="button"
+                    variant="ghost"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                ) : null}
                 <CollapsibleTrigger asChild>
                   <Button
                     aria-expanded={open}
@@ -416,6 +444,10 @@ type TimelineBodyProps = {
   expandDetailsLabel: string
   collapseDetailsLabel: string
   statusLabels: MilestoneStatusLabels
+  onDeleteMilestone?: (id: string) => void | Promise<void>
+  deletingMilestoneId: string | null
+  deleteButtonLabel: string
+  deleteMilestoneAriaLabel: string
 }
 
 function TimelineBody({
@@ -426,24 +458,37 @@ function TimelineBody({
   expandDetailsLabel,
   collapseDetailsLabel,
   statusLabels,
+  onDeleteMilestone,
+  deletingMilestoneId,
+  deleteButtonLabel,
+  deleteMilestoneAriaLabel,
 }: TimelineBodyProps) {
   return (
     <div className="min-h-0 flex-1">
       <ScrollArea className="h-full">
         <div aria-label={listLabel} className="flex flex-col p-4 pr-3" role="listbox">
-          {milestones.map((milestone, index) => (
-            <TimelineItem
-              key={milestone.id}
-              collapseDetailsLabel={collapseDetailsLabel}
-              expandDetailsLabel={expandDetailsLabel}
-              isFirst={index === 0}
-              isLast={index === milestones.length - 1}
-              isSelected={milestone.id === selectedId}
-              milestone={milestone}
-              onSelect={onSelectMilestone}
-              statusLabels={statusLabels}
-            />
-          ))}
+          {milestones.map((milestone, index) => {
+            const isLast = index === milestones.length - 1
+            const showDelete = Boolean(isLast && onDeleteMilestone)
+            return (
+              <TimelineItem
+                key={milestone.id}
+                collapseDetailsLabel={collapseDetailsLabel}
+                deleteButtonLabel={deleteButtonLabel}
+                deleteMilestoneAriaLabel={deleteMilestoneAriaLabel}
+                expandDetailsLabel={expandDetailsLabel}
+                isDeleting={deletingMilestoneId === milestone.id}
+                isFirst={index === 0}
+                isLast={isLast}
+                isSelected={milestone.id === selectedId}
+                milestone={milestone}
+                onDeleteMilestone={onDeleteMilestone}
+                onSelect={onSelectMilestone}
+                showDelete={showDelete}
+                statusLabels={statusLabels}
+              />
+            )
+          })}
         </div>
       </ScrollArea>
     </div>
@@ -455,8 +500,11 @@ export type TimelineWorkspaceProps = {
   isLoading?: boolean
   loadError?: string | null
   createError?: string | null
+  deleteError?: string | null
   creating?: boolean
+  deletingMilestoneId?: string | null
   onCreateMilestone: () => void | Promise<void>
+  onDeleteMilestone?: (id: string) => void | Promise<void>
 }
 
 export function TimelineWorkspace({
@@ -464,8 +512,11 @@ export function TimelineWorkspace({
   isLoading = false,
   loadError = null,
   createError = null,
+  deleteError = null,
   creating = false,
+  deletingMilestoneId = null,
   onCreateMilestone,
+  onDeleteMilestone,
 }: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
 
@@ -518,6 +569,11 @@ export function TimelineWorkspace({
           {createError}
         </p>
       ) : null}
+      {deleteError && showTimeline ? (
+        <p className="border-b px-4 py-2 text-destructive text-sm" role="alert">
+          {deleteError}
+        </p>
+      ) : null}
       {isLoading ? (
         <div
           aria-busy="true"
@@ -561,9 +617,13 @@ export function TimelineWorkspace({
       ) : (
         <TimelineBody
           collapseDetailsLabel={t('milestoneCollapseDetails')}
+          deleteButtonLabel={t('deleteMilestone')}
+          deleteMilestoneAriaLabel={t('deleteMilestoneAriaLabel')}
+          deletingMilestoneId={deletingMilestoneId}
           expandDetailsLabel={t('milestoneExpandDetails')}
           listLabel={t('timelineListLabel')}
           milestones={milestones}
+          onDeleteMilestone={onDeleteMilestone}
           onSelectMilestone={setSelectedId}
           selectedId={selectedId}
           statusLabels={{
