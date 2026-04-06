@@ -1,0 +1,154 @@
+---
+description: Python conventions for apps/agents (FastAPI, LangChain, LangGraph, uv, Ruff)
+globs: apps/agents/**
+alwaysApply: false
+---
+
+# LangGraph Agents (`apps/agents`) — Python conventions
+
+## Stack
+
+- **FastAPI** HTTP service, exposed as `agents_app.server:app` (port **8001**).
+- **LangGraph** for stateful agent graphs; **LangChain / langchain-openai** for LLM calls.
+- **httpx** for calling the GraphQL API — agents never access the database directly.
+- Package name: `agents_app`; run with `PYTHONPATH=../..`.
+
+## Directory layout
+
+```
+agents/           # LangGraph graph definitions, one subdir per domain feature
+  chat_agent.py
+  milestone_eval/
+    graph.py      # build_*_graph() factory; nodes defined as inner async fns
+    state.py      # TypedDict state + reducers
+    prompts.py    # system/human message strings and builder helpers
+    graphql_client.py  # httpx helpers to call the GraphQL API
+models/
+  llm_config.py   # get_llm() (streaming), get_llm_structured() (non-streaming)
+prompts/          # Top-level shared prompt strings
+routers/          # FastAPI APIRouter — one file per domain
+server.py         # FastAPI app, load_dotenv(), router registration, /health
+tests/
+```
+
+## Graph factory pattern
+
+Compile graphs in a `build_*_graph(...)` factory function — do not import compiled graph instances directly. This keeps FastAPI routers thin and allows dependency injection (e.g. an `httpx.AsyncClient`).
+
+```python
+# agents/chat_agent.py
+def build_chat_graph(*, campaign_id=None, milestone_id=None):
+    builder = StateGraph(MessagesState)
+    builder.add_node("chat", chat_node)
+    builder.add_edge(START, "chat")
+    builder.add_edge("chat", END)
+    return builder.compile()
+
+# routers/chat.py — thin; never embeds graph topology
+graph = build_chat_graph(campaign_id=..., milestone_id=...)
+```
+
+## State design
+
+| Use case | State type | Notes |
+|---|---|---|
+| Simple chat | `MessagesState` | Built-in LangGraph message list; no checkpointer needed for stateless SSE |
+| Parallel fan-out (Send) | `TypedDict` + `Annotated[list[...], operator.add]` reducer | Merge worker outputs back into the parent state |
+
+```python
+# state.py — fan-out example
+import operator
+from typing import Annotated, TypedDict
+
+class MilestoneEvalState(TypedDict):
+    milestone_id: str
+    evaluated: Annotated[list[CriterionEval], operator.add]
+    ...
+```
+
+## Fan-out with Send
+
+Use `Send` for parallel node execution; route via a conditional edge function that returns a list of `Send` objects or a fallback node name.
+
+```python
+def route_after_fetch(state) -> list[Send] | Literal["synthesize"]:
+    criteria = state.get("criteria") or []
+    if not criteria:
+        return "synthesize"
+    return [Send("evaluate_criterion", {"criterion_id": c["id"], ...}) for c in criteria]
+
+builder.add_conditional_edges("fetch_context", route_after_fetch, ["evaluate_criterion", "synthesize"])
+```
+
+## Streaming patterns
+
+**Token streaming (chat):** use `astream_events(version="v2")` and filter for `on_chat_model_stream` events.
+
+```python
+async for event in graph.astream_events({"messages": lc_messages}, version="v2"):
+    if event["event"] != "on_chat_model_stream":
+        continue
+    text = event["data"]["chunk"].content
+    yield f"data: {json.dumps({'token': text})}\n\n"
+```
+
+**Step progress (multi-step flows):** use `astream(stream_mode=["custom", "values"])` + `get_stream_writer()` inside nodes.
+
+```python
+# inside a node
+writer = get_stream_writer()
+writer({"step": "fetch_context"})
+```
+
+Always set SSE response headers: `Cache-Control: no-cache`, `Connection: keep-alive`, `X-Accel-Buffering: no`.
+
+## LLM config
+
+- `get_llm()` — streaming `ChatOpenAI` (use for token streams and `astream`).
+- `get_llm_structured()` — non-streaming `ChatOpenAI` (use with `.with_structured_output(PydanticModel)`).
+
+Both read `OPENAI_API_KEY` (and optionally `OPENAI_MODEL`) from env.
+
+## Structured output
+
+Define a Pydantic `BaseModel` in the same graph module; use `get_llm_structured().with_structured_output(Model)`.
+
+```python
+class CriterionVerdict(BaseModel):
+    status: Literal["pass", "fail"] = Field(description="pass or fail")
+    reasoning: str
+
+llm = get_llm_structured().with_structured_output(CriterionVerdict)
+verdict: CriterionVerdict = await llm.ainvoke([...])
+```
+
+## External data
+
+Agents call the GraphQL API over HTTP (`GRAPHQL_ENDPOINT`) via dedicated `graphql_client.py` helpers — never import `data_sources` or open a DB session from the agents app.
+
+Pass `X-User-Id` and (when available) `X-Menuyukti-Internal-Api-Key` headers forwarded from the router.
+
+## Router conventions
+
+- One `APIRouter` per domain feature file under `routers/`.
+- Validate input with Pydantic request bodies; raise `HTTPException` for 4xx errors.
+- Require `X-Menuyukti-User-Id` header for authenticated endpoints (extract from `Request` headers).
+- Delegate all graph logic to `build_*_graph()` factories; keep handlers < 30 lines.
+
+## Environment
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `OPENAI_API_KEY` | Yes | LLM calls |
+| `OPENAI_MODEL` | No | Override model name |
+| `GRAPHQL_ENDPOINT` | Yes (for non-chat flows) | GraphQL API base URL |
+| `GRAPHQL_INTERNAL_API_KEY` | No | Server-to-server auth header |
+
+Load with `load_dotenv()` at server startup (`server.py`); `.env.example` documents all variables.
+
+## Tooling
+
+- **uv**: `uv sync`, `uv add`, `uv run` — no ad-hoc `pip install`.
+- **Ruff**: `make lint` / `make format`.
+- **mypy**: `make typecheck` — type-annotate all public functions; mypy ignores langchain/langgraph import stubs.
+- **Tests**: `make test` — `uv run pytest tests/`; use `pytest-asyncio` for async test cases.

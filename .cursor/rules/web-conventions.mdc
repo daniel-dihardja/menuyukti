@@ -1,55 +1,107 @@
 ---
-description: Next.js, Clerk, shadcn, i18n, UX/UI quality bar, and testing for apps/web
+description: Next.js, Clerk, shadcn, i18n, GraphQL client, UX/UI quality bar, and testing for apps/web
 globs: apps/web/**
+alwaysApply: false
 ---
 
 # Web app (`apps/web`) — conventions
 
 ## Framework
 
-- **Next.js** with **App Router** — routes and layouts under `app/`.
-- Prefer **React Server Components** by default. Add **`"use client"`** only when you need hooks, browser-only APIs, or event handlers in that module.
+- **Next.js App Router** (`next dev --turbopack`). Output `standalone`; transpiles `@workspace/ui`.
+- Prefer **React Server Components** by default. Add **`"use client"`** only when you need hooks, browser-only APIs, or event handlers directly in that module.
+
+## Routing structure
+
+Use **route groups** to separate concerns:
+
+| Group | Path | Notes |
+|---|---|---|
+| `(protected)` | `/analytics/*`, `/campaigns/*`, `/assets` | Shared layout: sidebar + context providers; `auth()` guard |
+| `(standalone)` | `/login`, `/sign-up`, `/sso-callback` | No sidebar; Clerk-branded pages |
+| `app/api/` | `/api/**` | BFF route handlers — call `graphqlQuery` with Clerk user id |
+
+Feature-specific client components live **next to their route** under `app/(protected)/<feature>/_components/`, not centrally in `components/`.
 
 ## Auth
 
-- **Clerk** (`@clerk/nextjs`) — use established patterns: middleware, `auth()` / session helpers. Do not introduce ad-hoc cookie sessions or custom auth for product routes.
+- **Clerk** (`@clerk/nextjs`) — do not introduce custom sessions or cookie-based auth.
+- **Middleware** (`middleware.ts`): `clerkMiddleware` + `createRouteMatcher` protects `/analytics`, `/campaigns`, `/assets`. Uses `routes.ts` for URL constants.
+- **Server layouts/pages**: `auth()` from `@clerk/nextjs/server`; redirect if no `userId`. Protected layout does this as defense-in-depth after middleware.
+- **Client components**: `useAuth`, `UserButton`, `SignInButton` from `@clerk/nextjs`.
+- Clerk config (publishable key, sign-in/up URLs) is centralised in `lib/clerk-env.ts` and `lib/routes.ts`.
 
-## Data and persistence
+## GraphQL data access
 
-- **Database access, schema, and migrations belong in `apps/graphql`** — the web app talks to the platform through the **GraphQL API** only. Do not add or document direct database or ORM workflows in `apps/web`.
+The web app **never accesses the database directly**. Data flows through the GraphQL API only.
 
-## UI
+```typescript
+// lib/graphql/client.ts — single fetch helper
+const data = await graphqlQuery<ResponseType>(QUERY_STRING, variables, userId);
+```
 
-- **shadcn/ui** — configuration in `components.json`. Extend via **`components/ui/`** and local components; avoid copying unstable forked primitives.
+- `graphqlQuery<T>` sends to `process.env.GRAPHQL_ENDPOINT`, sets `X-User-Id` and (when available) `X-Internal-Api-Key`.
+- Query/mutation strings and TypeScript response types live in `lib/graphql/queries.ts`.
+- Node `data` JSON is validated with **Zod** schemas from `lib/graphql/node-schemas.ts`; always use `parseNodeData` / `parseNodesData` rather than casting.
+- Server Components and `app/api/` route handlers call `graphqlQuery`; **no Apollo/React Query** in the browser for the main data path.
+
+## UI components
+
+- **shadcn/ui** primitives come from **`@workspace/ui`** (aliased as `@workspace/ui/components` per `components.json`). Do **not** create a local `components/ui/` directory in `apps/web`.
+- App-level composites (sidebar, nav, page shells, markdown renderers, etc.) live under `components/`.
+- `components/clerk/` — branded auth forms and Clerk appearance config.
+- Extend UI with local components; avoid forking `@workspace/ui` primitives.
+
+## Styling (Tailwind v4)
+
+- There is **no `tailwind.config.*` in `apps/web`**. Tailwind is configured in **`packages/ui`**; styles enter via `@workspace/ui/globals.css` imported in `app/layout.tsx`.
+- `postcss.config.mjs` re-exports `@workspace/ui/postcss.config`.
+- Use Tailwind utility classes and CSS variables from `@workspace/ui` tokens; avoid one-off inline styles.
+
+## State management
+
+- No global state library (Zustand/Redux/Jotai). Prefer **React Context** for subtree-scoped shared state (e.g. `AnalyticsProvider` for `locationId` / `analyticsId`).
+- Co-locate context + hook in the relevant feature directory.
+
+## i18n (next-intl)
+
+- Config: `i18n/request.ts` resolves locale from `Accept-Language` and loads `messages/<locale>.json`.
+- Root layout wraps children in `NextIntlClientProvider` with `getMessages()` / `getLocale()`.
+- **Server**: `getTranslations('namespace')` (async).
+- **Client**: `useTranslations('namespace')`.
+- All user-facing copy — including button labels, error messages, and empty states — must be in `messages/en.json`. Do **not** hardcode English strings in components.
 
 ## UX / UI quality (apply on every UI change)
 
-When implementing or changing UI, **do not stop at “it works”** — treat the work as if reviewed by a **UX/UI specialist** and aim for the best practical solution within existing patterns.
+Treat every UI change as if reviewed by a UX/UI specialist — **do not stop at "it works"**.
 
-- **Clarity** — obvious primary action, scannable hierarchy (headings, spacing, grouping), labels that match user mental models.
-- **Feedback** — loading, empty, and error states; success confirmation where it reduces doubt; disabled vs loading vs error are visually distinct.
-- **Accessibility** — semantic HTML, focus order, keyboard use for interactive controls, sufficient contrast; pair icons with text where meaning isn’t obvious.
-- **Consistency** — align with nearby screens and **`@workspace/ui`** / shadcn tokens (spacing, typography, radius); avoid one-off styling unless intentional.
-- **Resilience** — sensible defaults, safe destructive actions (confirm or undo), mobile-friendly touch targets and layout.
-- **i18n** — new copy goes through **next-intl** (`messages/`), including button labels and error strings.
+- **Clarity** — obvious primary action, scannable hierarchy, labels matching user mental models.
+- **Feedback** — loading, empty, and error states; success confirmation where it reduces doubt; disabled / loading / error are visually distinct.
+- **Accessibility** — semantic HTML, focus order, keyboard support, sufficient contrast; pair icons with text where meaning isn't obvious.
+- **Consistency** — align with nearby screens and `@workspace/ui` tokens (spacing, typography, radius).
+- **Resilience** — sensible defaults, safe destructive actions (confirm or undo), mobile-friendly touch targets.
+- **i18n** — new copy goes through next-intl, including error strings.
 
-Prefer small, purposeful improvements over decorative churn; when tradeoffs exist, choose what helps **task completion and comprehension** first.
-
-## i18n
-
-- **next-intl** — user-facing copy belongs in **`messages/`** and message keys; avoid hardcoding English (or other) strings in components when a key exists or should exist.
-
-## Testing
-
-- **Vitest** (`vitest.config.ts`) — `pnpm test` from `apps/web`.
-- E2E artifacts may land in **`e2e-artifacts/`** (gitignored) — do not commit.
+Prefer purposeful improvements over decorative churn; when tradeoffs exist, choose what helps **task completion and comprehension** first.
 
 ## TypeScript
 
-- Prefer **strict typing** — avoid `any`; export explicit return types for public functions and server actions where applicable.
+- **Strict typing** — avoid `any`; export explicit return types for public functions and server actions.
+- Prefer inferring types from Zod schemas (`z.infer<typeof schema>`) for node data shapes rather than duplicating type definitions.
+
+## Testing
+
+- **Vitest** — `pnpm test` from `apps/web`. Config: `vitest.config.ts`.
+- Test files under `tests/` and co-located `*.test.ts` in `lib/`.
+- E2E artifacts in `e2e-artifacts/` (gitignored) — do not commit.
 
 ## Scripts
 
-- **`pnpm dev`** — `next dev --turbopack`
-- **`pnpm build`** / **`pnpm start`** — production
-- **`pnpm lint`** / **`pnpm typecheck`** — quality gates (`typecheck` maps to `tsc --noEmit`)
+| Command | Action |
+|---|---|
+| `pnpm dev` | `next dev --turbopack` |
+| `pnpm build` / `pnpm start` | Production build / serve |
+| `pnpm lint` | ESLint |
+| `pnpm typecheck` | `tsc --noEmit` |
+| `pnpm test` | Vitest |
+| `pnpm format` / `pnpm format:check` | Prettier (includes `messages/*.json`) |
