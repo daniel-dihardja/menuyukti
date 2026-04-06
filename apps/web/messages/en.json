@@ -426,6 +426,7 @@
         "breadcrumb": "View Campaign"
       },
       "chat": {
+        "pageLoadingTitle": "Loading campaign…",
         "pageTitle": "Campaign #{id}",
         "emptyTitle": "No messages yet",
         "emptyDescription": "Start a conversation to see messages here.",
