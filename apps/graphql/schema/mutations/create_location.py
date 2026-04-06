@@ -1,6 +1,6 @@
 import strawberry
 
-from graphql.data_sources import Location, SessionLocal
+from graphql.data_sources import Location, Node, SessionLocal
 from graphql.schema.types import LocationType
 
 
@@ -35,6 +35,22 @@ class CreateLocationMutation:
                 clerk_user_id=user_id,
             )
             session.add(loc)
+            session.flush()
+
+            loc_node = Node(
+                parent_id=None,
+                name=name,
+                description=None,
+                path="",
+                node_type="location",
+                location_id=loc.id,
+                data=None,
+            )
+            session.add(loc_node)
+            session.flush()
+            loc_node.path = f"/{loc_node.id}"
+            loc.node_id = loc_node.id
+
             session.commit()
             session.refresh(loc)
             return LocationType(
@@ -43,6 +59,7 @@ class CreateLocationMutation:
                 street=loc.street,
                 city=loc.city,
                 country=loc.country,
+                node_id=str(loc.node_id) if loc.node_id is not None else None,
             )
         finally:
             session.close()

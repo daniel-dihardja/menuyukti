@@ -8,3 +8,4 @@ class LocationType:
     street: str | None
     city: str | None
     country: str | None
+    node_id: strawberry.ID | None

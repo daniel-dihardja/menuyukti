@@ -32,6 +32,7 @@ class LocationsQuery:
                     street=row.street,
                     city=row.city,
                     country=row.country,
+                    node_id=str(row.node_id) if row.node_id is not None else None,
                 )
                 for row in rows
             ]
@@ -58,6 +59,7 @@ class LocationsQuery:
                 street=row.street,
                 city=row.city,
                 country=row.country,
+                node_id=str(row.node_id) if row.node_id is not None else None,
             )
         finally:
             session.close()

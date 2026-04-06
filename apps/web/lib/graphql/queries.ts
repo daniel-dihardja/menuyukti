@@ -7,12 +7,13 @@ export const LOCATIONS_QUERY = `
     locations {
       id
       name
+      nodeId
     }
   }
 `
 
 export type LocationsData = {
-  locations: Array<{ id: string; name: string }>
+  locations: Array<{ id: string; name: string; nodeId: string | null }>
 }
 
 export const LOCATION_QUERY = `
@@ -23,6 +24,7 @@ export const LOCATION_QUERY = `
       street
       city
       country
+      nodeId
     }
   }
 `
@@ -34,6 +36,7 @@ export type LocationData = {
     street: string | null
     city: string | null
     country: string | null
+    nodeId: string | null
   } | null
 }
 
@@ -42,12 +45,13 @@ export const CREATE_LOCATION_MUTATION = `
     createLocation(name: $name) {
       id
       name
+      nodeId
     }
   }
 `
 
 export type CreateLocationData = {
-  createLocation: { id: string; name: string }
+  createLocation: { id: string; name: string; nodeId: string | null }
 }
 
 export const CREATE_NODE_MUTATION = `

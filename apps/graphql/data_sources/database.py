@@ -5,6 +5,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from sqlalchemy import (
+    JSON,
     Column,
     Date,
     DateTime,
@@ -12,7 +13,6 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    JSON,
     String,
     Text,
     UniqueConstraint,
@@ -46,9 +46,24 @@ class Location(Base):
     city = Column(String(128), nullable=True)
     country = Column(String(128), nullable=True)
     clerk_user_id = Column(String(128), nullable=True, index=True)
+    node_id = Column(
+        Integer,
+        ForeignKey("node.id", use_alter=True, name="fk_location_node_id"),
+        nullable=True,
+        index=True,
+    )
 
     instagram_posts = relationship("InstagramPost", back_populates="location")
-    nodes = relationship("Node", back_populates="location")
+    nodes = relationship(
+        "Node",
+        back_populates="location",
+        foreign_keys="Node.location_id",
+    )
+    location_root_node = relationship(
+        "Node",
+        foreign_keys=[node_id],
+        post_update=True,
+    )
 
 
 class AnalyticsRun(Base):
@@ -207,7 +222,11 @@ class Node(Base):
 
     parent = relationship("Node", remote_side=[id], back_populates="children")
     children = relationship("Node", back_populates="parent")
-    location = relationship("Location", back_populates="nodes")
+    location = relationship(
+        "Location",
+        back_populates="nodes",
+        foreign_keys=[location_id],
+    )
 
     __table_args__ = (Index("ix_node_location_type", "location_id", "type"),)
 

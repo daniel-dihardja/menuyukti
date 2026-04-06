@@ -407,6 +407,7 @@
       "create": "Create New Campaign",
       "creating": "Creating…",
       "createFailed": "Could not create a campaign. Please try again.",
+      "missingLocationNode": "This location has no workspace root. Refresh the page or recreate the location, then try again.",
       "listFailed": "Could not load campaigns. Please try again.",
       "branchLabel": "Location",
       "branchPlaceholder": "Select a location",

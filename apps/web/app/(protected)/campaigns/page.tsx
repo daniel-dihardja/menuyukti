@@ -36,6 +36,7 @@ async function CampaignsData() {
   const branches = data.locations.map((loc) => ({
     id: Number(loc.id),
     name: loc.name,
+    nodeId: loc.nodeId,
   }))
 
   const hasBranches = branches.length > 0

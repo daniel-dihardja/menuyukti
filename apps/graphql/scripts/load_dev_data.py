@@ -13,6 +13,7 @@ from graphql.data_sources import (
     AnalyticsRun,
     Location,
     MenuItemCogs,
+    Node,
     OrderFact,
     SessionLocal,
     drop_db,
@@ -73,6 +74,22 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
             clerk_user_id=clerk_user_id,
         )
         session.add(location)
+        session.flush()
+
+        loc_node = Node(
+            parent_id=None,
+            name=location.name,
+            description=None,
+            path="",
+            node_type="location",
+            location_id=location.id,
+            data=None,
+        )
+        session.add(loc_node)
+        session.flush()
+        loc_node.path = f"/{loc_node.id}"
+        location.node_id = loc_node.id
+
         session.commit()
         session.refresh(location)
 

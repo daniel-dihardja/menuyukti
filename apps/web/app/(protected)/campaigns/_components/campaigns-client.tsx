@@ -12,6 +12,7 @@ import { CampaignsTable } from './campaigns-table'
 type Branch = {
   id: number
   name: string
+  nodeId: string | null
 }
 
 type CampaignNode = {
@@ -36,13 +37,18 @@ export function CampaignsClient({ branches }: Props) {
 
   const handleCreateCampaign = useCallback(async () => {
     if (locationId === null) return
+    const branch = branches.find((b) => b.id === locationId)
+    if (!branch?.nodeId) {
+      setCreateError(t('missingLocationNode'))
+      return
+    }
     setCreateError(null)
     setCreating(true)
     try {
       const res = await fetch('/api/campaigns/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ locationId }),
+        body: JSON.stringify({ locationId, locationNodeId: branch.nodeId }),
       })
       if (!res.ok) {
         const body = (await res.json().catch(() => null)) as { message?: string } | null
@@ -55,7 +61,7 @@ export function CampaignsClient({ branches }: Props) {
     } finally {
       setCreating(false)
     }
-  }, [locationId, router, t])
+  }, [branches, locationId, router, t])
 
   useEffect(() => {
     if (locationId !== null) return
