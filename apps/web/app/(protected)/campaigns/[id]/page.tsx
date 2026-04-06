@@ -79,8 +79,8 @@ export default async function Page({ params }: PageProps) {
 
   const initialMilestones: TimelineMilestone[] = await Promise.all(
     milestonesData.nodes.map(async (n) => {
-      const passCriteriaChildren = parseNodesData(
-        await graphqlQuery<NodesDataRaw>(
+      const [passCriteriaChildren, goalChildren] = await Promise.all([
+        graphqlQuery<NodesDataRaw>(
           NODES_QUERY,
           {
             locationId,
@@ -89,12 +89,24 @@ export default async function Page({ params }: PageProps) {
           },
           authUserId,
         ),
-      )
+        graphqlQuery<NodesDataRaw>(
+          NODES_QUERY,
+          {
+            locationId,
+            nodeType: 'goal',
+            parentId: n.id,
+          },
+          authUserId,
+        ),
+      ])
+      const passCriteriaParsed = parseNodesData(passCriteriaChildren)
+      const goalParsed = parseNodesData(goalChildren)
       const dto: MilestoneNodeDto = {
         id: n.id,
         name: n.name,
         data: n.data,
-        passCriteriaNodes: passCriteriaChildren.nodes,
+        passCriteriaNodes: passCriteriaParsed.nodes,
+        goalNodes: goalParsed.nodes,
       }
       return milestoneNodeToTimelineMilestone(dto)
     }),

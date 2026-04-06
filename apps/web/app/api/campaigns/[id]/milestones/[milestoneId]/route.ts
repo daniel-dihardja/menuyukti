@@ -85,6 +85,62 @@ async function assertPassCriteriaBelongsToMilestone(
   }
 }
 
+/** Persist goal text on a child `goal` node; empty string removes goal node(s). */
+async function syncGoalChild(
+  locationId: number,
+  milestoneId: string,
+  goalText: string,
+  userId: string,
+) {
+  const existing = parseNodesData(
+    await graphqlQuery<NodesDataRaw>(
+      NODES_QUERY,
+      {
+        locationId,
+        nodeType: 'goal',
+        parentId: milestoneId,
+      },
+      userId,
+    ),
+  )
+  const goals = existing.nodes.filter((n) => n.nodeType === 'goal')
+  if (goalText === '') {
+    for (const g of goals) {
+      await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: g.id }, userId)
+    }
+    return
+  }
+  if (goals.length === 0) {
+    parseCreateNodeData(
+      await graphqlQuery<CreateNodeDataRaw>(
+        CREATE_NODE_MUTATION,
+        {
+          locationId,
+          nodeType: 'goal',
+          parentId: milestoneId,
+          name: 'Goal',
+          data: { goal: goalText },
+        },
+        userId,
+      ),
+    )
+    return
+  }
+  const [primary, ...rest] = goals
+  for (const g of rest) {
+    await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: g.id }, userId)
+  }
+  if (primary) {
+    parseUpdateNodeData(
+      await graphqlQuery<UpdateNodeDataRaw>(
+        UPDATE_NODE_MUTATION,
+        { id: primary.id, data: { goal: goalText } },
+        userId,
+      ),
+    )
+  }
+}
+
 export async function PATCH(req: Request, context: RouteContext) {
   try {
     const { userId } = await auth()
@@ -179,17 +235,25 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
 
     if (body.passCriteria === undefined) {
-      const variables: Record<string, unknown> = { id: milestoneId }
-      if (body.name !== undefined) {
-        variables.name = body.name
-      }
       if (body.goal !== undefined) {
-        variables.data = { goal: body.goal }
+        await syncGoalChild(campaign.locationId, milestoneId, body.goal, userId)
       }
-      const data = parseUpdateNodeData(
-        await graphqlQuery<UpdateNodeDataRaw>(UPDATE_NODE_MUTATION, variables, userId),
+      if (body.name !== undefined) {
+        parseUpdateNodeData(
+          await graphqlQuery<UpdateNodeDataRaw>(
+            UPDATE_NODE_MUTATION,
+            { id: milestoneId, name: body.name },
+            userId,
+          ),
+        )
+      }
+      const milestoneFresh = parseNodeData(
+        await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: milestoneId }, userId),
       )
-      return NextResponse.json(data.updateNode, { status: 200 })
+      if (!milestoneFresh.node) {
+        return NextResponse.json({ message: 'Milestone not found' }, { status: 404 })
+      }
+      return NextResponse.json(milestoneFresh.node, { status: 200 })
     }
 
     if (body.name !== undefined) {

@@ -13,16 +13,25 @@ export const passCriteriaDataSchema = z.object({
 
 export type PassCriteriaData = z.infer<typeof passCriteriaDataSchema>
 
-/** Milestone `data` JSON — `order` is the display sequence; `goal` is free-form milestone goal text. */
+/** Milestone `data` JSON — `order` is the display sequence. */
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
-    /** User-authored goal text; leading/trailing whitespace is preserved. */
+    /**
+     * Legacy: goal text was stored on the milestone. New writes use a child node (`nodeType` `goal`).
+     */
     goal: z.string().optional(),
   })
   .passthrough()
 
 export type MilestoneData = z.infer<typeof milestoneDataSchema>
+
+/** Goal child node `data` JSON — matches backend `GoalHandler` validation. */
+export const goalDataSchema = z.object({
+  goal: z.string(),
+})
+
+export type GoalData = z.infer<typeof goalDataSchema>
 
 const baseNode = z.object({
   id: z.string(),
@@ -43,6 +52,11 @@ export const passCriteriaNodeSchema = baseNode.extend({
   data: passCriteriaDataSchema.nullable(),
 })
 
+export const goalNodeSchema = baseNode.extend({
+  nodeType: z.literal('goal'),
+  data: goalDataSchema.nullable(),
+})
+
 export const unknownNodeSchema = baseNode.extend({
   nodeType: z.string(),
   data: z.unknown().nullable(),
@@ -51,16 +65,18 @@ export const unknownNodeSchema = baseNode.extend({
 export const knownNodeSchema = z.discriminatedUnion('nodeType', [
   milestoneNodeSchema,
   passCriteriaNodeSchema,
+  goalNodeSchema,
 ])
 
 export type MilestoneNode = z.infer<typeof milestoneNodeSchema>
 export type PassCriteriaNode = z.infer<typeof passCriteriaNodeSchema>
+export type GoalNode = z.infer<typeof goalNodeSchema>
 export type KnownNode = z.infer<typeof knownNodeSchema>
 export type UnknownNode = z.infer<typeof unknownNodeSchema>
 export type AnyNode = KnownNode | UnknownNode
 
 /**
- * Parse a single node from GraphQL JSON. Tries milestone and passcriteria first, then falls back
+ * Parse a single node from GraphQL JSON. Tries milestone, passcriteria, and goal, then falls back
  * to a generic node (campaign, etc.) so callers can still narrow on `nodeType`.
  */
 export function parseNode(raw: unknown): AnyNode {
@@ -71,6 +87,10 @@ export function parseNode(raw: unknown): AnyNode {
   const p = passCriteriaNodeSchema.safeParse(raw)
   if (p.success) {
     return p.data
+  }
+  const g = goalNodeSchema.safeParse(raw)
+  if (g.success) {
+    return g.data
   }
   const u = unknownNodeSchema.safeParse(raw)
   if (u.success) {
