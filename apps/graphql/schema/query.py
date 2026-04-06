@@ -6,6 +6,7 @@ from graphql.schema.queries import (
     MenuEngineeringMatrixQuery,
     MenuHeatmapsQuery,
     NationalHolidaysQuery,
+    NodesQuery,
     OperatingProfileQuery,
 )
 
@@ -13,6 +14,7 @@ from graphql.schema.queries import (
 @strawberry.type
 class Query(
     LocationsQuery,
+    NodesQuery,
     AnalyticsRunQuery,
     MenuHeatmapsQuery,
     MenuEngineeringMatrixQuery,

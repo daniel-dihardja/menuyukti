@@ -7,11 +7,17 @@ import { useAnalytics } from '../../analytics/use-analytics'
 import { LocationSelect } from '../../analytics/sales/location-select'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
-import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
+import { CampaignsTable } from './campaigns-table'
 
 type Branch = {
   id: number
   name: string
+}
+
+type CampaignNode = {
+  id: string
+  name: string
+  nodeType: string
 }
 
 type Props = {
@@ -24,6 +30,9 @@ export function CampaignsClient({ branches }: Props) {
   const { locationId, setLocationId } = useAnalytics()
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [campaigns, setCampaigns] = useState<CampaignNode[]>([])
+  const [loadingCampaigns, setLoadingCampaigns] = useState(false)
+  const [listError, setListError] = useState<string | null>(null)
 
   const handleCreateCampaign = useCallback(async () => {
     if (locationId === null) return
@@ -56,6 +65,51 @@ export function CampaignsClient({ branches }: Props) {
     setLocationId(onlyBranch.id)
   }, [locationId, branches, setLocationId])
 
+  useEffect(() => {
+    if (locationId === null) {
+      setCampaigns([])
+      setListError(null)
+      return
+    }
+
+    let cancelled = false
+    setLoadingCampaigns(true)
+    setListError(null)
+
+    void fetch(`/api/campaigns?locationId=${locationId}`)
+      .then(async (res) => {
+        const body = (await res.json().catch(() => null)) as
+          | { nodes?: CampaignNode[]; message?: string }
+          | null
+        if (!res.ok) {
+          throw new Error(body?.message ?? t('listFailed'))
+        }
+        return body?.nodes ?? []
+      })
+      .then((nodes) => {
+        if (!cancelled) {
+          setCampaigns(nodes)
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setCampaigns([])
+          setListError(err instanceof Error ? err.message : t('listFailed'))
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingCampaigns(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [locationId, t])
+
+  const hasCampaigns = campaigns.length > 0
+
   return (
     <div className="space-y-6">
       <section className="flex flex-wrap items-end gap-3">
@@ -86,13 +140,19 @@ export function CampaignsClient({ branches }: Props) {
 
       {!locationId ? (
         <div className="rounded-md border p-8 text-left text-muted-foreground">{t('selectBranch')}</div>
+      ) : loadingCampaigns ? (
+        <div className="rounded-md border p-8 text-left">{t('loading')}</div>
+      ) : listError ? (
+        <p className="text-destructive text-sm" role="alert">
+          {listError}
+        </p>
+      ) : hasCampaigns ? (
+        <CampaignsTable campaigns={campaigns} />
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('noCampaigns.title')}</CardTitle>
-            <CardDescription>{t('noCampaigns.description')}</CardDescription>
-          </CardHeader>
-        </Card>
+        <div className="space-y-4 rounded-md border p-8 text-left">
+          <h2 className="text-lg font-medium">{t('noCampaigns.title')}</h2>
+          <p className="text-muted-foreground">{t('noCampaigns.description')}</p>
+        </div>
       )}
     </div>
   )

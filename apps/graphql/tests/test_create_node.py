@@ -5,9 +5,9 @@ from graphql.data_sources import Location, Node, SessionLocal
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
-MUTATION = """
-mutation CreateCampaign($locationId: Int!) {
-  createCampaign(locationId: $locationId) {
+CREATE_NODE = """
+mutation CreateNode($locationId: Int!, $nodeType: String!, $name: String) {
+  createNode(locationId: $locationId, nodeType: $nodeType, name: $name) {
     id
     name
     nodeType
@@ -19,7 +19,7 @@ mutation CreateCampaign($locationId: Int!) {
 """
 
 
-def test_create_campaign_inserts_root_node():
+def test_create_node_inserts_root_campaign_node():
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -36,13 +36,17 @@ def test_create_campaign_inserts_root_node():
 
     result = asyncio.run(
         schema.execute(
-            MUTATION,
-            variable_values={"locationId": location_id},
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "campaign",
+                "name": None,
+            },
             context_value=graphql_auth_context(),
         )
     )
     assert not result.errors, result.errors
-    data = result.data["createCampaign"]
+    data = result.data["createNode"]
     assert data["parentId"] is None
     assert data["nodeType"] == "campaign"
     assert data["locationId"] == location_id

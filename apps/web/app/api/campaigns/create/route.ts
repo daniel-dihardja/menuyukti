@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { ZodError } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
-import { CREATE_CAMPAIGN_MUTATION, type CreateCampaignData } from '@/lib/graphql/queries'
+import { CREATE_NODE_MUTATION, type CreateNodeData } from '@/lib/graphql/queries'
 import { createCampaignSchema } from './schema'
 
 export async function POST(req: Request) {
@@ -15,18 +15,18 @@ export async function POST(req: Request) {
     const json = await req.json()
     const { locationId } = createCampaignSchema.parse(json)
 
-    const data = await graphqlQuery<CreateCampaignData>(
-      CREATE_CAMPAIGN_MUTATION,
-      { locationId },
+    const data = await graphqlQuery<CreateNodeData>(
+      CREATE_NODE_MUTATION,
+      { locationId, nodeType: 'campaign' },
       userId,
     )
 
-    const campaign = data.createCampaign
-    if (!campaign) {
+    const node = data.createNode
+    if (!node) {
       return NextResponse.json({ message: 'Failed to create campaign' }, { status: 500 })
     }
 
-    return NextResponse.json(campaign, { status: 201 })
+    return NextResponse.json(node, { status: 201 })
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(

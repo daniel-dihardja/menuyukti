@@ -50,9 +50,9 @@ export type CreateLocationData = {
   createLocation: { id: string; name: string }
 }
 
-export const CREATE_CAMPAIGN_MUTATION = `
-  mutation CreateCampaign($locationId: Int!) {
-    createCampaign(locationId: $locationId) {
+export const CREATE_NODE_MUTATION = `
+  mutation CreateNode($locationId: Int!, $nodeType: String!, $name: String) {
+    createNode(locationId: $locationId, nodeType: $nodeType, name: $name) {
       id
       name
       nodeType
@@ -63,8 +63,8 @@ export const CREATE_CAMPAIGN_MUTATION = `
   }
 `
 
-export type CreateCampaignData = {
-  createCampaign: {
+export type CreateNodeData = {
+  createNode: {
     id: string
     name: string
     nodeType: string
@@ -72,6 +72,54 @@ export type CreateCampaignData = {
     parentId: string | null
     locationId: number | null
   }
+}
+
+export const NODES_QUERY = `
+  query Nodes($locationId: Int!, $nodeType: String) {
+    nodes(locationId: $locationId, nodeType: $nodeType) {
+      id
+      name
+      nodeType
+      path
+      parentId
+      locationId
+    }
+  }
+`
+
+export type NodesData = {
+  nodes: Array<{
+    id: string
+    name: string
+    nodeType: string
+    path: string
+    parentId: string | null
+    locationId: number | null
+  }>
+}
+
+export const NODE_QUERY = `
+  query Node($id: ID!) {
+    node(id: $id) {
+      id
+      name
+      nodeType
+      path
+      parentId
+      locationId
+    }
+  }
+`
+
+export type NodeData = {
+  node: {
+    id: string
+    name: string
+    nodeType: string
+    path: string
+    parentId: string | null
+    locationId: number | null
+  } | null
 }
 
 export const ANALYTICS_RUNS_BY_LOCATION_QUERY = `
