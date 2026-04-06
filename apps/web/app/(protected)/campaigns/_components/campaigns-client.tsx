@@ -3,11 +3,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { AlertCircle } from 'lucide-react'
 import { useAnalytics } from '../../analytics/use-analytics'
 import { LocationSelect } from '../../analytics/sales/location-select'
 import { routes } from '@/lib/routes'
+import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
-import { CampaignsTable } from './campaigns-table'
+import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
+import { Spinner } from '@workspace/ui/components/spinner'
+import { CampaignsTable, CampaignsTableSkeleton } from './campaigns-table'
 
 type Branch = {
   id: number
@@ -118,7 +122,7 @@ export function CampaignsClient({ branches }: Props) {
   const hasCampaigns = campaigns.length > 0
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <section className="flex flex-wrap items-end gap-3">
         <LocationSelect
           branches={branches}
@@ -134,34 +138,50 @@ export function CampaignsClient({ branches }: Props) {
             size="default"
             type="button"
           >
-            {creating ? t('creating') : t('create')}
+            {creating ? (
+              <>
+                <Spinner />
+                {t('creating')}
+              </>
+            ) : (
+              t('create')
+            )}
           </Button>
         ) : null}
       </section>
 
       {createError ? (
-        <p className="text-destructive text-sm" role="alert">
-          {createError}
-        </p>
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>{t('errors.createTitle')}</AlertTitle>
+          <AlertDescription>{createError}</AlertDescription>
+        </Alert>
       ) : null}
 
       {!locationId ? (
-        <div className="rounded-md border p-8 text-left text-muted-foreground">
-          {t('selectBranch')}
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('selectBranchTitle')}</CardTitle>
+            <CardDescription>{t('selectBranchDescription')}</CardDescription>
+          </CardHeader>
+        </Card>
       ) : loadingCampaigns ? (
-        <div className="rounded-md border p-8 text-left">{t('loading')}</div>
+        <CampaignsTableSkeleton />
       ) : listError ? (
-        <p className="text-destructive text-sm" role="alert">
-          {listError}
-        </p>
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>{t('errors.listTitle')}</AlertTitle>
+          <AlertDescription>{listError}</AlertDescription>
+        </Alert>
       ) : hasCampaigns ? (
         <CampaignsTable campaigns={campaigns} />
       ) : (
-        <div className="space-y-4 rounded-md border p-8 text-left">
-          <h2 className="text-lg font-medium">{t('noCampaigns.title')}</h2>
-          <p className="text-muted-foreground">{t('noCampaigns.description')}</p>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('noCampaigns.title')}</CardTitle>
+            <CardDescription>{t('noCampaigns.description')}</CardDescription>
+          </CardHeader>
+        </Card>
       )}
     </div>
   )

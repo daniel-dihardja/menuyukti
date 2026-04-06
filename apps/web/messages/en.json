@@ -398,7 +398,14 @@
     },
     "campaigns": {
       "title": "Campaigns",
-      "description": "Campaign workspace is being rebuilt on a new data model.",
+      "description": "Choose a location, create a campaign, then plan milestones, chat with the assistant, and run evaluations.",
+      "sectionTitle": "Campaigns for this location",
+      "selectBranchTitle": "Choose a location",
+      "selectBranchDescription": "Please select a location to view campaigns.",
+      "errors": {
+        "createTitle": "Could not create campaign",
+        "listTitle": "Could not load campaigns"
+      },
       "dataRedesign": {
         "title": "Campaign data is being redesigned",
         "description": "Saved campaigns, briefs, location profiles, and promotion candidates from the previous schema are no longer stored. A new model will replace them.",
@@ -419,6 +426,7 @@
         "status": "Status",
         "dates": "Dates",
         "action": "Actions",
+        "actionsForRow": "Actions for {name}",
         "view": "View",
         "delete": "Delete"
       },

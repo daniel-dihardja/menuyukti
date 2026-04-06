@@ -8,7 +8,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
-import { Card } from '@workspace/ui/components/card'
+import { Card, CardContent, CardHeader } from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { LOCATIONS_QUERY, type LocationsData } from '@/lib/graphql/queries'
@@ -18,9 +18,30 @@ import { CampaignsClient } from './_components/campaigns-client'
 
 function CampaignsListSkeleton() {
   return (
-    <div className="space-y-3">
-      <Skeleton className="h-10 w-full max-w-md" />
-      <Skeleton className="h-64 w-full rounded-md" />
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-end gap-3">
+        <Skeleton className="h-10 w-full max-w-xs" />
+        <Skeleton className="h-9 w-40" />
+      </div>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-5 w-56" />
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex gap-4 border-b pb-2">
+            <Skeleton className="h-4 w-8 shrink-0" />
+            <Skeleton className="h-4 min-w-0 flex-1" />
+            <Skeleton className="h-4 w-10 shrink-0" />
+          </div>
+          {Array.from({ length: 4 }, (_, i) => (
+            <div className="flex gap-4" key={`campaigns-skel-${i}`}>
+              <Skeleton className="h-4 w-8 shrink-0" />
+              <Skeleton className="h-4 min-w-0 flex-1" />
+              <Skeleton className="h-4 w-10 shrink-0" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   )
 }
@@ -43,7 +64,7 @@ async function CampaignsData() {
 
   if (!hasBranches) {
     return (
-      <Card className="space-y-4 p-8 text-center">
+      <Card className="flex flex-col gap-4 p-8 text-center">
         <h2 className="text-lg font-medium">{t('noBranches.title')}</h2>
         <p className="mx-auto max-w-md text-muted-foreground text-sm">
           {t('noBranches.description')}
@@ -56,7 +77,7 @@ async function CampaignsData() {
   }
 
   return (
-    <section className="space-y-3">
+    <section className="flex flex-col gap-3">
       <CampaignsClient branches={branches} />
     </section>
   )
@@ -67,7 +88,12 @@ export default async function Page() {
 
   return (
     <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
-      <PageHeading description={t('description')} title={t('title')} />
+      <PageHeading
+        description={t('description')}
+        descriptionClassName="text-pretty"
+        title={t('title')}
+        titleClassName="text-balance"
+      />
       <Suspense fallback={<CampaignsListSkeleton />}>
         <CampaignsData />
       </Suspense>
