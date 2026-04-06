@@ -6,7 +6,7 @@
 # stacks, replace `docker image prune -af` with `docker image prune -f` (dangling only) so unused
 # tagged images from other projects are kept.
 #
-# Run manually after you have pushed the images you need (Docker — web / graphql / gentic-agents).
+# Run manually after you have pushed the images you need (Docker — web / graphql).
 #
 # Server: place a `.env` next to `docker-compose.yml` under /opt/menuyukti (not copied by this workflow).
 #

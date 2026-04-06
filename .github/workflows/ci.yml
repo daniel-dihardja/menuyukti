@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   node:
-    name: Node (Prettier, types, ESLint)
+    name: Node (Prettier, types, ESLint, tests)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,6 +25,7 @@ jobs:
       - run: pnpm format-check
       - run: pnpm check-types
       - run: pnpm lint
+      - run: pnpm test
 
   graphql:
     name: GraphQL (Ruff, mypy, pytest)
@@ -40,35 +41,3 @@ jobs:
         working-directory: apps/graphql
       - run: make test
         working-directory: apps/graphql
-
-  go-agents:
-    name: Go gentic-agents
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.work
-      - run: go test ./...
-        working-directory: apps/gentic-agents
-      - uses: golangci/golangci-lint-action@v7
-        with:
-          version: v2.11.4
-          working-directory: apps/gentic-agents
-          args: --timeout=5m
-
-  go-gentic:
-    name: Go packages/gentic
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.work
-      - run: go test ./...
-        working-directory: packages/gentic
-      - uses: golangci/golangci-lint-action@v7
-        with:
-          version: v2.11.4
-          working-directory: packages/gentic
-          args: --timeout=5m

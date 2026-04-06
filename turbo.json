@@ -2,49 +2,19 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "globalEnv": [
-    "AGENTS_API_KEY",
     "AGENTS_API_URL",
     "AGENTS_URL",
     "PYTHON_AGENTS_URL",
-    "ANALYTICS_API_URL",
+    "AWS_REGION",
     "AWS_S3_BUCKET",
     "CLERK_PUBLISHABLE_KEY",
     "CLERK_SECRET_KEY",
     "GRAPHQL_ENDPOINT",
     "GRAPHQL_INTERNAL_API_KEY",
     "LEONARDO_API_KEY",
-    "COGS_ITEM_COVERAGE_BLOCK_THRESHOLD",
-    "COGS_ITEM_COVERAGE_WARN_THRESHOLD",
-    "COGS_REVENUE_COVERAGE_BLOCK_THRESHOLD",
-    "COGS_REVENUE_COVERAGE_WARN_THRESHOLD",
-    "DATABASE_URL",
-    "DATA_FRESHNESS_SLA_MINUTES",
-    "E2E_BASE_URL",
-    "E2E_ANALYTICS_ID",
-    "E2E_DATA_POLICY",
-    "E2E_DB_FORBIDDEN_PATTERN",
-    "E2E_DB_GUARD_DISABLED",
-    "E2E_DB_REQUIRED_PATTERN",
-    "E2E_GATE_DRY_RUN",
-    "E2E_GATE_SIMULATE_FAILURE",
-    "E2E_LOCATION_ID",
-    "E2E_MANAGE_SERVICES",
-    "E2E_REFRESH_DB",
-    "E2E_REPORT_ONLY",
-    "E2E_REQUIRED_SERVICES",
-    "E2E_SKIP_SEED_EXECUTE",
-    "E2E_SUITE_LIST",
-    "E2E_UPLOAD_FILE",
-    "ETL_BACKFILL_MAX_DAYS",
-    "ETL_LINEAGE_BACKFILL_WRITE",
-    "ETL_OPERATION_QUEUE_STALE_MINUTES",
-    "ETL_OPERATION_RUNNING_STALE_MINUTES",
-    "ETL_STAGE_LINEAGE_COMPAT_ENABLED",
-    "LEGACY_JSON_WRITES_ENABLED",
-    "MVP_ENABLE_OPERATIONS_FEATURE",
     "NODE_ENV",
-    "QUALITY_GATE_MAX_REJECT_RATE",
-    "UV_CACHE_DIR",
+    "NEXT_PUBLIC_APP_CURRENCY",
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
     "WAREHOUSE_READS_ENABLED"
   ],
   "tasks": {
@@ -61,9 +31,7 @@
         "!.next/cache/**"
       ],
       "env": [
-        "DATABASE_URL",
-        "NODE_ENV",
-        "ANALYTICS_API_URL"
+        "NODE_ENV"
       ]
     },
     "lint": {
@@ -80,15 +48,6 @@
       "cache": false,
       "persistent": true
     },
-    "db:generate": {
-      "cache": false
-    },
-    "db:migrate": {
-      "cache": false,
-      "persistent": true
-    },
-    "db:deploy": {
-      "cache": false
-    }
+    "test": {}
   }
 }
