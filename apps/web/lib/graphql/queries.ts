@@ -2,14 +2,16 @@
  * GraphQL query and mutation strings and response types used by the web app.
  */
 
-import {
-  parseNode,
-  parseNodeNullable,
-  parseNodes,
-  type AnyNode,
-} from './node-schemas'
+import { parseNode, parseNodeNullable, parseNodes, type AnyNode } from './node-schemas'
 
-export type { AnyNode, KnownNode, PassCriteriaData, PassCriteriaNode, MilestoneNode } from './node-schemas'
+export type {
+  AnyNode,
+  KnownNode,
+  MilestoneNode,
+  PassCriteriaData,
+  PassCriteriaNode,
+  ResultNode,
+} from './node-schemas'
 
 /** Wire payload from `graphqlQuery` before parsing — use `parseNodeData` / `parseNodesData`. */
 export type NodeDataRaw = { node: unknown | null }

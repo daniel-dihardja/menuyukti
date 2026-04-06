@@ -30,9 +30,9 @@ npm install zustand zundo immer
 ```
 
 ```ts
-import { create } from 'zustand';
-import { temporal } from 'zundo';
-import { immer } from 'zustand/middleware/immer';
+import { create } from 'zustand'
+import { temporal } from 'zundo'
+import { immer } from 'zustand/middleware/immer'
 import {
   applyNodeChanges,
   applyEdgeChanges,
@@ -42,17 +42,17 @@ import {
   type OnNodesChange,
   type OnEdgesChange,
   type OnConnect,
-} from '@xyflow/react';
+} from '@xyflow/react'
 
 type FlowState = {
-  nodes: Node[];
-  edges: Edge[];
-  onNodesChange: OnNodesChange;
-  onEdgesChange: OnEdgesChange;
-  onConnect: OnConnect;
-  setNodes: (nodes: Node[]) => void;
-  setEdges: (edges: Edge[]) => void;
-};
+  nodes: Node[]
+  edges: Edge[]
+  onNodesChange: OnNodesChange
+  onEdgesChange: OnEdgesChange
+  onConnect: OnConnect
+  setNodes: (nodes: Node[]) => void
+  setEdges: (edges: Edge[]) => void
+}
 
 const useFlowStore = create<FlowState>()(
   temporal(
@@ -60,13 +60,13 @@ const useFlowStore = create<FlowState>()(
       nodes: [] as Node[],
       edges: [] as Edge[],
       onNodesChange: (changes) => {
-        set({ nodes: applyNodeChanges(changes, get().nodes) });
+        set({ nodes: applyNodeChanges(changes, get().nodes) })
       },
       onEdgesChange: (changes) => {
-        set({ edges: applyEdgeChanges(changes, get().edges) });
+        set({ edges: applyEdgeChanges(changes, get().edges) })
       },
       onConnect: (connection) => {
-        set({ edges: addEdge(connection, get().edges) });
+        set({ edges: addEdge(connection, get().edges) })
       },
       setNodes: (nodes) => set({ nodes }),
       setEdges: (edges) => set({ edges }),
@@ -79,37 +79,37 @@ const useFlowStore = create<FlowState>()(
       }),
     },
   ),
-);
+)
 
-export default useFlowStore;
+export default useFlowStore
 ```
 
 Wire up the keyboard shortcuts and undo/redo actions:
 
 ```tsx
-import { useCallback, useEffect } from 'react';
-import { ReactFlow } from '@xyflow/react';
-import { useTemporalStore } from 'zundo';
-import useFlowStore from './store';
+import { useCallback, useEffect } from 'react'
+import { ReactFlow } from '@xyflow/react'
+import { useTemporalStore } from 'zundo'
+import useFlowStore from './store'
 
 function Flow() {
-  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useFlowStore();
-  const { undo, redo } = useTemporalStore((state) => state);
+  const { nodes, edges, onNodesChange, onEdgesChange, onConnect } = useFlowStore()
+  const { undo, redo } = useTemporalStore((state) => state)
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
-        e.preventDefault();
+        e.preventDefault()
         if (e.shiftKey) {
-          redo();
+          redo()
         } else {
-          undo();
+          undo()
         }
       }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [undo, redo]);
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [undo, redo])
 
   return (
     <ReactFlow
@@ -120,7 +120,7 @@ function Flow() {
       onConnect={onConnect}
       fitView
     />
-  );
+  )
 }
 ```
 
@@ -129,24 +129,27 @@ function Flow() {
 If you prefer no extra dependency, manage history stacks directly:
 
 ```ts
-import { useCallback, useRef } from 'react';
-import { type Node, type Edge } from '@xyflow/react';
+import { useCallback, useRef } from 'react'
+import { type Node, type Edge } from '@xyflow/react'
 
-type Snapshot = { nodes: Node[]; edges: Edge[] };
+type Snapshot = { nodes: Node[]; edges: Edge[] }
 
 export function useUndoRedo(maxHistory = 100) {
-  const past = useRef<Snapshot[]>([]);
-  const future = useRef<Snapshot[]>([]);
+  const past = useRef<Snapshot[]>([])
+  const future = useRef<Snapshot[]>([])
 
-  const takeSnapshot = useCallback((nodes: Node[], edges: Edge[]) => {
-    past.current = past.current.slice(-maxHistory);
-    past.current.push({
-      nodes: structuredClone(nodes),
-      edges: structuredClone(edges),
-    });
-    // Any new action clears the redo stack
-    future.current = [];
-  }, [maxHistory]);
+  const takeSnapshot = useCallback(
+    (nodes: Node[], edges: Edge[]) => {
+      past.current = past.current.slice(-maxHistory)
+      past.current.push({
+        nodes: structuredClone(nodes),
+        edges: structuredClone(edges),
+      })
+      // Any new action clears the redo stack
+      future.current = []
+    },
+    [maxHistory],
+  )
 
   const undo = useCallback(
     (
@@ -155,17 +158,17 @@ export function useUndoRedo(maxHistory = 100) {
       setNodes: (nodes: Node[]) => void,
       setEdges: (edges: Edge[]) => void,
     ) => {
-      const previous = past.current.pop();
-      if (!previous) return;
+      const previous = past.current.pop()
+      if (!previous) return
       future.current.push({
         nodes: structuredClone(currentNodes),
         edges: structuredClone(currentEdges),
-      });
-      setNodes(previous.nodes);
-      setEdges(previous.edges);
+      })
+      setNodes(previous.nodes)
+      setEdges(previous.edges)
     },
     [],
-  );
+  )
 
   const redo = useCallback(
     (
@@ -174,22 +177,22 @@ export function useUndoRedo(maxHistory = 100) {
       setNodes: (nodes: Node[]) => void,
       setEdges: (edges: Edge[]) => void,
     ) => {
-      const next = future.current.pop();
-      if (!next) return;
+      const next = future.current.pop()
+      if (!next) return
       past.current.push({
         nodes: structuredClone(currentNodes),
         edges: structuredClone(currentEdges),
-      });
-      setNodes(next.nodes);
-      setEdges(next.edges);
+      })
+      setNodes(next.nodes)
+      setEdges(next.edges)
     },
     [],
-  );
+  )
 
-  const canUndo = useCallback(() => past.current.length > 0, []);
-  const canRedo = useCallback(() => future.current.length > 0, []);
+  const canUndo = useCallback(() => past.current.length > 0, [])
+  const canRedo = useCallback(() => future.current.length > 0, [])
 
-  return { takeSnapshot, undo, redo, canUndo, canRedo };
+  return { takeSnapshot, undo, redo, canUndo, canRedo }
 }
 ```
 
@@ -202,63 +205,56 @@ export function useUndoRedo(maxHistory = 100) {
 Use the browser Clipboard API with a custom data type to avoid interfering with normal text copy/paste. Regenerate IDs on paste and offset positions so pasted nodes don't overlap originals. Remap edge source/target to the new IDs.
 
 ```tsx
-import { useCallback, useRef } from 'react';
-import { useReactFlow, type Node, type Edge } from '@xyflow/react';
+import { useCallback, useRef } from 'react'
+import { useReactFlow, type Node, type Edge } from '@xyflow/react'
 
-let idCounter = 0;
-const newId = () => `pasted_${Date.now()}_${idCounter++}`;
+let idCounter = 0
+const newId = () => `pasted_${Date.now()}_${idCounter++}`
 
 export function useCopyPaste() {
-  const { getNodes, getEdges, setNodes, setEdges, screenToFlowPosition } =
-    useReactFlow();
-  const clipboard = useRef<{ nodes: Node[]; edges: Edge[] } | null>(null);
+  const { getNodes, getEdges, setNodes, setEdges, screenToFlowPosition } = useReactFlow()
+  const clipboard = useRef<{ nodes: Node[]; edges: Edge[] } | null>(null)
 
   const copy = useCallback(() => {
-    const selectedNodes = getNodes().filter((n) => n.selected);
-    const selectedNodeIds = new Set(selectedNodes.map((n) => n.id));
+    const selectedNodes = getNodes().filter((n) => n.selected)
+    const selectedNodeIds = new Set(selectedNodes.map((n) => n.id))
     // Only copy edges where both source and target are selected
     const selectedEdges = getEdges().filter(
       (e) => selectedNodeIds.has(e.source) && selectedNodeIds.has(e.target),
-    );
+    )
     clipboard.current = {
       nodes: structuredClone(selectedNodes),
       edges: structuredClone(selectedEdges),
-    };
-  }, [getNodes, getEdges]);
+    }
+  }, [getNodes, getEdges])
 
   const cut = useCallback(() => {
-    copy();
-    const selected = getNodes().filter((n) => n.selected);
-    const selectedIds = new Set(selected.map((n) => n.id));
-    setNodes((nodes) => nodes.filter((n) => !selectedIds.has(n.id)));
+    copy()
+    const selected = getNodes().filter((n) => n.selected)
+    const selectedIds = new Set(selected.map((n) => n.id))
+    setNodes((nodes) => nodes.filter((n) => !selectedIds.has(n.id)))
     setEdges((edges) =>
-      edges.filter(
-        (e) => !selectedIds.has(e.source) && !selectedIds.has(e.target),
-      ),
-    );
-  }, [copy, getNodes, setNodes, setEdges]);
+      edges.filter((e) => !selectedIds.has(e.source) && !selectedIds.has(e.target)),
+    )
+  }, [copy, getNodes, setNodes, setEdges])
 
   const paste = useCallback(
     (position?: { x: number; y: number }) => {
-      if (!clipboard.current) return;
+      if (!clipboard.current) return
 
-      const { nodes: copiedNodes, edges: copiedEdges } = clipboard.current;
+      const { nodes: copiedNodes, edges: copiedEdges } = clipboard.current
       // Map old IDs to new IDs
-      const idMap = new Map<string, string>();
-      copiedNodes.forEach((n) => idMap.set(n.id, newId()));
+      const idMap = new Map<string, string>()
+      copiedNodes.forEach((n) => idMap.set(n.id, newId()))
 
       // Calculate offset: place relative to original centroid, shifted
       const offset = position
         ? (() => {
-            const avgX =
-              copiedNodes.reduce((sum, n) => sum + n.position.x, 0) /
-              copiedNodes.length;
-            const avgY =
-              copiedNodes.reduce((sum, n) => sum + n.position.y, 0) /
-              copiedNodes.length;
-            return { x: position.x - avgX, y: position.y - avgY };
+            const avgX = copiedNodes.reduce((sum, n) => sum + n.position.x, 0) / copiedNodes.length
+            const avgY = copiedNodes.reduce((sum, n) => sum + n.position.y, 0) / copiedNodes.length
+            return { x: position.x - avgX, y: position.y - avgY }
           })()
-        : { x: 50, y: 50 };
+        : { x: 50, y: 50 }
 
       const newNodes = copiedNodes.map((n) => ({
         ...n,
@@ -266,54 +262,48 @@ export function useCopyPaste() {
         position: { x: n.position.x + offset.x, y: n.position.y + offset.y },
         selected: true,
         dragging: false,
-        ...(n.parentId && idMap.has(n.parentId)
-          ? { parentId: idMap.get(n.parentId)! }
-          : {}),
-      }));
+        ...(n.parentId && idMap.has(n.parentId) ? { parentId: idMap.get(n.parentId)! } : {}),
+      }))
 
       const newEdges = copiedEdges.map((e) => ({
         ...e,
         id: newId(),
         source: idMap.get(e.source)!,
         target: idMap.get(e.target)!,
-      }));
+      }))
 
       // Deselect all, then add pasted elements as selected
-      setNodes((nodes) =>
-        [...nodes.map((n) => ({ ...n, selected: false })), ...newNodes],
-      );
-      setEdges((edges) =>
-        [...edges.map((e) => ({ ...e, selected: false })), ...newEdges],
-      );
+      setNodes((nodes) => [...nodes.map((n) => ({ ...n, selected: false })), ...newNodes])
+      setEdges((edges) => [...edges.map((e) => ({ ...e, selected: false })), ...newEdges])
     },
     [setNodes, setEdges],
-  );
+  )
 
-  return { copy, cut, paste };
+  return { copy, cut, paste }
 }
 ```
 
 Wire up keyboard shortcuts:
 
 ```tsx
-const { copy, cut, paste } = useCopyPaste();
+const { copy, cut, paste } = useCopyPaste()
 
 useEffect(() => {
   const onKeyDown = (e: KeyboardEvent) => {
     // Skip if user is typing in an input
-    if ((e.target as HTMLElement).closest('input, textarea, select')) return;
+    if ((e.target as HTMLElement).closest('input, textarea, select')) return
 
     if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
-      copy();
+      copy()
     } else if ((e.metaKey || e.ctrlKey) && e.key === 'x') {
-      cut();
+      cut()
     } else if ((e.metaKey || e.ctrlKey) && e.key === 'v') {
-      paste();
+      paste()
     }
-  };
-  document.addEventListener('keydown', onKeyDown);
-  return () => document.removeEventListener('keydown', onKeyDown);
-}, [copy, cut, paste]);
+  }
+  document.addEventListener('keydown', onKeyDown)
+  return () => document.removeEventListener('keydown', onKeyDown)
+}, [copy, cut, paste])
 ```
 
 ## Save and restore
@@ -321,30 +311,30 @@ useEffect(() => {
 Use `toObject()` from `useReactFlow()` to serialize the entire flow (nodes, edges, viewport) and restore it later:
 
 ```tsx
-import { useCallback } from 'react';
-import { useReactFlow } from '@xyflow/react';
+import { useCallback } from 'react'
+import { useReactFlow } from '@xyflow/react'
 
 function useSaveRestore(storageKey = 'react-flow-state') {
-  const { toObject, setNodes, setEdges, setViewport } = useReactFlow();
+  const { toObject, setNodes, setEdges, setViewport } = useReactFlow()
 
   const save = useCallback(() => {
-    const flow = toObject();
-    localStorage.setItem(storageKey, JSON.stringify(flow));
-  }, [toObject, storageKey]);
+    const flow = toObject()
+    localStorage.setItem(storageKey, JSON.stringify(flow))
+  }, [toObject, storageKey])
 
   const restore = useCallback(() => {
-    const json = localStorage.getItem(storageKey);
-    if (!json) return;
+    const json = localStorage.getItem(storageKey)
+    if (!json) return
 
-    const flow = JSON.parse(json);
-    setNodes(flow.nodes || []);
-    setEdges(flow.edges || []);
+    const flow = JSON.parse(json)
+    setNodes(flow.nodes || [])
+    setEdges(flow.edges || [])
 
-    const { x = 0, y = 0, zoom = 1 } = flow.viewport || {};
-    setViewport({ x, y, zoom });
-  }, [setNodes, setEdges, setViewport, storageKey]);
+    const { x = 0, y = 0, zoom = 1 } = flow.viewport || {}
+    setViewport({ x, y, zoom })
+  }, [setNodes, setEdges, setViewport, storageKey])
 
-  return { save, restore };
+  return { save, restore }
 }
 ```
 
@@ -352,9 +342,9 @@ function useSaveRestore(storageKey = 'react-flow-state') {
 
 ```ts
 interface ReactFlowJsonObject<NodeType, EdgeType> {
-  nodes: NodeType[];
-  edges: EdgeType[];
-  viewport: { x: number; y: number; zoom: number };
+  nodes: NodeType[]
+  edges: EdgeType[]
+  viewport: { x: number; y: number; zoom: number }
 }
 ```
 
@@ -364,41 +354,38 @@ This is JSON-serializable and works with `localStorage`, databases, or file expo
 
 Build nodes that react to data from connected nodes. Three hooks work together:
 
-| Hook | Purpose |
-|------|---------|
+| Hook                                 | Purpose                                        |
+| ------------------------------------ | ---------------------------------------------- |
 | `useNodeConnections({ handleType })` | Discover which nodes are connected to a handle |
-| `useNodesData(nodeIds)` | Subscribe to data changes on connected nodes |
-| `updateNodeData(id, data)` | Write computed results back to the node |
+| `useNodesData(nodeIds)`              | Subscribe to data changes on connected nodes   |
+| `updateNodeData(id, data)`           | Write computed results back to the node        |
 
 ### Input node (writes data)
 
 ```tsx
-import { memo } from 'react';
-import { Handle, Position, useReactFlow, type NodeProps, type Node } from '@xyflow/react';
+import { memo } from 'react'
+import { Handle, Position, useReactFlow, type NodeProps, type Node } from '@xyflow/react'
 
-type TextNodeData = { text: string };
+type TextNodeData = { text: string }
 
 function TextNode({ id, data }: NodeProps<Node<TextNodeData>>) {
-  const { updateNodeData } = useReactFlow();
+  const { updateNodeData } = useReactFlow()
 
   return (
     <div className="nodrag">
       <Handle type="source" position={Position.Right} />
-      <input
-        value={data.text}
-        onChange={(e) => updateNodeData(id, { text: e.target.value })}
-      />
+      <input value={data.text} onChange={(e) => updateNodeData(id, { text: e.target.value })} />
     </div>
-  );
+  )
 }
 
-export default memo(TextNode);
+export default memo(TextNode)
 ```
 
 ### Transform node (reads input, writes output)
 
 ```tsx
-import { memo, useEffect } from 'react';
+import { memo, useEffect } from 'react'
 import {
   Handle,
   Position,
@@ -406,17 +393,17 @@ import {
   useNodeConnections,
   useNodesData,
   type NodeProps,
-} from '@xyflow/react';
+} from '@xyflow/react'
 
 function UppercaseNode({ id }: NodeProps) {
-  const { updateNodeData } = useReactFlow();
-  const connections = useNodeConnections({ handleType: 'target' });
-  const sourceData = useNodesData(connections.map((c) => c.source));
+  const { updateNodeData } = useReactFlow()
+  const connections = useNodeConnections({ handleType: 'target' })
+  const sourceData = useNodesData(connections.map((c) => c.source))
 
   useEffect(() => {
-    const inputText = sourceData[0]?.data?.text ?? '';
-    updateNodeData(id, { text: inputText.toUpperCase() });
-  }, [sourceData, id, updateNodeData]);
+    const inputText = sourceData[0]?.data?.text ?? ''
+    updateNodeData(id, { text: inputText.toUpperCase() })
+  }, [sourceData, id, updateNodeData])
 
   return (
     <div>
@@ -424,21 +411,21 @@ function UppercaseNode({ id }: NodeProps) {
       <div>uppercase transform</div>
       <Handle type="source" position={Position.Right} />
     </div>
-  );
+  )
 }
 
-export default memo(UppercaseNode);
+export default memo(UppercaseNode)
 ```
 
 ### Aggregator node (reads from multiple sources)
 
 ```tsx
-import { memo } from 'react';
-import { Handle, Position, useNodeConnections, useNodesData } from '@xyflow/react';
+import { memo } from 'react'
+import { Handle, Position, useNodeConnections, useNodesData } from '@xyflow/react'
 
 function ResultNode() {
-  const connections = useNodeConnections({ handleType: 'target' });
-  const nodesData = useNodesData(connections.map((c) => c.source));
+  const connections = useNodeConnections({ handleType: 'target' })
+  const nodesData = useNodesData(connections.map((c) => c.source))
 
   return (
     <div>
@@ -449,10 +436,10 @@ function ResultNode() {
         ))}
       </div>
     </div>
-  );
+  )
 }
 
-export default memo(ResultNode);
+export default memo(ResultNode)
 ```
 
 ### Conditional branching with multiple output handles
@@ -461,17 +448,17 @@ A node can route data to different handles based on computation:
 
 ```tsx
 function BranchNode({ id }: NodeProps) {
-  const { updateNodeData } = useReactFlow();
-  const connections = useNodeConnections({ handleType: 'target' });
-  const sourceData = useNodesData(connections.map((c) => c.source));
+  const { updateNodeData } = useReactFlow()
+  const connections = useNodeConnections({ handleType: 'target' })
+  const sourceData = useNodesData(connections.map((c) => c.source))
 
   useEffect(() => {
-    const value = sourceData[0]?.data?.value ?? 0;
+    const value = sourceData[0]?.data?.value ?? 0
     updateNodeData(id, {
       high: value > 50 ? value : null,
       low: value <= 50 ? value : null,
-    });
-  }, [sourceData, id, updateNodeData]);
+    })
+  }, [sourceData, id, updateNodeData])
 
   return (
     <div>
@@ -480,7 +467,7 @@ function BranchNode({ id }: NodeProps) {
       <Handle type="source" position={Position.Top} id="high" />
       <Handle type="source" position={Position.Bottom} id="low" />
     </div>
-  );
+  )
 }
 ```
 
@@ -491,26 +478,28 @@ Downstream nodes connect to the specific handle and check for `null` to know whe
 When handles are added, removed, or repositioned programmatically, React Flow must recalculate internal dimensions. Call `useUpdateNodeInternals()` after the change.
 
 ```tsx
-import { useCallback, useState } from 'react';
-import { Handle, Position, useUpdateNodeInternals, type NodeProps } from '@xyflow/react';
+import { useCallback, useState } from 'react'
+import { Handle, Position, useUpdateNodeInternals, type NodeProps } from '@xyflow/react'
 
 function DynamicHandleNode({ id }: NodeProps) {
-  const updateNodeInternals = useUpdateNodeInternals();
-  const [outputs, setOutputs] = useState(['out-1']);
+  const updateNodeInternals = useUpdateNodeInternals()
+  const [outputs, setOutputs] = useState(['out-1'])
 
   const addHandle = useCallback(() => {
     setOutputs((prev) => {
-      const next = [...prev, `out-${prev.length + 1}`];
+      const next = [...prev, `out-${prev.length + 1}`]
       // Must call after state update triggers a render
-      requestAnimationFrame(() => updateNodeInternals(id));
-      return next;
-    });
-  }, [id, updateNodeInternals]);
+      requestAnimationFrame(() => updateNodeInternals(id))
+      return next
+    })
+  }, [id, updateNodeInternals])
 
   return (
     <div>
       <Handle type="target" position={Position.Left} />
-      <button className="nodrag" onClick={addHandle}>+ output</button>
+      <button className="nodrag" onClick={addHandle}>
+        + output
+      </button>
       {outputs.map((handleId, i) => (
         <Handle
           key={handleId}
@@ -521,7 +510,7 @@ function DynamicHandleNode({ id }: NodeProps) {
         />
       ))}
     </div>
-  );
+  )
 }
 ```
 
@@ -533,11 +522,11 @@ Generate handles from node data rather than hardcoding them:
 
 ```tsx
 function SchemaNode({ id, data }: NodeProps<Node<{ fields: string[] }>>) {
-  const updateNodeInternals = useUpdateNodeInternals();
+  const updateNodeInternals = useUpdateNodeInternals()
 
   useEffect(() => {
-    updateNodeInternals(id);
-  }, [data.fields, id, updateNodeInternals]);
+    updateNodeInternals(id)
+  }, [data.fields, id, updateNodeInternals])
 
   return (
     <div>
@@ -545,15 +534,11 @@ function SchemaNode({ id, data }: NodeProps<Node<{ fields: string[] }>>) {
       {data.fields.map((field) => (
         <div key={field} style={{ display: 'flex', alignItems: 'center' }}>
           <span>{field}</span>
-          <Handle
-            type="source"
-            position={Position.Right}
-            id={field}
-          />
+          <Handle type="source" position={Position.Right} id={field} />
         </div>
       ))}
     </div>
-  );
+  )
 }
 ```
 
@@ -587,37 +572,37 @@ const isValidConnection = useCallback(
 ### Cycle prevention using getOutgoers
 
 ```tsx
-import { useCallback } from 'react';
-import { getOutgoers, useReactFlow, type Connection } from '@xyflow/react';
+import { useCallback } from 'react'
+import { getOutgoers, useReactFlow, type Connection } from '@xyflow/react'
 
 function useNoCycles() {
-  const { getNodes, getEdges } = useReactFlow();
+  const { getNodes, getEdges } = useReactFlow()
 
   return useCallback(
     (connection: Connection) => {
-      const nodes = getNodes();
-      const edges = getEdges();
-      const target = nodes.find((n) => n.id === connection.target);
-      if (!target) return false;
+      const nodes = getNodes()
+      const edges = getEdges()
+      const target = nodes.find((n) => n.id === connection.target)
+      if (!target) return false
 
       // Prevent self-connection
-      if (connection.source === connection.target) return false;
+      if (connection.source === connection.target) return false
 
       // BFS: walk from target along outgoing edges — if we reach source, it's a cycle
       const hasCycle = (node: typeof target, visited = new Set<string>()) => {
-        if (visited.has(node.id)) return false;
-        visited.add(node.id);
+        if (visited.has(node.id)) return false
+        visited.add(node.id)
         for (const outgoer of getOutgoers(node, nodes, edges)) {
-          if (outgoer.id === connection.source) return true;
-          if (hasCycle(outgoer, visited)) return true;
+          if (outgoer.id === connection.source) return true
+          if (hasCycle(outgoer, visited)) return true
         }
-        return false;
-      };
+        return false
+      }
 
-      return !hasCycle(target);
+      return !hasCycle(target)
     },
     [getNodes, getEdges],
-  );
+  )
 }
 ```
 
@@ -634,7 +619,7 @@ const isValidConnection = useNoCycles();
 Limit the number of connections per handle using `useNodeConnections`:
 
 ```tsx
-import { Handle, useNodeConnections, type HandleProps } from '@xyflow/react';
+import { Handle, useNodeConnections, type HandleProps } from '@xyflow/react'
 
 function LimitedHandle({
   connectionCount = 1,
@@ -643,11 +628,9 @@ function LimitedHandle({
   const connections = useNodeConnections({
     handleType: props.type,
     handleId: props.id,
-  });
+  })
 
-  return (
-    <Handle {...props} isConnectable={connections.length < connectionCount} />
-  );
+  return <Handle {...props} isConnectable={connections.length < connectionCount} />
 }
 ```
 
@@ -663,13 +646,13 @@ Usage in a custom node:
 Show different content based on the current zoom level. Use `useStore` with a selector for performance — the component only re-renders when the zoom threshold is crossed, not on every zoom change:
 
 ```tsx
-import { memo } from 'react';
-import { Handle, Position, useStore } from '@xyflow/react';
+import { memo } from 'react'
+import { Handle, Position, useStore } from '@xyflow/react'
 
-const showDetailSelector = (state: ReactFlowState) => state.transform[2] >= 0.9;
+const showDetailSelector = (state: ReactFlowState) => state.transform[2] >= 0.9
 
 function DetailNode({ data }: NodeProps) {
-  const showDetail = useStore(showDetailSelector);
+  const showDetail = useStore(showDetailSelector)
 
   return (
     <div>
@@ -679,7 +662,11 @@ function DetailNode({ data }: NodeProps) {
         <div>
           <h3>{data.label}</h3>
           <p>{data.description}</p>
-          <ul>{data.items.map((item) => <li key={item}>{item}</li>)}</ul>
+          <ul>
+            {data.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
         </div>
       ) : (
         // Placeholder at low zoom
@@ -687,10 +674,10 @@ function DetailNode({ data }: NodeProps) {
       )}
       <Handle type="source" position={Position.Right} />
     </div>
-  );
+  )
 }
 
-export default memo(DetailNode);
+export default memo(DetailNode)
 ```
 
 **Critical**: Define the selector **outside** the component to keep a stable reference. If defined inline, the selector identity changes every render, defeating the optimization.
@@ -701,11 +688,11 @@ export default memo(DetailNode);
 
 Before building multiplayer, decide what to sync:
 
-| Category | Properties | Sync? |
-|----------|-----------|-------|
-| **Durable** | `id`, `type`, `data`, `position`, `source`, `target`, `sourceHandle`, `targetHandle` | Always sync and persist |
-| **Ephemeral** | `dragging`, `resizing`, cursor positions | Sync for UX (other users see activity), do not persist |
-| **Never sync** | `selected`, `measured`, `width`/`height` (computed) | Local per-user state |
+| Category       | Properties                                                                           | Sync?                                                  |
+| -------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| **Durable**    | `id`, `type`, `data`, `position`, `source`, `target`, `sourceHandle`, `targetHandle` | Always sync and persist                                |
+| **Ephemeral**  | `dragging`, `resizing`, cursor positions                                             | Sync for UX (other users see activity), do not persist |
+| **Never sync** | `selected`, `measured`, `width`/`height` (computed)                                  | Local per-user state                                   |
 
 ### Architecture with Yjs (CRDT)
 
@@ -716,73 +703,73 @@ npm install yjs y-webrtc
 ```
 
 ```ts
-import * as Y from 'yjs';
-import { WebrtcProvider } from 'y-webrtc';
+import * as Y from 'yjs'
+import { WebrtcProvider } from 'y-webrtc'
 
 // Create a shared document
-const ydoc = new Y.Doc();
-const provider = new WebrtcProvider('my-flow-room', ydoc);
+const ydoc = new Y.Doc()
+const provider = new WebrtcProvider('my-flow-room', ydoc)
 
 // Shared data structures
-const yNodes = ydoc.getMap<Node>('nodes');
-const yEdges = ydoc.getArray<Edge>('edges');
+const yNodes = ydoc.getMap<Node>('nodes')
+const yEdges = ydoc.getArray<Edge>('edges')
 ```
 
 Sync React Flow state with Yjs by observing changes:
 
 ```ts
-import { useEffect, useCallback } from 'react';
-import { useReactFlow } from '@xyflow/react';
+import { useEffect, useCallback } from 'react'
+import { useReactFlow } from '@xyflow/react'
 
 function useYjsSync(yNodes: Y.Map<Node>, yEdges: Y.Array<Edge>) {
-  const { setNodes, setEdges } = useReactFlow();
+  const { setNodes, setEdges } = useReactFlow()
 
   // Yjs -> React Flow: update local state when remote changes arrive
   useEffect(() => {
     const onNodesChange = () => {
-      setNodes(Array.from(yNodes.values()));
-    };
+      setNodes(Array.from(yNodes.values()))
+    }
     const onEdgesChange = () => {
-      setEdges(yEdges.toArray());
-    };
+      setEdges(yEdges.toArray())
+    }
 
-    yNodes.observe(onNodesChange);
-    yEdges.observe(onEdgesChange);
+    yNodes.observe(onNodesChange)
+    yEdges.observe(onEdgesChange)
 
     // Initial sync
-    onNodesChange();
-    onEdgesChange();
+    onNodesChange()
+    onEdgesChange()
 
     return () => {
-      yNodes.unobserve(onNodesChange);
-      yEdges.unobserve(onEdgesChange);
-    };
-  }, [yNodes, yEdges, setNodes, setEdges]);
+      yNodes.unobserve(onNodesChange)
+      yEdges.unobserve(onEdgesChange)
+    }
+  }, [yNodes, yEdges, setNodes, setEdges])
 
   // React Flow -> Yjs: write local changes to shared doc
   const updateNode = useCallback(
     (id: string, updates: Partial<Node>) => {
-      const existing = yNodes.get(id);
+      const existing = yNodes.get(id)
       if (existing) {
-        yNodes.set(id, { ...existing, ...updates });
+        yNodes.set(id, { ...existing, ...updates })
       }
     },
     [yNodes],
-  );
+  )
 
-  return { updateNode };
+  return { updateNode }
 }
 ```
 
 ### Technology comparison
 
-| Solution | Type | Offline support | Conflict resolution |
-|----------|------|----------------|---------------------|
-| **Yjs** | CRDT | Yes | Automatic |
-| **Automerge** | CRDT | Yes | Automatic |
-| **Liveblocks** | Server-authoritative | Limited | Server-managed |
-| **Supabase Realtime** | Server-authoritative | No | Manual (last-write-wins) |
-| **Convex** | Server-authoritative | Optimistic updates | Server-managed |
+| Solution              | Type                 | Offline support    | Conflict resolution      |
+| --------------------- | -------------------- | ------------------ | ------------------------ |
+| **Yjs**               | CRDT                 | Yes                | Automatic                |
+| **Automerge**         | CRDT                 | Yes                | Automatic                |
+| **Liveblocks**        | Server-authoritative | Limited            | Server-managed           |
+| **Supabase Realtime** | Server-authoritative | No                 | Manual (last-write-wins) |
+| **Convex**            | Server-authoritative | Optimistic updates | Server-managed           |
 
 CRDTs (Yjs, Automerge) are the better fit for flow editors because node position conflicts resolve naturally (both users' moves merge). Server-authoritative solutions require more coordination logic but are simpler to set up with existing databases.
 

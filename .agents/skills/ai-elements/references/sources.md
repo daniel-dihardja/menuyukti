@@ -19,48 +19,39 @@ Build a simple web search agent with Perplexity Sonar.
 Add the following component to your frontend:
 
 ```tsx title="app/page.tsx"
-"use client";
+'use client'
 
-import { useChat } from "@ai-sdk/react";
-import {
-  Source,
-  Sources,
-  SourcesContent,
-  SourcesTrigger,
-} from "@/components/ai-elements/sources";
+import { useChat } from '@ai-sdk/react'
+import { Source, Sources, SourcesContent, SourcesTrigger } from '@/components/ai-elements/sources'
 import {
   PromptInput,
   type PromptInputMessage,
   PromptInputTextarea,
   PromptInputSubmit,
-} from "@/components/ai-elements/prompt-input";
+} from '@/components/ai-elements/prompt-input'
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from "@/components/ai-elements/conversation";
-import {
-  Message,
-  MessageContent,
-  MessageResponse,
-} from "@/components/ai-elements/message";
-import { useState } from "react";
-import { DefaultChatTransport } from "ai";
+} from '@/components/ai-elements/conversation'
+import { Message, MessageContent, MessageResponse } from '@/components/ai-elements/message'
+import { useState } from 'react'
+import { DefaultChatTransport } from 'ai'
 
 const SourceDemo = () => {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('')
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
-      api: "/api/sources",
+      api: '/api/sources',
     }),
-  });
+  })
 
   const handleSubmit = (message: PromptInputMessage) => {
     if (message.text.trim()) {
-      sendMessage({ text: message.text });
-      setInput("");
+      sendMessage({ text: message.text })
+      setInput('')
     }
-  };
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 relative size-full rounded-lg border h-[600px]">
@@ -70,18 +61,14 @@ const SourceDemo = () => {
             <ConversationContent>
               {messages.map((message) => (
                 <div key={message.id}>
-                  {message.role === "assistant" && (
+                  {message.role === 'assistant' && (
                     <Sources>
                       <SourcesTrigger
-                        count={
-                          message.parts.filter(
-                            (part) => part.type === "source-url"
-                          ).length
-                        }
+                        count={message.parts.filter((part) => part.type === 'source-url').length}
                       />
                       {message.parts.map((part, i) => {
                         switch (part.type) {
-                          case "source-url":
+                          case 'source-url':
                             return (
                               <SourcesContent key={`${message.id}-${i}`}>
                                 <Source
@@ -90,7 +77,7 @@ const SourceDemo = () => {
                                   title={part.url}
                                 />
                               </SourcesContent>
-                            );
+                            )
                         }
                       })}
                     </Sources>
@@ -99,14 +86,14 @@ const SourceDemo = () => {
                     <MessageContent>
                       {message.parts.map((part, i) => {
                         switch (part.type) {
-                          case "text":
+                          case 'text':
                             return (
                               <MessageResponse key={`${message.id}-${i}`}>
                                 {part.text}
                               </MessageResponse>
-                            );
+                            )
                           default:
-                            return null;
+                            return null
                         }
                       })}
                     </MessageContent>
@@ -118,10 +105,7 @@ const SourceDemo = () => {
           </Conversation>
         </div>
 
-        <PromptInput
-          onSubmit={handleSubmit}
-          className="mt-4 w-full max-w-2xl mx-auto relative"
-        >
+        <PromptInput onSubmit={handleSubmit} className="mt-4 w-full max-w-2xl mx-auto relative">
           <PromptInputTextarea
             value={input}
             placeholder="Ask a question and search the..."
@@ -129,41 +113,41 @@ const SourceDemo = () => {
             className="pr-12"
           />
           <PromptInputSubmit
-            status={status === "streaming" ? "streaming" : "ready"}
+            status={status === 'streaming' ? 'streaming' : 'ready'}
             disabled={!input.trim()}
             className="absolute bottom-1 right-1"
           />
         </PromptInput>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default SourceDemo;
+export default SourceDemo
 ```
 
 Add the following route to your backend:
 
 ```tsx title="api/chat/route.ts"
-import { convertToModelMessages, streamText, UIMessage } from "ai";
-import { perplexity } from "@ai-sdk/perplexity";
+import { convertToModelMessages, streamText, UIMessage } from 'ai'
+import { perplexity } from '@ai-sdk/perplexity'
 
 // Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
+export const maxDuration = 30
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const { messages }: { messages: UIMessage[] } = await req.json()
 
   const result = streamText({
-    model: "perplexity/sonar",
+    model: 'perplexity/sonar',
     system:
-      "You are a helpful assistant. Keep your responses short (< 100 words) unless you are asked for more details. ALWAYS USE SEARCH.",
+      'You are a helpful assistant. Keep your responses short (< 100 words) unless you are asked for more details. ALWAYS USE SEARCH.',
     messages: await convertToModelMessages(messages),
-  });
+  })
 
   return result.toUIMessageStreamResponse({
     sendSources: true,
-  });
+  })
 }
 ```
 
@@ -185,25 +169,25 @@ See `scripts/sources-custom.tsx` for this example.
 
 ### `<Sources />`
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Any other props are spread to the root div. |
+| Prop       | Type                                   | Default | Description                                 |
+| ---------- | -------------------------------------- | ------- | ------------------------------------------- |
+| `...props` | `React.HTMLAttributes<HTMLDivElement>` | -       | Any other props are spread to the root div. |
 
 ### `<SourcesTrigger />`
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `count` | `number` | Required | The number of sources to display in the trigger. |
-| `...props` | `React.ComponentProps<typeof CollapsibleTrigger>` | - | Any other props are spread to the CollapsibleTrigger component. |
+| Prop       | Type                                              | Default  | Description                                                     |
+| ---------- | ------------------------------------------------- | -------- | --------------------------------------------------------------- |
+| `count`    | `number`                                          | Required | The number of sources to display in the trigger.                |
+| `...props` | `React.ComponentProps<typeof CollapsibleTrigger>` | -        | Any other props are spread to the CollapsibleTrigger component. |
 
 ### `<SourcesContent />`
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `...props` | `React.HTMLAttributes<HTMLDivElement>` | - | Any other props are spread to the content container. |
+| Prop       | Type                                   | Default | Description                                          |
+| ---------- | -------------------------------------- | ------- | ---------------------------------------------------- |
+| `...props` | `React.HTMLAttributes<HTMLDivElement>` | -       | Any other props are spread to the content container. |
 
 ### `<Source />`
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `...props` | `React.AnchorHTMLAttributes<HTMLAnchorElement>` | - | Any other props are spread to the anchor element. |
+| Prop       | Type                                            | Default | Description                                       |
+| ---------- | ----------------------------------------------- | ------- | ------------------------------------------------- |
+| `...props` | `React.AnchorHTMLAttributes<HTMLAnchorElement>` | -       | Any other props are spread to the anchor element. |

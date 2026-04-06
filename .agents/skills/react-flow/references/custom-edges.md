@@ -24,15 +24,15 @@ Use this file when creating custom edge components, adding interactive edge labe
 Custom edges receive coordinate and data props from React Flow:
 
 ```tsx
-import { BaseEdge, getStraightPath } from '@xyflow/react';
+import { BaseEdge, getStraightPath } from '@xyflow/react'
 
 function CustomEdge({ id, sourceX, sourceY, targetX, targetY }) {
-  const [edgePath] = getStraightPath({ sourceX, sourceY, targetX, targetY });
+  const [edgePath] = getStraightPath({ sourceX, sourceY, targetX, targetY })
 
-  return <BaseEdge id={id} path={edgePath} />;
+  return <BaseEdge id={id} path={edgePath} />
 }
 
-export default CustomEdge;
+export default CustomEdge
 ```
 
 ### Step 2: Register the edge type (outside the component!)
@@ -48,60 +48,60 @@ function App() {
 ### Step 3: Use the type in edge data
 
 ```tsx
-const edges = [
-  { id: 'e1', source: '1', target: '2', type: 'custom' },
-];
+const edges = [{ id: 'e1', source: '1', target: '2', type: 'custom' }]
 ```
 
 ## Props injected into custom edges
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `id` | `string` | Edge ID |
-| `source` | `string` | Source node ID |
-| `target` | `string` | Target node ID |
-| `sourceX` | `number` | Source handle X coordinate |
-| `sourceY` | `number` | Source handle Y coordinate |
-| `targetX` | `number` | Target handle X coordinate |
-| `targetY` | `number` | Target handle Y coordinate |
-| `sourcePosition` | `Position` | Source handle position (Top/Right/Bottom/Left) |
-| `targetPosition` | `Position` | Target handle position |
-| `sourceHandleId` | `string \| null` | Source handle ID |
-| `targetHandleId` | `string \| null` | Target handle ID |
-| `data` | `T` | Custom edge data |
-| `selected` | `boolean` | Whether the edge is selected |
-| `animated` | `boolean` | Whether the edge is animated |
-| `markerStart` | `string` | Start marker URL |
-| `markerEnd` | `string` | End marker URL |
-| `style` | `CSSProperties` | Edge styles |
-| `interactionWidth` | `number` | Invisible interaction area width |
-| `label` | `ReactNode` | Edge label |
+| Prop               | Type             | Description                                    |
+| ------------------ | ---------------- | ---------------------------------------------- |
+| `id`               | `string`         | Edge ID                                        |
+| `source`           | `string`         | Source node ID                                 |
+| `target`           | `string`         | Target node ID                                 |
+| `sourceX`          | `number`         | Source handle X coordinate                     |
+| `sourceY`          | `number`         | Source handle Y coordinate                     |
+| `targetX`          | `number`         | Target handle X coordinate                     |
+| `targetY`          | `number`         | Target handle Y coordinate                     |
+| `sourcePosition`   | `Position`       | Source handle position (Top/Right/Bottom/Left) |
+| `targetPosition`   | `Position`       | Target handle position                         |
+| `sourceHandleId`   | `string \| null` | Source handle ID                               |
+| `targetHandleId`   | `string \| null` | Target handle ID                               |
+| `data`             | `T`              | Custom edge data                               |
+| `selected`         | `boolean`        | Whether the edge is selected                   |
+| `animated`         | `boolean`        | Whether the edge is animated                   |
+| `markerStart`      | `string`         | Start marker URL                               |
+| `markerEnd`        | `string`         | End marker URL                                 |
+| `style`            | `CSSProperties`  | Edge styles                                    |
+| `interactionWidth` | `number`         | Invisible interaction area width               |
+| `label`            | `ReactNode`      | Edge label                                     |
 
 ## Path generation utilities
 
 React Flow provides four functions that return `[path, labelX, labelY, offsetX, offsetY]`:
 
-| Function | Description | Best for |
-|----------|-------------|----------|
-| `getBezierPath` | Smooth bezier curve | Default curved edges |
-| `getSimpleBezierPath` | Simpler bezier curve | Less pronounced curves |
-| `getSmoothStepPath` | Rounded right-angle path | Step-based layouts |
-| `getStraightPath` | Direct straight line | Simple connections |
+| Function              | Description              | Best for               |
+| --------------------- | ------------------------ | ---------------------- |
+| `getBezierPath`       | Smooth bezier curve      | Default curved edges   |
+| `getSimpleBezierPath` | Simpler bezier curve     | Less pronounced curves |
+| `getSmoothStepPath`   | Rounded right-angle path | Step-based layouts     |
+| `getStraightPath`     | Direct straight line     | Simple connections     |
 
 ### Usage pattern
 
 ```tsx
-import { BaseEdge, getBezierPath } from '@xyflow/react';
+import { BaseEdge, getBezierPath } from '@xyflow/react'
 
 function BezierEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition }) {
   const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX, sourceY,
-    targetX, targetY,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
     sourcePosition,
     targetPosition,
-  });
+  })
 
-  return <BaseEdge id={id} path={edgePath} />;
+  return <BaseEdge id={id} path={edgePath} />
 }
 ```
 
@@ -109,33 +109,35 @@ function BezierEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, ta
 
 ```tsx
 const [edgePath] = getSmoothStepPath({
-  sourceX, sourceY,
-  targetX, targetY,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
   sourcePosition,
   targetPosition,
-  borderRadius: 8,   // corner rounding (default: 5)
-  offset: 25,        // spacing from nodes
-});
+  borderRadius: 8, // corner rounding (default: 5)
+  offset: 25, // spacing from nodes
+})
 ```
 
 ## Custom SVG paths
 
 Build paths manually using SVG path commands:
 
-| Command | Syntax | Description |
-|---------|--------|-------------|
-| `M` | `M x y` | Move to coordinate |
-| `L` | `L x y` | Line to coordinate |
-| `Q` | `Q cx cy x y` | Quadratic bezier (cx,cy = control point) |
-| `C` | `C cx1 cy1 cx2 cy2 x y` | Cubic bezier |
+| Command | Syntax                  | Description                              |
+| ------- | ----------------------- | ---------------------------------------- |
+| `M`     | `M x y`                 | Move to coordinate                       |
+| `L`     | `L x y`                 | Line to coordinate                       |
+| `Q`     | `Q cx cy x y`           | Quadratic bezier (cx,cy = control point) |
+| `C`     | `C cx1 cy1 cx2 cy2 x y` | Cubic bezier                             |
 
 ```tsx
 function WavyEdge({ id, sourceX, sourceY, targetX, targetY }) {
-  const midX = (sourceX + targetX) / 2;
-  const midY = (sourceY + targetY) / 2;
-  const edgePath = `M ${sourceX} ${sourceY} Q ${midX} ${midY - 50} ${targetX} ${targetY}`;
+  const midX = (sourceX + targetX) / 2
+  const midY = (sourceY + targetY) / 2
+  const edgePath = `M ${sourceX} ${sourceY} Q ${midX} ${midY - 50} ${targetX} ${targetY}`
 
-  return <BaseEdge id={id} path={edgePath} />;
+  return <BaseEdge id={id} path={edgePath} />
 }
 ```
 
@@ -144,12 +146,26 @@ function WavyEdge({ id, sourceX, sourceY, targetX, targetY }) {
 For interactive or complex edge labels, use `<EdgeLabelRenderer>`:
 
 ```tsx
-import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react'
 
-function LabeledEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data }) {
+function LabeledEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  data,
+}) {
   const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition,
-  });
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+  })
 
   return (
     <>
@@ -167,11 +183,12 @@ function LabeledEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, t
         </div>
       </EdgeLabelRenderer>
     </>
-  );
+  )
 }
 ```
 
 **Key patterns for EdgeLabelRenderer:**
+
 - Use `position: absolute` on the label container
 - Use `transform: translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` for positioning
 - Add `pointerEvents: 'all'` to make labels interactive
@@ -182,10 +199,10 @@ function LabeledEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, t
 `<EdgeToolbar>` renders a toolbar near the edge (appears when edge is selected):
 
 ```tsx
-import { BaseEdge, EdgeToolbar, getBezierPath } from '@xyflow/react';
+import { BaseEdge, EdgeToolbar, getBezierPath } from '@xyflow/react'
 
 function ToolbarEdge(props) {
-  const [edgePath] = getBezierPath(props);
+  const [edgePath] = getBezierPath(props)
 
   return (
     <>
@@ -195,7 +212,7 @@ function ToolbarEdge(props) {
         <button>Delete</button>
       </EdgeToolbar>
     </>
-  );
+  )
 }
 ```
 
@@ -204,7 +221,7 @@ function ToolbarEdge(props) {
 ### Using built-in markers
 
 ```tsx
-import { MarkerType } from '@xyflow/react';
+import { MarkerType } from '@xyflow/react'
 
 const edges = [
   {
@@ -225,26 +242,26 @@ const edges = [
     },
     markerStart: { type: MarkerType.Arrow },
   },
-];
+]
 ```
 
 ### MarkerType options
 
-| Type | Description |
-|------|-------------|
-| `MarkerType.Arrow` | Open arrowhead |
+| Type                     | Description      |
+| ------------------------ | ---------------- |
+| `MarkerType.Arrow`       | Open arrowhead   |
 | `MarkerType.ArrowClosed` | Filled arrowhead |
 
 ### Marker properties
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `type` | `MarkerType` | Arrow style |
-| `color` | `string` | Marker color |
-| `width` | `number` | Marker width |
-| `height` | `number` | Marker height |
-| `orient` | `string` | Marker orientation |
-| `strokeWidth` | `number` | Stroke width |
+| Property      | Type         | Description        |
+| ------------- | ------------ | ------------------ |
+| `type`        | `MarkerType` | Arrow style        |
+| `color`       | `string`     | Marker color       |
+| `width`       | `number`     | Marker width       |
+| `height`      | `number`     | Marker height      |
+| `orient`      | `string`     | Marker orientation |
+| `strokeWidth` | `number`     | Stroke width       |
 
 ### Default marker color
 
@@ -297,20 +314,22 @@ const defaultEdgeOptions = {
 
 ```tsx
 function DashEdge({ id, ...props }: EdgeProps) {
-  const [edgePath] = getBezierPath(props);
+  const [edgePath] = getBezierPath(props)
   return (
     <BaseEdge
       id={id}
       path={edgePath}
       style={{ strokeDasharray: '5 5', animation: 'dashdraw 0.5s linear infinite' }}
     />
-  );
+  )
 }
 ```
 
 ```css
 @keyframes dashdraw {
-  to { stroke-dashoffset: -10; }
+  to {
+    stroke-dashoffset: -10;
+  }
 }
 ```
 
@@ -318,7 +337,7 @@ function DashEdge({ id, ...props }: EdgeProps) {
 
 ```tsx
 function MovingCircleEdge({ id, ...props }: EdgeProps) {
-  const [edgePath] = getBezierPath(props);
+  const [edgePath] = getBezierPath(props)
   return (
     <>
       <BaseEdge id={id} path={edgePath} />
@@ -326,7 +345,7 @@ function MovingCircleEdge({ id, ...props }: EdgeProps) {
         <animateMotion dur="2s" repeatCount="indefinite" path={edgePath} />
       </circle>
     </>
-  );
+  )
 }
 ```
 
@@ -334,7 +353,7 @@ function MovingCircleEdge({ id, ...props }: EdgeProps) {
 
 ```tsx
 function TextPathEdge({ id, data, ...props }: EdgeProps) {
-  const [edgePath] = getBezierPath(props);
+  const [edgePath] = getBezierPath(props)
   return (
     <>
       <BaseEdge id={id} path={edgePath} />
@@ -344,7 +363,7 @@ function TextPathEdge({ id, data, ...props }: EdgeProps) {
         </textPath>
       </text>
     </>
-  );
+  )
 }
 ```
 

@@ -84,9 +84,10 @@ export function CampaignsClient({ branches }: Props) {
 
     void fetch(`/api/campaigns?locationId=${locationId}`)
       .then(async (res) => {
-        const body = (await res.json().catch(() => null)) as
-          | { nodes?: CampaignNode[]; message?: string }
-          | null
+        const body = (await res.json().catch(() => null)) as {
+          nodes?: CampaignNode[]
+          message?: string
+        } | null
         if (!res.ok) {
           throw new Error(body?.message ?? t('listFailed'))
         }
@@ -145,7 +146,9 @@ export function CampaignsClient({ branches }: Props) {
       ) : null}
 
       {!locationId ? (
-        <div className="rounded-md border p-8 text-left text-muted-foreground">{t('selectBranch')}</div>
+        <div className="rounded-md border p-8 text-left text-muted-foreground">
+          {t('selectBranch')}
+        </div>
       ) : loadingCampaigns ? (
         <div className="rounded-md border p-8 text-left">{t('loading')}</div>
       ) : listError ? (

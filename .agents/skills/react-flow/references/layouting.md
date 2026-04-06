@@ -19,11 +19,11 @@ Use this file when positioning nodes with layout algorithms, creating sub-flows 
 
 React Flow does not include built-in layout algorithms. Use an external library:
 
-| Library | Best for | Dynamic sizes | Sub-flows | Edge routing | Bundle size |
-|---------|----------|---------------|-----------|--------------|-------------|
-| **dagre** | Tree/DAG with minimal config | Yes | Partial | No | Small |
-| **elkjs** | Complex, highly configurable layouts | Yes | Yes | Yes | Large (~1.4MB) |
-| **d3-hierarchy** | Single-root tree structures | No (uniform) | No | No | Small |
+| Library          | Best for                             | Dynamic sizes | Sub-flows | Edge routing | Bundle size    |
+| ---------------- | ------------------------------------ | ------------- | --------- | ------------ | -------------- |
+| **dagre**        | Tree/DAG with minimal config         | Yes           | Partial   | No           | Small          |
+| **elkjs**        | Complex, highly configurable layouts | Yes           | Yes       | Yes          | Large (~1.4MB) |
+| **d3-hierarchy** | Single-root tree structures          | No (uniform)  | No        | No           | Small          |
 
 For physics-based (force-directed) layouts, run a simulation that updates `node.position` in React Flow state; pick a library that fits your bundle budget.
 
@@ -32,29 +32,29 @@ For physics-based (force-directed) layouts, run a simulation that updates `node.
 Best for tree-shaped graphs with straightforward requirements.
 
 ```tsx
-import dagre from '@dagrejs/dagre';
+import dagre from '@dagrejs/dagre'
 
-const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}))
 
 function getLayoutedElements(nodes, edges, direction = 'TB') {
-  const isHorizontal = direction === 'LR';
-  dagreGraph.setGraph({ rankdir: direction });
+  const isHorizontal = direction === 'LR'
+  dagreGraph.setGraph({ rankdir: direction })
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, {
       width: node.measured?.width ?? 172,
       height: node.measured?.height ?? 36,
-    });
-  });
+    })
+  })
 
   edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
+    dagreGraph.setEdge(edge.source, edge.target)
+  })
 
-  dagre.layout(dagreGraph);
+  dagre.layout(dagreGraph)
 
   const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
+    const nodeWithPosition = dagreGraph.node(node.id)
     return {
       ...node,
       position: {
@@ -63,10 +63,10 @@ function getLayoutedElements(nodes, edges, direction = 'TB') {
       },
       targetPosition: isHorizontal ? 'left' : 'top',
       sourcePosition: isHorizontal ? 'right' : 'bottom',
-    };
-  });
+    }
+  })
 
-  return { nodes: layoutedNodes, edges };
+  return { nodes: layoutedNodes, edges }
 }
 ```
 
@@ -74,8 +74,8 @@ function getLayoutedElements(nodes, edges, direction = 'TB') {
 
 ```tsx
 function LayoutFlow() {
-  const [nodes, setNodes] = useState(initialNodes);
-  const [edges, setEdges] = useState(initialEdges);
+  const [nodes, setNodes] = useState(initialNodes)
+  const [edges, setEdges] = useState(initialEdges)
 
   const onLayout = useCallback(
     (direction) => {
@@ -83,12 +83,12 @@ function LayoutFlow() {
         nodes,
         edges,
         direction,
-      );
-      setNodes([...layoutedNodes]);
-      setEdges([...layoutedEdges]);
+      )
+      setNodes([...layoutedNodes])
+      setEdges([...layoutedEdges])
     },
     [nodes, edges],
-  );
+  )
 
   return (
     <ReactFlow nodes={nodes} edges={edges} fitView>
@@ -97,7 +97,7 @@ function LayoutFlow() {
         <button onClick={() => onLayout('LR')}>Horizontal</button>
       </Panel>
     </ReactFlow>
-  );
+  )
 }
 ```
 
@@ -108,15 +108,15 @@ function LayoutFlow() {
 Best for complex graphs needing edge routing and advanced layout options.
 
 ```tsx
-import ELK from 'elkjs/lib/elk.bundled.js';
+import ELK from 'elkjs/lib/elk.bundled.js'
 
-const elk = new ELK();
+const elk = new ELK()
 
 const elkOptions = {
   'elk.algorithm': 'layered',
   'elk.layered.spacing.nodeNodeBetweenLayers': '100',
   'elk.spacing.nodeNode': '80',
-};
+}
 
 async function getLayoutedElements(nodes, edges, options = {}) {
   const graph = {
@@ -134,19 +134,19 @@ async function getLayoutedElements(nodes, edges, options = {}) {
       sources: [edge.source],
       targets: [edge.target],
     })),
-  };
+  }
 
-  const layoutedGraph = await elk.layout(graph);
+  const layoutedGraph = await elk.layout(graph)
 
   const layoutedNodes = nodes.map((node) => {
-    const layoutedNode = layoutedGraph.children?.find((n) => n.id === node.id);
+    const layoutedNode = layoutedGraph.children?.find((n) => n.id === node.id)
     return {
       ...node,
       position: { x: layoutedNode?.x ?? 0, y: layoutedNode?.y ?? 0 },
-    };
-  });
+    }
+  })
 
-  return { nodes: layoutedNodes, edges };
+  return { nodes: layoutedNodes, edges }
 }
 ```
 
@@ -157,16 +157,16 @@ async function getLayoutedElements(nodes, edges, options = {}) {
 Best for tree structures with a single root node.
 
 ```tsx
-import { stratify, tree } from 'd3-hierarchy';
+import { stratify, tree } from 'd3-hierarchy'
 
 function getLayoutedElements(nodes, edges) {
   const hierarchy = stratify()
     .id((d) => d.id)
-    .parentId((d) => edges.find((e) => e.target === d.id)?.source);
+    .parentId((d) => edges.find((e) => e.target === d.id)?.source)
 
-  const root = hierarchy(nodes);
-  const layout = tree().nodeSize([200, 100]);
-  layout(root);
+  const root = hierarchy(nodes)
+  const layout = tree().nodeSize([200, 100])
+  layout(root)
 
   return {
     nodes: root.descendants().map((d) => ({
@@ -174,7 +174,7 @@ function getLayoutedElements(nodes, edges) {
       position: { x: d.x, y: d.y },
     })),
     edges,
-  };
+  }
 }
 ```
 
@@ -209,7 +209,7 @@ const nodes = [
     data: { label: 'Another Child' },
     extent: 'parent', // restrict movement to parent bounds
   },
-];
+]
 ```
 
 ### Critical rules for sub-flows
@@ -224,10 +224,14 @@ const nodes = [
 
 ```tsx
 // Constrain child to parent bounds
-{ extent: 'parent' }
+{
+  extent: 'parent'
+}
 
 // Auto-expand parent when child is dragged to edge
-{ expandParent: true }
+{
+  expandParent: true
+}
 ```
 
 ### The group node type
@@ -249,20 +253,20 @@ Child nodes can have edges to nodes outside their parent group. This creates con
 To layout nodes after they've been measured (so you have accurate dimensions):
 
 ```tsx
-import { useNodesInitialized } from '@xyflow/react';
+import { useNodesInitialized } from '@xyflow/react'
 
 function Flow() {
-  const nodesInitialized = useNodesInitialized();
+  const nodesInitialized = useNodesInitialized()
 
   useEffect(() => {
     if (nodesInitialized) {
       // Nodes are measured — now apply layout
-      const { nodes: layouted } = getLayoutedElements(nodes, edges);
-      setNodes(layouted);
+      const { nodes: layouted } = getLayoutedElements(nodes, edges)
+      setNodes(layouted)
       // Optionally fit view after layout
-      setTimeout(() => fitView(), 0);
+      setTimeout(() => fitView(), 0)
     }
-  }, [nodesInitialized]);
+  }, [nodesInitialized])
 }
 ```
 
@@ -271,58 +275,58 @@ function Flow() {
 Reusable hook that auto-layouts on initialization and exposes a `runLayout` function:
 
 ```tsx
-import { useCallback, useEffect, useRef } from 'react';
-import { useReactFlow, useNodesInitialized } from '@xyflow/react';
-import dagre from '@dagrejs/dagre';
+import { useCallback, useEffect, useRef } from 'react'
+import { useReactFlow, useNodesInitialized } from '@xyflow/react'
+import dagre from '@dagrejs/dagre'
 
 interface UseAutoLayoutOptions {
-  direction?: 'TB' | 'BT' | 'LR' | 'RL';
-  nodesep?: number;
-  ranksep?: number;
+  direction?: 'TB' | 'BT' | 'LR' | 'RL'
+  nodesep?: number
+  ranksep?: number
 }
 
 export function useAutoLayout(options: UseAutoLayoutOptions = {}) {
-  const { direction = 'TB', nodesep = 50, ranksep = 50 } = options;
-  const { getNodes, getEdges, setNodes, fitView } = useReactFlow();
-  const nodesInitialized = useNodesInitialized();
-  const layoutApplied = useRef(false);
+  const { direction = 'TB', nodesep = 50, ranksep = 50 } = options
+  const { getNodes, getEdges, setNodes, fitView } = useReactFlow()
+  const nodesInitialized = useNodesInitialized()
+  const layoutApplied = useRef(false)
 
   const runLayout = useCallback(() => {
-    const nodes = getNodes();
-    const edges = getEdges();
+    const nodes = getNodes()
+    const edges = getEdges()
 
-    const g = new dagre.graphlib.Graph();
-    g.setGraph({ rankdir: direction, nodesep, ranksep });
-    g.setDefaultEdgeLabel(() => ({}));
+    const g = new dagre.graphlib.Graph()
+    g.setGraph({ rankdir: direction, nodesep, ranksep })
+    g.setDefaultEdgeLabel(() => ({}))
 
     nodes.forEach((node) => {
       g.setNode(node.id, {
         width: node.measured?.width ?? 172,
         height: node.measured?.height ?? 36,
-      });
-    });
-    edges.forEach((edge) => g.setEdge(edge.source, edge.target));
-    dagre.layout(g);
+      })
+    })
+    edges.forEach((edge) => g.setEdge(edge.source, edge.target))
+    dagre.layout(g)
 
     const layouted = nodes.map((node) => {
-      const pos = g.node(node.id);
-      const w = node.measured?.width ?? 172;
-      const h = node.measured?.height ?? 36;
-      return { ...node, position: { x: pos.x - w / 2, y: pos.y - h / 2 } };
-    });
+      const pos = g.node(node.id)
+      const w = node.measured?.width ?? 172
+      const h = node.measured?.height ?? 36
+      return { ...node, position: { x: pos.x - w / 2, y: pos.y - h / 2 } }
+    })
 
-    setNodes(layouted);
-    window.requestAnimationFrame(() => fitView({ duration: 200 }));
-  }, [direction, nodesep, ranksep, getNodes, getEdges, setNodes, fitView]);
+    setNodes(layouted)
+    window.requestAnimationFrame(() => fitView({ duration: 200 }))
+  }, [direction, nodesep, ranksep, getNodes, getEdges, setNodes, fitView])
 
   useEffect(() => {
     if (nodesInitialized && !layoutApplied.current) {
-      runLayout();
-      layoutApplied.current = true;
+      runLayout()
+      layoutApplied.current = true
     }
-  }, [nodesInitialized, runLayout]);
+  }, [nodesInitialized, runLayout])
 
-  return { runLayout };
+  return { runLayout }
 }
 ```
 

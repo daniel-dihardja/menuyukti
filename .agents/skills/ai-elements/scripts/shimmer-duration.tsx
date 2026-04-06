@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { Shimmer } from "@/components/ai-elements/shimmer";
+import { Shimmer } from '@/components/ai-elements/shimmer'
 
 const Example = () => (
   <div className="flex flex-col gap-6 p-8">
@@ -20,12 +20,10 @@ const Example = () => (
     </div>
 
     <div className="text-center">
-      <p className="mb-3 text-muted-foreground text-sm">
-        Very Slow (6 seconds)
-      </p>
+      <p className="mb-3 text-muted-foreground text-sm">Very Slow (6 seconds)</p>
       <Shimmer duration={6}>Loading very slowly...</Shimmer>
     </div>
   </div>
-);
+)
 
-export default Example;
+export default Example

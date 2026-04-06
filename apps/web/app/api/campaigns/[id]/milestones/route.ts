@@ -19,7 +19,9 @@ type RouteContext = {
 }
 
 async function loadCampaignOrThrow(campaignId: string, userId: string) {
-  const data = parseNodeData(await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: campaignId }, userId))
+  const data = parseNodeData(
+    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: campaignId }, userId),
+  )
   const node = data.node
   if (!node) {
     return { error: NextResponse.json({ message: 'Campaign not found' }, { status: 404 }) }

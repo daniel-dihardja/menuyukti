@@ -71,9 +71,7 @@ const parseStackFrame = (line: string): StackFrame => {
     const [, functionName, filePath, lineNum, colNum] = withParensMatch
     const path = filePath ?? ''
     const isInternal =
-      path.includes('node_modules') ||
-      path.startsWith('node:') ||
-      path.includes('internal/')
+      path.includes('node_modules') || path.startsWith('node:') || path.includes('internal/')
     return {
       columnNumber: colNum ? Number.parseInt(colNum, 10) : null,
       filePath: filePath ?? null,
