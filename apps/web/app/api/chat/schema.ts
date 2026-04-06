@@ -21,6 +21,10 @@ export const chatRequestBodySchema = z.object({
     .string()
     .regex(/^\d+$/, 'Invalid campaign id')
     .optional(),
+  milestoneId: z
+    .string()
+    .regex(/^\d+$/, 'Invalid milestone id')
+    .optional(),
 })
 
 export type ChatRequestBody = z.infer<typeof chatRequestBodySchema>

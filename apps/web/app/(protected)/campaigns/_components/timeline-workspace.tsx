@@ -11,6 +11,7 @@ import {
   Clock,
   Maximize2,
   Pencil,
+  Play,
   Settings,
   Trash2,
   X,
@@ -28,9 +29,16 @@ import {
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
+import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { Textarea } from '@workspace/ui/components/textarea'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
 
 export type TimelineMilestoneStatus = 'complete' | 'pending' | 'empty'
@@ -200,6 +208,11 @@ type TimelineItemProps = {
   savingPassCriteriaMilestoneId: string | null
   onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
   isMoving: boolean
+  onRunMilestone?: (id: string) => void | Promise<void>
+  /** True while the campaign chat request is in flight (any milestone). */
+  isChatBusy?: boolean
+  /** Milestone that initiated the current run; used for per-card loading affordance. */
+  runningMilestoneId?: string | null
 }
 
 function TimelineItem({
@@ -223,6 +236,9 @@ function TimelineItem({
   savingPassCriteriaMilestoneId,
   onMoveMilestone,
   isMoving,
+  onRunMilestone,
+  isChatBusy = false,
+  runningMilestoneId = null,
 }: TimelineItemProps) {
   const [open, setOpen] = useState(true)
   const [editingTitle, setEditingTitle] = useState(false)
@@ -443,6 +459,37 @@ function TimelineItem({
                 )}
               </CardTitle>
               <CardAction className="flex items-center gap-1">
+                {onRunMilestone ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex">
+                        <Button
+                          aria-busy={
+                            runningMilestoneId === milestone.id && isChatBusy ? true : undefined
+                          }
+                          aria-label={t('milestonePlayAriaLabel')}
+                          className="size-9 shrink-0 rounded-full"
+                          disabled={editingTitle || isChatBusy}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            void onRunMilestone(milestone.id)
+                          }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          size="icon"
+                          type="button"
+                          variant="secondary"
+                        >
+                          {runningMilestoneId === milestone.id && isChatBusy ? (
+                            <Spinner />
+                          ) : (
+                            <Play aria-hidden data-icon="inline-start" />
+                          )}
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">{t('milestonePlayTooltip')}</TooltipContent>
+                  </Tooltip>
+                ) : null}
                 {onMoveMilestone ? (
                   <>
                     <Button
@@ -666,6 +713,9 @@ type TimelineBodyProps = {
   savingPassCriteriaMilestoneId: string | null
   onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
   movingMilestoneId: string | null
+  onRunMilestone?: (id: string) => void | Promise<void>
+  isChatBusy?: boolean
+  runningMilestoneId?: string | null
 }
 
 function TimelineBody({
@@ -686,43 +736,51 @@ function TimelineBody({
   savingPassCriteriaMilestoneId,
   onMoveMilestone,
   movingMilestoneId,
+  onRunMilestone,
+  isChatBusy = false,
+  runningMilestoneId = null,
 }: TimelineBodyProps) {
   return (
-    <div className="min-h-0 flex-1">
-      <ScrollArea className="h-full">
-        <div aria-label={listLabel} className="flex flex-col p-4 pr-3" role="listbox">
-          {milestones.map((milestone, index) => {
-            const isLast = index === milestones.length - 1
-            const showDelete = Boolean(isLast && onDeleteMilestone)
-            return (
-              <TimelineItem
-                key={milestone.id}
-                collapseDetailsLabel={collapseDetailsLabel}
-                deleteButtonLabel={deleteButtonLabel}
-                deleteMilestoneAriaLabel={deleteMilestoneAriaLabel}
-                expandDetailsLabel={expandDetailsLabel}
-                isDeleting={deletingMilestoneId === milestone.id}
-                isFirst={index === 0}
-                isLast={isLast}
-                isMoving={movingMilestoneId === milestone.id}
-                isSelected={milestone.id === selectedId}
-                milestone={milestone}
-                onDeleteMilestone={onDeleteMilestone}
-                onMoveMilestone={onMoveMilestone}
-                onRenameMilestone={onRenameMilestone}
-                onSelect={onSelectMilestone}
-                onUpdatePassCriteria={onUpdatePassCriteria}
-                positionIndex={index + 1}
-                renamingMilestoneId={renamingMilestoneId}
-                savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
-                showDelete={showDelete}
-                statusLabels={statusLabels}
-              />
-            )
-          })}
-        </div>
-      </ScrollArea>
-    </div>
+    <TooltipProvider>
+      <div className="min-h-0 flex-1">
+        <ScrollArea className="h-full">
+          <div aria-label={listLabel} className="flex flex-col p-4 pr-3" role="listbox">
+            {milestones.map((milestone, index) => {
+              const isLast = index === milestones.length - 1
+              const showDelete = Boolean(isLast && onDeleteMilestone)
+              return (
+                <TimelineItem
+                  key={milestone.id}
+                  collapseDetailsLabel={collapseDetailsLabel}
+                  deleteButtonLabel={deleteButtonLabel}
+                  deleteMilestoneAriaLabel={deleteMilestoneAriaLabel}
+                  expandDetailsLabel={expandDetailsLabel}
+                  isChatBusy={isChatBusy}
+                  isDeleting={deletingMilestoneId === milestone.id}
+                  isFirst={index === 0}
+                  isLast={isLast}
+                  isMoving={movingMilestoneId === milestone.id}
+                  isSelected={milestone.id === selectedId}
+                  milestone={milestone}
+                  onDeleteMilestone={onDeleteMilestone}
+                  onMoveMilestone={onMoveMilestone}
+                  onRenameMilestone={onRenameMilestone}
+                  onRunMilestone={onRunMilestone}
+                  onSelect={onSelectMilestone}
+                  onUpdatePassCriteria={onUpdatePassCriteria}
+                  positionIndex={index + 1}
+                  renamingMilestoneId={renamingMilestoneId}
+                  runningMilestoneId={runningMilestoneId}
+                  savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
+                  showDelete={showDelete}
+                  statusLabels={statusLabels}
+                />
+              )
+            })}
+          </div>
+        </ScrollArea>
+      </div>
+    </TooltipProvider>
   )
 }
 
@@ -745,6 +803,9 @@ export type TimelineWorkspaceProps = {
   onUpdatePassCriteria?: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
   savingPassCriteriaMilestoneId?: string | null
   passCriteriaError?: string | null
+  onRunMilestone?: (id: string) => void | Promise<void>
+  isChatBusy?: boolean
+  runningMilestoneId?: string | null
 }
 
 export function TimelineWorkspace({
@@ -766,6 +827,9 @@ export function TimelineWorkspace({
   onRenameMilestone,
   onMoveMilestone,
   onUpdatePassCriteria,
+  onRunMilestone,
+  isChatBusy = false,
+  runningMilestoneId = null,
 }: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
 
@@ -885,15 +949,18 @@ export function TimelineWorkspace({
           deleteMilestoneAriaLabel={t('deleteMilestoneAriaLabel')}
           deletingMilestoneId={deletingMilestoneId}
           expandDetailsLabel={t('milestoneExpandDetails')}
+          isChatBusy={isChatBusy}
           listLabel={t('timelineListLabel')}
           milestones={milestones}
           movingMilestoneId={movingMilestoneId ?? null}
           onDeleteMilestone={onDeleteMilestone}
           onMoveMilestone={onMoveMilestone}
           onRenameMilestone={onRenameMilestone}
+          onRunMilestone={onRunMilestone}
           onSelectMilestone={setSelectedId}
           onUpdatePassCriteria={onUpdatePassCriteria}
           renamingMilestoneId={renamingMilestoneId}
+          runningMilestoneId={runningMilestoneId}
           savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
           selectedId={selectedId}
           statusLabels={{

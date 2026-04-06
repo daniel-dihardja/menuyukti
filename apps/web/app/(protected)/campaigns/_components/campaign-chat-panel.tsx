@@ -49,6 +49,7 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
   const [passCriteriaError, setPassCriteriaError] = useState<string | null>(null)
   const [moveError, setMoveError] = useState<string | null>(null)
   const [movingMilestoneId, setMovingMilestoneId] = useState<string | null>(null)
+  const [runningMilestoneId, setRunningMilestoneId] = useState<string | null>(null)
 
   useEffect(() => {
     setMilestones(initialMilestones)
@@ -61,6 +62,7 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
     setSavingPassCriteriaMilestoneId(null)
     setMoveError(null)
     setMovingMilestoneId(null)
+    setRunningMilestoneId(null)
   }, [campaignId, initialMilestones])
 
   const transport = useMemo(
@@ -75,6 +77,12 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
   const { messages, sendMessage, status, stop, error, clearError, regenerate } = useChat({
     transport,
   })
+
+  useEffect(() => {
+    if (status === 'ready' || status === 'error') {
+      setRunningMilestoneId(null)
+    }
+  }, [status])
 
   const handleTextChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value)
@@ -219,6 +227,21 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
     [campaignId, t],
   )
 
+  const handleRunMilestone = useCallback(
+    async (milestoneId: string) => {
+      setRunningMilestoneId(milestoneId)
+      try {
+        await sendMessage(
+          { text: t('milestoneRunUserMessage') },
+          { body: { milestoneId } },
+        )
+      } catch {
+        setRunningMilestoneId(null)
+      }
+    },
+    [sendMessage, t],
+  )
+
   const handleMoveMilestone = useCallback(
     async (milestoneId: string, direction: 'up' | 'down') => {
       setMoveError(null)
@@ -266,6 +289,7 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
   )
 
   const isSubmitDisabled = !text.trim() || status === 'streaming' || status === 'submitted'
+  const isChatBusy = status === 'streaming' || status === 'submitted'
 
   const visibleMessages = messages.filter((msg) => msg.role !== 'system')
 
@@ -359,6 +383,7 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
           creating={creating}
           deleteError={deleteError}
           deletingMilestoneId={deletingMilestoneId}
+          isChatBusy={isChatBusy}
           milestones={milestones}
           moveError={moveError}
           movingMilestoneId={movingMilestoneId}
@@ -366,10 +391,12 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
           onDeleteMilestone={handleDeleteMilestone}
           onMoveMilestone={handleMoveMilestone}
           onRenameMilestone={handleRenameMilestone}
+          onRunMilestone={handleRunMilestone}
           onUpdatePassCriteria={handleUpdatePassCriteria}
           passCriteriaError={passCriteriaError}
           renameError={renameError}
           renamingMilestoneId={renamingMilestoneId}
+          runningMilestoneId={runningMilestoneId}
           savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
         />
       </div>

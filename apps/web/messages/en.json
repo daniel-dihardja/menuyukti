@@ -480,7 +480,10 @@
         "milestoneInputLabel": "Notes for this milestone",
         "milestoneInputDescription": "Add context the assistant should use when working on this step.",
         "milestoneInputPlaceholder": "Type or paste input…",
-        "milestoneResultEmpty": "No result yet."
+        "milestoneResultEmpty": "No result yet.",
+        "milestonePlayTooltip": "Run this milestone",
+        "milestonePlayAriaLabel": "Run milestone",
+        "milestoneRunUserMessage": "Run this milestone now."
       },
       "noCampaigns": {
         "title": "No campaigns yet",

@@ -121,7 +121,7 @@ export async function POST(req: Request) {
     return jsonError(message, 400)
   }
 
-  const { messages: rawMessages, campaignId } = parsed.data
+  const { messages: rawMessages, campaignId, milestoneId } = parsed.data
   const messages = rawMessages as UIMessage[]
   const pythonMessages = uiMessagesToPython(messages)
   if (pythonMessages.length === 0) {
@@ -139,6 +139,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         messages: pythonMessages,
         ...(campaignId !== undefined ? { campaign_id: campaignId } : {}),
+        ...(milestoneId !== undefined ? { milestone_id: milestoneId } : {}),
       }),
       signal: req.signal,
     })
