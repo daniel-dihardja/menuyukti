@@ -5,6 +5,11 @@
       "source": "vercel-labs/next-skills",
       "sourceType": "github",
       "computedHash": "db85045827ebeb83ac8dbc992b69188755eeb74dcf01cbf5e694d58aa494a106"
+    },
+    "turborepo": {
+      "source": "vercel/turborepo",
+      "sourceType": "github",
+      "computedHash": "f59628995c41e11858d63acf2792030325c9ca0174df5d1bae5c43ded301d851"
     }
   }
 }
