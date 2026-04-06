@@ -43,11 +43,8 @@ export default async function Page({ params }: PageProps) {
   return (
     <AnalyticsPageShell
       title={title}
-      breadcrumbs={[
-        { label: tCampaigns('title'), href: routes.campaigns.list },
-        { label: title },
-      ]}
-      mainClassName="max-w-none w-full h-[calc(100vh-4rem)] min-h-[24rem]"
+      breadcrumbs={[{ label: tCampaigns('title'), href: routes.campaigns.list }, { label: title }]}
+      mainClassName="max-w-none flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
       <CampaignChatPanel campaignId={campaignIdNum} />
     </AnalyticsPageShell>

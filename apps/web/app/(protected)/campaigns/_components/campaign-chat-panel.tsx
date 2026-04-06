@@ -16,13 +16,6 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
 } from '@workspace/ui/components/ai-elements/prompt-input'
-import {
-  Artifact,
-  ArtifactContent,
-  ArtifactDescription,
-  ArtifactHeader,
-  ArtifactTitle,
-} from '@workspace/ui/components/ai-elements/artifact'
 import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { useChat } from '@ai-sdk/react'
@@ -30,6 +23,7 @@ import { DefaultChatTransport } from 'ai'
 import { useTranslations } from 'next-intl'
 import { useCallback, useMemo, useState } from 'react'
 
+import { CampaignMilestoneTimeline } from './campaign-milestone-timeline'
 import { ChatMessageParts } from './chat-message-parts'
 
 export type CampaignChatPanelProps = {
@@ -86,8 +80,8 @@ export function CampaignChatPanel({ campaignId }: CampaignChatPanelProps) {
   const visibleMessages = messages.filter((msg) => msg.role !== 'system')
 
   return (
-    <div className="grid size-full grid-cols-3 gap-4 overflow-hidden">
-      <div className="relative col-span-1 flex flex-col divide-y overflow-hidden rounded-lg border">
+    <div className="grid min-h-0 flex-1 grid-cols-3 grid-rows-[minmax(0,1fr)] gap-4 overflow-hidden">
+      <div className="relative col-span-1 flex min-h-0 flex-col divide-y overflow-hidden rounded-lg border">
         <Conversation aria-live="polite">
           <ConversationContent>
             {error ? (
@@ -98,7 +92,13 @@ export function CampaignChatPanel({ campaignId }: CampaignChatPanelProps) {
               >
                 <p className="font-medium">{t('errorTitle')}</p>
                 <p className="mt-1 text-muted-foreground">{error.message}</p>
-                <Button className="mt-3" onClick={() => void handleRetry()} size="sm" type="button" variant="outline">
+                <Button
+                  className="mt-3"
+                  onClick={() => void handleRetry()}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
                   {t('retry')}
                 </Button>
               </div>
@@ -109,7 +109,8 @@ export function CampaignChatPanel({ campaignId }: CampaignChatPanelProps) {
               <>
                 {visibleMessages.map((msg) => {
                   const isLast = msg === visibleMessages[visibleMessages.length - 1]
-                  const isActiveStream = isLast && (status === 'submitted' || status === 'streaming')
+                  const isActiveStream =
+                    isLast && (status === 'submitted' || status === 'streaming')
                   const msgText = getMessageText(msg)
                   const showFallbackSpinner =
                     isActiveStream && msg.role === 'assistant' && msgText.length === 0
@@ -162,18 +163,8 @@ export function CampaignChatPanel({ campaignId }: CampaignChatPanelProps) {
         </div>
       </div>
 
-      <div className="col-span-2 min-h-0 overflow-hidden">
-        <Artifact className="h-full max-h-full">
-          <ArtifactHeader>
-            <div className="flex flex-col gap-1">
-              <ArtifactTitle>{t('artifactTitle')}</ArtifactTitle>
-              <ArtifactDescription>{t('artifactPlaceholder')}</ArtifactDescription>
-            </div>
-          </ArtifactHeader>
-          <ArtifactContent className="flex min-h-[12rem] items-center justify-center text-muted-foreground text-sm">
-            {/* Reserved for future campaign artifacts */}
-          </ArtifactContent>
-        </Artifact>
+      <div className="col-span-2 flex min-h-0 flex-col overflow-hidden rounded-lg border bg-background shadow-sm">
+        <CampaignMilestoneTimeline />
       </div>
     </div>
   )

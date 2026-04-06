@@ -12,7 +12,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-svh min-h-0">
       <AppSidebar />
       <AnalyticsProvider>{children}</AnalyticsProvider>
     </SidebarProvider>

@@ -425,7 +425,16 @@
         "errorTitle": "Something went wrong",
         "retry": "Retry",
         "artifactTitle": "Artifact",
-        "artifactPlaceholder": "Content will appear here as you work with the assistant."
+        "artifactPlaceholder": "Content will appear here as you work with the assistant.",
+        "artifactPanelPlaceholder": "Milestone content will appear here.",
+        "milestone1Title": "Location Profile",
+        "milestone1Detail": "Analyse and build the restaurant's location profile.",
+        "milestone1Body1": "Review trade area, peak hours, guest segments, and what makes this site distinct. Capture positioning, menu strengths, and constraints the campaign must respect.",
+        "milestone1Body2": "The profile feeds every downstream step: audience selection, offers, and tone. Keep it factual so the assistant can ground recommendations in your real operation.",
+        "milestone2Title": "Campaign Briefing",
+        "milestone2Detail": "Generate a targeted campaign brief from the profile.",
+        "milestone2Body1": "Translate the location profile into a concise brief: objectives, primary audience, key messages, channels, and timing. Align tone with your brand and local context.",
+        "milestone2Body2": "This brief steers creative, copy, and approvals. Update it when goals or constraints change so the assistant stays aligned with what you want to achieve."
       },
       "noCampaigns": {
         "title": "No campaigns yet",

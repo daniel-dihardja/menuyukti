@@ -26,9 +26,9 @@ export function AnalyticsPageShell({
   beforeContent,
 }: AnalyticsPageShellProps) {
   return (
-    <SidebarInset>
+    <SidebarInset className="min-h-0">
       {beforeContent}
-      <div className="w-full">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {triggerWrapperClassName ? (
           <div className={triggerWrapperClassName}>
             <SidebarTriggerClient title={title} breadcrumbs={breadcrumbs} />
@@ -37,7 +37,14 @@ export function AnalyticsPageShell({
           <SidebarTriggerClient title={title} breadcrumbs={breadcrumbs} />
         )}
 
-        <main className={cn('mx-auto max-w-6xl p-4 space-y-6', mainClassName)}>{children}</main>
+        <div
+          className={cn(
+            'mx-auto flex w-full max-w-6xl flex-1 flex-col min-h-0 p-4 space-y-6',
+            mainClassName,
+          )}
+        >
+          {children}
+        </div>
       </div>
     </SidebarInset>
   )
