@@ -21,18 +21,29 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { useTranslations } from 'next-intl'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import type { TimelineMilestone } from './timeline-workspace'
 import { TimelineWorkspace } from './timeline-workspace'
 import { ChatMessageParts } from './chat-message-parts'
+import { milestoneNodeToTimelineMilestone } from './milestone-map'
 
 export type CampaignChatPanelProps = {
   campaignId: string
+  initialMilestones: TimelineMilestone[]
 }
 
-export function CampaignChatPanel({ campaignId }: CampaignChatPanelProps) {
+export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignChatPanelProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const [text, setText] = useState('')
+  const [milestones, setMilestones] = useState<TimelineMilestone[]>(initialMilestones)
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setMilestones(initialMilestones)
+    setCreateError(null)
+  }, [campaignId, initialMilestones])
 
   const transport = useMemo(
     () =>
@@ -74,6 +85,34 @@ export function CampaignChatPanel({ campaignId }: CampaignChatPanelProps) {
     clearError()
     await regenerate()
   }, [clearError, regenerate])
+
+  const handleCreateMilestone = useCallback(async () => {
+    setCreateError(null)
+    setCreating(true)
+    try {
+      const res = await fetch(`/api/campaigns/${campaignId}/milestones`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      const body = (await res.json().catch(() => null)) as
+        | { message?: string; id?: string; name?: string }
+        | null
+      if (!res.ok) {
+        throw new Error(body?.message ?? t('milestonesCreateError'))
+      }
+      const id = body?.id
+      const name = body?.name
+      if (typeof id === 'string' && typeof name === 'string') {
+        const created = { id, name }
+        setMilestones((prev) => [...prev, milestoneNodeToTimelineMilestone(created)])
+      }
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : t('milestonesCreateError'))
+    } finally {
+      setCreating(false)
+    }
+  }, [campaignId, t])
 
   const isSubmitDisabled = !text.trim() || status === 'streaming' || status === 'submitted'
 
@@ -164,7 +203,12 @@ export function CampaignChatPanel({ campaignId }: CampaignChatPanelProps) {
       </div>
 
       <div className="col-span-2 flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-        <TimelineWorkspace />
+        <TimelineWorkspace
+          createError={createError}
+          creating={creating}
+          milestones={milestones}
+          onCreateMilestone={handleCreateMilestone}
+        />
       </div>
     </div>
   )

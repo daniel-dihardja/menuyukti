@@ -7,8 +7,11 @@ import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import { z } from 'zod'
 import { routes } from '@/lib/routes'
+import { graphqlQuery } from '@/lib/graphql/client'
+import { NODE_QUERY, NODES_QUERY, type NodeData, type NodesData } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { CampaignChatPanel } from '../_components/campaign-chat-panel'
+import type { TimelineMilestone } from '../_components/timeline-workspace'
 
 const campaignIdParamSchema = z.string().regex(/^\d+$/, 'Invalid campaign id')
 
@@ -41,6 +44,33 @@ export default async function Page({ params }: PageProps) {
   }
   const campaignId = parsed.data
 
+  const nodeData = await graphqlQuery<NodeData>(NODE_QUERY, { id: campaignId }, authUserId)
+  const campaignNode = nodeData.node
+  if (!campaignNode || campaignNode.nodeType !== 'campaign') {
+    notFound()
+  }
+  const locationId = campaignNode.locationId
+  if (locationId == null) {
+    notFound()
+  }
+
+  const milestonesData = await graphqlQuery<NodesData>(
+    NODES_QUERY,
+    {
+      locationId,
+      nodeType: 'milestone',
+      parentId: campaignId,
+    },
+    authUserId,
+  )
+
+  const initialMilestones: TimelineMilestone[] = milestonesData.nodes.map((n) => ({
+    id: n.id,
+    title: n.name,
+    passCriteria: '',
+    status: 'empty',
+  }))
+
   const tCampaigns = await getTranslations('analytics.campaigns')
   const tChat = await getTranslations('analytics.campaigns.chat')
   const title = tChat('pageTitle', { id: campaignId.slice(0, 8) })
@@ -51,7 +81,7 @@ export default async function Page({ params }: PageProps) {
       breadcrumbs={[{ label: tCampaigns('title'), href: routes.campaigns.list }, { label: title }]}
       mainClassName="max-w-none flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
-      <CampaignChatPanel campaignId={campaignId} />
+      <CampaignChatPanel campaignId={campaignId} initialMilestones={initialMilestones} />
     </AnalyticsPageShell>
   )
 }

@@ -51,8 +51,8 @@ export type CreateLocationData = {
 }
 
 export const CREATE_NODE_MUTATION = `
-  mutation CreateNode($locationId: Int!, $nodeType: String!, $name: String, $description: String, $data: JSON) {
-    createNode(locationId: $locationId, nodeType: $nodeType, name: $name, description: $description, data: $data) {
+  mutation CreateNode($locationId: Int!, $nodeType: String!, $name: String, $description: String, $data: JSON, $parentId: ID) {
+    createNode(locationId: $locationId, nodeType: $nodeType, name: $name, description: $description, data: $data, parentId: $parentId) {
       id
       name
       description
@@ -79,8 +79,8 @@ export type CreateNodeData = {
 }
 
 export const NODES_QUERY = `
-  query Nodes($locationId: Int!, $nodeType: String) {
-    nodes(locationId: $locationId, nodeType: $nodeType) {
+  query Nodes($locationId: Int!, $nodeType: String, $parentId: ID) {
+    nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId) {
       id
       name
       description

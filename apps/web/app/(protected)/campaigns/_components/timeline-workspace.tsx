@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Check, ChevronDown, Circle, Clock, Maximize2, Settings, Trash2, X } from 'lucide-react'
 
@@ -18,6 +18,7 @@ import { Input } from '@workspace/ui/components/input'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { Textarea } from '@workspace/ui/components/textarea'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import { cn } from '@workspace/ui/lib/utils'
 
 export type TimelineMilestoneStatus = 'complete' | 'pending' | 'empty'
@@ -101,34 +102,62 @@ type TimelineToolbarProps = {
   count: number
   expandLabel: string
   settingsLabel: string
+  createLabel?: string
+  creatingLabel?: string
+  onCreateMilestone?: () => void | Promise<void>
+  creating?: boolean
+  showCreate?: boolean
 }
 
-function TimelineToolbar({ title, count, expandLabel, settingsLabel }: TimelineToolbarProps) {
+function TimelineToolbar({
+  title,
+  count,
+  expandLabel,
+  settingsLabel,
+  createLabel,
+  creatingLabel,
+  onCreateMilestone,
+  creating,
+  showCreate,
+}: TimelineToolbarProps) {
   return (
     <header className="flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3">
       <div className="flex min-w-0 items-center gap-2">
         <h2 className="truncate font-semibold text-foreground text-sm">{title}</h2>
         <Badge variant="secondary">{count}</Badge>
       </div>
-      <div className="flex shrink-0 items-center gap-1">
-        <Button
-          aria-label={expandLabel}
-          className="size-9"
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <Maximize2 data-icon="inline-start" />
-        </Button>
-        <Button
-          aria-label={settingsLabel}
-          className="size-9"
-          size="icon"
-          type="button"
-          variant="ghost"
-        >
-          <Settings data-icon="inline-start" />
-        </Button>
+      <div className="flex shrink-0 items-center gap-2">
+        {showCreate && onCreateMilestone && createLabel && creatingLabel ? (
+          <Button
+            disabled={creating}
+            onClick={() => void onCreateMilestone()}
+            size="sm"
+            type="button"
+            variant="default"
+          >
+            {creating ? creatingLabel : createLabel}
+          </Button>
+        ) : null}
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            aria-label={expandLabel}
+            className="size-9"
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <Maximize2 data-icon="inline-start" />
+          </Button>
+          <Button
+            aria-label={settingsLabel}
+            className="size-9"
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <Settings data-icon="inline-start" />
+          </Button>
+        </div>
       </div>
     </header>
   )
@@ -422,37 +451,25 @@ function TimelineBody({
 }
 
 export type TimelineWorkspaceProps = {
-  milestones?: TimelineMilestone[]
+  milestones: TimelineMilestone[]
+  isLoading?: boolean
+  loadError?: string | null
+  createError?: string | null
+  creating?: boolean
+  onCreateMilestone: () => void | Promise<void>
 }
 
-export function TimelineWorkspace({ milestones: milestonesProp }: TimelineWorkspaceProps) {
+export function TimelineWorkspace({
+  milestones,
+  isLoading = false,
+  loadError = null,
+  createError = null,
+  creating = false,
+  onCreateMilestone,
+}: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
-
-  const milestones = useMemo<TimelineMilestone[]>(() => {
-    if (milestonesProp?.length) {
-      return milestonesProp
-    }
-    return [
-      {
-        id: '1',
-        title: t('milestone1Title'),
-        passCriteria: t('milestone1PassCriteria'),
-        input: t('milestone1Input'),
-        resultMarkdown: t('milestone1ResultMarkdown'),
-        status: 'complete' satisfies TimelineMilestoneStatus,
-      },
-      {
-        id: '2',
-        title: t('milestone2Title'),
-        passCriteria: t('milestone2PassCriteria'),
-        input: t('milestone2Input'),
-        resultMarkdown: t('milestone2ResultMarkdown'),
-        status: 'pending' satisfies TimelineMilestoneStatus,
-      },
-    ]
-  }, [milestonesProp, t])
 
   useEffect(() => {
     setSelectedId((prev) => {
@@ -481,27 +498,81 @@ export function TimelineWorkspace({ milestones: milestonesProp }: TimelineWorksp
     return () => document.removeEventListener('pointerdown', onPointerDownCapture, true)
   }, [])
 
+  const showTimeline = !isLoading && !loadError && milestones.length > 0
+
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-background">
       <TimelineToolbar
         count={milestones.length}
+        createLabel={t('createMilestone')}
+        creating={creating}
+        creatingLabel={t('creatingMilestone')}
         expandLabel={t('timelineExpandLabel')}
+        onCreateMilestone={onCreateMilestone}
         settingsLabel={t('timelineSettingsLabel')}
+        showCreate={showTimeline}
         title={t('timelineToolbarTitle')}
       />
-      <TimelineBody
-        collapseDetailsLabel={t('milestoneCollapseDetails')}
-        expandDetailsLabel={t('milestoneExpandDetails')}
-        listLabel={t('timelineListLabel')}
-        milestones={milestones}
-        onSelectMilestone={setSelectedId}
-        selectedId={selectedId}
-        statusLabels={{
-          complete: t('milestoneStatusComplete'),
-          empty: t('milestoneStatusEmpty'),
-          pending: t('milestoneStatusPending'),
-        }}
-      />
+      {createError && showTimeline ? (
+        <p className="border-b px-4 py-2 text-destructive text-sm" role="alert">
+          {createError}
+        </p>
+      ) : null}
+      {isLoading ? (
+        <div
+          aria-busy="true"
+          aria-live="polite"
+          className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-8"
+        >
+          <Skeleton className="h-8 w-full max-w-lg" />
+          <Skeleton className="h-28 w-full max-w-lg" />
+          <Skeleton className="h-28 w-full max-w-lg" />
+        </div>
+      ) : loadError ? (
+        <p className="flex flex-1 items-center justify-center p-8 text-center text-destructive text-sm" role="alert">
+          {loadError}
+        </p>
+      ) : milestones.length === 0 ? (
+        <div
+          aria-labelledby="timeline-empty-heading"
+          className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-8 text-center"
+          role="region"
+        >
+          <div className="max-w-md space-y-2">
+            <h3 className="font-medium text-foreground text-lg" id="timeline-empty-heading">
+              {t('timelineEmptyTitle')}
+            </h3>
+            <p className="text-muted-foreground text-sm">{t('timelineEmptyDescription')}</p>
+          </div>
+          <Button
+            disabled={creating}
+            onClick={() => void onCreateMilestone()}
+            size="default"
+            type="button"
+          >
+            {creating ? t('creatingMilestone') : t('createMilestone')}
+          </Button>
+          {createError ? (
+            <p className="max-w-md text-destructive text-sm" role="alert">
+              {createError}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <TimelineBody
+          collapseDetailsLabel={t('milestoneCollapseDetails')}
+          expandDetailsLabel={t('milestoneExpandDetails')}
+          listLabel={t('timelineListLabel')}
+          milestones={milestones}
+          onSelectMilestone={setSelectedId}
+          selectedId={selectedId}
+          statusLabels={{
+            complete: t('milestoneStatusComplete'),
+            empty: t('milestoneStatusEmpty'),
+            pending: t('milestoneStatusPending'),
+          }}
+        />
+      )}
     </div>
   )
 }
