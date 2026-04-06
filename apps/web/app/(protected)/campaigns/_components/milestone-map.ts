@@ -3,6 +3,7 @@ import {
   milestoneDataSchema,
   milestonedataDataSchema,
   passCriteriaDataSchema,
+  resultDataSchema,
 } from '@/lib/graphql/node-schemas'
 import type { AnyNode } from '@/lib/graphql/queries'
 
@@ -15,6 +16,7 @@ export type MilestoneNodeDto = {
   passCriteriaNodes?: AnyNode[]
   goalNodes?: AnyNode[]
   milestonedataNodes?: AnyNode[]
+  resultNodes?: AnyNode[]
 }
 
 export function passCriteriaFromChildNodes(nodes: AnyNode[] | undefined | null): PassCriteriaRow[] {
@@ -81,6 +83,27 @@ export function milestoneDataFromChildNodes(nodes: AnyNode[] | undefined | null)
   return undefined
 }
 
+/** First valid `result` child wins (at most one is expected). */
+export function resultMarkdownFromChildNodes(nodes: AnyNode[] | undefined | null): string | undefined {
+  if (nodes == null || !Array.isArray(nodes)) {
+    return undefined
+  }
+  for (const n of nodes) {
+    if (n.nodeType !== 'result') {
+      continue
+    }
+    const d = n.data
+    if (d == null || typeof d !== 'object') {
+      continue
+    }
+    const parsed = resultDataSchema.safeParse(d)
+    if (parsed.success) {
+      return parsed.data.summary
+    }
+  }
+  return undefined
+}
+
 export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): TimelineMilestone {
   const parsed = milestoneDataSchema.safeParse(node.data)
   const legacyGoal = parsed.success ? parsed.data.goal : undefined
@@ -93,6 +116,7 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
     goal,
     data,
     passCriteria: passCriteriaFromChildNodes(node.passCriteriaNodes),
+    resultMarkdown: resultMarkdownFromChildNodes(node.resultNodes),
     status: 'empty',
   }
 }

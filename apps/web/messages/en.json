@@ -489,7 +489,16 @@
         "milestoneResultEmpty": "No result yet.",
         "milestonePlayTooltip": "Run this milestone",
         "milestonePlayAriaLabel": "Run milestone",
-        "milestoneRunUserMessage": "Run this milestone now."
+        "milestoneRunUserMessage": "Run this milestone now.",
+        "milestoneRunError": "Could not run milestone evaluation. Please try again."
+      },
+      "milestoneRun": {
+        "runningLabel": "Evaluation in progress…",
+        "stepFetchContext": "Fetching context",
+        "stepEvaluateCriteria": "Evaluating criteria",
+        "stepUpdateCriteria": "Updating records",
+        "stepSynthesize": "Synthesising",
+        "stepStoreResult": "Storing result"
       },
       "noCampaigns": {
         "title": "No campaigns yet",

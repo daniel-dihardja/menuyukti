@@ -13,3 +13,13 @@ def get_llm() -> ChatOpenAI:
         temperature=0,
         streaming=True,
     )
+
+
+def get_llm_structured() -> ChatOpenAI:
+    """Non-streaming model for structured output / deterministic evaluation."""
+    model = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+    return ChatOpenAI(
+        model=model,
+        temperature=0,
+        streaming=False,
+    )

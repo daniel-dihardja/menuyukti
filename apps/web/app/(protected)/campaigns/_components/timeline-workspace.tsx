@@ -135,6 +135,76 @@ function TimelineRailMarker({
   )
 }
 
+/** Agent graph step keys emitted over SSE (order matches the evaluation pipeline). */
+const MILESTONE_RUN_STEP_KEYS = [
+  'fetch_context',
+  'evaluate_criterion',
+  'update_criteria',
+  'synthesize',
+  'store_result',
+] as const
+
+function milestoneRunStepIndex(step: string | null): number {
+  if (!step) {
+    return 0
+  }
+  const i = (MILESTONE_RUN_STEP_KEYS as readonly string[]).indexOf(step)
+  return i === -1 ? 0 : i
+}
+
+function MilestoneRunProgressStrip({ runningStep }: { runningStep: string | null }) {
+  const t = useTranslations('analytics.campaigns.milestoneRun')
+  const labels = [
+    t('stepFetchContext'),
+    t('stepEvaluateCriteria'),
+    t('stepUpdateCriteria'),
+    t('stepSynthesize'),
+    t('stepStoreResult'),
+  ]
+  const currentIdx = milestoneRunStepIndex(runningStep)
+
+  return (
+    <div
+      aria-live="polite"
+      className="border-border/60 border-b bg-muted/30 px-6 py-3"
+      role="status"
+    >
+      <p className="mb-2 font-medium text-foreground text-xs">{t('runningLabel')}</p>
+      <ol className="flex flex-wrap items-center gap-x-1 gap-y-2 text-muted-foreground text-xs">
+        {labels.map((label, j) => {
+          const done = j < currentIdx
+          const active = j === currentIdx
+          return (
+            <li className="flex min-w-0 items-center gap-1" key={MILESTONE_RUN_STEP_KEYS[j]}>
+              {j > 0 ? (
+                <span aria-hidden className="px-0.5 text-muted-foreground/50">
+                  →
+                </span>
+              ) : null}
+              <span
+                className={cn(
+                  'flex min-w-0 items-center gap-1.5 rounded-md px-1 py-0.5',
+                  active && 'bg-background/80 font-medium text-foreground shadow-sm',
+                  done && 'text-foreground/90',
+                )}
+              >
+                {done ? (
+                  <Check aria-hidden className="size-3.5 shrink-0 text-primary" />
+                ) : active ? (
+                  <Spinner className="size-3.5 shrink-0" />
+                ) : (
+                  <Circle aria-hidden className="size-3.5 shrink-0 opacity-60" />
+                )}
+                <span className="min-w-0 leading-tight">{label}</span>
+              </span>
+            </li>
+          )
+        })}
+      </ol>
+    </div>
+  )
+}
+
 type TimelineToolbarProps = {
   title: string
   count: number
@@ -231,6 +301,8 @@ type TimelineItemProps = {
   isChatBusy?: boolean
   /** Milestone that initiated the current run; used for per-card loading affordance. */
   runningMilestoneId?: string | null
+  /** Current graph step from the milestone run SSE stream. */
+  runningStep?: string | null
 }
 
 function TimelineItem({
@@ -261,8 +333,9 @@ function TimelineItem({
   onRunMilestone,
   isChatBusy = false,
   runningMilestoneId = null,
+  runningStep = null,
 }: TimelineItemProps) {
-  const [open, setOpen] = useState(true)
+  const [userOpen, setUserOpen] = useState(true)
   const [editingTitle, setEditingTitle] = useState(false)
   const [draftTitle, setDraftTitle] = useState(milestone.title)
   const [goalDraft, setGoalDraft] = useState(() => milestone.goal ?? '')
@@ -270,6 +343,9 @@ function TimelineItem({
   const titleEditInputId = `milestone-title-edit-${milestone.id}`
   const titleEditContainerRef = useRef<HTMLDivElement>(null)
   const t = useTranslations('analytics.campaigns.chat')
+  const isMilestoneRunning = runningMilestoneId === milestone.id
+  /** Keep the card expanded for the whole run; user can collapse again after the run ends. */
+  const open = isMilestoneRunning || userOpen
   const status: TimelineMilestoneStatus = milestone.status ?? 'empty'
   const [criteriaRows, setCriteriaRows] = useState<PassCriteriaRow[]>(() => milestone.passCriteria)
   const addCriteriaInputId = `milestone-pass-criteria-add-${milestone.id}`
@@ -453,7 +529,7 @@ function TimelineItem({
         )}
       </div>
       <div className={cn('min-w-0 flex-1', !isLast && 'pb-8')}>
-        <Collapsible onOpenChange={setOpen} open={open}>
+        <Collapsible onOpenChange={setUserOpen} open={open}>
           <Card
             className={cn(
               'gap-0 border py-4 shadow-none transition-[background-color,box-shadow,border-color]',
@@ -535,12 +611,10 @@ function TimelineItem({
                     <TooltipTrigger asChild>
                       <span className="inline-flex">
                         <Button
-                          aria-busy={
-                            runningMilestoneId === milestone.id && isChatBusy ? true : undefined
-                          }
+                          aria-busy={isMilestoneRunning ? true : undefined}
                           aria-label={t('milestonePlayAriaLabel')}
                           className="size-9 shrink-0 rounded-full"
-                          disabled={editingTitle || isChatBusy}
+                          disabled={editingTitle || isChatBusy || runningMilestoneId !== null}
                           onClick={(e) => {
                             e.stopPropagation()
                             void onRunMilestone(milestone.id)
@@ -550,11 +624,7 @@ function TimelineItem({
                           type="button"
                           variant="secondary"
                         >
-                          {runningMilestoneId === milestone.id && isChatBusy ? (
-                            <Spinner />
-                          ) : (
-                            <Play aria-hidden data-icon="inline-start" />
-                          )}
+                          {isMilestoneRunning ? <Spinner /> : <Play aria-hidden data-icon="inline-start" />}
                         </Button>
                       </span>
                     </TooltipTrigger>
@@ -635,6 +705,7 @@ function TimelineItem({
                 </CollapsibleTrigger>
               </CardAction>
             </CardHeader>
+            {isMilestoneRunning ? <MilestoneRunProgressStrip runningStep={runningStep} /> : null}
             <CollapsibleContent
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
@@ -693,6 +764,14 @@ function TimelineItem({
                                   aria-hidden
                                   className="mt-0.5 size-4 shrink-0 text-destructive stroke-[2.5]"
                                 />
+                              ) : isMilestoneRunning ? (
+                                <span
+                                  aria-label={t('milestonePassCriteriaOpenLabel')}
+                                  className="mt-0.5 inline-flex shrink-0"
+                                  role="img"
+                                >
+                                  <Spinner className="size-4" />
+                                </span>
                               ) : (
                                 <span
                                   aria-label={t('milestonePassCriteriaOpenLabel')}
@@ -818,6 +897,7 @@ type TimelineBodyProps = {
   onRunMilestone?: (id: string) => void | Promise<void>
   isChatBusy?: boolean
   runningMilestoneId?: string | null
+  runningStep?: string | null
 }
 
 function TimelineBody({
@@ -845,6 +925,7 @@ function TimelineBody({
   onRunMilestone,
   isChatBusy = false,
   runningMilestoneId = null,
+  runningStep = null,
 }: TimelineBodyProps) {
   return (
     <TooltipProvider>
@@ -879,6 +960,7 @@ function TimelineBody({
                   positionIndex={index + 1}
                   renamingMilestoneId={renamingMilestoneId}
                   runningMilestoneId={runningMilestoneId}
+                  runningStep={runningStep}
                   savingDataMilestoneId={savingDataMilestoneId}
                   savingGoalMilestoneId={savingGoalMilestoneId}
                   savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
@@ -922,6 +1004,8 @@ export type TimelineWorkspaceProps = {
   onRunMilestone?: (id: string) => void | Promise<void>
   isChatBusy?: boolean
   runningMilestoneId?: string | null
+  runningStep?: string | null
+  milestoneRunError?: string | null
 }
 
 export function TimelineWorkspace({
@@ -952,6 +1036,8 @@ export function TimelineWorkspace({
   onRunMilestone,
   isChatBusy = false,
   runningMilestoneId = null,
+  runningStep = null,
+  milestoneRunError = null,
 }: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
 
@@ -1034,6 +1120,11 @@ export function TimelineWorkspace({
           {milestoneDataError}
         </p>
       ) : null}
+      {milestoneRunError && showTimeline ? (
+        <p className="border-b px-4 py-2 text-destructive text-sm" role="alert">
+          {milestoneRunError}
+        </p>
+      ) : null}
       {isLoading ? (
         <div
           aria-busy="true"
@@ -1095,6 +1186,7 @@ export function TimelineWorkspace({
           onUpdatePassCriteria={onUpdatePassCriteria}
           renamingMilestoneId={renamingMilestoneId}
           runningMilestoneId={runningMilestoneId}
+          runningStep={runningStep}
           savingDataMilestoneId={savingDataMilestoneId}
           savingGoalMilestoneId={savingGoalMilestoneId}
           savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}

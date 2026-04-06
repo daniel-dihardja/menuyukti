@@ -79,38 +79,49 @@ export default async function Page({ params }: PageProps) {
 
   const initialMilestones: TimelineMilestone[] = await Promise.all(
     milestonesData.nodes.map(async (n) => {
-      const [passCriteriaChildren, goalChildren, milestonedataChildren] = await Promise.all([
-        graphqlQuery<NodesDataRaw>(
-          NODES_QUERY,
-          {
-            locationId,
-            nodeType: 'passcriteria',
-            parentId: n.id,
-          },
-          authUserId,
-        ),
-        graphqlQuery<NodesDataRaw>(
-          NODES_QUERY,
-          {
-            locationId,
-            nodeType: 'goal',
-            parentId: n.id,
-          },
-          authUserId,
-        ),
-        graphqlQuery<NodesDataRaw>(
-          NODES_QUERY,
-          {
-            locationId,
-            nodeType: 'milestonedata',
-            parentId: n.id,
-          },
-          authUserId,
-        ),
-      ])
+      const [passCriteriaChildren, goalChildren, milestonedataChildren, resultChildren] =
+        await Promise.all([
+          graphqlQuery<NodesDataRaw>(
+            NODES_QUERY,
+            {
+              locationId,
+              nodeType: 'passcriteria',
+              parentId: n.id,
+            },
+            authUserId,
+          ),
+          graphqlQuery<NodesDataRaw>(
+            NODES_QUERY,
+            {
+              locationId,
+              nodeType: 'goal',
+              parentId: n.id,
+            },
+            authUserId,
+          ),
+          graphqlQuery<NodesDataRaw>(
+            NODES_QUERY,
+            {
+              locationId,
+              nodeType: 'milestonedata',
+              parentId: n.id,
+            },
+            authUserId,
+          ),
+          graphqlQuery<NodesDataRaw>(
+            NODES_QUERY,
+            {
+              locationId,
+              nodeType: 'result',
+              parentId: n.id,
+            },
+            authUserId,
+          ),
+        ])
       const passCriteriaParsed = parseNodesData(passCriteriaChildren)
       const goalParsed = parseNodesData(goalChildren)
       const milestonedataParsed = parseNodesData(milestonedataChildren)
+      const resultParsed = parseNodesData(resultChildren)
       const dto: MilestoneNodeDto = {
         id: n.id,
         name: n.name,
@@ -118,6 +129,7 @@ export default async function Page({ params }: PageProps) {
         passCriteriaNodes: passCriteriaParsed.nodes,
         goalNodes: goalParsed.nodes,
         milestonedataNodes: milestonedataParsed.nodes,
+        resultNodes: resultParsed.nodes,
       }
       return milestoneNodeToTimelineMilestone(dto)
     }),
@@ -133,7 +145,11 @@ export default async function Page({ params }: PageProps) {
       breadcrumbs={[{ label: tCampaigns('title'), href: routes.campaigns.list }, { label: title }]}
       mainClassName="max-w-none flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
-      <CampaignChatPanel campaignId={campaignId} initialMilestones={initialMilestones} />
+      <CampaignChatPanel
+        campaignId={campaignId}
+        initialMilestones={initialMilestones}
+        locationId={locationId}
+      />
     </AnalyticsPageShell>
   )
 }

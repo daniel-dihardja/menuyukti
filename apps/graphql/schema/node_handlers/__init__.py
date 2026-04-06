@@ -9,6 +9,7 @@ from graphql.schema.node_handlers.goal import GoalHandler
 from graphql.schema.node_handlers.milestone import MilestoneHandler
 from graphql.schema.node_handlers.milestonedata import MilestoneDataHandler
 from graphql.schema.node_handlers.passcriteria import PassCriteriaHandler
+from graphql.schema.node_handlers.result import ResultHandler
 
 _GENERIC_HANDLER = GenericHandler()
 
@@ -18,6 +19,7 @@ _REGISTRY: dict[str, NodeHandler] = {
     "passcriteria": PassCriteriaHandler(),
     "goal": GoalHandler(),
     "milestonedata": MilestoneDataHandler(),
+    "result": ResultHandler(),
 }
 
 
@@ -39,5 +41,6 @@ __all__ = [
     "MilestoneHandler",
     "NodeHandler",
     "PassCriteriaHandler",
+    "ResultHandler",
     "get_handler",
 ]
