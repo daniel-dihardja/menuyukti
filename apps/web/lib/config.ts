@@ -9,3 +9,15 @@ export function getAgentsBaseUrl(): string | null {
   if (!raw) return null
   return raw.replace(/\/$/, '')
 }
+
+/**
+ * Base URL for the Python LangChain / LangGraph agents service (`apps/agents`), no trailing slash.
+ *
+ * Set `PYTHON_AGENTS_URL` in apps/web/.env.local (e.g. http://127.0.0.1:8001).
+ * Defaults to `http://localhost:8001` when unset (local dev).
+ */
+export function getPythonAgentsUrl(): string {
+  const raw = process.env.PYTHON_AGENTS_URL?.trim()
+  if (raw) return raw.replace(/\/$/, '')
+  return 'http://localhost:8001'
+}
