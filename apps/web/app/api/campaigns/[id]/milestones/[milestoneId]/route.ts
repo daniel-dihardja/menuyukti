@@ -33,7 +33,9 @@ function passCriterionDisplayName(requirement: string): string {
 }
 
 async function loadCampaignOrThrow(campaignId: string, userId: string) {
-  const data = parseNodeData(await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: campaignId }, userId))
+  const data = parseNodeData(
+    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: campaignId }, userId),
+  )
   const node = data.node
   if (!node) {
     return { error: NextResponse.json({ message: 'Campaign not found' }, { status: 404 }) }
@@ -78,7 +80,9 @@ async function assertPassCriteriaBelongsToMilestone(
   milestoneId: string,
   userId: string,
 ) {
-  const data = parseNodeData(await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: passCriteriaId }, userId))
+  const data = parseNodeData(
+    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: passCriteriaId }, userId),
+  )
   const n = data.node
   if (!n || n.nodeType !== 'passcriteria' || n.parentId !== milestoneId) {
     throw new Error('Invalid pass criterion id')
@@ -452,11 +456,7 @@ export async function DELETE(_req: Request, context: RouteContext) {
     }
 
     try {
-      await graphqlQuery<DeleteNodeData>(
-        DELETE_NODE_MUTATION,
-        { id: milestoneId },
-        userId,
-      )
+      await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: milestoneId }, userId)
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
       if (msg.includes('Only the last milestone')) {

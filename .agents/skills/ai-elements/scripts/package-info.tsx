@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   PackageInfo,
@@ -10,16 +10,11 @@ import {
   PackageInfoHeader,
   PackageInfoName,
   PackageInfoVersion,
-} from "@/components/ai-elements/package-info";
+} from '@/components/ai-elements/package-info'
 
 const Example = () => (
   <div className="flex flex-col gap-4">
-    <PackageInfo
-      changeType="major"
-      currentVersion="18.2.0"
-      name="react"
-      newVersion="19.0.0"
-    >
+    <PackageInfo changeType="major" currentVersion="18.2.0" name="react" newVersion="19.0.0">
       <PackageInfoHeader>
         <PackageInfoName />
         <PackageInfoChangeType />
@@ -46,6 +41,6 @@ const Example = () => (
 
     <PackageInfo changeType="removed" currentVersion="2.29.4" name="moment" />
   </div>
-);
+)
 
-export default Example;
+export default Example

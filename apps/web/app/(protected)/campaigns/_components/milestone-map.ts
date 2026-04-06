@@ -7,7 +7,11 @@ import {
 } from '@/lib/graphql/node-schemas'
 import type { AnyNode } from '@/lib/graphql/queries'
 
-import type { PassCriteriaRow, TimelineMilestone, TimelineMilestoneStatus } from './timeline-workspace'
+import type {
+  PassCriteriaRow,
+  TimelineMilestone,
+  TimelineMilestoneStatus,
+} from './timeline-workspace'
 
 /** Rail icon state from persisted pass criteria + optional result (single source for SSR + client). */
 export function deriveMilestoneRailStatus(
@@ -81,7 +85,9 @@ export function goalFromChildNodes(nodes: AnyNode[] | undefined | null): string 
 }
 
 /** First valid `milestonedata` child wins (at most one is expected). */
-export function milestoneDataFromChildNodes(nodes: AnyNode[] | undefined | null): string | undefined {
+export function milestoneDataFromChildNodes(
+  nodes: AnyNode[] | undefined | null,
+): string | undefined {
   if (nodes == null || !Array.isArray(nodes)) {
     return undefined
   }
@@ -102,7 +108,9 @@ export function milestoneDataFromChildNodes(nodes: AnyNode[] | undefined | null)
 }
 
 /** First valid `result` child wins (at most one is expected). */
-export function resultMarkdownFromChildNodes(nodes: AnyNode[] | undefined | null): string | undefined {
+export function resultMarkdownFromChildNodes(
+  nodes: AnyNode[] | undefined | null,
+): string | undefined {
   if (nodes == null || !Array.isArray(nodes)) {
     return undefined
   }

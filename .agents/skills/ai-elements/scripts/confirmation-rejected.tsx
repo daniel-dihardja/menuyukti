@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Confirmation,
@@ -6,23 +6,18 @@ import {
   ConfirmationRejected,
   ConfirmationRequest,
   ConfirmationTitle,
-} from "@/components/ai-elements/confirmation";
-import { CheckIcon, XIcon } from "lucide-react";
-import { nanoid } from "nanoid";
+} from '@/components/ai-elements/confirmation'
+import { CheckIcon, XIcon } from 'lucide-react'
+import { nanoid } from 'nanoid'
 
 const Example = () => (
   <div className="w-full max-w-2xl">
-    <Confirmation
-      approval={{ approved: false, id: nanoid() }}
-      state="output-denied"
-    >
+    <Confirmation approval={{ approved: false, id: nanoid() }} state="output-denied">
       <ConfirmationTitle>
         <ConfirmationRequest>
-          This tool wants to delete the file{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-sm">
-            /tmp/example.txt
-          </code>
-          . Do you approve this action?
+          This tool wants to delete the file{' '}
+          <code className="rounded bg-muted px-1.5 py-0.5 text-sm">/tmp/example.txt</code>. Do you
+          approve this action?
         </ConfirmationRequest>
         <ConfirmationAccepted>
           <CheckIcon className="size-4 text-green-600 dark:text-green-400" />
@@ -35,6 +30,6 @@ const Example = () => (
       </ConfirmationTitle>
     </Confirmation>
   </div>
-);
+)
 
-export default Example;
+export default Example

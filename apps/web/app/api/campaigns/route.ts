@@ -22,11 +22,7 @@ export async function GET(req: Request) {
     }
 
     const data = parseNodesData(
-      await graphqlQuery<NodesDataRaw>(
-        NODES_QUERY,
-        { locationId, nodeType: 'campaign' },
-        userId,
-      ),
+      await graphqlQuery<NodesDataRaw>(NODES_QUERY, { locationId, nodeType: 'campaign' }, userId),
     )
 
     return NextResponse.json({ nodes: data.nodes })

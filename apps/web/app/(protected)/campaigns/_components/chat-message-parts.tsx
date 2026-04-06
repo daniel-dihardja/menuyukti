@@ -107,7 +107,12 @@ function MessagePartRenderer({
   if (part.type === 'source-url') {
     return (
       <p className="text-muted-foreground text-xs">
-        <Link className="underline underline-offset-2" href={part.url} rel="noreferrer" target="_blank">
+        <Link
+          className="underline underline-offset-2"
+          href={part.url}
+          rel="noreferrer"
+          target="_blank"
+        >
           {part.title ?? part.url}
         </Link>
       </p>
@@ -123,11 +128,7 @@ function MessagePartRenderer({
   }
 
   if (part.type === 'file') {
-    return (
-      <p className="text-muted-foreground text-xs">
-        File: {part.filename ?? part.mediaType}
-      </p>
-    )
+    return <p className="text-muted-foreground text-xs">File: {part.filename ?? part.mediaType}</p>
   }
 
   if (part.type === 'step-start') {

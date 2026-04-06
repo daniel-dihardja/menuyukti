@@ -4,11 +4,11 @@ This file helps AI coding agents (Cursor, Claude Code, Codex, etc.) run the righ
 
 ## Repository layout
 
-| Area             | Path            | Stack                                                                   |
-| ---------------- | --------------- | ----------------------------------------------------------------------- |
-| Web              | `apps/web`      | Next.js, React, TypeScript, Clerk, Vitest, next-intl (data via GraphQL) |
-| GraphQL API      | `apps/graphql`  | Python, Strawberry, uv, Ruff, pytest                                    |
-| LangGraph agents | `apps/agents`   | Python, FastAPI, LangChain / LangGraph, OpenAI, uv, Ruff, pytest        |
+| Area             | Path           | Stack                                                                   |
+| ---------------- | -------------- | ----------------------------------------------------------------------- |
+| Web              | `apps/web`     | Next.js, React, TypeScript, Clerk, Vitest, next-intl (data via GraphQL) |
+| GraphQL API      | `apps/graphql` | Python, Strawberry, uv, Ruff, pytest                                    |
+| LangGraph agents | `apps/agents`  | Python, FastAPI, LangChain / LangGraph, OpenAI, uv, Ruff, pytest        |
 
 **pnpm workspaces:** `apps/*`, `packages/*`. **Python (uv):** root `pyproject.toml` + `apps/graphql`, `apps/agents`, `packages/menuyukti`.
 

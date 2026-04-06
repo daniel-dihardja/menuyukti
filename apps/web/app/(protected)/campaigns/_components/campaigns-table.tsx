@@ -60,7 +60,10 @@ export function CampaignsTable({ campaigns }: CampaignsTableProps) {
 
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href={routes.campaigns.detail(row.id)} className="flex items-center gap-2">
+                      <Link
+                        href={routes.campaigns.detail(row.id)}
+                        className="flex items-center gap-2"
+                      >
                         <Eye className="h-4 w-4" />
                         {t('view')}
                       </Link>

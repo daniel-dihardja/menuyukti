@@ -78,9 +78,8 @@ function isKeyboardEventFromNestedInteractive(eventTarget: EventTarget | null): 
     return false
   }
   return (
-    eventTarget.closest(
-      'textarea, input, select, button, a[href], [contenteditable="true"]',
-    ) !== null
+    eventTarget.closest('textarea, input, select, button, a[href], [contenteditable="true"]') !==
+    null
   )
 }
 
@@ -91,7 +90,6 @@ const TIMELINE_RAIL_ICON = 'size-7 origin-center stroke-[2]'
 const TIMELINE_RAIL_ICON_CHECK = cn(TIMELINE_RAIL_ICON, 'scale-[0.7]')
 
 function TimelineRailMarker({
-   
   status,
   labels,
 }: {
@@ -549,9 +547,7 @@ function TimelineItem({
           <Card
             className={cn(
               'gap-0 border py-4 shadow-none transition-[background-color,box-shadow,border-color]',
-              isSelected
-                ? 'border-primary bg-accent/50 ring-2 ring-ring/50'
-                : 'hover:bg-accent/30',
+              isSelected ? 'border-primary bg-accent/50 ring-2 ring-ring/50' : 'hover:bg-accent/30',
             )}
           >
             <CardHeader className="gap-1.5">
@@ -640,7 +636,11 @@ function TimelineItem({
                           type="button"
                           variant="secondary"
                         >
-                          {isMilestoneRunning ? <Spinner /> : <Play aria-hidden data-icon="inline-start" />}
+                          {isMilestoneRunning ? (
+                            <Spinner />
+                          ) : (
+                            <Play aria-hidden data-icon="inline-start" />
+                          )}
                         </Button>
                       </span>
                     </TooltipTrigger>
@@ -820,7 +820,9 @@ function TimelineItem({
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-muted-foreground text-sm">{t('milestonePassCriteriaEmpty')}</p>
+                      <p className="text-muted-foreground text-sm">
+                        {t('milestonePassCriteriaEmpty')}
+                      </p>
                     )}
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                       <Input
@@ -1152,7 +1154,10 @@ export function TimelineWorkspace({
           <Skeleton className="h-28 w-full max-w-lg" />
         </div>
       ) : loadError ? (
-        <p className="flex flex-1 items-center justify-center p-8 text-center text-destructive text-sm" role="alert">
+        <p
+          className="flex flex-1 items-center justify-center p-8 text-center text-destructive text-sm"
+          role="alert"
+        >
           {loadError}
         </p>
       ) : milestones.length === 0 ? (

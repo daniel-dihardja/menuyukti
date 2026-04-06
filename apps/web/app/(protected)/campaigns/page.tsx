@@ -45,7 +45,9 @@ async function CampaignsData() {
     return (
       <Card className="space-y-4 p-8 text-center">
         <h2 className="text-lg font-medium">{t('noBranches.title')}</h2>
-        <p className="mx-auto max-w-md text-muted-foreground text-sm">{t('noBranches.description')}</p>
+        <p className="mx-auto max-w-md text-muted-foreground text-sm">
+          {t('noBranches.description')}
+        </p>
         <Button asChild size="lg">
           <Link href={routes.analytics.branchesCreate}>{t('noBranches.cta')}</Link>
         </Button>

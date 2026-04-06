@@ -19,11 +19,11 @@ Use this file when upgrading a project from the legacy `reactflow` package (v11 
 
 The package name changed across major versions:
 
-| Version | Package name | Import style |
-|---------|-------------|--------------|
+| Version         | Package name          | Import style                                  |
+| --------------- | --------------------- | --------------------------------------------- |
 | v10 and earlier | `react-flow-renderer` | `import ReactFlow from 'react-flow-renderer'` |
-| v11 | `reactflow` | `import ReactFlow from 'reactflow'` |
-| v12+ (current) | `@xyflow/react` | `import { ReactFlow } from '@xyflow/react'` |
+| v11             | `reactflow`           | `import ReactFlow from 'reactflow'`           |
+| v12+ (current)  | `@xyflow/react`       | `import { ReactFlow } from '@xyflow/react'`   |
 
 To migrate:
 
@@ -42,10 +42,10 @@ v11 used a default export. v12 uses named exports:
 
 ```tsx
 // v11 (old)
-import ReactFlow, { Background, Controls, MiniMap } from 'reactflow';
+import ReactFlow, { Background, Controls, MiniMap } from 'reactflow'
 
 // v12 (new)
-import { ReactFlow, Background, Controls, MiniMap } from '@xyflow/react';
+import { ReactFlow, Background, Controls, MiniMap } from '@xyflow/react'
 ```
 
 All subpackage imports (`@reactflow/core`, `@reactflow/background`, etc.) are consolidated into `@xyflow/react`. Remove any subpackage dependencies.
@@ -54,13 +54,13 @@ All subpackage imports (`@reactflow/core`, `@reactflow/background`, etc.) are co
 
 ```tsx
 // v11 (old)
-import 'reactflow/dist/style.css';
+import 'reactflow/dist/style.css'
 
 // v12 (new)
-import '@xyflow/react/dist/style.css';
+import '@xyflow/react/dist/style.css'
 
 // or for custom styling frameworks (Tailwind, styled-components):
-import '@xyflow/react/dist/base.css';
+import '@xyflow/react/dist/base.css'
 ```
 
 ## Immutable state updates
@@ -71,10 +71,10 @@ v11 tolerated mutations when updating nodes. v12 requires immutable updates — 
 // v11 (old) — mutations worked
 setNodes((currentNodes) =>
   currentNodes.map((node) => {
-    node.hidden = true;  // mutation
-    return node;
+    node.hidden = true // mutation
+    return node
   }),
-);
+)
 
 // v12 (new) — must create new objects
 setNodes((currentNodes) =>
@@ -82,7 +82,7 @@ setNodes((currentNodes) =>
     ...node,
     hidden: true,
   })),
-);
+)
 ```
 
 This applies everywhere: `setNodes`, `setEdges`, `onNodesChange` handlers, Zustand stores, etc.
@@ -109,36 +109,36 @@ v12 simplified the generic type system for nodes and edges. Instead of passing d
 
 ```ts
 // v11 (old) — generic on each usage
-import { Node } from 'reactflow';
-type MyNode = Node<{ label: string; value: number }>;
+import { Node } from 'reactflow'
+type MyNode = Node<{ label: string; value: number }>
 
 // v12 (new) — discriminated union with type tag
-import { type Node } from '@xyflow/react';
+import { type Node } from '@xyflow/react'
 
-type NumberNode = Node<{ value: number }, 'number'>;
-type TextNode = Node<{ text: string }, 'text'>;
-type AppNode = NumberNode | TextNode;
+type NumberNode = Node<{ value: number }, 'number'>
+type TextNode = Node<{ text: string }, 'text'>
+type AppNode = NumberNode | TextNode
 ```
 
 Apply the union type to hooks and callbacks:
 
 ```ts
-const { getNodes, getEdges } = useReactFlow<AppNode, AppEdge>();
+const { getNodes, getEdges } = useReactFlow<AppNode, AppEdge>()
 const onNodesChange: OnNodesChange<AppNode> = useCallback(
   (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
   [],
-);
+)
 ```
 
 ## Hooks changes
 
-| v11 | v12 | Notes |
-|-----|-----|-------|
-| `useNodesState` | Still available | Works the same way |
-| `useEdgesState` | Still available | Works the same way |
-| `useHandleConnections` | `useNodeConnections` | Renamed |
-| `useReactFlow().project()` | `useReactFlow().screenToFlowPosition()` | Renamed |
-| `useReactFlow().setTransform()` | `useReactFlow().setViewport()` | Renamed (from v10) |
+| v11                             | v12                                     | Notes              |
+| ------------------------------- | --------------------------------------- | ------------------ |
+| `useNodesState`                 | Still available                         | Works the same way |
+| `useEdgesState`                 | Still available                         | Works the same way |
+| `useHandleConnections`          | `useNodeConnections`                    | Renamed            |
+| `useReactFlow().project()`      | `useReactFlow().screenToFlowPosition()` | Renamed            |
+| `useReactFlow().setTransform()` | `useReactFlow().setViewport()`          | Renamed (from v10) |
 
 New hooks in v12 (no v11 equivalent):
 

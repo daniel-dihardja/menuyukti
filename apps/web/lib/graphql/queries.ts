@@ -2,12 +2,7 @@
  * GraphQL query and mutation strings and response types used by the web app.
  */
 
-import {
-  parseNode,
-  parseNodeNullable,
-  parseNodes,
-  type AnyNode,
-} from './node-schemas'
+import { parseNode, parseNodeNullable, parseNodes, type AnyNode } from './node-schemas'
 
 export type {
   AnyNode,

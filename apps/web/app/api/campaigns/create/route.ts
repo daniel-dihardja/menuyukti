@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { ZodError } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
-import { CREATE_NODE_MUTATION, parseCreateNodeData, type CreateNodeDataRaw } from '@/lib/graphql/queries'
+import {
+  CREATE_NODE_MUTATION,
+  parseCreateNodeData,
+  type CreateNodeDataRaw,
+} from '@/lib/graphql/queries'
 import { createCampaignSchema } from './schema'
 
 export async function POST(req: Request) {

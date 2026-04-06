@@ -36,7 +36,11 @@ export type CampaignChatPanelProps = {
   locationId: number
 }
 
-export function CampaignChatPanel({ campaignId, initialMilestones, locationId }: CampaignChatPanelProps) {
+export function CampaignChatPanel({
+  campaignId,
+  initialMilestones,
+  locationId,
+}: CampaignChatPanelProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const [text, setText] = useState('')
   const [milestones, setMilestones] = useState<TimelineMilestone[]>(initialMilestones)
@@ -131,9 +135,12 @@ export function CampaignChatPanel({ campaignId, initialMilestones, locationId }:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       })
-      const body = (await res.json().catch(() => null)) as
-        | { message?: string; id?: string; name?: string; data?: unknown | null }
-        | null
+      const body = (await res.json().catch(() => null)) as {
+        message?: string
+        id?: string
+        name?: string
+        data?: unknown | null
+      } | null
       if (!res.ok) {
         throw new Error(body?.message ?? t('milestonesCreateError'))
       }
@@ -183,7 +190,10 @@ export function CampaignChatPanel({ campaignId, initialMilestones, locationId }:
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name }),
         })
-        const body = (await res.json().catch(() => null)) as { message?: string; name?: string } | null
+        const body = (await res.json().catch(() => null)) as {
+          message?: string
+          name?: string
+        } | null
         if (!res.ok) {
           throw new Error(body?.message ?? t('milestonesRenameError'))
         }
@@ -304,7 +314,9 @@ export function CampaignChatPanel({ campaignId, initialMilestones, locationId }:
         )
         return true
       } catch (err) {
-        setMilestoneDataError(err instanceof Error ? err.message : t('milestonesMilestoneDataError'))
+        setMilestoneDataError(
+          err instanceof Error ? err.message : t('milestonesMilestoneDataError'),
+        )
         return false
       } finally {
         setSavingDataMilestoneId(null)
@@ -367,7 +379,10 @@ export function CampaignChatPanel({ campaignId, initialMilestones, locationId }:
               const summary = typeof payload.summary === 'string' ? payload.summary : ''
               const criteriaRaw = payload.criteria
               const criteriaList = Array.isArray(criteriaRaw)
-                ? criteriaRaw.filter((c): c is { id?: unknown; status?: unknown } => c != null && typeof c === 'object')
+                ? criteriaRaw.filter(
+                    (c): c is { id?: unknown; status?: unknown } =>
+                      c != null && typeof c === 'object',
+                  )
                 : []
               setMilestones((prev) =>
                 prev.map((milestone) => {

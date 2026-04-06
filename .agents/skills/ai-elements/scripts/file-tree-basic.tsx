@@ -1,10 +1,6 @@
-"use client";
+'use client'
 
-import {
-  FileTree,
-  FileTreeFile,
-  FileTreeFolder,
-} from "@/components/ai-elements/file-tree";
+import { FileTree, FileTreeFile, FileTreeFolder } from '@/components/ai-elements/file-tree'
 
 const Example = () => (
   <FileTree>
@@ -13,6 +9,6 @@ const Example = () => (
     </FileTreeFolder>
     <FileTreeFile name="package.json" path="package.json" />
   </FileTree>
-);
+)
 
-export default Example;
+export default Example

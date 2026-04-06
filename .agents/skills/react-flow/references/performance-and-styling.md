@@ -18,8 +18,8 @@ Use this file when optimizing React Flow for large graphs, reducing re-renders, 
 Custom components re-render whenever any node/edge changes unless memoized:
 
 ```tsx
-import { memo } from 'react';
-import { Handle, Position } from '@xyflow/react';
+import { memo } from 'react'
+import { Handle, Position } from '@xyflow/react'
 
 const CustomNode = memo(function CustomNode({ data }) {
   return (
@@ -28,10 +28,10 @@ const CustomNode = memo(function CustomNode({ data }) {
       <span>{data.label}</span>
       <Handle type="source" position={Position.Bottom} />
     </div>
-  );
-});
+  )
+})
 
-export default CustomNode;
+export default CustomNode
 ```
 
 ### 2. Stable nodeTypes and edgeTypes references
@@ -40,11 +40,11 @@ Define outside components or memoize:
 
 ```tsx
 // BEST: outside component
-const nodeTypes = { custom: CustomNode };
-const edgeTypes = { custom: CustomEdge };
+const nodeTypes = { custom: CustomNode }
+const edgeTypes = { custom: CustomEdge }
 
 // OK: memoized
-const nodeTypes = useMemo(() => ({ custom: CustomNode }), []);
+const nodeTypes = useMemo(() => ({ custom: CustomNode }), [])
 ```
 
 ### 3. Memoize callback props
@@ -75,24 +75,24 @@ Reading the entire `nodes` or `edges` array causes re-renders on every change:
 
 ```tsx
 // BAD: re-renders whenever ANY node changes
-const nodes = useStore((state) => state.nodes);
-const selectedNodeIds = nodes.filter((n) => n.selected).map((n) => n.id);
+const nodes = useStore((state) => state.nodes)
+const selectedNodeIds = nodes.filter((n) => n.selected).map((n) => n.id)
 
 // GOOD: only re-renders when selection actually changes
 const selectedNodeIds = useStore(
   (state) => state.nodes.filter((n) => n.selected).map((n) => n.id),
   shallow, // import from zustand/shallow
-);
+)
 ```
 
 Use `useReactFlow()` for on-demand reads that don't need reactive updates:
 
 ```tsx
-const { getNodes, getEdges } = useReactFlow();
+const { getNodes, getEdges } = useReactFlow()
 
 const handleSave = () => {
-  const currentNodes = getNodes(); // no subscription, no re-render
-};
+  const currentNodes = getNodes() // no subscription, no re-render
+}
 ```
 
 ### 5. Only render visible elements
@@ -112,23 +112,19 @@ Use the `hidden` property to toggle visibility of subtrees:
 ```tsx
 const toggleChildren = (parentId) => {
   // Read current nodes once to use in both updates
-  const currentNodes = getNodes();
-  const childIds = new Set(
-    currentNodes.filter((n) => n.parentId === parentId).map((n) => n.id),
-  );
+  const currentNodes = getNodes()
+  const childIds = new Set(currentNodes.filter((n) => n.parentId === parentId).map((n) => n.id))
 
   setNodes((nodes) =>
-    nodes.map((node) =>
-      childIds.has(node.id) ? { ...node, hidden: !node.hidden } : node,
-    ),
-  );
+    nodes.map((node) => (childIds.has(node.id) ? { ...node, hidden: !node.hidden } : node)),
+  )
   setEdges((edges) =>
     edges.map((edge) => {
-      const isChild = childIds.has(edge.source) || childIds.has(edge.target);
-      return isChild ? { ...edge, hidden: !edge.hidden } : edge;
+      const isChild = childIds.has(edge.source) || childIds.has(edge.target)
+      return isChild ? { ...edge, hidden: !edge.hidden } : edge
     }),
-  );
-};
+  )
+}
 ```
 
 ### 7. Simplify node styles
@@ -147,9 +143,9 @@ Track UI concerns (selection, hover, focus) separately from the flow data to pre
 ```tsx
 // In your Zustand store
 type UIState = {
-  selectedNodeIds: Set<string>;
-  hoveredNodeId: string | null;
-};
+  selectedNodeIds: Set<string>
+  hoveredNodeId: string | null
+}
 ```
 
 ## Theming
@@ -162,11 +158,11 @@ React Flow supports light, dark, and system color modes:
 <ReactFlow colorMode="dark" ... />
 ```
 
-| Value | Description |
-|-------|-------------|
-| `'light'` | Light theme (default) |
-| `'dark'` | Dark theme |
-| `'system'` | Match OS preference |
+| Value      | Description           |
+| ---------- | --------------------- |
+| `'light'`  | Light theme (default) |
+| `'dark'`   | Dark theme            |
+| `'system'` | Match OS preference   |
 
 This adds a class to the `.react-flow` container (`dark` or `light`) for conditional CSS.
 
@@ -242,29 +238,29 @@ Override default styles by setting CSS variables on `.react-flow` or `:root`:
 
 ### CSS class targets
 
-| Selector | Target |
-|----------|--------|
-| `.react-flow` | Root container |
-| `.react-flow__node` | All nodes |
-| `.react-flow__node-default` | Default node type |
-| `.react-flow__node-input` | Input node type |
-| `.react-flow__node-output` | Output node type |
-| `.react-flow__node-group` | Group node type |
-| `.react-flow__node.selected` | Selected nodes |
-| `.react-flow__edge` | All edges |
-| `.react-flow__edge.selected` | Selected edges |
-| `.react-flow__edge-path` | Edge SVG path |
-| `.react-flow__handle` | Handles |
-| `.react-flow__handle-top` | Top-positioned handles |
-| `.react-flow__handle-right` | Right-positioned handles |
+| Selector                     | Target                    |
+| ---------------------------- | ------------------------- |
+| `.react-flow`                | Root container            |
+| `.react-flow__node`          | All nodes                 |
+| `.react-flow__node-default`  | Default node type         |
+| `.react-flow__node-input`    | Input node type           |
+| `.react-flow__node-output`   | Output node type          |
+| `.react-flow__node-group`    | Group node type           |
+| `.react-flow__node.selected` | Selected nodes            |
+| `.react-flow__edge`          | All edges                 |
+| `.react-flow__edge.selected` | Selected edges            |
+| `.react-flow__edge-path`     | Edge SVG path             |
+| `.react-flow__handle`        | Handles                   |
+| `.react-flow__handle-top`    | Top-positioned handles    |
+| `.react-flow__handle-right`  | Right-positioned handles  |
 | `.react-flow__handle-bottom` | Bottom-positioned handles |
-| `.react-flow__handle-left` | Left-positioned handles |
-| `.react-flow__connection` | Connection line |
-| `.react-flow__controls` | Controls container |
-| `.react-flow__minimap` | MiniMap container |
-| `.react-flow__background` | Background container |
-| `.react-flow__panel` | Panel container |
-| `.react-flow__attribution` | Attribution link |
+| `.react-flow__handle-left`   | Left-positioned handles   |
+| `.react-flow__connection`    | Connection line           |
+| `.react-flow__controls`      | Controls container        |
+| `.react-flow__minimap`       | MiniMap container         |
+| `.react-flow__background`    | Background container      |
+| `.react-flow__panel`         | Panel container           |
+| `.react-flow__attribution`   | Attribution link          |
 
 ### Inline styles via style prop
 
@@ -282,13 +278,13 @@ Override default styles by setting CSS variables on `.react-flow` or `:root`:
 Import only base styles (not the full stylesheet):
 
 ```tsx
-import '@xyflow/react/dist/base.css';
+import '@xyflow/react/dist/base.css'
 ```
 
 ### Custom node with Tailwind
 
 ```tsx
-import { Handle, Position } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react'
 
 function TailwindNode({ data }) {
   return (
@@ -299,18 +295,10 @@ function TailwindNode({ data }) {
           <div className="text-gray-500">{data.role}</div>
         </div>
       </div>
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="w-16 !bg-teal-500"
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="w-16 !bg-teal-500"
-      />
+      <Handle type="target" position={Position.Top} className="w-16 !bg-teal-500" />
+      <Handle type="source" position={Position.Bottom} className="w-16 !bg-teal-500" />
     </div>
-  );
+  )
 }
 ```
 
@@ -320,11 +308,11 @@ function TailwindNode({ data }) {
 
 React Flow provides utility classes for custom node content:
 
-| Class | Effect |
-|-------|--------|
-| `nodrag` | Prevents node drag on the element |
-| `nowheel` | Prevents zoom on scroll |
-| `nopan` | Prevents viewport pan |
+| Class     | Effect                            |
+| --------- | --------------------------------- |
+| `nodrag`  | Prevents node drag on the element |
+| `nowheel` | Prevents zoom on scroll           |
+| `nopan`   | Prevents viewport pan             |
 
 These can be combined with Tailwind classes:
 
@@ -365,7 +353,7 @@ const nodes = [
     position: { x: 0, y: 0 },
     ariaLabel: 'Start node - beginning of the workflow',
   },
-];
+]
 ```
 
 ## Do / Don't

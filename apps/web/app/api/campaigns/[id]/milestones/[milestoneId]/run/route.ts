@@ -40,7 +40,10 @@ export async function POST(req: Request, context: RouteContext) {
   }
   const parsed = runBodySchema.safeParse(json)
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid body', issues: parsed.error.issues }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Invalid body', issues: parsed.error.issues },
+      { status: 400 },
+    )
   }
   const { locationId } = parsed.data
 
@@ -63,7 +66,10 @@ export async function POST(req: Request, context: RouteContext) {
     return NextResponse.json({ error: 'Milestone not found' }, { status: 404 })
   }
   if (milestoneNode.parentId !== campaignId) {
-    return NextResponse.json({ error: 'Milestone does not belong to this campaign' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Milestone does not belong to this campaign' },
+      { status: 400 },
+    )
   }
 
   const baseUrl = getPythonAgentsUrl()
