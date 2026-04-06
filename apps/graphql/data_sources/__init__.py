@@ -12,6 +12,7 @@ __all__ = [
     "MenuItemCogs",
     "InstagramPost",
     "InstagramPostPromotedItem",
+    "Node",
     "SessionLocal",
     "engine",
     "init_db",

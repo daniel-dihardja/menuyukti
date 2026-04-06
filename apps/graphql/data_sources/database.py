@@ -1,6 +1,7 @@
 """Database helpers for the GraphQL service."""
 
 import os
+import uuid
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -17,6 +18,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    Uuid,
     create_engine,
     func,
     text,
@@ -359,6 +361,33 @@ class PromotionCandidates(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+
+
+class Node(Base):
+    """
+    Graph-like hierarchy: each row is a vertex with an optional parent edge (adjacency list).
+    """
+
+    __tablename__ = "node"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    parent_id = Column(
+        Uuid(as_uuid=True),
+        ForeignKey("node.id"),
+        nullable=True,
+        index=True,
+    )
+    name = Column(Text, nullable=False)
+    path = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    parent = relationship("Node", remote_side=[id], back_populates="children")
+    children = relationship("Node", back_populates="parent")
 
 
 def init_db(target_engine=None) -> None:
