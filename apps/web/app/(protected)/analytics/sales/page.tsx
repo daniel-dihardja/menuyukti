@@ -7,6 +7,7 @@ import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import { Card } from '@workspace/ui/components/card'
 import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { LOCATIONS_QUERY, type LocationsData } from '@/lib/graphql/queries'
 import { AnalyticsSalesClient } from './analytics-sales-client'
@@ -17,7 +18,7 @@ export default async function Page() {
   const t = await getTranslations('analytics.sales')
   const { userId } = await auth()
   if (!userId) {
-    throw new Error('Unauthorized')
+    redirect(routes.login)
   }
 
   const data = await graphqlQuery<LocationsData>(LOCATIONS_QUERY, undefined, userId)

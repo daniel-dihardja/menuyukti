@@ -7,10 +7,17 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import MessagesState
 
 
-async def _chat_node(state: MessagesState) -> dict[str, list[BaseMessage]]:
+def _system_prompt(campaign_id: int | None) -> str:
+    text = CHAT_SYSTEM_PROMPT
+    if campaign_id is not None:
+        text += f"\n\nCampaign context: The user is discussing campaign ID {campaign_id}."
+    return text
+
+
+async def _chat_node(state: MessagesState, *, campaign_id: int | None = None) -> dict[str, list[BaseMessage]]:
     """Stream tokens from the model; LangGraph surfaces them via astream_events."""
     llm = get_llm()
-    system = SystemMessage(content=CHAT_SYSTEM_PROMPT)
+    system = SystemMessage(content=_system_prompt(campaign_id))
     messages: list[BaseMessage] = [system, *state["messages"]]
     full_content = ""
     async for chunk in llm.astream(messages):
@@ -23,10 +30,14 @@ async def _chat_node(state: MessagesState) -> dict[str, list[BaseMessage]]:
     return {"messages": [AIMessage(content=full_content)]}
 
 
-def build_chat_graph():
+def build_chat_graph(campaign_id: int | None = None):
     """Compile a stateless chat graph (no checkpointer)."""
     builder = StateGraph(MessagesState)
-    builder.add_node("chat", _chat_node)
+
+    async def chat_node(state: MessagesState) -> dict[str, list[BaseMessage]]:
+        return await _chat_node(state, campaign_id=campaign_id)
+
+    builder.add_node("chat", chat_node)
     builder.add_edge(START, "chat")
     builder.add_edge("chat", END)
     return builder.compile()

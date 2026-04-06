@@ -422,6 +422,8 @@
         "emptyDescription": "Start a conversation to see messages here.",
         "placeholder": "What would you like to know?",
         "thinking": "Thinking…",
+        "errorTitle": "Something went wrong",
+        "retry": "Retry",
         "artifactTitle": "Artifact",
         "artifactPlaceholder": "Content will appear here as you work with the assistant."
       },

@@ -121,7 +121,8 @@ export async function POST(req: Request) {
     return jsonError(message, 400)
   }
 
-  const messages = parsed.data.messages as UIMessage[]
+  const { messages: rawMessages, campaignId } = parsed.data
+  const messages = rawMessages as UIMessage[]
   const pythonMessages = uiMessagesToPython(messages)
   if (pythonMessages.length === 0) {
     return jsonError('No messages with text content found in request', 400)
@@ -135,7 +136,10 @@ export async function POST(req: Request) {
         'Content-Type': 'application/json',
         'X-Menuyukti-User-Id': userId,
       },
-      body: JSON.stringify({ messages: pythonMessages }),
+      body: JSON.stringify({
+        messages: pythonMessages,
+        ...(campaignId !== undefined ? { campaign_id: campaignId } : {}),
+      }),
       signal: req.signal,
     })
   } catch (err) {

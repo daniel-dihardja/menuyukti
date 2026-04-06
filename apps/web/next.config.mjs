@@ -4,6 +4,9 @@ import createNextIntlPlugin from "next-intl/plugin";
 const nextConfig = {
   output: "standalone",
   transpilePackages: ["@workspace/ui"],
+  experimental: {
+    optimizePackageImports: ["lucide-react", "@workspace/ui"],
+  },
   images: {
     remotePatterns: [
       {

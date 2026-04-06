@@ -8,7 +8,7 @@ from agents_app.agents.chat_agent import build_chat_graph, messages_from_roles
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import BaseMessage
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PositiveInt
 
 router = APIRouter()
 
@@ -20,14 +20,19 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[ChatMessage] = Field(min_length=1)
+    campaign_id: PositiveInt | None = None
 
 
 def _sse_data_line(payload: dict[str, str]) -> str:
     return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
 
-async def _stream_chat_events(lc_messages: list[BaseMessage]) -> AsyncIterator[str]:
-    graph = build_chat_graph()
+async def _stream_chat_events(
+    lc_messages: list[BaseMessage],
+    *,
+    campaign_id: int | None = None,
+) -> AsyncIterator[str]:
+    graph = build_chat_graph(campaign_id=campaign_id)
     async for event in graph.astream_events(
         {"messages": lc_messages},
         version="v2",
@@ -57,7 +62,7 @@ async def chat_stream(body: ChatRequest) -> StreamingResponse:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
     return StreamingResponse(
-        _stream_chat_events(lc_messages),
+        _stream_chat_events(lc_messages, campaign_id=body.campaign_id),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

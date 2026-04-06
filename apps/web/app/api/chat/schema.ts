@@ -17,6 +17,7 @@ const messageSchema = z
 
 export const chatRequestBodySchema = z.object({
   messages: z.array(messageSchema).optional().default([]),
+  campaignId: z.number().int().positive().optional(),
 })
 
 export type ChatRequestBody = z.infer<typeof chatRequestBodySchema>

@@ -10,7 +10,6 @@ Use this file when positioning nodes with layout algorithms, creating sub-flows 
 - [Dagre integration](#dagre-integration)
 - [ELK integration](#elk-integration)
 - [D3-Hierarchy integration](#d3-hierarchy-integration)
-- [D3-Force integration](#d3-force-integration)
 - [Sub-flows (parent-child nodes)](#sub-flows-parent-child-nodes)
 - [Layout on initial render](#layout-on-initial-render)
 - [useAutoLayout hook (dagre)](#useautolayout-hook-dagre)
@@ -25,7 +24,8 @@ React Flow does not include built-in layout algorithms. Use an external library:
 | **dagre** | Tree/DAG with minimal config | Yes | Partial | No | Small |
 | **elkjs** | Complex, highly configurable layouts | Yes | Yes | Yes | Large (~1.4MB) |
 | **d3-hierarchy** | Single-root tree structures | No (uniform) | No | No | Small |
-| **d3-force** | Physics-based, organic layouts | Yes | No | No | Small |
+
+For physics-based (force-directed) layouts, run a simulation that updates `node.position` in React Flow state; pick a library that fits your bundle budget.
 
 ## Dagre integration
 
@@ -179,40 +179,6 @@ function getLayoutedElements(nodes, edges) {
 ```
 
 **Limitation**: Requires single root, all nodes must be reachable, uniform node sizes.
-
-## D3-Force integration
-
-Best for organic, physics-based layouts with interactive simulation.
-
-```tsx
-import { forceSimulation, forceLink, forceManyBody, forceX, forceY } from 'd3-force';
-
-function useLayoutedElements() {
-  const { getNodes, getEdges, setNodes } = useReactFlow();
-
-  return useCallback(() => {
-    const nodes = getNodes();
-    const edges = getEdges();
-
-    const simulation = forceSimulation(nodes)
-      .force('link', forceLink(edges).id((d) => d.id).distance(100))
-      .force('charge', forceManyBody().strength(-200))
-      .force('x', forceX().strength(0.05))
-      .force('y', forceY().strength(0.05));
-
-    simulation.on('end', () => {
-      setNodes(
-        nodes.map((node) => ({
-          ...node,
-          position: { x: node.x, y: node.y },
-        })),
-      );
-    });
-
-    simulation.alpha(1).restart();
-  }, [getNodes, getEdges, setNodes]);
-}
-```
 
 ## Sub-flows (parent-child nodes)
 

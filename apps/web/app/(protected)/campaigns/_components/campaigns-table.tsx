@@ -76,7 +76,10 @@ export function CampaignsTable({
 
         <TableBody>
           {campaigns.map((row, index) => (
-            <TableRow key={row.id}>
+            <TableRow
+              key={row.id}
+              className="[contain-intrinsic-size:0_3rem] [content-visibility:auto]"
+            >
               <TableCell>{index + 1}</TableCell>
               <TableCell>
                 <span>{row.name}</span>
@@ -90,8 +93,14 @@ export function CampaignsTable({
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
+                    <Button
+                      aria-label={t('table.action')}
+                      className="h-8 w-8"
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <MoreHorizontal aria-hidden className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
 

@@ -6,7 +6,7 @@ import { Button } from '@workspace/ui/components/button'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { routes } from '@/lib/routes'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { graphqlQuery } from '@/lib/graphql/client'
@@ -27,7 +27,7 @@ type PageProps = {
 export default async function Page({ params }: PageProps) {
   const { userId } = await auth()
   if (!userId) {
-    notFound()
+    redirect(routes.login)
   }
 
   const tSales = await getTranslations('analytics.sales')

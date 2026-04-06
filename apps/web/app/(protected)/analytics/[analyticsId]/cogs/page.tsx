@@ -3,7 +3,7 @@ export const runtime = 'nodejs'
 
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
 import { UpdateCogsForm } from './update-cogs-form'
 import { getAppCurrencyCode } from '@/lib/app-currency'
@@ -26,7 +26,7 @@ type PageProps = {
 export default async function Page({ params }: PageProps) {
   const { userId } = await auth()
   if (!userId) {
-    notFound()
+    redirect(routes.login)
   }
 
   const t = await getTranslations('analytics')

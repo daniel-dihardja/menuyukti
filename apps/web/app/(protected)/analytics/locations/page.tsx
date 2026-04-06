@@ -9,6 +9,7 @@ import { LocationsTable } from './locations-table'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { LOCATIONS_QUERY, type LocationsData } from '@/lib/graphql/queries'
 
@@ -21,7 +22,7 @@ export default async function Page() {
   const t = await getTranslations('analytics.branches')
   const { userId } = await auth()
   if (!userId) {
-    throw new Error('Unauthorized')
+    redirect(routes.login)
   }
 
   const branches = await fetchLocations(userId)
