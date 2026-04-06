@@ -1,5 +1,3 @@
-import uuid
-
 import strawberry
 
 from graphql.data_sources import Node, SessionLocal
@@ -52,10 +50,12 @@ class NodesQuery:
         session = SessionLocal()
         try:
             try:
-                node_uuid = uuid.UUID(str(id))
+                node_pk = int(str(id))
             except ValueError:
                 return None
-            row = session.get(Node, node_uuid)
+            if node_pk < 1:
+                return None
+            row = session.get(Node, node_pk)
             if row is None or row.location_id is None:
                 return None
             if not is_location_owner(session, row.location_id, user_id):

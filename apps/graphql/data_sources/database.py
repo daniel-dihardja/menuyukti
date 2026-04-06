@@ -1,7 +1,6 @@
 """Database helpers for the GraphQL service."""
 
 import os
-import uuid
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -17,7 +16,6 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    Uuid,
     create_engine,
     func,
     text,
@@ -176,9 +174,9 @@ class Node(Base):
 
     __tablename__ = "node"
 
-    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     parent_id = Column(
-        Uuid(as_uuid=True),
+        Integer,
         ForeignKey("node.id"),
         nullable=True,
         index=True,

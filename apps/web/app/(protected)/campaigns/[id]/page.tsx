@@ -10,7 +10,7 @@ import { routes } from '@/lib/routes'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { CampaignChatPanel } from '../_components/campaign-chat-panel'
 
-const campaignIdParamSchema = z.string().uuid()
+const campaignIdParamSchema = z.string().regex(/^\d+$/, 'Invalid campaign id')
 
 type PageProps = {
   params: Promise<{ id: string }>

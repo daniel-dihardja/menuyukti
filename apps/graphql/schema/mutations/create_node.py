@@ -1,5 +1,4 @@
 import secrets
-import uuid
 
 import strawberry
 from strawberry.scalars import JSON
@@ -50,33 +49,37 @@ class CreateNodeMutation:
         try:
             require_location_owner(session, location_id, user_id)
 
-            node_id = uuid.uuid4()
             display_name = name if name is not None and name.strip() else _random_default_name()
 
-            if parent_id is None:
-                path = f"/{node_id}"
-                resolved_parent_id = None
-            else:
-                parent_uuid = uuid.UUID(str(parent_id))
-                parent = session.get(Node, parent_uuid)
+            parent: Node | None = None
+            resolved_parent_id: int | None = None
+            if parent_id is not None:
+                try:
+                    parent_pk = int(str(parent_id))
+                except ValueError as e:
+                    raise ValueError("Invalid parent node id") from e
+                parent = session.get(Node, parent_pk)
                 if parent is None:
                     raise ValueError("Parent node not found")
                 if parent.location_id != location_id:
                     raise ValueError("Parent node does not belong to this location")
-                path = f"{parent.path.rstrip('/')}/{node_id}"
-                resolved_parent_id = parent_uuid
+                resolved_parent_id = parent_pk
 
             node = Node(
-                id=node_id,
                 parent_id=resolved_parent_id,
                 name=display_name,
                 description=description,
-                path=path,
+                path="",
                 node_type=node_type,
                 location_id=location_id,
                 data=data,
             )
             session.add(node)
+            session.flush()
+            if parent is None:
+                node.path = f"/{node.id}"
+            else:
+                node.path = f"{parent.path.rstrip('/')}/{node.id}"
             session.commit()
             session.refresh(node)
 

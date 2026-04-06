@@ -1,5 +1,4 @@
 import asyncio
-import uuid
 
 from graphql.data_sources import Location, Node, SessionLocal
 from graphql.schema import schema
@@ -59,7 +58,7 @@ def test_create_node_inserts_root_campaign_node():
 
     session = SessionLocal()
     try:
-        row = session.get(Node, uuid.UUID(str(data["id"])))
+        row = session.get(Node, int(data["id"]))
         assert row is not None
         assert row.parent_id is None
         assert row.node_type == "campaign"
@@ -107,7 +106,7 @@ def test_create_node_with_json_data():
 
     session = SessionLocal()
     try:
-        row = session.get(Node, uuid.UUID(str(data["id"])))
+        row = session.get(Node, int(data["id"]))
         assert row is not None
         assert row.data == payload
         assert row.description == "A test campaign"
