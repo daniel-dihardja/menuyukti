@@ -9,7 +9,7 @@ import {
   type NodeData,
   type UpdateNodeData,
 } from '@/lib/graphql/queries'
-import { campaignIdParamSchema, milestoneIdParamSchema, patchMilestoneNameSchema } from '../schema'
+import { campaignIdParamSchema, milestoneIdParamSchema, patchMilestoneSchema } from '../schema'
 
 type RouteContext = {
   params: Promise<{ id: string; milestoneId: string }>
@@ -83,7 +83,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Invalid JSON body' }, { status: 400 })
     }
 
-    const parsed = patchMilestoneNameSchema.safeParse(json)
+    const parsed = patchMilestoneSchema.safeParse(json)
     if (!parsed.success) {
       return NextResponse.json(
         { message: 'Invalid input', issues: parsed.error.issues },
@@ -96,11 +96,16 @@ export async function PATCH(req: Request, context: RouteContext) {
       return validated.error
     }
 
-    const data = await graphqlQuery<UpdateNodeData>(
-      UPDATE_NODE_MUTATION,
-      { id: milestoneId, name: parsed.data.name },
-      userId,
-    )
+    const body = parsed.data
+    const variables: Record<string, unknown> = { id: milestoneId }
+    if (body.name !== undefined) {
+      variables.name = body.name
+    }
+    if (body.passCriteria !== undefined) {
+      variables.data = { passCriteria: body.passCriteria }
+    }
+
+    const data = await graphqlQuery<UpdateNodeData>(UPDATE_NODE_MUTATION, variables, userId)
 
     const node = data.updateNode
     return NextResponse.json(node, { status: 200 })

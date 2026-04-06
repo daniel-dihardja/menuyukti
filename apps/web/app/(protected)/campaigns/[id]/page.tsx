@@ -11,6 +11,7 @@ import { graphqlQuery } from '@/lib/graphql/client'
 import { NODE_QUERY, NODES_QUERY, type NodeData, type NodesData } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { CampaignChatPanel } from '../_components/campaign-chat-panel'
+import { passCriteriaFromNodeData } from '../_components/milestone-map'
 import type { TimelineMilestone } from '../_components/timeline-workspace'
 
 const campaignIdParamSchema = z.string().regex(/^\d+$/, 'Invalid campaign id')
@@ -67,7 +68,7 @@ export default async function Page({ params }: PageProps) {
   const initialMilestones: TimelineMilestone[] = milestonesData.nodes.map((n) => ({
     id: n.id,
     title: n.name,
-    passCriteria: '',
+    passCriteria: passCriteriaFromNodeData(n.data),
     status: 'empty',
   }))
 

@@ -448,6 +448,7 @@
         "editMilestoneTitleAriaLabel": "Edit milestone name",
         "saveMilestoneTitleAriaLabel": "Save milestone name",
         "milestonesRenameError": "Could not update milestone name. Please try again.",
+        "milestonesPassCriteriaError": "Could not save pass criteria. Please try again.",
         "timelineListLabel": "Milestone timeline",
         "timelineExpandLabel": "Expand panel",
         "timelineSettingsLabel": "Timeline settings",

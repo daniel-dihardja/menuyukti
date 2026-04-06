@@ -23,14 +23,14 @@ import { cn } from '@workspace/ui/lib/utils'
 
 export type TimelineMilestoneStatus = 'complete' | 'pending' | 'empty'
 
+export type PassCriteriaStatus = 'pass' | 'fail' | 'neutral'
+
+export type PassCriteriaRow = { text: string; status: PassCriteriaStatus }
+
 export type TimelineMilestone = {
   id: string
   title: string
-  /**
-   * Pass criteria copy: newline-separated lines. After trim: `!` prefix = not met (X), `?` =
-   * not validated yet (neutral circle), otherwise pass (check).
-   */
-  passCriteria: string
+  passCriteria: PassCriteriaRow[]
   /** Default text for the Input tab textarea. */
   input?: string
   /** Markdown body for the Result tab. */
@@ -163,27 +163,6 @@ function TimelineToolbar({
   )
 }
 
-export type PassCriteriaStatus = 'pass' | 'fail' | 'neutral'
-
-export type PassCriteriaRow = { text: string; status: PassCriteriaStatus }
-
-/** `!` = fail, `?` = neutral (unvalidated), else pass. */
-function parsePassCriteriaLines(passCriteria: string): PassCriteriaRow[] {
-  return passCriteria
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      if (line.startsWith('!')) {
-        return { text: line.slice(1).trim(), status: 'fail' satisfies PassCriteriaStatus }
-      }
-      if (line.startsWith('?')) {
-        return { text: line.slice(1).trim(), status: 'neutral' satisfies PassCriteriaStatus }
-      }
-      return { text: line, status: 'pass' satisfies PassCriteriaStatus }
-    })
-}
-
 type TimelineItemProps = {
   milestone: TimelineMilestone
   isFirst: boolean
@@ -200,6 +179,8 @@ type TimelineItemProps = {
   deleteMilestoneAriaLabel: string
   onRenameMilestone?: (id: string, name: string) => Promise<boolean>
   renamingMilestoneId: string | null
+  onUpdatePassCriteria?: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
+  savingPassCriteriaMilestoneId: string | null
 }
 
 function TimelineItem({
@@ -218,6 +199,8 @@ function TimelineItem({
   deleteMilestoneAriaLabel,
   onRenameMilestone,
   renamingMilestoneId,
+  onUpdatePassCriteria,
+  savingPassCriteriaMilestoneId,
 }: TimelineItemProps) {
   const [open, setOpen] = useState(true)
   const [editingTitle, setEditingTitle] = useState(false)
@@ -226,14 +209,14 @@ function TimelineItem({
   const titleEditContainerRef = useRef<HTMLDivElement>(null)
   const t = useTranslations('analytics.campaigns.chat')
   const status: TimelineMilestoneStatus = milestone.status ?? 'empty'
-  const [criteriaRows, setCriteriaRows] = useState<PassCriteriaRow[]>(() =>
-    parsePassCriteriaLines(milestone.passCriteria),
-  )
+  const [criteriaRows, setCriteriaRows] = useState<PassCriteriaRow[]>(() => milestone.passCriteria)
   const addCriteriaInputId = `milestone-pass-criteria-add-${milestone.id}`
 
   useEffect(() => {
-    setCriteriaRows(parsePassCriteriaLines(milestone.passCriteria))
+    setCriteriaRows(milestone.passCriteria)
   }, [milestone.id, milestone.passCriteria])
+
+  const savingPassCriteria = savingPassCriteriaMilestoneId === milestone.id
 
   useEffect(() => {
     if (!editingTitle) {
@@ -289,6 +272,30 @@ function TimelineItem({
     if (ok) {
       setEditingTitle(false)
     }
+  }
+
+  const handleAddPassCriterion = async () => {
+    if (!onUpdatePassCriteria || savingPassCriteria) {
+      return
+    }
+    const el = document.getElementById(addCriteriaInputId)
+    const raw = el instanceof HTMLInputElement ? el.value.trim() : ''
+    if (!raw) {
+      return
+    }
+    const next = [...criteriaRows, { text: raw, status: 'neutral' as const }]
+    const ok = await onUpdatePassCriteria(milestone.id, next)
+    if (ok && el instanceof HTMLInputElement) {
+      el.value = ''
+    }
+  }
+
+  const handleRemovePassCriterion = async (index: number) => {
+    if (!onUpdatePassCriteria || savingPassCriteria) {
+      return
+    }
+    const next = criteriaRows.filter((_, i) => i !== index)
+    await onUpdatePassCriteria(milestone.id, next)
   }
 
   const inputId = `milestone-input-${milestone.id}`
@@ -501,9 +508,10 @@ function TimelineItem({
                             <Button
                               aria-label={t('milestonePassCriteriaRemoveLabel')}
                               className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
+                              disabled={savingPassCriteria}
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setCriteriaRows((rows) => rows.filter((_, i) => i !== index))
+                                void handleRemovePassCriterion(index)
                               }}
                               size="icon"
                               type="button"
@@ -521,13 +529,25 @@ function TimelineItem({
                       <Input
                         aria-label={t('milestonePassCriteriaAddPlaceholder')}
                         className="flex-1"
+                        disabled={savingPassCriteria}
                         id={addCriteriaInputId}
+                        onKeyDown={(e) => {
+                          e.stopPropagation()
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            void handleAddPassCriterion()
+                          }
+                        }}
                         placeholder={t('milestonePassCriteriaAddPlaceholder')}
                         type="text"
                       />
                       <Button
                         className="shrink-0 sm:w-auto"
-                        onClick={(e) => e.stopPropagation()}
+                        disabled={savingPassCriteria}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          void handleAddPassCriterion()
+                        }}
                         type="button"
                         variant="secondary"
                       >
@@ -580,6 +600,8 @@ type TimelineBodyProps = {
   deleteMilestoneAriaLabel: string
   onRenameMilestone?: (id: string, name: string) => Promise<boolean>
   renamingMilestoneId: string | null
+  onUpdatePassCriteria?: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
+  savingPassCriteriaMilestoneId: string | null
 }
 
 function TimelineBody({
@@ -596,6 +618,8 @@ function TimelineBody({
   deleteMilestoneAriaLabel,
   onRenameMilestone,
   renamingMilestoneId,
+  onUpdatePassCriteria,
+  savingPassCriteriaMilestoneId,
 }: TimelineBodyProps) {
   return (
     <div className="min-h-0 flex-1">
@@ -619,7 +643,9 @@ function TimelineBody({
                 onDeleteMilestone={onDeleteMilestone}
                 onRenameMilestone={onRenameMilestone}
                 onSelect={onSelectMilestone}
+                onUpdatePassCriteria={onUpdatePassCriteria}
                 renamingMilestoneId={renamingMilestoneId}
+                savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
                 showDelete={showDelete}
                 statusLabels={statusLabels}
               />
@@ -644,6 +670,9 @@ export type TimelineWorkspaceProps = {
   onRenameMilestone?: (id: string, name: string) => Promise<boolean>
   renamingMilestoneId?: string | null
   renameError?: string | null
+  onUpdatePassCriteria?: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
+  savingPassCriteriaMilestoneId?: string | null
+  passCriteriaError?: string | null
 }
 
 export function TimelineWorkspace({
@@ -653,12 +682,15 @@ export function TimelineWorkspace({
   createError = null,
   deleteError = null,
   renameError = null,
+  passCriteriaError = null,
   creating = false,
   deletingMilestoneId = null,
   renamingMilestoneId = null,
+  savingPassCriteriaMilestoneId = null,
   onCreateMilestone,
   onDeleteMilestone,
   onRenameMilestone,
+  onUpdatePassCriteria,
 }: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
 
@@ -721,6 +753,11 @@ export function TimelineWorkspace({
           {renameError}
         </p>
       ) : null}
+      {passCriteriaError && showTimeline ? (
+        <p className="border-b px-4 py-2 text-destructive text-sm" role="alert">
+          {passCriteriaError}
+        </p>
+      ) : null}
       {isLoading ? (
         <div
           aria-busy="true"
@@ -773,7 +810,9 @@ export function TimelineWorkspace({
           onDeleteMilestone={onDeleteMilestone}
           onRenameMilestone={onRenameMilestone}
           onSelectMilestone={setSelectedId}
+          onUpdatePassCriteria={onUpdatePassCriteria}
           renamingMilestoneId={renamingMilestoneId}
+          savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
           selectedId={selectedId}
           statusLabels={{
             complete: t('milestoneStatusComplete'),

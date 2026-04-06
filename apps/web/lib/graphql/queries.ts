@@ -89,8 +89,8 @@ export type DeleteNodeData = {
 }
 
 export const UPDATE_NODE_MUTATION = `
-  mutation UpdateNode($id: ID!, $name: String!) {
-    updateNode(id: $id, name: $name) {
+  mutation UpdateNode($id: ID!, $name: String, $data: JSON) {
+    updateNode(id: $id, name: $name, data: $data) {
       id
       name
       description

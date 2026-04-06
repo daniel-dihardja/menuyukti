@@ -65,6 +65,10 @@ class CreateNodeMutation:
                     raise ValueError("Parent node does not belong to this location")
                 resolved_parent_id = parent_pk
 
+            resolved_data = data
+            if node_type == "milestone" and resolved_data is None:
+                resolved_data = {"passCriteria": []}
+
             node = Node(
                 parent_id=resolved_parent_id,
                 name=display_name,
@@ -72,7 +76,7 @@ class CreateNodeMutation:
                 path="",
                 node_type=node_type,
                 location_id=location_id,
-                data=data,
+                data=resolved_data,
             )
             session.add(node)
             session.flush()

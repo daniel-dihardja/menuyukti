@@ -23,7 +23,7 @@ import { DefaultChatTransport } from 'ai'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import type { TimelineMilestone } from './timeline-workspace'
+import type { PassCriteriaRow, TimelineMilestone } from './timeline-workspace'
 import { TimelineWorkspace } from './timeline-workspace'
 import { ChatMessageParts } from './chat-message-parts'
 import { milestoneNodeToTimelineMilestone } from './milestone-map'
@@ -43,6 +43,10 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [renamingMilestoneId, setRenamingMilestoneId] = useState<string | null>(null)
   const [renameError, setRenameError] = useState<string | null>(null)
+  const [savingPassCriteriaMilestoneId, setSavingPassCriteriaMilestoneId] = useState<string | null>(
+    null,
+  )
+  const [passCriteriaError, setPassCriteriaError] = useState<string | null>(null)
 
   useEffect(() => {
     setMilestones(initialMilestones)
@@ -51,6 +55,8 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
     setDeletingMilestoneId(null)
     setRenameError(null)
     setRenamingMilestoneId(null)
+    setPassCriteriaError(null)
+    setSavingPassCriteriaMilestoneId(null)
   }, [campaignId, initialMilestones])
 
   const transport = useMemo(
@@ -104,7 +110,7 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
         body: JSON.stringify({}),
       })
       const body = (await res.json().catch(() => null)) as
-        | { message?: string; id?: string; name?: string }
+        | { message?: string; id?: string; name?: string; data?: unknown | null }
         | null
       if (!res.ok) {
         throw new Error(body?.message ?? t('milestonesCreateError'))
@@ -112,7 +118,7 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
       const id = body?.id
       const name = body?.name
       if (typeof id === 'string' && typeof name === 'string') {
-        const created = { id, name }
+        const created = { id, name, data: body?.data }
         setMilestones((prev) => [...prev, milestoneNodeToTimelineMilestone(created)])
       }
     } catch (err) {
@@ -172,6 +178,34 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
         return false
       } finally {
         setRenamingMilestoneId(null)
+      }
+    },
+    [campaignId, t],
+  )
+
+  const handleUpdatePassCriteria = useCallback(
+    async (milestoneId: string, passCriteria: PassCriteriaRow[]): Promise<boolean> => {
+      setPassCriteriaError(null)
+      setSavingPassCriteriaMilestoneId(milestoneId)
+      try {
+        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passCriteria }),
+        })
+        const body = (await res.json().catch(() => null)) as { message?: string } | null
+        if (!res.ok) {
+          throw new Error(body?.message ?? t('milestonesPassCriteriaError'))
+        }
+        setMilestones((prev) =>
+          prev.map((m) => (m.id === milestoneId ? { ...m, passCriteria } : m)),
+        )
+        return true
+      } catch (err) {
+        setPassCriteriaError(err instanceof Error ? err.message : t('milestonesPassCriteriaError'))
+        return false
+      } finally {
+        setSavingPassCriteriaMilestoneId(null)
       }
     },
     [campaignId, t],
@@ -275,8 +309,11 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
           onCreateMilestone={handleCreateMilestone}
           onDeleteMilestone={handleDeleteMilestone}
           onRenameMilestone={handleRenameMilestone}
+          onUpdatePassCriteria={handleUpdatePassCriteria}
+          passCriteriaError={passCriteriaError}
           renameError={renameError}
           renamingMilestoneId={renamingMilestoneId}
+          savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
         />
       </div>
     </div>
