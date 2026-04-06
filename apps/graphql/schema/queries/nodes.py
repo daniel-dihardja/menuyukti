@@ -11,10 +11,12 @@ def _node_to_gql(row: Node) -> NodeType:
     return NodeType(
         id=str(row.id),
         name=row.name,
+        description=row.description,
         node_type=row.node_type,
         path=row.path,
         parent_id=str(row.parent_id) if row.parent_id is not None else None,
         location_id=row.location_id,
+        data=row.data,
     )
 
 

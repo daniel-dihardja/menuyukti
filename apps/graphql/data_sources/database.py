@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    JSON,
     String,
     Text,
     UniqueConstraint,
@@ -21,6 +22,7 @@ from sqlalchemy import (
     func,
     text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -182,6 +184,7 @@ class Node(Base):
         index=True,
     )
     name = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
     path = Column(Text, nullable=False)
     node_type = Column(
         "type",
@@ -196,6 +199,7 @@ class Node(Base):
         nullable=True,
         index=True,
     )
+    data = Column(JSONB().with_variant(JSON(), "sqlite"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
         DateTime(timezone=True),

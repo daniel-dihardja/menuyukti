@@ -51,14 +51,16 @@ export type CreateLocationData = {
 }
 
 export const CREATE_NODE_MUTATION = `
-  mutation CreateNode($locationId: Int!, $nodeType: String!, $name: String) {
-    createNode(locationId: $locationId, nodeType: $nodeType, name: $name) {
+  mutation CreateNode($locationId: Int!, $nodeType: String!, $name: String, $description: String, $data: JSON) {
+    createNode(locationId: $locationId, nodeType: $nodeType, name: $name, description: $description, data: $data) {
       id
       name
+      description
       nodeType
       path
       parentId
       locationId
+      data
     }
   }
 `
@@ -67,10 +69,12 @@ export type CreateNodeData = {
   createNode: {
     id: string
     name: string
+    description: string | null
     nodeType: string
     path: string
     parentId: string | null
     locationId: number | null
+    data: unknown | null
   }
 }
 
@@ -79,10 +83,12 @@ export const NODES_QUERY = `
     nodes(locationId: $locationId, nodeType: $nodeType) {
       id
       name
+      description
       nodeType
       path
       parentId
       locationId
+      data
     }
   }
 `
@@ -91,10 +97,12 @@ export type NodesData = {
   nodes: Array<{
     id: string
     name: string
+    description: string | null
     nodeType: string
     path: string
     parentId: string | null
     locationId: number | null
+    data: unknown | null
   }>
 }
 
@@ -103,10 +111,12 @@ export const NODE_QUERY = `
     node(id: $id) {
       id
       name
+      description
       nodeType
       path
       parentId
       locationId
+      data
     }
   }
 `
@@ -115,10 +125,12 @@ export type NodeData = {
   node: {
     id: string
     name: string
+    description: string | null
     nodeType: string
     path: string
     parentId: string | null
     locationId: number | null
+    data: unknown | null
   } | null
 }
 

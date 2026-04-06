@@ -2,6 +2,7 @@ import secrets
 import uuid
 
 import strawberry
+from strawberry.scalars import JSON
 
 from graphql.data_sources import Node, SessionLocal
 from graphql.schema.auth import require_location_owner, user_id_from_info
@@ -19,10 +20,12 @@ def _node_to_gql(node: Node) -> NodeType:
     return NodeType(
         id=str(node.id),
         name=node.name,
+        description=node.description,
         node_type=node.node_type,
         path=node.path,
         parent_id=str(node.parent_id) if node.parent_id is not None else None,
         location_id=node.location_id,
+        data=node.data,
     )
 
 
@@ -36,6 +39,8 @@ class CreateNodeMutation:
         node_type: str,
         name: str | None = None,
         parent_id: strawberry.ID | None = None,
+        description: str | None = None,
+        data: JSON | None = None,
     ) -> NodeType:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -65,9 +70,11 @@ class CreateNodeMutation:
                 id=node_id,
                 parent_id=resolved_parent_id,
                 name=display_name,
+                description=description,
                 path=path,
                 node_type=node_type,
                 location_id=location_id,
+                data=data,
             )
             session.add(node)
             session.commit()
