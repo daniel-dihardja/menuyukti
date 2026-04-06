@@ -2,7 +2,19 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Check, ChevronDown, Circle, Clock, Maximize2, Pencil, Settings, Trash2, X } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  ChevronDown,
+  Circle,
+  Clock,
+  Maximize2,
+  Pencil,
+  Settings,
+  Trash2,
+  X,
+} from 'lucide-react'
 
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Badge } from '@workspace/ui/components/badge'
@@ -169,6 +181,7 @@ function TimelineToolbar({
 
 type TimelineItemProps = {
   milestone: TimelineMilestone
+  positionIndex: number
   isFirst: boolean
   isLast: boolean
   isSelected: boolean
@@ -185,10 +198,13 @@ type TimelineItemProps = {
   renamingMilestoneId: string | null
   onUpdatePassCriteria?: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
   savingPassCriteriaMilestoneId: string | null
+  onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
+  isMoving: boolean
 }
 
 function TimelineItem({
   milestone,
+  positionIndex,
   isFirst,
   isLast,
   isSelected,
@@ -205,6 +221,8 @@ function TimelineItem({
   renamingMilestoneId,
   onUpdatePassCriteria,
   savingPassCriteriaMilestoneId,
+  onMoveMilestone,
+  isMoving,
 }: TimelineItemProps) {
   const [open, setOpen] = useState(true)
   const [editingTitle, setEditingTitle] = useState(false)
@@ -328,6 +346,9 @@ function TimelineItem({
             <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
               <TimelineRailMarker labels={statusLabels} status={status} />
             </div>
+            <span className="mt-0.5 text-center text-muted-foreground text-xs tabular-nums">
+              {positionIndex}
+            </span>
           </div>
         ) : (
           <div className="flex w-full shrink-0 flex-col items-center">
@@ -335,6 +356,9 @@ function TimelineItem({
             <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
               <TimelineRailMarker labels={statusLabels} status={status} />
             </div>
+            <span className="mt-0.5 text-center text-muted-foreground text-xs tabular-nums">
+              {positionIndex}
+            </span>
           </div>
         )}
         {isLast ? null : (
@@ -419,6 +443,40 @@ function TimelineItem({
                 )}
               </CardTitle>
               <CardAction className="flex items-center gap-1">
+                {onMoveMilestone ? (
+                  <>
+                    <Button
+                      aria-label={t('moveMilestoneUp')}
+                      className="size-9 shrink-0 text-muted-foreground"
+                      disabled={isFirst || isMoving || editingTitle}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void onMoveMilestone(milestone.id, 'up')
+                      }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <ArrowUp className="size-4" />
+                    </Button>
+                    <Button
+                      aria-label={t('moveMilestoneDown')}
+                      className="size-9 shrink-0 text-muted-foreground"
+                      disabled={isLast || isMoving || editingTitle}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void onMoveMilestone(milestone.id, 'down')
+                      }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      size="icon"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <ArrowDown className="size-4" />
+                    </Button>
+                  </>
+                ) : null}
                 {showDelete && onDeleteMilestone ? (
                   <Button
                     aria-label={deleteMilestoneAriaLabel}
@@ -606,6 +664,8 @@ type TimelineBodyProps = {
   renamingMilestoneId: string | null
   onUpdatePassCriteria?: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
   savingPassCriteriaMilestoneId: string | null
+  onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
+  movingMilestoneId: string | null
 }
 
 function TimelineBody({
@@ -624,6 +684,8 @@ function TimelineBody({
   renamingMilestoneId,
   onUpdatePassCriteria,
   savingPassCriteriaMilestoneId,
+  onMoveMilestone,
+  movingMilestoneId,
 }: TimelineBodyProps) {
   return (
     <div className="min-h-0 flex-1">
@@ -642,12 +704,15 @@ function TimelineBody({
                 isDeleting={deletingMilestoneId === milestone.id}
                 isFirst={index === 0}
                 isLast={isLast}
+                isMoving={movingMilestoneId === milestone.id}
                 isSelected={milestone.id === selectedId}
                 milestone={milestone}
                 onDeleteMilestone={onDeleteMilestone}
+                onMoveMilestone={onMoveMilestone}
                 onRenameMilestone={onRenameMilestone}
                 onSelect={onSelectMilestone}
                 onUpdatePassCriteria={onUpdatePassCriteria}
+                positionIndex={index + 1}
                 renamingMilestoneId={renamingMilestoneId}
                 savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
                 showDelete={showDelete}
@@ -667,11 +732,14 @@ export type TimelineWorkspaceProps = {
   loadError?: string | null
   createError?: string | null
   deleteError?: string | null
+  moveError?: string | null
   creating?: boolean
   deletingMilestoneId?: string | null
+  movingMilestoneId?: string | null
   onCreateMilestone: () => void | Promise<void>
   onDeleteMilestone?: (id: string) => void | Promise<void>
   onRenameMilestone?: (id: string, name: string) => Promise<boolean>
+  onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
   renamingMilestoneId?: string | null
   renameError?: string | null
   onUpdatePassCriteria?: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
@@ -685,15 +753,18 @@ export function TimelineWorkspace({
   loadError = null,
   createError = null,
   deleteError = null,
+  moveError = null,
   renameError = null,
   passCriteriaError = null,
   creating = false,
   deletingMilestoneId = null,
+  movingMilestoneId = null,
   renamingMilestoneId = null,
   savingPassCriteriaMilestoneId = null,
   onCreateMilestone,
   onDeleteMilestone,
   onRenameMilestone,
+  onMoveMilestone,
   onUpdatePassCriteria,
 }: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
@@ -757,6 +828,11 @@ export function TimelineWorkspace({
           {renameError}
         </p>
       ) : null}
+      {moveError && showTimeline ? (
+        <p className="border-b px-4 py-2 text-destructive text-sm" role="alert">
+          {moveError}
+        </p>
+      ) : null}
       {passCriteriaError && showTimeline ? (
         <p className="border-b px-4 py-2 text-destructive text-sm" role="alert">
           {passCriteriaError}
@@ -811,7 +887,9 @@ export function TimelineWorkspace({
           expandDetailsLabel={t('milestoneExpandDetails')}
           listLabel={t('timelineListLabel')}
           milestones={milestones}
+          movingMilestoneId={movingMilestoneId ?? null}
           onDeleteMilestone={onDeleteMilestone}
+          onMoveMilestone={onMoveMilestone}
           onRenameMilestone={onRenameMilestone}
           onSelectMilestone={setSelectedId}
           onUpdatePassCriteria={onUpdatePassCriteria}

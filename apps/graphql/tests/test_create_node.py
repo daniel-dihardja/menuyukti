@@ -70,7 +70,7 @@ def test_create_node_inserts_root_campaign_node():
         session.close()
 
 
-def test_create_milestone_has_no_default_pass_criteria_json():
+def test_create_milestone_sets_order_in_data_json():
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -114,7 +114,7 @@ def test_create_milestone_has_no_default_pass_criteria_json():
     )
     assert not milestone.errors, milestone.errors
     data = milestone.data["createNode"]
-    assert data["data"] is None
+    assert data["data"] == {"order": 1}
 
 
 def test_create_passcriteria_requires_milestone_parent():

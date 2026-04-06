@@ -129,6 +129,55 @@ export async function PATCH(req: Request, context: RouteContext) {
 
     const body = parsed.data
 
+    if (body.move !== undefined) {
+      const list = parseNodesData(
+        await graphqlQuery<NodesDataRaw>(
+          NODES_QUERY,
+          {
+            locationId: campaign.locationId,
+            nodeType: 'milestone',
+            parentId: campaignId,
+          },
+          userId,
+        ),
+      )
+      const milestones = list.nodes.filter((n) => n.nodeType === 'milestone')
+      const idx = milestones.findIndex((n) => n.id === milestoneId)
+      if (idx === -1) {
+        return NextResponse.json({ message: 'Milestone not found in campaign' }, { status: 404 })
+      }
+      const j = body.move === 'up' ? idx - 1 : idx + 1
+      if (j < 0 || j >= milestones.length) {
+        return NextResponse.json({ message: 'Cannot move milestone' }, { status: 400 })
+      }
+      // Swap positions in the sorted list, then assign sequential orders 1..n so stored
+      // `order` always matches display order (avoids duplicate order values that made swaps a no-op).
+      const reordered = [...milestones]
+      const a = reordered[idx]
+      const b = reordered[j]
+      if (!a || !b) {
+        return NextResponse.json({ message: 'Milestone not found' }, { status: 404 })
+      }
+      reordered[idx] = b
+      reordered[j] = a
+
+      for (let i = 0; i < reordered.length; i++) {
+        const node = reordered[i]
+        if (!node) {
+          continue
+        }
+        parseUpdateNodeData(
+          await graphqlQuery<UpdateNodeDataRaw>(
+            UPDATE_NODE_MUTATION,
+            { id: node.id, data: { order: i + 1 } },
+            userId,
+          ),
+        )
+      }
+
+      return NextResponse.json({ ok: true }, { status: 200 })
+    }
+
     if (body.passCriteria === undefined) {
       const variables: Record<string, unknown> = { id: milestoneId }
       if (body.name !== undefined) {

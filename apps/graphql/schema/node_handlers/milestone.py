@@ -1,4 +1,4 @@
-"""Milestone nodes: under campaign; LIFO delete; optional JSON data on update."""
+"""Milestone nodes: under campaign; LIFO delete by display order; optional JSON data on update."""
 
 from __future__ import annotations
 
@@ -8,11 +8,43 @@ from graphql.data_sources import Node
 from graphql.schema.node_handlers.base import NodeHandler
 
 
+def _milestone_sort_key(row: Node) -> tuple[int, object, int]:
+    """Sort milestones: primary `data.order` (int), then created_at, then id."""
+    d = row.data if isinstance(row.data, dict) else {}
+    raw = d.get("order")
+    order = raw if isinstance(raw, int) else 0
+    return (order, row.created_at or 0, row.id)
+
+
 class MilestoneHandler(NodeHandler):
     node_type = "milestone"
 
-    def validate_create(self, parent: Node | None, data: dict | None) -> dict | None:
-        return data
+    def validate_create(
+        self,
+        parent: Node | None,
+        data: dict | None,
+        session: Session | None = None,
+    ) -> dict | None:
+        if parent is None:
+            raise ValueError("Milestone must have a parent campaign")
+        if parent.node_type != "campaign":
+            raise ValueError("Milestone parent must be a campaign")
+        if session is None:
+            raise ValueError("Session required to create milestone")
+
+        count = (
+            session.query(Node)
+            .filter(
+                Node.location_id == parent.location_id,
+                Node.parent_id == parent.id,
+                Node.node_type == "milestone",
+            )
+            .count()
+        )
+        next_order = count + 1
+        base: dict = dict(data) if isinstance(data, dict) else {}
+        base["order"] = next_order
+        return base
 
     def validate_update(self, node: Node, parent: Node | None, data: dict | None) -> None:
         if data is not None and not isinstance(data, dict):
@@ -36,21 +68,23 @@ class MilestoneHandler(NodeHandler):
         if parent.location_id != node.location_id:
             raise ValueError("Node location mismatch")
 
-        last_sibling = (
+        siblings = (
             session.query(Node)
             .filter(
                 Node.location_id == node.location_id,
                 Node.parent_id == node.parent_id,
                 Node.node_type == "milestone",
             )
-            .order_by(Node.created_at.desc(), Node.id.desc())
-            .first()
+            .all()
         )
-        if last_sibling is None or last_sibling.id != node.id:
+        if not siblings:
+            raise ValueError("Milestone siblings not found")
+
+        last_sibling = max(siblings, key=_milestone_sort_key)
+        if last_sibling.id != node.id:
             raise ValueError("Only the last milestone can be deleted")
 
         session.query(Node).filter(
             Node.parent_id == node.id,
             Node.node_type == "passcriteria",
         ).delete(synchronize_session=False)
-

@@ -22,7 +22,12 @@ def _validate_passcriteria_payload(data: dict) -> None:
 class PassCriteriaHandler(NodeHandler):
     node_type = "passcriteria"
 
-    def validate_create(self, parent: Node | None, data: dict | None) -> dict | None:
+    def validate_create(
+        self,
+        parent: Node | None,
+        data: dict | None,
+        session: Session | None = None,
+    ) -> dict | None:
         if parent is None:
             raise ValueError("passcriteria nodes must have a parent milestone")
         if parent.node_type != "milestone":

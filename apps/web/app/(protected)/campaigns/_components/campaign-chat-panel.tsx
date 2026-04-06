@@ -47,6 +47,8 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
     null,
   )
   const [passCriteriaError, setPassCriteriaError] = useState<string | null>(null)
+  const [moveError, setMoveError] = useState<string | null>(null)
+  const [movingMilestoneId, setMovingMilestoneId] = useState<string | null>(null)
 
   useEffect(() => {
     setMilestones(initialMilestones)
@@ -57,6 +59,8 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
     setRenamingMilestoneId(null)
     setPassCriteriaError(null)
     setSavingPassCriteriaMilestoneId(null)
+    setMoveError(null)
+    setMovingMilestoneId(null)
   }, [campaignId, initialMilestones])
 
   const transport = useMemo(
@@ -215,6 +219,52 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
     [campaignId, t],
   )
 
+  const handleMoveMilestone = useCallback(
+    async (milestoneId: string, direction: 'up' | 'down') => {
+      setMoveError(null)
+      let snapshot: TimelineMilestone[] | null = null
+      setMilestones((prev) => {
+        snapshot = prev
+        const idx = prev.findIndex((m) => m.id === milestoneId)
+        if (idx === -1) {
+          return prev
+        }
+        const j = direction === 'up' ? idx - 1 : idx + 1
+        if (j < 0 || j >= prev.length) {
+          return prev
+        }
+        const next = [...prev]
+        const a = next[idx]
+        const b = next[j]
+        if (a && b) {
+          next[idx] = b
+          next[j] = a
+        }
+        return next
+      })
+      setMovingMilestoneId(milestoneId)
+      try {
+        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ move: direction }),
+        })
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as { message?: string } | null
+          throw new Error(body?.message ?? t('milestonesMoveError'))
+        }
+      } catch (err) {
+        if (snapshot) {
+          setMilestones(snapshot)
+        }
+        setMoveError(err instanceof Error ? err.message : t('milestonesMoveError'))
+      } finally {
+        setMovingMilestoneId(null)
+      }
+    },
+    [campaignId, t],
+  )
+
   const isSubmitDisabled = !text.trim() || status === 'streaming' || status === 'submitted'
 
   const visibleMessages = messages.filter((msg) => msg.role !== 'system')
@@ -310,8 +360,11 @@ export function CampaignChatPanel({ campaignId, initialMilestones }: CampaignCha
           deleteError={deleteError}
           deletingMilestoneId={deletingMilestoneId}
           milestones={milestones}
+          moveError={moveError}
+          movingMilestoneId={movingMilestoneId}
           onCreateMilestone={handleCreateMilestone}
           onDeleteMilestone={handleDeleteMilestone}
+          onMoveMilestone={handleMoveMilestone}
           onRenameMilestone={handleRenameMilestone}
           onUpdatePassCriteria={handleUpdatePassCriteria}
           passCriteriaError={passCriteriaError}

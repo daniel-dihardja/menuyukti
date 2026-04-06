@@ -5,9 +5,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session
 
+if TYPE_CHECKING:
     from graphql.data_sources import Node
 
 
@@ -18,7 +18,12 @@ class NodeHandler(ABC):
     node_type: str = "generic"
 
     @abstractmethod
-    def validate_create(self, parent: Node | None, data: dict | None) -> dict | None:
+    def validate_create(
+        self,
+        parent: Node | None,
+        data: dict | None,
+        session: Session | None = None,
+    ) -> dict | None:
         """Return resolved `data` for persistence (defaults merged, shape validated)."""
         ...
 

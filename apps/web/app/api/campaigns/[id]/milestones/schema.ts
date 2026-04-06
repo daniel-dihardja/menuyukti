@@ -18,7 +18,8 @@ export const patchMilestoneSchema = z
   .object({
     name: z.string().trim().min(1).max(500).optional(),
     passCriteria: z.array(passCriteriaRowSchema).optional(),
+    move: z.enum(['up', 'down']).optional(),
   })
-  .refine((v) => v.name !== undefined || v.passCriteria !== undefined, {
-    message: 'Provide at least one of name or passCriteria',
+  .refine((v) => v.name !== undefined || v.passCriteria !== undefined || v.move !== undefined, {
+    message: 'Provide at least one of name, passCriteria, or move',
   })

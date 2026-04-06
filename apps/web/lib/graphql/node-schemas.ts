@@ -13,8 +13,12 @@ export const passCriteriaDataSchema = z.object({
 
 export type PassCriteriaData = z.infer<typeof passCriteriaDataSchema>
 
-/** Milestone `data` is unstructured JSON object today; validate as a generic object or null. */
-export const milestoneDataSchema = z.record(z.unknown())
+/** Milestone `data` JSON — `order` is the display sequence; other keys allowed. */
+export const milestoneDataSchema = z
+  .object({
+    order: z.number().int().optional(),
+  })
+  .passthrough()
 
 export type MilestoneData = z.infer<typeof milestoneDataSchema>
 

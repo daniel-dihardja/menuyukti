@@ -93,7 +93,7 @@ def test_update_milestone_name():
     assert data["id"] == milestone_id
     assert data["name"] == "Renamed title"
     assert data["nodeType"] == "milestone"
-    assert data["data"] is None
+    assert data["data"] == {"order": 1}
 
 
 CREATE_PASSCRITERIA = """

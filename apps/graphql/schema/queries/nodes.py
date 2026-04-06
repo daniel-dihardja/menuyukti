@@ -2,6 +2,7 @@ import strawberry
 
 from graphql.data_sources import Node, SessionLocal
 from graphql.schema.auth import is_location_owner, user_id_from_info
+from graphql.schema.node_handlers.milestone import _milestone_sort_key
 from graphql.schema.types import NodeType
 
 
@@ -46,8 +47,9 @@ class NodesQuery:
                 if parent_pk < 1:
                     return []
                 q = q.filter(Node.parent_id == parent_pk)
-                # Timeline order: oldest first when listing children under a parent.
                 rows = q.order_by(Node.created_at.asc()).all()
+                # Display order for milestones (data.order); passcriteria fall back to created_at.
+                rows.sort(key=_milestone_sort_key)
             else:
                 rows = q.order_by(Node.created_at.desc()).all()
             return [_node_to_gql(r) for r in rows]

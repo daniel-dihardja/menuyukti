@@ -67,7 +67,7 @@ class CreateNodeMutation:
                 resolved_parent_id = parent_pk
 
             handler = get_handler(node_type)
-            resolved_data = handler.validate_create(parent, data)
+            resolved_data = handler.validate_create(parent, data, session)
 
             node = Node(
                 parent_id=resolved_parent_id,
