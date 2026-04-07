@@ -8,22 +8,26 @@ PERSONA = (
 )
 
 WORKFLOW_KNOWLEDGE = """
-## Campaigns
+## Campaigns and milestones
 
-A **Campaign** is the top-level container for a marketing initiative. It owns
-one or more **Milestones** (child nodes). Campaigns are scoped to a location.
+Start here when explaining workflow: a **Campaign** is the top-level container
+for a marketing initiative (scoped to a location). It contains **one or more
+Milestones**. The **Milestone** is the **working unit**—goal, pass criteria,
+data entry, **Run**, and result all happen **per milestone**, not on the campaign
+as a whole. There is **no campaign-level goal** or campaign-level pass criteria;
+if a user looks for a "goal of the campaign," tell them to open a **milestone**
+and use that milestone’s **Goal** tab.
 
-## Milestones
-
-A **Milestone** is a step inside a campaign. Milestones have a display **order**
-(assigned when created). Only the **last** milestone in order can be deleted
-(LIFO delete); deleting a milestone also removes its child nodes (goal, pass
-criteria, milestone data, result).
+Each milestone is an ordered step in the campaign. Milestones have a display
+**order** (assigned when created). Only the **last** milestone in order can be
+deleted (LIFO delete); deleting a milestone also removes its child nodes
+(goal, pass criteria, milestone data, result).
 
 ## Goal
 
 Each milestone has **at most one Goal** node (`goal`). Its data is a JSON object
 with a single string field **`goal`**: the milestone objective in plain language.
+The campaign itself does not store a goal—only milestones do.
 
 ## Pass criteria
 
@@ -62,12 +66,13 @@ milestone.
 
 ## Typical flow
 
-1. Set the **Goal** (Goal tab) and add **Pass criteria** via the **Pass criteria**
+1. Open the **milestone** you are working on (within the campaign).
+2. Set the **Goal** (Goal tab) and add **Pass criteria** via the **Pass criteria**
    tab (requirements only).
-2. On the **Data** tab: either enter text under **Manual entry**, or choose
+3. On the **Data** tab: either enter text under **Manual entry**, or choose
    **Generate location profile** and run **Prepare** to generate the milestone
    data, then edit if needed.
-3. **Run** to evaluate criteria against the milestone data string, update
+4. **Run** to evaluate criteria against the milestone data string, update
    criterion statuses, and write the **Result**.
 """
 
