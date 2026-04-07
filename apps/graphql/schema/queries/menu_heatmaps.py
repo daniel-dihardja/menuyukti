@@ -34,14 +34,8 @@ class MenuHeatmapType:
     reporting_period: str
 
 
-def _compute_menu_heatmaps_for_run(
-    session, run: AnalyticsRun
-) -> list[MenuHeatmapType]:
-    rows = (
-        session.query(OrderFact)
-        .where(OrderFact.analytics_run_id == run.id)
-        .all()
-    )
+def _compute_menu_heatmaps_for_run(session, run: AnalyticsRun) -> list[MenuHeatmapType]:
+    rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
 
     if not rows:
         return []

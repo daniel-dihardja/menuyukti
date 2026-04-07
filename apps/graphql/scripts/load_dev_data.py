@@ -6,7 +6,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from graphql.data_sources import (
@@ -16,6 +16,8 @@ from graphql.data_sources import (
     Node,
     OrderFact,
     SessionLocal,
+    Workspace,
+    WorkspaceMembership,
     drop_db,
     init_db,
 )
@@ -67,11 +69,30 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
 
     session = SessionLocal()
     try:
+        now = datetime.now(tz=UTC)
+        workspace = Workspace(
+            name="Dev Workspace",
+            owner_clerk_user_id=clerk_user_id,
+        )
+        session.add(workspace)
+        session.flush()
+        session.add(
+            WorkspaceMembership(
+                workspace_id=workspace.id,
+                clerk_user_id=clerk_user_id,
+                role="owner",
+                invited_at=now,
+                accepted_at=now,
+            )
+        )
+        session.flush()
+
         location = Location(
             name="Dev (Jan-Mar 2025)",
             city="Jakarta",
             country="Indonesia",
             currency="IDR",
+            workspace_id=workspace.id,
             clerk_user_id=clerk_user_id,
         )
         session.add(location)
@@ -133,9 +154,7 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
         session = SessionLocal()
         try:
             order_facts = (
-                session.query(OrderFact)
-                .where(OrderFact.analytics_run_id == analytics_run_id)
-                .all()
+                session.query(OrderFact).where(OrderFact.analytics_run_id == analytics_run_id).all()
             )
             seen_menus: dict[str, tuple[str | None, str | None]] = {}
             for row in order_facts:
@@ -157,15 +176,19 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
             session.commit()
         finally:
             session.close()
-        print(f"Loaded {len(normalized_rows)} rows and {cogs_count} menu COGS from {path} and {cogs_file}.")
+        print(
+            f"Loaded {len(normalized_rows)} rows and {cogs_count} menu COGS from {path} and {cogs_file}."
+        )
     else:
         if cogs_path is not None:
             print(f"COGS file not found; skipping. Loaded {len(normalized_rows)} rows from {path}.")
         else:
-            print(f"Loaded {len(normalized_rows)} rows from {path}. (No COGS file provided; run with --cogs to add COGS.)")
+            print(
+                f"Loaded {len(normalized_rows)} rows from {path}. (No COGS file provided; run with --cogs to add COGS.)"
+            )
 
     print(
-        f"Location owner clerk_user_id={clerk_user_id!r}. "
+        f"Workspace owner clerk_user_id={clerk_user_id!r}. "
         "Set DEV_CLERK_USER_ID or --clerk-user-id to your Clerk user id so the web app can query this data."
     )
     if clerk_user_id == _DEFAULT_DEV_CLERK_USER_ID and not os.environ.get("DEV_CLERK_USER_ID"):
@@ -197,13 +220,15 @@ if __name__ == "__main__":
         default=None,
         metavar="ID",
         help=(
-            "Clerk user id stored on Location.clerk_user_id (default: DEV_CLERK_USER_ID env or "
+            "Clerk user id for Workspace owner and Location (default: DEV_CLERK_USER_ID env or "
             f"{_DEFAULT_DEV_CLERK_USER_ID!r})"
         ),
     )
     args = parser.parse_args()
 
     excel_path = args.excel
-    cogs_path = args.cogs if args.cogs is not None else str(DEFAULT_COGS) if DEFAULT_COGS.exists() else None
+    cogs_path = (
+        args.cogs if args.cogs is not None else str(DEFAULT_COGS) if DEFAULT_COGS.exists() else None
+    )
     clerk_user_id = _resolve_clerk_user_id(args.clerk_user_id)
     sys.exit(main(excel_path, cogs_path, clerk_user_id))

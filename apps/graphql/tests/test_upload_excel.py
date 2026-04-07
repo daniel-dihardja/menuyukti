@@ -38,16 +38,16 @@ mutation UploadFile($file: Upload!, $locationId: ID!) {
 
 def test_upload_excel_creates_metadata(tmp_path):
     if not REPORT_FILE.exists():
-        pytest.skip("Expected sample Excel file at 'reports/Sales_Recapitulation_Detail_Report_Test.xlsx' to exist.")
+        pytest.skip(
+            "Expected sample Excel file at 'reports/Sales_Recapitulation_Detail_Report_Test.xlsx' to exist."
+        )
 
     payload = REPORT_FILE.read_bytes()
     upload = UploadFile(
         file=BytesIO(payload),
         filename=REPORT_FILE.name,
         headers=Headers(
-            {
-                "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            }
+            {"content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
         ),
     )
 
@@ -104,9 +104,7 @@ def test_upload_excel_creates_metadata(tmp_path):
         )
         assert order_time_value == order_time
         assert normalized_rows[0]["menuCategory"] == expected_first["menuCategory"]
-        assert normalized_rows[0]["menuCategoryDetail"] == expected_first[
-            "menuCategoryDetail"
-        ]
+        assert normalized_rows[0]["menuCategoryDetail"] == expected_first["menuCategoryDetail"]
 
     session = SessionLocal()
     try:

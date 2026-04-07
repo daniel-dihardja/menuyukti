@@ -73,9 +73,49 @@ export type LocationData = {
   } | null
 }
 
+export const MY_WORKSPACE_QUERY = `
+  query MyWorkspace {
+    myWorkspace {
+      id
+      name
+      ownerClerkUserId
+      createdAt
+    }
+  }
+`
+
+export type MyWorkspaceData = {
+  myWorkspace: {
+    id: string
+    name: string
+    ownerClerkUserId: string
+    createdAt: string | null
+  } | null
+}
+
+export const CREATE_WORKSPACE_MUTATION = `
+  mutation CreateWorkspace($name: String!) {
+    createWorkspace(name: $name) {
+      id
+      name
+      ownerClerkUserId
+      createdAt
+    }
+  }
+`
+
+export type CreateWorkspaceData = {
+  createWorkspace: {
+    id: string
+    name: string
+    ownerClerkUserId: string
+    createdAt: string | null
+  }
+}
+
 export const CREATE_LOCATION_MUTATION = `
-  mutation CreateLocation($name: String!) {
-    createLocation(name: $name) {
+  mutation CreateLocation($workspaceId: ID!, $name: String!) {
+    createLocation(workspaceId: $workspaceId, name: $name) {
       id
       name
       nodeId

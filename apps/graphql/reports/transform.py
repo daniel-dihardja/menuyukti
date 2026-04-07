@@ -64,9 +64,7 @@ def line_items_to_orders(
             )
             for row in sorted(group, key=lambda r: (r.menu, r.menuCategory))
         ]
-        result.append(
-            Order(billNumber=bill_number, orderTime=order_time, items=items)
-        )
+        result.append(Order(billNumber=bill_number, orderTime=order_time, items=items))
 
     return result
 

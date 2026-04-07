@@ -147,14 +147,8 @@ def test_menu_heatmaps_with_qa_data(analytics_run_with_qa_data):
 def _normalize_expected_heatmaps(expected_payloads):
     normalized = []
     for payload in expected_payloads:
-        daily = [
-            (int(row["hour"]), int(row["quantity"]))
-            for row in payload["daily_heatmap"]
-        ]
-        weekly = [
-            (row["day"], int(row["quantity"]))
-            for row in payload["weekly_heatmap"]
-        ]
+        daily = [(int(row["hour"]), int(row["quantity"])) for row in payload["daily_heatmap"]]
+        weekly = [(row["day"], int(row["quantity"])) for row in payload["weekly_heatmap"]]
         normalized.append(
             {
                 "menu": payload["menu"],
@@ -229,9 +223,7 @@ def test_menu_heatmaps_match_menuyukti_calculation(tmp_path):
         file=BytesIO(payload),
         filename=REPORT_FILE.name,
         headers=Headers(
-            {
-                "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            }
+            {"content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
         ),
     )
 
@@ -296,4 +288,3 @@ def test_menu_heatmaps_match_menuyukti_calculation(tmp_path):
         assert got["reporting_period"] == expected["reporting_period"]
         assert got["daily"] == expected["daily"]
         assert got["weekly"] == expected["weekly"]
-

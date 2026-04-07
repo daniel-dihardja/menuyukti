@@ -5,6 +5,7 @@ from .menu_heatmaps import MenuHeatmapsQuery
 from .national_holidays import NationalHolidaysQuery
 from .nodes import NodesQuery
 from .operating_profile import OperatingProfileQuery
+from .workspace import WorkspaceQuery
 
 __all__ = [
     "AnalyticsRunQuery",
@@ -14,4 +15,5 @@ __all__ = [
     "NationalHolidaysQuery",
     "NodesQuery",
     "OperatingProfileQuery",
+    "WorkspaceQuery",
 ]

@@ -67,9 +67,7 @@ def main(excel_path: str) -> int:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Load a sales report Excel file into order_fact."
-    )
+    parser = argparse.ArgumentParser(description="Load a sales report Excel file into order_fact.")
     parser.add_argument("path", help="Path to the Excel file to ingest")
     args = parser.parse_args()
 

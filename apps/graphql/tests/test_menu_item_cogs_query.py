@@ -83,9 +83,7 @@ def test_menu_item_cogs_query_returns_cogs_for_run(tmp_path):
         file=BytesIO(payload),
         filename=REPORT_FILE.name,
         headers=Headers(
-            {
-                "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            }
+            {"content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
         ),
     )
 
@@ -167,4 +165,3 @@ def test_menu_item_cogs_query_returns_cogs_for_run(tmp_path):
 
     assert pytest.approx(float(by_menu["Item A"]["cogs"]), rel=1e-6) == 1.23
     assert pytest.approx(float(by_menu["Item B"]["cogs"]), rel=1e-6) == 4.56
-

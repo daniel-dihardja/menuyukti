@@ -43,14 +43,8 @@ class AnalyticsRunListItemType:
     filename: str
 
 
-def _compute_order_metrics(
-    session, run: AnalyticsRun
-) -> AnalyticsRunOrderMetricsType:
-    rows = (
-        session.query(OrderFact)
-        .where(OrderFact.analytics_run_id == run.id)
-        .all()
-    )
+def _compute_order_metrics(session, run: AnalyticsRun) -> AnalyticsRunOrderMetricsType:
+    rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
 
     if not rows:
         return AnalyticsRunOrderMetricsType(
@@ -66,9 +60,7 @@ def _compute_order_metrics(
     order_revenues: list[float] = []
     for group in orders.values():
         order_sizes.append(len(group))
-        order_revenues.append(
-            float(sum(r.total_after_bill_discount for r in group))
-        )
+        order_revenues.append(float(sum(r.total_after_bill_discount for r in group)))
 
     avg_order_size = float(sum(order_sizes)) / len(order_sizes)
     avg_order_revenue = float(sum(order_revenues)) / len(order_revenues)
@@ -80,11 +72,7 @@ def _compute_order_metrics(
 
 
 def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
-    cogs_rows = (
-        session.query(MenuItemCogs)
-        .where(MenuItemCogs.analytics_run_id == run.id)
-        .all()
-    )
+    cogs_rows = session.query(MenuItemCogs).where(MenuItemCogs.analytics_run_id == run.id).all()
     menu_item_cogs = [
         MenuItemCogsType(
             id=row.id,
@@ -114,12 +102,8 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
 
 @strawberry.type
 class AnalyticsRunQuery:
-    @strawberry.field(
-        description="Fetch metadata and COGS for a single analytics run by ID."
-    )
-    def analytics_run(
-        self, info: strawberry.Info, id: strawberry.ID
-    ) -> AnalyticsRunType | None:
+    @strawberry.field(description="Fetch metadata and COGS for a single analytics run by ID.")
+    def analytics_run(self, info: strawberry.Info, id: strawberry.ID) -> AnalyticsRunType | None:
         user_id = user_id_from_info(info)
         session = SessionLocal()
         try:
@@ -130,9 +114,7 @@ class AnalyticsRunQuery:
         finally:
             session.close()
 
-    @strawberry.field(
-        description="List analytics runs for a location, newest first."
-    )
+    @strawberry.field(description="List analytics runs for a location, newest first.")
     def analytics_runs(
         self, info: strawberry.Info, location_id: int
     ) -> list[AnalyticsRunListItemType]:

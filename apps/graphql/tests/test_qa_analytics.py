@@ -109,13 +109,15 @@ def _normalize_heatmaps(menu_heatmaps):
     for m in menu_heatmaps:
         daily = [(int(r["hour"]), int(r["quantity"])) for r in m["dailyHeatmap"]]
         weekly = [(r["day"], int(r["quantity"])) for r in m["weeklyHeatmap"]]
-        out.append({
-            "menu": m["menu"],
-            "menu_category": m["menuCategory"],
-            "menu_category_detail": m["menuCategoryDetail"],
-            "daily": daily,
-            "weekly": weekly,
-        })
+        out.append(
+            {
+                "menu": m["menu"],
+                "menu_category": m["menuCategory"],
+                "menu_category_detail": m["menuCategoryDetail"],
+                "daily": daily,
+                "weekly": weekly,
+            }
+        )
     return out
 
 
@@ -124,21 +126,23 @@ def _normalize_expected_heatmap_payloads(payloads):
     for p in payloads:
         daily = [(int(r["hour"]), int(r["quantity"])) for r in p["daily_heatmap"]]
         weekly = [(r["day"], int(r["quantity"])) for r in p["weekly_heatmap"]]
-        out.append({
-            "menu": p["menu"],
-            "menu_category": p["menu_category"],
-            "menu_category_detail": p["menu_category_detail"],
-            "daily": daily,
-            "weekly": weekly,
-        })
+        out.append(
+            {
+                "menu": p["menu"],
+                "menu_category": p["menu_category"],
+                "menu_category_detail": p["menu_category_detail"],
+                "daily": daily,
+                "weekly": weekly,
+            }
+        )
     return out
 
 
 def test_qa_order_metrics(analytics_run_with_qa_data, qa_sales_rows):
     """Order metrics from GraphQL match expected values computed from QA sales rows."""
     run_id = analytics_run_with_qa_data
-    expected_avg_size, expected_avg_revenue, expected_start, expected_end = _expected_order_metrics_from_rows(
-        qa_sales_rows
+    expected_avg_size, expected_avg_revenue, expected_start, expected_end = (
+        _expected_order_metrics_from_rows(qa_sales_rows)
     )
 
     result = asyncio.run(
@@ -217,11 +221,21 @@ def test_qa_menu_engineering_matrix(analytics_run_with_qa_data, qa_cogs_by_menu)
     assert matrix is not None
 
     th = matrix["thresholds"]
-    assert pytest.approx(float(th["avgPopularity"]), rel=1e-6) == expected["thresholds"]["avg_popularity"]
-    assert pytest.approx(float(th["avgContributionMargin"]), rel=1e-6) == expected["thresholds"]["avg_contribution_margin"]
+    assert (
+        pytest.approx(float(th["avgPopularity"]), rel=1e-6)
+        == expected["thresholds"]["avg_popularity"]
+    )
+    assert (
+        pytest.approx(float(th["avgContributionMargin"]), rel=1e-6)
+        == expected["thresholds"]["avg_contribution_margin"]
+    )
     assert pytest.approx(float(th["totalCogs"]), rel=1e-6) == expected["thresholds"]["total_cogs"]
-    assert pytest.approx(float(th["totalProfit"]), rel=1e-6) == expected["thresholds"]["total_profit"]
-    assert pytest.approx(float(th["totalMargin"]), rel=1e-5) == expected["thresholds"]["total_margin"]
+    assert (
+        pytest.approx(float(th["totalProfit"]), rel=1e-6) == expected["thresholds"]["total_profit"]
+    )
+    assert (
+        pytest.approx(float(th["totalMargin"]), rel=1e-5) == expected["thresholds"]["total_margin"]
+    )
 
     dist = matrix["distribution"]
     assert len(dist) == len(expected["distribution"])
@@ -242,8 +256,14 @@ def test_qa_menu_engineering_matrix(analytics_run_with_qa_data, qa_cogs_by_menu)
         assert int(got_item["quantity"]) == exp_item["quantity"]
         assert pytest.approx(float(got_item["totalRevenue"]), rel=1e-6) == exp_item["total_revenue"]
         assert pytest.approx(float(got_item["cogs"]), rel=1e-6) == exp_item["cogs"]
-        assert pytest.approx(float(got_item["contributionMargin"]), rel=1e-6) == exp_item["contribution_margin"]
-        assert pytest.approx(float(got_item["contributionMarginPercentage"]), rel=1e-5) == exp_item["contribution_margin_percentage"]
+        assert (
+            pytest.approx(float(got_item["contributionMargin"]), rel=1e-6)
+            == exp_item["contribution_margin"]
+        )
+        assert (
+            pytest.approx(float(got_item["contributionMarginPercentage"]), rel=1e-5)
+            == exp_item["contribution_margin_percentage"]
+        )
 
 
 def test_qa_menu_engineering_matrix_none_without_cogs(analytics_run_with_qa_sales_only):

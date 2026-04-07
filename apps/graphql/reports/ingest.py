@@ -48,9 +48,7 @@ def _build_rows(df: pd.DataFrame) -> list[NormalizedLineItemData]:
                 ),
                 orderTime=_to_python(record[POSTransactionLineItem.ORDER_TIME]),
                 menuCategory=str(record[POSTransactionLineItem.MENU_CATEGORY]),
-                menuCategoryDetail=str(
-                    record[POSTransactionLineItem.MENU_CATEGORY_DETAIL]
-                ),
+                menuCategoryDetail=str(record[POSTransactionLineItem.MENU_CATEGORY_DETAIL]),
             )
         )
     return rows

@@ -77,7 +77,9 @@ def test_create_milestone_sets_order_in_data_json():
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
         session.commit()
 
-        location = Location(name="Milestone Default Data Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        location = Location(
+            name="Milestone Default Data Location", clerk_user_id=GRAPHQL_TEST_USER_ID
+        )
         session.add(location)
         session.commit()
         session.refresh(location)

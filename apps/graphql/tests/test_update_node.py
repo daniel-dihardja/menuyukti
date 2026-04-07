@@ -296,7 +296,9 @@ def test_update_milestonedata_node_data():
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
         session.commit()
 
-        location = Location(name="Update MilestoneData Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        location = Location(
+            name="Update MilestoneData Location", clerk_user_id=GRAPHQL_TEST_USER_ID
+        )
         session.add(location)
         session.commit()
         session.refresh(location)

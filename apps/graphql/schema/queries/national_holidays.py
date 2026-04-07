@@ -21,8 +21,4 @@ class NationalHolidaysQuery:
         if not path.exists():
             return []
         entries = json.loads(path.read_text())
-        return [
-            NationalHolidayType(**e)
-            for e in entries
-            if start_date <= e["date"] <= end_date
-        ]
+        return [NationalHolidayType(**e) for e in entries if start_date <= e["date"] <= end_date]

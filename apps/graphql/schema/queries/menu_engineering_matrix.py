@@ -70,11 +70,7 @@ class MenuEngineeringMatrixType:
 def _compute_menu_engineering_matrix_for_run(
     session, run: AnalyticsRun
 ) -> MenuEngineeringMatrixType | None:
-    rows = (
-        session.query(OrderFact)
-        .where(OrderFact.analytics_run_id == run.id)
-        .all()
-    )
+    rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
 
     if not rows:
         return None
@@ -90,11 +86,7 @@ def _compute_menu_engineering_matrix_for_run(
         for r in rows
     ]
 
-    cogs_rows = (
-        session.query(MenuItemCogs)
-        .where(MenuItemCogs.analytics_run_id == run.id)
-        .all()
-    )
+    cogs_rows = session.query(MenuItemCogs).where(MenuItemCogs.analytics_run_id == run.id).all()
     cogs_by_menu = {r.menu: float(r.cogs) for r in cogs_rows}
 
     try:

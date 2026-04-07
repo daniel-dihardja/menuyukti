@@ -54,9 +54,7 @@ def _compute_expected_metrics(payload: bytes):
 
     for group in orders.values():
         sizes.append(len(group))
-        revenues.append(
-            float(sum(r.totalAfterBillDiscount for r in group))
-        )
+        revenues.append(float(sum(r.totalAfterBillDiscount for r in group)))
         for r in group:
             order_time = r.orderTime
             if hasattr(order_time, "to_pydatetime"):
@@ -112,8 +110,8 @@ def _expected_metrics_from_rows(rows):
 def test_order_metrics_with_qa_data(analytics_run_with_qa_data, qa_sales_rows):
     """Order metrics from GraphQL match expected values from QA sales rows (no Excel)."""
     run_id = analytics_run_with_qa_data
-    expected_avg_size, expected_avg_revenue, expected_start, expected_end = _expected_metrics_from_rows(
-        qa_sales_rows
+    expected_avg_size, expected_avg_revenue, expected_start, expected_end = (
+        _expected_metrics_from_rows(qa_sales_rows)
     )
 
     result = asyncio.run(
@@ -149,9 +147,7 @@ def test_order_metrics_for_uploaded_run(tmp_path):
         file=BytesIO(payload),
         filename=REPORT_FILE.name,
         headers=Headers(
-            {
-                "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            }
+            {"content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
         ),
     )
 
@@ -219,4 +215,3 @@ def test_order_metrics_for_uploaded_run(tmp_path):
         assert period_start == expected_start
     if expected_end is not None:
         assert period_end == expected_end
-

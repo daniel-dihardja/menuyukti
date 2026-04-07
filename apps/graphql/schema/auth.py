@@ -1,11 +1,11 @@
-"""Authorization helpers: tenant data is rooted at Location.clerk_user_id."""
+"""Authorization helpers: tenant data is rooted at Workspace membership."""
 
 from __future__ import annotations
 
 import strawberry
 from sqlalchemy.orm import Session
 
-from graphql.data_sources import AnalyticsRun, Location
+from graphql.data_sources import AnalyticsRun, Location, WorkspaceMembership
 
 
 def user_id_from_info(info: strawberry.Info) -> str:
@@ -15,15 +15,45 @@ def user_id_from_info(info: strawberry.Info) -> str:
     return ""
 
 
+def is_workspace_member(session: Session, workspace_id: int, user_id: str) -> bool:
+    if not user_id:
+        return False
+    row = (
+        session.query(WorkspaceMembership)
+        .filter(
+            WorkspaceMembership.workspace_id == workspace_id,
+            WorkspaceMembership.clerk_user_id == user_id,
+        )
+        .first()
+    )
+    return row is not None
+
+
+def is_workspace_owner_role(session: Session, workspace_id: int, user_id: str) -> bool:
+    """True if user has owner membership on the workspace."""
+    if not user_id:
+        return False
+    row = (
+        session.query(WorkspaceMembership)
+        .filter(
+            WorkspaceMembership.workspace_id == workspace_id,
+            WorkspaceMembership.clerk_user_id == user_id,
+            WorkspaceMembership.role == "owner",
+        )
+        .first()
+    )
+    return row is not None
+
+
 def is_location_owner(session: Session, location_id: int, user_id: str) -> bool:
     if not user_id:
         return False
-    loc = (
-        session.query(Location)
-        .filter(Location.id == location_id, Location.clerk_user_id == user_id)
-        .first()
-    )
-    return loc is not None
+    loc = session.get(Location, location_id)
+    if loc is None:
+        return False
+    if loc.workspace_id is None:
+        return loc.clerk_user_id == user_id
+    return is_workspace_member(session, loc.workspace_id, user_id)
 
 
 def require_location_owner(session: Session, location_id: int, user_id: str) -> None:

@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from graphql.data_sources import Node
 
 
-
 class NodeHandler(ABC):
     """Strategy for validating and transforming node operations by `node_type`."""
 

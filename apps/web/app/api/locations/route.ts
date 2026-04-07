@@ -3,7 +3,14 @@ import { auth } from '@clerk/nextjs/server'
 import { createLocationSchema } from './schema'
 import { ZodError } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
-import { CREATE_LOCATION_MUTATION, type CreateLocationData } from '@/lib/graphql/queries'
+import {
+  CREATE_LOCATION_MUTATION,
+  CREATE_WORKSPACE_MUTATION,
+  MY_WORKSPACE_QUERY,
+  type CreateLocationData,
+  type CreateWorkspaceData,
+  type MyWorkspaceData,
+} from '@/lib/graphql/queries'
 
 export async function POST(req: Request) {
   try {
@@ -15,7 +22,23 @@ export async function POST(req: Request) {
     const json = await req.json()
     const { name } = createLocationSchema.parse(json)
 
-    const data = await graphqlQuery<CreateLocationData>(CREATE_LOCATION_MUTATION, { name }, userId)
+    let workspaceId: string | undefined
+    const wsData = await graphqlQuery<MyWorkspaceData>(MY_WORKSPACE_QUERY, {}, userId)
+    workspaceId = wsData.myWorkspace?.id
+    if (!workspaceId) {
+      const createdWs = await graphqlQuery<CreateWorkspaceData>(
+        CREATE_WORKSPACE_MUTATION,
+        { name: 'My workspace' },
+        userId,
+      )
+      workspaceId = createdWs.createWorkspace.id
+    }
+
+    const data = await graphqlQuery<CreateLocationData>(
+      CREATE_LOCATION_MUTATION,
+      { workspaceId, name },
+      userId,
+    )
 
     const location = data.createLocation
     if (!location) {

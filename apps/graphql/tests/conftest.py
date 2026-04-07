@@ -70,7 +70,9 @@ def analytics_run_with_qa_data(qa_sales_rows, qa_cogs_by_menu):
         session.refresh(location)
 
         times = [
-            r.orderTime if isinstance(r.orderTime, datetime) else datetime.fromisoformat(str(r.orderTime))
+            r.orderTime
+            if isinstance(r.orderTime, datetime)
+            else datetime.fromisoformat(str(r.orderTime))
             for r in qa_sales_rows
         ]
         period_start = min(times).date() if times else None
@@ -95,9 +97,7 @@ def analytics_run_with_qa_data(qa_sales_rows, qa_cogs_by_menu):
 
     session = SessionLocal()
     try:
-        order_facts = (
-            session.query(OrderFact).where(OrderFact.analytics_run_id == run_id).all()
-        )
+        order_facts = session.query(OrderFact).where(OrderFact.analytics_run_id == run_id).all()
         seen_menus: dict[str, tuple[str, str]] = {}
         for row in order_facts:
             if row.menu not in seen_menus:
@@ -143,15 +143,15 @@ def analytics_run_with_qa_sales_only(qa_sales_rows):
         session.query(Location).delete()
         session.commit()
 
-        location = Location(
-            name="QA Test Location (no COGS)", clerk_user_id=GRAPHQL_TEST_USER_ID
-        )
+        location = Location(name="QA Test Location (no COGS)", clerk_user_id=GRAPHQL_TEST_USER_ID)
         session.add(location)
         session.commit()
         session.refresh(location)
 
         times = [
-            r.orderTime if isinstance(r.orderTime, datetime) else datetime.fromisoformat(str(r.orderTime))
+            r.orderTime
+            if isinstance(r.orderTime, datetime)
+            else datetime.fromisoformat(str(r.orderTime))
             for r in qa_sales_rows
         ]
         period_start = min(times).date() if times else None

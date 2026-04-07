@@ -100,8 +100,14 @@ def test_menu_engineering_matrix_with_qa_data(analytics_run_with_qa_data, qa_cog
     assert matrix is not None
 
     th = matrix["thresholds"]
-    assert pytest.approx(float(th["avgPopularity"]), rel=1e-6) == expected["thresholds"]["avg_popularity"]
-    assert pytest.approx(float(th["avgContributionMargin"]), rel=1e-6) == expected["thresholds"]["avg_contribution_margin"]
+    assert (
+        pytest.approx(float(th["avgPopularity"]), rel=1e-6)
+        == expected["thresholds"]["avg_popularity"]
+    )
+    assert (
+        pytest.approx(float(th["avgContributionMargin"]), rel=1e-6)
+        == expected["thresholds"]["avg_contribution_margin"]
+    )
 
     items = matrix["items"]
     assert len(items) == len(expected["items"])
@@ -110,7 +116,10 @@ def test_menu_engineering_matrix_with_qa_data(analytics_run_with_qa_data, qa_cog
         got_item = by_menu[exp_item["menu"]]
         assert got_item["category"] == exp_item["category"]
         assert got_item["action"] == exp_item["action"]
-        assert pytest.approx(float(got_item["contributionMarginPercentage"]), rel=1e-5) == exp_item["contribution_margin_percentage"]
+        assert (
+            pytest.approx(float(got_item["contributionMarginPercentage"]), rel=1e-5)
+            == exp_item["contribution_margin_percentage"]
+        )
 
 
 def _get_location_id_for_run(run_id: int) -> int:
@@ -137,7 +146,9 @@ def test_menu_engineering_matrix_wrong_location_returns_none(analytics_run_with_
     assert result.data["menuEngineeringMatrix"] is None
 
 
-def test_menu_engineering_matrix_with_matching_location_id(analytics_run_with_qa_data, qa_cogs_by_menu):
+def test_menu_engineering_matrix_with_matching_location_id(
+    analytics_run_with_qa_data, qa_cogs_by_menu
+):
     """Explicit locationId matching the run returns the same matrix as when omitted."""
     run_id = analytics_run_with_qa_data
     location_id = _get_location_id_for_run(run_id)
@@ -155,7 +166,10 @@ def test_menu_engineering_matrix_with_matching_location_id(analytics_run_with_qa
     matrix = query_result.data["menuEngineeringMatrix"]
     assert matrix is not None
     th = matrix["thresholds"]
-    assert pytest.approx(float(th["avgPopularity"]), rel=1e-6) == expected["thresholds"]["avg_popularity"]
+    assert (
+        pytest.approx(float(th["avgPopularity"]), rel=1e-6)
+        == expected["thresholds"]["avg_popularity"]
+    )
 
 
 def test_menu_engineering_matrix_none_without_cogs(analytics_run_with_qa_sales_only):
@@ -181,9 +195,7 @@ def test_menu_engineering_matrix_query_returns_matrix_with_cogs_from_json():
             "Expected sample Excel file at 'reports/Sales_Recapitulation_Detail_Report_Test.xlsx' to exist."
         )
     if not MENU_COGS_FILE.exists():
-        pytest.skip(
-            "Expected COGS data at 'notebooks/data/menu_cogs.json' to exist."
-        )
+        pytest.skip("Expected COGS data at 'notebooks/data/menu_cogs.json' to exist.")
 
     cogs_by_menu = _load_cogs_by_menu()
     assert cogs_by_menu is not None
@@ -193,9 +205,7 @@ def test_menu_engineering_matrix_query_returns_matrix_with_cogs_from_json():
         file=BytesIO(payload),
         filename=REPORT_FILE.name,
         headers=Headers(
-            {
-                "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            }
+            {"content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
         ),
     )
 
@@ -229,11 +239,7 @@ def test_menu_engineering_matrix_query_returns_matrix_with_cogs_from_json():
         run = session.query(AnalyticsRun).order_by(AnalyticsRun.id.desc()).first()
         assert run is not None
 
-        order_facts = (
-            session.query(OrderFact)
-            .where(OrderFact.analytics_run_id == run.id)
-            .all()
-        )
+        order_facts = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
         seen_menus = {}
         for row in order_facts:
             if row.menu not in seen_menus:
@@ -299,4 +305,6 @@ def test_menu_engineering_matrix_query_returns_matrix_with_cogs_from_json():
         assert item["action"] in ("keep", "promote", "reprice", "remove")
 
     items_with_cogs = [i for i in items if float(i["cogs"]) > 0]
-    assert len(items_with_cogs) >= 1, "At least one item should have non-zero COGS and appear in the matrix"
+    assert len(items_with_cogs) >= 1, (
+        "At least one item should have non-zero COGS and appear in the matrix"
+    )

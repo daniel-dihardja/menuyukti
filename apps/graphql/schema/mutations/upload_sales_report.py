@@ -129,31 +129,21 @@ class UploadSalesReportMutation:
             analytics_run_id=analytics_run_id,
         )
 
-        normalized_rows = [
-            NormalizedLineItem(**asdict(row)) for row in normalized_rows_data
-        ]
+        normalized_rows = [NormalizedLineItem(**asdict(row)) for row in normalized_rows_data]
 
         orders_data = line_items_to_orders(normalized_rows_data)
         orders = [_order_to_strawberry(o) for o in orders_data]
 
-        sales_analytics_dict: dict[str, Any] = run_sales_analytics(
-            normalized_rows_data
-        )
+        sales_analytics_dict: dict[str, Any] = run_sales_analytics(normalized_rows_data)
 
-        workbook = load_workbook(
-            filename=BytesIO(payload), read_only=True, data_only=True
-        )
+        workbook = load_workbook(filename=BytesIO(payload), read_only=True, data_only=True)
         sheet_names = workbook.sheetnames
         header_preview: list[str] = []
 
         if sheet_names:
             active_sheet = workbook[sheet_names[0]]
-            first_row = next(
-                active_sheet.iter_rows(max_row=1, values_only=True), ()
-            )
-            header_preview = [
-                str(value) if value is not None else "" for value in first_row
-            ]
+            first_row = next(active_sheet.iter_rows(max_row=1, values_only=True), ())
+            header_preview = [str(value) if value is not None else "" for value in first_row]
 
         workbook.close()
 

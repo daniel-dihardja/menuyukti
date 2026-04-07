@@ -1,6 +1,8 @@
 import strawberry
+from sqlalchemy import or_
 
-from graphql.data_sources import Location, SessionLocal
+from graphql.data_sources import Location, SessionLocal, WorkspaceMembership
+from graphql.schema.auth import is_location_owner
 from graphql.schema.types import LocationType
 
 
@@ -20,11 +22,16 @@ class LocationsQuery:
             return []
         session = SessionLocal()
         try:
-            rows = (
-                session.query(Location)
-                .filter(Location.clerk_user_id == user_id)
+            workspace_ids = [
+                w[0]
+                for w in session.query(WorkspaceMembership.workspace_id)
+                .filter(WorkspaceMembership.clerk_user_id == user_id)
                 .all()
-            )
+            ]
+            access = [Location.clerk_user_id == user_id]
+            if workspace_ids:
+                access.append(Location.workspace_id.in_(workspace_ids))
+            rows = session.query(Location).filter(or_(*access)).all()
             return [
                 LocationType(
                     id=row.id,
@@ -47,12 +54,8 @@ class LocationsQuery:
             return None
         session = SessionLocal()
         try:
-            row = (
-                session.query(Location)
-                .filter(Location.id == int(id), Location.clerk_user_id == user_id)
-                .first()
-            )
-            if row is None:
+            row = session.get(Location, int(id))
+            if row is None or not is_location_owner(session, row.id, user_id):
                 return None
             return LocationType(
                 id=row.id,

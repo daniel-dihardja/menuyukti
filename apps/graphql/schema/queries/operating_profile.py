@@ -1,4 +1,3 @@
-
 import strawberry
 from menuyukti.core.analytics import compute_operating_profile_from_orders
 
@@ -124,11 +123,7 @@ class OperatingProfileQuery:
             if run is None or run.location_id != int(location_id):
                 return None
 
-            rows = (
-                session.query(OrderFact)
-                .where(OrderFact.analytics_run_id == run.id)
-                .all()
-            )
+            rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
 
             order_rows = [
                 {

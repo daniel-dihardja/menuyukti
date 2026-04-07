@@ -2,6 +2,8 @@
 
 __all__ = [
     "Base",
+    "Workspace",
+    "WorkspaceMembership",
     "Location",
     "AnalyticsRun",
     "OrderFact",

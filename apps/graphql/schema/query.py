@@ -8,6 +8,7 @@ from graphql.schema.queries import (
     NationalHolidaysQuery,
     NodesQuery,
     OperatingProfileQuery,
+    WorkspaceQuery,
 )
 
 
@@ -20,5 +21,6 @@ class Query(
     MenuEngineeringMatrixQuery,
     NationalHolidaysQuery,
     OperatingProfileQuery,
+    WorkspaceQuery,
 ):
     pass
