@@ -52,7 +52,7 @@ jobs:
               - '.github/workflows/**'
 
   node:
-    name: Node (Prettier, types, ESLint, tests)
+    name: Web (Prettier, types, ESLint, tests)
     needs: changes
     if: needs.changes.outputs.node == 'true'
     runs-on: ubuntu-latest
