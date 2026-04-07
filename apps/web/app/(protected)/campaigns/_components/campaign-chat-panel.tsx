@@ -343,7 +343,10 @@ export function CampaignChatPanel({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ dataTask }),
         })
-        const body = (await res.json().catch(() => null)) as { message?: string; data?: unknown } | null
+        const body = (await res.json().catch(() => null)) as {
+          message?: string
+          data?: unknown
+        } | null
         if (!res.ok) {
           throw new Error(body?.message ?? t('milestonesMilestoneDataError'))
         }
@@ -409,12 +412,9 @@ export function CampaignChatPanel({
               throw new Error(payload.error)
             }
             if (payload.done === true) {
-              const preview =
-                typeof payload.dataPreview === 'string' ? payload.dataPreview : ''
+              const preview = typeof payload.dataPreview === 'string' ? payload.dataPreview : ''
               setMilestones((prev) =>
-                prev.map((m) =>
-                  m.id === milestoneId ? { ...m, data: preview || m.data } : m,
-                ),
+                prev.map((m) => (m.id === milestoneId ? { ...m, data: preview || m.data } : m)),
               )
             }
           }

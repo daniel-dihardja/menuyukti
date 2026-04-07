@@ -5,9 +5,7 @@
  * then `http://localhost:8001` for local dev.
  */
 export function getPythonAgentsUrl(): string {
-  const raw =
-    process.env.AGENTS_URL?.trim() ||
-    process.env.PYTHON_AGENTS_URL?.trim()
+  const raw = process.env.AGENTS_URL?.trim() || process.env.PYTHON_AGENTS_URL?.trim()
   if (raw) return raw.replace(/\/$/, '')
   return 'http://localhost:8001'
 }

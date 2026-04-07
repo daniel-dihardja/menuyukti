@@ -273,10 +273,7 @@ function TimelineItemInner({
           </div>
         ) : (
           <div className="flex w-full shrink-0 flex-col items-center">
-            <div
-              aria-hidden
-              className="h-4 w-px shrink-0 border-l border-dashed border-border"
-            />
+            <div aria-hidden className="h-4 w-px shrink-0 border-l border-dashed border-border" />
             <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
               <TimelineRailMarker labels={statusLabels} status={status} />
             </div>
@@ -286,10 +283,7 @@ function TimelineItemInner({
           </div>
         )}
         {isLast ? null : (
-          <div
-            aria-hidden
-            className="min-h-0 w-px flex-1 border-l border-dashed border-border"
-          />
+          <div aria-hidden className="min-h-0 w-px flex-1 border-l border-dashed border-border" />
         )}
       </div>
       <div className={cn('min-w-0 flex-1', !isLast && 'pb-8')}>
@@ -381,4 +375,3 @@ function TimelineItemInner({
 }
 
 export const TimelineItem = memo(TimelineItemInner)
-

@@ -29,7 +29,10 @@ export async function POST(req: Request) {
 
   const parsed = bodySchema.safeParse(json)
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid body', issues: parsed.error.issues }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Invalid body', issues: parsed.error.issues },
+      { status: 400 },
+    )
   }
 
   const { content, preset } = parsed.data // aligns with @/lib/markdown-format-presets

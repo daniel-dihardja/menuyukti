@@ -35,7 +35,6 @@ export const patchMilestoneSchema = z
       v.passCriteria !== undefined ||
       v.move !== undefined,
     {
-      message:
-        'Provide at least one of name, goal, milestoneData, dataTask, passCriteria, or move',
+      message: 'Provide at least one of name, goal, milestoneData, dataTask, passCriteria, or move',
     },
   )

@@ -139,9 +139,7 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   const passCriteria = passCriteriaFromChildNodes(node.passCriteriaNodes)
   const resultMarkdown = resultMarkdownFromChildNodes(node.resultNodes)
   const dataTask: MilestoneDataTask =
-    parsed.success && parsed.data.dataTask === 'location_profile'
-      ? 'location_profile'
-      : 'manual'
+    parsed.success && parsed.data.dataTask === 'location_profile' ? 'location_profile' : 'manual'
 
   return {
     id: node.id,
