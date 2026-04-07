@@ -256,20 +256,29 @@ export function MilestoneItemTabs({
                   </Button>
                 </div>
               ) : null}
-              <Tabs className="gap-3" defaultValue="edit">
+              <Tabs className="gap-3" defaultValue="preview">
                 <TabsList
                   className="h-9 w-full max-w-md"
                   variant="default"
                   onClick={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}
                 >
-                  <TabsTrigger className="flex-1" value="edit">
-                    {t('milestoneDataEditTab')}
-                  </TabsTrigger>
                   <TabsTrigger className="flex-1" value="preview">
                     {t('milestoneDataPreviewTab')}
                   </TabsTrigger>
+                  <TabsTrigger className="flex-1" value="edit">
+                    {t('milestoneDataEditTab')}
+                  </TabsTrigger>
                 </TabsList>
+                <TabsContent className="mt-0" value="preview">
+                  {dataDraft.trim() ? (
+                    <div className="max-h-[min(50vh,28rem)] overflow-y-auto rounded-md border border-border/60 bg-muted/30 p-3">
+                      <MarkdownMessage content={dataDraft} />
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">{t('milestoneDataPreviewEmpty')}</p>
+                  )}
+                </TabsContent>
                 <TabsContent className="mt-0" value="edit">
                   <Textarea
                     className="min-h-[200px] resize-y whitespace-pre-wrap"
@@ -282,15 +291,6 @@ export function MilestoneItemTabs({
                     placeholder={t('milestoneDataPlaceholder')}
                     value={dataDraft}
                   />
-                </TabsContent>
-                <TabsContent className="mt-0" value="preview">
-                  {dataDraft.trim() ? (
-                    <div className="max-h-[min(50vh,28rem)] overflow-y-auto rounded-md border border-border/60 bg-muted/30 p-3">
-                      <MarkdownMessage content={dataDraft} />
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">{t('milestoneDataPreviewEmpty')}</p>
-                  )}
                 </TabsContent>
               </Tabs>
             </Field>
