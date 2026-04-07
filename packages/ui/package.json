@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "format-check": "prettier --check \"src/**/*.{ts,tsx,md,css}\" components.json",
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit"
   },

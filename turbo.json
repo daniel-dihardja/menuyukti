@@ -34,6 +34,11 @@
         "NODE_ENV"
       ]
     },
+    "format-check": {
+      "dependsOn": [
+        "^format-check"
+      ]
+    },
     "lint": {
       "dependsOn": [
         "^lint"

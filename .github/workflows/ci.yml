@@ -1,4 +1,5 @@
 # Lint, typecheck, and test on every PR and push to main/develop.
+# Path filters skip unrelated jobs; Node uses Turbo --affected on PRs, full run on push.
 name: CI
 
 on:
@@ -11,24 +12,80 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      node: ${{ steps.filter.outputs.node }}
+      graphql: ${{ steps.filter.outputs.graphql }}
+      agents: ${{ steps.filter.outputs.agents }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            node:
+              - 'apps/web/**'
+              - 'packages/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+              - '.prettierrc.json'
+              - '.prettierignore'
+              - 'lint-staged.config.mjs'
+              - '.husky/**'
+              - '.github/workflows/**'
+            graphql:
+              - 'apps/graphql/**'
+              - 'packages/menuyukti/**'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - '.github/workflows/**'
+            agents:
+              - 'apps/agents/**'
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - '.github/workflows/**'
+
   node:
     name: Node (Prettier, types, ESLint, tests)
+    needs: changes
+    if: needs.changes.outputs.node == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch base ref (pull requests)
+        if: github.event_name == 'pull_request'
+        run: git fetch origin ${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm format-check
-      - run: pnpm check-types
-      - run: pnpm lint
-      - run: pnpm test
+      # PRs: only affected workspace packages (base = PR target branch). Push: full run for safety.
+      - name: Turbo (affected packages)
+        if: github.event_name == 'pull_request'
+        env:
+          TURBO_SCM_BASE: origin/${{ github.base_ref }}
+        run: pnpm exec turbo run format-check lint check-types test --affected
+      - name: Turbo (full)
+        if: github.event_name == 'push'
+        run: pnpm exec turbo run format-check lint check-types test
+      # Top-level Markdown not owned by a workspace package format-check script
+      - name: Prettier (repo root docs)
+        run: pnpm exec prettier --check README.md AGENTS.md
 
   graphql:
     name: GraphQL (Ruff, mypy, pytest)
+    needs: changes
+    if: needs.changes.outputs.graphql == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,6 +101,8 @@ jobs:
 
   agents:
     name: Agents (Ruff, mypy, pytest)
+    needs: changes
+    if: needs.changes.outputs.agents == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

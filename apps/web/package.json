@@ -9,6 +9,7 @@
     "start": "next start",
     "format": "prettier --write app components hooks lib i18n messages middleware.ts vitest.config.ts",
     "format:check": "prettier --check app components hooks lib i18n messages middleware.ts vitest.config.ts",
+    "format-check": "prettier --check app components hooks lib i18n messages middleware.ts vitest.config.ts",
     "lint": "eslint app components hooks lib i18n middleware.ts vitest.config.ts --max-warnings 0",
     "lint:fix": "eslint app components hooks lib i18n middleware.ts vitest.config.ts --fix --max-warnings 0",
     "typecheck": "tsc --noEmit",
