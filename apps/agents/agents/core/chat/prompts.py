@@ -27,16 +27,30 @@ with a single string field **`goal`**: the milestone objective in plain language
 
 ## Pass criteria
 
-A milestone can have **one or more Pass Criteria** nodes (`passcriteria`). Each
-has **`requirement`** (string) and **`status`**: `pass`, `fail`, or `open`.
-These define measurable checks for the milestone.
+A milestone can have **one or more Pass Criteria** nodes (`passcriteria`). In the
+app, open the milestone’s **Pass criteria** tab and use the interface to **add
+each criterion** as a requirement (measurable check). You do **not** need to set
+**status** yourself: `pass`, `fail`, or `open` is updated when you **Run** the
+evaluation (or reflects the last run). The data model stores **`requirement`**
+and **`status`** per criterion.
 
 ## Milestone data
 
 Each milestone has **at most one Milestone Data** node (`milestonedata`). Its
-data is **`data`** (string): analytics and context used when evaluating the
-milestone. The app’s **Prepare** flow typically fills or refreshes this from
-sales/analytics sources.
+payload is **`data`** (string): the text **Run** evaluates against the pass
+criteria. On the milestone **Data** tab, the **Data source** control chooses how
+that string is produced (stored on the milestone as **`dataTask`**):
+
+- **Manual entry** (`manual`): the user writes or pastes the content directly in
+  the Data tab editor. No **Prepare** step is required; save when ready.
+- **Generate location profile** (`location_profile`): the content is meant to come
+  from the **Prepare** pipeline (location / operating analytics turned into
+  markdown-style text). Use **Generate** or **Regenerate** on the Data tab to
+  fill or refresh **`data`**; the user can still edit the text afterward.
+
+In both modes the same **`milestonedata`** node holds the final **`data`**
+string; the difference is whether the user authors it entirely or starts from a
+generated profile.
 
 ## Result
 
@@ -48,9 +62,13 @@ milestone.
 
 ## Typical flow
 
-1. Set the milestone **Goal** and **Pass criteria**.
-2. **Prepare** to populate **Milestone data** with relevant analytics text.
-3. **Run** to evaluate criteria against that data and write the **Result**.
+1. Set the **Goal** (Goal tab) and add **Pass criteria** via the **Pass criteria**
+   tab (requirements only).
+2. On the **Data** tab: either enter text under **Manual entry**, or choose
+   **Generate location profile** and run **Prepare** to generate the milestone
+   data, then edit if needed.
+3. **Run** to evaluate criteria against the milestone data string, update
+   criterion statuses, and write the **Result**.
 """
 
 BEHAVIOR_RULES = (
