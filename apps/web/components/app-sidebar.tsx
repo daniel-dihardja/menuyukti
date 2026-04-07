@@ -38,9 +38,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader
-        className={cn('h-16 min-h-16 border-b', 'flex flex-row items-center gap-0')}
-      >
+      <SidebarHeader className={cn('h-16 min-h-16 border-b', 'flex flex-row items-center gap-0')}>
         {state === 'collapsed' ? (
           <Tooltip>
             <TooltipTrigger asChild>{brandLink}</TooltipTrigger>
