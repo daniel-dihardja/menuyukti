@@ -413,13 +413,13 @@ export function AssetsClient() {
 
       <section className="w-full">
         {loading ? (
-          <div className="columns-2 gap-4 sm:columns-3 sm:gap-5 lg:columns-4 xl:columns-5 2xl:columns-6">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
               <div
                 key={i}
-                className="mb-4 break-inside-avoid rounded-xl border border-border/60 bg-muted/40 sm:mb-5"
+                className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-muted/40"
               >
-                <div className="aspect-[4/3] animate-pulse rounded-t-xl bg-muted" />
+                <div className="aspect-[4/3] animate-pulse bg-muted" />
                 <div className="space-y-2 p-3">
                   <div className="h-3 w-2/3 animate-pulse rounded bg-muted" />
                   <div className="h-2 w-1/3 animate-pulse rounded bg-muted" />
@@ -438,14 +438,14 @@ export function AssetsClient() {
             </div>
           </Card>
         ) : (
-          <div className="columns-2 gap-4 sm:columns-3 sm:gap-5 lg:columns-4 xl:columns-5 2xl:columns-6">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {items.map((item) => (
               <figure
                 key={item.name}
-                className="group/tile mb-4 break-inside-avoid overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md sm:mb-5"
+                className="group/tile min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md"
               >
                 <div
-                  className="relative cursor-zoom-in bg-muted/30 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="relative aspect-[4/3] cursor-zoom-in overflow-hidden bg-muted/30 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   role="button"
                   tabIndex={0}
                   aria-label={t('grid.viewLarge')}
@@ -462,7 +462,7 @@ export function AssetsClient() {
                     src={item.url}
                     alt=""
                     loading="lazy"
-                    className="w-full h-auto object-cover transition duration-300 group-hover/tile:scale-[1.02]"
+                    className="size-full object-cover transition duration-300 group-hover/tile:scale-[1.02]"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100" />
                   <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex items-end justify-between gap-2 p-3 opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100">

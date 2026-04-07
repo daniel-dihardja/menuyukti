@@ -22,17 +22,19 @@ def _flow_to_gql(row: ImageAiFlow) -> ImageAiFlowType:
 @strawberry.type
 class ImageAiFlowsQuery:
     @strawberry.field
-    def image_ai_flows(self) -> list[ImageAiFlowType]:
-        """All active image AI flows for the asset upload UI, ordered for display."""
+    def image_ai_flows(
+        self, include_inactive: bool = False
+    ) -> list[ImageAiFlowType]:
+        """Image AI flows ordered for display. Default: active only (asset upload UI)."""
 
         session = SessionLocal()
         try:
-            rows = (
-                session.query(ImageAiFlow)
-                .filter(ImageAiFlow.is_active.is_(True))
-                .order_by(ImageAiFlow.sort_order.asc(), ImageAiFlow.id.asc())
-                .all()
+            q = session.query(ImageAiFlow).order_by(
+                ImageAiFlow.sort_order.asc(), ImageAiFlow.id.asc()
             )
+            if not include_inactive:
+                q = q.filter(ImageAiFlow.is_active.is_(True))
+            rows = q.all()
             return [_flow_to_gql(r) for r in rows]
         finally:
             session.close()

@@ -137,7 +137,7 @@ export function CampaignWorkspace({
       </Tabs>
 
       <Sheet onOpenChange={setStudioOpen} open={studioOpen}>
-        <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
+        <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-2xl">
           <SheetHeader className="border-b px-6 py-4 text-left">
             <SheetTitle>{t('studioSheetTitle')}</SheetTitle>
             <SheetDescription>{t('studioSheetDescription')}</SheetDescription>

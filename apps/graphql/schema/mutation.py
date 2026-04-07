@@ -1,12 +1,15 @@
 import strawberry
 
 from graphql.schema.mutations import (
+    CreateImageAiFlowMutation,
     CreateLocationMutation,
     CreateNodeMutation,
     CreateWorkspaceMutation,
+    DeleteImageAiFlowMutation,
     DeleteNodeMutation,
     InviteWorkspaceMemberMutation,
     RemoveWorkspaceMemberMutation,
+    UpdateImageAiFlowMutation,
     UpdateMenuItemCogsBulkMutation,
     UpdateNodeMutation,
     UploadSalesReportMutation,
@@ -24,5 +27,8 @@ class Mutation(
     InviteWorkspaceMemberMutation,
     RemoveWorkspaceMemberMutation,
     UpdateMenuItemCogsBulkMutation,
+    CreateImageAiFlowMutation,
+    UpdateImageAiFlowMutation,
+    DeleteImageAiFlowMutation,
 ):
     pass
