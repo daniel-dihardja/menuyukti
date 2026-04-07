@@ -72,8 +72,8 @@ Database schema, migrations, and persistence are implemented in **`apps/graphql`
 
 ## Quality gates and CI
 
-- **GitHub Actions:** `.github/workflows/ci.yml` runs on pushes and pull requests to `main` and `develop` (Prettier check, Turbo `check-types` + `lint` + `test`, GraphQL Ruff/mypy/pytest).
-- **Pre-commit:** Husky runs [lint-staged](https://github.com/lint-staged/lint-staged) (`lint-staged.config.mjs`): Prettier on staged TS/MD/CSS, Ruff on `apps/graphql` Python, ESLint on `apps/web` and `packages/ui`. After `pnpm install`, the `prepare` script registers Husky (requires a writable `.git` in dev).
+- **GitHub Actions:** `.github/workflows/ci.yml` runs on pushes and pull requests to `main` and `develop` (Prettier check, Turbo `check-types` + `lint` + `test`, GraphQL and agents Ruff/mypy/pytest).
+- **Pre-commit:** Husky runs [lint-staged](https://github.com/lint-staged/lint-staged) (`lint-staged.config.mjs`): Prettier on staged TS/MD/CSS, Ruff on `apps/graphql` and `apps/agents` Python, ESLint on `apps/web` and `packages/ui`. After `pnpm install`, the `prepare` script registers Husky (requires a writable `.git` in dev).
 - **Suggested checks before a PR:** from the repo root run `pnpm format-check`, `pnpm check-types`, `pnpm lint`, `pnpm test`; from `apps/graphql` run `make lint`, `make typecheck`, `make test`; from `apps/agents` run `make lint`, `make typecheck`, `make test`.
 
 ## Off-limits or discouraged patterns

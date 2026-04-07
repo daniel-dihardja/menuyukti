@@ -16,24 +16,17 @@ Menuyukti is an **agentic AI platform for data-driven restaurant marketing autom
 | **GraphQL API** | `apps/graphql` | Python backend: structured data, analytics, persistence. **Single source of truth** for reads/writes used by the web app and agent services. |
 | **Web** | `apps/web` | Next.js user-facing app: chat, artifacts, CRUD for product entities. Calls GraphQL. |
 | **LangGraph agents** | `apps/agents` | Python FastAPI service: LangChain / LangGraph graphs, streaming chat (OpenAI), LCEL-friendly composition. Can call into platform APIs as features grow. |
-| **Gentic agents** | `apps/gentic-agents` | Go HTTP service: intent routing, multi-step flows, LLM + tools; calls GraphQL when it needs platform data. |
-| **Gentic framework** | `packages/gentic` | In-repo Go module (steps, flows, ReAct, reflect, intent, providers). Consumed by `apps/gentic-agents` via root **`go.work`** and a local **`replace`** in `apps/gentic-agents/go.mod` — not fetched from the upstream GitHub module for day-to-day work. |
-
-The **`gentic-agents`** service is built on **in-repo Gentic** (`packages/gentic`) and the Go patterns below.
 
 ## Agentic patterns in use
 
 - **LangChain / LangGraph (`apps/agents`)** — LCEL chains, `MessagesState` graphs, async streaming (`astream_events`), OpenAI via `langchain-openai`. Prefer modular layout (`agents/`, `models/`, `prompts/`, `routers/`). See `.cursor/rules/langchain.mdc` and `.cursor/rules/langgraph.mdc`.
-- **ReAct (Reason + Act)** — interleaved reasoning, tool calls, and observations; implemented via `packages/gentic/pkg/gentic/react` — do not re-implement the loop.
 - **Plan-and-execute** — explicit multi-step plans for pipelines (e.g. campaign: data → slots → schedule → formats → brief).
 - **Reflect** — generate → critique → revise for drafts (e.g. location profiles, format plans) with iteration bounds.
 
 ## Layering and boundaries
 
-- **`apps/agents`:** FastAPI routers validate DTOs and delegate to compiled graphs / runnables; keep prompts, model config, and graph topology in separate modules — not monolithic route handlers.
-- **HTTP handlers** (Gentic) validate input, map DTOs ↔ domain types, and delegate — no heavy business logic in handlers alone.
-- **Agent logic** (Gentic) lives under `internal/agent/` (`flows/*` per feature, `flowstate/`, shared `step/` helpers, tools).
-- **Platform concerns** (config, GraphQL client, DB) stay in `internal/platform/` or equivalent — not mixed into flow business rules without clear boundaries.
+- **`apps/graphql`:** Strawberry schema, SQLAlchemy persistence, analytics — the database and migrations live here; other apps call GraphQL over HTTP.
+- **`apps/agents`:** FastAPI routers validate DTOs and delegate to compiled graphs / runnables; keep prompts, model config, and graph topology in separate modules — not monolithic route handlers. Agents use `httpx` to call GraphQL; they do not open DB connections.
 
 ## Further reading
 

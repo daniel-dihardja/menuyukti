@@ -15,7 +15,7 @@
     "prepare": "husky",
     "docker:build:graphql": "docker build -f apps/graphql/Dockerfile -t johngoyason/menuyukti-graphql:${DOCKER_TAG:-latest} .",
     "docker:build:web": "docker build -f apps/web/Dockerfile -t johngoyason/menuyukti-web:${DOCKER_TAG:-latest} --build-arg DATABASE_URL=\\\"$DATABASE_URL\\\" --build-arg ANALYTICS_API_URL=\\\"${ANALYTICS_API_URL:-http://graphql:8000}\\\" .",
-    "docker:build:agents": "docker build -f apps/gentic-agents/Dockerfile -t johngoyason/menuyukti-agents:${DOCKER_TAG:-latest} .",
+    "docker:build:agents": "docker build -f apps/agents/Dockerfile -t johngoyason/menuyukti-agents:${DOCKER_TAG:-latest} .",
     "docker:build:all": "pnpm run docker:build:graphql && pnpm run docker:build:agents && pnpm run docker:build:web",
     "docker:push:graphql": "bash scripts/docker-push-images.sh graphql",
     "docker:push:web": "bash scripts/docker-push-images.sh web",

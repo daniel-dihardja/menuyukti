@@ -1,0 +1,26 @@
+# Build and push agents image (menuyukti-agents). Manual only — Actions → Run workflow (optional tag).
+# Server: run "Docker — remote compose pull" after images exist on Docker Hub.
+#
+# Secrets: DOCKERHUB_USERNAME, DOCKERHUB_PASSWORD (see docker-build-push.reusable.yml)
+# Optional variable: DOCKER_IMAGE_PREFIX (default johngoyason)
+
+name: Docker — agents
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Optional single tag (empty = sha-* + latest on default branch)"
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  build-push:
+    uses: ./.github/workflows/docker-build-push.reusable.yml
+    secrets: inherit
+    with:
+      service: agents
+      dockerfile: apps/agents/Dockerfile
+      image_repository: ${{ format('{0}/menuyukti-agents', vars.DOCKER_IMAGE_PREFIX != '' && vars.DOCKER_IMAGE_PREFIX || 'johngoyason') }}
+      custom_tag: ${{ github.event.inputs.tag }}

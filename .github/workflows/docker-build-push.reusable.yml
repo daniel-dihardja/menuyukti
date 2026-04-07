@@ -12,7 +12,7 @@
 #
 # Remote server: copy compose + pull images via workflow "Docker — remote compose pull" (docker-remote-pull.yml).
 #
-# Manual run: Actions → "Reusable Docker build and push" → choose preset (web | graphql).
+# Manual run: Actions → "Reusable Docker build and push" → choose preset (web | graphql | agents).
 
 name: Reusable Docker build and push
 
@@ -22,7 +22,7 @@ on:
       service:
         required: true
         type: string
-        description: "graphql | web"
+        description: "graphql | web | agents"
       dockerfile:
         required: true
         type: string
@@ -38,12 +38,13 @@ on:
   workflow_dispatch:
     inputs:
       preset:
-        description: "Which image to build and push (same mapping as Docker — web / graphql)"
+        description: "Which image to build and push (same mapping as Docker — web / graphql / agents)"
         required: true
         type: choice
         options:
           - web
           - graphql
+          - agents
       custom_tag:
         description: "Optional single tag (empty = sha-* + latest on default branch)"
         required: false
@@ -88,8 +89,13 @@ jobs:
                 echo "dockerfile=apps/graphql/Dockerfile" >> "$GITHUB_OUTPUT"
                 echo "image_repository=${PREFIX}/menuyukti-graphql" >> "$GITHUB_OUTPUT"
                 ;;
+              agents)
+                echo "service=agents" >> "$GITHUB_OUTPUT"
+                echo "dockerfile=apps/agents/Dockerfile" >> "$GITHUB_OUTPUT"
+                echo "image_repository=${PREFIX}/menuyukti-agents" >> "$GITHUB_OUTPUT"
+                ;;
               *)
-                echo "Invalid preset (run from Actions UI on this workflow and choose web or graphql)" >&2
+                echo "Invalid preset (run from Actions UI on this workflow and choose web, graphql, or agents)" >&2
                 exit 1
                 ;;
             esac

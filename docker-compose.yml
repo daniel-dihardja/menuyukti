@@ -3,13 +3,13 @@
 #
 # In `.env` next to this file, set:
 #   DATABASE_URL   — Neon Postgres URL (web + GraphQL), e.g. postgresql://user:pass@...neon.tech/neondb?sslmode=require
-#   OPENAI_API_KEY — for gentic-agents
+#   OPENAI_API_KEY — for agents (LangGraph)
 #   CLERK_SECRET_KEY — Clerk secret key (also passed into the web container via `environment:`)
 #   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — Clerk publishable key (pk_…); used at `next build` and, for the web
 #       container, mapped to env var CLERK_PUBLISHABLE_KEY at runtime (see `web` service `environment:`)
-#   GRAPHQL_INTERNAL_API_KEY — optional shared secret; when set, web and gentic-agents send it as
+#   GRAPHQL_INTERNAL_API_KEY — optional shared secret; when set, web and agents send it as
 #       X-Internal-Api-Key to GraphQL (same value as apps/graphql INTERNAL_API_KEY).
-#   AGENTS_API_KEY — optional; when set, web must send it to gentic-agents /invoke and /invoke/stream.
+#   AGENTS_API_KEY — optional; when set, web must send it to the agents service for protected routes.
 #
 # The `web` service loads `.env` via `env_file`. Rebuild after changing build-time vars:
 #   docker compose build --no-cache web && docker compose up -d web
@@ -31,21 +31,20 @@ services:
     ports:
       - "8000:8000"
 
-  gentic-agents:
+  agents:
     image: johngoyason/menuyukti-agents:latest
     build:
       context: .
-      dockerfile: apps/gentic-agents/Dockerfile
+      dockerfile: apps/agents/Dockerfile
     environment:
-      ADDR: :7000
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GRAPHQL_ENDPOINT: http://graphql:8000/graphql
       GRAPHQL_INTERNAL_API_KEY: ${GRAPHQL_INTERNAL_API_KEY:-}
       AGENTS_API_KEY: ${AGENTS_API_KEY:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     depends_on:
       - graphql
     ports:
-      - "7000:7000"
+      - "8001:8001"
 
   caddy:
     image: caddy:2-alpine
@@ -77,14 +76,14 @@ services:
       GRAPHQL_ENDPOINT: http://graphql:8000/graphql
       GRAPHQL_INTERNAL_API_KEY: ${GRAPHQL_INTERNAL_API_KEY:-}
       AGENTS_API_KEY: ${AGENTS_API_KEY:-}
-      AGENTS_URL: http://gentic-agents:7000
+      AGENTS_URL: http://agents:8001
       ANALYTICS_API_URL: http://graphql:8000
       CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
       CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
     depends_on:
       graphql:
         condition: service_started
-      gentic-agents:
+      agents:
         condition: service_started
 
 volumes:

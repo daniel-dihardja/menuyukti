@@ -14,6 +14,11 @@ export default {
     const args = stripPrefix(filenames, 'apps/graphql').join(' ')
     return `cd apps/graphql && uv run --group dev ruff check --fix ${args} && uv run --group dev ruff format ${args}`
   },
+  'apps/agents/**/*.py': (filenames) => {
+    if (filenames.length === 0) return []
+    const args = stripPrefix(filenames, 'apps/agents').join(' ')
+    return `cd apps/agents && uv run --group dev ruff check --fix ${args} && uv run --group dev ruff format ${args}`
+  },
   'apps/web/**/*.{ts,tsx}': (filenames) => {
     if (filenames.length === 0) return []
     const args = stripPrefix(filenames, 'apps/web').join(' ')

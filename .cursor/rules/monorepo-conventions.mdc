@@ -1,5 +1,5 @@
 ---
-description: pnpm workspaces, Turbo, uv, and Go module conventions for this monorepo
+description: pnpm workspaces, Turbo, and uv conventions for this monorepo
 alwaysApply: true
 ---
 
@@ -28,15 +28,10 @@ alwaysApply: true
 - **Ruff** is used for lint/format in Python apps (see app `Makefile` and `pyproject.toml` files).
 - **`apps/agents`** — FastAPI + LangChain / LangGraph; default dev port **8001** (see `Makefile`). Follow `.cursor/rules/langchain.mdc` and `.cursor/rules/langgraph.mdc`.
 
-## Go
-
-- **`apps/gentic-agents`** has its own `go.mod` / `go.sum`. Build and test from that directory or via documented Make targets.
-- The **Gentic** framework lives under **`packages/gentic`**; **`apps/gentic-agents`** depends on it via root **`go.work`** and a **`replace`** in its `go.mod`. Respect module boundaries.
-
 ## Secrets and env
 
 - Per-app **`.env`** files are local; never commit secrets. Root `.gitignore` includes `.env`, `creds`, `apps/web/e2e-artifacts/`, etc.
 
 ## Formatting
 
-- **Prettier** (root) for TS/MD/CSS as configured; **Ruff** for Python; **`go fmt`** for Go.
+- **Prettier** (root) for TS/MD/CSS as configured; **Ruff** for Python.

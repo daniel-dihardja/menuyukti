@@ -41,3 +41,18 @@ jobs:
         working-directory: apps/graphql
       - run: make test
         working-directory: apps/graphql
+
+  agents:
+    name: Agents (Ruff, mypy, pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --all-groups
+        working-directory: apps/agents
+      - run: make lint
+        working-directory: apps/agents
+      - run: make typecheck
+        working-directory: apps/agents
+      - run: make test
+        working-directory: apps/agents
