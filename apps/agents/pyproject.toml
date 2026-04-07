@@ -14,6 +14,7 @@ dependencies = [
     "langgraph>=0.3.0",
     "python-dotenv>=1.2.1",
     "pydantic>=2.0.0",
+    "pyyaml>=6.0.3",
 ]
 
 [dependency-groups]
@@ -22,6 +23,7 @@ dev = [
     "pytest>=9.0.0",
     "pytest-asyncio>=0.25.0",
     "ruff>=0.9.0",
+    "types-pyyaml>=6.0.12.20250915",
 ]
 
 [build-system]
@@ -35,9 +37,10 @@ packages = [
     "agents_app.agents.core",
     "agents_app.agents.core.chat",
     "agents_app.agents.core.format_markdown",
+    "agents_app.agents.core.milestone_data",
     "agents_app.agents.core.milestone_eval",
     "agents_app.agents.domain",
-    "agents_app.agents.domain.location_profile",
+    "agents_app.agents.domain.skill_runner",
     "agents_app.models",
     "agents_app.routers",
 ]

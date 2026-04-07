@@ -29,12 +29,17 @@ agents/
       state.py        # TypedDict state + reducers
       prompts.py
       graphql_client.py
-  domain/             # One subdir per data-source / domain agent (e.g. operating profile, future menu_*)
-    location_profile/
-      graph.py
-      state.py
-      prompts.py
+    milestone_data/   # Persist generated text to `milestonedata` nodes (GraphQL upsert; used by skill prepare)
       graphql_client.py
+      persist.py
+  domain/             # Skill-driven domain workflows (e.g. location profile prepare)
+    skill_runner/     # Load SKILL.md, prefetch handlers, LLM runner (persistence via core/milestone_data)
+      graphql_client.py
+      handlers.py
+      loader.py
+      prefetch.py
+      runner.py
+skills/               # SKILL.md files (e.g. skills/location_profile/SKILL.md)
 models/
   llm_config.py       # get_llm(), get_llm_structured()
 routers/              # FastAPI APIRouter — thin handlers; one file per route group
@@ -44,7 +49,7 @@ tests/
   domain/             # domain agent tests as you add them
 ```
 
-**Convention:** add new **custom / data-source** agents under `agents/domain/<name>/`. Add **cross-cutting** flows (milestone evaluation, chat) under `agents/core/`.
+**Convention:** add new **skill-driven** data providers under `agents/skills/<name>/SKILL.md` and extend `agents/domain/skill_runner/` (prefetch handlers) as needed. **Milestone data persistence** lives in `agents/core/milestone_data/`, not in SKILL YAML. Add **cross-cutting** flows (milestone evaluation, chat) under `agents/core/`.
 
 ## Graph factory pattern
 

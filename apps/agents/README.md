@@ -25,8 +25,8 @@ make dev
 
 ## Core vs domain
 
-- **Core** (`agents/core/`): cross-cutting flows (chat, milestone evaluation, **format-markdown** presets).
-- **Domain** (`agents/domain/<name>/`): data-source-specific graphs (e.g. location profile). The format endpoint is **not** domain-specific; milestone UI is one client.
+- **Core** (`agents/core/`): cross-cutting flows (chat, milestone evaluation, **format-markdown** presets, **`milestone_data`** GraphQL upsert for persisting generated milestone text).
+- **Domain** (`agents/domain/skill_runner/`): skill-driven prepare flows. **Location profile** (`POST /milestones/{id}/prepare`) uses [`skills/location_profile/SKILL.md`](skills/location_profile/SKILL.md) (prefetch + LLM instructions); saving to `milestonedata` is handled by core `milestone_data`, not declared in the skill file. The format endpoint is **not** domain-specific; milestone UI is one client.
 
 ## Quality
 
