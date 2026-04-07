@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { WandSparkles } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { MarkdownMessage } from '@/components/markdown-message'
 import type { MarkdownFormatPreset } from '@/lib/markdown-format-presets'
@@ -42,6 +42,27 @@ export function MarkdownEditField({
   const t = useTranslations('analytics.campaigns.chat')
   const [formatting, setFormatting] = useState(false)
   const [formatError, setFormatError] = useState<string | null>(null)
+  /** Preview vs Edit — controlled so we can persist when leaving Edit without relying on textarea blur (Radix may hide content before blur). */
+  const [innerTab, setInnerTab] = useState('preview')
+  const onBlurRef = useRef(onBlur)
+  onBlurRef.current = onBlur
+  const blurLock = useRef(false)
+
+  const commitBlur = () => {
+    if (!onBlurRef.current) return
+    if (blurLock.current) return
+    blurLock.current = true
+    queueMicrotask(() => {
+      blurLock.current = false
+    })
+    onBlurRef.current()
+  }
+
+  useEffect(() => {
+    return () => {
+      onBlurRef.current?.()
+    }
+  }, [])
 
   async function handleFormat() {
     setFormatError(null)
@@ -71,7 +92,16 @@ export function MarkdownEditField({
 
   return (
     <div className="flex flex-col gap-3">
-      <Tabs className="gap-3" defaultValue="preview">
+      <Tabs
+        className="gap-3"
+        onValueChange={(next) => {
+          if (innerTab === 'edit' && next !== 'edit') {
+            commitBlur()
+          }
+          setInnerTab(next)
+        }}
+        value={innerTab}
+      >
         <TabsList
           className="h-9 w-full max-w-md"
           variant="default"
@@ -137,7 +167,7 @@ export function MarkdownEditField({
             disabled={disabled}
             id={id}
             onChange={(e) => onChange(e.target.value)}
-            onBlur={onBlur}
+            onBlur={commitBlur}
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             placeholder={placeholder}
