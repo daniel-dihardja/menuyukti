@@ -16,7 +16,6 @@ import {
 } from '@workspace/ui/components/collapsible'
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -104,10 +103,6 @@ export function NavMain() {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel className="text-xs uppercase text-muted-foreground tracking-wider">
-        {t('groupLabel')}
-      </SidebarGroupLabel>
-
       <SidebarMenu>
         {NAV_ITEMS.map((item) => {
           const active = isActive(item.href) || item.children?.some((c) => isActive(c.href))
