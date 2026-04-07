@@ -515,7 +515,10 @@
         "milestoneGoalPreviewEmpty": "Nothing to preview yet. Add Markdown in Edit.",
         "formatMarkdownButton": "Format Markdown",
         "formatMarkdownFormatting": "Formatting…",
-        "formatMarkdownError": "Could not format text. Please try again."
+        "formatMarkdownError": "Could not format text. Please try again.",
+        "fieldSaveStatusSaving": "Saving…",
+        "fieldSaveStatusSaved": "Saved",
+        "fieldSaveStatusUnsaved": "Changed"
       },
       "milestoneRun": {
         "runningLabel": "Evaluation in progress…",

@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { Check, Circle, Trash2, X } from 'lucide-react'
 
+import { FieldSaveStatus } from '@/components/field-save-status'
 import { MarkdownEditField } from '@/components/markdown-edit-field'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
@@ -72,6 +73,21 @@ export function MilestoneItemTabs({
   const dataTask: MilestoneDataTask = milestone.dataTask ?? 'manual'
   const dataTaskFieldId = `milestone-data-task-${milestone.id}`
   const hasGeneratedData = Boolean((milestone.data ?? '').trim())
+  const saveStatusMessages = {
+    saving: t('fieldSaveStatusSaving'),
+    saved: t('fieldSaveStatusSaved'),
+    unsaved: t('fieldSaveStatusUnsaved'),
+  }
+  const goalSaveStatus = savingGoal
+    ? 'saving'
+    : goalDraft !== (milestone.goal ?? '')
+      ? 'unsaved'
+      : 'saved'
+  const dataSaveStatus = savingData
+    ? 'saving'
+    : dataDraft !== (milestone.data ?? '')
+      ? 'unsaved'
+      : 'saved'
 
   return (
     <CardContent className="border-border/60 border-t px-6 pt-4 pb-0">
@@ -95,19 +111,28 @@ export function MilestoneItemTabs({
             <Field>
               <FieldLabel htmlFor={goalFieldId}>{t('milestoneGoalLabel')}</FieldLabel>
               <FieldDescription>{t('milestoneGoalDescription')}</FieldDescription>
-              <MarkdownEditField
-                disabled={savingGoal}
-                editTabLabel={t('milestoneDataEditTab')}
-                formatPreset="milestone-goal"
-                id={goalFieldId}
-                onBlur={handleGoalBlur}
-                onChange={setGoalDraft}
-                placeholder={t('milestoneGoalPlaceholder')}
-                previewEmptyLabel={t('milestoneGoalPreviewEmpty')}
-                previewTabLabel={t('milestoneDataPreviewTab')}
-                textareaClassName="min-h-[120px] resize-y whitespace-pre-wrap"
-                value={goalDraft}
-              />
+              <div className="flex flex-col gap-1.5">
+                <MarkdownEditField
+                  disabled={savingGoal}
+                  editTabLabel={t('milestoneDataEditTab')}
+                  formatPreset="milestone-goal"
+                  id={goalFieldId}
+                  onBlur={handleGoalBlur}
+                  onChange={setGoalDraft}
+                  placeholder={t('milestoneGoalPlaceholder')}
+                  previewEmptyLabel={t('milestoneGoalPreviewEmpty')}
+                  previewTabLabel={t('milestoneDataPreviewTab')}
+                  textareaClassName="min-h-[120px] resize-y whitespace-pre-wrap"
+                  value={goalDraft}
+                />
+                <div className="flex justify-end">
+                  <FieldSaveStatus
+                    className="inline-flex"
+                    messages={saveStatusMessages}
+                    status={goalSaveStatus}
+                  />
+                </div>
+              </div>
             </Field>
           </FieldGroup>
         </TabsContent>
@@ -258,19 +283,28 @@ export function MilestoneItemTabs({
                   </Button>
                 </div>
               ) : null}
-              <MarkdownEditField
-                disabled={savingData}
-                editTabLabel={t('milestoneDataEditTab')}
-                formatPreset="milestone-data"
-                id={dataFieldId}
-                onBlur={handleDataBlur}
-                onChange={setDataDraft}
-                placeholder={t('milestoneDataPlaceholder')}
-                previewEmptyLabel={t('milestoneDataPreviewEmpty')}
-                previewTabLabel={t('milestoneDataPreviewTab')}
-                textareaClassName="min-h-[200px] resize-y whitespace-pre-wrap"
-                value={dataDraft}
-              />
+              <div className="flex flex-col gap-1.5">
+                <MarkdownEditField
+                  disabled={savingData}
+                  editTabLabel={t('milestoneDataEditTab')}
+                  formatPreset="milestone-data"
+                  id={dataFieldId}
+                  onBlur={handleDataBlur}
+                  onChange={setDataDraft}
+                  placeholder={t('milestoneDataPlaceholder')}
+                  previewEmptyLabel={t('milestoneDataPreviewEmpty')}
+                  previewTabLabel={t('milestoneDataPreviewTab')}
+                  textareaClassName="min-h-[200px] resize-y whitespace-pre-wrap"
+                  value={dataDraft}
+                />
+                <div className="flex justify-end">
+                  <FieldSaveStatus
+                    className="inline-flex"
+                    messages={saveStatusMessages}
+                    status={dataSaveStatus}
+                  />
+                </div>
+              </div>
             </Field>
           </FieldGroup>
         </TabsContent>
