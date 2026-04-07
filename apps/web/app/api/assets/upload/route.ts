@@ -4,9 +4,17 @@ import { auth } from '@clerk/nextjs/server'
 import { randomUUID } from 'crypto'
 import sharp from 'sharp'
 
-import flows from '@/lib/assets/flows.json'
+import { graphqlQuery } from '@/lib/graphql/client'
+import {
+  IMAGE_AI_FLOW_BY_SLUG_QUERY,
+  type ImageAiFlowBySlugData,
+} from '@/lib/graphql/queries'
 import { getPresignedGetUrl, getS3Bucket, getS3Client, userObjectKey } from '@/lib/assets/storage'
-import { type NanoBananaFlowConfig, runRemoveBackground } from '@/lib/leonardo'
+import {
+  type ImageReferenceStrength,
+  type NanoBananaFlowConfig,
+  runRemoveBackground,
+} from '@/lib/leonardo'
 
 const ALLOWED_TYPES = new Set([
   'image/jpeg',
@@ -17,20 +25,62 @@ const ALLOWED_TYPES = new Set([
   'image/tiff',
 ])
 
-const ALLOWED_FLOWS = new Set(['none', 'remove-background'])
-
 function truncateStack(stack: string, max = 4000): string {
   if (stack.length <= max) return stack
   return `${stack.slice(0, max)}…(truncated)`
 }
 
+const MAX_FLOW_SLUG_LEN = 128
+
 function normalizeFlow(raw: unknown): string {
   const s = typeof raw === 'string' ? raw.trim() : ''
-  if (ALLOWED_FLOWS.has(s)) return s
-  return 'none'
+  if (s === '' || s === 'none') return 'none'
+  if (s.length > MAX_FLOW_SLUG_LEN) return 'none'
+  return s
 }
 
-type RemoveBackgroundFlowConfig = NanoBananaFlowConfig
+/** Thrown when Leonardo `runRemoveBackground` fails (distinct from GraphQL/config errors). */
+class LeonardoInvocationError extends Error {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options)
+    this.name = 'LeonardoInvocationError'
+  }
+}
+
+function toNanoBananaConfig(
+  row: NonNullable<ImageAiFlowBySlugData['imageAiFlow']>,
+): NanoBananaFlowConfig {
+  const styleIds = row.styleIds
+  const parsedStyleIds =
+    Array.isArray(styleIds) && styleIds.every((x) => typeof x === 'string')
+      ? (styleIds as string[])
+      : undefined
+
+  const strength = row.imageReferenceStrength
+  const imageReferenceStrength: ImageReferenceStrength | undefined =
+    strength === 'LOW' || strength === 'MID' || strength === 'HIGH' ? strength : undefined
+
+  const pe = row.promptEnhance
+  const promptEnhance: 'OFF' | 'ON' | undefined =
+    pe === 'OFF' || pe === 'ON' ? pe : undefined
+
+  return {
+    model: row.model,
+    prompt: row.prompt,
+    ...(parsedStyleIds && parsedStyleIds.length > 0 ? { styleIds: parsedStyleIds } : {}),
+    ...(imageReferenceStrength ? { imageReferenceStrength } : {}),
+    ...(promptEnhance ? { promptEnhance } : {}),
+  }
+}
+
+async function fetchFlowRow(
+  slug: string,
+): Promise<ImageAiFlowBySlugData['imageAiFlow']> {
+  const data = await graphqlQuery<ImageAiFlowBySlugData>(IMAGE_AI_FLOW_BY_SLUG_QUERY, {
+    slug,
+  })
+  return data.imageAiFlow
+}
 
 /** Flow-specific post-processing after resize + WebP encode. */
 async function applyFlow(
@@ -39,14 +89,29 @@ async function applyFlow(
   width: number,
   height: number,
 ): Promise<Buffer> {
-  if (flow === 'remove-background') {
-    const cfg = (flows as Record<string, RemoveBackgroundFlowConfig>)['remove-background']
-    if (!cfg?.prompt || !cfg?.model) {
-      throw new Error('remove-background flow is not configured')
-    }
-    return runRemoveBackground(buffer, cfg, width, height)
+  if (flow === 'none') {
+    return buffer
   }
-  return buffer
+
+  let row: ImageAiFlowBySlugData['imageAiFlow']
+  try {
+    row = await fetchFlowRow(flow)
+  } catch {
+    throw new Error('Could not load AI flow configuration')
+  }
+
+  if (!row?.isActive || !row.prompt || !row.model) {
+    return buffer
+  }
+
+  const cfg = toNanoBananaConfig(row)
+  try {
+    return await runRemoveBackground(buffer, cfg, width, height)
+  } catch (err) {
+    throw new LeonardoInvocationError(err instanceof Error ? err.message : 'Processing failed', {
+      cause: err,
+    })
+  }
 }
 
 export const runtime = 'nodejs'
@@ -102,11 +167,7 @@ export async function POST(req: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Processing failed'
     const stack = err instanceof Error ? err.stack : undefined
-    const isLeonardo =
-      flow === 'remove-background' &&
-      (message.includes('Leonardo') ||
-        message.includes('LEONARDO_API_KEY') ||
-        /insufficient tokens/i.test(message))
+    const isLeonardo = err instanceof LeonardoInvocationError
     const isInsufficientTokens = /insufficient tokens/i.test(message)
     console.error('[assets/upload] flow processing failed', {
       flow,

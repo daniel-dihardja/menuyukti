@@ -6,6 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from sqlalchemy import (
     JSON,
+    Boolean,
     Column,
     Date,
     DateTime,
@@ -22,6 +23,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy.sql import true as sql_true
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env", override=False)
@@ -290,11 +292,84 @@ class Node(Base):
     __table_args__ = (Index("ix_node_location_type", "location_id", "type"),)
 
 
+class ImageAiFlow(Base):
+    """
+    Configurable image post-processing flows (e.g. Leonardo / Nano Banana) for asset uploads.
+
+    Slug is the stable key sent from the web client; display_name is shown in the UI.
+    """
+
+    __tablename__ = "image_ai_flow"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    slug = Column(Text, unique=True, nullable=False, index=True)
+    display_name = Column(Text, nullable=False)
+    prompt = Column(Text, nullable=False)
+    model = Column(Text, nullable=False)
+    prompt_enhance = Column(Text, nullable=True)
+    image_reference_strength = Column(Text, nullable=True)
+    style_ids = Column(JSONB().with_variant(JSON(), "sqlite"), nullable=True)
+    is_active = Column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default=sql_true(),
+    )
+    sort_order = Column(
+        Integer,
+        nullable=False,
+        default=0,
+        server_default=text("0"),
+    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+
+def seed_db(target_engine=None) -> None:
+    """Insert default image AI flows when missing (idempotent)."""
+
+    resolved_engine = target_engine or engine
+    Session = sessionmaker(bind=resolved_engine, expire_on_commit=False)
+    session = Session()
+    try:
+        existing = (
+            session.query(ImageAiFlow)
+            .filter(ImageAiFlow.slug == "remove-background")
+            .first()
+        )
+        if existing is None:
+            session.add(
+                ImageAiFlow(
+                    slug="remove-background",
+                    display_name="Remove background",
+                    prompt=(
+                        "Remove the background completely. Keep only the main subject "
+                        "centered on a solid white background (opaque, not transparent). "
+                        "Preserve edges and fine details of the subject."
+                    ),
+                    model="gemini-2.5-flash-image",
+                    prompt_enhance="OFF",
+                    image_reference_strength="MID",
+                    style_ids=["556c1ee5-ec38-42e8-955a-1e82dad0ffa1"],
+                    is_active=True,
+                    sort_order=0,
+                )
+            )
+            session.commit()
+    finally:
+        session.close()
+
+
 def init_db(target_engine=None) -> None:
     """Create tables for all models (defaults to the configured engine)."""
 
     resolved_engine = target_engine or engine
     Base.metadata.create_all(bind=resolved_engine)
+    seed_db(resolved_engine)
 
 
 def drop_db(target_engine=None) -> None:

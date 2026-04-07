@@ -2,6 +2,7 @@ import strawberry
 
 from graphql.schema.queries import (
     AnalyticsRunQuery,
+    ImageAiFlowsQuery,
     LocationsQuery,
     MenuEngineeringMatrixQuery,
     MenuHeatmapsQuery,
@@ -22,5 +23,6 @@ class Query(
     NationalHolidaysQuery,
     OperatingProfileQuery,
     WorkspaceQuery,
+    ImageAiFlowsQuery,
 ):
     pass

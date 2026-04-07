@@ -1,4 +1,5 @@
 from .analytics_run import AnalyticsRunQuery
+from .image_ai_flows import ImageAiFlowsQuery
 from .locations import LocationsQuery
 from .menu_engineering_matrix import MenuEngineeringMatrixQuery
 from .menu_heatmaps import MenuHeatmapsQuery
@@ -9,6 +10,7 @@ from .workspace import WorkspaceQuery
 
 __all__ = [
     "AnalyticsRunQuery",
+    "ImageAiFlowsQuery",
     "LocationsQuery",
     "MenuEngineeringMatrixQuery",
     "MenuHeatmapsQuery",

@@ -1,9 +1,0 @@
-{
-  "remove-background": {
-    "model": "gemini-2.5-flash-image",
-    "prompt": "Remove the background completely. Keep only the main subject centered on a solid white background (opaque, not transparent). Preserve edges and fine details of the subject.",
-    "promptEnhance": "OFF",
-    "imageReferenceStrength": "MID",
-    "styleIds": ["556c1ee5-ec38-42e8-955a-1e82dad0ffa1"]
-  }
-}

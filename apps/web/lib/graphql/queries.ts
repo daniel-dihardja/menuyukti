@@ -390,3 +390,65 @@ export type PublicHolidayItem = {
 export type PublicHolidaysData = {
   publicHolidays: PublicHolidayItem[]
 }
+
+export const IMAGE_AI_FLOWS_QUERY = `
+  query ImageAiFlows {
+    imageAiFlows {
+      id
+      slug
+      displayName
+      prompt
+      model
+      promptEnhance
+      imageReferenceStrength
+      styleIds
+      isActive
+      sortOrder
+    }
+  }
+`
+
+export type ImageAiFlowsData = {
+  imageAiFlows: Array<{
+    id: number
+    slug: string
+    displayName: string
+    prompt: string
+    model: string
+    promptEnhance: string | null
+    imageReferenceStrength: string | null
+    styleIds: unknown
+    isActive: boolean
+    sortOrder: number
+  }>
+}
+
+export const IMAGE_AI_FLOW_BY_SLUG_QUERY = `
+  query ImageAiFlow($slug: String!) {
+    imageAiFlow(slug: $slug) {
+      id
+      slug
+      displayName
+      prompt
+      model
+      promptEnhance
+      imageReferenceStrength
+      styleIds
+      isActive
+    }
+  }
+`
+
+export type ImageAiFlowBySlugData = {
+  imageAiFlow: {
+    id: number
+    slug: string
+    displayName: string
+    prompt: string
+    model: string
+    promptEnhance: string | null
+    imageReferenceStrength: string | null
+    styleIds: unknown
+    isActive: boolean
+  } | null
+}

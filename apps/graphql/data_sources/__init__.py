@@ -10,10 +10,12 @@ __all__ = [
     "MenuItemCogs",
     "InstagramPost",
     "Node",
+    "ImageAiFlow",
     "SessionLocal",
     "engine",
     "init_db",
     "drop_db",
+    "seed_db",
 ]
 
 

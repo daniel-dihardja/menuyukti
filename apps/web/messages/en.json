@@ -208,8 +208,7 @@
       "invalidType": "Please choose an image file.",
       "flow": {
         "label": "AI Flow",
-        "none": "No flow",
-        "removeBackground": "Remove background"
+        "none": "No flow"
       }
     },
     "grid": {
@@ -230,6 +229,7 @@
       "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
       "uploadPartial": "Some files couldn’t be uploaded. Check your images and try again.",
       "loadError": "Couldn’t load your library. Refresh the page.",
+      "flowsLoadError": "Couldn’t load AI flows. You can still upload without AI.",
       "deleted": "Image removed",
       "deleteError": "Couldn’t remove the image"
     }

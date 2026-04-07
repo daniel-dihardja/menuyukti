@@ -26,8 +26,7 @@ type AssetItem = {
 
 type ToastState = { kind: 'success' | 'error'; message: string } | null
 
-/** Post-upload processing flow; sent with FormData as `flow`. */
-type AssetFlow = 'none' | 'remove-background'
+/** Post-upload processing flow slug; sent with FormData as `flow` (`none` = no AI). */
 
 const SKELETON_COUNT = 8
 
@@ -50,7 +49,9 @@ export function AssetsClient() {
   const [dragActive, setDragActive] = useState(false)
   const [toast, setToast] = useState<ToastState>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
-  const [selectedFlow, setSelectedFlow] = useState<AssetFlow>('none')
+  const [selectedFlow, setSelectedFlow] = useState<string>('none')
+  const [aiFlows, setAiFlows] = useState<Array<{ slug: string; displayName: string }>>([])
+  const [flowsLoading, setFlowsLoading] = useState(true)
   const [previewItem, setPreviewItem] = useState<AssetItem | null>(null)
   const [previewImgLoaded, setPreviewImgLoaded] = useState(false)
 
@@ -80,6 +81,40 @@ export function AssetsClient() {
   useEffect(() => {
     void load(false)
   }, [load])
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      setFlowsLoading(true)
+      try {
+        const res = await fetch('/api/assets/flows')
+        if (!res.ok) throw new Error('flows')
+        const data = (await res.json()) as {
+          flows?: Array<{ slug: string; displayName: string }>
+        }
+        if (!cancelled) {
+          setAiFlows(data.flows ?? [])
+        }
+      } catch {
+        if (!cancelled) {
+          setAiFlows([])
+          showToast('error', t('toast.flowsLoadError'))
+        }
+      } finally {
+        if (!cancelled) setFlowsLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [showToast, t])
+
+  useEffect(() => {
+    if (selectedFlow === 'none') return
+    if (!aiFlows.some((f) => f.slug === selectedFlow)) {
+      setSelectedFlow('none')
+    }
+  }, [aiFlows, selectedFlow])
 
   useEffect(() => {
     setPreviewImgLoaded(false)
@@ -319,8 +354,8 @@ export function AssetsClient() {
               </Label>
               <Select
                 value={selectedFlow}
-                onValueChange={(v) => setSelectedFlow(v as AssetFlow)}
-                disabled={uploading}
+                onValueChange={setSelectedFlow}
+                disabled={uploading || flowsLoading}
               >
                 <SelectTrigger
                   id="asset-upload-flow"
@@ -339,15 +374,17 @@ export function AssetsClient() {
                   className="min-w-[var(--radix-select-trigger-width)]"
                 >
                   <SelectItem value="none">{t('upload.flow.none')}</SelectItem>
-                  <SelectItem value="remove-background" className="cursor-pointer">
-                    <span className="flex w-full items-center gap-2">
-                      <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
-                      <span className="flex-1">{t('upload.flow.removeBackground')}</span>
-                      <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-primary">
-                        AI
+                  {aiFlows.map((flow) => (
+                    <SelectItem key={flow.slug} value={flow.slug} className="cursor-pointer">
+                      <span className="flex w-full items-center gap-2">
+                        <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
+                        <span className="flex-1">{flow.displayName}</span>
+                        <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-primary">
+                          AI
+                        </span>
                       </span>
-                    </span>
-                  </SelectItem>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
