@@ -1,5 +1,7 @@
 'use client'
 
+import { Alert, AlertDescription } from '@workspace/ui/components/alert'
+
 const ERROR_KEYS = [
   'create',
   'delete',
@@ -53,13 +55,13 @@ export function TimelineInlineErrors({
     <>
       {messages.map((msg, i) =>
         msg ? (
-          <p
+          <Alert
+            className="rounded-none border-x-0 border-t-0"
             key={ERROR_KEYS[i]}
-            className="border-b px-4 py-2 text-destructive text-sm"
-            role="alert"
+            variant="destructive"
           >
-            {msg}
-          </p>
+            <AlertDescription>{msg}</AlertDescription>
+          </Alert>
         ) : null,
       )}
     </>

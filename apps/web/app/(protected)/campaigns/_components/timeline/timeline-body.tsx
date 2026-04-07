@@ -23,6 +23,10 @@ export type TimelineBodyProps = {
   deletingMilestoneId: string | null
   deleteButtonLabel: string
   deleteMilestoneAriaLabel: string
+  deleteMilestoneConfirmTitle: string
+  deleteMilestoneConfirmDescription: string
+  deleteMilestoneConfirmCancel: string
+  deleteMilestoneConfirmAction: string
   onRenameMilestone?: (id: string, name: string) => Promise<boolean>
   renamingMilestoneId: string | null
   onUpdatePassCriteria?: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
@@ -54,6 +58,10 @@ export function TimelineBody({
   deletingMilestoneId,
   deleteButtonLabel,
   deleteMilestoneAriaLabel,
+  deleteMilestoneConfirmTitle,
+  deleteMilestoneConfirmDescription,
+  deleteMilestoneConfirmCancel,
+  deleteMilestoneConfirmAction,
   onRenameMilestone,
   renamingMilestoneId,
   onUpdatePassCriteria,
@@ -86,6 +94,10 @@ export function TimelineBody({
                   collapseDetailsLabel={collapseDetailsLabel}
                   deleteButtonLabel={deleteButtonLabel}
                   deleteMilestoneAriaLabel={deleteMilestoneAriaLabel}
+                  deleteMilestoneConfirmAction={deleteMilestoneConfirmAction}
+                  deleteMilestoneConfirmCancel={deleteMilestoneConfirmCancel}
+                  deleteMilestoneConfirmDescription={deleteMilestoneConfirmDescription}
+                  deleteMilestoneConfirmTitle={deleteMilestoneConfirmTitle}
                   expandDetailsLabel={expandDetailsLabel}
                   isChatBusy={isChatBusy}
                   isDeleting={deletingMilestoneId === milestone.id}

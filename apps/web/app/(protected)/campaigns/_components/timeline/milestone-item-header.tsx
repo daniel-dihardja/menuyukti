@@ -3,7 +3,18 @@
 import type { RefObject } from 'react'
 import { ArrowDown, ArrowUp, Check, ChevronDown, Pencil, Play, Trash2 } from 'lucide-react'
 
-import { Button } from '@workspace/ui/components/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@workspace/ui/components/alert-dialog'
+import { Button, buttonVariants } from '@workspace/ui/components/button'
 import { CardAction, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { CollapsibleTrigger } from '@workspace/ui/components/collapsible'
 import { Input } from '@workspace/ui/components/input'
@@ -45,6 +56,10 @@ export type MilestoneItemHeaderProps = {
   isDeleting: boolean
   deleteButtonLabel: string
   deleteMilestoneAriaLabel: string
+  deleteMilestoneConfirmTitle: string
+  deleteMilestoneConfirmDescription: string
+  deleteMilestoneConfirmCancel: string
+  deleteMilestoneConfirmAction: string
   handleSaveTitle: () => Promise<void>
 }
 
@@ -80,6 +95,10 @@ export function MilestoneItemHeader({
   isDeleting,
   deleteButtonLabel,
   deleteMilestoneAriaLabel,
+  deleteMilestoneConfirmTitle,
+  deleteMilestoneConfirmDescription,
+  deleteMilestoneConfirmCancel,
+  deleteMilestoneConfirmAction,
   handleSaveTitle,
 }: MilestoneItemHeaderProps) {
   return (
@@ -121,7 +140,7 @@ export function MilestoneItemHeader({
               type="button"
               variant="default"
             >
-              <Check className="size-4" />
+              <Check aria-hidden data-icon="inline-start" />
             </Button>
           </div>
         ) : (
@@ -141,7 +160,7 @@ export function MilestoneItemHeader({
                 type="button"
                 variant="ghost"
               >
-                <Pencil className="size-4" />
+                <Pencil aria-hidden data-icon="inline-start" />
               </Button>
             ) : null}
           </>
@@ -188,7 +207,7 @@ export function MilestoneItemHeader({
               type="button"
               variant="ghost"
             >
-              <ArrowUp className="size-4" />
+              <ArrowUp aria-hidden data-icon="inline-start" />
             </Button>
             <Button
               aria-label={moveMilestoneDown}
@@ -203,27 +222,63 @@ export function MilestoneItemHeader({
               type="button"
               variant="ghost"
             >
-              <ArrowDown className="size-4" />
+              <ArrowDown aria-hidden data-icon="inline-start" />
             </Button>
           </>
         ) : null}
         {showDelete && onDeleteMilestone ? (
-          <Button
-            aria-label={deleteMilestoneAriaLabel}
-            className="size-9 shrink-0 text-muted-foreground hover:text-destructive"
-            disabled={isDeleting || editingTitle}
-            onClick={(e) => {
-              e.stopPropagation()
-              void onDeleteMilestone(milestone.id)
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            size="icon"
-            title={deleteButtonLabel}
-            type="button"
-            variant="ghost"
-          >
-            <Trash2 className="size-4" />
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                aria-label={deleteMilestoneAriaLabel}
+                className="size-9 shrink-0 text-muted-foreground hover:text-destructive"
+                disabled={isDeleting || editingTitle}
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                size="icon"
+                title={deleteButtonLabel}
+                type="button"
+                variant="ghost"
+              >
+                <Trash2 aria-hidden data-icon="inline-start" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <AlertDialogHeader>
+                <AlertDialogTitle>{deleteMilestoneConfirmTitle}</AlertDialogTitle>
+                <AlertDialogDescription>{deleteMilestoneConfirmDescription}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={(e) => e.stopPropagation()} type="button">
+                  {deleteMilestoneConfirmCancel}
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  className={cn(
+                    buttonVariants({ variant: 'destructive' }),
+                    isDeleting && 'inline-flex items-center gap-2',
+                  )}
+                  disabled={isDeleting}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void onDeleteMilestone(milestone.id)
+                  }}
+                  type="button"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Spinner data-icon="inline-start" />
+                      {deleteMilestoneConfirmAction}
+                    </>
+                  ) : (
+                    deleteMilestoneConfirmAction
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         ) : null}
         <CollapsibleTrigger asChild>
           <Button
@@ -237,7 +292,11 @@ export function MilestoneItemHeader({
             variant="ghost"
           >
             <ChevronDown
-              className={cn('transition-transform duration-200', open ? 'rotate-180' : 'rotate-0')}
+              aria-hidden
+              className={cn(
+                'motion-safe:transition-transform motion-safe:duration-200',
+                open ? 'rotate-180' : 'rotate-0',
+              )}
               data-icon="inline-start"
             />
           </Button>

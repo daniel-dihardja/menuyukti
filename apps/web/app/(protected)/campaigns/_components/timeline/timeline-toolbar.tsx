@@ -4,6 +4,7 @@ import { Maximize2, Settings } from 'lucide-react'
 
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import { Spinner } from '@workspace/ui/components/spinner'
 
 export type TimelineToolbarProps = {
   title: string
@@ -43,7 +44,14 @@ export function TimelineToolbar({
             type="button"
             variant="default"
           >
-            {creating ? creatingLabel : createLabel}
+            {creating ? (
+              <>
+                <Spinner data-icon="inline-start" />
+                {creatingLabel}
+              </>
+            ) : (
+              createLabel
+            )}
           </Button>
         ) : null}
         <div className="flex shrink-0 items-center gap-1">
@@ -54,7 +62,7 @@ export function TimelineToolbar({
             type="button"
             variant="ghost"
           >
-            <Maximize2 data-icon="inline-start" />
+            <Maximize2 aria-hidden data-icon="inline-start" />
           </Button>
           <Button
             aria-label={settingsLabel}
@@ -63,7 +71,7 @@ export function TimelineToolbar({
             type="button"
             variant="ghost"
           >
-            <Settings data-icon="inline-start" />
+            <Settings aria-hidden data-icon="inline-start" />
           </Button>
         </div>
       </div>

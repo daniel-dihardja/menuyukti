@@ -9,7 +9,12 @@ import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
 import { CardContent } from '@workspace/ui/components/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
-import { Input } from '@workspace/ui/components/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@workspace/ui/components/input-group'
 import {
   Select,
   SelectContent,
@@ -172,7 +177,7 @@ export function MilestoneItemTabs({
                         <Circle aria-hidden className="size-4 text-muted-foreground stroke-[2.5]" />
                       </span>
                     )}
-                    <span className="min-w-0 leading-snug">{row.requirement}</span>
+                    <span className="min-w-0 break-words leading-snug">{row.requirement}</span>
                   </div>
                   <Button
                     aria-label={t('milestonePassCriteriaRemoveLabel')}
@@ -194,10 +199,10 @@ export function MilestoneItemTabs({
           ) : (
             <p className="text-muted-foreground text-sm">{t('milestonePassCriteriaEmpty')}</p>
           )}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Input
+          <InputGroup className="h-auto min-h-9 w-full flex-col items-stretch gap-2 sm:h-9 sm:flex-row sm:items-center sm:gap-0">
+            <InputGroupInput
               aria-label={t('milestonePassCriteriaAddPlaceholder')}
-              className="flex-1"
+              className="min-h-9"
               disabled={savingPassCriteria}
               id={addCriteriaInputId}
               onKeyDown={(e) => {
@@ -210,19 +215,20 @@ export function MilestoneItemTabs({
               placeholder={t('milestonePassCriteriaAddPlaceholder')}
               type="text"
             />
-            <Button
-              className="shrink-0 sm:w-auto"
-              disabled={savingPassCriteria}
-              onClick={(e) => {
-                e.stopPropagation()
-                void handleAddPassCriterion()
-              }}
-              type="button"
-              variant="secondary"
-            >
-              {t('milestonePassCriteriaAddButton')}
-            </Button>
-          </div>
+            <InputGroupAddon align="inline-end" className="w-full sm:w-auto">
+              <InputGroupButton
+                disabled={savingPassCriteria}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void handleAddPassCriterion()
+                }}
+                size="sm"
+                variant="secondary"
+              >
+                {t('milestonePassCriteriaAddButton')}
+              </InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
         </TabsContent>
         <TabsContent value="data">
           <FieldGroup className="gap-4">

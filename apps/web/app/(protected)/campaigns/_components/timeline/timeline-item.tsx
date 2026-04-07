@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 
 import { Card } from '@workspace/ui/components/card'
@@ -34,6 +34,10 @@ export type TimelineItemProps = {
   isDeleting: boolean
   deleteButtonLabel: string
   deleteMilestoneAriaLabel: string
+  deleteMilestoneConfirmTitle: string
+  deleteMilestoneConfirmDescription: string
+  deleteMilestoneConfirmCancel: string
+  deleteMilestoneConfirmAction: string
   onRenameMilestone?: (id: string, name: string) => Promise<boolean>
   renamingMilestoneId: string | null
   onUpdatePassCriteria?: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
@@ -56,7 +60,7 @@ export type TimelineItemProps = {
   runningStep?: string | null
 }
 
-export function TimelineItem({
+function TimelineItemInner({
   milestone,
   positionIndex,
   isFirst,
@@ -71,6 +75,10 @@ export function TimelineItem({
   isDeleting,
   deleteButtonLabel,
   deleteMilestoneAriaLabel,
+  deleteMilestoneConfirmTitle,
+  deleteMilestoneConfirmDescription,
+  deleteMilestoneConfirmCancel,
+  deleteMilestoneConfirmAction,
   onRenameMilestone,
   renamingMilestoneId,
   onUpdatePassCriteria,
@@ -125,10 +133,6 @@ export function TimelineItem({
       setDraftTitle(milestone.title)
     }
   }, [milestone.id, milestone.title, editingTitle])
-
-  useEffect(() => {
-    setEditingTitle(false)
-  }, [milestone.id])
 
   useEffect(() => {
     if (!editingTitle) {
@@ -239,7 +243,7 @@ export function TimelineItem({
   return (
     <div
       aria-selected={isSelected}
-      className="flex cursor-pointer gap-4 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+      className="flex cursor-pointer gap-4 rounded-md outline-none [contain-intrinsic-size:0_200px] [content-visibility:auto] focus-visible:ring-2 focus-visible:ring-ring/60"
       data-timeline-card=""
       onClick={() => {
         onSelect(milestone.id)
@@ -269,7 +273,10 @@ export function TimelineItem({
           </div>
         ) : (
           <div className="flex w-full shrink-0 flex-col items-center">
-            <div className="h-4 w-px shrink-0 border-l border-dashed border-border" />
+            <div
+              aria-hidden
+              className="h-4 w-px shrink-0 border-l border-dashed border-border"
+            />
             <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
               <TimelineRailMarker labels={statusLabels} status={status} />
             </div>
@@ -279,7 +286,10 @@ export function TimelineItem({
           </div>
         )}
         {isLast ? null : (
-          <div className="min-h-0 w-px flex-1 border-l border-dashed border-border" />
+          <div
+            aria-hidden
+            className="min-h-0 w-px flex-1 border-l border-dashed border-border"
+          />
         )}
       </div>
       <div className={cn('min-w-0 flex-1', !isLast && 'pb-8')}>
@@ -294,6 +304,10 @@ export function TimelineItem({
               collapseDetailsLabel={collapseDetailsLabel}
               deleteButtonLabel={deleteButtonLabel}
               deleteMilestoneAriaLabel={deleteMilestoneAriaLabel}
+              deleteMilestoneConfirmAction={deleteMilestoneConfirmAction}
+              deleteMilestoneConfirmCancel={deleteMilestoneConfirmCancel}
+              deleteMilestoneConfirmDescription={deleteMilestoneConfirmDescription}
+              deleteMilestoneConfirmTitle={deleteMilestoneConfirmTitle}
               draftTitle={draftTitle}
               editMilestoneTitleAriaLabel={t('editMilestoneTitleAriaLabel')}
               expandDetailsLabel={expandDetailsLabel}
@@ -365,3 +379,6 @@ export function TimelineItem({
     </div>
   )
 }
+
+export const TimelineItem = memo(TimelineItemInner)
+

@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useTranslations } from 'next-intl'
+import { parseAsString, useQueryState } from 'nuqs'
 
 import { Button } from '@workspace/ui/components/button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import { Spinner } from '@workspace/ui/components/spinner'
 
 import { TimelineBody } from './timeline-body'
 import { TimelineInlineErrors } from './timeline-inline-errors'
@@ -48,19 +50,18 @@ export function TimelineWorkspace({
 }: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
 
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useQueryState('milestone', parseAsString)
 
   useEffect(() => {
-    setSelectedId((prev) => {
-      if (milestones.length === 0) {
-        return null
-      }
-      if (prev !== null && milestones.some((m) => m.id === prev)) {
-        return prev
-      }
-      return milestones[0]?.id ?? null
-    })
-  }, [milestones])
+    if (milestones.length === 0) {
+      void setSelectedId(null)
+      return
+    }
+    if (selectedId !== null && milestones.some((m) => m.id === selectedId)) {
+      return
+    }
+    void setSelectedId(milestones[0]?.id ?? null)
+  }, [milestones, selectedId, setSelectedId])
 
   useEffect(() => {
     const onPointerDownCapture = (e: PointerEvent) => {
@@ -71,11 +72,11 @@ export function TimelineWorkspace({
       if (node.closest('[data-timeline-card]')) {
         return
       }
-      setSelectedId(null)
+      void setSelectedId(null)
     }
     document.addEventListener('pointerdown', onPointerDownCapture, true)
     return () => document.removeEventListener('pointerdown', onPointerDownCapture, true)
-  }, [])
+  }, [setSelectedId])
 
   const showTimeline = !isLoading && !loadError && milestones.length > 0
 
@@ -127,7 +128,7 @@ export function TimelineWorkspace({
           className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-8 text-center"
           role="region"
         >
-          <div className="max-w-md space-y-2">
+          <div className="flex max-w-md flex-col gap-2">
             <h3 className="font-medium text-foreground text-lg" id="timeline-empty-heading">
               {t('timelineEmptyTitle')}
             </h3>
@@ -139,7 +140,14 @@ export function TimelineWorkspace({
             size="default"
             type="button"
           >
-            {creating ? t('creatingMilestone') : t('createMilestone')}
+            {creating ? (
+              <>
+                <Spinner data-icon="inline-start" />
+                {t('creatingMilestone')}
+              </>
+            ) : (
+              t('createMilestone')
+            )}
           </Button>
           {createError ? (
             <p className="max-w-md text-destructive text-sm" role="alert">
@@ -152,6 +160,10 @@ export function TimelineWorkspace({
           collapseDetailsLabel={t('milestoneCollapseDetails')}
           deleteButtonLabel={t('deleteMilestone')}
           deleteMilestoneAriaLabel={t('deleteMilestoneAriaLabel')}
+          deleteMilestoneConfirmAction={t('deleteMilestoneConfirmAction')}
+          deleteMilestoneConfirmCancel={t('deleteMilestoneConfirmCancel')}
+          deleteMilestoneConfirmDescription={t('deleteMilestoneConfirmDescription')}
+          deleteMilestoneConfirmTitle={t('deleteMilestoneConfirmTitle')}
           deletingMilestoneId={deletingMilestoneId}
           expandDetailsLabel={t('milestoneExpandDetails')}
           isChatBusy={isChatBusy}
