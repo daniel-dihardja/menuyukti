@@ -36,6 +36,10 @@ export function TimelineWorkspace({
   onUpdatePassCriteria,
   onUpdateMilestoneGoal,
   onUpdateMilestoneData,
+  onSetMilestoneDataTask,
+  onPrepareMilestone,
+  preparingMilestoneId = null,
+  milestonePrepareError = null,
   onRunMilestone,
   isChatBusy = false,
   runningMilestoneId = null,
@@ -93,6 +97,7 @@ export function TimelineWorkspace({
         deleteError={deleteError}
         goalError={goalError}
         milestoneDataError={milestoneDataError}
+        milestonePrepareError={milestonePrepareError}
         milestoneRunError={milestoneRunError}
         moveError={moveError}
         passCriteriaError={passCriteriaError}
@@ -158,9 +163,12 @@ export function TimelineWorkspace({
           onRenameMilestone={onRenameMilestone}
           onRunMilestone={onRunMilestone}
           onSelectMilestone={setSelectedId}
+          onPrepareMilestone={onPrepareMilestone}
+          onSetMilestoneDataTask={onSetMilestoneDataTask}
           onUpdateMilestoneData={onUpdateMilestoneData}
           onUpdateMilestoneGoal={onUpdateMilestoneGoal}
           onUpdatePassCriteria={onUpdatePassCriteria}
+          preparingMilestoneId={preparingMilestoneId}
           renamingMilestoneId={renamingMilestoneId}
           runningMilestoneId={runningMilestoneId}
           runningStep={runningStep}

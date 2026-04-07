@@ -8,6 +8,7 @@ const ERROR_KEYS = [
   'passCriteria',
   'goal',
   'milestoneData',
+  'milestonePrepare',
   'milestoneRun',
 ] as const
 
@@ -20,6 +21,7 @@ export function TimelineInlineErrors({
   passCriteriaError,
   goalError,
   milestoneDataError,
+  milestonePrepareError,
   milestoneRunError,
 }: {
   show: boolean
@@ -30,6 +32,7 @@ export function TimelineInlineErrors({
   passCriteriaError?: string | null
   goalError?: string | null
   milestoneDataError?: string | null
+  milestonePrepareError?: string | null
   milestoneRunError?: string | null
 }) {
   if (!show) {
@@ -43,6 +46,7 @@ export function TimelineInlineErrors({
     passCriteriaError,
     goalError,
     milestoneDataError,
+    milestonePrepareError,
     milestoneRunError,
   ]
   return (

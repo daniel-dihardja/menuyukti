@@ -33,6 +33,7 @@ packages = [
     "agents_app",
     "agents_app.agents",
     "agents_app.agents.milestone_eval",
+    "agents_app.agents.location_profile",
     "agents_app.models",
     "agents_app.prompts",
     "agents_app.routers",

@@ -295,6 +295,23 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
 
     if (body.passCriteria === undefined) {
+      if (body.dataTask !== undefined) {
+        const milestoneCurrent = parseNodeData(
+          await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: milestoneId }, userId),
+        )
+        const mn = milestoneCurrent.node
+        const prevData =
+          mn && mn.nodeType === 'milestone' && mn.data != null && typeof mn.data === 'object'
+            ? { ...(mn.data as Record<string, unknown>) }
+            : {}
+        parseUpdateNodeData(
+          await graphqlQuery<UpdateNodeDataRaw>(
+            UPDATE_NODE_MUTATION,
+            { id: milestoneId, data: { ...prevData, dataTask: body.dataTask } },
+            userId,
+          ),
+        )
+      }
       if (body.goal !== undefined) {
         await syncGoalChild(campaign.locationId, milestoneId, body.goal, userId)
       }

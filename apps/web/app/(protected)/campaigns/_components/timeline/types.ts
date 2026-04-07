@@ -8,6 +8,8 @@ export type PassCriteriaRow = {
   status: PassCriteriaStatus
 }
 
+export type MilestoneDataTask = 'manual' | 'location_profile'
+
 export type TimelineMilestone = {
   id: string
   title: string
@@ -16,6 +18,8 @@ export type TimelineMilestone = {
   goal?: string
   /** Data tab text; stored on a child `milestonedata` node as `{ data: string }`. */
   data?: string
+  /** How Data tab content is produced; stored on milestone `data` JSON. */
+  dataTask?: MilestoneDataTask
   /** Markdown body for the Result tab. */
   resultMarkdown?: string
   /** Defaults to `empty` when omitted. */
@@ -54,6 +58,10 @@ export type TimelineWorkspaceProps = {
   onUpdateMilestoneData?: (id: string, milestoneData: string) => Promise<boolean>
   savingDataMilestoneId?: string | null
   milestoneDataError?: string | null
+  onSetMilestoneDataTask?: (id: string, dataTask: MilestoneDataTask) => Promise<boolean>
+  onPrepareMilestone?: (id: string) => void | Promise<void>
+  preparingMilestoneId?: string | null
+  milestonePrepareError?: string | null
   onRunMilestone?: (id: string) => void | Promise<void>
   isChatBusy?: boolean
   runningMilestoneId?: string | null

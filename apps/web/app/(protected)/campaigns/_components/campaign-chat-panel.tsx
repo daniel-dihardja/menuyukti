@@ -23,7 +23,12 @@ import { DefaultChatTransport } from 'ai'
 import { useTranslations } from 'next-intl'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import type { PassCriteriaRow, PassCriteriaStatus, TimelineMilestone } from './timeline-workspace'
+import type {
+  MilestoneDataTask,
+  PassCriteriaRow,
+  PassCriteriaStatus,
+  TimelineMilestone,
+} from './timeline-workspace'
 import { TimelineWorkspace } from './timeline-workspace'
 import { ChatMessageParts } from './chat-message-parts'
 import { milestoneDataSchema } from '@/lib/graphql/node-schemas'
@@ -64,6 +69,8 @@ export function CampaignChatPanel({
   /** Current agent graph step from SSE (`fetch_context`, `evaluate_criterion`, …). */
   const [runningStep, setRunningStep] = useState<string | null>(null)
   const [milestoneRunError, setMilestoneRunError] = useState<string | null>(null)
+  const [preparingMilestoneId, setPreparingMilestoneId] = useState<string | null>(null)
+  const [milestonePrepareError, setMilestonePrepareError] = useState<string | null>(null)
 
   useEffect(() => {
     setMilestones(initialMilestones)
@@ -83,6 +90,8 @@ export function CampaignChatPanel({
     setRunningMilestoneId(null)
     setRunningStep(null)
     setMilestoneRunError(null)
+    setPreparingMilestoneId(null)
+    setMilestonePrepareError(null)
   }, [campaignId, initialMilestones])
 
   const transport = useMemo(
@@ -323,6 +332,100 @@ export function CampaignChatPanel({
       }
     },
     [campaignId, t],
+  )
+
+  const handleSetMilestoneDataTask = useCallback(
+    async (milestoneId: string, dataTask: MilestoneDataTask): Promise<boolean> => {
+      setMilestonePrepareError(null)
+      try {
+        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataTask }),
+        })
+        const body = (await res.json().catch(() => null)) as { message?: string; data?: unknown } | null
+        if (!res.ok) {
+          throw new Error(body?.message ?? t('milestonesMilestoneDataError'))
+        }
+        const nodeBody = body as { data?: unknown }
+        const parsed = milestoneDataSchema.safeParse(nodeBody?.data)
+        const nextTask: MilestoneDataTask =
+          parsed.success && parsed.data.dataTask === 'location_profile'
+            ? 'location_profile'
+            : 'manual'
+        setMilestones((prev) =>
+          prev.map((m) => (m.id === milestoneId ? { ...m, dataTask: nextTask } : m)),
+        )
+        return true
+      } catch (err) {
+        setMilestonePrepareError(err instanceof Error ? err.message : t('milestonePrepareError'))
+        return false
+      }
+    },
+    [campaignId, t],
+  )
+
+  const handlePrepareMilestone = useCallback(
+    async (milestoneId: string) => {
+      setMilestonePrepareError(null)
+      setPreparingMilestoneId(milestoneId)
+      try {
+        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}/prepare`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locationId }),
+        })
+        if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as { error?: string } | null
+          throw new Error(body?.error ?? t('milestonePrepareError'))
+        }
+        if (!res.body) {
+          throw new Error(t('milestonePrepareError'))
+        }
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) {
+            break
+          }
+          buffer += decoder.decode(value, { stream: true })
+          const blocks = buffer.split('\n\n')
+          buffer = blocks.pop() ?? ''
+          for (const block of blocks) {
+            const m = block.match(/^data: (.+)$/m)
+            const raw = m?.[1]?.trim()
+            if (!raw) {
+              continue
+            }
+            let payload: Record<string, unknown>
+            try {
+              payload = JSON.parse(raw) as Record<string, unknown>
+            } catch {
+              continue
+            }
+            if (typeof payload.error === 'string') {
+              throw new Error(payload.error)
+            }
+            if (payload.done === true) {
+              const preview =
+                typeof payload.dataPreview === 'string' ? payload.dataPreview : ''
+              setMilestones((prev) =>
+                prev.map((m) =>
+                  m.id === milestoneId ? { ...m, data: preview || m.data } : m,
+                ),
+              )
+            }
+          }
+        }
+      } catch (err) {
+        setMilestonePrepareError(err instanceof Error ? err.message : t('milestonePrepareError'))
+      } finally {
+        setPreparingMilestoneId(null)
+      }
+    },
+    [campaignId, locationId, t],
   )
 
   const handleRunMilestone = useCallback(
@@ -590,6 +693,7 @@ export function CampaignChatPanel({
           goalError={goalError}
           isChatBusy={isChatBusy}
           milestoneDataError={milestoneDataError}
+          milestonePrepareError={milestonePrepareError}
           milestoneRunError={milestoneRunError}
           milestones={milestones}
           moveError={moveError}
@@ -597,12 +701,15 @@ export function CampaignChatPanel({
           onCreateMilestone={handleCreateMilestone}
           onDeleteMilestone={handleDeleteMilestone}
           onMoveMilestone={handleMoveMilestone}
+          onPrepareMilestone={handlePrepareMilestone}
           onRenameMilestone={handleRenameMilestone}
           onRunMilestone={handleRunMilestone}
+          onSetMilestoneDataTask={handleSetMilestoneDataTask}
           onUpdateMilestoneData={handleUpdateMilestoneData}
           onUpdateMilestoneGoal={handleUpdateMilestoneGoal}
           onUpdatePassCriteria={handleUpdatePassCriteria}
           passCriteriaError={passCriteriaError}
+          preparingMilestoneId={preparingMilestoneId}
           renameError={renameError}
           renamingMilestoneId={renamingMilestoneId}
           runningMilestoneId={runningMilestoneId}

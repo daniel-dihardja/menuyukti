@@ -21,6 +21,8 @@ export const patchMilestoneSchema = z
     goal: z.string().optional(),
     /** Milestone Data tab; persisted on a child `milestonedata` node as `{ data: string }`. */
     milestoneData: z.string().optional(),
+    /** Stored on milestone node `data` JSON (`manual` | `location_profile`). */
+    dataTask: z.enum(['manual', 'location_profile']).optional(),
     passCriteria: z.array(passCriteriaRowSchema).optional(),
     move: z.enum(['up', 'down']).optional(),
   })
@@ -29,9 +31,11 @@ export const patchMilestoneSchema = z
       v.name !== undefined ||
       v.goal !== undefined ||
       v.milestoneData !== undefined ||
+      v.dataTask !== undefined ||
       v.passCriteria !== undefined ||
       v.move !== undefined,
     {
-      message: 'Provide at least one of name, goal, milestoneData, passCriteria, or move',
+      message:
+        'Provide at least one of name, goal, milestoneData, dataTask, passCriteria, or move',
     },
   )

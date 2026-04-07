@@ -8,11 +8,18 @@ import { Button } from '@workspace/ui/components/button'
 import { CardContent } from '@workspace/ui/components/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import { Input } from '@workspace/ui/components/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { Textarea } from '@workspace/ui/components/textarea'
 
-import type { PassCriteriaRow, TimelineMilestone } from './types'
+import type { MilestoneDataTask, PassCriteriaRow, TimelineMilestone } from './types'
 
 export type MilestoneItemTabsProps = {
   milestone: TimelineMilestone
@@ -29,6 +36,9 @@ export type MilestoneItemTabsProps = {
   savingPassCriteria: boolean
   hasResult: boolean
   isMilestoneRunning: boolean
+  isPreparing?: boolean
+  onSetMilestoneDataTask?: (dataTask: MilestoneDataTask) => void | Promise<void>
+  onPrepareMilestone?: () => void | Promise<void>
   handleGoalBlur: () => void
   handleDataBlur: () => void
   handleAddPassCriterion: () => Promise<void>
@@ -50,12 +60,18 @@ export function MilestoneItemTabs({
   savingPassCriteria,
   hasResult,
   isMilestoneRunning,
+  isPreparing = false,
+  onSetMilestoneDataTask,
+  onPrepareMilestone,
   handleGoalBlur,
   handleDataBlur,
   handleAddPassCriterion,
   handleRemovePassCriterion,
 }: MilestoneItemTabsProps) {
   const t = useTranslations('analytics.campaigns.chat')
+  const dataTask: MilestoneDataTask = milestone.dataTask ?? 'manual'
+  const dataTaskFieldId = `milestone-data-task-${milestone.id}`
+  const hasGeneratedData = Boolean((milestone.data ?? '').trim())
 
   return (
     <CardContent className="border-border/60 border-t px-6 pt-4 pb-0">
@@ -184,20 +200,83 @@ export function MilestoneItemTabs({
         <TabsContent value="data">
           <FieldGroup className="gap-4">
             <Field>
-              <FieldLabel htmlFor={dataFieldId}>{t('milestoneDataLabel')}</FieldLabel>
-              <FieldDescription>{t('milestoneDataDescription')}</FieldDescription>
-              <Textarea
-                className="min-h-[120px] resize-y whitespace-pre-wrap"
-                disabled={savingData}
-                id={dataFieldId}
-                onChange={(e) => setDataDraft(e.target.value)}
-                onBlur={handleDataBlur}
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                placeholder={t('milestoneDataPlaceholder')}
-                value={dataDraft}
-              />
+              <FieldLabel htmlFor={dataTaskFieldId}>{t('milestoneDataTaskLabel')}</FieldLabel>
+              <Select
+                disabled={!onSetMilestoneDataTask}
+                onValueChange={(v) => {
+                  void onSetMilestoneDataTask?.(v as MilestoneDataTask)
+                }}
+                value={dataTask}
+              >
+                <SelectTrigger
+                  className="w-full max-w-md"
+                  id={dataTaskFieldId}
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">{t('milestoneDataTaskManual')}</SelectItem>
+                  <SelectItem value="location_profile">
+                    {t('milestoneDataTaskLocationProfile')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </Field>
+            {dataTask === 'manual' ? (
+              <Field>
+                <FieldLabel htmlFor={dataFieldId}>{t('milestoneDataLabel')}</FieldLabel>
+                <FieldDescription>{t('milestoneDataDescription')}</FieldDescription>
+                <Textarea
+                  className="min-h-[120px] resize-y whitespace-pre-wrap"
+                  disabled={savingData}
+                  id={dataFieldId}
+                  onChange={(e) => setDataDraft(e.target.value)}
+                  onBlur={handleDataBlur}
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  placeholder={t('milestoneDataPlaceholder')}
+                  value={dataDraft}
+                />
+              </Field>
+            ) : (
+              <Field>
+                <FieldLabel htmlFor={dataFieldId}>{t('milestoneDataLabel')}</FieldLabel>
+                <FieldDescription>{t('milestoneDataDescriptionLocationProfile')}</FieldDescription>
+                <div className="flex flex-wrap items-center gap-2 pb-2">
+                  <Button
+                    disabled={isPreparing || !onPrepareMilestone}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void onPrepareMilestone?.()
+                    }}
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
+                    {isPreparing ? (
+                      <>
+                        <Spinner className="size-4" />
+                        {t('milestonePrepareRunning')}
+                      </>
+                    ) : hasGeneratedData ? (
+                      t('milestoneRegenerateButton')
+                    ) : (
+                      t('milestoneGenerateButton')
+                    )}
+                  </Button>
+                </div>
+                <Textarea
+                  className="min-h-[200px] resize-y whitespace-pre-wrap"
+                  id={dataFieldId}
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  readOnly
+                  value={dataDraft}
+                />
+              </Field>
+            )}
           </FieldGroup>
         </TabsContent>
         <TabsContent value="result">

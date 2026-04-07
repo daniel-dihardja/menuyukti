@@ -500,7 +500,15 @@
         "milestonePlayTooltip": "Run this milestone",
         "milestonePlayAriaLabel": "Run milestone",
         "milestoneRunUserMessage": "Run this milestone now.",
-        "milestoneRunError": "Could not run milestone evaluation. Please try again."
+        "milestoneRunError": "Could not run milestone evaluation. Please try again.",
+        "milestoneDataTaskLabel": "Data source",
+        "milestoneDataTaskManual": "Manual entry",
+        "milestoneDataTaskLocationProfile": "Generate location profile",
+        "milestoneDataDescriptionLocationProfile": "Uses your latest analytics run and operating profile metrics. Generate to fill milestone data; edit the goal and criteria as needed, then run evaluation.",
+        "milestoneGenerateButton": "Generate from analytics",
+        "milestoneRegenerateButton": "Regenerate from analytics",
+        "milestonePrepareRunning": "Generating…",
+        "milestonePrepareError": "Could not generate milestone data. Please try again."
       },
       "milestoneRun": {
         "runningLabel": "Evaluation in progress…",

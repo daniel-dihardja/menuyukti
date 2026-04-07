@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from agents_app.routers.chat import router as chat_router
+from agents_app.routers.milestone_prepare import router as milestone_prepare_router
 from agents_app.routers.milestone_run import router as milestone_run_router
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -22,6 +23,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.include_router(chat_router, tags=["chat"])
+app.include_router(milestone_prepare_router, tags=["milestones"])
 app.include_router(milestone_run_router, tags=["milestones"])
 
 

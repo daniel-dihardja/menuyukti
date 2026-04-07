@@ -4,7 +4,12 @@ import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
 import { TimelineItem } from './timeline-item'
-import type { MilestoneStatusLabels, PassCriteriaRow, TimelineMilestone } from './types'
+import type {
+  MilestoneDataTask,
+  MilestoneStatusLabels,
+  PassCriteriaRow,
+  TimelineMilestone,
+} from './types'
 
 export type TimelineBodyProps = {
   milestones: TimelineMilestone[]
@@ -26,6 +31,9 @@ export type TimelineBodyProps = {
   savingGoalMilestoneId: string | null
   onUpdateMilestoneData?: (id: string, milestoneData: string) => Promise<boolean>
   savingDataMilestoneId: string | null
+  onSetMilestoneDataTask?: (id: string, dataTask: MilestoneDataTask) => Promise<boolean>
+  onPrepareMilestone?: (id: string) => void | Promise<void>
+  preparingMilestoneId?: string | null
   onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
   movingMilestoneId: string | null
   onRunMilestone?: (id: string) => void | Promise<void>
@@ -54,6 +62,9 @@ export function TimelineBody({
   savingGoalMilestoneId,
   onUpdateMilestoneData,
   savingDataMilestoneId,
+  onSetMilestoneDataTask,
+  onPrepareMilestone,
+  preparingMilestoneId = null,
   onMoveMilestone,
   movingMilestoneId,
   onRunMilestone,
@@ -88,10 +99,13 @@ export function TimelineBody({
                   onRenameMilestone={onRenameMilestone}
                   onRunMilestone={onRunMilestone}
                   onSelect={onSelectMilestone}
+                  onPrepareMilestone={onPrepareMilestone}
+                  onSetMilestoneDataTask={onSetMilestoneDataTask}
                   onUpdateMilestoneData={onUpdateMilestoneData}
                   onUpdateMilestoneGoal={onUpdateMilestoneGoal}
                   onUpdatePassCriteria={onUpdatePassCriteria}
                   positionIndex={index + 1}
+                  preparingMilestoneId={preparingMilestoneId}
                   renamingMilestoneId={renamingMilestoneId}
                   runningMilestoneId={runningMilestoneId}
                   runningStep={runningStep}

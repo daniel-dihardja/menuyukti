@@ -8,6 +8,7 @@ import {
 import type { AnyNode } from '@/lib/graphql/queries'
 
 import type {
+  MilestoneDataTask,
   PassCriteriaRow,
   TimelineMilestone,
   TimelineMilestoneStatus,
@@ -137,12 +138,17 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   const data = milestoneDataFromChildNodes(node.milestonedataNodes)
   const passCriteria = passCriteriaFromChildNodes(node.passCriteriaNodes)
   const resultMarkdown = resultMarkdownFromChildNodes(node.resultNodes)
+  const dataTask: MilestoneDataTask =
+    parsed.success && parsed.data.dataTask === 'location_profile'
+      ? 'location_profile'
+      : 'manual'
 
   return {
     id: node.id,
     title: node.name,
     goal,
     data,
+    dataTask,
     passCriteria,
     resultMarkdown,
     status: deriveMilestoneRailStatus(passCriteria, resultMarkdown),

@@ -21,6 +21,8 @@ export const milestoneDataSchema = z
      * Legacy: goal text was stored on the milestone. New writes use a child node (`nodeType` `goal`).
      */
     goal: z.string().optional(),
+    /** How milestone Data tab content is produced (`manual` = textarea; `location_profile` = prepare pipeline). */
+    dataTask: z.enum(['manual', 'location_profile']).optional(),
   })
   .passthrough()
 

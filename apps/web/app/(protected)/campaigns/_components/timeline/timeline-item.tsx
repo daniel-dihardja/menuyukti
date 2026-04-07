@@ -12,6 +12,7 @@ import { MilestoneItemTabs } from './milestone-item-tabs'
 import { MilestoneRunProgressStrip } from './milestone-run-progress'
 import { isKeyboardEventFromNestedInteractive, TimelineRailMarker } from './timeline-rail'
 import type {
+  MilestoneDataTask,
   MilestoneStatusLabels,
   PassCriteriaRow,
   TimelineMilestone,
@@ -41,6 +42,9 @@ export type TimelineItemProps = {
   savingGoalMilestoneId: string | null
   onUpdateMilestoneData?: (id: string, milestoneData: string) => Promise<boolean>
   savingDataMilestoneId: string | null
+  onSetMilestoneDataTask?: (id: string, dataTask: MilestoneDataTask) => Promise<boolean>
+  onPrepareMilestone?: (id: string) => void | Promise<void>
+  preparingMilestoneId?: string | null
   onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
   isMoving: boolean
   onRunMilestone?: (id: string) => void | Promise<void>
@@ -75,6 +79,9 @@ export function TimelineItem({
   savingGoalMilestoneId,
   onUpdateMilestoneData,
   savingDataMilestoneId,
+  onSetMilestoneDataTask,
+  onPrepareMilestone,
+  preparingMilestoneId = null,
   onMoveMilestone,
   isMoving,
   onRunMilestone,
@@ -214,6 +221,9 @@ export function TimelineItem({
   }
 
   const handleDataBlur = () => {
+    if (milestone.dataTask === 'location_profile') {
+      return
+    }
     if (!onUpdateMilestoneData || savingData) {
       return
     }
@@ -335,7 +345,16 @@ export function TimelineItem({
                 handleRemovePassCriterion={handleRemovePassCriterion}
                 hasResult={hasResult}
                 isMilestoneRunning={isMilestoneRunning}
+                isPreparing={preparingMilestoneId === milestone.id}
                 milestone={milestone}
+                onPrepareMilestone={
+                  onPrepareMilestone ? () => void onPrepareMilestone(milestone.id) : undefined
+                }
+                onSetMilestoneDataTask={
+                  onSetMilestoneDataTask
+                    ? (dataTask) => void onSetMilestoneDataTask(milestone.id, dataTask)
+                    : undefined
+                }
                 savingData={savingData}
                 savingGoal={savingGoal}
                 savingPassCriteria={savingPassCriteria}
