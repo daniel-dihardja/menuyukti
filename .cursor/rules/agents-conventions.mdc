@@ -23,7 +23,7 @@ agents/
   core/               # Platform-level agents — reusable across data sources
     chat/
       graph.py        # build_chat_graph(); MessagesState
-      prompts.py      # CHAT_SYSTEM_PROMPT
+      prompts.py      # build_system_prompt(), PERSONA, WORKFLOW_KNOWLEDGE
     milestone_eval/
       graph.py        # build_milestone_eval_graph(client)
       state.py        # TypedDict state + reducers

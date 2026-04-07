@@ -1,19 +1,10 @@
 """LangGraph chat graph (single LLM node, MessagesState)."""
 
-from agents_app.agents.core.chat.prompts import CHAT_SYSTEM_PROMPT
+from agents_app.agents.core.chat.prompts import build_system_prompt
 from agents_app.models.llm_config import get_llm
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import MessagesState
-
-
-def _system_prompt(campaign_id: str | None, milestone_id: str | None = None) -> str:
-    text = CHAT_SYSTEM_PROMPT
-    if campaign_id is not None:
-        text += f"\n\nCampaign context: The user is discussing campaign node id {campaign_id}."
-    if milestone_id is not None:
-        text += f"\n\nMilestone context: The user is running milestone node id {milestone_id}."
-    return text
 
 
 async def _chat_node(
@@ -24,7 +15,9 @@ async def _chat_node(
 ) -> dict[str, list[BaseMessage]]:
     """Stream tokens from the model; LangGraph surfaces them via astream_events."""
     llm = get_llm()
-    system = SystemMessage(content=_system_prompt(campaign_id, milestone_id=milestone_id))
+    system = SystemMessage(
+        content=build_system_prompt(campaign_id, milestone_id=milestone_id),
+    )
     messages: list[BaseMessage] = [system, *state["messages"]]
     full_content = ""
     async for chunk in llm.astream(messages):
