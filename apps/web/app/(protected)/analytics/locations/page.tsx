@@ -27,7 +27,10 @@ function LocationsPageSkeleton() {
           <Skeleton className="h-4 w-32" />
         </div>
         {Array.from({ length: 4 }, (_, i) => (
-          <div className="flex gap-4 border-b px-4 py-3 last:border-b-0" key={`locations-skel-${i}`}>
+          <div
+            className="flex gap-4 border-b px-4 py-3 last:border-b-0"
+            key={`locations-skel-${i}`}
+          >
             <Skeleton className="h-4 w-8 shrink-0" />
             <Skeleton className="h-4 min-w-0 flex-1 max-w-xs" />
           </div>
