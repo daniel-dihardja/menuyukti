@@ -274,7 +274,7 @@ export function MilestoneItemTabs({
                     }}
                     size="sm"
                     type="button"
-                    variant="secondary"
+                    variant="default"
                   >
                     {isPreparing ? (
                       <>
