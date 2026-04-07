@@ -7,7 +7,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
-from agents_app.agents.domain.skill_runner.env import RunEnv, render_inputs, render_template
+from agents_app.agents.domain.skill_runner.env import (
+    RunEnv,
+    render_human_message,
+    render_inputs,
+    render_template,
+)
 from agents_app.agents.domain.skill_runner.loader import load_skill
 from agents_app.agents.domain.skill_runner.prefetch import prefetch_data
 from agents_app.agents.domain.skill_runner.runner import run_skill_events
@@ -22,7 +27,9 @@ def http_client() -> TestClient:
 
 @pytest.fixture
 def skill_path() -> Path:
-    return Path(__file__).resolve().parent.parent.parent / "skills" / "location_profile" / "SKILL.md"
+    return (
+        Path(__file__).resolve().parent.parent.parent / "skills" / "location_profile" / "SKILL.md"
+    )
 
 
 def test_load_location_profile_skill(skill_path: Path) -> None:
@@ -30,6 +37,8 @@ def test_load_location_profile_skill(skill_path: Path) -> None:
     assert cfg.name == "location-profile"
     assert "location profile" in cfg.description.lower()
     assert cfg.menuyukti.version == 1
+    assert cfg.menuyukti.human_message_template.strip()
+    assert "context.operating_profile" in cfg.menuyukti.human_message_template
     assert len(cfg.menuyukti.data_requirements) == 2
     assert "restaurant marketing analyst" in cfg.body.lower()
 
@@ -44,6 +53,25 @@ def test_render_inputs_coerces_location_id() -> None:
     env = RunEnv(milestone_id="m-1", location_id=99, user_id="u")
     out = render_inputs({"location_id": "{{ env.location_id }}"}, env)
     assert out["location_id"] == 99
+
+
+def test_render_human_message() -> None:
+    tpl = (
+        "Metrics:\n{{ context.operating_profile | tojson(indent=2) }}\n"
+        "{% if context.location %}\nLoc:\n{{ context.location | tojson(indent=2) }}\n{% endif %}\nDone."
+    )
+    ctx = {
+        "operating_profile": {"totalOrders": 1},
+        "location": {"name": "Cafe"},
+    }
+    out = render_human_message(tpl, ctx)
+    assert '"totalOrders": 1' in out
+    assert '"name": "Cafe"' in out
+
+    ctx_no_loc = {"operating_profile": {"a": 1}, "location": None}
+    out2 = render_human_message(tpl, ctx_no_loc)
+    assert '"a": 1' in out2
+    assert "Loc:" not in out2
 
 
 @pytest.mark.asyncio
@@ -99,7 +127,6 @@ async def test_run_skill_events_streams_steps(skill_path: Path) -> None:
             new=AsyncMock(return_value="node-uuid-1"),
         ) as mock_persist,
     ):
-
         async with httpx.AsyncClient() as client:
             async for payload in run_skill_events(
                 skill_path,

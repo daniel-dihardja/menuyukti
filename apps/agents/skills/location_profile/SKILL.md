@@ -8,6 +8,17 @@ description: >-
 menuyukti:
   version: 1
 
+  human_message_template: |
+    Operating profile (JSON from POS analytics):
+    {{ context.operating_profile | tojson(indent=2) }}
+
+    {% if context.location %}
+    Location record (JSON from platform):
+    {{ context.location | tojson(indent=2) }}
+    {% endif %}
+
+    Write the location profile in Markdown.
+
   data_requirements:
     - id: location
       use: platform.location

@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from typing import Any
+
+from jinja2 import Environment
 
 
 @dataclass(frozen=True)
@@ -33,3 +37,14 @@ def render_inputs(inputs: dict[str, str], env: RunEnv) -> dict[str, object]:
         else:
             out[key] = rendered
     return out
+
+
+def _jinja2_env() -> Environment:
+    env = Environment()
+    env.filters["tojson"] = lambda v, indent=None: json.dumps(v, indent=indent, ensure_ascii=False)
+    return env
+
+
+def render_human_message(template: str, context: dict[str, Any]) -> str:
+    """Render SKILL ``human_message_template`` with prefetched ``context`` (Jinja2)."""
+    return _jinja2_env().from_string(template).render(context=context)

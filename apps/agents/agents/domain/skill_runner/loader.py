@@ -19,6 +19,7 @@ class DataRequirement(BaseModel):
 
 class MenuyuktiConfig(BaseModel):
     version: int = 1
+    human_message_template: str
     data_requirements: list[DataRequirement] = Field(default_factory=list)
 
 
