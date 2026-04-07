@@ -7,7 +7,7 @@ import { Download, ImageIcon, Loader2, Maximize2, Sparkles, Trash2, Upload } fro
 import { Button } from '@workspace/ui/components/button'
 import { Card } from '@workspace/ui/components/card'
 import { Dialog, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
-import { Label } from '@workspace/ui/components/label'
+import { Field, FieldLabel } from '@workspace/ui/components/field'
 import {
   Select,
   SelectContent,
@@ -218,7 +218,7 @@ export function AssetsClient() {
   }
 
   return (
-    <div className="w-full space-y-6">
+    <div className="flex w-full flex-col gap-6">
       {toast ? (
         <div
           role="status"
@@ -328,85 +328,89 @@ export function AssetsClient() {
           onDrop={onDrop}
         >
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(var(--primary)/0.06),_transparent_55%)] pointer-events-none" />
-          <div className="relative flex flex-col items-center justify-center gap-4 px-6 py-14 text-center sm:py-16">
-            <div
-              className={cn(
-                'flex h-14 w-14 items-center justify-center rounded-2xl border bg-background/80 shadow-sm transition-transform duration-300',
-                dragActive ? 'scale-110 border-primary/50 text-primary' : 'text-muted-foreground',
-              )}
-            >
-              {uploading ? (
-                <Loader2 className="h-7 w-7 animate-spin text-primary" />
-              ) : (
-                <Upload className="h-7 w-7" />
-              )}
-            </div>
-            <div className="space-y-1">
-              <h2 className="text-lg font-semibold tracking-tight">{t('upload.title')}</h2>
-              <p className="text-sm text-muted-foreground max-w-md">{t('upload.hint')}</p>
-            </div>
-            <div className="flex w-full max-w-sm flex-col items-stretch gap-2.5">
-              <Label
-                htmlFor="asset-upload-flow"
-                className="text-center text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
+          <div className="relative flex flex-col gap-3 px-4 py-7 sm:gap-3 sm:px-5 sm:py-8">
+            <div className="flex items-start gap-3 sm:items-center sm:gap-4">
+              <div
+                className={cn(
+                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background/80 shadow-sm transition-transform duration-300',
+                  dragActive ? 'scale-105 border-primary/50 text-primary' : 'text-muted-foreground',
+                )}
               >
-                {t('upload.flow.label')}
-              </Label>
-              <Select
-                value={selectedFlow}
-                onValueChange={setSelectedFlow}
-                disabled={uploading || flowsLoading}
-              >
-                <SelectTrigger
-                  id="asset-upload-flow"
-                  size="default"
-                  className={cn(
-                    'h-11 w-full justify-between rounded-lg border-border/80 bg-background/90 px-4 shadow-sm transition-[box-shadow,border-color] duration-200',
-                    'hover:border-primary/30 hover:bg-background',
-                    'data-[state=open]:border-primary/40 data-[state=open]:shadow-[0_0_0_3px_hsl(var(--ring)/0.25)]',
-                  )}
+                {uploading ? (
+                  <Loader2 className="size-5 animate-spin text-primary" aria-hidden />
+                ) : (
+                  <Upload className="size-5" aria-hidden />
+                )}
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
+                <h2 className="text-base font-semibold tracking-tight">{t('upload.title')}</h2>
+                <p className="text-pretty text-xs text-muted-foreground sm:text-sm">{t('upload.hint')}</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-3">
+              <Field className="min-w-0 flex-1 gap-1.5">
+                <FieldLabel
+                  htmlFor="asset-upload-flow"
+                  className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
                 >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent
-                  align="center"
-                  position="popper"
-                  className="min-w-[var(--radix-select-trigger-width)]"
+                  {t('upload.flow.label')}
+                </FieldLabel>
+                <Select
+                  value={selectedFlow}
+                  onValueChange={setSelectedFlow}
+                  disabled={uploading || flowsLoading}
                 >
-                  <SelectItem value="none">{t('upload.flow.none')}</SelectItem>
-                  {aiFlows.map((flow) => (
-                    <SelectItem key={flow.slug} value={flow.slug} className="cursor-pointer">
-                      <span className="flex w-full items-center gap-2">
-                        <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
-                        <span className="flex-1">{flow.displayName}</span>
-                        <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-primary">
-                          AI
+                  <SelectTrigger
+                    id="asset-upload-flow"
+                    size="default"
+                    className={cn(
+                      'h-10 w-full justify-between rounded-lg border-border/80 bg-background/90 px-3 shadow-sm transition-[box-shadow,border-color] duration-200',
+                      'hover:border-primary/30 hover:bg-background',
+                      'data-[state=open]:border-primary/40 data-[state=open]:shadow-[0_0_0_3px_hsl(var(--ring)/0.25)]',
+                    )}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent
+                    align="start"
+                    position="popper"
+                    className="min-w-[var(--radix-select-trigger-width)]"
+                  >
+                    <SelectItem value="none">{t('upload.flow.none')}</SelectItem>
+                    {aiFlows.map((flow) => (
+                      <SelectItem key={flow.slug} value={flow.slug} className="cursor-pointer">
+                        <span className="flex w-full items-center gap-2">
+                          <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
+                          <span className="flex-1">{flow.displayName}</span>
+                          <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-primary">
+                            AI
+                          </span>
                         </span>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Button
+                type="button"
+                className="h-10 shrink-0 rounded-full px-6 shadow-sm sm:min-w-[9rem]"
+                disabled={uploading}
+                onClick={() => inputRef.current?.click()}
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('upload.uploading')}
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    {t('upload.browse')}
+                  </>
+                )}
+              </Button>
             </div>
-            <Button
-              type="button"
-              size="lg"
-              className="rounded-full px-8 shadow-sm"
-              disabled={uploading}
-              onClick={() => inputRef.current?.click()}
-            >
-              {uploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('upload.uploading')}
-                </>
-              ) : (
-                <>
-                  <ImageIcon className="mr-2 h-4 w-4" />
-                  {t('upload.browse')}
-                </>
-              )}
-            </Button>
           </div>
         </Card>
       </section>
