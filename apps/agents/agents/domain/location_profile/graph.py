@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 import httpx
-from agents_app.agents.location_profile.graphql_client import (
+from agents_app.agents.domain.location_profile.graphql_client import (
     fetch_latest_analytics_run_id,
     fetch_operating_profile_dict,
     upsert_milestonedata,
 )
-from agents_app.agents.location_profile.prompts import (
+from agents_app.agents.domain.location_profile.prompts import (
     LOCATION_PROFILE_SYSTEM,
     location_profile_human_message,
 )
-from agents_app.agents.location_profile.state import LocationProfileState
+from agents_app.agents.domain.location_profile.state import LocationProfileState
 from agents_app.models.llm_config import get_llm
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer

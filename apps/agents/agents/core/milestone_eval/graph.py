@@ -5,19 +5,19 @@ from __future__ import annotations
 from typing import Any, Literal
 
 import httpx
-from agents_app.agents.milestone_eval.graphql_client import (
+from agents_app.agents.core.milestone_eval.graphql_client import (
     create_result_node,
     delete_node,
     fetch_milestone_children,
     update_passcriteria_status,
 )
-from agents_app.agents.milestone_eval.prompts import (
+from agents_app.agents.core.milestone_eval.prompts import (
     EVAL_SYSTEM,
     SYNTHESIS_SYSTEM,
     eval_human_message,
     synthesis_human_message,
 )
-from agents_app.agents.milestone_eval.state import CriterionEval, MilestoneEvalState
+from agents_app.agents.core.milestone_eval.state import CriterionEval, MilestoneEvalState
 from agents_app.models.llm_config import get_llm, get_llm_structured
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer

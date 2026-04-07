@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator
 from typing import Annotated
 
 import httpx
-from agents_app.agents.milestone_eval.graph import build_milestone_eval_graph
+from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_graph
 from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field

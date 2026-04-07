@@ -1,7 +1,7 @@
 """LangGraph chat graph (single LLM node, MessagesState)."""
 
+from agents_app.agents.core.chat.prompts import CHAT_SYSTEM_PROMPT
 from agents_app.models.llm_config import get_llm
-from agents_app.prompts.chat_prompts import CHAT_SYSTEM_PROMPT
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import MessagesState

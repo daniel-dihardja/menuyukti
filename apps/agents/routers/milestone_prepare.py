@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator
 from typing import Annotated
 
 import httpx
-from agents_app.agents.location_profile.graph import build_location_profile_graph
+from agents_app.agents.domain.location_profile.graph import build_location_profile_graph
 from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field

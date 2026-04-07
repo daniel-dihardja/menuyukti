@@ -15,28 +15,43 @@ alwaysApply: false
 
 ## Directory layout
 
+Split **platform** graphs from **domain** graphs so new data-source agents have an obvious home.
+
 ```
-agents/           # LangGraph graph definitions, one subdir per domain feature
-  chat_agent.py
-  milestone_eval/
-    graph.py      # build_*_graph() factory; nodes defined as inner async fns
-    state.py      # TypedDict state + reducers
-    prompts.py    # system/human message strings and builder helpers
-    graphql_client.py  # httpx helpers to call the GraphQL API
+agents/
+  graphql_base.py   # Shared GraphQL HTTP helpers (httpx + auth headers); used by core and domain
+  core/               # Platform-level agents — reusable across data sources
+    chat/
+      graph.py        # build_chat_graph(); MessagesState
+      prompts.py      # CHAT_SYSTEM_PROMPT
+    milestone_eval/
+      graph.py        # build_milestone_eval_graph(client)
+      state.py        # TypedDict state + reducers
+      prompts.py
+      graphql_client.py
+  domain/             # One subdir per data-source / domain agent (e.g. operating profile, future menu_*)
+    location_profile/
+      graph.py
+      state.py
+      prompts.py
+      graphql_client.py
 models/
-  llm_config.py   # get_llm() (streaming), get_llm_structured() (non-streaming)
-prompts/          # Top-level shared prompt strings
-routers/          # FastAPI APIRouter — one file per domain
-server.py         # FastAPI app, load_dotenv(), router registration, /health
+  llm_config.py       # get_llm(), get_llm_structured()
+routers/              # FastAPI APIRouter — thin handlers; one file per route group
+server.py
 tests/
+  core/               # e.g. test_chat HTTP tests
+  domain/             # domain agent tests as you add them
 ```
+
+**Convention:** add new **custom / data-source** agents under `agents/domain/<name>/`. Add **cross-cutting** flows (milestone evaluation, chat) under `agents/core/`.
 
 ## Graph factory pattern
 
 Compile graphs in a `build_*_graph(...)` factory function — do not import compiled graph instances directly. This keeps FastAPI routers thin and allows dependency injection (e.g. an `httpx.AsyncClient`).
 
 ```python
-# agents/chat_agent.py
+# agents/core/chat/graph.py
 def build_chat_graph(*, campaign_id=None, milestone_id=None):
     builder = StateGraph(MessagesState)
     builder.add_node("chat", chat_node)

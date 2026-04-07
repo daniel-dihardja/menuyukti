@@ -23,7 +23,7 @@ format:
 	uv run --group dev ruff format .
 
 typecheck:
-	uv run --group dev mypy server.py agents models prompts routers
+	uv run --group dev mypy server.py agents models routers
 
 clean:
 	rm -rf __pycache__

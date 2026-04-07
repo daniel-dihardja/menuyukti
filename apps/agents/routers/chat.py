@@ -4,7 +4,7 @@ import json
 from collections.abc import AsyncIterator
 from typing import Literal
 
-from agents_app.agents.chat_agent import build_chat_graph, messages_from_roles
+from agents_app.agents.core.chat.graph import build_chat_graph, messages_from_roles
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import BaseMessage
