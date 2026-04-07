@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { Check, Circle, Trash2, X } from 'lucide-react'
 
+import { MarkdownEditField } from '@/components/markdown-edit-field'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
 import { CardContent } from '@workspace/ui/components/card'
@@ -17,7 +18,6 @@ import {
 } from '@workspace/ui/components/select'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
-import { Textarea } from '@workspace/ui/components/textarea'
 
 import type { MilestoneDataTask, PassCriteriaRow, TimelineMilestone } from './types'
 
@@ -95,15 +95,17 @@ export function MilestoneItemTabs({
             <Field>
               <FieldLabel htmlFor={goalFieldId}>{t('milestoneGoalLabel')}</FieldLabel>
               <FieldDescription>{t('milestoneGoalDescription')}</FieldDescription>
-              <Textarea
-                className="min-h-[120px] resize-y whitespace-pre-wrap"
+              <MarkdownEditField
                 disabled={savingGoal}
+                editTabLabel={t('milestoneDataEditTab')}
+                formatPreset="milestone-goal"
                 id={goalFieldId}
-                onChange={(e) => setGoalDraft(e.target.value)}
                 onBlur={handleGoalBlur}
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
+                onChange={setGoalDraft}
                 placeholder={t('milestoneGoalPlaceholder')}
+                previewEmptyLabel={t('milestoneGoalPreviewEmpty')}
+                previewTabLabel={t('milestoneDataPreviewTab')}
+                textareaClassName="min-h-[120px] resize-y whitespace-pre-wrap"
                 value={goalDraft}
               />
             </Field>
@@ -256,43 +258,19 @@ export function MilestoneItemTabs({
                   </Button>
                 </div>
               ) : null}
-              <Tabs className="gap-3" defaultValue="preview">
-                <TabsList
-                  className="h-9 w-full max-w-md"
-                  variant="default"
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                >
-                  <TabsTrigger className="flex-1" value="preview">
-                    {t('milestoneDataPreviewTab')}
-                  </TabsTrigger>
-                  <TabsTrigger className="flex-1" value="edit">
-                    {t('milestoneDataEditTab')}
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent className="mt-0" value="preview">
-                  {dataDraft.trim() ? (
-                    <div className="max-h-[min(50vh,28rem)] overflow-y-auto rounded-md border border-border/60 bg-muted/30 p-3">
-                      <MarkdownMessage content={dataDraft} />
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">{t('milestoneDataPreviewEmpty')}</p>
-                  )}
-                </TabsContent>
-                <TabsContent className="mt-0" value="edit">
-                  <Textarea
-                    className="min-h-[200px] resize-y whitespace-pre-wrap"
-                    disabled={savingData}
-                    id={dataFieldId}
-                    onChange={(e) => setDataDraft(e.target.value)}
-                    onBlur={handleDataBlur}
-                    onClick={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    placeholder={t('milestoneDataPlaceholder')}
-                    value={dataDraft}
-                  />
-                </TabsContent>
-              </Tabs>
+              <MarkdownEditField
+                disabled={savingData}
+                editTabLabel={t('milestoneDataEditTab')}
+                formatPreset="milestone-data"
+                id={dataFieldId}
+                onBlur={handleDataBlur}
+                onChange={setDataDraft}
+                placeholder={t('milestoneDataPlaceholder')}
+                previewEmptyLabel={t('milestoneDataPreviewEmpty')}
+                previewTabLabel={t('milestoneDataPreviewTab')}
+                textareaClassName="min-h-[200px] resize-y whitespace-pre-wrap"
+                value={dataDraft}
+              />
             </Field>
           </FieldGroup>
         </TabsContent>

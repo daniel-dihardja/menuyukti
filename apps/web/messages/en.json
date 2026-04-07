@@ -511,7 +511,11 @@
         "milestoneGenerateButton": "Generate from analytics",
         "milestoneRegenerateButton": "Regenerate from analytics",
         "milestonePrepareRunning": "Generating…",
-        "milestonePrepareError": "Could not generate milestone data. Please try again."
+        "milestonePrepareError": "Could not generate milestone data. Please try again.",
+        "milestoneGoalPreviewEmpty": "Nothing to preview yet. Add Markdown in Edit.",
+        "formatMarkdownButton": "Format Markdown",
+        "formatMarkdownFormatting": "Formatting…",
+        "formatMarkdownError": "Could not format text. Please try again."
       },
       "milestoneRun": {
         "runningLabel": "Evaluation in progress…",
