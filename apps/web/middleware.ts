@@ -2,7 +2,14 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
 import { routes } from '@/lib/routes'
 
-const isProtectedRoute = createRouteMatcher(['/analytics(.*)', '/campaigns(.*)', '/assets(.*)'])
+const isProtectedRoute = createRouteMatcher([
+  '/analytics(.*)',
+  '/campaigns(.*)',
+  '/assets(.*)',
+  '/studio(.*)',
+  '/print-orders(.*)',
+  '/dashboard(.*)',
+])
 
 // Use default env resolution (CLERK_SECRET_KEY, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY). Do not pass
 // secretKey/publishableKey via the dynamic-keys callback unless CLERK_ENCRYPTION_KEY is set — see

@@ -1,5 +1,12 @@
 /** URL prefixes for the signed-in app shell (sidebar + header row). User profile lives in that header, not the global AppChrome bar. */
-export const PROTECTED_APP_SHELL_PREFIXES = ['/analytics', '/campaigns', '/assets'] as const
+export const PROTECTED_APP_SHELL_PREFIXES = [
+  '/analytics',
+  '/campaigns',
+  '/assets',
+  '/studio',
+  '/print-orders',
+  '/dashboard',
+] as const
 
 export function isProtectedAppShellPath(pathname: string | null): boolean {
   if (pathname == null) return false
@@ -30,6 +37,11 @@ export const routes = {
   },
 
   assets: '/assets',
+  /** AI asset studio (brand library + generation); `/assets` redirects here. */
+  studio: '/studio',
+  studioSession: (id: string | number) => `/studio/${id}`,
+  printOrders: '/print-orders',
+  dashboard: '/dashboard',
 
   campaigns: {
     list: '/campaigns',

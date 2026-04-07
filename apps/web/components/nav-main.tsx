@@ -1,6 +1,14 @@
 'use client'
 
-import { ChevronRight, FileUp, Images, MapPin, Megaphone } from 'lucide-react'
+import {
+  ChevronRight,
+  FileUp,
+  LayoutDashboard,
+  MapPin,
+  Megaphone,
+  Package,
+  Sparkles,
+} from 'lucide-react'
 import {
   Collapsible,
   CollapsibleContent,
@@ -31,12 +39,12 @@ type NavItem = {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  // {
-  //   key: "news",
-  //   labelKey: "news",
-  //   href: routes.news,
-  //   icon: <Newspaper className="w-4 h-4" />,
-  // },
+  {
+    key: 'dashboard',
+    labelKey: 'dashboard',
+    href: routes.dashboard,
+    icon: <LayoutDashboard className="w-4 h-4" />,
+  },
   {
     key: 'campaigns',
     labelKey: 'campaigns',
@@ -44,16 +52,22 @@ const NAV_ITEMS: NavItem[] = [
     icon: <Megaphone className="w-4 h-4" />,
   },
   {
-    key: 'assets',
-    labelKey: 'assets',
-    href: routes.assets,
-    icon: <Images className="w-4 h-4" />,
+    key: 'studio',
+    labelKey: 'studio',
+    href: routes.studio,
+    icon: <Sparkles className="w-4 h-4" />,
   },
   {
     key: 'reports',
     labelKey: 'reports',
     icon: <FileUp className="w-4 h-4" />,
     href: routes.analytics.sales,
+  },
+  {
+    key: 'printOrders',
+    labelKey: 'printOrders',
+    href: routes.printOrders,
+    icon: <Package className="w-4 h-4" />,
   },
   {
     key: 'branches',

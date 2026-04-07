@@ -18,6 +18,7 @@ import {
 } from '@/lib/graphql/queries'
 import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
 import { matrixItemsToGroupedRows } from '@/lib/analytics/matrix-page-adapter'
+import { CreateCampaignFromReportButton } from '@/components/create-campaign-from-report-button'
 import { MatrixCategoryTables } from './matrix-category-tables'
 
 type PageProps = {
@@ -32,6 +33,7 @@ export default async function Page({ params }: PageProps) {
 
   const tSales = await getTranslations('analytics.sales')
   const tMatrix = await getTranslations('analytics.matrix')
+  const tShared = await getTranslations('analytics.shared')
 
   const { analyticsId: analyticsIdParam } = await params
   if (!analyticsIdParam) notFound()
@@ -71,9 +73,12 @@ export default async function Page({ params }: PageProps) {
     >
       <section className="border rounded-md p-6 space-y-4">
         <PageHeading title={tMatrix('heading')} description={tMatrix('description')} />
-        <Button asChild>
-          <Link href={routes.analytics.sales}>Back to Sales</Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
+          </Button>
+          <CreateCampaignFromReportButton analyticsId={analyticsId} />
+        </div>
 
         {totalItems === 0 ? (
           <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">

@@ -1,5 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
 import { Button } from '@workspace/ui/components/button'
 import { CopyrightFooter } from '@/components/copyright-footer'
 import { routes } from '@/lib/routes'
@@ -16,6 +18,11 @@ import {
 } from 'lucide-react'
 
 export default async function LandingPage() {
+  const { userId } = await auth()
+  if (userId) {
+    redirect(routes.dashboard)
+  }
+
   const t = await getTranslations('landing')
 
   return (

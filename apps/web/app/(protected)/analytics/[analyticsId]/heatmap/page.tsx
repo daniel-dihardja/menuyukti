@@ -18,6 +18,7 @@ import {
 } from '@/lib/graphql/queries'
 import { DAILY_HEATMAP_END_HOUR, DAILY_HEATMAP_START_HOUR } from '@/lib/heatmap-config'
 import { adaptDailyHeatmapMatrix, adaptWeeklyHeatmapMatrix } from './heatmap.adapters'
+import { CreateCampaignFromReportButton } from '@/components/create-campaign-from-report-button'
 import { HeatmapView } from './heatmap-view'
 
 type PageProps = {
@@ -32,6 +33,7 @@ export default async function Page({ params }: PageProps) {
 
   const tSales = await getTranslations('analytics.sales')
   const tHeatmap = await getTranslations('analytics.heatmap')
+  const tShared = await getTranslations('analytics.shared')
 
   const { analyticsId: analyticsIdParam } = await params
   if (!analyticsIdParam) notFound()
@@ -71,9 +73,12 @@ export default async function Page({ params }: PageProps) {
     >
       <section className="border rounded-md p-6 space-y-4">
         <PageHeading title={tHeatmap('heading')} description={tHeatmap('description')} />
-        <Button asChild>
-          <Link href={routes.analytics.sales}>Back to Sales</Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
+          </Button>
+          <CreateCampaignFromReportButton analyticsId={analyticsId} />
+        </div>
         <HeatmapView dailyMatrix={dailyMatrix} weeklyMatrix={weeklyMatrix} />
       </section>
     </AnalyticsPageShell>

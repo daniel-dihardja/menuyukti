@@ -17,6 +17,12 @@ import {
   PromptInputTextarea,
 } from '@workspace/ui/components/ai-elements/prompt-input'
 import { Button } from '@workspace/ui/components/button'
+import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@workspace/ui/components/resizable'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
@@ -47,6 +53,7 @@ export function CampaignChatPanel({
   locationId,
 }: CampaignChatPanelProps) {
   const t = useTranslations('analytics.campaigns.chat')
+  const tWorkspace = useTranslations('analytics.campaigns.workspace')
   const [text, setText] = useState('')
   const [milestones, setMilestones] = useState<TimelineMilestone[]>(initialMilestones)
   const [creating, setCreating] = useState(false)
@@ -601,125 +608,149 @@ export function CampaignChatPanel({
   const visibleMessages = messages.filter((msg) => msg.role !== 'system')
 
   return (
-    <div className="grid h-full min-h-0 flex-1 grid-cols-3 grid-rows-[minmax(0,1fr)] gap-4 overflow-hidden">
-      <div className="relative col-span-1 flex min-h-0 flex-col divide-y overflow-hidden rounded-lg border">
-        <Conversation aria-live="polite">
-          <ConversationContent>
-            {error ? (
-              <div
-                aria-live="polite"
-                className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-destructive text-sm"
-                role="alert"
-              >
-                <p className="font-medium">{t('errorTitle')}</p>
-                <p className="mt-1 text-muted-foreground">{error.message}</p>
-                <Button
-                  className="mt-3"
-                  onClick={() => void handleRetry()}
-                  size="sm"
-                  type="button"
-                  variant="outline"
-                >
-                  {t('retry')}
-                </Button>
-              </div>
-            ) : null}
-            {messages.length === 0 && !error ? (
-              <ConversationEmptyState description={t('emptyDescription')} title={t('emptyTitle')} />
-            ) : (
-              <>
-                {visibleMessages.map((msg) => {
-                  const isLast = msg === visibleMessages[visibleMessages.length - 1]
-                  const isActiveStream =
-                    isLast && (status === 'submitted' || status === 'streaming')
-                  const msgText = getMessageText(msg)
-                  const showFallbackSpinner =
-                    isActiveStream && msg.role === 'assistant' && msgText.length === 0
+    <ResizablePanelGroup className="h-full min-h-0 flex-1 overflow-hidden rounded-lg border">
+      <ResizablePanel defaultSize={40} minSize={28}>
+        <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+          <TimelineWorkspace
+            createError={createError}
+            creating={creating}
+            deleteError={deleteError}
+            deletingMilestoneId={deletingMilestoneId}
+            goalError={goalError}
+            isChatBusy={isChatBusy}
+            milestoneDataError={milestoneDataError}
+            milestonePrepareError={milestonePrepareError}
+            milestoneRunError={milestoneRunError}
+            milestones={milestones}
+            moveError={moveError}
+            movingMilestoneId={movingMilestoneId}
+            onCreateMilestone={handleCreateMilestone}
+            onDeleteMilestone={handleDeleteMilestone}
+            onMoveMilestone={handleMoveMilestone}
+            onPrepareMilestone={handlePrepareMilestone}
+            onRenameMilestone={handleRenameMilestone}
+            onRunMilestone={handleRunMilestone}
+            onSetMilestoneDataTask={handleSetMilestoneDataTask}
+            onUpdateMilestoneData={handleUpdateMilestoneData}
+            onUpdateMilestoneGoal={handleUpdateMilestoneGoal}
+            onUpdatePassCriteria={handleUpdatePassCriteria}
+            passCriteriaError={passCriteriaError}
+            preparingMilestoneId={preparingMilestoneId}
+            renameError={renameError}
+            renamingMilestoneId={renamingMilestoneId}
+            runningMilestoneId={runningMilestoneId}
+            runningStep={runningStep}
+            savingDataMilestoneId={savingDataMilestoneId}
+            savingGoalMilestoneId={savingGoalMilestoneId}
+            savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
+          />
+        </div>
+      </ResizablePanel>
 
-                  return (
-                    <Message from={msg.role} key={msg.id}>
-                      <MessageContent>
-                        {showFallbackSpinner ? (
+      <ResizableHandle withHandle />
+
+      <ResizablePanel defaultSize={22} minSize={16}>
+        <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-muted/20 p-3">
+          <Card className="flex h-full min-h-0 flex-col overflow-hidden border-dashed">
+            <CardHeader className="shrink-0">
+              <CardTitle className="text-base">{tWorkspace('previewTitle')}</CardTitle>
+              <CardDescription className="text-pretty">
+                {tWorkspace('previewDescription')}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </ResizablePanel>
+
+      <ResizableHandle withHandle />
+
+      <ResizablePanel defaultSize={38} minSize={22}>
+        <div className="relative flex h-full min-h-0 min-w-0 flex-col divide-y overflow-hidden">
+          <Conversation aria-live="polite">
+            <ConversationContent>
+              {error ? (
+                <div
+                  aria-live="polite"
+                  className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-destructive text-sm"
+                  role="alert"
+                >
+                  <p className="font-medium">{t('errorTitle')}</p>
+                  <p className="mt-1 text-muted-foreground">{error.message}</p>
+                  <Button
+                    className="mt-3"
+                    onClick={() => void handleRetry()}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    {t('retry')}
+                  </Button>
+                </div>
+              ) : null}
+              {messages.length === 0 && !error ? (
+                <ConversationEmptyState
+                  description={t('emptyDescription')}
+                  title={t('emptyTitle')}
+                />
+              ) : (
+                <>
+                  {visibleMessages.map((msg) => {
+                    const isLast = msg === visibleMessages[visibleMessages.length - 1]
+                    const isActiveStream =
+                      isLast && (status === 'submitted' || status === 'streaming')
+                    const msgText = getMessageText(msg)
+                    const showFallbackSpinner =
+                      isActiveStream && msg.role === 'assistant' && msgText.length === 0
+
+                    return (
+                      <Message from={msg.role} key={msg.id}>
+                        <MessageContent>
+                          {showFallbackSpinner ? (
+                            <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                              <Spinner />
+                              <span>{t('thinking')}</span>
+                            </div>
+                          ) : (
+                            <ChatMessageParts message={msg} role={msg.role} />
+                          )}
+                        </MessageContent>
+                      </Message>
+                    )
+                  })}
+                  {visibleMessages.length > 0 &&
+                    (status === 'submitted' || status === 'streaming') &&
+                    visibleMessages[visibleMessages.length - 1]?.role === 'user' && (
+                      <Message from="assistant">
+                        <MessageContent>
                           <div className="flex items-center gap-2 text-muted-foreground text-sm">
                             <Spinner />
                             <span>{t('thinking')}</span>
                           </div>
-                        ) : (
-                          <ChatMessageParts message={msg} role={msg.role} />
-                        )}
-                      </MessageContent>
-                    </Message>
-                  )
-                })}
-                {visibleMessages.length > 0 &&
-                  (status === 'submitted' || status === 'streaming') &&
-                  visibleMessages[visibleMessages.length - 1]?.role === 'user' && (
-                    <Message from="assistant">
-                      <MessageContent>
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                          <Spinner />
-                          <span>{t('thinking')}</span>
-                        </div>
-                      </MessageContent>
-                    </Message>
-                  )}
-              </>
-            )}
-          </ConversationContent>
-          <ConversationScrollButton />
-        </Conversation>
-        <div className="shrink-0 p-4">
-          <PromptInput globalDrop multiple onSubmit={handleSubmit}>
-            <PromptInputBody>
-              <PromptInputTextarea
-                placeholder={t('placeholder')}
-                value={text}
-                onChange={handleTextChange}
-              />
-            </PromptInputBody>
-            <PromptInputFooter>
-              <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />
-            </PromptInputFooter>
-          </PromptInput>
+                        </MessageContent>
+                      </Message>
+                    )}
+                </>
+              )}
+            </ConversationContent>
+            <ConversationScrollButton />
+          </Conversation>
+          <div className="shrink-0 p-4">
+            <PromptInput globalDrop multiple onSubmit={handleSubmit}>
+              <PromptInputBody>
+                <PromptInputTextarea
+                  placeholder={t('placeholder')}
+                  value={text}
+                  onChange={handleTextChange}
+                />
+              </PromptInputBody>
+              <PromptInputFooter>
+                <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />
+              </PromptInputFooter>
+            </PromptInput>
+          </div>
         </div>
-      </div>
-
-      <div className="col-span-2 flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-        <TimelineWorkspace
-          createError={createError}
-          creating={creating}
-          deleteError={deleteError}
-          deletingMilestoneId={deletingMilestoneId}
-          goalError={goalError}
-          isChatBusy={isChatBusy}
-          milestoneDataError={milestoneDataError}
-          milestonePrepareError={milestonePrepareError}
-          milestoneRunError={milestoneRunError}
-          milestones={milestones}
-          moveError={moveError}
-          movingMilestoneId={movingMilestoneId}
-          onCreateMilestone={handleCreateMilestone}
-          onDeleteMilestone={handleDeleteMilestone}
-          onMoveMilestone={handleMoveMilestone}
-          onPrepareMilestone={handlePrepareMilestone}
-          onRenameMilestone={handleRenameMilestone}
-          onRunMilestone={handleRunMilestone}
-          onSetMilestoneDataTask={handleSetMilestoneDataTask}
-          onUpdateMilestoneData={handleUpdateMilestoneData}
-          onUpdateMilestoneGoal={handleUpdateMilestoneGoal}
-          onUpdatePassCriteria={handleUpdatePassCriteria}
-          passCriteriaError={passCriteriaError}
-          preparingMilestoneId={preparingMilestoneId}
-          renameError={renameError}
-          renamingMilestoneId={renamingMilestoneId}
-          runningMilestoneId={runningMilestoneId}
-          runningStep={runningStep}
-          savingDataMilestoneId={savingDataMilestoneId}
-          savingGoalMilestoneId={savingGoalMilestoneId}
-          savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
-        />
-      </div>
-    </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   )
 }
 

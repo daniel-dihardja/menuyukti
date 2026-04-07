@@ -152,16 +152,48 @@
   },
   "sidebar": {
     "groupLabel": "Menuyukti",
+    "dashboard": "Dashboard",
     "news": "News",
     "analysis": "Analysis",
     "branches": "Locations",
     "reports": "Reports",
     "campaigns": "Campaigns",
+    "studio": "Studio",
+    "printOrders": "Print orders",
     "agents": "Agents",
     "cogs": "COGS",
     "fixedCosts": "Fixed Costs",
     "docs": "Docs",
     "assets": "Assets"
+  },
+  "platform": {
+    "dashboard": {
+      "title": "Dashboard",
+      "description": "Campaigns, brand assets, and quick links across your workspace.",
+      "campaignsHeading": "Campaigns",
+      "campaignsViewAll": "View all campaigns",
+      "viewCampaign": "Open campaign",
+      "noCampaigns": "No campaigns yet",
+      "createCampaign": "Create campaign",
+      "assetsHeading": "Studio",
+      "assetsDescription": "Recent images from your brand library.",
+      "assetsOpenStudio": "Open Studio",
+      "assetsEmpty": "No images in your library yet.",
+      "printHeading": "Print orders",
+      "printDescription": "Track print-on-demand orders when fulfillment is connected.",
+      "printViewOrders": "Print orders",
+      "insightsHeading": "Insights",
+      "insightsDescription": "Upload sales data and open analytics to see what to promote next.",
+      "insightsCta": "Go to reports",
+      "branchLabel": "Location"
+    },
+    "printOrders": {
+      "title": "Print orders",
+      "description": "Fulfillment history and status for print-on-demand orders.",
+      "emptyTitle": "No orders yet",
+      "emptyDescription": "When you place orders from the print shop, they will appear here.",
+      "browseShop": "Browse print shop"
+    }
   },
   "assets": {
     "title": "Brand assets",
@@ -524,6 +556,26 @@
         "fieldSaveStatusSaved": "Saved",
         "fieldSaveStatusUnsaved": "Changed"
       },
+      "workspace": {
+        "tabBrief": "Brief & milestones",
+        "tabAssets": "Assets",
+        "tabPrint": "Print & ship",
+        "previewTitle": "Preview",
+        "previewDescription": "Campaign visuals and milestones stay in sync as you work. Generate images from the Brief tab.",
+        "generateVisuals": "Generate visuals",
+        "studioSheetTitle": "AI asset studio",
+        "studioSheetDescription": "Upload or generate images for your brand library. They are available across campaigns.",
+        "studioSheetClose": "Close studio",
+        "orderPrints": "Order prints",
+        "printDialogTitle": "Print on demand",
+        "printDialogDescription": "Browse the print shop to order branded wall art, packaging, and more. Use your library images where product customization allows.",
+        "openPrintShop": "Open print shop",
+        "viewPrintOrders": "View print orders",
+        "assetsTabDescription": "Your brand library images. Add more from the Brief tab with Generate visuals.",
+        "loadingAssets": "Loading assets…",
+        "assetsEmpty": "No images yet",
+        "assetsEmptyHint": "Open Generate visuals to add images to your library."
+      },
       "milestoneRun": {
         "runningLabel": "Evaluation in progress…",
         "stepFetchContext": "Fetching context",
@@ -594,6 +646,11 @@
         "loadImportFailed": "Failed to load COGS from analytics",
         "unknown": "Unknown error"
       }
+    },
+    "shared": {
+      "backToSales": "Back to sales",
+      "createCampaignFromReport": "Create campaign",
+      "createCampaignFromReportHint": "Open campaigns with this report context to plan promos from these insights."
     },
     "heatmap": {
       "reportTitle": "Heatmaps",
