@@ -5,6 +5,7 @@ from __future__ import annotations
 import httpx
 from agents_app.agents.domain.location_profile.graphql_client import (
     fetch_latest_analytics_run_id,
+    fetch_location_dict,
     fetch_operating_profile_dict,
     upsert_milestonedata,
 )
@@ -42,16 +43,24 @@ def build_location_profile_graph(client: httpx.AsyncClient):
         if not profile:
             msg = "Could not load operating profile for the latest analytics run."
             raise RuntimeError(msg)
-        return {"profile_data": profile}
+        location = await fetch_location_dict(
+            state["location_id"],
+            state["user_id"],
+            client=client,
+        )
+        return {"profile_data": profile, "location_data": location}
 
     async def generate(state: LocationProfileState) -> dict[str, object]:
         writer = get_stream_writer()
         writer({"step": "generate"})
         llm = get_llm()
         profile = state.get("profile_data") or {}
+        location = state.get("location_data")
         messages = [
             SystemMessage(content=LOCATION_PROFILE_SYSTEM),
-            HumanMessage(content=location_profile_human_message(profile)),
+            HumanMessage(
+                content=location_profile_human_message(profile, location=location),
+            ),
         ]
         full = ""
         async for chunk in llm.astream(messages):

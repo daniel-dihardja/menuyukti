@@ -45,6 +45,7 @@ class Location(Base):
     street = Column(String(512), nullable=True)
     city = Column(String(128), nullable=True)
     country = Column(String(128), nullable=True)
+    currency = Column(String(16), nullable=True)
     clerk_user_id = Column(String(128), nullable=True, index=True)
     node_id = Column(
         Integer,

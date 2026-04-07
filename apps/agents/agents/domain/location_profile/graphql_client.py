@@ -18,6 +18,19 @@ query AnalyticsRunsByLocation($locationId: Int!) {
 }
 """
 
+_LOCATION_QUERY = """
+query GetLocation($id: ID!) {
+  location(id: $id) {
+    id
+    name
+    street
+    city
+    country
+    currency
+  }
+}
+"""
+
 _OPERATING_PROFILE_QUERY = """
 query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
   operatingProfile(locationId: $locationId, analyticsRunId: $analyticsRunId) {
@@ -133,6 +146,27 @@ async def fetch_latest_analytics_run_id(
         return None
     rid = first.get("id")
     return str(rid) if rid is not None else None
+
+
+async def fetch_location_dict(
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Load location row fields (name, address, currency) from GraphQL."""
+    data = await graphql_post(
+        client,
+        _LOCATION_QUERY,
+        {"id": str(location_id)},
+        user_id,
+    )
+    raw = data.get("location")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return json.loads(json.dumps(raw))
 
 
 async def fetch_operating_profile_dict(

@@ -71,6 +71,7 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
             name="Dev (Jan-Mar 2025)",
             city="Jakarta",
             country="Indonesia",
+            currency="IDR",
             clerk_user_id=clerk_user_id,
         )
         session.add(location)

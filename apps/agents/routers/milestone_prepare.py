@@ -38,6 +38,7 @@ async def milestone_prepare(
             "location_id": body.location_id,
             "user_id": x_menuyukti_user_id,
             "profile_data": {},
+            "location_data": None,
             "generated_text": "",
             "milestonedata_id": None,
         }

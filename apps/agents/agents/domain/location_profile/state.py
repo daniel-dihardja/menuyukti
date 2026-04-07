@@ -10,5 +10,6 @@ class LocationProfileState(TypedDict):
     location_id: int
     user_id: str
     profile_data: dict[str, Any]
+    location_data: dict[str, Any] | None
     generated_text: str
     milestonedata_id: str | None
