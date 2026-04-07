@@ -224,26 +224,14 @@ export function MilestoneItemTabs({
                 </SelectContent>
               </Select>
             </Field>
-            {dataTask === 'manual' ? (
-              <Field>
-                <FieldLabel htmlFor={dataFieldId}>{t('milestoneDataLabel')}</FieldLabel>
-                <FieldDescription>{t('milestoneDataDescription')}</FieldDescription>
-                <Textarea
-                  className="min-h-[120px] resize-y whitespace-pre-wrap"
-                  disabled={savingData}
-                  id={dataFieldId}
-                  onChange={(e) => setDataDraft(e.target.value)}
-                  onBlur={handleDataBlur}
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  placeholder={t('milestoneDataPlaceholder')}
-                  value={dataDraft}
-                />
-              </Field>
-            ) : (
-              <Field>
-                <FieldLabel htmlFor={dataFieldId}>{t('milestoneDataLabel')}</FieldLabel>
-                <FieldDescription>{t('milestoneDataDescriptionLocationProfile')}</FieldDescription>
+            <Field>
+              <FieldLabel htmlFor={dataFieldId}>{t('milestoneDataLabel')}</FieldLabel>
+              <FieldDescription>
+                {dataTask === 'manual'
+                  ? t('milestoneDataDescription')
+                  : t('milestoneDataDescriptionLocationProfile')}
+              </FieldDescription>
+              {dataTask === 'location_profile' ? (
                 <div className="flex flex-wrap items-center gap-2 pb-2">
                   <Button
                     disabled={isPreparing || !onPrepareMilestone}
@@ -267,16 +255,45 @@ export function MilestoneItemTabs({
                     )}
                   </Button>
                 </div>
-                <Textarea
-                  className="min-h-[200px] resize-y whitespace-pre-wrap"
-                  id={dataFieldId}
+              ) : null}
+              <Tabs className="gap-3" defaultValue="edit">
+                <TabsList
+                  className="h-9 w-full max-w-md"
+                  variant="default"
                   onClick={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}
-                  readOnly
-                  value={dataDraft}
-                />
-              </Field>
-            )}
+                >
+                  <TabsTrigger className="flex-1" value="edit">
+                    {t('milestoneDataEditTab')}
+                  </TabsTrigger>
+                  <TabsTrigger className="flex-1" value="preview">
+                    {t('milestoneDataPreviewTab')}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent className="mt-0" value="edit">
+                  <Textarea
+                    className="min-h-[200px] resize-y whitespace-pre-wrap"
+                    disabled={savingData}
+                    id={dataFieldId}
+                    onChange={(e) => setDataDraft(e.target.value)}
+                    onBlur={handleDataBlur}
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    placeholder={t('milestoneDataPlaceholder')}
+                    value={dataDraft}
+                  />
+                </TabsContent>
+                <TabsContent className="mt-0" value="preview">
+                  {dataDraft.trim() ? (
+                    <div className="max-h-[min(50vh,28rem)] overflow-y-auto rounded-md border border-border/60 bg-muted/30 p-3">
+                      <MarkdownMessage content={dataDraft} />
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">{t('milestoneDataPreviewEmpty')}</p>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </Field>
           </FieldGroup>
         </TabsContent>
         <TabsContent value="result">

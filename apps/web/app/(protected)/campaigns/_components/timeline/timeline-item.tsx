@@ -221,9 +221,6 @@ export function TimelineItem({
   }
 
   const handleDataBlur = () => {
-    if (milestone.dataTask === 'location_profile') {
-      return
-    }
     if (!onUpdateMilestoneData || savingData) {
       return
     }
