@@ -3,83 +3,26 @@
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
+import { useTimelineContext } from '../timeline-context'
 import { TimelineItem } from './timeline-item'
-import type {
-  MilestoneDataTask,
-  MilestoneStatusLabels,
-  PassCriteriaRow,
-  TimelineMilestone,
-} from './types'
-
-export type TimelineBodyProps = {
-  milestones: TimelineMilestone[]
-  selectedId: string | null
-  onSelectMilestone: (id: string) => void
-  listLabel: string
-  expandDetailsLabel: string
-  collapseDetailsLabel: string
-  statusLabels: MilestoneStatusLabels
-  onDeleteMilestone?: (id: string) => void | Promise<void>
-  deletingMilestoneId: string | null
-  deleteButtonLabel: string
-  deleteMilestoneAriaLabel: string
-  deleteMilestoneConfirmTitle: string
-  deleteMilestoneConfirmDescription: string
-  deleteMilestoneConfirmCancel: string
-  deleteMilestoneConfirmAction: string
-  onRenameMilestone?: (id: string, name: string) => Promise<boolean>
-  renamingMilestoneId: string | null
-  onUpdatePassCriteria?: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
-  savingPassCriteriaMilestoneId: string | null
-  onUpdateMilestoneGoal?: (id: string, goal: string) => Promise<boolean>
-  savingGoalMilestoneId: string | null
-  onUpdateMilestoneData?: (id: string, milestoneData: string) => Promise<boolean>
-  savingDataMilestoneId: string | null
-  onSetMilestoneDataTask?: (id: string, dataTask: MilestoneDataTask) => Promise<boolean>
-  onPrepareMilestone?: (id: string) => void | Promise<void>
-  preparingMilestoneId?: string | null
-  onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
-  movingMilestoneId: string | null
-  onRunMilestone?: (id: string) => void | Promise<void>
-  isChatBusy?: boolean
-  runningMilestoneId?: string | null
-  runningStep?: string | null
-}
+import type { TimelineBodyLabelsProps } from './types'
 
 export function TimelineBody({
-  milestones,
   selectedId,
   onSelectMilestone,
   listLabel,
   expandDetailsLabel,
   collapseDetailsLabel,
   statusLabels,
-  onDeleteMilestone,
-  deletingMilestoneId,
   deleteButtonLabel,
   deleteMilestoneAriaLabel,
   deleteMilestoneConfirmTitle,
   deleteMilestoneConfirmDescription,
   deleteMilestoneConfirmCancel,
   deleteMilestoneConfirmAction,
-  onRenameMilestone,
-  renamingMilestoneId,
-  onUpdatePassCriteria,
-  savingPassCriteriaMilestoneId,
-  onUpdateMilestoneGoal,
-  savingGoalMilestoneId,
-  onUpdateMilestoneData,
-  savingDataMilestoneId,
-  onSetMilestoneDataTask,
-  onPrepareMilestone,
-  preparingMilestoneId = null,
-  onMoveMilestone,
-  movingMilestoneId,
-  onRunMilestone,
-  isChatBusy = false,
-  runningMilestoneId = null,
-  runningStep = null,
-}: TimelineBodyProps) {
+}: TimelineBodyLabelsProps) {
+  const { milestones, onDeleteMilestone } = useTimelineContext()
+
   return (
     <TooltipProvider>
       <div className="min-h-0 flex-1">
@@ -99,31 +42,12 @@ export function TimelineBody({
                   deleteMilestoneConfirmDescription={deleteMilestoneConfirmDescription}
                   deleteMilestoneConfirmTitle={deleteMilestoneConfirmTitle}
                   expandDetailsLabel={expandDetailsLabel}
-                  isChatBusy={isChatBusy}
-                  isDeleting={deletingMilestoneId === milestone.id}
                   isFirst={index === 0}
                   isLast={isLast}
-                  isMoving={movingMilestoneId === milestone.id}
                   isSelected={milestone.id === selectedId}
                   milestone={milestone}
-                  onDeleteMilestone={onDeleteMilestone}
-                  onMoveMilestone={onMoveMilestone}
-                  onRenameMilestone={onRenameMilestone}
-                  onRunMilestone={onRunMilestone}
                   onSelect={onSelectMilestone}
-                  onPrepareMilestone={onPrepareMilestone}
-                  onSetMilestoneDataTask={onSetMilestoneDataTask}
-                  onUpdateMilestoneData={onUpdateMilestoneData}
-                  onUpdateMilestoneGoal={onUpdateMilestoneGoal}
-                  onUpdatePassCriteria={onUpdatePassCriteria}
                   positionIndex={index + 1}
-                  preparingMilestoneId={preparingMilestoneId}
-                  renamingMilestoneId={renamingMilestoneId}
-                  runningMilestoneId={runningMilestoneId}
-                  runningStep={runningStep}
-                  savingDataMilestoneId={savingDataMilestoneId}
-                  savingGoalMilestoneId={savingGoalMilestoneId}
-                  savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
                   showDelete={showDelete}
                   statusLabels={statusLabels}
                 />

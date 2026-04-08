@@ -11,8 +11,7 @@ import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import { graphqlQuery } from '@/lib/graphql/client'
-import { LOCATIONS_QUERY, type LocationsData } from '@/lib/graphql/queries'
+import { getCachedLocationsData } from '@/lib/graphql/cached-queries'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
 function LocationsPageSkeleton() {
@@ -47,7 +46,7 @@ async function LocationsPageData() {
     redirect(routes.login)
   }
 
-  const data = await graphqlQuery<LocationsData>(LOCATIONS_QUERY, undefined, userId)
+  const data = await getCachedLocationsData(userId)
   const branches = data.locations
 
   return (

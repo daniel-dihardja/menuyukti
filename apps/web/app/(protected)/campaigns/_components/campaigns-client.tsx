@@ -82,11 +82,11 @@ export function CampaignsClient({ branches }: Props) {
       return
     }
 
-    let cancelled = false
+    const controller = new AbortController()
     setLoadingCampaigns(true)
     setListError(null)
 
-    void fetch(`/api/campaigns?locationId=${locationId}`)
+    void fetch(`/api/campaigns?locationId=${locationId}`, { signal: controller.signal })
       .then(async (res) => {
         const body = (await res.json().catch(() => null)) as {
           nodes?: CampaignNode[]
@@ -98,25 +98,22 @@ export function CampaignsClient({ branches }: Props) {
         return body?.nodes ?? []
       })
       .then((nodes) => {
-        if (!cancelled) {
-          setCampaigns(nodes)
-        }
+        setCampaigns(nodes)
       })
       .catch((err: unknown) => {
-        if (!cancelled) {
-          setCampaigns([])
-          setListError(err instanceof Error ? err.message : t('listFailed'))
+        if (err instanceof Error && err.name === 'AbortError') {
+          return
         }
+        setCampaigns([])
+        setListError(err instanceof Error ? err.message : t('listFailed'))
       })
       .finally(() => {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setLoadingCampaigns(false)
         }
       })
 
-    return () => {
-      cancelled = true
-    }
+    return () => controller.abort()
   }, [locationId, t])
 
   const hasCampaigns = campaigns.length > 0

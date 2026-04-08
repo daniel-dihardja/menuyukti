@@ -33,38 +33,23 @@ export type MilestoneStatusLabels = {
   empty: string
 }
 
+/** Optional loading/error when milestones are not yet in `TimelineProvider`. */
 export type TimelineWorkspaceProps = {
-  milestones: TimelineMilestone[]
   isLoading?: boolean
   loadError?: string | null
-  createError?: string | null
-  deleteError?: string | null
-  moveError?: string | null
-  creating?: boolean
-  deletingMilestoneId?: string | null
-  movingMilestoneId?: string | null
-  onCreateMilestone: () => void | Promise<void>
-  onDeleteMilestone?: (id: string) => void | Promise<void>
-  onRenameMilestone?: (id: string, name: string) => Promise<boolean>
-  onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
-  renamingMilestoneId?: string | null
-  renameError?: string | null
-  onUpdatePassCriteria?: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
-  savingPassCriteriaMilestoneId?: string | null
-  passCriteriaError?: string | null
-  onUpdateMilestoneGoal?: (id: string, goal: string) => Promise<boolean>
-  savingGoalMilestoneId?: string | null
-  goalError?: string | null
-  onUpdateMilestoneData?: (id: string, milestoneData: string) => Promise<boolean>
-  savingDataMilestoneId?: string | null
-  milestoneDataError?: string | null
-  onSetMilestoneDataTask?: (id: string, dataTask: MilestoneDataTask) => Promise<boolean>
-  onPrepareMilestone?: (id: string) => void | Promise<void>
-  preparingMilestoneId?: string | null
-  milestonePrepareError?: string | null
-  onRunMilestone?: (id: string) => void | Promise<void>
-  isChatBusy?: boolean
-  runningMilestoneId?: string | null
-  runningStep?: string | null
-  milestoneRunError?: string | null
+}
+
+export type TimelineBodyLabelsProps = {
+  selectedId: string | null
+  onSelectMilestone: (id: string) => void
+  listLabel: string
+  expandDetailsLabel: string
+  collapseDetailsLabel: string
+  statusLabels: MilestoneStatusLabels
+  deleteButtonLabel: string
+  deleteMilestoneAriaLabel: string
+  deleteMilestoneConfirmTitle: string
+  deleteMilestoneConfirmDescription: string
+  deleteMilestoneConfirmCancel: string
+  deleteMilestoneConfirmAction: string
 }

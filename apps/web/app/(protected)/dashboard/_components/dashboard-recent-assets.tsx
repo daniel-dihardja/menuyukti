@@ -21,22 +21,29 @@ export function DashboardRecentAssets() {
   const [items, setItems] = useState<AssetItem[]>([])
   const [loading, setLoading] = useState(true)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
     try {
-      const res = await fetch('/api/assets/list')
+      const res = await fetch('/api/assets/list', { signal })
       if (!res.ok) throw new Error('list failed')
       const data = (await res.json()) as { items: AssetItem[] }
       setItems((data.items ?? []).slice(0, PREVIEW_COUNT))
-    } catch {
+    } catch (e) {
+      if (e instanceof Error && e.name === 'AbortError') {
+        return
+      }
       setItems([])
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) {
+        setLoading(false)
+      }
     }
   }, [])
 
   useEffect(() => {
-    void load()
+    const controller = new AbortController()
+    void load(controller.signal)
+    return () => controller.abort()
   }, [load])
 
   if (loading) {

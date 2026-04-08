@@ -27,19 +27,18 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { useTranslations } from 'next-intl'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
 
-import type {
-  MilestoneDataTask,
-  PassCriteriaRow,
-  PassCriteriaStatus,
-  TimelineMilestone,
-} from './timeline-workspace'
+import type { TimelineMilestone } from './timeline-workspace'
 import { TimelineWorkspace } from './timeline-workspace'
 import { ChatMessageParts } from './chat-message-parts'
-import { milestoneDataSchema } from '@/lib/graphql/node-schemas'
 
-import { deriveMilestoneRailStatus, milestoneNodeToTimelineMilestone } from './milestone-map'
+import {
+  campaignMilestoneReducer,
+  createInitialCampaignMilestoneUiState,
+} from './campaign-milestone-reducer'
+import { TimelineProvider, type TimelineContextValue } from './timeline-context'
+import { useMilestoneOperations } from './use-milestone-operations'
 
 export type CampaignChatPanelProps = {
   campaignId: string
@@ -55,51 +54,18 @@ export function CampaignChatPanel({
   const t = useTranslations('analytics.campaigns.chat')
   const tWorkspace = useTranslations('analytics.campaigns.workspace')
   const [text, setText] = useState('')
-  const [milestones, setMilestones] = useState<TimelineMilestone[]>(initialMilestones)
-  const [creating, setCreating] = useState(false)
-  const [createError, setCreateError] = useState<string | null>(null)
-  const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [renamingMilestoneId, setRenamingMilestoneId] = useState<string | null>(null)
-  const [renameError, setRenameError] = useState<string | null>(null)
-  const [savingPassCriteriaMilestoneId, setSavingPassCriteriaMilestoneId] = useState<string | null>(
-    null,
+
+  const [milestoneUi, dispatch] = useReducer(
+    campaignMilestoneReducer,
+    initialMilestones,
+    createInitialCampaignMilestoneUiState,
   )
-  const [passCriteriaError, setPassCriteriaError] = useState<string | null>(null)
-  const [savingGoalMilestoneId, setSavingGoalMilestoneId] = useState<string | null>(null)
-  const [goalError, setGoalError] = useState<string | null>(null)
-  const [savingDataMilestoneId, setSavingDataMilestoneId] = useState<string | null>(null)
-  const [milestoneDataError, setMilestoneDataError] = useState<string | null>(null)
-  const [moveError, setMoveError] = useState<string | null>(null)
-  const [movingMilestoneId, setMovingMilestoneId] = useState<string | null>(null)
-  const [runningMilestoneId, setRunningMilestoneId] = useState<string | null>(null)
-  /** Current agent graph step from SSE (`fetch_context`, `evaluate_criterion`, …). */
-  const [runningStep, setRunningStep] = useState<string | null>(null)
-  const [milestoneRunError, setMilestoneRunError] = useState<string | null>(null)
-  const [preparingMilestoneId, setPreparingMilestoneId] = useState<string | null>(null)
-  const [milestonePrepareError, setMilestonePrepareError] = useState<string | null>(null)
 
   useEffect(() => {
-    setMilestones(initialMilestones)
-    setCreateError(null)
-    setDeleteError(null)
-    setDeletingMilestoneId(null)
-    setRenameError(null)
-    setRenamingMilestoneId(null)
-    setPassCriteriaError(null)
-    setSavingPassCriteriaMilestoneId(null)
-    setGoalError(null)
-    setSavingGoalMilestoneId(null)
-    setMilestoneDataError(null)
-    setSavingDataMilestoneId(null)
-    setMoveError(null)
-    setMovingMilestoneId(null)
-    setRunningMilestoneId(null)
-    setRunningStep(null)
-    setMilestoneRunError(null)
-    setPreparingMilestoneId(null)
-    setMilestonePrepareError(null)
+    dispatch({ type: 'RESET', milestones: initialMilestones })
   }, [campaignId, initialMilestones])
+
+  const ops = useMilestoneOperations(dispatch, { campaignId, locationId, t })
 
   const transport = useMemo(
     () =>
@@ -142,615 +108,143 @@ export function CampaignChatPanel({
     await regenerate()
   }, [clearError, regenerate])
 
-  const handleCreateMilestone = useCallback(async () => {
-    setCreateError(null)
-    setCreating(true)
-    try {
-      const res = await fetch(`/api/campaigns/${campaignId}/milestones`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      })
-      const body = (await res.json().catch(() => null)) as {
-        message?: string
-        id?: string
-        name?: string
-        data?: unknown | null
-      } | null
-      if (!res.ok) {
-        throw new Error(body?.message ?? t('milestonesCreateError'))
-      }
-      const id = body?.id
-      const name = body?.name
-      if (typeof id === 'string' && typeof name === 'string') {
-        const created = { id, name, data: body?.data }
-        setMilestones((prev) => [...prev, milestoneNodeToTimelineMilestone(created)])
-      }
-    } catch (err) {
-      setCreateError(err instanceof Error ? err.message : t('milestonesCreateError'))
-    } finally {
-      setCreating(false)
-    }
-  }, [campaignId, t])
-
-  const handleDeleteMilestone = useCallback(
-    async (milestoneId: string) => {
-      setDeleteError(null)
-      setDeletingMilestoneId(milestoneId)
-      try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
-          method: 'DELETE',
-        })
-        if (res.status === 204) {
-          setMilestones((prev) => prev.filter((m) => m.id !== milestoneId))
-          return
-        }
-        const body = (await res.json().catch(() => null)) as { message?: string } | null
-        throw new Error(body?.message ?? t('milestonesDeleteError'))
-      } catch (err) {
-        setDeleteError(err instanceof Error ? err.message : t('milestonesDeleteError'))
-      } finally {
-        setDeletingMilestoneId(null)
-      }
-    },
-    [campaignId, t],
-  )
-
-  const handleRenameMilestone = useCallback(
-    async (milestoneId: string, name: string): Promise<boolean> => {
-      setRenameError(null)
-      setRenamingMilestoneId(milestoneId)
-      try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name }),
-        })
-        const body = (await res.json().catch(() => null)) as {
-          message?: string
-          name?: string
-        } | null
-        if (!res.ok) {
-          throw new Error(body?.message ?? t('milestonesRenameError'))
-        }
-        const newName = body?.name
-        if (typeof newName === 'string') {
-          setMilestones((prev) =>
-            prev.map((m) => (m.id === milestoneId ? { ...m, title: newName } : m)),
-          )
-          return true
-        }
-        return false
-      } catch (err) {
-        setRenameError(err instanceof Error ? err.message : t('milestonesRenameError'))
-        return false
-      } finally {
-        setRenamingMilestoneId(null)
-      }
-    },
-    [campaignId, t],
-  )
-
-  const handleUpdatePassCriteria = useCallback(
-    async (milestoneId: string, passCriteria: PassCriteriaRow[]): Promise<boolean> => {
-      setPassCriteriaError(null)
-      setSavingPassCriteriaMilestoneId(milestoneId)
-      try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ passCriteria }),
-        })
-        const body = (await res.json().catch(() => null)) as {
-          message?: string
-          passCriteria?: PassCriteriaRow[]
-        } | null
-        if (!res.ok) {
-          throw new Error(body?.message ?? t('milestonesPassCriteriaError'))
-        }
-        const nextCriteria = body?.passCriteria ?? passCriteria
-        setMilestones((prev) =>
-          prev.map((m) => {
-            if (m.id !== milestoneId) {
-              return m
-            }
-            return {
-              ...m,
-              passCriteria: nextCriteria,
-              status: deriveMilestoneRailStatus(nextCriteria, m.resultMarkdown),
-            }
-          }),
-        )
-        return true
-      } catch (err) {
-        setPassCriteriaError(err instanceof Error ? err.message : t('milestonesPassCriteriaError'))
-        return false
-      } finally {
-        setSavingPassCriteriaMilestoneId(null)
-      }
-    },
-    [campaignId, t],
-  )
-
-  const handleUpdateMilestoneGoal = useCallback(
-    async (milestoneId: string, goal: string): Promise<boolean> => {
-      setGoalError(null)
-      setSavingGoalMilestoneId(milestoneId)
-      try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ goal }),
-        })
-        const body = (await res.json().catch(() => null)) as {
-          message?: string
-          data?: unknown
-        } | null
-        if (!res.ok) {
-          throw new Error(body?.message ?? t('milestonesGoalError'))
-        }
-        const rawData = body?.data
-        let nextGoal: string | undefined
-        if (rawData != null && typeof rawData === 'object') {
-          const parsed = milestoneDataSchema.safeParse(rawData)
-          if (parsed.success) {
-            nextGoal = parsed.data.goal
-          }
-        }
-        setMilestones((prev) =>
-          prev.map((m) => (m.id === milestoneId ? { ...m, goal: nextGoal ?? goal } : m)),
-        )
-        return true
-      } catch (err) {
-        setGoalError(err instanceof Error ? err.message : t('milestonesGoalError'))
-        return false
-      } finally {
-        setSavingGoalMilestoneId(null)
-      }
-    },
-    [campaignId, t],
-  )
-
-  const handleUpdateMilestoneData = useCallback(
-    async (milestoneId: string, milestoneData: string): Promise<boolean> => {
-      setMilestoneDataError(null)
-      setSavingDataMilestoneId(milestoneId)
-      try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ milestoneData }),
-        })
-        const body = (await res.json().catch(() => null)) as { message?: string } | null
-        if (!res.ok) {
-          throw new Error(body?.message ?? t('milestonesMilestoneDataError'))
-        }
-        setMilestones((prev) =>
-          prev.map((m) => (m.id === milestoneId ? { ...m, data: milestoneData } : m)),
-        )
-        return true
-      } catch (err) {
-        setMilestoneDataError(
-          err instanceof Error ? err.message : t('milestonesMilestoneDataError'),
-        )
-        return false
-      } finally {
-        setSavingDataMilestoneId(null)
-      }
-    },
-    [campaignId, t],
-  )
-
-  const handleSetMilestoneDataTask = useCallback(
-    async (milestoneId: string, dataTask: MilestoneDataTask): Promise<boolean> => {
-      setMilestonePrepareError(null)
-      try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ dataTask }),
-        })
-        const body = (await res.json().catch(() => null)) as {
-          message?: string
-          data?: unknown
-        } | null
-        if (!res.ok) {
-          throw new Error(body?.message ?? t('milestonesMilestoneDataError'))
-        }
-        const nodeBody = body as { data?: unknown }
-        const parsed = milestoneDataSchema.safeParse(nodeBody?.data)
-        const nextTask: MilestoneDataTask =
-          parsed.success && parsed.data.dataTask === 'location_profile'
-            ? 'location_profile'
-            : 'manual'
-        setMilestones((prev) =>
-          prev.map((m) => (m.id === milestoneId ? { ...m, dataTask: nextTask } : m)),
-        )
-        return true
-      } catch (err) {
-        setMilestonePrepareError(err instanceof Error ? err.message : t('milestonePrepareError'))
-        return false
-      }
-    },
-    [campaignId, t],
-  )
-
-  const handlePrepareMilestone = useCallback(
-    async (milestoneId: string) => {
-      setMilestonePrepareError(null)
-      setPreparingMilestoneId(milestoneId)
-      try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}/prepare`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locationId }),
-        })
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null
-          throw new Error(body?.error ?? t('milestonePrepareError'))
-        }
-        if (!res.body) {
-          throw new Error(t('milestonePrepareError'))
-        }
-        const reader = res.body.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ''
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) {
-            break
-          }
-          buffer += decoder.decode(value, { stream: true })
-          const blocks = buffer.split('\n\n')
-          buffer = blocks.pop() ?? ''
-          for (const block of blocks) {
-            const m = block.match(/^data: (.+)$/m)
-            const raw = m?.[1]?.trim()
-            if (!raw) {
-              continue
-            }
-            let payload: Record<string, unknown>
-            try {
-              payload = JSON.parse(raw) as Record<string, unknown>
-            } catch {
-              continue
-            }
-            if (typeof payload.error === 'string') {
-              throw new Error(payload.error)
-            }
-            if (payload.done === true) {
-              const preview = typeof payload.dataPreview === 'string' ? payload.dataPreview : ''
-              setMilestones((prev) =>
-                prev.map((m) => (m.id === milestoneId ? { ...m, data: preview || m.data } : m)),
-              )
-            }
-          }
-        }
-      } catch (err) {
-        setMilestonePrepareError(err instanceof Error ? err.message : t('milestonePrepareError'))
-      } finally {
-        setPreparingMilestoneId(null)
-      }
-    },
-    [campaignId, locationId, t],
-  )
-
-  const handleRunMilestone = useCallback(
-    async (milestoneId: string) => {
-      setMilestoneRunError(null)
-      setRunningMilestoneId(milestoneId)
-      setRunningStep('fetch_context')
-      setMilestones((prev) =>
-        prev.map((m) => (m.id === milestoneId ? { ...m, status: 'pending' as const } : m)),
-      )
-      try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}/run`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locationId }),
-        })
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null
-          throw new Error(body?.error ?? t('milestoneRunError'))
-        }
-        if (!res.body) {
-          throw new Error(t('milestoneRunError'))
-        }
-        const reader = res.body.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ''
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) {
-            break
-          }
-          buffer += decoder.decode(value, { stream: true })
-          const blocks = buffer.split('\n\n')
-          buffer = blocks.pop() ?? ''
-          for (const block of blocks) {
-            const m = block.match(/^data: (.+)$/m)
-            const raw = m?.[1]?.trim()
-            if (!raw) {
-              continue
-            }
-            let payload: Record<string, unknown>
-            try {
-              payload = JSON.parse(raw) as Record<string, unknown>
-            } catch {
-              continue
-            }
-            if (typeof payload.error === 'string') {
-              throw new Error(payload.error)
-            }
-            if (typeof payload.step === 'string') {
-              setRunningStep(payload.step)
-            }
-            if (payload.done === true) {
-              const summary = typeof payload.summary === 'string' ? payload.summary : ''
-              const criteriaRaw = payload.criteria
-              const criteriaList = Array.isArray(criteriaRaw)
-                ? criteriaRaw.filter(
-                    (c): c is { id?: unknown; status?: unknown } =>
-                      c != null && typeof c === 'object',
-                  )
-                : []
-              setMilestones((prev) =>
-                prev.map((milestone) => {
-                  if (milestone.id !== milestoneId) {
-                    return milestone
-                  }
-                  const idToStatus = new Map(
-                    criteriaList.map((c) => [String(c.id ?? ''), String(c.status ?? '')]),
-                  )
-                  const nextPass = milestone.passCriteria.map((row) => {
-                    if (!row.id) {
-                      return row
-                    }
-                    const st = idToStatus.get(row.id)
-                    if (st === 'pass' || st === 'fail') {
-                      return { ...row, status: st as PassCriteriaStatus }
-                    }
-                    return row
-                  })
-                  const hasFail = nextPass.some((row) => row.status === 'fail')
-                  return {
-                    ...milestone,
-                    status: hasFail ? ('failed' as const) : ('complete' as const),
-                    passCriteria: nextPass,
-                    resultMarkdown: summary || milestone.resultMarkdown,
-                  }
-                }),
-              )
-            }
-            if (payload.step === 'evaluate_criterion' && typeof payload.id === 'string') {
-              const st = payload.status
-              if (st === 'pass' || st === 'fail') {
-                const status = st as PassCriteriaStatus
-                setMilestones((prev) =>
-                  prev.map((milestone) => {
-                    if (milestone.id !== milestoneId) {
-                      return milestone
-                    }
-                    return {
-                      ...milestone,
-                      passCriteria: milestone.passCriteria.map((row) =>
-                        row.id === payload.id ? { ...row, status } : row,
-                      ),
-                    }
-                  }),
-                )
-              }
-            }
-          }
-        }
-      } catch (err) {
-        setMilestoneRunError(err instanceof Error ? err.message : t('milestoneRunError'))
-        setMilestones((prev) =>
-          prev.map((m) => (m.id === milestoneId ? { ...m, status: 'empty' as const } : m)),
-        )
-      } finally {
-        setRunningMilestoneId(null)
-        setRunningStep(null)
-      }
-    },
-    [campaignId, locationId, t],
-  )
-
-  const handleMoveMilestone = useCallback(
-    async (milestoneId: string, direction: 'up' | 'down') => {
-      setMoveError(null)
-      let snapshot: TimelineMilestone[] | null = null
-      setMilestones((prev) => {
-        snapshot = prev
-        const idx = prev.findIndex((m) => m.id === milestoneId)
-        if (idx === -1) {
-          return prev
-        }
-        const j = direction === 'up' ? idx - 1 : idx + 1
-        if (j < 0 || j >= prev.length) {
-          return prev
-        }
-        const next = [...prev]
-        const a = next[idx]
-        const b = next[j]
-        if (a && b) {
-          next[idx] = b
-          next[j] = a
-        }
-        return next
-      })
-      setMovingMilestoneId(milestoneId)
-      try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ move: direction }),
-        })
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { message?: string } | null
-          throw new Error(body?.message ?? t('milestonesMoveError'))
-        }
-      } catch (err) {
-        if (snapshot) {
-          setMilestones(snapshot)
-        }
-        setMoveError(err instanceof Error ? err.message : t('milestonesMoveError'))
-      } finally {
-        setMovingMilestoneId(null)
-      }
-    },
-    [campaignId, t],
-  )
-
   const isSubmitDisabled = !text.trim() || status === 'streaming' || status === 'submitted'
   const isChatBusy = status === 'streaming' || status === 'submitted'
+
+  const timelineValue = useMemo<TimelineContextValue>(
+    () => ({
+      ...milestoneUi,
+      isChatBusy,
+      onCreateMilestone: ops.handleCreateMilestone,
+      onDeleteMilestone: ops.handleDeleteMilestone,
+      onRenameMilestone: ops.handleRenameMilestone,
+      onMoveMilestone: ops.handleMoveMilestone,
+      onUpdatePassCriteria: ops.handleUpdatePassCriteria,
+      onUpdateMilestoneGoal: ops.handleUpdateMilestoneGoal,
+      onUpdateMilestoneData: ops.handleUpdateMilestoneData,
+      onSetMilestoneDataTask: ops.handleSetMilestoneDataTask,
+      onPrepareMilestone: ops.handlePrepareMilestone,
+      onRunMilestone: ops.handleRunMilestone,
+    }),
+    [milestoneUi, isChatBusy, ops],
+  )
 
   const visibleMessages = messages.filter((msg) => msg.role !== 'system')
 
   return (
-    <ResizablePanelGroup className="h-full min-h-0 flex-1 overflow-hidden rounded-lg border">
-      <ResizablePanel defaultSize={40} minSize={28}>
-        <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-          <TimelineWorkspace
-            createError={createError}
-            creating={creating}
-            deleteError={deleteError}
-            deletingMilestoneId={deletingMilestoneId}
-            goalError={goalError}
-            isChatBusy={isChatBusy}
-            milestoneDataError={milestoneDataError}
-            milestonePrepareError={milestonePrepareError}
-            milestoneRunError={milestoneRunError}
-            milestones={milestones}
-            moveError={moveError}
-            movingMilestoneId={movingMilestoneId}
-            onCreateMilestone={handleCreateMilestone}
-            onDeleteMilestone={handleDeleteMilestone}
-            onMoveMilestone={handleMoveMilestone}
-            onPrepareMilestone={handlePrepareMilestone}
-            onRenameMilestone={handleRenameMilestone}
-            onRunMilestone={handleRunMilestone}
-            onSetMilestoneDataTask={handleSetMilestoneDataTask}
-            onUpdateMilestoneData={handleUpdateMilestoneData}
-            onUpdateMilestoneGoal={handleUpdateMilestoneGoal}
-            onUpdatePassCriteria={handleUpdatePassCriteria}
-            passCriteriaError={passCriteriaError}
-            preparingMilestoneId={preparingMilestoneId}
-            renameError={renameError}
-            renamingMilestoneId={renamingMilestoneId}
-            runningMilestoneId={runningMilestoneId}
-            runningStep={runningStep}
-            savingDataMilestoneId={savingDataMilestoneId}
-            savingGoalMilestoneId={savingGoalMilestoneId}
-            savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
-          />
-        </div>
-      </ResizablePanel>
+    <TimelineProvider value={timelineValue}>
+      <ResizablePanelGroup className="h-full min-h-0 flex-1 overflow-hidden rounded-lg border">
+        <ResizablePanel defaultSize={40} minSize={28}>
+          <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+            <TimelineWorkspace />
+          </div>
+        </ResizablePanel>
 
-      <ResizableHandle withHandle />
+        <ResizableHandle withHandle />
 
-      <ResizablePanel defaultSize={22} minSize={16}>
-        <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-muted/20 p-3">
-          <Card className="flex h-full min-h-0 flex-col overflow-hidden border-dashed">
-            <CardHeader className="shrink-0">
-              <CardTitle className="text-base">{tWorkspace('previewTitle')}</CardTitle>
-              <CardDescription className="text-pretty">
-                {tWorkspace('previewDescription')}
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </ResizablePanel>
+        <ResizablePanel defaultSize={22} minSize={16}>
+          <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-muted/20 p-3">
+            <Card className="flex h-full min-h-0 flex-col overflow-hidden border-dashed">
+              <CardHeader className="shrink-0">
+                <CardTitle className="text-base">{tWorkspace('previewTitle')}</CardTitle>
+                <CardDescription className="text-pretty">
+                  {tWorkspace('previewDescription')}
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </ResizablePanel>
 
-      <ResizableHandle withHandle />
+        <ResizableHandle withHandle />
 
-      <ResizablePanel defaultSize={38} minSize={22}>
-        <div className="relative flex h-full min-h-0 min-w-0 flex-col divide-y overflow-hidden">
-          <Conversation aria-live="polite">
-            <ConversationContent>
-              {error ? (
-                <div
-                  aria-live="polite"
-                  className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-destructive text-sm"
-                  role="alert"
-                >
-                  <p className="font-medium">{t('errorTitle')}</p>
-                  <p className="mt-1 text-muted-foreground">{error.message}</p>
-                  <Button
-                    className="mt-3"
-                    onClick={() => void handleRetry()}
-                    size="sm"
-                    type="button"
-                    variant="outline"
+        <ResizablePanel defaultSize={38} minSize={22}>
+          <div className="relative flex h-full min-h-0 min-w-0 flex-col divide-y overflow-hidden">
+            <Conversation aria-live="polite">
+              <ConversationContent>
+                {error ? (
+                  <div
+                    aria-live="polite"
+                    className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-destructive text-sm"
+                    role="alert"
                   >
-                    {t('retry')}
-                  </Button>
-                </div>
-              ) : null}
-              {messages.length === 0 && !error ? (
-                <ConversationEmptyState
-                  description={t('emptyDescription')}
-                  title={t('emptyTitle')}
-                />
-              ) : (
-                <>
-                  {visibleMessages.map((msg) => {
-                    const isLast = msg === visibleMessages[visibleMessages.length - 1]
-                    const isActiveStream =
-                      isLast && (status === 'submitted' || status === 'streaming')
-                    const msgText = getMessageText(msg)
-                    const showFallbackSpinner =
-                      isActiveStream && msg.role === 'assistant' && msgText.length === 0
+                    <p className="font-medium">{t('errorTitle')}</p>
+                    <p className="mt-1 text-muted-foreground">{error.message}</p>
+                    <Button
+                      className="mt-3"
+                      onClick={() => void handleRetry()}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      {t('retry')}
+                    </Button>
+                  </div>
+                ) : null}
+                {messages.length === 0 && !error ? (
+                  <ConversationEmptyState
+                    description={t('emptyDescription')}
+                    title={t('emptyTitle')}
+                  />
+                ) : (
+                  <>
+                    {visibleMessages.map((msg) => {
+                      const isLast = msg === visibleMessages[visibleMessages.length - 1]
+                      const isActiveStream =
+                        isLast && (status === 'submitted' || status === 'streaming')
+                      const msgText = getMessageText(msg)
+                      const showFallbackSpinner =
+                        isActiveStream && msg.role === 'assistant' && msgText.length === 0
 
-                    return (
-                      <Message from={msg.role} key={msg.id}>
-                        <MessageContent>
-                          {showFallbackSpinner ? (
+                      return (
+                        <Message from={msg.role} key={msg.id}>
+                          <MessageContent>
+                            {showFallbackSpinner ? (
+                              <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                                <Spinner />
+                                <span>{t('thinking')}</span>
+                              </div>
+                            ) : (
+                              <ChatMessageParts message={msg} role={msg.role} />
+                            )}
+                          </MessageContent>
+                        </Message>
+                      )
+                    })}
+                    {visibleMessages.length > 0 &&
+                      (status === 'submitted' || status === 'streaming') &&
+                      visibleMessages[visibleMessages.length - 1]?.role === 'user' && (
+                        <Message from="assistant">
+                          <MessageContent>
                             <div className="flex items-center gap-2 text-muted-foreground text-sm">
                               <Spinner />
                               <span>{t('thinking')}</span>
                             </div>
-                          ) : (
-                            <ChatMessageParts message={msg} role={msg.role} />
-                          )}
-                        </MessageContent>
-                      </Message>
-                    )
-                  })}
-                  {visibleMessages.length > 0 &&
-                    (status === 'submitted' || status === 'streaming') &&
-                    visibleMessages[visibleMessages.length - 1]?.role === 'user' && (
-                      <Message from="assistant">
-                        <MessageContent>
-                          <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                            <Spinner />
-                            <span>{t('thinking')}</span>
-                          </div>
-                        </MessageContent>
-                      </Message>
-                    )}
-                </>
-              )}
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
-          <div className="shrink-0 p-4">
-            <PromptInput globalDrop multiple onSubmit={handleSubmit}>
-              <PromptInputBody>
-                <PromptInputTextarea
-                  placeholder={t('placeholder')}
-                  value={text}
-                  onChange={handleTextChange}
-                />
-              </PromptInputBody>
-              <PromptInputFooter>
-                <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />
-              </PromptInputFooter>
-            </PromptInput>
+                          </MessageContent>
+                        </Message>
+                      )}
+                  </>
+                )}
+              </ConversationContent>
+              <ConversationScrollButton />
+            </Conversation>
+            <div className="shrink-0 p-4">
+              <PromptInput globalDrop multiple onSubmit={handleSubmit}>
+                <PromptInputBody>
+                  <PromptInputTextarea
+                    placeholder={t('placeholder')}
+                    value={text}
+                    onChange={handleTextChange}
+                  />
+                </PromptInputBody>
+                <PromptInputFooter>
+                  <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />
+                </PromptInputFooter>
+              </PromptInput>
+            </div>
           </div>
-        </div>
-      </ResizablePanel>
-    </ResizablePanelGroup>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    </TimelineProvider>
   )
 }
 

@@ -61,52 +61,54 @@ export function AssetsClient() {
   }, [])
 
   const load = useCallback(
-    async (silent = false) => {
+    async (silent = false, signal?: AbortSignal) => {
       if (!silent) setLoading(true)
       try {
-        const res = await fetch('/api/assets/list')
+        const res = await fetch('/api/assets/list', { signal })
         if (!res.ok) throw new Error('list failed')
         const data = (await res.json()) as { items: AssetItem[] }
         setItems(data.items ?? [])
-      } catch {
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AbortError') {
+          return
+        }
         setItems([])
         showToast('error', t('toast.loadError'))
       } finally {
-        if (!silent) setLoading(false)
+        if (!silent && !signal?.aborted) setLoading(false)
       }
     },
     [showToast, t],
   )
 
   useEffect(() => {
-    void load(false)
+    const controller = new AbortController()
+    void load(false, controller.signal)
+    return () => controller.abort()
   }, [load])
 
   useEffect(() => {
-    let cancelled = false
+    const controller = new AbortController()
     void (async () => {
       setFlowsLoading(true)
       try {
-        const res = await fetch('/api/assets/flows')
+        const res = await fetch('/api/assets/flows', { signal: controller.signal })
         if (!res.ok) throw new Error('flows')
         const data = (await res.json()) as {
           flows?: Array<{ slug: string; displayName: string }>
         }
-        if (!cancelled) {
-          setAiFlows(data.flows ?? [])
+        setAiFlows(data.flows ?? [])
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AbortError') {
+          return
         }
-      } catch {
-        if (!cancelled) {
-          setAiFlows([])
-          showToast('error', t('toast.flowsLoadError'))
-        }
+        setAiFlows([])
+        showToast('error', t('toast.flowsLoadError'))
       } finally {
-        if (!cancelled) setFlowsLoading(false)
+        if (!controller.signal.aborted) setFlowsLoading(false)
       }
     })()
-    return () => {
-      cancelled = true
-    }
+    return () => controller.abort()
   }, [showToast, t])
 
   useEffect(() => {

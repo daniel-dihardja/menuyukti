@@ -10,8 +10,7 @@ import { Card } from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import { graphqlQuery } from '@/lib/graphql/client'
-import { LOCATIONS_QUERY, type LocationsData } from '@/lib/graphql/queries'
+import { getCachedLocationsData } from '@/lib/graphql/cached-queries'
 import { AnalyticsSalesClient } from './analytics-sales-client'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
@@ -37,7 +36,7 @@ async function SalesPageData() {
     redirect(routes.login)
   }
 
-  const data = await graphqlQuery<LocationsData>(LOCATIONS_QUERY, undefined, userId)
+  const data = await getCachedLocationsData(userId)
   const branches = data.locations.map((loc) => ({
     id: Number(loc.id),
     name: loc.name,

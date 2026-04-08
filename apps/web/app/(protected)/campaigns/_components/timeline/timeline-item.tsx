@@ -7,12 +7,12 @@ import { Card } from '@workspace/ui/components/card'
 import { Collapsible, CollapsibleContent } from '@workspace/ui/components/collapsible'
 import { cn } from '@workspace/ui/lib/utils'
 
+import { useTimelineContext } from '../timeline-context'
 import { MilestoneItemHeader } from './milestone-item-header'
 import { MilestoneItemTabs } from './milestone-item-tabs'
 import { MilestoneRunProgressStrip } from './milestone-run-progress'
 import { isKeyboardEventFromNestedInteractive, TimelineRailMarker } from './timeline-rail'
 import type {
-  MilestoneDataTask,
   MilestoneStatusLabels,
   PassCriteriaRow,
   TimelineMilestone,
@@ -30,34 +30,12 @@ export type TimelineItemProps = {
   collapseDetailsLabel: string
   statusLabels: MilestoneStatusLabels
   showDelete: boolean
-  onDeleteMilestone?: (id: string) => void | Promise<void>
-  isDeleting: boolean
   deleteButtonLabel: string
   deleteMilestoneAriaLabel: string
   deleteMilestoneConfirmTitle: string
   deleteMilestoneConfirmDescription: string
   deleteMilestoneConfirmCancel: string
   deleteMilestoneConfirmAction: string
-  onRenameMilestone?: (id: string, name: string) => Promise<boolean>
-  renamingMilestoneId: string | null
-  onUpdatePassCriteria?: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
-  savingPassCriteriaMilestoneId: string | null
-  onUpdateMilestoneGoal?: (id: string, goal: string) => Promise<boolean>
-  savingGoalMilestoneId: string | null
-  onUpdateMilestoneData?: (id: string, milestoneData: string) => Promise<boolean>
-  savingDataMilestoneId: string | null
-  onSetMilestoneDataTask?: (id: string, dataTask: MilestoneDataTask) => Promise<boolean>
-  onPrepareMilestone?: (id: string) => void | Promise<void>
-  preparingMilestoneId?: string | null
-  onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
-  isMoving: boolean
-  onRunMilestone?: (id: string) => void | Promise<void>
-  /** True while the campaign chat request is in flight (any milestone). */
-  isChatBusy?: boolean
-  /** Milestone that initiated the current run; used for per-card loading affordance. */
-  runningMilestoneId?: string | null
-  /** Current graph step from the milestone run SSE stream. */
-  runningStep?: string | null
 }
 
 function TimelineItemInner({
@@ -71,39 +49,44 @@ function TimelineItemInner({
   collapseDetailsLabel,
   statusLabels,
   showDelete,
-  onDeleteMilestone,
-  isDeleting,
   deleteButtonLabel,
   deleteMilestoneAriaLabel,
   deleteMilestoneConfirmTitle,
   deleteMilestoneConfirmDescription,
   deleteMilestoneConfirmCancel,
   deleteMilestoneConfirmAction,
-  onRenameMilestone,
-  renamingMilestoneId,
-  onUpdatePassCriteria,
-  savingPassCriteriaMilestoneId,
-  onUpdateMilestoneGoal,
-  savingGoalMilestoneId,
-  onUpdateMilestoneData,
-  savingDataMilestoneId,
-  onSetMilestoneDataTask,
-  onPrepareMilestone,
-  preparingMilestoneId = null,
-  onMoveMilestone,
-  isMoving,
-  onRunMilestone,
-  isChatBusy = false,
-  runningMilestoneId = null,
-  runningStep = null,
 }: TimelineItemProps) {
+  const {
+    onDeleteMilestone,
+    deletingMilestoneId,
+    movingMilestoneId,
+    renamingMilestoneId,
+    savingPassCriteriaMilestoneId,
+    savingGoalMilestoneId,
+    savingDataMilestoneId,
+    preparingMilestoneId,
+    onRenameMilestone,
+    onUpdatePassCriteria,
+    onUpdateMilestoneGoal,
+    onUpdateMilestoneData,
+    onSetMilestoneDataTask,
+    onPrepareMilestone,
+    onMoveMilestone,
+    onRunMilestone,
+    isChatBusy,
+    runningMilestoneId,
+    runningStep,
+  } = useTimelineContext()
+
   const [userOpen, setUserOpen] = useState(true)
   const [editingTitle, setEditingTitle] = useState(false)
   const [draftTitle, setDraftTitle] = useState(milestone.title)
   const [goalDraft, setGoalDraft] = useState(() => milestone.goal ?? '')
   const [dataDraft, setDataDraft] = useState(() => milestone.data ?? '')
   const titleEditInputId = `milestone-title-edit-${milestone.id}`
+  const titleEditInputRef = useRef<HTMLInputElement>(null)
   const titleEditContainerRef = useRef<HTMLDivElement>(null)
+  const addCriteriaInputRef = useRef<HTMLInputElement>(null)
   const t = useTranslations('analytics.campaigns.chat')
   const isMilestoneRunning = runningMilestoneId === milestone.id
   /** Keep the card expanded for the whole run; user can collapse again after the run ends. */
@@ -138,12 +121,9 @@ function TimelineItemInner({
     if (!editingTitle) {
       return
     }
-    const el = document.getElementById(titleEditInputId)
-    if (el instanceof HTMLInputElement) {
-      el.focus()
-      el.select()
-    }
-  }, [editingTitle, titleEditInputId])
+    titleEditInputRef.current?.focus()
+    titleEditInputRef.current?.select()
+  }, [editingTitle])
 
   useEffect(() => {
     if (!editingTitle) {
@@ -184,15 +164,14 @@ function TimelineItemInner({
     if (!onUpdatePassCriteria || savingPassCriteria) {
       return
     }
-    const el = document.getElementById(addCriteriaInputId)
-    const raw = el instanceof HTMLInputElement ? el.value.trim() : ''
+    const raw = addCriteriaInputRef.current?.value.trim() ?? ''
     if (!raw) {
       return
     }
     const next = [...criteriaRows, { requirement: raw, status: 'open' as const }]
     const ok = await onUpdatePassCriteria(milestone.id, next)
-    if (ok && el instanceof HTMLInputElement) {
-      el.value = ''
+    if (ok && addCriteriaInputRef.current) {
+      addCriteriaInputRef.current.value = ''
     }
   }
 
@@ -239,6 +218,9 @@ function TimelineItemInner({
       }
     })()
   }
+
+  const isDeleting = deletingMilestoneId === milestone.id
+  const isMoving = movingMilestoneId === milestone.id
 
   return (
     <div
@@ -330,6 +312,7 @@ function TimelineItemInner({
               showDelete={showDelete}
               titleEditContainerRef={titleEditContainerRef}
               titleEditInputId={titleEditInputId}
+              titleEditInputRef={titleEditInputRef}
               editingTitle={editingTitle}
             />
             {isMilestoneRunning ? <MilestoneRunProgressStrip runningStep={runningStep} /> : null}
@@ -339,6 +322,7 @@ function TimelineItemInner({
             >
               <MilestoneItemTabs
                 addCriteriaInputId={addCriteriaInputId}
+                addCriteriaInputRef={addCriteriaInputRef}
                 criteriaRows={criteriaRows}
                 dataDraft={dataDraft}
                 dataFieldId={dataFieldId}

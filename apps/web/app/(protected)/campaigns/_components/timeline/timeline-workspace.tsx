@@ -8,47 +8,31 @@ import { Button } from '@workspace/ui/components/button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Spinner } from '@workspace/ui/components/spinner'
 
+import { useTimelineContext } from '../timeline-context'
 import { TimelineBody } from './timeline-body'
 import { TimelineInlineErrors } from './timeline-inline-errors'
 import { TimelineToolbar } from './timeline-toolbar'
 import type { TimelineWorkspaceProps } from './types'
 
 export function TimelineWorkspace({
-  milestones,
   isLoading = false,
   loadError = null,
-  createError = null,
-  deleteError = null,
-  moveError = null,
-  renameError = null,
-  passCriteriaError = null,
-  goalError = null,
-  milestoneDataError = null,
-  creating = false,
-  deletingMilestoneId = null,
-  movingMilestoneId = null,
-  renamingMilestoneId = null,
-  savingPassCriteriaMilestoneId = null,
-  savingGoalMilestoneId = null,
-  savingDataMilestoneId = null,
-  onCreateMilestone,
-  onDeleteMilestone,
-  onRenameMilestone,
-  onMoveMilestone,
-  onUpdatePassCriteria,
-  onUpdateMilestoneGoal,
-  onUpdateMilestoneData,
-  onSetMilestoneDataTask,
-  onPrepareMilestone,
-  preparingMilestoneId = null,
-  milestonePrepareError = null,
-  onRunMilestone,
-  isChatBusy = false,
-  runningMilestoneId = null,
-  runningStep = null,
-  milestoneRunError = null,
 }: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
+  const {
+    milestones,
+    creating,
+    createError,
+    deleteError,
+    moveError,
+    renameError,
+    passCriteriaError,
+    goalError,
+    milestoneDataError,
+    milestonePrepareError,
+    milestoneRunError,
+    onCreateMilestone,
+  } = useTimelineContext()
 
   const [selectedId, setSelectedId] = useQueryState('milestone', parseAsString)
 
@@ -162,29 +146,9 @@ export function TimelineWorkspace({
           deleteMilestoneConfirmCancel={t('deleteMilestoneConfirmCancel')}
           deleteMilestoneConfirmDescription={t('deleteMilestoneConfirmDescription')}
           deleteMilestoneConfirmTitle={t('deleteMilestoneConfirmTitle')}
-          deletingMilestoneId={deletingMilestoneId}
           expandDetailsLabel={t('milestoneExpandDetails')}
-          isChatBusy={isChatBusy}
           listLabel={t('timelineListLabel')}
-          milestones={milestones}
-          movingMilestoneId={movingMilestoneId ?? null}
-          onDeleteMilestone={onDeleteMilestone}
-          onMoveMilestone={onMoveMilestone}
-          onRenameMilestone={onRenameMilestone}
-          onRunMilestone={onRunMilestone}
           onSelectMilestone={setSelectedId}
-          onPrepareMilestone={onPrepareMilestone}
-          onSetMilestoneDataTask={onSetMilestoneDataTask}
-          onUpdateMilestoneData={onUpdateMilestoneData}
-          onUpdateMilestoneGoal={onUpdateMilestoneGoal}
-          onUpdatePassCriteria={onUpdatePassCriteria}
-          preparingMilestoneId={preparingMilestoneId}
-          renamingMilestoneId={renamingMilestoneId}
-          runningMilestoneId={runningMilestoneId}
-          runningStep={runningStep}
-          savingDataMilestoneId={savingDataMilestoneId}
-          savingGoalMilestoneId={savingGoalMilestoneId}
-          savingPassCriteriaMilestoneId={savingPassCriteriaMilestoneId}
           selectedId={selectedId}
           statusLabels={{
             complete: t('milestoneStatusComplete'),

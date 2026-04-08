@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useCallback, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
@@ -15,6 +16,7 @@ import {
   DialogTitle,
 } from '@workspace/ui/components/dialog'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import {
   Sheet,
   SheetContent,
@@ -24,11 +26,33 @@ import {
 } from '@workspace/ui/components/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 
-import { AssetsClient } from '../../assets/assets-client'
 import { CampaignAssetsTab } from './campaign-assets-tab'
-import { CampaignChatPanel } from './campaign-chat-panel'
 import { CampaignGoalEditor } from './campaign-goal-editor'
 import type { TimelineMilestone } from './timeline-workspace'
+
+const CampaignChatPanel = dynamic(
+  () => import('./campaign-chat-panel').then((m) => m.CampaignChatPanel),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-[min(420px,50vh)] min-w-0 flex-1 items-center justify-center rounded-lg border border-dashed">
+        <Skeleton className="h-10 w-56" />
+      </div>
+    ),
+  },
+)
+
+const AssetsClient = dynamic(
+  () => import('../../assets/assets-client').then((m) => m.AssetsClient),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-[200px] items-center justify-center p-8">
+        <Skeleton className="h-8 w-full max-w-md" />
+      </div>
+    ),
+  },
+)
 
 function normalizeTab(value: string | null): 'brief' | 'assets' | 'print' {
   if (value === 'assets' || value === 'print' || value === 'brief') {

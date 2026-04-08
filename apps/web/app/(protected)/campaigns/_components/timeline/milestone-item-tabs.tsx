@@ -1,5 +1,6 @@
 'use client'
 
+import type { RefObject } from 'react'
 import { useTranslations } from 'next-intl'
 import { Check, Circle, Trash2, X } from 'lucide-react'
 
@@ -32,6 +33,7 @@ export type MilestoneItemTabsProps = {
   goalFieldId: string
   dataFieldId: string
   addCriteriaInputId: string
+  addCriteriaInputRef: RefObject<HTMLInputElement | null>
   goalDraft: string
   setGoalDraft: (v: string) => void
   dataDraft: string
@@ -56,6 +58,7 @@ export function MilestoneItemTabs({
   goalFieldId,
   dataFieldId,
   addCriteriaInputId,
+  addCriteriaInputRef,
   goalDraft,
   setGoalDraft,
   dataDraft,
@@ -201,6 +204,7 @@ export function MilestoneItemTabs({
           )}
           <InputGroup className="h-auto min-h-9 w-full flex-col items-stretch gap-2 sm:h-9 sm:flex-row sm:items-center sm:gap-0">
             <InputGroupInput
+              ref={addCriteriaInputRef}
               aria-label={t('milestonePassCriteriaAddPlaceholder')}
               className="min-h-9"
               disabled={savingPassCriteria}

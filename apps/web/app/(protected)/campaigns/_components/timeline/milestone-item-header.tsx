@@ -31,6 +31,7 @@ export type MilestoneItemHeaderProps = {
   draftTitle: string
   setDraftTitle: (title: string) => void
   titleEditInputId: string
+  titleEditInputRef: RefObject<HTMLInputElement | null>
   titleEditContainerRef: RefObject<HTMLDivElement | null>
   renaming: boolean
   open: boolean
@@ -70,6 +71,7 @@ export function MilestoneItemHeader({
   draftTitle,
   setDraftTitle,
   titleEditInputId,
+  titleEditInputRef,
   titleEditContainerRef,
   renaming,
   open,
@@ -107,6 +109,7 @@ export function MilestoneItemHeader({
         {editingTitle ? (
           <div className="flex min-w-0 flex-1 items-center gap-1" ref={titleEditContainerRef}>
             <Input
+              ref={titleEditInputRef}
               id={titleEditInputId}
               aria-label={editMilestoneTitleAriaLabel}
               className="h-8 min-w-0 flex-1 text-base font-semibold"
