@@ -63,6 +63,7 @@ export default async function RootLayout({
           {...(publishableKey ? { publishableKey } : {})}
           signInUrl={routes.login}
           signUpUrl={routes.signUp}
+          afterSignOutUrl={routes.login}
         >
           <NextIntlClientProvider locale={locale} messages={messages}>
             <Providers>

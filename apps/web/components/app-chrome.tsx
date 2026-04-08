@@ -8,14 +8,14 @@ const HIDE_HEADER_PREFIXES = ['/login', '/sign-up', '/sso-callback']
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { isSignedIn } = useAuth()
+  const { isLoaded, isSignedIn } = useAuth()
   const hideHeader =
     pathname != null &&
     HIDE_HEADER_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
   const isRootPage =
     pathname === '/' || pathname === '' || (pathname != null && pathname.startsWith('/shop'))
-  const showChromeHeader = !hideHeader && (isSignedIn || !isRootPage)
-  const profileInSidebarHeader = isSignedIn && isProtectedAppShellPath(pathname)
+  const showChromeHeader = isLoaded && !hideHeader && (isSignedIn || !isRootPage)
+  const profileInSidebarHeader = isLoaded && isSignedIn && isProtectedAppShellPath(pathname)
 
   return (
     <>

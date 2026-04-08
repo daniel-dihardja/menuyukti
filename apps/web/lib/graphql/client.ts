@@ -18,6 +18,9 @@ export type GraphQLResponse<T> = {
 function buildHeaders(userId?: string): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   const apiKey = process.env.GRAPHQL_INTERNAL_API_KEY
+  if (!apiKey?.trim() && process.env.NODE_ENV === 'production') {
+    throw new Error('GRAPHQL_INTERNAL_API_KEY must be set in production')
+  }
   if (apiKey) {
     headers['X-Internal-Api-Key'] = apiKey
   }
