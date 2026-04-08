@@ -11,6 +11,11 @@
       "sourceType": "github",
       "computedHash": "f263ed30e7627f1f22aea99f0f098b73a9f3b5f1c9ea36d3a31a787eacf2e07e"
     },
+    "react-expert": {
+      "source": "reactjs/react.dev",
+      "sourceType": "github",
+      "computedHash": "e53cc1a286987b7f28ba5cdd29e8ebacdde0d5822d40e938652fec8c47f33efa"
+    },
     "turborepo": {
       "source": "vercel/turborepo",
       "sourceType": "github",
