@@ -14,6 +14,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY packages/menuyukti ./packages/menuyukti
 COPY apps/graphql ./apps/graphql
+COPY apps/agents/pyproject.toml ./apps/agents/pyproject.toml
 
 RUN uv sync --frozen --no-dev --package graphql
 
