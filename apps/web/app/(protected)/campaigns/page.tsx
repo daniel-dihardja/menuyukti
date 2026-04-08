@@ -5,7 +5,6 @@ import { Suspense } from 'react'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import { Card, CardContent, CardHeader } from '@workspace/ui/components/card'
@@ -48,9 +47,9 @@ function CampaignsListSkeleton() {
 
 async function CampaignsData() {
   const t = await getTranslations('analytics.campaigns')
-  const { userId } = await auth()
-  if (!userId) {
-    redirect(routes.login)
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated || !userId) {
+    throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
   const data = await graphqlQuery<LocationsData>(LOCATIONS_QUERY, undefined, userId)

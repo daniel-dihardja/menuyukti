@@ -29,7 +29,7 @@ Feature-specific client components live **next to their route** under `app/(prot
 - **Middleware** (`middleware.ts`): `clerkMiddleware` + `createRouteMatcher` protects `/analytics`, `/campaigns`, `/assets`. Uses `routes.ts` for URL constants.
 - **Server layouts/pages**: `auth()` from `@clerk/nextjs/server`; redirect if no `userId`. Protected layout does this as defense-in-depth after middleware.
 - **Client components**: `useAuth`, `UserButton`, `SignInButton` from `@clerk/nextjs`.
-- Clerk config (publishable key, sign-in/up URLs) is centralised in `lib/clerk-env.ts` and `lib/routes.ts`.
+- Clerk config: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` for the client; sign-in/up URLs in `lib/routes.ts`; optional `getClerkSecretKey()` in `lib/clerk-env.ts` for server tooling.
 
 ## GraphQL data access
 

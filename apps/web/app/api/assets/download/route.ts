@@ -8,9 +8,9 @@ import { getS3Bucket, getS3Client, isSafeAssetFilename, userObjectKey } from '@/
 export const runtime = 'nodejs'
 
 export async function GET(req: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const url = new URL(req.url)

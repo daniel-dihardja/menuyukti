@@ -15,8 +15,8 @@ function jsonError(message: string, status: number) {
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth()
-  if (!userId) {
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated) {
     return jsonError('Unauthorized', 401)
   }
 

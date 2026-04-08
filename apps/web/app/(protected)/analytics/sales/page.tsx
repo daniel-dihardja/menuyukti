@@ -9,7 +9,6 @@ import { Button } from '@workspace/ui/components/button'
 import { Card } from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
 import { getCachedLocationsData } from '@/lib/graphql/cached-queries'
 import { AnalyticsSalesClient } from './analytics-sales-client'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
@@ -31,9 +30,9 @@ function SalesPageSkeleton() {
 
 async function SalesPageData() {
   const t = await getTranslations('analytics.sales')
-  const { userId } = await auth()
-  if (!userId) {
-    redirect(routes.login)
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated || !userId) {
+    throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
   const data = await getCachedLocationsData(userId)

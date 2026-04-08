@@ -5,9 +5,9 @@ import { NODES_QUERY, parseNodesData, type NodesDataRaw } from '@/lib/graphql/qu
 
 export async function GET(req: Request) {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    const { isAuthenticated, userId } = await auth()
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(req.url)

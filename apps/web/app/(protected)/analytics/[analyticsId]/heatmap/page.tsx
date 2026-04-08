@@ -4,7 +4,7 @@ export const runtime = 'nodejs'
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import { routes } from '@/lib/routes'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { Button } from '@workspace/ui/components/button'
@@ -26,9 +26,9 @@ type PageProps = {
 }
 
 export default async function Page({ params }: PageProps) {
-  const { userId } = await auth()
-  if (!userId) {
-    redirect(routes.login)
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated || !userId) {
+    throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
   const tSales = await getTranslations('analytics.sales')

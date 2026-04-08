@@ -10,7 +10,6 @@ import { LocationsTable } from './locations-table'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
 import { getCachedLocationsData } from '@/lib/graphql/cached-queries'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
@@ -41,9 +40,9 @@ function LocationsPageSkeleton() {
 
 async function LocationsPageData() {
   const t = await getTranslations('analytics.branches')
-  const { userId } = await auth()
-  if (!userId) {
-    redirect(routes.login)
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated || !userId) {
+    throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
   const data = await getCachedLocationsData(userId)

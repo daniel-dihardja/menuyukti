@@ -1,3 +1,5 @@
+import { NextResponse } from 'next/server'
+
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
 import { routes } from '@/lib/routes'
@@ -15,6 +17,12 @@ const isProtectedRoute = createRouteMatcher([
 // secretKey/publishableKey via the dynamic-keys callback unless CLERK_ENCRYPTION_KEY is set — see
 // https://clerk.com/docs/references/nextjs/clerk-middleware#dynamic-keys
 export default clerkMiddleware(async (auth, req) => {
+  const { sessionStatus } = await auth()
+  // Session tasks (e.g. MFA setup): send pending sessions to sign-in URL configured in ClerkProvider.
+  if (sessionStatus === 'pending') {
+    return NextResponse.redirect(new URL(routes.login, req.url))
+  }
+
   if (!isProtectedRoute(req)) {
     return
   }

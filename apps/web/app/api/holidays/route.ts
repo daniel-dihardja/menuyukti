@@ -18,8 +18,8 @@ import {
  */
 export async function GET(req: Request) {
   try {
-    const { userId } = await auth()
-    if (!userId) {
+    const { isAuthenticated, userId } = await auth()
+    if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

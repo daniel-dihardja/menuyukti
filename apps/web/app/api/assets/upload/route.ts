@@ -111,9 +111,9 @@ async function applyFlow(
 export const runtime = 'nodejs'
 
 export async function POST(req: Request) {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   let formData: FormData

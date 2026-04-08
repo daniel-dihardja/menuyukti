@@ -6,8 +6,8 @@ import { redirect } from 'next/navigation'
 import { routes } from '@/lib/routes'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { userId } = await auth()
-  if (!userId) {
+  const { isAuthenticated } = await auth()
+  if (!isAuthenticated) {
     redirect(routes.login)
   }
 

@@ -3,7 +3,6 @@ export const runtime = 'nodejs'
 
 import { getTranslations } from 'next-intl/server'
 import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
 
 import { routes } from '@/lib/routes'
 import { graphqlQuery } from '@/lib/graphql/client'
@@ -16,9 +15,9 @@ import { ImageFlowsManager } from './_components/image-flows-manager'
 export default async function Page() {
   const tImageFlows = await getTranslations('imageFlows')
   const tStudio = await getTranslations('sidebar')
-  const { userId } = await auth()
-  if (!userId) {
-    redirect(routes.login)
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated || !userId) {
+    throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
   const flowsData = await graphqlQuery<ImageAiFlowsData>(

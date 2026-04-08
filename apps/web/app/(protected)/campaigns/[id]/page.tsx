@@ -4,7 +4,7 @@ export const runtime = 'nodejs'
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { z } from 'zod'
 import { routes } from '@/lib/routes'
 import { graphqlQuery } from '@/lib/graphql/client'
@@ -42,9 +42,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function Page({ params }: PageProps) {
-  const { userId: authUserId } = await auth()
-  if (!authUserId) {
-    redirect(routes.login)
+  const { isAuthenticated, userId: authUserId } = await auth()
+  if (!isAuthenticated || !authUserId) {
+    throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
   const { id: rawId } = await params

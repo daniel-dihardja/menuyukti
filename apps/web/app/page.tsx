@@ -18,8 +18,8 @@ import {
 } from 'lucide-react'
 
 export default async function LandingPage() {
-  const { userId } = await auth()
-  if (userId) {
+  const { isAuthenticated } = await auth()
+  if (isAuthenticated) {
     redirect(routes.dashboard)
   }
 

@@ -9,8 +9,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 export default async function SignUpPage() {
-  const { userId } = await auth()
-  if (userId) {
+  const { isAuthenticated } = await auth()
+  if (isAuthenticated) {
     redirect(routes.campaigns.list)
   }
 

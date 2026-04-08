@@ -7,9 +7,9 @@ import { IMAGE_AI_FLOWS_QUERY, type ImageAiFlowsData } from '@/lib/graphql/queri
 export const runtime = 'nodejs'
 
 export async function GET() {
-  const { userId } = await auth()
-  if (!userId) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+  const { isAuthenticated } = await auth()
+  if (!isAuthenticated) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {

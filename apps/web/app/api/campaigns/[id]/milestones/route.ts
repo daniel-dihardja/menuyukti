@@ -37,9 +37,9 @@ async function loadCampaignOrThrow(campaignId: string, userId: string) {
 
 export async function GET(_req: Request, context: RouteContext) {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    const { isAuthenticated, userId } = await auth()
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id: rawId } = await context.params
@@ -76,9 +76,9 @@ export async function GET(_req: Request, context: RouteContext) {
 
 export async function POST(req: Request, context: RouteContext) {
   try {
-    const { userId } = await auth()
-    if (!userId) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    const { isAuthenticated, userId } = await auth()
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id: rawId } = await context.params

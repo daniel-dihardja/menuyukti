@@ -3,8 +3,8 @@
 #     --build-arg DATABASE_URL="postgresql://user:pass@localhost:5432/db" \
 #     --build-arg ANALYTICS_API_URL="http://localhost:9999" .
 #
-# Runtime: pass DATABASE_URL, ANALYTICS_API_URL, CLERK_SECRET_KEY, and CLERK_PUBLISHABLE_KEY
-# (see docker-compose env_file + lib/clerk-env.ts). NEXT_PUBLIC_* is optional if CLERK_PUBLISHABLE_KEY is set at runtime.
+# Runtime: pass DATABASE_URL, ANALYTICS_API_URL, CLERK_SECRET_KEY, and Clerk publishable key
+# (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` at build; docker-compose may also map `CLERK_PUBLISHABLE_KEY` for the shell).
 
 FROM node:20-bookworm-slim AS builder
 

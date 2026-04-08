@@ -5,7 +5,6 @@ import { Suspense } from 'react'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
 
 import { routes } from '@/lib/routes'
 import { graphqlQuery } from '@/lib/graphql/client'
@@ -104,9 +103,9 @@ function DashboardPageSkeleton() {
 
 async function DashboardPageData() {
   const t = await getTranslations('platform.dashboard')
-  const { userId } = await auth()
-  if (!userId) {
-    redirect(routes.login)
+  const { isAuthenticated, userId } = await auth()
+  if (!isAuthenticated || !userId) {
+    throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
   const locationsData = await graphqlQuery<LocationsData>(LOCATIONS_QUERY, undefined, userId)
