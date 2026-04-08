@@ -103,19 +103,50 @@ export function MarkdownEditField({
         }}
         value={innerTab}
       >
-        <TabsList
-          className="h-9 w-full max-w-md"
-          variant="default"
+        <div
+          className="flex min-w-0 flex-wrap items-center justify-between gap-2"
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
         >
-          <TabsTrigger className="flex-1" value="preview">
-            {previewTabLabel}
-          </TabsTrigger>
-          <TabsTrigger className="flex-1" value="edit">
-            {editTabLabel}
-          </TabsTrigger>
-        </TabsList>
+          <TabsList className="w-fit max-w-full" variant="line">
+            <TabsTrigger value="preview">{previewTabLabel}</TabsTrigger>
+            <TabsTrigger value="edit">{editTabLabel}</TabsTrigger>
+          </TabsList>
+          {innerTab === 'edit' ? (
+            <div className="shrink-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label={t('formatMarkdownButton')}
+                    className="gap-1.5"
+                    disabled={disabled || formatting}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void handleFormat()
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
+                    {formatting ? (
+                      <>
+                        <Spinner className="size-4" />
+                        {t('formatMarkdownFormatting')}
+                      </>
+                    ) : (
+                      <>
+                        <WandSparkles className="size-4" aria-hidden />
+                        {t('formatMarkdownButton')}
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{t('formatMarkdownButton')}</TooltipContent>
+              </Tooltip>
+            </div>
+          ) : null}
+        </div>
         <TabsContent className="mt-0" value="preview">
           {value.trim() ? (
             <div className="max-h-[min(50vh,28rem)] overflow-y-auto rounded-md border border-border/60 bg-muted/30 p-3">
@@ -126,38 +157,6 @@ export function MarkdownEditField({
           )}
         </TabsContent>
         <TabsContent className="mt-0 flex flex-col gap-2" value="edit">
-          <div className="flex justify-end">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  aria-label={t('formatMarkdownButton')}
-                  className="gap-1.5"
-                  disabled={disabled || formatting}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    void handleFormat()
-                  }}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  size="sm"
-                  type="button"
-                  variant="secondary"
-                >
-                  {formatting ? (
-                    <>
-                      <Spinner className="size-4" />
-                      {t('formatMarkdownFormatting')}
-                    </>
-                  ) : (
-                    <>
-                      <WandSparkles className="size-4" aria-hidden />
-                      {t('formatMarkdownButton')}
-                    </>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{t('formatMarkdownButton')}</TooltipContent>
-            </Tooltip>
-          </div>
           {formatError ? (
             <p className="text-destructive text-sm" role="alert">
               {formatError}
