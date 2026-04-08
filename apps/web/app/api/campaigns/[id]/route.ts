@@ -10,7 +10,7 @@ import {
   type NodeDataRaw,
   type UpdateNodeDataRaw,
 } from '@/lib/graphql/queries'
-import { patchCampaignGoalSchema } from './schema'
+import { patchCampaignSchema } from './schema'
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -44,12 +44,20 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
 
     const json = await req.json()
-    const { goal } = patchCampaignGoalSchema.parse(json)
+    const patch = patchCampaignSchema.parse(json)
+
+    const variables: Record<string, unknown> = { id: campaignId }
+    if (patch.name !== undefined) {
+      variables.name = patch.name
+    }
+    if (patch.goal !== undefined) {
+      variables.data = { goal: patch.goal }
+    }
 
     const updated = parseUpdateNodeData(
       await graphqlQuery<UpdateNodeDataRaw>(
         UPDATE_NODE_MUTATION,
-        { id: campaignId, data: { goal } },
+        variables,
         userId,
       ),
     )

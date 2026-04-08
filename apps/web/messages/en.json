@@ -511,7 +511,10 @@
         "action": "Actions",
         "actionsForRow": "Actions for {name}",
         "view": "View",
-        "delete": "Delete"
+        "delete": "Delete",
+        "editNameAria": "Edit campaign name",
+        "saveNameAria": "Save campaign name",
+        "renameError": "Could not save the name. Please try again."
       },
       "detail": {
         "breadcrumb": "View Campaign"

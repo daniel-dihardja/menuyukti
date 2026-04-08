@@ -121,6 +121,10 @@ export function CampaignsClient({ branches }: Props) {
 
   const hasCampaigns = campaigns.length > 0
 
+  const handleCampaignRenamed = useCallback((id: string, name: string) => {
+    setCampaigns((prev) => prev.map((c) => (c.id === id ? { ...c, name } : c)))
+  }, [])
+
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-wrap items-end gap-3">
@@ -174,7 +178,7 @@ export function CampaignsClient({ branches }: Props) {
           <AlertDescription>{listError}</AlertDescription>
         </Alert>
       ) : hasCampaigns ? (
-        <CampaignsTable campaigns={campaigns} />
+        <CampaignsTable campaigns={campaigns} onCampaignRenamed={handleCampaignRenamed} />
       ) : (
         <Card>
           <CardHeader>

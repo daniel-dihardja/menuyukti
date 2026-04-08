@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Table,
   TableBody,
@@ -11,6 +12,7 @@ import {
 } from '@workspace/ui/components/table'
 import { Button } from '@workspace/ui/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
+import { Input } from '@workspace/ui/components/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +20,8 @@ import {
   DropdownMenuTrigger,
 } from '@workspace/ui/components/dropdown-menu'
 import { Skeleton } from '@workspace/ui/components/skeleton'
-import { Eye, MoreHorizontal } from 'lucide-react'
+import { Spinner } from '@workspace/ui/components/spinner'
+import { Check, Eye, MoreHorizontal, Pencil } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { routes } from '@/lib/routes'
 
@@ -29,6 +32,7 @@ export type CampaignRow = {
 
 interface CampaignsTableProps {
   campaigns: CampaignRow[]
+  onCampaignRenamed?: (id: string, name: string) => void
 }
 
 export function CampaignsTableSkeleton() {
@@ -55,9 +59,96 @@ export function CampaignsTableSkeleton() {
   )
 }
 
-export function CampaignsTable({ campaigns }: CampaignsTableProps) {
+export function CampaignsTable({ campaigns, onCampaignRenamed }: CampaignsTableProps) {
   const t = useTranslations('analytics.campaigns')
   const tTable = useTranslations('analytics.campaigns.table')
+
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [draftName, setDraftName] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [renameError, setRenameError] = useState<string | null>(null)
+  const editContainerRef = useRef<HTMLDivElement>(null)
+
+  const cancelEdit = useCallback(() => {
+    setEditingId(null)
+    setDraftName('')
+    setRenameError(null)
+  }, [])
+
+  useEffect(() => {
+    if (editingId === null) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        cancelEdit()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [editingId, cancelEdit])
+
+  useEffect(() => {
+    if (editingId === null) return
+    const onPointerDown = (e: PointerEvent) => {
+      if (saving) return
+      const el = editContainerRef.current
+      if (!el?.contains(e.target as Node)) {
+        cancelEdit()
+      }
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [editingId, saving, cancelEdit])
+
+  const startEdit = useCallback((row: CampaignRow) => {
+    setEditingId(row.id)
+    setDraftName(row.name)
+    setRenameError(null)
+  }, [])
+
+  const saveEdit = useCallback(async () => {
+    if (editingId === null || saving) return
+    const trimmed = draftName.trim()
+    if (!trimmed) return
+
+    const row = campaigns.find((c) => c.id === editingId)
+    if (row && trimmed === row.name) {
+      cancelEdit()
+      return
+    }
+
+    setSaving(true)
+    setRenameError(null)
+    try {
+      const res = await fetch(`/api/campaigns/${encodeURIComponent(editingId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmed }),
+      })
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { message?: string } | null
+        setRenameError(body?.message ?? tTable('renameError'))
+        return
+      }
+      const updated = (await res.json()) as { name?: string }
+      const nextName = updated.name ?? trimmed
+      onCampaignRenamed?.(editingId, nextName)
+      cancelEdit()
+    } catch {
+      setRenameError(tTable('renameError'))
+    } finally {
+      setSaving(false)
+    }
+  }, [campaigns, cancelEdit, draftName, editingId, onCampaignRenamed, saving, tTable])
+
+  const onDraftKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        void saveEdit()
+      }
+    },
+    [saveEdit],
+  )
 
   return (
     <Card>
@@ -80,13 +171,56 @@ export function CampaignsTable({ campaigns }: CampaignsTableProps) {
                 <TableRow key={row.id}>
                   <TableCell className="tabular-nums text-muted-foreground">{index + 1}</TableCell>
                   <TableCell className="min-w-0 max-w-[min(100%,24rem)]">
-                    <Link
-                      className="block truncate font-medium text-foreground underline-offset-4 hover:underline"
-                      href={routes.campaigns.detail(row.id)}
-                      title={row.name}
-                    >
-                      {row.name}
-                    </Link>
+                    {editingId === row.id ? (
+                      <div ref={editContainerRef} className="flex flex-col gap-1">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <Input
+                            aria-invalid={renameError ? true : undefined}
+                            autoFocus
+                            className="min-w-0 flex-1"
+                            disabled={saving}
+                            onChange={(e) => setDraftName(e.target.value)}
+                            onKeyDown={onDraftKeyDown}
+                            value={draftName}
+                          />
+                          <Button
+                            aria-label={tTable('saveNameAria')}
+                            disabled={saving || draftName.trim().length === 0}
+                            onClick={() => void saveEdit()}
+                            size="icon-sm"
+                            type="button"
+                            variant="secondary"
+                          >
+                            {saving ? <Spinner /> : <Check aria-hidden />}
+                          </Button>
+                        </div>
+                        {renameError ? (
+                          <p className="text-destructive text-sm" role="alert">
+                            {renameError}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="flex min-w-0 items-center gap-1">
+                        <Link
+                          className="min-w-0 flex-1 truncate font-medium text-foreground underline-offset-4 hover:underline"
+                          href={routes.campaigns.detail(row.id)}
+                          title={row.name}
+                        >
+                          {row.name}
+                        </Link>
+                        <Button
+                          aria-label={tTable('editNameAria')}
+                          className="shrink-0"
+                          onClick={() => startEdit(row)}
+                          size="icon-sm"
+                          type="button"
+                          variant="ghost"
+                        >
+                          <Pencil aria-hidden />
+                        </Button>
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
