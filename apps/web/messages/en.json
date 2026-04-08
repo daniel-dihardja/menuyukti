@@ -122,9 +122,55 @@
     "shopLink": "Print Shop"
   },
   "shop": {
+    "listMetaTitle": "The Digital Curator | Art for Your Restaurant",
+    "listMetaDescription": "Elevate your culinary space with bespoke prints designed for the modern restaurateur.",
+    "skipToContent": "Skip to products",
+    "filterAria": "Filter by collection",
     "noImagesAvailable": "No images are currently available.",
+    "collections": {
+      "all": "All Collections",
+      "posters": "Posters",
+      "menuBackgrounds": "Menu Backgrounds",
+      "customPrints": "Custom Prints",
+      "limitedEdition": "Limited Edition"
+    },
+    "sort": {
+      "label": "Sort by",
+      "newest": "Newest",
+      "priceAsc": "Price: Low to High",
+      "priceDesc": "Price: High to Low",
+      "popularity": "Popularity"
+    },
+    "grid": {
+      "viewDetails": "View details",
+      "lineTotal": "Line total ({count}):"
+    },
+    "pdp": {
+      "printOnDemand": "Print on demand",
+      "from": "From",
+      "sizeOrLicense": "Size or license",
+      "finishOrProfile": "Finish / color profile",
+      "quantity": "Quantity",
+      "choosePlaceholder": "Choose…",
+      "share": "Share",
+      "shareCopied": "Link copied to clipboard.",
+      "breadcrumbShop": "Shop",
+      "aboutPiece": "About this piece",
+      "accordionShippingTitle": "Production and shipping",
+      "accordionShippingBody": "Each order is printed after checkout—allow 3–5 business days for production plus transit time. Tracking is sent when your package leaves our partner lab. International delivery may incur duties.",
+      "accordionReturnsTitle": "Returns and reprints",
+      "accordionReturnsBody": "Because pieces are made to order, returns are limited to damage in transit or print defects—contact us within 14 days with photos of the packaging and item. Color variation up to 10% versus your screen is normal for giclée and canvas.",
+      "accordionCareTitle": "Care",
+      "accordionCareBody": "Handle framed and canvas works with clean, dry hands. Dust lightly with a soft microfiber cloth; avoid household cleaners on the print surface. Keep out of direct sunlight to preserve color for years in hospitality environments.",
+      "backToShop": "Back to shop",
+      "addToCartDisabled": "Coming soon",
+      "checkoutHint": "Online checkout is not available yet—we will notify you when ordering opens.",
+      "sizePrice": "{label} — {price}"
+    },
     "hero": {
-      "headline": "Brand Every Corner of Your Restaurant",
+      "kicker": "Editorial Collection",
+      "headline": "The Digital Curator: Art for Your Restaurant",
+      "description": "Elevate your culinary space with bespoke prints designed for the modern restaurateur.",
       "subtitle": "Custom print-on-demand products designed for restaurants. From wall art to takeaway packaging, get your brand on everything.",
       "ctaPrimary": "Browse Products"
     },

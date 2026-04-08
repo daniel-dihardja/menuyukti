@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Button } from '@workspace/ui/components/button'
-import { Card, CardContent } from '@workspace/ui/components/card'
+import { useTranslations } from 'next-intl'
+import { parseAsStringLiteral, useQueryState } from 'nuqs'
 import {
   Select,
   SelectContent,
@@ -10,53 +9,99 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select'
+import { Separator } from '@workspace/ui/components/separator'
+import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 
-import filterData from './shop-filter-data.json'
+import {
+  SHOP_COLLECTION_VALUES,
+  SHOP_SORT_VALUES,
+  type ShopCollectionParam,
+  type ShopSortParam,
+} from '@/lib/shop/shop-list-params'
 
-const defaultCollectionId = filterData.collections[0]?.id ?? 'all'
-const defaultSortId = filterData.sortOptions[0]?.id ?? 'newest'
+const collectionParser = parseAsStringLiteral(SHOP_COLLECTION_VALUES).withDefault('all')
+const sortParser = parseAsStringLiteral(SHOP_SORT_VALUES).withDefault('newest')
+
+function collectionLabel(t: (key: string) => string, id: ShopCollectionParam): string {
+  switch (id) {
+    case 'all':
+      return t('collections.all')
+    case 'posters':
+      return t('collections.posters')
+    case 'menu-backgrounds':
+      return t('collections.menuBackgrounds')
+    case 'custom-prints':
+      return t('collections.customPrints')
+    case 'limited-edition':
+      return t('collections.limitedEdition')
+    default:
+      return t('collections.all')
+  }
+}
+
+function sortLabel(t: (key: string) => string, id: ShopSortParam): string {
+  switch (id) {
+    case 'newest':
+      return t('sort.newest')
+    case 'price-asc':
+      return t('sort.priceAsc')
+    case 'price-desc':
+      return t('sort.priceDesc')
+    case 'popularity':
+      return t('sort.popularity')
+    default:
+      return t('sort.newest')
+  }
+}
 
 export function ShopFilterBar() {
-  const [activeCollectionId, setActiveCollectionId] = useState(defaultCollectionId)
-  const [sortId, setSortId] = useState(defaultSortId)
+  const t = useTranslations('shop')
+  const [collection, setCollection] = useQueryState('collection', collectionParser)
+  const [sort, setSort] = useQueryState('sort', sortParser)
 
   return (
     <section className="mb-16">
-      <Card>
-        <CardContent className="flex flex-col items-stretch justify-between gap-8 md:flex-row md:items-center">
-          <div className="flex flex-wrap gap-2">
-            {filterData.collections.map((c) => (
-              <Button
-                key={c.id}
-                type="button"
-                variant={activeCollectionId === c.id ? 'default' : 'outline'}
-                onClick={() => setActiveCollectionId(c.id)}
-              >
-                {c.label}
-              </Button>
-            ))}
-          </div>
-          <div className="flex w-full flex-col gap-2 md:w-auto md:items-end">
-            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 md:w-auto">
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {filterData.labels.sortBy}
-              </span>
-              <Select value={sortId} onValueChange={setSortId}>
-                <SelectTrigger aria-label="Sort products" className="w-full md:w-auto">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent align="end">
-                  {filterData.sortOptions.map((opt) => (
-                    <SelectItem key={opt.id} value={opt.id}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col gap-6 rounded-xl border border-border bg-card/40 px-4 py-6 md:flex-row md:items-center md:justify-between md:gap-8 md:px-6">
+        <ToggleGroup
+          type="single"
+          value={collection ?? 'all'}
+          onValueChange={(v) => {
+            void setCollection((v || 'all') as ShopCollectionParam)
+          }}
+          aria-label={t('filterAria')}
+        >
+          {SHOP_COLLECTION_VALUES.map((id) => (
+            <ToggleGroupItem key={id} value={id}>
+              {collectionLabel(t, id)}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+
+        <Separator className="md:hidden" />
+
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 md:w-auto md:shrink-0">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {t('sort.label')}
+          </span>
+          <Select
+            value={sort ?? 'newest'}
+            onValueChange={(v) => {
+              void setSort(v as ShopSortParam)
+            }}
+          >
+            <SelectTrigger aria-label={t('sort.label')} className="w-full md:w-[min(100%,220px)]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end">
+              {SHOP_SORT_VALUES.map((opt) => (
+                <SelectItem key={opt} value={opt}>
+                  {sortLabel(t, opt)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
     </section>
   )
 }

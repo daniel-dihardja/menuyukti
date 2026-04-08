@@ -63,7 +63,11 @@ export default async function ShopProductPage({ params }: PageProps) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <main className="mx-auto w-full max-w-[1440px] flex-1 px-6 md:px-12 pt-8">
+      <main
+        className="mx-auto w-full max-w-[1440px] flex-1 px-6 pt-8 md:px-12"
+        id="shop-main"
+        tabIndex={-1}
+      >
         <ShopProductDetail key={product.slug} product={product} resolvedImages={resolvedImages} />
       </main>
       <CopyrightFooter />

@@ -1,3 +1,6 @@
+import type { ShopCollectionParam, ShopSortParam } from '@/lib/shop/shop-list-params'
+import { parsePriceToNumber } from '@/lib/shop/format-usd'
+
 export type ShopProductImageHint = {
   alt: string
   label: string
@@ -21,6 +24,13 @@ export type ShopProductGridLayout = {
   addToCartClass: string
 }
 
+/** Collection tag for filtering (excludes virtual `all`). */
+export type ShopProductCollectionId =
+  | 'posters'
+  | 'menu-backgrounds'
+  | 'custom-prints'
+  | 'limited-edition'
+
 export type ShopProduct = {
   slug: string
   title: string
@@ -33,6 +43,11 @@ export type ShopProduct = {
   sizes: ShopSizeVariant[]
   finishes: ShopFinishVariant[]
   grid: ShopProductGridLayout
+  collectionId: ShopProductCollectionId
+  /** Lower = newer for default catalog order. */
+  newestOrder: number
+  /** Higher = more popular when sorting by popularity. */
+  popularityOrder: number
 }
 
 const FINISHES_PRINT: ShopFinishVariant[] = [
@@ -75,6 +90,9 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       { id: '30x40', label: `30 × 40"`, price: '$240.00' },
     ],
     finishes: FINISHES_PRINT,
+    collectionId: 'posters',
+    newestOrder: 0,
+    popularityOrder: 5,
     grid: {
       colClass: 'col-span-12 md:col-span-8',
       imageAspect: 'aspect-[16/9]',
@@ -109,11 +127,14 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       { id: 'enterprise', label: 'Unlimited locations', price: '$195.00' },
     ],
     finishes: FINISHES_DIGITAL,
+    collectionId: 'menu-backgrounds',
+    newestOrder: 1,
+    popularityOrder: 4,
     grid: {
       colClass: 'col-span-12 md:col-span-4 mt-12',
       imageAspect: 'aspect-[3/4]',
       titleClass: 'text-lg leading-tight',
-      addToCartClass: 'text-[10px]',
+      addToCartClass: 'text-xs',
     },
   },
   {
@@ -143,11 +164,14 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       { id: '24x36', label: `24 × 36"`, price: '$320.00' },
     ],
     finishes: FINISHES_PRINT,
+    collectionId: 'limited-edition',
+    newestOrder: 2,
+    popularityOrder: 5,
     grid: {
       colClass: 'col-span-12 md:col-span-4 -mt-8',
       imageAspect: 'aspect-[4/5]',
       titleClass: 'text-lg',
-      addToCartClass: 'text-[10px]',
+      addToCartClass: 'text-xs',
     },
   },
   {
@@ -177,11 +201,14 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       { id: '24x24', label: `24 × 24"`, price: '$165.00' },
     ],
     finishes: FINISHES_PRINT,
+    collectionId: 'posters',
+    newestOrder: 3,
+    popularityOrder: 3,
     grid: {
       colClass: 'col-span-12 md:col-span-4 mt-16',
       imageAspect: 'aspect-square',
       titleClass: 'text-lg leading-tight',
-      addToCartClass: 'text-[10px]',
+      addToCartClass: 'text-xs',
     },
   },
   {
@@ -215,11 +242,14 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       { id: 'canvas-satin', label: 'Satin canvas (stretched)' },
       { id: 'framed-float', label: 'Float frame add-on' },
     ],
+    collectionId: 'custom-prints',
+    newestOrder: 4,
+    popularityOrder: 4,
     grid: {
       colClass: 'col-span-12 md:col-span-4',
       imageAspect: 'aspect-[4/5]',
       titleClass: 'text-lg leading-tight',
-      addToCartClass: 'text-[10px]',
+      addToCartClass: 'text-xs',
     },
   },
 ]
@@ -236,4 +266,34 @@ export function getShopProductSlugs(): string[] {
 
 export function getShopProductBySlug(slug: string): ShopProduct | undefined {
   return bySlug.get(slug)
+}
+
+export function filterAndSortShopProducts(
+  collection: ShopCollectionParam,
+  sort: ShopSortParam,
+): ShopProduct[] {
+  const list =
+    collection === 'all'
+      ? [...SHOP_PRODUCTS]
+      : SHOP_PRODUCTS.filter((p) => p.collectionId === collection)
+
+  const price = (p: ShopProduct) => parsePriceToNumber(p.displayPrice)
+
+  switch (sort) {
+    case 'price-asc':
+      list.sort((a, b) => price(a) - price(b))
+      break
+    case 'price-desc':
+      list.sort((a, b) => price(b) - price(a))
+      break
+    case 'popularity':
+      list.sort((a, b) => b.popularityOrder - a.popularityOrder)
+      break
+    case 'newest':
+    default:
+      list.sort((a, b) => a.newestOrder - b.newestOrder)
+      break
+  }
+
+  return list
 }
