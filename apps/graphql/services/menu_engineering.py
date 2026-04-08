@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -23,10 +24,21 @@ class MenuEngineeringMatrixData:
 
 
 def compute_menu_engineering_matrix(
-    session: Session, run: AnalyticsRun
+    session: Session,
+    run: AnalyticsRun,
+    *,
+    order_facts: Sequence[OrderFact] | None = None,
 ) -> MenuEngineeringMatrixData | None:
-    """Load facts and COGS, run matrix math; return None if no rows or on ValueError."""
-    rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+    """Load facts and COGS, run matrix math; return None if no rows or on ValueError.
+
+    When ``order_facts`` is provided, use those rows instead of querying ``OrderFact``
+    again (same shape as a DB load for this run).
+    """
+    rows = (
+        list(order_facts)
+        if order_facts is not None
+        else session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+    )
 
     if not rows:
         return None
