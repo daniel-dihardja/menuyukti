@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { SidebarInset } from '@workspace/ui/components/sidebar'
 import { cn } from '@workspace/ui/lib/utils'
 import { SidebarTriggerClient } from '@/components/sidebar-trigger-client'
 
@@ -26,7 +25,7 @@ export function AnalyticsPageShell({
   beforeContent,
 }: AnalyticsPageShellProps) {
   return (
-    <SidebarInset className="min-h-0">
+    <>
       {beforeContent}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {triggerWrapperClassName ? (
@@ -46,6 +45,6 @@ export function AnalyticsPageShell({
           {children}
         </div>
       </div>
-    </SidebarInset>
+    </>
   )
 }
