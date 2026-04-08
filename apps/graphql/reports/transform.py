@@ -1,4 +1,13 @@
-"""Transform normalized line items to orders and run menuyukti analytics."""
+"""Transform normalized line items to orders and run menuyukti analytics.
+
+When adding GraphQL queries that call ``packages/menuyukti`` analytics:
+
+- Map SQLAlchemy or API rows to ``NormalizedLineItemData`` (or a list of dicts
+  matching the relevant ``OrderRowFor*`` TypedDict), then use helpers here such
+  as :func:`line_items_to_dataframe` or call ``compute_*_from_orders`` from
+  menuyukti. Avoid building ad hoc ``pandas.DataFrame`` objects in resolvers so
+  column contracts stay in one place.
+"""
 
 from collections import defaultdict
 from dataclasses import dataclass

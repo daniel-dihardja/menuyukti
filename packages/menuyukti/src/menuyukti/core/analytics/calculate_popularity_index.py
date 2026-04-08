@@ -2,6 +2,11 @@ from typing import TypedDict
 
 import pandas as pd
 
+from menuyukti.core.analytics.frame_contracts import (
+    popularity_index_columns,
+    require_columns,
+)
+
 
 class PopularityIndexRow(TypedDict):
     menu: str
@@ -19,6 +24,11 @@ def calculate_popularity_index(df: pd.DataFrame) -> list[PopularityIndexRow]:
     - menu
     - qty
     """
+    require_columns(
+        df,
+        popularity_index_columns(),
+        context="calculate_popularity_index",
+    )
     if df.empty:
         raise ValueError("DataFrame is empty. Cannot calculate popularity index.")
 

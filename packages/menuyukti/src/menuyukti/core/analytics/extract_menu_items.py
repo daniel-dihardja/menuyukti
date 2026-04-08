@@ -2,13 +2,19 @@ from typing import TypedDict
 
 import pandas as pd
 
+from menuyukti.core.analytics.frame_contracts import (
+    ensure_optional_category_columns,
+    extract_menu_items_required_columns,
+    require_columns,
+)
+
 
 class ExtractedMenuItem(TypedDict):
     menu: str
     quantity: int
     total_revenue: float
-    menu_category: str
-    menu_category_detail: str
+    menu_category: str | None
+    menu_category_detail: str | None
 
 
 def extract_menu_items(df: pd.DataFrame) -> list[ExtractedMenuItem]:
@@ -26,11 +32,19 @@ def extract_menu_items(df: pd.DataFrame) -> list[ExtractedMenuItem]:
     - menu
     - qty
     - price
+
+    Optional columns ``menu_category`` and ``menu_category_detail`` default to
+    ``None`` when missing.
     """
+    require_columns(
+        df,
+        extract_menu_items_required_columns(),
+        context="extract_menu_items",
+    )
     if df.empty:
         return []
 
-    df = df.copy()
+    df = ensure_optional_category_columns(df.copy())
 
     # --------------------------------------------------
     # Filter invalid price rows

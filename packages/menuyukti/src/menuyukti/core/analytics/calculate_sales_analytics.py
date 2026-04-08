@@ -7,6 +7,10 @@ import pandas as pd
 
 from menuyukti.core.analytics.calculate_menu_heatmaps import calculate_menu_heatmaps
 from menuyukti.core.analytics.calculate_popularity_index import calculate_popularity_index
+from menuyukti.core.analytics.frame_contracts import (
+    line_item_columns_full,
+    require_columns,
+)
 
 
 class OrderRowForSalesAnalytics(TypedDict):
@@ -30,6 +34,11 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict[str, object]:
     Orders with total_after_bill_discount <= 0 are excluded
     from order-level revenue and item metrics (bonuses, promos).
     """
+    require_columns(
+        df,
+        line_item_columns_full(),
+        context="calculate_sales_analytics",
+    )
     if df.empty:
         raise ValueError("DataFrame is empty. Cannot calculate analytics.")
 
