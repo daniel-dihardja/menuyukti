@@ -552,8 +552,6 @@
         "moveMilestoneDown": "Move milestone down",
         "milestonesMoveError": "Could not reorder milestones. Please try again.",
         "timelineListLabel": "Milestone timeline",
-        "timelineExpandLabel": "Expand panel",
-        "timelineSettingsLabel": "Timeline settings",
         "milestoneExpandDetails": "Expand details",
         "milestoneCollapseDetails": "Collapse details",
         "milestoneStatusComplete": "Complete",
