@@ -36,7 +36,9 @@ export function LandingFaq({ title, items }: LandingFaqProps) {
                   </span>
                 </span>
               </summary>
-              <p className="mt-3 text-pretty text-sm leading-relaxed text-muted-foreground">{item.answer}</p>
+              <p className="mt-3 text-pretty text-sm leading-relaxed text-muted-foreground">
+                {item.answer}
+              </p>
             </details>
           ))}
         </div>

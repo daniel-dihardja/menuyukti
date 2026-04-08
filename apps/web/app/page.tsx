@@ -3,12 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { Separator } from '@workspace/ui/components/separator'
 import { LandingBento } from '@/app/_components/landing/landing-bento'
 import { LandingFaq } from '@/app/_components/landing/landing-faq'
@@ -163,13 +158,21 @@ export default async function LandingPage() {
             <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
               {(
                 [
-                  { Icon: Upload, titleKey: 'how.steps.upload.title', descKey: 'how.steps.upload.description' },
+                  {
+                    Icon: Upload,
+                    titleKey: 'how.steps.upload.title',
+                    descKey: 'how.steps.upload.description',
+                  },
                   {
                     Icon: BarChart3,
                     titleKey: 'how.steps.analyze.title',
                     descKey: 'how.steps.analyze.description',
                   },
-                  { Icon: Lightbulb, titleKey: 'how.steps.act.title', descKey: 'how.steps.act.description' },
+                  {
+                    Icon: Lightbulb,
+                    titleKey: 'how.steps.act.title',
+                    descKey: 'how.steps.act.description',
+                  },
                 ] as const
               ).map(({ Icon, titleKey, descKey }) => (
                 <Card key={titleKey} className="text-center shadow-md">
@@ -192,7 +195,9 @@ export default async function LandingPage() {
 
         <section className="bg-background py-24">
           <div className="mx-auto max-w-6xl px-6">
-            <h2 className="mb-6 text-balance text-center text-3xl font-bold md:text-4xl">{t('why.title')}</h2>
+            <h2 className="mb-6 text-balance text-center text-3xl font-bold md:text-4xl">
+              {t('why.title')}
+            </h2>
 
             <p className="mx-auto mb-16 max-w-3xl text-center text-pretty text-foreground/80">
               {t('why.subtitle')}
@@ -228,7 +233,9 @@ export default async function LandingPage() {
           <div className="mx-auto max-w-3xl px-6 text-center">
             <h2 className="mb-6 text-balance text-3xl font-bold md:text-4xl">{t('cta.title')}</h2>
 
-            <p className="mb-10 text-pretty leading-relaxed text-foreground/80">{t('cta.description')}</p>
+            <p className="mb-10 text-pretty leading-relaxed text-foreground/80">
+              {t('cta.description')}
+            </p>
 
             <div className="hidden justify-center md:flex">
               <Button size="lg" className="px-8 py-6" asChild>

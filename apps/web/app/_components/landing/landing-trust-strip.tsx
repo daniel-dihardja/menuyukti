@@ -11,7 +11,10 @@ export function LandingTrustStrip({ title, stats }: TrustStripProps) {
       aria-labelledby="trust-heading"
     >
       <div className="mx-auto max-w-6xl px-6">
-        <h2 id="trust-heading" className="mb-8 text-center text-sm font-medium uppercase tracking-wider text-muted-foreground">
+        <h2
+          id="trust-heading"
+          className="mb-8 text-center text-sm font-medium uppercase tracking-wider text-muted-foreground"
+        >
           {title}
         </h2>
         <ul className="flex flex-col gap-8 sm:flex-row sm:justify-center sm:gap-16">

@@ -22,7 +22,9 @@ export function LandingBento({ title, subtitle, items }: LandingBentoProps) {
         <h2 id="bento-heading" className="text-balance text-center text-3xl font-bold md:text-4xl">
           {title}
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-pretty text-foreground/80">{subtitle}</p>
+        <p className="mx-auto mt-4 max-w-2xl text-center text-pretty text-foreground/80">
+          {subtitle}
+        </p>
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {items.map((item, i) => {
             const Icon = icons[i]!
