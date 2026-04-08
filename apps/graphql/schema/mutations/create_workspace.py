@@ -3,21 +3,15 @@ from datetime import UTC, datetime
 import strawberry
 
 from graphql.data_sources import SessionLocal, Workspace, WorkspaceMembership
+from graphql.schema.auth import user_id_from_info
 from graphql.schema.types import WorkspaceType
-
-
-def _user_id(info: strawberry.Info) -> str:
-    ctx = info.context
-    if isinstance(ctx, dict):
-        return str(ctx.get("user_id") or "")
-    return ""
 
 
 @strawberry.type
 class CreateWorkspaceMutation:
     @strawberry.mutation
     def create_workspace(self, info: strawberry.Info, name: str) -> WorkspaceType:
-        user_id = _user_id(info)
+        user_id = user_id_from_info(info)
         if not user_id:
             raise ValueError("Missing authenticated user for createWorkspace")
         now = datetime.now(tz=UTC)

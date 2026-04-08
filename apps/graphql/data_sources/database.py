@@ -1,29 +1,12 @@
-"""Database helpers for the GraphQL service."""
+"""Database engine, session factory, and lifecycle helpers for the GraphQL service."""
 
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    Column,
-    Date,
-    DateTime,
-    Float,
-    ForeignKey,
-    Index,
-    Integer,
-    String,
-    Text,
-    UniqueConstraint,
-    create_engine,
-    func,
-    text,
-)
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
-from sqlalchemy.sql import true as sql_true
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env", override=False)
@@ -34,299 +17,8 @@ engine = create_engine(DATABASE_URL, future=True, echo=False)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 Base = declarative_base()
 
-
-class Workspace(Base):
-    """
-    Tenant container: multiple locations and members share a workspace.
-    """
-
-    __tablename__ = "workspace"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(256), nullable=False)
-    owner_clerk_user_id = Column(String(128), nullable=False, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    memberships = relationship("WorkspaceMembership", back_populates="workspace")
-    locations = relationship("Location", back_populates="workspace")
-
-
-class WorkspaceMembership(Base):
-    """
-    Links a Clerk user to a workspace with a role (owner or member).
-    """
-
-    __tablename__ = "workspace_membership"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    workspace_id = Column(
-        Integer,
-        ForeignKey("workspace.id"),
-        nullable=False,
-        index=True,
-    )
-    clerk_user_id = Column(String(128), nullable=False, index=True)
-    role = Column(String(32), nullable=False)
-    invited_at = Column(DateTime(timezone=True), server_default=func.now())
-    accepted_at = Column(DateTime(timezone=True), nullable=True)
-
-    workspace = relationship("Workspace", back_populates="memberships")
-
-    __table_args__ = (
-        UniqueConstraint(
-            "workspace_id",
-            "clerk_user_id",
-            name="uq_workspace_membership_workspace_user",
-        ),
-    )
-
-
-class Location(Base):
-    """
-    Restaurant / location dimension for analytics runs.
-    """
-
-    __tablename__ = "location"
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(256), nullable=False)
-    street = Column(String(512), nullable=True)
-    city = Column(String(128), nullable=True)
-    country = Column(String(128), nullable=True)
-    currency = Column(String(16), nullable=True)
-    workspace_id = Column(
-        Integer,
-        ForeignKey("workspace.id"),
-        nullable=True,
-        index=True,
-    )
-    clerk_user_id = Column(String(128), nullable=True, index=True)
-    node_id = Column(
-        Integer,
-        ForeignKey("node.id", use_alter=True, name="fk_location_node_id"),
-        nullable=True,
-        index=True,
-    )
-
-    workspace = relationship("Workspace", back_populates="locations")
-    instagram_posts = relationship("InstagramPost", back_populates="location")
-    nodes = relationship(
-        "Node",
-        back_populates="location",
-        foreign_keys="Node.location_id",
-    )
-    location_root_node = relationship(
-        "Node",
-        foreign_keys=[node_id],
-        post_update=True,
-    )
-
-
-class AnalyticsRun(Base):
-    """
-    Represents a single analytics context / upload of a sales report.
-
-    Used to group POS line items and COGS inputs for a given period.
-    """
-
-    __tablename__ = "analytics_run"
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String(256), nullable=False)
-    filename = Column(String(512), nullable=False)
-    pos_system = Column(String(64), nullable=False)
-    period_start = Column(Date, nullable=True)
-    period_end = Column(Date, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    location_id = Column(
-        Integer,
-        ForeignKey("location.id"),
-        nullable=False,
-        index=True,
-    )
-
-
-class OrderFact(Base):
-    __tablename__ = "order_fact"
-
-    id = Column(Integer, primary_key=True)
-    analytics_run_id = Column(
-        Integer,
-        ForeignKey("analytics_run.id"),
-        nullable=True,
-        index=True,
-    )
-    bill_number = Column(String(64), nullable=False, index=True)
-    menu = Column(String(256), nullable=False)
-    qty = Column(Integer, nullable=False)
-    price = Column(Float, nullable=False)
-    total_after_bill_discount = Column(Float, nullable=False)
-    order_time = Column(DateTime(timezone=True), nullable=False, index=True)
-    menu_category = Column(String(128), nullable=False)
-    menu_category_detail = Column(String(128), nullable=False)
-    pos_system = Column(String(64), nullable=False, default="unknown")
-
-
-class MenuItemCogs(Base):
-    """
-    Per-menu COGS values supplied by the user for a given analytics run.
-    """
-
-    __tablename__ = "menu_item_cogs"
-
-    id = Column(Integer, primary_key=True)
-    analytics_run_id = Column(
-        Integer,
-        ForeignKey("analytics_run.id"),
-        nullable=False,
-        index=True,
-    )
-    menu = Column(String(256), nullable=False)
-    menu_category = Column(String(128), nullable=True)
-    menu_category_detail = Column(String(128), nullable=True)
-    cogs = Column(Float, nullable=False)
-    currency = Column(String(16), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    __table_args__ = (
-        UniqueConstraint(
-            "analytics_run_id",
-            "menu",
-            name="uq_menu_item_cogs_analytics_run_menu",
-        ),
-    )
-
-
-class InstagramPost(Base):
-    """
-    Instagram post (content plan / published post) scoped to a location.
-
-    Holds platform, platform post id, status, media type, caption, and published_at.
-    """
-
-    __tablename__ = "instagram_posts"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    location_id = Column(
-        Integer,
-        ForeignKey("location.id"),
-        nullable=False,
-        index=True,
-    )
-    location = relationship("Location", back_populates="instagram_posts")
-    platform = Column(String(32), nullable=False, default="instagram")
-    platform_post_id = Column(String(256), nullable=True, index=True)
-    status = Column(String(64), nullable=False, default="draft")
-    media_type = Column(String(64), nullable=True)
-    caption = Column(Text, nullable=True)
-    published_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    __table_args__ = (
-        Index("ix_instagram_post_location_published_at", "location_id", "published_at"),
-        Index("ix_instagram_post_platform_post_id", "platform_post_id"),
-    )
-
-
-class Node(Base):
-    """
-    Graph-like hierarchy: each row is a vertex with an optional parent edge (adjacency list).
-    """
-
-    __tablename__ = "node"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    parent_id = Column(
-        Integer,
-        ForeignKey("node.id"),
-        nullable=True,
-        index=True,
-    )
-    name = Column(Text, nullable=False)
-    description = Column(Text, nullable=True)
-    path = Column(Text, nullable=False)
-    node_type = Column(
-        "type",
-        Text,
-        nullable=False,
-        default="unknown",
-        server_default=text("'unknown'"),
-    )
-    location_id = Column(
-        Integer,
-        ForeignKey("location.id"),
-        nullable=True,
-        index=True,
-    )
-    data = Column(JSONB().with_variant(JSON(), "sqlite"), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
-
-    parent = relationship("Node", remote_side=[id], back_populates="children")
-    children = relationship("Node", back_populates="parent")
-    location = relationship(
-        "Location",
-        back_populates="nodes",
-        foreign_keys=[location_id],
-    )
-
-    __table_args__ = (Index("ix_node_location_type", "location_id", "type"),)
-
-
-class ImageAiFlow(Base):
-    """
-    Configurable image post-processing flows (e.g. Leonardo / Nano Banana) for asset uploads.
-
-    Slug is the stable key sent from the web client; display_name is shown in the UI.
-    """
-
-    __tablename__ = "image_ai_flow"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    slug = Column(Text, unique=True, nullable=False, index=True)
-    display_name = Column(Text, nullable=False)
-    prompt = Column(Text, nullable=False)
-    model = Column(Text, nullable=False)
-    prompt_enhance = Column(Text, nullable=True)
-    image_reference_strength = Column(Text, nullable=True)
-    style_ids = Column(JSONB().with_variant(JSON(), "sqlite"), nullable=True)
-    is_active = Column(
-        Boolean,
-        nullable=False,
-        default=True,
-        server_default=sql_true(),
-    )
-    sort_order = Column(
-        Integer,
-        nullable=False,
-        default=0,
-        server_default=text("0"),
-    )
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-    )
+# Register all ORM models with Base.metadata (import side effects only).
+import graphql.data_sources.models  # noqa: F401, E402
 
 
 def seed_db(target_engine=None) -> None:
@@ -335,6 +27,8 @@ def seed_db(target_engine=None) -> None:
     resolved_engine = target_engine or engine
     Session = sessionmaker(bind=resolved_engine, expire_on_commit=False)
     session = Session()
+    from graphql.data_sources import ImageAiFlow
+
     try:
         existing = (
             session.query(ImageAiFlow)
@@ -405,8 +99,6 @@ def _main_drop() -> None:
 
 
 if __name__ == "__main__":
-    import sys
-
     action = sys.argv[1] if len(sys.argv) > 1 else "init"
 
     if action == "drop":

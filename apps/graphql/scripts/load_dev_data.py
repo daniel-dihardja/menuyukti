@@ -139,14 +139,14 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
         session.commit()
         session.refresh(analytics_run)
         analytics_run_id = analytics_run.id
+        persist_sales_report(
+            session,
+            normalized_rows,
+            detected_pos,
+            analytics_run_id=analytics_run_id,
+        )
     finally:
         session.close()
-
-    persist_sales_report(
-        normalized_rows,
-        detected_pos,
-        analytics_run_id=analytics_run_id,
-    )
 
     cogs_count = 0
     if cogs_file is not None and cogs_file.exists():

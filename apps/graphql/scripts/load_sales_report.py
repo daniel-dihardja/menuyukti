@@ -53,14 +53,14 @@ def main(excel_path: str) -> int:
         session.commit()
         session.refresh(analytics_run)
         analytics_run_id = analytics_run.id
+        persist_sales_report(
+            session,
+            normalized_rows,
+            detected_pos,
+            analytics_run_id=analytics_run_id,
+        )
     finally:
         session.close()
-
-    persist_sales_report(
-        normalized_rows,
-        detected_pos,
-        analytics_run_id=analytics_run_id,
-    )
 
     print(f"Loaded {len(normalized_rows)} rows from {path} into the database.")
     return 0

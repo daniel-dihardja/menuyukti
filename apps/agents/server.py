@@ -3,6 +3,7 @@
 from contextlib import asynccontextmanager
 from typing import Any
 
+import httpx
 from agents_app.routers.chat import router as chat_router
 from agents_app.routers.format_markdown import router as format_markdown_router
 from agents_app.routers.milestone_prepare import router as milestone_prepare_router
@@ -14,8 +15,10 @@ load_dotenv()
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> Any:
-    yield
+async def lifespan(app: FastAPI) -> Any:
+    async with httpx.AsyncClient() as http_client:
+        app.state.http_client = http_client
+        yield
 
 
 app = FastAPI(
@@ -32,3 +35,6 @@ app.include_router(milestone_run_router, tags=["milestones"])
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+__all__ = ["app"]

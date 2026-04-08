@@ -90,10 +90,9 @@ def analytics_run_with_qa_data(qa_sales_rows, qa_cogs_by_menu):
         session.commit()
         session.refresh(run)
         run_id = run.id
+        persist_sales_report(session, qa_sales_rows, "esb", analytics_run_id=run_id)
     finally:
         session.close()
-
-    persist_sales_report(qa_sales_rows, "esb", analytics_run_id=run_id)
 
     session = SessionLocal()
     try:
@@ -169,8 +168,7 @@ def analytics_run_with_qa_sales_only(qa_sales_rows):
         session.commit()
         session.refresh(run)
         run_id = run.id
+        persist_sales_report(session, qa_sales_rows, "esb", analytics_run_id=run_id)
     finally:
         session.close()
-
-    persist_sales_report(qa_sales_rows, "esb", analytics_run_id=run_id)
     yield run_id

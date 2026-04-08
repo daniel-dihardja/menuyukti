@@ -1,14 +1,7 @@
 import strawberry
 
 from graphql.data_sources import SessionLocal, WorkspaceMembership
-from graphql.schema.auth import is_workspace_owner_role
-
-
-def _user_id(info: strawberry.Info) -> str:
-    ctx = info.context
-    if isinstance(ctx, dict):
-        return str(ctx.get("user_id") or "")
-    return ""
+from graphql.schema.auth import is_workspace_owner_role, user_id_from_info
 
 
 @strawberry.type
@@ -20,7 +13,7 @@ class RemoveWorkspaceMemberMutation:
         workspace_id: strawberry.ID,
         clerk_user_id: str,
     ) -> bool:
-        user_id = _user_id(info)
+        user_id = user_id_from_info(info)
         if not user_id:
             raise ValueError("Missing authenticated user for removeWorkspaceMember")
         wid = int(workspace_id)

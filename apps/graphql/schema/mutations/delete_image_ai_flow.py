@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import strawberry
 
-from graphql.data_sources.database import ImageAiFlow, SessionLocal
+from graphql.data_sources import ImageAiFlow, SessionLocal
 from graphql.schema.auth import user_id_from_info
 
 

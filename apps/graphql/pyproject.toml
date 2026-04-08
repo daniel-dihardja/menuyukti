@@ -31,7 +31,9 @@ packages = [
     "graphql.schema",
     "graphql.resolvers",
     "graphql.data_sources",
+    "graphql.data_sources.models",
     "graphql.reports",
+    "graphql.services",
 ]
 
 [tool.setuptools.package-dir]
@@ -39,7 +41,9 @@ packages = [
 "graphql.schema" = "schema"
 "graphql.resolvers" = "resolvers"
 "graphql.data_sources" = "data_sources"
+"graphql.data_sources.models" = "data_sources/models"
 "graphql.reports" = "reports"
+"graphql.services" = "services"
 
 [tool.ruff]
 line-length = 100

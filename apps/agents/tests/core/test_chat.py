@@ -10,7 +10,8 @@ from langchain_core.messages import AIMessageChunk
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 def test_health(client: TestClient) -> None:

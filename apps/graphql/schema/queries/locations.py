@@ -2,22 +2,15 @@ import strawberry
 from sqlalchemy import or_
 
 from graphql.data_sources import Location, SessionLocal, WorkspaceMembership
-from graphql.schema.auth import is_location_owner
+from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types import LocationType
-
-
-def _user_id(info: strawberry.Info) -> str:
-    ctx = info.context
-    if isinstance(ctx, dict):
-        return str(ctx.get("user_id") or "")
-    return ""
 
 
 @strawberry.type
 class LocationsQuery:
     @strawberry.field
     def locations(self, info: strawberry.Info) -> list[LocationType]:
-        user_id = _user_id(info)
+        user_id = user_id_from_info(info)
         if not user_id:
             return []
         session = SessionLocal()
@@ -49,7 +42,7 @@ class LocationsQuery:
 
     @strawberry.field
     def location(self, info: strawberry.Info, id: strawberry.ID) -> LocationType | None:
-        user_id = _user_id(info)
+        user_id = user_id_from_info(info)
         if not user_id:
             return None
         session = SessionLocal()

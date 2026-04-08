@@ -9,7 +9,8 @@ from typing import Annotated
 
 import httpx
 from agents_app.agents.domain.skill_runner.runner import run_skill_events
-from fastapi import APIRouter, Header, HTTPException
+from agents_app.deps import get_http_client
+from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -32,6 +33,7 @@ def _sse_line(payload: object) -> str:
 async def milestone_prepare(
     milestone_id: str,
     body: MilestonePrepareBody,
+    client: Annotated[httpx.AsyncClient, Depends(get_http_client)],
     x_menuyukti_user_id: Annotated[str | None, Header(alias="X-Menuyukti-User-Id")] = None,
 ) -> StreamingResponse:
     if not x_menuyukti_user_id:
@@ -39,15 +41,14 @@ async def milestone_prepare(
 
     async def event_stream() -> AsyncIterator[str]:
         try:
-            async with httpx.AsyncClient() as client:
-                async for payload in run_skill_events(
-                    LOCATION_PROFILE_SKILL_PATH,
-                    milestone_id,
-                    body.location_id,
-                    x_menuyukti_user_id,
-                    client=client,
-                ):
-                    yield _sse_line(payload)
+            async for payload in run_skill_events(
+                LOCATION_PROFILE_SKILL_PATH,
+                milestone_id,
+                body.location_id,
+                x_menuyukti_user_id,
+                client=client,
+            ):
+                yield _sse_line(payload)
         except Exception as e:
             yield _sse_line({"error": str(e)})
 

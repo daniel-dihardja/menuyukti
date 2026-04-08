@@ -1,6 +1,6 @@
 import strawberry
 
-from graphql.data_sources.database import ImageAiFlow, SessionLocal
+from graphql.data_sources import ImageAiFlow, SessionLocal
 from graphql.schema.types import ImageAiFlowType
 
 

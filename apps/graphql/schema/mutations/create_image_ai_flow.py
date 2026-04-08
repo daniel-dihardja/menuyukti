@@ -7,7 +7,7 @@ import re
 import strawberry
 from strawberry.scalars import JSON
 
-from graphql.data_sources.database import ImageAiFlow, SessionLocal
+from graphql.data_sources import ImageAiFlow, SessionLocal
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.queries.image_ai_flows import _flow_to_gql
 from graphql.schema.types import ImageAiFlowType
