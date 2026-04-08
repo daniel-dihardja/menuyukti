@@ -93,6 +93,16 @@ export const resultNodeSchema = baseNode.extend({
   data: resultDataSchema.nullable(),
 })
 
+/** Campaign root node `data` JSON — e.g. `{ "goal": "..." }`. */
+export const campaignDataSchema = z.object({ goal: z.string().optional() }).passthrough()
+
+export type CampaignData = z.infer<typeof campaignDataSchema>
+
+export const campaignNodeSchema = baseNode.extend({
+  nodeType: z.literal('campaign'),
+  data: campaignDataSchema.nullable(),
+})
+
 export const unknownNodeSchema = baseNode.extend({
   nodeType: z.string(),
   data: z.unknown().nullable(),
@@ -104,6 +114,7 @@ export const knownNodeSchema = z.discriminatedUnion('nodeType', [
   goalNodeSchema,
   milestonedataNodeSchema,
   resultNodeSchema,
+  campaignNodeSchema,
 ])
 
 export type MilestoneNode = z.infer<typeof milestoneNodeSchema>
@@ -111,13 +122,14 @@ export type PassCriteriaNode = z.infer<typeof passCriteriaNodeSchema>
 export type GoalNode = z.infer<typeof goalNodeSchema>
 export type MilestonedataNode = z.infer<typeof milestonedataNodeSchema>
 export type ResultNode = z.infer<typeof resultNodeSchema>
+export type CampaignNode = z.infer<typeof campaignNodeSchema>
 export type KnownNode = z.infer<typeof knownNodeSchema>
 export type UnknownNode = z.infer<typeof unknownNodeSchema>
 export type AnyNode = KnownNode | UnknownNode
 
 /**
- * Parse a single node from GraphQL JSON. Tries milestone, passcriteria, goal, milestonedata, result, then falls back
- * to a generic node (campaign, etc.) so callers can still narrow on `nodeType`.
+ * Parse a single node from GraphQL JSON. Tries milestone, passcriteria, goal, milestonedata, result, campaign, then
+ * falls back to a generic node so callers can still narrow on `nodeType`.
  */
 export function parseNode(raw: unknown): AnyNode {
   const m = milestoneNodeSchema.safeParse(raw)
@@ -139,6 +151,10 @@ export function parseNode(raw: unknown): AnyNode {
   const r = resultNodeSchema.safeParse(raw)
   if (r.success) {
     return r.data
+  }
+  const c = campaignNodeSchema.safeParse(raw)
+  if (c.success) {
+    return c.data
   }
   const u = unknownNodeSchema.safeParse(raw)
   if (u.success) {

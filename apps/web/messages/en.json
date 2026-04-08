@@ -625,7 +625,9 @@
         "assetsTabDescription": "Your brand library images. Add more from the Brief tab with Generate visuals.",
         "loadingAssets": "Loading assets…",
         "assetsEmpty": "No images yet",
-        "assetsEmptyHint": "Open Generate visuals to add images to your library."
+        "assetsEmptyHint": "Open Generate visuals to add images to your library.",
+        "goalLabel": "Campaign goal",
+        "goalSaveError": "Could not save goal. Please try again."
       },
       "milestoneRun": {
         "runningLabel": "Evaluation in progress…",

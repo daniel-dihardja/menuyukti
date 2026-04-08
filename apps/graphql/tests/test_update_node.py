@@ -364,6 +364,48 @@ def test_update_milestonedata_node_data():
     assert out["data"]["data"] == "Second draft"
 
 
+def test_update_campaign_node_goal_data():
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(name="Update Campaign Goal Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    campaign = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "campaign",
+                "name": "Campaign",
+                "parentId": None,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not campaign.errors, campaign.errors
+    campaign_id = campaign.data["createNode"]["id"]
+
+    updated = asyncio.run(
+        schema.execute(
+            UPDATE_NODE,
+            variable_values={"id": campaign_id, "data": {"goal": "Grow lunch traffic"}},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not updated.errors, updated.errors
+    out = updated.data["updateNode"]
+    assert out["data"]["goal"] == "Grow lunch traffic"
+
+
 def test_get_handler_strips_node_type_for_lookup():
     from graphql.schema.node_handlers import get_handler
     from graphql.schema.node_handlers.goal import GoalHandler

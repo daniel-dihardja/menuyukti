@@ -13,6 +13,7 @@ import {
   NODES_QUERY,
   parseNodeData,
   parseNodesData,
+  type CampaignNode,
   type NodeDataRaw,
   type NodesDataRaw,
 } from '@/lib/graphql/queries'
@@ -56,10 +57,11 @@ export default async function Page({ params }: PageProps) {
   const nodeData = parseNodeData(
     await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: campaignId }, authUserId),
   )
-  const campaignNode = nodeData.node
-  if (!campaignNode || campaignNode.nodeType !== 'campaign') {
+  const campaignNodeRaw = nodeData.node
+  if (!campaignNodeRaw || campaignNodeRaw.nodeType !== 'campaign') {
     notFound()
   }
+  const campaignNode = campaignNodeRaw as CampaignNode
   const locationId = campaignNode.locationId
   if (locationId == null) {
     notFound()
@@ -147,6 +149,7 @@ export default async function Page({ params }: PageProps) {
     >
       <CampaignWorkspace
         campaignId={campaignId}
+        initialGoal={campaignNode.data?.goal ?? null}
         initialMilestones={initialMilestones}
         locationId={locationId}
       />

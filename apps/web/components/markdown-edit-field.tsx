@@ -11,6 +11,7 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { Textarea } from '@workspace/ui/components/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
+import { cn } from '@workspace/ui/lib/utils'
 
 export type MarkdownEditFieldProps = {
   id: string
@@ -163,7 +164,10 @@ export function MarkdownEditField({
             </p>
           ) : null}
           <Textarea
-            className={textareaClassName}
+            className={cn(
+              'max-h-[min(50vh,28rem)] min-h-0 overflow-y-auto',
+              textareaClassName,
+            )}
             disabled={disabled}
             id={id}
             onChange={(e) => onChange(e.target.value)}

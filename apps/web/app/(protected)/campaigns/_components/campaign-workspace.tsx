@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/componen
 import { AssetsClient } from '../../assets/assets-client'
 import { CampaignAssetsTab } from './campaign-assets-tab'
 import { CampaignChatPanel } from './campaign-chat-panel'
+import { CampaignGoalEditor } from './campaign-goal-editor'
 import type { TimelineMilestone } from './timeline-workspace'
 
 function normalizeTab(value: string | null): 'brief' | 'assets' | 'print' {
@@ -39,12 +40,14 @@ function normalizeTab(value: string | null): 'brief' | 'assets' | 'print' {
 export type CampaignWorkspaceProps = {
   campaignId: string
   locationId: number
+  initialGoal: string | null
   initialMilestones: TimelineMilestone[]
 }
 
 export function CampaignWorkspace({
   campaignId,
   locationId,
+  initialGoal,
   initialMilestones,
 }: CampaignWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.workspace')
@@ -67,19 +70,14 @@ export function CampaignWorkspace({
         onValueChange={handleTabChange}
         value={tab}
       >
-        <TabsList className="w-full min-w-0 shrink-0 justify-start sm:w-auto">
-          <TabsTrigger value="brief">{t('tabBrief')}</TabsTrigger>
-          <TabsTrigger value="assets">{t('tabAssets')}</TabsTrigger>
-          <TabsTrigger value="print">{t('tabPrint')}</TabsTrigger>
-        </TabsList>
-
-        <TabsContent
-          className="mt-0 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
-          forceMount
-          value="brief"
-        >
-          <div className="flex min-h-0 flex-1 flex-col gap-2">
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <div className="flex shrink-0 flex-col gap-3 border-border/60 border-b pb-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <TabsList className="h-9 w-full min-w-0 justify-start sm:w-auto">
+            <TabsTrigger value="brief">{t('tabBrief')}</TabsTrigger>
+            <TabsTrigger value="assets">{t('tabAssets')}</TabsTrigger>
+            <TabsTrigger value="print">{t('tabPrint')}</TabsTrigger>
+          </TabsList>
+          {tab === 'brief' ? (
+            <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
               <Button onClick={() => setStudioOpen(true)} type="button" variant="default">
                 {t('generateVisuals')}
               </Button>
@@ -94,6 +92,16 @@ export function CampaignWorkspace({
                 {t('orderPrints')}
               </Button>
             </div>
+          ) : null}
+        </div>
+
+        <TabsContent
+          className="mt-0 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
+          forceMount
+          value="brief"
+        >
+          <div className="flex min-h-0 flex-1 flex-col gap-4">
+            <CampaignGoalEditor campaignId={campaignId} initialGoal={initialGoal} />
             <div className="min-h-0 flex-1">
               <CampaignChatPanel
                 campaignId={campaignId}

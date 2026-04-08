@@ -6,6 +6,7 @@ import { parseNode, parseNodeNullable, parseNodes, type AnyNode } from './node-s
 
 export type {
   AnyNode,
+  CampaignNode,
   KnownNode,
   MilestoneNode,
   PassCriteriaData,

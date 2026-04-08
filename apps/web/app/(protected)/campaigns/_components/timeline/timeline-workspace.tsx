@@ -81,15 +81,13 @@ export function TimelineWorkspace({
   const showTimeline = !isLoading && !loadError && milestones.length > 0
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-background">
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
       <TimelineToolbar
         count={milestones.length}
         createLabel={t('createMilestone')}
         creating={creating}
         creatingLabel={t('creatingMilestone')}
-        expandLabel={t('timelineExpandLabel')}
         onCreateMilestone={onCreateMilestone}
-        settingsLabel={t('timelineSettingsLabel')}
         showCreate={showTimeline}
         title={t('timelineToolbarTitle')}
       />
