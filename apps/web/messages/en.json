@@ -1,4 +1,9 @@
 {
+  "metadata": {
+    "title": "Menuyukti — Agentic AI workflows for restaurant marketing",
+    "description": "Composable campaign workflows: sales analytics, LangGraph-style agents, milestone data, and Instagram-ready artifacts—one GraphQL-backed workspace for teams.",
+    "ogLocale": "en_US"
+  },
   "login": {
     "title": "Menuyukti",
     "slogan": "AI-powered restaurant marketing",
@@ -28,54 +33,91 @@
   },
   "landing": {
     "brand": "Menuyukti",
+    "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Restaurant marketing SaaS for marketers and agencies",
-      "subtitle": "An agentic AI system that turns sales data into Instagram schedules with post concepts and copy.",
-      "ctaPrimary": "Sign in"
+      "headline": "Agentic AI workflows for data-driven restaurant marketing",
+      "subtitle": "Upload sales data, explore analytics-backed signals, then run campaign milestones that produce structured outputs—schedules, angles, and copy—through agentic pipelines, chat, and reusable artifacts.",
+      "badge": "Milestones · Analytics · Agents",
+      "ctaSecondary": "Sign in"
     },
-    "problem": "Restaurant marketers and agencies still rely on gut feel to decide what to promote. That leads to missed demand signals, wasted budget, and underperforming campaigns.",
-    "solution": "Menuyukti turns sales data into marketing intelligence and AI workflows that create Instagram schedules with post concepts and copy, then measures the real impact of those posts.",
+    "problem": "Most restaurant marketing still runs on spreadsheets, static playbooks, and gut feel—without agentic automation that turns live sales data into repeatable workflow outputs. Teams miss demand signals, burn budget on the wrong promos, and never get from insight to publish-ready assets in one system.",
+    "problemImageAlt": "Abstract analytics dashboard showing sales performance bars and insight summary.",
+    "solution": "Menuyukti is built as a workflow platform: campaigns are sequences of milestones that fetch context, run AI steps (LangGraph-style agent service), and persist structured milestone data—not only chat. Your flagship use case is restaurant marketing: sales and menu signals feed those workflows so you get Instagram-oriented schedules and content you can refine in the app and reuse across locations.",
+    "solutionImageAlt": "Workflow diagram from POS data through AI milestones to stored campaign outputs and artifacts.",
+    "trust": {
+      "title": "What the platform is",
+      "stat1Value": "Milestones",
+      "stat1Label": "Campaign workflows with steps that ingest data, run models, and save outputs for what comes next.",
+      "stat2Value": "One stack",
+      "stat2Label": "Web app, GraphQL API, and Python agent service share the same workspace data—analytics plus agents.",
+      "stat3Value": "Artifacts",
+      "stat3Label": "Chat to steer work; review and edit generated captions, ideas, and plans as reusable assets."
+    },
+    "bento": {
+      "title": "Analytics, agents, and deliverables together",
+      "subtitle": "The product focuses on composable pipelines: structured data in, milestone results out—grounded in how your locations actually perform.",
+      "item1Title": "Sales- and menu-native analytics",
+      "item1Description": "Insights computed from uploaded POS or spreadsheet reports—what sells, mix shifts, and patterns worth promoting before you brief creative.",
+      "item2Title": "Agentic milestone pipelines",
+      "item2Description": "Prepare and run campaign steps with LLM-backed graphs: plan-and-execute style flows, reflection where drafts are critiqued and revised, and outputs written back as milestone data.",
+      "item3Title": "Chat, artifacts, and reuse",
+      "item3Description": "Steer agents in conversation, iterate on drafts, and keep schedules and copy as artifacts you can revisit—not a one-off thread that disappears."
+    },
+    "faq": {
+      "title": "Common questions",
+      "q1": "What data do I need to upload?",
+      "a1": "Typical POS or spreadsheet exports work—sales by item, category, or ticket over time. The GraphQL-backed workspace stores what you import so analytics and agents can use the same source of truth.",
+      "q2": "Is my sales data shared with third parties?",
+      "a2": "Your data powers your workspace and insights. We do not sell your data. Details are covered in our privacy policy.",
+      "q3": "Is Menuyukti only a chatbot?",
+      "a3": "Chat is how you collaborate, but the core model is campaign workflows: ordered milestones that produce stored, structured outputs—schedules, profiles, evaluations—not only messages. Agents call platform APIs when they need your data.",
+      "q4": "Who is it for?",
+      "a4": "Restaurant marketers, in-house creatives, and agencies running multi-location brands who want analytics plus agentic automation in one place—not disconnected dashboards and ad hoc prompts.",
+      "q5": "Can my team collaborate?",
+      "a5": "Yes—work across locations, campaigns, milestones, and brand assets as your organization scales."
+    },
     "how": {
       "title": "How it works",
       "steps": {
         "upload": {
-          "title": "1. Upload sales data",
-          "description": "Import POS exports or Excel sales reports in minutes."
+          "title": "1. Connect data",
+          "description": "Upload POS exports or spreadsheet sales reports into your workspace—the GraphQL API persists them for analytics and for agents to query."
         },
         "analyze": {
-          "title": "2. Automatic marketing insights",
-          "description": "Menuyukti converts sales performance into marketing insights you can act on."
+          "title": "2. Get analytics-backed signals",
+          "description": "The platform computes menu, mix, and trend-style views from your files so priorities are tied to what actually sells."
         },
         "act": {
-          "title": "3. Campaign-ready actions",
-          "description": "AI turns those insights into Instagram schedules with post concepts and copy."
+          "title": "3. Run campaign milestones",
+          "description": "Open or continue a campaign workflow: each milestone can prepare context, run agentic AI steps, and save structured outputs—schedules, ideas, copy—for Instagram-style execution and iteration in chat."
         }
       }
     },
     "why": {
-      "title": "Why restaurant marketers choose Menuyukti",
-      "subtitle": "Data-backed insights, AI automation, and post-impact analytics in one place.",
+      "title": "Why teams use Menuyukti",
+      "subtitle": "A workflow platform first: milestones and milestone data, plus chat and artifacts—built for restaurant marketing as the flagship product.",
       "cards": {
-        "insights": "Data-backed marketing insights",
-        "waste": "Measure post impact",
-        "ops": "AI-generated Instagram schedules",
-        "margin": "Stronger marketing ROI"
+        "insights": "Real sales data, not generic benchmarks",
+        "waste": "From signals to publish-ready artifacts",
+        "ops": "Agent pipelines wired to your workspace data",
+        "margin": "Locations, campaigns, and assets together"
       }
     },
     "cta": {
-      "title": "Ready to market smarter?",
-      "description": "Get a free analysis and see which menu items to promote plus Instagram post schedules with content.",
-      "primary": "Sign in"
+      "title": "Explore your workspace",
+      "description": "Sign in to connect locations, upload sales data, and run campaign workflows with agentic support—analytics, milestones, and editable outputs in one stack.",
+      "secondary": "Sign in"
     },
     "footer": {
-      "about": "About",
-      "contact": "Contact",
-      "privacy": "Privacy Policy",
-      "copyright": "© 2025 Menuyukti"
+      "navLabel": "Footer",
+      "about": "How it works",
+      "contact": "Get started",
+      "privacy": "Privacy & data",
+      "copyrightName": "Menuyukti"
     },
     "mobileCta": {
       "primary": "Sign in",
-      "secondary": "Learn More"
+      "secondary": "How it works"
     },
     "shopLink": "Print Shop"
   },
