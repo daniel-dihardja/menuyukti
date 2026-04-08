@@ -11,7 +11,7 @@ export const SHOP_COLLECTION_VALUES = [
 
 export type ShopCollectionParam = (typeof SHOP_COLLECTION_VALUES)[number]
 
-export const SHOP_SORT_VALUES = ['newest', 'price-asc', 'price-desc', 'popularity'] as const
+export const SHOP_SORT_VALUES = ['newest', 'popularity'] as const
 
 export type ShopSortParam = (typeof SHOP_SORT_VALUES)[number]
 

@@ -137,17 +137,13 @@
     "sort": {
       "label": "Sort by",
       "newest": "Newest",
-      "priceAsc": "Price: Low to High",
-      "priceDesc": "Price: High to Low",
       "popularity": "Popularity"
     },
     "grid": {
-      "viewDetails": "View details",
-      "lineTotal": "Line total ({count}):"
+      "viewDetails": "View details"
     },
     "pdp": {
       "printOnDemand": "Print on demand",
-      "from": "From",
       "sizeOrLicense": "Size or license",
       "finishOrProfile": "Finish / color profile",
       "quantity": "Quantity",
@@ -164,8 +160,7 @@
       "accordionCareBody": "Handle framed and canvas works with clean, dry hands. Dust lightly with a soft microfiber cloth; avoid household cleaners on the print surface. Keep out of direct sunlight to preserve color for years in hospitality environments.",
       "backToShop": "Back to shop",
       "addToCartDisabled": "Coming soon",
-      "checkoutHint": "Online checkout is not available yet—we will notify you when ordering opens.",
-      "sizePrice": "{label} — {price}"
+      "checkoutHint": "Online checkout is not available yet—we will notify you when ordering opens."
     },
     "hero": {
       "kicker": "Editorial Collection",

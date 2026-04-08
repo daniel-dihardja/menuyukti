@@ -57,31 +57,22 @@ export async function ShopProductGrid({ products }: Props) {
                 sizes="(max-width: 768px) 100vw, 33vw"
               />
             </div>
-            <div className="flex min-w-0 items-start justify-between gap-4">
-              <div className="min-w-0">
-                <h3
-                  className={`font-[family-name:var(--font-shop-headline)] font-bold text-foreground ${p.grid.titleClass}`}
-                >
-                  {p.title}
-                </h3>
-                <p
-                  className={`mt-1 text-muted-foreground ${p.grid.titleClass.includes('text-2xl') ? '' : 'text-sm'}`}
-                >
-                  {p.subtitle}
-                </p>
-              </div>
-              <div className="shrink-0 text-right">
-                <p
-                  className={`font-[family-name:var(--font-shop-headline)] font-bold text-primary ${p.grid.titleClass.includes('text-2xl') ? 'text-xl' : 'text-lg'}`}
-                >
-                  {p.displayPrice}
-                </p>
-                <p
-                  className={`mt-2 font-bold uppercase tracking-widest text-muted-foreground transition-opacity group-hover:opacity-80 ${p.grid.addToCartClass}`}
-                >
-                  {t('grid.viewDetails')}
-                </p>
-              </div>
+            <div className="min-w-0">
+              <h3
+                className={`font-[family-name:var(--font-shop-headline)] font-bold text-foreground ${p.grid.titleClass}`}
+              >
+                {p.title}
+              </h3>
+              <p
+                className={`mt-1 text-muted-foreground ${p.grid.titleClass.includes('text-2xl') ? '' : 'text-sm'}`}
+              >
+                {p.subtitle}
+              </p>
+              <p
+                className={`mt-3 font-bold uppercase tracking-widest text-muted-foreground transition-opacity group-hover:opacity-80 ${p.grid.addToCartClass}`}
+              >
+                {t('grid.viewDetails')}
+              </p>
             </div>
           </Link>
         )

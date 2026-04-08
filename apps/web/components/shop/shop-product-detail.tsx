@@ -23,7 +23,6 @@ import {
 } from '@workspace/ui/components/select'
 
 import type { ResolvedShopImage } from '@/lib/shop/resolve-shop-images'
-import { formatUsd, parsePriceToNumber } from '@/lib/shop/format-usd'
 import { routes } from '@/lib/routes'
 
 import type { ShopProduct } from './shop-catalog'
@@ -45,11 +44,6 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
   const active = images[imageIndex] ?? images[0]
   const hasGallery = images.length > 0
   const showCarouselNav = images.length > 1
-
-  const selectedSize = product.sizes.find((s) => s.id === sizeId) ?? product.sizes[0]
-
-  const lineTotal =
-    selectedSize != null ? formatUsd(parsePriceToNumber(selectedSize.price) * quantity) : '—'
 
   const goPrev = useCallback(() => {
     setImageIndex((i) => (i === 0 ? images.length - 1 : i - 1))
@@ -205,26 +199,8 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
           </h1>
           <p className="mt-2 text-lg text-muted-foreground">{product.subtitle}</p>
 
-          <div className="mt-8 flex flex-wrap items-end gap-4 border-b border-border pb-8">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {t('pdp.from')}
-              </p>
-              <p className="font-[family-name:var(--font-shop-headline)] text-3xl font-bold text-primary">
-                {selectedSize?.price ?? '—'}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t('grid.lineTotal', { count: quantity })}{' '}
-                <span className="font-semibold tabular-nums text-foreground">{lineTotal}</span>
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="ml-auto"
-              onClick={handleShare}
-            >
+          <div className="mt-8 flex flex-wrap items-center justify-end gap-4 border-b border-border pb-8">
+            <Button type="button" variant="outline" size="sm" onClick={handleShare}>
               <Share2 data-icon="inline-start" />
               {t('pdp.share')}
             </Button>
@@ -241,7 +217,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
                   <SelectContent>
                     {product.sizes.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
-                        {t('pdp.sizePrice', { label: s.label, price: s.price })}
+                        {s.label}
                       </SelectItem>
                     ))}
                   </SelectContent>

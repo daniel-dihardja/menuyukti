@@ -1,5 +1,4 @@
 import type { ShopCollectionParam, ShopSortParam } from '@/lib/shop/shop-list-params'
-import { parsePriceToNumber } from '@/lib/shop/format-usd'
 
 export type ShopProductImageHint = {
   alt: string
@@ -277,15 +276,7 @@ export function filterAndSortShopProducts(
       ? [...SHOP_PRODUCTS]
       : SHOP_PRODUCTS.filter((p) => p.collectionId === collection)
 
-  const price = (p: ShopProduct) => parsePriceToNumber(p.displayPrice)
-
   switch (sort) {
-    case 'price-asc':
-      list.sort((a, b) => price(a) - price(b))
-      break
-    case 'price-desc':
-      list.sort((a, b) => price(b) - price(a))
-      break
     case 'popularity':
       list.sort((a, b) => b.popularityOrder - a.popularityOrder)
       break

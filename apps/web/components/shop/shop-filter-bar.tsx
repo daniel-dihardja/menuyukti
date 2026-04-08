@@ -43,10 +43,6 @@ function sortLabel(t: (key: string) => string, id: ShopSortParam): string {
   switch (id) {
     case 'newest':
       return t('sort.newest')
-    case 'price-asc':
-      return t('sort.priceAsc')
-    case 'price-desc':
-      return t('sort.priceDesc')
     case 'popularity':
       return t('sort.popularity')
     default:
