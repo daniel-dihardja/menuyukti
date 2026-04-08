@@ -34,4 +34,4 @@ alwaysApply: true
 
 ## Formatting
 
-- **Prettier** (root) for TS/MD/CSS as configured; **Ruff** for Python.
+- **Prettier (repo root):** `pnpm format` writes `**/*.{ts,tsx,md}`; `pnpm format-fix` also includes CSS. **`pnpm format-check`** runs Turbo `format-check` (CI-style check). **Ruff** for Python in `apps/graphql` and `apps/agents`.

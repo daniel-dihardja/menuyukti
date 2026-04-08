@@ -1,6 +1,6 @@
 ---
-description: Definitive guidelines for writing maintainable, performant, and robust LangChain applications using modern best practices (LCEL, LangGraph, Pydantic, `create_agent`).
-globs: **/*.py
+description: LangChain best practices for apps/agents — LCEL, structured output, async/streaming, env
+globs: apps/agents/**/*.py
 ---
 # LangChain Best Practices
 

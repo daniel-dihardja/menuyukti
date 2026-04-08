@@ -24,12 +24,16 @@ schema/
   node_handlers/    # NodeHandler strategy registry keyed by node_type
   auth.py           # user_id_from_info, is_location_owner, require_location_owner
 data_sources/       # SQLAlchemy models + SessionLocal
+services/           # App-layer orchestration (e.g. sales reports, menu engineering helpers)
 reports/            # Analytics transform / ingest logic
+resolvers/          # Package stub (setuptools); Strawberry fields live under schema/queries|mutations
 scripts/            # One-off dev scripts (never import from schema)
 tests/
 ```
 
-> `resolvers/` exists as a placeholder only — resolvers live in `schema/queries/` and `schema/mutations/`, not there.
+Heavy **analytics and matrix math** belong in **`packages/menuyukti`**; this app imports them and maps results to GraphQL types (see `apps/graphql/README.md`).
+
+> Field implementations live in **`schema/queries/`** and **`schema/mutations/`**, not under a separate `resolvers/` module beyond the package placeholder.
 
 ## Query & mutation mixin pattern
 

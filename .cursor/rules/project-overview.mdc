@@ -19,7 +19,7 @@ Menuyukti is an **agentic AI platform for data-driven restaurant marketing autom
 
 ## Agentic patterns in use
 
-- **LangChain / LangGraph (`apps/agents`)** — LCEL chains, `MessagesState` graphs, async streaming (`astream_events`), OpenAI via `langchain-openai`. Prefer modular layout (`agents/`, `models/`, `prompts/`, `routers/`). See `.cursor/rules/langchain.mdc` and `.cursor/rules/langgraph.mdc`.
+- **LangChain / LangGraph (`apps/agents`)** — LCEL chains, `MessagesState` graphs, async streaming (`astream_events`), OpenAI via `langchain-openai`. Prefer modular layout: **`agents/`** (graphs and co-located `prompts.py` per flow), **`models/`**, **`routers/`**, **`server.py`**. See `.cursor/rules/langchain.mdc` and `.cursor/rules/langgraph.mdc`.
 - **Plan-and-execute** — explicit multi-step plans for pipelines (e.g. campaign: data → slots → schedule → formats → brief).
 - **Reflect** — generate → critique → revise for drafts (e.g. location profiles, format plans) with iteration bounds.
 

@@ -146,7 +146,7 @@ verdict: CriterionVerdict = await llm.ainvoke([...])
 
 Agents call the GraphQL API over HTTP (`GRAPHQL_ENDPOINT`) via dedicated `graphql_client.py` helpers — never import `data_sources` or open a DB session from the agents app.
 
-Pass `X-User-Id` and (when available) `X-Menuyukti-Internal-Api-Key` headers forwarded from the router.
+Routers authenticate with **`X-Menuyukti-User-Id`**. GraphQL calls use **`graphql_headers()`** in `agents/graphql_base.py`: **`X-User-Id`**, plus **`X-Internal-Api-Key`** when `GRAPHQL_INTERNAL_API_KEY` is set (same header names as the web app’s `graphqlQuery`).
 
 ## Router conventions
 

@@ -1,38 +1,63 @@
 ---
-description: This guide provides definitive best practices for building robust, maintainable, and performant AI agent workflows using LangGraph.
-globs: **/*.py
+description: LangGraph patterns for apps/agents — StateGraph, Send, streaming, persistence
+globs: apps/agents/**/*.py
 ---
-# langgraph Best Practices
+# LangGraph — practices (Menuyukti `apps/agents`)
 
-## Code Organization and Structure
+Use this together with **`.cursor/rules/agents-conventions.mdc`** (factories, `Send`, SSE, LLM config). Prefer patterns already used in **`agents/core/`** graphs.
 
-### 1. Explicit Graph Topology & Modularity
-Define clear, single responsibilities for each node. Encapsulate common patterns into reusable subgraphs. Prefer Directed Acyclic Graphs (DAGs); use cycles only when essential for feedback loops.
+## 1. Explicit graph topology and modularity
 
-✅ GOOD: Focused nodes, composable subgraphs
+Define one responsibility per node. Extract reusable pieces as **subgraphs** only when it clarifies reuse (avoid deep nesting without reason). Prefer **DAGs**; add cycles only for explicit feedback loops.
+
+**Use `START` / `END`** with `StateGraph` — match the style in `agents/core/milestone_eval/graph.py`:
+
 ```python
-from langgraph.graph import StateGraph, END
-from typing import TypedDict, List
-
-class AgentState(TypedDict):
-    messages: List[str]
-    tool_output: str | None
-
-def fetch_data_node(state: AgentState) -> AgentState:
-    return {"messages": state["messages"] + ["Data fetched."]}
-
-def analyze_data_node(state: AgentState) -> AgentState:
-    return {"messages": state["messages"] + ["Data analyzed."]}
+from langgraph.graph import END, START, StateGraph
 
 def build_subgraph():
     builder = StateGraph(AgentState)
     builder.add_node("fetch", fetch_data_node)
     builder.add_node("analyze", analyze_data_node)
+    builder.add_edge(START, "fetch")
     builder.add_edge("fetch", "analyze")
-    builder.set_entry_point("fetch")
-    builder.set_finish_point("analyze")
+    builder.add_edge("analyze", END)
     return builder.compile()
 ```
 
-### 2. Functional API Preference
-Prior
+Avoid legacy `set_entry_point` / `set_finish_point` unless you maintain older code that still uses them.
+
+## 2. Prefer the functional graph API (`StateGraph`)
+
+Build graphs with **`StateGraph`**, **`add_node`**, **`add_edge`**, **`add_conditional_edges`**, and **`compile()`**. Do not hand-roll ad-hoc async loops that duplicate LangGraph scheduling, checkpointing, or streaming — use **`Send`** for parallel branches (see agents conventions).
+
+Expose graphs via **`build_*_graph(...)`** factories that return **`compile()`** results; routers inject dependencies (e.g. `httpx.AsyncClient`) there.
+
+## 3. State shape and reducers
+
+- Use **`TypedDict`** (or Pydantic where the team standardises on it) for graph state.
+- Use **`Annotated[..., operator.add]`** (or another reducer) when multiple nodes append to the same list (e.g. parallel criterion eval).
+- Keep state **serialisable** if you use **checkpointers** (see below).
+
+## 4. Parallel fan-out with `Send`
+
+For parallel work items, route with a conditional edge that returns **`Send`** targets (see **`agents-conventions.mdc`**). Merge results back through reducers on shared state fields.
+
+## 5. Persistence and threads
+
+When you need **durable runs**, **resume**, or **HITL**, attach a **checkpointer** at `compile()` and pass a stable **`thread_id`** on invoke/stream. Stateless SSE chat can omit checkpointers if product requirements allow.
+
+## 6. Streaming
+
+- **Token streaming:** `astream_events(version="v2")` and filter `on_chat_model_stream` (see agents conventions).
+- **Step / custom events:** `get_stream_writer()` inside nodes with `astream(..., stream_mode=[...])` as documented in agents conventions.
+
+Set SSE headers on HTTP responses: `Cache-Control: no-cache`, `Connection: keep-alive`, `X-Accel-Buffering: no`.
+
+## 7. Errors and side effects
+
+Keep **GraphQL and I/O** in dedicated nodes or injected callables; **do not** open DB connections from the agents app. Let exceptions propagate unless the product requires a **structured error** node; avoid silent `except: pass` in nodes.
+
+## 8. Testing
+
+Use **`pytest`** and **`pytest-asyncio`** for async nodes and router integration tests. Prefer testing **pure node functions** with mocked clients where possible, plus thin tests that **compile** the graph without hitting production APIs.
