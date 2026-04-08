@@ -6,9 +6,9 @@ from graphql.schema.queries import (
     LocationsQuery,
     MenuEngineeringMatrixQuery,
     MenuHeatmapsQuery,
-    NationalHolidaysQuery,
     NodesQuery,
     OperatingProfileQuery,
+    PublicHolidaysQuery,
     WorkspaceQuery,
 )
 
@@ -20,7 +20,7 @@ class Query(
     AnalyticsRunQuery,
     MenuHeatmapsQuery,
     MenuEngineeringMatrixQuery,
-    NationalHolidaysQuery,
+    PublicHolidaysQuery,
     OperatingProfileQuery,
     WorkspaceQuery,
     ImageAiFlowsQuery,

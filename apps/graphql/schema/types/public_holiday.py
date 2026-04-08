@@ -2,7 +2,7 @@ import strawberry
 
 
 @strawberry.type
-class NationalHolidayType:
+class PublicHolidayType:
     id: str
     date: str
     name: str
