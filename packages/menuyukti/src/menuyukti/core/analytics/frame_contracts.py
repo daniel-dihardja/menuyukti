@@ -6,11 +6,19 @@ so callers get clear errors instead of ``KeyError`` mid-pipeline.
 
 Convention for new analytics (see also package ``__init__.py`` docstring):
 
-1. Define a ``TypedDict`` for line-level rows.
-2. Expose ``compute_<name>_from_orders(rows: list[...])`` that builds a DataFrame
+1. Define a ``TypedDict`` for line-level rows (when the pipeline accepts order
+   lines from GraphQL or ingest).
+2. Add a ``<name>_columns() -> list[str]`` helper that returns the minimum column
+   set for that ``calculate_*`` function, and pass it to :func:`require_columns`
+   with a ``context=`` string (function name).
+3. Expose ``compute_<name>_from_orders(rows: list[...])`` that builds a DataFrame
    and calls ``calculate_<name>(df)``.
-3. Call ``require_columns`` (or :func:`ensure_optional_category_columns`) first in
+4. Call ``require_columns`` (or :func:`ensure_optional_category_columns`) first in
    ``calculate_<name>``.
+
+**Not covered here:** composition functions that only merge *outputs* of other
+analytics (e.g. ``calculate_instagram_signals``) — they take TypedDicts or
+plain dicts, not a raw sales ``DataFrame``.
 """
 
 from __future__ import annotations
@@ -53,6 +61,20 @@ def line_item_columns_full() -> list[str]:
 def popularity_index_columns() -> list[str]:
     """Minimum columns for :func:`calculate_popularity_index`."""
     return [_COL.MENU, _COL.QTY]
+
+
+def category_mix_columns() -> list[str]:
+    """Minimum columns for :func:`calculate_category_mix`."""
+    return [
+        _COL.MENU,
+        _COL.QTY,
+        _COL.TOTAL_AFTER_BILL_DISCOUNT,
+    ]
+
+
+def revenue_trends_columns() -> list[str]:
+    """Minimum columns for :func:`calculate_revenue_trends`."""
+    return [_COL.MENU, _COL.TOTAL_AFTER_BILL_DISCOUNT]
 
 
 def extract_menu_items_required_columns() -> list[str]:
