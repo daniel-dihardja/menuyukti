@@ -31,6 +31,8 @@ out/
 build
 dist
 
+# Local CV snippets (not versioned)
+packages/cv-snippet/
 
 # Debug
 npm-debug.log*
