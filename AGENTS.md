@@ -14,6 +14,8 @@ This file helps AI coding agents (Cursor, Claude Code, Codex, etc.) run the righ
 
 Persistent Cursor guidance lives in **`.cursor/rules/*.mdc`**.
 
+Menuyukti-specific agent workflows (e.g. new GraphQL data providers) live under **`.agents/skills/menuyukti-*/`** — see [`menuyukti-data-provider`](.agents/skills/menuyukti-data-provider/SKILL.md).
+
 ## Environment and secrets
 
 - Each app may use a local **`.env`** (see each app’s README or `.env.example` where present).
