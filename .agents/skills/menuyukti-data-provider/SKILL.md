@@ -150,8 +150,8 @@ Split long API notes into `reference.md` in this folder if this file grows.
 
 ## Roadmap (future Cursor skills)
 
-| Skill                            | Purpose                                  |
-| -------------------------------- | ---------------------------------------- |
-| `menuyukti-repo-orientation`     | App boundaries, DB ownership, pnpm vs uv |
-| `menuyukti-web-graphql-consumer` | Web GraphQL + Clerk + next-intl          |
-| `menuyukti-pr-checklist`         | Pre-PR commands aligned with CI          |
+| Skill                                                                  | Purpose                                  |
+| ---------------------------------------------------------------------- | ---------------------------------------- |
+| [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md) | App boundaries, DB ownership, pnpm vs uv |
+| `menuyukti-web-graphql-consumer`                                       | Web GraphQL + Clerk + next-intl          |
+| `menuyukti-pr-checklist`                                               | Pre-PR commands aligned with CI          |
