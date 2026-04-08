@@ -86,6 +86,121 @@ query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) 
 }
 """
 
+_INSTAGRAM_SIGNALS_QUERY = """
+query InstagramSignals($analyticsRunId: ID!, $locationId: ID!) {
+  instagramSignals(analyticsRunId: $analyticsRunId, locationId: $locationId) {
+    analyticsRunId
+    periodStart
+    periodEnd
+    contentHeroes {
+      menu
+      matrixCategory
+      totalRevenue
+      menuCategory
+      menuCategoryDetail
+    }
+    trendingItems {
+      menu
+      currentRevenue
+      previousRevenue
+      changePct
+      rankCurrent
+      rankPrevious
+      trendLabel
+    }
+    avoidItems {
+      menu
+      matrixCategory
+      totalRevenue
+      menuCategory
+      menuCategoryDetail
+    }
+    categoryFocus {
+      category
+      revenueShare
+      quantityShare
+    }
+    bestPostingWindow {
+      peakDay
+      peakRevenueDay
+      primaryMealPeriod
+      peakRevenueMealPeriod
+      peakHour
+    }
+    periodHeadline {
+      periodStart
+      periodEnd
+      totalRevenue
+      previousPeriodTotalRevenue
+      revenueVsPreviousPct
+    }
+  }
+}
+"""
+
+_PROMOTION_MENU_ITEMS_QUERY = """
+query PromotionMenuItems($analyticsRunId: ID!, $locationId: ID!) {
+  promotionMenuItems(analyticsRunId: $analyticsRunId, locationId: $locationId) {
+    analyticsRunId
+    periodStart
+    periodEnd
+    items {
+      menu
+      quantity
+      totalRevenue
+      menuCategory
+      menuCategoryDetail
+      cogs
+      totalCogs
+      contributionMargin
+      contributionMarginPercentage
+      marginPerUnit
+      weValue
+      category
+      action
+      peakHour
+      peakDay
+    }
+  }
+}
+"""
+
+_CATEGORY_MIX_QUERY = """
+query CategoryMix($analyticsRunId: ID!, $locationId: ID!) {
+  categoryMix(analyticsRunId: $analyticsRunId, locationId: $locationId) {
+    analyticsRunId
+    topRevenueCategory
+    rows {
+      category
+      revenue
+      quantity
+      revenueShare
+      quantityShare
+      topItem
+    }
+  }
+}
+"""
+
+_REVENUE_TRENDS_QUERY = """
+query RevenueTrends($analyticsRunId: ID!, $locationId: ID!) {
+  revenueTrends(analyticsRunId: $analyticsRunId, locationId: $locationId) {
+    analyticsRunId
+    currentPeriodTotalRevenue
+    previousPeriodTotalRevenue
+    rows {
+      menu
+      currentRevenue
+      previousRevenue
+      changePct
+      rankCurrent
+      rankPrevious
+      trendLabel
+    }
+  }
+}
+"""
+
 
 async def fetch_latest_analytics_run_id(
     location_id: int,
@@ -174,6 +289,106 @@ async def fetch_operating_profile_dict(
         user_id,
     )
     raw = data.get("operatingProfile")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return json.loads(json.dumps(raw))
+
+
+async def fetch_instagram_signals_dict(
+    location_id: int,
+    analytics_run_id: str,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Load composite Instagram signals for an analytics run (camelCase JSON keys)."""
+    data = await graphql_post(
+        client,
+        _INSTAGRAM_SIGNALS_QUERY,
+        {
+            "analyticsRunId": str(analytics_run_id),
+            "locationId": str(location_id),
+        },
+        user_id,
+    )
+    raw = data.get("instagramSignals")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return json.loads(json.dumps(raw))
+
+
+async def fetch_promotion_menu_items_dict(
+    location_id: int,
+    analytics_run_id: str,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Load promotion menu items payload (camelCase JSON keys)."""
+    data = await graphql_post(
+        client,
+        _PROMOTION_MENU_ITEMS_QUERY,
+        {
+            "analyticsRunId": str(analytics_run_id),
+            "locationId": str(location_id),
+        },
+        user_id,
+    )
+    raw = data.get("promotionMenuItems")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return json.loads(json.dumps(raw))
+
+
+async def fetch_category_mix_dict(
+    location_id: int,
+    analytics_run_id: str,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Load category mix for an analytics run."""
+    data = await graphql_post(
+        client,
+        _CATEGORY_MIX_QUERY,
+        {
+            "analyticsRunId": str(analytics_run_id),
+            "locationId": str(location_id),
+        },
+        user_id,
+    )
+    raw = data.get("categoryMix")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return json.loads(json.dumps(raw))
+
+
+async def fetch_revenue_trends_dict(
+    location_id: int,
+    analytics_run_id: str,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Load revenue trends vs the prior period for an analytics run."""
+    data = await graphql_post(
+        client,
+        _REVENUE_TRENDS_QUERY,
+        {
+            "analyticsRunId": str(analytics_run_id),
+            "locationId": str(location_id),
+        },
+        user_id,
+    )
+    raw = data.get("revenueTrends")
     if raw is None:
         return None
     if not isinstance(raw, dict):

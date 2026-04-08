@@ -2,7 +2,9 @@ import strawberry
 
 from graphql.schema.queries import (
     AnalyticsRunQuery,
+    CategoryMixQuery,
     ImageAiFlowsQuery,
+    InstagramSignalsQuery,
     LocationsQuery,
     MenuEngineeringMatrixQuery,
     MenuHeatmapsQuery,
@@ -10,6 +12,7 @@ from graphql.schema.queries import (
     OperatingProfileQuery,
     PromotionMenuItemsQuery,
     PublicHolidaysQuery,
+    RevenueTrendsQuery,
     WorkspaceQuery,
 )
 
@@ -24,6 +27,9 @@ class Query(
     PromotionMenuItemsQuery,
     PublicHolidaysQuery,
     OperatingProfileQuery,
+    InstagramSignalsQuery,
+    CategoryMixQuery,
+    RevenueTrendsQuery,
     WorkspaceQuery,
     ImageAiFlowsQuery,
 ):

@@ -6,10 +6,14 @@ from typing import Any
 
 import httpx
 from agents_app.agents.domain.skill_runner.graphql_client import (
+    fetch_category_mix_dict,
+    fetch_instagram_signals_dict,
     fetch_latest_analytics_run_id,
     fetch_location_dict,
     fetch_operating_profile_dict,
+    fetch_promotion_menu_items_dict,
     fetch_public_holidays_list,
+    fetch_revenue_trends_dict,
 )
 
 PrefetchHandler = Any  # async (inputs: dict[str, object], *, client, user_id) -> Any
@@ -78,8 +82,84 @@ async def _handle_latest_operating_profile(
     return profile
 
 
+async def _handle_instagram_signals(
+    inputs: dict[str, object],
+    *,
+    client: httpx.AsyncClient,
+    user_id: str,
+) -> dict[str, Any] | None:
+    location_id = _coerce_location_id(inputs["location_id"])
+    run_id = await fetch_latest_analytics_run_id(location_id, user_id, client=client)
+    if not run_id:
+        msg = "No analytics run found for this location. Upload sales data first."
+        raise RuntimeError(msg)
+    payload = await fetch_instagram_signals_dict(location_id, run_id, user_id, client=client)
+    if not payload:
+        msg = "Could not load Instagram signals (no order data for the latest analytics run)."
+        raise RuntimeError(msg)
+    return payload
+
+
+async def _handle_promotion_menu_items(
+    inputs: dict[str, object],
+    *,
+    client: httpx.AsyncClient,
+    user_id: str,
+) -> dict[str, Any] | None:
+    location_id = _coerce_location_id(inputs["location_id"])
+    run_id = await fetch_latest_analytics_run_id(location_id, user_id, client=client)
+    if not run_id:
+        msg = "No analytics run found for this location. Upload sales data first."
+        raise RuntimeError(msg)
+    payload = await fetch_promotion_menu_items_dict(location_id, run_id, user_id, client=client)
+    if not payload:
+        msg = "Could not load promotion menu items for the latest analytics run."
+        raise RuntimeError(msg)
+    return payload
+
+
+async def _handle_category_mix(
+    inputs: dict[str, object],
+    *,
+    client: httpx.AsyncClient,
+    user_id: str,
+) -> dict[str, Any] | None:
+    location_id = _coerce_location_id(inputs["location_id"])
+    run_id = await fetch_latest_analytics_run_id(location_id, user_id, client=client)
+    if not run_id:
+        msg = "No analytics run found for this location. Upload sales data first."
+        raise RuntimeError(msg)
+    payload = await fetch_category_mix_dict(location_id, run_id, user_id, client=client)
+    if not payload:
+        msg = "Could not load category mix (no order data for the latest analytics run)."
+        raise RuntimeError(msg)
+    return payload
+
+
+async def _handle_revenue_trends(
+    inputs: dict[str, object],
+    *,
+    client: httpx.AsyncClient,
+    user_id: str,
+) -> dict[str, Any] | None:
+    location_id = _coerce_location_id(inputs["location_id"])
+    run_id = await fetch_latest_analytics_run_id(location_id, user_id, client=client)
+    if not run_id:
+        msg = "No analytics run found for this location. Upload sales data first."
+        raise RuntimeError(msg)
+    payload = await fetch_revenue_trends_dict(location_id, run_id, user_id, client=client)
+    if not payload:
+        msg = "Could not load revenue trends (no order data for the latest analytics run)."
+        raise RuntimeError(msg)
+    return payload
+
+
 PREFETCH_HANDLERS: dict[str, PrefetchHandler] = {
     "platform.location": _handle_location,
     "platform.public_holidays": _handle_public_holidays,
     "analytics.latest_operating_profile": _handle_latest_operating_profile,
+    "analytics.instagram_signals": _handle_instagram_signals,
+    "analytics.promotion_menu_items": _handle_promotion_menu_items,
+    "analytics.category_mix": _handle_category_mix,
+    "analytics.revenue_trends": _handle_revenue_trends,
 }

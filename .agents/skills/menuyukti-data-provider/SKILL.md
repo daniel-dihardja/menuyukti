@@ -75,6 +75,10 @@ Implementations live in [`handlers.py`](../../../apps/agents/agents/domain/skill
 | `platform.location`                  | Location record for `location_id`.                          |
 | `platform.public_holidays`           | Holidays for country + date range.                          |
 | `analytics.latest_operating_profile` | Latest analytics run + operating profile for `location_id`. |
+| `analytics.instagram_signals`        | Latest run: composite Instagram signals (heroes, window, headline). |
+| `analytics.promotion_menu_items`     | Latest run: per-menu promotion rows (engineering + peaks).   |
+| `analytics.category_mix`           | Latest run: category revenue/qty mix.                        |
+| `analytics.revenue_trends`           | Latest run: per-menu revenue vs prior period.                |
 
 **New data:** add async handler → register in `PREFETCH_HANDLERS` → add `fetch_*` helpers that call `graphql_post` (same pattern as existing fetches). Heavy analytics belong in **`packages/menuyukti`**; GraphQL stays thin — see [GraphQL README](../../../apps/graphql/README.md) and [menuyukti README](../../../packages/menuyukti/README.md).
 
