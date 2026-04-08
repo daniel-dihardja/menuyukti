@@ -1,7 +1,25 @@
+from __future__ import annotations
+
+from datetime import datetime
+from typing import TypedDict
+
 import pandas as pd
 
 from menuyukti.core.analytics.calculate_menu_heatmaps import calculate_menu_heatmaps
 from menuyukti.core.analytics.calculate_popularity_index import calculate_popularity_index
+
+
+class OrderRowForSalesAnalytics(TypedDict):
+    """Line-item row for sales analytics (same columns as POSTransactionLineItem)."""
+
+    bill_number: str
+    menu: str
+    qty: int
+    price: float
+    total_after_bill_discount: float
+    order_time: datetime
+    menu_category: str
+    menu_category_detail: str
 
 
 def calculate_sales_analytics(df: pd.DataFrame) -> dict[str, object]:
@@ -81,7 +99,6 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict[str, object]:
     # Final Output
     # -------------------------------------------------------
     return {
-        "metadata": {"source_system": "esb"},
         # Raw totals
         "total_orders": int(total_orders),
         "total_items_sold": int(total_items_sold),
@@ -94,7 +111,6 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict[str, object]:
         "max_order_items": int(items_per_order_valid.max()),
         "min_order_items": int(items_per_order_valid.min()),
         # Other analytics
-        "avg_popularity": float(avg_popularity_threshold),
         "avg_popularity_threshold": float(avg_popularity_threshold),
         "popularity_index": popularity_index,
         "menu_heatmaps": heatmap_results,
@@ -102,3 +118,20 @@ def calculate_sales_analytics(df: pd.DataFrame) -> dict[str, object]:
         "period_start": period_start.isoformat(),
         "period_end": period_end.isoformat(),
     }
+
+
+def compute_sales_analytics_from_orders(
+    order_rows: list[OrderRowForSalesAnalytics],
+) -> dict[str, object]:
+    """
+    Run :func:`calculate_sales_analytics` on order-level rows.
+
+    Builds a DataFrame with POSTransactionLineItem columns and delegates to
+    :func:`calculate_sales_analytics`. Use when data comes from DB rows or APIs
+    rather than an in-memory DataFrame.
+    """
+    if not order_rows:
+        raise ValueError("order_rows must not be empty")
+
+    df = pd.DataFrame(order_rows)
+    return calculate_sales_analytics(df)

@@ -109,13 +109,12 @@ def run_sales_analytics(
     """
     Run menuyukti sales analytics (heatmaps, avg order size, revenue, etc.).
 
-    Returns the full dict from calculate_sales_analytics (metadata, totals,
+    Returns the full dict from calculate_sales_analytics (totals,
     order-level metrics, popularity_index, menu_heatmaps, period).
     """
     df = line_items_to_dataframe(rows)
     if df.empty:
         return {
-            "metadata": {"source_system": "esb"},
             "total_orders": 0,
             "total_items_sold": 0,
             "total_revenue": 0.0,

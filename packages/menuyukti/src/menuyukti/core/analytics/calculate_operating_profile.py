@@ -164,6 +164,151 @@ class OrderRowForProfile(TypedDict):
     total_after_bill_discount: float
 
 
+def _aggregate_positive_revenue_bills(
+    order_rows: list[OrderRowForProfile],
+) -> tuple[dict[str, float], dict[str, datetime], dict[str, int]] | None:
+    """Aggregate line items to bills; drop non-positive revenue bills."""
+    bill_revenue: dict[str, float] = {}
+    bill_time: dict[str, datetime] = {}
+    bill_items: dict[str, int] = {}
+    for row in order_rows:
+        bn = row["bill_number"]
+        t = row["order_time"]
+        if bn not in bill_time or t < bill_time[bn]:
+            bill_time[bn] = t
+        bill_revenue[bn] = bill_revenue.get(bn, 0.0) + row["total_after_bill_discount"]
+        raw_qty: object = row.get("qty", 1)
+        line_qty = (
+            int(raw_qty)
+            if isinstance(raw_qty, (int, float)) and not isinstance(raw_qty, bool)
+            else 1
+        )
+        bill_items[bn] = bill_items.get(bn, 0) + line_qty
+
+    bill_revenue = {bn: rev for bn, rev in bill_revenue.items() if rev > 0}
+    bill_time = {bn: dt for bn, dt in bill_time.items() if bn in bill_revenue}
+    bill_items = {bn: n for bn, n in bill_items.items() if bn in bill_revenue}
+
+    if not bill_time:
+        return None
+    return bill_revenue, bill_time, bill_items
+
+
+def _holiday_bill_numbers(
+    bill_time: dict[str, datetime],
+    holiday_dates: set[date] | None,
+) -> set[str]:
+    holidays = holiday_dates or set()
+    return {bn for bn, dt in bill_time.items() if dt.date() in holidays}
+
+
+def _compute_dow_metrics(
+    bill_time: dict[str, datetime],
+    bill_revenue: dict[str, float],
+) -> tuple[dict[str, int], dict[str, float], str, str]:
+    dow_order_count: dict[str, int] = {d: 0 for d in _WEEKDAY_ORDER}
+    dow_revenue: dict[str, float] = {d: 0.0 for d in _WEEKDAY_ORDER}
+    for bn, dt in bill_time.items():
+        abbr = _abbr(dt)
+        dow_order_count[abbr] += 1
+        dow_revenue[abbr] += bill_revenue[bn]
+
+    peak_day = max(_WEEKDAY_ORDER, key=lambda d: (dow_order_count[d], dow_revenue[d]))
+    peak_revenue_day = max(_WEEKDAY_ORDER, key=lambda d: dow_revenue[d])
+    return dow_order_count, dow_revenue, peak_day, peak_revenue_day
+
+
+def _compute_weekday_weekend_holiday(
+    bill_time: dict[str, datetime],
+    bill_revenue: dict[str, float],
+    holiday_bill_numbers: set[str],
+    total_orders: int,
+) -> tuple[int, int, int, float, float, float, float, float, float]:
+    weekday_orders = sum(
+        1
+        for bn, dt in bill_time.items()
+        if _abbr(dt) not in _WEEKEND_DAYS and bn not in holiday_bill_numbers
+    )
+    weekend_orders = sum(
+        1
+        for bn, dt in bill_time.items()
+        if _abbr(dt) in _WEEKEND_DAYS and bn not in holiday_bill_numbers
+    )
+    holiday_orders = len(holiday_bill_numbers)
+
+    weekday_revenue = sum(
+        bill_revenue[bn]
+        for bn, dt in bill_time.items()
+        if _abbr(dt) not in _WEEKEND_DAYS and bn not in holiday_bill_numbers
+    )
+    weekend_revenue = sum(
+        bill_revenue[bn]
+        for bn, dt in bill_time.items()
+        if _abbr(dt) in _WEEKEND_DAYS and bn not in holiday_bill_numbers
+    )
+    holiday_revenue = sum(bill_revenue[bn] for bn in holiday_bill_numbers)
+
+    weekday_share = weekday_orders / total_orders if total_orders else 0.0
+    weekend_share = weekend_orders / total_orders if total_orders else 0.0
+    holiday_share = holiday_orders / total_orders if total_orders else 0.0
+
+    return (
+        weekday_orders,
+        weekend_orders,
+        holiday_orders,
+        weekday_revenue,
+        weekend_revenue,
+        holiday_revenue,
+        weekday_share,
+        weekend_share,
+        holiday_share,
+    )
+
+
+def _compute_meal_period_metrics(
+    bill_time: dict[str, datetime],
+    bill_revenue: dict[str, float],
+    total_orders: int,
+) -> tuple[
+    dict[str, int],
+    dict[str, float],
+    dict[str, float],
+    str,
+    str,
+    list[str],
+]:
+    mp_order_count: dict[str, int] = {p: 0 for p, _, _ in _MEAL_PERIODS}
+    mp_revenue: dict[str, float] = {p: 0.0 for p, _, _ in _MEAL_PERIODS}
+    for bn, dt in bill_time.items():
+        period = _meal_period(dt.hour)
+        mp_order_count[period] += 1
+        mp_revenue[period] += bill_revenue[bn]
+
+    period_shares = {
+        p: (mp_order_count[p] / total_orders if total_orders else 0.0)
+        for p, _, _ in _MEAL_PERIODS
+    }
+    primary_meal_period = max(
+        (p for p, _, _ in _MEAL_PERIODS),
+        key=lambda p: (mp_order_count[p], mp_revenue[p]),
+    )
+    peak_revenue_meal_period = max(
+        (p for p, _, _ in _MEAL_PERIODS),
+        key=lambda p: mp_revenue[p],
+    )
+    active_meal_periods = [
+        p for p, _, _ in _MEAL_PERIODS if period_shares[p] >= 0.05
+    ]
+    return (
+        mp_order_count,
+        mp_revenue,
+        period_shares,
+        primary_meal_period,
+        peak_revenue_meal_period,
+        active_meal_periods,
+    )
+
+
 def compute_operating_profile_from_orders(
     order_rows: list[OrderRowForProfile],
     holiday_dates: set[date] | None = None,
@@ -183,28 +328,10 @@ def compute_operating_profile_from_orders(
     if not order_rows:
         return None
 
-    # Aggregate per bill (order-level revenue, earliest time, and item count).
-    # Use min(order_time) per bill so meal period classification is correct
-    # regardless of row arrival order in raw POS exports.
-    bill_revenue: dict[str, float] = {}
-    bill_time: dict[str, datetime] = {}
-    bill_items: dict[str, int] = {}
-    for row in order_rows:
-        bn = row["bill_number"]
-        t = row["order_time"]
-        if bn not in bill_time or t < bill_time[bn]:
-            bill_time[bn] = t
-        bill_revenue[bn] = bill_revenue.get(bn, 0.0) + row["total_after_bill_discount"]
-        bill_items[bn] = bill_items.get(bn, 0) + row.get("qty", 1)
-
-    # Exclude zero/negative revenue bills (promos, voids, staff meals) so they
-    # don't inflate total_orders or distort any downstream share calculation.
-    bill_revenue = {bn: rev for bn, rev in bill_revenue.items() if rev > 0}
-    bill_time    = {bn: dt  for bn, dt  in bill_time.items()    if bn in bill_revenue}
-    bill_items   = {bn: n   for bn, n   in bill_items.items()   if bn in bill_revenue}
-
-    if not bill_time:
+    aggregated = _aggregate_positive_revenue_bills(order_rows)
+    if aggregated is None:
         return None
+    bill_revenue, bill_time, bill_items = aggregated
 
     total_orders = len(bill_time)
     total_revenue = sum(bill_revenue.values())
@@ -226,76 +353,38 @@ def compute_operating_profile_from_orders(
         min(7.0, active_days_count / (period_span_days / 7)), 2
     )
 
-    # Identify holiday bills
-    _holidays: set[date] = holiday_dates or set()
-    holiday_bill_numbers: set[str] = {
-        bn for bn, dt in bill_time.items() if dt.date() in _holidays
-    }
+    holiday_bill_numbers = _holiday_bill_numbers(bill_time, holiday_dates)
 
-    # Day-of-week counts and revenue (all orders, including holidays — used for DOW breakdown)
-    dow_order_count: dict[str, int] = {d: 0 for d in _WEEKDAY_ORDER}
-    dow_revenue: dict[str, float] = {d: 0.0 for d in _WEEKDAY_ORDER}
-    for bn, dt in bill_time.items():
-        abbr = _abbr(dt)
-        dow_order_count[abbr] += 1
-        dow_revenue[abbr] += bill_revenue[bn]
-
-    # Peak day: by orders first, revenue as tiebreaker
-    peak_day = max(_WEEKDAY_ORDER, key=lambda d: (dow_order_count[d], dow_revenue[d]))
-    # Peak revenue day: purely by revenue
-    peak_revenue_day = max(_WEEKDAY_ORDER, key=lambda d: dow_revenue[d])
-
-    # Weekday/weekend counts and revenue — holidays excluded so shares are meaningful
-    weekday_orders = sum(
-        1 for bn, dt in bill_time.items()
-        if _abbr(dt) not in _WEEKEND_DAYS and bn not in holiday_bill_numbers
+    dow_order_count, dow_revenue, peak_day, peak_revenue_day = _compute_dow_metrics(
+        bill_time,
+        bill_revenue,
     )
-    weekend_orders = sum(
-        1 for bn, dt in bill_time.items()
-        if _abbr(dt) in _WEEKEND_DAYS and bn not in holiday_bill_numbers
-    )
-    holiday_orders = len(holiday_bill_numbers)
 
-    weekday_revenue = sum(
-        bill_revenue[bn] for bn, dt in bill_time.items()
-        if _abbr(dt) not in _WEEKEND_DAYS and bn not in holiday_bill_numbers
+    (
+        weekday_orders,
+        weekend_orders,
+        holiday_orders,
+        weekday_revenue,
+        weekend_revenue,
+        holiday_revenue,
+        weekday_share,
+        weekend_share,
+        holiday_share,
+    ) = _compute_weekday_weekend_holiday(
+        bill_time,
+        bill_revenue,
+        holiday_bill_numbers,
+        total_orders,
     )
-    weekend_revenue = sum(
-        bill_revenue[bn] for bn, dt in bill_time.items()
-        if _abbr(dt) in _WEEKEND_DAYS and bn not in holiday_bill_numbers
-    )
-    holiday_revenue = sum(bill_revenue[bn] for bn in holiday_bill_numbers)
 
-    # Shares out of total_orders so weekday + weekend + holiday = 1.0
-    weekday_share = weekday_orders / total_orders if total_orders else 0.0
-    weekend_share = weekend_orders / total_orders if total_orders else 0.0
-    holiday_share = holiday_orders / total_orders if total_orders else 0.0
-
-    # Meal period counts and revenue — keyed by earliest order time per bill
-    mp_order_count: dict[str, int] = {p: 0 for p, _, _ in _MEAL_PERIODS}
-    mp_revenue: dict[str, float] = {p: 0.0 for p, _, _ in _MEAL_PERIODS}
-    for bn, dt in bill_time.items():
-        period = _meal_period(dt.hour)
-        mp_order_count[period] += 1
-        mp_revenue[period] += bill_revenue[bn]
-
-    period_shares = {
-        p: (mp_order_count[p] / total_orders if total_orders else 0.0)
-        for p, _, _ in _MEAL_PERIODS
-    }
-    # Primary meal period: by orders first, revenue as tiebreaker
-    primary_meal_period = max(
-        (p for p, _, _ in _MEAL_PERIODS),
-        key=lambda p: (mp_order_count[p], mp_revenue[p]),
-    )
-    # Peak revenue meal period: purely by revenue
-    peak_revenue_meal_period = max(
-        (p for p, _, _ in _MEAL_PERIODS),
-        key=lambda p: mp_revenue[p],
-    )
-    active_meal_periods = [
-        p for p, _, _ in _MEAL_PERIODS if period_shares[p] >= 0.05
-    ]
+    (
+        mp_order_count,
+        mp_revenue,
+        period_shares,
+        primary_meal_period,
+        peak_revenue_meal_period,
+        active_meal_periods,
+    ) = _compute_meal_period_metrics(bill_time, bill_revenue, total_orders)
 
     # Build output rows
     day_of_week_breakdown: list[DayOfWeekRow] = [

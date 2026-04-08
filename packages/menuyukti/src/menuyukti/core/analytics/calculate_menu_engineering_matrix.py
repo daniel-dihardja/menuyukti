@@ -63,6 +63,41 @@ class MenuEngineeringMatrixResult(TypedDict):
 
 
 # ---------------------------------------------------------------------------
+# Action classification (extracted for clarity and unit testing)
+# ---------------------------------------------------------------------------
+
+
+def _classify_action(
+    category: str,
+    contribution_margin_percentage: float,
+    margin_per_unit: float,
+    quantity: float,
+    avg_margin: float,
+    avg_popularity: float,
+) -> str:
+    """
+    Map matrix quadrant and margins to a recommended action per menu item.
+
+    Mirrors the previous vectorized mask logic: remove/reprice take precedence
+    over promote for overlapping conditions.
+    """
+    remove = (
+        category == "low_end"
+        and contribution_margin_percentage < 0.005
+        and quantity < avg_popularity
+    )
+    reprice = category == "low_end" and margin_per_unit >= avg_margin and not remove
+    promote = category == "puzzle" and not remove and not reprice
+    if promote:
+        return "promote"
+    if reprice:
+        return "reprice"
+    if remove:
+        return "remove"
+    return "keep"
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -202,23 +237,19 @@ def calculate_menu_engineering_matrix(df: pd.DataFrame) -> MenuEngineeringMatrix
     df.loc[~popular & profitable, "category"] = "puzzle"
 
     # --------------------------------------------------
-    # Action recommendation (decision decision)
+    # Action recommendation
     # --------------------------------------------------
-    df["action"] = "keep"
-    remove_mask = (
-        (df["category"] == "low_end")
-        & (df["contribution_margin_percentage"] < 0.005)
-        & (df["quantity"] < avg_popularity)
+    df["action"] = df.apply(
+        lambda r: _classify_action(
+            str(r["category"]),
+            float(r["contribution_margin_percentage"]),
+            float(r["margin_per_unit"]),
+            float(r["quantity"]),
+            float(avg_margin),
+            float(avg_popularity),
+        ),
+        axis=1,
     )
-    reprice_mask = (
-        (df["category"] == "low_end")
-        & (df["margin_per_unit"] >= avg_margin)
-        & ~remove_mask
-    )
-    promote_mask = (df["category"] == "puzzle") & ~remove_mask & ~reprice_mask
-    df.loc[promote_mask, "action"] = "promote"
-    df.loc[reprice_mask, "action"] = "reprice"
-    df.loc[remove_mask, "action"] = "remove"
 
     # --------------------------------------------------
     # Distribution (category-level aggregation)
