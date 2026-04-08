@@ -300,8 +300,7 @@ export function useMilestoneOperations(
         dispatch({
           type: 'PATCH',
           patch: {
-            milestonePrepareError:
-              err instanceof Error ? err.message : t('milestonePrepareError'),
+            milestonePrepareError: err instanceof Error ? err.message : t('milestonePrepareError'),
           },
         })
         return false
@@ -360,9 +359,7 @@ export function useMilestoneOperations(
               dispatch({
                 type: 'UPDATE_MILESTONES',
                 updater: (prev) =>
-                  prev.map((m) =>
-                    m.id === milestoneId ? { ...m, data: preview || m.data } : m,
-                  ),
+                  prev.map((m) => (m.id === milestoneId ? { ...m, data: preview || m.data } : m)),
               })
             }
           }
@@ -371,8 +368,7 @@ export function useMilestoneOperations(
         dispatch({
           type: 'PATCH',
           patch: {
-            milestonePrepareError:
-              err instanceof Error ? err.message : t('milestonePrepareError'),
+            milestonePrepareError: err instanceof Error ? err.message : t('milestonePrepareError'),
           },
         })
       } finally {

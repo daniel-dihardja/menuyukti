@@ -163,10 +163,7 @@ export function MarkdownEditField({
             </p>
           ) : null}
           <Textarea
-            className={cn(
-              'max-h-[min(50vh,28rem)] min-h-0 overflow-y-auto',
-              textareaClassName,
-            )}
+            className={cn('max-h-[min(50vh,28rem)] min-h-0 overflow-y-auto', textareaClassName)}
             disabled={disabled}
             id={id}
             onChange={(e) => onChange(e.target.value)}

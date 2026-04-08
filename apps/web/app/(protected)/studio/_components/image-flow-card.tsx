@@ -92,10 +92,7 @@ export function ImageFlowCard({ flow, onEdit, onDelete }: Props) {
                       <Pencil className="size-4" aria-hidden />
                       {t('edit')}
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => setConfirmOpen(true)}
-                    >
+                    <DropdownMenuItem variant="destructive" onSelect={() => setConfirmOpen(true)}>
                       {t('delete')}
                     </DropdownMenuItem>
                   </DropdownMenuGroup>

@@ -56,10 +56,7 @@ export async function PUT(req: Request, context: RouteContext) {
     return NextResponse.json({ flow: data.updateImageAiFlow })
   } catch (error) {
     if (error instanceof ZodError) {
-      return NextResponse.json(
-        { message: 'Invalid input', issues: error.issues },
-        { status: 400 },
-      )
+      return NextResponse.json({ message: 'Invalid input', issues: error.issues }, { status: 400 })
     }
     console.error('[image-ai-flows] PUT', error)
     const message = error instanceof Error ? error.message : 'Failed to update flow'
@@ -84,11 +81,7 @@ export async function DELETE(_req: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Invalid slug' }, { status: 400 })
     }
 
-    await graphqlQuery<DeleteImageAiFlowData>(
-      DELETE_IMAGE_AI_FLOW_MUTATION,
-      { slug },
-      userId,
-    )
+    await graphqlQuery<DeleteImageAiFlowData>(DELETE_IMAGE_AI_FLOW_MUTATION, { slug }, userId)
 
     return NextResponse.json({ ok: true })
   } catch (error) {

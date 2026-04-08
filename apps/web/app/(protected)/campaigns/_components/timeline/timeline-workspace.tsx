@@ -14,10 +14,7 @@ import { TimelineInlineErrors } from './timeline-inline-errors'
 import { TimelineToolbar } from './timeline-toolbar'
 import type { TimelineWorkspaceProps } from './types'
 
-export function TimelineWorkspace({
-  isLoading = false,
-  loadError = null,
-}: TimelineWorkspaceProps) {
+export function TimelineWorkspace({ isLoading = false, loadError = null }: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const {
     milestones,

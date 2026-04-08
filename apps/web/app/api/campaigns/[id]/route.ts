@@ -55,11 +55,7 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
 
     const updated = parseUpdateNodeData(
-      await graphqlQuery<UpdateNodeDataRaw>(
-        UPDATE_NODE_MUTATION,
-        variables,
-        userId,
-      ),
+      await graphqlQuery<UpdateNodeDataRaw>(UPDATE_NODE_MUTATION, variables, userId),
     )
 
     return NextResponse.json(updated.updateNode)

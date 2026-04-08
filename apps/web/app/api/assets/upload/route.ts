@@ -5,10 +5,7 @@ import { randomUUID } from 'crypto'
 import sharp from 'sharp'
 
 import { graphqlQuery } from '@/lib/graphql/client'
-import {
-  IMAGE_AI_FLOW_BY_SLUG_QUERY,
-  type ImageAiFlowBySlugData,
-} from '@/lib/graphql/queries'
+import { IMAGE_AI_FLOW_BY_SLUG_QUERY, type ImageAiFlowBySlugData } from '@/lib/graphql/queries'
 import { getPresignedGetUrl, getS3Bucket, getS3Client, userObjectKey } from '@/lib/assets/storage'
 import {
   type ImageReferenceStrength,
@@ -61,8 +58,7 @@ function toNanoBananaConfig(
     strength === 'LOW' || strength === 'MID' || strength === 'HIGH' ? strength : undefined
 
   const pe = row.promptEnhance
-  const promptEnhance: 'OFF' | 'ON' | undefined =
-    pe === 'OFF' || pe === 'ON' ? pe : undefined
+  const promptEnhance: 'OFF' | 'ON' | undefined = pe === 'OFF' || pe === 'ON' ? pe : undefined
 
   return {
     model: row.model,
@@ -73,9 +69,7 @@ function toNanoBananaConfig(
   }
 }
 
-async function fetchFlowRow(
-  slug: string,
-): Promise<ImageAiFlowBySlugData['imageAiFlow']> {
+async function fetchFlowRow(slug: string): Promise<ImageAiFlowBySlugData['imageAiFlow']> {
   const data = await graphqlQuery<ImageAiFlowBySlugData>(IMAGE_AI_FLOW_BY_SLUG_QUERY, {
     slug,
   })

@@ -3,10 +3,7 @@
 import { createContext, useContext, type ReactNode } from 'react'
 
 import type { CampaignMilestoneUiState } from './campaign-milestone-reducer'
-import type {
-  MilestoneDataTask,
-  PassCriteriaRow,
-} from './timeline/types'
+import type { MilestoneDataTask, PassCriteriaRow } from './timeline/types'
 
 export type TimelineContextValue = CampaignMilestoneUiState & {
   isChatBusy: boolean

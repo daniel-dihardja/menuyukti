@@ -90,11 +90,7 @@ export function CampaignGoalEditor({ campaignId, initialGoal }: CampaignGoalEdit
     saved: tChat('fieldSaveStatusSaved'),
     unsaved: tChat('fieldSaveStatusUnsaved'),
   }
-  const goalSaveStatus = saving
-    ? 'saving'
-    : draft !== lastSaved
-      ? 'unsaved'
-      : 'saved'
+  const goalSaveStatus = saving ? 'saving' : draft !== lastSaved ? 'unsaved' : 'saved'
 
   return (
     <Collapsible onOpenChange={setOpen} open={open}>
@@ -112,7 +108,9 @@ export function CampaignGoalEditor({ campaignId, initialGoal }: CampaignGoalEdit
             <CollapsibleTrigger asChild>
               <Button
                 aria-expanded={open}
-                aria-label={open ? tChat('milestoneCollapseDetails') : tChat('milestoneExpandDetails')}
+                aria-label={
+                  open ? tChat('milestoneCollapseDetails') : tChat('milestoneExpandDetails')
+                }
                 className="size-9 shrink-0"
                 size="icon"
                 type="button"

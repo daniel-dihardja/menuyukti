@@ -219,9 +219,7 @@ export function ImageFlowForm({ mode, initial, onSubmit, onCancel }: Props) {
             id="flow-ref-strength"
             name="imageReferenceStrength"
             value={values.imageReferenceStrength}
-            onChange={(e) =>
-              setValues((v) => ({ ...v, imageReferenceStrength: e.target.value }))
-            }
+            onChange={(e) => setValues((v) => ({ ...v, imageReferenceStrength: e.target.value }))}
             placeholder={t('imageReferenceStrengthPlaceholder')}
             autoComplete="off"
           />

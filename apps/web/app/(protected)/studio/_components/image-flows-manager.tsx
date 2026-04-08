@@ -155,7 +155,9 @@ export function ImageFlowsManager({ initialFlows }: Props) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold tracking-tight text-pretty">{t('sectionTitle')}</h2>
-          <p className="mt-1 text-sm text-muted-foreground text-pretty">{t('sectionDescription')}</p>
+          <p className="mt-1 text-sm text-muted-foreground text-pretty">
+            {t('sectionDescription')}
+          </p>
         </div>
         <Button type="button" onClick={handleCreate} className="shrink-0">
           <Plus data-icon="inline-start" />
