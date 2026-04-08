@@ -20,4 +20,5 @@ RUN uv sync --frozen --no-dev --package agents-app
 
 EXPOSE 8001
 
-CMD ["uv", "run", "uvicorn", "agents_app.server:app", "--host", "0.0.0.0", "--port", "8001"]
+# Skip runtime sync: root workspace lists sibling packages; this image only ships agents-app + menuyukti.
+CMD ["uv", "run", "--no-sync", "uvicorn", "agents_app.server:app", "--host", "0.0.0.0", "--port", "8001"]
