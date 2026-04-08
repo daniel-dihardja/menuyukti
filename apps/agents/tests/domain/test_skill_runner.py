@@ -13,6 +13,8 @@ from agents_app.agents.domain.skill_runner.env import (
     render_inputs,
     render_template,
 )
+from agents_app.agents.domain.skill_runner.graphql_client import fetch_public_holidays_list
+from agents_app.agents.domain.skill_runner.handlers import PREFETCH_HANDLERS
 from agents_app.agents.domain.skill_runner.loader import load_skill
 from agents_app.agents.domain.skill_runner.prefetch import prefetch_data
 from agents_app.agents.domain.skill_runner.runner import run_skill_events
@@ -47,6 +49,78 @@ def test_render_template() -> None:
     env = RunEnv(milestone_id="m-1", location_id=42, user_id="u1")
     assert render_template("{{ env.location_id }}", env) == "42"
     assert render_template("{{ env.milestone_id }}", env) == "m-1"
+
+
+@pytest.mark.asyncio
+async def test_fetch_public_holidays_list_mocked_graphql() -> None:
+    payload = {
+        "publicHolidays": [
+            {
+                "id": "x",
+                "date": "2025-06-01",
+                "name": "Holiday",
+                "localName": "Feiertag",
+                "holidayType": "public",
+                "isTentative": False,
+            }
+        ]
+    }
+    with patch(
+        "agents_app.agents.domain.skill_runner.graphql_client.graphql_post",
+        new=AsyncMock(return_value=payload),
+    ):
+        async with httpx.AsyncClient() as client:
+            out = await fetch_public_holidays_list(
+                "de",
+                "2025-06-01",
+                "2025-06-30",
+                "user-1",
+                client=client,
+            )
+    assert len(out) == 1
+    assert out[0]["name"] == "Holiday"
+    assert out[0]["localName"] == "Feiertag"
+
+
+@pytest.mark.asyncio
+async def test_prefetch_handler_public_holidays() -> None:
+    payload = {
+        "publicHolidays": [
+            {
+                "id": "1",
+                "date": "2025-01-01",
+                "name": "New Year",
+                "localName": "Neujahr",
+                "holidayType": "public",
+                "isTentative": False,
+            }
+        ]
+    }
+    with patch(
+        "agents_app.agents.domain.skill_runner.graphql_client.graphql_post",
+        new=AsyncMock(return_value=payload),
+    ):
+        async with httpx.AsyncClient() as client:
+            handler = PREFETCH_HANDLERS["platform.public_holidays"]
+            out = await handler(
+                {"country": "de", "start_date": "2025-01-01", "end_date": "2025-01-31"},
+                client=client,
+                user_id="user-1",
+            )
+    assert len(out) == 1
+    assert out[0]["date"] == "2025-01-01"
+
+
+@pytest.mark.asyncio
+async def test_prefetch_handler_public_holidays_rejects_inverted_range() -> None:
+    handler = PREFETCH_HANDLERS["platform.public_holidays"]
+    async with httpx.AsyncClient() as client:
+        with pytest.raises(RuntimeError, match="start_date"):
+            await handler(
+                {"country": "de", "start_date": "2025-12-31", "end_date": "2025-01-01"},
+                client=client,
+                user_id="user-1",
+            )
 
 
 def test_render_inputs_coerces_location_id() -> None:

@@ -1,4 +1,4 @@
-"""GraphQL: analytics runs, operating profile (skill prefetch)."""
+"""GraphQL: analytics runs, operating profile, public holidays (skill prefetch)."""
 
 from __future__ import annotations
 
@@ -73,6 +73,19 @@ query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
 }
 """
 
+_PUBLIC_HOLIDAYS_QUERY = """
+query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) {
+  publicHolidays(country: $country, startDate: $startDate, endDate: $endDate) {
+    id
+    date
+    name
+    localName
+    holidayType
+    isTentative
+  }
+}
+"""
+
 
 async def fetch_latest_analytics_run_id(
     location_id: int,
@@ -114,6 +127,33 @@ async def fetch_location_dict(
         return None
     if not isinstance(raw, dict):
         return None
+    return json.loads(json.dumps(raw))
+
+
+async def fetch_public_holidays_list(
+    country: str,
+    start_date: str,
+    end_date: str,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> list[dict[str, Any]]:
+    """Load public holidays for a country and inclusive date range (YYYY-MM-DD strings) from GraphQL."""
+    data = await graphql_post(
+        client,
+        _PUBLIC_HOLIDAYS_QUERY,
+        {
+            "country": country,
+            "startDate": start_date,
+            "endDate": end_date,
+        },
+        user_id,
+    )
+    raw = data.get("publicHolidays")
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        return []
     return json.loads(json.dumps(raw))
 
 
