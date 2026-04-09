@@ -40,12 +40,16 @@ export function useCampaignPreviewVisibility() {
     (next: boolean | ((prev: boolean) => boolean)) => {
       setPreviewOpenState((prev) => {
         const resolved = typeof next === 'function' ? (next as (p: boolean) => boolean)(prev) : next
-        try {
-          localStorage.setItem(STORAGE_KEY, resolved ? '1' : '0')
-        } catch {
-          /* ignore */
-        }
-        void setQueryPreview(resolved ? '1' : '0')
+        // Avoid setQueryPreview (nuqs) inside this updater — it updates an ancestor during the same
+        // commit as this component and triggers "Cannot update a component while rendering a different component".
+        queueMicrotask(() => {
+          try {
+            localStorage.setItem(STORAGE_KEY, resolved ? '1' : '0')
+          } catch {
+            /* ignore */
+          }
+          void setQueryPreview(resolved ? '1' : '0')
+        })
         return resolved
       })
     },

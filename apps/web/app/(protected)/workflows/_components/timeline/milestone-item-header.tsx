@@ -104,7 +104,7 @@ export function MilestoneItemHeader({
   handleSaveTitle,
 }: MilestoneItemHeaderProps) {
   return (
-    <CardHeader className="gap-1.5">
+    <CardHeader className={cn('gap-1.5', editingTitle && 'gap-x-8')}>
       <CardTitle className="flex min-w-0 items-center gap-1 text-base leading-snug">
         {editingTitle ? (
           <div className="flex min-w-0 flex-1 items-center gap-1" ref={titleEditContainerRef}>
@@ -147,26 +147,28 @@ export function MilestoneItemHeader({
             </Button>
           </div>
         ) : (
-          <>
-            <span className="min-w-0 flex-1 truncate">{milestone.title}</span>
-            {onRenameMilestone ? (
-              <Button
-                aria-label={editMilestoneTitleAriaLabel}
-                className="size-8 shrink-0 text-muted-foreground"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setDraftTitle(milestone.title)
-                  setEditingTitle(true)
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-                size="icon"
-                type="button"
-                variant="ghost"
-              >
-                <Pencil aria-hidden data-icon="inline-start" />
-              </Button>
-            ) : null}
-          </>
+          <div className="flex min-w-0 flex-1 items-center">
+            <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden">
+              <span className="min-w-0 truncate">{milestone.title}</span>
+              {onRenameMilestone ? (
+                <Button
+                  aria-label={editMilestoneTitleAriaLabel}
+                  className="size-8 shrink-0 text-muted-foreground"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setDraftTitle(milestone.title)
+                    setEditingTitle(true)
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                >
+                  <Pencil aria-hidden data-icon="inline-start" />
+                </Button>
+              ) : null}
+            </div>
+          </div>
         )}
       </CardTitle>
       <CardAction className="flex items-center gap-1">
