@@ -69,6 +69,43 @@ const CampaignPreviewPanelBodyLazy = dynamic(
   },
 )
 
+function CampaignPreviewToggleButton() {
+  const tWorkspace = useTranslations('analytics.campaigns.workspace')
+  const [isPreviewTransitionPending, startPreviewTransition] = useTransition()
+  const { previewOpen, setPreviewOpen } = useCampaignPreviewVisibility()
+
+  const handlePreviewToggle = useCallback(() => {
+    startPreviewTransition(() => {
+      setPreviewOpen((v) => !v)
+    })
+  }, [setPreviewOpen])
+
+  return (
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            aria-busy={isPreviewTransitionPending}
+            aria-label={tWorkspace('previewToggleAriaLabel')}
+            aria-pressed={previewOpen}
+            className="shrink-0"
+            onClick={handlePreviewToggle}
+            size="icon"
+            type="button"
+            variant="outline"
+          >
+            <PanelRight />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs text-balance" side="bottom">
+          <p>{tWorkspace('previewToggleTooltip')}</p>
+          <p className="mt-1 text-muted-foreground">{tWorkspace('previewToggleShortcut')}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
+
 export type CampaignChatPanelProps = {
   workflowId: string
   initialMilestones: TimelineMilestone[]
@@ -83,7 +120,7 @@ export function CampaignChatPanel({
   const t = useTranslations('analytics.campaigns.chat')
   const tWorkspace = useTranslations('analytics.campaigns.workspace')
   const [text, setText] = useState('')
-  const [isPreviewTransitionPending, startPreviewTransition] = useTransition()
+  const [, startPreviewTransition] = useTransition()
 
   const { previewOpen, setPreviewOpen } = useCampaignPreviewVisibility()
   const isDesktop = useMediaQuery('(min-width: 768px)')
@@ -201,12 +238,6 @@ export function CampaignChatPanel({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [setPreviewOpen])
 
-  const handlePreviewToggle = useCallback(() => {
-    startPreviewTransition(() => {
-      setPreviewOpen((v) => !v)
-    })
-  }, [setPreviewOpen])
-
   const handleMobileSheetOpenChange = useCallback(
     (open: boolean) => {
       if (!open) {
@@ -219,36 +250,11 @@ export function CampaignChatPanel({
   return (
     <TimelineProvider value={timelineValue}>
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden">
-        <div className="flex shrink-0 justify-end">
-          <TooltipProvider delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  aria-busy={isPreviewTransitionPending}
-                  aria-label={tWorkspace('previewToggleAriaLabel')}
-                  aria-pressed={previewOpen}
-                  className="shrink-0"
-                  onClick={handlePreviewToggle}
-                  size="icon"
-                  type="button"
-                  variant="outline"
-                >
-                  <PanelRight />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs text-balance" side="bottom">
-                <p>{tWorkspace('previewToggleTooltip')}</p>
-                <p className="mt-1 text-muted-foreground">{tWorkspace('previewToggleShortcut')}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
           <ResizablePanelGroup className="h-full min-h-0 flex-1 overflow-hidden">
             <ResizablePanel defaultSize={isDesktop ? 40 : 40} minSize={isDesktop ? 28 : 22}>
               <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-                <TimelineWorkspace />
+                <TimelineWorkspace timelineTrailing={<CampaignPreviewToggleButton />} />
               </div>
             </ResizablePanel>
 

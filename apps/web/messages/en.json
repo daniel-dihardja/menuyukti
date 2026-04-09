@@ -748,6 +748,12 @@
         "assetsEmpty": "No images yet",
         "assetsEmptyHint": "Open Generate visuals to add images to your library.",
         "goalLabel": "Workflow goal",
+        "goalNotSetBadge": "Not set",
+        "goalPreviewEmpty": "No goal set yet. Add one to guide this workflow.",
+        "goalEditButton": "Edit",
+        "goalEditAriaLabel": "Edit workflow goal",
+        "goalSheetTitle": "Workflow goal",
+        "goalSheetDescription": "Describe what this campaign should achieve. Changes save when you leave the editor or close this panel.",
         "goalSaveError": "Could not save goal. Please try again."
       },
       "milestoneRun": {

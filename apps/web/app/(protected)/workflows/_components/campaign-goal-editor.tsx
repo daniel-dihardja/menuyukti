@@ -2,17 +2,20 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { ChevronDown } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 
 import { FieldSaveStatus } from '@/components/field-save-status'
 import { MarkdownEditField } from '@/components/markdown-edit-field'
+import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
+import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@workspace/ui/components/collapsible'
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@workspace/ui/components/sheet'
 import { cn } from '@workspace/ui/lib/utils'
 
 export type CampaignGoalEditorProps = {
@@ -22,13 +25,28 @@ export type CampaignGoalEditorProps = {
 
 type ToastState = { kind: 'error'; message: string } | null
 
+const GOAL_PREVIEW_MAX_LEN = 160
+
+/** Plain-ish one-line preview for the compact bar (not full markdown rendering). */
+function workflowGoalPreview(markdown: string, maxLength: number): string {
+  const trimmed = markdown.trim()
+  if (!trimmed) return ''
+  const firstLine = trimmed.split(/\r?\n/).find((line) => line.trim().length > 0) ?? trimmed
+  const rough = firstLine
+    .replace(/^#{1,6}\s+/, '')
+    .replace(/`+/g, '')
+    .replace(/\[(.*?)\]\([^)]*\)/g, '$1')
+    .trim()
+  if (rough.length <= maxLength) return rough
+  return `${rough.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`
+}
+
 export function CampaignGoalEditor({ workflowId, initialGoal }: CampaignGoalEditorProps) {
   const t = useTranslations('analytics.campaigns.workspace')
   const tChat = useTranslations('analytics.campaigns.chat')
   const goalFieldId = `workflow-goal-${workflowId}`
-  const goalTitleId = `workflow-goal-title-${workflowId}`
 
-  const [open, setOpen] = useState(true)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [draft, setDraft] = useState(initialGoal ?? '')
   /** Last value persisted to the server (avoids overwriting with stale `initialGoal` after save). */
   const [lastSaved, setLastSaved] = useState(initialGoal ?? '')
@@ -85,6 +103,16 @@ export function CampaignGoalEditor({ workflowId, initialGoal }: CampaignGoalEdit
     void persistGoal()
   }, [persistGoal])
 
+  const handleSheetOpenChange = useCallback(
+    (next: boolean) => {
+      if (!next) {
+        void persistGoal()
+      }
+      setSheetOpen(next)
+    },
+    [persistGoal],
+  )
+
   const saveStatusMessages = {
     saving: tChat('fieldSaveStatusSaving'),
     saved: tChat('fieldSaveStatusSaved'),
@@ -92,76 +120,87 @@ export function CampaignGoalEditor({ workflowId, initialGoal }: CampaignGoalEdit
   }
   const goalSaveStatus = saving ? 'saving' : draft !== lastSaved ? 'unsaved' : 'saved'
 
+  const hasSavedGoal = lastSaved.trim().length > 0
+  const previewText = hasSavedGoal
+    ? workflowGoalPreview(lastSaved, GOAL_PREVIEW_MAX_LEN)
+    : t('goalPreviewEmpty')
+
   return (
-    <Collapsible onOpenChange={setOpen} open={open}>
-      <Card
+    <div className="flex min-w-0 flex-col gap-2">
+      <div
         className={cn(
-          'gap-0 border py-4 shadow-none transition-[background-color,box-shadow,border-color]',
+          'flex min-w-0 flex-col gap-3 rounded-lg border bg-card/30 py-4 pr-4 pl-4 shadow-none transition-[background-color,box-shadow,border-color]',
+          'sm:flex-row sm:items-center sm:gap-4',
           'hover:bg-accent/30',
         )}
       >
-        <CardHeader className="gap-1.5 pb-0">
-          <CardTitle className="text-base leading-snug" id={goalTitleId}>
-            {t('goalLabel')}
-          </CardTitle>
-          <CardAction>
-            <CollapsibleTrigger asChild>
-              <Button
-                aria-expanded={open}
-                aria-label={
-                  open ? tChat('milestoneCollapseDetails') : tChat('milestoneExpandDetails')
-                }
-                className="size-9 shrink-0"
-                size="icon"
-                type="button"
-                variant="ghost"
-              >
-                <ChevronDown
-                  aria-hidden
-                  className={cn(
-                    'motion-safe:transition-transform motion-safe:duration-200',
-                    open ? 'rotate-180' : 'rotate-0',
-                  )}
-                />
-              </Button>
-            </CollapsibleTrigger>
-          </CardAction>
-        </CardHeader>
-        <CollapsibleContent
-          aria-labelledby={goalTitleId}
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
+        <div className="min-w-0 flex-1 flex flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-medium text-base leading-snug">{t('goalLabel')}</h2>
+            {!hasSavedGoal ? <Badge variant="secondary">{t('goalNotSetBadge')}</Badge> : null}
+          </div>
+          <p
+            className={cn(
+              'text-sm leading-snug break-words',
+              hasSavedGoal ? 'text-muted-foreground line-clamp-2' : 'text-muted-foreground italic',
+            )}
+          >
+            {previewText}
+          </p>
+        </div>
+        <Button
+          aria-label={t('goalEditAriaLabel')}
+          className="w-full shrink-0 sm:w-auto"
+          onClick={() => setSheetOpen(true)}
+          type="button"
+          variant="outline"
         >
-          <CardContent className="flex flex-col gap-2 border-border/60 border-t px-6 pt-4 pb-0">
-            <MarkdownEditField
-              disabled={saving}
-              editTabLabel={tChat('milestoneDataEditTab')}
-              formatPreset="milestone-goal"
-              id={goalFieldId}
-              onBlur={handleBlur}
-              onChange={setDraft}
-              placeholder={tChat('milestoneGoalPlaceholder')}
-              previewEmptyLabel={tChat('milestoneGoalPreviewEmpty')}
-              previewTabLabel={tChat('milestoneDataPreviewTab')}
-              textareaClassName="min-h-[120px] resize-y whitespace-pre-wrap"
-              value={draft}
-            />
-            <div className="flex justify-end">
-              <FieldSaveStatus
-                className="inline-flex"
-                messages={saveStatusMessages}
-                status={goalSaveStatus}
-              />
-            </div>
+          <Pencil aria-hidden data-icon="inline-start" />
+          {t('goalEditButton')}
+        </Button>
+      </div>
 
-            {toast ? (
-              <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive text-sm">
-                {toast.message}
-              </p>
-            ) : null}
-          </CardContent>
-        </CollapsibleContent>
-      </Card>
-    </Collapsible>
+      {toast ? (
+        <p
+          className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive text-sm"
+          role="alert"
+        >
+          {toast.message}
+        </p>
+      ) : null}
+
+      <Sheet onOpenChange={handleSheetOpenChange} open={sheetOpen}>
+        <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-2xl">
+          <SheetHeader className="border-b px-6 py-4 text-left">
+            <SheetTitle>{t('goalSheetTitle')}</SheetTitle>
+            <SheetDescription>{t('goalSheetDescription')}</SheetDescription>
+          </SheetHeader>
+          <ScrollArea className="min-h-0 flex-1 px-4 py-4">
+            <div className="flex flex-col gap-2 pr-2 pb-2">
+              <MarkdownEditField
+                disabled={saving}
+                editTabLabel={tChat('milestoneDataEditTab')}
+                formatPreset="milestone-goal"
+                id={goalFieldId}
+                onBlur={handleBlur}
+                onChange={setDraft}
+                placeholder={tChat('milestoneGoalPlaceholder')}
+                previewEmptyLabel={tChat('milestoneGoalPreviewEmpty')}
+                previewTabLabel={tChat('milestoneDataPreviewTab')}
+                textareaClassName="min-h-[min(280px,40vh)] resize-y whitespace-pre-wrap"
+                value={draft}
+              />
+              <div className="flex justify-end">
+                <FieldSaveStatus
+                  className="inline-flex"
+                  messages={saveStatusMessages}
+                  status={goalSaveStatus}
+                />
+              </div>
+            </div>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+    </div>
   )
 }

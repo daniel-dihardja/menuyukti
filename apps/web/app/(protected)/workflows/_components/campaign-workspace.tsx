@@ -102,18 +102,8 @@ export function CampaignWorkspace({
           </TabsList>
           {tab === 'brief' ? (
             <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-              <Button onClick={() => setStudioOpen(true)} type="button" variant="default">
+              <Button onClick={() => setStudioOpen(true)} type="button" variant="secondary">
                 {t('generateVisuals')}
-              </Button>
-              <Button
-                onClick={() => {
-                  void setTabRaw('print')
-                  setPrintDialogOpen(true)
-                }}
-                type="button"
-                variant="outline"
-              >
-                {t('orderPrints')}
               </Button>
             </div>
           ) : null}

@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 export type TimelineMilestoneStatus = 'complete' | 'failed' | 'pending' | 'empty'
 
 export type PassCriteriaStatus = 'pass' | 'fail' | 'open'
@@ -37,6 +39,8 @@ export type MilestoneStatusLabels = {
 export type TimelineWorkspaceProps = {
   isLoading?: boolean
   loadError?: string | null
+  /** Placed after the create milestone control in the toolbar and beside create in the empty state. */
+  timelineTrailing?: ReactNode
 }
 
 export type TimelineBodyLabelsProps = {

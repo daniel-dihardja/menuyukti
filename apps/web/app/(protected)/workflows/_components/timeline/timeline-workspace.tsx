@@ -2,11 +2,18 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { Plus } from 'lucide-react'
 import { parseAsString, useQueryState } from 'nuqs'
 
 import { Button } from '@workspace/ui/components/button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Spinner } from '@workspace/ui/components/spinner'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@workspace/ui/components/tooltip'
 
 import { useTimelineContext } from '../timeline-context'
 import { TimelineBody } from './timeline-body'
@@ -15,7 +22,11 @@ import { ImportWorkflowDialog } from './import-workflow-dialog'
 import { TimelineToolbar } from './timeline-toolbar'
 import type { TimelineWorkspaceProps } from './types'
 
-export function TimelineWorkspace({ isLoading = false, loadError = null }: TimelineWorkspaceProps) {
+export function TimelineWorkspace({
+  isLoading = false,
+  loadError = null,
+  timelineTrailing = null,
+}: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const {
@@ -91,6 +102,7 @@ export function TimelineWorkspace({ isLoading = false, loadError = null }: Timel
         showExport={showTimeline}
         showImport={showReady}
         title={t('timelineToolbarTitle')}
+        trailingSlot={timelineTrailing}
       />
       <TimelineInlineErrors
         createError={createError}
@@ -134,21 +146,31 @@ export function TimelineWorkspace({ isLoading = false, loadError = null }: Timel
             </h3>
             <p className="text-muted-foreground text-sm">{t('timelineEmptyDescription')}</p>
           </div>
-          <Button
-            disabled={creating}
-            onClick={() => void onCreateMilestone()}
-            size="default"
-            type="button"
-          >
-            {creating ? (
-              <>
-                <Spinner data-icon="inline-start" />
-                {t('creatingMilestone')}
-              </>
-            ) : (
-              t('createMilestone')
-            )}
-          </Button>
+          <TooltipProvider delayDuration={300}>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">
+                    <Button
+                      aria-busy={creating}
+                      aria-label={creating ? t('creatingMilestone') : t('createMilestone')}
+                      disabled={creating}
+                      onClick={() => void onCreateMilestone()}
+                      size="icon"
+                      type="button"
+                      variant="default"
+                    >
+                      {creating ? <Spinner /> : <Plus aria-hidden />}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>{creating ? t('creatingMilestone') : t('createMilestone')}</p>
+                </TooltipContent>
+              </Tooltip>
+              {timelineTrailing}
+            </div>
+          </TooltipProvider>
           {createError ? (
             <p className="max-w-md text-destructive text-sm" role="alert">
               {createError}
