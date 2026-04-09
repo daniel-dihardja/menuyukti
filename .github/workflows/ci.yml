@@ -1,10 +1,12 @@
-# Lint, typecheck, and test on every PR and push to main/develop.
-# Path filters skip unrelated jobs; Node uses Turbo --affected on PRs, full run on push.
+# Lint, typecheck, and test on every PR (including into develop) and on push to main.
+# Pushes to develop do not run CI: format/lint/tests already ran on the merged feature PR.
+# Deploy still runs on push to develop (see deploy.yml).
+# Path filters skip unrelated jobs; Node uses Turbo --affected on PRs, full run on push to main.
 name: CI
 
 on:
   push:
-    branches: [develop, main]
+    branches: [main]
   pull_request:
 
 concurrency:
