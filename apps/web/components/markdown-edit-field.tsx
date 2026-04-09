@@ -1,10 +1,11 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { WandSparkles } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { Maximize2, WandSparkles, X } from 'lucide-react'
+import { type ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
 import { MarkdownMessage } from '@/components/markdown-message'
+import { PanelFullscreenContext } from '@/components/panel-fullscreen-context'
 import type { MarkdownFormatPreset } from '@/lib/markdown-format-presets'
 import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
@@ -25,6 +26,211 @@ export type MarkdownEditFieldProps = {
   editTabLabel: string
   previewEmptyLabel: string
   textareaClassName?: string
+  /** When true, shows expand control and allows filling the milestones pane (requires PanelFullscreenProvider). */
+  enablePanelFullscreen?: boolean
+  /** Optional title shown in the fullscreen header (e.g. field label). */
+  fullscreenHeaderTitle?: string
+}
+
+type MarkdownEditTabsPaneProps = {
+  layout: 'embedded' | 'fullscreen'
+  innerTab: string
+  onInnerTabChange: (next: string) => void
+  commitBlur: () => void
+  id: string
+  value: string
+  onChange: (v: string) => void
+  disabled: boolean
+  placeholder?: string
+  previewTabLabel: string
+  editTabLabel: string
+  previewEmptyLabel: string
+  textareaClassName: string
+  formatError: string | null
+  formatting: boolean
+  onFormatClick: () => void
+  formatButtonLabel: string
+  formatFormattingLabel: string
+  /** Shown after the format control on the same row as the tab triggers (e.g. expand). */
+  headerTrailing?: ReactNode
+}
+
+function MarkdownEditTabsPane({
+  layout,
+  innerTab,
+  onInnerTabChange,
+  commitBlur,
+  id,
+  value,
+  onChange,
+  disabled,
+  placeholder,
+  previewTabLabel,
+  editTabLabel,
+  previewEmptyLabel,
+  textareaClassName,
+  formatError,
+  formatting,
+  onFormatClick,
+  formatButtonLabel,
+  formatFormattingLabel,
+  headerTrailing,
+}: MarkdownEditTabsPaneProps) {
+  const textareaId = layout === 'fullscreen' ? `${id}-fullscreen` : id
+  const tabsClass = layout === 'fullscreen' ? 'flex min-h-0 flex-1 flex-col gap-3' : 'gap-3'
+  const previewScrollClass =
+    layout === 'fullscreen'
+      ? 'min-h-0 flex-1 overflow-y-auto rounded-md border border-border/60 bg-muted/30 p-3'
+      : 'max-h-[min(50vh,28rem)] overflow-y-auto rounded-md border border-border/60 bg-muted/30 p-3'
+  const textareaClass =
+    layout === 'fullscreen'
+      ? cn('min-h-0 flex-1 resize-y overflow-y-auto', textareaClassName)
+      : cn('max-h-[min(50vh,28rem)] min-h-0 overflow-y-auto', textareaClassName)
+  const editContentClass =
+    layout === 'fullscreen' ? 'mt-0 flex min-h-0 flex-1 flex-col gap-2' : 'mt-0 flex flex-col gap-2'
+
+  return (
+    <Tabs
+      className={tabsClass}
+      onValueChange={(next) => {
+        if (innerTab === 'edit' && next !== 'edit') {
+          commitBlur()
+        }
+        onInnerTabChange(next)
+      }}
+      value={innerTab}
+    >
+      <div
+        className="flex min-w-0 flex-wrap items-center justify-between gap-2"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <TabsList className="w-fit max-w-full" variant="line">
+          <TabsTrigger value="preview">{previewTabLabel}</TabsTrigger>
+          <TabsTrigger value="edit">{editTabLabel}</TabsTrigger>
+        </TabsList>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {innerTab === 'edit' ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  aria-label={formatButtonLabel}
+                  className="gap-1.5"
+                  disabled={disabled || formatting}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void onFormatClick()
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  size="sm"
+                  type="button"
+                  variant="secondary"
+                >
+                  {formatting ? (
+                    <>
+                      <Spinner className="size-4" />
+                      {formatFormattingLabel}
+                    </>
+                  ) : (
+                    <>
+                      <WandSparkles aria-hidden />
+                      {formatButtonLabel}
+                    </>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{formatButtonLabel}</TooltipContent>
+            </Tooltip>
+          ) : null}
+          {headerTrailing}
+        </div>
+      </div>
+      <TabsContent
+        className={layout === 'fullscreen' ? 'mt-0 flex min-h-0 flex-1 flex-col' : 'mt-0'}
+        value="preview"
+      >
+        {value.trim() ? (
+          <div className={previewScrollClass}>
+            <MarkdownMessage content={value} />
+          </div>
+        ) : (
+          <p className="text-muted-foreground text-sm">{previewEmptyLabel}</p>
+        )}
+      </TabsContent>
+      <TabsContent className={editContentClass} value="edit">
+        {formatError ? (
+          <p className="text-destructive text-sm" role="alert">
+            {formatError}
+          </p>
+        ) : null}
+        <Textarea
+          className={textareaClass}
+          disabled={disabled}
+          id={textareaId}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={commitBlur}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          placeholder={placeholder}
+          value={value}
+        />
+      </TabsContent>
+    </Tabs>
+  )
+}
+
+type FullscreenMarkdownShellProps = {
+  title?: string
+  regionAriaLabel: string
+  closeLabel: string
+  onClose: () => void
+  children: ReactNode
+}
+
+function FullscreenMarkdownShell({
+  title,
+  regionAriaLabel,
+  closeLabel,
+  onClose,
+  children,
+}: FullscreenMarkdownShellProps) {
+  return (
+    <div
+      aria-label={regionAriaLabel}
+      className="flex min-h-0 flex-1 flex-col bg-background"
+      role="region"
+    >
+      <div className="flex shrink-0 items-center justify-between gap-2 border-border/60 border-b px-3 py-2">
+        {title ? (
+          <span className="min-w-0 flex-1 truncate font-medium text-foreground text-sm">
+            {title}
+          </span>
+        ) : (
+          <span className="min-w-0 flex-1" />
+        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              aria-label={closeLabel}
+              autoFocus
+              onClick={(e) => {
+                e.stopPropagation()
+                onClose()
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <X aria-hidden />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{closeLabel}</TooltipContent>
+        </Tooltip>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col p-3">{children}</div>
+    </div>
+  )
 }
 
 export function MarkdownEditField({
@@ -39,17 +245,26 @@ export function MarkdownEditField({
   editTabLabel,
   previewEmptyLabel,
   textareaClassName = 'min-h-[200px] resize-y whitespace-pre-wrap',
+  enablePanelFullscreen = false,
+  fullscreenHeaderTitle,
 }: MarkdownEditFieldProps) {
   const t = useTranslations('analytics.campaigns.chat')
+  const panelCtx = useContext(PanelFullscreenContext)
+  const expandButtonRef = useRef<HTMLButtonElement>(null)
+  const panelCtxRef = useRef(panelCtx)
+  panelCtxRef.current = panelCtx
+
   const [formatting, setFormatting] = useState(false)
   const [formatError, setFormatError] = useState<string | null>(null)
   /** Preview vs Edit — controlled so we can persist when leaving Edit without relying on textarea blur (Radix may hide content before blur). */
   const [innerTab, setInnerTab] = useState('preview')
+  const [isPanelFullscreen, setIsPanelFullscreen] = useState(false)
+
   const onBlurRef = useRef(onBlur)
   onBlurRef.current = onBlur
   const blurLock = useRef(false)
 
-  const commitBlur = () => {
+  const commitBlur = useCallback(() => {
     if (!onBlurRef.current) return
     if (blurLock.current) return
     blurLock.current = true
@@ -57,7 +272,7 @@ export function MarkdownEditField({
       blurLock.current = false
     })
     onBlurRef.current()
-  }
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -65,7 +280,15 @@ export function MarkdownEditField({
     }
   }, [])
 
-  async function handleFormat() {
+  useEffect(() => {
+    return () => {
+      if (enablePanelFullscreen) {
+        panelCtxRef.current?.clearContent()
+      }
+    }
+  }, [enablePanelFullscreen])
+
+  const handleFormat = useCallback(async () => {
     setFormatError(null)
     setFormatting(true)
     try {
@@ -89,92 +312,123 @@ export function MarkdownEditField({
     } finally {
       setFormatting(false)
     }
+  }, [formatPreset, onChange, t, value])
+
+  const closePanelFullscreen = useCallback(() => {
+    panelCtx?.clearContent()
+    setIsPanelFullscreen(false)
+    requestAnimationFrame(() => {
+      expandButtonRef.current?.focus()
+    })
+  }, [panelCtx])
+
+  const showExpandControl = Boolean(enablePanelFullscreen && panelCtx)
+
+  useEffect(() => {
+    if (!isPanelFullscreen || !panelCtx) {
+      return
+    }
+    panelCtx.setContent(
+      <FullscreenMarkdownShell
+        closeLabel={t('milestoneDataCloseFullscreen')}
+        regionAriaLabel={fullscreenHeaderTitle ?? t('milestoneDataLabel')}
+        title={fullscreenHeaderTitle}
+        onClose={closePanelFullscreen}
+      >
+        <MarkdownEditTabsPane
+          commitBlur={commitBlur}
+          formatButtonLabel={t('formatMarkdownButton')}
+          formatError={formatError}
+          formatFormattingLabel={t('formatMarkdownFormatting')}
+          formatting={formatting}
+          id={id}
+          innerTab={innerTab}
+          layout="fullscreen"
+          onChange={onChange}
+          onFormatClick={handleFormat}
+          onInnerTabChange={setInnerTab}
+          disabled={disabled}
+          editTabLabel={editTabLabel}
+          placeholder={placeholder}
+          previewEmptyLabel={previewEmptyLabel}
+          previewTabLabel={previewTabLabel}
+          textareaClassName={textareaClassName}
+          value={value}
+        />
+      </FullscreenMarkdownShell>,
+    )
+  }, [
+    closePanelFullscreen,
+    commitBlur,
+    disabled,
+    editTabLabel,
+    formatError,
+    formatting,
+    fullscreenHeaderTitle,
+    handleFormat,
+    id,
+    innerTab,
+    isPanelFullscreen,
+    onChange,
+    panelCtx,
+    placeholder,
+    previewEmptyLabel,
+    previewTabLabel,
+    t,
+    textareaClassName,
+    value,
+  ])
+
+  const expandHeaderTrailing = showExpandControl ? (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          ref={expandButtonRef}
+          aria-label={t('milestoneDataFullscreen')}
+          disabled={disabled}
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsPanelFullscreen(true)
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          size="icon"
+          type="button"
+          variant="ghost"
+        >
+          <Maximize2 aria-hidden />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">{t('milestoneDataFullscreen')}</TooltipContent>
+    </Tooltip>
+  ) : null
+
+  if (isPanelFullscreen) {
+    return <div aria-hidden className="min-h-px" />
   }
 
   return (
     <div className="flex flex-col gap-3">
-      <Tabs
-        className="gap-3"
-        onValueChange={(next) => {
-          if (innerTab === 'edit' && next !== 'edit') {
-            commitBlur()
-          }
-          setInnerTab(next)
-        }}
-        value={innerTab}
-      >
-        <div
-          className="flex min-w-0 flex-wrap items-center justify-between gap-2"
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <TabsList className="w-fit max-w-full" variant="line">
-            <TabsTrigger value="preview">{previewTabLabel}</TabsTrigger>
-            <TabsTrigger value="edit">{editTabLabel}</TabsTrigger>
-          </TabsList>
-          {innerTab === 'edit' ? (
-            <div className="shrink-0">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    aria-label={t('formatMarkdownButton')}
-                    className="gap-1.5"
-                    disabled={disabled || formatting}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      void handleFormat()
-                    }}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    size="sm"
-                    type="button"
-                    variant="secondary"
-                  >
-                    {formatting ? (
-                      <>
-                        <Spinner className="size-4" />
-                        {t('formatMarkdownFormatting')}
-                      </>
-                    ) : (
-                      <>
-                        <WandSparkles className="size-4" aria-hidden />
-                        {t('formatMarkdownButton')}
-                      </>
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{t('formatMarkdownButton')}</TooltipContent>
-              </Tooltip>
-            </div>
-          ) : null}
-        </div>
-        <TabsContent className="mt-0" value="preview">
-          {value.trim() ? (
-            <div className="max-h-[min(50vh,28rem)] overflow-y-auto rounded-md border border-border/60 bg-muted/30 p-3">
-              <MarkdownMessage content={value} />
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-sm">{previewEmptyLabel}</p>
-          )}
-        </TabsContent>
-        <TabsContent className="mt-0 flex flex-col gap-2" value="edit">
-          {formatError ? (
-            <p className="text-destructive text-sm" role="alert">
-              {formatError}
-            </p>
-          ) : null}
-          <Textarea
-            className={cn('max-h-[min(50vh,28rem)] min-h-0 overflow-y-auto', textareaClassName)}
-            disabled={disabled}
-            id={id}
-            onChange={(e) => onChange(e.target.value)}
-            onBlur={commitBlur}
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-            placeholder={placeholder}
-            value={value}
-          />
-        </TabsContent>
-      </Tabs>
+      <MarkdownEditTabsPane
+        commitBlur={commitBlur}
+        formatButtonLabel={t('formatMarkdownButton')}
+        formatError={formatError}
+        formatFormattingLabel={t('formatMarkdownFormatting')}
+        formatting={formatting}
+        headerTrailing={expandHeaderTrailing}
+        id={id}
+        innerTab={innerTab}
+        layout="embedded"
+        onChange={onChange}
+        onFormatClick={handleFormat}
+        onInnerTabChange={setInnerTab}
+        disabled={disabled}
+        editTabLabel={editTabLabel}
+        placeholder={placeholder}
+        previewEmptyLabel={previewEmptyLabel}
+        previewTabLabel={previewTabLabel}
+        textareaClassName={textareaClassName}
+        value={value}
+      />
     </div>
   )
 }

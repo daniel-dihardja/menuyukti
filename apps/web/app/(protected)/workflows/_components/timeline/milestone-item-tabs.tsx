@@ -297,7 +297,9 @@ export function MilestoneItemTabs({
                 <MarkdownEditField
                   disabled={savingData}
                   editTabLabel={t('milestoneDataEditTab')}
+                  enablePanelFullscreen
                   formatPreset="milestone-data"
+                  fullscreenHeaderTitle={t('milestoneDataLabel')}
                   id={dataFieldId}
                   onBlur={handleDataBlur}
                   onChange={setDataDraft}

@@ -15,6 +15,8 @@ import {
   TooltipTrigger,
 } from '@workspace/ui/components/tooltip'
 
+import { PanelFullscreenProvider } from '@/components/panel-fullscreen-context'
+
 import { useTimelineContext } from '../timeline-context'
 import { TimelineBody } from './timeline-body'
 import { TimelineInlineErrors } from './timeline-inline-errors'
@@ -80,7 +82,7 @@ export function TimelineWorkspace({
   const showTimeline = showReady && milestones.length > 0
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
+    <PanelFullscreenProvider className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
       <ImportWorkflowDialog
         onOpenChange={setImportDialogOpen}
         open={importDialogOpen}
@@ -198,6 +200,6 @@ export function TimelineWorkspace({
           }}
         />
       )}
-    </div>
+    </PanelFullscreenProvider>
   )
 }

@@ -704,6 +704,8 @@
         "milestoneDataEditTab": "Edit",
         "milestoneDataPreviewTab": "Preview",
         "milestoneDataPreviewEmpty": "Nothing to preview yet. Add Markdown in Edit.",
+        "milestoneDataFullscreen": "Expand to full view",
+        "milestoneDataCloseFullscreen": "Close full view",
         "milestoneResultEmpty": "No result yet.",
         "milestonePlayTooltip": "Run this milestone",
         "milestonePlayAriaLabel": "Run milestone",
