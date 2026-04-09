@@ -4,12 +4,12 @@ description: >-
   Implements a milestone Data task that prefetches GraphQL-backed context, runs the skill_runner LLM
   pipeline, and persists Markdown to milestonedata—same contract as location_profile. Use when adding
   a new prepare flow selectable from the milestone card, registering prefetch handlers, extending
-  GraphQL for agent prefetch, or wiring apps/agents/skills and milestone prepare.
+  GraphQL for agent prefetch, or wiring packages/agent-skills and milestone prepare.
 ---
 
 # Menuyukti: milestone data provider (skill_runner)
 
-Milestone **Data** tasks that use **Prepare** (instead of manual textarea) load a **runtime** `SKILL.md` from **`apps/agents/skills/<skill_id>/`**. The canonical example is [`location_profile/SKILL.md`](../../../apps/agents/skills/location_profile/SKILL.md).
+Milestone **Data** tasks that use **Prepare** (instead of manual textarea) load a **runtime** `SKILL.md` from **`packages/agent-skills/src/agent_skills/skills/<skill_id>/`** (resolved at runtime via `agent_skills.get_skill_path`). The canonical example is [`location_profile/SKILL.md`](../../../packages/agent-skills/src/agent_skills/skills/location_profile/SKILL.md).
 
 This guide is for **implementing** a new provider: GraphQL (and optional `packages/menuyukti`) → agents prefetch → `SKILL.md` contract → milestone UI / prepare route.
 
@@ -119,23 +119,26 @@ flowchart LR
 
 1. **`graphql_post`** — [`graphql_base.py`](../../../apps/agents/agents/graphql_base.py); env `GRAPHQL_ENDPOINT`, optional `GRAPHQL_INTERNAL_API_KEY`, `X-User-Id`.
 2. **Prefetch** — add `fetch_*` in `skill_runner/graphql_client.py`, wire in `handlers.py` under a new `use` string (dot-separated namespace recommended).
-3. **SKILL file** — add `apps/agents/skills/<skill_id>/SKILL.md` with valid `menuyukti` YAML and body.
+3. **SKILL file** — add `packages/agent-skills/src/agent_skills/skills/<skill_id>/SKILL.md` with valid `menuyukti` YAML and body (folder name must match `data_task` / milestone `dataTask`).
 
 ## Milestone card and Prepare API
 
-**Today**, [`milestone_prepare.py`](../../../apps/agents/routers/milestone_prepare.py) passes a **fixed** path to `location_profile/SKILL.md`. To expose a **new** task from the milestone **Data** dropdown:
+[`milestone_prepare.py`](../../../apps/agents/routers/milestone_prepare.py) resolves the skill with **`get_skill_path(body.data_task)`** (default `location_profile`). The Next.js BFF forwards `data_task` from the milestone Data source.
 
+To expose a **new** task from the milestone **Data** dropdown:
+
+- Add the skill folder + `SKILL.md` under `packages/agent-skills/…/skills/<skill_id>/`.
 - Extend **`dataTask`** enums and Zod schemas (e.g. [`timeline/types.ts`](<../../../apps/web/app/(protected)/workflows/_components/timeline/types.ts>), [`node-schemas.ts`](../../../apps/web/lib/graphql/node-schemas.ts), [`schema.ts`](../../../apps/web/app/api/workflows/[id]/milestones/schema.ts)) and the Select in [`milestone-item-tabs.tsx`](<../../../apps/web/app/(protected)/workflows/_components/timeline/milestone-item-tabs.tsx>).
 - Add **next-intl** strings for the new option (no hardcoded UI copy).
-- Route prepare by `dataTask`: map task id → `Path` to the correct `SKILL.md` (refactor the router when more than one skill exists).
+- Ensure GraphQL export/import preserves the new `dataTask` value if workflows are exported (see `export_workflow.py` / `import_workflow.py`).
 
-Until the router maps multiple skills, new `SKILL.md` files can be tested by pointing `run_skill_events` at the path in tests or a temporary route.
+New skills can be tested by calling `run_skill_events(get_skill_path("your_skill_id"), ...)` in tests.
 
 ## Reference chain
 
 | Layer                     | Example                                                                                                                                                           |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Milestone skill (runtime) | [`apps/agents/skills/location_profile/SKILL.md`](../../../apps/agents/skills/location_profile/SKILL.md)                                                           |
+| Milestone skill (runtime) | [`packages/agent-skills/.../location_profile/SKILL.md`](../../../packages/agent-skills/src/agent_skills/skills/location_profile/SKILL.md)                         |
 | Prefetch + handlers       | [`prefetch.py`](../../../apps/agents/agents/domain/skill_runner/prefetch.py), [`handlers.py`](../../../apps/agents/agents/domain/skill_runner/handlers.py)        |
 | GraphQL + `menuyukti`     | [`menu_heatmaps.py`](../../../apps/graphql/schema/queries/menu_heatmaps.py), [`services/menu_engineering.py`](../../../apps/graphql/services/menu_engineering.py) |
 

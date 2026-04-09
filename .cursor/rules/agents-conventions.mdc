@@ -39,7 +39,6 @@ agents/
       loader.py
       prefetch.py
       runner.py
-skills/               # SKILL.md files (e.g. skills/location_profile/SKILL.md)
 models/
   llm_config.py       # get_llm(), get_llm_structured()
 routers/              # FastAPI APIRouter — thin handlers; one file per route group
@@ -49,7 +48,7 @@ tests/
   domain/             # domain agent tests as you add them
 ```
 
-**Convention:** add new **skill-driven** data providers under `agents/skills/<name>/SKILL.md` and extend `agents/domain/skill_runner/` (prefetch handlers) as needed. **Milestone data persistence** lives in `agents/core/milestone_data/`, not in SKILL YAML. Add **cross-cutting** flows (milestone evaluation, chat) under `agents/core/`.
+**Convention:** add new **skill-driven** milestone assets under `packages/agent-skills/src/agent_skills/skills/<skill_id>/SKILL.md` (see `agent_skills.get_skill_path`) and extend `agents/domain/skill_runner/` (prefetch handlers) as needed. **Milestone data persistence** lives in `agents/core/milestone_data/`, not in SKILL YAML. Add **cross-cutting** flows (milestone evaluation, chat) under `agents/core/`.
 
 ## Graph factory pattern
 

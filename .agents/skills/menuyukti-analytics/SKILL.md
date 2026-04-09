@@ -9,30 +9,30 @@ description: >-
 
 # Menuyukti analytics (`packages/menuyukti`)
 
-This skill is for **Cursor/agents** working on the **shared Python package** [`packages/menuyukti`](../../../packages/menuyukti). It is **not** a runtime milestone skill under `apps/agents/skills/` (those feed `skill_runner`).
+This skill is for **Cursor/agents** working on the **shared Python package** [`packages/menuyukti`](../../../packages/menuyukti). It is **not** a runtime milestone skill under `packages/agent-skills/` (those feed `skill_runner`).
 
 ## Where the code lives
 
-| Area | Path | Role |
-|------|------|------|
-| **Analytics modules** | [`packages/menuyukti/src/menuyukti/core/analytics/`](../../../packages/menuyukti/src/menuyukti/core/analytics/) | Pandas pipelines + pure composition |
-| **Line-item model** | [`packages/menuyukti/src/menuyukti/core/models/pos_transaction.py`](../../../packages/menuyukti/src/menuyukti/core/models/pos_transaction.py) | `POSTransactionLineItem` column names |
-| **Unit tests** | [`packages/menuyukti/tests/unit/core/analytics/`](../../../packages/menuyukti/tests/unit/core/analytics/) | Pytest for each `calculate_*` |
-| **GraphQL integration** | [`apps/graphql/reports/transform.py`](../../../apps/graphql/reports/transform.py) | Maps ingest rows → DataFrame → `calculate_*` (do **not** build ad hoc frames in resolvers) |
+| Area                    | Path                                                                                                                                          | Role                                                                                       |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Analytics modules**   | [`packages/menuyukti/src/menuyukti/core/analytics/`](../../../packages/menuyukti/src/menuyukti/core/analytics/)                               | Pandas pipelines + pure composition                                                        |
+| **Line-item model**     | [`packages/menuyukti/src/menuyukti/core/models/pos_transaction.py`](../../../packages/menuyukti/src/menuyukti/core/models/pos_transaction.py) | `POSTransactionLineItem` column names                                                      |
+| **Unit tests**          | [`packages/menuyukti/tests/unit/core/analytics/`](../../../packages/menuyukti/tests/unit/core/analytics/)                                     | Pytest for each `calculate_*`                                                              |
+| **GraphQL integration** | [`apps/graphql/reports/transform.py`](../../../apps/graphql/reports/transform.py)                                                             | Maps ingest rows → DataFrame → `calculate_*` (do **not** build ad hoc frames in resolvers) |
 
 **Agents app** (`apps/agents`) calls **GraphQL over HTTP** for data; it does **not** import SQLAlchemy or open DB connections. New **HTTP-facing** shapes belong in GraphQL schema/resolvers after the package API is stable.
 
 ## Public pipelines (summary)
 
-| Function | Input | Output idea |
-|----------|--------|-------------|
-| `calculate_sales_analytics` | Full line-item frame | Totals, popularity, heatmaps, period |
-| `calculate_menu_heatmaps` | `menu`, `qty`, `order_time`, … | Per-menu hourly/weekly grids |
-| `compute_operating_profile_from_orders` | Bill-level rows + optional holidays | Meal periods, DOW, labels |
-| `calculate_menu_engineering_matrix` | Menu-level revenue + COGS | Star / plow_horse / puzzle / low_end |
-| `calculate_category_mix` | Line items with optional categories | Revenue/qty share per category |
-| `calculate_revenue_trends` | Current vs previous period frames | Deltas, ranks, trend labels |
-| `calculate_instagram_signals` | **Precomputed** dicts only | Heroes, trending, avoid, posting window, headline |
+| Function                                | Input                               | Output idea                                       |
+| --------------------------------------- | ----------------------------------- | ------------------------------------------------- |
+| `calculate_sales_analytics`             | Full line-item frame                | Totals, popularity, heatmaps, period              |
+| `calculate_menu_heatmaps`               | `menu`, `qty`, `order_time`, …      | Per-menu hourly/weekly grids                      |
+| `compute_operating_profile_from_orders` | Bill-level rows + optional holidays | Meal periods, DOW, labels                         |
+| `calculate_menu_engineering_matrix`     | Menu-level revenue + COGS           | Star / plow_horse / puzzle / low_end              |
+| `calculate_category_mix`                | Line items with optional categories | Revenue/qty share per category                    |
+| `calculate_revenue_trends`              | Current vs previous period frames   | Deltas, ranks, trend labels                       |
+| `calculate_instagram_signals`           | **Precomputed** dicts only          | Heroes, trending, avoid, posting window, headline |
 
 ## Conventions (must follow)
 

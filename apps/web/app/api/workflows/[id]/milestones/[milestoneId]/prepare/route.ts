@@ -11,6 +11,8 @@ export const maxDuration = 180
 
 const prepareBodySchema = z.object({
   locationId: z.number().int().positive(),
+  /** Which prepare pipeline to run; must match milestone Data source when set. */
+  dataTask: z.enum(['location_profile', 'instagram_campaign_schedule']).optional(),
 })
 
 type RouteContext = {
@@ -45,7 +47,8 @@ export async function POST(req: Request, context: RouteContext) {
       { status: 400 },
     )
   }
-  const { locationId } = parsed.data
+  const { locationId, dataTask } = parsed.data
+  const data_task = dataTask ?? 'location_profile'
 
   const rootData = parseNodeData(
     await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowId }, userId),
@@ -81,7 +84,7 @@ export async function POST(req: Request, context: RouteContext) {
         'Content-Type': 'application/json',
         'X-Menuyukti-User-Id': userId,
       },
-      body: JSON.stringify({ location_id: locationId }),
+      body: JSON.stringify({ location_id: locationId, data_task }),
       signal: req.signal,
     })
   } catch (err) {

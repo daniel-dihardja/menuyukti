@@ -33,7 +33,11 @@ def _milestone_data_task(data: object | None) -> str:
     if not isinstance(data, dict):
         return "manual"
     dt = data.get("dataTask")
-    return "location_profile" if dt == "location_profile" else "manual"
+    if dt == "location_profile":
+        return "location_profile"
+    if dt == "instagram_campaign_schedule":
+        return "instagram_campaign_schedule"
+    return "manual"
 
 
 def _derive_rail_status(

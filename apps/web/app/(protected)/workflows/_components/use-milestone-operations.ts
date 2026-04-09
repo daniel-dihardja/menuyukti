@@ -14,6 +14,21 @@ import type {
   TimelineMilestone,
 } from './timeline/types'
 
+function milestoneDataTaskFromNodeData(data: unknown): MilestoneDataTask {
+  const parsed = milestoneDataSchema.safeParse(data)
+  if (!parsed.success) {
+    return 'manual'
+  }
+  const dt = parsed.data.dataTask
+  if (dt === 'location_profile') {
+    return 'location_profile'
+  }
+  if (dt === 'instagram_campaign_schedule') {
+    return 'instagram_campaign_schedule'
+  }
+  return 'manual'
+}
+
 export function useMilestoneOperations(
   dispatch: Dispatch<CampaignMilestoneAction>,
   {
@@ -285,11 +300,7 @@ export function useMilestoneOperations(
           throw new Error(body?.message ?? t('milestonesMilestoneDataError'))
         }
         const nodeBody = body as { data?: unknown }
-        const parsed = milestoneDataSchema.safeParse(nodeBody?.data)
-        const nextTask: MilestoneDataTask =
-          parsed.success && parsed.data.dataTask === 'location_profile'
-            ? 'location_profile'
-            : 'manual'
+        const nextTask = milestoneDataTaskFromNodeData(nodeBody?.data)
         dispatch({
           type: 'UPDATE_MILESTONES',
           updater: (prev) =>
@@ -310,7 +321,10 @@ export function useMilestoneOperations(
   )
 
   const handlePrepareMilestone = useCallback(
-    async (milestoneId: string) => {
+    async (milestoneId: string, dataTask: MilestoneDataTask) => {
+      if (dataTask !== 'location_profile' && dataTask !== 'instagram_campaign_schedule') {
+        return
+      }
       dispatch({
         type: 'PATCH',
         patch: { milestonePrepareError: null, preparingMilestoneId: milestoneId },
@@ -319,7 +333,7 @@ export function useMilestoneOperations(
         const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}/prepare`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locationId }),
+          body: JSON.stringify({ locationId, dataTask }),
         })
         if (!res.ok) {
           const body = (await res.json().catch(() => null)) as { error?: string } | null
@@ -603,7 +617,7 @@ export function useMilestoneOperations(
         }
         const body = (await res.json().catch(() => null)) as {
           milestoneData?: string
-          dataTask?: 'manual' | 'location_profile' | null
+          dataTask?: MilestoneDataTask | null
         } | null
         if (!body) {
           return
@@ -619,6 +633,8 @@ export function useMilestoneOperations(
               const next = { ...m, data: text }
               if (body.dataTask === 'location_profile') {
                 next.dataTask = 'location_profile'
+              } else if (body.dataTask === 'instagram_campaign_schedule') {
+                next.dataTask = 'instagram_campaign_schedule'
               }
               return next
             }),

@@ -314,7 +314,9 @@ function TimelineItemInner({
                 isPreparing={preparingMilestoneId === milestone.id}
                 milestone={milestone}
                 onPrepareMilestone={
-                  onPrepareMilestone ? () => void onPrepareMilestone(milestone.id) : undefined
+                  onPrepareMilestone
+                    ? () => void onPrepareMilestone(milestone.id, milestone.dataTask ?? 'manual')
+                    : undefined
                 }
                 onSetMilestoneDataTask={
                   onSetMilestoneDataTask

@@ -10,7 +10,7 @@ export type PassCriteriaRow = {
   status: PassCriteriaStatus
 }
 
-export type MilestoneDataTask = 'manual' | 'location_profile'
+export type MilestoneDataTask = 'manual' | 'location_profile' | 'instagram_campaign_schedule'
 
 export type TimelineMilestone = {
   id: string

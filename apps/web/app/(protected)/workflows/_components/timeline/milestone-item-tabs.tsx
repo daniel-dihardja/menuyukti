@@ -250,6 +250,9 @@ export function MilestoneItemTabs({
                   <SelectItem value="location_profile">
                     {t('milestoneDataTaskLocationProfile')}
                   </SelectItem>
+                  <SelectItem value="instagram_campaign_schedule">
+                    {t('milestoneDataTaskInstagramCampaignSchedule')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </Field>
@@ -258,9 +261,11 @@ export function MilestoneItemTabs({
               <FieldDescription>
                 {dataTask === 'manual'
                   ? t('milestoneDataDescription')
-                  : t('milestoneDataDescriptionLocationProfile')}
+                  : dataTask === 'instagram_campaign_schedule'
+                    ? t('milestoneDataDescriptionInstagramCampaignSchedule')
+                    : t('milestoneDataDescriptionLocationProfile')}
               </FieldDescription>
-              {dataTask === 'location_profile' ? (
+              {dataTask === 'location_profile' || dataTask === 'instagram_campaign_schedule' ? (
                 <div className="flex flex-wrap items-center gap-2 pb-2">
                   <Button
                     disabled={isPreparing || !onPrepareMilestone}

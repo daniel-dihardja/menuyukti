@@ -140,8 +140,8 @@
         },
         "dataTask": {
           "type": "string",
-          "enum": ["manual", "location_profile"],
-          "description": "manual: user or LLM supplies milestone markdown (data) and prepares without the location_profile pipeline. location_profile: milestone is prepared using the location_profile data task / prefetch flow."
+          "enum": ["manual", "location_profile", "instagram_campaign_schedule"],
+          "description": "manual: user or LLM supplies milestone markdown (data). location_profile / instagram_campaign_schedule: milestone Data uses the corresponding prepare pipeline (agent_skills)."
         },
         "data": {
           "type": "string",

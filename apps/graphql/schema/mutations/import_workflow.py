@@ -157,11 +157,12 @@ def _create_milestone_node(
     order_val = raw_order if isinstance(raw_order, int) else 0
 
     dt_raw = m.get("dataTask")
-    is_location_profile = dt_raw == "location_profile"
 
     milestone_data: dict[str, Any] = {"order": order_val}
-    if is_location_profile:
+    if dt_raw == "location_profile":
         milestone_data["dataTask"] = "location_profile"
+    elif dt_raw == "instagram_campaign_schedule":
+        milestone_data["dataTask"] = "instagram_campaign_schedule"
 
     milestone = Node(
         parent_id=root_node.id,

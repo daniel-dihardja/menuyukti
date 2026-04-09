@@ -263,11 +263,16 @@ export async function GET(_req: Request, context: RouteContext) {
     }
 
     const mn = validated.milestoneNode
-    let dataTask: 'manual' | 'location_profile' | null = null
+    let dataTask: 'manual' | 'location_profile' | 'instagram_campaign_schedule' | null = null
     if (mn.data != null && typeof mn.data === 'object') {
       const parsed = milestoneDataSchema.safeParse(mn.data)
-      if (parsed.success && parsed.data.dataTask === 'location_profile') {
-        dataTask = 'location_profile'
+      if (parsed.success) {
+        const dt = parsed.data.dataTask
+        if (dt === 'location_profile') {
+          dataTask = 'location_profile'
+        } else if (dt === 'instagram_campaign_schedule') {
+          dataTask = 'instagram_campaign_schedule'
+        }
       }
     }
 

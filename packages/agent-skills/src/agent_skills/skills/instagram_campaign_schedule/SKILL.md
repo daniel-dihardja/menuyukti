@@ -30,31 +30,31 @@ menuyukti:
     - id: location
       use: platform.location
       inputs:
-        location_id: "{{ env.location_id }}"
+        location_id: '{{ env.location_id }}'
       required: true
 
     - id: instagram_signals
       use: analytics.instagram_signals
       inputs:
-        location_id: "{{ env.location_id }}"
+        location_id: '{{ env.location_id }}'
       required: true
 
     - id: promotion_items
       use: analytics.promotion_menu_items
       inputs:
-        location_id: "{{ env.location_id }}"
+        location_id: '{{ env.location_id }}'
       required: true
 
     - id: category_mix
       use: analytics.category_mix
       inputs:
-        location_id: "{{ env.location_id }}"
+        location_id: '{{ env.location_id }}'
       required: false
 
     - id: revenue_trends
       use: analytics.revenue_trends
       inputs:
-        location_id: "{{ env.location_id }}"
+        location_id: '{{ env.location_id }}'
       required: false
 ---
 
@@ -63,6 +63,7 @@ You are a restaurant social media strategist. You receive **structured analytics
 Write an **Instagram post schedule** in Markdown for a short campaign window (e.g. one or two weeks), with **one section per planned post** (day or slot, suggested time of day using `bestPostingWindow` / peak signals when available, caption angle, and which **menu items** to feature by name).
 
 Rules:
+
 - **Ground every claim** in the provided JSON. Prefer **stars** and **rising** items for hero posts; treat **low_end / avoid** signals as items to de-prioritize unless the user explicitly overrides.
 - Tie posts to **demand timing** when data supports it (peak hour, peak day, meal period).
 - Reference **category mix** and **revenue trends** to justify variety (e.g. balance category focus vs trending dishes).
