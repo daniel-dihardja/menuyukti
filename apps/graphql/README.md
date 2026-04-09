@@ -7,15 +7,21 @@ A minimal starter for the Strawberry GraphQL endpoint. The service currently exp
 
 Keep this app **light**: resolvers should load data, enforce ownership/auth, and map results to GraphQL types. **Sales and menu analytics** (aggregations, metrics, matrix/heatmap logic, etc.) live in the shared Python package **`packages/menuyukti`** — add new calculations there and call them from here. Database schema and migrations remain in this app; see [`packages/menuyukti/README.md`](../../packages/menuyukti/README.md) for boundaries and layout.
 
-## Database schema (for AWS/SQLAlchemy testing)
+## Database schema and migrations (Alembic)
+
+Schema changes are **versioned** under [`alembic/`](./alembic/) (revision scripts in `alembic/versions/`). Production and shared PostgreSQL databases should use Alembic, not ad-hoc `ALTER` scripts, for DDL.
 
 1. Install dependencies with `make install` (`uv sync --all-groups`, including Ruff and mypy) or your normal workflow.
-2. Set `DATABASE_URL` in `apps/graphql/.env` (the module loads that file automatically via `python-dotenv`). If you already have a Neon URL, paste it directly there instead of re-exporting the variable every time.
-3. Run `make migrate-db` (or `DATABASE_URL="..." make migrate-db` if you need to override the `.env`) to create the analytics tables defined in `apps/graphql/data_sources/database.py`; `DATABASE_URL` now comes from `.env`, so no extra flags are required.
-4. The script falls back to the on-disk SQLite file (`sqlite+pysqlite:///./graphql.db`) when the env var is missing, keeping the workflow safe for quick local tests.
-5. After the tables exist, import `SessionLocal` from `graphql.data_sources` inside your resolvers to read or write Neon rows via SQLAlchemy sessions.
+2. Set `DATABASE_URL` in `apps/graphql/.env` (loaded by `python-dotenv` in `graphql.data_sources.database` and Alembic `env.py`). Use a PostgreSQL URL, e.g. `postgresql+psycopg2://user:pass@host:5432/dbname`.
+3. Apply migrations: `make db-upgrade` (or `PYTHONPATH=../.. uv run alembic upgrade head` from `apps/graphql`).
+4. After a model change, generate a revision: `make db-generate MSG=short_description`, then review the file under `alembic/versions/`, run `make db-upgrade`, and commit the new revision.
+5. **Existing databases** that were created with `create_all` before Alembic: after deploying this workflow, either run `alembic upgrade head` if the live schema already matches the initial revision, or use `make db-stamp-head` only if you have verified the schema matches and must not re-run DDL (see Alembic docs for `stamp`).
 
-**Existing databases** (already created before a schema change): `make migrate-db` only runs `create_all` and does not add columns. To align an older `node` table with the current models, run:
+The app still falls back to the on-disk SQLite file (`sqlite+pysqlite:///./graphql.db`) when `DATABASE_URL` is unset (handy for quick local runs). The pytest suite forces a SQLite test DB in `tests/conftest.py` and uses `create_all` — it does not run Alembic.
+
+Import `SessionLocal` from `graphql.data_sources` inside resolvers to read or write rows via SQLAlchemy sessions.
+
+**Legacy one-off SQL** (only if you still have a pre–Alembic database that never ran migrations): to align an older `node` table manually, you could run:
 
 ```sql
 ALTER TABLE node ADD COLUMN type TEXT NOT NULL DEFAULT 'unknown';
@@ -24,7 +30,7 @@ CREATE INDEX IF NOT EXISTS ix_node_location_id ON node(location_id);
 CREATE INDEX IF NOT EXISTS ix_node_location_type ON node(location_id, type);
 ```
 
-Export snapshots for workflow roots are stored in the **`workflow`** table (`make migrate-db` / `create_all`).
+Export snapshots for workflow roots are stored in the **`workflow`** table (created by Alembic migrations / `create_all` in tests).
 
 ### Workflow root node type (`workflow`)
 
@@ -38,7 +44,7 @@ UPDATE node SET type = 'workflow' WHERE type = 'campaign';
 
 Deploy order: apply the SQL update so existing roots match what the API expects, then restart the GraphQL and web services.
 
-Need a clean slate? Run `make drop-db` (or `uv run python -m graphql.data_sources.database drop`) to drop every table before recreating the schema with `make migrate-db`.  
+Need a clean slate on PostgreSQL? Run `make drop-db` (destructive: drops `public` schema), then `make db-upgrade`. For local SQLite only, you can also use `uv run python -m graphql.data_sources.database` for `create_all` (not used for production Postgres).  
 To import a specific Excel report directly into `order_fact`, run `make load-report REPORT_PATH=../../reports/Sales_Recapitulation_Detail_Report_Test.xlsx`; this drops/recreates the database, normalizes the specified workbook with Menyukti, and loads the rows so the analytics schema mirrors that report.
 
 ### Dev data (Excel + COGS)
@@ -64,7 +70,7 @@ The normalized upload mutation now feeds a dedicated Orders fact table (`apps/gr
 | `menu_category_detail`      | string       | Subcategory/classifier            |
 | `pos_system`                | string       | Detected POS (currently `esb`)    |
 
-Running `make migrate-db` (or `DATABASE_URL="..." make migrate-db`) will create this table alongside the other analytics tables. The next step after this is wiring the mutation to persist `NormalizedLineItem` rows into `OrderFact`, then building materialized views or summaries for your downstream analytics/agentic consumers.
+Running `make db-upgrade` with `DATABASE_URL` set will create this table alongside the other analytics tables via Alembic. The next step after this is wiring the mutation to persist `NormalizedLineItem` rows into `OrderFact`, then building materialized views or summaries for your downstream analytics/agentic consumers.
 
 ## Uploading Excel files
 

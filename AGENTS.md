@@ -39,9 +39,11 @@ From `apps/graphql` (requires `uv`):
 ```bash
 make install   # uv sync --all-groups (includes Ruff + mypy dev tools)
 make dev       # uvicorn with reload, port 8000
+make db-upgrade   # Alembic: apply migrations (set DATABASE_URL in .env)
 ```
 
 - Tests: `make test` — Lint/format: `make lint` / `make format` — Types: `make typecheck` (mypy)
+- DB schema: Alembic under `apps/graphql/alembic/` — see `apps/graphql/README.md`.
 
 ### LangGraph agents (`apps/agents`)
 

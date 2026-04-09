@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.13.0",
     "sqlalchemy>=2.0.46",
     "strawberry-graphql[asgi]>=0.308.2",
     "uvicorn>=0.40.0",
@@ -57,6 +58,8 @@ select = ["E4", "E7", "E9", "F", "I", "UP", "B", "SIM"]
 [tool.ruff.lint.per-file-ignores]
 # DATABASE_URL must be set before importing graphql.* (import side effects).
 "tests/conftest.py" = ["E402"]
+# load_dotenv() must run before graphql imports (database reads DATABASE_URL at import time).
+"alembic/env.py" = ["E402"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -69,6 +72,7 @@ explicit_package_bases = true
 exclude = [
     "^tests/",
     "^scripts/",
+    "^alembic/",
 ]
 
 [[tool.mypy.overrides]]
