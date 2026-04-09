@@ -15,8 +15,7 @@ class CreateWorkspaceMutation:
         if not user_id:
             raise ValueError("Missing authenticated user for createWorkspace")
         now = datetime.now(tz=UTC)
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             ws = Workspace(name=name, owner_clerk_user_id=user_id)
             session.add(ws)
             session.flush()
@@ -37,5 +36,3 @@ class CreateWorkspaceMutation:
                 owner_clerk_user_id=ws.owner_clerk_user_id,
                 created_at=ws.created_at,
             )
-        finally:
-            session.close()

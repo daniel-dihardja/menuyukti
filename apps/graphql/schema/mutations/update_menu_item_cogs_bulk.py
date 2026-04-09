@@ -11,6 +11,20 @@ class MenuItemCogsUpdateInput:
     cogs: float
 
 
+def _menu_item_cogs_to_gql(row: MenuItemCogs) -> MenuItemCogsType:
+    return MenuItemCogsType(
+        id=row.id,
+        analyticsRunId=row.analytics_run_id,
+        menu=row.menu,
+        menuCategory=row.menu_category,
+        menuCategoryDetail=row.menu_category_detail,
+        cogs=row.cogs,
+        currency=row.currency,
+        createdAt=row.created_at,
+        updatedAt=row.updated_at,
+    )
+
+
 @strawberry.type
 class UpdateMenuItemCogsBulkMutation:
     @strawberry.mutation
@@ -20,37 +34,43 @@ class UpdateMenuItemCogsBulkMutation:
         updates: list[MenuItemCogsUpdateInput],
     ) -> list[MenuItemCogsType]:
         user_id = user_id_from_info(info)
-        session = SessionLocal()
-        try:
-            updated_ids: list[int] = []
-            for item in updates:
-                row = session.get(MenuItemCogs, int(item.id))
-                if row is None:
-                    continue
-                run = session.get(AnalyticsRun, row.analytics_run_id)
+        if not updates:
+            return []
+        id_to_cogs: dict[int, float] = {}
+        for item in updates:
+            try:
+                pk = int(item.id)
+            except ValueError:
+                continue
+            id_to_cogs[pk] = item.cogs
+        if not id_to_cogs:
+            return []
+
+        with SessionLocal() as session:
+            rows = (
+                session.query(MenuItemCogs).filter(MenuItemCogs.id.in_(id_to_cogs.keys())).all()
+            )
+            by_id = {r.id: r for r in rows}
+
+            run_ids = {r.analytics_run_id for r in rows}
+            for run_id in run_ids:
+                run = session.get(AnalyticsRun, run_id)
                 if run is None or not is_location_owner(session, run.location_id, user_id):
                     raise PermissionError("Access denied")
-                row.cogs = item.cogs
-                updated_ids.append(row.id)
+
+            touched: list[MenuItemCogs] = []
+            for item in updates:
+                try:
+                    pk = int(item.id)
+                except ValueError:
+                    continue
+                row = by_id.get(pk)
+                if row is None:
+                    continue
+                row.cogs = id_to_cogs[pk]
+                touched.append(row)
+
             session.commit()
-            result: list[MenuItemCogsType] = []
-            for uid in updated_ids:
-                row = session.get(MenuItemCogs, uid)
-                if row is not None:
-                    session.refresh(row)
-                    result.append(
-                        MenuItemCogsType(
-                            id=row.id,
-                            analyticsRunId=row.analytics_run_id,
-                            menu=row.menu,
-                            menuCategory=row.menu_category,
-                            menuCategoryDetail=row.menu_category_detail,
-                            cogs=row.cogs,
-                            currency=row.currency,
-                            createdAt=row.created_at,
-                            updatedAt=row.updated_at,
-                        )
-                    )
-            return result
-        finally:
-            session.close()
+            for row in touched:
+                session.refresh(row)
+            return [_menu_item_cogs_to_gql(row) for row in touched]

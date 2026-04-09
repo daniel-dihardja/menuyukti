@@ -20,8 +20,7 @@ class InviteWorkspaceMemberMutation:
         if not user_id:
             raise ValueError("Missing authenticated user for inviteWorkspaceMember")
         wid = int(workspace_id)
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             if not is_workspace_member(session, wid, user_id):
                 raise PermissionError("Access denied")
             existing = (
@@ -53,5 +52,3 @@ class InviteWorkspaceMemberMutation:
                 invited_at=row.invited_at,
                 accepted_at=row.accepted_at,
             )
-        finally:
-            session.close()

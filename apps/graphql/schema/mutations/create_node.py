@@ -46,8 +46,7 @@ class CreateNodeMutation:
         if not user_id:
             raise ValueError("Missing authenticated user for createNode")
 
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             require_location_owner(session, location_id, user_id)
 
             display_name = name if name is not None and name.strip() else _random_default_name()
@@ -88,5 +87,3 @@ class CreateNodeMutation:
             session.refresh(node)
 
             return _node_to_gql(node)
-        finally:
-            session.close()

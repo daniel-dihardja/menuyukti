@@ -1,9 +1,16 @@
 """Instagram post ORM model."""
 
-from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text, func
-from sqlalchemy.orm import relationship
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from graphql.data_sources.database import Base
+
+if TYPE_CHECKING:
+    from graphql.data_sources.models.location import Location
 
 
 class InstagramPost(Base):
@@ -15,22 +22,25 @@ class InstagramPost(Base):
 
     __tablename__ = "instagram_posts"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    location_id = Column(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    location_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("location.id"),
-        nullable=False,
         index=True,
     )
-    location = relationship("Location", back_populates="instagram_posts")
-    platform = Column(String(32), nullable=False, default="instagram")
-    platform_post_id = Column(String(256), nullable=True, index=True)
-    status = Column(String(64), nullable=False, default="draft")
-    media_type = Column(String(64), nullable=True)
-    caption = Column(Text, nullable=True)
-    published_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
+    location: Mapped[Location] = relationship(back_populates="instagram_posts")
+    platform: Mapped[str] = mapped_column(String(32), default="instagram")
+    platform_post_id: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    status: Mapped[str] = mapped_column(String(64), default="draft")
+    media_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    caption: Mapped[str | None] = mapped_column(Text, nullable=True)
+    published_at: Mapped[object | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[object] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[object] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),

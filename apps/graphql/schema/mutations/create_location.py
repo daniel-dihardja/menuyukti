@@ -23,8 +23,7 @@ class CreateLocationMutation:
         if not user_id:
             raise ValueError("Missing authenticated user for createLocation")
         wid = int(workspace_id)
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             if not is_workspace_member(session, wid, user_id):
                 raise PermissionError("Access denied")
             loc_kwargs: dict[str, object] = {
@@ -66,5 +65,3 @@ class CreateLocationMutation:
                 currency=loc.currency,
                 node_id=str(loc.node_id) if loc.node_id is not None else None,
             )
-        finally:
-            session.close()

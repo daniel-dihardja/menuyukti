@@ -17,8 +17,7 @@ class RemoveWorkspaceMemberMutation:
         if not user_id:
             raise ValueError("Missing authenticated user for removeWorkspaceMember")
         wid = int(workspace_id)
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             if not is_workspace_owner_role(session, wid, user_id):
                 raise PermissionError("Access denied")
             if clerk_user_id == user_id:
@@ -38,5 +37,3 @@ class RemoveWorkspaceMemberMutation:
             session.delete(target)
             session.commit()
             return True
-        finally:
-            session.close()

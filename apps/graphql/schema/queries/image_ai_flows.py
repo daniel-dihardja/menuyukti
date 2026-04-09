@@ -25,8 +25,7 @@ class ImageAiFlowsQuery:
     def image_ai_flows(self, include_inactive: bool = False) -> list[ImageAiFlowType]:
         """Image AI flows ordered for display. Default: active only (asset upload UI)."""
 
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             q = session.query(ImageAiFlow).order_by(
                 ImageAiFlow.sort_order.asc(), ImageAiFlow.id.asc()
             )
@@ -34,8 +33,6 @@ class ImageAiFlowsQuery:
                 q = q.filter(ImageAiFlow.is_active.is_(True))
             rows = q.all()
             return [_flow_to_gql(r) for r in rows]
-        finally:
-            session.close()
 
     @strawberry.field
     def image_ai_flow(self, slug: str) -> ImageAiFlowType | None:
@@ -45,9 +42,6 @@ class ImageAiFlowsQuery:
         if not slug_clean:
             return None
 
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             row = session.query(ImageAiFlow).filter(ImageAiFlow.slug == slug_clean).first()
             return _flow_to_gql(row) if row else None
-        finally:
-            session.close()

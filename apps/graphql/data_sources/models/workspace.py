@@ -1,9 +1,16 @@
 """Workspace and membership ORM models."""
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
-from sqlalchemy.orm import relationship
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from graphql.data_sources.database import Base
+
+if TYPE_CHECKING:
+    from graphql.data_sources.models.location import Location
 
 
 class Workspace(Base):
@@ -13,18 +20,20 @@ class Workspace(Base):
 
     __tablename__ = "workspace"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(256), nullable=False)
-    owner_clerk_user_id = Column(String(128), nullable=False, index=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(256))
+    owner_clerk_user_id: Mapped[str] = mapped_column(String(128), index=True)
+    created_at: Mapped[object] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[object] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
     )
 
-    memberships = relationship("WorkspaceMembership", back_populates="workspace")
-    locations = relationship("Location", back_populates="workspace")
+    memberships: Mapped[list[WorkspaceMembership]] = relationship(back_populates="workspace")
+    locations: Mapped[list[Location]] = relationship(back_populates="workspace")
 
 
 class WorkspaceMembership(Base):
@@ -34,19 +43,22 @@ class WorkspaceMembership(Base):
 
     __tablename__ = "workspace_membership"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    workspace_id = Column(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    workspace_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("workspace.id"),
-        nullable=False,
         index=True,
     )
-    clerk_user_id = Column(String(128), nullable=False, index=True)
-    role = Column(String(32), nullable=False)
-    invited_at = Column(DateTime(timezone=True), server_default=func.now())
-    accepted_at = Column(DateTime(timezone=True), nullable=True)
+    clerk_user_id: Mapped[str] = mapped_column(String(128), index=True)
+    role: Mapped[str] = mapped_column(String(32))
+    invited_at: Mapped[object] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    accepted_at: Mapped[object | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
-    workspace = relationship("Workspace", back_populates="memberships")
+    workspace: Mapped[Workspace] = relationship(back_populates="memberships")
 
     __table_args__ = (
         UniqueConstraint(

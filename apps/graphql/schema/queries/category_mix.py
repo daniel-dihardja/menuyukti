@@ -39,8 +39,7 @@ class CategoryMixQuery:
         location_id: strawberry.ID | None = None,
     ) -> CategoryMixPayloadType | None:
         user_id = user_id_from_info(info)
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
             if run is None:
                 return None
@@ -66,5 +65,3 @@ class CategoryMixQuery:
                     for r in raw["rows"]
                 ],
             )
-        finally:
-            session.close()

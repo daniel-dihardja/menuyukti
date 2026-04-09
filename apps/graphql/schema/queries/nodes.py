@@ -32,8 +32,7 @@ class NodesQuery:
         user_id = user_id_from_info(info)
         if not user_id:
             return []
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             if not is_location_owner(session, location_id, user_id):
                 return []
             q = session.query(Node).filter(Node.location_id == location_id)
@@ -53,16 +52,13 @@ class NodesQuery:
             else:
                 rows = q.order_by(Node.created_at.desc()).all()
             return [_node_to_gql(r) for r in rows]
-        finally:
-            session.close()
 
     @strawberry.field
     def node(self, info: strawberry.Info, id: strawberry.ID) -> NodeType | None:
         user_id = user_id_from_info(info)
         if not user_id:
             return None
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             try:
                 node_pk = int(str(id))
             except ValueError:
@@ -75,5 +71,3 @@ class NodesQuery:
             if not is_location_owner(session, row.location_id, user_id):
                 return None
             return _node_to_gql(row)
-        finally:
-            session.close()

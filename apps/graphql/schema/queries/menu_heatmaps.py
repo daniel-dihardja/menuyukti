@@ -98,13 +98,10 @@ class MenuHeatmapsQuery:
         location_id: strawberry.ID | None = None,
     ) -> list[MenuHeatmapType]:
         user_id = user_id_from_info(info)
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
             if run is None:
                 return []
             if location_id is not None and run.location_id != int(location_id):
                 return []
             return _compute_menu_heatmaps_for_run(session, run)
-        finally:
-            session.close()

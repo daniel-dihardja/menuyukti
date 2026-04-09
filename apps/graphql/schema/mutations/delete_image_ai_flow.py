@@ -20,8 +20,7 @@ class DeleteImageAiFlowMutation:
         if not slug_key:
             raise ValueError("Slug is required")
 
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             row = session.query(ImageAiFlow).filter(ImageAiFlow.slug == slug_key).first()
             if row is None:
                 raise ValueError("Image AI flow not found")
@@ -29,5 +28,3 @@ class DeleteImageAiFlowMutation:
             session.delete(row)
             session.commit()
             return True
-        finally:
-            session.close()
