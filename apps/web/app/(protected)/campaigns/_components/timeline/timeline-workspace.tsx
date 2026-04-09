@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
 
@@ -11,12 +11,15 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { useTimelineContext } from '../timeline-context'
 import { TimelineBody } from './timeline-body'
 import { TimelineInlineErrors } from './timeline-inline-errors'
+import { ImportCampaignDialog } from './import-campaign-dialog'
 import { TimelineToolbar } from './timeline-toolbar'
 import type { TimelineWorkspaceProps } from './types'
 
 export function TimelineWorkspace({ isLoading = false, loadError = null }: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
   const {
+    campaignId,
     milestones,
     creating,
     createError,
@@ -62,10 +65,16 @@ export function TimelineWorkspace({ isLoading = false, loadError = null }: Timel
     return () => document.removeEventListener('pointerdown', onPointerDownCapture, true)
   }, [setSelectedId])
 
-  const showTimeline = !isLoading && !loadError && milestones.length > 0
+  const showReady = !isLoading && !loadError
+  const showTimeline = showReady && milestones.length > 0
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
+      <ImportCampaignDialog
+        campaignId={campaignId}
+        onOpenChange={setImportDialogOpen}
+        open={importDialogOpen}
+      />
       <TimelineToolbar
         count={milestones.length}
         createLabel={t('createMilestone')}
@@ -74,10 +83,13 @@ export function TimelineWorkspace({ isLoading = false, loadError = null }: Timel
         exportLabel={t('exportMilestones')}
         exporting={exporting}
         exportingLabel={t('exportingMilestones')}
+        importLabel={t('importMilestones')}
         onCreateMilestone={onCreateMilestone}
         onExport={onExport}
+        onImport={() => setImportDialogOpen(true)}
         showCreate={showTimeline}
         showExport={showTimeline}
+        showImport={showReady}
         title={t('timelineToolbarTitle')}
       />
       <TimelineInlineErrors

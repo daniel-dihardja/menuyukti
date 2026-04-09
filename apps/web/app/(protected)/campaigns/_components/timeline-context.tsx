@@ -6,6 +6,7 @@ import type { CampaignMilestoneUiState } from './campaign-milestone-reducer'
 import type { MilestoneDataTask, PassCriteriaRow } from './timeline/types'
 
 export type TimelineContextValue = CampaignMilestoneUiState & {
+  campaignId: string
   isChatBusy: boolean
   onCreateMilestone: () => void | Promise<void>
   onDeleteMilestone: (id: string) => void | Promise<void>

@@ -202,6 +202,51 @@ export type ExportCampaignDataRaw = {
   }
 }
 
+export const CAMPAIGN_EXPORTS_QUERY = `
+  query CampaignExports($locationId: Int!) {
+    campaignExports(locationId: $locationId) {
+      id
+      campaignId
+      locationId
+      payload
+      schemaVersion
+      createdAt
+      updatedAt
+    }
+  }
+`
+
+export type CampaignExportsDataRaw = {
+  campaignExports: Array<{
+    id: string
+    campaignId: string
+    locationId: number
+    payload: unknown
+    schemaVersion: string
+    createdAt: string | null
+    updatedAt: string | null
+  }>
+}
+
+export const IMPORT_CAMPAIGN_MUTATION = `
+  mutation ImportCampaign($locationId: Int!, $payload: JSON!) {
+    importCampaign(locationId: $locationId, payload: $payload) {
+      id
+      name
+      description
+      nodeType
+      path
+      parentId
+      locationId
+      data
+    }
+  }
+`
+
+export type ImportCampaignDataRaw = {
+  importCampaign: AnyNode
+}
+
 export const NODES_QUERY = `
   query Nodes($locationId: Int!, $nodeType: String, $parentId: ID) {
     nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId) {

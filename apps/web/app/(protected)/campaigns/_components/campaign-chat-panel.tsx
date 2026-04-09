@@ -114,6 +114,7 @@ export function CampaignChatPanel({
   const timelineValue = useMemo<TimelineContextValue>(
     () => ({
       ...milestoneUi,
+      campaignId,
       isChatBusy,
       onCreateMilestone: ops.handleCreateMilestone,
       onDeleteMilestone: ops.handleDeleteMilestone,
@@ -127,7 +128,7 @@ export function CampaignChatPanel({
       onRunMilestone: ops.handleRunMilestone,
       onExport: ops.handleExportCampaign,
     }),
-    [milestoneUi, isChatBusy, ops],
+    [campaignId, milestoneUi, isChatBusy, ops],
   )
 
   const visibleMessages = messages.filter((msg) => msg.role !== 'system')

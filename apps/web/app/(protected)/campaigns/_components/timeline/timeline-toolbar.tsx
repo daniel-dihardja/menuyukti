@@ -17,6 +17,9 @@ export type TimelineToolbarProps = {
   onExport?: () => void | Promise<void>
   exporting?: boolean
   showExport?: boolean
+  importLabel?: string
+  onImport?: () => void | Promise<void>
+  showImport?: boolean
 }
 
 export function TimelineToolbar({
@@ -32,9 +35,13 @@ export function TimelineToolbar({
   onExport,
   exporting,
   showExport,
+  importLabel,
+  onImport,
+  showImport,
 }: TimelineToolbarProps) {
   const showActions =
     (showExport && onExport && exportLabel && exportingLabel) ||
+    (showImport && onImport && importLabel) ||
     (showCreate && onCreateMilestone && createLabel && creatingLabel)
 
   return (
@@ -61,6 +68,17 @@ export function TimelineToolbar({
               ) : (
                 exportLabel
               )}
+            </Button>
+          ) : null}
+          {showImport && onImport && importLabel ? (
+            <Button
+              disabled={creating || exporting}
+              onClick={() => void onImport()}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              {importLabel}
             </Button>
           ) : null}
           {showCreate && onCreateMilestone && createLabel && creatingLabel ? (
