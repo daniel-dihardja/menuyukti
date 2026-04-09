@@ -63,12 +63,10 @@ function TimelineItemInner({
     renamingMilestoneId,
     savingPassCriteriaMilestoneId,
     savingGoalMilestoneId,
-    savingDataMilestoneId,
     preparingMilestoneId,
     onRenameMilestone,
     onUpdatePassCriteria,
     onUpdateMilestoneGoal,
-    onUpdateMilestoneData,
     onSetMilestoneDataTask,
     onPrepareMilestone,
     onMoveMilestone,
@@ -82,7 +80,6 @@ function TimelineItemInner({
   const [editingTitle, setEditingTitle] = useState(false)
   const [draftTitle, setDraftTitle] = useState(milestone.title)
   const [goalDraft, setGoalDraft] = useState(() => milestone.goal ?? '')
-  const [dataDraft, setDataDraft] = useState(() => milestone.data ?? '')
   const titleEditInputId = `milestone-title-edit-${milestone.id}`
   const titleEditInputRef = useRef<HTMLInputElement>(null)
   const titleEditContainerRef = useRef<HTMLDivElement>(null)
@@ -101,15 +98,9 @@ function TimelineItemInner({
 
   const savingPassCriteria = savingPassCriteriaMilestoneId === milestone.id
   const savingGoal = savingGoalMilestoneId === milestone.id
-  const savingData = savingDataMilestoneId === milestone.id
-
   useEffect(() => {
     setGoalDraft(milestone.goal ?? '')
   }, [milestone.id, milestone.goal])
-
-  useEffect(() => {
-    setDataDraft(milestone.data ?? '')
-  }, [milestone.id, milestone.data])
 
   useEffect(() => {
     if (!editingTitle) {
@@ -184,7 +175,6 @@ function TimelineItemInner({
   }
 
   const goalFieldId = `milestone-goal-${milestone.id}`
-  const dataFieldId = `milestone-data-${milestone.id}`
   const hasResult = Boolean(milestone.resultMarkdown?.trim())
 
   const handleGoalBlur = () => {
@@ -199,22 +189,6 @@ function TimelineItemInner({
       const ok = await onUpdateMilestoneGoal(milestone.id, goalDraft)
       if (!ok) {
         setGoalDraft(server)
-      }
-    })()
-  }
-
-  const handleDataBlur = () => {
-    if (!onUpdateMilestoneData || savingData) {
-      return
-    }
-    const server = milestone.data ?? ''
-    if (dataDraft === server) {
-      return
-    }
-    void (async () => {
-      const ok = await onUpdateMilestoneData(milestone.id, dataDraft)
-      if (!ok) {
-        setDataDraft(server)
       }
     })()
   }
@@ -324,12 +298,9 @@ function TimelineItemInner({
                 addCriteriaInputId={addCriteriaInputId}
                 addCriteriaInputRef={addCriteriaInputRef}
                 criteriaRows={criteriaRows}
-                dataDraft={dataDraft}
-                dataFieldId={dataFieldId}
                 goalDraft={goalDraft}
                 goalFieldId={goalFieldId}
                 handleAddPassCriterion={handleAddPassCriterion}
-                handleDataBlur={handleDataBlur}
                 handleGoalBlur={handleGoalBlur}
                 handleRemovePassCriterion={handleRemovePassCriterion}
                 hasResult={hasResult}
@@ -344,10 +315,8 @@ function TimelineItemInner({
                     ? (dataTask) => void onSetMilestoneDataTask(milestone.id, dataTask)
                     : undefined
                 }
-                savingData={savingData}
                 savingGoal={savingGoal}
                 savingPassCriteria={savingPassCriteria}
-                setDataDraft={setDataDraft}
                 setGoalDraft={setGoalDraft}
               />
             </CollapsibleContent>

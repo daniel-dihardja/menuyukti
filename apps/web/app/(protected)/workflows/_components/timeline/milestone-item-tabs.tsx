@@ -31,16 +31,12 @@ import type { MilestoneDataTask, PassCriteriaRow, TimelineMilestone } from './ty
 export type MilestoneItemTabsProps = {
   milestone: TimelineMilestone
   goalFieldId: string
-  dataFieldId: string
   addCriteriaInputId: string
   addCriteriaInputRef: RefObject<HTMLInputElement | null>
   goalDraft: string
   setGoalDraft: (v: string) => void
-  dataDraft: string
-  setDataDraft: (v: string) => void
   criteriaRows: PassCriteriaRow[]
   savingGoal: boolean
-  savingData: boolean
   savingPassCriteria: boolean
   hasResult: boolean
   isMilestoneRunning: boolean
@@ -48,7 +44,6 @@ export type MilestoneItemTabsProps = {
   onSetMilestoneDataTask?: (dataTask: MilestoneDataTask) => void | Promise<void>
   onPrepareMilestone?: () => void | Promise<void>
   handleGoalBlur: () => void
-  handleDataBlur: () => void
   handleAddPassCriterion: () => Promise<void>
   handleRemovePassCriterion: (index: number) => Promise<void>
 }
@@ -56,16 +51,12 @@ export type MilestoneItemTabsProps = {
 export function MilestoneItemTabs({
   milestone,
   goalFieldId,
-  dataFieldId,
   addCriteriaInputId,
   addCriteriaInputRef,
   goalDraft,
   setGoalDraft,
-  dataDraft,
-  setDataDraft,
   criteriaRows,
   savingGoal,
-  savingData,
   savingPassCriteria,
   hasResult,
   isMilestoneRunning,
@@ -73,7 +64,6 @@ export function MilestoneItemTabs({
   onSetMilestoneDataTask,
   onPrepareMilestone,
   handleGoalBlur,
-  handleDataBlur,
   handleAddPassCriterion,
   handleRemovePassCriterion,
 }: MilestoneItemTabsProps) {
@@ -91,12 +81,6 @@ export function MilestoneItemTabs({
     : goalDraft !== (milestone.goal ?? '')
       ? 'unsaved'
       : 'saved'
-  const dataSaveStatus = savingData
-    ? 'saving'
-    : dataDraft !== (milestone.data ?? '')
-      ? 'unsaved'
-      : 'saved'
-
   return (
     <CardContent className="border-border/60 border-t px-6 pt-4 pb-0">
       <Tabs className="gap-4" defaultValue="input">
@@ -262,7 +246,7 @@ export function MilestoneItemTabs({
               </Select>
             </Field>
             <Field>
-              <FieldLabel htmlFor={dataFieldId}>{t('milestoneDataLabel')}</FieldLabel>
+              <FieldLabel>{t('milestoneDataLabel')}</FieldLabel>
               <FieldDescription>
                 {dataTask === 'manual'
                   ? t('milestoneDataDescription')
@@ -293,30 +277,7 @@ export function MilestoneItemTabs({
                   </Button>
                 </div>
               ) : null}
-              <div className="flex flex-col gap-1.5">
-                <MarkdownEditField
-                  disabled={savingData}
-                  editTabLabel={t('milestoneDataEditTab')}
-                  enablePanelFullscreen
-                  formatPreset="milestone-data"
-                  fullscreenHeaderTitle={t('milestoneDataLabel')}
-                  id={dataFieldId}
-                  onBlur={handleDataBlur}
-                  onChange={setDataDraft}
-                  placeholder={t('milestoneDataPlaceholder')}
-                  previewEmptyLabel={t('milestoneDataPreviewEmpty')}
-                  previewTabLabel={t('milestoneDataPreviewTab')}
-                  textareaClassName="min-h-[200px] resize-y whitespace-pre-wrap"
-                  value={dataDraft}
-                />
-                <div className="flex justify-end">
-                  <FieldSaveStatus
-                    className="inline-flex"
-                    messages={saveStatusMessages}
-                    status={dataSaveStatus}
-                  />
-                </div>
-              </div>
+              <p className="text-muted-foreground text-sm">{t('milestoneDataEditInPreviewHint')}</p>
             </Field>
           </FieldGroup>
         </TabsContent>

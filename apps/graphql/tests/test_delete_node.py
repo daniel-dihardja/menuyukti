@@ -397,3 +397,120 @@ def test_delete_milestone_removes_milestonedata_child():
         assert session.get(Node, md_id) is None
     finally:
         session.close()
+
+
+def test_delete_workflow_cascades_milestones_and_children():
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(name="Delete Workflow Cascade Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    campaign = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "workflow",
+                "name": "Campaign",
+                "parentId": None,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not campaign.errors, campaign.errors
+    campaign_id = campaign.data["createNode"]["id"]
+
+    first_ms = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "name": "First",
+                "parentId": campaign_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not first_ms.errors, first_ms.errors
+    first_milestone_id = first_ms.data["createNode"]["id"]
+
+    second_ms = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "name": "Second",
+                "parentId": campaign_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not second_ms.errors, second_ms.errors
+    second_milestone_id = second_ms.data["createNode"]["id"]
+
+    goal = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "goal",
+                "name": "Goal",
+                "parentId": first_milestone_id,
+                "data": {"goal": "x"},
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not goal.errors, goal.errors
+    goal_id = int(goal.data["createNode"]["id"])
+
+    pc = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "passcriteria",
+                "name": "PC",
+                "parentId": second_milestone_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not pc.errors, pc.errors
+    pc_id = int(pc.data["createNode"]["id"])
+
+    deleted = asyncio.run(
+        schema.execute(
+            DELETE_NODE,
+            variable_values={"id": campaign_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not deleted.errors, deleted.errors
+    assert deleted.data["deleteNode"] is True
+
+    session = SessionLocal()
+    try:
+        wf_pk = int(campaign_id)
+        assert session.get(Node, wf_pk) is None
+        assert session.get(Node, int(first_milestone_id)) is None
+        assert session.get(Node, int(second_milestone_id)) is None
+        assert session.get(Node, goal_id) is None
+        assert session.get(Node, pc_id) is None
+        remaining = (
+            session.query(Node).filter(Node.location_id == location_id, Node.parent_id == wf_pk).count()
+        )
+        assert remaining == 0
+    finally:
+        session.close()

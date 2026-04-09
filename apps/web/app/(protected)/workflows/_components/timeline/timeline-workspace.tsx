@@ -63,21 +63,6 @@ export function TimelineWorkspace({
     void setSelectedId(milestones[0]?.id ?? null)
   }, [milestones, selectedId, setSelectedId])
 
-  useEffect(() => {
-    const onPointerDownCapture = (e: PointerEvent) => {
-      const node = e.target
-      if (!(node instanceof Element)) {
-        return
-      }
-      if (node.closest('[data-timeline-card]')) {
-        return
-      }
-      void setSelectedId(null)
-    }
-    document.addEventListener('pointerdown', onPointerDownCapture, true)
-    return () => document.removeEventListener('pointerdown', onPointerDownCapture, true)
-  }, [setSelectedId])
-
   const showReady = !isLoading && !loadError
   const showTimeline = showReady && milestones.length > 0
 

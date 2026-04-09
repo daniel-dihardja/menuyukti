@@ -16,6 +16,29 @@ def _milestone_sort_key(row: Node) -> tuple[int, object, int]:
     return (order, row.created_at or 0, row.id)
 
 
+def delete_milestone_children(session: Session, milestone_id: int) -> None:
+    """Remove goal, passcriteria, milestonedata, and result rows under a milestone."""
+    session.query(Node).filter(
+        Node.parent_id == milestone_id,
+        Node.node_type == "goal",
+    ).delete(synchronize_session=False)
+
+    session.query(Node).filter(
+        Node.parent_id == milestone_id,
+        Node.node_type == "passcriteria",
+    ).delete(synchronize_session=False)
+
+    session.query(Node).filter(
+        Node.parent_id == milestone_id,
+        Node.node_type == "milestonedata",
+    ).delete(synchronize_session=False)
+
+    session.query(Node).filter(
+        Node.parent_id == milestone_id,
+        Node.node_type == "result",
+    ).delete(synchronize_session=False)
+
+
 class MilestoneHandler(NodeHandler):
     node_type = "milestone"
 
@@ -84,22 +107,4 @@ class MilestoneHandler(NodeHandler):
         if last_sibling.id != node.id:
             raise ValueError("Only the last milestone can be deleted")
 
-        session.query(Node).filter(
-            Node.parent_id == node.id,
-            Node.node_type == "goal",
-        ).delete(synchronize_session=False)
-
-        session.query(Node).filter(
-            Node.parent_id == node.id,
-            Node.node_type == "passcriteria",
-        ).delete(synchronize_session=False)
-
-        session.query(Node).filter(
-            Node.parent_id == node.id,
-            Node.node_type == "milestonedata",
-        ).delete(synchronize_session=False)
-
-        session.query(Node).filter(
-            Node.parent_id == node.id,
-            Node.node_type == "result",
-        ).delete(synchronize_session=False)
+        delete_milestone_children(session, node.id)

@@ -10,18 +10,28 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
-import { Button } from '@workspace/ui/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { Input } from '@workspace/ui/components/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@workspace/ui/components/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@workspace/ui/components/alert-dialog'
+import { Button } from '@workspace/ui/components/button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Spinner } from '@workspace/ui/components/spinner'
-import { Check, Eye, MoreHorizontal, Pencil } from 'lucide-react'
+import { Check, Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { routes } from '@/lib/routes'
 
@@ -33,6 +43,7 @@ export type CampaignRow = {
 interface CampaignsTableProps {
   campaigns: CampaignRow[]
   onCampaignRenamed?: (id: string, name: string) => void
+  onCampaignDeleted?: (id: string) => void
 }
 
 export function CampaignsTableSkeleton() {
@@ -59,7 +70,11 @@ export function CampaignsTableSkeleton() {
   )
 }
 
-export function CampaignsTable({ campaigns, onCampaignRenamed }: CampaignsTableProps) {
+export function CampaignsTable({
+  campaigns,
+  onCampaignRenamed,
+  onCampaignDeleted,
+}: CampaignsTableProps) {
   const t = useTranslations('analytics.campaigns')
   const tTable = useTranslations('analytics.campaigns.table')
 
@@ -68,6 +83,10 @@ export function CampaignsTable({ campaigns, onCampaignRenamed }: CampaignsTableP
   const [saving, setSaving] = useState(false)
   const [renameError, setRenameError] = useState<string | null>(null)
   const editContainerRef = useRef<HTMLDivElement>(null)
+
+  const [pendingDelete, setPendingDelete] = useState<CampaignRow | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const cancelEdit = useCallback(() => {
     setEditingId(null)
@@ -149,6 +168,28 @@ export function CampaignsTable({ campaigns, onCampaignRenamed }: CampaignsTableP
     },
     [saveEdit],
   )
+
+  const confirmDeleteWorkflow = useCallback(async () => {
+    if (!pendingDelete) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      const res = await fetch(`/api/workflows/${encodeURIComponent(pendingDelete.id)}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { message?: string } | null
+        setDeleteError(body?.message ?? tTable('deleteError'))
+        return
+      }
+      onCampaignDeleted?.(pendingDelete.id)
+      setPendingDelete(null)
+    } catch {
+      setDeleteError(tTable('deleteError'))
+    } finally {
+      setDeleting(false)
+    }
+  }, [onCampaignDeleted, pendingDelete, tTable])
 
   return (
     <Card>
@@ -245,6 +286,19 @@ export function CampaignsTable({ campaigns, onCampaignRenamed }: CampaignsTableP
                             {tTable('view')}
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          disabled={deleting && pendingDelete?.id === row.id}
+                          onSelect={(e) => {
+                            e.preventDefault()
+                            setDeleteError(null)
+                            setPendingDelete(row)
+                          }}
+                        >
+                          <Trash2 aria-hidden className="size-4" />
+                          {tTable('delete')}
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -254,6 +308,49 @@ export function CampaignsTable({ campaigns, onCampaignRenamed }: CampaignsTableP
           </Table>
         </div>
       </CardContent>
+
+      <AlertDialog
+        onOpenChange={(open) => {
+          if (open) return
+          if (deleting) return
+          setPendingDelete(null)
+          setDeleteError(null)
+        }}
+        open={pendingDelete !== null}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tTable('deleteConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{tTable('deleteConfirmDescription')}</AlertDialogDescription>
+            {deleteError ? (
+              <p className="text-destructive text-sm" role="alert">
+                {deleteError}
+              </p>
+            ) : null}
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting} type="button">
+              {tTable('deleteConfirmCancel')}
+            </AlertDialogCancel>
+            <Button
+              className={deleting ? 'inline-flex items-center gap-2' : undefined}
+              disabled={deleting}
+              onClick={() => void confirmDeleteWorkflow()}
+              type="button"
+              variant="destructive"
+            >
+              {deleting ? (
+                <>
+                  <Spinner />
+                  {tTable('deleteConfirmAction')}
+                </>
+              ) : (
+                tTable('deleteConfirmAction')
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   )
 }

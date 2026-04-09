@@ -19,7 +19,7 @@ export type MarkdownPreviewSurfaceVariant = 'embedded' | 'fullscreen' | 'fill'
 
 export function markdownPreviewSurfaceClass(variant: MarkdownPreviewSurfaceVariant): string {
   return cn(
-    'overflow-y-auto rounded-md border border-border/60 bg-muted/30 p-3',
+    'scrollbar-thumb-only overflow-y-auto rounded-md border border-border/60 bg-muted/30 p-3',
     variant === 'embedded' && 'max-h-[min(50vh,28rem)]',
     (variant === 'fullscreen' || variant === 'fill') && 'min-h-0 flex-1',
   )
@@ -55,12 +55,17 @@ export type MarkdownEditFieldEditProps = {
   enablePanelFullscreen?: boolean
   /** Optional title shown in the fullscreen header (e.g. field label). */
   fullscreenHeaderTitle?: string
+  /**
+   * `fill` makes preview/edit tabs use the container height (side panels).
+   * Default `embedded` caps preview height for compact in-card layouts.
+   */
+  embeddedHeight?: 'default' | 'fill'
 }
 
 export type MarkdownEditFieldProps = MarkdownEditFieldPresentationProps | MarkdownEditFieldEditProps
 
 type MarkdownEditTabsPaneProps = {
-  layout: 'embedded' | 'fullscreen'
+  layout: 'embedded' | 'fullscreen' | 'fill'
   innerTab: string
   onInnerTabChange: (next: string) => void
   commitBlur: () => void
@@ -138,16 +143,17 @@ function MarkdownEditTabsPane({
   headerTrailing,
 }: MarkdownEditTabsPaneProps) {
   const textareaId = layout === 'fullscreen' ? `${id}-fullscreen` : id
-  const tabsClass = layout === 'fullscreen' ? 'flex min-h-0 flex-1 flex-col gap-3' : 'gap-3'
+  const stretchHeight = layout === 'fullscreen' || layout === 'fill'
+  const tabsClass = stretchHeight ? 'flex min-h-0 flex-1 flex-col gap-3' : 'gap-3'
   const previewSurfaceVariant: MarkdownPreviewSurfaceVariant =
-    layout === 'fullscreen' ? 'fullscreen' : 'embedded'
+    layout === 'fullscreen' ? 'fullscreen' : layout === 'fill' ? 'fill' : 'embedded'
   const previewScrollClass = markdownPreviewSurfaceClass(previewSurfaceVariant)
-  const textareaClass =
-    layout === 'fullscreen'
-      ? cn('min-h-0 flex-1 resize-y overflow-y-auto', textareaClassName)
-      : cn('max-h-[min(50vh,28rem)] min-h-0 overflow-y-auto', textareaClassName)
-  const editContentClass =
-    layout === 'fullscreen' ? 'mt-0 flex min-h-0 flex-1 flex-col gap-2' : 'mt-0 flex flex-col gap-2'
+  const textareaClass = stretchHeight
+    ? cn('scrollbar-thumb-only min-h-0 flex-1 resize-y overflow-y-auto', textareaClassName)
+    : cn('scrollbar-thumb-only max-h-[min(50vh,28rem)] min-h-0 overflow-y-auto', textareaClassName)
+  const editContentClass = stretchHeight
+    ? 'mt-0 flex min-h-0 flex-1 flex-col gap-2'
+    : 'mt-0 flex flex-col gap-2'
 
   return (
     <Tabs
@@ -206,7 +212,7 @@ function MarkdownEditTabsPane({
         </div>
       </div>
       <TabsContent
-        className={layout === 'fullscreen' ? 'mt-0 flex min-h-0 flex-1 flex-col' : 'mt-0'}
+        className={stretchHeight ? 'mt-0 flex min-h-0 flex-1 flex-col' : 'mt-0'}
         value="preview"
       >
         {value.trim() ? (
@@ -307,6 +313,7 @@ function MarkdownEditFieldEditor({
   textareaClassName = 'min-h-[200px] resize-y whitespace-pre-wrap',
   enablePanelFullscreen = false,
   fullscreenHeaderTitle,
+  embeddedHeight = 'default',
 }: MarkdownEditFieldEditProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const panelCtx = useContext(PanelFullscreenContext)
@@ -466,8 +473,14 @@ function MarkdownEditFieldEditor({
     return <div aria-hidden className="min-h-px" />
   }
 
+  const tabsLayout = embeddedHeight === 'fill' ? 'fill' : 'embedded'
+
   return (
-    <div className="flex flex-col gap-3">
+    <div
+      className={
+        embeddedHeight === 'fill' ? 'flex min-h-0 flex-1 flex-col gap-3' : 'flex flex-col gap-3'
+      }
+    >
       <MarkdownEditTabsPane
         commitBlur={commitBlur}
         formatButtonLabel={t('formatMarkdownButton')}
@@ -477,7 +490,7 @@ function MarkdownEditFieldEditor({
         headerTrailing={expandHeaderTrailing}
         id={id}
         innerTab={innerTab}
-        layout="embedded"
+        layout={tabsLayout}
         onChange={onChange}
         onFormatClick={handleFormat}
         onInnerTabChange={setInnerTab}

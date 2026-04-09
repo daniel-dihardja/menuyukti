@@ -122,6 +122,10 @@ export function CampaignsClient({ branches }: Props) {
     setCampaigns((prev) => prev.map((c) => (c.id === id ? { ...c, name } : c)))
   }, [])
 
+  const handleCampaignDeleted = useCallback((id: string) => {
+    setCampaigns((prev) => prev.filter((c) => c.id !== id))
+  }, [])
+
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-wrap items-end gap-3">
@@ -175,7 +179,11 @@ export function CampaignsClient({ branches }: Props) {
           <AlertDescription>{listError}</AlertDescription>
         </Alert>
       ) : hasCampaigns ? (
-        <CampaignsTable campaigns={campaigns} onCampaignRenamed={handleCampaignRenamed} />
+        <CampaignsTable
+          campaigns={campaigns}
+          onCampaignDeleted={handleCampaignDeleted}
+          onCampaignRenamed={handleCampaignRenamed}
+        />
       ) : (
         <Card>
           <CardHeader>
