@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
     const node = data.createNode
     if (!node) {
-      return NextResponse.json({ message: 'Failed to create campaign' }, { status: 500 })
+      return NextResponse.json({ message: 'Failed to create workflow' }, { status: 500 })
     }
 
     return NextResponse.json(node, { status: 201 })
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     }
 
     console.error(error)
-    const message = error instanceof Error ? error.message : 'Failed to create campaign'
+    const message = error instanceof Error ? error.message : 'Failed to create workflow'
     return NextResponse.json({ message }, { status: 500 })
   }
 }

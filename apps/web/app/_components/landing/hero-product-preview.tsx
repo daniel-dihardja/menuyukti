@@ -1,5 +1,9 @@
+type HeroProductPreviewProps = {
+  workflowCardTitle: string
+}
+
 /** Decorative product-style preview for the hero (no live data). */
-export function HeroProductPreview() {
+export function HeroProductPreview({ workflowCardTitle }: HeroProductPreviewProps) {
   return (
     <div
       className="relative mx-auto mt-12 w-full max-w-3xl overflow-hidden rounded-xl border border-border bg-card shadow-lg"
@@ -31,7 +35,7 @@ export function HeroProductPreview() {
               </div>
             </div>
             <div className="rounded-lg border border-border bg-background p-3">
-              <div className="mb-2 font-medium text-foreground">Campaign</div>
+              <div className="mb-2 font-medium text-foreground">{workflowCardTitle}</div>
               <div className="space-y-1">
                 <div className="h-2 w-full rounded bg-muted" />
                 <div className="h-2 w-2/3 rounded bg-muted" />

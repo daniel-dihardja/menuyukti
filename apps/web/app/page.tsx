@@ -101,7 +101,7 @@ export default async function LandingPage() {
               </Button>
             </div>
 
-            <HeroProductPreview />
+            <HeroProductPreview workflowCardTitle={t('hero.previewWorkflowCardTitle')} />
           </div>
         </section>
 

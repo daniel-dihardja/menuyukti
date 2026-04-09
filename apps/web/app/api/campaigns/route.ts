@@ -28,7 +28,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ nodes: data.nodes })
   } catch (error) {
     console.error(error)
-    const message = error instanceof Error ? error.message : 'Failed to list campaigns'
+    const message = error instanceof Error ? error.message : 'Failed to list workflows'
     return NextResponse.json({ message }, { status: 500 })
   }
 }

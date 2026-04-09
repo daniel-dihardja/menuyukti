@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "Menuyukti — Agentic AI workflows for restaurant marketing",
-    "description": "Composable campaign workflows: sales analytics, LangGraph-style agents, milestone data, and Instagram-ready artifacts—one GraphQL-backed workspace for teams.",
+    "description": "Composable workflows: sales analytics, LangGraph-style agents, milestone data, and Instagram-ready artifacts—one GraphQL-backed workspace for teams.",
     "ogLocale": "en_US"
   },
   "login": {
@@ -9,7 +9,7 @@
     "slogan": "AI-powered restaurant marketing",
     "backToHome": "Back to home",
     "signUpTitle": "Join Menuyukti",
-    "signUpDescription": "Create an account to connect your locations and campaigns.",
+    "signUpDescription": "Create an account to connect your locations and workflows.",
     "emailLabel": "Email",
     "emailPlaceholder": "m@example.com",
     "passwordLabel": "Password",
@@ -36,18 +36,19 @@
     "skipToContent": "Skip to content",
     "hero": {
       "headline": "Agentic AI workflows for data-driven restaurant marketing",
-      "subtitle": "Upload sales data, explore analytics-backed signals, then run campaign milestones that produce structured outputs—schedules, angles, and copy—through agentic pipelines, chat, and reusable artifacts.",
+      "subtitle": "Upload sales data, explore analytics-backed signals, then run workflow milestones that produce structured outputs—schedules, angles, and copy—through agentic pipelines, chat, and reusable artifacts.",
       "badge": "Milestones · Analytics · Agents",
-      "ctaSecondary": "Sign in"
+      "ctaSecondary": "Sign in",
+      "previewWorkflowCardTitle": "Workflow"
     },
     "problem": "Most restaurant marketing still runs on spreadsheets, static playbooks, and gut feel—without agentic automation that turns live sales data into repeatable workflow outputs. Teams miss demand signals, burn budget on the wrong promos, and never get from insight to publish-ready assets in one system.",
     "problemImageAlt": "Abstract analytics dashboard showing sales performance bars and insight summary.",
-    "solution": "Menuyukti is built as a workflow platform: campaigns are sequences of milestones that fetch context, run AI steps (LangGraph-style agent service), and persist structured milestone data—not only chat. Your flagship use case is restaurant marketing: sales and menu signals feed those workflows so you get Instagram-oriented schedules and content you can refine in the app and reuse across locations.",
-    "solutionImageAlt": "Workflow diagram from POS data through AI milestones to stored campaign outputs and artifacts.",
+    "solution": "Menuyukti is built as a workflow platform: workflows are sequences of milestones that fetch context, run AI steps (LangGraph-style agent service), and persist structured milestone data—not only chat. Your flagship use case is restaurant marketing: sales and menu signals feed those workflows so you get Instagram-oriented schedules and content you can refine in the app and reuse across locations.",
+    "solutionImageAlt": "Workflow diagram from POS data through AI milestones to stored workflow outputs and artifacts.",
     "trust": {
       "title": "What the platform is",
       "stat1Value": "Milestones",
-      "stat1Label": "Campaign workflows with steps that ingest data, run models, and save outputs for what comes next.",
+      "stat1Label": "Workflows with steps that ingest data, run models, and save outputs for what comes next.",
       "stat2Value": "One stack",
       "stat2Label": "Web app, GraphQL API, and Python agent service share the same workspace data—analytics plus agents.",
       "stat3Value": "Artifacts",
@@ -59,7 +60,7 @@
       "item1Title": "Sales- and menu-native analytics",
       "item1Description": "Insights computed from uploaded POS or spreadsheet reports—what sells, mix shifts, and patterns worth promoting before you brief creative.",
       "item2Title": "Agentic milestone pipelines",
-      "item2Description": "Prepare and run campaign steps with LLM-backed graphs: plan-and-execute style flows, reflection where drafts are critiqued and revised, and outputs written back as milestone data.",
+      "item2Description": "Prepare and run workflow steps with LLM-backed graphs: plan-and-execute style flows, reflection where drafts are critiqued and revised, and outputs written back as milestone data.",
       "item3Title": "Chat, artifacts, and reuse",
       "item3Description": "Steer agents in conversation, iterate on drafts, and keep schedules and copy as artifacts you can revisit—not a one-off thread that disappears."
     },
@@ -70,11 +71,11 @@
       "q2": "Is my sales data shared with third parties?",
       "a2": "Your data powers your workspace and insights. We do not sell your data. Details are covered in our privacy policy.",
       "q3": "Is Menuyukti only a chatbot?",
-      "a3": "Chat is how you collaborate, but the core model is campaign workflows: ordered milestones that produce stored, structured outputs—schedules, profiles, evaluations—not only messages. Agents call platform APIs when they need your data.",
+      "a3": "Chat is how you collaborate, but the core model is workflows: ordered milestones that produce stored, structured outputs—schedules, profiles, evaluations—not only messages. Agents call platform APIs when they need your data.",
       "q4": "Who is it for?",
       "a4": "Restaurant marketers, in-house creatives, and agencies running multi-location brands who want analytics plus agentic automation in one place—not disconnected dashboards and ad hoc prompts.",
       "q5": "Can my team collaborate?",
-      "a5": "Yes—work across locations, campaigns, milestones, and brand assets as your organization scales."
+      "a5": "Yes—work across locations, workflows, milestones, and brand assets as your organization scales."
     },
     "how": {
       "title": "How it works",
@@ -88,8 +89,8 @@
           "description": "The platform computes menu, mix, and trend-style views from your files so priorities are tied to what actually sells."
         },
         "act": {
-          "title": "3. Run campaign milestones",
-          "description": "Open or continue a campaign workflow: each milestone can prepare context, run agentic AI steps, and save structured outputs—schedules, ideas, copy—for Instagram-style execution and iteration in chat."
+          "title": "3. Run workflow milestones",
+          "description": "Open or continue a workflow: each milestone can prepare context, run agentic AI steps, and save structured outputs—schedules, ideas, copy—for Instagram-style execution and iteration in chat."
         }
       }
     },
@@ -100,12 +101,12 @@
         "insights": "Real sales data, not generic benchmarks",
         "waste": "From signals to publish-ready artifacts",
         "ops": "Agent pipelines wired to your workspace data",
-        "margin": "Locations, campaigns, and assets together"
+        "margin": "Locations, workflows, and assets together"
       }
     },
     "cta": {
       "title": "Explore your workspace",
-      "description": "Sign in to connect locations, upload sales data, and run campaign workflows with agentic support—analytics, milestones, and editable outputs in one stack.",
+      "description": "Sign in to connect locations, upload sales data, and run workflows with agentic support—analytics, milestones, and editable outputs in one stack.",
       "secondary": "Sign in"
     },
     "footer": {
@@ -249,7 +250,7 @@
     "analysis": "Analysis",
     "branches": "Locations",
     "reports": "Reports",
-    "campaigns": "Campaigns",
+    "campaigns": "Workflows",
     "studio": "Studio",
     "printOrders": "Print orders",
     "agents": "Agents",
@@ -261,12 +262,12 @@
   "platform": {
     "dashboard": {
       "title": "Dashboard",
-      "description": "Campaigns, brand assets, and quick links across your workspace.",
-      "campaignsHeading": "Campaigns",
-      "campaignsViewAll": "View all campaigns",
-      "viewCampaign": "Open campaign",
-      "noCampaigns": "No campaigns yet",
-      "createCampaign": "Create campaign",
+      "description": "Workflows, brand assets, and quick links across your workspace.",
+      "campaignsHeading": "Workflows",
+      "campaignsViewAll": "View all workflows",
+      "viewCampaign": "Open workflow",
+      "noCampaigns": "No workflows yet",
+      "createCampaign": "Create workflow",
       "assetsHeading": "Studio",
       "assetsDescription": "Recent images from your brand library.",
       "assetsOpenStudio": "Open Studio",
@@ -293,7 +294,7 @@
   },
   "assets": {
     "title": "Brand assets",
-    "description": "Upload and organize images for campaigns and creative. Files are normalized to 1024px on the shortest side and saved as WebP.",
+    "description": "Upload and organize images for workflows and creative. Files are normalized to 1024px on the shortest side and saved as WebP.",
     "upload": {
       "title": "Upload images",
       "hint": "Drag and drop or browse — PNG, JPEG, WebP, GIF, AVIF",
@@ -311,7 +312,7 @@
       "loading": "Loading…",
       "empty": {
         "title": "No images yet",
-        "description": "Upload your first restaurant photo, logo, or campaign visual to keep everything in one place."
+        "description": "Upload your first restaurant photo, logo, or workflow visual to keep everything in one place."
       },
       "delete": "Remove",
       "deleteConfirm": "Remove this image?",
@@ -540,7 +541,7 @@
         "index": "#",
         "fileName": "File Name",
         "action": "Actions",
-        "askAi": "Campaign Planner",
+        "askAi": "Workflow Planner",
         "cogs": "COGS",
         "report": "Report",
         "delete": "Delete",
@@ -576,48 +577,48 @@
       }
     },
     "campaigns": {
-      "title": "Campaigns",
-      "description": "Choose a location, create a campaign, then plan milestones, chat with the assistant, and run evaluations.",
-      "sectionTitle": "Campaigns for this location",
+      "title": "Workflows",
+      "description": "Choose a location, create a workflow, then plan milestones, chat with the assistant, and run evaluations.",
+      "sectionTitle": "Workflows for this location",
       "selectBranchTitle": "Choose a location",
-      "selectBranchDescription": "Please select a location to view campaigns.",
+      "selectBranchDescription": "Please select a location to view workflows.",
       "errors": {
-        "createTitle": "Could not create campaign",
-        "listTitle": "Could not load campaigns"
+        "createTitle": "Could not create workflow",
+        "listTitle": "Could not load workflows"
       },
       "dataRedesign": {
-        "title": "Campaign data is being redesigned",
-        "description": "Saved campaigns, briefs, location profiles, and promotion candidates from the previous schema are no longer stored. A new model will replace them.",
-        "note": "You can still open an existing campaign chat URL if you have one bookmarked; list and create flows will return when the new backend is ready."
+        "title": "Workflow data is being redesigned",
+        "description": "Saved workflows, briefs, location profiles, and promotion candidates from the previous schema are no longer stored. A new model will replace them.",
+        "note": "You can still open an existing workflow chat URL if you have one bookmarked; list and create flows will return when the new backend is ready."
       },
-      "create": "Create New Campaign",
+      "create": "Create New Workflow",
       "creating": "Creating…",
-      "createFailed": "Could not create a campaign. Please try again.",
+      "createFailed": "Could not create a workflow. Please try again.",
       "missingLocationNode": "This location has no workspace root. Refresh the page or recreate the location, then try again.",
-      "listFailed": "Could not load campaigns. Please try again.",
+      "listFailed": "Could not load workflows. Please try again.",
       "branchLabel": "Location",
       "branchPlaceholder": "Select a location",
-      "selectBranch": "Please select a location to view campaigns.",
-      "loading": "Loading campaigns…",
+      "selectBranch": "Please select a location to view workflows.",
+      "loading": "Loading workflows…",
       "table": {
         "index": "#",
-        "name": "Campaign Name",
+        "name": "Workflow Name",
         "status": "Status",
         "dates": "Dates",
         "action": "Actions",
         "actionsForRow": "Actions for {name}",
         "view": "View",
         "delete": "Delete",
-        "editNameAria": "Edit campaign name",
-        "saveNameAria": "Save campaign name",
+        "editNameAria": "Edit workflow name",
+        "saveNameAria": "Save workflow name",
         "renameError": "Could not save the name. Please try again."
       },
       "detail": {
-        "breadcrumb": "View Campaign"
+        "breadcrumb": "View Workflow"
       },
       "chat": {
-        "pageLoadingTitle": "Loading campaign…",
-        "pageTitle": "Campaign #{id}",
+        "pageLoadingTitle": "Loading workflow…",
+        "pageTitle": "Workflow #{id}",
         "emptyTitle": "No messages yet",
         "emptyDescription": "Start a conversation to see messages here.",
         "placeholder": "What would you like to know?",
@@ -629,7 +630,7 @@
         "artifactPanelPlaceholder": "Milestone content will appear here.",
         "timelineToolbarTitle": "Milestones",
         "timelineEmptyTitle": "No milestones yet",
-        "timelineEmptyDescription": "Create a milestone to plan steps for this campaign. You can add details and pass criteria in the card.",
+        "timelineEmptyDescription": "Create a milestone to plan steps for this workflow. You can add details and pass criteria in the card.",
         "createMilestone": "Create milestone",
         "creatingMilestone": "Creating…",
         "exportMilestones": "Export",
@@ -637,12 +638,12 @@
         "exportSuccess": "Milestones saved.",
         "exportError": "Could not export milestones. Please try again.",
         "importMilestones": "Import",
-        "importDialogTitle": "Import campaign",
-        "importDialogDescription": "Select a previously exported campaign to import as a new campaign.",
+        "importDialogTitle": "Import workflow",
+        "importDialogDescription": "Select a previously exported workflow to import as a new workflow.",
         "importDialogEmpty": "No exports found for this location.",
         "importDialogConfirm": "Import",
         "importDialogCancel": "Cancel",
-        "importError": "Failed to import campaign",
+        "importError": "Failed to import workflow",
         "importingMilestones": "Importing…",
         "importDialogMilestoneCount": "{count, plural, one {# milestone} other {# milestones}}",
         "importDialogFallbackName": "Untitled",
@@ -651,7 +652,7 @@
         "deleteMilestone": "Delete",
         "deleteMilestoneAriaLabel": "Delete milestone",
         "deleteMilestoneConfirmTitle": "Delete this milestone?",
-        "deleteMilestoneConfirmDescription": "This removes the milestone from the campaign. You can't undo this action.",
+        "deleteMilestoneConfirmDescription": "This removes the milestone from the workflow. You can't undo this action.",
         "deleteMilestoneConfirmCancel": "Cancel",
         "deleteMilestoneConfirmAction": "Delete milestone",
         "milestonesDeleteError": "Could not delete milestone. Please try again.",
@@ -675,10 +676,10 @@
         "milestone1PassCriteria": "Trade area and peak hours are documented with sources or assumptions called out.\nGuest segments are named with at least one supporting signal (sales, reviews, or staff input).\nSite positioning, hero menu items, and hard constraints (hours, brand, compliance) are explicit.\nProfile is factual enough for downstream audience and offer recommendations.",
         "milestone1Input": "Paste notes from your GM or link to your last menu refresh…",
         "milestone1ResultMarkdown": "## Location profile (draft)\n\n**Trade area:** 12–15 min drive around the site; lunch office crowd Tue–Thu.\n\n**Segments:** power lunch (35%), families weekend (28%), delivery dinner (22%).\n\n**Constraints:** kitchen closes 9:30pm; no alcohol promos without manager approval.",
-        "milestone2Title": "Campaign Briefing",
-        "milestone2PassCriteria": "Objectives are measurable (reach, visits, or revenue) and time-bound.\nPrimary audience ties back to the location profile segments.\n!Primary audience is still too broad — narrow to one segment (example not met).\n?Key messages, channels, and timing fit the brand and local context (pending validation).\n?Campaign budget split and channel mix under review (pending).\n?Stakeholders who must approve are listed or implied (pending confirmation).",
+        "milestone2Title": "Workflow Briefing",
+        "milestone2PassCriteria": "Objectives are measurable (reach, visits, or revenue) and time-bound.\nPrimary audience ties back to the location profile segments.\n!Primary audience is still too broad — narrow to one segment (example not met).\n?Key messages, channels, and timing fit the brand and local context (pending validation).\n?Budget split and channel mix under review (pending).\n?Stakeholders who must approve are listed or implied (pending confirmation).",
         "milestone2Input": "Optional: objectives, promos already approved, dates to avoid…",
-        "milestone2ResultMarkdown": "## Campaign brief\n\n**Goal:** lift weekday lunch covers by 8% over 4 weeks.\n\n**Audience:** office workers within 10 minutes, Tue–Thu 11:30–1:30.\n\n**Messages:** speed of service, chef’s lunch set, loyalty nudge.\n\n**Channels:** Instagram feed + Stories; in-store QR to follow.",
+        "milestone2ResultMarkdown": "## Workflow brief\n\n**Goal:** lift weekday lunch covers by 8% over 4 weeks.\n\n**Audience:** office workers within 10 minutes, Tue–Thu 11:30–1:30.\n\n**Messages:** speed of service, chef’s lunch set, loyalty nudge.\n\n**Channels:** Instagram feed + Stories; in-store QR to follow.",
         "milestoneTabPassCriteria": "Criteria",
         "milestonePassCriteriaAddPlaceholder": "New criterion…",
         "milestonePassCriteriaAddButton": "Add criteria",
@@ -723,10 +724,10 @@
         "tabAssets": "Assets",
         "tabPrint": "Print & ship",
         "previewTitle": "Preview",
-        "previewDescription": "Campaign visuals and milestones stay in sync as you work. Generate images from the Brief tab.",
+        "previewDescription": "Workflow visuals and milestones stay in sync as you work. Generate images from the Brief tab.",
         "generateVisuals": "Generate visuals",
         "studioSheetTitle": "AI asset studio",
-        "studioSheetDescription": "Upload or generate images for your brand library. They are available across campaigns.",
+        "studioSheetDescription": "Upload or generate images for your brand library. They are available across workflows.",
         "studioSheetClose": "Close studio",
         "orderPrints": "Order prints",
         "printDialogTitle": "Print on demand",
@@ -737,7 +738,7 @@
         "loadingAssets": "Loading assets…",
         "assetsEmpty": "No images yet",
         "assetsEmptyHint": "Open Generate visuals to add images to your library.",
-        "goalLabel": "Campaign goal",
+        "goalLabel": "Workflow goal",
         "goalSaveError": "Could not save goal. Please try again."
       },
       "milestoneRun": {
@@ -749,13 +750,13 @@
         "stepStoreResult": "Storing result"
       },
       "noCampaigns": {
-        "title": "No campaigns yet",
-        "description": "Create your first campaign to start planning your marketing schedule.",
-        "cta": "Create New Campaign"
+        "title": "No workflows yet",
+        "description": "Create your first workflow to start planning your marketing schedule.",
+        "cta": "Create New Workflow"
       },
       "noBranches": {
         "title": "No locations yet",
-        "description": "Please create a location before creating campaigns.",
+        "description": "Please create a location before creating workflows.",
         "cta": "Create Location"
       },
       "agentPipeline": {
@@ -763,7 +764,7 @@
         "createLocationProfile": "Create location profile",
         "deleteLocationProfile": "Delete location profile",
         "deleteLocationProfileConfirm": "Delete this location profile? This cannot be undone.",
-        "locationProfileEmpty": "No location profile yet. Create one to start building campaigns."
+        "locationProfileEmpty": "No location profile yet. Create one to start building workflows."
       }
     },
     "cogs": {
@@ -813,8 +814,8 @@
     },
     "shared": {
       "backToSales": "Back to sales",
-      "createCampaignFromReport": "Create campaign",
-      "createCampaignFromReportHint": "Open campaigns with this report context to plan promos from these insights."
+      "createCampaignFromReport": "Create workflow",
+      "createCampaignFromReportHint": "Open workflows with this report context to plan promos from these insights."
     },
     "heatmap": {
       "reportTitle": "Heatmaps",
@@ -829,9 +830,9 @@
       "weeklyTitle": "Weekly Sales (Mon–Fri)"
     },
     "ai": {
-      "reportTitle": "Campaign Planner",
-      "breadcrumb": "Campaign Planner",
-      "heading": "Campaign Planner",
+      "reportTitle": "Workflow Planner",
+      "breadcrumb": "Workflow Planner",
+      "heading": "Workflow Planner",
       "description": "Ask questions about this analytics snapshot."
     },
     "finance": {
