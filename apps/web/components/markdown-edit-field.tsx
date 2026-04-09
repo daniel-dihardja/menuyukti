@@ -14,7 +14,32 @@ import { Textarea } from '@workspace/ui/components/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
 
-export type MarkdownEditFieldProps = {
+/** Scroll/surface styling for Markdown preview areas (edit tabs + presentation mode). */
+export type MarkdownPreviewSurfaceVariant = 'embedded' | 'fullscreen' | 'fill'
+
+export function markdownPreviewSurfaceClass(variant: MarkdownPreviewSurfaceVariant): string {
+  return cn(
+    'overflow-y-auto rounded-md border border-border/60 bg-muted/30 p-3',
+    variant === 'embedded' && 'max-h-[min(50vh,28rem)]',
+    (variant === 'fullscreen' || variant === 'fill') && 'min-h-0 flex-1',
+  )
+}
+
+export type MarkdownPresentationLayout = 'embedded' | 'fill'
+
+export type MarkdownEditFieldPresentationProps = {
+  presentationOnly: true
+  id: string
+  value: string
+  previewEmptyLabel: string
+  /** `fill` uses available height (e.g. side panel); `embedded` matches in-card preview max height. */
+  presentationLayout?: MarkdownPresentationLayout
+  /** Optional id of a heading/label element (`aria-labelledby`). */
+  ariaLabelledBy?: string
+}
+
+export type MarkdownEditFieldEditProps = {
+  presentationOnly?: false
   id: string
   value: string
   onChange: (value: string) => void
@@ -31,6 +56,8 @@ export type MarkdownEditFieldProps = {
   /** Optional title shown in the fullscreen header (e.g. field label). */
   fullscreenHeaderTitle?: string
 }
+
+export type MarkdownEditFieldProps = MarkdownEditFieldPresentationProps | MarkdownEditFieldEditProps
 
 type MarkdownEditTabsPaneProps = {
   layout: 'embedded' | 'fullscreen'
@@ -53,6 +80,40 @@ type MarkdownEditTabsPaneProps = {
   formatFormattingLabel: string
   /** Shown after the format control on the same row as the tab triggers (e.g. expand). */
   headerTrailing?: ReactNode
+}
+
+function MarkdownPresentationPane({
+  id,
+  value,
+  previewEmptyLabel,
+  presentationLayout = 'embedded',
+  ariaLabelledBy,
+}: {
+  id: string
+  value: string
+  previewEmptyLabel: string
+  presentationLayout?: MarkdownPresentationLayout
+  ariaLabelledBy?: string
+}) {
+  const surfaceVariant: MarkdownPreviewSurfaceVariant =
+    presentationLayout === 'fill' ? 'fill' : 'embedded'
+
+  return (
+    <div
+      aria-labelledby={ariaLabelledBy}
+      className="flex min-h-0 flex-1 flex-col"
+      id={id}
+      role="region"
+    >
+      {value.trim() ? (
+        <div className={markdownPreviewSurfaceClass(surfaceVariant)}>
+          <MarkdownMessage content={value} />
+        </div>
+      ) : (
+        <p className="text-muted-foreground text-sm">{previewEmptyLabel}</p>
+      )}
+    </div>
+  )
 }
 
 function MarkdownEditTabsPane({
@@ -78,10 +139,9 @@ function MarkdownEditTabsPane({
 }: MarkdownEditTabsPaneProps) {
   const textareaId = layout === 'fullscreen' ? `${id}-fullscreen` : id
   const tabsClass = layout === 'fullscreen' ? 'flex min-h-0 flex-1 flex-col gap-3' : 'gap-3'
-  const previewScrollClass =
-    layout === 'fullscreen'
-      ? 'min-h-0 flex-1 overflow-y-auto rounded-md border border-border/60 bg-muted/30 p-3'
-      : 'max-h-[min(50vh,28rem)] overflow-y-auto rounded-md border border-border/60 bg-muted/30 p-3'
+  const previewSurfaceVariant: MarkdownPreviewSurfaceVariant =
+    layout === 'fullscreen' ? 'fullscreen' : 'embedded'
+  const previewScrollClass = markdownPreviewSurfaceClass(previewSurfaceVariant)
   const textareaClass =
     layout === 'fullscreen'
       ? cn('min-h-0 flex-1 resize-y overflow-y-auto', textareaClassName)
@@ -233,7 +293,7 @@ function FullscreenMarkdownShell({
   )
 }
 
-export function MarkdownEditField({
+function MarkdownEditFieldEditor({
   id,
   value,
   onChange,
@@ -247,7 +307,7 @@ export function MarkdownEditField({
   textareaClassName = 'min-h-[200px] resize-y whitespace-pre-wrap',
   enablePanelFullscreen = false,
   fullscreenHeaderTitle,
-}: MarkdownEditFieldProps) {
+}: MarkdownEditFieldEditProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const panelCtx = useContext(PanelFullscreenContext)
   const expandButtonRef = useRef<HTMLButtonElement>(null)
@@ -431,4 +491,19 @@ export function MarkdownEditField({
       />
     </div>
   )
+}
+
+export function MarkdownEditField(props: MarkdownEditFieldProps) {
+  if (props.presentationOnly === true) {
+    return (
+      <MarkdownPresentationPane
+        ariaLabelledBy={props.ariaLabelledBy}
+        id={props.id}
+        presentationLayout={props.presentationLayout}
+        previewEmptyLabel={props.previewEmptyLabel}
+        value={props.value}
+      />
+    )
+  }
+  return <MarkdownEditFieldEditor {...props} />
 }
