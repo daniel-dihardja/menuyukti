@@ -1,4 +1,13 @@
-"""Database engine, session factory, and lifecycle helpers for the GraphQL service."""
+"""Database engine, session factory, and lifecycle helpers for the GraphQL service.
+
+**Production / PostgreSQL:** apply schema changes with Alembic — from ``apps/graphql`` run
+``make db-upgrade`` (or ``PYTHONPATH=../.. uv run alembic upgrade head``) with
+``DATABASE_URL`` set (e.g. ``postgresql+psycopg2://...``). See ``alembic/`` and the app README.
+
+**Tests:** pytest sets ``DATABASE_URL`` to a SQLite file before importing this module; tests use
+``init_db()`` / ``drop_db()`` which call ``create_all`` / ``drop_all`` — migrations are not run
+in the test suite.
+"""
 
 import os
 import sys
@@ -57,7 +66,11 @@ def seed_db(target_engine=None) -> None:
 
 
 def init_db(target_engine=None) -> None:
-    """Create tables for all models (defaults to the configured engine)."""
+    """Create tables for all models (defaults to the configured engine).
+
+    Intended for **tests and local SQLite** bootstrap. For PostgreSQL in deployed environments,
+    prefer ``alembic upgrade head`` so schema history stays in version control.
+    """
 
     resolved_engine = target_engine or engine
     Base.metadata.create_all(bind=resolved_engine)
@@ -71,6 +84,7 @@ def drop_db(target_engine=None) -> None:
     stale tables (not in the current models) with FK dependencies don't block
     the drop. SQLite falls back to the standard drop_all path.
     """
+
     resolved_engine = target_engine or engine
     if resolved_engine.dialect.name == "postgresql":
         with resolved_engine.connect() as conn:
@@ -83,10 +97,13 @@ def drop_db(target_engine=None) -> None:
 
 
 def main() -> None:
-    """Entry point so the schema can be quickly bootstrapped."""
+    """Bootstrap SQLite or dev DB via create_all (not Alembic).
+
+    For PostgreSQL, use ``make db-upgrade`` instead.
+    """
 
     init_db()
-    print("Created tables for the GraphQL service.")
+    print("Created tables for the GraphQL service (create_all). For PostgreSQL, use: make db-upgrade")
 
 
 def _main_drop() -> None:

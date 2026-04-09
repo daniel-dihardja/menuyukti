@@ -87,11 +87,32 @@ jobs:
     needs: changes
     if: needs.changes.outputs.graphql == 'true'
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: graphql_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d graphql_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --all-groups
         working-directory: apps/graphql
+      - name: Alembic upgrade and check
+        working-directory: apps/graphql
+        env:
+          DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/graphql_test
+        run: |
+          PYTHONPATH=../.. uv run alembic upgrade head
+          PYTHONPATH=../.. uv run alembic check
       - run: make lint
         working-directory: apps/graphql
       - run: make typecheck

@@ -1,8 +1,9 @@
 PYTHON=uv run python
 UV=uv run
 UVICORN=uv run uvicorn
+ALEMBIC=PYTHONPATH=../.. uv run alembic
 
-.PHONY: install run dev migrate-db drop-db test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report dev-data lint format typecheck clean
+.PHONY: install run dev db-upgrade db-downgrade db-generate db-history db-current db-stamp-head db-check drop-db test test-qa test-upload test-order-metrics test-menu-item-cogs test-menu-heatmaps test-menu-engineering-matrix load-report dev-data lint format typecheck clean
 
 install:
 	uv sync --all-groups
@@ -13,9 +14,30 @@ run:
 dev:
 	PYTHONPATH=../.. $(UVICORN) graphql.server:app --reload --host 0.0.0.0 --port 8000
 
-migrate-db:
-	PYTHONPATH=../.. $(PYTHON) -m graphql.data_sources.database
+# --- Database migrations (Alembic; set DATABASE_URL, e.g. postgresql+psycopg2://...) ---
+db-upgrade:
+	$(ALEMBIC) upgrade head
 
+db-downgrade:
+	$(ALEMBIC) downgrade -1
+
+db-generate:
+	@if [ -z "$(MSG)" ]; then echo "MSG is required: make db-generate MSG=add_column_to_users"; exit 1; fi
+	$(ALEMBIC) revision --autogenerate -m "$(MSG)"
+
+db-history:
+	$(ALEMBIC) history --verbose
+
+db-current:
+	$(ALEMBIC) current
+
+db-stamp-head:
+	$(ALEMBIC) stamp head
+
+db-check:
+	$(ALEMBIC) check
+
+# Destructive: drops public schema on PostgreSQL (see graphql.data_sources.database).
 drop-db:
 	PYTHONPATH=../.. $(PYTHON) -m graphql.data_sources.database drop
 
