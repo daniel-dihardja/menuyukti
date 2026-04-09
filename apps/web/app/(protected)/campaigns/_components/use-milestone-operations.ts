@@ -17,11 +17,11 @@ import type {
 export function useMilestoneOperations(
   dispatch: Dispatch<CampaignMilestoneAction>,
   {
-    campaignId,
+    workflowId,
     locationId,
     t,
   }: {
-    campaignId: string
+    workflowId: string
     locationId: number
     /** `useTranslations('analytics.campaigns.chat')` */
     t: (key: string) => string
@@ -30,7 +30,7 @@ export function useMilestoneOperations(
   const handleCreateMilestone = useCallback(async () => {
     dispatch({ type: 'PATCH', patch: { createError: null, creating: true } })
     try {
-      const res = await fetch(`/api/campaigns/${campaignId}/milestones`, {
+      const res = await fetch(`/api/campaigns/${workflowId}/milestones`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
@@ -63,13 +63,13 @@ export function useMilestoneOperations(
     } finally {
       dispatch({ type: 'PATCH', patch: { creating: false } })
     }
-  }, [campaignId, dispatch, t])
+  }, [workflowId, dispatch, t])
 
   const handleDeleteMilestone = useCallback(
     async (milestoneId: string) => {
       dispatch({ type: 'PATCH', patch: { deleteError: null, deletingMilestoneId: milestoneId } })
       try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+        const res = await fetch(`/api/campaigns/${workflowId}/milestones/${milestoneId}`, {
           method: 'DELETE',
         })
         if (res.status === 204) {
@@ -92,14 +92,14 @@ export function useMilestoneOperations(
         dispatch({ type: 'PATCH', patch: { deletingMilestoneId: null } })
       }
     },
-    [campaignId, dispatch, t],
+    [workflowId, dispatch, t],
   )
 
   const handleRenameMilestone = useCallback(
     async (milestoneId: string, name: string): Promise<boolean> => {
       dispatch({ type: 'PATCH', patch: { renameError: null, renamingMilestoneId: milestoneId } })
       try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+        const res = await fetch(`/api/campaigns/${workflowId}/milestones/${milestoneId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name }),
@@ -133,7 +133,7 @@ export function useMilestoneOperations(
         dispatch({ type: 'PATCH', patch: { renamingMilestoneId: null } })
       }
     },
-    [campaignId, dispatch, t],
+    [workflowId, dispatch, t],
   )
 
   const handleUpdatePassCriteria = useCallback(
@@ -143,7 +143,7 @@ export function useMilestoneOperations(
         patch: { passCriteriaError: null, savingPassCriteriaMilestoneId: milestoneId },
       })
       try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+        const res = await fetch(`/api/campaigns/${workflowId}/milestones/${milestoneId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ passCriteria }),
@@ -184,14 +184,14 @@ export function useMilestoneOperations(
         dispatch({ type: 'PATCH', patch: { savingPassCriteriaMilestoneId: null } })
       }
     },
-    [campaignId, dispatch, t],
+    [workflowId, dispatch, t],
   )
 
   const handleUpdateMilestoneGoal = useCallback(
     async (milestoneId: string, goal: string): Promise<boolean> => {
       dispatch({ type: 'PATCH', patch: { goalError: null, savingGoalMilestoneId: milestoneId } })
       try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+        const res = await fetch(`/api/campaigns/${workflowId}/milestones/${milestoneId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ goal }),
@@ -227,7 +227,7 @@ export function useMilestoneOperations(
         dispatch({ type: 'PATCH', patch: { savingGoalMilestoneId: null } })
       }
     },
-    [campaignId, dispatch, t],
+    [workflowId, dispatch, t],
   )
 
   const handleUpdateMilestoneData = useCallback(
@@ -237,7 +237,7 @@ export function useMilestoneOperations(
         patch: { milestoneDataError: null, savingDataMilestoneId: milestoneId },
       })
       try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+        const res = await fetch(`/api/campaigns/${workflowId}/milestones/${milestoneId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ milestoneData }),
@@ -265,14 +265,14 @@ export function useMilestoneOperations(
         dispatch({ type: 'PATCH', patch: { savingDataMilestoneId: null } })
       }
     },
-    [campaignId, dispatch, t],
+    [workflowId, dispatch, t],
   )
 
   const handleSetMilestoneDataTask = useCallback(
     async (milestoneId: string, dataTask: MilestoneDataTask): Promise<boolean> => {
       dispatch({ type: 'PATCH', patch: { milestonePrepareError: null } })
       try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+        const res = await fetch(`/api/campaigns/${workflowId}/milestones/${milestoneId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ dataTask }),
@@ -306,7 +306,7 @@ export function useMilestoneOperations(
         return false
       }
     },
-    [campaignId, dispatch, t],
+    [workflowId, dispatch, t],
   )
 
   const handlePrepareMilestone = useCallback(
@@ -316,7 +316,7 @@ export function useMilestoneOperations(
         patch: { milestonePrepareError: null, preparingMilestoneId: milestoneId },
       })
       try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}/prepare`, {
+        const res = await fetch(`/api/campaigns/${workflowId}/milestones/${milestoneId}/prepare`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ locationId }),
@@ -375,7 +375,7 @@ export function useMilestoneOperations(
         dispatch({ type: 'PATCH', patch: { preparingMilestoneId: null } })
       }
     },
-    [campaignId, dispatch, locationId, t],
+    [workflowId, dispatch, locationId, t],
   )
 
   const handleRunMilestone = useCallback(
@@ -394,7 +394,7 @@ export function useMilestoneOperations(
           prev.map((m) => (m.id === milestoneId ? { ...m, status: 'pending' as const } : m)),
       })
       try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}/run`, {
+        const res = await fetch(`/api/campaigns/${workflowId}/milestones/${milestoneId}/run`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ locationId }),
@@ -513,7 +513,7 @@ export function useMilestoneOperations(
         dispatch({ type: 'PATCH', patch: { runningMilestoneId: null, runningStep: null } })
       }
     },
-    [campaignId, dispatch, locationId, t],
+    [workflowId, dispatch, locationId, t],
   )
 
   const handleMoveMilestone = useCallback(
@@ -544,7 +544,7 @@ export function useMilestoneOperations(
       })
       dispatch({ type: 'PATCH', patch: { movingMilestoneId: milestoneId } })
       try {
-        const res = await fetch(`/api/campaigns/${campaignId}/milestones/${milestoneId}`, {
+        const res = await fetch(`/api/campaigns/${workflowId}/milestones/${milestoneId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ move: direction }),
@@ -567,13 +567,13 @@ export function useMilestoneOperations(
         dispatch({ type: 'PATCH', patch: { movingMilestoneId: null } })
       }
     },
-    [campaignId, dispatch, t],
+    [workflowId, dispatch, t],
   )
 
-  const handleExportCampaign = useCallback(async () => {
+  const handleExportWorkflow = useCallback(async () => {
     dispatch({ type: 'PATCH', patch: { exportError: null, exporting: true } })
     try {
-      const res = await fetch(`/api/campaigns/${campaignId}/export`, {
+      const res = await fetch(`/api/campaigns/${workflowId}/export`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       })
@@ -591,7 +591,7 @@ export function useMilestoneOperations(
     } finally {
       dispatch({ type: 'PATCH', patch: { exporting: false } })
     }
-  }, [campaignId, dispatch, t])
+  }, [workflowId, dispatch, t])
 
   return useMemo(
     () => ({
@@ -605,7 +605,7 @@ export function useMilestoneOperations(
       handlePrepareMilestone,
       handleRunMilestone,
       handleMoveMilestone,
-      handleExportCampaign,
+      handleExportWorkflow,
     }),
     [
       handleCreateMilestone,
@@ -618,7 +618,7 @@ export function useMilestoneOperations(
       handlePrepareMilestone,
       handleRunMilestone,
       handleMoveMilestone,
-      handleExportCampaign,
+      handleExportWorkflow,
     ],
   )
 }

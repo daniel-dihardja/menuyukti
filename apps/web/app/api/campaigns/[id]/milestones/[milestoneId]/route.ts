@@ -18,7 +18,7 @@ import {
   type NodesDataRaw,
   type UpdateNodeDataRaw,
 } from '@/lib/graphql/queries'
-import { campaignIdParamSchema, milestoneIdParamSchema, patchMilestoneSchema } from '../schema'
+import { milestoneIdParamSchema, patchMilestoneSchema, workflowIdParamSchema } from '../schema'
 
 type RouteContext = {
   params: Promise<{ id: string; milestoneId: string }>
@@ -32,25 +32,25 @@ function passCriterionDisplayName(requirement: string): string {
   return t.length > 500 ? `${t.slice(0, 497)}...` : t
 }
 
-async function loadCampaignOrThrow(campaignId: string, userId: string) {
+async function loadWorkflowRootOrThrow(workflowId: string, userId: string) {
   const data = parseNodeData(
-    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: campaignId }, userId),
+    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowId }, userId),
   )
   const node = data.node
   if (!node) {
-    return { error: NextResponse.json({ message: 'Campaign not found' }, { status: 404 }) }
+    return { error: NextResponse.json({ message: 'Workflow not found' }, { status: 404 }) }
   }
   if (node.nodeType !== 'campaign') {
-    return { error: NextResponse.json({ message: 'Not a campaign' }, { status: 400 }) }
+    return { error: NextResponse.json({ message: 'Not a workflow root' }, { status: 400 }) }
   }
   if (node.locationId == null) {
-    return { error: NextResponse.json({ message: 'Campaign has no location' }, { status: 400 }) }
+    return { error: NextResponse.json({ message: 'Workflow has no location' }, { status: 400 }) }
   }
   return { node, locationId: node.locationId }
 }
 
-async function validateMilestoneUnderCampaign(
-  campaignId: string,
+async function validateMilestoneUnderWorkflow(
+  workflowId: string,
   milestoneId: string,
   userId: string,
 ) {
@@ -64,10 +64,10 @@ async function validateMilestoneUnderCampaign(
   if (milestoneNode.nodeType !== 'milestone') {
     return { error: NextResponse.json({ message: 'Not a milestone' }, { status: 400 }) }
   }
-  if (milestoneNode.parentId !== campaignId) {
+  if (milestoneNode.parentId !== workflowId) {
     return {
       error: NextResponse.json(
-        { message: 'Milestone does not belong to this campaign' },
+        { message: 'Milestone does not belong to this workflow' },
         { status: 400 },
       ),
     }
@@ -208,19 +208,19 @@ export async function PATCH(req: Request, context: RouteContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id: rawCampaignId, milestoneId: rawMilestoneId } = await context.params
+    const { id: rawWorkflowId, milestoneId: rawMilestoneId } = await context.params
 
-    const campaignParsed = campaignIdParamSchema.safeParse(rawCampaignId)
+    const workflowParsed = workflowIdParamSchema.safeParse(rawWorkflowId)
     const milestoneParsed = milestoneIdParamSchema.safeParse(rawMilestoneId)
-    if (!campaignParsed.success || !milestoneParsed.success) {
+    if (!workflowParsed.success || !milestoneParsed.success) {
       return NextResponse.json({ message: 'Invalid id' }, { status: 400 })
     }
-    const campaignId = campaignParsed.data
+    const workflowId = workflowParsed.data
     const milestoneId = milestoneParsed.data
 
-    const campaign = await loadCampaignOrThrow(campaignId, userId)
-    if ('error' in campaign) {
-      return campaign.error
+    const workflowRoot = await loadWorkflowRootOrThrow(workflowId, userId)
+    if ('error' in workflowRoot) {
+      return workflowRoot.error
     }
 
     let json: unknown
@@ -238,7 +238,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       )
     }
 
-    const validated = await validateMilestoneUnderCampaign(campaignId, milestoneId, userId)
+    const validated = await validateMilestoneUnderWorkflow(workflowId, milestoneId, userId)
     if ('error' in validated) {
       return validated.error
     }
@@ -250,9 +250,9 @@ export async function PATCH(req: Request, context: RouteContext) {
         await graphqlQuery<NodesDataRaw>(
           NODES_QUERY,
           {
-            locationId: campaign.locationId,
+            locationId: workflowRoot.locationId,
             nodeType: 'milestone',
-            parentId: campaignId,
+            parentId: workflowId,
           },
           userId,
         ),
@@ -260,7 +260,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       const milestones = list.nodes.filter((n) => n.nodeType === 'milestone')
       const idx = milestones.findIndex((n) => n.id === milestoneId)
       if (idx === -1) {
-        return NextResponse.json({ message: 'Milestone not found in campaign' }, { status: 404 })
+        return NextResponse.json({ message: 'Milestone not found in workflow' }, { status: 404 })
       }
       const j = body.move === 'up' ? idx - 1 : idx + 1
       if (j < 0 || j >= milestones.length) {
@@ -313,10 +313,15 @@ export async function PATCH(req: Request, context: RouteContext) {
         )
       }
       if (body.goal !== undefined) {
-        await syncGoalChild(campaign.locationId, milestoneId, body.goal, userId)
+        await syncGoalChild(workflowRoot.locationId, milestoneId, body.goal, userId)
       }
       if (body.milestoneData !== undefined) {
-        await syncMilestonedataChild(campaign.locationId, milestoneId, body.milestoneData, userId)
+        await syncMilestonedataChild(
+          workflowRoot.locationId,
+          milestoneId,
+          body.milestoneData,
+          userId,
+        )
       }
       if (body.name !== undefined) {
         parseUpdateNodeData(
@@ -349,7 +354,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       await graphqlQuery<NodesDataRaw>(
         NODES_QUERY,
         {
-          locationId: campaign.locationId,
+          locationId: workflowRoot.locationId,
           nodeType: 'passcriteria',
           parentId: milestoneId,
         },
@@ -386,7 +391,7 @@ export async function PATCH(req: Request, context: RouteContext) {
           await graphqlQuery<CreateNodeDataRaw>(
             CREATE_NODE_MUTATION,
             {
-              locationId: campaign.locationId,
+              locationId: workflowRoot.locationId,
               nodeType: 'passcriteria',
               parentId: milestoneId,
               name: displayName,
@@ -405,7 +410,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       await graphqlQuery<NodesDataRaw>(
         NODES_QUERY,
         {
-          locationId: campaign.locationId,
+          locationId: workflowRoot.locationId,
           nodeType: 'passcriteria',
           parentId: milestoneId,
         },
@@ -452,22 +457,22 @@ export async function DELETE(_req: Request, context: RouteContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id: rawCampaignId, milestoneId: rawMilestoneId } = await context.params
+    const { id: rawWorkflowId, milestoneId: rawMilestoneId } = await context.params
 
-    const campaignParsed = campaignIdParamSchema.safeParse(rawCampaignId)
+    const workflowParsed = workflowIdParamSchema.safeParse(rawWorkflowId)
     const milestoneParsed = milestoneIdParamSchema.safeParse(rawMilestoneId)
-    if (!campaignParsed.success || !milestoneParsed.success) {
+    if (!workflowParsed.success || !milestoneParsed.success) {
       return NextResponse.json({ message: 'Invalid id' }, { status: 400 })
     }
-    const campaignId = campaignParsed.data
+    const workflowId = workflowParsed.data
     const milestoneId = milestoneParsed.data
 
-    const campaign = await loadCampaignOrThrow(campaignId, userId)
-    if ('error' in campaign) {
-      return campaign.error
+    const workflowRoot = await loadWorkflowRootOrThrow(workflowId, userId)
+    if ('error' in workflowRoot) {
+      return workflowRoot.error
     }
 
-    const validated = await validateMilestoneUnderCampaign(campaignId, milestoneId, userId)
+    const validated = await validateMilestoneUnderWorkflow(workflowId, milestoneId, userId)
     if ('error' in validated) {
       return validated.error
     }

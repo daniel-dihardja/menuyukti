@@ -1,5 +1,4 @@
 from .analytics_run import AnalyticsRunQuery
-from .campaign_exports import CampaignExportsQuery
 from .category_mix import CategoryMixQuery
 from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_signals import InstagramSignalsQuery
@@ -11,11 +10,12 @@ from .operating_profile import OperatingProfileQuery
 from .promotion_menu_items import PromotionMenuItemsQuery
 from .public_holidays import PublicHolidaysQuery
 from .revenue_trends import RevenueTrendsQuery
+from .workflow_exports import WorkflowExportsQuery
 from .workspace import WorkspaceQuery
 
 __all__ = [
     "AnalyticsRunQuery",
-    "CampaignExportsQuery",
+    "WorkflowExportsQuery",
     "CategoryMixQuery",
     "ImageAiFlowsQuery",
     "InstagramSignalsQuery",

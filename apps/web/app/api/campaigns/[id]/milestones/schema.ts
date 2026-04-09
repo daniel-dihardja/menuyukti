@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 import { passCriteriaDataSchema } from '@/lib/graphql/node-schemas'
 
-export const campaignIdParamSchema = z.string().regex(/^\d+$/, 'Invalid campaign id')
+export const workflowIdParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow id')
 
 export const milestoneIdParamSchema = z.string().regex(/^\d+$/, 'Invalid milestone id')
 

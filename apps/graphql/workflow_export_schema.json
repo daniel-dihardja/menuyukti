@@ -1,16 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://menuyukti.dev/schemas/campaign-export/1.0",
-  "title": "Campaign export snapshot or import payload",
-  "$comment": "Two shapes: campaignExportSnapshot matches persisted exportCampaign output; campaignImportPayload is the minimal JSON importCampaign accepts for new campaigns (e.g. LLM-generated). Milestone fields marked export-only are ignored on import.",
-  "description": "Menuyukti campaign tree as JSON. (1) Export snapshot: written by exportCampaign with DB ids and timestamps; use for backup and round-trip after re-import (ids are reassigned). (2) Import payload: only campaignName and milestones are required; goal is optional. importCampaign ignores schemaVersion, campaignId, exportedAt, milestone id, milestone status, and passCriteria id. Omit result when creating a fresh campaign unless you need a prefilled evaluation summary.",
+  "$id": "https://menuyukti.dev/schemas/workflow-export/2.0",
+  "title": "Workflow export snapshot or import payload",
+  "$comment": "Two shapes: workflowExportSnapshot matches persisted exportWorkflow output; workflowImportPayload is the minimal JSON importWorkflow accepts for new workflow roots (e.g. LLM-generated). Milestone fields marked export-only are ignored on import.",
+  "description": "Menuyukti workflow (milestone tree) as JSON. (1) Export snapshot: written by exportWorkflow with DB ids and timestamps; use for backup and round-trip after re-import (ids are reassigned). (2) Import payload: only workflowName and milestones are required; goal is optional. importWorkflow ignores schemaVersion, workflowId, exportedAt, milestone id, milestone status, and passCriteria id. Omit result when creating a fresh workflow unless you need a prefilled evaluation summary.",
   "oneOf": [
-    { "$ref": "#/$defs/campaignExportSnapshot" },
-    { "$ref": "#/$defs/campaignImportPayload" }
+    { "$ref": "#/$defs/workflowExportSnapshot" },
+    { "$ref": "#/$defs/workflowImportPayload" }
   ],
   "examples": [
     {
-      "campaignName": "Spring lunch push",
+      "workflowName": "Spring lunch push",
       "goal": "Increase weekday lunch covers using Instagram promos tied to top sellers.",
       "milestones": [
         {
@@ -32,9 +32,9 @@
       ]
     },
     {
-      "schemaVersion": "1.0",
-      "campaignId": "42",
-      "campaignName": "Exported campaign",
+      "schemaVersion": "2.0",
+      "workflowId": "42",
+      "workflowName": "Exported workflow",
       "goal": "Grow dinner revenue",
       "exportedAt": "2026-04-09T12:00:00Z",
       "milestones": [
@@ -55,30 +55,30 @@
     }
   ],
   "$defs": {
-    "campaignExportSnapshot": {
+    "workflowExportSnapshot": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Full snapshot from exportCampaign: includes format version, campaign node id, and export timestamp. Re-import assigns new database ids; these metadata fields are not read by importCampaign.",
-      "required": ["schemaVersion", "campaignId", "campaignName", "exportedAt", "goal", "milestones"],
+      "description": "Full snapshot from exportWorkflow: includes format version, root workflow node id, and export timestamp. Re-import assigns new database ids; these metadata fields are not read by importWorkflow.",
+      "required": ["schemaVersion", "workflowId", "workflowName", "exportedAt", "goal", "milestones"],
       "properties": {
         "schemaVersion": {
           "type": "string",
-          "const": "1.0",
-          "description": "Payload format version. Export-only; importCampaign does not validate this."
+          "const": "2.0",
+          "description": "Payload format version. Export-only; importWorkflow does not validate this."
         },
-        "campaignId": {
+        "workflowId": {
           "type": "string",
           "pattern": "^[0-9]+$",
-          "description": "Campaign node id at export time. Export-only; new campaign receives a new id on import."
+          "description": "Root workflow container node id at export time (node_type campaign in DB). Export-only; new root receives a new id on import."
         },
-        "campaignName": {
+        "workflowName": {
           "type": "string",
           "minLength": 1,
-          "description": "Campaign node name (display title)."
+          "description": "Root node name (display title)."
         },
         "goal": {
           "type": ["string", "null"],
-          "description": "Campaign-level objective from campaign node data.goal. On import, stored on the new campaign when string; null means no goal field."
+          "description": "Workflow-level objective from root node data.goal. On import, stored on the new root when string; null means no goal field."
         },
         "exportedAt": {
           "type": "string",
@@ -87,29 +87,29 @@
         },
         "milestones": {
           "type": "array",
-          "description": "Milestone nodes under the campaign, ordered by order then legacy id for tie-break (export).",
+          "description": "Milestone nodes under the workflow root, ordered by order then legacy id for tie-break (export).",
           "items": { "$ref": "#/$defs/milestoneNode" }
         }
       }
     },
-    "campaignImportPayload": {
+    "workflowImportPayload": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Minimal payload accepted by importCampaign: non-empty campaignName and a milestones array. Optional campaign goal; milestone ids and export-only fields may be omitted.",
-      "required": ["campaignName", "milestones"],
+      "description": "Minimal payload accepted by importWorkflow: non-empty workflowName and a milestones array. Optional root goal; milestone ids and export-only fields may be omitted.",
+      "required": ["workflowName", "milestones"],
       "properties": {
-        "campaignName": {
+        "workflowName": {
           "type": "string",
           "minLength": 1,
-          "description": "Name for the new campaign node (whitespace-stripped; empty after trim is rejected by the API)."
+          "description": "Name for the new root node (whitespace-stripped; empty after trim is rejected by the API)."
         },
         "goal": {
           "type": ["string", "null"],
-          "description": "Optional high-level campaign objective. Omit or null for no goal on the campaign node."
+          "description": "Optional high-level workflow objective. Omit or null for no goal on the root node."
         },
         "milestones": {
           "type": "array",
-          "description": "Milestones to create under the campaign, processed in sorted order by order then id tie-break. May be empty.",
+          "description": "Milestones to create under the root, processed in sorted order by order then id tie-break. May be empty.",
           "items": { "$ref": "#/$defs/milestoneNode" }
         }
       }
@@ -158,7 +158,7 @@
           "items": { "$ref": "#/$defs/passCriteriaExport" }
         },
         "result": {
-          "description": "Optional evaluation summary child. Omit for new campaigns; include when replaying a saved evaluation outcome.",
+          "description": "Optional evaluation summary child. Omit for new workflows; include when replaying a saved evaluation outcome.",
           "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/resultExport" }]
         }
       }

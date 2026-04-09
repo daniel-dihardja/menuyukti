@@ -62,14 +62,14 @@ function normalizeTab(value: string | null): 'brief' | 'assets' | 'print' {
 }
 
 export type CampaignWorkspaceProps = {
-  campaignId: string
+  workflowId: string
   locationId: number
   initialGoal: string | null
   initialMilestones: TimelineMilestone[]
 }
 
 export function CampaignWorkspace({
-  campaignId,
+  workflowId,
   locationId,
   initialGoal,
   initialMilestones,
@@ -125,12 +125,12 @@ export function CampaignWorkspace({
           value="brief"
         >
           <div className="flex min-h-0 flex-1 flex-col gap-4">
-            <CampaignGoalEditor campaignId={campaignId} initialGoal={initialGoal} />
+            <CampaignGoalEditor initialGoal={initialGoal} workflowId={workflowId} />
             <div className="min-h-0 flex-1">
               <CampaignChatPanel
-                campaignId={campaignId}
                 initialMilestones={initialMilestones}
                 locationId={locationId}
+                workflowId={workflowId}
               />
             </div>
           </div>
@@ -138,11 +138,11 @@ export function CampaignWorkspace({
 
         <TabsContent className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden" value="assets">
           <CampaignAssetsTab
-            campaignId={campaignId}
             onOpenPrintShop={() => {
               void setTabRaw('print')
               setPrintDialogOpen(true)
             }}
+            workflowId={workflowId}
           />
         </TabsContent>
 
@@ -156,7 +156,7 @@ export function CampaignWorkspace({
             </div>
             <div className="flex flex-wrap gap-2">
               <Button asChild>
-                <Link href={`${routes.shop}?campaignId=${encodeURIComponent(campaignId)}`}>
+                <Link href={`${routes.shop}?workflowId=${encodeURIComponent(workflowId)}`}>
                   {t('openPrintShop')}
                 </Link>
               </Button>
@@ -188,7 +188,7 @@ export function CampaignWorkspace({
           </DialogHeader>
           <div className="flex flex-col gap-3 pt-2">
             <Button asChild>
-              <Link href={`${routes.shop}?campaignId=${encodeURIComponent(campaignId)}`}>
+              <Link href={`${routes.shop}?workflowId=${encodeURIComponent(workflowId)}`}>
                 {t('openPrintShop')}
               </Link>
             </Button>

@@ -5,9 +5,9 @@ from strawberry.scalars import JSON
 
 
 @strawberry.type
-class CampaignExportType:
+class WorkflowExportType:
     id: strawberry.ID
-    campaign_id: strawberry.ID
+    workflow_id: strawberry.ID
     location_id: int
     payload: JSON
     schema_version: str

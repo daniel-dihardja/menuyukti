@@ -11,7 +11,7 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { useTimelineContext } from '../timeline-context'
 import { TimelineBody } from './timeline-body'
 import { TimelineInlineErrors } from './timeline-inline-errors'
-import { ImportCampaignDialog } from './import-campaign-dialog'
+import { ImportWorkflowDialog } from './import-workflow-dialog'
 import { TimelineToolbar } from './timeline-toolbar'
 import type { TimelineWorkspaceProps } from './types'
 
@@ -19,7 +19,7 @@ export function TimelineWorkspace({ isLoading = false, loadError = null }: Timel
   const t = useTranslations('analytics.campaigns.chat')
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const {
-    campaignId,
+    workflowId,
     milestones,
     creating,
     createError,
@@ -70,10 +70,10 @@ export function TimelineWorkspace({ isLoading = false, loadError = null }: Timel
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
-      <ImportCampaignDialog
-        campaignId={campaignId}
+      <ImportWorkflowDialog
         onOpenChange={setImportDialogOpen}
         open={importDialogOpen}
+        workflowId={workflowId}
       />
       <TimelineToolbar
         count={milestones.length}

@@ -85,13 +85,13 @@ BEHAVIOR_RULES = (
 
 
 def build_system_prompt(
-    campaign_id: str | None = None,
+    workflow_id: str | None = None,
     milestone_id: str | None = None,
 ) -> str:
     """Assemble the full system prompt for the chat graph."""
     parts: list[str] = [PERSONA, WORKFLOW_KNOWLEDGE.strip(), BEHAVIOR_RULES]
-    if campaign_id is not None:
-        parts.append(f"Campaign context: the user is working on campaign node id {campaign_id}.")
+    if workflow_id is not None:
+        parts.append(f"Workflow context: the user is working on workflow root node id {workflow_id}.")
     if milestone_id is not None:
         parts.append(f"Milestone context: the user is running milestone node id {milestone_id}.")
     return "\n\n".join(parts)

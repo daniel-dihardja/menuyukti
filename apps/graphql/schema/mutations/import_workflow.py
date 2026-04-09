@@ -1,4 +1,4 @@
-"""Create a campaign and milestone tree from an export payload (new DB ids)."""
+"""Create a workflow root and milestone tree from an export payload (new DB ids)."""
 
 from __future__ import annotations
 
@@ -146,7 +146,7 @@ def _create_child_nodes(
 
 def _create_milestone_node(
     session: Session,
-    campaign_node: Node,
+    root_node: Node,
     m: dict[str, Any],
     location_id: int,
 ) -> None:
@@ -164,7 +164,7 @@ def _create_milestone_node(
         milestone_data["dataTask"] = "location_profile"
 
     milestone = Node(
-        parent_id=campaign_node.id,
+        parent_id=root_node.id,
         name=name,
         description=None,
         path="",
@@ -172,7 +172,7 @@ def _create_milestone_node(
         location_id=location_id,
         data=milestone_data,
     )
-    _flush_with_path(session, milestone, campaign_node)
+    _flush_with_path(session, milestone, root_node)
     _create_child_nodes(session, milestone, m, location_id)
 
 
@@ -180,52 +180,52 @@ def _import_from_payload(session: Session, location_id: int, payload: object) ->
     if not isinstance(payload, dict):
         raise ValueError("payload must be a JSON object")
 
-    raw_name = payload.get("campaignName")
+    raw_name = payload.get("workflowName")
     if not isinstance(raw_name, str) or not raw_name.strip():
-        raise ValueError("payload must include a non-empty campaignName string")
+        raise ValueError("payload must include a non-empty workflowName string")
 
     raw_milestones = payload.get("milestones")
     if not isinstance(raw_milestones, list):
         raise ValueError("payload must include a milestones array")
 
     goal_top = payload.get("goal")
-    campaign_data: dict[str, Any] | None
+    root_data: dict[str, Any] | None
     if goal_top is None:
-        campaign_data = None
+        root_data = None
     elif isinstance(goal_top, str):
-        campaign_data = {"goal": goal_top}
+        root_data = {"goal": goal_top}
     else:
         raise ValueError("payload goal must be a string or null")
 
     handler = get_handler("campaign")
-    resolved_campaign = handler.validate_create(None, campaign_data, session)
+    resolved_root = handler.validate_create(None, root_data, session)
 
-    campaign_node = Node(
+    root_node = Node(
         parent_id=None,
         name=raw_name.strip(),
         description=None,
         path="",
         node_type="campaign",
         location_id=location_id,
-        data=resolved_campaign,
+        data=resolved_root,
     )
-    _flush_with_path(session, campaign_node, None)
+    _flush_with_path(session, root_node, None)
 
     milestone_dicts = [x for x in raw_milestones if isinstance(x, dict)]
     milestone_dicts.sort(key=_milestone_dict_sort_key)
 
     for m in milestone_dicts:
-        _create_milestone_node(session, campaign_node, m, location_id)
+        _create_milestone_node(session, root_node, m, location_id)
 
     session.commit()
-    session.refresh(campaign_node)
-    return campaign_node
+    session.refresh(root_node)
+    return root_node
 
 
 @strawberry.type
-class ImportCampaignMutation:
+class ImportWorkflowMutation:
     @strawberry.mutation
-    def import_campaign(
+    def import_workflow(
         self,
         info: strawberry.Info,
         location_id: int,
@@ -233,12 +233,12 @@ class ImportCampaignMutation:
     ) -> NodeType:
         user_id = user_id_from_info(info)
         if not user_id:
-            raise ValueError("Missing authenticated user for importCampaign")
+            raise ValueError("Missing authenticated user for importWorkflow")
 
         session = SessionLocal()
         try:
             require_location_owner(session, location_id, user_id)
-            campaign_node = _import_from_payload(session, location_id, payload)
-            return _node_to_gql(campaign_node)
+            root_node = _import_from_payload(session, location_id, payload)
+            return _node_to_gql(root_node)
         finally:
             session.close()

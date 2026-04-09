@@ -20,7 +20,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     messages: list[ChatMessage] = Field(min_length=1)
-    campaign_id: str | None = None
+    workflow_id: str | None = None
     milestone_id: str | None = None
 
 
@@ -31,10 +31,10 @@ def _sse_data_line(payload: dict[str, str]) -> str:
 async def _stream_chat_events(
     lc_messages: list[BaseMessage],
     *,
-    campaign_id: str | None = None,
+    workflow_id: str | None = None,
     milestone_id: str | None = None,
 ) -> AsyncIterator[str]:
-    graph = build_chat_graph(campaign_id=campaign_id, milestone_id=milestone_id)
+    graph = build_chat_graph(workflow_id=workflow_id, milestone_id=milestone_id)
     async for event in graph.astream_events(
         {"messages": lc_messages},
         version="v2",
@@ -66,7 +66,7 @@ async def chat_stream(body: ChatRequest) -> StreamingResponse:
     return StreamingResponse(
         _stream_chat_events(
             lc_messages,
-            campaign_id=body.campaign_id,
+            workflow_id=body.workflow_id,
             milestone_id=body.milestone_id,
         ),
         media_type="text/event-stream",

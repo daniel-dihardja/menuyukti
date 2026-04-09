@@ -23,7 +23,7 @@ import { milestoneNodeToTimelineMilestone } from '../_components/milestone-map'
 import type { MilestoneNodeDto } from '../_components/milestone-map'
 import type { TimelineMilestone } from '../_components/timeline-workspace'
 
-const campaignIdParamSchema = z.string().regex(/^\d+$/, 'Invalid campaign id')
+const workflowIdParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow id')
 
 type PageProps = {
   params: Promise<{ id: string }>
@@ -31,9 +31,9 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id: rawId } = await params
-  const parsed = campaignIdParamSchema.safeParse(rawId)
+  const parsed = workflowIdParamSchema.safeParse(rawId)
   if (!parsed.success) {
-    return { title: 'Campaign' }
+    return { title: 'Workflow' }
   }
   const tChat = await getTranslations('analytics.campaigns.chat')
   const shortId = parsed.data.slice(0, 8)
@@ -48,14 +48,14 @@ export default async function Page({ params }: PageProps) {
   }
 
   const { id: rawId } = await params
-  const parsed = campaignIdParamSchema.safeParse(rawId)
+  const parsed = workflowIdParamSchema.safeParse(rawId)
   if (!parsed.success) {
     notFound()
   }
-  const campaignId = parsed.data
+  const workflowId = parsed.data
 
   const nodeData = parseNodeData(
-    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: campaignId }, authUserId),
+    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowId }, authUserId),
   )
   const campaignNodeRaw = nodeData.node
   if (!campaignNodeRaw || campaignNodeRaw.nodeType !== 'campaign') {
@@ -73,7 +73,7 @@ export default async function Page({ params }: PageProps) {
       {
         locationId,
         nodeType: 'milestone',
-        parentId: campaignId,
+        parentId: workflowId,
       },
       authUserId,
     ),
@@ -139,7 +139,7 @@ export default async function Page({ params }: PageProps) {
 
   const tCampaigns = await getTranslations('analytics.campaigns')
   const tChat = await getTranslations('analytics.campaigns.chat')
-  const title = tChat('pageTitle', { id: campaignId.slice(0, 8) })
+  const title = tChat('pageTitle', { id: workflowId.slice(0, 8) })
 
   return (
     <AnalyticsPageShell
@@ -148,10 +148,10 @@ export default async function Page({ params }: PageProps) {
       mainClassName="max-w-none flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
       <CampaignWorkspace
-        campaignId={campaignId}
         initialGoal={campaignNode.data?.goal ?? null}
         initialMilestones={initialMilestones}
         locationId={locationId}
+        workflowId={workflowId}
       />
     </AnalyticsPageShell>
   )

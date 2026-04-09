@@ -24,6 +24,8 @@ CREATE INDEX IF NOT EXISTS ix_node_location_id ON node(location_id);
 CREATE INDEX IF NOT EXISTS ix_node_location_type ON node(location_id, type);
 ```
 
+Export snapshots for workflow roots are stored in the **`workflow`** table (`make migrate-db` / `create_all`).
+
 Need a clean slate? Run `make drop-db` (or `uv run python -m graphql.data_sources.database drop`) to drop every table before recreating the schema with `make migrate-db`.  
 To import a specific Excel report directly into `order_fact`, run `make load-report REPORT_PATH=../../reports/Sales_Recapitulation_Detail_Report_Test.xlsx`; this drops/recreates the database, normalizes the specified workbook with Menyukti, and loads the rows so the analytics schema mirrors that report.
 

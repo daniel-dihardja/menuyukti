@@ -41,13 +41,13 @@ import { TimelineProvider, type TimelineContextValue } from './timeline-context'
 import { useMilestoneOperations } from './use-milestone-operations'
 
 export type CampaignChatPanelProps = {
-  campaignId: string
+  workflowId: string
   initialMilestones: TimelineMilestone[]
   locationId: number
 }
 
 export function CampaignChatPanel({
-  campaignId,
+  workflowId,
   initialMilestones,
   locationId,
 }: CampaignChatPanelProps) {
@@ -63,17 +63,17 @@ export function CampaignChatPanel({
 
   useEffect(() => {
     dispatch({ type: 'RESET', milestones: initialMilestones })
-  }, [campaignId, initialMilestones])
+  }, [workflowId, initialMilestones])
 
-  const ops = useMilestoneOperations(dispatch, { campaignId, locationId, t })
+  const ops = useMilestoneOperations(dispatch, { workflowId, locationId, t })
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: '/api/chat',
-        body: { campaignId },
+        body: { workflowId },
       }),
-    [campaignId],
+    [workflowId],
   )
 
   const { messages, sendMessage, status, stop, error, clearError, regenerate } = useChat({
@@ -114,7 +114,7 @@ export function CampaignChatPanel({
   const timelineValue = useMemo<TimelineContextValue>(
     () => ({
       ...milestoneUi,
-      campaignId,
+      workflowId,
       isChatBusy,
       onCreateMilestone: ops.handleCreateMilestone,
       onDeleteMilestone: ops.handleDeleteMilestone,
@@ -126,9 +126,9 @@ export function CampaignChatPanel({
       onSetMilestoneDataTask: ops.handleSetMilestoneDataTask,
       onPrepareMilestone: ops.handlePrepareMilestone,
       onRunMilestone: ops.handleRunMilestone,
-      onExport: ops.handleExportCampaign,
+      onExport: ops.handleExportWorkflow,
     }),
-    [campaignId, milestoneUi, isChatBusy, ops],
+    [workflowId, milestoneUi, isChatBusy, ops],
   )
 
   const visibleMessages = messages.filter((msg) => msg.role !== 'system')

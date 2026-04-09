@@ -57,7 +57,7 @@ Compile graphs in a `build_*_graph(...)` factory function — do not import comp
 
 ```python
 # agents/core/chat/graph.py
-def build_chat_graph(*, campaign_id=None, milestone_id=None):
+def build_chat_graph(*, workflow_id=None, milestone_id=None):
     builder = StateGraph(MessagesState)
     builder.add_node("chat", chat_node)
     builder.add_edge(START, "chat")
@@ -65,7 +65,7 @@ def build_chat_graph(*, campaign_id=None, milestone_id=None):
     return builder.compile()
 
 # routers/chat.py — thin; never embeds graph topology
-graph = build_chat_graph(campaign_id=..., milestone_id=...)
+graph = build_chat_graph(workflow_id=..., milestone_id=...)
 ```
 
 ## State design

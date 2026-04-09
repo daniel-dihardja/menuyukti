@@ -1,4 +1,4 @@
-"""Validate campaign_export_schema.json against representative payloads."""
+"""Validate workflow_export_schema.json against representative payloads."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 import jsonschema
 import pytest
 
-_SCHEMA_PATH = Path(__file__).resolve().parents[1] / "campaign_export_schema.json"
+_SCHEMA_PATH = Path(__file__).resolve().parents[1] / "workflow_export_schema.json"
 
 
 @pytest.fixture(scope="module")
@@ -40,7 +40,7 @@ def test_full_export_snapshot_example_validates(schema: dict[str, object]) -> No
 
 def test_import_payload_without_goal_validates(schema: dict[str, object]) -> None:
     payload = {
-        "campaignName": "No goal campaign",
+        "workflowName": "No goal workflow",
         "milestones": [{"order": 0, "title": "Only milestone", "passCriteria": []}],
     }
     _validate(payload, schema)
@@ -48,7 +48,7 @@ def test_import_payload_without_goal_validates(schema: dict[str, object]) -> Non
 
 def test_export_rejects_unknown_top_level_key(schema: dict[str, object]) -> None:
     bad = {
-        "campaignName": "x",
+        "workflowName": "x",
         "milestones": [],
         "extra": 1,
     }
@@ -58,7 +58,7 @@ def test_export_rejects_unknown_top_level_key(schema: dict[str, object]) -> None
 
 def test_milestone_requires_order_for_schema_validity(schema: dict[str, object]) -> None:
     bad_import = {
-        "campaignName": "Test",
+        "workflowName": "Test",
         "milestones": [{"title": "Missing order"}],
     }
     with pytest.raises(jsonschema.ValidationError):

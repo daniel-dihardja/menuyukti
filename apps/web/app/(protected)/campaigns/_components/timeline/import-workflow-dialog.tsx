@@ -21,9 +21,9 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import { routes } from '@/lib/routes'
 
-export type CampaignExportListItem = {
+export type WorkflowExportListItem = {
   id: string
-  campaignId: string
+  workflowId: string
   locationId: number
   payload: unknown
   schemaVersion: string
@@ -32,8 +32,8 @@ export type CampaignExportListItem = {
 }
 
 function titleFromPayload(payload: unknown, fallback: string): string {
-  if (payload && typeof payload === 'object' && 'campaignName' in payload) {
-    const n = (payload as { campaignName?: unknown }).campaignName
+  if (payload && typeof payload === 'object' && 'workflowName' in payload) {
+    const n = (payload as { workflowName?: unknown }).workflowName
     if (typeof n === 'string' && n.trim()) {
       return n.trim()
     }
@@ -49,22 +49,22 @@ function milestoneCountFromPayload(payload: unknown): number {
   return 0
 }
 
-export type ImportCampaignDialogProps = {
+export type ImportWorkflowDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  campaignId: string
+  workflowId: string
 }
 
-export function ImportCampaignDialog({
+export function ImportWorkflowDialog({
   open,
   onOpenChange,
-  campaignId,
-}: ImportCampaignDialogProps) {
+  workflowId,
+}: ImportWorkflowDialogProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const format = useFormatter()
   const router = useRouter()
 
-  const [exportsList, setExportsList] = useState<CampaignExportListItem[]>([])
+  const [exportsList, setExportsList] = useState<WorkflowExportListItem[]>([])
   const [loadState, setLoadState] = useState<'idle' | 'loading' | 'error'>('idle')
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [selectedExportId, setSelectedExportId] = useState<string | null>(null)
@@ -87,9 +87,9 @@ export function ImportCampaignDialog({
 
     void (async () => {
       try {
-        const res = await fetch(`/api/campaigns/${campaignId}/exports`)
+        const res = await fetch(`/api/campaigns/${workflowId}/exports`)
         const body = (await res.json().catch(() => null)) as {
-          exports?: CampaignExportListItem[]
+          exports?: WorkflowExportListItem[]
           message?: string
         } | null
         if (!res.ok) {
@@ -110,7 +110,7 @@ export function ImportCampaignDialog({
     return () => {
       cancelled = true
     }
-  }, [open, campaignId, t])
+  }, [open, workflowId, t])
 
   const handleImport = useCallback(async () => {
     const row = exportsList.find((e) => e.id === selectedExportId)
@@ -120,19 +120,19 @@ export function ImportCampaignDialog({
     setImporting(true)
     setImportError(null)
     try {
-      const res = await fetch(`/api/campaigns/${campaignId}/import`, {
+      const res = await fetch(`/api/campaigns/${workflowId}/import`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ payload: row.payload }),
       })
       const body = (await res.json().catch(() => null)) as {
-        campaign?: { id: string }
+        workflow?: { id: string }
         message?: string
       } | null
       if (!res.ok) {
         throw new Error(body?.message ?? t('importError'))
       }
-      const newId = body?.campaign?.id
+      const newId = body?.workflow?.id
       if (newId) {
         onOpenChange(false)
         router.push(routes.campaigns.detail(newId))
@@ -144,7 +144,7 @@ export function ImportCampaignDialog({
     } finally {
       setImporting(false)
     }
-  }, [campaignId, exportsList, onOpenChange, router, selectedExportId, t])
+  }, [workflowId, exportsList, onOpenChange, router, selectedExportId, t])
 
   const formatExportDate = useCallback(
     (iso: string | null) => {

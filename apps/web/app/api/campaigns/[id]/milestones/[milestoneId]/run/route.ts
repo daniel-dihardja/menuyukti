@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { getPythonAgentsUrl } from '@/lib/config'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
-import { campaignIdParamSchema, milestoneIdParamSchema } from '../../schema'
+import { milestoneIdParamSchema, workflowIdParamSchema } from '../../schema'
 
 export const maxDuration = 180
 
@@ -23,13 +23,13 @@ export async function POST(req: Request, context: RouteContext) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { id: rawCampaignId, milestoneId: rawMilestoneId } = await context.params
-  const campaignParsed = campaignIdParamSchema.safeParse(rawCampaignId)
+  const { id: rawWorkflowId, milestoneId: rawMilestoneId } = await context.params
+  const workflowParsed = workflowIdParamSchema.safeParse(rawWorkflowId)
   const milestoneParsed = milestoneIdParamSchema.safeParse(rawMilestoneId)
-  if (!campaignParsed.success || !milestoneParsed.success) {
+  if (!workflowParsed.success || !milestoneParsed.success) {
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
   }
-  const campaignId = campaignParsed.data
+  const workflowId = workflowParsed.data
   const milestoneId = milestoneParsed.data
 
   let json: unknown
@@ -47,14 +47,14 @@ export async function POST(req: Request, context: RouteContext) {
   }
   const { locationId } = parsed.data
 
-  const campaignData = parseNodeData(
-    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: campaignId }, userId),
+  const rootData = parseNodeData(
+    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowId }, userId),
   )
-  const campaignNode = campaignData.node
-  if (!campaignNode || campaignNode.nodeType !== 'campaign') {
-    return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
+  const rootNode = rootData.node
+  if (!rootNode || rootNode.nodeType !== 'campaign') {
+    return NextResponse.json({ error: 'Workflow not found' }, { status: 404 })
   }
-  if (campaignNode.locationId == null || campaignNode.locationId !== locationId) {
+  if (rootNode.locationId == null || rootNode.locationId !== locationId) {
     return NextResponse.json({ error: 'Location mismatch' }, { status: 400 })
   }
 
@@ -65,9 +65,9 @@ export async function POST(req: Request, context: RouteContext) {
   if (!milestoneNode || milestoneNode.nodeType !== 'milestone') {
     return NextResponse.json({ error: 'Milestone not found' }, { status: 404 })
   }
-  if (milestoneNode.parentId !== campaignId) {
+  if (milestoneNode.parentId !== workflowId) {
     return NextResponse.json(
-      { error: 'Milestone does not belong to this campaign' },
+      { error: 'Milestone does not belong to this workflow' },
       { status: 400 },
     )
   }

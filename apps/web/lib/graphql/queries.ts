@@ -176,11 +176,11 @@ export type UpdateNodeData = {
   updateNode: AnyNode
 }
 
-export const EXPORT_CAMPAIGN_MUTATION = `
-  mutation ExportCampaign($campaignId: ID!, $locationId: Int!) {
-    exportCampaign(campaignId: $campaignId, locationId: $locationId) {
+export const EXPORT_WORKFLOW_MUTATION = `
+  mutation ExportWorkflow($workflowId: ID!, $locationId: Int!) {
+    exportWorkflow(workflowId: $workflowId, locationId: $locationId) {
       id
-      campaignId
+      workflowId
       locationId
       payload
       schemaVersion
@@ -190,10 +190,10 @@ export const EXPORT_CAMPAIGN_MUTATION = `
   }
 `
 
-export type ExportCampaignDataRaw = {
-  exportCampaign: {
+export type ExportWorkflowDataRaw = {
+  exportWorkflow: {
     id: string
-    campaignId: string
+    workflowId: string
     locationId: number
     payload: unknown
     schemaVersion: string
@@ -202,11 +202,11 @@ export type ExportCampaignDataRaw = {
   }
 }
 
-export const CAMPAIGN_EXPORTS_QUERY = `
-  query CampaignExports($locationId: Int!) {
-    campaignExports(locationId: $locationId) {
+export const WORKFLOW_EXPORTS_QUERY = `
+  query WorkflowExports($locationId: Int!) {
+    workflowExports(locationId: $locationId) {
       id
-      campaignId
+      workflowId
       locationId
       payload
       schemaVersion
@@ -216,10 +216,10 @@ export const CAMPAIGN_EXPORTS_QUERY = `
   }
 `
 
-export type CampaignExportsDataRaw = {
-  campaignExports: Array<{
+export type WorkflowExportsDataRaw = {
+  workflowExports: Array<{
     id: string
-    campaignId: string
+    workflowId: string
     locationId: number
     payload: unknown
     schemaVersion: string
@@ -228,9 +228,9 @@ export type CampaignExportsDataRaw = {
   }>
 }
 
-export const IMPORT_CAMPAIGN_MUTATION = `
-  mutation ImportCampaign($locationId: Int!, $payload: JSON!) {
-    importCampaign(locationId: $locationId, payload: $payload) {
+export const IMPORT_WORKFLOW_MUTATION = `
+  mutation ImportWorkflow($locationId: Int!, $payload: JSON!) {
+    importWorkflow(locationId: $locationId, payload: $payload) {
       id
       name
       description
@@ -243,8 +243,8 @@ export const IMPORT_CAMPAIGN_MUTATION = `
   }
 `
 
-export type ImportCampaignDataRaw = {
-  importCampaign: AnyNode
+export type ImportWorkflowDataRaw = {
+  importWorkflow: AnyNode
 }
 
 export const NODES_QUERY = `

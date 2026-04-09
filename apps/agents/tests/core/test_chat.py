@@ -56,7 +56,7 @@ def test_chat_stream_sse(mock_build_graph: MagicMock, client: TestClient) -> Non
         assert "Hi" in text
         assert "there" in text
         assert "data:" in text
-        mock_build_graph.assert_called_once_with(campaign_id=None, milestone_id=None)
+        mock_build_graph.assert_called_once_with(workflow_id=None, milestone_id=None)
 
 
 @patch("agents_app.routers.chat.build_chat_graph")
@@ -80,4 +80,4 @@ def test_chat_stream_passes_milestone_id(mock_build_graph: MagicMock, client: Te
         },
     ) as response:
         assert response.status_code == 200
-    mock_build_graph.assert_called_once_with(campaign_id=None, milestone_id="42")
+    mock_build_graph.assert_called_once_with(workflow_id=None, milestone_id="42")

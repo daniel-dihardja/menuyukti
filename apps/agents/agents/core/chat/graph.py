@@ -10,13 +10,13 @@ from langgraph.graph.message import MessagesState
 async def _chat_node(
     state: MessagesState,
     *,
-    campaign_id: str | None = None,
+    workflow_id: str | None = None,
     milestone_id: str | None = None,
 ) -> dict[str, list[BaseMessage]]:
     """Stream tokens from the model; LangGraph surfaces them via astream_events."""
     llm = get_llm()
     system = SystemMessage(
-        content=build_system_prompt(campaign_id, milestone_id=milestone_id),
+        content=build_system_prompt(workflow_id, milestone_id=milestone_id),
     )
     messages: list[BaseMessage] = [system, *state["messages"]]
     full_content = ""
@@ -30,12 +30,12 @@ async def _chat_node(
     return {"messages": [AIMessage(content=full_content)]}
 
 
-def build_chat_graph(campaign_id: str | None = None, milestone_id: str | None = None):
+def build_chat_graph(workflow_id: str | None = None, milestone_id: str | None = None):
     """Compile a stateless chat graph (no checkpointer)."""
     builder = StateGraph(MessagesState)
 
     async def chat_node(state: MessagesState) -> dict[str, list[BaseMessage]]:
-        return await _chat_node(state, campaign_id=campaign_id, milestone_id=milestone_id)
+        return await _chat_node(state, workflow_id=workflow_id, milestone_id=milestone_id)
 
     builder.add_node("chat", chat_node)
     builder.add_edge(START, "chat")

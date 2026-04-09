@@ -18,11 +18,11 @@ type AssetItem = {
 }
 
 export type CampaignAssetsTabProps = {
-  campaignId: string
+  workflowId: string
   onOpenPrintShop: () => void
 }
 
-export function CampaignAssetsTab({ campaignId, onOpenPrintShop }: CampaignAssetsTabProps) {
+export function CampaignAssetsTab({ workflowId, onOpenPrintShop }: CampaignAssetsTabProps) {
   const t = useTranslations('analytics.campaigns.workspace')
   const tAssets = useTranslations('assets')
   const [items, setItems] = useState<AssetItem[]>([])
@@ -51,7 +51,7 @@ export function CampaignAssetsTab({ campaignId, onOpenPrintShop }: CampaignAsset
       <p className="text-muted-foreground text-sm text-pretty">{t('assetsTabDescription')}</p>
       <div className="flex flex-wrap gap-2">
         <Button asChild variant="outline">
-          <Link href={`${routes.studio}?campaignId=${encodeURIComponent(campaignId)}`}>
+          <Link href={`${routes.studio}?workflowId=${encodeURIComponent(workflowId)}`}>
             {tAssets('title')}
           </Link>
         </Button>

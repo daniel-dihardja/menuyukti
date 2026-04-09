@@ -3,10 +3,10 @@ import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
-  IMPORT_CAMPAIGN_MUTATION,
+  IMPORT_WORKFLOW_MUTATION,
   NODE_QUERY,
   parseNodeData,
-  type ImportCampaignDataRaw,
+  type ImportWorkflowDataRaw,
   type NodeDataRaw,
 } from '@/lib/graphql/queries'
 
@@ -14,7 +14,7 @@ type RouteContext = {
   params: Promise<{ id: string }>
 }
 
-const idParamSchema = z.string().regex(/^\d+$/, 'Invalid campaign id')
+const idParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow id')
 
 const bodySchema = z.object({
   payload: z.unknown(),
@@ -30,9 +30,9 @@ export async function POST(req: Request, context: RouteContext) {
     const { id: rawId } = await context.params
     const idParsed = idParamSchema.safeParse(rawId)
     if (!idParsed.success) {
-      return NextResponse.json({ message: 'Invalid campaign id' }, { status: 400 })
+      return NextResponse.json({ message: 'Invalid workflow id' }, { status: 400 })
     }
-    const campaignId = idParsed.data
+    const workflowId = idParsed.data
 
     const json = (await req.json().catch(() => null)) as unknown
     const parsedBody = bodySchema.safeParse(json)
@@ -40,30 +40,30 @@ export async function POST(req: Request, context: RouteContext) {
       return NextResponse.json({ message: 'Invalid body: payload required' }, { status: 400 })
     }
 
-    const campaignData = parseNodeData(
-      await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: campaignId }, userId),
+    const rootData = parseNodeData(
+      await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowId }, userId),
     )
-    const node = campaignData.node
+    const node = rootData.node
     if (!node) {
-      return NextResponse.json({ message: 'Campaign not found' }, { status: 404 })
+      return NextResponse.json({ message: 'Workflow not found' }, { status: 404 })
     }
     if (node.nodeType !== 'campaign') {
-      return NextResponse.json({ message: 'Not a campaign' }, { status: 400 })
+      return NextResponse.json({ message: 'Not a workflow root' }, { status: 400 })
     }
     if (node.locationId == null) {
-      return NextResponse.json({ message: 'Campaign has no location' }, { status: 400 })
+      return NextResponse.json({ message: 'Workflow has no location' }, { status: 400 })
     }
 
-    const data = await graphqlQuery<ImportCampaignDataRaw>(
-      IMPORT_CAMPAIGN_MUTATION,
+    const data = await graphqlQuery<ImportWorkflowDataRaw>(
+      IMPORT_WORKFLOW_MUTATION,
       { locationId: node.locationId, payload: parsedBody.data.payload },
       userId,
     )
 
-    return NextResponse.json({ campaign: data.importCampaign })
+    return NextResponse.json({ workflow: data.importWorkflow })
   } catch (error) {
     console.error(error)
-    const message = error instanceof Error ? error.message : 'Failed to import campaign'
+    const message = error instanceof Error ? error.message : 'Failed to import workflow'
     return NextResponse.json({ message }, { status: 500 })
   }
 }

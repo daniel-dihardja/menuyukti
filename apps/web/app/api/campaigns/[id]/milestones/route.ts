@@ -12,25 +12,25 @@ import {
   type NodeDataRaw,
   type NodesDataRaw,
 } from '@/lib/graphql/queries'
-import { campaignIdParamSchema, createMilestoneBodySchema } from './schema'
+import { createMilestoneBodySchema, workflowIdParamSchema } from './schema'
 
 type RouteContext = {
   params: Promise<{ id: string }>
 }
 
-async function loadCampaignOrThrow(campaignId: string, userId: string) {
+async function loadWorkflowRootOrThrow(workflowId: string, userId: string) {
   const data = parseNodeData(
-    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: campaignId }, userId),
+    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowId }, userId),
   )
   const node = data.node
   if (!node) {
-    return { error: NextResponse.json({ message: 'Campaign not found' }, { status: 404 }) }
+    return { error: NextResponse.json({ message: 'Workflow not found' }, { status: 404 }) }
   }
   if (node.nodeType !== 'campaign') {
-    return { error: NextResponse.json({ message: 'Not a campaign' }, { status: 400 }) }
+    return { error: NextResponse.json({ message: 'Not a workflow root' }, { status: 400 }) }
   }
   if (node.locationId == null) {
-    return { error: NextResponse.json({ message: 'Campaign has no location' }, { status: 400 }) }
+    return { error: NextResponse.json({ message: 'Workflow has no location' }, { status: 400 }) }
   }
   return { node, locationId: node.locationId }
 }
@@ -43,24 +43,24 @@ export async function GET(_req: Request, context: RouteContext) {
     }
 
     const { id: rawId } = await context.params
-    const parsed = campaignIdParamSchema.safeParse(rawId)
+    const parsed = workflowIdParamSchema.safeParse(rawId)
     if (!parsed.success) {
-      return NextResponse.json({ message: 'Invalid campaign id' }, { status: 400 })
+      return NextResponse.json({ message: 'Invalid workflow id' }, { status: 400 })
     }
-    const campaignId = parsed.data
+    const workflowId = parsed.data
 
-    const campaign = await loadCampaignOrThrow(campaignId, userId)
-    if ('error' in campaign) {
-      return campaign.error
+    const workflowRoot = await loadWorkflowRootOrThrow(workflowId, userId)
+    if ('error' in workflowRoot) {
+      return workflowRoot.error
     }
 
     const list = parseNodesData(
       await graphqlQuery<NodesDataRaw>(
         NODES_QUERY,
         {
-          locationId: campaign.locationId,
+          locationId: workflowRoot.locationId,
           nodeType: 'milestone',
-          parentId: campaignId,
+          parentId: workflowId,
         },
         userId,
       ),
@@ -82,15 +82,15 @@ export async function POST(req: Request, context: RouteContext) {
     }
 
     const { id: rawId } = await context.params
-    const parsed = campaignIdParamSchema.safeParse(rawId)
+    const parsed = workflowIdParamSchema.safeParse(rawId)
     if (!parsed.success) {
-      return NextResponse.json({ message: 'Invalid campaign id' }, { status: 400 })
+      return NextResponse.json({ message: 'Invalid workflow id' }, { status: 400 })
     }
-    const campaignId = parsed.data
+    const workflowId = parsed.data
 
-    const campaign = await loadCampaignOrThrow(campaignId, userId)
-    if ('error' in campaign) {
-      return campaign.error
+    const workflowRoot = await loadWorkflowRootOrThrow(workflowId, userId)
+    if ('error' in workflowRoot) {
+      return workflowRoot.error
     }
 
     let body: Record<string, unknown> = {}
@@ -117,9 +117,9 @@ export async function POST(req: Request, context: RouteContext) {
       await graphqlQuery<CreateNodeDataRaw>(
         CREATE_NODE_MUTATION,
         {
-          locationId: campaign.locationId,
+          locationId: workflowRoot.locationId,
           nodeType: 'milestone',
-          parentId: campaignId,
+          parentId: workflowId,
           ...(name !== undefined ? { name } : {}),
         },
         userId,

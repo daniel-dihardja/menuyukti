@@ -16,17 +16,17 @@ import {
 import { cn } from '@workspace/ui/lib/utils'
 
 export type CampaignGoalEditorProps = {
-  campaignId: string
+  workflowId: string
   initialGoal: string | null
 }
 
 type ToastState = { kind: 'error'; message: string } | null
 
-export function CampaignGoalEditor({ campaignId, initialGoal }: CampaignGoalEditorProps) {
+export function CampaignGoalEditor({ workflowId, initialGoal }: CampaignGoalEditorProps) {
   const t = useTranslations('analytics.campaigns.workspace')
   const tChat = useTranslations('analytics.campaigns.chat')
-  const goalFieldId = `campaign-goal-${campaignId}`
-  const goalTitleId = `campaign-goal-title-${campaignId}`
+  const goalFieldId = `workflow-goal-${workflowId}`
+  const goalTitleId = `workflow-goal-title-${workflowId}`
 
   const [open, setOpen] = useState(true)
   const [draft, setDraft] = useState(initialGoal ?? '')
@@ -56,7 +56,7 @@ export function CampaignGoalEditor({ campaignId, initialGoal }: CampaignGoalEdit
     }
     setSaving(true)
     try {
-      const res = await fetch(`/api/campaigns/${encodeURIComponent(campaignId)}`, {
+      const res = await fetch(`/api/campaigns/${encodeURIComponent(workflowId)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ goal: draft }),
@@ -79,7 +79,7 @@ export function CampaignGoalEditor({ campaignId, initialGoal }: CampaignGoalEdit
     } finally {
       setSaving(false)
     }
-  }, [campaignId, draft, lastSaved, saving, showError, t])
+  }, [workflowId, draft, lastSaved, saving, showError, t])
 
   const handleBlur = useCallback(() => {
     void persistGoal()

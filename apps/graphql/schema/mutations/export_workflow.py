@@ -1,4 +1,4 @@
-"""Persist a JSON snapshot of a campaign's milestones and child nodes."""
+"""Persist a JSON snapshot of a workflow root's milestones and child nodes."""
 
 from __future__ import annotations
 
@@ -7,15 +7,15 @@ from datetime import UTC, datetime
 import strawberry
 from sqlalchemy.orm import Session
 
-from graphql.data_sources import CampaignExport, Node, SessionLocal
+from graphql.data_sources import Node, SessionLocal, WorkflowExport
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.node_handlers.milestone import _milestone_sort_key
-from graphql.schema.types import CampaignExportType
+from graphql.schema.types import WorkflowExportType
 
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "2.0"
 
 
-def _campaign_goal_from_data(data: object | None) -> str | None:
+def _workflow_goal_from_data(data: object | None) -> str | None:
     if not isinstance(data, dict):
         return None
     g = data.get("goal")
@@ -137,12 +137,12 @@ def _serialize_milestone(session: Session, milestone: Node) -> dict[str, object]
     return out_m
 
 
-def _build_payload(session: Session, campaign: Node) -> dict[str, object]:
+def _build_payload(session: Session, root: Node) -> dict[str, object]:
     milestones_raw = (
         session.query(Node)
         .filter(
-            Node.parent_id == campaign.id,
-            Node.location_id == campaign.location_id,
+            Node.parent_id == root.id,
+            Node.location_id == root.location_id,
             Node.node_type == "milestone",
         )
         .all()
@@ -150,15 +150,15 @@ def _build_payload(session: Session, campaign: Node) -> dict[str, object]:
     milestones_raw.sort(key=_milestone_sort_key)
     milestones = [_serialize_milestone(session, m) for m in milestones_raw]
 
-    c_data = campaign.data if isinstance(campaign.data, dict) else {}
-    goal = _campaign_goal_from_data(c_data)
+    c_data = root.data if isinstance(root.data, dict) else {}
+    goal = _workflow_goal_from_data(c_data)
 
     exported_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
     payload: dict[str, object] = {
         "schemaVersion": SCHEMA_VERSION,
-        "campaignId": str(campaign.id),
-        "campaignName": campaign.name,
+        "workflowId": str(root.id),
+        "workflowName": root.name,
         "exportedAt": exported_at,
         "milestones": milestones,
     }
@@ -170,10 +170,10 @@ def _build_payload(session: Session, campaign: Node) -> dict[str, object]:
     return payload
 
 
-def _export_to_gql(row: CampaignExport) -> CampaignExportType:
-    return CampaignExportType(
+def _export_to_gql(row: WorkflowExport) -> WorkflowExportType:
+    return WorkflowExportType(
         id=str(row.id),
-        campaign_id=str(row.campaign_id),
+        workflow_id=str(row.workflow_id),
         location_id=row.location_id,
         payload=row.payload,
         schema_version=row.schema_version,
@@ -183,42 +183,42 @@ def _export_to_gql(row: CampaignExport) -> CampaignExportType:
 
 
 @strawberry.type
-class ExportCampaignMutation:
+class ExportWorkflowMutation:
     @strawberry.mutation
-    def export_campaign(
+    def export_workflow(
         self,
         info: strawberry.Info,
-        campaign_id: strawberry.ID,
+        workflow_id: strawberry.ID,
         location_id: int,
-    ) -> CampaignExportType:
+    ) -> WorkflowExportType:
         user_id = user_id_from_info(info)
         if not user_id:
-            raise ValueError("Missing authenticated user for exportCampaign")
+            raise ValueError("Missing authenticated user for exportWorkflow")
 
         try:
-            campaign_pk = int(str(campaign_id))
+            root_pk = int(str(workflow_id))
         except ValueError as e:
-            raise ValueError("Invalid campaign id") from e
-        if campaign_pk < 1:
-            raise ValueError("Invalid campaign id")
+            raise ValueError("Invalid workflow id") from e
+        if root_pk < 1:
+            raise ValueError("Invalid workflow id")
 
         session = SessionLocal()
         try:
             require_location_owner(session, location_id, user_id)
 
-            campaign = session.get(Node, campaign_pk)
-            if campaign is None:
-                raise ValueError("Campaign not found")
-            if campaign.node_type != "campaign":
-                raise ValueError("Node is not a campaign")
-            if campaign.location_id != location_id:
-                raise ValueError("Campaign does not belong to this location")
+            root = session.get(Node, root_pk)
+            if root is None:
+                raise ValueError("Workflow root not found")
+            if root.node_type != "campaign":
+                raise ValueError("Node is not a workflow root")
+            if root.location_id != location_id:
+                raise ValueError("Workflow root does not belong to this location")
 
-            payload = _build_payload(session, campaign)
+            payload = _build_payload(session, root)
 
             existing = (
-                session.query(CampaignExport)
-                .filter(CampaignExport.campaign_id == campaign_pk)
+                session.query(WorkflowExport)
+                .filter(WorkflowExport.workflow_id == root_pk)
                 .one_or_none()
             )
             if existing is not None:
@@ -229,8 +229,8 @@ class ExportCampaignMutation:
                 session.refresh(existing)
                 return _export_to_gql(existing)
 
-            row = CampaignExport(
-                campaign_id=campaign_pk,
+            row = WorkflowExport(
+                workflow_id=root_pk,
                 location_id=location_id,
                 payload=payload,
                 schema_version=SCHEMA_VERSION,
