@@ -14,8 +14,8 @@
 # The `web` service loads `.env` via `env_file`. Rebuild after changing build-time vars:
 #   docker compose build --no-cache web && docker compose up -d web
 #
-# Apply GraphQL DB migrations against Neon when needed (image WORKDIR is /app):
-#   docker compose run --rm graphql sh -c "cd apps/graphql && PYTHONPATH=/app uv run alembic upgrade head"
+# GraphQL runs Alembic migrations on container start (see apps/graphql/docker-entrypoint.sh).
+# For manual runs: from repo root, `cd apps/graphql && PYTHONPATH=../.. uv run alembic upgrade head`.
 
 name: menuyukti
 

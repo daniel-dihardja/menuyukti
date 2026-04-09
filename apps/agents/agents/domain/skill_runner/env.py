@@ -16,14 +16,16 @@ class RunEnv:
     milestone_id: str
     location_id: int
     user_id: str
+    workflow_id: str = ""
 
 
 def render_template(value: str, env: RunEnv) -> str:
-    """Replace `{{ env.milestone_id }}`, `{{ env.location_id }}`, `{{ env.user_id }}`."""
+    """Replace `{{ env.milestone_id }}`, `{{ env.location_id }}`, `{{ env.user_id }}`, `{{ env.workflow_id }}`."""
     return (
         value.replace("{{ env.milestone_id }}", str(env.milestone_id))
         .replace("{{ env.location_id }}", str(env.location_id))
         .replace("{{ env.user_id }}", str(env.user_id))
+        .replace("{{ env.workflow_id }}", str(env.workflow_id))
     )
 
 

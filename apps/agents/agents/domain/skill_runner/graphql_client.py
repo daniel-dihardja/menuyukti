@@ -201,6 +201,59 @@ query RevenueTrends($analyticsRunId: ID!, $locationId: ID!) {
 }
 """
 
+_MENU_ITEMS_CATALOG_QUERY = """
+query MenuItemsCatalog($locationId: Int!) {
+  menuItemsCatalog(locationId: $locationId) {
+    analyticsRunId
+    items {
+      id
+      name
+      category
+      categoryDetail
+      price
+      description
+      isActive
+    }
+  }
+}
+"""
+
+_WEEKLY_DEMAND_PATTERN_QUERY = """
+query WeeklyDemandPattern($locationId: Int!) {
+  weeklyDemandPattern(locationId: $locationId) {
+    analyticsRunId
+    rows {
+      isoWeek
+      weekLabel
+      revenueIndex
+      txIndex
+      relativeDemand
+    }
+  }
+}
+"""
+
+_LOCATION_SOCIAL_SETTINGS_QUERY = """
+query LocationSocialSettings($locationId: Int!) {
+  locationSocialSettings(locationId: $locationId) {
+    locationId
+    tone
+    brandPersonality
+    contentPillars
+    platformFocus
+    brandHashtags
+    avoidTopics
+    targetAudience
+  }
+}
+"""
+
+_MOST_RECENT_MILESTONE_DATA_QUERY = """
+query MostRecentMilestoneData($workflowId: ID!, $dataTask: String!) {
+  mostRecentMilestoneData(workflowId: $workflowId, dataTask: $dataTask)
+}
+"""
+
 
 async def fetch_latest_analytics_run_id(
     location_id: int,
@@ -394,3 +447,88 @@ async def fetch_revenue_trends_dict(
     if not isinstance(raw, dict):
         return None
     return json.loads(json.dumps(raw))
+
+
+async def fetch_menu_items_catalog_dict(
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Full menu catalog from latest analytics run (camelCase JSON keys)."""
+    data = await graphql_post(
+        client,
+        _MENU_ITEMS_CATALOG_QUERY,
+        {"locationId": location_id},
+        user_id,
+    )
+    raw = data.get("menuItemsCatalog")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return json.loads(json.dumps(raw))
+
+
+async def fetch_weekly_demand_pattern_dict(
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Week-level demand indices for the latest analytics run."""
+    data = await graphql_post(
+        client,
+        _WEEKLY_DEMAND_PATTERN_QUERY,
+        {"locationId": location_id},
+        user_id,
+    )
+    raw = data.get("weeklyDemandPattern")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return json.loads(json.dumps(raw))
+
+
+async def fetch_location_social_settings_dict(
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Brand voice / hashtag defaults for a location."""
+    data = await graphql_post(
+        client,
+        _LOCATION_SOCIAL_SETTINGS_QUERY,
+        {"locationId": location_id},
+        user_id,
+    )
+    raw = data.get("locationSocialSettings")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return json.loads(json.dumps(raw))
+
+
+async def fetch_most_recent_milestone_data_str(
+    workflow_id: str,
+    data_task: str,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> str | None:
+    """Markdown from the most recent milestone with matching dataTask under the workflow."""
+    data = await graphql_post(
+        client,
+        _MOST_RECENT_MILESTONE_DATA_QUERY,
+        {"workflowId": str(workflow_id), "dataTask": data_task},
+        user_id,
+    )
+    raw = data.get("mostRecentMilestoneData")
+    if raw is None:
+        return None
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    return raw

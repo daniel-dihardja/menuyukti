@@ -21,8 +21,18 @@ export const milestoneDataSchema = z
      * Legacy: goal text was stored on the milestone. New writes use a child node (`nodeType` `goal`).
      */
     goal: z.string().optional(),
-    /** How milestone Data tab content is produced (`manual` = textarea; `location_profile` = prepare pipeline). */
-    dataTask: z.enum(['manual', 'location_profile']).optional(),
+    /** How milestone Data tab content is produced (`manual` = textarea; prepare tasks use agent_skills). */
+    dataTask: z
+      .enum([
+        'manual',
+        'location_profile',
+        'instagram_campaign_schedule',
+        'restaurant_brand_brief',
+        'social_campaign_calendar',
+        'social_caption_batch',
+        'visual_creative_brief',
+      ])
+      .optional(),
   })
   .passthrough()
 

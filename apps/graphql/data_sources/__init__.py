@@ -6,6 +6,7 @@ __all__ = [
     "Workspace",
     "WorkspaceMembership",
     "Location",
+    "LocationSocialSettings",
     "AnalyticsRun",
     "OrderFact",
     "MenuItemCogs",

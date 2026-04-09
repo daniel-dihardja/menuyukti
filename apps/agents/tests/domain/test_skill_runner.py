@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
+from agent_skills import get_skill_path
 from agents_app.agents.domain.skill_runner.env import (
     RunEnv,
     render_human_message,
@@ -30,9 +31,7 @@ def http_client() -> TestClient:
 
 @pytest.fixture
 def skill_path() -> Path:
-    return (
-        Path(__file__).resolve().parent.parent.parent / "skills" / "location_profile" / "SKILL.md"
-    )
+    return get_skill_path("location_profile")
 
 
 def test_load_location_profile_skill(skill_path: Path) -> None:
@@ -47,9 +46,10 @@ def test_load_location_profile_skill(skill_path: Path) -> None:
 
 
 def test_render_template() -> None:
-    env = RunEnv(milestone_id="m-1", location_id=42, user_id="u1")
+    env = RunEnv(milestone_id="m-1", location_id=42, user_id="u1", workflow_id="wf-9")
     assert render_template("{{ env.location_id }}", env) == "42"
     assert render_template("{{ env.milestone_id }}", env) == "m-1"
+    assert render_template("{{ env.workflow_id }}", env) == "wf-9"
 
 
 @pytest.mark.asyncio

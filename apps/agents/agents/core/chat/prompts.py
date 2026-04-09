@@ -47,14 +47,22 @@ that string is produced (stored on the milestone as **`dataTask`**):
 
 - **Manual entry** (`manual`): the user writes or pastes the content directly in
   the Data tab editor. No **Prepare** step is required; save when ready.
-- **Generate location profile** (`location_profile`): the content is meant to come
-  from the **Prepare** pipeline (location / operating analytics turned into
-  markdown-style text). Use **Generate** or **Regenerate** on the Data tab to
-  fill or refresh **`data`**; the user can still edit the text afterward.
+- **Prepare** (several `dataTask` values): the user picks a pipeline; **Generate**
+  or **Regenerate** runs the agents service, which loads a runtime skill and
+  prefetches GraphQL context, then writes Markdown into **`data`**. The user can
+  still edit afterward. Common tasks include:
+  - **`restaurant_brand_brief`** — brand pillars and voice from operating profile,
+    category mix, and menu catalog (often a good first step for social campaigns).
+  - **`social_campaign_calendar`**, **`social_caption_batch`**, **`visual_creative_brief`**,
+    **`instagram_campaign_schedule`** — Instagram-oriented schedules, captions, or
+    creative briefs from analytics and optional prior milestones in the workflow.
+  - **`location_profile`** — optional standalone **operating snapshot** from POS
+    metrics and location fields; it is **not** required for Instagram post quality
+    when other prepare tasks are used.
 
-In both modes the same **`milestonedata`** node holds the final **`data`**
-string; the difference is whether the user authors it entirely or starts from a
-generated profile.
+In every mode the same **`milestonedata`** node holds the final **`data`**
+string; the difference is whether the user authors it entirely or starts from
+generated Markdown.
 
 ## Result
 
@@ -69,9 +77,9 @@ milestone.
 1. Open the **milestone** you are working on (within the campaign).
 2. Set the **Goal** (Goal tab) and add **Pass criteria** via the **Pass criteria**
    tab (requirements only).
-3. On the **Data** tab: either enter text under **Manual entry**, or choose
-   **Generate location profile** and run **Prepare** to generate the milestone
-   data, then edit if needed.
+3. On the **Data** tab: either enter text under **Manual entry**, or choose a
+   **Prepare** data source (e.g. **restaurant brand brief** or another task) and
+   run **Prepare** to generate the milestone data, then edit if needed.
 4. **Run** to evaluate criteria against the milestone data string, update
    criterion statuses, and write the **Result**.
 """

@@ -23,13 +23,13 @@ menuyukti:
     - id: location
       use: platform.location
       inputs:
-        location_id: "{{ env.location_id }}"
+        location_id: '{{ env.location_id }}'
       required: false
 
     - id: operating_profile
       use: analytics.latest_operating_profile
       inputs:
-        location_id: "{{ env.location_id }}"
+        location_id: '{{ env.location_id }}'
       required: true
 ---
 
@@ -40,6 +40,7 @@ metrics for a single location and (2) optional **location record** fields
 Write a clear **location profile** in Markdown.
 
 Include sections that help downstream campaign work:
+
 - **Location context** — when location fields are provided, weave in the venue name, address
   or city/country, and **currency** (e.g. for how prices or value should be framed). Do not invent
   address lines if only partial address data exists; use what is given.
@@ -48,6 +49,7 @@ Include sections that help downstream campaign work:
 - **Positioning hints** — factual implications for messaging (no invented demographics).
 
 Rules:
+
 - Ground operating claims in the operating-profile JSON; ground venue facts in the location JSON
   when present.
 - Do not invent competitors, review data, or missing address parts.

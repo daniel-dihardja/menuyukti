@@ -18,7 +18,7 @@ export type TimelineContextValue = CampaignMilestoneUiState & {
   /** Refetch persisted Data tab content from GraphQL when client state is missing it. */
   onHydrateMilestoneData: (id: string) => Promise<void>
   onSetMilestoneDataTask: (id: string, dataTask: MilestoneDataTask) => Promise<boolean>
-  onPrepareMilestone: (id: string) => void | Promise<void>
+  onPrepareMilestone: (id: string, dataTask: MilestoneDataTask) => void | Promise<void>
   onRunMilestone: (id: string) => void | Promise<void>
   onExport: () => void | Promise<void>
 }

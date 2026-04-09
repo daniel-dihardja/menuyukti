@@ -8,16 +8,16 @@ description: >-
 
 # Menuyukti: repository orientation
 
-This skill is for **Cursor/agents** navigating the repo. It is **not** a runtime milestone skill under `apps/agents/skills/` (those feed `skill_runner`).
+This skill is for **Cursor/agents** navigating the repo. It is **not** a runtime milestone skill under `packages/agent-skills/` (those feed `skill_runner`).
 
 ## Service map
 
-| Area                 | Path           | Role                                                                                                                                                                 |
-| -------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Web**              | `apps/web`     | Next.js UI: chat, campaigns, CRUD. **Reads/writes go through GraphQL** (not direct DB). Workflow roots use GraphQL **`nodeType` `workflow`**.                        |
-| **GraphQL API**      | `apps/graphql` | Strawberry schema, **SQLAlchemy persistence**, analytics. **Single HTTP API** for structured data used by web and agents.                                            |
-| **LangGraph agents** | `apps/agents`  | FastAPI, LangChain / LangGraph. **Calls GraphQL over HTTP** (e.g. `httpx`); **does not** open database connections.                                                  |
-| **Shared packages**  | `packages/*`   | Shared TypeScript libraries; Python shared code may live under [`packages/menuyukti`](../../../packages/menuyukti) and app-local packages per root workspace config. |
+| Area                 | Path           | Role                                                                                                                                                                                                                                   |
+| -------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Web**              | `apps/web`     | Next.js UI: chat, campaigns, CRUD. **Reads/writes go through GraphQL** (not direct DB). Workflow roots use GraphQL **`nodeType` `workflow`**.                                                                                          |
+| **GraphQL API**      | `apps/graphql` | Strawberry schema, **SQLAlchemy persistence**, analytics. **Single HTTP API** for structured data used by web and agents.                                                                                                              |
+| **LangGraph agents** | `apps/agents`  | FastAPI, LangChain / LangGraph. **Calls GraphQL over HTTP** (e.g. `httpx`); **does not** open database connections.                                                                                                                    |
+| **Shared packages**  | `packages/*`   | Shared TypeScript libraries; Python: [`packages/menuyukti`](../../../packages/menuyukti) (analytics), [`packages/agent-skills`](../../../packages/agent-skills) (runtime milestone `SKILL.md` for prepare), per root workspace config. |
 
 ```mermaid
 flowchart LR

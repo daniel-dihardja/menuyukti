@@ -7,12 +7,21 @@ import { milestoneDataSchema } from '@/lib/graphql/node-schemas'
 
 import type { CampaignMilestoneAction } from './campaign-milestone-reducer'
 import { deriveMilestoneRailStatus, milestoneNodeToTimelineMilestone } from './milestone-map'
-import type {
-  MilestoneDataTask,
-  PassCriteriaRow,
-  PassCriteriaStatus,
-  TimelineMilestone,
+import {
+  MILESTONE_PREPARE_DATA_TASKS,
+  type MilestoneDataTask,
+  type PassCriteriaRow,
+  type PassCriteriaStatus,
+  type TimelineMilestone,
 } from './timeline/types'
+
+function milestoneDataTaskFromNodeData(data: unknown): MilestoneDataTask {
+  const parsed = milestoneDataSchema.safeParse(data)
+  if (!parsed.success) {
+    return 'manual'
+  }
+  return parsed.data.dataTask ?? 'manual'
+}
 
 export function useMilestoneOperations(
   dispatch: Dispatch<CampaignMilestoneAction>,
@@ -285,11 +294,7 @@ export function useMilestoneOperations(
           throw new Error(body?.message ?? t('milestonesMilestoneDataError'))
         }
         const nodeBody = body as { data?: unknown }
-        const parsed = milestoneDataSchema.safeParse(nodeBody?.data)
-        const nextTask: MilestoneDataTask =
-          parsed.success && parsed.data.dataTask === 'location_profile'
-            ? 'location_profile'
-            : 'manual'
+        const nextTask = milestoneDataTaskFromNodeData(nodeBody?.data)
         dispatch({
           type: 'UPDATE_MILESTONES',
           updater: (prev) =>
@@ -310,7 +315,10 @@ export function useMilestoneOperations(
   )
 
   const handlePrepareMilestone = useCallback(
-    async (milestoneId: string) => {
+    async (milestoneId: string, dataTask: MilestoneDataTask) => {
+      if (!MILESTONE_PREPARE_DATA_TASKS.includes(dataTask)) {
+        return
+      }
       dispatch({
         type: 'PATCH',
         patch: { milestonePrepareError: null, preparingMilestoneId: milestoneId },
@@ -319,7 +327,7 @@ export function useMilestoneOperations(
         const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}/prepare`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locationId }),
+          body: JSON.stringify({ locationId, dataTask }),
         })
         if (!res.ok) {
           const body = (await res.json().catch(() => null)) as { error?: string } | null
@@ -603,7 +611,7 @@ export function useMilestoneOperations(
         }
         const body = (await res.json().catch(() => null)) as {
           milestoneData?: string
-          dataTask?: 'manual' | 'location_profile' | null
+          dataTask?: MilestoneDataTask | null
         } | null
         if (!body) {
           return
@@ -617,8 +625,8 @@ export function useMilestoneOperations(
                 return m
               }
               const next = { ...m, data: text }
-              if (body.dataTask === 'location_profile') {
-                next.dataTask = 'location_profile'
+              if (body.dataTask) {
+                next.dataTask = body.dataTask
               }
               return next
             }),
