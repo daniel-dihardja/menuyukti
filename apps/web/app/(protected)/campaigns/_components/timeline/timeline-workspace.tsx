@@ -28,7 +28,10 @@ export function TimelineWorkspace({ isLoading = false, loadError = null }: Timel
     milestoneDataError,
     milestonePrepareError,
     milestoneRunError,
+    exporting,
+    exportError,
     onCreateMilestone,
+    onExport,
   } = useTimelineContext()
 
   const [selectedId, setSelectedId] = useQueryState('milestone', parseAsString)
@@ -68,13 +71,19 @@ export function TimelineWorkspace({ isLoading = false, loadError = null }: Timel
         createLabel={t('createMilestone')}
         creating={creating}
         creatingLabel={t('creatingMilestone')}
+        exportLabel={t('exportMilestones')}
+        exporting={exporting}
+        exportingLabel={t('exportingMilestones')}
         onCreateMilestone={onCreateMilestone}
+        onExport={onExport}
         showCreate={showTimeline}
+        showExport={showTimeline}
         title={t('timelineToolbarTitle')}
       />
       <TimelineInlineErrors
         createError={createError}
         deleteError={deleteError}
+        exportError={exportError}
         goalError={goalError}
         milestoneDataError={milestoneDataError}
         milestonePrepareError={milestonePrepareError}

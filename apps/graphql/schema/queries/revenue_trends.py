@@ -71,7 +71,9 @@ class RevenueTrendsQuery:
                         menu=str(r["menu"]),
                         current_revenue=float(r["current_revenue"]),
                         previous_revenue=float(r["previous_revenue"]),
-                        change_pct=float(r["change_pct"]) if r.get("change_pct") is not None else None,
+                        change_pct=float(r["change_pct"])
+                        if r.get("change_pct") is not None
+                        else None,
                         rank_current=int(r["rank_current"]),
                         rank_previous=int(r["rank_previous"]),
                         trend_label=str(r["trend_label"]),

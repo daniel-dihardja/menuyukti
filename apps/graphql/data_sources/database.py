@@ -31,9 +31,7 @@ def seed_db(target_engine=None) -> None:
 
     try:
         existing = (
-            session.query(ImageAiFlow)
-            .filter(ImageAiFlow.slug == "remove-background")
-            .first()
+            session.query(ImageAiFlow).filter(ImageAiFlow.slug == "remove-background").first()
         )
         if existing is None:
             session.add(

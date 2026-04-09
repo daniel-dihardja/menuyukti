@@ -176,6 +176,32 @@ export type UpdateNodeData = {
   updateNode: AnyNode
 }
 
+export const EXPORT_CAMPAIGN_MUTATION = `
+  mutation ExportCampaign($campaignId: ID!, $locationId: Int!) {
+    exportCampaign(campaignId: $campaignId, locationId: $locationId) {
+      id
+      campaignId
+      locationId
+      payload
+      schemaVersion
+      createdAt
+      updatedAt
+    }
+  }
+`
+
+export type ExportCampaignDataRaw = {
+  exportCampaign: {
+    id: string
+    campaignId: string
+    locationId: number
+    payload: unknown
+    schemaVersion: string
+    createdAt: string | null
+    updatedAt: string | null
+  }
+}
+
 export const NODES_QUERY = `
   query Nodes($locationId: Int!, $nodeType: String, $parentId: ID) {
     nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId) {

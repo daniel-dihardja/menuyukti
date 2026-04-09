@@ -9,9 +9,7 @@ from graphql.schema.auth import get_analytics_run_if_owner, user_id_from_info
 from graphql.services.instagram_signals import build_instagram_signals
 
 
-@strawberry.type(
-    description="Menu engineering fields surfaced for Instagram hero/avoid copy."
-)
+@strawberry.type(description="Menu engineering fields surfaced for Instagram hero/avoid copy.")
 class MatrixBackedItemType:
     menu: str
     matrix_category: str
@@ -79,7 +77,9 @@ def _matrix_item(raw: dict) -> MatrixBackedItemType:
         menu=str(raw["menu"]),
         matrix_category=str(raw["matrix_category"]),
         total_revenue=float(raw["total_revenue"]),
-        menu_category=raw.get("menu_category") if isinstance(raw.get("menu_category"), str) else None,
+        menu_category=raw.get("menu_category")
+        if isinstance(raw.get("menu_category"), str)
+        else None,
         menu_category_detail=(
             raw.get("menu_category_detail")
             if isinstance(raw.get("menu_category_detail"), str)

@@ -112,8 +112,7 @@ def test_promotion_menu_items_with_qa_data(
         assert pytest.approx(float(got["totalRevenue"]), rel=1e-6) == exp["total_revenue"]
         assert pytest.approx(float(got["cogs"]), rel=1e-6) == exp["cogs"]
         assert (
-            pytest.approx(float(got["contributionMargin"]), rel=1e-6)
-            == exp["contribution_margin"]
+            pytest.approx(float(got["contributionMargin"]), rel=1e-6) == exp["contribution_margin"]
         )
         assert (
             pytest.approx(float(got["contributionMarginPercentage"]), rel=1e-5)

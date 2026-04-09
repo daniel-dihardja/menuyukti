@@ -27,9 +27,7 @@ from graphql.services.order_fact_rows import (
 )
 
 
-def build_instagram_signals(
-    session: Session, run: AnalyticsRun
-) -> dict[str, Any] | None:
+def build_instagram_signals(session: Session, run: AnalyticsRun) -> dict[str, Any] | None:
     """
     Load order facts for ``run`` and the prior run (if any), run analytics pipelines,
     and return a JSON-friendly dict matching :class:`InstagramSignalsResult`.
@@ -41,9 +39,7 @@ def build_instagram_signals(
     prev_run = get_previous_analytics_run(session, run.location_id, run.id)
     prev_facts: list[OrderFact] = []
     if prev_run is not None:
-        prev_facts = (
-            session.query(OrderFact).where(OrderFact.analytics_run_id == prev_run.id).all()
-        )
+        prev_facts = session.query(OrderFact).where(OrderFact.analytics_run_id == prev_run.id).all()
 
     sales_rows = facts_to_sales_analytics_rows(facts)
     sales_analytics = compute_sales_analytics_from_orders(sales_rows)

@@ -21,6 +21,8 @@ export type CampaignMilestoneUiState = {
   milestoneRunError: string | null
   preparingMilestoneId: string | null
   milestonePrepareError: string | null
+  exporting: boolean
+  exportError: string | null
 }
 
 export function createInitialCampaignMilestoneUiState(
@@ -47,6 +49,8 @@ export function createInitialCampaignMilestoneUiState(
     milestoneRunError: null,
     preparingMilestoneId: null,
     milestonePrepareError: null,
+    exporting: false,
+    exportError: null,
   }
 }
 

@@ -12,6 +12,11 @@ export type TimelineToolbarProps = {
   onCreateMilestone?: () => void | Promise<void>
   creating?: boolean
   showCreate?: boolean
+  exportLabel?: string
+  exportingLabel?: string
+  onExport?: () => void | Promise<void>
+  exporting?: boolean
+  showExport?: boolean
 }
 
 export function TimelineToolbar({
@@ -22,31 +27,60 @@ export function TimelineToolbar({
   onCreateMilestone,
   creating,
   showCreate,
+  exportLabel,
+  exportingLabel,
+  onExport,
+  exporting,
+  showExport,
 }: TimelineToolbarProps) {
+  const showActions =
+    (showExport && onExport && exportLabel && exportingLabel) ||
+    (showCreate && onCreateMilestone && createLabel && creatingLabel)
+
   return (
     <header className="flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3">
       <div className="flex min-w-0 items-center gap-2">
         <h2 className="truncate font-semibold text-foreground text-sm">{title}</h2>
         <Badge variant="secondary">{count}</Badge>
       </div>
-      {showCreate && onCreateMilestone && createLabel && creatingLabel ? (
+      {showActions ? (
         <div className="flex shrink-0 items-center gap-2">
-          <Button
-            disabled={creating}
-            onClick={() => void onCreateMilestone()}
-            size="sm"
-            type="button"
-            variant="default"
-          >
-            {creating ? (
-              <>
-                <Spinner data-icon="inline-start" />
-                {creatingLabel}
-              </>
-            ) : (
-              createLabel
-            )}
-          </Button>
+          {showExport && onExport && exportLabel && exportingLabel ? (
+            <Button
+              disabled={exporting || creating}
+              onClick={() => void onExport()}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              {exporting ? (
+                <>
+                  <Spinner data-icon="inline-start" />
+                  {exportingLabel}
+                </>
+              ) : (
+                exportLabel
+              )}
+            </Button>
+          ) : null}
+          {showCreate && onCreateMilestone && createLabel && creatingLabel ? (
+            <Button
+              disabled={creating || exporting}
+              onClick={() => void onCreateMilestone()}
+              size="sm"
+              type="button"
+              variant="default"
+            >
+              {creating ? (
+                <>
+                  <Spinner data-icon="inline-start" />
+                  {creatingLabel}
+                </>
+              ) : (
+                createLabel
+              )}
+            </Button>
+          ) : null}
         </div>
       ) : null}
     </header>

@@ -29,7 +29,9 @@ def build_revenue_trends(
         return None
 
     if previous_run_id is not None:
-        prev_row = session.query(AnalyticsRun).where(AnalyticsRun.id == previous_run_id).one_or_none()
+        prev_row = (
+            session.query(AnalyticsRun).where(AnalyticsRun.id == previous_run_id).one_or_none()
+        )
         if prev_row is None or prev_row.location_id != run.location_id:
             prev_facts: list[OrderFact] = []
         else:

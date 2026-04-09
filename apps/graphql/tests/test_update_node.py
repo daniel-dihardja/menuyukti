@@ -371,7 +371,9 @@ def test_update_campaign_node_goal_data():
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
         session.commit()
 
-        location = Location(name="Update Campaign Goal Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        location = Location(
+            name="Update Campaign Goal Location", clerk_user_id=GRAPHQL_TEST_USER_ID
+        )
         session.add(location)
         session.commit()
         session.refresh(location)

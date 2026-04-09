@@ -2,6 +2,7 @@
 
 __all__ = [
     "Base",
+    "CampaignExport",
     "Workspace",
     "WorkspaceMembership",
     "Location",

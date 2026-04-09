@@ -55,13 +55,9 @@ def update_image_ai_flow(
     if new_slug is not UNSET:
         new_slug_clean = _validate_slug_optional(new_slug)  # type: ignore[arg-type]
         if new_slug_clean is not None and new_slug_clean != row.slug:
-            taken = (
-                session.query(ImageAiFlow).filter(ImageAiFlow.slug == new_slug_clean).first()
-            )
+            taken = session.query(ImageAiFlow).filter(ImageAiFlow.slug == new_slug_clean).first()
             if taken is not None:
-                raise ValueError(
-                    f"An image AI flow with slug '{new_slug_clean}' already exists"
-                )
+                raise ValueError(f"An image AI flow with slug '{new_slug_clean}' already exists")
             row.slug = new_slug_clean
 
     if display_name is not UNSET:

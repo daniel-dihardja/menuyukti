@@ -570,6 +570,29 @@ export function useMilestoneOperations(
     [campaignId, dispatch, t],
   )
 
+  const handleExportCampaign = useCallback(async () => {
+    dispatch({ type: 'PATCH', patch: { exportError: null, exporting: true } })
+    try {
+      const res = await fetch(`/api/campaigns/${campaignId}/export`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const body = (await res.json().catch(() => null)) as { message?: string } | null
+      if (!res.ok) {
+        throw new Error(body?.message ?? t('exportError'))
+      }
+    } catch (err) {
+      dispatch({
+        type: 'PATCH',
+        patch: {
+          exportError: err instanceof Error ? err.message : t('exportError'),
+        },
+      })
+    } finally {
+      dispatch({ type: 'PATCH', patch: { exporting: false } })
+    }
+  }, [campaignId, dispatch, t])
+
   return useMemo(
     () => ({
       handleCreateMilestone,
@@ -582,6 +605,7 @@ export function useMilestoneOperations(
       handlePrepareMilestone,
       handleRunMilestone,
       handleMoveMilestone,
+      handleExportCampaign,
     }),
     [
       handleCreateMilestone,
@@ -594,6 +618,7 @@ export function useMilestoneOperations(
       handlePrepareMilestone,
       handleRunMilestone,
       handleMoveMilestone,
+      handleExportCampaign,
     ],
   )
 }

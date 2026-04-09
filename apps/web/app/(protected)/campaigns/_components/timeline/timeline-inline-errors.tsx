@@ -12,6 +12,7 @@ const ERROR_KEYS = [
   'milestoneData',
   'milestonePrepare',
   'milestoneRun',
+  'export',
 ] as const
 
 export function TimelineInlineErrors({
@@ -25,6 +26,7 @@ export function TimelineInlineErrors({
   milestoneDataError,
   milestonePrepareError,
   milestoneRunError,
+  exportError,
 }: {
   show: boolean
   createError?: string | null
@@ -36,6 +38,7 @@ export function TimelineInlineErrors({
   milestoneDataError?: string | null
   milestonePrepareError?: string | null
   milestoneRunError?: string | null
+  exportError?: string | null
 }) {
   if (!show) {
     return null
@@ -50,6 +53,7 @@ export function TimelineInlineErrors({
     milestoneDataError,
     milestonePrepareError,
     milestoneRunError,
+    exportError,
   ]
   return (
     <>

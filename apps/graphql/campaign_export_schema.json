@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://menuyukti.dev/schemas/campaign-export/1.0",
+  "title": "Campaign milestone export",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "campaignId",
+    "campaignName",
+    "exportedAt",
+    "milestones"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Payload format version"
+    },
+    "campaignId": {
+      "type": "string",
+      "pattern": "^[0-9]+$",
+      "description": "Campaign node id"
+    },
+    "campaignName": {
+      "type": "string"
+    },
+    "goal": {
+      "type": ["string", "null"],
+      "description": "Campaign-level goal from campaign node data.goal"
+    },
+    "exportedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC ISO-8601 when the export was written"
+    },
+    "milestones": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/milestoneExport" }
+    }
+  },
+  "$defs": {
+    "milestoneExport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "order", "passCriteria"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "title": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "goal": {
+          "type": "string",
+          "description": "Milestone goal from goal child or legacy milestone.data.goal"
+        },
+        "dataTask": {
+          "type": "string",
+          "enum": ["manual", "location_profile"]
+        },
+        "data": {
+          "type": "string",
+          "description": "Markdown from milestonedata child"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["complete", "failed", "pending", "empty"]
+        },
+        "passCriteria": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/passCriteriaExport" }
+        },
+        "result": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/resultExport" }]
+        }
+      }
+    },
+    "passCriteriaExport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirement", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "requirement": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pass", "fail", "open"]
+        }
+      }
+    },
+    "resultExport": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["summary", "passed", "total"],
+      "properties": {
+        "summary": { "type": "string" },
+        "passed": { "type": "integer" },
+        "total": { "type": "integer" },
+        "criteria": {
+          "type": "array"
+        }
+      }
+    }
+  }
+}

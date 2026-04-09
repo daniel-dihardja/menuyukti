@@ -125,6 +125,7 @@ export function CampaignChatPanel({
       onSetMilestoneDataTask: ops.handleSetMilestoneDataTask,
       onPrepareMilestone: ops.handlePrepareMilestone,
       onRunMilestone: ops.handleRunMilestone,
+      onExport: ops.handleExportCampaign,
     }),
     [milestoneUi, isChatBusy, ops],
   )

@@ -17,6 +17,7 @@ export type TimelineContextValue = CampaignMilestoneUiState & {
   onSetMilestoneDataTask: (id: string, dataTask: MilestoneDataTask) => Promise<boolean>
   onPrepareMilestone: (id: string) => void | Promise<void>
   onRunMilestone: (id: string) => void | Promise<void>
+  onExport: () => void | Promise<void>
 }
 
 const TimelineContext = createContext<TimelineContextValue | null>(null)
