@@ -2,14 +2,15 @@
 name: menuyukti-data-provider
 description: >-
   Implements a milestone Data task that prefetches GraphQL-backed context, runs the skill_runner LLM
-  pipeline, and persists Markdown to milestonedata—same contract as location_profile. Use when adding
+  pipeline, and persists Markdown to milestonedata—same contract as existing skills (e.g.
+  `restaurant_brand_brief`). Use when adding
   a new prepare flow selectable from the milestone card, registering prefetch handlers, extending
   GraphQL for agent prefetch, or wiring packages/agent-skills and milestone prepare.
 ---
 
 # Menuyukti: milestone data provider (skill_runner)
 
-Milestone **Data** tasks that use **Prepare** (instead of manual textarea) load a **runtime** `SKILL.md` from **`packages/agent-skills/src/agent_skills/skills/<skill_id>/`** (resolved at runtime via `agent_skills.get_skill_path`). The canonical example is [`location_profile/SKILL.md`](../../../packages/agent-skills/src/agent_skills/skills/location_profile/SKILL.md).
+Milestone **Data** tasks that use **Prepare** (instead of manual textarea) load a **runtime** `SKILL.md` from **`packages/agent-skills/src/agent_skills/skills/<skill_id>/`** (resolved at runtime via `agent_skills.get_skill_path`). A small, self-contained reference is [`location_profile/SKILL.md`](../../../packages/agent-skills/src/agent_skills/skills/location_profile/SKILL.md); marketing flows often use [`restaurant_brand_brief/SKILL.md`](../../../packages/agent-skills/src/agent_skills/skills/restaurant_brand_brief/SKILL.md).
 
 This guide is for **implementing** a new provider: GraphQL (and optional `packages/menuyukti`) → agents prefetch → `SKILL.md` contract → milestone UI / prepare route.
 
@@ -46,7 +47,7 @@ menuyukti:
       required: true
 ---
 You are a helpful assistant. Follow the product rules below.
-(Your system prompt body goes here—same role as location_profile body.)
+(Your system prompt body goes here—same role as other skills’ Markdown bodies.)
 ```
 
 ### `menuyukti` fields
@@ -110,7 +111,7 @@ flowchart LR
   GC -->|graphql_post| API
 ```
 
-[`run_skill_events`](../../../apps/agents/agents/domain/skill_runner/runner.py): prefetch → render `human_message_template` → LLM stream → [`persist_milestonedata_markdown`](../../../apps/agents/agents/core/milestone_data/). The model does **not** call a save tool; persistence is after generation (same as location_profile **Persistence** section).
+[`run_skill_events`](../../../apps/agents/agents/domain/skill_runner/runner.py): prefetch → render `human_message_template` → LLM stream → [`persist_milestonedata_markdown`](../../../apps/agents/agents/core/milestone_data/). The model does **not** call a save tool; persistence is after generation (same pattern as each skill’s **Persistence** section in `SKILL.md`).
 
 ## GraphQL and `menuyukti` checklist
 
@@ -128,7 +129,7 @@ flowchart LR
 
 ## Milestone card and Prepare API
 
-[`milestone_prepare.py`](../../../apps/agents/routers/milestone_prepare.py) resolves the skill with **`get_skill_path(body.data_task)`** (default `location_profile`). The Next.js BFF forwards `data_task` from the milestone Data source.
+[`milestone_prepare.py`](../../../apps/agents/routers/milestone_prepare.py) resolves the skill with **`get_skill_path(body.data_task)`** (default `restaurant_brand_brief` when the client omits `data_task`). The Next.js BFF forwards `data_task` from the milestone Data source.
 
 To expose a **new** task from the milestone **Data** dropdown:
 
@@ -141,11 +142,11 @@ New skills can be tested by calling `run_skill_events(get_skill_path("your_skill
 
 ## Reference chain
 
-| Layer                     | Example                                                                                                                                                           |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Milestone skill (runtime) | [`packages/agent-skills/.../location_profile/SKILL.md`](../../../packages/agent-skills/src/agent_skills/skills/location_profile/SKILL.md)                         |
-| Prefetch + handlers       | [`prefetch.py`](../../../apps/agents/agents/domain/skill_runner/prefetch.py), [`handlers.py`](../../../apps/agents/agents/domain/skill_runner/handlers.py)        |
-| GraphQL + `menuyukti`     | [`menu_heatmaps.py`](../../../apps/graphql/schema/queries/menu_heatmaps.py), [`services/menu_engineering.py`](../../../apps/graphql/services/menu_engineering.py) |
+| Layer                     | Example                                                                                                                                                                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Milestone skill (runtime) | e.g. [`restaurant_brand_brief/SKILL.md`](../../../packages/agent-skills/src/agent_skills/skills/restaurant_brand_brief/SKILL.md), [`location_profile/SKILL.md`](../../../packages/agent-skills/src/agent_skills/skills/location_profile/SKILL.md) |
+| Prefetch + handlers       | [`prefetch.py`](../../../apps/agents/agents/domain/skill_runner/prefetch.py), [`handlers.py`](../../../apps/agents/agents/domain/skill_runner/handlers.py)                                                                                        |
+| GraphQL + `menuyukti`     | [`menu_heatmaps.py`](../../../apps/graphql/schema/queries/menu_heatmaps.py), [`services/menu_engineering.py`](../../../apps/graphql/services/menu_engineering.py)                                                                                 |
 
 ## Canonical docs
 

@@ -57,7 +57,7 @@ export async function POST(req: Request, context: RouteContext) {
     )
   }
   const { locationId, dataTask } = parsed.data
-  const data_task = dataTask ?? 'location_profile'
+  const data_task = dataTask ?? 'restaurant_brand_brief'
 
   const rootData = parseNodeData(
     await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowIdFromRoute }, userId),

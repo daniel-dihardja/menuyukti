@@ -29,7 +29,7 @@ PrepareDataTask = Literal[
 class MilestonePrepareBody(BaseModel):
     location_id: int = Field(..., ge=1)
     data_task: PrepareDataTask = Field(
-        default="location_profile",
+        default="restaurant_brand_brief",
         description="Milestone data task / skill id (folder name under agent_skills.skills).",
     )
     workflow_id: str = Field(

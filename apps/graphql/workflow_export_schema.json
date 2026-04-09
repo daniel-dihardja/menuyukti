@@ -25,8 +25,8 @@
         },
         {
           "order": 1,
-          "title": "Location context",
-          "dataTask": "location_profile",
+          "title": "Brand foundation",
+          "dataTask": "restaurant_brand_brief",
           "passCriteria": []
         }
       ]
@@ -140,8 +140,16 @@
         },
         "dataTask": {
           "type": "string",
-          "enum": ["manual", "location_profile", "instagram_campaign_schedule"],
-          "description": "manual: user or LLM supplies milestone markdown (data). location_profile / instagram_campaign_schedule: milestone Data uses the corresponding prepare pipeline (agent_skills)."
+          "enum": [
+            "manual",
+            "location_profile",
+            "instagram_campaign_schedule",
+            "restaurant_brand_brief",
+            "social_campaign_calendar",
+            "social_caption_batch",
+            "visual_creative_brief"
+          ],
+          "description": "manual: user supplies milestone markdown (data). Other values: milestone Data uses the corresponding prepare pipeline in agent_skills (see apps/web milestone dataTask enum)."
         },
         "data": {
           "type": "string",
