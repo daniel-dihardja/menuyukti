@@ -122,9 +122,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
           <li aria-hidden className="text-muted-foreground/70">
             /
           </li>
-          <li className="font-sans font-semibold text-foreground">
-            {product.title}
-          </li>
+          <li className="font-sans font-semibold text-foreground">{product.title}</li>
         </ol>
       </nav>
 
@@ -277,9 +275,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
           <p className="mt-3 text-center text-sm text-muted-foreground">{t('pdp.checkoutHint')}</p>
 
           <div className="mt-10 text-muted-foreground">
-            <h2 className="font-sans text-lg font-bold text-foreground">
-              {t('pdp.aboutPiece')}
-            </h2>
+            <h2 className="font-sans text-lg font-bold text-foreground">{t('pdp.aboutPiece')}</h2>
             <p className="mt-2 leading-relaxed">{product.description}</p>
           </div>
 

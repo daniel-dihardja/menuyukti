@@ -18,7 +18,11 @@ export default async function ShopLayout({
   const t = await getTranslations('shop')
 
   return (
-    <div className={cn('flex min-h-screen flex-col bg-background font-sans text-foreground antialiased')}>
+    <div
+      className={cn(
+        'flex min-h-screen flex-col bg-background font-sans text-foreground antialiased',
+      )}
+    >
       <a
         href="#shop-main"
         className={cn(

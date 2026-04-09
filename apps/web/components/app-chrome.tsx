@@ -15,8 +15,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const isRootPage = pathname === '/' || pathname === ''
   /** Shop uses `ShopNav` (branding + Clerk). Avoid duplicate headers / duplicate auth controls. */
   const isShopRoute = pathname != null && pathname.startsWith('/shop')
-  const showChromeHeader =
-    isLoaded && !hideHeader && !isShopRoute && (isSignedIn || !isRootPage)
+  const showChromeHeader = isLoaded && !hideHeader && !isShopRoute && (isSignedIn || !isRootPage)
   const profileInSidebarHeader = isLoaded && isSignedIn && isProtectedAppShellPath(pathname)
 
   return (
