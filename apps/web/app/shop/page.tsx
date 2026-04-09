@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 
-import { CopyrightFooter } from '@/components/copyright-footer'
 import { ShopFilterBar, ShopHero, ShopProductGrid } from '@/components/shop'
 import { filterAndSortShopProducts } from '@/components/shop/shop-catalog'
 import { loadShopListParams } from '@/lib/shop/shop-list-params'
@@ -40,7 +39,6 @@ export default async function ShopPage({ searchParams }: PageProps) {
         <ShopFilterBar />
         <ShopProductGrid products={products} />
       </main>
-      <CopyrightFooter />
     </div>
   )
 }

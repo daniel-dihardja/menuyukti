@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-import { CopyrightFooter } from '@/components/copyright-footer'
 import { ShopProductDetail } from '@/components/shop/shop-product-detail'
 import { getShopProductBySlug, getShopProductSlugs } from '@/components/shop/shop-catalog'
 import { resolveShopImages } from '@/lib/shop/resolve-shop-images'
@@ -70,7 +69,6 @@ export default async function ShopProductPage({ params }: PageProps) {
       >
         <ShopProductDetail key={product.slug} product={product} resolvedImages={resolvedImages} />
       </main>
-      <CopyrightFooter />
     </div>
   )
 }

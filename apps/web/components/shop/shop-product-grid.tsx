@@ -59,7 +59,7 @@ export async function ShopProductGrid({ products }: Props) {
             </div>
             <div className="min-w-0">
               <h3
-                className={`font-[family-name:var(--font-shop-headline)] font-bold text-foreground ${p.grid.titleClass}`}
+                className={`font-sans font-bold tracking-tight text-foreground ${p.grid.titleClass}`}
               >
                 {p.title}
               </h3>

@@ -17,6 +17,8 @@ import {
 } from '@workspace/ui/components/card'
 import { Package } from 'lucide-react'
 
+import { ShopPrintOrdersPreview } from '@/components/shop'
+
 export default async function Page() {
   const t = await getTranslations('platform.printOrders')
 
@@ -31,12 +33,13 @@ export default async function Page() {
           <CardTitle>{t('emptyTitle')}</CardTitle>
           <CardDescription className="max-w-md">{t('emptyDescription')}</CardDescription>
         </CardHeader>
-        <CardContent className="flex justify-center pb-8">
-          <Button asChild>
+        <CardContent className="flex justify-center pb-2">
+          <Button asChild variant="secondary">
             <Link href={routes.shop}>{t('browseShop')}</Link>
           </Button>
         </CardContent>
       </Card>
+      <ShopPrintOrdersPreview />
     </AnalyticsPageShell>
   )
 }

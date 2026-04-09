@@ -124,6 +124,15 @@
   "shop": {
     "listMetaTitle": "The Digital Curator | Art for Your Restaurant",
     "listMetaDescription": "Elevate your culinary space with bespoke prints designed for the modern restaurateur.",
+    "nav": {
+      "brand": "Menuyukti",
+      "brandAria": "Menuyukti print shop home",
+      "tagline": "Print-on-demand for restaurants — part of your Menuyukti workspace.",
+      "signedInNavAria": "Platform navigation",
+      "backDashboard": "Dashboard",
+      "backPrintOrders": "Print orders",
+      "signIn": "Sign in"
+    },
     "skipToContent": "Skip to products",
     "filterAria": "Filter by collection",
     "noImagesAvailable": "No images are currently available.",
@@ -275,7 +284,11 @@
       "description": "Fulfillment history and status for print-on-demand orders.",
       "emptyTitle": "No orders yet",
       "emptyDescription": "When you place orders from the print shop, they will appear here.",
-      "browseShop": "Browse print shop"
+      "browseShop": "Browse print shop",
+      "previewTitle": "Featured from the print shop",
+      "previewDescription": "Browse popular pieces without leaving Menuyukti. Checkout opens in the public catalog.",
+      "previewFootnote": "The full catalog is open to everyone — share links with your team.",
+      "browseFullCatalog": "Browse full catalogue"
     }
   },
   "assets": {

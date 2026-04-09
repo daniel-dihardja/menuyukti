@@ -122,7 +122,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
           <li aria-hidden className="text-muted-foreground/70">
             /
           </li>
-          <li className="font-[family-name:var(--font-shop-headline)] text-foreground">
+          <li className="font-sans font-semibold text-foreground">
             {product.title}
           </li>
         </ol>
@@ -194,7 +194,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
             {t('pdp.printOnDemand')}
           </p>
-          <h1 className="text-balance mt-2 font-[family-name:var(--font-shop-headline)] text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
+          <h1 className="text-balance mt-2 font-sans text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
             {product.title}
           </h1>
           <p className="mt-2 text-lg text-muted-foreground">{product.subtitle}</p>
@@ -277,7 +277,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
           <p className="mt-3 text-center text-sm text-muted-foreground">{t('pdp.checkoutHint')}</p>
 
           <div className="mt-10 text-muted-foreground">
-            <h2 className="font-[family-name:var(--font-shop-headline)] text-lg font-bold text-foreground">
+            <h2 className="font-sans text-lg font-bold text-foreground">
               {t('pdp.aboutPiece')}
             </h2>
             <p className="mt-2 leading-relaxed">{product.description}</p>
@@ -285,7 +285,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
 
           <Accordion type="single" collapsible className="mt-10 w-full border-t border-border">
             <AccordionItem value="shipping">
-              <AccordionTrigger className="font-[family-name:var(--font-shop-headline)] hover:no-underline">
+              <AccordionTrigger className="font-sans font-semibold hover:no-underline">
                 {t('pdp.accordionShippingTitle')}
               </AccordionTrigger>
               <AccordionContent className="leading-relaxed text-muted-foreground">
@@ -293,7 +293,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="returns">
-              <AccordionTrigger className="font-[family-name:var(--font-shop-headline)] hover:no-underline">
+              <AccordionTrigger className="font-sans font-semibold hover:no-underline">
                 {t('pdp.accordionReturnsTitle')}
               </AccordionTrigger>
               <AccordionContent className="leading-relaxed text-muted-foreground">
@@ -301,7 +301,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="care">
-              <AccordionTrigger className="font-[family-name:var(--font-shop-headline)] hover:no-underline">
+              <AccordionTrigger className="font-sans font-semibold hover:no-underline">
                 {t('pdp.accordionCareTitle')}
               </AccordionTrigger>
               <AccordionContent className="leading-relaxed text-muted-foreground">

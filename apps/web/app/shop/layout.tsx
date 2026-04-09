@@ -1,22 +1,14 @@
 import { getTranslations } from 'next-intl/server'
-import { Manrope, Work_Sans } from 'next/font/google'
 
-import { cn } from '@workspace/ui/lib/utils'
+import { CopyrightFooter } from '@/components/copyright-footer'
+import { ShopNav } from '@/components/shop/shop-nav'
 
 import '@/components/shop/shop.css'
 
+import { cn } from '@workspace/ui/lib/utils'
+
 /** Presigned S3 URLs must not be frozen at build time. */
 export const dynamic = 'force-dynamic'
-
-const manrope = Manrope({
-  subsets: ['latin'],
-  variable: '--font-shop-headline',
-})
-
-const workSans = Work_Sans({
-  subsets: ['latin'],
-  variable: '--font-shop-body',
-})
 
 export default async function ShopLayout({
   children,
@@ -26,13 +18,7 @@ export default async function ShopLayout({
   const t = await getTranslations('shop')
 
   return (
-    <div
-      className={cn(
-        manrope.variable,
-        workSans.variable,
-        'flex min-h-screen flex-col bg-background font-[family-name:var(--font-shop-body),sans-serif] text-foreground',
-      )}
-    >
+    <div className={cn('flex min-h-screen flex-col bg-background font-sans text-foreground antialiased')}>
       <a
         href="#shop-main"
         className={cn(
@@ -41,7 +27,9 @@ export default async function ShopLayout({
       >
         {t('skipToContent')}
       </a>
-      {children}
+      <ShopNav />
+      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+      <CopyrightFooter />
     </div>
   )
 }

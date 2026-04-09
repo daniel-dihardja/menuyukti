@@ -21,10 +21,10 @@ export async function ShopHero() {
       </div>
       <div className="absolute inset-0 flex items-center bg-gradient-to-r from-black/40 to-transparent px-8 md:px-16">
         <div className="max-w-2xl text-white">
-          <span className="mb-4 block font-[family-name:var(--font-shop-headline)] text-sm font-bold uppercase tracking-[0.2em] opacity-80">
+          <span className="mb-4 block text-sm font-bold uppercase tracking-[0.2em] opacity-80">
             {t('kicker')}
           </span>
-          <h1 className="text-balance font-[family-name:var(--font-shop-headline)] text-5xl font-extrabold leading-[1.1] tracking-tight md:text-7xl">
+          <h1 className="text-balance font-sans text-5xl font-extrabold leading-[1.1] tracking-tight md:text-7xl">
             {t('headline')}
           </h1>
           <p className="mt-6 max-w-lg text-pretty text-xl font-light leading-relaxed text-white">
