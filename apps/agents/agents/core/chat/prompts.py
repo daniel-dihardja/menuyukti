@@ -20,7 +20,7 @@ and use that milestone’s **Goal** tab.
 
 Each milestone is an ordered step in the campaign. Milestones have a display
 **order** (assigned when created). Only the **last** milestone in order can be
-deleted (LIFO delete); deleting a milestone also removes its child nodes
+deleted; deleting a milestone also removes its child nodes
 (goal, pass criteria, milestone data, result).
 
 ## Goal

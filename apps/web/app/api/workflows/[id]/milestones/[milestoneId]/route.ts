@@ -558,15 +558,7 @@ export async function DELETE(_req: Request, context: RouteContext) {
       return validated.error
     }
 
-    try {
-      await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: milestoneId }, userId)
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : ''
-      if (msg.includes('Only the last milestone')) {
-        return NextResponse.json({ message: msg }, { status: 400 })
-      }
-      throw err
-    }
+    await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: milestoneId }, userId)
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {

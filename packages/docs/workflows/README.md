@@ -28,7 +28,7 @@ A workflow **should** expose a **root goal**: one clear statement of **why this 
 Each **milestone** is a **working unit** in that flow:
 
 - Milestones have a display **order** (sequence of steps).
-- Only the **last** milestone in order can be deleted (LIFO); removing a milestone removes its dependent pieces (goal, criteria, data, result).
+- Any milestone can be deleted; removing a milestone removes its dependent pieces (goal, criteria, data, result).
 
 Downstream milestones can depend on **milestone data** produced earlier in the same campaign (conceptually: later steps consume or build on earlier artifacts), even though persistence is modeled **per milestone** in the product.
 

@@ -1,4 +1,4 @@
-"""Milestone nodes: under workflow root; LIFO delete by display order; optional JSON data on update."""
+"""Milestone nodes: under workflow root; any milestone may be deleted; optional JSON data on update."""
 
 from __future__ import annotations
 
@@ -90,21 +90,5 @@ class MilestoneHandler(NodeHandler):
             raise ValueError("Milestone parent must be a workflow root")
         if parent.location_id != node.location_id:
             raise ValueError("Node location mismatch")
-
-        siblings = (
-            session.query(Node)
-            .filter(
-                Node.location_id == node.location_id,
-                Node.parent_id == node.parent_id,
-                Node.node_type == "milestone",
-            )
-            .all()
-        )
-        if not siblings:
-            raise ValueError("Milestone siblings not found")
-
-        last_sibling = max(siblings, key=_milestone_sort_key)
-        if last_sibling.id != node.id:
-            raise ValueError("Only the last milestone can be deleted")
 
         delete_milestone_children(session, node.id)

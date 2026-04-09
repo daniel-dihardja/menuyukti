@@ -30,7 +30,7 @@ export function TimelineBody({
           <div aria-label={listLabel} className="flex flex-col p-4 pr-3" role="listbox">
             {milestones.map((milestone, index) => {
               const isLast = index === milestones.length - 1
-              const showDelete = Boolean(isLast && onDeleteMilestone)
+              const showDelete = Boolean(onDeleteMilestone)
               return (
                 <TimelineItem
                   key={milestone.id}

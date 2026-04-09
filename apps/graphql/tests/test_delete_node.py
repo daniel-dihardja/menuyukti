@@ -40,7 +40,8 @@ mutation DeleteNode($id: ID!) {
 """
 
 
-def test_delete_node_only_last_milestone():
+def test_delete_node_any_milestone():
+    """Any milestone may be deleted, not only the last in display order."""
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -100,25 +101,15 @@ def test_delete_node_only_last_milestone():
     assert not second.errors, second.errors
     second_id = second.data["createNode"]["id"]
 
-    bad = asyncio.run(
+    delete_first = asyncio.run(
         schema.execute(
             DELETE_NODE,
             variable_values={"id": first_id},
             context_value=graphql_auth_context(),
         )
     )
-    assert bad.errors
-    assert bad.data is None or bad.data.get("deleteNode") is None
-
-    good = asyncio.run(
-        schema.execute(
-            DELETE_NODE,
-            variable_values={"id": second_id},
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not good.errors, good.errors
-    assert good.data["deleteNode"] is True
+    assert not delete_first.errors, delete_first.errors
+    assert delete_first.data["deleteNode"] is True
 
     listed = asyncio.run(
         schema.execute(
@@ -134,8 +125,32 @@ def test_delete_node_only_last_milestone():
     assert not listed.errors, listed.errors
     nodes = listed.data["nodes"]
     assert len(nodes) == 1
-    assert nodes[0]["id"] == first_id
-    assert nodes[0]["name"] == "First"
+    assert nodes[0]["id"] == second_id
+    assert nodes[0]["name"] == "Second"
+
+    delete_second = asyncio.run(
+        schema.execute(
+            DELETE_NODE,
+            variable_values={"id": second_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not delete_second.errors, delete_second.errors
+    assert delete_second.data["deleteNode"] is True
+
+    listed_empty = asyncio.run(
+        schema.execute(
+            NODES_BY_PARENT,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "parentId": campaign_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not listed_empty.errors, listed_empty.errors
+    assert listed_empty.data["nodes"] == []
 
 
 def test_delete_passcriteria_node():
