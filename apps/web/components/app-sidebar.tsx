@@ -3,9 +3,13 @@
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
   useSidebar,
 } from '@workspace/ui/components/sidebar'
+import { Separator } from '@workspace/ui/components/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
 import { Leaf } from 'lucide-react'
@@ -13,6 +17,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 import { NavMain } from './nav-main'
+import { SidebarThemeToggle } from './sidebar-theme-toggle'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const t = useTranslations('sidebar')
@@ -54,6 +59,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain />
       </SidebarContent>
+
+      <Separator className="mx-2 bg-sidebar-border" />
+      <SidebarFooter className="pb-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarThemeToggle />
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   )
 }

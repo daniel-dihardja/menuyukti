@@ -257,7 +257,13 @@
     "cogs": "COGS",
     "fixedCosts": "Fixed Costs",
     "docs": "Docs",
-    "assets": "Assets"
+    "assets": "Assets",
+    "theme": {
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    }
   },
   "platform": {
     "dashboard": {
