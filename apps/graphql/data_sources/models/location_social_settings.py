@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Text, func
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
@@ -19,14 +19,17 @@ class LocationSocialSettings(Base):
     """One row per location; nullable JSON lists for pillars, platforms, hashtags."""
 
     __tablename__ = "location_social_settings"
+    # Matches b2c3d4e5f6a7 (UniqueConstraint + Index; column unique=True differs in metadata).
+    __table_args__ = (
+        UniqueConstraint("location_id", name="uq_location_social_settings_location_id"),
+        Index("ix_location_social_settings_location_id", "location_id", unique=False),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     location_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("location.id", ondelete="CASCADE"),
         nullable=False,
-        unique=True,
-        index=True,
     )
     tone: Mapped[str | None] = mapped_column(Text, nullable=True)
     brand_personality: Mapped[str | None] = mapped_column(Text, nullable=True)
