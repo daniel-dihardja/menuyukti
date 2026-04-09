@@ -50,8 +50,7 @@ class UpdateNodeMutation:
         if node_pk < 1:
             raise ValueError("Invalid node id")
 
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             node = session.get(Node, node_pk)
             if node is None:
                 raise ValueError("Node not found")
@@ -77,5 +76,3 @@ class UpdateNodeMutation:
             session.refresh(node)
 
             return _node_to_gql(node)
-        finally:
-            session.close()

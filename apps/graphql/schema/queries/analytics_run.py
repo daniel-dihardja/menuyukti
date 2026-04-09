@@ -105,22 +105,18 @@ class AnalyticsRunQuery:
     @strawberry.field(description="Fetch metadata and COGS for a single analytics run by ID.")
     def analytics_run(self, info: strawberry.Info, id: strawberry.ID) -> AnalyticsRunType | None:
         user_id = user_id_from_info(info)
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             run = get_analytics_run_if_owner(session, int(id), user_id)
             if run is None:
                 return None
             return _run_to_type(session, run)
-        finally:
-            session.close()
 
     @strawberry.field(description="List analytics runs for a location, newest first.")
     def analytics_runs(
         self, info: strawberry.Info, location_id: int
     ) -> list[AnalyticsRunListItemType]:
         user_id = user_id_from_info(info)
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             if not is_location_owner(session, location_id, user_id):
                 return []
             runs = (
@@ -137,8 +133,6 @@ class AnalyticsRunQuery:
                 )
                 for run in runs
             ]
-        finally:
-            session.close()
 
     @strawberry.field(
         description=(
@@ -150,11 +144,8 @@ class AnalyticsRunQuery:
         self, info: strawberry.Info, analytics_run_id: strawberry.ID
     ) -> AnalyticsRunOrderMetricsType | None:
         user_id = user_id_from_info(info)
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
             if run is None:
                 return None
             return _compute_order_metrics(session, run)
-        finally:
-            session.close()

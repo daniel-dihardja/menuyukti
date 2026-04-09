@@ -14,19 +14,27 @@ def get_previous_analytics_run(
     Return the next-older analytics run for the same location.
 
     Runs are ordered by id descending (newest first); the "previous" period is the
-    run immediately after the current id in that list.
+    run with the largest id strictly less than ``current_run_id`` for this location.
+
+    Returns None if there is no analytics run with ``current_run_id`` for this
+    location (same as the legacy full-scan implementation).
     """
-    runs = (
+    current = (
         session.query(AnalyticsRun)
-        .where(AnalyticsRun.location_id == location_id)
-        .order_by(AnalyticsRun.id.desc())
-        .all()
+        .filter(
+            AnalyticsRun.location_id == location_id,
+            AnalyticsRun.id == current_run_id,
+        )
+        .first()
     )
-    ids = [r.id for r in runs]
-    try:
-        idx = ids.index(current_run_id)
-    except ValueError:
+    if current is None:
         return None
-    if idx + 1 < len(runs):
-        return runs[idx + 1]
-    return None
+    return (
+        session.query(AnalyticsRun)
+        .filter(
+            AnalyticsRun.location_id == location_id,
+            AnalyticsRun.id < current_run_id,
+        )
+        .order_by(AnalyticsRun.id.desc())
+        .first()
+    )

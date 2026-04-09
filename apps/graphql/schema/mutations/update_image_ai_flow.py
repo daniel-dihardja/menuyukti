@@ -34,8 +34,7 @@ class UpdateImageAiFlowMutation:
         if not user_id:
             raise ValueError("Missing authenticated user for updateImageAiFlow")
 
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             row = image_ai_flow_service.update_image_ai_flow(
                 session,
                 slug=slug,
@@ -50,5 +49,3 @@ class UpdateImageAiFlowMutation:
                 sort_order=sort_order,
             )
             return _flow_to_gql(row)
-        finally:
-            session.close()

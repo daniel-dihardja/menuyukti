@@ -421,7 +421,9 @@ def test_delete_workflow_cascades_milestones_and_children():
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
         session.commit()
 
-        location = Location(name="Delete Workflow Cascade Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        location = Location(
+            name="Delete Workflow Cascade Location", clerk_user_id=GRAPHQL_TEST_USER_ID
+        )
         session.add(location)
         session.commit()
         session.refresh(location)
@@ -524,7 +526,9 @@ def test_delete_workflow_cascades_milestones_and_children():
         assert session.get(Node, goal_id) is None
         assert session.get(Node, pc_id) is None
         remaining = (
-            session.query(Node).filter(Node.location_id == location_id, Node.parent_id == wf_pk).count()
+            session.query(Node)
+            .filter(Node.location_id == location_id, Node.parent_id == wf_pk)
+            .count()
         )
         assert remaining == 0
     finally:

@@ -13,8 +13,7 @@ class LocationsQuery:
         user_id = user_id_from_info(info)
         if not user_id:
             return []
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             workspace_ids = [
                 w[0]
                 for w in session.query(WorkspaceMembership.workspace_id)
@@ -37,16 +36,13 @@ class LocationsQuery:
                 )
                 for row in rows
             ]
-        finally:
-            session.close()
 
     @strawberry.field
     def location(self, info: strawberry.Info, id: strawberry.ID) -> LocationType | None:
         user_id = user_id_from_info(info)
         if not user_id:
             return None
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             row = session.get(Location, int(id))
             if row is None or not is_location_owner(session, row.id, user_id):
                 return None
@@ -59,5 +55,3 @@ class LocationsQuery:
                 currency=row.currency,
                 node_id=str(row.node_id) if row.node_id is not None else None,
             )
-        finally:
-            session.close()

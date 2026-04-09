@@ -117,8 +117,7 @@ class OperatingProfileQuery:
         the given location_id.
         """
         user_id = user_id_from_info(info)
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
             if run is None or run.location_id != int(location_id):
                 return None
@@ -140,5 +139,3 @@ class OperatingProfileQuery:
                 return None
 
             return _result_to_type(result)
-        finally:
-            session.close()

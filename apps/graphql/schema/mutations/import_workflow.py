@@ -235,10 +235,7 @@ class ImportWorkflowMutation:
         if not user_id:
             raise ValueError("Missing authenticated user for importWorkflow")
 
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             require_location_owner(session, location_id, user_id)
             root_node = _import_from_payload(session, location_id, payload)
             return _node_to_gql(root_node)
-        finally:
-            session.close()

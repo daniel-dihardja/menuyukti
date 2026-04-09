@@ -61,8 +61,7 @@ class CreateImageAiFlowMutation:
         if not model_clean:
             raise ValueError("Model is required")
 
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             existing = session.query(ImageAiFlow).filter(ImageAiFlow.slug == slug_clean).first()
             if existing is not None:
                 raise ValueError(f"An image AI flow with slug '{slug_clean}' already exists")
@@ -84,5 +83,3 @@ class CreateImageAiFlowMutation:
             session.commit()
             session.refresh(row)
             return _flow_to_gql(row)
-        finally:
-            session.close()

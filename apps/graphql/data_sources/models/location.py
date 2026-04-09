@@ -1,9 +1,18 @@
 """Location ORM model."""
 
-from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.orm import relationship
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from graphql.data_sources.database import Base
+
+if TYPE_CHECKING:
+    from graphql.data_sources.models.instagram import InstagramPost
+    from graphql.data_sources.models.node import Node
+    from graphql.data_sources.models.workspace import Workspace
 
 
 class Location(Base):
@@ -13,35 +22,35 @@ class Location(Base):
 
     __tablename__ = "location"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(256), nullable=False)
-    street = Column(String(512), nullable=True)
-    city = Column(String(128), nullable=True)
-    country = Column(String(128), nullable=True)
-    currency = Column(String(16), nullable=True)
-    workspace_id = Column(
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(256))
+    street: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    city: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    country: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    currency: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    workspace_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("workspace.id"),
         nullable=True,
         index=True,
     )
-    clerk_user_id = Column(String(128), nullable=True, index=True)
-    node_id = Column(
+    clerk_user_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    node_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("node.id", use_alter=True, name="fk_location_node_id"),
         nullable=True,
         index=True,
     )
 
-    workspace = relationship("Workspace", back_populates="locations")
-    instagram_posts = relationship("InstagramPost", back_populates="location")
-    nodes = relationship(
+    workspace: Mapped[Workspace | None] = relationship(back_populates="locations")
+    instagram_posts: Mapped[list[InstagramPost]] = relationship(back_populates="location")
+    nodes: Mapped[list[Node]] = relationship(
         "Node",
         back_populates="location",
         foreign_keys="Node.location_id",
     )
-    location_root_node = relationship(
+    location_root_node: Mapped[Node | None] = relationship(
         "Node",
-        foreign_keys=[node_id],
+        foreign_keys="Location.node_id",
         post_update=True,
     )

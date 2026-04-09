@@ -43,8 +43,7 @@ def ingest_sales_report_upload(
 ) -> SalesReportIngestResult:
     """Create analytics run, persist order facts in one DB session, then build preview data."""
     normalized_rows_data, detected_pos = normalize_sales_report(payload)
-    session = SessionLocal()
-    try:
+    with SessionLocal() as session:
         period_start: datetime | None = None
         period_end: datetime | None = None
         if normalized_rows_data:
@@ -80,8 +79,6 @@ def ingest_sales_report_upload(
             detected_pos,
             analytics_run_id=analytics_run.id,
         )
-    finally:
-        session.close()
 
     orders_data = line_items_to_orders(normalized_rows_data)
     sales_analytics_dict: dict[str, Any] = run_sales_analytics(normalized_rows_data)

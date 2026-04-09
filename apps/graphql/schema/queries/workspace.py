@@ -33,8 +33,7 @@ class WorkspaceQuery:
         user_id = user_id_from_info(info)
         if not user_id:
             return None
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             mem = (
                 session.query(WorkspaceMembership)
                 .filter(WorkspaceMembership.clerk_user_id == user_id)
@@ -47,8 +46,6 @@ class WorkspaceQuery:
             if ws is None:
                 return None
             return _workspace_to_gql(ws)
-        finally:
-            session.close()
 
     @strawberry.field
     def workspace_members(
@@ -58,8 +55,7 @@ class WorkspaceQuery:
         if not user_id:
             return []
         wid = int(workspace_id)
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             if not is_workspace_member(session, wid, user_id):
                 return []
             rows = (
@@ -69,5 +65,3 @@ class WorkspaceQuery:
                 .all()
             )
             return [_membership_to_gql(r) for r in rows]
-        finally:
-            session.close()

@@ -29,8 +29,7 @@ class WorkflowExportsQuery:
         if not user_id:
             return []
 
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             if not is_location_owner(session, location_id, user_id):
                 return []
             rows = (
@@ -40,5 +39,3 @@ class WorkflowExportsQuery:
                 .all()
             )
             return [_export_row_to_gql(r) for r in rows]
-        finally:
-            session.close()

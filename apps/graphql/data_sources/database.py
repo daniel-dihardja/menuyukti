@@ -15,16 +15,31 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env", override=False)
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite+pysqlite:///./graphql.db")
 
-engine = create_engine(DATABASE_URL, future=True, echo=False)
+engine = create_engine(
+    DATABASE_URL,
+    future=True,
+    echo=False,
+    pool_size=10,
+    max_overflow=20,
+    pool_timeout=30,
+    pool_recycle=1800,
+    pool_pre_ping=True,
+)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
-Base = declarative_base()
+
+
+class Base(DeclarativeBase):
+    """Declarative base for SQLAlchemy 2.0 ORM models."""
+
+    pass
+
 
 # Register all ORM models with Base.metadata (import side effects only).
 import graphql.data_sources.models  # noqa: F401, E402
@@ -35,10 +50,9 @@ def seed_db(target_engine=None) -> None:
 
     resolved_engine = target_engine or engine
     Session = sessionmaker(bind=resolved_engine, expire_on_commit=False)
-    session = Session()
     from graphql.data_sources import ImageAiFlow
 
-    try:
+    with Session() as session:
         existing = (
             session.query(ImageAiFlow).filter(ImageAiFlow.slug == "remove-background").first()
         )
@@ -61,8 +75,6 @@ def seed_db(target_engine=None) -> None:
                 )
             )
             session.commit()
-    finally:
-        session.close()
 
 
 def init_db(target_engine=None) -> None:
@@ -103,7 +115,9 @@ def main() -> None:
     """
 
     init_db()
-    print("Created tables for the GraphQL service (create_all). For PostgreSQL, use: make db-upgrade")
+    print(
+        "Created tables for the GraphQL service (create_all). For PostgreSQL, use: make db-upgrade"
+    )
 
 
 def _main_drop() -> None:

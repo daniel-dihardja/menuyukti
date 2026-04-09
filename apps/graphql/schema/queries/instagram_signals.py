@@ -128,8 +128,7 @@ class InstagramSignalsQuery:
         location_id: strawberry.ID | None = None,
     ) -> InstagramSignalsType | None:
         user_id = user_id_from_info(info)
-        session = SessionLocal()
-        try:
+        with SessionLocal() as session:
             run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
             if run is None:
                 return None
@@ -170,5 +169,3 @@ class InstagramSignalsQuery:
                     revenue_vs_previous_pct=raw["period_headline"].get("revenue_vs_previous_pct"),
                 ),
             )
-        finally:
-            session.close()
