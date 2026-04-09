@@ -255,7 +255,21 @@ function MarkdownManualSaveFooter({
   manualSave: MarkdownEditFieldManualSave
   saveButtonLabel: string
 }) {
-  const saveDisabled = disabled || manualSave.status === 'saving' || manualSave.status === 'saved'
+  const isSaved = manualSave.status === 'saved'
+  const isSaving = manualSave.status === 'saving'
+  const saveDisabled = disabled || isSaving
+
+  if (isSaved) {
+    return (
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        <FieldSaveStatus
+          className="inline-flex"
+          messages={manualSave.messages}
+          status={manualSave.status}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
@@ -271,11 +285,13 @@ function MarkdownManualSaveFooter({
       >
         {saveButtonLabel}
       </Button>
-      <FieldSaveStatus
-        className="inline-flex"
-        messages={manualSave.messages}
-        status={manualSave.status}
-      />
+      {isSaving ? (
+        <FieldSaveStatus
+          className="inline-flex"
+          messages={manualSave.messages}
+          status={manualSave.status}
+        />
+      ) : null}
     </div>
   )
 }
