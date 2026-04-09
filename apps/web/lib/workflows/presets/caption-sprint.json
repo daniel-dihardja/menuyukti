@@ -1,0 +1,71 @@
+{
+  "workflowName": "Caption sprint",
+  "goal": "Rapidly generate a campaign calendar and publish-ready captions for a focused 1–2 week content push.",
+  "milestones": [
+    {
+      "order": 0,
+      "title": "Sprint Brief",
+      "goal": "Define sprint dates, theme, featured items, and posting cadence before calendar and captions.",
+      "dataTask": "manual",
+      "data": "## Sprint Brief\n\n**Sprint start date:** <!-- YYYY-MM-DD -->\n**Sprint end date:** <!-- YYYY-MM-DD -->\n**Sprint theme or angle:** <!-- e.g. Weekend brunch heroes -->\n**Featured item(s) or category:** <!-- comma-separated -->\n**Post cadence:** <!-- e.g. 2 posts/day for 5 days -->\n**Platforms:** <!-- e.g. Instagram only -->\n**Notes:** <!-- constraints, voice, or CTA focus -->\n",
+      "passCriteria": [
+        {
+          "requirement": "Sprint start date is specified.",
+          "status": "open"
+        },
+        {
+          "requirement": "Sprint end date is specified and is on or after the start date.",
+          "status": "open"
+        },
+        {
+          "requirement": "Featured item(s) or a clear theme is stated.",
+          "status": "open"
+        },
+        {
+          "requirement": "Post cadence is noted (e.g. posts per day or per week).",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 1,
+      "title": "Campaign Calendar",
+      "goal": "Produce a compact multi-day or multi-week calendar for the sprint window with formats and angles.",
+      "dataTask": "social_campaign_calendar",
+      "passCriteria": [
+        {
+          "requirement": "Calendar covers the full sprint window from the Sprint Brief.",
+          "status": "open"
+        },
+        {
+          "requirement": "Each slot includes format and at least one featured menu item by name.",
+          "status": "open"
+        },
+        {
+          "requirement": "Each slot includes a caption angle or talking point.",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 2,
+      "title": "Caption Batch",
+      "goal": "Turn each calendar slot into a publish-ready caption (hook, body, CTA, hashtags).",
+      "dataTask": "social_caption_batch",
+      "passCriteria": [
+        {
+          "requirement": "Every calendar slot has a caption.",
+          "status": "open"
+        },
+        {
+          "requirement": "Each caption opens with a hook (first line).",
+          "status": "open"
+        },
+        {
+          "requirement": "Each caption includes hashtags (typically 5–10).",
+          "status": "open"
+        }
+      ]
+    }
+  ]
+}

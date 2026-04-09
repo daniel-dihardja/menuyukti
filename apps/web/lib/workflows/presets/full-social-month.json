@@ -1,0 +1,131 @@
+{
+  "workflowName": "Full social month",
+  "goal": "Build a complete 4-week Instagram campaign: brand foundation, content calendar, captions, and visual direction.",
+  "milestones": [
+    {
+      "order": 0,
+      "title": "Campaign Brief",
+      "goal": "Lock the month window, theme, platforms, and anchor dates before generating assets.",
+      "dataTask": "manual",
+      "data": "## Campaign Brief\n\n**Start date:** <!-- YYYY-MM-DD -->\n**End date:** <!-- YYYY-MM-DD (should span ~4 weeks) -->\n**Monthly theme:** <!-- e.g. Spring lunch spotlight -->\n**Social platforms in scope:** <!-- e.g. Instagram Feed, Reels, Stories -->\n**Brand voice notes:** <!-- e.g. warm, confident, value-clear -->\n**Campaign objective:** <!-- e.g. Grow dinner covers on Thu–Sat -->\n**Key menu items or categories:** <!-- comma-separated -->\n**Target guest:** <!-- e.g. local families, office lunch -->\n**Post cadence:** <!-- e.g. 5 posts/week -->\n**Special events or holidays in window:** <!-- list dates or write \"none\" -->\n**Budget or constraints:** <!-- e.g. no paid ads, in-house photos only -->\n",
+      "passCriteria": [
+        {
+          "requirement": "Start date is specified (YYYY-MM-DD or clear equivalent).",
+          "status": "open"
+        },
+        {
+          "requirement": "End date is specified and is on or after the start date.",
+          "status": "open"
+        },
+        {
+          "requirement": "Monthly theme is stated.",
+          "status": "open"
+        },
+        {
+          "requirement": "At least one special event or holiday in the window is noted, or the brief explicitly says \"none\".",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 1,
+      "title": "Location Profile",
+      "goal": "Document operating snapshot and positioning hints from POS data for downstream creative work.",
+      "dataTask": "location_profile",
+      "passCriteria": [
+        {
+          "requirement": "Peak periods or traffic pattern is documented.",
+          "status": "open"
+        },
+        {
+          "requirement": "Guest behavior section is present (when/how people order).",
+          "status": "open"
+        },
+        {
+          "requirement": "Positioning hints or implications for messaging are listed.",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 2,
+      "title": "Brand Brief",
+      "goal": "Establish pillars, tone, audience hypotheses, and proof-oriented angles from analytics.",
+      "dataTask": "restaurant_brand_brief",
+      "passCriteria": [
+        {
+          "requirement": "3–5 content pillars are defined and tied to categories or operating signals.",
+          "status": "open"
+        },
+        {
+          "requirement": "Tone guardrails are documented (3–5 bullets or equivalent).",
+          "status": "open"
+        },
+        {
+          "requirement": "At least one proof-oriented menu angle cites category mix or hero/trending items from the data.",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "title": "4-Week Content Calendar",
+      "goal": "Produce a four-week Instagram-first calendar with formats, pillars, and featured items per slot.",
+      "dataTask": "social_campaign_calendar",
+      "passCriteria": [
+        {
+          "requirement": "All four weeks (Week 1–4) are covered with planned slots.",
+          "status": "open"
+        },
+        {
+          "requirement": "Each week includes at least three post slots.",
+          "status": "open"
+        },
+        {
+          "requirement": "Content mix reflects weekly demand pattern (e.g. promotional bias in lower-demand weeks when data supports it).",
+          "status": "open"
+        },
+        {
+          "requirement": "Each slot specifies format (e.g. Reel, Carousel, Feed, Story).",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "title": "Caption Batch",
+      "goal": "Write hook, body, CTA, and hashtags for each calendar slot in brand voice.",
+      "dataTask": "social_caption_batch",
+      "passCriteria": [
+        {
+          "requirement": "Every calendar slot has a corresponding caption block.",
+          "status": "open"
+        },
+        {
+          "requirement": "Each caption includes a hook, body, CTA, and hashtag block.",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "title": "Visual Creative Brief",
+      "goal": "Define shot lists, Reel hooks, and Story sequences aligned to the calendar and promotion signals.",
+      "dataTask": "visual_creative_brief",
+      "passCriteria": [
+        {
+          "requirement": "Each of four weeks has a shot list or equivalent visual plan.",
+          "status": "open"
+        },
+        {
+          "requirement": "A Reel hook or first-frame note is specified for each week.",
+          "status": "open"
+        },
+        {
+          "requirement": "A Story sequence (multi-slide outline) is described for each week.",
+          "status": "open"
+        }
+      ]
+    }
+  ]
+}
