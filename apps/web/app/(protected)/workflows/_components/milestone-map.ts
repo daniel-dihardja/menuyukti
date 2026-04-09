@@ -139,13 +139,8 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   const passCriteria = passCriteriaFromChildNodes(node.passCriteriaNodes)
   const resultMarkdown = resultMarkdownFromChildNodes(node.resultNodes)
   let dataTask: MilestoneDataTask = 'manual'
-  if (parsed.success) {
-    const dt = parsed.data.dataTask
-    if (dt === 'location_profile') {
-      dataTask = 'location_profile'
-    } else if (dt === 'instagram_campaign_schedule') {
-      dataTask = 'instagram_campaign_schedule'
-    }
+  if (parsed.success && parsed.data.dataTask) {
+    dataTask = parsed.data.dataTask
   }
 
   return {

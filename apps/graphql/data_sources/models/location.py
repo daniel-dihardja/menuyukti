@@ -11,6 +11,7 @@ from graphql.data_sources.database import Base
 
 if TYPE_CHECKING:
     from graphql.data_sources.models.instagram import InstagramPost
+    from graphql.data_sources.models.location_social_settings import LocationSocialSettings
     from graphql.data_sources.models.node import Node
     from graphql.data_sources.models.workspace import Workspace
 
@@ -53,4 +54,9 @@ class Location(Base):
         "Node",
         foreign_keys="Location.node_id",
         post_update=True,
+    )
+    social_settings: Mapped[LocationSocialSettings | None] = relationship(
+        "LocationSocialSettings",
+        back_populates="location",
+        uselist=False,
     )

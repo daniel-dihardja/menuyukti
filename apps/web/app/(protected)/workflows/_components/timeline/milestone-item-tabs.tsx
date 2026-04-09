@@ -29,6 +29,26 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 
 import type { MilestoneDataTask, PassCriteriaRow, TimelineMilestone } from './types'
+import { MILESTONE_PREPARE_DATA_TASKS } from './types'
+
+const DATA_TAB_DESCRIPTION_KEY: Record<
+  MilestoneDataTask,
+  | 'milestoneDataDescription'
+  | 'milestoneDataDescriptionLocationProfile'
+  | 'milestoneDataDescriptionInstagramCampaignSchedule'
+  | 'milestoneDataDescriptionRestaurantBrandBrief'
+  | 'milestoneDataDescriptionSocialCampaignCalendar'
+  | 'milestoneDataDescriptionSocialCaptionBatch'
+  | 'milestoneDataDescriptionVisualCreativeBrief'
+> = {
+  manual: 'milestoneDataDescription',
+  location_profile: 'milestoneDataDescriptionLocationProfile',
+  instagram_campaign_schedule: 'milestoneDataDescriptionInstagramCampaignSchedule',
+  restaurant_brand_brief: 'milestoneDataDescriptionRestaurantBrandBrief',
+  social_campaign_calendar: 'milestoneDataDescriptionSocialCampaignCalendar',
+  social_caption_batch: 'milestoneDataDescriptionSocialCaptionBatch',
+  visual_creative_brief: 'milestoneDataDescriptionVisualCreativeBrief',
+}
 
 export type MilestoneItemTabsProps = {
   milestone: TimelineMilestone
@@ -71,6 +91,7 @@ export function MilestoneItemTabs({
 }: MilestoneItemTabsProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const dataTask: MilestoneDataTask = milestone.dataTask ?? 'manual'
+  const isPrepareDataTask = MILESTONE_PREPARE_DATA_TASKS.includes(dataTask)
   const dataTaskFieldId = `milestone-data-task-${milestone.id}`
   const hasGeneratedData = Boolean((milestone.data ?? '').trim())
   const saveStatusMessages = useMemo(
@@ -253,19 +274,25 @@ export function MilestoneItemTabs({
                   <SelectItem value="instagram_campaign_schedule">
                     {t('milestoneDataTaskInstagramCampaignSchedule')}
                   </SelectItem>
+                  <SelectItem value="restaurant_brand_brief">
+                    {t('milestoneDataTaskRestaurantBrandBrief')}
+                  </SelectItem>
+                  <SelectItem value="social_campaign_calendar">
+                    {t('milestoneDataTaskSocialCampaignCalendar')}
+                  </SelectItem>
+                  <SelectItem value="social_caption_batch">
+                    {t('milestoneDataTaskSocialCaptionBatch')}
+                  </SelectItem>
+                  <SelectItem value="visual_creative_brief">
+                    {t('milestoneDataTaskVisualCreativeBrief')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </Field>
             <Field>
               <FieldLabel>{t('milestoneDataLabel')}</FieldLabel>
-              <FieldDescription>
-                {dataTask === 'manual'
-                  ? t('milestoneDataDescription')
-                  : dataTask === 'instagram_campaign_schedule'
-                    ? t('milestoneDataDescriptionInstagramCampaignSchedule')
-                    : t('milestoneDataDescriptionLocationProfile')}
-              </FieldDescription>
-              {dataTask === 'location_profile' || dataTask === 'instagram_campaign_schedule' ? (
+              <FieldDescription>{t(DATA_TAB_DESCRIPTION_KEY[dataTask])}</FieldDescription>
+              {isPrepareDataTask ? (
                 <div className="flex flex-wrap items-center gap-2 pb-2">
                   <Button
                     disabled={isPreparing || !onPrepareMilestone}

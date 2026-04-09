@@ -10,10 +10,14 @@ from agents_app.agents.domain.skill_runner.graphql_client import (
     fetch_instagram_signals_dict,
     fetch_latest_analytics_run_id,
     fetch_location_dict,
+    fetch_location_social_settings_dict,
+    fetch_menu_items_catalog_dict,
+    fetch_most_recent_milestone_data_str,
     fetch_operating_profile_dict,
     fetch_promotion_menu_items_dict,
     fetch_public_holidays_list,
     fetch_revenue_trends_dict,
+    fetch_weekly_demand_pattern_dict,
 )
 
 PrefetchHandler = Any  # async (inputs: dict[str, object], *, client, user_id) -> Any
@@ -47,6 +51,34 @@ async def _handle_public_holidays(
         raise RuntimeError(msg)
     return await fetch_public_holidays_list(
         country,
+        start_date,
+        end_date,
+        user_id,
+        client=client,
+    )
+
+
+async def _handle_public_holidays_for_location(
+    inputs: dict[str, object],
+    *,
+    client: httpx.AsyncClient,
+    user_id: str,
+) -> list[dict[str, Any]]:
+    """Resolve country from platform.location, then fetch holidays (empty list if no country)."""
+    location_id = _coerce_location_id(inputs["location_id"])
+    start_date = _coerce_required_str(inputs, "start_date")
+    end_date = _coerce_required_str(inputs, "end_date")
+    if start_date > end_date:
+        msg = "start_date must be on or before end_date"
+        raise RuntimeError(msg)
+    loc = await fetch_location_dict(location_id, user_id, client=client)
+    if not loc:
+        return []
+    country = loc.get("country")
+    if not country or not str(country).strip():
+        return []
+    return await fetch_public_holidays_list(
+        str(country).strip(),
         start_date,
         end_date,
         user_id,
@@ -154,12 +186,73 @@ async def _handle_revenue_trends(
     return payload
 
 
+async def _handle_menu_items_catalog(
+    inputs: dict[str, object],
+    *,
+    client: httpx.AsyncClient,
+    user_id: str,
+) -> dict[str, Any] | None:
+    location_id = _coerce_location_id(inputs["location_id"])
+    payload = await fetch_menu_items_catalog_dict(location_id, user_id, client=client)
+    if not payload:
+        msg = "Could not load menu catalog (no order data for the latest analytics run)."
+        raise RuntimeError(msg)
+    return payload
+
+
+async def _handle_weekly_demand_pattern(
+    inputs: dict[str, object],
+    *,
+    client: httpx.AsyncClient,
+    user_id: str,
+) -> dict[str, Any] | None:
+    location_id = _coerce_location_id(inputs["location_id"])
+    payload = await fetch_weekly_demand_pattern_dict(location_id, user_id, client=client)
+    if not payload:
+        msg = "Could not load weekly demand pattern (no order data for the latest analytics run)."
+        raise RuntimeError(msg)
+    return payload
+
+
+async def _handle_location_social_settings(
+    inputs: dict[str, object],
+    *,
+    client: httpx.AsyncClient,
+    user_id: str,
+) -> dict[str, Any] | None:
+    location_id = _coerce_location_id(inputs["location_id"])
+    return await fetch_location_social_settings_dict(location_id, user_id, client=client)
+
+
+async def _handle_prior_milestone_data(
+    inputs: dict[str, object],
+    *,
+    client: httpx.AsyncClient,
+    user_id: str,
+) -> str | None:
+    raw_wf = inputs.get("workflow_id")
+    if raw_wf is None or (isinstance(raw_wf, str) and not str(raw_wf).strip()):
+        return None
+    data_task = _coerce_required_str(inputs, "data_task")
+    return await fetch_most_recent_milestone_data_str(
+        str(raw_wf).strip(),
+        data_task,
+        user_id,
+        client=client,
+    )
+
+
 PREFETCH_HANDLERS: dict[str, PrefetchHandler] = {
     "platform.location": _handle_location,
     "platform.public_holidays": _handle_public_holidays,
+    "platform.public_holidays_for_location": _handle_public_holidays_for_location,
     "analytics.latest_operating_profile": _handle_latest_operating_profile,
     "analytics.instagram_signals": _handle_instagram_signals,
     "analytics.promotion_menu_items": _handle_promotion_menu_items,
     "analytics.category_mix": _handle_category_mix,
     "analytics.revenue_trends": _handle_revenue_trends,
+    "platform.menu_items": _handle_menu_items_catalog,
+    "analytics.weekly_demand_pattern": _handle_weekly_demand_pattern,
+    "platform.location_social_settings": _handle_location_social_settings,
+    "milestone.prior_data": _handle_prior_milestone_data,
 }

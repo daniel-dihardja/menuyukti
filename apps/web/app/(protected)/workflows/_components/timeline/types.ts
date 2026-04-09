@@ -10,7 +10,24 @@ export type PassCriteriaRow = {
   status: PassCriteriaStatus
 }
 
-export type MilestoneDataTask = 'manual' | 'location_profile' | 'instagram_campaign_schedule'
+export type MilestoneDataTask =
+  | 'manual'
+  | 'location_profile'
+  | 'instagram_campaign_schedule'
+  | 'restaurant_brand_brief'
+  | 'social_campaign_calendar'
+  | 'social_caption_batch'
+  | 'visual_creative_brief'
+
+/** Data sources that support Generate from analytics (Prepare). */
+export const MILESTONE_PREPARE_DATA_TASKS: readonly MilestoneDataTask[] = [
+  'location_profile',
+  'instagram_campaign_schedule',
+  'restaurant_brand_brief',
+  'social_campaign_calendar',
+  'social_caption_batch',
+  'visual_creative_brief',
+] as const
 
 export type TimelineMilestone = {
   id: string

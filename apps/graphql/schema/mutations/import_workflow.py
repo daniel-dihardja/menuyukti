@@ -163,6 +163,14 @@ def _create_milestone_node(
         milestone_data["dataTask"] = "location_profile"
     elif dt_raw == "instagram_campaign_schedule":
         milestone_data["dataTask"] = "instagram_campaign_schedule"
+    elif dt_raw == "restaurant_brand_brief":
+        milestone_data["dataTask"] = "restaurant_brand_brief"
+    elif dt_raw == "social_campaign_calendar":
+        milestone_data["dataTask"] = "social_campaign_calendar"
+    elif dt_raw == "social_caption_batch":
+        milestone_data["dataTask"] = "social_caption_batch"
+    elif dt_raw == "visual_creative_brief":
+        milestone_data["dataTask"] = "visual_creative_brief"
 
     milestone = Node(
         parent_id=root_node.id,

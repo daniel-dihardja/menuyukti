@@ -22,7 +22,17 @@ export const patchMilestoneSchema = z
     /** Milestone Data tab; persisted on a child `milestonedata` node as `{ data: string }`. */
     milestoneData: z.string().optional(),
     /** Stored on milestone node `data` JSON. */
-    dataTask: z.enum(['manual', 'location_profile', 'instagram_campaign_schedule']).optional(),
+    dataTask: z
+      .enum([
+        'manual',
+        'location_profile',
+        'instagram_campaign_schedule',
+        'restaurant_brand_brief',
+        'social_campaign_calendar',
+        'social_caption_batch',
+        'visual_creative_brief',
+      ])
+      .optional(),
     passCriteria: z.array(passCriteriaRowSchema).optional(),
     move: z.enum(['up', 'down']).optional(),
   })

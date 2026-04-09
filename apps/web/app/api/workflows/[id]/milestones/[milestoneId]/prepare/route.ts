@@ -12,7 +12,16 @@ export const maxDuration = 180
 const prepareBodySchema = z.object({
   locationId: z.number().int().positive(),
   /** Which prepare pipeline to run; must match milestone Data source when set. */
-  dataTask: z.enum(['location_profile', 'instagram_campaign_schedule']).optional(),
+  dataTask: z
+    .enum([
+      'location_profile',
+      'instagram_campaign_schedule',
+      'restaurant_brand_brief',
+      'social_campaign_calendar',
+      'social_caption_batch',
+      'visual_creative_brief',
+    ])
+    .optional(),
 })
 
 type RouteContext = {
@@ -31,7 +40,7 @@ export async function POST(req: Request, context: RouteContext) {
   if (!workflowParsed.success || !milestoneParsed.success) {
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
   }
-  const workflowId = workflowParsed.data
+  const workflowIdFromRoute = workflowParsed.data
   const milestoneId = milestoneParsed.data
 
   let json: unknown
@@ -51,7 +60,7 @@ export async function POST(req: Request, context: RouteContext) {
   const data_task = dataTask ?? 'location_profile'
 
   const rootData = parseNodeData(
-    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowId }, userId),
+    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowIdFromRoute }, userId),
   )
   const rootNode = rootData.node
   if (!rootNode || rootNode.nodeType !== 'workflow') {
@@ -68,7 +77,7 @@ export async function POST(req: Request, context: RouteContext) {
   if (!milestoneNode || milestoneNode.nodeType !== 'milestone') {
     return NextResponse.json({ error: 'Milestone not found' }, { status: 404 })
   }
-  if (milestoneNode.parentId !== workflowId) {
+  if (milestoneNode.parentId !== workflowIdFromRoute) {
     return NextResponse.json(
       { error: 'Milestone does not belong to this workflow' },
       { status: 400 },
@@ -84,7 +93,11 @@ export async function POST(req: Request, context: RouteContext) {
         'Content-Type': 'application/json',
         'X-Menuyukti-User-Id': userId,
       },
-      body: JSON.stringify({ location_id: locationId, data_task }),
+      body: JSON.stringify({
+        location_id: locationId,
+        data_task,
+        workflow_id: workflowIdFromRoute,
+      }),
       signal: req.signal,
     })
   } catch (err) {

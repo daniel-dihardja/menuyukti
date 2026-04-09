@@ -21,6 +21,7 @@ async def run_skill_events(
     location_id: int,
     user_id: str,
     *,
+    workflow_id: str = "",
     client: httpx.AsyncClient,
 ) -> AsyncIterator[dict[str, Any]]:
     """
@@ -30,7 +31,12 @@ async def run_skill_events(
     Yields SSE payload dicts: ``{"step": "..."}`` then ``{"done": True, ...}``.
     """
     cfg = load_skill(skill_path)
-    env = RunEnv(milestone_id=milestone_id, location_id=location_id, user_id=user_id)
+    env = RunEnv(
+        milestone_id=milestone_id,
+        location_id=location_id,
+        user_id=user_id,
+        workflow_id=workflow_id or "",
+    )
 
     context: dict[str, Any] = {}
     async for _step_name, key, result in prefetch_data_with_steps(cfg, env, client=client):

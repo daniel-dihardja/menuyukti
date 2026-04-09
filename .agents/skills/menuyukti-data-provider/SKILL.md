@@ -70,15 +70,20 @@ You are a helpful assistant. Follow the product rules below.
 
 Implementations live in [`handlers.py`](../../../apps/agents/agents/domain/skill_runner/handlers.py); GraphQL calls live in [`skill_runner/graphql_client.py`](../../../apps/agents/agents/domain/skill_runner/graphql_client.py).
 
-| `use`                                | Role                                                                |
-| ------------------------------------ | ------------------------------------------------------------------- |
-| `platform.location`                  | Location record for `location_id`.                                  |
-| `platform.public_holidays`           | Holidays for country + date range.                                  |
-| `analytics.latest_operating_profile` | Latest analytics run + operating profile for `location_id`.         |
-| `analytics.instagram_signals`        | Latest run: composite Instagram signals (heroes, window, headline). |
-| `analytics.promotion_menu_items`     | Latest run: per-menu promotion rows (engineering + peaks).          |
-| `analytics.category_mix`             | Latest run: category revenue/qty mix.                               |
-| `analytics.revenue_trends`           | Latest run: per-menu revenue vs prior period.                       |
+| `use`                                   | Role                                                                   |
+| --------------------------------------- | ---------------------------------------------------------------------- |
+| `platform.location`                     | Location record for `location_id`.                                     |
+| `platform.public_holidays`              | Holidays for country + date range.                                     |
+| `analytics.latest_operating_profile`    | Latest analytics run + operating profile for `location_id`.            |
+| `analytics.instagram_signals`           | Latest run: composite Instagram signals (heroes, window, headline).    |
+| `analytics.promotion_menu_items`        | Latest run: per-menu promotion rows (engineering + peaks).             |
+| `analytics.category_mix`                | Latest run: category revenue/qty mix.                                  |
+| `analytics.revenue_trends`              | Latest run: per-menu revenue vs prior period.                          |
+| `platform.menu_items`                   | Latest run: distinct menu lines (category, avg unit price).            |
+| `analytics.weekly_demand_pattern`       | Latest run: ISO-week revenue/tx indices vs location mean.              |
+| `platform.location_social_settings`     | Brand voice, pillars, hashtags (optional DB row per location).         |
+| `platform.public_holidays_for_location` | Holidays for `location_id` date range (resolves country via location). |
+| `milestone.prior_data`                  | Latest milestonedata Markdown for `data_task` under `workflow_id`.     |
 
 **New data:** add async handler → register in `PREFETCH_HANDLERS` → add `fetch_*` helpers that call `graphql_post` (same pattern as existing fetches). Heavy analytics belong in **`packages/menuyukti`**; GraphQL stays thin — see [GraphQL README](../../../apps/graphql/README.md) and [menuyukti README](../../../packages/menuyukti/README.md).
 

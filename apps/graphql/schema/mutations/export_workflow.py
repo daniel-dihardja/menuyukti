@@ -37,6 +37,14 @@ def _milestone_data_task(data: object | None) -> str:
         return "location_profile"
     if dt == "instagram_campaign_schedule":
         return "instagram_campaign_schedule"
+    if dt == "restaurant_brand_brief":
+        return "restaurant_brand_brief"
+    if dt == "social_campaign_calendar":
+        return "social_campaign_calendar"
+    if dt == "social_caption_batch":
+        return "social_caption_batch"
+    if dt == "visual_creative_brief":
+        return "visual_creative_brief"
     return "manual"
 
 

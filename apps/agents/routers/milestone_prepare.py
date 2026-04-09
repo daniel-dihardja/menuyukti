@@ -16,7 +16,14 @@ from pydantic import BaseModel, Field
 
 router = APIRouter()
 
-PrepareDataTask = Literal["location_profile", "instagram_campaign_schedule"]
+PrepareDataTask = Literal[
+    "location_profile",
+    "instagram_campaign_schedule",
+    "restaurant_brand_brief",
+    "social_campaign_calendar",
+    "social_caption_batch",
+    "visual_creative_brief",
+]
 
 
 class MilestonePrepareBody(BaseModel):
@@ -24,6 +31,10 @@ class MilestonePrepareBody(BaseModel):
     data_task: PrepareDataTask = Field(
         default="location_profile",
         description="Milestone data task / skill id (folder name under agent_skills.skills).",
+    )
+    workflow_id: str = Field(
+        default="",
+        description="Workflow root node id for milestone.prior_data prefetch (same as URL segment).",
     )
 
 
@@ -49,6 +60,7 @@ async def milestone_prepare(
                 milestone_id,
                 body.location_id,
                 x_menuyukti_user_id,
+                workflow_id=body.workflow_id.strip(),
                 client=client,
             ):
                 yield _sse_line(payload)

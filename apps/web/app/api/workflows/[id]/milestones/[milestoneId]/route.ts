@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import type { z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   milestoneDataSchema,
@@ -263,16 +264,11 @@ export async function GET(_req: Request, context: RouteContext) {
     }
 
     const mn = validated.milestoneNode
-    let dataTask: 'manual' | 'location_profile' | 'instagram_campaign_schedule' | null = null
+    let dataTask: z.infer<typeof milestoneDataSchema>['dataTask'] | null = null
     if (mn.data != null && typeof mn.data === 'object') {
       const parsed = milestoneDataSchema.safeParse(mn.data)
-      if (parsed.success) {
-        const dt = parsed.data.dataTask
-        if (dt === 'location_profile') {
-          dataTask = 'location_profile'
-        } else if (dt === 'instagram_campaign_schedule') {
-          dataTask = 'instagram_campaign_schedule'
-        }
+      if (parsed.success && parsed.data.dataTask) {
+        dataTask = parsed.data.dataTask
       }
     }
 

@@ -7,11 +7,12 @@ import { milestoneDataSchema } from '@/lib/graphql/node-schemas'
 
 import type { CampaignMilestoneAction } from './campaign-milestone-reducer'
 import { deriveMilestoneRailStatus, milestoneNodeToTimelineMilestone } from './milestone-map'
-import type {
-  MilestoneDataTask,
-  PassCriteriaRow,
-  PassCriteriaStatus,
-  TimelineMilestone,
+import {
+  MILESTONE_PREPARE_DATA_TASKS,
+  type MilestoneDataTask,
+  type PassCriteriaRow,
+  type PassCriteriaStatus,
+  type TimelineMilestone,
 } from './timeline/types'
 
 function milestoneDataTaskFromNodeData(data: unknown): MilestoneDataTask {
@@ -19,14 +20,7 @@ function milestoneDataTaskFromNodeData(data: unknown): MilestoneDataTask {
   if (!parsed.success) {
     return 'manual'
   }
-  const dt = parsed.data.dataTask
-  if (dt === 'location_profile') {
-    return 'location_profile'
-  }
-  if (dt === 'instagram_campaign_schedule') {
-    return 'instagram_campaign_schedule'
-  }
-  return 'manual'
+  return parsed.data.dataTask ?? 'manual'
 }
 
 export function useMilestoneOperations(
@@ -322,7 +316,7 @@ export function useMilestoneOperations(
 
   const handlePrepareMilestone = useCallback(
     async (milestoneId: string, dataTask: MilestoneDataTask) => {
-      if (dataTask !== 'location_profile' && dataTask !== 'instagram_campaign_schedule') {
+      if (!MILESTONE_PREPARE_DATA_TASKS.includes(dataTask)) {
         return
       }
       dispatch({
@@ -631,10 +625,8 @@ export function useMilestoneOperations(
                 return m
               }
               const next = { ...m, data: text }
-              if (body.dataTask === 'location_profile') {
-                next.dataTask = 'location_profile'
-              } else if (body.dataTask === 'instagram_campaign_schedule') {
-                next.dataTask = 'instagram_campaign_schedule'
+              if (body.dataTask) {
+                next.dataTask = body.dataTask
               }
               return next
             }),

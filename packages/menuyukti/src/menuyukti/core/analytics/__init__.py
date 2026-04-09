@@ -88,6 +88,12 @@ from menuyukti.core.analytics.calculate_sales_analytics import (
     calculate_sales_analytics,
     compute_sales_analytics_from_orders,
 )
+from menuyukti.core.analytics.calculate_weekly_demand_pattern import (
+    OrderRowForWeeklyDemand,
+    WeeklyDemandPatternRow,
+    calculate_weekly_demand_pattern,
+    compute_weekly_demand_pattern_from_orders,
+)
 from menuyukti.core.analytics.extract_menu_items import extract_menu_items
 from menuyukti.core.analytics.frame_contracts import (
     category_mix_columns,
@@ -126,10 +132,14 @@ __all__ = [
     "RevenueTrendRow",
     "RevenueTrendsResult",
     "WeeklyHeatmapRow",
+    "WeeklyDemandPatternRow",
+    "OrderRowForWeeklyDemand",
     "calculate_category_mix",
     "calculate_instagram_signals",
     "calculate_revenue_trends",
     "calculate_sales_analytics",
+    "calculate_weekly_demand_pattern",
+    "compute_weekly_demand_pattern_from_orders",
     "compute_category_mix_from_orders",
     "compute_sales_analytics_from_orders",
     "calculate_menu_heatmaps",

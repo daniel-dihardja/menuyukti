@@ -2,14 +2,18 @@ from .analytics_run import AnalyticsRunQuery
 from .category_mix import CategoryMixQuery
 from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_signals import InstagramSignalsQuery
+from .location_social_settings import LocationSocialSettingsQuery
 from .locations import LocationsQuery
+from .menu_catalog import MenuCatalogQuery
 from .menu_engineering_matrix import MenuEngineeringMatrixQuery
 from .menu_heatmaps import MenuHeatmapsQuery
+from .milestone_prior_data import MilestonePriorDataQuery
 from .nodes import NodesQuery
 from .operating_profile import OperatingProfileQuery
 from .promotion_menu_items import PromotionMenuItemsQuery
 from .public_holidays import PublicHolidaysQuery
 from .revenue_trends import RevenueTrendsQuery
+from .weekly_demand_pattern import WeeklyDemandPatternQuery
 from .workflow_exports import WorkflowExportsQuery
 from .workspace import WorkspaceQuery
 
@@ -20,6 +24,9 @@ __all__ = [
     "ImageAiFlowsQuery",
     "InstagramSignalsQuery",
     "LocationsQuery",
+    "LocationSocialSettingsQuery",
+    "MenuCatalogQuery",
+    "MilestonePriorDataQuery",
     "MenuEngineeringMatrixQuery",
     "MenuHeatmapsQuery",
     "PromotionMenuItemsQuery",
@@ -27,5 +34,6 @@ __all__ = [
     "NodesQuery",
     "OperatingProfileQuery",
     "RevenueTrendsQuery",
+    "WeeklyDemandPatternQuery",
     "WorkspaceQuery",
 ]

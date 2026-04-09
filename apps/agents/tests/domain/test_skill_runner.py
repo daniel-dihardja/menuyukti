@@ -46,9 +46,10 @@ def test_load_location_profile_skill(skill_path: Path) -> None:
 
 
 def test_render_template() -> None:
-    env = RunEnv(milestone_id="m-1", location_id=42, user_id="u1")
+    env = RunEnv(milestone_id="m-1", location_id=42, user_id="u1", workflow_id="wf-9")
     assert render_template("{{ env.location_id }}", env) == "42"
     assert render_template("{{ env.milestone_id }}", env) == "m-1"
+    assert render_template("{{ env.workflow_id }}", env) == "wf-9"
 
 
 @pytest.mark.asyncio
