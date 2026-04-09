@@ -1,0 +1,139 @@
+{
+  "workflowName": "Facebook full month",
+  "goal": "Full 4-week Facebook organic workflow: location and brand foundation, calendar, captions, and visual brief. Prepare steps use social_campaign_calendar / caption_batch / visual_brief skills; align outputs to Facebook Page and Reels.",
+  "milestones": [
+    {
+      "order": 0,
+      "title": "Facebook campaign brief",
+      "goal": "Define the month window, theme, Facebook placements, and anchor dates.",
+      "dataTask": "manual",
+      "data": "## Facebook campaign brief\n\n**Start date:** <!-- YYYY-MM-DD -->\n**End date:** <!-- YYYY-MM-DD (~4 weeks) -->\n**Monthly theme:** <!-- e.g. Summer patio & cocktails -->\n**Facebook placements:** <!-- Page Feed, Facebook Reels, Stories; optional Event or Group link -->\n**Brand voice notes:** <!-- e.g. neighborly, chef-led -->\n**Campaign objective:** <!-- e.g. Grow Page follows + weekend covers -->\n**Key menu items or categories:** <!-- comma-separated -->\n**Target audience:** <!-- e.g. nearby suburbs, families -->\n**Post cadence:** <!-- e.g. 5 Feed, 3 Reels, daily Stories -->\n**Page CTA focus:** <!-- Book / Call / Message / Shop -->\n**Special events or holidays:** <!-- list or \"none\" -->\n**Constraints:** <!-- no UGC without release, in-house photo only -->\n",
+      "passCriteria": [
+        {
+          "requirement": "Start date is specified (YYYY-MM-DD or clear equivalent).",
+          "status": "open"
+        },
+        {
+          "requirement": "End date is specified and is on or after the start date.",
+          "status": "open"
+        },
+        {
+          "requirement": "Monthly theme is stated.",
+          "status": "open"
+        },
+        {
+          "requirement": "At least one Facebook placement is listed (Feed, Reels, Stories, Event, or Group).",
+          "status": "open"
+        },
+        {
+          "requirement": "At least one special event or holiday in the window is noted, or the brief explicitly says \"none\".",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 1,
+      "title": "Location Profile",
+      "goal": "Operating snapshot from POS for Facebook local messaging and timing.",
+      "dataTask": "location_profile",
+      "passCriteria": [
+        {
+          "requirement": "Peak periods or traffic pattern is documented.",
+          "status": "open"
+        },
+        {
+          "requirement": "Guest behavior section is present (when/how people order).",
+          "status": "open"
+        },
+        {
+          "requirement": "Positioning hints or implications for messaging are listed.",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 2,
+      "title": "Brand Brief",
+      "goal": "Pillars and proof points for Page About-style themes and Reels hooks.",
+      "dataTask": "restaurant_brand_brief",
+      "passCriteria": [
+        {
+          "requirement": "3–5 content pillars are defined and tied to categories or operating signals.",
+          "status": "open"
+        },
+        {
+          "requirement": "Tone guardrails are documented (3–5 bullets or equivalent).",
+          "status": "open"
+        },
+        {
+          "requirement": "At least one proof-oriented menu angle cites category mix or hero/trending items from the data.",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "title": "4-Week Facebook content calendar",
+      "goal": "Prepare outputs a four-week calendar from Instagram-first skill text; edit Data so weeks and slots are explicit for Facebook (Feed vs Reels vs Stories) and your brief.",
+      "dataTask": "social_campaign_calendar",
+      "passCriteria": [
+        {
+          "requirement": "All four weeks (Week 1–4) are covered with planned slots.",
+          "status": "open"
+        },
+        {
+          "requirement": "Each week includes at least three post slots.",
+          "status": "open"
+        },
+        {
+          "requirement": "Content mix reflects weekly demand pattern where data supports it.",
+          "status": "open"
+        },
+        {
+          "requirement": "Each slot specifies format and intended Facebook surface (Feed, Facebook Reel, Story, or Carousel).",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "title": "Facebook caption batch",
+      "goal": "Generate captions via Prepare from the calendar; tune length and CTA for Facebook (links, comments, Page actions).",
+      "dataTask": "social_caption_batch",
+      "passCriteria": [
+        {
+          "requirement": "Every calendar slot has a corresponding caption block.",
+          "status": "open"
+        },
+        {
+          "requirement": "Each caption includes a hook, body, CTA, and tags or hashtags as appropriate for Facebook.",
+          "status": "open"
+        },
+        {
+          "requirement": "At least half of captions reference a clear Page or business CTA (visit, book, call, message, save).",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "title": "Visual creative brief",
+      "goal": "Shot lists and Reel hooks for Facebook-safe framing (Feed square/vertical, Reels 9:16, text-safe zones).",
+      "dataTask": "visual_creative_brief",
+      "passCriteria": [
+        {
+          "requirement": "Each of four weeks has a shot list or equivalent visual plan.",
+          "status": "open"
+        },
+        {
+          "requirement": "A Reel or vertical video hook is specified for each week.",
+          "status": "open"
+        },
+        {
+          "requirement": "A Story or multi-slide sequence is outlined for each week.",
+          "status": "open"
+        }
+      ]
+    }
+  ]
+}

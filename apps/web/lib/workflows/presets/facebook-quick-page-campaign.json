@@ -1,0 +1,75 @@
+{
+  "workflowName": "Facebook Page quick campaign",
+  "goal": "Produce a short organic plan for Facebook Page and Facebook Reels using the same analytics-backed pipeline as Instagram (Meta signals). Map Prepare output to Feed vs Reels vs Stories in milestone Data.",
+  "milestones": [
+    {
+      "order": 0,
+      "title": "Facebook campaign brief",
+      "goal": "Lock dates, Page objective, and Facebook surfaces before generated content.",
+      "dataTask": "manual",
+      "data": "## Facebook campaign brief\n\n**Start date:** <!-- YYYY-MM-DD -->\n**End date:** <!-- YYYY-MM-DD -->\n**Page objective:** <!-- e.g. Drive reservations from Page followers -->\n**Primary offer or theme:** <!-- e.g. weekday lunch set menu -->\n**Facebook surfaces to use:** <!-- e.g. Page Feed, Facebook Reels, Stories -->\n**Key menu items to feature:** <!-- comma-separated -->\n**Target audience on Facebook:** <!-- e.g. local 5 mi, 25–45, food explorers -->\n**Primary Page CTA:** <!-- e.g. Book now, Call, Message, Get directions -->\n**Post cadence:** <!-- e.g. 4 Feed + 2 Reels per week -->\n**Events or holidays in window:** <!-- dates or \"none\" -->\n**Notes:** <!-- Groups cross-post, paid boost later, etc. -->\n",
+      "passCriteria": [
+        {
+          "requirement": "Start date is specified (YYYY-MM-DD or clear equivalent).",
+          "status": "open"
+        },
+        {
+          "requirement": "End date is specified and is on or after the start date.",
+          "status": "open"
+        },
+        {
+          "requirement": "At least one Facebook surface is named (Feed, Reels, Stories, or Event).",
+          "status": "open"
+        },
+        {
+          "requirement": "At least one key menu item or offer to feature is listed.",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 1,
+      "title": "Brand Brief",
+      "goal": "Define pillars and tone from POS data; reuse for Facebook Page copy and Reels scripts.",
+      "dataTask": "restaurant_brand_brief",
+      "passCriteria": [
+        {
+          "requirement": "Content pillars are defined (typically 3–5) and tied to menu or operating signals.",
+          "status": "open"
+        },
+        {
+          "requirement": "Tone guardrails are documented (bullet list or short section).",
+          "status": "open"
+        },
+        {
+          "requirement": "Audience hypotheses are grounded in operating data (peaks, meal periods), not invented demographics.",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 2,
+      "title": "Organic post schedule",
+      "goal": "Run Prepare to generate a schedule from Instagram/Meta engagement signals; in Data, relabel slots for Facebook (Feed / Facebook Reels / Stories) and keep dish-level picks.",
+      "dataTask": "instagram_campaign_schedule",
+      "passCriteria": [
+        {
+          "requirement": "Schedule covers the full campaign window from the Facebook campaign brief.",
+          "status": "open"
+        },
+        {
+          "requirement": "Each planned slot names at least one featured menu item.",
+          "status": "open"
+        },
+        {
+          "requirement": "Each slot names an intended Facebook surface or format (Feed post, Facebook Reel, Story, or similar).",
+          "status": "open"
+        },
+        {
+          "requirement": "Suggested times reference analytics signals (e.g. bestPostingWindow) where present, as timing hints for local audience.",
+          "status": "open"
+        }
+      ]
+    }
+  ]
+}
