@@ -1,11 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Pencil } from 'lucide-react'
 
-import { FieldSaveStatus } from '@/components/field-save-status'
-import { MarkdownEditField } from '@/components/markdown-edit-field'
+import {
+  MarkdownEditField,
+  type MarkdownEditFieldManualSave,
+} from '@/components/markdown-edit-field'
+import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
@@ -99,10 +102,6 @@ export function CampaignGoalEditor({ workflowId, initialGoal }: CampaignGoalEdit
     }
   }, [workflowId, draft, lastSaved, saving, showError, t])
 
-  const handleBlur = useCallback(() => {
-    void persistGoal()
-  }, [persistGoal])
-
   const handleSheetOpenChange = useCallback(
     (next: boolean) => {
       if (!next) {
@@ -113,12 +112,26 @@ export function CampaignGoalEditor({ workflowId, initialGoal }: CampaignGoalEdit
     [persistGoal],
   )
 
-  const saveStatusMessages = {
-    saving: tChat('fieldSaveStatusSaving'),
-    saved: tChat('fieldSaveStatusSaved'),
-    unsaved: tChat('fieldSaveStatusUnsaved'),
-  }
+  const saveStatusMessages = useMemo(
+    () => ({
+      saving: tChat('fieldSaveStatusSaving'),
+      saved: tChat('fieldSaveStatusSaved'),
+      unsaved: tChat('fieldSaveStatusUnsaved'),
+    }),
+    [tChat],
+  )
   const goalSaveStatus = saving ? 'saving' : draft !== lastSaved ? 'unsaved' : 'saved'
+
+  const goalManualSave = useMemo(
+    (): MarkdownEditFieldManualSave => ({
+      messages: saveStatusMessages,
+      onSave: () => {
+        void persistGoal()
+      },
+      status: goalSaveStatus,
+    }),
+    [goalSaveStatus, persistGoal, saveStatusMessages],
+  )
 
   const hasSavedGoal = lastSaved.trim().length > 0
   const previewText = hasSavedGoal
@@ -161,12 +174,9 @@ export function CampaignGoalEditor({ workflowId, initialGoal }: CampaignGoalEdit
       </div>
 
       {toast ? (
-        <p
-          className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive text-sm"
-          role="alert"
-        >
-          {toast.message}
-        </p>
+        <Alert variant="destructive">
+          <AlertDescription>{toast.message}</AlertDescription>
+        </Alert>
       ) : null}
 
       <Sheet onOpenChange={handleSheetOpenChange} open={sheetOpen}>
@@ -182,7 +192,7 @@ export function CampaignGoalEditor({ workflowId, initialGoal }: CampaignGoalEdit
                 editTabLabel={tChat('milestoneDataEditTab')}
                 formatPreset="milestone-goal"
                 id={goalFieldId}
-                onBlur={handleBlur}
+                manualSave={goalManualSave}
                 onChange={setDraft}
                 placeholder={tChat('milestoneGoalPlaceholder')}
                 previewEmptyLabel={tChat('milestoneGoalPreviewEmpty')}
@@ -190,13 +200,6 @@ export function CampaignGoalEditor({ workflowId, initialGoal }: CampaignGoalEdit
                 textareaClassName="min-h-[min(280px,40vh)] resize-y whitespace-pre-wrap"
                 value={draft}
               />
-              <div className="flex justify-end">
-                <FieldSaveStatus
-                  className="inline-flex"
-                  messages={saveStatusMessages}
-                  status={goalSaveStatus}
-                />
-              </div>
             </div>
           </ScrollArea>
         </SheetContent>

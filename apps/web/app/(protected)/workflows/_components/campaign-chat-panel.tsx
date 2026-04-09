@@ -16,6 +16,7 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
 } from '@workspace/ui/components/ai-elements/prompt-input'
+import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
 import {
   ResizableHandle,
@@ -94,7 +95,7 @@ function CampaignPreviewToggleButton() {
             type="button"
             variant="outline"
           >
-            <PanelRight />
+            <PanelRight aria-hidden />
           </Button>
         </TooltipTrigger>
         <TooltipContent className="max-w-xs text-balance" side="bottom">
@@ -194,6 +195,7 @@ export function CampaignChatPanel({
       onUpdatePassCriteria: ops.handleUpdatePassCriteria,
       onUpdateMilestoneGoal: ops.handleUpdateMilestoneGoal,
       onUpdateMilestoneData: ops.handleUpdateMilestoneData,
+      onHydrateMilestoneData: ops.handleHydrateMilestoneData,
       onSetMilestoneDataTask: ops.handleSetMilestoneDataTask,
       onPrepareMilestone: ops.handlePrepareMilestone,
       onRunMilestone: ops.handleRunMilestone,
@@ -202,7 +204,7 @@ export function CampaignChatPanel({
     [workflowId, milestoneUi, isChatBusy, ops],
   )
 
-  const visibleMessages = messages.filter((msg) => msg.role !== 'system')
+  const visibleMessages = useMemo(() => messages.filter((msg) => msg.role !== 'system'), [messages])
 
   useLayoutEffect(() => {
     const panel = previewPanelRef.current
@@ -283,23 +285,21 @@ export function CampaignChatPanel({
                 <Conversation aria-live="polite">
                   <ConversationContent>
                     {error ? (
-                      <div
-                        aria-live="polite"
-                        className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-destructive text-sm"
-                        role="alert"
-                      >
-                        <p className="font-medium">{t('errorTitle')}</p>
-                        <p className="mt-1 text-muted-foreground">{error.message}</p>
-                        <Button
-                          className="mt-3"
-                          onClick={() => void handleRetry()}
-                          size="sm"
-                          type="button"
-                          variant="outline"
-                        >
-                          {t('retry')}
-                        </Button>
-                      </div>
+                      <Alert aria-live="polite" className="items-start" variant="destructive">
+                        <AlertTitle>{t('errorTitle')}</AlertTitle>
+                        <AlertDescription className="flex flex-col gap-3">
+                          <p>{error.message}</p>
+                          <Button
+                            className="w-fit"
+                            onClick={() => void handleRetry()}
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            {t('retry')}
+                          </Button>
+                        </AlertDescription>
+                      </Alert>
                     ) : null}
                     {messages.length === 0 && !error ? (
                       <ConversationEmptyState

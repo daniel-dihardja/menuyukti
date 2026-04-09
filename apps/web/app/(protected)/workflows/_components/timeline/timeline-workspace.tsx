@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { useSearchParams } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { parseAsString, useQueryState } from 'nuqs'
 
@@ -51,6 +52,12 @@ export function TimelineWorkspace({
   } = useTimelineContext()
 
   const [selectedId, setSelectedId] = useQueryState('milestone', parseAsString)
+  const searchParams = useSearchParams()
+
+  const milestonesRef = useRef(milestones)
+  const selectedIdRef = useRef(selectedId)
+  milestonesRef.current = milestones
+  selectedIdRef.current = selectedId
 
   useEffect(() => {
     if (milestones.length === 0) {
@@ -60,8 +67,24 @@ export function TimelineWorkspace({
     if (selectedId !== null && milestones.some((m) => m.id === selectedId)) {
       return
     }
-    void setSelectedId(milestones[0]?.id ?? null)
-  }, [milestones, selectedId, setSelectedId])
+    /** Defer default so nuqs can hydrate `?milestone=` from the URL before we fall back to the first card. */
+    const frame = requestAnimationFrame(() => {
+      const m = milestonesRef.current
+      const s = selectedIdRef.current
+      if (m.length === 0) {
+        return
+      }
+      if (s !== null && m.some((x) => x.id === s)) {
+        return
+      }
+      const fromUrl = searchParams.get('milestone')
+      if (fromUrl !== null && fromUrl !== '' && m.some((x) => x.id === fromUrl)) {
+        return
+      }
+      void setSelectedId(m[0]?.id ?? null)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [milestones, searchParams, selectedId, setSelectedId])
 
   const showReady = !isLoading && !loadError
   const showTimeline = showReady && milestones.length > 0

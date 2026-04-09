@@ -4,15 +4,27 @@ import { useTranslations } from 'next-intl'
 import { Maximize2, WandSparkles, X } from 'lucide-react'
 import { type ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react'
 
+import {
+  FieldSaveStatus,
+  type FieldSaveStatusProps,
+  type FieldSaveStatusVariant,
+} from '@/components/field-save-status'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { PanelFullscreenContext } from '@/components/panel-fullscreen-context'
 import type { MarkdownFormatPreset } from '@/lib/markdown-format-presets'
+import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { Textarea } from '@workspace/ui/components/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
+
+export type MarkdownEditFieldManualSave = {
+  onSave: () => void
+  status: FieldSaveStatusVariant
+  messages: FieldSaveStatusProps['messages']
+}
 
 /** Scroll/surface styling for Markdown preview areas (edit tabs + presentation mode). */
 export type MarkdownPreviewSurfaceVariant = 'embedded' | 'fullscreen' | 'fill'
@@ -43,7 +55,6 @@ export type MarkdownEditFieldEditProps = {
   id: string
   value: string
   onChange: (value: string) => void
-  onBlur?: () => void
   disabled?: boolean
   placeholder?: string
   formatPreset: MarkdownFormatPreset
@@ -60,6 +71,8 @@ export type MarkdownEditFieldEditProps = {
    * Default `embedded` caps preview height for compact in-card layouts.
    */
   embeddedHeight?: 'default' | 'fill'
+  /** Save button + status row below the editor; omit for fields without persistence. */
+  manualSave?: MarkdownEditFieldManualSave
 }
 
 export type MarkdownEditFieldProps = MarkdownEditFieldPresentationProps | MarkdownEditFieldEditProps
@@ -68,7 +81,6 @@ type MarkdownEditTabsPaneProps = {
   layout: 'embedded' | 'fullscreen' | 'fill'
   innerTab: string
   onInnerTabChange: (next: string) => void
-  commitBlur: () => void
   id: string
   value: string
   onChange: (v: string) => void
@@ -125,7 +137,6 @@ function MarkdownEditTabsPane({
   layout,
   innerTab,
   onInnerTabChange,
-  commitBlur,
   id,
   value,
   onChange,
@@ -156,16 +167,7 @@ function MarkdownEditTabsPane({
     : 'mt-0 flex flex-col gap-2'
 
   return (
-    <Tabs
-      className={tabsClass}
-      onValueChange={(next) => {
-        if (innerTab === 'edit' && next !== 'edit') {
-          commitBlur()
-        }
-        onInnerTabChange(next)
-      }}
-      value={innerTab}
-    >
+    <Tabs className={tabsClass} onValueChange={onInnerTabChange} value={innerTab}>
       <div
         className="flex min-w-0 flex-wrap items-center justify-between gap-2"
         onClick={(e) => e.stopPropagation()}
@@ -194,12 +196,12 @@ function MarkdownEditTabsPane({
                 >
                   {formatting ? (
                     <>
-                      <Spinner className="size-4" />
+                      <Spinner aria-hidden data-icon="inline-start" />
                       {formatFormattingLabel}
                     </>
                   ) : (
                     <>
-                      <WandSparkles aria-hidden />
+                      <WandSparkles aria-hidden data-icon="inline-start" />
                       {formatButtonLabel}
                     </>
                   )}
@@ -225,16 +227,15 @@ function MarkdownEditTabsPane({
       </TabsContent>
       <TabsContent className={editContentClass} value="edit">
         {formatError ? (
-          <p className="text-destructive text-sm" role="alert">
-            {formatError}
-          </p>
+          <Alert variant="destructive">
+            <AlertDescription>{formatError}</AlertDescription>
+          </Alert>
         ) : null}
         <Textarea
           className={textareaClass}
           disabled={disabled}
           id={textareaId}
           onChange={(e) => onChange(e.target.value)}
-          onBlur={commitBlur}
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
           placeholder={placeholder}
@@ -242,6 +243,40 @@ function MarkdownEditTabsPane({
         />
       </TabsContent>
     </Tabs>
+  )
+}
+
+function MarkdownManualSaveFooter({
+  disabled,
+  manualSave,
+  saveButtonLabel,
+}: {
+  disabled: boolean
+  manualSave: MarkdownEditFieldManualSave
+  saveButtonLabel: string
+}) {
+  const saveDisabled = disabled || manualSave.status === 'saving' || manualSave.status === 'saved'
+
+  return (
+    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+      <Button
+        disabled={saveDisabled}
+        onClick={(e) => {
+          e.stopPropagation()
+          manualSave.onSave()
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        size="sm"
+        type="button"
+      >
+        {saveButtonLabel}
+      </Button>
+      <FieldSaveStatus
+        className="inline-flex"
+        messages={manualSave.messages}
+        status={manualSave.status}
+      />
+    </div>
   )
 }
 
@@ -303,7 +338,6 @@ function MarkdownEditFieldEditor({
   id,
   value,
   onChange,
-  onBlur,
   disabled = false,
   placeholder,
   formatPreset,
@@ -314,6 +348,7 @@ function MarkdownEditFieldEditor({
   enablePanelFullscreen = false,
   fullscreenHeaderTitle,
   embeddedHeight = 'default',
+  manualSave,
 }: MarkdownEditFieldEditProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const panelCtx = useContext(PanelFullscreenContext)
@@ -323,29 +358,9 @@ function MarkdownEditFieldEditor({
 
   const [formatting, setFormatting] = useState(false)
   const [formatError, setFormatError] = useState<string | null>(null)
-  /** Preview vs Edit — controlled so we can persist when leaving Edit without relying on textarea blur (Radix may hide content before blur). */
+  /** Preview vs Edit — controlled so switching tabs does not depend on textarea blur order (Radix may hide content before blur). */
   const [innerTab, setInnerTab] = useState('preview')
   const [isPanelFullscreen, setIsPanelFullscreen] = useState(false)
-
-  const onBlurRef = useRef(onBlur)
-  onBlurRef.current = onBlur
-  const blurLock = useRef(false)
-
-  const commitBlur = useCallback(() => {
-    if (!onBlurRef.current) return
-    if (blurLock.current) return
-    blurLock.current = true
-    queueMicrotask(() => {
-      blurLock.current = false
-    })
-    onBlurRef.current()
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      onBlurRef.current?.()
-    }
-  }, [])
 
   useEffect(() => {
     return () => {
@@ -402,31 +417,38 @@ function MarkdownEditFieldEditor({
         title={fullscreenHeaderTitle}
         onClose={closePanelFullscreen}
       >
-        <MarkdownEditTabsPane
-          commitBlur={commitBlur}
-          formatButtonLabel={t('formatMarkdownButton')}
-          formatError={formatError}
-          formatFormattingLabel={t('formatMarkdownFormatting')}
-          formatting={formatting}
-          id={id}
-          innerTab={innerTab}
-          layout="fullscreen"
-          onChange={onChange}
-          onFormatClick={handleFormat}
-          onInnerTabChange={setInnerTab}
-          disabled={disabled}
-          editTabLabel={editTabLabel}
-          placeholder={placeholder}
-          previewEmptyLabel={previewEmptyLabel}
-          previewTabLabel={previewTabLabel}
-          textareaClassName={textareaClassName}
-          value={value}
-        />
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
+          <MarkdownEditTabsPane
+            formatButtonLabel={t('formatMarkdownButton')}
+            formatError={formatError}
+            formatFormattingLabel={t('formatMarkdownFormatting')}
+            formatting={formatting}
+            id={id}
+            innerTab={innerTab}
+            layout="fullscreen"
+            onChange={onChange}
+            onFormatClick={handleFormat}
+            onInnerTabChange={setInnerTab}
+            disabled={disabled}
+            editTabLabel={editTabLabel}
+            placeholder={placeholder}
+            previewEmptyLabel={previewEmptyLabel}
+            previewTabLabel={previewTabLabel}
+            textareaClassName={textareaClassName}
+            value={value}
+          />
+          {manualSave ? (
+            <MarkdownManualSaveFooter
+              disabled={disabled}
+              manualSave={manualSave}
+              saveButtonLabel={t('fieldSaveButton')}
+            />
+          ) : null}
+        </div>
       </FullscreenMarkdownShell>,
     )
   }, [
     closePanelFullscreen,
-    commitBlur,
     disabled,
     editTabLabel,
     formatError,
@@ -436,6 +458,7 @@ function MarkdownEditFieldEditor({
     id,
     innerTab,
     isPanelFullscreen,
+    manualSave,
     onChange,
     panelCtx,
     placeholder,
@@ -482,7 +505,6 @@ function MarkdownEditFieldEditor({
       }
     >
       <MarkdownEditTabsPane
-        commitBlur={commitBlur}
         formatButtonLabel={t('formatMarkdownButton')}
         formatError={formatError}
         formatFormattingLabel={t('formatMarkdownFormatting')}
@@ -502,6 +524,13 @@ function MarkdownEditFieldEditor({
         textareaClassName={textareaClassName}
         value={value}
       />
+      {manualSave ? (
+        <MarkdownManualSaveFooter
+          disabled={disabled}
+          manualSave={manualSave}
+          saveButtonLabel={t('fieldSaveButton')}
+        />
+      ) : null}
     </div>
   )
 }

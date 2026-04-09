@@ -2,10 +2,12 @@
 
 import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
-import { FieldSaveStatus } from '@/components/field-save-status'
-import { MarkdownEditField } from '@/components/markdown-edit-field'
+import {
+  MarkdownEditField,
+  type MarkdownEditFieldManualSave,
+} from '@/components/markdown-edit-field'
 import {
   Card,
   CardContent,
@@ -21,7 +23,8 @@ const PREVIEW_TITLE_ID = 'campaign-preview-panel-title'
 export function CampaignPreviewPanelBody() {
   const t = useTranslations('analytics.campaigns.chat')
   const tWorkspace = useTranslations('analytics.campaigns.workspace')
-  const { milestones, onUpdateMilestoneData, savingDataMilestoneId } = useTimelineContext()
+  const { milestones, onHydrateMilestoneData, onUpdateMilestoneData, savingDataMilestoneId } =
+    useTimelineContext()
   const [selectedId] = useQueryState('milestone', parseAsString)
 
   const selectedMilestone =
@@ -31,17 +34,38 @@ export function CampaignPreviewPanelBody() {
 
   const [dataDraft, setDataDraft] = useState('')
 
-  const selectedMilestoneId = selectedMilestone?.id
-  const selectedMilestoneData = selectedMilestone?.data
+  /** Single source from list so RESET / refetches update the draft even when the object reference was stale. */
+  const milestoneDataFromList = useMemo(() => {
+    if (selectedId == null) {
+      return ''
+    }
+    return milestones.find((m) => m.id === selectedId)?.data ?? ''
+  }, [milestones, selectedId])
+
+  useLayoutEffect(() => {
+    setDataDraft(milestoneDataFromList)
+  }, [milestoneDataFromList])
+
+  const hydrateAttempted = useRef<Set<string>>(new Set())
   useEffect(() => {
-    if (selectedMilestoneId == null) {
-      setDataDraft('')
+    if (selectedId == null) {
       return
     }
-    setDataDraft(selectedMilestoneData ?? '')
-  }, [selectedMilestoneId, selectedMilestoneData])
+    const row = milestones.find((m) => m.id === selectedId)
+    if (!row) {
+      return
+    }
+    if ((row.data ?? '').trim().length > 0) {
+      return
+    }
+    if (hydrateAttempted.current.has(selectedId)) {
+      return
+    }
+    hydrateAttempted.current.add(selectedId)
+    void onHydrateMilestoneData(selectedId)
+  }, [selectedId, milestones, onHydrateMilestoneData])
 
-  const handleDataBlur = useCallback(() => {
+  const handleDataSave = useCallback(() => {
     if (!selectedMilestone || savingData) {
       return
     }
@@ -57,16 +81,29 @@ export function CampaignPreviewPanelBody() {
     })()
   }, [selectedMilestone, dataDraft, savingData, onUpdateMilestoneData])
 
-  const saveStatusMessages = {
-    saving: t('fieldSaveStatusSaving'),
-    saved: t('fieldSaveStatusSaved'),
-    unsaved: t('fieldSaveStatusUnsaved'),
-  }
   const dataSaveStatus = savingData
     ? 'saving'
     : selectedMilestone && dataDraft !== (selectedMilestone.data ?? '')
       ? 'unsaved'
       : 'saved'
+
+  const saveStatusMessages = useMemo(
+    () => ({
+      saving: t('fieldSaveStatusSaving'),
+      saved: t('fieldSaveStatusSaved'),
+      unsaved: t('fieldSaveStatusUnsaved'),
+    }),
+    [t],
+  )
+
+  const dataManualSave = useMemo(
+    (): MarkdownEditFieldManualSave => ({
+      messages: saveStatusMessages,
+      onSave: handleDataSave,
+      status: dataSaveStatus,
+    }),
+    [dataSaveStatus, handleDataSave, saveStatusMessages],
+  )
 
   return (
     <Card className="flex h-full min-h-0 flex-col overflow-hidden border-dashed">
@@ -83,31 +120,23 @@ export function CampaignPreviewPanelBody() {
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden pt-0">
         {showMilestonePreview ? (
-          <>
-            <div className="flex min-h-0 flex-1 flex-col gap-2">
-              <MarkdownEditField
-                disabled={savingData}
-                editTabLabel={t('milestoneDataEditTab')}
-                embeddedHeight="fill"
-                formatPreset="milestone-data"
-                id="campaign-milestone-data-preview"
-                onBlur={handleDataBlur}
-                onChange={setDataDraft}
-                placeholder={t('milestoneDataPlaceholder')}
-                previewEmptyLabel={t('milestoneDataPreviewEmpty')}
-                previewTabLabel={t('milestoneDataPreviewTab')}
-                textareaClassName="min-h-0 resize-y whitespace-pre-wrap"
-                value={dataDraft}
-              />
-            </div>
-            <div className="flex shrink-0 justify-end">
-              <FieldSaveStatus
-                className="inline-flex"
-                messages={saveStatusMessages}
-                status={dataSaveStatus}
-              />
-            </div>
-          </>
+          <div className="flex min-h-0 flex-1 flex-col gap-2">
+            <MarkdownEditField
+              disabled={savingData}
+              editTabLabel={t('milestoneDataEditTab')}
+              embeddedHeight="fill"
+              formatPreset="milestone-data"
+              id={`campaign-milestone-data-preview-${selectedMilestone.id}`}
+              key={selectedMilestone.id}
+              manualSave={dataManualSave}
+              onChange={setDataDraft}
+              placeholder={t('milestoneDataPlaceholder')}
+              previewEmptyLabel={t('milestoneDataPreviewEmpty')}
+              previewTabLabel={t('milestoneDataPreviewTab')}
+              textareaClassName="min-h-0 resize-y whitespace-pre-wrap"
+              value={dataDraft}
+            />
+          </div>
         ) : (
           <p className="text-muted-foreground text-sm">
             {tWorkspace('previewNoMilestoneSelected')}

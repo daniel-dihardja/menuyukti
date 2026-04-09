@@ -731,7 +731,8 @@
         "formatMarkdownError": "Could not format text. Please try again.",
         "fieldSaveStatusSaving": "Saving…",
         "fieldSaveStatusSaved": "Saved",
-        "fieldSaveStatusUnsaved": "Changed"
+        "fieldSaveStatusUnsaved": "Changed",
+        "fieldSaveButton": "Save"
       },
       "workspace": {
         "tabBrief": "Brief & milestones",

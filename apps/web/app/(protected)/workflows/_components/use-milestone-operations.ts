@@ -593,6 +593,43 @@ export function useMilestoneOperations(
     }
   }, [workflowId, dispatch, t])
 
+  /** Load persisted milestonedata + dataTask from the API (fixes stale client state after navigation). */
+  const handleHydrateMilestoneData = useCallback(
+    async (milestoneId: string) => {
+      try {
+        const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`)
+        if (!res.ok) {
+          return
+        }
+        const body = (await res.json().catch(() => null)) as {
+          milestoneData?: string
+          dataTask?: 'manual' | 'location_profile' | null
+        } | null
+        if (!body) {
+          return
+        }
+        const text = body.milestoneData ?? ''
+        dispatch({
+          type: 'UPDATE_MILESTONES',
+          updater: (prev) =>
+            prev.map((m) => {
+              if (m.id !== milestoneId) {
+                return m
+              }
+              const next = { ...m, data: text }
+              if (body.dataTask === 'location_profile') {
+                next.dataTask = 'location_profile'
+              }
+              return next
+            }),
+        })
+      } catch {
+        // ignore
+      }
+    },
+    [workflowId, dispatch],
+  )
+
   return useMemo(
     () => ({
       handleCreateMilestone,
@@ -606,6 +643,7 @@ export function useMilestoneOperations(
       handleRunMilestone,
       handleMoveMilestone,
       handleExportWorkflow,
+      handleHydrateMilestoneData,
     }),
     [
       handleCreateMilestone,
@@ -619,6 +657,7 @@ export function useMilestoneOperations(
       handleRunMilestone,
       handleMoveMilestone,
       handleExportWorkflow,
+      handleHydrateMilestoneData,
     ],
   )
 }

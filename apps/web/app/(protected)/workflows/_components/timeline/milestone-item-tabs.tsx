@@ -1,11 +1,13 @@
 'use client'
 
-import type { RefObject } from 'react'
+import { type RefObject, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { Check, Circle, Trash2, X } from 'lucide-react'
 
-import { FieldSaveStatus } from '@/components/field-save-status'
-import { MarkdownEditField } from '@/components/markdown-edit-field'
+import {
+  MarkdownEditField,
+  type MarkdownEditFieldManualSave,
+} from '@/components/markdown-edit-field'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
 import { CardContent } from '@workspace/ui/components/card'
@@ -43,7 +45,7 @@ export type MilestoneItemTabsProps = {
   isPreparing?: boolean
   onSetMilestoneDataTask?: (dataTask: MilestoneDataTask) => void | Promise<void>
   onPrepareMilestone?: () => void | Promise<void>
-  handleGoalBlur: () => void
+  handleGoalSave: () => void
   handleAddPassCriterion: () => Promise<void>
   handleRemovePassCriterion: (index: number) => Promise<void>
 }
@@ -63,7 +65,7 @@ export function MilestoneItemTabs({
   isPreparing = false,
   onSetMilestoneDataTask,
   onPrepareMilestone,
-  handleGoalBlur,
+  handleGoalSave,
   handleAddPassCriterion,
   handleRemovePassCriterion,
 }: MilestoneItemTabsProps) {
@@ -71,16 +73,29 @@ export function MilestoneItemTabs({
   const dataTask: MilestoneDataTask = milestone.dataTask ?? 'manual'
   const dataTaskFieldId = `milestone-data-task-${milestone.id}`
   const hasGeneratedData = Boolean((milestone.data ?? '').trim())
-  const saveStatusMessages = {
-    saving: t('fieldSaveStatusSaving'),
-    saved: t('fieldSaveStatusSaved'),
-    unsaved: t('fieldSaveStatusUnsaved'),
-  }
+  const saveStatusMessages = useMemo(
+    () => ({
+      saving: t('fieldSaveStatusSaving'),
+      saved: t('fieldSaveStatusSaved'),
+      unsaved: t('fieldSaveStatusUnsaved'),
+    }),
+    [t],
+  )
   const goalSaveStatus = savingGoal
     ? 'saving'
     : goalDraft !== (milestone.goal ?? '')
       ? 'unsaved'
       : 'saved'
+
+  const goalManualSave = useMemo(
+    (): MarkdownEditFieldManualSave => ({
+      messages: saveStatusMessages,
+      onSave: handleGoalSave,
+      status: goalSaveStatus,
+    }),
+    [goalSaveStatus, handleGoalSave, saveStatusMessages],
+  )
+
   return (
     <CardContent className="border-border/60 border-t px-6 pt-4 pb-0">
       <Tabs className="gap-4" defaultValue="input">
@@ -109,7 +124,7 @@ export function MilestoneItemTabs({
                   editTabLabel={t('milestoneDataEditTab')}
                   formatPreset="milestone-goal"
                   id={goalFieldId}
-                  onBlur={handleGoalBlur}
+                  manualSave={goalManualSave}
                   onChange={setGoalDraft}
                   placeholder={t('milestoneGoalPlaceholder')}
                   previewEmptyLabel={t('milestoneGoalPreviewEmpty')}
@@ -117,13 +132,6 @@ export function MilestoneItemTabs({
                   textareaClassName="min-h-[120px] resize-y whitespace-pre-wrap"
                   value={goalDraft}
                 />
-                <div className="flex justify-end">
-                  <FieldSaveStatus
-                    className="inline-flex"
-                    messages={saveStatusMessages}
-                    status={goalSaveStatus}
-                  />
-                </div>
               </div>
             </Field>
           </FieldGroup>
@@ -178,7 +186,7 @@ export function MilestoneItemTabs({
                     type="button"
                     variant="ghost"
                   >
-                    <Trash2 className="size-4" />
+                    <Trash2 aria-hidden />
                   </Button>
                 </li>
               ))}
@@ -266,7 +274,7 @@ export function MilestoneItemTabs({
                   >
                     {isPreparing ? (
                       <>
-                        <Spinner className="size-4" />
+                        <Spinner aria-hidden data-icon="inline-start" />
                         {t('milestonePrepareRunning')}
                       </>
                     ) : hasGeneratedData ? (

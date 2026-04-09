@@ -177,7 +177,7 @@ function TimelineItemInner({
   const goalFieldId = `milestone-goal-${milestone.id}`
   const hasResult = Boolean(milestone.resultMarkdown?.trim())
 
-  const handleGoalBlur = () => {
+  const handleGoalSave = () => {
     if (!onUpdateMilestoneGoal || savingGoal) {
       return
     }
@@ -301,7 +301,7 @@ function TimelineItemInner({
                 goalDraft={goalDraft}
                 goalFieldId={goalFieldId}
                 handleAddPassCriterion={handleAddPassCriterion}
-                handleGoalBlur={handleGoalBlur}
+                handleGoalSave={handleGoalSave}
                 handleRemovePassCriterion={handleRemovePassCriterion}
                 hasResult={hasResult}
                 isMilestoneRunning={isMilestoneRunning}

@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { graphqlQuery } from '@/lib/graphql/client'
-import { passCriteriaDataSchema } from '@/lib/graphql/node-schemas'
+import {
+  milestoneDataSchema,
+  milestonedataDataSchema,
+  passCriteriaDataSchema,
+} from '@/lib/graphql/node-schemas'
 import {
   CREATE_NODE_MUTATION,
   DELETE_NODE_MUTATION,
@@ -201,6 +205,86 @@ async function syncGoalChild(
   }
 }
 
+/** Load persisted Data-tab markdown and milestone `dataTask` (same sources as the workflow page SSR). */
+export async function GET(_req: Request, context: RouteContext) {
+  try {
+    const { isAuthenticated, userId } = await auth()
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id: rawWorkflowId, milestoneId: rawMilestoneId } = await context.params
+
+    const workflowParsed = workflowIdParamSchema.safeParse(rawWorkflowId)
+    const milestoneParsed = milestoneIdParamSchema.safeParse(rawMilestoneId)
+    if (!workflowParsed.success || !milestoneParsed.success) {
+      return NextResponse.json({ message: 'Invalid id' }, { status: 400 })
+    }
+    const workflowId = workflowParsed.data
+    const milestoneId = milestoneParsed.data
+
+    const [workflowRoot, validated] = await Promise.all([
+      loadWorkflowRootOrThrow(workflowId, userId),
+      validateMilestoneUnderWorkflow(workflowId, milestoneId, userId),
+    ])
+    if ('error' in workflowRoot) {
+      return workflowRoot.error
+    }
+    if ('error' in validated) {
+      return validated.error
+    }
+
+    const milestonedataRes = parseNodesData(
+      await graphqlQuery<NodesDataRaw>(
+        NODES_QUERY,
+        {
+          locationId: workflowRoot.locationId,
+          nodeType: 'milestonedata',
+          parentId: milestoneId,
+        },
+        userId,
+      ),
+    )
+
+    let milestoneData = ''
+    for (const n of milestonedataRes.nodes) {
+      if (n.nodeType !== 'milestonedata') {
+        continue
+      }
+      const d = n.data
+      if (d == null || typeof d !== 'object') {
+        continue
+      }
+      const parsed = milestonedataDataSchema.safeParse(d)
+      if (parsed.success) {
+        milestoneData = parsed.data.data
+        break
+      }
+    }
+
+    const mn = validated.milestoneNode
+    let dataTask: 'manual' | 'location_profile' | null = null
+    if (mn.data != null && typeof mn.data === 'object') {
+      const parsed = milestoneDataSchema.safeParse(mn.data)
+      if (parsed.success && parsed.data.dataTask === 'location_profile') {
+        dataTask = 'location_profile'
+      }
+    }
+
+    return NextResponse.json(
+      {
+        milestoneData,
+        dataTask,
+      },
+      { status: 200 },
+    )
+  } catch (error) {
+    console.error(error)
+    const message = error instanceof Error ? error.message : 'Failed to load milestone'
+    return NextResponse.json({ message }, { status: 500 })
+  }
+}
+
 export async function PATCH(req: Request, context: RouteContext) {
   try {
     const { isAuthenticated, userId } = await auth()
@@ -277,31 +361,27 @@ export async function PATCH(req: Request, context: RouteContext) {
       reordered[idx] = b
       reordered[j] = a
 
-      for (let i = 0; i < reordered.length; i++) {
-        const node = reordered[i]
-        if (!node) {
-          continue
-        }
-        parseUpdateNodeData(
-          await graphqlQuery<UpdateNodeDataRaw>(
+      await Promise.all(
+        reordered.map((node, i) => {
+          if (!node) {
+            return Promise.resolve()
+          }
+          return graphqlQuery<UpdateNodeDataRaw>(
             UPDATE_NODE_MUTATION,
             { id: node.id, data: { order: i + 1 } },
             userId,
-          ),
-        )
-      }
+          ).then((res) => parseUpdateNodeData(res))
+        }),
+      )
 
       return NextResponse.json({ ok: true }, { status: 200 })
     }
 
     if (body.passCriteria === undefined) {
       if (body.dataTask !== undefined) {
-        const milestoneCurrent = parseNodeData(
-          await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: milestoneId }, userId),
-        )
-        const mn = milestoneCurrent.node
+        const mn = validated.milestoneNode
         const prevData =
-          mn && mn.nodeType === 'milestone' && mn.data != null && typeof mn.data === 'object'
+          mn.data != null && typeof mn.data === 'object'
             ? { ...(mn.data as Record<string, unknown>) }
             : {}
         parseUpdateNodeData(
@@ -312,16 +392,17 @@ export async function PATCH(req: Request, context: RouteContext) {
           ),
         )
       }
+      const syncPromises: Promise<void>[] = []
       if (body.goal !== undefined) {
-        await syncGoalChild(workflowRoot.locationId, milestoneId, body.goal, userId)
+        syncPromises.push(syncGoalChild(workflowRoot.locationId, milestoneId, body.goal, userId))
       }
       if (body.milestoneData !== undefined) {
-        await syncMilestonedataChild(
-          workflowRoot.locationId,
-          milestoneId,
-          body.milestoneData,
-          userId,
+        syncPromises.push(
+          syncMilestonedataChild(workflowRoot.locationId, milestoneId, body.milestoneData, userId),
         )
+      }
+      if (syncPromises.length > 0) {
+        await Promise.all(syncPromises)
       }
       if (body.name !== undefined) {
         parseUpdateNodeData(
