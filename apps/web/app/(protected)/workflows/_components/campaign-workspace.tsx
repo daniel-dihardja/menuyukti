@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { parseAsString, useQueryState } from 'nuqs'
@@ -54,8 +54,8 @@ const AssetsClient = dynamic(
   },
 )
 
-function normalizeTab(value: string | null): 'brief' | 'assets' | 'print' {
-  if (value === 'assets' || value === 'print' || value === 'brief') {
+function normalizeTab(value: string | null): 'brief' | 'assets' {
+  if (value === 'assets' || value === 'brief') {
     return value
   }
   return 'brief'
@@ -80,6 +80,12 @@ export function CampaignWorkspace({
   const [studioOpen, setStudioOpen] = useState(false)
   const [printDialogOpen, setPrintDialogOpen] = useState(false)
 
+  useEffect(() => {
+    if (tabRaw === 'print') {
+      void setTabRaw('brief')
+    }
+  }, [setTabRaw, tabRaw])
+
   const handleTabChange = useCallback(
     (value: string) => {
       void setTabRaw(normalizeTab(value))
@@ -101,9 +107,6 @@ export function CampaignWorkspace({
             </TabsTrigger>
             <TabsTrigger className="flex-none px-3 py-2" value="assets">
               {t('tabAssets')}
-            </TabsTrigger>
-            <TabsTrigger className="flex-none px-3 py-2" value="print">
-              {t('tabPrint')}
             </TabsTrigger>
           </TabsList>
           {tab === 'brief' ? (
@@ -135,32 +138,10 @@ export function CampaignWorkspace({
         <TabsContent className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden" value="assets">
           <CampaignAssetsTab
             onOpenPrintShop={() => {
-              void setTabRaw('print')
               setPrintDialogOpen(true)
             }}
             workflowId={workflowId}
           />
-        </TabsContent>
-
-        <TabsContent className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden" value="print">
-          <div className="flex flex-col gap-4 rounded-lg border bg-muted/30 p-6">
-            <div>
-              <h3 className="font-medium text-lg">{t('printDialogTitle')}</h3>
-              <p className="mt-1 text-muted-foreground text-sm text-pretty">
-                {t('printDialogDescription')}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button asChild>
-                <Link href={`${routes.shop}?workflowId=${encodeURIComponent(workflowId)}`}>
-                  {t('openPrintShop')}
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href={routes.printOrders}>{t('viewPrintOrders')}</Link>
-              </Button>
-            </div>
-          </div>
         </TabsContent>
       </Tabs>
 

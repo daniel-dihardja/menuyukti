@@ -730,7 +730,6 @@
       "workspace": {
         "tabBrief": "Brief & milestones",
         "tabAssets": "Assets",
-        "tabPrint": "Print & ship",
         "previewTitle": "Preview",
         "previewDescription": "Workflow visuals and milestones stay in sync as you work. Generate images from the Brief tab.",
         "previewToggleAriaLabel": "Toggle preview panel",
