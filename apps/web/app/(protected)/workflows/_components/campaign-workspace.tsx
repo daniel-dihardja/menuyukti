@@ -95,10 +95,16 @@ export function CampaignWorkspace({
         value={tab}
       >
         <div className="flex shrink-0 flex-col gap-3 border-border/60 border-b pb-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <TabsList className="h-9 w-full min-w-0 justify-start sm:w-auto">
-            <TabsTrigger value="brief">{t('tabBrief')}</TabsTrigger>
-            <TabsTrigger value="assets">{t('tabAssets')}</TabsTrigger>
-            <TabsTrigger value="print">{t('tabPrint')}</TabsTrigger>
+          <TabsList className="w-full min-w-0 justify-start p-0 sm:w-auto" variant="line">
+            <TabsTrigger className="flex-none px-3 py-2" value="brief">
+              {t('tabBrief')}
+            </TabsTrigger>
+            <TabsTrigger className="flex-none px-3 py-2" value="assets">
+              {t('tabAssets')}
+            </TabsTrigger>
+            <TabsTrigger className="flex-none px-3 py-2" value="print">
+              {t('tabPrint')}
+            </TabsTrigger>
           </TabsList>
           {tab === 'brief' ? (
             <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
