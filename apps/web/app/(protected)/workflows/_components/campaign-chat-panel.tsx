@@ -17,18 +17,37 @@ import {
   PromptInputTextarea,
 } from '@workspace/ui/components/ai-elements/prompt-input'
 import { Button } from '@workspace/ui/components/button'
-import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
+  usePanelRef,
 } from '@workspace/ui/components/resizable'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@workspace/ui/components/sheet'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Spinner } from '@workspace/ui/components/spinner'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@workspace/ui/components/tooltip'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
+import { PanelRight } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useState,
+  useTransition,
+} from 'react'
 
+import { useMediaQuery } from '@/hooks/use-media-query'
 import type { TimelineMilestone } from './timeline-workspace'
 import { TimelineWorkspace } from './timeline-workspace'
 import { ChatMessageParts } from './chat-message-parts'
@@ -38,7 +57,17 @@ import {
   createInitialCampaignMilestoneUiState,
 } from './campaign-milestone-reducer'
 import { TimelineProvider, type TimelineContextValue } from './timeline-context'
+import { useCampaignPreviewVisibility } from './use-campaign-preview-visibility'
 import { useMilestoneOperations } from './use-milestone-operations'
+
+/** Code-split preview; collapsible panel keeps the subtree mounted when hidden on desktop. */
+const CampaignPreviewPanelBodyLazy = dynamic(
+  () => import('./campaign-preview-panel-body').then((m) => m.CampaignPreviewPanelBody),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-28 w-full rounded-lg" />,
+  },
+)
 
 export type CampaignChatPanelProps = {
   workflowId: string
@@ -54,6 +83,11 @@ export function CampaignChatPanel({
   const t = useTranslations('analytics.campaigns.chat')
   const tWorkspace = useTranslations('analytics.campaigns.workspace')
   const [text, setText] = useState('')
+  const [isPreviewTransitionPending, startPreviewTransition] = useTransition()
+
+  const { previewOpen, setPreviewOpen } = useCampaignPreviewVisibility()
+  const isDesktop = useMediaQuery('(min-width: 768px)')
+  const previewPanelRef = usePanelRef()
 
   const [milestoneUi, dispatch] = useReducer(
     campaignMilestoneReducer,
@@ -133,119 +167,218 @@ export function CampaignChatPanel({
 
   const visibleMessages = messages.filter((msg) => msg.role !== 'system')
 
+  useLayoutEffect(() => {
+    const panel = previewPanelRef.current
+    if (!panel || !isDesktop) {
+      return
+    }
+    if (previewOpen) {
+      panel.expand()
+    } else {
+      panel.collapse()
+    }
+  }, [previewOpen, isDesktop, previewPanelRef])
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key !== '\\') {
+        return
+      }
+      const target = e.target
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return
+      }
+      e.preventDefault()
+      startPreviewTransition(() => {
+        setPreviewOpen((v) => !v)
+      })
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [setPreviewOpen])
+
+  const handlePreviewToggle = useCallback(() => {
+    startPreviewTransition(() => {
+      setPreviewOpen((v) => !v)
+    })
+  }, [setPreviewOpen])
+
+  const handleMobileSheetOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        setPreviewOpen(false)
+      }
+    },
+    [setPreviewOpen],
+  )
+
   return (
     <TimelineProvider value={timelineValue}>
-      <ResizablePanelGroup className="h-full min-h-0 flex-1 overflow-hidden rounded-lg border">
-        <ResizablePanel defaultSize={40} minSize={28}>
-          <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-            <TimelineWorkspace />
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden">
+        <div className="flex shrink-0 justify-end">
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  aria-busy={isPreviewTransitionPending}
+                  aria-label={tWorkspace('previewToggleAriaLabel')}
+                  aria-pressed={previewOpen}
+                  className="shrink-0"
+                  onClick={handlePreviewToggle}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <PanelRight />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs text-balance" side="bottom">
+                <p>{tWorkspace('previewToggleTooltip')}</p>
+                <p className="mt-1 text-muted-foreground">{tWorkspace('previewToggleShortcut')}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
+          <ResizablePanelGroup className="h-full min-h-0 flex-1 overflow-hidden">
+            <ResizablePanel defaultSize={isDesktop ? 40 : 40} minSize={isDesktop ? 28 : 22}>
+              <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+                <TimelineWorkspace />
+              </div>
+            </ResizablePanel>
+
+            <ResizableHandle withHandle />
+
+            {isDesktop ? (
+              <ResizablePanel
+                className="bg-muted/20 p-3"
+                collapsedSize={0}
+                collapsible
+                defaultSize={22}
+                id="campaign-preview"
+                minSize={16}
+                panelRef={previewPanelRef}
+              >
+                <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+                  <CampaignPreviewPanelBodyLazy />
+                </div>
+              </ResizablePanel>
+            ) : null}
+
+            {isDesktop ? <ResizableHandle withHandle /> : null}
+
+            <ResizablePanel defaultSize={isDesktop ? 38 : 60} minSize={isDesktop ? 22 : 28}>
+              <div className="relative flex h-full min-h-0 min-w-0 flex-col divide-y overflow-hidden">
+                <Conversation aria-live="polite">
+                  <ConversationContent>
+                    {error ? (
+                      <div
+                        aria-live="polite"
+                        className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-destructive text-sm"
+                        role="alert"
+                      >
+                        <p className="font-medium">{t('errorTitle')}</p>
+                        <p className="mt-1 text-muted-foreground">{error.message}</p>
+                        <Button
+                          className="mt-3"
+                          onClick={() => void handleRetry()}
+                          size="sm"
+                          type="button"
+                          variant="outline"
+                        >
+                          {t('retry')}
+                        </Button>
+                      </div>
+                    ) : null}
+                    {messages.length === 0 && !error ? (
+                      <ConversationEmptyState
+                        description={t('emptyDescription')}
+                        title={t('emptyTitle')}
+                      />
+                    ) : (
+                      <>
+                        {visibleMessages.map((msg) => {
+                          const isLast = msg === visibleMessages[visibleMessages.length - 1]
+                          const isActiveStream =
+                            isLast && (status === 'submitted' || status === 'streaming')
+                          const msgText = getMessageText(msg)
+                          const showFallbackSpinner =
+                            isActiveStream && msg.role === 'assistant' && msgText.length === 0
+
+                          return (
+                            <Message from={msg.role} key={msg.id}>
+                              <MessageContent>
+                                {showFallbackSpinner ? (
+                                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                                    <Spinner />
+                                    <span>{t('thinking')}</span>
+                                  </div>
+                                ) : (
+                                  <ChatMessageParts message={msg} role={msg.role} />
+                                )}
+                              </MessageContent>
+                            </Message>
+                          )
+                        })}
+                        {visibleMessages.length > 0 &&
+                          (status === 'submitted' || status === 'streaming') &&
+                          visibleMessages[visibleMessages.length - 1]?.role === 'user' && (
+                            <Message from="assistant">
+                              <MessageContent>
+                                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                                  <Spinner />
+                                  <span>{t('thinking')}</span>
+                                </div>
+                              </MessageContent>
+                            </Message>
+                          )}
+                      </>
+                    )}
+                  </ConversationContent>
+                  <ConversationScrollButton />
+                </Conversation>
+                <div className="shrink-0 p-4">
+                  <PromptInput globalDrop multiple onSubmit={handleSubmit}>
+                    <PromptInputBody>
+                      <PromptInputTextarea
+                        placeholder={t('placeholder')}
+                        value={text}
+                        onChange={handleTextChange}
+                      />
+                    </PromptInputBody>
+                    <PromptInputFooter>
+                      <PromptInputSubmit
+                        disabled={isSubmitDisabled}
+                        status={status}
+                        onStop={stop}
+                      />
+                    </PromptInputFooter>
+                  </PromptInput>
+                </div>
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
+      </div>
+
+      <Sheet onOpenChange={handleMobileSheetOpenChange} open={!isDesktop && previewOpen}>
+        <SheetContent
+          className="flex w-full flex-col gap-0 overflow-hidden sm:max-w-md"
+          side="right"
+        >
+          <SheetHeader className="sr-only">
+            <SheetTitle>{tWorkspace('previewTitle')}</SheetTitle>
+          </SheetHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto bg-muted/20 p-3">
+            <CampaignPreviewPanelBodyLazy />
           </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        <ResizablePanel defaultSize={22} minSize={16}>
-          <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-muted/20 p-3">
-            <Card className="flex h-full min-h-0 flex-col overflow-hidden border-dashed">
-              <CardHeader className="shrink-0">
-                <CardTitle className="text-base">{tWorkspace('previewTitle')}</CardTitle>
-                <CardDescription className="text-pretty">
-                  {tWorkspace('previewDescription')}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        <ResizablePanel defaultSize={38} minSize={22}>
-          <div className="relative flex h-full min-h-0 min-w-0 flex-col divide-y overflow-hidden">
-            <Conversation aria-live="polite">
-              <ConversationContent>
-                {error ? (
-                  <div
-                    aria-live="polite"
-                    className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-destructive text-sm"
-                    role="alert"
-                  >
-                    <p className="font-medium">{t('errorTitle')}</p>
-                    <p className="mt-1 text-muted-foreground">{error.message}</p>
-                    <Button
-                      className="mt-3"
-                      onClick={() => void handleRetry()}
-                      size="sm"
-                      type="button"
-                      variant="outline"
-                    >
-                      {t('retry')}
-                    </Button>
-                  </div>
-                ) : null}
-                {messages.length === 0 && !error ? (
-                  <ConversationEmptyState
-                    description={t('emptyDescription')}
-                    title={t('emptyTitle')}
-                  />
-                ) : (
-                  <>
-                    {visibleMessages.map((msg) => {
-                      const isLast = msg === visibleMessages[visibleMessages.length - 1]
-                      const isActiveStream =
-                        isLast && (status === 'submitted' || status === 'streaming')
-                      const msgText = getMessageText(msg)
-                      const showFallbackSpinner =
-                        isActiveStream && msg.role === 'assistant' && msgText.length === 0
-
-                      return (
-                        <Message from={msg.role} key={msg.id}>
-                          <MessageContent>
-                            {showFallbackSpinner ? (
-                              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                                <Spinner />
-                                <span>{t('thinking')}</span>
-                              </div>
-                            ) : (
-                              <ChatMessageParts message={msg} role={msg.role} />
-                            )}
-                          </MessageContent>
-                        </Message>
-                      )
-                    })}
-                    {visibleMessages.length > 0 &&
-                      (status === 'submitted' || status === 'streaming') &&
-                      visibleMessages[visibleMessages.length - 1]?.role === 'user' && (
-                        <Message from="assistant">
-                          <MessageContent>
-                            <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                              <Spinner />
-                              <span>{t('thinking')}</span>
-                            </div>
-                          </MessageContent>
-                        </Message>
-                      )}
-                  </>
-                )}
-              </ConversationContent>
-              <ConversationScrollButton />
-            </Conversation>
-            <div className="shrink-0 p-4">
-              <PromptInput globalDrop multiple onSubmit={handleSubmit}>
-                <PromptInputBody>
-                  <PromptInputTextarea
-                    placeholder={t('placeholder')}
-                    value={text}
-                    onChange={handleTextChange}
-                  />
-                </PromptInputBody>
-                <PromptInputFooter>
-                  <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />
-                </PromptInputFooter>
-              </PromptInput>
-            </div>
-          </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </SheetContent>
+      </Sheet>
     </TimelineProvider>
   )
 }
