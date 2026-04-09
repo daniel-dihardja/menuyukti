@@ -1,82 +1,164 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://menuyukti.dev/schemas/campaign-export/1.0",
-  "title": "Campaign milestone export",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "schemaVersion",
-    "campaignId",
-    "campaignName",
-    "exportedAt",
-    "milestones"
+  "title": "Campaign export snapshot or import payload",
+  "$comment": "Two shapes: campaignExportSnapshot matches persisted exportCampaign output; campaignImportPayload is the minimal JSON importCampaign accepts for new campaigns (e.g. LLM-generated). Milestone fields marked export-only are ignored on import.",
+  "description": "Menuyukti campaign tree as JSON. (1) Export snapshot: written by exportCampaign with DB ids and timestamps; use for backup and round-trip after re-import (ids are reassigned). (2) Import payload: only campaignName and milestones are required; goal is optional. importCampaign ignores schemaVersion, campaignId, exportedAt, milestone id, milestone status, and passCriteria id. Omit result when creating a fresh campaign unless you need a prefilled evaluation summary.",
+  "oneOf": [
+    { "$ref": "#/$defs/campaignExportSnapshot" },
+    { "$ref": "#/$defs/campaignImportPayload" }
   ],
-  "properties": {
-    "schemaVersion": {
-      "type": "string",
-      "const": "1.0",
-      "description": "Payload format version"
+  "examples": [
+    {
+      "campaignName": "Spring lunch push",
+      "goal": "Increase weekday lunch covers using Instagram promos tied to top sellers.",
+      "milestones": [
+        {
+          "order": 0,
+          "title": "Define audience and offer",
+          "dataTask": "manual",
+          "goal": "Agree on target guest and single primary offer.",
+          "passCriteria": [
+            { "requirement": "Offer is specific and measurable", "status": "open" },
+            { "requirement": "Creative fits brand voice", "status": "open" }
+          ]
+        },
+        {
+          "order": 1,
+          "title": "Location context",
+          "dataTask": "location_profile",
+          "passCriteria": []
+        }
+      ]
     },
-    "campaignId": {
-      "type": "string",
-      "pattern": "^[0-9]+$",
-      "description": "Campaign node id"
-    },
-    "campaignName": {
-      "type": "string"
-    },
-    "goal": {
-      "type": ["string", "null"],
-      "description": "Campaign-level goal from campaign node data.goal"
-    },
-    "exportedAt": {
-      "type": "string",
-      "format": "date-time",
-      "description": "UTC ISO-8601 when the export was written"
-    },
-    "milestones": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/milestoneExport" }
+    {
+      "schemaVersion": "1.0",
+      "campaignId": "42",
+      "campaignName": "Exported campaign",
+      "goal": "Grow dinner revenue",
+      "exportedAt": "2026-04-09T12:00:00Z",
+      "milestones": [
+        {
+          "id": "100",
+          "title": "Kickoff",
+          "order": 0,
+          "goal": "Align on KPIs",
+          "dataTask": "manual",
+          "data": "## Notes\nPrefilled markdown from milestonedata.",
+          "status": "pending",
+          "passCriteria": [
+            { "id": "201", "requirement": "KPIs documented", "status": "open" }
+          ],
+          "result": null
+        }
+      ]
     }
-  },
+  ],
   "$defs": {
-    "milestoneExport": {
+    "campaignExportSnapshot": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "title", "order", "passCriteria"],
+      "description": "Full snapshot from exportCampaign: includes format version, campaign node id, and export timestamp. Re-import assigns new database ids; these metadata fields are not read by importCampaign.",
+      "required": ["schemaVersion", "campaignId", "campaignName", "exportedAt", "goal", "milestones"],
+      "properties": {
+        "schemaVersion": {
+          "type": "string",
+          "const": "1.0",
+          "description": "Payload format version. Export-only; importCampaign does not validate this."
+        },
+        "campaignId": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Campaign node id at export time. Export-only; new campaign receives a new id on import."
+        },
+        "campaignName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Campaign node name (display title)."
+        },
+        "goal": {
+          "type": ["string", "null"],
+          "description": "Campaign-level objective from campaign node data.goal. On import, stored on the new campaign when string; null means no goal field."
+        },
+        "exportedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "UTC ISO-8601 when the export was written. Export-only; not used on import."
+        },
+        "milestones": {
+          "type": "array",
+          "description": "Milestone nodes under the campaign, ordered by order then legacy id for tie-break (export).",
+          "items": { "$ref": "#/$defs/milestoneNode" }
+        }
+      }
+    },
+    "campaignImportPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Minimal payload accepted by importCampaign: non-empty campaignName and a milestones array. Optional campaign goal; milestone ids and export-only fields may be omitted.",
+      "required": ["campaignName", "milestones"],
+      "properties": {
+        "campaignName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name for the new campaign node (whitespace-stripped; empty after trim is rejected by the API)."
+        },
+        "goal": {
+          "type": ["string", "null"],
+          "description": "Optional high-level campaign objective. Omit or null for no goal on the campaign node."
+        },
+        "milestones": {
+          "type": "array",
+          "description": "Milestones to create under the campaign, processed in sorted order by order then id tie-break. May be empty.",
+          "items": { "$ref": "#/$defs/milestoneNode" }
+        }
+      }
+    },
+    "milestoneNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Milestone: title and order define the node; pass criteria, goal child, markdown data, and optional result are created from these fields on import.",
+      "required": ["order"],
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^[0-9]+$"
+          "pattern": "^[0-9]+$",
+          "description": "Milestone node id from the database in exports. Export-only; not persisted on import (use any placeholder such as \"0\" in tools that require a string). Used only as a secondary sort key when order ties."
         },
         "title": {
-          "type": "string"
+          "type": "string",
+          "description": "Milestone display name. Defaults to \"Milestone\" on import if missing or blank."
         },
         "order": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "description": "Display sequence (non-negative). Primary sort key for milestones on import."
         },
         "goal": {
           "type": "string",
-          "description": "Milestone goal from goal child or legacy milestone.data.goal"
+          "description": "Milestone-level goal text; creates a goal child node when non-empty after trim."
         },
         "dataTask": {
           "type": "string",
-          "enum": ["manual", "location_profile"]
+          "enum": ["manual", "location_profile"],
+          "description": "manual: user or LLM supplies milestone markdown (data) and prepares without the location_profile pipeline. location_profile: milestone is prepared using the location_profile data task / prefetch flow."
         },
         "data": {
           "type": "string",
-          "description": "Markdown from milestonedata child"
+          "description": "Markdown body stored on the milestonedata child when non-empty; prefilled context for the milestone."
         },
         "status": {
           "type": "string",
-          "enum": ["complete", "failed", "pending", "empty"]
+          "enum": ["complete", "failed", "pending", "empty"],
+          "description": "Derived rail status from pass criteria and result in exports (complete / failed / pending / empty). Export-only; ignored on import."
         },
         "passCriteria": {
           "type": "array",
+          "description": "Checklist rows; each valid row creates a passcriteria child. Omit or use [] when there are no criteria.",
           "items": { "$ref": "#/$defs/passCriteriaExport" }
         },
         "result": {
+          "description": "Optional evaluation summary child. Omit for new campaigns; include when replaying a saved evaluation outcome.",
           "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/resultExport" }]
         }
       }
@@ -85,30 +167,70 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["requirement", "status"],
+      "description": "One pass/fail row; maps to a passcriteria child on import (id not stored).",
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^[0-9]+$"
+          "pattern": "^[0-9]+$",
+          "description": "passcriteria node id in exports. Export-only; not used on import."
         },
         "requirement": {
-          "type": "string"
+          "type": "string",
+          "description": "Human-readable criterion text."
         },
         "status": {
           "type": "string",
-          "enum": ["pass", "fail", "open"]
+          "enum": ["pass", "fail", "open"],
+          "description": "open: not yet evaluated; pass / fail: evaluation outcome."
         }
       }
     },
     "resultExport": {
       "type": "object",
-      "additionalProperties": true,
+      "additionalProperties": false,
       "required": ["summary", "passed", "total"],
+      "description": "Milestone evaluation rollup; creates a result child when summary, passed, and total are present with correct types.",
       "properties": {
-        "summary": { "type": "string" },
-        "passed": { "type": "integer" },
-        "total": { "type": "integer" },
+        "summary": {
+          "type": "string",
+          "description": "Short narrative of how criteria were judged."
+        },
+        "passed": {
+          "type": "integer",
+          "description": "Count of criteria that passed."
+        },
+        "total": {
+          "type": "integer",
+          "description": "Total criteria evaluated."
+        },
         "criteria": {
-          "type": "array"
+          "type": "array",
+          "description": "Per-criterion detail from automated evaluation (aligned with result node validation and milestone eval output).",
+          "items": { "$ref": "#/$defs/resultCriterionItem" }
+        }
+      }
+    },
+    "resultCriterionItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Single evaluated criterion in result.criteria.",
+      "required": ["id", "requirement", "status", "reasoning"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable id for the passcriteria row (often mirrors passcriteria node id)."
+        },
+        "requirement": {
+          "type": "string",
+          "description": "Criterion text that was evaluated."
+        },
+        "status": {
+          "type": "string",
+          "description": "Evaluation outcome for this row (e.g. pass, fail)."
+        },
+        "reasoning": {
+          "type": "string",
+          "description": "Short rationale for the status."
         }
       }
     }
