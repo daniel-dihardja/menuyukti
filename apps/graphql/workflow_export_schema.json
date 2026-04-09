@@ -46,9 +46,7 @@
           "dataTask": "manual",
           "data": "## Notes\nPrefilled markdown from milestonedata.",
           "status": "pending",
-          "passCriteria": [
-            { "id": "201", "requirement": "KPIs documented", "status": "open" }
-          ],
+          "passCriteria": [{ "id": "201", "requirement": "KPIs documented", "status": "open" }],
           "result": null
         }
       ]
@@ -59,7 +57,14 @@
       "type": "object",
       "additionalProperties": false,
       "description": "Full snapshot from exportWorkflow: includes format version, root workflow node id, and export timestamp. Re-import assigns new database ids; these metadata fields are not read by importWorkflow.",
-      "required": ["schemaVersion", "workflowId", "workflowName", "exportedAt", "goal", "milestones"],
+      "required": [
+        "schemaVersion",
+        "workflowId",
+        "workflowName",
+        "exportedAt",
+        "goal",
+        "milestones"
+      ],
       "properties": {
         "schemaVersion": {
           "type": "string",
