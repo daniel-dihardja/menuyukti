@@ -5,6 +5,7 @@ from .create_workspace import CreateWorkspaceMutation
 from .delete_image_ai_flow import DeleteImageAiFlowMutation
 from .delete_node import DeleteNodeMutation
 from .export_campaign import ExportCampaignMutation
+from .import_campaign import ImportCampaignMutation
 from .invite_workspace_member import InviteWorkspaceMemberMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
 from .update_image_ai_flow import UpdateImageAiFlowMutation
@@ -19,6 +20,7 @@ __all__ = [
     "CreateWorkspaceMutation",
     "DeleteImageAiFlowMutation",
     "ExportCampaignMutation",
+    "ImportCampaignMutation",
     "DeleteNodeMutation",
     "InviteWorkspaceMemberMutation",
     "RemoveWorkspaceMemberMutation",
