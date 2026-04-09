@@ -6,7 +6,7 @@ import { routes } from '@/lib/routes'
 
 const isProtectedRoute = createRouteMatcher([
   '/analytics(.*)',
-  '/campaigns(.*)',
+  '/workflows(.*)',
   '/assets(.*)',
   '/studio(.*)',
   '/print-orders(.*)',

@@ -60,7 +60,7 @@ def test_delete_node_only_last_milestone():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
                 "parentId": None,
             },
@@ -158,7 +158,7 @@ def test_delete_passcriteria_node():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
                 "parentId": None,
             },
@@ -261,7 +261,7 @@ def test_delete_milestone_removes_goal_child():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
                 "parentId": None,
             },
@@ -341,7 +341,7 @@ def test_delete_milestone_removes_milestonedata_child():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
                 "parentId": None,
             },

@@ -20,7 +20,7 @@ mutation CreateNode($locationId: Int!, $nodeType: String!, $name: String, $descr
 """
 
 
-def test_create_node_inserts_root_campaign_node():
+def test_create_node_inserts_root_workflow_node():
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -40,7 +40,7 @@ def test_create_node_inserts_root_campaign_node():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": None,
             },
             context_value=graphql_auth_context(),
@@ -49,7 +49,7 @@ def test_create_node_inserts_root_campaign_node():
     assert not result.errors, result.errors
     data = result.data["createNode"]
     assert data["parentId"] is None
-    assert data["nodeType"] == "campaign"
+    assert data["nodeType"] == "workflow"
     assert data["locationId"] == location_id
     assert data["name"]
     assert data["path"] == f"/{data['id']}"
@@ -61,7 +61,7 @@ def test_create_node_inserts_root_campaign_node():
         row = session.get(Node, int(data["id"]))
         assert row is not None
         assert row.parent_id is None
-        assert row.node_type == "campaign"
+        assert row.node_type == "workflow"
         assert row.location_id == location_id
         assert row.name == data["name"]
         assert row.data is None
@@ -92,7 +92,7 @@ def test_create_milestone_sets_order_in_data_json():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
                 "parentId": None,
             },
@@ -152,7 +152,7 @@ def test_create_passcriteria_requires_milestone_parent():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
             },
             context_value=graphql_auth_context(),
@@ -230,7 +230,7 @@ def test_create_node_with_json_data():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "With data",
                 "description": "A test campaign",
                 "data": payload,
@@ -273,7 +273,7 @@ def test_create_goal_under_milestone():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
             },
             context_value=graphql_auth_context(),
@@ -337,7 +337,7 @@ def test_create_second_goal_rejected():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
             },
             context_value=graphql_auth_context(),
@@ -412,7 +412,7 @@ def test_create_milestonedata_under_milestone():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
             },
             context_value=graphql_auth_context(),
@@ -476,7 +476,7 @@ def test_create_second_milestonedata_rejected():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
             },
             context_value=graphql_auth_context(),

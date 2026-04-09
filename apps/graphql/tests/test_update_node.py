@@ -56,7 +56,7 @@ def test_update_milestone_name():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
                 "parentId": None,
             },
@@ -137,7 +137,7 @@ def test_update_passcriteria_node_data():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
                 "parentId": None,
             },
@@ -236,7 +236,7 @@ def test_update_goal_node_data():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
                 "parentId": None,
             },
@@ -311,7 +311,7 @@ def test_update_milestonedata_node_data():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
                 "parentId": None,
             },
@@ -364,7 +364,7 @@ def test_update_milestonedata_node_data():
     assert out["data"]["data"] == "Second draft"
 
 
-def test_update_campaign_node_goal_data():
+def test_update_workflow_node_goal_data():
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -386,7 +386,7 @@ def test_update_campaign_node_goal_data():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Campaign",
                 "parentId": None,
             },

@@ -69,7 +69,7 @@
         "workflowId": {
           "type": "string",
           "pattern": "^[0-9]+$",
-          "description": "Root workflow container node id at export time (node_type campaign in DB). Export-only; new root receives a new id on import."
+          "description": "Root workflow container node id at export time (node_type workflow in DB). Export-only; new root receives a new id on import."
         },
         "workflowName": {
           "type": "string",

@@ -1,7 +1,7 @@
 /** URL prefixes for the signed-in app shell (sidebar + header row). User profile lives in that header, not the global AppChrome bar. */
 export const PROTECTED_APP_SHELL_PREFIXES = [
   '/analytics',
-  '/campaigns',
+  '/workflows',
   '/assets',
   '/studio',
   '/print-orders',
@@ -43,9 +43,9 @@ export const routes = {
   printOrders: '/print-orders',
   dashboard: '/dashboard',
 
-  campaigns: {
-    list: '/campaigns',
-    detail: (id: string | number) => `/campaigns/${id}`,
+  workflows: {
+    list: '/workflows',
+    detail: (id: string | number) => `/workflows/${id}`,
   },
 
   agents: {

@@ -58,7 +58,7 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
 
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href={routes.campaigns.list} className="flex items-center gap-2">
+                      <Link href={routes.workflows.list} className="flex items-center gap-2">
                         <Sparkles className="h-4 w-4" />
                         {t('askAi')}
                       </Link>

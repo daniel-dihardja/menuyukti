@@ -57,7 +57,7 @@ def test_nodes_filters_by_parent_id_and_returns_milestone_children():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Test Campaign",
                 "parentId": None,
             },
@@ -90,7 +90,7 @@ def test_nodes_filters_by_parent_id_and_returns_milestone_children():
             CREATE_NODE,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "campaign",
+                "nodeType": "workflow",
                 "name": "Other Campaign",
                 "parentId": None,
             },

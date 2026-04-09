@@ -70,15 +70,15 @@ You are a helpful assistant. Follow the product rules below.
 
 Implementations live in [`handlers.py`](../../../apps/agents/agents/domain/skill_runner/handlers.py); GraphQL calls live in [`skill_runner/graphql_client.py`](../../../apps/agents/agents/domain/skill_runner/graphql_client.py).
 
-| `use`                                | Role                                                        |
-| ------------------------------------ | ----------------------------------------------------------- |
-| `platform.location`                  | Location record for `location_id`.                          |
-| `platform.public_holidays`           | Holidays for country + date range.                          |
-| `analytics.latest_operating_profile` | Latest analytics run + operating profile for `location_id`. |
+| `use`                                | Role                                                                |
+| ------------------------------------ | ------------------------------------------------------------------- |
+| `platform.location`                  | Location record for `location_id`.                                  |
+| `platform.public_holidays`           | Holidays for country + date range.                                  |
+| `analytics.latest_operating_profile` | Latest analytics run + operating profile for `location_id`.         |
 | `analytics.instagram_signals`        | Latest run: composite Instagram signals (heroes, window, headline). |
-| `analytics.promotion_menu_items`     | Latest run: per-menu promotion rows (engineering + peaks).   |
-| `analytics.category_mix`           | Latest run: category revenue/qty mix.                        |
-| `analytics.revenue_trends`           | Latest run: per-menu revenue vs prior period.                |
+| `analytics.promotion_menu_items`     | Latest run: per-menu promotion rows (engineering + peaks).          |
+| `analytics.category_mix`             | Latest run: category revenue/qty mix.                               |
+| `analytics.revenue_trends`           | Latest run: per-menu revenue vs prior period.                       |
 
 **New data:** add async handler → register in `PREFETCH_HANDLERS` → add `fetch_*` helpers that call `graphql_post` (same pattern as existing fetches). Heavy analytics belong in **`packages/menuyukti`**; GraphQL stays thin — see [GraphQL README](../../../apps/graphql/README.md) and [menuyukti README](../../../packages/menuyukti/README.md).
 
@@ -113,6 +113,7 @@ flowchart LR
 2. **Logic** — non-trivial math in [`packages/menuyukti`](../../../packages/menuyukti); resolvers map ORM/rows to types.
 3. **Persistence** — new tables/columns only in **`apps/graphql`**.
 4. **Tests** — [`apps/graphql/tests/`](../../../apps/graphql/tests/).
+5. **Workflow roots** — The location-scoped workflow container is a GraphQL `Node` with **`nodeType` `workflow`** (milestones hang under it).
 
 ## Agents checklist
 
@@ -124,7 +125,7 @@ flowchart LR
 
 **Today**, [`milestone_prepare.py`](../../../apps/agents/routers/milestone_prepare.py) passes a **fixed** path to `location_profile/SKILL.md`. To expose a **new** task from the milestone **Data** dropdown:
 
-- Extend **`dataTask`** enums and Zod schemas (e.g. [`timeline/types.ts`](<../../../apps/web/app/(protected)/campaigns/_components/timeline/types.ts>), [`node-schemas.ts`](../../../apps/web/lib/graphql/node-schemas.ts), [`schema.ts`](../../../apps/web/app/api/campaigns/[id]/milestones/schema.ts)) and the Select in [`milestone-item-tabs.tsx`](<../../../apps/web/app/(protected)/campaigns/_components/timeline/milestone-item-tabs.tsx>).
+- Extend **`dataTask`** enums and Zod schemas (e.g. [`timeline/types.ts`](<../../../apps/web/app/(protected)/workflows/_components/timeline/types.ts>), [`node-schemas.ts`](../../../apps/web/lib/graphql/node-schemas.ts), [`schema.ts`](../../../apps/web/app/api/workflows/[id]/milestones/schema.ts)) and the Select in [`milestone-item-tabs.tsx`](<../../../apps/web/app/(protected)/workflows/_components/timeline/milestone-item-tabs.tsx>).
 - Add **next-intl** strings for the new option (no hardcoded UI copy).
 - Route prepare by `dataTask`: map task id → `Path` to the correct `SKILL.md` (refactor the router when more than one skill exists).
 

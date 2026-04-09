@@ -8,6 +8,8 @@ A **campaign** is the top-level container for a workflow. It is scoped to a **lo
 
 Think of the campaign as the **flow**: an ordered pipeline where the whole initiative has a **single north star**, and each stage has its own objective, inputs, outputs, and quality checks.
 
+**Persistence:** The top-level container is a **`node`** row whose GraphQL **`nodeType`** (database column **`type`**) is **`workflow`**. Milestones are children of that root. Product copy may still say “campaign”; the stored polymorphic type name is `workflow`.
+
 ### Root goal (workflow level)
 
 A workflow **should** expose a **root goal**: one clear statement of **why this campaign exists** and **what success means** at the level of the whole flow—not only inside individual milestones.

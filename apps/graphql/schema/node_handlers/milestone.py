@@ -1,4 +1,4 @@
-"""Milestone nodes: under campaign; LIFO delete by display order; optional JSON data on update."""
+"""Milestone nodes: under workflow root; LIFO delete by display order; optional JSON data on update."""
 
 from __future__ import annotations
 
@@ -26,9 +26,9 @@ class MilestoneHandler(NodeHandler):
         session: Session | None = None,
     ) -> dict | None:
         if parent is None:
-            raise ValueError("Milestone must have a parent campaign")
-        if parent.node_type != "campaign":
-            raise ValueError("Milestone parent must be a campaign")
+            raise ValueError("Milestone must have a parent workflow")
+        if parent.node_type != "workflow":
+            raise ValueError("Milestone parent must be a workflow root")
         if session is None:
             raise ValueError("Session required to create milestone")
 
@@ -53,8 +53,8 @@ class MilestoneHandler(NodeHandler):
             raise ValueError("Milestone has no parent")
         if parent is None:
             raise ValueError("Parent node not found")
-        if parent.node_type != "campaign":
-            raise ValueError("Milestone parent must be a campaign")
+        if parent.node_type != "workflow":
+            raise ValueError("Milestone parent must be a workflow root")
         if parent.location_id != node.location_id:
             raise ValueError("Node location mismatch")
 
@@ -63,8 +63,8 @@ class MilestoneHandler(NodeHandler):
             raise ValueError("Milestone has no parent")
         if parent is None:
             raise ValueError("Parent node not found")
-        if parent.node_type != "campaign":
-            raise ValueError("Milestone parent must be a campaign")
+        if parent.node_type != "workflow":
+            raise ValueError("Milestone parent must be a workflow root")
         if parent.location_id != node.location_id:
             raise ValueError("Node location mismatch")
 

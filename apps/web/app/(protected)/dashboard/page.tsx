@@ -115,7 +115,7 @@ async function DashboardPageData() {
     locationsData.locations.map(async (loc) => {
       const raw = await graphqlQuery<NodesDataRaw>(
         NODES_QUERY,
-        { locationId: Number(loc.id), nodeType: 'campaign' },
+        { locationId: Number(loc.id), nodeType: 'workflow' },
         userId,
       )
       const { nodes } = parseNodesData(raw)
@@ -137,7 +137,7 @@ async function DashboardPageData() {
         <div className="flex flex-wrap items-end justify-between gap-2">
           <h2 className="font-semibold text-lg">{t('campaignsHeading')}</h2>
           <Button asChild size="sm" variant="outline">
-            <Link href={routes.campaigns.list}>{t('campaignsViewAll')}</Link>
+            <Link href={routes.workflows.list}>{t('campaignsViewAll')}</Link>
           </Button>
         </div>
         {campaignRows.length === 0 ? (
@@ -145,7 +145,7 @@ async function DashboardPageData() {
             <CardContent className="flex flex-col gap-3 py-8">
               <p className="text-center text-muted-foreground">{t('noCampaigns')}</p>
               <Button asChild className="self-center">
-                <Link href={routes.campaigns.list}>{t('createCampaign')}</Link>
+                <Link href={routes.workflows.list}>{t('createCampaign')}</Link>
               </Button>
             </CardContent>
           </Card>
@@ -162,7 +162,7 @@ async function DashboardPageData() {
                   </CardHeader>
                   <CardContent>
                     <Button asChild size="sm" variant="secondary">
-                      <Link href={routes.campaigns.detail(c.id)}>{t('viewCampaign')}</Link>
+                      <Link href={routes.workflows.detail(c.id)}>{t('viewCampaign')}</Link>
                     </Button>
                   </CardContent>
                 </Card>

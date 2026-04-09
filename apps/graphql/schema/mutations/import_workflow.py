@@ -197,7 +197,7 @@ def _import_from_payload(session: Session, location_id: int, payload: object) ->
     else:
         raise ValueError("payload goal must be a string or null")
 
-    handler = get_handler("campaign")
+    handler = get_handler("workflow")
     resolved_root = handler.validate_create(None, root_data, session)
 
     root_node = Node(
@@ -205,7 +205,7 @@ def _import_from_payload(session: Session, location_id: int, payload: object) ->
         name=raw_name.strip(),
         description=None,
         path="",
-        node_type="campaign",
+        node_type="workflow",
         location_id=location_id,
         data=resolved_root,
     )

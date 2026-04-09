@@ -17,7 +17,7 @@ Use **route groups** to separate concerns:
 
 | Group | Path | Notes |
 |---|---|---|
-| `(protected)` | `/analytics/*`, `/campaigns/*`, `/assets` | Shared layout: sidebar + context providers; `auth()` guard |
+| `(protected)` | `/analytics/*`, `/workflows/*`, `/assets` | Shared layout: sidebar + context providers; `auth()` guard |
 | `(standalone)` | `/login`, `/sign-up`, `/sso-callback` | No sidebar; Clerk-branded pages |
 | `app/api/` | `/api/**` | BFF route handlers — call `graphqlQuery` with Clerk user id |
 
@@ -26,7 +26,7 @@ Feature-specific client components live **next to their route** under `app/(prot
 ## Auth
 
 - **Clerk** (`@clerk/nextjs`) — do not introduce custom sessions or cookie-based auth.
-- **Middleware** (`middleware.ts`): `clerkMiddleware` + `createRouteMatcher` protects `/analytics`, `/campaigns`, `/assets`. Uses `routes.ts` for URL constants.
+- **Middleware** (`middleware.ts`): `clerkMiddleware` + `createRouteMatcher` protects `/analytics`, `/workflows`, `/assets`. Uses `routes.ts` for URL constants.
 - **Server layouts/pages**: `auth()` from `@clerk/nextjs/server`; redirect if no `userId`. Protected layout does this as defense-in-depth after middleware.
 - **Client components**: `useAuth`, `UserButton`, `SignInButton` from `@clerk/nextjs`.
 - Clerk config: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` for the client; sign-in/up URLs in `lib/routes.ts`; optional `getClerkSecretKey()` in `lib/clerk-env.ts` for server tooling.

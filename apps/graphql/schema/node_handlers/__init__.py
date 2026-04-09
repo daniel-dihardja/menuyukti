@@ -4,17 +4,17 @@ from __future__ import annotations
 
 from graphql.schema.node_handlers._generic import GenericHandler
 from graphql.schema.node_handlers.base import NodeHandler
-from graphql.schema.node_handlers.campaign import CampaignHandler
 from graphql.schema.node_handlers.goal import GoalHandler
 from graphql.schema.node_handlers.milestone import MilestoneHandler
 from graphql.schema.node_handlers.milestonedata import MilestoneDataHandler
 from graphql.schema.node_handlers.passcriteria import PassCriteriaHandler
 from graphql.schema.node_handlers.result import ResultHandler
+from graphql.schema.node_handlers.workflow import WorkflowHandler
 
 _GENERIC_HANDLER = GenericHandler()
 
 _REGISTRY: dict[str, NodeHandler] = {
-    "campaign": CampaignHandler(),
+    "workflow": WorkflowHandler(),
     "milestone": MilestoneHandler(),
     "passcriteria": PassCriteriaHandler(),
     "goal": GoalHandler(),
@@ -34,7 +34,7 @@ def get_handler(node_type: str | None) -> NodeHandler:
 
 
 __all__ = [
-    "CampaignHandler",
+    "WorkflowHandler",
     "GenericHandler",
     "GoalHandler",
     "MilestoneDataHandler",

@@ -93,14 +93,14 @@ export const resultNodeSchema = baseNode.extend({
   data: resultDataSchema.nullable(),
 })
 
-/** Campaign root node `data` JSON — e.g. `{ "goal": "..." }`. */
-export const campaignDataSchema = z.object({ goal: z.string().optional() }).passthrough()
+/** Workflow root node `data` JSON — e.g. `{ "goal": "..." }`. */
+export const workflowDataSchema = z.object({ goal: z.string().optional() }).passthrough()
 
-export type CampaignData = z.infer<typeof campaignDataSchema>
+export type WorkflowData = z.infer<typeof workflowDataSchema>
 
-export const campaignNodeSchema = baseNode.extend({
-  nodeType: z.literal('campaign'),
-  data: campaignDataSchema.nullable(),
+export const workflowNodeSchema = baseNode.extend({
+  nodeType: z.literal('workflow'),
+  data: workflowDataSchema.nullable(),
 })
 
 export const unknownNodeSchema = baseNode.extend({
@@ -114,7 +114,7 @@ export const knownNodeSchema = z.discriminatedUnion('nodeType', [
   goalNodeSchema,
   milestonedataNodeSchema,
   resultNodeSchema,
-  campaignNodeSchema,
+  workflowNodeSchema,
 ])
 
 export type MilestoneNode = z.infer<typeof milestoneNodeSchema>
@@ -122,13 +122,13 @@ export type PassCriteriaNode = z.infer<typeof passCriteriaNodeSchema>
 export type GoalNode = z.infer<typeof goalNodeSchema>
 export type MilestonedataNode = z.infer<typeof milestonedataNodeSchema>
 export type ResultNode = z.infer<typeof resultNodeSchema>
-export type CampaignNode = z.infer<typeof campaignNodeSchema>
+export type WorkflowNode = z.infer<typeof workflowNodeSchema>
 export type KnownNode = z.infer<typeof knownNodeSchema>
 export type UnknownNode = z.infer<typeof unknownNodeSchema>
 export type AnyNode = KnownNode | UnknownNode
 
 /**
- * Parse a single node from GraphQL JSON. Tries milestone, passcriteria, goal, milestonedata, result, campaign, then
+ * Parse a single node from GraphQL JSON. Tries milestone, passcriteria, goal, milestonedata, result, workflow, then
  * falls back to a generic node so callers can still narrow on `nodeType`.
  */
 export function parseNode(raw: unknown): AnyNode {
@@ -152,9 +152,9 @@ export function parseNode(raw: unknown): AnyNode {
   if (r.success) {
     return r.data
   }
-  const c = campaignNodeSchema.safeParse(raw)
-  if (c.success) {
-    return c.data
+  const w = workflowNodeSchema.safeParse(raw)
+  if (w.success) {
+    return w.data
   }
   const u = unknownNodeSchema.safeParse(raw)
   if (u.success) {

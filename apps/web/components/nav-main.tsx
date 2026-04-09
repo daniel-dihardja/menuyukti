@@ -45,9 +45,9 @@ const NAV_ITEMS: NavItem[] = [
     icon: <LayoutDashboard className="w-4 h-4" />,
   },
   {
-    key: 'campaigns',
-    labelKey: 'campaigns',
-    href: routes.campaigns.list,
+    key: 'workflows',
+    labelKey: 'workflows',
+    href: routes.workflows.list,
     icon: <Megaphone className="w-4 h-4" />,
   },
   {

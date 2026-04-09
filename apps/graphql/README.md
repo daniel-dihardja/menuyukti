@@ -26,6 +26,18 @@ CREATE INDEX IF NOT EXISTS ix_node_location_type ON node(location_id, type);
 
 Export snapshots for workflow roots are stored in the **`workflow`** table (`make migrate-db` / `create_all`).
 
+### Workflow root node type (`workflow`)
+
+The GraphQL `nodeType` for a **workflow root** (the container for milestones under a location) is **`workflow`**, persisted in the `node` table column **`type`**.
+
+If you upgrade from a build that stored the legacy value `campaign` on those rows, run this **once per database** before or immediately after deploying the new code (SQLite and PostgreSQL both use the `type` column):
+
+```sql
+UPDATE node SET type = 'workflow' WHERE type = 'campaign';
+```
+
+Deploy order: apply the SQL update so existing roots match what the API expects, then restart the GraphQL and web services.
+
 Need a clean slate? Run `make drop-db` (or `uv run python -m graphql.data_sources.database drop`) to drop every table before recreating the schema with `make migrate-db`.  
 To import a specific Excel report directly into `order_fact`, run `make load-report REPORT_PATH=../../reports/Sales_Recapitulation_Detail_Report_Test.xlsx`; this drops/recreates the database, normalizes the specified workbook with Menyukti, and loads the rows so the analytics schema mirrors that report.
 

@@ -10,7 +10,7 @@ export function MenuyuktiSignUp() {
       path="/sign-up"
       routing="path"
       signInUrl={routes.login}
-      forceRedirectUrl={routes.campaigns.list}
+      forceRedirectUrl={routes.workflows.list}
       appearance={menuyuktiClerkAppearance}
     />
   )

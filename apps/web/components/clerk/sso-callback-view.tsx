@@ -37,7 +37,7 @@ export function SsoCallbackView() {
             if (session?.currentTask) {
               return
             }
-            const url = decorateUrl(routes.campaigns.list)
+            const url = decorateUrl(routes.workflows.list)
             if (url.startsWith('http')) {
               window.location.href = url
             } else {
@@ -57,7 +57,7 @@ export function SsoCallbackView() {
               if (session?.currentTask) {
                 return
               }
-              const url = decorateUrl(routes.campaigns.list)
+              const url = decorateUrl(routes.workflows.list)
               if (url.startsWith('http')) {
                 window.location.href = url
               } else {
@@ -87,7 +87,7 @@ export function SsoCallbackView() {
               if (session?.currentTask) {
                 return
               }
-              const url = decorateUrl(routes.campaigns.list)
+              const url = decorateUrl(routes.workflows.list)
               if (url.startsWith('http')) {
                 window.location.href = url
               } else {
@@ -107,7 +107,7 @@ export function SsoCallbackView() {
             if (session?.currentTask) {
               return
             }
-            const url = decorateUrl(routes.campaigns.list)
+            const url = decorateUrl(routes.workflows.list)
             if (url.startsWith('http')) {
               window.location.href = url
             } else {
@@ -132,7 +132,7 @@ export function SsoCallbackView() {
               if (session?.currentTask) {
                 return
               }
-              const url = decorateUrl(routes.campaigns.list)
+              const url = decorateUrl(routes.workflows.list)
               if (url.startsWith('http')) {
                 window.location.href = url
               } else {

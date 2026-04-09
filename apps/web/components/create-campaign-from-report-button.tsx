@@ -21,7 +21,7 @@ export function CreateCampaignFromReportButton({
   analyticsId,
 }: CreateCampaignFromReportButtonProps) {
   const t = useTranslations('analytics.shared')
-  const href = `${routes.campaigns.list}?fromAnalytics=${String(analyticsId)}`
+  const href = `${routes.workflows.list}?fromAnalytics=${String(analyticsId)}`
 
   return (
     <TooltipProvider>

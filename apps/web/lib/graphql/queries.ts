@@ -6,12 +6,12 @@ import { parseNode, parseNodeNullable, parseNodes, type AnyNode } from './node-s
 
 export type {
   AnyNode,
-  CampaignNode,
   KnownNode,
   MilestoneNode,
   PassCriteriaData,
   PassCriteriaNode,
   ResultNode,
+  WorkflowNode,
 } from './node-schemas'
 
 /** Wire payload from `graphqlQuery` before parsing — use `parseNodeData` / `parseNodesData`. */

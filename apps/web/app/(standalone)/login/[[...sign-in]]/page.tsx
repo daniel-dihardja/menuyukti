@@ -11,7 +11,7 @@ import { redirect } from 'next/navigation'
 export default async function LoginPage() {
   const { isAuthenticated } = await auth()
   if (isAuthenticated) {
-    redirect(routes.campaigns.list)
+    redirect(routes.workflows.list)
   }
 
   const t = await getTranslations('login')

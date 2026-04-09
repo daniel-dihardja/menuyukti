@@ -209,7 +209,7 @@ class ExportWorkflowMutation:
             root = session.get(Node, root_pk)
             if root is None:
                 raise ValueError("Workflow root not found")
-            if root.node_type != "campaign":
+            if root.node_type != "workflow":
                 raise ValueError("Node is not a workflow root")
             if root.location_id != location_id:
                 raise ValueError("Workflow root does not belong to this location")
