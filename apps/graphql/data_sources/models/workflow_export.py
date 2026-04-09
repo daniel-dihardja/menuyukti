@@ -36,9 +36,7 @@ class WorkflowExport(Base):
     )
     payload: Mapped[dict] = mapped_column(JSONB().with_variant(JSON(), "sqlite"))
     schema_version: Mapped[str] = mapped_column(Text, server_default=text("'2.0'"))
-    created_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[object] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

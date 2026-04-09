@@ -23,9 +23,7 @@ class Workspace(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(256))
     owner_clerk_user_id: Mapped[str] = mapped_column(String(128), index=True)
-    created_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[object] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -51,12 +49,8 @@ class WorkspaceMembership(Base):
     )
     clerk_user_id: Mapped[str] = mapped_column(String(128), index=True)
     role: Mapped[str] = mapped_column(String(32))
-    invited_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
-    accepted_at: Mapped[object | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    invited_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    accepted_at: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     workspace: Mapped[Workspace] = relationship(back_populates="memberships")
 

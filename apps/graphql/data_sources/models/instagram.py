@@ -34,12 +34,8 @@ class InstagramPost(Base):
     status: Mapped[str] = mapped_column(String(64), default="draft")
     media_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
     caption: Mapped[str | None] = mapped_column(Text, nullable=True)
-    published_at: Mapped[object | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    created_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    published_at: Mapped[object | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[object] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

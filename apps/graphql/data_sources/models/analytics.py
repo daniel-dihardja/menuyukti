@@ -32,9 +32,7 @@ class AnalyticsRun(Base):
     pos_system: Mapped[str] = mapped_column(String(64))
     period_start: Mapped[Date | None] = mapped_column(Date, nullable=True)
     period_end: Mapped[Date | None] = mapped_column(Date, nullable=True)
-    created_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
     location_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("location.id"),
@@ -81,9 +79,7 @@ class MenuItemCogs(Base):
     menu_category_detail: Mapped[str | None] = mapped_column(String(128), nullable=True)
     cogs: Mapped[float] = mapped_column(Float)
     currency: Mapped[str | None] = mapped_column(String(16), nullable=True)
-    created_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[object] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

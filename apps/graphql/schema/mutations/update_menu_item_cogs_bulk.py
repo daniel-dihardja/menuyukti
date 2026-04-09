@@ -47,9 +47,7 @@ class UpdateMenuItemCogsBulkMutation:
             return []
 
         with SessionLocal() as session:
-            rows = (
-                session.query(MenuItemCogs).filter(MenuItemCogs.id.in_(id_to_cogs.keys())).all()
-            )
+            rows = session.query(MenuItemCogs).filter(MenuItemCogs.id.in_(id_to_cogs.keys())).all()
             by_id = {r.id: r for r in rows}
 
             run_ids = {r.analytics_run_id for r in rows}

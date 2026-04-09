@@ -39,9 +39,7 @@ class ImageAiFlow(Base):
         default=0,
         server_default=text("0"),
     )
-    created_at: Mapped[object] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[object] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

@@ -40,6 +40,7 @@ class Base(DeclarativeBase):
 
     pass
 
+
 # Register all ORM models with Base.metadata (import side effects only).
 import graphql.data_sources.models  # noqa: F401, E402
 
@@ -114,7 +115,9 @@ def main() -> None:
     """
 
     init_db()
-    print("Created tables for the GraphQL service (create_all). For PostgreSQL, use: make db-upgrade")
+    print(
+        "Created tables for the GraphQL service (create_all). For PostgreSQL, use: make db-upgrade"
+    )
 
 
 def _main_drop() -> None:

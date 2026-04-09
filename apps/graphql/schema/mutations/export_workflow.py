@@ -157,9 +157,7 @@ def _build_payload(session: Session, root: Node) -> dict[str, object]:
         for c in all_children:
             children_by_parent.setdefault(c.parent_id, []).append(c)
 
-    milestones = [
-        _serialize_milestone(children_by_parent.get(m.id, []), m) for m in milestones_raw
-    ]
+    milestones = [_serialize_milestone(children_by_parent.get(m.id, []), m) for m in milestones_raw]
 
     c_data = root.data if isinstance(root.data, dict) else {}
     goal = _workflow_goal_from_data(c_data)
