@@ -8,6 +8,12 @@ import pytest
 from agents_app.agents.core.milestone_run.graph import SkillSelections, build_milestone_run_graph
 
 
+async def _empty_astream_events(*_a: object, **_k: object):
+    """Async generator that yields no LangGraph stream events."""
+    if False:  # pragma: no cover
+        yield None
+
+
 def test_build_milestone_run_graph_compiles() -> None:
     client = MagicMock(spec=AsyncMock)
     graph = build_milestone_run_graph(client)
@@ -51,7 +57,7 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
         ) as mock_create,
     ):
         mock_agent = MagicMock()
-        mock_agent.ainvoke = AsyncMock(return_value={"messages": []})
+        mock_agent.astream_events = MagicMock(side_effect=_empty_astream_events)
         mock_create.return_value = mock_agent
         graph = build_milestone_run_graph(client)
         out = await graph.ainvoke(
@@ -78,7 +84,7 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
     assert out.get("selected_skill_id") == "generic"
     assert out.get("selected_skill_ids") == ["generic"]
     mock_create.assert_called_once()
-    mock_agent.ainvoke.assert_awaited_once()
+    assert mock_agent.astream_events.call_count == 1
 
 
 @pytest.mark.asyncio
@@ -120,7 +126,7 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
         ) as mock_create,
     ):
         mock_agent = MagicMock()
-        mock_agent.ainvoke = AsyncMock(return_value={"messages": []})
+        mock_agent.astream_events = MagicMock(side_effect=_empty_astream_events)
         mock_create.return_value = mock_agent
         graph = build_milestone_run_graph(client)
         out = await graph.ainvoke(
@@ -145,4 +151,4 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
         )
     assert out.get("selected_skill_ids") == ["public_holidays", "generic"]
     assert mock_create.call_count == 2
-    assert mock_agent.ainvoke.await_count == 2
+    assert mock_agent.astream_events.call_count == 2

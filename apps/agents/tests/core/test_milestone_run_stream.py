@@ -2,15 +2,35 @@
 
 from __future__ import annotations
 
+import json
+import re
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.stream import iter_milestone_run_sse_lines
 
 
+def _parse_sse_data_lines(lines: list[str]) -> list[dict]:
+    out: list[dict] = []
+    for line in lines:
+        for block in line.strip().split("\n\n"):
+            m = re.match(r"^data: (.+)$", block.strip(), flags=re.MULTILINE)
+            if not m:
+                continue
+            try:
+                out.append(json.loads(m.group(1)))
+            except json.JSONDecodeError:
+                continue
+    return out
+
+
 @pytest.mark.asyncio
 async def test_iter_milestone_run_sse_lines_yields_done_payload() -> None:
-    async def fake_astream(*_a: object, **_k: object):
+    captured: dict = {}
+
+    async def fake_astream(initial: object, *args: object, **kwargs: object):
+        captured["initial"] = initial
+        captured["config"] = kwargs.get("config")
         yield (
             "values",
             {
@@ -24,9 +44,19 @@ async def test_iter_milestone_run_sse_lines_yields_done_payload() -> None:
     mock_graph = MagicMock()
     mock_graph.astream = fake_astream
 
-    with patch(
-        "agents_app.agents.core.milestone_run.stream.build_milestone_run_graph",
-        return_value=mock_graph,
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.stream.build_milestone_run_graph",
+            return_value=mock_graph,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.stream.start_milestone_agent_run_record",
+            new=AsyncMock(return_value=True),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.stream.complete_milestone_agent_run_record",
+            new=AsyncMock(),
+        ) as mock_complete,
     ):
         lines: list[str] = []
         async for line in iter_milestone_run_sse_lines(
@@ -37,12 +67,30 @@ async def test_iter_milestone_run_sse_lines_yields_done_payload() -> None:
         ):
             lines.append(line)
 
-    assert len(lines) == 1
-    assert "done" in lines[0]
-    assert "node-99" in lines[0]
-    assert "All good" in lines[0]
-    assert "c1" in lines[0] and "pass" in lines[0]
-    assert "dataPreview" not in lines[0]
+    mock_complete.assert_awaited_once()
+    assert mock_complete.await_args is not None
+    assert mock_complete.await_args.kwargs.get("status") == "success"
+
+    payloads = _parse_sse_data_lines(lines)
+    assert len(payloads) == 2
+    assert "run_id" in payloads[0] and len(str(payloads[0]["run_id"])) > 0
+    rid = str(payloads[0]["run_id"])
+    done = payloads[1]
+    assert done.get("done") is True
+    assert done.get("run_id") == rid
+    assert done.get("resultId") == "node-99"
+    assert done.get("summary") == "All good"
+    assert any(c.get("id") == "c1" and c.get("status") == "pass" for c in (done.get("criteria") or []))
+    assert "dataPreview" not in done
+
+    init = captured["initial"]
+    assert isinstance(init, dict)
+    assert init.get("run_id") == rid
+    assert init.get("milestone_id") == "m1"
+    cfg = captured.get("config")
+    assert isinstance(cfg, dict)
+    assert cfg["metadata"]["run_id"] == rid
+    assert cfg["metadata"]["milestone_id"] == "m1"
 
 
 @pytest.mark.asyncio
@@ -62,9 +110,19 @@ async def test_iter_milestone_run_sse_done_includes_data_preview_when_milestoned
     mock_graph = MagicMock()
     mock_graph.astream = fake_astream
 
-    with patch(
-        "agents_app.agents.core.milestone_run.stream.build_milestone_run_graph",
-        return_value=mock_graph,
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.stream.build_milestone_run_graph",
+            return_value=mock_graph,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.stream.start_milestone_agent_run_record",
+            new=AsyncMock(return_value=True),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.stream.complete_milestone_agent_run_record",
+            new=AsyncMock(),
+        ),
     ):
         lines: list[str] = []
         async for line in iter_milestone_run_sse_lines(
@@ -75,6 +133,7 @@ async def test_iter_milestone_run_sse_done_includes_data_preview_when_milestoned
         ):
             lines.append(line)
 
-    assert len(lines) == 1
-    assert "dataPreview" in lines[0]
-    assert "## Updated" in lines[0]
+    payloads = _parse_sse_data_lines(lines)
+    assert len(payloads) == 2
+    done = payloads[1]
+    assert done.get("dataPreview") == "## Updated\n\nBody"

@@ -47,7 +47,11 @@ async def fetch_context(
     mid = state["milestone_id"]
     loc = state["location_id"]
     writer = get_stream_writer()
-    writer({"step": "fetch_context"})
+    fc_payload: dict[str, Any] = {"step": "fetch_context"}
+    rid = state.get("run_id")
+    if isinstance(rid, str) and rid:
+        fc_payload["run_id"] = rid
+    writer(fc_payload)
     _logger.info(
         "milestone_eval.fetch_context: emitted step fetch_context; calling GraphQL nodes(parentId=%s)",
         mid,

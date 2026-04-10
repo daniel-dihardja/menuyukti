@@ -72,6 +72,8 @@ export async function POST(req: Request, context: RouteContext) {
     )
   }
 
+  const traceparent = req.headers.get('traceparent')?.trim()
+
   const baseUrl = getPythonAgentsUrl()
   let agentRes: Response
   try {
@@ -80,6 +82,7 @@ export async function POST(req: Request, context: RouteContext) {
       headers: {
         'Content-Type': 'application/json',
         'X-Menuyukti-User-Id': userId,
+        ...(traceparent ? { traceparent } : {}),
       },
       body: JSON.stringify({ location_id: locationId, workflow_id: workflowId }),
       signal: req.signal,

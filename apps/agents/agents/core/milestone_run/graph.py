@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import re
 from functools import partial
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import httpx
 from agents_app.agents.core.milestone_eval.nodes import fetch_context
@@ -25,12 +25,64 @@ from agents_app.agents.core.milestone_run.state import MilestoneRunState
 from agents_app.agents.core.milestone_run.tools import make_milestone_run_tools
 from agents_app.models.llm_config import get_llm, get_llm_structured
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 from langgraph.config import get_stream_writer
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel, Field
 
 _logger = logging.getLogger(__name__)
+
+
+def _trace_step(state: MilestoneRunState, step: str, **extra: Any) -> None:
+    """Emit a custom stream chunk with ``step`` and ``run_id`` when present."""
+    payload: dict[str, Any] = {"step": step, **extra}
+    rid = state.get("run_id")
+    if isinstance(rid, str) and rid:
+        payload["run_id"] = rid
+    get_stream_writer()(payload)
+
+
+def _trace_agent_event(state: MilestoneRunState, kind: str, **extra: Any) -> None:
+    """Emit a sub-step trace during ReAct (does not change top-level ``step`` for the UI)."""
+    payload: dict[str, Any] = {"agent_event": {"kind": kind, **extra}}
+    rid = state.get("run_id")
+    if isinstance(rid, str) and rid:
+        payload["run_id"] = rid
+    get_stream_writer()(payload)
+
+
+def _astream_event_tool_name(event: dict[str, Any]) -> str:
+    """Best-effort tool name from LangGraph ``astream_events`` v2 payloads (redacted tracing only)."""
+    n = event.get("name")
+    if isinstance(n, str) and n.strip():
+        return n.strip()
+    data = event.get("data")
+    if isinstance(data, dict):
+        for key in ("name", "tool_name"):
+            v = data.get(key)
+            if isinstance(v, str) and v.strip():
+                return v.strip()
+    return ""
+
+
+def _lc_run_config(state: MilestoneRunState, **metadata_extra: Any) -> dict[str, Any]:
+    """RunnableConfig for LangChain/LangGraph (LangSmith picks up ``metadata`` / ``tags``)."""
+    meta: dict[str, Any] = {
+        "milestone_id": str(state["milestone_id"]),
+        "location_id": int(state["location_id"]),
+    }
+    wf = state.get("workflow_id")
+    if isinstance(wf, str) and wf.strip():
+        meta["workflow_id"] = wf.strip()
+    rid = state.get("run_id")
+    if isinstance(rid, str) and rid:
+        meta["run_id"] = rid
+    tp = state.get("traceparent")
+    if isinstance(tp, str) and tp.strip():
+        meta["traceparent"] = tp.strip()
+    meta.update(metadata_extra)
+    return {"metadata": meta, "tags": ["milestone_run"]}
 
 
 class SkillSelections(BaseModel):
@@ -107,8 +159,7 @@ async def _select_skills(state: MilestoneRunState, *, client: httpx.AsyncClient)
     del client  # unused; signature matches partial for symmetry
     mid = str(state["milestone_id"])
     _logger.info("milestone_run.select_skills: start milestone_id=%s", mid)
-    writer = get_stream_writer()
-    writer({"step": "select_skill"})
+    _trace_step(state, "select_skill")
     skills_md = format_skills_for_selector(SKILL_REGISTRY)
     human = skill_selector_human_message(
         str(state.get("goal", "")),
@@ -122,6 +173,7 @@ async def _select_skills(state: MilestoneRunState, *, client: httpx.AsyncClient)
             SystemMessage(content=SKILL_SELECTOR_SYSTEM),
             HumanMessage(content=human),
         ],
+        config=_lc_run_config(state, langgraph_node="select_skills"),
     )
     ids = _normalize_skill_id_list(list(selection.skill_ids))
     for raw in selection.skill_ids:
@@ -167,8 +219,7 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         sid,
         is_last,
     )
-    writer = get_stream_writer()
-    writer({"step": "execute_skill"})
+    _trace_step(state, "execute_skill", skill_id=sid, skill_index=idx, skill_count=len(ids))
     skill = SKILL_REGISTRY.get(sid) or SKILL_REGISTRY[DEFAULT_SKILL_ID]
     tools = make_milestone_run_tools(
         state,
@@ -183,13 +234,39 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         system_prompt = skill.prompt + INTERMEDIATE_SKILL_PROMPT_SUFFIX
     llm = get_llm()
     agent = create_react_agent(llm, tools, prompt=system_prompt)
-    await agent.ainvoke(
-        {
-            "messages": [
-                HumanMessage(content=execute_skill_task_message(skill.id, skill.name)),
-            ],
-        },
+    agent_input = {
+        "messages": [
+            HumanMessage(content=execute_skill_task_message(skill.id, skill.name)),
+        ],
+    }
+    agent_cfg = cast(
+        RunnableConfig,
+        _lc_run_config(
+            state,
+            langgraph_node="execute_skill",
+            skill_id=sid,
+            skill_index=idx,
+        ),
     )
+    async for event in agent.astream_events(
+        agent_input,
+        version="v2",
+        config=agent_cfg,
+    ):
+        ev = cast(dict[str, Any], event)
+        et = ev.get("event")
+        if et == "on_tool_start":
+            tname = _astream_event_tool_name(ev)
+            if tname:
+                _trace_agent_event(state, "tool_start", name=tname)
+        elif et == "on_tool_end":
+            tname = _astream_event_tool_name(ev)
+            if tname:
+                _trace_agent_event(state, "tool_end", name=tname)
+        elif et == "on_chat_model_start":
+            _trace_agent_event(state, "chat_model_start")
+        elif et == "on_chat_model_end":
+            _trace_agent_event(state, "chat_model_end")
     raw_last = state.get("last_criteria_verdicts", [])
     last_verdicts = list(raw_last) if isinstance(raw_last, list) else []
     next_idx = idx + 1
