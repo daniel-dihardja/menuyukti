@@ -12,16 +12,29 @@ import { Skeleton } from '@workspace/ui/components/skeleton'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { LOCATIONS_QUERY, type LocationsData } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { PageHeading } from '@/components/page-heading'
 import { CampaignsClient } from './_components/campaigns-client'
 
 function CampaignsListSkeleton() {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end gap-3">
-        <Skeleton className="h-10 w-full max-w-xs" />
-        <Skeleton className="h-9 w-40" />
-      </div>
+    <div className="flex flex-col gap-8">
+      <Card className="overflow-hidden border shadow-sm ring-1 ring-border/50">
+        <CardHeader className="border-b bg-muted/20 px-5 py-5 sm:px-6">
+          <Skeleton className="mb-2 h-7 w-48" />
+          <Skeleton className="h-4 w-full max-w-xl" />
+          <Skeleton className="mt-1 h-4 w-full max-w-lg" />
+        </CardHeader>
+        <div className="flex flex-col gap-6 px-5 py-6 sm:px-6">
+          <Skeleton className="h-10 w-full max-w-md" />
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full sm:col-span-2 lg:col-span-1" />
+          </div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
+            <Skeleton className="h-12 w-full max-w-md" />
+            <Skeleton className="h-11 w-44 shrink-0" />
+          </div>
+        </div>
+      </Card>
       <Card>
         <CardHeader>
           <Skeleton className="h-5 w-56" />
@@ -76,7 +89,7 @@ async function CampaignsData() {
   }
 
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex flex-col gap-6">
       <CampaignsClient branches={branches} />
     </section>
   )
@@ -87,12 +100,6 @@ export default async function Page() {
 
   return (
     <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
-      <PageHeading
-        description={t('description')}
-        descriptionClassName="text-pretty"
-        title={t('title')}
-        titleClassName="text-balance"
-      />
       <Suspense fallback={<CampaignsListSkeleton />}>
         <CampaignsData />
       </Suspense>

@@ -39,6 +39,21 @@ export const WORKFLOW_IMPORT_PRESETS: readonly WorkflowImportPreset[] = [
 
 export const PRESET_KEY_PREFIX = 'preset:' as const
 
+/** "Blank workflow" option in overview + new-workflow dialog preset pickers. */
+export const BLANK_PRESET_SELECTION_KEY = 'blank' as const
+
+export function workflowTitleFromPresetPayload(
+  payload: WorkflowImportPreset['payload'],
+): string | null {
+  if (payload && typeof payload === 'object' && 'workflowName' in payload) {
+    const n = (payload as { workflowName?: unknown }).workflowName
+    if (typeof n === 'string' && n.trim()) {
+      return n.trim()
+    }
+  }
+  return null
+}
+
 export function presetSelectionKey(id: WorkflowImportPresetId): string {
   return `${PRESET_KEY_PREFIX}${id}`
 }

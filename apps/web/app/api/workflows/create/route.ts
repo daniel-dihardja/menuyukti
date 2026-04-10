@@ -17,12 +17,17 @@ export async function POST(req: Request) {
     }
 
     const json = await req.json()
-    const { locationId, locationNodeId } = createCampaignSchema.parse(json)
+    const { locationId, locationNodeId, analyticsRunId } = createCampaignSchema.parse(json)
 
     const data = parseCreateNodeData(
       await graphqlQuery<CreateNodeDataRaw>(
         CREATE_NODE_MUTATION,
-        { locationId, nodeType: 'workflow', parentId: locationNodeId },
+        {
+          locationId,
+          nodeType: 'workflow',
+          parentId: locationNodeId,
+          data: analyticsRunId !== undefined ? { analyticsRunId } : undefined,
+        },
         userId,
       ),
     )
