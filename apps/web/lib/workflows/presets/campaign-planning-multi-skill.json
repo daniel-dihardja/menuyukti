@@ -7,10 +7,10 @@
       "title": "Campaign Brief",
       "goal": "Specify the campaign window and primary objectives.",
       "dataTask": "manual",
-      "data": "## Campaign Brief\n\n**Start date:** <!-- YYYY-MM-DD -->\n**End date:** <!-- YYYY-MM-DD -->\n\n**Target audience:** <!-- e.g. families, young adults -->\n\n**Primary objective:** <!-- e.g. drive footfall during Ramadan -->\n\n**Budget / channel preference:** <!-- optional -->\n",
+      "data": "## Campaign Brief\n\n**Start date:** 01.05.2026\n**End date:** 31.05.2026\n\n**Target audience:** <!-- e.g. families, young adults -->\n\n**Primary objective:** <!-- e.g. drive footfall during Ramadan -->\n\n**Budget / channel preference:** <!-- optional -->\n",
       "passCriteria": [
         {
-          "requirement": "Start date is specified (YYYY-MM-DD).",
+          "requirement": "Start date is specified (e.g. DD.MM.YYYY or YYYY-MM-DD).",
           "status": "open"
         },
         {
@@ -32,7 +32,7 @@
       "title": "Campaign Overview & Holiday Check",
       "goal": "Confirm all public holidays in the campaign window and validate that the brief is complete.",
       "dataTask": "manual",
-      "data": "## Campaign Overview\n\n<!-- Copy key details from the Campaign Brief milestone here. -->\n\n## Public Holidays\n\n<!-- Will be populated automatically when Run is clicked -->\n",
+      "data": "## Campaign Overview\n\n**Campaign window:** 01.05.2026 – 31.05.2026\n\n<!-- Add objectives and audience from the Campaign Brief milestone as needed. -->\n\n## Public Holidays\n\n<!-- Will be populated automatically when Run is clicked -->\n",
       "passCriteria": [
         {
           "requirement": "All public holidays in the campaign window are listed, or none are confirmed.",

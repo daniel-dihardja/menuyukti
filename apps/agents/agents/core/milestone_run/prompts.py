@@ -48,8 +48,9 @@ def skill_selector_human_message(
 
 INTERMEDIATE_SKILL_PROMPT_SUFFIX = """
 
-**Multi-skill run (intermediate step):** You do not have the write_result tool in this step. Populate or fix \
-the Data tab using get_public_holidays and write_result_data as needed. A later step will call write_result."""
+**Multi-skill run (intermediate step):** The write_result tool is NOT available in this step — skip step 5 entirely. \
+Complete steps 1–4 (read context, fetch holidays, write updated Data tab via write_result_data), then output a \
+one-sentence confirmation and stop. Do not call any further tools after write_result_data."""
 
 PUBLIC_HOLIDAYS_SKILL_PROMPT = """You are a precise assistant for a restaurant campaign milestone focused on \
 public holidays.

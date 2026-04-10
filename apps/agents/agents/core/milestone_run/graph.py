@@ -200,9 +200,11 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         len(last_verdicts),
         next_idx,
     )
+    updated_data = str(state.get("result_data", "") or state.get("raw_data", ""))
     return {
         "current_skill_index": next_idx,
         "result_data": str(state.get("result_data", "")),
+        "raw_data": updated_data,
         "milestonedata_written": bool(state.get("milestonedata_written")),
         "result_summary": str(state.get("result_summary", "")),
         "result_node_id": state.get("result_node_id"),

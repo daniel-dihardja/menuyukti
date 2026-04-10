@@ -73,6 +73,9 @@ def make_milestone_run_tools(
     @tool
     def read_data() -> str:
         """Return the current milestone Data tab content (Markdown in the milestonedata node)."""
+        updated = context.get("result_data", "")
+        if isinstance(updated, str) and updated.strip():
+            return updated
         d = context.get("raw_data", "")
         return d if isinstance(d, str) else str(d)
 

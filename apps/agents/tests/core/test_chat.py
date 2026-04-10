@@ -103,14 +103,15 @@ def test_build_chat_graph_compiles_simple_llm() -> None:
     assert graph is not None
 
 
-@pytest.mark.asyncio
-async def test_build_chat_graph_compiles_react_with_milestone_tool() -> None:
+@patch("agents_app.agents.core.chat.graph.get_llm")
+def test_build_chat_graph_compiles_react_with_milestone_tool(mock_get_llm: MagicMock) -> None:
     """With milestone_id, location, user, and client, graph is a ReAct agent with get_milestone_data."""
-    async with httpx.AsyncClient() as client:
-        graph = build_chat_graph(
-            milestone_id="1",
-            location_id=1,
-            user_id="test-user",
-            http_client=client,
-        )
+    mock_get_llm.return_value = MagicMock()
+    graph = build_chat_graph(
+        milestone_id="1",
+        location_id=1,
+        user_id="test-user",
+        http_client=MagicMock(spec=httpx.AsyncClient),
+    )
     assert graph is not None
+    mock_get_llm.assert_called_once()
