@@ -8,6 +8,30 @@ import pytest
 from agents_app.agents.core.milestone_run.graph import SkillSelections, build_milestone_run_graph
 
 
+async def _empty_astream_events(*_a: object, **_k: object):
+    """Async generator that yields no LangGraph stream events."""
+    if False:  # pragma: no cover
+        yield None
+
+
+async def _fake_eval_astream(*_a: object, **_k: object):
+    yield (
+        "values",
+        {
+            "evaluated": [
+                {
+                    "id": "c1",
+                    "status": "pass",
+                    "requirement": "r1",
+                    "reasoning": "ok",
+                }
+            ],
+            "result_summary": "S1",
+            "result_node_id": "rn1",
+        },
+    )
+
+
 def test_build_milestone_run_graph_compiles() -> None:
     client = MagicMock(spec=AsyncMock)
     graph = build_milestone_run_graph(client)
@@ -20,6 +44,9 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
     mock_structured = MagicMock()
     mock_structured.ainvoke = AsyncMock(return_value=SkillSelections(skill_ids=["generic"]))
     mock_with_structured = MagicMock(return_value=mock_structured)
+
+    mock_eval = MagicMock()
+    mock_eval.astream = _fake_eval_astream
 
     with (
         patch(
@@ -39,6 +66,14 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
             return_value=lambda _x: None,
         ),
         patch(
+            "agents_app.agents.core.milestone_run.graph.get_config",
+            return_value={},
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph",
+            return_value=mock_eval,
+        ),
+        patch(
             "agents_app.agents.core.milestone_run.graph.get_llm_structured",
             return_value=MagicMock(with_structured_output=mock_with_structured),
         ),
@@ -51,7 +86,7 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
         ) as mock_create,
     ):
         mock_agent = MagicMock()
-        mock_agent.ainvoke = AsyncMock(return_value={"messages": []})
+        mock_agent.astream_events = MagicMock(side_effect=_empty_astream_events)
         mock_create.return_value = mock_agent
         graph = build_milestone_run_graph(client)
         out = await graph.ainvoke(
@@ -78,7 +113,10 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
     assert out.get("selected_skill_id") == "generic"
     assert out.get("selected_skill_ids") == ["generic"]
     mock_create.assert_called_once()
-    mock_agent.ainvoke.assert_awaited_once()
+    assert mock_agent.astream_events.call_count == 1
+    assert out.get("result_summary") == "S1"
+    assert out.get("result_node_id") == "rn1"
+    assert out.get("last_criteria_verdicts") == [{"id": "c1", "status": "pass"}]
 
 
 @pytest.mark.asyncio
@@ -89,6 +127,9 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
         return_value=SkillSelections(skill_ids=["public_holidays", "generic"]),
     )
     mock_with_structured = MagicMock(return_value=mock_structured)
+
+    mock_eval = MagicMock()
+    mock_eval.astream = _fake_eval_astream
 
     with (
         patch(
@@ -108,6 +149,14 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
             return_value=lambda _x: None,
         ),
         patch(
+            "agents_app.agents.core.milestone_run.graph.get_config",
+            return_value={},
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph",
+            return_value=mock_eval,
+        ),
+        patch(
             "agents_app.agents.core.milestone_run.graph.get_llm_structured",
             return_value=MagicMock(with_structured_output=mock_with_structured),
         ),
@@ -120,7 +169,7 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
         ) as mock_create,
     ):
         mock_agent = MagicMock()
-        mock_agent.ainvoke = AsyncMock(return_value={"messages": []})
+        mock_agent.astream_events = MagicMock(side_effect=_empty_astream_events)
         mock_create.return_value = mock_agent
         graph = build_milestone_run_graph(client)
         out = await graph.ainvoke(
@@ -145,4 +194,6 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
         )
     assert out.get("selected_skill_ids") == ["public_holidays", "generic"]
     assert mock_create.call_count == 2
-    assert mock_agent.ainvoke.await_count == 2
+    assert mock_agent.astream_events.call_count == 2
+    assert out.get("result_summary") == "S1"
+    assert out.get("last_criteria_verdicts") == [{"id": "c1", "status": "pass"}]

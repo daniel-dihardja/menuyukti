@@ -31,9 +31,12 @@ async def milestone_run(
     body: MilestoneRunBody,
     client: Annotated[httpx.AsyncClient, Depends(get_http_client)],
     x_menuyukti_user_id: Annotated[str | None, Header(alias="X-Menuyukti-User-Id")] = None,
+    traceparent: Annotated[str | None, Header()] = None,
 ) -> StreamingResponse:
     if not x_menuyukti_user_id:
         raise HTTPException(status_code=401, detail="Missing X-Menuyukti-User-Id")
+
+    tp = traceparent.strip() if traceparent and traceparent.strip() else None
 
     async def event_stream():
         try:
@@ -43,6 +46,7 @@ async def milestone_run(
                 location_id=body.location_id,
                 user_id=x_menuyukti_user_id,
                 workflow_id=body.workflow_id,
+                traceparent=tp,
             ):
                 yield line
         except Exception as e:

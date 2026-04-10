@@ -26,10 +26,11 @@ agents/
       prompts.py      # build_system_prompt(), SYSTEM_PROMPT
       tools.py        # make_get_milestone_data_tool (GraphQL read for chat)
     milestone_eval/
-      graph.py        # build_milestone_eval_graph(client)
+      graph.py        # build_milestone_eval_graph(client) — criterion loop + synthesis + result (internal)
       state.py        # TypedDict state + reducers
       prompts.py
       graphql_client.py
+      # Invoked only from milestone_run finalize_eval; no separate HTTP route or SSE adapter.
     milestone_data/   # Persist generated text to `milestonedata` nodes (GraphQL upsert; used by skill prepare)
       graphql_client.py
       persist.py
@@ -49,7 +50,7 @@ tests/
   domain/             # domain agent tests as you add them
 ```
 
-**Convention:** add new **skill-driven** milestone assets under `packages/agent-skills/src/agent_skills/skills/<skill_id>/SKILL.md` (see `agent_skills.get_skill_path`) and extend `agents/domain/skill_runner/` (prefetch handlers) as needed. **Milestone data persistence** lives in `agents/core/milestone_data/`, not in SKILL YAML. Add **cross-cutting** flows (milestone evaluation, chat) under `agents/core/`.
+**Convention:** add new **skill-driven** milestone assets under `packages/agent-skills/src/agent_skills/skills/<skill_id>/SKILL.md` (see `agent_skills.get_skill_path`) and extend `agents/domain/skill_runner/` (prefetch handlers) as needed. **Milestone data persistence** lives in `agents/core/milestone_data/`, not in SKILL YAML. Add **cross-cutting** flows (milestone run with embedded evaluation, chat) under `agents/core/`.
 
 ## Graph factory pattern
 

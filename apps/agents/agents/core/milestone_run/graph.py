@@ -5,9 +5,10 @@ from __future__ import annotations
 import logging
 import re
 from functools import partial
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import httpx
+from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_graph
 from agents_app.agents.core.milestone_eval.nodes import fetch_context
 from agents_app.agents.core.milestone_run.graphql_client import fetch_prior_milestones_data
 from agents_app.agents.core.milestone_run.prompts import (
@@ -25,12 +26,64 @@ from agents_app.agents.core.milestone_run.state import MilestoneRunState
 from agents_app.agents.core.milestone_run.tools import make_milestone_run_tools
 from agents_app.models.llm_config import get_llm, get_llm_structured
 from langchain_core.messages import HumanMessage, SystemMessage
-from langgraph.config import get_stream_writer
+from langchain_core.runnables import RunnableConfig
+from langgraph.config import get_config, get_stream_writer
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel, Field
 
 _logger = logging.getLogger(__name__)
+
+
+def _trace_step(state: MilestoneRunState, step: str, **extra: Any) -> None:
+    """Emit a custom stream chunk with ``step`` and ``run_id`` when present."""
+    payload: dict[str, Any] = {"step": step, **extra}
+    rid = state.get("run_id")
+    if isinstance(rid, str) and rid:
+        payload["run_id"] = rid
+    get_stream_writer()(payload)
+
+
+def _trace_agent_event(state: MilestoneRunState, kind: str, **extra: Any) -> None:
+    """Emit a sub-step trace during ReAct (does not change top-level ``step`` for the UI)."""
+    payload: dict[str, Any] = {"agent_event": {"kind": kind, **extra}}
+    rid = state.get("run_id")
+    if isinstance(rid, str) and rid:
+        payload["run_id"] = rid
+    get_stream_writer()(payload)
+
+
+def _astream_event_tool_name(event: dict[str, Any]) -> str:
+    """Best-effort tool name from LangGraph ``astream_events`` v2 payloads (redacted tracing only)."""
+    n = event.get("name")
+    if isinstance(n, str) and n.strip():
+        return n.strip()
+    data = event.get("data")
+    if isinstance(data, dict):
+        for key in ("name", "tool_name"):
+            v = data.get(key)
+            if isinstance(v, str) and v.strip():
+                return v.strip()
+    return ""
+
+
+def _lc_run_config(state: MilestoneRunState, **metadata_extra: Any) -> dict[str, Any]:
+    """RunnableConfig for LangChain/LangGraph (LangSmith picks up ``metadata`` / ``tags``)."""
+    meta: dict[str, Any] = {
+        "milestone_id": str(state["milestone_id"]),
+        "location_id": int(state["location_id"]),
+    }
+    wf = state.get("workflow_id")
+    if isinstance(wf, str) and wf.strip():
+        meta["workflow_id"] = wf.strip()
+    rid = state.get("run_id")
+    if isinstance(rid, str) and rid:
+        meta["run_id"] = rid
+    tp = state.get("traceparent")
+    if isinstance(tp, str) and tp.strip():
+        meta["traceparent"] = tp.strip()
+    meta.update(metadata_extra)
+    return {"metadata": meta, "tags": ["milestone_run"]}
 
 
 class SkillSelections(BaseModel):
@@ -107,8 +160,7 @@ async def _select_skills(state: MilestoneRunState, *, client: httpx.AsyncClient)
     del client  # unused; signature matches partial for symmetry
     mid = str(state["milestone_id"])
     _logger.info("milestone_run.select_skills: start milestone_id=%s", mid)
-    writer = get_stream_writer()
-    writer({"step": "select_skill"})
+    _trace_step(state, "select_skill")
     skills_md = format_skills_for_selector(SKILL_REGISTRY)
     human = skill_selector_human_message(
         str(state.get("goal", "")),
@@ -122,6 +174,7 @@ async def _select_skills(state: MilestoneRunState, *, client: httpx.AsyncClient)
             SystemMessage(content=SKILL_SELECTOR_SYSTEM),
             HumanMessage(content=human),
         ],
+        config=_lc_run_config(state, langgraph_node="select_skills"),
     )
     ids = _normalize_skill_id_list(list(selection.skill_ids))
     for raw in selection.skill_ids:
@@ -167,8 +220,7 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         sid,
         is_last,
     )
-    writer = get_stream_writer()
-    writer({"step": "execute_skill"})
+    _trace_step(state, "execute_skill", skill_id=sid, skill_index=idx, skill_count=len(ids))
     skill = SKILL_REGISTRY.get(sid) or SKILL_REGISTRY[DEFAULT_SKILL_ID]
     tools = make_milestone_run_tools(
         state,
@@ -176,20 +228,45 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         int(state["location_id"]),
         str(state["user_id"]),
         client=client,
-        include_write_result=is_last,
     )
     system_prompt = skill.prompt
     if not is_last:
         system_prompt = skill.prompt + INTERMEDIATE_SKILL_PROMPT_SUFFIX
     llm = get_llm()
     agent = create_react_agent(llm, tools, prompt=system_prompt)
-    await agent.ainvoke(
-        {
-            "messages": [
-                HumanMessage(content=execute_skill_task_message(skill.id, skill.name)),
-            ],
-        },
+    agent_input = {
+        "messages": [
+            HumanMessage(content=execute_skill_task_message(skill.id, skill.name)),
+        ],
+    }
+    agent_cfg = cast(
+        RunnableConfig,
+        _lc_run_config(
+            state,
+            langgraph_node="execute_skill",
+            skill_id=sid,
+            skill_index=idx,
+        ),
     )
+    async for event in agent.astream_events(
+        agent_input,
+        version="v2",
+        config=agent_cfg,
+    ):
+        ev = cast(dict[str, Any], event)
+        et = ev.get("event")
+        if et == "on_tool_start":
+            tname = _astream_event_tool_name(ev)
+            if tname:
+                _trace_agent_event(state, "tool_start", name=tname)
+        elif et == "on_tool_end":
+            tname = _astream_event_tool_name(ev)
+            if tname:
+                _trace_agent_event(state, "tool_end", name=tname)
+        elif et == "on_chat_model_start":
+            _trace_agent_event(state, "chat_model_start")
+        elif et == "on_chat_model_end":
+            _trace_agent_event(state, "chat_model_end")
     raw_last = state.get("last_criteria_verdicts", [])
     last_verdicts = list(raw_last) if isinstance(raw_last, list) else []
     next_idx = idx + 1
@@ -213,12 +290,86 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
     }
 
 
-def _route_after_execute(state: MilestoneRunState) -> Literal["again", "stop"]:
+def _route_after_execute(state: MilestoneRunState) -> Literal["again", "finalize_eval"]:
     ids = state.get("selected_skill_ids") or []
     idx = int(state.get("current_skill_index") or 0)
     if idx < len(ids):
         return "again"
-    return "stop"
+    return "finalize_eval"
+
+
+async def _finalize_eval(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+    """Run criterion scoring, summary synthesis, and result persistence (shared eval graph)."""
+    mid = str(state["milestone_id"])
+    _logger.info("milestone_run.finalize_eval: start milestone_id=%s", mid)
+    _trace_step(state, "finalize_eval")
+
+    eval_graph = build_milestone_eval_graph(client)
+    initial: dict[str, Any] = {
+        "milestone_id": state["milestone_id"],
+        "location_id": int(state["location_id"]),
+        "user_id": str(state["user_id"]),
+        "goal": "",
+        "raw_data": "",
+        "criteria": [],
+        "evaluated": [],
+        "result_summary": "",
+        "result_node_id": None,
+    }
+    rid = state.get("run_id")
+    if isinstance(rid, str) and rid:
+        initial["run_id"] = rid
+
+    try:
+        run_cfg = get_config()
+    except Exception:  # pragma: no cover - outside runnable context
+        run_cfg = None
+
+    writer = get_stream_writer()
+    final_sub: dict[str, Any] | None = None
+
+    async for mode, chunk in eval_graph.astream(
+        initial,
+        stream_mode=["custom", "values"],
+        config=run_cfg,
+    ):
+        if mode == "custom" and isinstance(chunk, dict):
+            payload = dict(chunk)
+            rid2 = state.get("run_id")
+            if isinstance(rid2, str) and rid2 and "run_id" not in payload:
+                payload["run_id"] = rid2
+            writer(payload)
+        elif mode == "values" and isinstance(chunk, dict):
+            final_sub = chunk
+
+    if not isinstance(final_sub, dict):
+        _logger.warning("milestone_run.finalize_eval: missing final state milestone_id=%s", mid)
+        return {
+            "result_summary": str(state.get("result_summary", "")),
+            "result_node_id": state.get("result_node_id"),
+            "last_criteria_verdicts": [],
+        }
+
+    evaluated = final_sub.get("evaluated", [])
+    sse_verdicts: list[dict[str, Any]] = []
+    if isinstance(evaluated, list):
+        for row in evaluated:
+            if isinstance(row, dict) and row.get("id"):
+                sse_verdicts.append(
+                    {"id": str(row["id"]), "status": str(row.get("status", ""))},
+                )
+
+    _logger.info(
+        "milestone_run.finalize_eval: done milestone_id=%s result_id=%s verdict_count=%s",
+        mid,
+        final_sub.get("result_node_id"),
+        len(sse_verdicts),
+    )
+    return {
+        "result_summary": str(final_sub.get("result_summary", "") or ""),
+        "result_node_id": final_sub.get("result_node_id"),
+        "last_criteria_verdicts": sse_verdicts,
+    }
 
 
 def build_milestone_run_graph(client: httpx.AsyncClient):
@@ -227,12 +378,14 @@ def build_milestone_run_graph(client: httpx.AsyncClient):
     builder.add_node("fetch_children", partial(_fetch_children, client=client))
     builder.add_node("select_skills", partial(_select_skills, client=client))
     builder.add_node("execute_skill", partial(_execute_skill, client=client))
+    builder.add_node("finalize_eval", partial(_finalize_eval, client=client))
     builder.add_edge(START, "fetch_children")
     builder.add_edge("fetch_children", "select_skills")
     builder.add_edge("select_skills", "execute_skill")
     builder.add_conditional_edges(
         "execute_skill",
         _route_after_execute,
-        {"again": "execute_skill", "stop": END},
+        {"again": "execute_skill", "finalize_eval": "finalize_eval"},
     )
+    builder.add_edge("finalize_eval", END)
     return builder.compile()

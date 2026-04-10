@@ -1,1 +1,1 @@
-"""LangGraph milestone evaluation: criteria pass/fail + result node persistence."""
+"""Internal LangGraph pipeline: criteria pass/fail, summary, result node. Invoked from milestone_run only."""

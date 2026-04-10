@@ -7,6 +7,7 @@ from .delete_node import DeleteNodeMutation
 from .export_workflow import ExportWorkflowMutation
 from .import_workflow import ImportWorkflowMutation
 from .invite_workspace_member import InviteWorkspaceMemberMutation
+from .milestone_agent_run import MilestoneAgentRunMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
 from .update_image_ai_flow import UpdateImageAiFlowMutation
 from .update_menu_item_cogs_bulk import UpdateMenuItemCogsBulkMutation
@@ -23,6 +24,7 @@ __all__ = [
     "ImportWorkflowMutation",
     "DeleteNodeMutation",
     "InviteWorkspaceMemberMutation",
+    "MilestoneAgentRunMutation",
     "RemoveWorkspaceMemberMutation",
     "UpdateImageAiFlowMutation",
     "UpdateNodeMutation",

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 
 class MilestoneRunState(TypedDict):
@@ -30,5 +30,9 @@ class MilestoneRunState(TypedDict):
     milestonedata_written: bool
     result_summary: str
     result_node_id: str | None
-    # Set by write_result for SSE ``done.criteria`` (id + status per criterion)
+    # Set by finalize_eval (criterion graph) for SSE ``done.criteria`` (id + status per criterion)
     last_criteria_verdicts: list[dict[str, Any]]
+    # Correlates one user-triggered run across SSE, LangSmith, and DB (set by stream adapter).
+    run_id: NotRequired[str]
+    # W3C trace context from BFF (optional distributed tracing).
+    traceparent: NotRequired[str | None]

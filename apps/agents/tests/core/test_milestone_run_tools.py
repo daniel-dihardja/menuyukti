@@ -12,7 +12,6 @@ def _tools_for_context(
     context: dict[str, Any],
     *,
     client: Any | None = None,
-    include_write_result: bool = True,
 ) -> list[Any]:
     from agents_app.agents.core.milestone_run.tools import make_milestone_run_tools
 
@@ -23,12 +22,11 @@ def _tools_for_context(
         42,
         "user-1",
         client=c,
-        include_write_result=include_write_result,
     )
 
 
-def test_make_milestone_run_tools_omits_write_result_when_disabled() -> None:
-    tools = _tools_for_context({}, include_write_result=False)
+def test_make_milestone_run_tools_has_no_write_result() -> None:
+    tools = _tools_for_context({})
     names = [getattr(t, "name", "") for t in tools]
     assert len(tools) == 6
     assert "write_result" not in names
@@ -122,61 +120,3 @@ async def test_write_result_data_upserts_and_updates_context() -> None:
     mock_upsert.assert_awaited_once()
     assert ctx.get("result_data") == "Updated body"
     assert "md-9" in out
-
-
-@pytest.mark.asyncio
-async def test_write_result_replaces_result_node_and_updates_context() -> None:
-    ctx: dict[str, Any] = {}
-    client = MagicMock(spec=AsyncMock)
-
-    fake_children = [
-        {"nodeType": "result", "id": "old-res"},
-    ]
-
-    with (
-        patch(
-            "agents_app.agents.core.milestone_run.tools.fetch_milestone_children",
-            new=AsyncMock(return_value=fake_children),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.tools.delete_node",
-            new=AsyncMock(return_value=True),
-        ) as mock_delete,
-        patch(
-            "agents_app.agents.core.milestone_run.tools.update_passcriteria_status",
-            new=AsyncMock(return_value={}),
-        ) as mock_pc,
-        patch(
-            "agents_app.agents.core.milestone_run.tools.create_result_node",
-            new=AsyncMock(return_value={"id": "new-res"}),
-        ) as mock_create,
-    ):
-        tools = _tools_for_context(ctx, client=client)
-        write_result = tools[6]
-        out = await write_result.ainvoke(
-            {
-                "summary": "Done",
-                "criteria_verdicts": [
-                    {
-                        "id": "c1",
-                        "requirement": "R1",
-                        "status": "pass",
-                        "reasoning": "ok",
-                    }
-                ],
-            }
-        )
-
-    mock_delete.assert_awaited_once()
-    mock_pc.assert_awaited_once_with("c1", "pass", "user-1", client=client)
-    mock_create.assert_awaited_once()
-    call_kw = mock_create.await_args
-    assert call_kw is not None
-    payload = call_kw[0][2]
-    assert payload["summary"] == "Done"
-    assert payload["passed"] == 1
-    assert payload["total"] == 1
-    assert ctx.get("result_summary") == "Done"
-    assert ctx.get("result_node_id") == "new-res"
-    assert ctx.get("last_criteria_verdicts") == [{"id": "c1", "status": "pass"}]
-    assert "new-res" in out

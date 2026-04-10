@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import operator
-from typing import Annotated, TypedDict
+from typing import Annotated, NotRequired, TypedDict
 
 
 class CriterionEval(TypedDict):
@@ -16,6 +16,7 @@ class CriterionEval(TypedDict):
 class MilestoneEvalState(TypedDict):
     """State for milestone evaluation; `evaluated` uses additive reducer for Send fan-in."""
 
+    run_id: NotRequired[str]
     milestone_id: str
     location_id: int
     user_id: str
