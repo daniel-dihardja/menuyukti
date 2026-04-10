@@ -445,6 +445,10 @@ export function useMilestoneOperations(
             }
             if (payload.done === true) {
               const summary = typeof payload.summary === 'string' ? payload.summary : ''
+              const dataPreview =
+                'dataPreview' in payload && typeof payload.dataPreview === 'string'
+                  ? payload.dataPreview
+                  : undefined
               const criteriaRaw = payload.criteria
               const criteriaList = Array.isArray(criteriaRaw)
                 ? criteriaRaw.filter(
@@ -478,6 +482,7 @@ export function useMilestoneOperations(
                       status: hasFail ? ('failed' as const) : ('complete' as const),
                       passCriteria: nextPass,
                       resultMarkdown: summary || milestone.resultMarkdown,
+                      ...(dataPreview !== undefined ? { data: dataPreview } : {}),
                     }
                   }),
               })

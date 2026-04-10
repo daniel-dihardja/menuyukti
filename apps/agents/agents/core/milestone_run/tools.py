@@ -10,6 +10,7 @@ from agents_app.agents.core.milestone_run.graphql_client import (
     create_result_node,
     delete_node,
     fetch_milestone_children,
+    fetch_public_holidays_for_milestone,
     update_passcriteria_status,
     upsert_milestonedata_node,
 )
@@ -28,12 +29,14 @@ def make_milestone_run_tools(
     *,
     client: httpx.AsyncClient,
 ) -> list[BaseTool]:
-    """Build five bound tools that read/write :class:`~agents_app.agents.core.milestone_run.state.MilestoneRunState` fields.
+    """Build bound tools that read/write :class:`~agents_app.agents.core.milestone_run.state.MilestoneRunState` fields.
 
     **Reads** use ``context`` (typically the LangGraph state dict): ``goal``, ``raw_data``, ``criteria``.
 
     **Writes** persist via GraphQL and update ``context`` keys ``result_data``, ``result_summary``,
     ``result_node_id``, and ``last_criteria_verdicts`` (after ``write_result``).
+
+    Includes ``get_public_holidays`` to load holidays for the campaign location and date range.
     """
 
     @tool
@@ -66,6 +69,36 @@ def make_milestone_run_tools(
         return d if isinstance(d, str) else str(d)
 
     @tool
+    async def get_public_holidays(start_date: str, end_date: str) -> str:
+        """Fetch public holidays between start_date and end_date (YYYY-MM-DD) for this location's country.
+
+        Returns a Markdown bullet list (date, name, local name) or a short message if none apply,
+        the country is unknown, or the range is invalid. Use before write_result_data when holidays
+        must be filled in the Data tab.
+        """
+        holidays, err = await fetch_public_holidays_for_milestone(
+            location_id,
+            start_date.strip(),
+            end_date.strip(),
+            user_id,
+            client=client,
+        )
+        if err:
+            return err
+        if not holidays:
+            return "No public holidays in this date range (confirmed)."
+        lines: list[str] = []
+        for h in holidays:
+            if not isinstance(h, dict):
+                continue
+            d = h.get("date", "")
+            name = h.get("name", "")
+            local_name = h.get("localName", "")
+            extra = f" ({local_name})" if local_name and str(local_name) != str(name) else ""
+            lines.append(f"- **{d}** — {name}{extra}")
+        return "Public holidays in range:\n\n" + "\n".join(lines)
+
+    @tool
     async def write_result_data(new_data: str) -> str:
         """Upsert the milestonedata child under this milestone with the given Markdown body.
 
@@ -80,6 +113,7 @@ def make_milestone_run_tools(
         )
         nid = str(node.get("id", ""))
         context["result_data"] = new_data
+        context["milestonedata_written"] = True
         return f"Saved milestonedata node id={nid} ({len(new_data)} characters)."
 
     @tool
@@ -151,4 +185,4 @@ def make_milestone_run_tools(
         context["result_node_id"] = nid
         return f"Created result node id={nid} (passed {passed}/{total})."
 
-    return [read_goal, read_criteria, read_data, write_result_data, write_result]
+    return [read_goal, read_criteria, read_data, get_public_holidays, write_result_data, write_result]

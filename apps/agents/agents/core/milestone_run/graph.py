@@ -68,6 +68,7 @@ async def _run_milestone_agent(
     )
     return {
         "result_data": str(state.get("result_data", "")),
+        "milestonedata_written": bool(state.get("milestonedata_written")),
         "result_summary": str(state.get("result_summary", "")),
         "result_node_id": state.get("result_node_id"),
         "last_criteria_verdicts": last_verdicts,

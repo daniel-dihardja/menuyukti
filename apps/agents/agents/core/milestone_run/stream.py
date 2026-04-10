@@ -34,6 +34,7 @@ async def iter_milestone_run_sse_lines(
         "raw_data": "",
         "criteria": [],
         "result_data": "",
+        "milestonedata_written": False,
         "result_summary": "",
         "result_node_id": None,
         "last_criteria_verdicts": [],
@@ -82,11 +83,12 @@ async def iter_milestone_run_sse_lines(
             final_state.get("result_node_id"),
             len(criteria_payload),
         )
-        yield format_sse_line(
-            {
-                "done": True,
-                "resultId": str(final_state.get("result_node_id") or ""),
-                "summary": str(final_state.get("result_summary") or ""),
-                "criteria": criteria_payload,
-            }
-        )
+        done_payload: dict[str, Any] = {
+            "done": True,
+            "resultId": str(final_state.get("result_node_id") or ""),
+            "summary": str(final_state.get("result_summary") or ""),
+            "criteria": criteria_payload,
+        }
+        if final_state.get("milestonedata_written"):
+            done_payload["dataPreview"] = str(final_state.get("result_data") or "")
+        yield format_sse_line(done_payload)

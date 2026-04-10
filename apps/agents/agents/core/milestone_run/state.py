@@ -17,6 +17,8 @@ class MilestoneRunState(TypedDict):
     criteria: list[dict[str, str]]
     # Written by agent tools / graph merge
     result_data: str
+    # Set True when write_result_data tool persists milestonedata (for SSE dataPreview).
+    milestonedata_written: bool
     result_summary: str
     result_node_id: str | None
     # Set by write_result for SSE ``done.criteria`` (id + status per criterion)

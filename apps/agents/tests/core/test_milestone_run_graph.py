@@ -51,6 +51,7 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
                 "raw_data": "",
                 "criteria": [],
                 "result_data": "",
+                "milestonedata_written": False,
                 "result_summary": "",
                 "result_node_id": None,
                 "last_criteria_verdicts": [],

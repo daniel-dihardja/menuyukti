@@ -1,3 +1,4 @@
+import campaignBriefDates from './campaign-brief-dates.json'
 import captionSprint from './caption-sprint.json'
 import facebookCaptionSprint from './facebook-caption-sprint.json'
 import facebookFullMonth from './facebook-full-month.json'
@@ -13,6 +14,7 @@ import quickInstagramCampaign from './quick-instagram-campaign.json'
  * milestone copy instructs mapping outputs to Facebook Page / Reels / Stories.
  */
 export type WorkflowImportPresetId =
+  | 'campaign-brief-dates'
   | 'caption-sprint'
   | 'facebook-caption-sprint'
   | 'facebook-full-month'
@@ -26,6 +28,7 @@ export type WorkflowImportPreset = {
 }
 
 export const WORKFLOW_IMPORT_PRESETS: readonly WorkflowImportPreset[] = [
+  { id: 'campaign-brief-dates', payload: campaignBriefDates },
   { id: 'quick-instagram-campaign', payload: quickInstagramCampaign },
   { id: 'full-social-month', payload: fullSocialMonth },
   { id: 'caption-sprint', payload: captionSprint },

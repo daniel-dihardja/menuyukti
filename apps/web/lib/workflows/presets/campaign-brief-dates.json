@@ -1,0 +1,27 @@
+{
+  "workflowName": "Campaign Brief — Date Collection",
+  "goal": "Collect and confirm the campaign window: start date, end date, and all public holidays within that range.",
+  "milestones": [
+    {
+      "order": 0,
+      "title": "Campaign Brief",
+      "goal": "Collect the campaign start date, end date, and public holidays between them so all downstream planning steps have a complete date window.",
+      "dataTask": "manual",
+      "data": "## Campaign Brief\n\n**Start date:** 2026-05-01 (01.05.2026)\n**End date:** 2026-05-31 (31.05.2026)\n\n## Public Holidays\n\n<!-- Public holidays will be filled automatically when Run is clicked -->\n",
+      "passCriteria": [
+        {
+          "requirement": "Start date is specified in YYYY-MM-DD format.",
+          "status": "open"
+        },
+        {
+          "requirement": "End date is specified in YYYY-MM-DD format and is on or after the start date.",
+          "status": "open"
+        },
+        {
+          "requirement": "Public holidays between the start and end dates are listed (or confirmed as none).",
+          "status": "open"
+        }
+      ]
+    }
+  ]
+}

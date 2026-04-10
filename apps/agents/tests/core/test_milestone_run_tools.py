@@ -55,6 +55,32 @@ def test_read_data_returns_raw_data() -> None:
 
 
 @pytest.mark.asyncio
+async def test_get_public_holidays_formats_list() -> None:
+    ctx: dict[str, Any] = {}
+    client = MagicMock(spec=AsyncMock)
+
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.fetch_public_holidays_for_milestone",
+        new=AsyncMock(
+            return_value=(
+                [
+                    {"date": "2025-01-01", "name": "New Year's Day", "localName": "New Year's Day"},
+                ],
+                None,
+            )
+        ),
+    ):
+        tools = _tools_for_context(ctx, client=client)
+        get_public_holidays = tools[3]
+        out = await get_public_holidays.ainvoke(
+            {"start_date": "2025-01-01", "end_date": "2025-01-31"}
+        )
+
+    assert "2025-01-01" in out
+    assert "New Year's Day" in out
+
+
+@pytest.mark.asyncio
 async def test_write_result_data_upserts_and_updates_context() -> None:
     ctx: dict[str, Any] = {}
     client = MagicMock(spec=AsyncMock)
@@ -64,7 +90,7 @@ async def test_write_result_data_upserts_and_updates_context() -> None:
         new=AsyncMock(return_value={"id": "md-9"}),
     ) as mock_upsert:
         tools = _tools_for_context(ctx, client=client)
-        write_result_data = tools[3]
+        write_result_data = tools[4]
         out = await write_result_data.ainvoke({"new_data": "Updated body"})
 
     mock_upsert.assert_awaited_once()
@@ -100,7 +126,7 @@ async def test_write_result_replaces_result_node_and_updates_context() -> None:
         ) as mock_create,
     ):
         tools = _tools_for_context(ctx, client=client)
-        write_result = tools[4]
+        write_result = tools[5]
         out = await write_result.ainvoke(
             {
                 "summary": "Done",
