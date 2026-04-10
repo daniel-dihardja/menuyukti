@@ -1,5 +1,6 @@
 """FastAPI ASGI entrypoint for the agents service."""
 
+import logging
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -12,6 +13,21 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 
 load_dotenv()
+
+
+def _configure_agents_app_logging() -> None:
+    """Emit INFO logs from ``agents_app`` (e.g. milestone run fetch steps) without raising root level."""
+    pkg = logging.getLogger("agents_app")
+    if pkg.handlers:
+        return
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(levelname)s [%(name)s] %(message)s"))
+    pkg.addHandler(handler)
+    pkg.setLevel(logging.INFO)
+    pkg.propagate = False
+
+
+_configure_agents_app_logging()
 
 
 @asynccontextmanager

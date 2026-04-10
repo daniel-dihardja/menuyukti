@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Literal
 
 import httpx
@@ -24,6 +25,8 @@ from langgraph.config import get_stream_writer
 from langgraph.types import Send
 from pydantic import BaseModel, Field
 
+_logger = logging.getLogger(__name__)
+
 
 class CriterionVerdict(BaseModel):
     """Structured LLM output for a single pass/fail decision."""
@@ -41,13 +44,25 @@ async def fetch_context(
     *,
     client: httpx.AsyncClient,
 ) -> dict[str, Any]:
+    mid = state["milestone_id"]
+    loc = state["location_id"]
     writer = get_stream_writer()
     writer({"step": "fetch_context"})
+    _logger.info(
+        "milestone_eval.fetch_context: emitted step fetch_context; calling GraphQL nodes(parentId=%s)",
+        mid,
+    )
     children = await fetch_milestone_children(
-        state["milestone_id"],
-        state["location_id"],
+        mid,
+        loc,
         state["user_id"],
         client=client,
+    )
+    _logger.info(
+        "milestone_eval.fetch_context: GraphQL returned %s child nodes for milestone_id=%s location_id=%s",
+        len(children),
+        mid,
+        loc,
     )
     goal = ""
     raw_data = ""

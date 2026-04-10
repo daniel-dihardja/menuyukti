@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import Annotated
 
 import httpx
-from agents_app.agents.core.milestone_eval.stream import (
+from agents_app.agents.core.milestone_run.stream import (
     format_sse_line,
-    iter_milestone_eval_sse_lines,
+    iter_milestone_run_sse_lines,
 )
 from agents_app.deps import get_http_client
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -33,7 +33,7 @@ async def milestone_run(
 
     async def event_stream():
         try:
-            async for line in iter_milestone_eval_sse_lines(
+            async for line in iter_milestone_run_sse_lines(
                 client=client,
                 milestone_id=milestone_id,
                 location_id=body.location_id,
