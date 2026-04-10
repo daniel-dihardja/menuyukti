@@ -7,7 +7,7 @@
       "title": "Campaign Brief",
       "goal": "Set the campaign start and end dates.",
       "dataTask": "manual",
-      "data": "## Campaign Brief\n\n**Start date:** <!-- YYYY-MM-DD -->\n**End date:** <!-- YYYY-MM-DD -->\n",
+      "data": "## Campaign Brief\n\n**Start date:** 2026-05-01\n**End date:** 2026-05-31\n",
       "passCriteria": [
         {
           "requirement": "Start date is specified (YYYY-MM-DD).",

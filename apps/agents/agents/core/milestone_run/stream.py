@@ -24,20 +24,25 @@ async def iter_milestone_run_sse_lines(
     milestone_id: str,
     location_id: int,
     user_id: str,
+    workflow_id: str | None = None,
 ) -> AsyncIterator[str]:
     """Stream Server-Sent Event lines: custom step payloads, then a final ``done`` object."""
     initial: dict[str, Any] = {
         "milestone_id": milestone_id,
         "location_id": location_id,
         "user_id": user_id,
+        "workflow_id": workflow_id,
         "goal": "",
         "raw_data": "",
         "criteria": [],
+        "prior_milestones_data": "",
         "result_data": "",
         "milestonedata_written": False,
         "result_summary": "",
         "result_node_id": None,
         "last_criteria_verdicts": [],
+        "selected_skill_ids": [],
+        "current_skill_index": 0,
         "selected_skill_id": None,
     }
     final_state: dict[str, Any] | None = None

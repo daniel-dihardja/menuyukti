@@ -1,18 +1,20 @@
+import campaignPlanningMultiSkill from './campaign-planning-multi-skill.json'
 import publicHolidaysExample from './public-holidays-example.json'
 
 /**
  * Built-in workflow import payloads (`workflowImportPayload` from
  * `apps/graphql/workflow_export_schema.json`). Shown first in the import dialog.
  */
-export type WorkflowImportPresetId = 'public-holidays-example'
+export type WorkflowImportPresetId = 'public-holidays-example' | 'campaign-planning-multi-skill'
 
 export type WorkflowImportPreset = {
   id: WorkflowImportPresetId
-  payload: typeof publicHolidaysExample
+  payload: typeof publicHolidaysExample | typeof campaignPlanningMultiSkill
 }
 
 export const WORKFLOW_IMPORT_PRESETS: readonly WorkflowImportPreset[] = [
   { id: 'public-holidays-example', payload: publicHolidaysExample },
+  { id: 'campaign-planning-multi-skill', payload: campaignPlanningMultiSkill },
 ] as const
 
 export const PRESET_KEY_PREFIX = 'preset:' as const

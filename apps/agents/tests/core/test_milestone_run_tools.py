@@ -12,6 +12,7 @@ def _tools_for_context(
     context: dict[str, Any],
     *,
     client: Any | None = None,
+    include_write_result: bool = True,
 ) -> list[Any]:
     from agents_app.agents.core.milestone_run.tools import make_milestone_run_tools
 
@@ -22,7 +23,15 @@ def _tools_for_context(
         42,
         "user-1",
         client=c,
+        include_write_result=include_write_result,
     )
+
+
+def test_make_milestone_run_tools_omits_write_result_when_disabled() -> None:
+    tools = _tools_for_context({}, include_write_result=False)
+    names = [getattr(t, "name", "") for t in tools]
+    assert len(tools) == 6
+    assert "write_result" not in names
 
 
 def test_read_goal_returns_context_goal() -> None:
@@ -54,6 +63,23 @@ def test_read_data_returns_raw_data() -> None:
     assert out.startswith("# Notes")
 
 
+def test_read_prior_milestones_returns_context() -> None:
+    ctx = {"prior_milestones_data": "## Campaign Brief\n\n**Start:** 2026-05-01"}
+    tools = _tools_for_context(ctx)
+    read_prior = tools[3]
+    out = read_prior.invoke({})
+    assert "Campaign Brief" in out
+    assert "2026-05-01" in out
+
+
+def test_read_prior_milestones_empty_shows_message() -> None:
+    ctx: dict[str, Any] = {}
+    tools = _tools_for_context(ctx)
+    read_prior = tools[3]
+    out = read_prior.invoke({})
+    assert "No prior milestone data available" in out
+
+
 @pytest.mark.asyncio
 async def test_get_public_holidays_formats_list() -> None:
     ctx: dict[str, Any] = {}
@@ -71,7 +97,7 @@ async def test_get_public_holidays_formats_list() -> None:
         ),
     ):
         tools = _tools_for_context(ctx, client=client)
-        get_public_holidays = tools[3]
+        get_public_holidays = tools[4]
         out = await get_public_holidays.ainvoke(
             {"start_date": "2025-01-01", "end_date": "2025-01-31"}
         )
@@ -90,7 +116,7 @@ async def test_write_result_data_upserts_and_updates_context() -> None:
         new=AsyncMock(return_value={"id": "md-9"}),
     ) as mock_upsert:
         tools = _tools_for_context(ctx, client=client)
-        write_result_data = tools[4]
+        write_result_data = tools[5]
         out = await write_result_data.ainvoke({"new_data": "Updated body"})
 
     mock_upsert.assert_awaited_once()
@@ -126,7 +152,7 @@ async def test_write_result_replaces_result_node_and_updates_context() -> None:
         ) as mock_create,
     ):
         tools = _tools_for_context(ctx, client=client)
-        write_result = tools[5]
+        write_result = tools[6]
         out = await write_result.ainvoke(
             {
                 "summary": "Done",

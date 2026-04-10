@@ -11,11 +11,18 @@ class MilestoneRunState(TypedDict):
     milestone_id: str
     location_id: int
     user_id: str
+    # Parent workflow node id — when set, prior milestone Data tabs are prefetched for tools.
+    workflow_id: str | None
     # Filled before the agent step (e.g. fetch_context node)
     goal: str
     raw_data: str
     criteria: list[dict[str, str]]
-    # Set by select_skill node (structured LLM)
+    # Markdown: prior milestones' Data tabs (empty if no workflow_id or no earlier milestones).
+    prior_milestones_data: str
+    # Set by select_skills node (structured LLM); ordered execution
+    selected_skill_ids: list[str]
+    current_skill_index: int
+    # Convenience: first selected id (same as selected_skill_ids[0] when non-empty)
     selected_skill_id: str | None
     # Written by agent tools / graph merge
     result_data: str

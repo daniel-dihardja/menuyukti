@@ -38,10 +38,92 @@ query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) 
 }
 """
 
+_WORKFLOW_MILESTONES_QUERY = """
+query WorkflowMilestones($locationId: Int!, $parentId: ID) {
+  nodes(locationId: $locationId, parentId: $parentId) {
+    id
+    name
+    nodeType
+    data
+  }
+}
+"""
+
+
+def _milestone_sort_key(node: dict[str, Any]) -> tuple[int, str]:
+    """Sort milestones by ``data.order`` then id (stable)."""
+    o = None
+    raw = node.get("data")
+    data = raw if isinstance(raw, dict) else {}
+    ord_raw = data.get("order")
+    if isinstance(ord_raw, int):
+        o = ord_raw
+    oid = o if o is not None else 10**9
+    return (oid, str(node.get("id", "")))
+
+
+async def fetch_prior_milestones_data(
+    milestone_id: str,
+    workflow_id: str,
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> str:
+    """Build Markdown of each earlier milestone's Data tab (by ``order``), for the current milestone.
+
+    Milestones under ``workflow_id`` are ordered by ``data.order``; content is taken from each prior
+    milestone's ``milestonedata`` child.
+    """
+    data = await graphql_post(
+        client,
+        _WORKFLOW_MILESTONES_QUERY,
+        {"locationId": location_id, "parentId": workflow_id},
+        user_id,
+    )
+    raw_nodes = data.get("nodes")
+    if not isinstance(raw_nodes, list):
+        return ""
+    milestones: list[dict[str, Any]] = []
+    for item in raw_nodes:
+        if isinstance(item, dict) and str(item.get("nodeType") or "") == "milestone":
+            milestones.append(item)
+    milestones.sort(key=_milestone_sort_key)
+    idx = next((i for i, m in enumerate(milestones) if str(m.get("id")) == milestone_id), -1)
+    if idx <= 0:
+        return ""
+    sections: list[str] = []
+    for m in milestones[:idx]:
+        mid = str(m.get("id", ""))
+        if not mid:
+            continue
+        title = str(m.get("name") or "Milestone")
+        children = await fetch_milestone_children(
+            mid,
+            location_id,
+            user_id,
+            client=client,
+        )
+        md_body = ""
+        for ch in children:
+            nt = str(ch.get("nodeType") or ch.get("node_type") or "")
+            if nt != "milestonedata":
+                continue
+            raw_d = ch.get("data")
+            d = raw_d if isinstance(raw_d, dict) else {}
+            body = d.get("data")
+            if isinstance(body, str):
+                md_body = body
+                break
+        sections.append(f"## {title}\n\n{md_body}\n")
+    return "\n".join(sections).strip()
+
+
 __all__ = [
     "create_result_node",
     "delete_node",
     "fetch_milestone_children",
+    "fetch_prior_milestones_data",
     "fetch_public_holidays_for_milestone",
     "update_passcriteria_status",
     "upsert_milestonedata_node",

@@ -6,14 +6,18 @@ import json
 
 SKILL_SELECTOR_SYSTEM = """You are a routing assistant for a restaurant campaign milestone run.
 
-Given the milestone goal, pass/fail criteria, and the current Data tab (Markdown), choose exactly ONE \
-skill id from the provided list that best matches what the run should do next.
+Given the milestone goal, pass/fail criteria, and the current Data tab (Markdown), choose an **ordered list** \
+of one or two skill ids from the provided list. The run executes them in order: earlier skills may update the \
+Data tab; the **last** skill writes the final milestone result and criterion verdicts.
 
 Rules:
-- Prefer `public_holidays` when the goal or any criterion mentions public holidays, bank holidays, \
-national holidays, or filling a holidays section for a date range.
-- Use `generic` for all other milestone evaluation tasks.
-- Respond with a structured object whose skill_id is one of the listed ids exactly (underscores, lowercase)."""
+- Prefer `["public_holidays", "generic"]` (in that order) when the goal or criteria require **both** (a) listing \
+or confirming public holidays for a date range **and** (b) broader evaluation of the brief (e.g. objectives, \
+budget, summary) beyond holidays alone.
+- Prefer `["public_holidays"]` when only holidays listing/confirmation is needed.
+- Prefer `["generic"]` for standard evaluation when holidays are not a distinct requirement.
+- Use at most **two** ids. Do not duplicate the same id.
+- Each id must be one of the listed keys exactly (underscores, lowercase)."""
 
 
 def skill_selector_human_message(
@@ -42,22 +46,30 @@ def skill_selector_human_message(
 """
 
 
+INTERMEDIATE_SKILL_PROMPT_SUFFIX = """
+
+**Multi-skill run (intermediate step):** You do not have the write_result tool in this step. Populate or fix \
+the Data tab using get_public_holidays and write_result_data as needed. A later step will call write_result."""
+
 PUBLIC_HOLIDAYS_SKILL_PROMPT = """You are a precise assistant for a restaurant campaign milestone focused on \
 public holidays.
 
 You have tools to read the milestone goal, pass/fail criteria, and the Data tab (Markdown); to fetch public \
-holidays for this location's country and a date range; and to save updated Data tab content and to write the \
-final milestone result.
+holidays for this location's country and a date range; and to save updated Data tab content. When the \
+write_result tool is available, use it for the final milestone result.
 
 Workflow:
 1. Call read_goal, read_criteria, and read_data at least once each.
-2. Find valid start and end dates (YYYY-MM-DD) in the Data tab (e.g. under Campaign Brief). If missing or invalid, \
-still call write_result with fail verdicts explaining what is missing.
+2. Find valid start and end dates (YYYY-MM-DD) in the Data tab (e.g. under Campaign Brief). If they are not in \
+the current Data tab, call read_prior_milestones_data to load earlier milestones' Data tabs (e.g. Campaign Brief) \
+before concluding dates are missing. If still missing or invalid and you have write_result, call write_result with \
+fail verdicts explaining what is missing. If write_result is not available, note gaps in the Data tab via \
+write_result_data if appropriate.
 3. If dates are valid, call get_public_holidays(start_date, end_date). Merge the result into the Data tab: \
 update any \"Public Holidays\" section (or add one) with a bullet list, or a clear \"none\" / error line.
 4. Call write_result_data with the full updated Markdown body when the Data tab should change.
-5. Call write_result exactly once with a short summary and criteria_verdicts (id from read_criteria, \
-status pass or fail, one-sentence reasoning). Do not invent criterion ids."""
+5. If write_result is available: call it exactly once with a short summary and criteria_verdicts (id from \
+read_criteria, status pass or fail, one-sentence reasoning). Do not invent criterion ids."""
 
 
 GENERIC_SKILL_PROMPT = """You are a precise marketing-operations assistant for a restaurant campaign milestone.

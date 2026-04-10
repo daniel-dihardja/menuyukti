@@ -1,0 +1,52 @@
+{
+  "workflowName": "Campaign Planning with Holiday Awareness",
+  "goal": "Plan and document a complete campaign window with public holidays confirmed.",
+  "milestones": [
+    {
+      "order": 0,
+      "title": "Campaign Brief",
+      "goal": "Specify the campaign window and primary objectives.",
+      "dataTask": "manual",
+      "data": "## Campaign Brief\n\n**Start date:** <!-- YYYY-MM-DD -->\n**End date:** <!-- YYYY-MM-DD -->\n\n**Target audience:** <!-- e.g. families, young adults -->\n\n**Primary objective:** <!-- e.g. drive footfall during Ramadan -->\n\n**Budget / channel preference:** <!-- optional -->\n",
+      "passCriteria": [
+        {
+          "requirement": "Start date is specified (YYYY-MM-DD).",
+          "status": "open"
+        },
+        {
+          "requirement": "End date is specified and is on or after start date.",
+          "status": "open"
+        },
+        {
+          "requirement": "Target audience is defined.",
+          "status": "open"
+        },
+        {
+          "requirement": "Primary campaign objective is stated.",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 1,
+      "title": "Campaign Overview & Holiday Check",
+      "goal": "Confirm all public holidays in the campaign window and validate that the brief is complete.",
+      "dataTask": "manual",
+      "data": "## Campaign Overview\n\n<!-- Copy key details from the Campaign Brief milestone here. -->\n\n## Public Holidays\n\n<!-- Will be populated automatically when Run is clicked -->\n",
+      "passCriteria": [
+        {
+          "requirement": "All public holidays in the campaign window are listed, or none are confirmed.",
+          "status": "open"
+        },
+        {
+          "requirement": "Brief summary of campaign dates and objective is present.",
+          "status": "open"
+        },
+        {
+          "requirement": "Budget or preferred channel is documented.",
+          "status": "open"
+        }
+      ]
+    }
+  ]
+}

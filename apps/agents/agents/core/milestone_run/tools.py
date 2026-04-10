@@ -28,6 +28,7 @@ def make_milestone_run_tools(
     user_id: str,
     *,
     client: httpx.AsyncClient,
+    include_write_result: bool = True,
 ) -> list[BaseTool]:
     """Build bound tools that read/write :class:`~agents_app.agents.core.milestone_run.state.MilestoneRunState` fields.
 
@@ -35,6 +36,12 @@ def make_milestone_run_tools(
 
     **Writes** persist via GraphQL and update ``context`` keys ``result_data``, ``result_summary``,
     ``result_node_id``, and ``last_criteria_verdicts`` (after ``write_result``).
+
+    ``prior_milestones_data`` is prefetched when ``workflow_id`` is set on the run; use \
+    ``read_prior_milestones_data`` to read it.
+
+    When ``include_write_result`` is False (intermediate step in a multi-skill run), the
+    ``write_result`` tool is omitted so only the Data tab can be updated until the final skill.
 
     Shared tool: ``get_public_holidays`` — callable from any skill that needs holidays for the \
     campaign location and date range (same implementation for all skills in the registry).
@@ -68,6 +75,18 @@ def make_milestone_run_tools(
         """Return the current milestone Data tab content (Markdown in the milestonedata node)."""
         d = context.get("raw_data", "")
         return d if isinstance(d, str) else str(d)
+
+    @tool
+    def read_prior_milestones_data() -> str:
+        """Return Markdown from earlier milestones in this workflow (their Data tabs).
+
+        Call when the current Data tab is missing context (e.g. campaign dates) that a previous
+        milestone should have set. Empty or unavailable if the run was not scoped to a workflow.
+        """
+        d = context.get("prior_milestones_data", "")
+        if isinstance(d, str) and d.strip():
+            return d
+        return "No prior milestone data available."
 
     @tool
     async def get_public_holidays(start_date: str, end_date: str) -> str:
@@ -186,4 +205,14 @@ def make_milestone_run_tools(
         context["result_node_id"] = nid
         return f"Created result node id={nid} (passed {passed}/{total})."
 
-    return [read_goal, read_criteria, read_data, get_public_holidays, write_result_data, write_result]
+    tools: list[BaseTool] = [
+        read_goal,
+        read_criteria,
+        read_data,
+        read_prior_milestones_data,
+        get_public_holidays,
+        write_result_data,
+    ]
+    if include_write_result:
+        tools.append(write_result)
+    return tools

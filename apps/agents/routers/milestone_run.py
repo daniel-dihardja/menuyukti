@@ -19,6 +19,10 @@ router = APIRouter()
 
 class MilestoneRunBody(BaseModel):
     location_id: int = Field(..., ge=1)
+    workflow_id: str | None = Field(
+        default=None,
+        description="Parent workflow node id — enables reading earlier milestones' Data tabs.",
+    )
 
 
 @router.post("/milestones/{milestone_id}/run")
@@ -38,6 +42,7 @@ async def milestone_run(
                 milestone_id=milestone_id,
                 location_id=body.location_id,
                 user_id=x_menuyukti_user_id,
+                workflow_id=body.workflow_id,
             ):
                 yield line
         except Exception as e:
