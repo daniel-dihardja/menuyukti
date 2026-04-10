@@ -104,7 +104,12 @@ export const resultNodeSchema = baseNode.extend({
 })
 
 /** Workflow root node `data` JSON — e.g. `{ "goal": "..." }`. */
-export const workflowDataSchema = z.object({ goal: z.string().optional() }).passthrough()
+export const workflowDataSchema = z
+  .object({
+    goal: z.string().optional(),
+    analyticsRunId: z.number().optional(),
+  })
+  .passthrough()
 
 export type WorkflowData = z.infer<typeof workflowDataSchema>
 

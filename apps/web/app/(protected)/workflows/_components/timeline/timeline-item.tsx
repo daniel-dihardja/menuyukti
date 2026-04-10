@@ -63,12 +63,9 @@ function TimelineItemInner({
     renamingMilestoneId,
     savingPassCriteriaMilestoneId,
     savingGoalMilestoneId,
-    preparingMilestoneId,
     onRenameMilestone,
     onUpdatePassCriteria,
     onUpdateMilestoneGoal,
-    onSetMilestoneDataTask,
-    onPrepareMilestone,
     onMoveMilestone,
     onRunMilestone,
     isChatBusy,
@@ -311,18 +308,7 @@ function TimelineItemInner({
                 handleRemovePassCriterion={handleRemovePassCriterion}
                 hasResult={hasResult}
                 isMilestoneRunning={isMilestoneRunning}
-                isPreparing={preparingMilestoneId === milestone.id}
                 milestone={milestone}
-                onPrepareMilestone={
-                  onPrepareMilestone
-                    ? () => void onPrepareMilestone(milestone.id, milestone.dataTask ?? 'manual')
-                    : undefined
-                }
-                onSetMilestoneDataTask={
-                  onSetMilestoneDataTask
-                    ? (dataTask) => void onSetMilestoneDataTask(milestone.id, dataTask)
-                    : undefined
-                }
                 savingGoal={savingGoal}
                 savingPassCriteria={savingPassCriteria}
                 setGoalDraft={setGoalDraft}

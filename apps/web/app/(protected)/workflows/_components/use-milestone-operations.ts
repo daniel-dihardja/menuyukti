@@ -445,6 +445,10 @@ export function useMilestoneOperations(
             }
             if (payload.done === true) {
               const summary = typeof payload.summary === 'string' ? payload.summary : ''
+              const dataPreview =
+                'dataPreview' in payload && typeof payload.dataPreview === 'string'
+                  ? payload.dataPreview
+                  : undefined
               const criteriaRaw = payload.criteria
               const criteriaList = Array.isArray(criteriaRaw)
                 ? criteriaRaw.filter(
@@ -478,6 +482,7 @@ export function useMilestoneOperations(
                       status: hasFail ? ('failed' as const) : ('complete' as const),
                       passCriteria: nextPass,
                       resultMarkdown: summary || milestone.resultMarkdown,
+                      ...(dataPreview !== undefined ? { data: dataPreview } : {}),
                     }
                   }),
               })
@@ -601,7 +606,7 @@ export function useMilestoneOperations(
     }
   }, [workflowId, dispatch, t])
 
-  /** Load persisted milestonedata + dataTask from the API (fixes stale client state after navigation). */
+  /** Load persisted goal, pass criteria, milestonedata + dataTask from the API (navigation, chat tools). */
   const handleHydrateMilestoneData = useCallback(
     async (milestoneId: string) => {
       try {
@@ -612,6 +617,8 @@ export function useMilestoneOperations(
         const body = (await res.json().catch(() => null)) as {
           milestoneData?: string
           dataTask?: MilestoneDataTask | null
+          goal?: string
+          passCriteria?: PassCriteriaRow[]
         } | null
         if (!body) {
           return
@@ -624,7 +631,18 @@ export function useMilestoneOperations(
               if (m.id !== milestoneId) {
                 return m
               }
-              const next = { ...m, data: text }
+              const passCriteria =
+                body.passCriteria !== undefined && Array.isArray(body.passCriteria)
+                  ? body.passCriteria
+                  : m.passCriteria
+              const goalText = typeof body.goal === 'string' ? body.goal : (m.goal ?? '')
+              const next: TimelineMilestone = {
+                ...m,
+                data: text,
+                goal: goalText.trim() ? goalText : undefined,
+                passCriteria,
+                status: deriveMilestoneRailStatus(passCriteria, m.resultMarkdown),
+              }
               if (body.dataTask) {
                 next.dataTask = body.dataTask
               }

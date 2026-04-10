@@ -167,4 +167,12 @@
   .scrollbar-thumb-only::-webkit-scrollbar-corner {
     background: transparent;
   }
+
+  /**
+   * use-stick-to-bottom sets inline `scrollbar-gutter: stable both-edges` on the scroll host.
+   * That reserves a persistent gutter that reads as a “track”. Reset so only the thumb shows.
+   */
+  .scrollbar-thumb-only-host {
+    scrollbar-gutter: auto !important;
+  }
 }

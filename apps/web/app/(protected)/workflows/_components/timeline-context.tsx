@@ -21,6 +21,9 @@ export type TimelineContextValue = CampaignMilestoneUiState & {
   onPrepareMilestone: (id: string, dataTask: MilestoneDataTask) => void | Promise<void>
   onRunMilestone: (id: string) => void | Promise<void>
   onExport: () => void | Promise<void>
+  /** Selected milestone card (URL `?milestone=`); sent to chat as milestone context. */
+  selectedMilestoneId: string | null
+  onSelectMilestone: (id: string | null) => void | Promise<void>
 }
 
 const TimelineContext = createContext<TimelineContextValue | null>(null)

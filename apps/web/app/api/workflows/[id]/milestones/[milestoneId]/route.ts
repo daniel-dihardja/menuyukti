@@ -23,6 +23,10 @@ import {
   type NodesDataRaw,
   type UpdateNodeDataRaw,
 } from '@/lib/graphql/queries'
+import {
+  goalFromChildNodes,
+  passCriteriaFromChildNodes,
+} from '@/app/(protected)/workflows/_components/milestone-map'
 import { milestoneIdParamSchema, patchMilestoneSchema, workflowIdParamSchema } from '../schema'
 
 type RouteContext = {
@@ -235,20 +239,40 @@ export async function GET(_req: Request, context: RouteContext) {
       return validated.error
     }
 
-    const milestonedataRes = parseNodesData(
-      await graphqlQuery<NodesDataRaw>(
+    const locationId = workflowRoot.locationId
+    const [milestonedataRes, goalRes, passRes] = await Promise.all([
+      graphqlQuery<NodesDataRaw>(
         NODES_QUERY,
         {
-          locationId: workflowRoot.locationId,
+          locationId,
           nodeType: 'milestonedata',
           parentId: milestoneId,
         },
         userId,
       ),
-    )
+      graphqlQuery<NodesDataRaw>(
+        NODES_QUERY,
+        {
+          locationId,
+          nodeType: 'goal',
+          parentId: milestoneId,
+        },
+        userId,
+      ),
+      graphqlQuery<NodesDataRaw>(
+        NODES_QUERY,
+        {
+          locationId,
+          nodeType: 'passcriteria',
+          parentId: milestoneId,
+        },
+        userId,
+      ),
+    ])
 
+    const milestonedataParsed = parseNodesData(milestonedataRes)
     let milestoneData = ''
-    for (const n of milestonedataRes.nodes) {
+    for (const n of milestonedataParsed.nodes) {
       if (n.nodeType !== 'milestonedata') {
         continue
       }
@@ -263,19 +287,32 @@ export async function GET(_req: Request, context: RouteContext) {
       }
     }
 
+    const goalParsed = parseNodesData(goalRes)
+    const passParsed = parseNodesData(passRes)
+    const goalFromNode = goalFromChildNodes(goalParsed.nodes)
+    const passCriteria = passCriteriaFromChildNodes(passParsed.nodes)
+
     const mn = validated.milestoneNode
     let dataTask: z.infer<typeof milestoneDataSchema>['dataTask'] | null = null
+    let legacyGoal: string | undefined
     if (mn.data != null && typeof mn.data === 'object') {
       const parsed = milestoneDataSchema.safeParse(mn.data)
-      if (parsed.success && parsed.data.dataTask) {
-        dataTask = parsed.data.dataTask
+      if (parsed.success) {
+        if (parsed.data.dataTask) {
+          dataTask = parsed.data.dataTask
+        }
+        legacyGoal = parsed.data.goal
       }
     }
+
+    const goal = goalFromNode ?? legacyGoal ?? ''
 
     return NextResponse.json(
       {
         milestoneData,
         dataTask,
+        goal,
+        passCriteria,
       },
       { status: 200 },
     )

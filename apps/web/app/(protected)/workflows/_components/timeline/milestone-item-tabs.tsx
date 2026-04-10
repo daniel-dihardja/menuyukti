@@ -18,37 +18,10 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from '@workspace/ui/components/input-group'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@workspace/ui/components/select'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 
-import type { MilestoneDataTask, PassCriteriaRow, TimelineMilestone } from './types'
-import { MILESTONE_PREPARE_DATA_TASKS } from './types'
-
-const DATA_TAB_DESCRIPTION_KEY: Record<
-  MilestoneDataTask,
-  | 'milestoneDataDescription'
-  | 'milestoneDataDescriptionLocationProfile'
-  | 'milestoneDataDescriptionInstagramCampaignSchedule'
-  | 'milestoneDataDescriptionRestaurantBrandBrief'
-  | 'milestoneDataDescriptionSocialCampaignCalendar'
-  | 'milestoneDataDescriptionSocialCaptionBatch'
-  | 'milestoneDataDescriptionVisualCreativeBrief'
-> = {
-  manual: 'milestoneDataDescription',
-  location_profile: 'milestoneDataDescriptionLocationProfile',
-  instagram_campaign_schedule: 'milestoneDataDescriptionInstagramCampaignSchedule',
-  restaurant_brand_brief: 'milestoneDataDescriptionRestaurantBrandBrief',
-  social_campaign_calendar: 'milestoneDataDescriptionSocialCampaignCalendar',
-  social_caption_batch: 'milestoneDataDescriptionSocialCaptionBatch',
-  visual_creative_brief: 'milestoneDataDescriptionVisualCreativeBrief',
-}
+import type { PassCriteriaRow, TimelineMilestone } from './types'
 
 export type MilestoneItemTabsProps = {
   milestone: TimelineMilestone
@@ -62,9 +35,6 @@ export type MilestoneItemTabsProps = {
   savingPassCriteria: boolean
   hasResult: boolean
   isMilestoneRunning: boolean
-  isPreparing?: boolean
-  onSetMilestoneDataTask?: (dataTask: MilestoneDataTask) => void | Promise<void>
-  onPrepareMilestone?: () => void | Promise<void>
   handleGoalSave: () => void
   handleAddPassCriterion: () => Promise<void>
   handleRemovePassCriterion: (index: number) => Promise<void>
@@ -82,18 +52,11 @@ export function MilestoneItemTabs({
   savingPassCriteria,
   hasResult,
   isMilestoneRunning,
-  isPreparing = false,
-  onSetMilestoneDataTask,
-  onPrepareMilestone,
   handleGoalSave,
   handleAddPassCriterion,
   handleRemovePassCriterion,
 }: MilestoneItemTabsProps) {
   const t = useTranslations('analytics.campaigns.chat')
-  const dataTask: MilestoneDataTask = milestone.dataTask ?? 'manual'
-  const isPrepareDataTask = MILESTONE_PREPARE_DATA_TASKS.includes(dataTask)
-  const dataTaskFieldId = `milestone-data-task-${milestone.id}`
-  const hasGeneratedData = Boolean((milestone.data ?? '').trim())
   const saveStatusMessages = useMemo(
     () => ({
       saving: t('fieldSaveStatusSaving'),
@@ -126,9 +89,6 @@ export function MilestoneItemTabs({
           </TabsTrigger>
           <TabsTrigger className="flex-1" value="pass">
             {t('milestoneTabPassCriteria')}
-          </TabsTrigger>
-          <TabsTrigger className="flex-1" value="data">
-            {t('milestoneTabData')}
           </TabsTrigger>
           <TabsTrigger className="flex-1" value="result">
             {t('milestoneTabResult')}
@@ -246,80 +206,6 @@ export function MilestoneItemTabs({
               </InputGroupButton>
             </InputGroupAddon>
           </InputGroup>
-        </TabsContent>
-        <TabsContent value="data">
-          <FieldGroup className="gap-4">
-            <Field>
-              <FieldLabel htmlFor={dataTaskFieldId}>{t('milestoneDataTaskLabel')}</FieldLabel>
-              <Select
-                disabled={!onSetMilestoneDataTask}
-                onValueChange={(v) => {
-                  void onSetMilestoneDataTask?.(v as MilestoneDataTask)
-                }}
-                value={dataTask}
-              >
-                <SelectTrigger
-                  className="w-full max-w-md"
-                  id={dataTaskFieldId}
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manual">{t('milestoneDataTaskManual')}</SelectItem>
-                  <SelectItem value="location_profile">
-                    {t('milestoneDataTaskLocationProfile')}
-                  </SelectItem>
-                  <SelectItem value="instagram_campaign_schedule">
-                    {t('milestoneDataTaskInstagramCampaignSchedule')}
-                  </SelectItem>
-                  <SelectItem value="restaurant_brand_brief">
-                    {t('milestoneDataTaskRestaurantBrandBrief')}
-                  </SelectItem>
-                  <SelectItem value="social_campaign_calendar">
-                    {t('milestoneDataTaskSocialCampaignCalendar')}
-                  </SelectItem>
-                  <SelectItem value="social_caption_batch">
-                    {t('milestoneDataTaskSocialCaptionBatch')}
-                  </SelectItem>
-                  <SelectItem value="visual_creative_brief">
-                    {t('milestoneDataTaskVisualCreativeBrief')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field>
-              <FieldLabel>{t('milestoneDataLabel')}</FieldLabel>
-              <FieldDescription>{t(DATA_TAB_DESCRIPTION_KEY[dataTask])}</FieldDescription>
-              {isPrepareDataTask ? (
-                <div className="flex flex-wrap items-center gap-2 pb-2">
-                  <Button
-                    disabled={isPreparing || !onPrepareMilestone}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      void onPrepareMilestone?.()
-                    }}
-                    size="sm"
-                    type="button"
-                    variant="default"
-                  >
-                    {isPreparing ? (
-                      <>
-                        <Spinner aria-hidden data-icon="inline-start" />
-                        {t('milestonePrepareRunning')}
-                      </>
-                    ) : hasGeneratedData ? (
-                      t('milestoneRegenerateButton')
-                    ) : (
-                      t('milestoneGenerateButton')
-                    )}
-                  </Button>
-                </div>
-              ) : null}
-              <p className="text-muted-foreground text-sm">{t('milestoneDataEditInPreviewHint')}</p>
-            </Field>
-          </FieldGroup>
         </TabsContent>
         <TabsContent value="result">
           {hasResult ? (

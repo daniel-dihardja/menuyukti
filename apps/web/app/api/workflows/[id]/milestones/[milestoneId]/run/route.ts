@@ -81,7 +81,7 @@ export async function POST(req: Request, context: RouteContext) {
         'Content-Type': 'application/json',
         'X-Menuyukti-User-Id': userId,
       },
-      body: JSON.stringify({ location_id: locationId }),
+      body: JSON.stringify({ location_id: locationId, workflow_id: workflowId }),
       signal: req.signal,
     })
   } catch (err) {

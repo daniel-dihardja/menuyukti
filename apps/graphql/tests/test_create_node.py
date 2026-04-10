@@ -529,3 +529,107 @@ def test_create_second_milestonedata_rejected():
         )
     )
     assert second.errors
+
+
+def test_create_second_result_under_milestone_replaces_first():
+    """Second createNode(result) under the same milestone deletes the prior result (agent re-run)."""
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(name="Result Replace Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    campaign = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "workflow",
+                "name": "Campaign",
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not campaign.errors, campaign.errors
+    campaign_id = campaign.data["createNode"]["id"]
+
+    milestone = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "name": "M1",
+                "parentId": campaign_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not milestone.errors, milestone.errors
+    milestone_id = milestone.data["createNode"]["id"]
+
+    payload_v1 = {
+        "summary": "First",
+        "passed": 1,
+        "total": 1,
+        "criteria": [],
+    }
+    first = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "result",
+                "name": "Result",
+                "parentId": milestone_id,
+                "data": payload_v1,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not first.errors, first.errors
+
+    payload_v2 = {
+        "summary": "Second run",
+        "passed": 0,
+        "total": 1,
+        "criteria": [],
+    }
+    second = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "result",
+                "name": "Result",
+                "parentId": milestone_id,
+                "data": payload_v2,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not second.errors, second.errors
+    assert second.data["createNode"]["data"]["summary"] == "Second run"
+
+    session = SessionLocal()
+    try:
+        count = (
+            session.query(Node)
+            .filter(Node.parent_id == int(milestone_id), Node.node_type == "result")
+            .count()
+        )
+        assert count == 1
+        row = session.get(Node, int(first.data["createNode"]["id"]))
+        assert row is not None
+        assert isinstance(row.data, dict)
+        assert row.data.get("summary") == "Second run"
+    finally:
+        session.close()
