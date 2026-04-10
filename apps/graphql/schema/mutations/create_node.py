@@ -1,12 +1,28 @@
 import secrets
 
 import strawberry
+from sqlalchemy.orm import Session
 from strawberry.scalars import JSON
 
 from graphql.data_sources import Node, SessionLocal
 from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.node_handlers import get_handler
 from graphql.schema.types import NodeType
+
+
+def _delete_existing_result_children_under_milestone(session: Session, milestone: Node) -> None:
+    """Remove existing result children so a new result can be created (idempotent replace)."""
+    existing = (
+        session.query(Node)
+        .filter(Node.parent_id == milestone.id, Node.node_type == "result")
+        .all()
+    )
+    if not existing:
+        return
+    result_handler = get_handler("result")
+    for old in existing:
+        result_handler.pre_delete(old, milestone, session)
+        session.delete(old)
 
 _ADJECTIVES = ("Swift", "Bright", "Urban", "Golden", "Fresh", "Bold")
 _NOUNS = ("Launch", "Push", "Drive", "Wave", "Spark", "Pulse")
@@ -58,12 +74,24 @@ class CreateNodeMutation:
                     parent_pk = int(str(parent_id))
                 except ValueError as e:
                     raise ValueError("Invalid parent node id") from e
-                parent = session.get(Node, parent_pk)
+                # Lock milestone row when replacing result nodes so concurrent creates serialize.
+                parent_query = session.query(Node).filter(Node.id == parent_pk)
+                if node_type == "result":
+                    parent_query = parent_query.with_for_update()
+                parent = parent_query.one_or_none()
                 if parent is None:
                     raise ValueError("Parent node not found")
                 if parent.location_id != location_id:
                     raise ValueError("Parent node does not belong to this location")
                 resolved_parent_id = parent_pk
+
+            if (
+                node_type == "result"
+                and parent is not None
+                and parent.node_type == "milestone"
+            ):
+                _delete_existing_result_children_under_milestone(session, parent)
+                session.flush()
 
             handler = get_handler(node_type)
             resolved_data = handler.validate_create(parent, data, session)
