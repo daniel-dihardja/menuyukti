@@ -8,6 +8,7 @@ from functools import partial
 from typing import Any, Literal, cast
 
 import httpx
+from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_graph
 from agents_app.agents.core.milestone_eval.nodes import fetch_context
 from agents_app.agents.core.milestone_run.graphql_client import fetch_prior_milestones_data
 from agents_app.agents.core.milestone_run.prompts import (
@@ -26,7 +27,7 @@ from agents_app.agents.core.milestone_run.tools import make_milestone_run_tools
 from agents_app.models.llm_config import get_llm, get_llm_structured
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
-from langgraph.config import get_stream_writer
+from langgraph.config import get_config, get_stream_writer
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel, Field
@@ -227,7 +228,6 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         int(state["location_id"]),
         str(state["user_id"]),
         client=client,
-        include_write_result=is_last,
     )
     system_prompt = skill.prompt
     if not is_last:
@@ -290,12 +290,86 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
     }
 
 
-def _route_after_execute(state: MilestoneRunState) -> Literal["again", "stop"]:
+def _route_after_execute(state: MilestoneRunState) -> Literal["again", "finalize_eval"]:
     ids = state.get("selected_skill_ids") or []
     idx = int(state.get("current_skill_index") or 0)
     if idx < len(ids):
         return "again"
-    return "stop"
+    return "finalize_eval"
+
+
+async def _finalize_eval(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+    """Run criterion scoring, summary synthesis, and result persistence (shared eval graph)."""
+    mid = str(state["milestone_id"])
+    _logger.info("milestone_run.finalize_eval: start milestone_id=%s", mid)
+    _trace_step(state, "finalize_eval")
+
+    eval_graph = build_milestone_eval_graph(client)
+    initial: dict[str, Any] = {
+        "milestone_id": state["milestone_id"],
+        "location_id": int(state["location_id"]),
+        "user_id": str(state["user_id"]),
+        "goal": "",
+        "raw_data": "",
+        "criteria": [],
+        "evaluated": [],
+        "result_summary": "",
+        "result_node_id": None,
+    }
+    rid = state.get("run_id")
+    if isinstance(rid, str) and rid:
+        initial["run_id"] = rid
+
+    try:
+        run_cfg = get_config()
+    except Exception:  # pragma: no cover - outside runnable context
+        run_cfg = None
+
+    writer = get_stream_writer()
+    final_sub: dict[str, Any] | None = None
+
+    async for mode, chunk in eval_graph.astream(
+        initial,
+        stream_mode=["custom", "values"],
+        config=run_cfg,
+    ):
+        if mode == "custom" and isinstance(chunk, dict):
+            payload = dict(chunk)
+            rid2 = state.get("run_id")
+            if isinstance(rid2, str) and rid2 and "run_id" not in payload:
+                payload["run_id"] = rid2
+            writer(payload)
+        elif mode == "values" and isinstance(chunk, dict):
+            final_sub = chunk
+
+    if not isinstance(final_sub, dict):
+        _logger.warning("milestone_run.finalize_eval: missing final state milestone_id=%s", mid)
+        return {
+            "result_summary": str(state.get("result_summary", "")),
+            "result_node_id": state.get("result_node_id"),
+            "last_criteria_verdicts": [],
+        }
+
+    evaluated = final_sub.get("evaluated", [])
+    sse_verdicts: list[dict[str, Any]] = []
+    if isinstance(evaluated, list):
+        for row in evaluated:
+            if isinstance(row, dict) and row.get("id"):
+                sse_verdicts.append(
+                    {"id": str(row["id"]), "status": str(row.get("status", ""))},
+                )
+
+    _logger.info(
+        "milestone_run.finalize_eval: done milestone_id=%s result_id=%s verdict_count=%s",
+        mid,
+        final_sub.get("result_node_id"),
+        len(sse_verdicts),
+    )
+    return {
+        "result_summary": str(final_sub.get("result_summary", "") or ""),
+        "result_node_id": final_sub.get("result_node_id"),
+        "last_criteria_verdicts": sse_verdicts,
+    }
 
 
 def build_milestone_run_graph(client: httpx.AsyncClient):
@@ -304,12 +378,14 @@ def build_milestone_run_graph(client: httpx.AsyncClient):
     builder.add_node("fetch_children", partial(_fetch_children, client=client))
     builder.add_node("select_skills", partial(_select_skills, client=client))
     builder.add_node("execute_skill", partial(_execute_skill, client=client))
+    builder.add_node("finalize_eval", partial(_finalize_eval, client=client))
     builder.add_edge(START, "fetch_children")
     builder.add_edge("fetch_children", "select_skills")
     builder.add_edge("select_skills", "execute_skill")
     builder.add_conditional_edges(
         "execute_skill",
         _route_after_execute,
-        {"again": "execute_skill", "stop": END},
+        {"again": "execute_skill", "finalize_eval": "finalize_eval"},
     )
+    builder.add_edge("finalize_eval", END)
     return builder.compile()

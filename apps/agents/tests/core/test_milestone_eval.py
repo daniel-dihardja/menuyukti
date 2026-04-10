@@ -1,4 +1,4 @@
-"""Unit tests for milestone eval nodes and SSE streaming adapter."""
+"""Unit tests for milestone evaluation nodes (used by milestone run finalize)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from agents_app.agents.core.milestone_eval import nodes
 from agents_app.agents.core.milestone_eval.state import MilestoneEvalState
-from agents_app.agents.core.milestone_eval.stream import iter_milestone_eval_sse_lines
 from langgraph.types import Send
 
 
@@ -77,37 +76,3 @@ async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
     assert out["goal"] == "Increase covers"
     assert out["raw_data"] == "Sales up 10%"
     assert out["criteria"] == [{"id": "pc-1", "requirement": "Has baseline"}]
-
-
-@pytest.mark.asyncio
-async def test_iter_milestone_eval_sse_lines_yields_done_payload() -> None:
-    async def fake_astream(*_a: object, **_k: object):
-        yield (
-            "values",
-            {
-                "evaluated": [{"id": "a", "status": "pass"}],
-                "result_node_id": "node-99",
-                "result_summary": "All good",
-            },
-        )
-
-    mock_graph = MagicMock()
-    mock_graph.astream = fake_astream
-
-    with patch(
-        "agents_app.agents.core.milestone_eval.stream.build_milestone_eval_graph",
-        return_value=mock_graph,
-    ):
-        lines: list[str] = []
-        async for line in iter_milestone_eval_sse_lines(
-            client=MagicMock(),
-            milestone_id="m1",
-            location_id=2,
-            user_id="u1",
-        ):
-            lines.append(line)
-
-    assert len(lines) == 1
-    assert "done" in lines[0]
-    assert "node-99" in lines[0]
-    assert "All good" in lines[0]

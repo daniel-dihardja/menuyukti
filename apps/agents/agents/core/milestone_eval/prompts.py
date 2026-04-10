@@ -4,8 +4,8 @@ EVAL_SYSTEM = """You evaluate whether provided data satisfies a single requireme
 Respond with pass only if the data clearly supports satisfying the requirement; otherwise fail.
 Be concise."""
 
-SYNTHESIS_SYSTEM = """You write a short milestone result summary for stakeholders.
-Use the goal and the per-criterion outcomes. Be clear and professional."""
+SYNTHESIS_SYSTEM = """You reflect on the milestone goal and each pass/fail outcome, then write a short result \
+summary for stakeholders. Be clear, professional, and grounded in the criterion results."""
 
 
 def eval_human_message(goal: str, raw_data: str, requirement: str) -> str:

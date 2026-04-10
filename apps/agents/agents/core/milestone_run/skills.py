@@ -33,10 +33,10 @@ def _build_registry() -> dict[str, SkillDef]:
         ),
         "generic": SkillDef(
             id="generic",
-            name="Generic milestone evaluation",
+            name="Generic milestone data prep",
             description=(
-                "Use for standard milestone runs: read goal, criteria, and Data tab; evaluate "
-                "each criterion; persist milestonedata updates and a result when appropriate."
+                "Use for standard milestone runs: read goal, criteria, and Data tab; improve or "
+                "complete the Data tab (Markdown). Evaluation and summary run automatically after skills."
             ),
             prompt=GENERIC_SKILL_PROMPT,
         ),
