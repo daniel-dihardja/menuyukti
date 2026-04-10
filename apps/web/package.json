@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "analyze": "ANALYZE=true next build --webpack",
     "start": "next start",
     "format": "prettier --write app components hooks lib i18n messages middleware.ts vitest.config.ts",
     "format:check": "prettier --check app components hooks lib i18n messages middleware.ts vitest.config.ts",
@@ -41,6 +42,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.3",
     "@types/node": "^20.19.9",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",

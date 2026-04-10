@@ -123,6 +123,7 @@
     "shopLink": "Print Shop"
   },
   "shop": {
+    "listPageLoadingTitle": "Loading shop…",
     "listMetaTitle": "The Digital Curator | Art for Your Restaurant",
     "listMetaDescription": "Elevate your culinary space with bespoke prints designed for the modern restaurateur.",
     "nav": {
@@ -153,6 +154,7 @@
       "viewDetails": "View details"
     },
     "pdp": {
+      "pageLoadingTitle": "Loading product…",
       "printOnDemand": "Print on demand",
       "sizeOrLicense": "Size or license",
       "finishOrProfile": "Finish / color profile",
@@ -288,6 +290,7 @@
     },
     "printOrders": {
       "title": "Print orders",
+      "pageLoadingTitle": "Loading print orders…",
       "description": "Fulfillment history and status for print-on-demand orders.",
       "emptyTitle": "No orders yet",
       "emptyDescription": "When you place orders from the print shop, they will appear here.",
@@ -338,6 +341,7 @@
     }
   },
   "imageFlows": {
+    "pageLoadingTitle": "Loading Studio…",
     "pageDescription": "Define image AI flows used when uploading brand assets—prompts, models, and options are stored for your workspace.",
     "sectionTitle": "Image AI flows",
     "sectionDescription": "Create, edit, or remove flows. Inactive flows stay hidden from the upload picker but remain editable here.",
@@ -835,6 +839,7 @@
     },
     "cogs": {
       "title": "COGS",
+      "pageLoadingTitle": "Loading COGS…",
       "description": "Manage ingredient costs and COGS data for each analytics snapshot.",
       "menuName": "Menu Name",
       "menuCost": "Menu Cost",
@@ -885,6 +890,7 @@
     },
     "heatmap": {
       "reportTitle": "Heatmaps",
+      "pageLoadingTitle": "Loading heatmap…",
       "breadcrumb": "Heatmaps",
       "heading": "Menu Sales Heatmap",
       "description": "Visualize sales volume by menu and time",
@@ -938,6 +944,7 @@
     },
     "matrix": {
       "reportTitle": "Menu Engineering Report",
+      "pageLoadingTitle": "Loading matrix…",
       "breadcrumb": "Matrix",
       "heading": "Menu Engineering Matrix",
       "description": "See which menu items to promote, improve, or retire with clear sales and profitability signals for restaurant marketers and menu analysts.",

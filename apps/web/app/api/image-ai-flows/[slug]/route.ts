@@ -1,7 +1,9 @@
+import { revalidateTag } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { ZodError } from 'zod'
 
+import { graphqlImageAiFlowsCacheTag } from '@/lib/graphql/cache-tags'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   DELETE_IMAGE_AI_FLOW_MUTATION,
@@ -21,7 +23,7 @@ type RouteContext = {
 export async function PUT(req: Request, context: RouteContext) {
   try {
     const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -53,6 +55,8 @@ export async function PUT(req: Request, context: RouteContext) {
       userId,
     )
 
+    revalidateTag(graphqlImageAiFlowsCacheTag(userId), 'max')
+
     return NextResponse.json({ flow: data.updateImageAiFlow })
   } catch (error) {
     if (error instanceof ZodError) {
@@ -71,7 +75,7 @@ export async function PUT(req: Request, context: RouteContext) {
 export async function DELETE(_req: Request, context: RouteContext) {
   try {
     const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -82,6 +86,8 @@ export async function DELETE(_req: Request, context: RouteContext) {
     }
 
     await graphqlQuery<DeleteImageAiFlowData>(DELETE_IMAGE_AI_FLOW_MUTATION, { slug }, userId)
+
+    revalidateTag(graphqlImageAiFlowsCacheTag(userId), 'max')
 
     return NextResponse.json({ ok: true })
   } catch (error) {

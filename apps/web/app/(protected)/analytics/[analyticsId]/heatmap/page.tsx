@@ -10,12 +10,8 @@ import { PageHeading } from '@/components/page-heading'
 import { Button } from '@workspace/ui/components/button'
 import Link from 'next/link'
 import { graphqlQuery } from '@/lib/graphql/client'
-import {
-  ANALYTICS_RUN_QUERY,
-  MENU_HEATMAPS_QUERY,
-  type AnalyticsRunData,
-  type MenuHeatmapsData,
-} from '@/lib/graphql/queries'
+import { getCachedAnalyticsRun } from '@/lib/graphql/cached-queries'
+import { MENU_HEATMAPS_QUERY, type MenuHeatmapsData } from '@/lib/graphql/queries'
 import { DAILY_HEATMAP_END_HOUR, DAILY_HEATMAP_START_HOUR } from '@/lib/heatmap-config'
 import { adaptDailyHeatmapMatrix, adaptWeeklyHeatmapMatrix } from './heatmap.adapters'
 import { CreateCampaignFromReportButton } from '@/components/create-campaign-from-report-button'
@@ -42,7 +38,7 @@ export default async function Page({ params }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound()
 
   const id = String(analyticsId)
-  const runData = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }, userId)
+  const runData = await getCachedAnalyticsRun(userId, id)
   const run = runData.analyticsRun
   if (!run) notFound()
 

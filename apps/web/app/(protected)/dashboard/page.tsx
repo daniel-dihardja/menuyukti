@@ -8,13 +8,8 @@ import { auth } from '@clerk/nextjs/server'
 
 import { routes } from '@/lib/routes'
 import { graphqlQuery } from '@/lib/graphql/client'
-import {
-  LOCATIONS_QUERY,
-  NODES_QUERY,
-  parseNodesData,
-  type LocationsData,
-  type NodesDataRaw,
-} from '@/lib/graphql/queries'
+import { getCachedLocationsData } from '@/lib/graphql/cached-queries'
+import { NODES_QUERY, parseNodesData, type NodesDataRaw } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { Button } from '@workspace/ui/components/button'
@@ -108,7 +103,7 @@ async function DashboardPageData() {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const locationsData = await graphqlQuery<LocationsData>(LOCATIONS_QUERY, undefined, userId)
+  const locationsData = await getCachedLocationsData(userId)
   const campaignRows: CampaignRow[] = []
 
   await Promise.all(

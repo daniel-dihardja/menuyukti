@@ -1,8 +1,10 @@
+import { revalidateTag } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createLocationSchema } from './schema'
 import { ZodError } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { graphqlLocationsDataCacheTag } from '@/lib/graphql/cache-tags'
 import {
   CREATE_LOCATION_MUTATION,
   CREATE_WORKSPACE_MUTATION,
@@ -15,7 +17,7 @@ import {
 export async function POST(req: Request) {
   try {
     const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -44,6 +46,8 @@ export async function POST(req: Request) {
     if (!location) {
       return NextResponse.json({ message: 'Failed to create location' }, { status: 500 })
     }
+
+    revalidateTag(graphqlLocationsDataCacheTag(userId), 'max')
 
     return NextResponse.json(location, { status: 201 })
   } catch (error) {

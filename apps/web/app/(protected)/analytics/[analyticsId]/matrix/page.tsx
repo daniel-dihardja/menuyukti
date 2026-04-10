@@ -10,10 +10,9 @@ import { notFound } from 'next/navigation'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { getCachedAnalyticsRun } from '@/lib/graphql/cached-queries'
 import {
-  ANALYTICS_RUN_QUERY,
   MENU_ENGINEERING_MATRIX_QUERY,
-  type AnalyticsRunData,
   type MenuEngineeringMatrixData,
 } from '@/lib/graphql/queries'
 import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
@@ -42,7 +41,7 @@ export default async function Page({ params }: PageProps) {
   if (!Number.isInteger(analyticsId)) notFound()
 
   const id = String(analyticsId)
-  const runData = await graphqlQuery<AnalyticsRunData>(ANALYTICS_RUN_QUERY, { id }, userId)
+  const runData = await getCachedAnalyticsRun(userId, id)
   const run = runData.analyticsRun
   if (!run) notFound()
 
