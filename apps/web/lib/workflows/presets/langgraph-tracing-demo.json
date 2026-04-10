@@ -1,0 +1,27 @@
+{
+  "workflowName": "LangGraph tracing demo (May 2026)",
+  "goal": "Use milestone Run to exercise LangGraph streaming and optional LangSmith tracing (LANGCHAIN_TRACING_V2, LANGCHAIN_API_KEY on agents).",
+  "milestones": [
+    {
+      "order": 0,
+      "title": "Campaign window and public holidays",
+      "goal": "Using the Data tab: confirm the campaign start and end dates are present and correct, and list all public holidays in that window for this location's country (or state clearly if there are none).",
+      "dataTask": "manual",
+      "data": "## Campaign window\n\n**Start date:** 01.05.2026\n**End date:** 31.05.2026\n\n## Public Holidays\n\n<!-- Populated when Run is executed -->\n",
+      "passCriteria": [
+        {
+          "requirement": "Start date is specified (e.g. DD.MM.YYYY or YYYY-MM-DD).",
+          "status": "open"
+        },
+        {
+          "requirement": "End date is specified and is on or after the start date.",
+          "status": "open"
+        },
+        {
+          "requirement": "Public holidays section lists all holidays in the window for the location's country, or explicitly confirms there are none.",
+          "status": "open"
+        }
+      ]
+    }
+  ]
+}
