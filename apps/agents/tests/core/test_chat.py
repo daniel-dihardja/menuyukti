@@ -1,8 +1,10 @@
 """HTTP tests for streaming chat."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
+import httpx
 import pytest
+from agents_app.agents.core.chat.graph import build_chat_graph
 from agents_app.server import app
 from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessageChunk
@@ -56,7 +58,13 @@ def test_chat_stream_sse(mock_build_graph: MagicMock, client: TestClient) -> Non
         assert "Hi" in text
         assert "there" in text
         assert "data:" in text
-        mock_build_graph.assert_called_once_with(workflow_id=None, milestone_id=None)
+        mock_build_graph.assert_called_once_with(
+            workflow_id=None,
+            milestone_id=None,
+            location_id=None,
+            user_id=None,
+            http_client=ANY,
+        )
 
 
 @patch("agents_app.routers.chat.build_chat_graph")
@@ -80,4 +88,29 @@ def test_chat_stream_passes_milestone_id(mock_build_graph: MagicMock, client: Te
         },
     ) as response:
         assert response.status_code == 200
-    mock_build_graph.assert_called_once_with(workflow_id=None, milestone_id="42")
+    mock_build_graph.assert_called_once_with(
+        workflow_id=None,
+        milestone_id="42",
+        location_id=None,
+        user_id=None,
+        http_client=ANY,
+    )
+
+
+def test_build_chat_graph_compiles_simple_llm() -> None:
+    """Without milestone + auth context, graph is a single LLM node (no tools)."""
+    graph = build_chat_graph()
+    assert graph is not None
+
+
+@pytest.mark.asyncio
+async def test_build_chat_graph_compiles_react_with_milestone_tool() -> None:
+    """With milestone_id, location, user, and client, graph is a ReAct agent with get_milestone_data."""
+    async with httpx.AsyncClient() as client:
+        graph = build_chat_graph(
+            milestone_id="1",
+            location_id=1,
+            user_id="test-user",
+            http_client=client,
+        )
+    assert graph is not None

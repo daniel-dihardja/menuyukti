@@ -601,7 +601,7 @@ export function useMilestoneOperations(
     }
   }, [workflowId, dispatch, t])
 
-  /** Load persisted milestonedata + dataTask from the API (fixes stale client state after navigation). */
+  /** Load persisted goal, pass criteria, milestonedata + dataTask from the API (navigation, chat tools). */
   const handleHydrateMilestoneData = useCallback(
     async (milestoneId: string) => {
       try {
@@ -612,6 +612,8 @@ export function useMilestoneOperations(
         const body = (await res.json().catch(() => null)) as {
           milestoneData?: string
           dataTask?: MilestoneDataTask | null
+          goal?: string
+          passCriteria?: PassCriteriaRow[]
         } | null
         if (!body) {
           return
@@ -624,7 +626,18 @@ export function useMilestoneOperations(
               if (m.id !== milestoneId) {
                 return m
               }
-              const next = { ...m, data: text }
+              const passCriteria =
+                body.passCriteria !== undefined && Array.isArray(body.passCriteria)
+                  ? body.passCriteria
+                  : m.passCriteria
+              const goalText = typeof body.goal === 'string' ? body.goal : (m.goal ?? '')
+              const next: TimelineMilestone = {
+                ...m,
+                data: text,
+                goal: goalText.trim() ? goalText : undefined,
+                passCriteria,
+                status: deriveMilestoneRailStatus(passCriteria, m.resultMarkdown),
+              }
               if (body.dataTask) {
                 next.dataTask = body.dataTask
               }

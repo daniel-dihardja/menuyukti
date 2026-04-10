@@ -19,6 +19,7 @@ export const chatRequestBodySchema = z.object({
   messages: z.array(messageSchema).optional().default([]),
   workflowId: z.string().regex(/^\d+$/, 'Invalid workflow id').optional(),
   milestoneId: z.string().regex(/^\d+$/, 'Invalid milestone id').optional(),
+  locationId: z.string().regex(/^\d+$/, 'Invalid location id').optional(),
 })
 
 export type ChatRequestBody = z.infer<typeof chatRequestBodySchema>

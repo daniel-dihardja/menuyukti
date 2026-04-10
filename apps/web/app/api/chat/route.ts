@@ -121,7 +121,7 @@ export async function POST(req: Request) {
     return jsonError(message, 400)
   }
 
-  const { messages: rawMessages, workflowId, milestoneId } = parsed.data
+  const { messages: rawMessages, workflowId, milestoneId, locationId } = parsed.data
   const messages = rawMessages as UIMessage[]
   const pythonMessages = uiMessagesToPython(messages)
   if (pythonMessages.length === 0) {
@@ -140,6 +140,7 @@ export async function POST(req: Request) {
         messages: pythonMessages,
         ...(workflowId !== undefined ? { workflow_id: workflowId } : {}),
         ...(milestoneId !== undefined ? { milestone_id: milestoneId } : {}),
+        ...(locationId !== undefined ? { location_id: Number(locationId) } : {}),
       }),
       signal: req.signal,
     })
