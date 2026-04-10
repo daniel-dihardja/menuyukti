@@ -184,17 +184,36 @@ export function CampaignChatPanel({
     [setSelectedMilestoneId],
   )
 
+  /** `useChat` keeps the first `transport` instance; a ref keeps milestone/workflow ids fresh per request. */
+  const chatApiContextRef = useRef({
+    workflowId,
+    locationId,
+    milestoneId: selectedMilestoneId,
+  })
+  chatApiContextRef.current = {
+    workflowId,
+    locationId,
+    milestoneId: selectedMilestoneId,
+  }
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: '/api/chat',
-        body: {
-          workflowId,
-          ...(selectedMilestoneId !== null ? { milestoneId: selectedMilestoneId } : {}),
-          locationId: String(locationId),
+        prepareSendMessagesRequest: ({ messages, body: mergedBody }) => {
+          const ctx = chatApiContextRef.current
+          return {
+            body: {
+              ...mergedBody,
+              messages,
+              workflowId: ctx.workflowId,
+              locationId: String(ctx.locationId),
+              ...(ctx.milestoneId !== null ? { milestoneId: ctx.milestoneId } : {}),
+            },
+          }
         },
       }),
-    [workflowId, locationId, selectedMilestoneId],
+    [],
   )
 
   const { messages, sendMessage, status, stop, error, clearError, regenerate } = useChat({
