@@ -15,6 +15,8 @@ class MilestoneRunState(TypedDict):
     goal: str
     raw_data: str
     criteria: list[dict[str, str]]
+    # Set by select_skill node (structured LLM)
+    selected_skill_id: str | None
     # Written by agent tools / graph merge
     result_data: str
     # Set True when write_result_data tool persists milestonedata (for SSE dataPreview).

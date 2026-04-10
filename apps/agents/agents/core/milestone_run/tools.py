@@ -36,7 +36,8 @@ def make_milestone_run_tools(
     **Writes** persist via GraphQL and update ``context`` keys ``result_data``, ``result_summary``,
     ``result_node_id``, and ``last_criteria_verdicts`` (after ``write_result``).
 
-    Includes ``get_public_holidays`` to load holidays for the campaign location and date range.
+    Shared tool: ``get_public_holidays`` — callable from any skill that needs holidays for the \
+    campaign location and date range (same implementation for all skills in the registry).
     """
 
     @tool
@@ -70,11 +71,11 @@ def make_milestone_run_tools(
 
     @tool
     async def get_public_holidays(start_date: str, end_date: str) -> str:
-        """Fetch public holidays between start_date and end_date (YYYY-MM-DD) for this location's country.
+        """Shared tool: fetch public holidays for this location's country (YYYY-MM-DD range).
 
-        Returns a Markdown bullet list (date, name, local name) or a short message if none apply,
-        the country is unknown, or the range is invalid. Use before write_result_data when holidays
-        must be filled in the Data tab.
+        Reusable across milestone skills. Returns a Markdown bullet list (date, name, local name) or a short \
+        message if none apply, the country is unknown, or the range is invalid. Use before write_result_data \
+        when holidays must be filled in the Data tab.
         """
         holidays, err = await fetch_public_holidays_for_milestone(
             location_id,

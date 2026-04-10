@@ -38,6 +38,7 @@ async def iter_milestone_run_sse_lines(
         "result_summary": "",
         "result_node_id": None,
         "last_criteria_verdicts": [],
+        "selected_skill_id": None,
     }
     final_state: dict[str, Any] | None = None
     _logger.info(

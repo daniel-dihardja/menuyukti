@@ -1,4 +1,4 @@
-"""Milestone run agent: tools and state for goal/criteria/data → result workflows."""
+"""Milestone run: fetch children → LLM skill selection → ReAct execute with tools → result."""
 
 from __future__ import annotations
 

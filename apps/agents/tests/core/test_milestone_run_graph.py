@@ -5,7 +5,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from agents_app.agents.core.milestone_run.graph import build_milestone_run_graph
+from agents_app.agents.core.milestone_run.graph import SkillSelection, build_milestone_run_graph
 
 
 def test_build_milestone_run_graph_compiles() -> None:
@@ -17,6 +17,10 @@ def test_build_milestone_run_graph_compiles() -> None:
 @pytest.mark.asyncio
 async def test_graph_runs_fetch_then_mock_agent() -> None:
     client = MagicMock(spec=AsyncMock)
+    mock_structured = MagicMock()
+    mock_structured.ainvoke = AsyncMock(return_value=SkillSelection(skill_id="generic"))
+    mock_with_structured = MagicMock(return_value=mock_structured)
+
     with (
         patch(
             "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
@@ -29,6 +33,14 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
         patch(
             "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
             return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.get_llm_structured",
+            return_value=MagicMock(with_structured_output=mock_with_structured),
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.get_llm",
@@ -50,6 +62,7 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
                 "goal": "",
                 "raw_data": "",
                 "criteria": [],
+                "selected_skill_id": None,
                 "result_data": "",
                 "milestonedata_written": False,
                 "result_summary": "",
@@ -58,6 +71,6 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
             },
         )
     assert out.get("goal") == "G1"
+    assert out.get("selected_skill_id") == "generic"
     mock_create.assert_called_once()
     mock_agent.ainvoke.assert_awaited_once()
-

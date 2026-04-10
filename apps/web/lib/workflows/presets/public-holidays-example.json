@@ -1,0 +1,36 @@
+{
+  "workflowName": "Public Holidays Research",
+  "goal": "Research and document public holidays for a given campaign window.",
+  "milestones": [
+    {
+      "order": 0,
+      "title": "Campaign Brief",
+      "goal": "Set the campaign start and end dates.",
+      "dataTask": "manual",
+      "data": "## Campaign Brief\n\n**Start date:** <!-- YYYY-MM-DD -->\n**End date:** <!-- YYYY-MM-DD -->\n",
+      "passCriteria": [
+        {
+          "requirement": "Start date is specified (YYYY-MM-DD).",
+          "status": "open"
+        },
+        {
+          "requirement": "End date is specified and is on or after start date.",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "order": 1,
+      "title": "Public Holidays",
+      "goal": "List all public holidays in the campaign window for this location's country.",
+      "dataTask": "manual",
+      "data": "## Public Holidays\n\n<!-- Will be populated automatically when Run is clicked -->\n",
+      "passCriteria": [
+        {
+          "requirement": "Public holidays section lists all holidays in the window, or confirms there are none.",
+          "status": "open"
+        }
+      ]
+    }
+  ]
+}
