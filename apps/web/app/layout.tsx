@@ -11,11 +11,13 @@ import { NextIntlClientProvider } from 'next-intl'
 
 const fontSans = Geist({
   subsets: ['latin'],
+  display: 'swap',
   variable: '--font-sans',
 })
 
 const fontMono = Geist_Mono({
   subsets: ['latin'],
+  display: 'swap',
   variable: '--font-mono',
 })
 

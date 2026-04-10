@@ -46,7 +46,7 @@ export async function ShopPrintOrdersPreview() {
       </CardHeader>
       <CardContent>
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {withImages.map(({ product: p, resolved }) => {
+          {withImages.map(({ product: p, resolved }, index) => {
             const hero = resolved[0]!
             return (
               <li key={p.slug}>
@@ -59,8 +59,9 @@ export async function ShopPrintOrdersPreview() {
                       src={hero.src}
                       alt={hero.alt}
                       fill
+                      priority={index === 0}
                       className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                      sizes="(max-width: 640px) 100vw, 25vw"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                   </div>
                   <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground">

@@ -9,8 +9,7 @@ import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import { Card, CardContent, CardHeader } from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
-import { graphqlQuery } from '@/lib/graphql/client'
-import { LOCATIONS_QUERY, type LocationsData } from '@/lib/graphql/queries'
+import { getCachedLocationsData } from '@/lib/graphql/cached-queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { CampaignsClient } from './_components/campaigns-client'
 
@@ -65,7 +64,7 @@ async function CampaignsData() {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const data = await graphqlQuery<LocationsData>(LOCATIONS_QUERY, undefined, userId)
+  const data = await getCachedLocationsData(userId)
   const branches = data.locations.map((loc) => ({
     id: Number(loc.id),
     name: loc.name,

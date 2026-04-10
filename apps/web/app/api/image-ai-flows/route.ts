@@ -1,7 +1,9 @@
+import { revalidateTag } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { ZodError } from 'zod'
 
+import { graphqlImageAiFlowsCacheTag } from '@/lib/graphql/cache-tags'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { CREATE_IMAGE_AI_FLOW_MUTATION, type CreateImageAiFlowData } from '@/lib/graphql/queries'
 
@@ -12,7 +14,7 @@ export const runtime = 'nodejs'
 export async function POST(req: Request) {
   try {
     const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -34,6 +36,8 @@ export async function POST(req: Request) {
       },
       userId,
     )
+
+    revalidateTag(graphqlImageAiFlowsCacheTag(userId), 'max')
 
     return NextResponse.json({ flow: data.createImageAiFlow }, { status: 201 })
   } catch (error) {

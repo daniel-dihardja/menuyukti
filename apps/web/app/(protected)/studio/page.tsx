@@ -5,8 +5,7 @@ import { getTranslations } from 'next-intl/server'
 import { auth } from '@clerk/nextjs/server'
 
 import { routes } from '@/lib/routes'
-import { graphqlQuery } from '@/lib/graphql/client'
-import { IMAGE_AI_FLOWS_QUERY, type ImageAiFlowsData } from '@/lib/graphql/queries'
+import { getCachedImageAiFlows } from '@/lib/graphql/cached-queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 
@@ -20,11 +19,7 @@ export default async function Page() {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const flowsData = await graphqlQuery<ImageAiFlowsData>(
-    IMAGE_AI_FLOWS_QUERY,
-    { includeInactive: true },
-    userId,
-  )
+  const flowsData = await getCachedImageAiFlows(userId)
 
   return (
     <AnalyticsPageShell
