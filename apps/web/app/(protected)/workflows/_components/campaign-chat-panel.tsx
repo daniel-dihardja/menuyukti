@@ -57,7 +57,7 @@ import {
 } from './campaign-milestone-reducer'
 import { TimelineProvider } from './timeline-context'
 import { useCampaignPreviewVisibility } from './use-campaign-preview-visibility'
-import { useCampaignTimelineProviderValue } from './use-campaign-timeline-provider-value'
+import { useCampaignTimelineProviderSlices } from './use-campaign-timeline-provider-value'
 import { useMilestoneOperations } from './use-milestone-operations'
 
 /** Code-split preview; collapsible panel keeps the subtree mounted when hidden on desktop. */
@@ -256,7 +256,7 @@ export function CampaignChatPanel({
   const isSubmitDisabled = !text.trim() || status === 'streaming' || status === 'submitted'
   const isChatBusy = status === 'streaming' || status === 'submitted'
 
-  const timelineValue = useCampaignTimelineProviderValue(
+  const timelineSlices = useCampaignTimelineProviderSlices(
     milestoneUi,
     workflowId,
     isChatBusy,
@@ -392,7 +392,11 @@ export function CampaignChatPanel({
   )
 
   return (
-    <TimelineProvider value={timelineValue}>
+    <TimelineProvider
+      actions={timelineSlices.actions}
+      chat={timelineSlices.chat}
+      workspace={timelineSlices.workspace}
+    >
       <CampaignChatLayout
         chatPane={chatPane}
         isDesktop={isDesktop}

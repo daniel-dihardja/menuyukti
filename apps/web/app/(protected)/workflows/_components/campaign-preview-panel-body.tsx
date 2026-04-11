@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from '@workspace/ui/components/card'
 
-import { useTimelineContext } from './timeline-context'
+import { useTimelineActions, useTimelineWorkspaceState } from './timeline-context'
 
 const PREVIEW_TITLE_ID = 'campaign-preview-panel-title'
 
@@ -25,8 +25,8 @@ export function CampaignPreviewPanelBody() {
   const tWorkspace = useTranslations('analytics.campaigns.workspace')
   const {
     milestoneState: { milestones, savingDataMilestoneId },
-    actions: { onHydrateMilestoneData, onUpdateMilestoneData },
-  } = useTimelineContext()
+  } = useTimelineWorkspaceState()
+  const { onHydrateMilestoneData, onUpdateMilestoneData } = useTimelineActions()
   const [selectedId] = useQueryState('milestone', parseAsString)
 
   const selectedMilestone =

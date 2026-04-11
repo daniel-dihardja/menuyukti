@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { Plus } from 'lucide-react'
 
@@ -106,12 +107,11 @@ export function TimelineWorkspaceMilestoneList({
   selectedMilestoneId: string | null
   onSelectMilestone: (id: string | null) => void | Promise<void>
 }) {
-  return (
-    <TimelineBody
-      onSelectMilestone={(id) => {
-        void onSelectMilestone(id)
-      }}
-      selectedId={selectedMilestoneId}
-    />
+  const onSelectRow = useCallback(
+    (id: string) => {
+      void onSelectMilestone(id)
+    },
+    [onSelectMilestone],
   )
+  return <TimelineBody onSelectMilestone={onSelectRow} selectedId={selectedMilestoneId} />
 }

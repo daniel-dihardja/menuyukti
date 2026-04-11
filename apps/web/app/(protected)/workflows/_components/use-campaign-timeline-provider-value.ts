@@ -3,7 +3,12 @@
 import { useMemo } from 'react'
 
 import type { CampaignMilestoneUiState } from './campaign-milestone-reducer'
-import { splitMilestoneUiState, type TimelineContextValue } from './timeline-context'
+import {
+  splitMilestoneUiState,
+  type TimelineActions,
+  type TimelineChatState,
+  type TimelineWorkspaceStateValue,
+} from './timeline-context'
 import type { MilestoneDataTask, PassCriteriaRow } from './timeline/types'
 
 export type CampaignTimelineOpsHandles = {
@@ -21,37 +26,55 @@ export type CampaignTimelineOpsHandles = {
   handleExportWorkflow: () => void | Promise<void>
 }
 
-export function useCampaignTimelineProviderValue(
+export type CampaignTimelineProviderSlices = {
+  actions: TimelineActions
+  chat: TimelineChatState
+  workspace: TimelineWorkspaceStateValue
+}
+
+export function useCampaignTimelineProviderSlices(
   milestoneUi: CampaignMilestoneUiState,
   workflowId: string,
   isChatBusy: boolean,
   selectedMilestoneId: string | null,
   onSelectMilestone: (id: string | null) => void,
   ops: CampaignTimelineOpsHandles,
-): TimelineContextValue {
-  return useMemo(() => {
-    const { milestoneState, errors } = splitMilestoneUiState(milestoneUi)
-    return {
+): CampaignTimelineProviderSlices {
+  const { milestoneState, errors } = useMemo(
+    () => splitMilestoneUiState(milestoneUi),
+    [milestoneUi],
+  )
+
+  const actions = useMemo<TimelineActions>(
+    () => ({
+      onCreateMilestone: ops.handleCreateMilestone,
+      onDeleteMilestone: ops.handleDeleteMilestone,
+      onRenameMilestone: ops.handleRenameMilestone,
+      onMoveMilestone: ops.handleMoveMilestone,
+      onUpdatePassCriteria: ops.handleUpdatePassCriteria,
+      onUpdateMilestoneGoal: ops.handleUpdateMilestoneGoal,
+      onUpdateMilestoneData: ops.handleUpdateMilestoneData,
+      onHydrateMilestoneData: ops.handleHydrateMilestoneData,
+      onSetMilestoneDataTask: ops.handleSetMilestoneDataTask,
+      onPrepareMilestone: ops.handlePrepareMilestone,
+      onRunMilestone: ops.handleRunMilestone,
+      onExport: ops.handleExportWorkflow,
+    }),
+    [ops],
+  )
+
+  const chat = useMemo<TimelineChatState>(() => ({ isBusy: isChatBusy }), [isChatBusy])
+
+  const workspace = useMemo<TimelineWorkspaceStateValue>(
+    () => ({
       workflowId,
       selectedMilestoneId,
       onSelectMilestone,
       milestoneState,
       errors,
-      chat: { isBusy: isChatBusy },
-      actions: {
-        onCreateMilestone: ops.handleCreateMilestone,
-        onDeleteMilestone: ops.handleDeleteMilestone,
-        onRenameMilestone: ops.handleRenameMilestone,
-        onMoveMilestone: ops.handleMoveMilestone,
-        onUpdatePassCriteria: ops.handleUpdatePassCriteria,
-        onUpdateMilestoneGoal: ops.handleUpdateMilestoneGoal,
-        onUpdateMilestoneData: ops.handleUpdateMilestoneData,
-        onHydrateMilestoneData: ops.handleHydrateMilestoneData,
-        onSetMilestoneDataTask: ops.handleSetMilestoneDataTask,
-        onPrepareMilestone: ops.handlePrepareMilestone,
-        onRunMilestone: ops.handleRunMilestone,
-        onExport: ops.handleExportWorkflow,
-      },
-    }
-  }, [milestoneUi, workflowId, isChatBusy, selectedMilestoneId, onSelectMilestone, ops])
+    }),
+    [workflowId, selectedMilestoneId, onSelectMilestone, milestoneState, errors],
+  )
+
+  return { actions, chat, workspace }
 }

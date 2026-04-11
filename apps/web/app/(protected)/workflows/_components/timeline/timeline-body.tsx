@@ -5,13 +5,14 @@ import { useTranslations } from 'next-intl'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
-import { useTimelineContext } from '../timeline-context'
+import { useTimelineActions, useTimelineWorkspaceState } from '../timeline-context'
 import { TimelineItem } from './timeline-item'
 import type { TimelineBodyProps } from './types'
 
 export function TimelineBody({ selectedId, onSelectMilestone }: TimelineBodyProps) {
   const t = useTranslations('analytics.campaigns.chat')
-  const { milestoneState, actions } = useTimelineContext()
+  const { milestoneState } = useTimelineWorkspaceState()
+  const actions = useTimelineActions()
   const { milestones } = milestoneState
   const showDelete = Boolean(actions.onDeleteMilestone)
 

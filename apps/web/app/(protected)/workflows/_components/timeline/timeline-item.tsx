@@ -6,7 +6,7 @@ import { Card } from '@workspace/ui/components/card'
 import { Collapsible, CollapsibleContent } from '@workspace/ui/components/collapsible'
 import { cn } from '@workspace/ui/lib/utils'
 
-import { useTimelineContext } from '../timeline-context'
+import { useTimelineActions, useTimelineChat, useTimelineWorkspaceState } from '../timeline-context'
 import { MilestoneItemHeader } from './milestone-item-header'
 import { MilestoneItemTabs } from './milestone-item-tabs'
 import { MilestoneRunProgressStrip } from './milestone-run-progress'
@@ -33,14 +33,14 @@ function TimelineItemInner({
   showDelete,
 }: TimelineItemProps) {
   const {
-    actions: {
-      onDeleteMilestone,
-      onRenameMilestone,
-      onUpdatePassCriteria,
-      onUpdateMilestoneGoal,
-      onMoveMilestone,
-      onRunMilestone,
-    },
+    onDeleteMilestone,
+    onRenameMilestone,
+    onUpdatePassCriteria,
+    onUpdateMilestoneGoal,
+    onMoveMilestone,
+    onRunMilestone,
+  } = useTimelineActions()
+  const {
     milestoneState: {
       deletingMilestoneId,
       movingMilestoneId,
@@ -50,8 +50,8 @@ function TimelineItemInner({
       runningMilestoneId,
       runningStep,
     },
-    chat: { isBusy: isChatBusy },
-  } = useTimelineContext()
+  } = useTimelineWorkspaceState()
+  const { isBusy: isChatBusy } = useTimelineChat()
 
   const [userOpen, setUserOpen] = useState(true)
   const [editingTitle, setEditingTitle] = useState(false)

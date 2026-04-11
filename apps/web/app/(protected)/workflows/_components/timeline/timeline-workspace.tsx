@@ -5,7 +5,11 @@ import { useTranslations } from 'next-intl'
 
 import { PanelFullscreenProvider } from '@/components/panel-fullscreen-context'
 
-import { useTimelineContext, type TimelineErrors } from '../timeline-context'
+import {
+  useTimelineActions,
+  useTimelineWorkspaceState,
+  type TimelineErrors,
+} from '../timeline-context'
 import { TimelineInlineErrors, type TimelineErrorMap } from './timeline-inline-errors'
 import { ImportWorkflowDialog } from './import-workflow-dialog'
 import {
@@ -44,10 +48,10 @@ export function TimelineWorkspace({
 }: TimelineWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const [importDialogOpen, setImportDialogOpen] = useState(false)
-  const { workflowId, milestoneState, errors, actions, selectedMilestoneId, onSelectMilestone } =
-    useTimelineContext()
+  const { workflowId, milestoneState, errors, selectedMilestoneId, onSelectMilestone } =
+    useTimelineWorkspaceState()
   const { milestones, creating, exporting } = milestoneState
-  const { onCreateMilestone, onExport } = actions
+  const { onCreateMilestone, onExport } = useTimelineActions()
 
   const showReady = !isLoading && !loadError
   const showTimeline = showReady && milestones.length > 0
