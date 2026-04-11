@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { routes } from '@/lib/routes'
 
+import { ProfileChangePasswordCard } from './_components/profile-change-password-card'
 import { ProfileOverviewCard } from './_components/profile-overview-card'
 
 type ClerkUser = NonNullable<Awaited<ReturnType<typeof currentUser>>>
@@ -39,20 +40,21 @@ export default async function ProfilePage() {
   const name = getDisplayName(user)
   const email = getPrimaryEmail(user) || t('noEmail')
   const imageUrl = user.imageUrl
+  const passwordEnabledFromServer = user.passwordEnabled === true
 
   return (
     <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('breadcrumb') }]}>
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="text-muted-foreground text-sm">{t('description')}</p>
-        <div className="pt-4">
+        <div className="flex flex-col gap-6 pt-4">
           <ProfileOverviewCard
             name={name}
             email={email}
             imageUrl={imageUrl}
-            manageAccountLabel={t('manageAccount')}
             avatarAlt={t('avatarAlt', { name })}
           />
+          <ProfileChangePasswordCard passwordEnabledFromServer={passwordEnabledFromServer} />
         </div>
       </div>
     </AnalyticsPageShell>
