@@ -129,3 +129,69 @@ def test_nodes_filters_by_parent_id_and_returns_milestone_children():
     assert nodes[0]["id"] == m_data["id"]
     assert nodes[0]["name"] == "Step one"
     assert nodes[0]["parentId"] == campaign_id
+
+
+def test_nodes_respects_first_and_after_cursor():
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(name="Cursor Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    async def _create_workflow(name: str) -> str:
+        r = await schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "workflow",
+                "name": name,
+                "parentId": None,
+            },
+            context_value=graphql_auth_context(),
+        )
+        assert not r.errors, r.errors
+        return r.data["createNode"]["id"]
+
+    w1 = asyncio.run(_create_workflow("W1"))
+    w2 = asyncio.run(_create_workflow("W2"))
+
+    page1 = asyncio.run(
+        schema.execute(
+            """
+            query N($locationId: Int!, $first: Int) {
+              nodes(locationId: $locationId, first: $first) { id name }
+            }
+            """,
+            variable_values={"locationId": location_id, "first": 1},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not page1.errors, page1.errors
+    nodes1 = page1.data["nodes"]
+    assert len(nodes1) == 1
+
+    page2 = asyncio.run(
+        schema.execute(
+            """
+            query N($locationId: Int!, $first: Int, $afterId: ID) {
+              nodes(locationId: $locationId, first: $first, afterId: $afterId) { id name }
+            }
+            """,
+            variable_values={"locationId": location_id, "first": 10, "afterId": nodes1[0]["id"]},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not page2.errors, page2.errors
+    nodes2 = page2.data["nodes"]
+    assert len(nodes2) == 1
+    assert nodes2[0]["id"] != nodes1[0]["id"]
+    ids = {nodes1[0]["id"], nodes2[0]["id"]}
+    assert ids == {w1, w2}

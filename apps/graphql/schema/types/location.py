@@ -1,7 +1,7 @@
 import strawberry
 
 
-@strawberry.type
+@strawberry.type(description="A restaurant location; ties POS data and workflow roots to a workspace or legacy owner.")
 class LocationType:
     id: strawberry.ID
     name: str

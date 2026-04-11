@@ -60,7 +60,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain />
       </SidebarContent>
 
-      <Separator className="mx-2 bg-sidebar-border" />
+      <Separator className="bg-sidebar-border" />
       <SidebarFooter className="pb-2">
         <SidebarMenu>
           <SidebarMenuItem>

@@ -1,0 +1,13 @@
+overwrite: true
+schema: ../graphql/schema.graphql
+generates:
+  lib/graphql/generated/schema-types.ts:
+    plugins:
+      - typescript
+    config:
+      useTypeImports: true
+      scalars:
+        DateTime: string
+        Date: string
+        JSON: unknown
+        Upload: unknown

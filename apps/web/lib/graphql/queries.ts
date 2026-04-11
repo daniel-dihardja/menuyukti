@@ -248,8 +248,8 @@ export type ImportWorkflowDataRaw = {
 }
 
 export const NODES_QUERY = `
-  query Nodes($locationId: Int!, $nodeType: String, $parentId: ID) {
-    nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId) {
+  query Nodes($locationId: Int!, $nodeType: String, $parentId: ID, $first: Int, $afterId: ID) {
+    nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId, first: $first, afterId: $afterId) {
       id
       name
       description
@@ -285,9 +285,60 @@ export type NodeData = {
   node: AnyNode | null
 }
 
+/** Wire payload for `WORKFLOW_CAMPAIGN_TREE_QUERY` before parsing nodes. */
+export type WorkflowCampaignTreeDataRaw = {
+  workflowCampaignTree: {
+    workflow: unknown
+    milestones: Array<{
+      milestone: unknown
+      passCriteriaNodes: unknown[]
+      goalNodes: unknown[]
+      milestonedataNodes: unknown[]
+      resultNodes: unknown[]
+    }>
+  } | null
+}
+
+const NODE_SELECTION_FIELDS = `
+      id
+      name
+      description
+      nodeType
+      path
+      parentId
+      locationId
+      data`
+
+export const WORKFLOW_CAMPAIGN_TREE_QUERY = `
+  query WorkflowCampaignTree($workflowId: ID!) {
+    workflowCampaignTree(workflowId: $workflowId) {
+      workflow {
+        ${NODE_SELECTION_FIELDS}
+      }
+      milestones {
+        milestone {
+          ${NODE_SELECTION_FIELDS}
+        }
+        passCriteriaNodes {
+          ${NODE_SELECTION_FIELDS}
+        }
+        goalNodes {
+          ${NODE_SELECTION_FIELDS}
+        }
+        milestonedataNodes {
+          ${NODE_SELECTION_FIELDS}
+        }
+        resultNodes {
+          ${NODE_SELECTION_FIELDS}
+        }
+      }
+    }
+  }
+`
+
 export const ANALYTICS_RUNS_BY_LOCATION_QUERY = `
-  query AnalyticsRunsByLocation($locationId: Int!) {
-    analyticsRuns(locationId: $locationId) {
+  query AnalyticsRunsByLocation($locationId: Int!, $first: Int) {
+    analyticsRuns(locationId: $locationId, first: $first) {
       id
       name
       filename
@@ -297,6 +348,35 @@ export const ANALYTICS_RUNS_BY_LOCATION_QUERY = `
 
 export type AnalyticsRunsByLocationData = {
   analyticsRuns: Array<{ id: string; name: string; filename: string }>
+}
+
+/** Run metadata only; omits `menuItemCogs` so the GraphQL resolver skips the COGS query. */
+export const ANALYTICS_RUN_METADATA_QUERY = `
+  query AnalyticsRunMetadata($id: ID!) {
+    analyticsRun(id: $id) {
+      id
+      name
+      filename
+      posSystem
+      periodStart
+      periodEnd
+      createdAt
+      locationId
+    }
+  }
+`
+
+export type AnalyticsRunMetadataData = {
+  analyticsRun: {
+    id: string
+    name: string
+    filename: string
+    posSystem: string
+    periodStart: string | null
+    periodEnd: string | null
+    createdAt: string
+    locationId: number
+  } | null
 }
 
 export const ANALYTICS_RUN_QUERY = `

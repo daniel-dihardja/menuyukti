@@ -8,7 +8,9 @@ from graphql.schema.types import LocationType
 
 @strawberry.type
 class LocationsQuery:
-    @strawberry.field
+    @strawberry.field(
+        description="All locations the current user can access (direct owner or workspace member)."
+    )
     def locations(self, info: strawberry.Info) -> list[LocationType]:
         user_id = user_id_from_info(info)
         if not user_id:
@@ -37,7 +39,7 @@ class LocationsQuery:
                 for row in rows
             ]
 
-    @strawberry.field
+    @strawberry.field(description="Fetch one location by id if the caller has access.")
     def location(self, info: strawberry.Info, id: strawberry.ID) -> LocationType | None:
         user_id = user_id_from_info(info)
         if not user_id:

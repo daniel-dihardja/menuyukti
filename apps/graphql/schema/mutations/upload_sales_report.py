@@ -5,6 +5,7 @@ import strawberry
 from strawberry.file_uploads import Upload
 from strawberry.scalars import JSON
 
+from graphql.limits import MAX_SALES_REPORT_UPLOAD_BYTES
 from graphql.reports import Order
 from graphql.schema.auth import user_id_from_info
 from graphql.services.sales_report import ingest_sales_report_upload
@@ -39,7 +40,12 @@ class OrderType:
     items: list[OrderItemType]
 
 
-@strawberry.type
+@strawberry.type(
+    description=(
+        "Result of ingesting a sales report Excel file. "
+        "Line-level `normalizedRows` and `orders` are omitted unless includeLineItems is true."
+    )
+)
 class ExcelUploadResult:
     filename: str
     sheet_names: list[str]
@@ -70,15 +76,28 @@ def _order_to_strawberry(order: Order) -> OrderType:
 
 @strawberry.type
 class UploadSalesReportMutation:
-    @strawberry.mutation
+    @strawberry.mutation(
+        description=(
+            "Upload and normalize a POS sales Excel file, persist order facts, and return metadata "
+            "and sales analytics. Set includeLineItems to receive normalizedRows and orders "
+            "(large payloads). Upload size is capped by MAX_SALES_REPORT_UPLOAD_BYTES (default 30 MiB)."
+        )
+    )
     async def upload_sales_report(
         self,
         info: strawberry.Info,
         file: Upload,
         location_id: strawberry.ID,
+        include_line_items: bool = False,
     ) -> ExcelUploadResult:
         user_id = user_id_from_info(info)
         payload = await file.read()
+        if len(payload) > MAX_SALES_REPORT_UPLOAD_BYTES:
+            mb = MAX_SALES_REPORT_UPLOAD_BYTES / (1024 * 1024)
+            raise ValueError(
+                f"File exceeds maximum upload size ({mb:.0f} MiB). "
+                "Raise MAX_SALES_REPORT_UPLOAD_BYTES if you need a higher limit."
+            )
         result = ingest_sales_report_upload(
             payload=payload,
             filename=file.filename,
@@ -86,8 +105,14 @@ class UploadSalesReportMutation:
             user_id=user_id,
         )
 
-        normalized_rows = [NormalizedLineItem(**asdict(row)) for row in result.normalized_rows]
-        orders = [_order_to_strawberry(o) for o in result.orders]
+        if include_line_items:
+            normalized_rows = [
+                NormalizedLineItem(**asdict(row)) for row in result.normalized_rows
+            ]
+            orders = [_order_to_strawberry(o) for o in result.orders]
+        else:
+            normalized_rows = []
+            orders = []
 
         return ExcelUploadResult(
             filename=result.filename,

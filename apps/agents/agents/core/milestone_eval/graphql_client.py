@@ -6,61 +6,13 @@ from typing import Any
 
 import httpx
 from agents_app.agents.graphql_base import graphql_post
-
-_NODES_QUERY = """
-query Nodes($locationId: Int!, $parentId: ID) {
-  nodes(locationId: $locationId, parentId: $parentId) {
-    id
-    name
-    nodeType
-    parentId
-    locationId
-    data
-  }
-}
-"""
-
-_UPDATE_NODE_MUTATION = """
-mutation UpdateNode($id: ID!, $data: JSON) {
-  updateNode(id: $id, data: $data) {
-    id
-    nodeType
-    data
-  }
-}
-"""
-
-_DELETE_NODE_MUTATION = """
-mutation DeleteNode($id: ID!) {
-  deleteNode(id: $id)
-}
-"""
-
-_CREATE_NODE_MUTATION = """
-mutation CreateNode(
-  $locationId: Int!
-  $nodeType: String!
-  $name: String
-  $description: String
-  $data: JSON
-  $parentId: ID
-) {
-  createNode(
-    locationId: $locationId
-    nodeType: $nodeType
-    name: $name
-    description: $description
-    data: $data
-    parentId: $parentId
-  ) {
-    id
-    nodeType
-    data
-    parentId
-    locationId
-  }
-}
-"""
+from agents_app.agents.graphql_operations import (
+    CREATE_NODE_MUTATION,
+    DEFAULT_NODES_FIRST,
+    DELETE_NODE_MUTATION,
+    NODES_QUERY,
+    UPDATE_NODE_MUTATION,
+)
 
 
 async def fetch_milestone_children(
@@ -75,8 +27,13 @@ async def fetch_milestone_children(
     async def _run(c: httpx.AsyncClient) -> list[dict[str, Any]]:
         data = await graphql_post(
             c,
-            _NODES_QUERY,
-            {"locationId": location_id, "parentId": milestone_id},
+            NODES_QUERY,
+            {
+                "locationId": location_id,
+                "nodeType": None,
+                "parentId": milestone_id,
+                "first": DEFAULT_NODES_FIRST,
+            },
             user_id,
         )
         raw = data.get("nodes")
@@ -106,7 +63,7 @@ async def update_passcriteria_status(
     async def _run(c: httpx.AsyncClient) -> dict[str, Any]:
         data = await graphql_post(
             c,
-            _UPDATE_NODE_MUTATION,
+            UPDATE_NODE_MUTATION,
             {"id": node_id, "data": {"status": status}},
             user_id,
         )
@@ -129,7 +86,7 @@ async def delete_node(
     client: httpx.AsyncClient | None = None,
 ) -> bool:
     async def _run(c: httpx.AsyncClient) -> bool:
-        data = await graphql_post(c, _DELETE_NODE_MUTATION, {"id": node_id}, user_id)
+        data = await graphql_post(c, DELETE_NODE_MUTATION, {"id": node_id}, user_id)
         return bool(data.get("deleteNode"))
 
     if client is not None:
@@ -149,7 +106,7 @@ async def create_result_node(
     async def _run(c: httpx.AsyncClient) -> dict[str, Any]:
         gql = await graphql_post(
             c,
-            _CREATE_NODE_MUTATION,
+            CREATE_NODE_MUTATION,
             {
                 "locationId": location_id,
                 "nodeType": "result",

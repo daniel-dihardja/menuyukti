@@ -17,14 +17,21 @@ from graphql.schema.queries import (
     PublicHolidaysQuery,
     RevenueTrendsQuery,
     WeeklyDemandPatternQuery,
+    WorkflowCampaignTreeQuery,
     WorkflowExportsQuery,
     WorkspaceQuery,
 )
 
 
-@strawberry.type
+@strawberry.type(
+    description=(
+        "Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, "
+        "and workspace membership."
+    )
+)
 class Query(
     WorkflowExportsQuery,
+    WorkflowCampaignTreeQuery,
     LocationsQuery,
     NodesQuery,
     AnalyticsRunQuery,

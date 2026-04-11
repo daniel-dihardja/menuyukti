@@ -2,7 +2,12 @@ import strawberry
 from strawberry.scalars import JSON
 
 
-@strawberry.type
+@strawberry.type(
+    description=(
+        "A workflow tree node (workflow, milestone, goal, passcriteria, result, milestonedata, etc.) "
+        "stored in the polymorphic `node` table."
+    )
+)
 class NodeType:
     id: strawberry.ID
     name: str

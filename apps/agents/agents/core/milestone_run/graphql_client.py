@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+from copy import deepcopy
 from typing import Any
 
 import httpx
@@ -14,52 +14,11 @@ from agents_app.agents.core.milestone_eval.graphql_client import (
     update_passcriteria_status,
 )
 from agents_app.agents.graphql_base import graphql_post
-
-_LOCATION_QUERY = """
-query GetLocation($id: ID!) {
-  location(id: $id) {
-    id
-    name
-    country
-  }
-}
-"""
-
-_PUBLIC_HOLIDAYS_QUERY = """
-query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) {
-  publicHolidays(country: $country, startDate: $startDate, endDate: $endDate) {
-    id
-    date
-    name
-    localName
-    holidayType
-    isTentative
-  }
-}
-"""
-
-_WORKFLOW_MILESTONES_QUERY = """
-query WorkflowMilestones($locationId: Int!, $parentId: ID) {
-  nodes(locationId: $locationId, parentId: $parentId) {
-    id
-    name
-    nodeType
-    data
-  }
-}
-"""
-
-
-def _milestone_sort_key(node: dict[str, Any]) -> tuple[int, str]:
-    """Sort milestones by ``data.order`` then id (stable)."""
-    o = None
-    raw = node.get("data")
-    data = raw if isinstance(raw, dict) else {}
-    ord_raw = data.get("order")
-    if isinstance(ord_raw, int):
-        o = ord_raw
-    oid = o if o is not None else 10**9
-    return (oid, str(node.get("id", "")))
+from agents_app.agents.graphql_operations import (
+    LOCATION_QUERY,
+    PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
+    PUBLIC_HOLIDAYS_QUERY,
+)
 
 
 async def fetch_prior_milestones_data(
@@ -72,62 +31,22 @@ async def fetch_prior_milestones_data(
 ) -> str:
     """Build Markdown of each earlier milestone's Data tab (by ``order``), for the current milestone.
 
-    Milestones under ``workflow_id`` are ordered by ``data.order``; content is taken from each prior
-    milestone's ``milestonedata`` child.
+    Resolved in a single GraphQL round-trip via ``priorMilestonesMilestoneData``.
     """
     data = await graphql_post(
         client,
-        _WORKFLOW_MILESTONES_QUERY,
-        {"locationId": location_id, "parentId": workflow_id},
+        PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
+        {
+            "workflowId": workflow_id,
+            "milestoneId": milestone_id,
+            "locationId": location_id,
+        },
         user_id,
     )
-    raw_nodes = data.get("nodes")
-    if not isinstance(raw_nodes, list):
+    raw = data.get("priorMilestonesMilestoneData")
+    if not isinstance(raw, str):
         return ""
-    milestones: list[dict[str, Any]] = []
-    for item in raw_nodes:
-        if isinstance(item, dict) and str(item.get("nodeType") or "") == "milestone":
-            milestones.append(item)
-    milestones.sort(key=_milestone_sort_key)
-    idx = next((i for i, m in enumerate(milestones) if str(m.get("id")) == milestone_id), -1)
-    if idx <= 0:
-        return ""
-    sections: list[str] = []
-    for m in milestones[:idx]:
-        mid = str(m.get("id", ""))
-        if not mid:
-            continue
-        title = str(m.get("name") or "Milestone")
-        children = await fetch_milestone_children(
-            mid,
-            location_id,
-            user_id,
-            client=client,
-        )
-        md_body = ""
-        for ch in children:
-            nt = str(ch.get("nodeType") or ch.get("node_type") or "")
-            if nt != "milestonedata":
-                continue
-            raw_d = ch.get("data")
-            d = raw_d if isinstance(raw_d, dict) else {}
-            body = d.get("data")
-            if isinstance(body, str):
-                md_body = body
-                break
-        sections.append(f"## {title}\n\n{md_body}\n")
-    return "\n".join(sections).strip()
-
-
-__all__ = [
-    "create_result_node",
-    "delete_node",
-    "fetch_milestone_children",
-    "fetch_prior_milestones_data",
-    "fetch_public_holidays_for_milestone",
-    "update_passcriteria_status",
-    "upsert_milestonedata_node",
-]
+    return raw.strip()
 
 
 async def fetch_public_holidays_for_milestone(
@@ -153,7 +72,7 @@ async def fetch_public_holidays_for_milestone(
 
     data = await graphql_post(
         client,
-        _LOCATION_QUERY,
+        LOCATION_QUERY,
         {"id": str(location_id)},
         user_id,
     )
@@ -166,7 +85,7 @@ async def fetch_public_holidays_for_milestone(
 
     data = await graphql_post(
         client,
-        _PUBLIC_HOLIDAYS_QUERY,
+        PUBLIC_HOLIDAYS_QUERY,
         {
             "country": str(country).strip(),
             "startDate": sd,
@@ -179,7 +98,7 @@ async def fetch_public_holidays_for_milestone(
         return [], None
     if not isinstance(holidays, list):
         return [], None
-    return json.loads(json.dumps(holidays)), None
+    return deepcopy(holidays), None
 
 
 async def upsert_milestonedata_node(
@@ -202,3 +121,14 @@ async def upsert_milestonedata_node(
         user_id,
         client=client,
     )
+
+
+__all__ = [
+    "create_result_node",
+    "delete_node",
+    "fetch_milestone_children",
+    "fetch_prior_milestones_data",
+    "fetch_public_holidays_for_milestone",
+    "update_passcriteria_status",
+    "upsert_milestonedata_node",
+]

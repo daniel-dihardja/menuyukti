@@ -9,6 +9,7 @@ from .import_workflow import ImportWorkflowMutation
 from .invite_workspace_member import InviteWorkspaceMemberMutation
 from .milestone_agent_run import MilestoneAgentRunMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
+from .replace_pass_criteria import ReplacePassCriteriaMutation
 from .update_image_ai_flow import UpdateImageAiFlowMutation
 from .update_menu_item_cogs_bulk import UpdateMenuItemCogsBulkMutation
 from .update_node import UpdateNodeMutation
@@ -26,6 +27,7 @@ __all__ = [
     "InviteWorkspaceMemberMutation",
     "MilestoneAgentRunMutation",
     "RemoveWorkspaceMemberMutation",
+    "ReplacePassCriteriaMutation",
     "UpdateImageAiFlowMutation",
     "UpdateNodeMutation",
     "UpdateMenuItemCogsBulkMutation",
