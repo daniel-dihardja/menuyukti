@@ -6,6 +6,7 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/studio',
   '/print-orders',
   '/dashboard',
+  '/skills',
   '/staff',
   '/profile',
 ] as const
@@ -55,6 +56,8 @@ export const routes = {
     list: '/workflows',
     detail: (id: string | number) => `/workflows/${id}`,
   },
+
+  skills: '/skills',
 
   agents: {
     list: '/agents',

@@ -245,6 +245,12 @@
       "secondary": "Learn More"
     }
   },
+  "skillsPage": {
+    "title": "Skills & tools",
+    "description": "Overview of skills and tools used when the AI prepares milestone data. Names and descriptions match the agents service backend.",
+    "skillsHeading": "Skills",
+    "toolsHeading": "Tools"
+  },
   "profile": {
     "title": "Profile",
     "breadcrumb": "Profile",
@@ -279,6 +285,7 @@
     "branches": "Locations",
     "reports": "Reports",
     "workflows": "Workflows",
+    "skills": "Skills & tools",
     "studio": "Studio",
     "printOrders": "Print orders",
     "agents": "Agents",
