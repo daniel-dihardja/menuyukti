@@ -8,14 +8,11 @@ import { notFound } from 'next/navigation'
 import { z } from 'zod'
 import { routes } from '@/lib/routes'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { parseNode, parseNodes } from '@/lib/graphql/node-schemas'
 import {
-  NODE_QUERY,
-  NODES_QUERY,
-  parseNodeData,
-  parseNodesData,
+  WORKFLOW_CAMPAIGN_TREE_QUERY,
+  type WorkflowCampaignTreeDataRaw,
   type WorkflowNode,
-  type NodeDataRaw,
-  type NodesDataRaw,
 } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { CampaignWorkspace } from '../_components/campaign-workspace'
@@ -54,11 +51,19 @@ export default async function Page({ params }: PageProps) {
   }
   const workflowId = parsed.data
 
-  const nodeData = parseNodeData(
-    await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowId }, authUserId),
+  const treeRaw = await graphqlQuery<WorkflowCampaignTreeDataRaw>(
+    WORKFLOW_CAMPAIGN_TREE_QUERY,
+    { workflowId },
+    authUserId,
+    'WorkflowCampaignTree',
   )
-  const campaignNodeRaw = nodeData.node
-  if (!campaignNodeRaw || campaignNodeRaw.nodeType !== 'workflow') {
+  const tree = treeRaw.workflowCampaignTree
+  if (!tree) {
+    notFound()
+  }
+
+  const campaignNodeRaw = parseNode(tree.workflow)
+  if (campaignNodeRaw.nodeType !== 'workflow') {
     notFound()
   }
   const campaignNode = campaignNodeRaw as WorkflowNode
@@ -67,75 +72,19 @@ export default async function Page({ params }: PageProps) {
     notFound()
   }
 
-  const milestonesData = parseNodesData(
-    await graphqlQuery<NodesDataRaw>(
-      NODES_QUERY,
-      {
-        locationId,
-        nodeType: 'milestone',
-        parentId: workflowId,
-      },
-      authUserId,
-    ),
-  )
-
-  const initialMilestones: TimelineMilestone[] = await Promise.all(
-    milestonesData.nodes.map(async (n) => {
-      const [passCriteriaChildren, goalChildren, milestonedataChildren, resultChildren] =
-        await Promise.all([
-          graphqlQuery<NodesDataRaw>(
-            NODES_QUERY,
-            {
-              locationId,
-              nodeType: 'passcriteria',
-              parentId: n.id,
-            },
-            authUserId,
-          ),
-          graphqlQuery<NodesDataRaw>(
-            NODES_QUERY,
-            {
-              locationId,
-              nodeType: 'goal',
-              parentId: n.id,
-            },
-            authUserId,
-          ),
-          graphqlQuery<NodesDataRaw>(
-            NODES_QUERY,
-            {
-              locationId,
-              nodeType: 'milestonedata',
-              parentId: n.id,
-            },
-            authUserId,
-          ),
-          graphqlQuery<NodesDataRaw>(
-            NODES_QUERY,
-            {
-              locationId,
-              nodeType: 'result',
-              parentId: n.id,
-            },
-            authUserId,
-          ),
-        ])
-      const passCriteriaParsed = parseNodesData(passCriteriaChildren)
-      const goalParsed = parseNodesData(goalChildren)
-      const milestonedataParsed = parseNodesData(milestonedataChildren)
-      const resultParsed = parseNodesData(resultChildren)
-      const dto: MilestoneNodeDto = {
-        id: n.id,
-        name: n.name,
-        data: n.data,
-        passCriteriaNodes: passCriteriaParsed.nodes,
-        goalNodes: goalParsed.nodes,
-        milestonedataNodes: milestonedataParsed.nodes,
-        resultNodes: resultParsed.nodes,
-      }
-      return milestoneNodeToTimelineMilestone(dto)
-    }),
-  )
+  const initialMilestones: TimelineMilestone[] = tree.milestones.map((bundle) => {
+    const m = parseNode(bundle.milestone)
+    const dto: MilestoneNodeDto = {
+      id: m.id,
+      name: m.name,
+      data: m.data,
+      passCriteriaNodes: parseNodes(bundle.passCriteriaNodes),
+      goalNodes: parseNodes(bundle.goalNodes),
+      milestonedataNodes: parseNodes(bundle.milestonedataNodes),
+      resultNodes: parseNodes(bundle.resultNodes),
+    }
+    return milestoneNodeToTimelineMilestone(dto)
+  })
 
   const tCampaigns = await getTranslations('analytics.campaigns')
   const tChat = await getTranslations('analytics.campaigns.chat')

@@ -25,7 +25,8 @@ class AnalyticsRunOrderMetricsType:
 
 @strawberry.type(
     description=(
-        "Metadata for a single analytics run — period, POS system, and per-menu COGS records. "
+        "Metadata for a single analytics run — period, POS system, and optional per-menu COGS. "
+        "Request `menuItemCogs` only when needed; it loads from the database lazily. "
         "Use menuEngineeringMatrix, menuHeatmaps, or orderMetrics queries for computed analytics."
     )
 )
@@ -38,7 +39,36 @@ class AnalyticsRunType:
     periodEnd: date | None
     createdAt: datetime
     locationId: int
-    menuItemCogs: list[MenuItemCogsType]
+    _analytics_run_id: strawberry.Private[int]
+
+    @strawberry.field(
+        description="Per-menu COGS rows; queried only when this field appears in the selection set."
+    )
+    def menuItemCogs(self, info: strawberry.Info) -> list[MenuItemCogsType]:
+        user_id = user_id_from_info(info)
+        with SessionLocal() as session:
+            run = get_analytics_run_if_owner(session, self._analytics_run_id, user_id)
+            if run is None:
+                return []
+            cogs_rows = (
+                session.query(MenuItemCogs)
+                .where(MenuItemCogs.analytics_run_id == self._analytics_run_id)
+                .all()
+            )
+            return [
+                MenuItemCogsType(
+                    id=row.id,
+                    analyticsRunId=row.analytics_run_id,
+                    menu=row.menu,
+                    menuCategory=row.menu_category,
+                    menuCategoryDetail=row.menu_category_detail,
+                    cogs=row.cogs,
+                    currency=row.currency,
+                    createdAt=row.created_at,
+                    updatedAt=row.updated_at,
+                )
+                for row in cogs_rows
+            ]
 
 
 @strawberry.type(description="Minimal fields for listing analytics runs by location.")
@@ -76,24 +106,9 @@ def _compute_order_metrics(session, run: AnalyticsRun) -> AnalyticsRunOrderMetri
     )
 
 
-def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
-    cogs_rows = session.query(MenuItemCogs).where(MenuItemCogs.analytics_run_id == run.id).all()
-    menu_item_cogs = [
-        MenuItemCogsType(
-            id=row.id,
-            analyticsRunId=row.analytics_run_id,
-            menu=row.menu,
-            menuCategory=row.menu_category,
-            menuCategoryDetail=row.menu_category_detail,
-            cogs=row.cogs,
-            currency=row.currency,
-            createdAt=row.created_at,
-            updatedAt=row.updated_at,
-        )
-        for row in cogs_rows
-    ]
+def _run_to_type(run: AnalyticsRun) -> AnalyticsRunType:
     return AnalyticsRunType(
-        id=run.id,
+        id=str(run.id),
         name=run.name,
         filename=run.filename,
         posSystem=run.pos_system,
@@ -101,7 +116,7 @@ def _run_to_type(session, run: AnalyticsRun) -> AnalyticsRunType:
         periodEnd=run.period_end,
         createdAt=run.created_at,
         locationId=run.location_id,
-        menuItemCogs=menu_item_cogs,
+        _analytics_run_id=run.id,
     )
 
 
@@ -114,7 +129,7 @@ class AnalyticsRunQuery:
             run = get_analytics_run_if_owner(session, int(id), user_id)
             if run is None:
                 return None
-            return _run_to_type(session, run)
+            return _run_to_type(run)
 
     @strawberry.field(
         description=(

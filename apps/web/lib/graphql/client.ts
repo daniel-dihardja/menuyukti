@@ -34,11 +34,16 @@ export async function graphqlQuery<T>(
   query: string,
   variables?: Record<string, unknown>,
   userId?: string,
+  operationName?: string,
 ): Promise<T> {
+  const body: Record<string, unknown> = { query, variables }
+  if (operationName) {
+    body.operationName = operationName
+  }
   const res = await fetch(getEndpoint(), {
     method: 'POST',
     headers: buildHeaders(userId),
-    body: JSON.stringify({ query, variables }),
+    body: JSON.stringify(body),
   })
 
   if (!res.ok) {
@@ -47,7 +52,8 @@ export async function graphqlQuery<T>(
 
   const json = (await res.json()) as GraphQLResponse<T>
   if (json.errors?.length) {
-    throw new Error(json.errors[0]?.message ?? 'GraphQL error')
+    const msg = json.errors.map((e) => e.message).join('; ')
+    throw new Error(msg || 'GraphQL error')
   }
 
   if (json.data == null) {

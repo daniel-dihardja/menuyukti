@@ -17,6 +17,7 @@ from graphql.schema.queries import (
     PublicHolidaysQuery,
     RevenueTrendsQuery,
     WeeklyDemandPatternQuery,
+    WorkflowCampaignTreeQuery,
     WorkflowExportsQuery,
     WorkspaceQuery,
 )
@@ -30,6 +31,7 @@ from graphql.schema.queries import (
 )
 class Query(
     WorkflowExportsQuery,
+    WorkflowCampaignTreeQuery,
     LocationsQuery,
     NodesQuery,
     AnalyticsRunQuery,
