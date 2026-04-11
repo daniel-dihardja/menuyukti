@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "url-safety",
     "alembic>=1.13.0",
     "sqlalchemy>=2.0.46",
     "strawberry-graphql[asgi]>=0.308.2",
@@ -15,6 +16,9 @@ dependencies = [
     "pytest>=9.0.0",
     "menuyukti",
 ]
+
+[tool.uv.sources]
+url-safety = { workspace = true }
 
 [dependency-groups]
 dev = [

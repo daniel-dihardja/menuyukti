@@ -46,3 +46,17 @@ make test
 ## Monorepo
 
 This app is a **uv workspace member** (see root `pyproject.toml`). Use `uv sync` from the repo root or `make install` here.
+
+## Custom API adapter tools (egress)
+
+When milestone runs call user-configured HTTPS URLs, use **`agents_app.agents.http.safe_egress.safe_https_get`** only (do not call arbitrary URLs with a raw `httpx` client). It re-validates URLs, resolves hostnames off the event loop and rejects non-public IPs, follows redirects with the same checks, and caps the response body.
+
+Environment variables (optional overrides):
+
+| Variable                               | Default  | Purpose                                                   |
+| -------------------------------------- | -------- | --------------------------------------------------------- |
+| `MENUYUKTI_ADAPTER_HTTP_TIMEOUT_S`     | `15`     | Total request timeout (seconds), clamped to 1–120         |
+| `MENUYUKTI_ADAPTER_HTTP_MAX_BYTES`     | `524288` | Max response body bytes (512 KiB), clamped to 1 KiB–8 MiB |
+| `MENUYUKTI_ADAPTER_HTTP_MAX_REDIRECTS` | `5`      | Max redirect hops, clamped to 0–20                        |
+
+There is a residual DNS time-of-check vs time-of-use window versus the actual TCP connect; mitigating that fully requires stronger infrastructure (custom transport / pinning).

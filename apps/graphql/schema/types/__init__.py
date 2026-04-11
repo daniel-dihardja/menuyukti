@@ -1,3 +1,4 @@
+from .api_adapter_tool import ApiAdapterToolType
 from .image_ai_flow import ImageAiFlowType
 from .location import LocationType
 from .menu_item_cogs import MenuItemCogsType
@@ -8,6 +9,7 @@ from .workspace import WorkspaceType
 from .workspace_membership import WorkspaceMembershipType
 
 __all__ = [
+    "ApiAdapterToolType",
     "WorkflowExportType",
     "ImageAiFlowType",
     "LocationType",

@@ -32,6 +32,7 @@ class Workspace(Base):
 
     memberships: Mapped[list[WorkspaceMembership]] = relationship(back_populates="workspace")
     locations: Mapped[list[Location]] = relationship(back_populates="workspace")
+    api_adapter_tools: Mapped[list["ApiAdapterTool"]] = relationship(back_populates="workspace")
 
 
 class WorkspaceMembership(Base):

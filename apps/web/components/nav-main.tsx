@@ -11,6 +11,7 @@ import {
   Shield,
   Sparkles,
   User,
+  Wrench,
 } from 'lucide-react'
 import {
   Collapsible,
@@ -64,6 +65,12 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'skills',
     href: routes.skills,
     icon: <BookOpen className="w-4 h-4" />,
+  },
+  {
+    key: 'customTools',
+    labelKey: 'customTools',
+    href: routes.customTools,
+    icon: <Wrench className="w-4 h-4" />,
   },
   {
     key: 'reports',

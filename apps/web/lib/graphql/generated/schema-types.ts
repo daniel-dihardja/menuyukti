@@ -56,6 +56,20 @@ export type AnalyticsRunType = {
   posSystem: Scalars['String']['output']
 }
 
+/** Workspace-owned HTTP tool definition for custom agent integrations (URL invoked at runtime). */
+export type ApiAdapterToolType = {
+  __typename?: 'ApiAdapterToolType'
+  createdAt: Scalars['DateTime']['output']
+  description: Scalars['String']['output']
+  id: Scalars['ID']['output']
+  isActive: Scalars['Boolean']['output']
+  name: Scalars['String']['output']
+  toolKey: Scalars['String']['output']
+  updatedAt: Scalars['DateTime']['output']
+  url: Scalars['String']['output']
+  workspaceId: Scalars['ID']['output']
+}
+
 /** Venue-level demand timing for post scheduling. */
 export type BestPostingWindowType = {
   __typename?: 'BestPostingWindowType'
@@ -305,21 +319,25 @@ export type MilestoneCampaignBundleType = {
   resultNodes: Array<NodeType>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type Mutation = {
   __typename?: 'Mutation'
   completeMilestoneAgentRun: Scalars['Boolean']['output']
+  createApiAdapterTool: ApiAdapterToolType
   createImageAiFlow: ImageAiFlowType
   createLocation: LocationType
   createNode: NodeType
   createWorkspace: WorkspaceType
+  deleteApiAdapterTool: Scalars['Boolean']['output']
   deleteImageAiFlow: Scalars['Boolean']['output']
   deleteNode: Scalars['Boolean']['output']
   exportWorkflow: WorkflowExportType
   importWorkflow: NodeType
   inviteWorkspaceMember: WorkspaceMembershipType
   removeWorkspaceMember: Scalars['Boolean']['output']
+  replacePassCriteria: Scalars['Boolean']['output']
   startMilestoneAgentRun: Scalars['Boolean']['output']
+  updateApiAdapterTool: ApiAdapterToolType
   updateImageAiFlow: ImageAiFlowType
   updateMenuItemCogsBulk: Array<MenuItemCogsType>
   updateNode: NodeType
@@ -327,7 +345,7 @@ export type Mutation = {
   uploadSalesReport: ExcelUploadResult
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationCompleteMilestoneAgentRunArgs = {
   errorMessage?: InputMaybe<Scalars['String']['input']>
   externalTraceId?: InputMaybe<Scalars['String']['input']>
@@ -338,7 +356,16 @@ export type MutationCompleteMilestoneAgentRunArgs = {
   timeline?: InputMaybe<Scalars['JSON']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
+export type MutationCreateApiAdapterToolArgs = {
+  description: Scalars['String']['input']
+  isActive?: Scalars['Boolean']['input']
+  name: Scalars['String']['input']
+  url: Scalars['String']['input']
+  workspaceId: Scalars['ID']['input']
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationCreateImageAiFlowArgs = {
   displayName: Scalars['String']['input']
   imageReferenceStrength?: InputMaybe<Scalars['String']['input']>
@@ -351,7 +378,7 @@ export type MutationCreateImageAiFlowArgs = {
   styleIds?: InputMaybe<Scalars['JSON']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationCreateLocationArgs = {
   city?: InputMaybe<Scalars['String']['input']>
   country?: InputMaybe<Scalars['String']['input']>
@@ -361,7 +388,7 @@ export type MutationCreateLocationArgs = {
   workspaceId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationCreateNodeArgs = {
   data?: InputMaybe<Scalars['JSON']['input']>
   description?: InputMaybe<Scalars['String']['input']>
@@ -371,46 +398,58 @@ export type MutationCreateNodeArgs = {
   parentId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationCreateWorkspaceArgs = {
   name: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
+export type MutationDeleteApiAdapterToolArgs = {
+  id: Scalars['ID']['input']
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationDeleteImageAiFlowArgs = {
   slug: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationDeleteNodeArgs = {
   id: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationExportWorkflowArgs = {
   locationId: Scalars['Int']['input']
   workflowId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationImportWorkflowArgs = {
   locationId: Scalars['Int']['input']
   payload: Scalars['JSON']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationInviteWorkspaceMemberArgs = {
   clerkUserId: Scalars['String']['input']
   workspaceId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationRemoveWorkspaceMemberArgs = {
   clerkUserId: Scalars['String']['input']
   workspaceId: Scalars['ID']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
+export type MutationReplacePassCriteriaArgs = {
+  locationId: Scalars['Int']['input']
+  milestoneId: Scalars['ID']['input']
+  requirements: Array<Scalars['String']['input']>
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationStartMilestoneAgentRunArgs = {
   milestoneId: Scalars['ID']['input']
   runId: Scalars['String']['input']
@@ -418,7 +457,16 @@ export type MutationStartMilestoneAgentRunArgs = {
   workflowId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
+export type MutationUpdateApiAdapterToolArgs = {
+  description?: InputMaybe<Scalars['String']['input']>
+  id: Scalars['ID']['input']
+  isActive?: InputMaybe<Scalars['Boolean']['input']>
+  name?: InputMaybe<Scalars['String']['input']>
+  url?: InputMaybe<Scalars['String']['input']>
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationUpdateImageAiFlowArgs = {
   displayName?: InputMaybe<Scalars['String']['input']>
   imageReferenceStrength?: InputMaybe<Scalars['String']['input']>
@@ -432,19 +480,19 @@ export type MutationUpdateImageAiFlowArgs = {
   styleIds?: InputMaybe<Scalars['JSON']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationUpdateMenuItemCogsBulkArgs = {
   updates: Array<MenuItemCogsUpdateInput>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationUpdateNodeArgs = {
   data?: InputMaybe<Scalars['JSON']['input']>
   id: Scalars['ID']['input']
   name?: InputMaybe<Scalars['String']['input']>
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationUploadSalesReportArgs = {
   file: Scalars['Upload']['input']
   includeLineItems?: Scalars['Boolean']['input']
@@ -561,13 +609,15 @@ export type PublicHolidayType = {
   name: Scalars['String']['output']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type Query = {
   __typename?: 'Query'
   /** Fetch metadata and COGS for a single analytics run by ID. */
   analyticsRun?: Maybe<AnalyticsRunType>
   /** List analytics runs for a location, newest first. Use `first` to cap rows (default 100, max 300). */
   analyticsRuns: Array<AnalyticsRunListItemType>
+  /** Custom API adapter tools for a workspace. Empty list if the user is not a member. */
+  apiAdapterTools: Array<ApiAdapterToolType>
   /** Revenue and quantity share per menu category for an analytics run. Returns null when the run has no order lines. */
   categoryMix?: Maybe<CategoryMixPayloadType>
   imageAiFlow?: Maybe<ImageAiFlowType>
@@ -596,6 +646,8 @@ export type Query = {
   operatingProfile?: Maybe<OperatingProfileType>
   /** Compute average order size and revenue for an analytics run. Returns None if the run has no order data. */
   orderMetrics?: Maybe<AnalyticsRunOrderMetricsType>
+  /** Markdown sections (## title + body) for each milestone strictly before the given milestone in workflow display order, using each prior milestone's first milestonedata child body. Empty string when there are no prior milestones or no content. */
+  priorMilestonesMilestoneData: Scalars['String']['output']
   /** Return per-menu promotion signals for an analytics run: volume and revenue, optional BCG-style menu-engineering metrics when COGS allow, and peak hour/day from demand heatmaps. When locationId is set, the run must belong to that location (otherwise returns null). */
   promotionMenuItems?: Maybe<PromotionMenuItemsPayloadType>
   publicHolidays: Array<PublicHolidayType>
@@ -609,79 +661,84 @@ export type Query = {
   workspaceMembers: Array<WorkspaceMembershipType>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryAnalyticsRunArgs = {
   id: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryAnalyticsRunsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>
   locationId: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
+export type QueryApiAdapterToolsArgs = {
+  workspaceId: Scalars['ID']['input']
+}
+
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryCategoryMixArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryImageAiFlowArgs = {
   slug: Scalars['String']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryImageAiFlowsArgs = {
   includeInactive?: Scalars['Boolean']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryInstagramSignalsArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryLocationArgs = {
   id: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryLocationSocialSettingsArgs = {
   locationId: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryMenuEngineeringMatrixArgs = {
   analyticsRunId: Scalars['ID']['input']
   categories?: InputMaybe<Array<Scalars['String']['input']>>
   locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryMenuHeatmapsArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryMenuItemsCatalogArgs = {
   locationId: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryMostRecentMilestoneDataArgs = {
   dataTask: Scalars['String']['input']
   workflowId: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryNodeArgs = {
   id: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryNodesArgs = {
   afterId?: InputMaybe<Scalars['ID']['input']>
   first?: InputMaybe<Scalars['Int']['input']>
@@ -690,53 +747,60 @@ export type QueryNodesArgs = {
   parentId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryOperatingProfileArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryOrderMetricsArgs = {
   analyticsRunId: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
+export type QueryPriorMilestonesMilestoneDataArgs = {
+  locationId: Scalars['Int']['input']
+  milestoneId: Scalars['ID']['input']
+  workflowId: Scalars['ID']['input']
+}
+
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryPromotionMenuItemsArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryPublicHolidaysArgs = {
   country: Scalars['String']['input']
   endDate: Scalars['String']['input']
   startDate: Scalars['String']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryRevenueTrendsArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
   previousRunId?: InputMaybe<Scalars['ID']['input']>
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryWeeklyDemandPatternArgs = {
   locationId: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryWorkflowCampaignTreeArgs = {
   workflowId: Scalars['ID']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryWorkflowExportsArgs = {
   locationId: Scalars['Int']['input']
 }
 
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryWorkspaceMembersArgs = {
   workspaceId: Scalars['ID']['input']
 }

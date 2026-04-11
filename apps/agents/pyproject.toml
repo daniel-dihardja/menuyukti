@@ -5,6 +5,7 @@ description = "FastAPI LangChain/LangGraph agent service"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "url-safety",
     "agent-skills",
     "fastapi>=0.115.0",
     "httpx>=0.28.0",
@@ -20,6 +21,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
+url-safety = { workspace = true }
 agent-skills = { workspace = true }
 
 [dependency-groups]
@@ -40,6 +42,7 @@ packages = [
     "agents_app",
     "agents_app.agents",
     "agents_app.agents.core",
+    "agents_app.agents.http",
     "agents_app.agents.core.chat",
     "agents_app.agents.core.format_markdown",
     "agents_app.agents.core.milestone_data",

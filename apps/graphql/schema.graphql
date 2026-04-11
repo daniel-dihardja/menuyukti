@@ -30,6 +30,21 @@ type AnalyticsRunType {
   menuItemCogs: [MenuItemCogsType!]!
 }
 
+"""
+Workspace-owned HTTP tool definition for custom agent integrations (URL invoked at runtime).
+"""
+type ApiAdapterToolType {
+  id: ID!
+  workspaceId: ID!
+  toolKey: String!
+  name: String!
+  description: String!
+  url: String!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
 """Venue-level demand timing for post scheduling."""
 type BestPostingWindowType {
   peakDay: String
@@ -288,9 +303,11 @@ type MilestoneCampaignBundleType {
 }
 
 """
-Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration.
+Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration.
 """
 type Mutation {
+  createApiAdapterTool(workspaceId: ID!, name: String!, description: String!, url: String!, isActive: Boolean! = true): ApiAdapterToolType!
+
   """
   Upload and normalize a POS sales Excel file, persist order facts, and return metadata and sales analytics. Set includeLineItems to receive normalizedRows and orders (large payloads). Upload size is capped by MAX_SALES_REPORT_UPLOAD_BYTES (default 30 MiB).
   """
@@ -310,7 +327,9 @@ type Mutation {
   updateMenuItemCogsBulk(updates: [MenuItemCogsUpdateInput!]!): [MenuItemCogsType!]!
   createImageAiFlow(slug: String!, displayName: String!, prompt: String!, model: String!, promptEnhance: String = null, imageReferenceStrength: String = null, styleIds: JSON = null, isActive: Boolean! = true, sortOrder: Int! = 0): ImageAiFlowType!
   updateImageAiFlow(slug: String!, newSlug: String, displayName: String, prompt: String, model: String, promptEnhance: String, imageReferenceStrength: String, styleIds: JSON, isActive: Boolean, sortOrder: Int): ImageAiFlowType!
+  deleteApiAdapterTool(id: ID!): Boolean!
   deleteImageAiFlow(slug: String!): Boolean!
+  updateApiAdapterTool(id: ID!, name: String, description: String, url: String, isActive: Boolean): ApiAdapterToolType!
 }
 
 """
@@ -421,9 +440,13 @@ type PublicHolidayType {
 }
 
 """
-Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership.
+Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools.
 """
 type Query {
+  """
+  Custom API adapter tools for a workspace. Empty list if the user is not a member.
+  """
+  apiAdapterTools(workspaceId: ID!): [ApiAdapterToolType!]!
   workflowExports(locationId: Int!): [WorkflowExportType!]!
 
   """
