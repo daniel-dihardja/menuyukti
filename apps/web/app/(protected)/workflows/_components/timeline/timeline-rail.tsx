@@ -1,10 +1,11 @@
 'use client'
 
 import { Check, Circle, Clock, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { cn } from '@workspace/ui/lib/utils'
 
-import type { MilestoneStatusLabels, TimelineMilestoneStatus } from './types'
+import type { TimelineMilestoneStatus } from './types'
 
 /** When true, the listbox card must not handle Space/Enter (used for selection). */
 export function isKeyboardEventFromNestedInteractive(eventTarget: EventTarget | null): boolean {
@@ -23,13 +24,15 @@ const TIMELINE_RAIL_MARKER_BOX = 'flex size-7 shrink-0 items-center justify-cent
 const TIMELINE_RAIL_ICON = 'size-7 origin-center stroke-[2]'
 const TIMELINE_RAIL_ICON_CHECK = cn(TIMELINE_RAIL_ICON, 'scale-[0.7]')
 
-export function TimelineRailMarker({
-  status,
-  labels,
-}: {
-  status: TimelineMilestoneStatus
-  labels: MilestoneStatusLabels
-}) {
+export function TimelineRailMarker({ status }: { status: TimelineMilestoneStatus }) {
+  const t = useTranslations('analytics.campaigns.chat')
+  const labels = {
+    complete: t('milestoneStatusComplete'),
+    failed: t('milestoneStatusFailed'),
+    pending: t('milestoneStatusPending'),
+    empty: t('milestoneStatusEmpty'),
+  }
+
   if (status === 'complete') {
     return (
       <span

@@ -25,6 +25,16 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "img.clerk.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "images.clerk.dev",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "*.s3.*.amazonaws.com",
         pathname: "/**",
       },

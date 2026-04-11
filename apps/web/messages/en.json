@@ -245,9 +245,35 @@
       "secondary": "Learn More"
     }
   },
+  "profile": {
+    "title": "Profile",
+    "breadcrumb": "Profile",
+    "description": "Your account overview.",
+    "accountTitle": "Account settings",
+    "accountBreadcrumb": "Account settings",
+    "accountDescription": "Update security, email, passwords, and connected accounts.",
+    "avatarAlt": "Profile photo of {name}",
+    "noEmail": "No email on file",
+    "passwordSectionTitle": "Password",
+    "passwordSectionDescription": "Use a strong password you do not reuse elsewhere.",
+    "passwordCurrentLabel": "Current password",
+    "passwordNewLabel": "New password",
+    "passwordConfirmLabel": "Confirm new password",
+    "passwordSubmit": "Update password",
+    "passwordSubmitting": "Updating…",
+    "passwordChangeSuccess": "Your password was updated.",
+    "passwordChangeError": "Could not update your password. Please try again.",
+    "passwordCurrentRequired": "Enter your current password.",
+    "passwordMinLength": "New password must be at least 8 characters.",
+    "passwordMismatch": "New password and confirmation do not match.",
+    "passwordSameAsCurrent": "New password must be different from your current password.",
+    "passwordOAuthOnly": "Your account does not use a password for sign-in, or you have not set one yet. You can add or manage a password in account settings.",
+    "passwordOpenAccountSettings": "Open account settings"
+  },
   "sidebar": {
     "groupLabel": "Menuyukti",
     "dashboard": "Dashboard",
+    "profil": "Profil",
     "news": "News",
     "analysis": "Analysis",
     "branches": "Locations",
@@ -260,12 +286,17 @@
     "fixedCosts": "Fixed Costs",
     "docs": "Docs",
     "assets": "Assets",
+    "staffTools": "Staff",
     "theme": {
       "label": "Theme",
       "light": "Light",
       "dark": "Dark",
       "system": "System"
     }
+  },
+  "staff": {
+    "title": "Staff console",
+    "description": "Menuyukti platform tools for team members. Customers do not see this area."
   },
   "platform": {
     "dashboard": {
@@ -802,6 +833,7 @@
         "loadingAssets": "Loading assets…",
         "assetsEmpty": "No images yet",
         "assetsEmptyHint": "Open Generate visuals to add images to your library.",
+        "assetsTabAdminOnly": "The brand library, Studio, and print shop are limited to Menuyukti staff accounts.",
         "goalLabel": "Workflow goal",
         "goalNotSetBadge": "Not set",
         "goalPreviewEmpty": "No goal set yet. Add one to guide this workflow.",

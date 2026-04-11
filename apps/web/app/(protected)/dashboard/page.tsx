@@ -8,6 +8,8 @@ import { auth } from '@clerk/nextjs/server'
 
 import { routes } from '@/lib/routes'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
+import { resolveMenuyuktiRole } from '@/lib/menuyukti-role-server'
 import { getCachedLocationsData } from '@/lib/graphql/cached-queries'
 import { NODES_QUERY, parseNodesData, type NodesDataRaw } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
@@ -103,6 +105,9 @@ async function DashboardPageData() {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
+  const platformRole = await resolveMenuyuktiRole()
+  const isPlatformAdmin = isMenuyuktiAdmin(platformRole)
+
   const locationsData = await getCachedLocationsData(userId)
   const campaignRows: CampaignRow[] = []
 
@@ -167,32 +172,36 @@ async function DashboardPageData() {
         )}
       </section>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <h2 className="font-semibold text-lg">{t('assetsHeading')}</h2>
-            <p className="text-muted-foreground text-sm">{t('assetsDescription')}</p>
+      {isPlatformAdmin ? (
+        <section className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 className="font-semibold text-lg">{t('assetsHeading')}</h2>
+              <p className="text-muted-foreground text-sm">{t('assetsDescription')}</p>
+            </div>
+            <Button asChild size="sm" variant="outline">
+              <Link href={routes.studio}>{t('assetsOpenStudio')}</Link>
+            </Button>
           </div>
-          <Button asChild size="sm" variant="outline">
-            <Link href={routes.studio}>{t('assetsOpenStudio')}</Link>
-          </Button>
-        </div>
-        <DashboardRecentAssets />
-      </section>
+          <DashboardRecentAssets />
+        </section>
+      ) : null}
 
       <section className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('printHeading')}</CardTitle>
-            <CardDescription>{t('printDescription')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline">
-              <Link href={routes.printOrders}>{t('printViewOrders')}</Link>
-            </Button>
-          </CardContent>
-        </Card>
-        <Card>
+        {isPlatformAdmin ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('printHeading')}</CardTitle>
+              <CardDescription>{t('printDescription')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="outline">
+                <Link href={routes.printOrders}>{t('printViewOrders')}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+        <Card className={isPlatformAdmin ? '' : 'md:col-span-2'}>
           <CardHeader>
             <CardTitle>{t('insightsHeading')}</CardTitle>
             <CardDescription>{t('insightsDescription')}</CardDescription>

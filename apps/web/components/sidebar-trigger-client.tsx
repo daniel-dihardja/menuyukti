@@ -22,6 +22,7 @@ import {
 } from '@workspace/ui/components/dropdown-menu'
 import { Button, buttonVariants } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
+import { routes } from '@/lib/routes'
 
 interface SidebarTriggerClientProps {
   title: string
@@ -150,7 +151,7 @@ export function SidebarTriggerClient({
 
       <div className="ml-auto flex shrink-0 items-center">
         <Show when="signed-in">
-          <UserButton />
+          <UserButton userProfileMode="navigation" userProfileUrl={routes.profileAccount} />
         </Show>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { ListObjectsV2Command } from '@aws-sdk/client-s3'
 import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
 import {
   getPresignedGetUrl,
@@ -14,10 +14,9 @@ import {
 export const runtime = 'nodejs'
 
 export async function GET() {
-  const { isAuthenticated, userId } = await auth()
-  if (!isAuthenticated) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authz = await requireMenuyuktiAdminApi()
+  if (!authz.ok) return authz.response
+  const { userId } = authz
 
   const bucket = getS3Bucket()
   const s3 = getS3Client()

@@ -17,12 +17,15 @@ type AssetItem = {
   createdAt: string
 }
 
+export type CampaignAssetsTabAccess = 'loading' | 'allowed' | 'denied'
+
 export type CampaignAssetsTabProps = {
   workflowId: string
   onOpenPrintShop: () => void
+  access: CampaignAssetsTabAccess
 }
 
-export function CampaignAssetsTab({ workflowId, onOpenPrintShop }: CampaignAssetsTabProps) {
+export function CampaignAssetsTab({ workflowId, onOpenPrintShop, access }: CampaignAssetsTabProps) {
   const t = useTranslations('analytics.campaigns.workspace')
   const tAssets = useTranslations('assets')
   const [items, setItems] = useState<AssetItem[]>([])
@@ -43,8 +46,27 @@ export function CampaignAssetsTab({ workflowId, onOpenPrintShop }: CampaignAsset
   }, [])
 
   useEffect(() => {
+    if (access !== 'allowed') {
+      setItems([])
+      setLoading(false)
+      return
+    }
     void load()
-  }, [load])
+  }, [access, load])
+
+  if (access === 'loading') {
+    return (
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+        {Array.from({ length: 8 }, (_, i) => (
+          <Skeleton className="aspect-square w-full rounded-md" key={`asset-role-skel-${i}`} />
+        ))}
+      </div>
+    )
+  }
+
+  if (access === 'denied') {
+    return <p className="text-muted-foreground text-sm text-pretty">{t('assetsTabAdminOnly')}</p>
+  }
 
   return (
     <div className="flex flex-col gap-4">

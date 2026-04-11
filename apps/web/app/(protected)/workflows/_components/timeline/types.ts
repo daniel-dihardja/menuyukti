@@ -45,13 +45,6 @@ export type TimelineMilestone = {
   status?: TimelineMilestoneStatus
 }
 
-export type MilestoneStatusLabels = {
-  complete: string
-  failed: string
-  pending: string
-  empty: string
-}
-
 /** Optional loading/error when milestones are not yet in `TimelineProvider`. */
 export type TimelineWorkspaceProps = {
   isLoading?: boolean
@@ -60,17 +53,7 @@ export type TimelineWorkspaceProps = {
   timelineTrailing?: ReactNode
 }
 
-export type TimelineBodyLabelsProps = {
+export type TimelineBodyProps = {
   selectedId: string | null
   onSelectMilestone: (id: string) => void
-  listLabel: string
-  expandDetailsLabel: string
-  collapseDetailsLabel: string
-  statusLabels: MilestoneStatusLabels
-  deleteButtonLabel: string
-  deleteMilestoneAriaLabel: string
-  deleteMilestoneConfirmTitle: string
-  deleteMilestoneConfirmDescription: string
-  deleteMilestoneConfirmCancel: string
-  deleteMilestoneConfirmAction: string
 }

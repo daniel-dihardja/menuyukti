@@ -1,16 +1,13 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
-
 import { graphqlQuery } from '@/lib/graphql/client'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { IMAGE_AI_FLOWS_QUERY, type ImageAiFlowsData } from '@/lib/graphql/queries'
 
 export const runtime = 'nodejs'
 
 export async function GET() {
-  const { isAuthenticated } = await auth()
-  if (!isAuthenticated) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authz = await requireMenuyuktiAdminApi()
+  if (!authz.ok) return authz.response
 
   try {
     const data = await graphqlQuery<ImageAiFlowsData>(IMAGE_AI_FLOWS_QUERY)

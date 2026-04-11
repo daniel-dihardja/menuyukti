@@ -6,6 +6,8 @@ import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { parseAsString, useQueryState } from 'nuqs'
 
+import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
+import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import {
@@ -75,8 +77,12 @@ export function CampaignWorkspace({
   initialMilestones,
 }: CampaignWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.workspace')
+  const { role, isLoaded } = useMenuyuktiRole()
+  const isPlatformAdmin = isLoaded && isMenuyuktiAdmin(role)
   const [tabRaw, setTabRaw] = useQueryState('tab', parseAsString.withDefault('brief'))
   const tab = normalizeTab(tabRaw)
+  /** Avoid Radix `Tabs` value `assets` before we know the user is admin (or while loading). */
+  const tabsValue = !isLoaded || (tab === 'assets' && !isPlatformAdmin) ? 'brief' : tab
   const [studioOpen, setStudioOpen] = useState(false)
   const [printDialogOpen, setPrintDialogOpen] = useState(false)
 
@@ -98,18 +104,20 @@ export function CampaignWorkspace({
       <Tabs
         className="flex min-h-0 flex-1 flex-col gap-3"
         onValueChange={handleTabChange}
-        value={tab}
+        value={tabsValue}
       >
         <div className="flex shrink-0 flex-col gap-3 border-border/60 border-b pb-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <TabsList className="w-full min-w-0 justify-start p-0 sm:w-auto" variant="line">
             <TabsTrigger className="flex-none px-3 py-2" value="brief">
               {t('tabBrief')}
             </TabsTrigger>
-            <TabsTrigger className="flex-none px-3 py-2" value="assets">
-              {t('tabAssets')}
-            </TabsTrigger>
+            {isPlatformAdmin ? (
+              <TabsTrigger className="flex-none px-3 py-2" value="assets">
+                {t('tabAssets')}
+              </TabsTrigger>
+            ) : null}
           </TabsList>
-          {tab === 'brief' ? (
+          {tab === 'brief' && isPlatformAdmin ? (
             <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
               <Button onClick={() => setStudioOpen(true)} type="button" variant="secondary">
                 {t('generateVisuals')}
@@ -137,6 +145,7 @@ export function CampaignWorkspace({
 
         <TabsContent className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden" value="assets">
           <CampaignAssetsTab
+            access={!isLoaded ? 'loading' : isPlatformAdmin ? 'allowed' : 'denied'}
             onOpenPrintShop={() => {
               setPrintDialogOpen(true)
             }}
@@ -145,36 +154,40 @@ export function CampaignWorkspace({
         </TabsContent>
       </Tabs>
 
-      <Sheet onOpenChange={setStudioOpen} open={studioOpen}>
-        <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-2xl">
-          <SheetHeader className="border-b px-6 py-4 text-left">
-            <SheetTitle>{t('studioSheetTitle')}</SheetTitle>
-            <SheetDescription>{t('studioSheetDescription')}</SheetDescription>
-          </SheetHeader>
-          <ScrollArea className="min-h-0 flex-1 px-4 py-4">
-            <AssetsClient />
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
+      {isPlatformAdmin ? (
+        <Sheet onOpenChange={setStudioOpen} open={studioOpen}>
+          <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-2xl">
+            <SheetHeader className="border-b px-6 py-4 text-left">
+              <SheetTitle>{t('studioSheetTitle')}</SheetTitle>
+              <SheetDescription>{t('studioSheetDescription')}</SheetDescription>
+            </SheetHeader>
+            <ScrollArea className="min-h-0 flex-1 px-4 py-4">
+              <AssetsClient />
+            </ScrollArea>
+          </SheetContent>
+        </Sheet>
+      ) : null}
 
-      <Dialog onOpenChange={setPrintDialogOpen} open={printDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{t('printDialogTitle')}</DialogTitle>
-            <DialogDescription>{t('printDialogDescription')}</DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 pt-2">
-            <Button asChild>
-              <Link href={`${routes.shop}?workflowId=${encodeURIComponent(workflowId)}`}>
-                {t('openPrintShop')}
-              </Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href={routes.printOrders}>{t('viewPrintOrders')}</Link>
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {isPlatformAdmin ? (
+        <Dialog onOpenChange={setPrintDialogOpen} open={printDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t('printDialogTitle')}</DialogTitle>
+              <DialogDescription>{t('printDialogDescription')}</DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-3 pt-2">
+              <Button asChild>
+                <Link href={`${routes.shop}?workflowId=${encodeURIComponent(workflowId)}`}>
+                  {t('openPrintShop')}
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href={routes.printOrders}>{t('viewPrintOrders')}</Link>
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </div>
   )
 }

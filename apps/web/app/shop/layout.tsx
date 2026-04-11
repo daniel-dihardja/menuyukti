@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 
 import { CopyrightFooter } from '@/components/copyright-footer'
 import { ShopNav } from '@/components/shop/shop-nav'
+import { requireMenuyuktiAdmin } from '@/lib/menuyukti-role-server'
 
 import '@/components/shop/shop.css'
 
@@ -15,6 +16,7 @@ export default async function ShopLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  await requireMenuyuktiAdmin()
   const t = await getTranslations('shop')
 
   return (

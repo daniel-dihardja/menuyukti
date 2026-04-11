@@ -6,6 +6,8 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/studio',
   '/print-orders',
   '/dashboard',
+  '/staff',
+  '/profile',
 ] as const
 
 export function isProtectedAppShellPath(pathname: string | null): boolean {
@@ -42,6 +44,12 @@ export const routes = {
   studioSession: (id: string | number) => `/studio/${id}`,
   printOrders: '/print-orders',
   dashboard: '/dashboard',
+  /** Menuyukti staff-only console (platform role `admin`). */
+  staff: '/staff',
+  /** Custom profile overview (name, email, avatar). */
+  profile: '/profile',
+  /** Clerk `<UserProfile />` (manage account); optional catch-all under `/profile/account/...`. */
+  profileAccount: '/profile/account',
 
   workflows: {
     list: '/workflows',

@@ -1,23 +1,17 @@
 'use client'
 
 import { memo, useEffect, useRef, useState } from 'react'
-import { useTranslations } from 'next-intl'
 
 import { Card } from '@workspace/ui/components/card'
 import { Collapsible, CollapsibleContent } from '@workspace/ui/components/collapsible'
 import { cn } from '@workspace/ui/lib/utils'
 
-import { useTimelineContext } from '../timeline-context'
+import { useTimelineActions, useTimelineChat, useTimelineWorkspaceState } from '../timeline-context'
 import { MilestoneItemHeader } from './milestone-item-header'
 import { MilestoneItemTabs } from './milestone-item-tabs'
 import { MilestoneRunProgressStrip } from './milestone-run-progress'
 import { isKeyboardEventFromNestedInteractive, TimelineRailMarker } from './timeline-rail'
-import type {
-  MilestoneStatusLabels,
-  PassCriteriaRow,
-  TimelineMilestone,
-  TimelineMilestoneStatus,
-} from './types'
+import type { PassCriteriaRow, TimelineMilestone, TimelineMilestoneStatus } from './types'
 
 export type TimelineItemProps = {
   milestone: TimelineMilestone
@@ -26,16 +20,7 @@ export type TimelineItemProps = {
   isLast: boolean
   isSelected: boolean
   onSelect: (id: string) => void
-  expandDetailsLabel: string
-  collapseDetailsLabel: string
-  statusLabels: MilestoneStatusLabels
   showDelete: boolean
-  deleteButtonLabel: string
-  deleteMilestoneAriaLabel: string
-  deleteMilestoneConfirmTitle: string
-  deleteMilestoneConfirmDescription: string
-  deleteMilestoneConfirmCancel: string
-  deleteMilestoneConfirmAction: string
 }
 
 function TimelineItemInner({
@@ -45,33 +30,28 @@ function TimelineItemInner({
   isLast,
   isSelected,
   onSelect,
-  expandDetailsLabel,
-  collapseDetailsLabel,
-  statusLabels,
   showDelete,
-  deleteButtonLabel,
-  deleteMilestoneAriaLabel,
-  deleteMilestoneConfirmTitle,
-  deleteMilestoneConfirmDescription,
-  deleteMilestoneConfirmCancel,
-  deleteMilestoneConfirmAction,
 }: TimelineItemProps) {
   const {
     onDeleteMilestone,
-    deletingMilestoneId,
-    movingMilestoneId,
-    renamingMilestoneId,
-    savingPassCriteriaMilestoneId,
-    savingGoalMilestoneId,
     onRenameMilestone,
     onUpdatePassCriteria,
     onUpdateMilestoneGoal,
     onMoveMilestone,
     onRunMilestone,
-    isChatBusy,
-    runningMilestoneId,
-    runningStep,
-  } = useTimelineContext()
+  } = useTimelineActions()
+  const {
+    milestoneState: {
+      deletingMilestoneId,
+      movingMilestoneId,
+      renamingMilestoneId,
+      savingPassCriteriaMilestoneId,
+      savingGoalMilestoneId,
+      runningMilestoneId,
+      runningStep,
+    },
+  } = useTimelineWorkspaceState()
+  const { isBusy: isChatBusy } = useTimelineChat()
 
   const [userOpen, setUserOpen] = useState(true)
   const [editingTitle, setEditingTitle] = useState(false)
@@ -81,7 +61,6 @@ function TimelineItemInner({
   const titleEditInputRef = useRef<HTMLInputElement>(null)
   const titleEditContainerRef = useRef<HTMLDivElement>(null)
   const addCriteriaInputRef = useRef<HTMLInputElement>(null)
-  const t = useTranslations('analytics.campaigns.chat')
   const isMilestoneRunning = runningMilestoneId === milestone.id
   /** Keep the card expanded for the whole run; user can collapse again after the run ends. */
   const open = isMilestoneRunning || userOpen
@@ -218,7 +197,7 @@ function TimelineItemInner({
         {isFirst ? (
           <div className="flex w-full shrink-0 flex-col items-center pt-4">
             <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
-              <TimelineRailMarker labels={statusLabels} status={status} />
+              <TimelineRailMarker status={status} />
             </div>
             <span className="mt-0.5 text-center text-muted-foreground text-xs tabular-nums">
               {positionIndex}
@@ -231,7 +210,7 @@ function TimelineItemInner({
               className="h-4 w-px shrink-0 border-l border-dashed border-border dark:border-muted-foreground/45"
             />
             <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
-              <TimelineRailMarker labels={statusLabels} status={status} />
+              <TimelineRailMarker status={status} />
             </div>
             <span className="mt-0.5 text-center text-muted-foreground text-xs tabular-nums">
               {positionIndex}
@@ -254,16 +233,8 @@ function TimelineItemInner({
             )}
           >
             <MilestoneItemHeader
-              collapseDetailsLabel={collapseDetailsLabel}
-              deleteButtonLabel={deleteButtonLabel}
-              deleteMilestoneAriaLabel={deleteMilestoneAriaLabel}
-              deleteMilestoneConfirmAction={deleteMilestoneConfirmAction}
-              deleteMilestoneConfirmCancel={deleteMilestoneConfirmCancel}
-              deleteMilestoneConfirmDescription={deleteMilestoneConfirmDescription}
-              deleteMilestoneConfirmTitle={deleteMilestoneConfirmTitle}
               draftTitle={draftTitle}
-              editMilestoneTitleAriaLabel={t('editMilestoneTitleAriaLabel')}
-              expandDetailsLabel={expandDetailsLabel}
+              editingTitle={editingTitle}
               handleSaveTitle={handleSaveTitle}
               isChatBusy={isChatBusy}
               isDeleting={isDeleting}
@@ -272,10 +243,6 @@ function TimelineItemInner({
               isMilestoneRunning={isMilestoneRunning}
               isMoving={isMoving}
               milestone={milestone}
-              milestonePlayAriaLabel={t('milestonePlayAriaLabel')}
-              milestonePlayTooltip={t('milestonePlayTooltip')}
-              moveMilestoneDown={t('moveMilestoneDown')}
-              moveMilestoneUp={t('moveMilestoneUp')}
               onDeleteMilestone={onDeleteMilestone}
               onMoveMilestone={onMoveMilestone}
               onRenameMilestone={onRenameMilestone}
@@ -283,14 +250,12 @@ function TimelineItemInner({
               open={open}
               renaming={renaming}
               runningMilestoneId={runningMilestoneId}
-              saveMilestoneTitleAriaLabel={t('saveMilestoneTitleAriaLabel')}
               setDraftTitle={setDraftTitle}
               setEditingTitle={setEditingTitle}
               showDelete={showDelete}
               titleEditContainerRef={titleEditContainerRef}
               titleEditInputId={titleEditInputId}
               titleEditInputRef={titleEditInputRef}
-              editingTitle={editingTitle}
             />
             {isMilestoneRunning ? <MilestoneRunProgressStrip runningStep={runningStep} /> : null}
             <CollapsibleContent
