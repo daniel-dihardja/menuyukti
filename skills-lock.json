@@ -26,6 +26,11 @@
       "sourceType": "github",
       "computedHash": "722d79f7610ff60878d5b73b8f53faa51aff729c43b44222faedc7fa926e332f"
     },
+    "graphql-architect": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "computedHash": "eb7b270f227622d410105b4dd8be1f5078a0967388ae4a50765708e33e8ebadf"
+    },
     "next-best-practices": {
       "source": "vercel-labs/next-skills",
       "sourceType": "github",
