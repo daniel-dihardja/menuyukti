@@ -57,7 +57,11 @@ export function ShopNav() {
                   <Link href={routes.printOrders}>{t('backPrintOrders')}</Link>
                 </Button>
               ) : null}
-              <UserButton appearance={menuyuktiClerkAppearance} />
+              <UserButton
+                appearance={menuyuktiClerkAppearance}
+                userProfileMode="navigation"
+                userProfileUrl={routes.profileAccount}
+              />
             </nav>
           </Show>
           <Show when="signed-out">

@@ -9,6 +9,7 @@ import {
   Package,
   Shield,
   Sparkles,
+  User,
 } from 'lucide-react'
 import {
   Collapsible,
@@ -48,6 +49,12 @@ const NAV_ITEMS: NavItem[] = [
     labelKey: 'dashboard',
     href: routes.dashboard,
     icon: <LayoutDashboard className="w-4 h-4" />,
+  },
+  {
+    key: 'profil',
+    labelKey: 'profil',
+    href: routes.profile,
+    icon: <User className="w-4 h-4" />,
   },
   {
     key: 'workflows',

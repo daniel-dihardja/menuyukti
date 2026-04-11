@@ -2,7 +2,7 @@
 
 import { Show, SignInButton, SignUpButton, UserButton, useAuth } from '@clerk/nextjs'
 import { usePathname } from 'next/navigation'
-import { isProtectedAppShellPath } from '@/lib/routes'
+import { isProtectedAppShellPath, routes } from '@/lib/routes'
 
 const HIDE_HEADER_PREFIXES = ['/login', '/sign-up', '/sso-callback']
 
@@ -27,7 +27,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
             <SignUpButton />
           </Show>
           <Show when="signed-in">
-            <UserButton />
+            <UserButton userProfileMode="navigation" userProfileUrl={routes.profileAccount} />
           </Show>
         </header>
       )}

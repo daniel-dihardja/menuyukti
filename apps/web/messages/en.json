@@ -245,9 +245,21 @@
       "secondary": "Learn More"
     }
   },
+  "profile": {
+    "title": "Profile",
+    "breadcrumb": "Profile",
+    "description": "Your account overview.",
+    "manageAccount": "Manage account",
+    "accountTitle": "Account settings",
+    "accountBreadcrumb": "Account settings",
+    "accountDescription": "Update security, email, passwords, and connected accounts.",
+    "avatarAlt": "Profile photo of {name}",
+    "noEmail": "No email on file"
+  },
   "sidebar": {
     "groupLabel": "Menuyukti",
     "dashboard": "Dashboard",
+    "profil": "Profil",
     "news": "News",
     "analysis": "Analysis",
     "branches": "Locations",

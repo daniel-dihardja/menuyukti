@@ -12,6 +12,7 @@ const isProtectedRoute = createRouteMatcher([
   '/print-orders(.*)',
   '/dashboard(.*)',
   '/staff(.*)',
+  '/profile(.*)',
   '/shop(.*)',
 ])
 
