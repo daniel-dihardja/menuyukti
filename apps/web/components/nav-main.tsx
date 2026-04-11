@@ -7,6 +7,7 @@ import {
   MapPin,
   Megaphone,
   Package,
+  Shield,
   Sparkles,
 } from 'lucide-react'
 import {
@@ -26,6 +27,8 @@ import {
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
+import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
+import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
 import type { ReactNode } from 'react'
 
@@ -35,6 +38,8 @@ type NavItem = {
   href?: string
   icon?: ReactNode
   children?: NavItem[]
+  /** If true, only users with platform role `admin` see this item. */
+  adminOnly?: boolean
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -55,6 +60,7 @@ const NAV_ITEMS: NavItem[] = [
     labelKey: 'studio',
     href: routes.studio,
     icon: <Sparkles className="w-4 h-4" />,
+    adminOnly: true,
   },
   {
     key: 'reports',
@@ -67,12 +73,20 @@ const NAV_ITEMS: NavItem[] = [
     labelKey: 'printOrders',
     href: routes.printOrders,
     icon: <Package className="w-4 h-4" />,
+    adminOnly: true,
   },
   {
     key: 'branches',
     labelKey: 'branches',
     href: routes.analytics.branches,
     icon: <MapPin className="w-4 h-4" />,
+  },
+  {
+    key: 'staff',
+    labelKey: 'staffTools',
+    href: routes.staff,
+    icon: <Shield className="w-4 h-4" />,
+    adminOnly: true,
   },
   // {
   //   key: "sales_children",
@@ -98,13 +112,17 @@ const NAV_ITEMS: NavItem[] = [
 export function NavMain() {
   const t = useTranslations('sidebar')
   const pathname = usePathname()
+  const { role, isLoaded } = useMenuyuktiRole()
+  const showAdminNav = isLoaded && isMenuyuktiAdmin(role)
 
   const isActive = (url?: string) => (url ? pathname.startsWith(url) : false)
+
+  const visibleItems = NAV_ITEMS.filter((item) => !item.adminOnly || showAdminNav)
 
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {NAV_ITEMS.map((item) => {
+        {visibleItems.map((item) => {
           const active = isActive(item.href) || item.children?.some((c) => isActive(c.href))
 
           if (item.children) {

@@ -11,6 +11,8 @@ const isProtectedRoute = createRouteMatcher([
   '/studio(.*)',
   '/print-orders(.*)',
   '/dashboard(.*)',
+  '/staff(.*)',
+  '/shop(.*)',
 ])
 
 // Use default env resolution (CLERK_SECRET_KEY, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY). Do not pass

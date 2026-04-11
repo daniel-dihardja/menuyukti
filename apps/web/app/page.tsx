@@ -70,14 +70,6 @@ export default async function LandingPage() {
             <UtensilsCrossed className="size-5 text-primary" aria-hidden />
             <p className="text-xl font-semibold tracking-tight">{t('brand')}</p>
           </div>
-          <div className="hidden items-center gap-6 md:flex">
-            <Link
-              href={routes.shop}
-              className="text-sm text-foreground/70 transition-colors hover:text-foreground"
-            >
-              {t('shopLink')}
-            </Link>
-          </div>
         </div>
       </header>
 

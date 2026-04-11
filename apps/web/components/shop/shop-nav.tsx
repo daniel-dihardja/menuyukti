@@ -7,11 +7,15 @@ import { useTranslations } from 'next-intl'
 
 import { Button } from '@workspace/ui/components/button'
 import { menuyuktiClerkAppearance } from '@/components/clerk/menuyukti-appearance'
+import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
+import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
 
 export function ShopNav() {
   const t = useTranslations('shop.nav')
+  const { role, isLoaded } = useMenuyuktiRole()
+  const showAdminLinks = isLoaded && isMenuyuktiAdmin(role)
 
   return (
     <header
@@ -48,9 +52,11 @@ export function ShopNav() {
                   {t('backDashboard')}
                 </Link>
               </Button>
-              <Button variant="ghost" size="sm" className="hidden px-2 lg:inline-flex" asChild>
-                <Link href={routes.printOrders}>{t('backPrintOrders')}</Link>
-              </Button>
+              {showAdminLinks ? (
+                <Button variant="ghost" size="sm" className="hidden px-2 lg:inline-flex" asChild>
+                  <Link href={routes.printOrders}>{t('backPrintOrders')}</Link>
+                </Button>
+              ) : null}
               <UserButton appearance={menuyuktiClerkAppearance} />
             </nav>
           </Show>

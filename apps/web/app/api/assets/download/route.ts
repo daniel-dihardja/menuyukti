@@ -1,17 +1,16 @@
 import { GetObjectCommand, NoSuchKey } from '@aws-sdk/client-s3'
 import { NextResponse } from 'next/server'
 import { Readable } from 'node:stream'
-import { auth } from '@clerk/nextjs/server'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
 import { getS3Bucket, getS3Client, isSafeAssetFilename, userObjectKey } from '@/lib/assets/storage'
 
 export const runtime = 'nodejs'
 
 export async function GET(req: Request) {
-  const { isAuthenticated, userId } = await auth()
-  if (!isAuthenticated) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authz = await requireMenuyuktiAdminApi()
+  if (!authz.ok) return authz.response
+  const { userId } = authz
 
   const url = new URL(req.url)
   const name = url.searchParams.get('name')?.trim() ?? ''

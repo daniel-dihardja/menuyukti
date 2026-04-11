@@ -260,12 +260,17 @@
     "fixedCosts": "Fixed Costs",
     "docs": "Docs",
     "assets": "Assets",
+    "staffTools": "Staff",
     "theme": {
       "label": "Theme",
       "light": "Light",
       "dark": "Dark",
       "system": "System"
     }
+  },
+  "staff": {
+    "title": "Staff console",
+    "description": "Menuyukti platform tools for team members. Customers do not see this area."
   },
   "platform": {
     "dashboard": {
@@ -802,6 +807,7 @@
         "loadingAssets": "Loading assets…",
         "assetsEmpty": "No images yet",
         "assetsEmptyHint": "Open Generate visuals to add images to your library.",
+        "assetsTabAdminOnly": "The brand library, Studio, and print shop are limited to Menuyukti staff accounts.",
         "goalLabel": "Workflow goal",
         "goalNotSetBadge": "Not set",
         "goalPreviewEmpty": "No goal set yet. Add one to guide this workflow.",

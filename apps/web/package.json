@@ -21,6 +21,7 @@
     "@ai-sdk/react": "^3.0.99",
     "@aws-sdk/client-s3": "^3.1023.0",
     "@aws-sdk/s3-request-presigner": "^3.1023.0",
+    "@clerk/backend": "^2.29.0",
     "@clerk/nextjs": "^7.0.7",
     "@workspace/ui": "workspace:*",
     "@xyflow/react": "^12.10.1",

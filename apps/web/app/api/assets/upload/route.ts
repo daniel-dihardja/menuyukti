@@ -1,6 +1,6 @@
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { randomUUID } from 'crypto'
 import sharp from 'sharp'
 
@@ -111,10 +111,9 @@ async function applyFlow(
 export const runtime = 'nodejs'
 
 export async function POST(req: Request) {
-  const { isAuthenticated, userId } = await auth()
-  if (!isAuthenticated) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authz = await requireMenuyuktiAdminApi()
+  if (!authz.ok) return authz.response
+  const { userId } = authz
 
   let formData: FormData
   try {

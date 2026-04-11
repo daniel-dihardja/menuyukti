@@ -1,6 +1,6 @@
 import { revalidateTag } from 'next/cache'
 import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { ZodError } from 'zod'
 
 import { graphqlImageAiFlowsCacheTag } from '@/lib/graphql/cache-tags'
@@ -22,10 +22,9 @@ type RouteContext = {
 
 export async function PUT(req: Request, context: RouteContext) {
   try {
-    const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated || !userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const authz = await requireMenuyuktiAdminApi()
+    if (!authz.ok) return authz.response
+    const { userId } = authz
 
     const { slug: rawSlug } = await context.params
     const slug = decodeURIComponent(rawSlug).trim()
@@ -74,10 +73,9 @@ export async function PUT(req: Request, context: RouteContext) {
 
 export async function DELETE(_req: Request, context: RouteContext) {
   try {
-    const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated || !userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const authz = await requireMenuyuktiAdminApi()
+    if (!authz.ok) return authz.response
+    const { userId } = authz
 
     const { slug: rawSlug } = await context.params
     const slug = decodeURIComponent(rawSlug).trim()

@@ -1,6 +1,6 @@
 import { revalidateTag } from 'next/cache'
 import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { ZodError } from 'zod'
 
 import { graphqlImageAiFlowsCacheTag } from '@/lib/graphql/cache-tags'
@@ -13,10 +13,9 @@ export const runtime = 'nodejs'
 
 export async function POST(req: Request) {
   try {
-    const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated || !userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const authz = await requireMenuyuktiAdminApi()
+    if (!authz.ok) return authz.response
+    const { userId } = authz
 
     const json = await req.json()
     const body = createImageAiFlowBodySchema.parse(json)
