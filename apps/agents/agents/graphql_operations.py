@@ -85,6 +85,19 @@ query GetLocation($id: ID!) {
     city
     country
     currency
+    workspaceId
+  }
+}
+"""
+
+API_ADAPTER_TOOLS_QUERY = """
+query ApiAdapterToolsForRun($workspaceId: ID!) {
+  apiAdapterTools(workspaceId: $workspaceId) {
+    toolKey
+    name
+    description
+    url
+    isActive
   }
 }
 """

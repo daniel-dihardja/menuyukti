@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 SKILL_SELECTOR_SYSTEM = """You are a routing assistant for a restaurant campaign milestone run.
 
@@ -75,22 +76,66 @@ update any \"Public Holidays\" section (or add one) with a bullet list, or a cle
 GENERIC_SKILL_PROMPT = """You are a precise marketing-operations assistant for a restaurant campaign milestone.
 
 You have tools to read the milestone goal, pass/fail criteria, and the Data tab (Markdown); to fetch public \
-holidays for the campaign location and date range; and to save updated Data tab content.
+holidays for the campaign location and date range; to call workspace-configured HTTP GET tools when listed below; \
+and to save updated Data tab content.
 
 Workflow:
-1. Use read_goal, read_criteria, and read_data to understand the task. Call each at least once before concluding.
-2. Improve or complete the Data tab so it supports the milestone goal and criteria (clear Markdown, required \
+1. Use read_goal, read_criteria, and read_data to understand the task. Call each at least once before concluding \
+(unless the user message already includes the full milestone goal — still call read_criteria and read_data).
+2. If the system prompt lists **Workspace API tools** and the goal requires data from one of them, call that tool \
+by its **exact** tool name **before** write_result_data. Do not invent JSON or API payload content without calling \
+the tool.
+3. Improve or complete the Data tab so it supports the milestone goal and criteria (clear Markdown, required \
 sections, factual content). You do not assign pass/fail — that happens in a separate evaluation step after you finish.
-3. If the Data tab needs public holidays filled and dates are available, call get_public_holidays then \
+4. If the Data tab needs public holidays filled and dates are available, call get_public_holidays then \
 write_result_data with the full updated Markdown.
-4. If the Data tab should be improved for other reasons, use write_result_data with the full Markdown body.
-5. End with a short confirmation when the Data tab is in good shape. Do not invent criterion ids; evaluation \
+5. If the Data tab should be improved for other reasons, use write_result_data with the full Markdown body.
+6. End with a short confirmation when the Data tab is in good shape. Do not invent criterion ids; evaluation \
 uses the criteria from the milestone automatically."""
 
 
-def execute_skill_task_message(skill_id: str, skill_name: str) -> str:
+def workspace_adapter_tools_prompt_suffix(adapters: list[dict[str, Any]]) -> str:
+    """Appendix when the location's workspace has API adapter tools (GET; LangChain name = tool_key)."""
+    lines: list[str] = []
+    for row in adapters:
+        if not isinstance(row, dict):
+            continue
+        key = row.get("tool_key")
+        desc = row.get("description", "")
+        if not isinstance(key, str) or not key.strip():
+            continue
+        d = desc.strip() if isinstance(desc, str) else ""
+        lines.append(f"- **`{key.strip()}`** — {d}" if d else f"- **`{key.strip()}`**")
+    if not lines:
+        return ""
+    bullet = "\n".join(lines)
+    example_key = next(
+        (
+            str(r.get("tool_key", "")).strip()
+            for r in adapters
+            if isinstance(r, dict) and str(r.get("tool_key", "")).strip()
+        ),
+        "tool_key",
+    )
+    return f"""
+
+**Workspace API tools (parameterless HTTP GET; invoke using the exact tool name, e.g. `{example_key}`):**
+
+{bullet}
+
+**Mandatory when applicable:** If the milestone goal names one of these tools (including in backticks) or asks to \
+fetch JSON from the workspace feed, you **must** invoke that tool by **exact name** at least once **before** \
+write_result_data. Merge the response into the Data tab as Markdown. Never invent feed data without calling the tool. \
+If the tool returns an error message, write a short note in the Data tab."""
+
+
+def execute_skill_task_message(skill_id: str, skill_name: str, goal: str = "") -> str:
     """Human message that starts the execute-skill ReAct agent."""
-    return (
+    base = (
         f"Run this milestone using the selected skill `{skill_id}` ({skill_name}). "
         "Follow the system instructions and persist the Data tab with the tools."
     )
+    g = goal.strip()
+    if not g:
+        return base
+    return f"{base}\n\n## Milestone goal\n\n{g}"

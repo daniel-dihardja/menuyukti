@@ -15,10 +15,64 @@ from agents_app.agents.core.milestone_eval.graphql_client import (
 )
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
+    API_ADAPTER_TOOLS_QUERY,
     LOCATION_QUERY,
     PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
     PUBLIC_HOLIDAYS_QUERY,
 )
+
+
+async def fetch_api_adapter_tools_for_location(
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> list[dict[str, Any]]:
+    """Active workspace API adapter tools for this location (empty if no workspace)."""
+    data = await graphql_post(
+        client,
+        LOCATION_QUERY,
+        {"id": str(location_id)},
+        user_id,
+    )
+    raw = data.get("location")
+    if not isinstance(raw, dict):
+        return []
+    wid = raw.get("workspaceId")
+    if wid is None or str(wid).strip() == "":
+        return []
+
+    data2 = await graphql_post(
+        client,
+        API_ADAPTER_TOOLS_QUERY,
+        {"workspaceId": str(wid)},
+        user_id,
+    )
+    tools = data2.get("apiAdapterTools")
+    if not isinstance(tools, list):
+        return []
+
+    out: list[dict[str, Any]] = []
+    for row in tools:
+        if not isinstance(row, dict):
+            continue
+        if not row.get("isActive", True):
+            continue
+        key = row.get("toolKey")
+        url = row.get("url")
+        desc = row.get("description")
+        if not isinstance(key, str) or not key.strip():
+            continue
+        if not isinstance(url, str) or not url.strip():
+            continue
+        out.append(
+            {
+                "tool_key": key.strip(),
+                "url": url.strip(),
+                "description": desc.strip() if isinstance(desc, str) else "",
+            }
+        )
+    return out
 
 
 async def fetch_prior_milestones_data(
@@ -68,7 +122,10 @@ async def fetch_public_holidays_for_milestone(
     sd = start_date.strip()
     ed = end_date.strip()
     if not sd or not ed or sd > ed:
-        return [], "Invalid date range: start and end must be YYYY-MM-DD with start on or before end."
+        return (
+            [],
+            "Invalid date range: start and end must be YYYY-MM-DD with start on or before end.",
+        )
 
     data = await graphql_post(
         client,
@@ -126,6 +183,7 @@ async def upsert_milestonedata_node(
 __all__ = [
     "create_result_node",
     "delete_node",
+    "fetch_api_adapter_tools_for_location",
     "fetch_milestone_children",
     "fetch_prior_milestones_data",
     "fetch_public_holidays_for_milestone",

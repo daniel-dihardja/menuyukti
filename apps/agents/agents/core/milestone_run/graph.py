@@ -10,12 +10,16 @@ from typing import Any, Literal, cast
 import httpx
 from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_graph
 from agents_app.agents.core.milestone_eval.nodes import fetch_context
-from agents_app.agents.core.milestone_run.graphql_client import fetch_prior_milestones_data
+from agents_app.agents.core.milestone_run.graphql_client import (
+    fetch_api_adapter_tools_for_location,
+    fetch_prior_milestones_data,
+)
 from agents_app.agents.core.milestone_run.prompts import (
     INTERMEDIATE_SKILL_PROMPT_SUFFIX,
     SKILL_SELECTOR_SYSTEM,
     execute_skill_task_message,
     skill_selector_human_message,
+    workspace_adapter_tools_prompt_suffix,
 )
 from agents_app.agents.core.milestone_run.skills import (
     DEFAULT_SKILL_ID,
@@ -145,15 +149,28 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
                 mid,
             )
             raise
+    try:
+        adapters = await fetch_api_adapter_tools_for_location(
+            int(state["location_id"]),
+            str(state["user_id"]),
+            client=client,
+        )
+    except Exception:
+        _logger.exception(
+            "milestone_run.fetch_children: api adapter tools fetch failed milestone_id=%s",
+            mid,
+        )
+        raise
     _logger.info(
-        "milestone_run.fetch_children: done milestone_id=%s criteria_count=%s goal_len=%s raw_data_len=%s prior_len=%s",
+        "milestone_run.fetch_children: done milestone_id=%s criteria_count=%s goal_len=%s raw_data_len=%s prior_len=%s adapters=%s",
         mid,
         len(out.get("criteria") or []),
         len(str(out.get("goal") or "")),
         len(str(out.get("raw_data") or "")),
         len(prior),
+        len(adapters),
     )
-    return {**out, "prior_milestones_data": prior}
+    return {**out, "prior_milestones_data": prior, "api_adapter_tools": adapters}
 
 
 async def _select_skills(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
@@ -229,14 +246,23 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         str(state["user_id"]),
         client=client,
     )
-    system_prompt = skill.prompt
+    raw_adapters = state.get("api_adapter_tools", [])
+    adapters_list = raw_adapters if isinstance(raw_adapters, list) else []
+    adapter_suffix = workspace_adapter_tools_prompt_suffix(adapters_list)
+    system_prompt = skill.prompt + adapter_suffix
     if not is_last:
-        system_prompt = skill.prompt + INTERMEDIATE_SKILL_PROMPT_SUFFIX
+        system_prompt = skill.prompt + adapter_suffix + INTERMEDIATE_SKILL_PROMPT_SUFFIX
     llm = get_llm()
     agent = create_react_agent(llm, tools, prompt=system_prompt)
     agent_input = {
         "messages": [
-            HumanMessage(content=execute_skill_task_message(skill.id, skill.name)),
+            HumanMessage(
+                content=execute_skill_task_message(
+                    skill.id,
+                    skill.name,
+                    str(state.get("goal") or ""),
+                ),
+            ),
         ],
     }
     agent_cfg = cast(
@@ -258,10 +284,12 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         if et == "on_tool_start":
             tname = _astream_event_tool_name(ev)
             if tname:
+                _logger.info("milestone_run.execute_skill: tool_start name=%s milestone_id=%s", tname, mid)
                 _trace_agent_event(state, "tool_start", name=tname)
         elif et == "on_tool_end":
             tname = _astream_event_tool_name(ev)
             if tname:
+                _logger.info("milestone_run.execute_skill: tool_end name=%s milestone_id=%s", tname, mid)
                 _trace_agent_event(state, "tool_end", name=tname)
         elif et == "on_chat_model_start":
             _trace_agent_event(state, "chat_model_start")

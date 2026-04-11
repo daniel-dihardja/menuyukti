@@ -32,6 +32,22 @@ def test_make_milestone_run_tools_has_no_write_result() -> None:
     assert "write_result" not in names
 
 
+def test_make_milestone_run_tools_appends_workspace_adapter_tools() -> None:
+    ctx: dict[str, Any] = {
+        "api_adapter_tools": [
+            {
+                "tool_key": "menu_promotions_mock_api",
+                "url": "http://127.0.0.1:3090/api/mock",
+                "description": "Mock promotions JSON",
+            },
+        ],
+    }
+    tools = _tools_for_context(ctx)
+    names = [getattr(t, "name", "") for t in tools]
+    assert len(tools) == 7
+    assert "menu_promotions_mock_api" in names
+
+
 def test_read_goal_returns_context_goal() -> None:
     ctx = {"goal": "Ship the campaign"}
     tools = _tools_for_context(ctx)

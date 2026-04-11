@@ -3,14 +3,48 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
+
+_logger = logging.getLogger(__name__)
 
 import httpx
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_public_holidays_for_milestone,
     upsert_milestonedata_node,
 )
-from langchain_core.tools import BaseTool, tool
+from agents_app.agents.http.safe_egress import adapter_http_get
+from langchain_core.tools import BaseTool, StructuredTool, tool
+
+
+def _make_workspace_adapter_tool(
+    tool_key: str,
+    endpoint_url: str,
+    description: str,
+    *,
+    http_client: httpx.AsyncClient,
+) -> BaseTool:
+    desc = (description or "").strip() or f"GET workspace-configured endpoint for {tool_key}."
+    if "GET" not in desc.upper():
+        desc += " Performs an HTTP GET only; returns JSON or plain text."
+
+    async def _adapter_fetch() -> str:
+        body, err = await adapter_http_get(endpoint_url, client=http_client)
+        if err:
+            _logger.warning(
+                "milestone_run workspace adapter GET failed tool_key=%s url=%s error=%s",
+                tool_key,
+                endpoint_url,
+                err,
+            )
+            return f"Adapter request failed: {err}"
+        return body if body is not None else ""
+
+    return StructuredTool.from_function(
+        coroutine=_adapter_fetch,
+        name=tool_key,
+        description=desc,
+    )
 
 
 def make_milestone_run_tools(
@@ -33,6 +67,9 @@ def make_milestone_run_tools(
 
     Shared tool: ``get_public_holidays`` — callable from any skill that needs holidays for the \
     campaign location and date range (same implementation for all skills in the registry).
+
+    When ``context`` includes ``api_adapter_tools`` (from GraphQL), one parameterless GET tool per \
+    active row is appended (LangChain name = ``tool_key``). See :func:`adapter_http_get` for HTTPS vs dev HTTP.
     """
 
     @tool
@@ -127,6 +164,29 @@ def make_milestone_run_tools(
         context["milestonedata_written"] = True
         return f"Saved milestonedata node id={nid} ({len(new_data)} characters)."
 
+    raw_adapters = context.get("api_adapter_tools", [])
+    adapters: list[dict[str, Any]] = raw_adapters if isinstance(raw_adapters, list) else []
+    adapter_tools: list[BaseTool] = []
+    for row in adapters:
+        if not isinstance(row, dict):
+            continue
+        tk = row.get("tool_key")
+        endpoint = row.get("url")
+        if not isinstance(tk, str) or not tk.strip():
+            continue
+        if not isinstance(endpoint, str) or not endpoint.strip():
+            continue
+        d = row.get("description", "")
+        desc_str = d if isinstance(d, str) else ""
+        adapter_tools.append(
+            _make_workspace_adapter_tool(
+                tk.strip(),
+                endpoint.strip(),
+                desc_str,
+                http_client=client,
+            )
+        )
+
     return [
         read_goal,
         read_criteria,
@@ -134,4 +194,5 @@ def make_milestone_run_tools(
         read_prior_milestones_data,
         get_public_holidays,
         write_result_data,
+        *adapter_tools,
     ]

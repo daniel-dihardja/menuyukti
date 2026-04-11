@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from graphql.data_sources import Node
+from graphql.data_sources import MilestoneAgentRun, Node
 from graphql.schema.node_handlers.base import NodeHandler
 
 
@@ -17,7 +17,11 @@ def _milestone_sort_key(row: Node) -> tuple[int, object, int]:
 
 
 def delete_milestone_children(session: Session, milestone_id: int) -> None:
-    """Remove goal, passcriteria, milestonedata, and result rows under a milestone."""
+    """Remove persisted agent runs, then goal, passcriteria, milestonedata, and result rows under a milestone."""
+    session.query(MilestoneAgentRun).filter(
+        MilestoneAgentRun.milestone_node_id == milestone_id,
+    ).delete(synchronize_session=False)
+
     session.query(Node).filter(
         Node.parent_id == milestone_id,
         Node.node_type == "goal",

@@ -83,6 +83,7 @@ async def iter_milestone_run_sse_lines(
         "raw_data": "",
         "criteria": [],
         "prior_milestones_data": "",
+        "api_adapter_tools": [],
         "result_data": "",
         "milestonedata_written": False,
         "result_summary": "",

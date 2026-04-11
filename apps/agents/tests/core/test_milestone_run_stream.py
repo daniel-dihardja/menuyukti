@@ -87,6 +87,7 @@ async def test_iter_milestone_run_sse_lines_yields_done_payload() -> None:
     assert isinstance(init, dict)
     assert init.get("run_id") == rid
     assert init.get("milestone_id") == "m1"
+    assert init.get("api_adapter_tools") == []
     cfg = captured.get("config")
     assert isinstance(cfg, dict)
     assert cfg["metadata"]["run_id"] == rid

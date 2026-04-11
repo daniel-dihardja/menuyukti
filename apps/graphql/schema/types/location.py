@@ -10,3 +10,4 @@ class LocationType:
     country: str | None
     currency: str | None
     node_id: strawberry.ID | None
+    workspace_id: strawberry.ID | None

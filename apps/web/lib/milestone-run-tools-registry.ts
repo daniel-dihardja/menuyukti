@@ -1,6 +1,7 @@
 /**
- * Milestone-run LangChain tools for UI. Keep in sync with
- * `apps/agents/agents/core/milestone_run/tools.py` (`make_milestone_run_tools` return list order and docstrings).
+ * Milestone-run LangChain tools for UI. Built-in tools match
+ * `apps/agents/agents/core/milestone_run/tools.py` (`make_milestone_run_tools`) order and intent; workspace
+ * API adapter tools are appended at runtime (one entry below describes them in aggregate).
  */
 import 'server-only'
 
@@ -46,5 +47,11 @@ export const MILESTONE_RUN_TOOLS_REGISTRY: readonly MilestoneRunToolMeta[] = [
     name: 'Write result data',
     description:
       'Upsert the milestonedata child under this milestone with the given Markdown body. Updates context result_data and returns a short confirmation including the node id.',
+  },
+  {
+    id: 'workspace_api_adapter_tools',
+    name: 'Workspace API adapter tools (dynamic)',
+    description:
+      'When the campaign location belongs to a workspace, each active API proxy is appended at runtime as a parameterless HTTP GET tool named with its tool_key (see API Proxies page). Not a fixed id list.',
   },
 ] as const

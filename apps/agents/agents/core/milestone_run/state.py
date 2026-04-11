@@ -19,6 +19,8 @@ class MilestoneRunState(TypedDict):
     criteria: list[dict[str, str]]
     # Markdown: prior milestones' Data tabs (empty if no workflow_id or no earlier milestones).
     prior_milestones_data: str
+    # Workspace API adapter tools (tool_key, url, description); filled in fetch_children.
+    api_adapter_tools: list[dict[str, Any]]
     # Set by select_skills node (structured LLM); ordered execution
     selected_skill_ids: list[str]
     current_skill_index: int

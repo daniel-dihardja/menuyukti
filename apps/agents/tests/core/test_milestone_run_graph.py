@@ -58,6 +58,10 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
             ),
         ),
         patch(
+            "agents_app.agents.core.milestone_run.graph.fetch_api_adapter_tools_for_location",
+            new=AsyncMock(return_value=[]),
+        ),
+        patch(
             "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
@@ -99,6 +103,7 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
                 "raw_data": "",
                 "criteria": [],
                 "prior_milestones_data": "",
+                "api_adapter_tools": [],
                 "selected_skill_id": None,
                 "selected_skill_ids": [],
                 "current_skill_index": 0,
@@ -141,6 +146,10 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
             ),
         ),
         patch(
+            "agents_app.agents.core.milestone_run.graph.fetch_api_adapter_tools_for_location",
+            new=AsyncMock(return_value=[]),
+        ),
+        patch(
             "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
@@ -182,6 +191,7 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
                 "raw_data": "",
                 "criteria": [],
                 "prior_milestones_data": "",
+                "api_adapter_tools": [],
                 "selected_skill_id": None,
                 "selected_skill_ids": [],
                 "current_skill_index": 0,
