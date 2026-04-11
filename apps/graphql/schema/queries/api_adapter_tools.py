@@ -23,6 +23,26 @@ def _row_to_gql(row: ApiAdapterTool) -> ApiAdapterToolType:
     )
 
 
+def list_api_adapter_tools_for_workspace(
+    info: strawberry.Info,
+    workspace_id: int,
+) -> list[ApiAdapterToolType]:
+    """Tools for a workspace when the current user is a member; otherwise []."""
+    user_id = user_id_from_info(info)
+    if not user_id:
+        return []
+    with SessionLocal() as session:
+        if not is_workspace_member(session, workspace_id, user_id):
+            return []
+        rows = (
+            session.query(ApiAdapterTool)
+            .filter(ApiAdapterTool.workspace_id == workspace_id)
+            .order_by(ApiAdapterTool.name.asc(), ApiAdapterTool.id.asc())
+            .all()
+        )
+        return [_row_to_gql(r) for r in rows]
+
+
 @strawberry.type
 class ApiAdapterToolsQuery:
     @strawberry.field(
@@ -33,17 +53,4 @@ class ApiAdapterToolsQuery:
         info: strawberry.Info,
         workspace_id: strawberry.ID,
     ) -> list[ApiAdapterToolType]:
-        user_id = user_id_from_info(info)
-        if not user_id:
-            return []
-        wid = int(workspace_id)
-        with SessionLocal() as session:
-            if not is_workspace_member(session, wid, user_id):
-                return []
-            rows = (
-                session.query(ApiAdapterTool)
-                .filter(ApiAdapterTool.workspace_id == wid)
-                .order_by(ApiAdapterTool.name.asc(), ApiAdapterTool.id.asc())
-                .all()
-            )
-            return [_row_to_gql(r) for r in rows]
+        return list_api_adapter_tools_for_workspace(info, int(workspace_id))

@@ -29,6 +29,19 @@ query ApiAdapterTools($workspaceId: ID!) {
 }
 """
 
+MY_WORKSPACE_WITH_TOOLS = """
+query MyWorkspaceWithApiAdapterTools {
+  myWorkspace {
+    id
+    apiAdapterTools {
+      id
+      toolKey
+      name
+    }
+  }
+}
+"""
+
 CREATE_TOOL = """
 mutation CreateApiAdapterTool($workspaceId: ID!, $name: String!, $description: String!, $url: String!) {
   createApiAdapterTool(workspaceId: $workspaceId, name: $name, description: $description, url: $url) {
@@ -115,6 +128,17 @@ def test_api_adapter_tools_crud_and_list():
     items = r_list.data["apiAdapterTools"]
     assert len(items) == 1
     assert items[0]["id"] == tid
+
+    r_nested = asyncio.run(
+        schema.execute(MY_WORKSPACE_WITH_TOOLS, context_value=ctx),
+    )
+    assert not r_nested.errors, r_nested.errors
+    mw = r_nested.data["myWorkspace"]
+    assert mw["id"] == str(wid)
+    nested_items = mw["apiAdapterTools"]
+    assert len(nested_items) == 1
+    assert nested_items[0]["id"] == tid
+    assert nested_items[0]["toolKey"] == "my_pos_feed"
 
     r_up = asyncio.run(
         schema.execute(

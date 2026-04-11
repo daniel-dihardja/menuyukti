@@ -891,6 +891,8 @@ export type WorkspaceMembershipType = {
 /** A tenant workspace; locations can belong to a workspace with role-based membership. */
 export type WorkspaceType = {
   __typename?: 'WorkspaceType'
+  /** Custom API adapter tools for this workspace. Empty list if the user is not a member. */
+  apiAdapterTools: Array<ApiAdapterToolType>
   createdAt?: Maybe<Scalars['DateTime']['output']>
   id: Scalars['ID']['output']
   name: Scalars['String']['output']

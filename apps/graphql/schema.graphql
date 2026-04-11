@@ -632,4 +632,9 @@ type WorkspaceType {
   name: String!
   ownerClerkUserId: String!
   createdAt: DateTime
+
+  """
+  Custom API adapter tools for this workspace. Empty list if the user is not a member.
+  """
+  apiAdapterTools: [ApiAdapterToolType!]!
 }

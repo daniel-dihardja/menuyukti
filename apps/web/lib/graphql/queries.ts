@@ -725,24 +725,37 @@ export type ApiAdapterToolRow = {
   updatedAt: string
 }
 
-export const API_ADAPTER_TOOLS_QUERY = `
-  query ApiAdapterTools($workspaceId: ID!) {
-    apiAdapterTools(workspaceId: $workspaceId) {
+/** Single round-trip for the custom-tools page (workspace + tools). */
+export const MY_WORKSPACE_WITH_API_ADAPTER_TOOLS_QUERY = `
+  query MyWorkspaceWithApiAdapterTools {
+    myWorkspace {
       id
-      workspaceId
-      toolKey
       name
-      description
-      url
-      isActive
+      ownerClerkUserId
       createdAt
-      updatedAt
+      apiAdapterTools {
+        id
+        workspaceId
+        toolKey
+        name
+        description
+        url
+        isActive
+        createdAt
+        updatedAt
+      }
     }
   }
 `
 
-export type ApiAdapterToolsData = {
-  apiAdapterTools: ApiAdapterToolRow[]
+export type MyWorkspaceWithApiAdapterToolsData = {
+  myWorkspace: {
+    id: string
+    name: string
+    ownerClerkUserId: string
+    createdAt: string | null
+    apiAdapterTools: ApiAdapterToolRow[]
+  } | null
 }
 
 export const CREATE_API_ADAPTER_TOOL_MUTATION = `

@@ -9,6 +9,7 @@ import { routes } from '@/lib/routes'
 import {
   CREATE_API_ADAPTER_TOOL_MUTATION,
   DELETE_API_ADAPTER_TOOL_MUTATION,
+  type ApiAdapterToolRow,
   type CreateApiAdapterToolData,
   type DeleteApiAdapterToolData,
   UPDATE_API_ADAPTER_TOOL_MUTATION,
@@ -111,7 +112,11 @@ const updateSchema = z.object({
   isActive: z.boolean(),
 })
 
-export type ActionResult = { ok: true } | { ok: false; error: string }
+export type CreateUpdateToolResult =
+  | { ok: true; tool: ApiAdapterToolRow }
+  | { ok: false; error: string }
+
+export type DeleteToolResult = { ok: true } | { ok: false; error: string }
 
 async function requireUserId(): Promise<string> {
   const { userId } = await auth()
@@ -121,7 +126,7 @@ async function requireUserId(): Promise<string> {
   return userId
 }
 
-export async function createApiAdapterToolAction(raw: unknown): Promise<ActionResult> {
+export async function createApiAdapterToolAction(raw: unknown): Promise<CreateUpdateToolResult> {
   const parsed = createSchema.safeParse(raw)
   if (!parsed.success) {
     const msg = parsed.error.issues[0]?.message ?? 'Invalid input'
@@ -129,7 +134,7 @@ export async function createApiAdapterToolAction(raw: unknown): Promise<ActionRe
   }
   try {
     const userId = await requireUserId()
-    await graphqlQuery<CreateApiAdapterToolData>(
+    const data = await graphqlQuery<CreateApiAdapterToolData>(
       CREATE_API_ADAPTER_TOOL_MUTATION,
       {
         workspaceId: parsed.data.workspaceId,
@@ -142,14 +147,14 @@ export async function createApiAdapterToolAction(raw: unknown): Promise<ActionRe
       'CreateApiAdapterTool',
     )
     revalidatePath(routes.customTools)
-    return { ok: true }
+    return { ok: true, tool: data.createApiAdapterTool }
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Request failed'
     return { ok: false, error: msg }
   }
 }
 
-export async function updateApiAdapterToolAction(raw: unknown): Promise<ActionResult> {
+export async function updateApiAdapterToolAction(raw: unknown): Promise<CreateUpdateToolResult> {
   const parsed = updateSchema.safeParse(raw)
   if (!parsed.success) {
     const msg = parsed.error.issues[0]?.message ?? 'Invalid input'
@@ -157,7 +162,7 @@ export async function updateApiAdapterToolAction(raw: unknown): Promise<ActionRe
   }
   try {
     const userId = await requireUserId()
-    await graphqlQuery<UpdateApiAdapterToolData>(
+    const data = await graphqlQuery<UpdateApiAdapterToolData>(
       UPDATE_API_ADAPTER_TOOL_MUTATION,
       {
         id: parsed.data.id,
@@ -170,14 +175,14 @@ export async function updateApiAdapterToolAction(raw: unknown): Promise<ActionRe
       'UpdateApiAdapterTool',
     )
     revalidatePath(routes.customTools)
-    return { ok: true }
+    return { ok: true, tool: data.updateApiAdapterTool }
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Request failed'
     return { ok: false, error: msg }
   }
 }
 
-export async function deleteApiAdapterToolAction(id: string): Promise<ActionResult> {
+export async function deleteApiAdapterToolAction(id: string): Promise<DeleteToolResult> {
   const idClean = id.trim()
   if (!idClean) {
     return { ok: false, error: 'Missing id' }

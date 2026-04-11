@@ -1,9 +1,16 @@
 'use client'
 
 import { MoreHorizontal, Pencil, Plus } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useCallback, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useOptimistic,
+  useState,
+  useTransition,
+  type ReactNode,
+} from 'react'
 
 import {
   createApiAdapterToolAction,
@@ -72,14 +79,59 @@ type Props = {
 
 type DialogMode = 'create' | 'edit'
 
+type OptimisticToolAction =
+  | { type: 'add'; tool: ApiAdapterToolRow }
+  | { type: 'patch'; tool: ApiAdapterToolRow }
+  | { type: 'remove'; id: string }
+
+function reduceTools(
+  state: ApiAdapterToolRow[],
+  action: OptimisticToolAction,
+): ApiAdapterToolRow[] {
+  switch (action.type) {
+    case 'add':
+      return [...state, action.tool]
+    case 'patch':
+      return state.map((t) => (t.id === action.tool.id ? action.tool : t))
+    case 'remove':
+      return state.filter((t) => t.id !== action.id)
+    default:
+      return state
+  }
+}
+
+function makePendingCreateTool(
+  workspaceId: string,
+  name: string,
+  description: string,
+  url: string,
+  isActive: boolean,
+): ApiAdapterToolRow {
+  const now = new Date().toISOString()
+  return {
+    id: `optimistic:${crypto.randomUUID()}`,
+    workspaceId,
+    toolKey: '…',
+    name,
+    description,
+    url,
+    isActive,
+    createdAt: now,
+    updatedAt: now,
+  }
+}
+
 export function CustomToolsManager({ workspaceId, workspaceName, initialTools }: Props) {
   const t = useTranslations('customToolsPage')
-  const router = useRouter()
-  const tools = initialTools
+  const [tools, setTools] = useState(initialTools)
+  useEffect(() => {
+    setTools(initialTools)
+  }, [initialTools])
 
-  const refresh = useCallback(() => {
-    router.refresh()
-  }, [router])
+  const [displayTools, applyToolOptimistic] = useOptimistic(tools, reduceTools)
+
+  const [formPending, startFormTransition] = useTransition()
+  const [deletePending, startDeleteTransition] = useTransition()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<DialogMode>('create')
@@ -91,13 +143,11 @@ export function CustomToolsManager({ workspaceId, workspaceName, initialTools }:
   const [isActive, setIsActive] = useState(true)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
 
   const [deleteTarget, setDeleteTarget] = useState<ApiAdapterToolRow | null>(null)
-  const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
-  const openCreate = () => {
+  const openCreate = useCallback(() => {
     setDeleteError(null)
     setDialogMode('create')
     setEditing(null)
@@ -108,9 +158,9 @@ export function CustomToolsManager({ workspaceId, workspaceName, initialTools }:
     setFieldErrors({})
     setFormError(null)
     setDialogOpen(true)
-  }
+  }, [])
 
-  const openEdit = (tool: ApiAdapterToolRow) => {
+  const openEdit = useCallback((tool: ApiAdapterToolRow) => {
     setDeleteError(null)
     setDialogMode('edit')
     setEditing(tool)
@@ -121,16 +171,18 @@ export function CustomToolsManager({ workspaceId, workspaceName, initialTools }:
     setFieldErrors({})
     setFormError(null)
     setDialogOpen(true)
-  }
+  }, [])
 
-  const handleDialogSubmit = async (e: React.FormEvent) => {
+  const handleDialogSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!workspaceId) return
     setFormError(null)
     setFieldErrors({})
-    setSaving(true)
-    try {
+
+    startFormTransition(async () => {
       if (dialogMode === 'create') {
+        const pending = makePendingCreateTool(workspaceId, name, description, url, isActive)
+        applyToolOptimistic({ type: 'add', tool: pending })
         const res = await createApiAdapterToolAction({
           workspaceId,
           name,
@@ -145,7 +197,20 @@ export function CustomToolsManager({ workspaceId, workspaceName, initialTools }:
           setFormError(res.error)
           return
         }
-      } else if (editing) {
+        setTools((prev) => [...prev.filter((x) => x.id !== pending.id), res.tool])
+        setDialogOpen(false)
+        return
+      }
+
+      if (dialogMode === 'edit' && editing) {
+        const patched: ApiAdapterToolRow = {
+          ...editing,
+          name,
+          description,
+          url,
+          isActive,
+        }
+        applyToolOptimistic({ type: 'patch', tool: patched })
         const res = await updateApiAdapterToolAction({
           id: editing.id,
           name,
@@ -160,30 +225,124 @@ export function CustomToolsManager({ workspaceId, workspaceName, initialTools }:
           setFormError(res.error)
           return
         }
+        setTools((prev) => prev.map((x) => (x.id === res.tool.id ? res.tool : x)))
+        setDialogOpen(false)
       }
-      setDialogOpen(false)
-      refresh()
-    } finally {
-      setSaving(false)
-    }
+    })
   }
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (!deleteTarget) return
-    setDeleting(true)
-    setDeleteError(null)
-    try {
-      const res = await deleteApiAdapterToolAction(deleteTarget.id)
+    const id = deleteTarget.id
+    startDeleteTransition(async () => {
+      applyToolOptimistic({ type: 'remove', id })
+      const res = await deleteApiAdapterToolAction(id)
       if (!res.ok) {
         setDeleteError(res.error)
         return
       }
+      setTools((prev) => prev.filter((x) => x.id !== id))
       setDeleteTarget(null)
-      refresh()
-    } finally {
-      setDeleting(false)
-    }
+    })
   }
+
+  const { desktopRows, mobileCards } = useMemo(() => {
+    const dRows: ReactNode[] = []
+    const mCards: ReactNode[] = []
+    for (const tool of displayTools) {
+      dRows.push(
+        <TableRow key={tool.id}>
+          <TableCell className="font-medium">{tool.name}</TableCell>
+          <TableCell className="font-mono text-xs" translate="no">
+            {tool.toolKey}
+          </TableCell>
+          <TableCell className="max-w-[20rem] truncate font-mono text-xs" translate="no">
+            <span title={tool.url}>{tool.url}</span>
+          </TableCell>
+          <TableCell>
+            <Badge variant={tool.isActive ? 'default' : 'secondary'}>
+              {tool.isActive ? t('badgeActive') : t('badgeInactive')}
+            </Badge>
+          </TableCell>
+          <TableCell className="text-end">
+            <div className="flex justify-end gap-1">
+              <Button type="button" variant="ghost" size="sm" onClick={() => openEdit(tool)}>
+                {t('edit')}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setDeleteTarget(tool)}
+              >
+                {t('delete')}
+              </Button>
+            </div>
+          </TableCell>
+        </TableRow>,
+      )
+      mCards.push(
+        <li key={tool.id}>
+          <Card className="overflow-hidden border-border/60 shadow-sm">
+            <CardHeader className="flex flex-col gap-2 pb-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-base leading-snug">{tool.name}</CardTitle>
+                  <CardDescription className="mt-1 font-mono text-xs" translate="no">
+                    {tool.toolKey}
+                  </CardDescription>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Badge variant={tool.isActive ? 'default' : 'secondary'}>
+                    {tool.isActive ? t('badgeActive') : t('badgeInactive')}
+                  </Badge>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        aria-label={t('actions')}
+                      >
+                        <MoreHorizontal className="size-4" aria-hidden />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem onSelect={() => openEdit(tool)}>
+                          <Pencil className="size-4" aria-hidden />
+                          {t('edit')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onSelect={() => setDeleteTarget(tool)}
+                        >
+                          {t('delete')}
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2 pb-3">
+              <p className="text-muted-foreground line-clamp-3 text-sm">{tool.description}</p>
+              <p
+                className="truncate font-mono text-xs text-muted-foreground"
+                title={tool.url}
+                translate="no"
+              >
+                {tool.url}
+              </p>
+            </CardContent>
+          </Card>
+        </li>,
+      )
+    }
+    return { desktopRows: dRows, mobileCards: mCards }
+  }, [displayTools, openEdit, t])
 
   if (!workspaceId) {
     return (
@@ -222,7 +381,7 @@ export function CustomToolsManager({ workspaceId, workspaceName, initialTools }:
         </Button>
       </div>
 
-      {tools.length === 0 ? (
+      {displayTools.length === 0 ? (
         <Card className="border-dashed">
           <CardHeader>
             <CardTitle>{t('emptyListTitle')}</CardTitle>
@@ -243,118 +402,18 @@ export function CustomToolsManager({ workspaceId, workspaceName, initialTools }:
                     <TableHead className="w-[120px] text-end">{t('colActions')}</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {tools.map((tool) => (
-                    <TableRow key={tool.id}>
-                      <TableCell className="font-medium">{tool.name}</TableCell>
-                      <TableCell className="font-mono text-xs" translate="no">
-                        {tool.toolKey}
-                      </TableCell>
-                      <TableCell
-                        className="max-w-[20rem] truncate font-mono text-xs"
-                        translate="no"
-                      >
-                        <span title={tool.url}>{tool.url}</span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={tool.isActive ? 'default' : 'secondary'}>
-                          {tool.isActive ? t('badgeActive') : t('badgeInactive')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-end">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEdit(tool)}
-                          >
-                            {t('edit')}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => setDeleteTarget(tool)}
-                          >
-                            {t('delete')}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
+                <TableBody>{desktopRows}</TableBody>
               </Table>
             </div>
           </div>
 
-          <ul className="grid gap-4 md:hidden">
-            {tools.map((tool) => (
-              <li key={tool.id}>
-                <Card className="overflow-hidden border-border/60 shadow-sm">
-                  <CardHeader className="flex flex-col gap-2 pb-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <CardTitle className="text-base leading-snug">{tool.name}</CardTitle>
-                        <CardDescription className="mt-1 font-mono text-xs" translate="no">
-                          {tool.toolKey}
-                        </CardDescription>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <Badge variant={tool.isActive ? 'default' : 'secondary'}>
-                          {tool.isActive ? t('badgeActive') : t('badgeInactive')}
-                        </Badge>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="size-8"
-                              aria-label={t('actions')}
-                            >
-                              <MoreHorizontal className="size-4" aria-hidden />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuGroup>
-                              <DropdownMenuItem onSelect={() => openEdit(tool)}>
-                                <Pencil className="size-4" aria-hidden />
-                                {t('edit')}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onSelect={() => setDeleteTarget(tool)}
-                              >
-                                {t('delete')}
-                              </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-2 pb-3">
-                    <p className="text-muted-foreground line-clamp-3 text-sm">{tool.description}</p>
-                    <p
-                      className="truncate font-mono text-xs text-muted-foreground"
-                      title={tool.url}
-                      translate="no"
-                    >
-                      {tool.url}
-                    </p>
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
-          </ul>
+          <ul className="grid gap-4 md:hidden">{mobileCards}</ul>
         </>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-h-[min(90vh,720px)] overflow-y-auto sm:max-w-lg">
-          <form onSubmit={(e) => void handleDialogSubmit(e)}>
+          <form onSubmit={handleDialogSubmit}>
             <DialogHeader>
               <DialogTitle>{dialogMode === 'create' ? t('addTool') : t('editTool')}</DialogTitle>
             </DialogHeader>
@@ -432,8 +491,8 @@ export function CustomToolsManager({ workspaceId, workspaceName, initialTools }:
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 {t('cancel')}
               </Button>
-              <Button type="submit" disabled={saving} className="gap-2">
-                {saving ? (
+              <Button type="submit" disabled={formPending} className="gap-2">
+                {formPending ? (
                   <>
                     <Spinner className="size-4" />
                     {t('saving')}
@@ -454,15 +513,15 @@ export function CustomToolsManager({ workspaceId, workspaceName, initialTools }:
             <AlertDialogDescription>{t('deleteDescription')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>{t('deleteCancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={deletePending}>{t('deleteCancel')}</AlertDialogCancel>
             <Button
               type="button"
               variant="destructive"
-              disabled={deleting}
+              disabled={deletePending}
               className="gap-2"
               onClick={() => void handleDeleteConfirm()}
             >
-              {deleting ? (
+              {deletePending ? (
                 <>
                   <Spinner className="size-4" />
                   {t('deleting')}
