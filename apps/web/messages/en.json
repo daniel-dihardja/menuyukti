@@ -254,9 +254,7 @@
   "customToolsPage": {
     "nav": "Custom tools",
     "title": "Custom tools",
-    "description": "Define HTTPS endpoints the platform can call as tools when running milestone skills. Keep secrets on your server—never put API keys in descriptions or prompts.",
-    "securityTitle": "Security",
-    "securityBody": "Only add https URLs you control. Authentication belongs in your API (headers, mTLS, IP allowlists), not in tool text the model can read. We block private IPs, localhost-style hosts, and credentials in the URL. When the AI calls your tool, we resolve DNS to public addresses only, follow a limited number of redirects, and cap response size.",
+    "description": "Define endpoints the platform can call as tools when running milestone skills. Keep secrets on your server—never put API keys in descriptions or prompts.",
     "addTool": "Add tool",
     "editTool": "Edit tool",
     "save": "Save",
@@ -271,7 +269,7 @@
     "emptyWorkspaceTitle": "Workspace required",
     "emptyWorkspaceDescription": "Create or join a workspace to add custom API tools for your team.",
     "emptyListTitle": "No custom tools yet",
-    "emptyListDescription": "Add a tool with a name, description, and HTTPS URL. The description helps the AI know when to use it.",
+    "emptyListDescription": "Add a tool with a name, description, and endpoint URL. The description helps the AI know when to use it.",
     "colName": "Name",
     "colKey": "Tool key",
     "colUrl": "URL",
@@ -284,11 +282,10 @@
     "fieldDescription": "Description",
     "fieldDescriptionHint": "What this endpoint returns and when the AI should call it.",
     "fieldUrl": "Endpoint URL",
-    "fieldUrlHint": "Must start with https://",
+    "fieldUrlHint": "Any endpoint string your integration uses (max 2048 characters).",
     "fieldActive": "Active",
     "actions": "Actions",
-    "edit": "Edit",
-    "urlInvalid": "URL must use https and include a valid host."
+    "edit": "Edit"
   },
   "profile": {
     "title": "Profile",

@@ -204,7 +204,7 @@ def test_api_adapter_tools_non_member_empty_list_and_denied_create():
     assert "Access denied" in str(r_create.errors[0].message)
 
 
-def test_create_api_adapter_tool_rejects_http_url():
+def test_create_api_adapter_tool_accepts_http_url():
     wid = _seed_workspace_with_member()
 
     r = asyncio.run(
@@ -212,15 +212,15 @@ def test_create_api_adapter_tool_rejects_http_url():
             CREATE_TOOL,
             variable_values={
                 "workspaceId": str(wid),
-                "name": "Bad",
+                "name": "HttpOk",
                 "description": "Uses http",
                 "url": "http://insecure.example.com/data",
             },
             context_value=graphql_auth_context(),
         )
     )
-    assert r.errors
-    assert "https" in str(r.errors[0].message).lower()
+    assert not r.errors, r.errors
+    assert r.data["createApiAdapterTool"]["url"] == "http://insecure.example.com/data"
 
 
 def test_create_duplicate_name_rejected():

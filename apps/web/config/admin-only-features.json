@@ -13,12 +13,6 @@
       "navKeys": ["studio"]
     },
     {
-      "id": "customTools",
-      "description": "Workspace custom API adapter tools.",
-      "routePrefixes": ["/custom-tools"],
-      "navKeys": ["customTools"]
-    },
-    {
       "id": "printOrders",
       "description": "Print orders listing and shop flow entry points tied to print.",
       "routePrefixes": ["/print-orders"],

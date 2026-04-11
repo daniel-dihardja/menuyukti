@@ -30,7 +30,7 @@ class CreateApiAdapterToolMutation:
         wid = int(workspace_id)
         name_clean = api_adapter_tool_service.normalize_name(name)
         desc_clean = api_adapter_tool_service.normalize_description(description)
-        url_clean = api_adapter_tool_service.validate_https_url(url)
+        url_clean = api_adapter_tool_service.validate_tool_url(url)
         tool_key = api_adapter_tool_service.tool_key_from_name(name_clean)
 
         with SessionLocal() as session:

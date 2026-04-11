@@ -1,10 +1,8 @@
-"""Validate and normalize API adapter tool inputs (HTTPS URL, tool_key from name)."""
+"""Validate and normalize API adapter tool inputs (endpoint URL string, tool_key from name)."""
 
 from __future__ import annotations
 
 import re
-
-from url_safety.egress import parse_and_validate_egress_https_url
 
 _MAX_NAME_LEN = 256
 _MAX_DESCRIPTION_LEN = 8000
@@ -50,7 +48,8 @@ def normalize_description(description: str) -> str:
     return d
 
 
-def validate_https_url(url: str) -> str:
+def validate_tool_url(url: str) -> str:
+    """Normalize stored endpoint string: non-empty after strip, max length only."""
     u = url.strip()
     if not u:
         msg = "URL is required"
@@ -58,4 +57,4 @@ def validate_https_url(url: str) -> str:
     if len(u) > _MAX_URL_LEN:
         msg = f"URL must be at most {_MAX_URL_LEN} characters"
         raise ValueError(msg)
-    return parse_and_validate_egress_https_url(u)
+    return u

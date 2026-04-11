@@ -551,7 +551,6 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "sqlalchemy" },
     { name = "strawberry-graphql", extra = ["asgi"] },
-    { name = "url-safety" },
     { name = "uvicorn" },
 ]
 
@@ -572,7 +571,6 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "sqlalchemy", specifier = ">=2.0.46" },
     { name = "strawberry-graphql", extras = ["asgi"], specifier = ">=0.308.2" },
-    { name = "url-safety", editable = "packages/url-safety" },
     { name = "uvicorn", specifier = ">=0.40.0" },
 ]
 

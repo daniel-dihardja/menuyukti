@@ -18,7 +18,7 @@ import {
   updateApiAdapterToolAction,
 } from '@/app/(protected)/custom-tools/actions'
 import type { ApiAdapterToolRow } from '@/lib/graphql/queries'
-import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
+import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -191,8 +191,8 @@ export function CustomToolsManager({ workspaceId, workspaceName, initialTools }:
           isActive,
         })
         if (!res.ok) {
-          if (res.error.toLowerCase().includes('https')) {
-            setFieldErrors((prev) => ({ ...prev, url: t('urlInvalid') }))
+          if (res.error.toLowerCase().includes('url')) {
+            setFieldErrors((prev) => ({ ...prev, url: res.error }))
           }
           setFormError(res.error)
           return
@@ -219,8 +219,8 @@ export function CustomToolsManager({ workspaceId, workspaceName, initialTools }:
           isActive,
         })
         if (!res.ok) {
-          if (res.error.toLowerCase().includes('https')) {
-            setFieldErrors((prev) => ({ ...prev, url: t('urlInvalid') }))
+          if (res.error.toLowerCase().includes('url')) {
+            setFieldErrors((prev) => ({ ...prev, url: res.error }))
           }
           setFormError(res.error)
           return
@@ -362,11 +362,6 @@ export function CustomToolsManager({ workspaceId, workspaceName, initialTools }:
           <AlertDescription>{deleteError}</AlertDescription>
         </Alert>
       ) : null}
-      <Alert>
-        <AlertTitle>{t('securityTitle')}</AlertTitle>
-        <AlertDescription>{t('securityBody')}</AlertDescription>
-      </Alert>
-
       <div className="flex flex-wrap items-center justify-between gap-3">
         {workspaceName ? (
           <p className="text-muted-foreground text-sm">
@@ -460,8 +455,7 @@ export function CustomToolsManager({ workspaceId, workspaceName, initialTools }:
                   <Input
                     id="ct-url"
                     name="url"
-                    type="url"
-                    inputMode="url"
+                    type="text"
                     value={url}
                     onChange={(ev) => setUrl(ev.target.value)}
                     autoComplete="off"

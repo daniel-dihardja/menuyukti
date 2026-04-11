@@ -61,7 +61,7 @@ class UpdateApiAdapterToolMutation:
                 row.description = api_adapter_tool_service.normalize_description(description)
 
             if url is not UNSET and url is not None:
-                row.url = api_adapter_tool_service.validate_https_url(url)
+                row.url = api_adapter_tool_service.validate_tool_url(url)
 
             if is_active is not UNSET and is_active is not None:
                 row.is_active = is_active

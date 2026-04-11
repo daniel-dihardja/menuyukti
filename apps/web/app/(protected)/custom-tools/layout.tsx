@@ -1,6 +1,3 @@
-import { requireMenuyuktiAdmin } from '@/lib/menuyukti-role-server'
-
-export default async function CustomToolsLayout({ children }: { children: React.ReactNode }) {
-  await requireMenuyuktiAdmin()
+export default function CustomToolsLayout({ children }: { children: React.ReactNode }) {
   return children
 }

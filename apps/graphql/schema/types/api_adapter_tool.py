@@ -4,7 +4,7 @@ import strawberry
 
 
 @strawberry.type(
-    description="Workspace-owned HTTP tool definition for custom agent integrations (URL invoked at runtime)."
+    description="Workspace-owned tool definition for custom agent integrations (endpoint invoked at runtime)."
 )
 class ApiAdapterToolType:
     id: strawberry.ID

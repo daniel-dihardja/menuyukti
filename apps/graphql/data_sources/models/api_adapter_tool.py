@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 class ApiAdapterTool(Base):
     """
-    User-defined tool: HTTPS URL invoked by the agent runtime (phase 2).
+    User-defined tool: endpoint URL or string invoked by the agent runtime (phase 2).
     tool_key is a stable snake_case identifier unique per workspace (LangChain tool name).
     """
 
