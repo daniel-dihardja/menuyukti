@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  BarChart3,
   BookOpen,
   ChevronRight,
   FileUp,
@@ -113,6 +114,12 @@ const NAV_ADMIN: NavItem[] = [
     labelKey: 'staffTools',
     href: routes.staff,
     icon: <Shield className="w-4 h-4" />,
+  },
+  {
+    key: 'usage',
+    labelKey: 'usage',
+    href: routes.usage,
+    icon: <BarChart3 className="w-4 h-4" />,
   },
 ]
 

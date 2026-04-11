@@ -23,6 +23,12 @@
       "description": "Menuyukti staff console.",
       "routePrefixes": ["/staff"],
       "navKeys": ["staff"]
+    },
+    {
+      "id": "aiGatewayUsage",
+      "description": "Vercel AI Gateway usage and credits (admin).",
+      "routePrefixes": ["/usage"],
+      "navKeys": ["usage"]
     }
   ]
 }

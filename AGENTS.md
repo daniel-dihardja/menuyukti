@@ -31,6 +31,7 @@ cd apps/web && pnpm dev
 
 - Production build: `pnpm build` then `pnpm start`
 - Lint: `pnpm lint` — Typecheck: `pnpm typecheck` / `pnpm check-types` (same as typecheck) — Format: `pnpm format:check` / `pnpm format` (includes `messages/*.json`) — Tests: `pnpm test`
+- Admin **AI usage** page (`/usage`): set `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` in the web app environment (same as agents) so server-side fetches to Vercel AI Gateway can run.
 
 ### GraphQL (`apps/graphql`)
 

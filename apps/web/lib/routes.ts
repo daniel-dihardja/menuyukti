@@ -12,6 +12,7 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/skills',
   '/custom-tools',
   '/staff',
+  '/usage',
   '/profile',
 ] as const
 
@@ -51,6 +52,8 @@ export const routes = {
   dashboard: '/dashboard',
   /** Menuyukti staff-only console (platform role `admin`). */
   staff: '/staff',
+  /** Vercel AI Gateway credits and per-model usage (platform role `admin`). */
+  usage: '/usage',
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',
   /** Clerk `<UserProfile />` (manage account); optional catch-all under `/profile/account/...`. */

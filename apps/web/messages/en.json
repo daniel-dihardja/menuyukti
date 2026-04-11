@@ -331,6 +331,7 @@
     "docs": "Docs",
     "assets": "Assets",
     "staffTools": "Staff",
+    "usage": "AI usage",
     "theme": {
       "label": "Theme",
       "light": "Light",
@@ -341,6 +342,38 @@
   "staff": {
     "title": "Staff console",
     "description": "Menuyukti platform tools for team members. Customers do not see this area."
+  },
+  "usage": {
+    "title": "AI usage",
+    "breadcrumb": "AI usage",
+    "heading": "Vercel AI Gateway usage",
+    "description": "Credit balance and per-model token spend from your AI Gateway account (last 30 days UTC for the model breakdown).",
+    "dateRange": "Model breakdown period: {start} → {end} (UTC).",
+    "credits": {
+      "sectionTitle": "Credits",
+      "balanceLabel": "Balance",
+      "totalUsedLabel": "Total used",
+      "missingKeyTitle": "AI Gateway key not configured",
+      "missingKeyDescription": "Set AI_GATEWAY_API_KEY or VERCEL_OIDC_TOKEN for the web app so usage can be loaded. See Vercel AI Gateway documentation.",
+      "errorTitle": "Could not load credits",
+      "httpError": "The credits request failed (HTTP {status}).",
+      "parseError": "The credits response could not be read."
+    },
+    "report": {
+      "sectionTitle": "Usage by model",
+      "sectionHint": "Per-model data uses the AI Gateway reporting API (Vercel Pro or Enterprise). Each page load runs one report query; on lower tiers you may see an access message instead of a table.",
+      "forbiddenTitle": "Model breakdown unavailable",
+      "forbiddenDescription": "Your plan or key may not include custom reporting, or the reporting API returned access denied. Credits above may still be accurate.",
+      "errorTitle": "Could not load model breakdown",
+      "httpError": "The report request failed (HTTP {status}).",
+      "parseError": "The report response could not be read.",
+      "empty": "No usage rows for this period. Data can take a few minutes to appear after requests.",
+      "columnModel": "Model",
+      "columnRequests": "Requests",
+      "columnInputTokens": "Input tokens",
+      "columnOutputTokens": "Output tokens",
+      "columnCost": "Cost (USD)"
+    }
   },
   "platform": {
     "dashboard": {
