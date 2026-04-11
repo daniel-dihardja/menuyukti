@@ -1,6 +1,6 @@
 # Menuyukti Agents (`apps/agents`)
 
-FastAPI service for **LangChain / LangGraph** workflows with streaming chat over **OpenAI**.
+FastAPI service for **LangChain / LangGraph** workflows with streaming chat via **[Vercel AI Gateway](https://vercel.com/docs/ai-gateway)** (OpenAI-compatible; default model `openai/gpt-4o-mini`).
 
 ## Setup
 
@@ -9,7 +9,7 @@ From this directory (requires [uv](https://docs.astral.sh/uv/)):
 ```bash
 make install
 cp .env.example .env
-# Set OPENAI_API_KEY in .env
+# Set AI_GATEWAY_API_KEY in .env (see https://vercel.com/docs/ai-gateway#using-the-ai-gateway-with-an-api-key)
 ```
 
 ## Run

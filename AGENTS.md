@@ -55,7 +55,7 @@ make dev       # FastAPI + uvicorn reload, port 8001
 ```
 
 - Streaming chat: `POST /chat` (SSE) — Health: `GET /health` — Tests: `make test` — Lint/format: `make lint` / `make format` — Types: `make typecheck` (mypy)
-- Set `OPENAI_API_KEY` in `.env` (see `.env.example`).
+- Set `AI_GATEWAY_API_KEY` in `.env` for LLM calls (see `.env.example` and `apps/agents/.env.example`).
 
 ### All services
 

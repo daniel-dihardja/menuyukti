@@ -1,7 +1,8 @@
 # Build from repository root:
 #   docker build -f apps/agents/Dockerfile -t agents .
 #
-# Runtime: set OPENAI_API_KEY, GRAPHQL_ENDPOINT, and optional GRAPHQL_INTERNAL_API_KEY / AGENTS_API_KEY.
+# Runtime: set AI_GATEWAY_API_KEY (or VERCEL_OIDC_TOKEN on Vercel), GRAPHQL_ENDPOINT,
+# and optional GRAPHQL_INTERNAL_API_KEY / AGENTS_API_KEY.
 
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm
 

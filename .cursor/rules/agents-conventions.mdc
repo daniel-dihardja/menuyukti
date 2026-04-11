@@ -128,7 +128,7 @@ Always set SSE response headers: `Cache-Control: no-cache`, `Connection: keep-al
 - `get_llm()` — streaming `ChatOpenAI` (use for token streams and `astream`).
 - `get_llm_structured()` — non-streaming `ChatOpenAI` (use with `.with_structured_output(PydanticModel)`).
 
-Both read `OPENAI_API_KEY` (and optionally `OPENAI_MODEL`) from env.
+Both use **Vercel AI Gateway** (`ChatOpenAI` with `base_url` `https://ai-gateway.vercel.sh/v1`). Set `AI_GATEWAY_API_KEY`, or `VERCEL_OIDC_TOKEN` on Vercel. Optionally override with `OPENAI_MODEL` (bare names get `openai/` prefix; use `provider/model` for a full gateway id).
 
 ## Structured output
 
@@ -160,8 +160,9 @@ Routers authenticate with **`X-Menuyukti-User-Id`**. GraphQL calls use **`graphq
 
 | Variable | Required | Purpose |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes | LLM calls |
-| `OPENAI_MODEL` | No | Override model name |
+| `AI_GATEWAY_API_KEY` | Yes (unless `VERCEL_OIDC_TOKEN`) | LLM calls via Vercel AI Gateway |
+| `VERCEL_OIDC_TOKEN` | No | On Vercel; alternative to `AI_GATEWAY_API_KEY` |
+| `OPENAI_MODEL` | No | Override model (`gpt-4o-mini` → `openai/gpt-4o-mini`, or full `provider/model`) |
 | `GRAPHQL_ENDPOINT` | Yes (for non-chat flows) | GraphQL API base URL |
 | `GRAPHQL_INTERNAL_API_KEY` | No | Server-to-server auth header |
 

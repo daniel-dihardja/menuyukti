@@ -2,7 +2,6 @@
 
 import httpx
 import pytest
-
 from agents_app.agents.http.safe_egress import safe_https_get
 
 

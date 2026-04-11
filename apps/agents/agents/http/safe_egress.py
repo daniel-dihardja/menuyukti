@@ -55,7 +55,10 @@ async def safe_https_get(
     """
     own_client = client is None
     if own_client:
-        client = httpx.AsyncClient(timeout=_timeout(), follow_redirects=False)
+        http_client = httpx.AsyncClient(timeout=_timeout(), follow_redirects=False)
+    else:
+        assert client is not None
+        http_client = client
 
     try:
         try:
@@ -77,7 +80,7 @@ async def safe_https_get(
             if err:
                 return None, err
 
-            async with client.stream("GET", current) as response:
+            async with http_client.stream("GET", current) as response:
                 if response.status_code in (301, 302, 303, 307, 308):
                     if redirects >= max_red:
                         return None, "Too many redirects"
@@ -107,4 +110,4 @@ async def safe_https_get(
                 return body.decode("utf-8", errors="replace"), None
     finally:
         if own_client:
-            await client.aclose()
+            await http_client.aclose()

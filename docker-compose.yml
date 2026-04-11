@@ -3,7 +3,7 @@
 #
 # In `.env` next to this file, set:
 #   DATABASE_URL   — Neon Postgres URL (web + GraphQL), e.g. postgresql://user:pass@...neon.tech/neondb?sslmode=require
-#   OPENAI_API_KEY — for agents (LangGraph)
+#   AI_GATEWAY_API_KEY — for agents (LangGraph via Vercel AI Gateway)
 #   CLERK_SECRET_KEY — Clerk secret key (also passed into the web container via `environment:`)
 #   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — Clerk publishable key (pk_…); used at `next build` and, for the web
 #       container, mapped to env var CLERK_PUBLISHABLE_KEY at runtime (see `web` service `environment:`)
@@ -37,7 +37,7 @@ services:
       context: .
       dockerfile: apps/agents/Dockerfile
     environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-}
       GRAPHQL_ENDPOINT: http://graphql:8000/graphql
       GRAPHQL_INTERNAL_API_KEY: ${GRAPHQL_INTERNAL_API_KEY:-}
       AGENTS_API_KEY: ${AGENTS_API_KEY:-}
