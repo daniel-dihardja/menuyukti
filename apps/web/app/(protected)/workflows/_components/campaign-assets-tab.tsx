@@ -17,20 +17,15 @@ type AssetItem = {
   createdAt: string
 }
 
+export type CampaignAssetsTabAccess = 'loading' | 'allowed' | 'denied'
+
 export type CampaignAssetsTabProps = {
   workflowId: string
   onOpenPrintShop: () => void
-  isPlatformAdmin: boolean
-  /** When false, role is not known yet — avoid showing the admin-only message prematurely. */
-  platformRoleLoaded: boolean
+  access: CampaignAssetsTabAccess
 }
 
-export function CampaignAssetsTab({
-  workflowId,
-  onOpenPrintShop,
-  isPlatformAdmin,
-  platformRoleLoaded,
-}: CampaignAssetsTabProps) {
+export function CampaignAssetsTab({ workflowId, onOpenPrintShop, access }: CampaignAssetsTabProps) {
   const t = useTranslations('analytics.campaigns.workspace')
   const tAssets = useTranslations('assets')
   const [items, setItems] = useState<AssetItem[]>([])
@@ -51,15 +46,15 @@ export function CampaignAssetsTab({
   }, [])
 
   useEffect(() => {
-    if (!platformRoleLoaded || !isPlatformAdmin) {
+    if (access !== 'allowed') {
       setItems([])
       setLoading(false)
       return
     }
     void load()
-  }, [isPlatformAdmin, load, platformRoleLoaded])
+  }, [access, load])
 
-  if (!platformRoleLoaded) {
+  if (access === 'loading') {
     return (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
         {Array.from({ length: 8 }, (_, i) => (
@@ -69,7 +64,7 @@ export function CampaignAssetsTab({
     )
   }
 
-  if (!isPlatformAdmin) {
+  if (access === 'denied') {
     return <p className="text-muted-foreground text-sm text-pretty">{t('assetsTabAdminOnly')}</p>
   }
 

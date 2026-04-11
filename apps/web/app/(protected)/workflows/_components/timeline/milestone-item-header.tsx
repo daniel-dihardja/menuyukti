@@ -1,6 +1,7 @@
 'use client'
 
 import type { RefObject } from 'react'
+import { useTranslations } from 'next-intl'
 import { ArrowDown, ArrowUp, Check, ChevronDown, Pencil, Play, Trash2 } from 'lucide-react'
 
 import {
@@ -35,14 +36,6 @@ export type MilestoneItemHeaderProps = {
   titleEditContainerRef: RefObject<HTMLDivElement | null>
   renaming: boolean
   open: boolean
-  expandDetailsLabel: string
-  collapseDetailsLabel: string
-  editMilestoneTitleAriaLabel: string
-  saveMilestoneTitleAriaLabel: string
-  milestonePlayAriaLabel: string
-  milestonePlayTooltip: string
-  moveMilestoneUp: string
-  moveMilestoneDown: string
   onRenameMilestone?: (id: string, name: string) => Promise<boolean>
   onRunMilestone?: (id: string) => void | Promise<void>
   onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
@@ -55,12 +48,6 @@ export type MilestoneItemHeaderProps = {
   showDelete: boolean
   onDeleteMilestone?: (id: string) => void | Promise<void>
   isDeleting: boolean
-  deleteButtonLabel: string
-  deleteMilestoneAriaLabel: string
-  deleteMilestoneConfirmTitle: string
-  deleteMilestoneConfirmDescription: string
-  deleteMilestoneConfirmCancel: string
-  deleteMilestoneConfirmAction: string
   handleSaveTitle: () => Promise<void>
 }
 
@@ -75,14 +62,6 @@ export function MilestoneItemHeader({
   titleEditContainerRef,
   renaming,
   open,
-  expandDetailsLabel,
-  collapseDetailsLabel,
-  editMilestoneTitleAriaLabel,
-  saveMilestoneTitleAriaLabel,
-  milestonePlayAriaLabel,
-  milestonePlayTooltip,
-  moveMilestoneUp,
-  moveMilestoneDown,
   onRenameMilestone,
   onRunMilestone,
   onMoveMilestone,
@@ -95,14 +74,10 @@ export function MilestoneItemHeader({
   showDelete,
   onDeleteMilestone,
   isDeleting,
-  deleteButtonLabel,
-  deleteMilestoneAriaLabel,
-  deleteMilestoneConfirmTitle,
-  deleteMilestoneConfirmDescription,
-  deleteMilestoneConfirmCancel,
-  deleteMilestoneConfirmAction,
   handleSaveTitle,
 }: MilestoneItemHeaderProps) {
+  const t = useTranslations('analytics.campaigns.chat')
+
   return (
     <CardHeader className={cn('gap-1.5', editingTitle && 'gap-x-8')}>
       <CardTitle className="flex min-w-0 items-center gap-1 text-base leading-snug">
@@ -111,7 +86,7 @@ export function MilestoneItemHeader({
             <Input
               ref={titleEditInputRef}
               id={titleEditInputId}
-              aria-label={editMilestoneTitleAriaLabel}
+              aria-label={t('editMilestoneTitleAriaLabel')}
               className="h-8 min-w-0 flex-1 text-base font-semibold"
               disabled={renaming}
               onChange={(e) => setDraftTitle(e.target.value)}
@@ -131,7 +106,7 @@ export function MilestoneItemHeader({
               value={draftTitle}
             />
             <Button
-              aria-label={saveMilestoneTitleAriaLabel}
+              aria-label={t('saveMilestoneTitleAriaLabel')}
               className="size-9 shrink-0"
               disabled={renaming || !draftTitle.trim()}
               onClick={(e) => {
@@ -152,7 +127,7 @@ export function MilestoneItemHeader({
               <span className="min-w-0 truncate">{milestone.title}</span>
               {onRenameMilestone ? (
                 <Button
-                  aria-label={editMilestoneTitleAriaLabel}
+                  aria-label={t('editMilestoneTitleAriaLabel')}
                   className="size-8 shrink-0 text-muted-foreground"
                   onClick={(e) => {
                     e.stopPropagation()
@@ -178,7 +153,7 @@ export function MilestoneItemHeader({
               <span className="inline-flex">
                 <Button
                   aria-busy={isMilestoneRunning ? true : undefined}
-                  aria-label={milestonePlayAriaLabel}
+                  aria-label={t('milestonePlayAriaLabel')}
                   className="size-9 shrink-0 rounded-full"
                   disabled={editingTitle || isChatBusy || runningMilestoneId !== null}
                   onClick={(e) => {
@@ -194,13 +169,13 @@ export function MilestoneItemHeader({
                 </Button>
               </span>
             </TooltipTrigger>
-            <TooltipContent side="bottom">{milestonePlayTooltip}</TooltipContent>
+            <TooltipContent side="bottom">{t('milestonePlayTooltip')}</TooltipContent>
           </Tooltip>
         ) : null}
         {onMoveMilestone ? (
           <>
             <Button
-              aria-label={moveMilestoneUp}
+              aria-label={t('moveMilestoneUp')}
               className="size-9 shrink-0 text-muted-foreground"
               disabled={isFirst || isMoving || editingTitle}
               onClick={(e) => {
@@ -215,7 +190,7 @@ export function MilestoneItemHeader({
               <ArrowUp aria-hidden data-icon="inline-start" />
             </Button>
             <Button
-              aria-label={moveMilestoneDown}
+              aria-label={t('moveMilestoneDown')}
               className="size-9 shrink-0 text-muted-foreground"
               disabled={isLast || isMoving || editingTitle}
               onClick={(e) => {
@@ -235,13 +210,13 @@ export function MilestoneItemHeader({
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
-                aria-label={deleteMilestoneAriaLabel}
+                aria-label={t('deleteMilestoneAriaLabel')}
                 className="size-9 shrink-0 text-muted-foreground hover:text-destructive"
                 disabled={isDeleting || editingTitle}
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 size="icon"
-                title={deleteButtonLabel}
+                title={t('deleteMilestone')}
                 type="button"
                 variant="ghost"
               >
@@ -253,12 +228,14 @@ export function MilestoneItemHeader({
               onPointerDown={(e) => e.stopPropagation()}
             >
               <AlertDialogHeader>
-                <AlertDialogTitle>{deleteMilestoneConfirmTitle}</AlertDialogTitle>
-                <AlertDialogDescription>{deleteMilestoneConfirmDescription}</AlertDialogDescription>
+                <AlertDialogTitle>{t('deleteMilestoneConfirmTitle')}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t('deleteMilestoneConfirmDescription')}
+                </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={(e) => e.stopPropagation()} type="button">
-                  {deleteMilestoneConfirmCancel}
+                  {t('deleteMilestoneConfirmCancel')}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   className={cn(
@@ -275,10 +252,10 @@ export function MilestoneItemHeader({
                   {isDeleting ? (
                     <>
                       <Spinner data-icon="inline-start" />
-                      {deleteMilestoneConfirmAction}
+                      {t('deleteMilestoneConfirmAction')}
                     </>
                   ) : (
-                    deleteMilestoneConfirmAction
+                    t('deleteMilestoneConfirmAction')
                   )}
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -288,7 +265,7 @@ export function MilestoneItemHeader({
         <CollapsibleTrigger asChild>
           <Button
             aria-expanded={open}
-            aria-label={open ? collapseDetailsLabel : expandDetailsLabel}
+            aria-label={open ? t('milestoneCollapseDetails') : t('milestoneExpandDetails')}
             className="size-9 shrink-0"
             disabled={editingTitle}
             onClick={(e) => e.stopPropagation()}

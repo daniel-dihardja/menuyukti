@@ -17,46 +17,14 @@ import {
 export type TimelineToolbarProps = {
   title: string
   count: number
-  createLabel?: string
-  creatingLabel?: string
-  onCreateMilestone?: () => void | Promise<void>
-  creating?: boolean
-  showCreate?: boolean
-  exportLabel?: string
-  exportingLabel?: string
-  onExport?: () => void | Promise<void>
-  exporting?: boolean
-  showExport?: boolean
-  importLabel?: string
-  onImport?: () => void | Promise<void>
-  showImport?: boolean
-  /** Rendered after the create milestone button (e.g. preview toggle). */
+  /** Toolbar buttons; omit by not rendering (composition over show* flags). */
+  actions?: ReactNode
+  /** Rendered after action buttons (e.g. preview toggle). */
   trailingSlot?: ReactNode
 }
 
-export function TimelineToolbar({
-  title,
-  count,
-  createLabel,
-  creatingLabel,
-  onCreateMilestone,
-  creating,
-  showCreate,
-  exportLabel,
-  exportingLabel,
-  onExport,
-  exporting,
-  showExport,
-  importLabel,
-  onImport,
-  showImport,
-  trailingSlot,
-}: TimelineToolbarProps) {
-  const showActions =
-    Boolean(trailingSlot) ||
-    (showExport && onExport && exportLabel && exportingLabel) ||
-    (showImport && onImport && importLabel) ||
-    (showCreate && onCreateMilestone && createLabel && creatingLabel)
+export function TimelineToolbar({ title, count, actions, trailingSlot }: TimelineToolbarProps) {
+  const showActions = Boolean(actions) || Boolean(trailingSlot)
 
   return (
     <header className="flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3">
@@ -67,75 +35,119 @@ export function TimelineToolbar({
       {showActions ? (
         <TooltipProvider delayDuration={300}>
           <div className="flex shrink-0 items-center gap-2">
-            {showExport && onExport && exportLabel && exportingLabel ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex">
-                    <Button
-                      aria-busy={exporting}
-                      aria-label={exporting ? exportingLabel : exportLabel}
-                      disabled={exporting || creating}
-                      onClick={() => void onExport()}
-                      size="icon"
-                      type="button"
-                      variant="outline"
-                    >
-                      {exporting ? <Spinner /> : <Download aria-hidden />}
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>{exporting ? exportingLabel : exportLabel}</p>
-                </TooltipContent>
-              </Tooltip>
-            ) : null}
-            {showImport && onImport && importLabel ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex">
-                    <Button
-                      aria-label={importLabel}
-                      disabled={creating || exporting}
-                      onClick={() => void onImport()}
-                      size="icon"
-                      type="button"
-                      variant="outline"
-                    >
-                      <Upload aria-hidden />
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>{importLabel}</p>
-                </TooltipContent>
-              </Tooltip>
-            ) : null}
-            {showCreate && onCreateMilestone && createLabel && creatingLabel ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex">
-                    <Button
-                      aria-busy={creating}
-                      aria-label={creating ? creatingLabel : createLabel}
-                      disabled={creating || exporting}
-                      onClick={() => void onCreateMilestone()}
-                      size="icon"
-                      type="button"
-                      variant="default"
-                    >
-                      {creating ? <Spinner /> : <Plus aria-hidden />}
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>{creating ? creatingLabel : createLabel}</p>
-                </TooltipContent>
-              </Tooltip>
-            ) : null}
+            {actions}
             {trailingSlot}
           </div>
         </TooltipProvider>
       ) : null}
     </header>
+  )
+}
+
+export function TimelineToolbarExportButton({
+  exportLabel,
+  exportingLabel,
+  onExport,
+  exporting,
+  creating,
+}: {
+  exportLabel: string
+  exportingLabel: string
+  onExport: () => void | Promise<void>
+  exporting: boolean
+  creating: boolean
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">
+          <Button
+            aria-busy={exporting}
+            aria-label={exporting ? exportingLabel : exportLabel}
+            disabled={exporting || creating}
+            onClick={() => void onExport()}
+            size="icon"
+            type="button"
+            variant="outline"
+          >
+            {exporting ? <Spinner /> : <Download aria-hidden />}
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        <p>{exporting ? exportingLabel : exportLabel}</p>
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+export function TimelineToolbarImportButton({
+  importLabel,
+  onImport,
+  creating,
+  exporting,
+}: {
+  importLabel: string
+  onImport: () => void | Promise<void>
+  creating: boolean
+  exporting: boolean
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">
+          <Button
+            aria-label={importLabel}
+            disabled={creating || exporting}
+            onClick={() => void onImport()}
+            size="icon"
+            type="button"
+            variant="outline"
+          >
+            <Upload aria-hidden />
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        <p>{importLabel}</p>
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+export function TimelineToolbarCreateButton({
+  createLabel,
+  creatingLabel,
+  onCreateMilestone,
+  creating,
+  exporting,
+}: {
+  createLabel: string
+  creatingLabel: string
+  onCreateMilestone: () => void | Promise<void>
+  creating: boolean
+  exporting: boolean
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">
+          <Button
+            aria-busy={creating}
+            aria-label={creating ? creatingLabel : createLabel}
+            disabled={creating || exporting}
+            onClick={() => void onCreateMilestone()}
+            size="icon"
+            type="button"
+            variant="default"
+          >
+            {creating ? <Spinner /> : <Plus aria-hidden />}
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        <p>{creating ? creatingLabel : createLabel}</p>
+      </TooltipContent>
+    </Tooltip>
   )
 }

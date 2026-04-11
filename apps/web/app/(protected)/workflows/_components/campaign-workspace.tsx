@@ -145,8 +145,7 @@ export function CampaignWorkspace({
 
         <TabsContent className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden" value="assets">
           <CampaignAssetsTab
-            isPlatformAdmin={isPlatformAdmin}
-            platformRoleLoaded={isLoaded}
+            access={!isLoaded ? 'loading' : isPlatformAdmin ? 'allowed' : 'denied'}
             onOpenPrintShop={() => {
               setPrintDialogOpen(true)
             }}

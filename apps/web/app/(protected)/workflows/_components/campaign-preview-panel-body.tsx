@@ -23,8 +23,10 @@ const PREVIEW_TITLE_ID = 'campaign-preview-panel-title'
 export function CampaignPreviewPanelBody() {
   const t = useTranslations('analytics.campaigns.chat')
   const tWorkspace = useTranslations('analytics.campaigns.workspace')
-  const { milestones, onHydrateMilestoneData, onUpdateMilestoneData, savingDataMilestoneId } =
-    useTimelineContext()
+  const {
+    milestoneState: { milestones, savingDataMilestoneId },
+    actions: { onHydrateMilestoneData, onUpdateMilestoneData },
+  } = useTimelineContext()
   const [selectedId] = useQueryState('milestone', parseAsString)
 
   const selectedMilestone =
