@@ -28,7 +28,7 @@ export async function GET(req: Request) {
 
     const data = await graphqlQuery<AnalyticsRunsByLocationData>(
       ANALYTICS_RUNS_BY_LOCATION_QUERY,
-      { locationId },
+      { locationId, first: 300 },
       userId,
     )
 

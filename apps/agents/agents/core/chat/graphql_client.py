@@ -21,8 +21,8 @@ query Node($id: ID!) {
 """
 
 _NODES_QUERY = """
-query Nodes($locationId: Int!, $nodeType: String, $parentId: ID) {
-  nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId) {
+query Nodes($locationId: Int!, $nodeType: String, $parentId: ID, $first: Int) {
+  nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId, first: $first) {
     id
     name
     nodeType
@@ -34,8 +34,8 @@ query Nodes($locationId: Int!, $nodeType: String, $parentId: ID) {
 """
 
 _NODES_BY_PARENT_QUERY = """
-query NodesByParent($locationId: Int!, $parentId: ID) {
-  nodes(locationId: $locationId, parentId: $parentId) {
+query NodesByParent($locationId: Int!, $parentId: ID, $first: Int) {
+  nodes(locationId: $locationId, parentId: $parentId, first: $first) {
     id
     name
     nodeType
@@ -123,7 +123,7 @@ async def fetch_milestone_children(
     data = await graphql_post(
         client,
         _NODES_BY_PARENT_QUERY,
-        {"locationId": location_id, "parentId": milestone_id},
+        {"locationId": location_id, "parentId": milestone_id, "first": 500},
         user_id,
     )
     raw = data.get("nodes")
@@ -148,6 +148,7 @@ async def upsert_goal_node(
             "locationId": location_id,
             "nodeType": "goal",
             "parentId": milestone_id,
+            "first": 500,
         },
         user_id,
     )
@@ -222,6 +223,7 @@ async def replace_pass_criteria(
             "locationId": location_id,
             "nodeType": "passcriteria",
             "parentId": milestone_id,
+            "first": 500,
         },
         user_id,
     )

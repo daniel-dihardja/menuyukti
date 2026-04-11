@@ -3,6 +3,16 @@
 A minimal starter for the Strawberry GraphQL endpoint. The service currently exposes the schema from
 `apps/graphql/schema` and can be launched with `uvicorn server:app` (see the Makefile for shortcuts).
 
+## Security and query limits
+
+**Trust model.** The API is intended for **server-to-server** use from the Next.js app (or other trusted callers). When `INTERNAL_API_KEY` is set in the environment, [`server.py`](./server.py) requires matching header `X-Internal-Api-Key` on every request. The authenticated Clerk user is passed as **`X-User-Id`**; the GraphQL layer **trusts** that value after the internal key gate. Do not expose this endpoint directly to browsers without a gateway that validates callers. Rotate `INTERNAL_API_KEY` if it may have leaked.
+
+**Query protections.** The schema enables depth, alias count, token count, and maximum field-selection limits (see [`limits.py`](./limits.py) and [`schema/__init__.py`](./schema/__init__.py)). Oversized documents fail validation before execution.
+
+**Pagination.** `nodes` accepts optional `first` (default 500, max 500) and `afterId` (last-seen node id) when listing by location without `parentId`; pages are ordered by **id descending** (typically newest-first with serial PKs). With `parentId`, results use milestone display order and truncate to `first`. `analyticsRuns` accepts optional `first` (default 100, max 300).
+
+**Uploads.** `uploadSalesReport` rejects files larger than `MAX_SALES_REPORT_UPLOAD_BYTES` (default 30 MiB). Line-level `normalizedRows` and `orders` are returned only when **`includeLineItems`** is true; otherwise the mutation still ingests data but omits those large fields in the response.
+
 ## Analytics and the `menuyukti` package
 
 Keep this app **light**: resolvers should load data, enforce ownership/auth, and map results to GraphQL types. **Sales and menu analytics** (aggregations, metrics, matrix/heatmap logic, etc.) live in the shared Python package **`packages/menuyukti`** — add new calculations there and call them from here. Database schema and migrations remain in this app; see [`packages/menuyukti/README.md`](../../packages/menuyukti/README.md) for boundaries and layout.
@@ -74,7 +84,7 @@ Running `make db-upgrade` with `DATABASE_URL` set will create this table alongsi
 
 ## Uploading Excel files
 
-The schema now exposes an `uploadSalesReport(file: Upload!): ExcelUploadResult!` mutation. It reads the file into memory, detects the POS system (ESB today, others in the future), normalizes the rows via Menyukti, persists them into the `order_fact` table, and returns metadata (sheet names/header row, bytes) plus the normalized data.
+The schema exposes `uploadSalesReport(file: Upload!, locationId: ID!, includeLineItems: Boolean = false): ExcelUploadResult!`. It reads the file into memory (subject to `MAX_SALES_REPORT_UPLOAD_BYTES`), detects the POS system (ESB today, others in the future), normalizes the rows via Menyukti, persists them into the `order_fact` table, and returns metadata (sheet names/header row, bytes) and `salesAnalytics`. Set **`includeLineItems: true`** only when the client needs `normalizedRows` and `orders` in the response (large payloads).
 
 1. Open a GraphQL client that supports multipart file uploads (Insomnia, Altair, GraphiQL with `graphql-multipart-request-spec`).
 2. Issue a mutation such as:

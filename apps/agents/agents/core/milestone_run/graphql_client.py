@@ -39,8 +39,8 @@ query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) 
 """
 
 _WORKFLOW_MILESTONES_QUERY = """
-query WorkflowMilestones($locationId: Int!, $parentId: ID) {
-  nodes(locationId: $locationId, parentId: $parentId) {
+query WorkflowMilestones($locationId: Int!, $parentId: ID, $first: Int) {
+  nodes(locationId: $locationId, parentId: $parentId, first: $first) {
     id
     name
     nodeType
@@ -78,7 +78,7 @@ async def fetch_prior_milestones_data(
     data = await graphql_post(
         client,
         _WORKFLOW_MILESTONES_QUERY,
-        {"locationId": location_id, "parentId": workflow_id},
+        {"locationId": location_id, "parentId": workflow_id, "first": 500},
         user_id,
     )
     raw_nodes = data.get("nodes")

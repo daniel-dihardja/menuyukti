@@ -8,8 +8,8 @@ import httpx
 from agents_app.agents.graphql_base import graphql_post
 
 _NODES_QUERY = """
-query Nodes($locationId: Int!, $nodeType: String, $parentId: ID) {
-  nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId) {
+query Nodes($locationId: Int!, $nodeType: String, $parentId: ID, $first: Int) {
+  nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId, first: $first) {
     id
     nodeType
     data
@@ -77,6 +77,7 @@ async def upsert_milestonedata(
             "locationId": location_id,
             "nodeType": "milestonedata",
             "parentId": milestone_id,
+            "first": 500,
         },
         user_id,
     )

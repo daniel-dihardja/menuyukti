@@ -248,8 +248,8 @@ export type ImportWorkflowDataRaw = {
 }
 
 export const NODES_QUERY = `
-  query Nodes($locationId: Int!, $nodeType: String, $parentId: ID) {
-    nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId) {
+  query Nodes($locationId: Int!, $nodeType: String, $parentId: ID, $first: Int, $afterId: ID) {
+    nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId, first: $first, afterId: $afterId) {
       id
       name
       description
@@ -286,8 +286,8 @@ export type NodeData = {
 }
 
 export const ANALYTICS_RUNS_BY_LOCATION_QUERY = `
-  query AnalyticsRunsByLocation($locationId: Int!) {
-    analyticsRuns(locationId: $locationId) {
+  query AnalyticsRunsByLocation($locationId: Int!, $first: Int) {
+    analyticsRuns(locationId: $locationId, first: $first) {
       id
       name
       filename

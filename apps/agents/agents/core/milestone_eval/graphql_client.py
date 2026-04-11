@@ -8,8 +8,8 @@ import httpx
 from agents_app.agents.graphql_base import graphql_post
 
 _NODES_QUERY = """
-query Nodes($locationId: Int!, $parentId: ID) {
-  nodes(locationId: $locationId, parentId: $parentId) {
+query Nodes($locationId: Int!, $parentId: ID, $first: Int) {
+  nodes(locationId: $locationId, parentId: $parentId, first: $first) {
     id
     name
     nodeType
@@ -76,7 +76,7 @@ async def fetch_milestone_children(
         data = await graphql_post(
             c,
             _NODES_QUERY,
-            {"locationId": location_id, "parentId": milestone_id},
+            {"locationId": location_id, "parentId": milestone_id, "first": 500},
             user_id,
         )
         raw = data.get("nodes")

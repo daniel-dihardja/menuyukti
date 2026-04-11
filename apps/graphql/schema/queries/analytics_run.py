@@ -4,6 +4,11 @@ from datetime import date, datetime
 import strawberry
 
 from graphql.data_sources import AnalyticsRun, MenuItemCogs, OrderFact, SessionLocal
+from graphql.limits import (
+    DEFAULT_ANALYTICS_RUNS_FIRST,
+    MAX_ANALYTICS_RUNS_FIRST,
+    clamp_page_size,
+)
 from graphql.schema.auth import (
     get_analytics_run_if_owner,
     is_location_owner,
@@ -111,11 +116,24 @@ class AnalyticsRunQuery:
                 return None
             return _run_to_type(session, run)
 
-    @strawberry.field(description="List analytics runs for a location, newest first.")
+    @strawberry.field(
+        description=(
+            "List analytics runs for a location, newest first. "
+            "Use `first` to cap rows (default 100, max 300)."
+        )
+    )
     def analytics_runs(
-        self, info: strawberry.Info, location_id: int
+        self,
+        info: strawberry.Info,
+        location_id: int,
+        first: int | None = None,
     ) -> list[AnalyticsRunListItemType]:
         user_id = user_id_from_info(info)
+        limit = clamp_page_size(
+            first,
+            default=DEFAULT_ANALYTICS_RUNS_FIRST,
+            maximum=MAX_ANALYTICS_RUNS_FIRST,
+        )
         with SessionLocal() as session:
             if not is_location_owner(session, location_id, user_id):
                 return []
@@ -123,6 +141,7 @@ class AnalyticsRunQuery:
                 session.query(AnalyticsRun)
                 .where(AnalyticsRun.location_id == location_id)
                 .order_by(AnalyticsRun.id.desc())
+                .limit(limit)
                 .all()
             )
             return [

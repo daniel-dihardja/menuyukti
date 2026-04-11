@@ -16,7 +16,7 @@ REPORT_FILE = ROOT_DIR / "reports" / "Sales_Recapitulation_Detail_Report_Test.xl
 
 MUTATION = """
 mutation UploadFile($file: Upload!, $locationId: ID!) {
-  uploadSalesReport(file: $file, locationId: $locationId) {
+  uploadSalesReport(file: $file, locationId: $locationId, includeLineItems: true) {
     filename
     sheetNames
     headerPreview

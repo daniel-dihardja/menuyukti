@@ -19,7 +19,12 @@ from graphql.schema.mutations import (
 )
 
 
-@strawberry.type
+@strawberry.type(
+    description=(
+        "Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, "
+        "and image AI flow configuration."
+    )
+)
 class Mutation(
     UploadSalesReportMutation,
     CreateNodeMutation,
