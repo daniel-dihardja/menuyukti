@@ -1,9 +1,21 @@
+import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { routes } from '@/lib/routes'
 
 import { ProfileUserProfile } from '../_components/profile-user-profile'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('profile')
+  const title = t('accountTitle')
+  const description = t('accountDescription')
+  return {
+    title,
+    description,
+    openGraph: { title, description },
+  }
+}
 
 export default async function ProfileAccountPage() {
   const t = await getTranslations('profile')

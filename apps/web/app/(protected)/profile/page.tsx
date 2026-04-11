@@ -1,4 +1,5 @@
 import { currentUser } from '@clerk/nextjs/server'
+import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
 
@@ -28,6 +29,17 @@ function getDisplayName(user: ClerkUser): string {
 
 function getPrimaryEmail(user: ClerkUser): string {
   return user.primaryEmailAddress?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? ''
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('profile')
+  const title = t('title')
+  const description = t('description')
+  return {
+    title,
+    description,
+    openGraph: { title, description },
+  }
 }
 
 export default async function ProfilePage() {
