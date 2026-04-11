@@ -39,13 +39,19 @@ async def prefetch_data_with_steps(
 
     step_name is ``fetch_<id>`` for SSE compatibility.
     """
+    prefetch_cache: dict[int, str | None] = {}
     for req in config.menuyukti.data_requirements:
         handler = PREFETCH_HANDLERS.get(req.use)
         if handler is None:
             msg = f"Unknown prefetch handler: {req.use}"
             raise RuntimeError(msg)
         inputs = render_inputs(req.inputs, env)
-        result = await handler(inputs, client=client, user_id=env.user_id)
+        result = await handler(
+            inputs,
+            client=client,
+            user_id=env.user_id,
+            prefetch_cache=prefetch_cache,
+        )
         if req.required and not result:
             msg = f"Required data requirement {req.id!r} returned empty result"
             raise RuntimeError(msg)

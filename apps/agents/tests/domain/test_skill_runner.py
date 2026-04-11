@@ -14,7 +14,10 @@ from agents_app.agents.domain.skill_runner.env import (
     render_inputs,
     render_template,
 )
-from agents_app.agents.domain.skill_runner.graphql_client import fetch_public_holidays_list
+from agents_app.agents.domain.skill_runner.graphql_client import (
+    fetch_public_holidays_list,
+    get_or_fetch_latest_analytics_run_id,
+)
 from agents_app.agents.domain.skill_runner.handlers import PREFETCH_HANDLERS
 from agents_app.agents.domain.skill_runner.loader import load_skill
 from agents_app.agents.domain.skill_runner.prefetch import prefetch_data
@@ -113,6 +116,31 @@ async def test_prefetch_handler_public_holidays() -> None:
 
 
 @pytest.mark.asyncio
+async def test_get_or_fetch_latest_analytics_run_id_uses_prefetch_cache() -> None:
+    with patch(
+        "agents_app.agents.domain.skill_runner.graphql_client.fetch_latest_analytics_run_id",
+        new=AsyncMock(return_value="run-42"),
+    ) as mock_fetch:
+        async with httpx.AsyncClient() as client:
+            cache: dict[int, str | None] = {}
+            a = await get_or_fetch_latest_analytics_run_id(
+                7,
+                "user-1",
+                client=client,
+                prefetch_cache=cache,
+            )
+            b = await get_or_fetch_latest_analytics_run_id(
+                7,
+                "user-1",
+                client=client,
+                prefetch_cache=cache,
+            )
+    assert a == "run-42"
+    assert b == "run-42"
+    assert mock_fetch.await_count == 1
+
+
+@pytest.mark.asyncio
 async def test_prefetch_handler_public_holidays_rejects_inverted_range() -> None:
     handler = PREFETCH_HANDLERS["platform.public_holidays"]
     async with httpx.AsyncClient() as client:
@@ -154,10 +182,24 @@ async def test_prefetch_data_mock_handlers(skill_path: Path) -> None:
     cfg = load_skill(skill_path)
     env = RunEnv(milestone_id="ms1", location_id=1, user_id="user-1")
 
-    async def fake_loc(inputs: dict, *, client: httpx.AsyncClient, user_id: str):
+    async def fake_loc(
+        inputs: dict,
+        *,
+        client: httpx.AsyncClient,
+        user_id: str,
+        prefetch_cache: dict[int, str | None] | None = None,
+    ):
+        _ = prefetch_cache
         return {"id": "1", "name": "Test"}
 
-    async def fake_op(inputs: dict, *, client: httpx.AsyncClient, user_id: str):
+    async def fake_op(
+        inputs: dict,
+        *,
+        client: httpx.AsyncClient,
+        user_id: str,
+        prefetch_cache: dict[int, str | None] | None = None,
+    ):
+        _ = prefetch_cache
         return {"totalOrders": 10}
 
     with patch.dict(

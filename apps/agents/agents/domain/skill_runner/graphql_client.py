@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import json
+from copy import deepcopy
 from typing import Any
 
 import httpx
 from agents_app.agents.graphql_base import graphql_post
+from agents_app.agents.graphql_operations import LOCATION_QUERY, PUBLIC_HOLIDAYS_QUERY
 
 _ANALYTICS_RUNS_QUERY = """
 query AnalyticsRunsByLocation($locationId: Int!) {
@@ -14,19 +15,6 @@ query AnalyticsRunsByLocation($locationId: Int!) {
     id
     name
     filename
-  }
-}
-"""
-
-_LOCATION_QUERY = """
-query GetLocation($id: ID!) {
-  location(id: $id) {
-    id
-    name
-    street
-    city
-    country
-    currency
   }
 }
 """
@@ -69,19 +57,6 @@ query OperatingProfile($locationId: ID!, $analyticsRunId: ID!) {
       revenue
       revenueShare
     }
-  }
-}
-"""
-
-_PUBLIC_HOLIDAYS_QUERY = """
-query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) {
-  publicHolidays(country: $country, startDate: $startDate, endDate: $endDate) {
-    id
-    date
-    name
-    localName
-    holidayType
-    isTentative
   }
 }
 """
@@ -261,6 +236,7 @@ async def fetch_latest_analytics_run_id(
     *,
     client: httpx.AsyncClient,
 ) -> str | None:
+    """Return the newest analytics run id for the location (server orders by id desc)."""
     data = await graphql_post(
         client,
         _ANALYTICS_RUNS_QUERY,
@@ -277,6 +253,22 @@ async def fetch_latest_analytics_run_id(
     return str(rid) if rid is not None else None
 
 
+async def get_or_fetch_latest_analytics_run_id(
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+    prefetch_cache: dict[int, str | None] | None = None,
+) -> str | None:
+    """Like :func:`fetch_latest_analytics_run_id` but reuses one result per location per prefetch run."""
+    if prefetch_cache is not None and location_id in prefetch_cache:
+        return prefetch_cache[location_id]
+    rid = await fetch_latest_analytics_run_id(location_id, user_id, client=client)
+    if prefetch_cache is not None:
+        prefetch_cache[location_id] = rid
+    return rid
+
+
 async def fetch_location_dict(
     location_id: int,
     user_id: str,
@@ -286,7 +278,7 @@ async def fetch_location_dict(
     """Load location row fields (name, address, currency) from GraphQL."""
     data = await graphql_post(
         client,
-        _LOCATION_QUERY,
+        LOCATION_QUERY,
         {"id": str(location_id)},
         user_id,
     )
@@ -295,7 +287,7 @@ async def fetch_location_dict(
         return None
     if not isinstance(raw, dict):
         return None
-    return json.loads(json.dumps(raw))
+    return deepcopy(raw)
 
 
 async def fetch_public_holidays_list(
@@ -309,7 +301,7 @@ async def fetch_public_holidays_list(
     """Load public holidays for a country and inclusive date range (YYYY-MM-DD strings) from GraphQL."""
     data = await graphql_post(
         client,
-        _PUBLIC_HOLIDAYS_QUERY,
+        PUBLIC_HOLIDAYS_QUERY,
         {
             "country": country,
             "startDate": start_date,
@@ -322,7 +314,7 @@ async def fetch_public_holidays_list(
         return []
     if not isinstance(raw, list):
         return []
-    return json.loads(json.dumps(raw))
+    return deepcopy(raw)
 
 
 async def fetch_operating_profile_dict(
@@ -346,7 +338,7 @@ async def fetch_operating_profile_dict(
         return None
     if not isinstance(raw, dict):
         return None
-    return json.loads(json.dumps(raw))
+    return deepcopy(raw)
 
 
 async def fetch_instagram_signals_dict(
@@ -371,7 +363,7 @@ async def fetch_instagram_signals_dict(
         return None
     if not isinstance(raw, dict):
         return None
-    return json.loads(json.dumps(raw))
+    return deepcopy(raw)
 
 
 async def fetch_promotion_menu_items_dict(
@@ -396,7 +388,7 @@ async def fetch_promotion_menu_items_dict(
         return None
     if not isinstance(raw, dict):
         return None
-    return json.loads(json.dumps(raw))
+    return deepcopy(raw)
 
 
 async def fetch_category_mix_dict(
@@ -421,7 +413,7 @@ async def fetch_category_mix_dict(
         return None
     if not isinstance(raw, dict):
         return None
-    return json.loads(json.dumps(raw))
+    return deepcopy(raw)
 
 
 async def fetch_revenue_trends_dict(
@@ -446,7 +438,7 @@ async def fetch_revenue_trends_dict(
         return None
     if not isinstance(raw, dict):
         return None
-    return json.loads(json.dumps(raw))
+    return deepcopy(raw)
 
 
 async def fetch_menu_items_catalog_dict(
@@ -467,7 +459,7 @@ async def fetch_menu_items_catalog_dict(
         return None
     if not isinstance(raw, dict):
         return None
-    return json.loads(json.dumps(raw))
+    return deepcopy(raw)
 
 
 async def fetch_weekly_demand_pattern_dict(
@@ -488,7 +480,7 @@ async def fetch_weekly_demand_pattern_dict(
         return None
     if not isinstance(raw, dict):
         return None
-    return json.loads(json.dumps(raw))
+    return deepcopy(raw)
 
 
 async def fetch_location_social_settings_dict(
@@ -509,7 +501,7 @@ async def fetch_location_social_settings_dict(
         return None
     if not isinstance(raw, dict):
         return None
-    return json.loads(json.dumps(raw))
+    return deepcopy(raw)
 
 
 async def fetch_most_recent_milestone_data_str(

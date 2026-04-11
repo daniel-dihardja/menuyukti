@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 import httpx
 from agents_app.agents.domain.skill_runner.graphql_client import (
     fetch_category_mix_dict,
     fetch_instagram_signals_dict,
-    fetch_latest_analytics_run_id,
     fetch_location_dict,
     fetch_location_social_settings_dict,
     fetch_menu_items_catalog_dict,
@@ -18,9 +18,10 @@ from agents_app.agents.domain.skill_runner.graphql_client import (
     fetch_public_holidays_list,
     fetch_revenue_trends_dict,
     fetch_weekly_demand_pattern_dict,
+    get_or_fetch_latest_analytics_run_id,
 )
 
-PrefetchHandler = Any  # async (inputs: dict[str, object], *, client, user_id) -> Any
+PrefetchHandler = Callable[..., Awaitable[Any]]
 
 
 def _coerce_location_id(raw: object) -> int:
@@ -42,7 +43,9 @@ async def _handle_public_holidays(
     *,
     client: httpx.AsyncClient,
     user_id: str,
+    prefetch_cache: dict[int, str | None] | None = None,
 ) -> list[dict[str, Any]]:
+    _ = prefetch_cache
     country = _coerce_required_str(inputs, "country")
     start_date = _coerce_required_str(inputs, "start_date")
     end_date = _coerce_required_str(inputs, "end_date")
@@ -63,8 +66,10 @@ async def _handle_public_holidays_for_location(
     *,
     client: httpx.AsyncClient,
     user_id: str,
+    prefetch_cache: dict[int, str | None] | None = None,
 ) -> list[dict[str, Any]]:
     """Resolve country from platform.location, then fetch holidays (empty list if no country)."""
+    _ = prefetch_cache
     location_id = _coerce_location_id(inputs["location_id"])
     start_date = _coerce_required_str(inputs, "start_date")
     end_date = _coerce_required_str(inputs, "end_date")
@@ -91,7 +96,9 @@ async def _handle_location(
     *,
     client: httpx.AsyncClient,
     user_id: str,
+    prefetch_cache: dict[int, str | None] | None = None,
 ) -> dict[str, Any] | None:
+    _ = prefetch_cache
     location_id = _coerce_location_id(inputs["location_id"])
     return await fetch_location_dict(location_id, user_id, client=client)
 
@@ -101,9 +108,15 @@ async def _handle_latest_operating_profile(
     *,
     client: httpx.AsyncClient,
     user_id: str,
+    prefetch_cache: dict[int, str | None] | None = None,
 ) -> dict[str, Any] | None:
     location_id = _coerce_location_id(inputs["location_id"])
-    run_id = await fetch_latest_analytics_run_id(location_id, user_id, client=client)
+    run_id = await get_or_fetch_latest_analytics_run_id(
+        location_id,
+        user_id,
+        client=client,
+        prefetch_cache=prefetch_cache,
+    )
     if not run_id:
         msg = "No analytics run found for this location. Upload sales data first."
         raise RuntimeError(msg)
@@ -119,9 +132,15 @@ async def _handle_instagram_signals(
     *,
     client: httpx.AsyncClient,
     user_id: str,
+    prefetch_cache: dict[int, str | None] | None = None,
 ) -> dict[str, Any] | None:
     location_id = _coerce_location_id(inputs["location_id"])
-    run_id = await fetch_latest_analytics_run_id(location_id, user_id, client=client)
+    run_id = await get_or_fetch_latest_analytics_run_id(
+        location_id,
+        user_id,
+        client=client,
+        prefetch_cache=prefetch_cache,
+    )
     if not run_id:
         msg = "No analytics run found for this location. Upload sales data first."
         raise RuntimeError(msg)
@@ -137,9 +156,15 @@ async def _handle_promotion_menu_items(
     *,
     client: httpx.AsyncClient,
     user_id: str,
+    prefetch_cache: dict[int, str | None] | None = None,
 ) -> dict[str, Any] | None:
     location_id = _coerce_location_id(inputs["location_id"])
-    run_id = await fetch_latest_analytics_run_id(location_id, user_id, client=client)
+    run_id = await get_or_fetch_latest_analytics_run_id(
+        location_id,
+        user_id,
+        client=client,
+        prefetch_cache=prefetch_cache,
+    )
     if not run_id:
         msg = "No analytics run found for this location. Upload sales data first."
         raise RuntimeError(msg)
@@ -155,9 +180,15 @@ async def _handle_category_mix(
     *,
     client: httpx.AsyncClient,
     user_id: str,
+    prefetch_cache: dict[int, str | None] | None = None,
 ) -> dict[str, Any] | None:
     location_id = _coerce_location_id(inputs["location_id"])
-    run_id = await fetch_latest_analytics_run_id(location_id, user_id, client=client)
+    run_id = await get_or_fetch_latest_analytics_run_id(
+        location_id,
+        user_id,
+        client=client,
+        prefetch_cache=prefetch_cache,
+    )
     if not run_id:
         msg = "No analytics run found for this location. Upload sales data first."
         raise RuntimeError(msg)
@@ -173,9 +204,15 @@ async def _handle_revenue_trends(
     *,
     client: httpx.AsyncClient,
     user_id: str,
+    prefetch_cache: dict[int, str | None] | None = None,
 ) -> dict[str, Any] | None:
     location_id = _coerce_location_id(inputs["location_id"])
-    run_id = await fetch_latest_analytics_run_id(location_id, user_id, client=client)
+    run_id = await get_or_fetch_latest_analytics_run_id(
+        location_id,
+        user_id,
+        client=client,
+        prefetch_cache=prefetch_cache,
+    )
     if not run_id:
         msg = "No analytics run found for this location. Upload sales data first."
         raise RuntimeError(msg)
@@ -191,7 +228,9 @@ async def _handle_menu_items_catalog(
     *,
     client: httpx.AsyncClient,
     user_id: str,
+    prefetch_cache: dict[int, str | None] | None = None,
 ) -> dict[str, Any] | None:
+    _ = prefetch_cache
     location_id = _coerce_location_id(inputs["location_id"])
     payload = await fetch_menu_items_catalog_dict(location_id, user_id, client=client)
     if not payload:
@@ -205,7 +244,9 @@ async def _handle_weekly_demand_pattern(
     *,
     client: httpx.AsyncClient,
     user_id: str,
+    prefetch_cache: dict[int, str | None] | None = None,
 ) -> dict[str, Any] | None:
+    _ = prefetch_cache
     location_id = _coerce_location_id(inputs["location_id"])
     payload = await fetch_weekly_demand_pattern_dict(location_id, user_id, client=client)
     if not payload:
@@ -219,7 +260,9 @@ async def _handle_location_social_settings(
     *,
     client: httpx.AsyncClient,
     user_id: str,
+    prefetch_cache: dict[int, str | None] | None = None,
 ) -> dict[str, Any] | None:
+    _ = prefetch_cache
     location_id = _coerce_location_id(inputs["location_id"])
     return await fetch_location_social_settings_dict(location_id, user_id, client=client)
 
@@ -229,7 +272,9 @@ async def _handle_prior_milestone_data(
     *,
     client: httpx.AsyncClient,
     user_id: str,
+    prefetch_cache: dict[int, str | None] | None = None,
 ) -> str | None:
+    _ = prefetch_cache
     raw_wf = inputs.get("workflow_id")
     if raw_wf is None or (isinstance(raw_wf, str) and not str(raw_wf).strip()):
         return None

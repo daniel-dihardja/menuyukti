@@ -300,6 +300,7 @@ type Mutation {
   exportWorkflow(workflowId: ID!, locationId: Int!): WorkflowExportType!
   importWorkflow(locationId: Int!, payload: JSON!): NodeType!
   updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
+  replacePassCriteria(milestoneId: ID!, locationId: Int!, requirements: [String!]!): Boolean!
   createLocation(workspaceId: ID!, name: String!, street: String = null, city: String = null, country: String = null, currency: String): LocationType!
   createWorkspace(name: String!): WorkspaceType!
   inviteWorkspaceMember(workspaceId: ID!, clerkUserId: String!): WorkspaceMembershipType!
@@ -510,6 +511,11 @@ type Query {
   Markdown body from the milestonedata child of the most recently updated milestone under the workflow whose milestone.data.dataTask matches ``data_task``. Returns null when none match or content is empty.
   """
   mostRecentMilestoneData(workflowId: ID!, dataTask: String!): String
+
+  """
+  Markdown sections (## title + body) for each milestone strictly before the given milestone in workflow display order, using each prior milestone's first milestonedata child body. Empty string when there are no prior milestones or no content.
+  """
+  priorMilestonesMilestoneData(workflowId: ID!, milestoneId: ID!, locationId: Int!): String!
   myWorkspace: WorkspaceType
   workspaceMembers(workspaceId: ID!): [WorkspaceMembershipType!]!
   imageAiFlows(includeInactive: Boolean! = false): [ImageAiFlowType!]!

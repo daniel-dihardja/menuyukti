@@ -8,6 +8,19 @@ from typing import Any, cast
 import httpx
 
 
+class GraphQLHttpError(RuntimeError):
+    """GraphQL response contained errors or no data."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        errors: list[dict[str, Any]] | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.errors = errors
+
+
 def graphql_endpoint() -> str:
     url = os.environ.get("GRAPHQL_ENDPOINT", "").strip()
     if not url:
@@ -25,6 +38,32 @@ def graphql_headers(user_id: str) -> dict[str, str]:
     return headers
 
 
+def _first_error_detail(err: dict[str, Any]) -> str:
+    parts: list[str] = []
+    msg = err.get("message")
+    if isinstance(msg, str) and msg:
+        parts.append(msg)
+    path = err.get("path")
+    if isinstance(path, list) and path:
+        parts.append(f"path={path}")
+    ext = err.get("extensions")
+    if isinstance(ext, dict):
+        code = ext.get("code")
+        if code is not None:
+            parts.append(f"code={code}")
+    return "; ".join(parts) if parts else "GraphQL error"
+
+
+def _errors_list(raw: object) -> list[dict[str, Any]]:
+    if not isinstance(raw, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for item in raw:
+        if isinstance(item, dict):
+            out.append(item)
+    return out
+
+
 async def graphql_post(
     client: httpx.AsyncClient,
     query: str,
@@ -39,17 +78,11 @@ async def graphql_post(
     )
     res.raise_for_status()
     body = cast(dict[str, Any], res.json())
-    errors = body.get("errors")
+    errors = _errors_list(body.get("errors"))
     if errors:
-        first = errors[0] if isinstance(errors, list) and errors else {}
-        msg = (
-            str(first.get("message", "GraphQL error"))
-            if isinstance(first, dict)
-            else "GraphQL error"
-        )
-        raise RuntimeError(msg)
+        detail = _first_error_detail(errors[0])
+        raise GraphQLHttpError(detail, errors=errors)
     data = body.get("data")
     if not isinstance(data, dict):
-        msg = "GraphQL returned no data"
-        raise RuntimeError(msg)
+        raise GraphQLHttpError("GraphQL returned no data", errors=None)
     return data

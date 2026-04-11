@@ -6,58 +6,13 @@ from typing import Any
 
 import httpx
 from agents_app.agents.graphql_base import graphql_post
-
-_NODES_QUERY = """
-query Nodes($locationId: Int!, $nodeType: String, $parentId: ID, $first: Int) {
-  nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId, first: $first) {
-    id
-    nodeType
-    data
-  }
-}
-"""
-
-_UPDATE_NODE_MUTATION = """
-mutation UpdateNode($id: ID!, $data: JSON) {
-  updateNode(id: $id, data: $data) {
-    id
-    nodeType
-    data
-  }
-}
-"""
-
-_DELETE_NODE_MUTATION = """
-mutation DeleteNode($id: ID!) {
-  deleteNode(id: $id)
-}
-"""
-
-_CREATE_NODE_MUTATION = """
-mutation CreateNode(
-  $locationId: Int!
-  $nodeType: String!
-  $name: String
-  $description: String
-  $data: JSON
-  $parentId: ID
-) {
-  createNode(
-    locationId: $locationId
-    nodeType: $nodeType
-    name: $name
-    description: $description
-    data: $data
-    parentId: $parentId
-  ) {
-    id
-    nodeType
-    data
-    parentId
-    locationId
-  }
-}
-"""
+from agents_app.agents.graphql_operations import (
+    CREATE_NODE_MUTATION,
+    DEFAULT_NODES_FIRST,
+    DELETE_NODE_MUTATION,
+    NODES_QUERY,
+    UPDATE_NODE_MUTATION,
+)
 
 
 async def upsert_milestonedata(
@@ -72,12 +27,12 @@ async def upsert_milestonedata(
 
     data = await graphql_post(
         client,
-        _NODES_QUERY,
+        NODES_QUERY,
         {
             "locationId": location_id,
             "nodeType": "milestonedata",
             "parentId": milestone_id,
-            "first": 500,
+            "first": DEFAULT_NODES_FIRST,
         },
         user_id,
     )
@@ -91,7 +46,7 @@ async def upsert_milestonedata(
     if not rows:
         gql = await graphql_post(
             client,
-            _CREATE_NODE_MUTATION,
+            CREATE_NODE_MUTATION,
             {
                 "locationId": location_id,
                 "nodeType": "milestonedata",
@@ -111,7 +66,7 @@ async def upsert_milestonedata(
     for extra in rest:
         eid = extra.get("id")
         if eid is not None:
-            await graphql_post(client, _DELETE_NODE_MUTATION, {"id": str(eid)}, user_id)
+            await graphql_post(client, DELETE_NODE_MUTATION, {"id": str(eid)}, user_id)
 
     pid = primary.get("id")
     if pid is None:
@@ -119,7 +74,7 @@ async def upsert_milestonedata(
         raise RuntimeError(msg)
     upd = await graphql_post(
         client,
-        _UPDATE_NODE_MUTATION,
+        UPDATE_NODE_MUTATION,
         {"id": str(pid), "data": {"data": text}},
         user_id,
     )

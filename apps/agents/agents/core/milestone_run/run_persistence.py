@@ -8,46 +8,12 @@ from typing import Any
 
 import httpx
 from agents_app.agents.graphql_base import graphql_post
+from agents_app.agents.graphql_operations import (
+    COMPLETE_MILESTONE_AGENT_RUN_MUTATION,
+    START_MILESTONE_AGENT_RUN_MUTATION,
+)
 
 _logger = logging.getLogger(__name__)
-
-_START_MUTATION = """
-mutation StartMilestoneAgentRun(
-  $runId: String!
-  $milestoneId: ID!
-  $workflowId: ID
-  $traceparent: String
-) {
-  startMilestoneAgentRun(
-    runId: $runId
-    milestoneId: $milestoneId
-    workflowId: $workflowId
-    traceparent: $traceparent
-  )
-}
-"""
-
-_COMPLETE_MUTATION = """
-mutation CompleteMilestoneAgentRun(
-  $runId: String!
-  $status: String!
-  $summary: JSON
-  $externalTraceId: String
-  $externalTraceUrl: String
-  $timeline: JSON
-  $errorMessage: String
-) {
-  completeMilestoneAgentRun(
-    runId: $runId
-    status: $status
-    summary: $summary
-    externalTraceId: $externalTraceId
-    externalTraceUrl: $externalTraceUrl
-    timeline: $timeline
-    errorMessage: $errorMessage
-  )
-}
-"""
 
 
 def external_trace_url_for_run(run_id: str) -> str | None:
@@ -73,7 +39,7 @@ async def start_milestone_agent_run_record(
     try:
         data = await graphql_post(
             client,
-            _START_MUTATION,
+            START_MILESTONE_AGENT_RUN_MUTATION,
             {
                 "runId": run_id,
                 "milestoneId": milestone_id,
@@ -112,7 +78,7 @@ async def complete_milestone_agent_run_record(
         ext_url = external_trace_url_for_run(run_id)
         data = await graphql_post(
             client,
-            _COMPLETE_MUTATION,
+            COMPLETE_MILESTONE_AGENT_RUN_MUTATION,
             {
                 "runId": run_id,
                 "status": status,
