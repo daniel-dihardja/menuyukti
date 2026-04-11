@@ -10,8 +10,8 @@ from agents_app.agents.graphql_operations import (
     CREATE_NODE_MUTATION,
     DEFAULT_NODES_FIRST,
     DELETE_NODE_MUTATION,
-    NODES_QUERY,
     NODE_BY_ID_QUERY,
+    NODES_QUERY,
     REPLACE_PASS_CRITERIA_MUTATION,
     UPDATE_NODE_MUTATION,
 )

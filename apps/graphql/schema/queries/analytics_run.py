@@ -108,7 +108,7 @@ def _compute_order_metrics(session, run: AnalyticsRun) -> AnalyticsRunOrderMetri
 
 def _run_to_type(run: AnalyticsRun) -> AnalyticsRunType:
     return AnalyticsRunType(
-        id=str(run.id),
+        id=strawberry.ID(str(run.id)),
         name=run.name,
         filename=run.filename,
         posSystem=run.pos_system,

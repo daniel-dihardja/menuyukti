@@ -15,9 +15,7 @@ from agents_app.agents.core.milestone_eval.graphql_client import (
 )
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
-    DEFAULT_NODES_FIRST,
     LOCATION_QUERY,
-    NODES_QUERY,
     PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
     PUBLIC_HOLIDAYS_QUERY,
 )
