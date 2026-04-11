@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 import { graphqlQuery } from '@/lib/graphql/client'
+import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
+import { resolveMenuyuktiRole } from '@/lib/menuyukti-role-server'
 import { routes } from '@/lib/routes'
 import {
   CREATE_API_ADAPTER_TOOL_MUTATION,
@@ -118,12 +120,19 @@ export type CreateUpdateToolResult =
 
 export type DeleteToolResult = { ok: true } | { ok: false; error: string }
 
-async function requireUserId(): Promise<string> {
+type ActionAuthOk = { ok: true; userId: string }
+type ActionAuthFail = { ok: false; error: string }
+
+async function requireMenuyuktiAdminForAction(): Promise<ActionAuthOk | ActionAuthFail> {
   const { userId } = await auth()
   if (!userId) {
-    throw new Error('Unauthorized')
+    return { ok: false, error: 'Unauthorized' }
   }
-  return userId
+  const role = await resolveMenuyuktiRole()
+  if (!isMenuyuktiAdmin(role)) {
+    return { ok: false, error: 'Forbidden' }
+  }
+  return { ok: true, userId }
 }
 
 export async function createApiAdapterToolAction(raw: unknown): Promise<CreateUpdateToolResult> {
@@ -133,7 +142,11 @@ export async function createApiAdapterToolAction(raw: unknown): Promise<CreateUp
     return { ok: false, error: msg }
   }
   try {
-    const userId = await requireUserId()
+    const authz = await requireMenuyuktiAdminForAction()
+    if (!authz.ok) {
+      return { ok: false, error: authz.error }
+    }
+    const { userId } = authz
     const data = await graphqlQuery<CreateApiAdapterToolData>(
       CREATE_API_ADAPTER_TOOL_MUTATION,
       {
@@ -161,7 +174,11 @@ export async function updateApiAdapterToolAction(raw: unknown): Promise<CreateUp
     return { ok: false, error: msg }
   }
   try {
-    const userId = await requireUserId()
+    const authz = await requireMenuyuktiAdminForAction()
+    if (!authz.ok) {
+      return { ok: false, error: authz.error }
+    }
+    const { userId } = authz
     const data = await graphqlQuery<UpdateApiAdapterToolData>(
       UPDATE_API_ADAPTER_TOOL_MUTATION,
       {
@@ -188,7 +205,11 @@ export async function deleteApiAdapterToolAction(id: string): Promise<DeleteTool
     return { ok: false, error: 'Missing id' }
   }
   try {
-    const userId = await requireUserId()
+    const authz = await requireMenuyuktiAdminForAction()
+    if (!authz.ok) {
+      return { ok: false, error: authz.error }
+    }
+    const { userId } = authz
     await graphqlQuery<DeleteApiAdapterToolData>(
       DELETE_API_ADAPTER_TOOL_MUTATION,
       { id: idClean },

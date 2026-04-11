@@ -1,4 +1,7 @@
-/** URL prefixes for the signed-in app shell (sidebar + header row). User profile lives in that header, not the global AppChrome bar. */
+/**
+ * URL prefixes for the signed-in app shell (sidebar + header row). User profile lives in that header, not the global AppChrome bar.
+ * Admin-only paths: also declare in `config/admin-only-features.json` (nav + route guards).
+ */
 export const PROTECTED_APP_SHELL_PREFIXES = [
   '/analytics',
   '/workflows',
