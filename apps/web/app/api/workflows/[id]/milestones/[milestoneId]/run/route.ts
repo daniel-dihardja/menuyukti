@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 
@@ -18,6 +18,7 @@ type RouteContext = {
 }
 
 export async function POST(req: Request, context: RouteContext) {
+  await connection()
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

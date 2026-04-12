@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { graphqlQuery } from '@/lib/graphql/client'
 import type { AnalyticsRunsByLocationData } from '@/lib/graphql/queries'
@@ -10,6 +10,7 @@ import { ANALYTICS_RUNS_BY_LOCATION_QUERY } from '@/lib/graphql/queries'
  */
 export async function GET(req: Request) {
   try {
+    await connection()
     const { isAuthenticated, userId } = await auth()
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { ZodError } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
@@ -11,6 +11,7 @@ import { createCampaignSchema } from './schema'
 
 export async function POST(req: Request) {
   try {
+    await connection()
     const { isAuthenticated, userId } = await auth()
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
