@@ -3,6 +3,8 @@
 import { createContext, useContext, type ReactNode } from 'react'
 
 import type { CampaignMilestoneUiState } from './campaign-milestone-reducer'
+import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
+
 import type { MilestoneDataTask, PassCriteriaRow } from './timeline/types'
 
 /** Milestone list + in-flight ids (no error strings). */
@@ -38,6 +40,7 @@ export type TimelineErrors = Pick<
 
 export type TimelineActions = {
   onCreateMilestone: () => void | Promise<void>
+  onCreateMilestoneFromPreset: (presetId: MilestonePresetId) => void | Promise<void>
   onDeleteMilestone: (id: string) => void | Promise<void>
   onRenameMilestone: (id: string, name: string) => Promise<boolean>
   onMoveMilestone: (id: string, direction: 'up' | 'down') => void | Promise<void>

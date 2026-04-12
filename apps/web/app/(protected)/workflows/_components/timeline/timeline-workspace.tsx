@@ -12,6 +12,7 @@ import {
 } from '../timeline-context'
 import { TimelineInlineErrors, type TimelineErrorMap } from './timeline-inline-errors'
 import { ImportWorkflowDialog } from './import-workflow-dialog'
+import { MilestonePresetSelect } from './milestone-preset-select'
 import {
   TimelineToolbar,
   TimelineToolbarCreateButton,
@@ -51,7 +52,7 @@ export function TimelineWorkspace({
   const { workflowId, milestoneState, errors, selectedMilestoneId, onSelectMilestone } =
     useTimelineWorkspaceState()
   const { milestones, creating, exporting } = milestoneState
-  const { onCreateMilestone, onExport } = useTimelineActions()
+  const { onCreateMilestone, onCreateMilestoneFromPreset, onExport } = useTimelineActions()
 
   const showReady = !isLoading && !loadError
   const showTimeline = showReady && milestones.length > 0
@@ -74,6 +75,10 @@ export function TimelineWorkspace({
             exporting={exporting}
             exportingLabel={t('exportingMilestones')}
             onExport={onExport}
+          />
+          <MilestonePresetSelect
+            disabled={creating || exporting}
+            onCreateFromPreset={onCreateMilestoneFromPreset}
           />
           <TimelineToolbarCreateButton
             createLabel={t('createMilestone')}
@@ -109,7 +114,9 @@ export function TimelineWorkspace({
         <TimelineWorkspaceEmpty
           createError={errors.createError}
           creating={creating}
+          exporting={exporting}
           onCreateMilestone={onCreateMilestone}
+          onCreateMilestoneFromPreset={onCreateMilestoneFromPreset}
           timelineTrailing={timelineTrailing}
         />
       ) : (

@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import { useCallback } from 'react'
 import { useTranslations } from 'next-intl'
+import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 import { Plus } from 'lucide-react'
 
 import { Button } from '@workspace/ui/components/button'
@@ -15,6 +16,7 @@ import {
   TooltipTrigger,
 } from '@workspace/ui/components/tooltip'
 
+import { MilestonePresetSelect } from './milestone-preset-select'
 import { TimelineBody } from './timeline-body'
 
 export function TimelineWorkspaceLoading() {
@@ -45,12 +47,16 @@ export function TimelineWorkspaceLoadError({ message }: { message: string }) {
 export function TimelineWorkspaceEmpty({
   creating,
   createError,
+  exporting,
   onCreateMilestone,
+  onCreateMilestoneFromPreset,
   timelineTrailing,
 }: {
   creating: boolean
   createError: string | null
+  exporting: boolean
   onCreateMilestone: () => void | Promise<void>
+  onCreateMilestoneFromPreset: (presetId: MilestonePresetId) => void | Promise<void>
   timelineTrailing: ReactNode
 }) {
   const t = useTranslations('analytics.campaigns.chat')
@@ -74,7 +80,7 @@ export function TimelineWorkspaceEmpty({
                 <Button
                   aria-busy={creating}
                   aria-label={creating ? t('creatingMilestone') : t('createMilestone')}
-                  disabled={creating}
+                  disabled={creating || exporting}
                   onClick={() => void onCreateMilestone()}
                   size="icon"
                   type="button"
@@ -88,6 +94,10 @@ export function TimelineWorkspaceEmpty({
               <p>{creating ? t('creatingMilestone') : t('createMilestone')}</p>
             </TooltipContent>
           </Tooltip>
+          <MilestonePresetSelect
+            disabled={creating || exporting}
+            onCreateFromPreset={onCreateMilestoneFromPreset}
+          />
           {timelineTrailing}
         </div>
       </TooltipProvider>

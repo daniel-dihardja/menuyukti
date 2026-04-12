@@ -784,6 +784,19 @@
         "timelineEmptyDescription": "Create a milestone to plan steps for this workflow. You can add details and pass criteria in the card.",
         "createMilestone": "Create milestone",
         "creatingMilestone": "Creating…",
+        "milestonePreset": {
+          "selectPlaceholder": "Preset…",
+          "selectAriaLabel": "Create milestone from preset",
+          "dates": {
+            "label": "Dates",
+            "title": "Dates",
+            "goal": "All key dates are collected: start date, end date, and public holidays are documented in the Data tab.",
+            "criterionStartDate": "Start date is filled in under **Start date** in the Data tab.",
+            "criterionEndDate": "End date is filled in under **End date** in the Data tab.",
+            "criterionPublicHolidays": "Public holidays are listed under **Public holidays** in the Data tab.",
+            "dataMarkdown": "## Start date\n\n\n## End date\n\n\n## Public holidays\n\n"
+          }
+        },
         "exportMilestones": "Export",
         "exportingMilestones": "Exporting…",
         "exportSuccess": "Milestones saved.",

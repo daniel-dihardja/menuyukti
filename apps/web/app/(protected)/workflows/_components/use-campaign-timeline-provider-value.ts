@@ -9,10 +9,13 @@ import {
   type TimelineChatState,
   type TimelineWorkspaceStateValue,
 } from './timeline-context'
+import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
+
 import type { MilestoneDataTask, PassCriteriaRow } from './timeline/types'
 
 export type CampaignTimelineOpsHandles = {
   handleCreateMilestone: () => void | Promise<void>
+  handleCreateMilestoneFromPreset: (presetId: MilestonePresetId) => void | Promise<void>
   handleDeleteMilestone: (id: string) => void | Promise<void>
   handleRenameMilestone: (id: string, name: string) => Promise<boolean>
   handleMoveMilestone: (id: string, direction: 'up' | 'down') => void | Promise<void>
@@ -48,6 +51,7 @@ export function useCampaignTimelineProviderSlices(
   const actions = useMemo<TimelineActions>(
     () => ({
       onCreateMilestone: ops.handleCreateMilestone,
+      onCreateMilestoneFromPreset: ops.handleCreateMilestoneFromPreset,
       onDeleteMilestone: ops.handleDeleteMilestone,
       onRenameMilestone: ops.handleRenameMilestone,
       onMoveMilestone: ops.handleMoveMilestone,

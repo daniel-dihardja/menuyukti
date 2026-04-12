@@ -4,6 +4,10 @@ import type { Dispatch } from 'react'
 import { useCallback, useMemo } from 'react'
 
 import { milestoneDataSchema } from '@/lib/graphql/node-schemas'
+import {
+  getMilestonePresetCreateFields,
+  type MilestonePresetId,
+} from '@/lib/milestones/preset-definitions'
 
 import type { CampaignMilestoneAction } from './campaign-milestone-reducer'
 import { deriveMilestoneRailStatus, milestoneNodeToTimelineMilestone } from './milestone-map'
@@ -73,6 +77,115 @@ export function useMilestoneOperations(
       dispatch({ type: 'PATCH', patch: { creating: false } })
     }
   }, [workflowId, dispatch, t])
+
+  const handleCreateMilestoneFromPreset = useCallback(
+    async (presetId: MilestonePresetId) => {
+      const fields = getMilestonePresetCreateFields(presetId, t)
+      dispatch({ type: 'PATCH', patch: { createError: null, creating: true } })
+      let createdId: string | null = null
+      try {
+        const res = await fetch(`/api/workflows/${workflowId}/milestones`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        })
+        const body = (await res.json().catch(() => null)) as {
+          message?: string
+          id?: string
+          name?: string
+          data?: unknown | null
+        } | null
+        if (!res.ok) {
+          throw new Error(body?.message ?? t('milestonesCreateError'))
+        }
+        const id = body?.id
+        if (typeof id !== 'string') {
+          throw new Error(t('milestonesCreateError'))
+        }
+        createdId = id
+
+        const patchBody: Record<string, unknown> = {
+          name: fields.name,
+          dataTask: fields.dataTask,
+          milestoneData: fields.milestoneData,
+        }
+        if (fields.goal !== undefined) {
+          patchBody.goal = fields.goal
+        }
+
+        const patchRes = await fetch(`/api/workflows/${workflowId}/milestones/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patchBody),
+        })
+        const patchJson = (await patchRes.json().catch(() => null)) as {
+          message?: string
+          name?: string
+          data?: unknown
+        } | null
+        if (!patchRes.ok) {
+          throw new Error(patchJson?.message ?? t('milestonesCreateError'))
+        }
+
+        const title = typeof patchJson?.name === 'string' ? patchJson.name : fields.name
+        const dataTask = milestoneDataTaskFromNodeData(
+          patchJson?.data ?? { dataTask: fields.dataTask },
+        )
+
+        let passCriteria: PassCriteriaRow[] = []
+        const criteriaDraft = fields.passCriteria
+        if (criteriaDraft !== undefined && criteriaDraft.length > 0) {
+          const criteriaRes = await fetch(`/api/workflows/${workflowId}/milestones/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ passCriteria: criteriaDraft }),
+          })
+          const criteriaJson = (await criteriaRes.json().catch(() => null)) as {
+            message?: string
+            passCriteria?: PassCriteriaRow[]
+          } | null
+          if (!criteriaRes.ok) {
+            throw new Error(criteriaJson?.message ?? t('milestonesCreateError'))
+          }
+          passCriteria = criteriaJson?.passCriteria ?? criteriaDraft
+        }
+
+        const next: TimelineMilestone = {
+          id,
+          title,
+          goal: fields.goal?.trim() ? fields.goal : undefined,
+          data: fields.milestoneData,
+          dataTask,
+          passCriteria,
+          status: deriveMilestoneRailStatus(passCriteria, undefined),
+        }
+
+        dispatch({
+          type: 'UPDATE_MILESTONES',
+          updater: (prev) => [...prev, next],
+        })
+      } catch (err) {
+        if (createdId !== null) {
+          try {
+            await fetch(`/api/workflows/${workflowId}/milestones/${createdId}`, {
+              method: 'DELETE',
+            })
+          } catch {
+            // best-effort rollback
+          }
+        }
+        dispatch({
+          type: 'PATCH',
+          patch: {
+            createError: err instanceof Error ? err.message : t('milestonesCreateError'),
+          },
+        })
+      } finally {
+        dispatch({ type: 'PATCH', patch: { creating: false } })
+      }
+    },
+    [workflowId, dispatch, t],
+  )
 
   const handleDeleteMilestone = useCallback(
     async (milestoneId: string) => {
@@ -659,6 +772,7 @@ export function useMilestoneOperations(
   return useMemo(
     () => ({
       handleCreateMilestone,
+      handleCreateMilestoneFromPreset,
       handleDeleteMilestone,
       handleRenameMilestone,
       handleUpdatePassCriteria,
@@ -673,6 +787,7 @@ export function useMilestoneOperations(
     }),
     [
       handleCreateMilestone,
+      handleCreateMilestoneFromPreset,
       handleDeleteMilestone,
       handleRenameMilestone,
       handleUpdatePassCriteria,
