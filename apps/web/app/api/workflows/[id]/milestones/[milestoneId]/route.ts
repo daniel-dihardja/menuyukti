@@ -34,6 +34,27 @@ type RouteContext = {
   params: Promise<{ id: string; milestoneId: string }>
 }
 
+function mergeMilestoneNodeDataJson(
+  prev: Record<string, unknown>,
+  patch: {
+    dataTask?: 'manual'
+    milestoneRunSkillMode?: 'auto' | 'fixed'
+    milestoneRunSkillIds?: string[]
+  },
+): Record<string, unknown> {
+  const next = { ...prev }
+  if (patch.dataTask !== undefined) {
+    next.dataTask = patch.dataTask
+  }
+  if (patch.milestoneRunSkillMode !== undefined) {
+    next.milestoneRunSkillMode = patch.milestoneRunSkillMode
+  }
+  if (patch.milestoneRunSkillIds !== undefined) {
+    next.milestoneRunSkillIds = patch.milestoneRunSkillIds
+  }
+  return next
+}
+
 function passCriterionDisplayName(requirement: string): string {
   const t = requirement.trim()
   if (!t) {
@@ -308,12 +329,30 @@ export async function GET(_req: Request, context: RouteContext) {
 
     const goal = goalFromNode ?? legacyGoal ?? ''
 
+    let milestoneRunSkillMode: 'auto' | 'fixed' = 'auto'
+    let milestoneRunSkillIds: string[] = []
+    if (mn.data != null && typeof mn.data === 'object') {
+      const mdParsed = milestoneDataSchema.safeParse(mn.data)
+      if (mdParsed.success) {
+        if (mdParsed.data.milestoneRunSkillMode === 'fixed') {
+          milestoneRunSkillMode = 'fixed'
+        }
+        if (Array.isArray(mdParsed.data.milestoneRunSkillIds)) {
+          milestoneRunSkillIds = mdParsed.data.milestoneRunSkillIds.filter(
+            (x): x is string => typeof x === 'string' && x.length > 0,
+          )
+        }
+      }
+    }
+
     return NextResponse.json(
       {
         milestoneData,
         dataTask,
         goal,
         passCriteria,
+        milestoneRunSkillMode,
+        milestoneRunSkillIds,
       },
       { status: 200 },
     )
@@ -419,16 +458,25 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
 
     if (body.passCriteria === undefined) {
-      if (body.dataTask !== undefined) {
+      if (
+        body.dataTask !== undefined ||
+        body.milestoneRunSkillMode !== undefined ||
+        body.milestoneRunSkillIds !== undefined
+      ) {
         const mn = validated.milestoneNode
         const prevData =
           mn.data != null && typeof mn.data === 'object'
             ? { ...(mn.data as Record<string, unknown>) }
             : {}
+        const merged = mergeMilestoneNodeDataJson(prevData, {
+          dataTask: body.dataTask,
+          milestoneRunSkillMode: body.milestoneRunSkillMode,
+          milestoneRunSkillIds: body.milestoneRunSkillIds,
+        })
         parseUpdateNodeData(
           await graphqlQuery<UpdateNodeDataRaw>(
             UPDATE_NODE_MUTATION,
-            { id: milestoneId, data: { ...prevData, dataTask: body.dataTask } },
+            { id: milestoneId, data: merged },
             userId,
           ),
         )
@@ -472,6 +520,30 @@ export async function PATCH(req: Request, context: RouteContext) {
         userId,
       )
       parseUpdateNodeData(u)
+    }
+
+    if (
+      body.dataTask !== undefined ||
+      body.milestoneRunSkillMode !== undefined ||
+      body.milestoneRunSkillIds !== undefined
+    ) {
+      const mn = validated.milestoneNode
+      const prevData =
+        mn.data != null && typeof mn.data === 'object'
+          ? { ...(mn.data as Record<string, unknown>) }
+          : {}
+      const merged = mergeMilestoneNodeDataJson(prevData, {
+        dataTask: body.dataTask,
+        milestoneRunSkillMode: body.milestoneRunSkillMode,
+        milestoneRunSkillIds: body.milestoneRunSkillIds,
+      })
+      parseUpdateNodeData(
+        await graphqlQuery<UpdateNodeDataRaw>(
+          UPDATE_NODE_MUTATION,
+          { id: milestoneId, data: merged },
+          userId,
+        ),
+      )
     }
 
     const existing = parseNodesData(

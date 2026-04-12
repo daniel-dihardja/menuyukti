@@ -13,6 +13,9 @@ export type PassCriteriaRow = {
 /** Stored on milestone `data.dataTask` when the Data tab is manual entry only. */
 export type MilestoneDataTask = 'manual'
 
+/** Milestone agent run skill selection; stored on milestone `data` JSON. */
+export type MilestoneRunSkillMode = 'auto' | 'fixed'
+
 export type TimelineMilestone = {
   id: string
   title: string
@@ -23,6 +26,10 @@ export type TimelineMilestone = {
   data?: string
   /** How Data tab content is produced; stored on milestone `data` JSON. */
   dataTask?: MilestoneDataTask
+  /** Auto: LLM picks skills. Fixed: use `milestoneRunSkillIds` (max 2). */
+  milestoneRunSkillMode?: MilestoneRunSkillMode
+  /** Registry skill ids when mode is `fixed`. */
+  milestoneRunSkillIds?: string[]
   /** Markdown body for the Result tab. */
   resultMarkdown?: string
   /** Derived rail status from pass criteria + optional run outcome. */

@@ -11,7 +11,9 @@ export const TIMELINE_ERROR_KEYS = [
   'goal',
   'milestoneData',
   'milestoneRun',
+  'milestoneSettings',
   'export',
+  'milestoneRunCriteriaHint',
 ] as const
 
 export type TimelineErrorKey = (typeof TIMELINE_ERROR_KEYS)[number]
@@ -32,11 +34,15 @@ export function TimelineInlineErrors({
     <>
       {TIMELINE_ERROR_KEYS.map((key) => {
         const msg = errors[key]
-        return msg ? (
-          <Alert className="rounded-none border-x-0 border-t-0" key={key} variant="destructive">
+        if (!msg) {
+          return null
+        }
+        const variant = key === 'milestoneRunCriteriaHint' ? 'default' : 'destructive'
+        return (
+          <Alert className="rounded-none border-x-0 border-t-0" key={key} variant={variant}>
             <AlertDescription>{msg}</AlertDescription>
           </Alert>
-        ) : null
+        )
       })}
     </>
   )

@@ -1,5 +1,6 @@
 import type {
   MilestoneDataTask,
+  MilestoneRunSkillMode,
   PassCriteriaRow,
 } from '@/app/(protected)/workflows/_components/timeline/types'
 
@@ -19,6 +20,8 @@ export type MilestonePresetCreateFields = {
   dataTask: MilestoneDataTask
   milestoneData: string
   goal?: string
+  milestoneRunSkillMode?: MilestoneRunSkillMode
+  milestoneRunSkillIds?: string[]
   /** Applied in a follow-up PATCH (API handles `passCriteria` separately from goal/Data). */
   passCriteria?: MilestonePresetPassCriterionDraft[]
 }
@@ -38,6 +41,8 @@ export function getMilestonePresetCreateFields(
         dataTask: 'manual',
         milestoneData: t('milestonePreset.dates.dataMarkdown'),
         goal: t('milestonePreset.dates.goal'),
+        milestoneRunSkillMode: 'fixed',
+        milestoneRunSkillIds: ['public_holidays'],
         passCriteria: [
           {
             requirement: t('milestonePreset.dates.criterionStartDate'),

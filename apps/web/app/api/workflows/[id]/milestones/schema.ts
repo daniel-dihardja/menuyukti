@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { passCriteriaDataSchema } from '@/lib/graphql/node-schemas'
+import { milestoneRunSkillModeSchema, passCriteriaDataSchema } from '@/lib/graphql/node-schemas'
 
 export const workflowIdParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow id')
 
@@ -23,6 +23,9 @@ export const patchMilestoneSchema = z
     milestoneData: z.string().optional(),
     /** Stored on milestone node `data` JSON. */
     dataTask: z.enum(['manual']).optional(),
+    /** Stored on milestone node `data` JSON; agents skip LLM skill pick when `fixed` + valid ids. */
+    milestoneRunSkillMode: milestoneRunSkillModeSchema.optional(),
+    milestoneRunSkillIds: z.array(z.string().trim().min(1)).max(2).optional(),
     passCriteria: z.array(passCriteriaRowSchema).optional(),
     move: z.enum(['up', 'down']).optional(),
   })
@@ -32,9 +35,12 @@ export const patchMilestoneSchema = z
       v.goal !== undefined ||
       v.milestoneData !== undefined ||
       v.dataTask !== undefined ||
+      v.milestoneRunSkillMode !== undefined ||
+      v.milestoneRunSkillIds !== undefined ||
       v.passCriteria !== undefined ||
       v.move !== undefined,
     {
-      message: 'Provide at least one of name, goal, milestoneData, dataTask, passCriteria, or move',
+      message:
+        'Provide at least one of name, goal, milestoneData, dataTask, milestoneRunSkillMode, milestoneRunSkillIds, passCriteria, or move',
     },
   )

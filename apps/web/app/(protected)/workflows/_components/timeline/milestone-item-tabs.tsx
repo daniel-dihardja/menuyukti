@@ -9,7 +9,9 @@ import {
   type MarkdownEditFieldManualSave,
 } from '@/components/markdown-edit-field'
 import { MarkdownMessage } from '@/components/markdown-message'
+import { MILESTONE_RUN_SKILL_REGISTRY } from '@/lib/milestone-run-skill-registry'
 import { Button } from '@workspace/ui/components/button'
+import { Checkbox } from '@workspace/ui/components/checkbox'
 import { cn } from '@workspace/ui/lib/utils'
 import { CardContent } from '@workspace/ui/components/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
@@ -21,8 +23,9 @@ import {
 } from '@workspace/ui/components/input-group'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
+import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 
-import type { PassCriteriaRow, TimelineMilestone } from './types'
+import type { MilestoneRunSkillMode, PassCriteriaRow, TimelineMilestone } from './types'
 
 /** Tab panel state and handlers for one milestone (built in `timeline-item`). */
 export type MilestoneItemTabsModel = {
@@ -40,6 +43,12 @@ export type MilestoneItemTabsModel = {
   handleGoalSave: () => void
   handleAddPassCriterion: () => Promise<void>
   handleRemovePassCriterion: (index: number) => Promise<void>
+  settingsMode: MilestoneRunSkillMode
+  setSettingsMode: (mode: MilestoneRunSkillMode) => void
+  settingsSkillIds: string[]
+  toggleSettingsSkill: (skillId: string) => void
+  handleSaveMilestoneSettings: () => Promise<void>
+  savingMilestoneSettings: boolean
 }
 
 export type MilestoneItemTabsProps = {
@@ -62,6 +71,12 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     handleGoalSave,
     handleAddPassCriterion,
     handleRemovePassCriterion,
+    settingsMode,
+    setSettingsMode,
+    settingsSkillIds,
+    toggleSettingsSkill,
+    handleSaveMilestoneSettings,
+    savingMilestoneSettings,
   } = model
   const t = useTranslations('analytics.campaigns.chat')
   const saveStatusMessages = useMemo(
@@ -99,6 +114,9 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           </TabsTrigger>
           <TabsTrigger className="flex-1" value="result">
             {t('milestoneTabResult')}
+          </TabsTrigger>
+          <TabsTrigger className="flex-1" value="settings">
+            {t('milestoneTabSettings')}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="input">
@@ -228,6 +246,86 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           ) : (
             <p className="text-muted-foreground text-sm">{t('milestoneResultEmpty')}</p>
           )}
+        </TabsContent>
+        <TabsContent value="settings">
+          <FieldGroup className="gap-4">
+            <Field>
+              <FieldLabel>{t('milestoneSettingsTitle')}</FieldLabel>
+              <FieldDescription>{t('milestoneSettingsDescription')}</FieldDescription>
+              <ToggleGroup
+                className="mt-2 justify-start"
+                disabled={isMilestoneRunning}
+                onValueChange={(v) => {
+                  if (v === 'auto' || v === 'fixed') {
+                    setSettingsMode(v)
+                  }
+                }}
+                type="single"
+                value={settingsMode}
+              >
+                <ToggleGroupItem aria-label={t('milestoneSettingsModeAuto')} value="auto">
+                  {t('milestoneSettingsModeAuto')}
+                </ToggleGroupItem>
+                <ToggleGroupItem aria-label={t('milestoneSettingsModeFixed')} value="fixed">
+                  {t('milestoneSettingsModeFixed')}
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </Field>
+            {settingsMode === 'fixed' ? (
+              <Field>
+                <FieldLabel>{t('milestoneSettingsSkillsLabel')}</FieldLabel>
+                <FieldDescription>{t('milestoneSettingsFixedSkillsHint')}</FieldDescription>
+                <ul className="mt-2 flex flex-col gap-3">
+                  {MILESTONE_RUN_SKILL_REGISTRY.map((skill) => {
+                    const checked = settingsSkillIds.includes(skill.id)
+                    const atCap = settingsSkillIds.length >= 2 && !checked
+                    return (
+                      <li className="flex items-start gap-3" key={skill.id}>
+                        <Checkbox
+                          checked={checked}
+                          className="mt-0.5"
+                          disabled={isMilestoneRunning || atCap}
+                          id={`milestone-skill-${milestone.id}-${skill.id}`}
+                          onCheckedChange={() => {
+                            toggleSettingsSkill(skill.id)
+                          }}
+                        />
+                        <label
+                          className={cn(
+                            'min-w-0 flex-1 cursor-pointer text-sm leading-snug',
+                            (isMilestoneRunning || atCap) &&
+                              !checked &&
+                              'cursor-not-allowed opacity-60',
+                          )}
+                          htmlFor={`milestone-skill-${milestone.id}-${skill.id}`}
+                        >
+                          <span className="font-medium text-foreground">{skill.name}</span>
+                          <span className="mt-0.5 block text-muted-foreground text-xs">
+                            {skill.description}
+                          </span>
+                        </label>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </Field>
+            ) : null}
+            <div>
+              <Button
+                disabled={isMilestoneRunning || savingMilestoneSettings}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void handleSaveMilestoneSettings()
+                }}
+                type="button"
+                variant="secondary"
+              >
+                {savingMilestoneSettings
+                  ? t('milestoneSettingsSaving')
+                  : t('milestoneSettingsSave')}
+              </Button>
+            </div>
+          </FieldGroup>
         </TabsContent>
       </Tabs>
     </CardContent>

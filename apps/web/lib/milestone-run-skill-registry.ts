@@ -2,7 +2,6 @@
  * Public milestone-run skill metadata for UI. Keep in sync with
  * `apps/agents/agents/core/milestone_run/skills.py` (`_build_registry` — id, name, description only).
  */
-import 'server-only'
 
 export type MilestoneRunSkillMeta = {
   id: string

@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 
 import { Card } from '@workspace/ui/components/card'
 import { Collapsible, CollapsibleContent } from '@workspace/ui/components/collapsible'
@@ -11,7 +11,12 @@ import { MilestoneItemHeader } from './milestone-item-header'
 import { MilestoneItemTabs } from './milestone-item-tabs'
 import { MilestoneRunProgressStrip } from './milestone-run-progress'
 import { isKeyboardEventFromNestedInteractive, TimelineRailMarker } from './timeline-rail'
-import type { PassCriteriaRow, TimelineMilestone, TimelineMilestoneStatus } from './types'
+import type {
+  MilestoneRunSkillMode,
+  PassCriteriaRow,
+  TimelineMilestone,
+  TimelineMilestoneStatus,
+} from './types'
 
 export type TimelineItemProps = {
   milestone: TimelineMilestone
@@ -39,6 +44,7 @@ function TimelineItemInner({
     onUpdateMilestoneGoal,
     onMoveMilestone,
     onRunMilestone,
+    onUpdateMilestoneRunSettings,
   } = useTimelineActions()
   const {
     milestoneState: {
@@ -47,6 +53,7 @@ function TimelineItemInner({
       renamingMilestoneId,
       savingPassCriteriaMilestoneId,
       savingGoalMilestoneId,
+      savingMilestoneSettingsMilestoneId,
       runningMilestoneId,
       runningStep,
     },
@@ -74,6 +81,38 @@ function TimelineItemInner({
 
   const savingPassCriteria = savingPassCriteriaMilestoneId === milestone.id
   const savingGoal = savingGoalMilestoneId === milestone.id
+  const savingMilestoneSettings = savingMilestoneSettingsMilestoneId === milestone.id
+
+  const [settingsMode, setSettingsMode] = useState<MilestoneRunSkillMode>(
+    () => milestone.milestoneRunSkillMode ?? 'auto',
+  )
+  const [settingsSkillIds, setSettingsSkillIds] = useState<string[]>(
+    () => milestone.milestoneRunSkillIds ?? [],
+  )
+
+  useEffect(() => {
+    setSettingsMode(milestone.milestoneRunSkillMode ?? 'auto')
+    setSettingsSkillIds(milestone.milestoneRunSkillIds ?? [])
+  }, [milestone.id, milestone.milestoneRunSkillMode, milestone.milestoneRunSkillIds])
+
+  const toggleSettingsSkill = useCallback((skillId: string) => {
+    setSettingsSkillIds((prev) => {
+      if (prev.includes(skillId)) {
+        return prev.filter((x) => x !== skillId)
+      }
+      if (prev.length >= 2) {
+        return prev
+      }
+      return [...prev, skillId]
+    })
+  }, [])
+
+  const handleSaveMilestoneSettings = useCallback(async () => {
+    await onUpdateMilestoneRunSettings(milestone.id, {
+      milestoneRunSkillMode: settingsMode,
+      milestoneRunSkillIds: settingsMode === 'fixed' ? settingsSkillIds : [],
+    })
+  }, [milestone.id, onUpdateMilestoneRunSettings, settingsMode, settingsSkillIds])
   useEffect(() => {
     setGoalDraft(milestone.goal ?? '')
   }, [milestone.id, milestone.goal])
@@ -278,6 +317,12 @@ function TimelineItemInner({
                   savingGoal,
                   savingPassCriteria,
                   setGoalDraft,
+                  settingsMode,
+                  setSettingsMode,
+                  settingsSkillIds,
+                  toggleSettingsSkill,
+                  handleSaveMilestoneSettings,
+                  savingMilestoneSettings,
                 }}
               />
             </CollapsibleContent>

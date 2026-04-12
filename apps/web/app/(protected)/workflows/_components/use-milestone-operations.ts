@@ -13,6 +13,7 @@ import type { CampaignMilestoneAction } from './campaign-milestone-reducer'
 import { deriveMilestoneRailStatus, milestoneNodeToTimelineMilestone } from './milestone-map'
 import type {
   MilestoneDataTask,
+  MilestoneRunSkillMode,
   PassCriteriaRow,
   PassCriteriaStatus,
   TimelineMilestone,
@@ -114,6 +115,12 @@ export function useMilestoneOperations(
         if (fields.goal !== undefined) {
           patchBody.goal = fields.goal
         }
+        if (fields.milestoneRunSkillMode !== undefined) {
+          patchBody.milestoneRunSkillMode = fields.milestoneRunSkillMode
+        }
+        if (fields.milestoneRunSkillIds !== undefined) {
+          patchBody.milestoneRunSkillIds = fields.milestoneRunSkillIds
+        }
 
         const patchRes = await fetch(`/api/workflows/${workflowId}/milestones/${id}`, {
           method: 'PATCH',
@@ -152,12 +159,29 @@ export function useMilestoneOperations(
           passCriteria = criteriaJson?.passCriteria ?? criteriaDraft
         }
 
+        const skillFromPatch = milestoneDataSchema.safeParse(patchJson?.data ?? {})
         const next: TimelineMilestone = {
           id,
           title,
           goal: fields.goal?.trim() ? fields.goal : undefined,
           data: fields.milestoneData,
           ...(dataTask !== undefined ? { dataTask } : {}),
+          ...(skillFromPatch.success && skillFromPatch.data.milestoneRunSkillMode === 'fixed'
+            ? { milestoneRunSkillMode: 'fixed' as const }
+            : skillFromPatch.success && skillFromPatch.data.milestoneRunSkillMode === 'auto'
+              ? { milestoneRunSkillMode: 'auto' as const }
+              : fields.milestoneRunSkillMode !== undefined
+                ? { milestoneRunSkillMode: fields.milestoneRunSkillMode }
+                : {}),
+          ...(skillFromPatch.success && Array.isArray(skillFromPatch.data.milestoneRunSkillIds)
+            ? {
+                milestoneRunSkillIds: skillFromPatch.data.milestoneRunSkillIds.filter(
+                  (x): x is string => typeof x === 'string' && x.length > 0,
+                ),
+              }
+            : fields.milestoneRunSkillIds !== undefined
+              ? { milestoneRunSkillIds: fields.milestoneRunSkillIds }
+              : {}),
           passCriteria,
           status: deriveMilestoneRailStatus(passCriteria, undefined),
         }
@@ -400,6 +424,7 @@ export function useMilestoneOperations(
         type: 'PATCH',
         patch: {
           milestoneRunError: null,
+          milestoneRunCriteriaHint: null,
           runningMilestoneId: milestoneId,
           runningStep: 'fetch_context',
         },
@@ -464,6 +489,7 @@ export function useMilestoneOperations(
                       c != null && typeof c === 'object',
                   )
                 : []
+              let criteriaHint: string | null = null
               dispatch({
                 type: 'UPDATE_MILESTONES',
                 updater: (prev) =>
@@ -485,6 +511,9 @@ export function useMilestoneOperations(
                       return row
                     })
                     const hasFail = nextPass.some((row) => row.status === 'fail')
+                    if (hasFail && milestone.milestoneRunSkillMode === 'fixed') {
+                      criteriaHint = t('milestoneRunFixedSkillsFailHint')
+                    }
                     return {
                       ...milestone,
                       status: hasFail ? ('failed' as const) : ('complete' as const),
@@ -493,6 +522,10 @@ export function useMilestoneOperations(
                       ...(dataPreview !== undefined ? { data: dataPreview } : {}),
                     }
                   }),
+              })
+              dispatch({
+                type: 'PATCH',
+                patch: { milestoneRunCriteriaHint: criteriaHint },
               })
             }
             if (payload.step === 'evaluate_criterion' && typeof payload.id === 'string') {
@@ -614,6 +647,68 @@ export function useMilestoneOperations(
     }
   }, [workflowId, dispatch, t])
 
+  const handleUpdateMilestoneRunSettings = useCallback(
+    async (
+      milestoneId: string,
+      settings: { milestoneRunSkillMode: MilestoneRunSkillMode; milestoneRunSkillIds: string[] },
+    ): Promise<boolean> => {
+      dispatch({
+        type: 'PATCH',
+        patch: { milestoneSettingsError: null, savingMilestoneSettingsMilestoneId: milestoneId },
+      })
+      try {
+        const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            milestoneRunSkillMode: settings.milestoneRunSkillMode,
+            milestoneRunSkillIds: settings.milestoneRunSkillIds,
+          }),
+        })
+        const body = (await res.json().catch(() => null)) as {
+          message?: string
+          data?: unknown
+        } | null
+        if (!res.ok) {
+          throw new Error(body?.message ?? t('milestoneSettingsSaveError'))
+        }
+        const parsed = milestoneDataSchema.safeParse(body?.data ?? {})
+        let mode: MilestoneRunSkillMode = settings.milestoneRunSkillMode
+        let ids = settings.milestoneRunSkillIds
+        if (parsed.success) {
+          mode = parsed.data.milestoneRunSkillMode === 'fixed' ? 'fixed' : 'auto'
+          if (Array.isArray(parsed.data.milestoneRunSkillIds)) {
+            ids = parsed.data.milestoneRunSkillIds.filter(
+              (x): x is string => typeof x === 'string' && x.length > 0,
+            )
+          }
+        }
+        dispatch({
+          type: 'UPDATE_MILESTONES',
+          updater: (prev) =>
+            prev.map((m) =>
+              m.id === milestoneId
+                ? { ...m, milestoneRunSkillMode: mode, milestoneRunSkillIds: ids }
+                : m,
+            ),
+        })
+        return true
+      } catch (err) {
+        dispatch({
+          type: 'PATCH',
+          patch: {
+            milestoneSettingsError:
+              err instanceof Error ? err.message : t('milestoneSettingsSaveError'),
+          },
+        })
+        return false
+      } finally {
+        dispatch({ type: 'PATCH', patch: { savingMilestoneSettingsMilestoneId: null } })
+      }
+    },
+    [workflowId, dispatch, t],
+  )
+
   /** Load persisted goal, pass criteria, milestonedata + dataTask from the API (navigation, chat tools). */
   const handleHydrateMilestoneData = useCallback(
     async (milestoneId: string) => {
@@ -627,6 +722,8 @@ export function useMilestoneOperations(
           dataTask?: MilestoneDataTask | null
           goal?: string
           passCriteria?: PassCriteriaRow[]
+          milestoneRunSkillMode?: MilestoneRunSkillMode
+          milestoneRunSkillIds?: string[]
         } | null
         if (!body) {
           return
@@ -654,6 +751,16 @@ export function useMilestoneOperations(
               if (body.dataTask === 'manual') {
                 next.dataTask = 'manual'
               }
+              if (body.milestoneRunSkillMode === 'fixed') {
+                next.milestoneRunSkillMode = 'fixed'
+              } else if (body.milestoneRunSkillMode === 'auto') {
+                next.milestoneRunSkillMode = 'auto'
+              }
+              if (Array.isArray(body.milestoneRunSkillIds)) {
+                next.milestoneRunSkillIds = body.milestoneRunSkillIds.filter(
+                  (x): x is string => typeof x === 'string' && x.length > 0,
+                )
+              }
               return next
             }),
         })
@@ -673,6 +780,7 @@ export function useMilestoneOperations(
       handleUpdatePassCriteria,
       handleUpdateMilestoneGoal,
       handleUpdateMilestoneData,
+      handleUpdateMilestoneRunSettings,
       handleRunMilestone,
       handleMoveMilestone,
       handleExportWorkflow,
@@ -686,6 +794,7 @@ export function useMilestoneOperations(
       handleUpdatePassCriteria,
       handleUpdateMilestoneGoal,
       handleUpdateMilestoneData,
+      handleUpdateMilestoneRunSettings,
       handleRunMilestone,
       handleMoveMilestone,
       handleExportWorkflow,

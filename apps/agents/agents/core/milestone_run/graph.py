@@ -21,6 +21,11 @@ from agents_app.agents.core.milestone_run.prompts import (
     skill_selector_human_message,
     workspace_adapter_tools_prompt_suffix,
 )
+from agents_app.agents.core.chat.graphql_client import fetch_milestone_node
+from agents_app.agents.core.milestone_run.skill_settings import (
+    normalize_skill_id_list,
+    resolve_skill_selection_from_milestone_data,
+)
 from agents_app.agents.core.milestone_run.skills import (
     DEFAULT_SKILL_ID,
     SKILL_REGISTRY,
@@ -106,15 +111,7 @@ def _normalize_skill_id(raw: str) -> str:
 
 def _normalize_skill_id_list(raw: list[str]) -> list[str]:
     """Deduplicate, keep order, cap at 2; fall back to default if empty."""
-    out: list[str] = []
-    seen: set[str] = set()
-    for item in raw:
-        sid = _normalize_skill_id(item)
-        if sid in SKILL_REGISTRY and sid not in seen:
-            out.append(sid)
-            seen.add(sid)
-        if len(out) >= 2:
-            break
+    out = normalize_skill_id_list([str(x) for x in raw], SKILL_REGISTRY)
     if not out:
         return [DEFAULT_SKILL_ID]
     return out
@@ -162,6 +159,41 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
         )
         raise
 
+    row = await fetch_milestone_node(mid, str(state["user_id"]), client=client)
+    raw_md = row.get("data") if isinstance(row, dict) else None
+    milestone_data = raw_md if isinstance(raw_md, dict) else {}
+    use_llm, fixed_ids = resolve_skill_selection_from_milestone_data(
+        milestone_data,
+        SKILL_REGISTRY,
+    )
+    base: dict[str, Any] = {
+        **out,
+        "prior_milestones_data": prior,
+        "api_adapter_tools": adapters,
+        "use_llm_skill_selector": use_llm,
+    }
+    if not use_llm and fixed_ids:
+        first = fixed_ids[0]
+        _trace_step(
+            state,
+            "select_skill",
+            source="fixed",
+            skill_ids=fixed_ids,
+        )
+        base["selected_skill_ids"] = fixed_ids
+        base["current_skill_index"] = 0
+        base["selected_skill_id"] = first
+        _logger.info(
+            "milestone_run.fetch_children: fixed skills milestone_id=%s skill_ids=%s",
+            mid,
+            fixed_ids,
+        )
+    else:
+        _logger.info(
+            "milestone_run.fetch_children: will use LLM skill selector milestone_id=%s",
+            mid,
+        )
+
     _logger.info(
         "milestone_run.fetch_children: done milestone_id=%s criteria_count=%s goal_len=%s raw_data_len=%s prior_len=%s adapters=%s",
         mid,
@@ -171,11 +203,7 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
         len(prior),
         len(adapters),
     )
-    return {
-        **out,
-        "prior_milestones_data": prior,
-        "api_adapter_tools": adapters,
-    }
+    return base
 
 
 async def _select_skills(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
@@ -327,6 +355,12 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
     }
 
 
+def _route_after_fetch_children(state: MilestoneRunState) -> Literal["select_skills", "execute_skill"]:
+    if state.get("use_llm_skill_selector", True):
+        return "select_skills"
+    return "execute_skill"
+
+
 def _route_after_execute(state: MilestoneRunState) -> Literal["again", "finalize_eval"]:
     ids = state.get("selected_skill_ids") or []
     idx = int(state.get("current_skill_index") or 0)
@@ -417,7 +451,11 @@ def build_milestone_run_graph(client: httpx.AsyncClient):
     builder.add_node("execute_skill", partial(_execute_skill, client=client))
     builder.add_node("finalize_eval", partial(_finalize_eval, client=client))
     builder.add_edge(START, "fetch_children")
-    builder.add_edge("fetch_children", "select_skills")
+    builder.add_conditional_edges(
+        "fetch_children",
+        _route_after_fetch_children,
+        {"select_skills": "select_skills", "execute_skill": "execute_skill"},
+    )
     builder.add_edge("select_skills", "execute_skill")
     builder.add_conditional_edges(
         "execute_skill",

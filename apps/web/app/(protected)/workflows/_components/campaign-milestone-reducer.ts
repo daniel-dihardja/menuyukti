@@ -19,6 +19,10 @@ export type CampaignMilestoneUiState = {
   runningMilestoneId: string | null
   runningStep: string | null
   milestoneRunError: string | null
+  /** Shown after a run when fixed skills were used and some criteria failed (informational). */
+  milestoneRunCriteriaHint: string | null
+  savingMilestoneSettingsMilestoneId: string | null
+  milestoneSettingsError: string | null
   exporting: boolean
   exportError: string | null
 }
@@ -45,6 +49,9 @@ export function createInitialCampaignMilestoneUiState(
     runningMilestoneId: null,
     runningStep: null,
     milestoneRunError: null,
+    milestoneRunCriteriaHint: null,
+    savingMilestoneSettingsMilestoneId: null,
+    milestoneSettingsError: null,
     exporting: false,
     exportError: null,
   }

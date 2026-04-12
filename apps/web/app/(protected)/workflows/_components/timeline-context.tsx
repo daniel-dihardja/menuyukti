@@ -5,7 +5,7 @@ import { createContext, useContext, type ReactNode } from 'react'
 import type { CampaignMilestoneUiState } from './campaign-milestone-reducer'
 import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 
-import type { PassCriteriaRow } from './timeline/types'
+import type { MilestoneRunSkillMode, PassCriteriaRow } from './timeline/types'
 
 /** Milestone list + in-flight ids (no error strings). */
 export type TimelineMilestoneState = Pick<
@@ -17,6 +17,7 @@ export type TimelineMilestoneState = Pick<
   | 'savingPassCriteriaMilestoneId'
   | 'savingGoalMilestoneId'
   | 'savingDataMilestoneId'
+  | 'savingMilestoneSettingsMilestoneId'
   | 'movingMilestoneId'
   | 'runningMilestoneId'
   | 'runningStep'
@@ -33,6 +34,8 @@ export type TimelineErrors = Pick<
   | 'goalError'
   | 'milestoneDataError'
   | 'milestoneRunError'
+  | 'milestoneRunCriteriaHint'
+  | 'milestoneSettingsError'
   | 'exportError'
 >
 
@@ -45,6 +48,10 @@ export type TimelineActions = {
   onUpdatePassCriteria: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
   onUpdateMilestoneGoal: (id: string, goal: string) => Promise<boolean>
   onUpdateMilestoneData: (id: string, milestoneData: string) => Promise<boolean>
+  onUpdateMilestoneRunSettings: (
+    id: string,
+    settings: { milestoneRunSkillMode: MilestoneRunSkillMode; milestoneRunSkillIds: string[] },
+  ) => Promise<boolean>
   onHydrateMilestoneData: (id: string) => Promise<void>
   onRunMilestone: (id: string) => void | Promise<void>
   onExport: () => void | Promise<void>
@@ -84,6 +91,8 @@ export function splitMilestoneUiState(ui: CampaignMilestoneUiState): {
     goalError,
     milestoneDataError,
     milestoneRunError,
+    milestoneRunCriteriaHint,
+    milestoneSettingsError,
     exportError,
     ...milestoneState
   } = ui
@@ -98,6 +107,8 @@ export function splitMilestoneUiState(ui: CampaignMilestoneUiState): {
       goalError,
       milestoneDataError,
       milestoneRunError,
+      milestoneRunCriteriaHint,
+      milestoneSettingsError,
       exportError,
     },
   }

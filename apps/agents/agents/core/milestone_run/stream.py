@@ -89,6 +89,7 @@ async def iter_milestone_run_sse_lines(
         "result_summary": "",
         "result_node_id": None,
         "last_criteria_verdicts": [],
+        "use_llm_skill_selector": True,
         "selected_skill_ids": [],
         "current_skill_index": 0,
         "selected_skill_id": None,
