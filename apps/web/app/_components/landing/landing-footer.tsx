@@ -1,19 +1,28 @@
 import Link from 'next/link'
 
+import { routes } from '@/lib/routes'
+
 type LandingFooterProps = {
   copyright: string
   navLabel: string
   aboutLabel: string
   contactLabel: string
-  privacyLabel: string
+  faqLabel: string
+  privacyPolicyLabel: string
+  termsLabel: string
 }
+
+const linkClassName =
+  'text-muted-foreground underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 
 export function LandingFooter({
   copyright,
   navLabel,
   aboutLabel,
   contactLabel,
-  privacyLabel,
+  faqLabel,
+  privacyPolicyLabel,
+  termsLabel,
 }: LandingFooterProps) {
   const year = new Date().getFullYear()
 
@@ -24,23 +33,20 @@ export function LandingFooter({
           aria-label={navLabel}
           className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm"
         >
-          <Link
-            href="#how-it-works"
-            className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
+          <Link href="#how-it-works" className={linkClassName}>
             {aboutLabel}
           </Link>
-          <Link
-            href="#cta"
-            className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
+          <Link href="#cta" className={linkClassName}>
             {contactLabel}
           </Link>
-          <Link
-            href="#faq"
-            className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            {privacyLabel}
+          <Link href="#faq" className={linkClassName}>
+            {faqLabel}
+          </Link>
+          <Link href={routes.privacy} className={linkClassName}>
+            {privacyPolicyLabel}
+          </Link>
+          <Link href={routes.terms} className={linkClassName}>
+            {termsLabel}
           </Link>
         </nav>
         <p className="text-center text-sm text-muted-foreground">

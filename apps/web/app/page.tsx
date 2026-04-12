@@ -65,10 +65,18 @@ export default async function LandingPage() {
       </a>
 
       <header className="sticky top-0 z-50 w-full border-b border-border backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <div className="flex items-center gap-2">
-            <UtensilsCrossed className="size-5 text-primary" aria-hidden />
-            <p className="text-xl font-semibold tracking-tight">{t('brand')}</p>
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
+          <div className="flex min-w-0 items-center gap-2">
+            <UtensilsCrossed className="size-5 shrink-0 text-primary" aria-hidden />
+            <p className="truncate text-xl font-semibold tracking-tight">{t('brand')}</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href={routes.login}>{t('header.signIn')}</Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link href={routes.signUp}>{t('header.signUp')}</Link>
+            </Button>
           </div>
         </div>
       </header>
@@ -243,7 +251,9 @@ export default async function LandingPage() {
         navLabel={t('footer.navLabel')}
         aboutLabel={t('footer.about')}
         contactLabel={t('footer.contact')}
-        privacyLabel={t('footer.privacy')}
+        faqLabel={t('footer.faq')}
+        privacyPolicyLabel={t('footer.privacyPolicy')}
+        termsLabel={t('footer.terms')}
       />
 
       <div className="fixed bottom-0 left-0 z-50 flex w-full gap-3 border-t border-border bg-background/80 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden">

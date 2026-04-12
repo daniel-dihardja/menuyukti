@@ -4,7 +4,7 @@ import { Show, SignInButton, SignUpButton, UserButton, useAuth } from '@clerk/ne
 import { usePathname } from 'next/navigation'
 import { isProtectedAppShellPath, routes } from '@/lib/routes'
 
-const HIDE_HEADER_PREFIXES = ['/login', '/sign-up', '/sso-callback']
+const HIDE_HEADER_PREFIXES = ['/login', '/sign-up', '/sso-callback', '/privacy', '/terms']
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()

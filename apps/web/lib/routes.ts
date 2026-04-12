@@ -26,7 +26,10 @@ export const routes = {
   signUp: '/sign-up',
   /** OAuth / SSO return URL (Clerk custom social sign-in). */
   ssoCallback: '/sso-callback',
-  news: '/news',
+
+  /** Public marketing / legal (not behind app shell). */
+  privacy: '/privacy',
+  terms: '/terms',
 
   analytics: {
     branches: '/analytics/locations',
@@ -66,19 +69,6 @@ export const routes = {
 
   skills: '/skills',
   customTools: '/custom-tools',
-
-  agents: {
-    list: '/agents',
-    detail: (agentId: string) => `/agents/${agentId}`,
-  },
-
-  branches: {
-    list: '/locations',
-
-    detail: (locationId: string | number) => `/locations/${locationId}`,
-  },
-
-  docs: '/docs',
 
   shop: '/shop',
   shopProduct: (slug: string) => `/shop/${slug}`,

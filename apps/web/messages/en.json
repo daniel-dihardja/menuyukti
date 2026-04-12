@@ -31,6 +31,64 @@
     "genericError": "Something went wrong. Please try again.",
     "startOver": "Start over"
   },
+  "legal": {
+    "privacy": {
+      "metaTitle": "Privacy Policy | Menuyukti",
+      "metaDescription": "How Menuyukti collects, uses, and protects data in your workspace.",
+      "title": "Privacy Policy",
+      "lastUpdated": "Last updated: April 12, 2026.",
+      "sections": {
+        "data": {
+          "title": "Data we process",
+          "body": "Menuyukti processes information you provide when you use the product—including account details, location and sales data you upload, workflow and milestone content, and usage needed to run the service. We process this data to deliver analytics, workflows, and AI-assisted features you request."
+        },
+        "use": {
+          "title": "How we use your data",
+          "body": "We use your data to operate and improve the platform, provide support, secure accounts, and comply with law. We do not sell your personal information or your restaurant sales data to third parties for their marketing."
+        },
+        "sharing": {
+          "title": "Service providers",
+          "body": "We may use trusted subprocessors (for example hosting, authentication, and AI inference) that process data under contract and only as needed to provide the service. A current list can be provided on request."
+        },
+        "security": {
+          "title": "Security",
+          "body": "We apply reasonable technical and organizational measures designed to protect your information. No method of transmission or storage is completely secure; we encourage strong passwords and safe sharing of workspace access."
+        },
+        "contact": {
+          "title": "Contact",
+          "body": "For privacy-related questions or requests, contact us through the same channel you use for Menuyukti product support."
+        }
+      }
+    },
+    "terms": {
+      "metaTitle": "Terms of Service | Menuyukti",
+      "metaDescription": "Terms governing use of the Menuyukti platform.",
+      "title": "Terms of Service",
+      "lastUpdated": "Last updated: April 12, 2026.",
+      "sections": {
+        "service": {
+          "title": "The service",
+          "body": "Menuyukti provides software for restaurant marketing workflows, analytics, and related AI-assisted features. Features may change as the product evolves."
+        },
+        "account": {
+          "title": "Your account",
+          "body": "You are responsible for activity under your account and for keeping credentials secure. You agree to provide accurate information and to use the service in compliance with applicable law."
+        },
+        "acceptable": {
+          "title": "Acceptable use",
+          "body": "You may not misuse the service, attempt to access others’ data without permission, interfere with operation of the platform, or use the service to violate law or third-party rights."
+        },
+        "disclaimer": {
+          "title": "Disclaimer",
+          "body": "The service and any AI-generated outputs are provided on an “as is” basis. Analytics and suggestions are informational; you remain responsible for business and compliance decisions."
+        },
+        "changes": {
+          "title": "Changes",
+          "body": "We may update these terms or the service. Continued use after changes constitutes acceptance of the updated terms where permitted by law."
+        }
+      }
+    }
+  },
   "landing": {
     "brand": "Menuyukti",
     "skipToContent": "Skip to content",
@@ -69,7 +127,7 @@
       "q1": "What data do I need to upload?",
       "a1": "Typical POS or spreadsheet exports work—sales by item, category, or ticket over time. The GraphQL-backed workspace stores what you import so analytics and agents can use the same source of truth.",
       "q2": "Is my sales data shared with third parties?",
-      "a2": "Your data powers your workspace and insights. We do not sell your data. Details are covered in our privacy policy.",
+      "a2": "Your data powers your workspace and insights. We do not sell your data. See our Privacy Policy for details.",
       "q3": "Is Menuyukti only a chatbot?",
       "a3": "Chat is how you collaborate, but the core model is workflows: ordered milestones that produce stored, structured outputs—schedules, profiles, evaluations—not only messages. Agents call platform APIs when they need your data.",
       "q4": "Who is it for?",
@@ -113,14 +171,19 @@
       "navLabel": "Footer",
       "about": "How it works",
       "contact": "Get started",
-      "privacy": "Privacy & data",
+      "faq": "FAQ",
+      "privacyPolicy": "Privacy Policy",
+      "terms": "Terms of Service",
       "copyrightName": "Menuyukti"
+    },
+    "header": {
+      "signIn": "Sign in",
+      "signUp": "Sign up"
     },
     "mobileCta": {
       "primary": "Sign in",
       "secondary": "How it works"
-    },
-    "shopLink": "Print Shop"
+    }
   },
   "shop": {
     "listPageLoadingTitle": "Loading shop…",
@@ -1020,7 +1083,8 @@
     "shared": {
       "backToSales": "Back to sales",
       "createCampaignFromReport": "Create workflow",
-      "createCampaignFromReportHint": "Open workflows with this report context to plan promos from these insights."
+      "createCampaignFromReportHint": "Open workflows with this report context to plan promos from these insights.",
+      "breadcrumbRunLoading": "Report"
     },
     "heatmap": {
       "reportTitle": "Heatmaps",
