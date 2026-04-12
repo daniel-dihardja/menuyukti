@@ -3,7 +3,9 @@ name: menuyukti-web
 description: >-
   Next.js web app (apps/web): GraphQL data fetching, Clerk auth, next-intl, workflow/milestone UI including
   Data tab Prepare and dataTask enums, API routes and Zod schemas. Use when changing milestone cards,
-  BFF routes, workflow timeline types, or web-side GraphQL usage.
+  BFF routes, workflow timeline types, or web-side GraphQL usage. For performance, caching, and composition
+  refactors, also use nextjs-performance, next-cache-components, and vercel-composition-patterns (see
+  Companion skills).
 ---
 
 # Menuyukti: `apps/web`
@@ -14,13 +16,23 @@ For monorepo boundaries, see [`menuyukti-repo-orientation`](../menuyukti-repo-or
 
 ## Companion skills
 
-When implementing in **`apps/web`**, follow these skills in addition to this doc:
+When implementing in **`apps/web`**, follow these skills in addition to this doc.
+
+### Feature work (default)
 
 - [`vercel-react-best-practices`](../vercel-react-best-practices/SKILL.md) — React and Next.js performance patterns.
 - [`next-best-practices`](../next-best-practices/SKILL.md) — Next.js file conventions, RSC boundaries, data fetching.
 - [`shadcn`](../shadcn/SKILL.md) — UI components and styling with the project’s shadcn setup.
 
 For **Clerk** (auth, middleware, Server Actions), use [`clerk-nextjs-patterns`](../clerk-nextjs-patterns/SKILL.md).
+
+### Refactors, performance, and composition
+
+When improving an existing implementation (not only greenfield features), also read:
+
+- [`nextjs-performance`](../nextjs-performance/SKILL.md) — Use when tuning Core Web Vitals, bundle size, LCP/INP, images/fonts, or RSC data performance.
+- [`next-cache-components`](../next-cache-components/SKILL.md) — Use when adopting Cache Components, PPR, `use cache`, `cacheLife`, `cacheTag`, or `updateTag`.
+- [`vercel-composition-patterns`](../vercel-composition-patterns/SKILL.md) — Use when refactoring boolean-prop sprawl, compound components, render props, or flexible public APIs.
 
 ## Layout (high level)
 
