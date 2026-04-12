@@ -10,6 +10,7 @@ import {
 } from '@/components/markdown-edit-field'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
+import { cn } from '@workspace/ui/lib/utils'
 import { CardContent } from '@workspace/ui/components/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import {
@@ -159,7 +160,15 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                         <Circle aria-hidden className="size-4 text-muted-foreground stroke-[2.5]" />
                       </span>
                     )}
-                    <span className="min-w-0 break-words leading-snug">{row.requirement}</span>
+                    <MarkdownMessage
+                      className={cn(
+                        'min-w-0 flex-1 text-muted-foreground',
+                        'prose-headings:text-muted-foreground prose-strong:text-foreground/90',
+                        'prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0',
+                        'first:prose-p:mt-0 last:prose-p:mb-0',
+                      )}
+                      content={row.requirement}
+                    />
                   </div>
                   <Button
                     aria-label={t('milestonePassCriteriaRemoveLabel')}
