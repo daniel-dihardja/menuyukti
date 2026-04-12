@@ -166,6 +166,16 @@ async def fetch_milestone_data_task(
     return None
 
 
+def _venue_name_from_location_dict(loc: dict[str, Any] | None) -> str | None:
+    if not isinstance(loc, dict):
+        return None
+    for key in ("name", "Name"):
+        v = loc.get(key)
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+    return None
+
+
 async def prefetch_restaurant_brand_brief_context(
     location_id: int,
     user_id: str,
@@ -176,8 +186,11 @@ async def prefetch_restaurant_brand_brief_context(
 
     out: dict[str, Any] = {}
     loc = await fetch_location_dict(location_id, user_id, client=client)
-    if loc:
+    if isinstance(loc, dict) and loc:
         out["location"] = loc
+    vn = _venue_name_from_location_dict(loc)
+    if vn:
+        out["venue_name"] = vn
     run_id = await get_or_fetch_latest_analytics_run_id(location_id, user_id, client=client)
     if not run_id:
         out["analytics_note"] = (

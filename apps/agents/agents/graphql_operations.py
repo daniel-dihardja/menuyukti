@@ -90,6 +90,19 @@ query GetLocation($id: ID!) {
 }
 """
 
+LOCATIONS_QUERY = """
+query LocationsForPrefetch {
+  locations {
+    id
+    name
+    street
+    city
+    country
+    currency
+  }
+}
+"""
+
 API_ADAPTER_TOOLS_QUERY = """
 query ApiAdapterToolsForRun($workspaceId: ID!) {
   apiAdapterTools(workspaceId: $workspaceId) {

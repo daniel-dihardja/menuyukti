@@ -7,7 +7,11 @@ from typing import Any
 
 import httpx
 from agents_app.agents.graphql_base import graphql_post
-from agents_app.agents.graphql_operations import LOCATION_QUERY, PUBLIC_HOLIDAYS_QUERY
+from agents_app.agents.graphql_operations import (
+    LOCATION_QUERY,
+    LOCATIONS_QUERY,
+    PUBLIC_HOLIDAYS_QUERY,
+)
 
 _ANALYTICS_RUNS_QUERY = """
 query AnalyticsRunsByLocation($locationId: Int!) {
@@ -275,7 +279,10 @@ async def fetch_location_dict(
     *,
     client: httpx.AsyncClient,
 ) -> dict[str, Any] | None:
-    """Load location row fields (name, address, currency) from GraphQL."""
+    """Load location row fields (name, address, currency) from GraphQL.
+
+    Uses ``location(id)`` first; if that returns null (edge cases), falls back to scanning ``locations``.
+    """
     data = await graphql_post(
         client,
         LOCATION_QUERY,
@@ -283,11 +290,25 @@ async def fetch_location_dict(
         user_id,
     )
     raw = data.get("location")
-    if raw is None:
+    if isinstance(raw, dict):
+        return deepcopy(raw)
+    data2 = await graphql_post(
+        client,
+        LOCATIONS_QUERY,
+        {},
+        user_id,
+    )
+    rows = data2.get("locations")
+    if not isinstance(rows, list):
         return None
-    if not isinstance(raw, dict):
-        return None
-    return deepcopy(raw)
+    target = str(location_id)
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        rid = row.get("id")
+        if rid is not None and str(rid) == target:
+            return deepcopy(row)
+    return None
 
 
 async def fetch_public_holidays_list(

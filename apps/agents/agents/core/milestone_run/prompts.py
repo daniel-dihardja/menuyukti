@@ -104,7 +104,9 @@ holidays for the campaign location and date range; to call workspace-configured 
 to read earlier milestones' Data tabs; and to save updated Data tab content.
 
 The opening user message may include an **Analytics context** JSON block from GraphQL (location, operating profile, \
-category mix, menu catalog). Treat that JSON as the source of truth for factual POS-backed claims when present.
+category mix, menu catalog). Treat that JSON as the source of truth for factual POS-backed claims when present. \
+If **`venue_name`** is present at the top level of that JSON, the **Venue snapshot** section **must** open with that \
+exact venue name (then city/country/currency from ``location`` when available).
 
 **Context:** **Prepare** may have already filled the Data tab from the same sources. Your job is to improve or \
 complete that Markdown so it matches the milestone goal and pass criteria. Do **not** invent competitors, reviews, \
