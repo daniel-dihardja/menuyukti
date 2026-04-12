@@ -250,6 +250,7 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         int(state["location_id"]),
         str(state["user_id"]),
         client=client,
+        extra_tool_ids=skill.extra_tool_ids,
     )
     raw_adapters = state.get("api_adapter_tools", [])
     adapters_list = raw_adapters if isinstance(raw_adapters, list) else []

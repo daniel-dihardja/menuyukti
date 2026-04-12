@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from agents_app.agents.core.milestone_run.skill_markdown import load_skill_markdown
 from agents_app.agents.core.milestone_run.skill_paths import get_milestone_run_skill_path
+from agents_app.agents.core.milestone_run.tools.registry import validate_extra_tool_ids
 
 
 @dataclass(frozen=True)
@@ -16,14 +17,22 @@ class SkillDef:
     name: str
     description: str
     prompt: str
+    extra_tool_ids: tuple[str, ...]
 
 
 def _load_disk_skill(skill_id: str) -> SkillDef:
     path = get_milestone_run_skill_path(skill_id)
     md = load_skill_markdown(path)
+    validate_extra_tool_ids(md.extra_tools)
     desc = md.description.strip() if md.description else ""
     name = (md.name or skill_id).strip() or skill_id
-    return SkillDef(id=skill_id, name=name, description=desc, prompt=md.body)
+    return SkillDef(
+        id=skill_id,
+        name=name,
+        description=desc,
+        prompt=md.body,
+        extra_tool_ids=tuple(md.extra_tools),
+    )
 
 
 def _build_registry() -> dict[str, SkillDef]:

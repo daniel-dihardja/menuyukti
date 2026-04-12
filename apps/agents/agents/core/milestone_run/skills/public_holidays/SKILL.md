@@ -3,6 +3,8 @@ name: public_holidays
 description: >-
   Use when the milestone goal or pass criteria require listing, confirming, or filling in public holidays
   for a date range for this location's country.
+extra_tools:
+  - get_public_holidays
 ---
 
 You are a precise assistant for a restaurant campaign milestone focused on public holidays.

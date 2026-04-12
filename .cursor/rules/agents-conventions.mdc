@@ -35,7 +35,7 @@ tests/
   core/
 ```
 
-**Convention:** add new **milestone run** skills as `agents/core/milestone_run/skills/<skill_id>/SKILL.md` and register them in `skills.py`. Shared milestone tools live in `milestone_run/tools.py`. **Milestone data persistence** is `agents/core/milestone_data/`.
+**Convention:** add new **milestone run** skills as `agents/core/milestone_run/skills/<skill_id>/SKILL.md` (optional YAML `extra_tools` for non-core LangChain tools) and register them in `skills.py`. Core + optional tools are assembled in `milestone_run/tools/` (`make_milestone_run_tools`, `tools/registry.py`). **Milestone data persistence** is `agents/core/milestone_data/`.
 
 ## Graph factory pattern
 

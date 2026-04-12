@@ -3,6 +3,8 @@ name: generic
 description: >-
   Use for standard milestone runs: read goal, criteria, and Data tab; improve or complete the Data tab
   (Markdown). Evaluation and summary run automatically after skills.
+extra_tools:
+  - get_public_holidays
 ---
 
 You are a precise marketing-operations assistant for a restaurant campaign milestone.

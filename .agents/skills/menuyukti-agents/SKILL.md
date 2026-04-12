@@ -36,14 +36,14 @@ Commands and ports: [AGENTS.md](../../../AGENTS.md).
 
 ## Runtime `SKILL.md` (milestone run)
 
-Skills live under [`milestone_run/skills/<skill_id>/SKILL.md`](../../../apps/agents/agents/core/milestone_run/skills/). [`get_milestone_run_skill_path`](../../../apps/agents/agents/core/milestone_run/skill_paths.py) resolves that path. [`load_skill_markdown`](../../../apps/agents/agents/core/milestone_run/skill_markdown.py) parses YAML frontmatter (`name`, `description`) and markdown body.
+Skills live under [`milestone_run/skills/<skill_id>/SKILL.md`](../../../apps/agents/agents/core/milestone_run/skills/). [`get_milestone_run_skill_path`](../../../apps/agents/agents/core/milestone_run/skill_paths.py) resolves that path. [`load_skill_markdown`](../../../apps/agents/agents/core/milestone_run/skill_markdown.py) parses YAML frontmatter (`name`, `description`, optional `extra_tools` list) and markdown body.
 
-Register each skill in [`skills.py`](../../../apps/agents/agents/core/milestone_run/skills.py) (`SKILL_REGISTRY`). Shared LangChain tools are built in [`tools.py`](../../../apps/agents/agents/core/milestone_run/tools.py) (`make_milestone_run_tools`).
+Register each skill in [`skills.py`](../../../apps/agents/agents/core/milestone_run/skills.py) (`SKILL_REGISTRY`). Core read tools and `write_result_data` are always attached; optional tools are declared per skill via `extra_tools` and built by [`make_milestone_run_tools`](../../../apps/agents/agents/core/milestone_run/tools/__init__.py) (see [`tools/registry.py`](../../../apps/agents/agents/core/milestone_run/tools/registry.py) for registered extra ids).
 
 ## Checklist (agents-only)
 
 1. **`graphql_post`** — correct env and headers in [`graphql_base.py`](../../../apps/agents/agents/graphql_base.py).
-2. **New skill** — add `SKILL.md`, register in `skills.py`, extend tools in `tools.py` / GraphQL in `milestone_run/graphql_client.py` if new data is needed.
+2. **New skill** — add `SKILL.md` (with `extra_tools` for non-core tools), register in `skills.py`, add factories to `milestone_run/tools/registry.py` / GraphQL in `milestone_run/graphql_client.py` if new data is needed.
 3. **Persistence** — Data tab writes go through `write_result_data` → `milestone_data` upsert.
 
 ## Related
