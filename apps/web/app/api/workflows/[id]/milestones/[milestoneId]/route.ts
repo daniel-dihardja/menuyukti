@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import type { z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
   milestoneDataSchema,
   milestonedataDataSchema,
@@ -326,7 +327,7 @@ export async function GET(_req: Request, context: RouteContext) {
 export async function PATCH(req: Request, context: RouteContext) {
   try {
     const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -412,6 +413,8 @@ export async function PATCH(req: Request, context: RouteContext) {
         }),
       )
 
+      revalidateWorkflowCampaignTreeCache(userId, workflowId)
+
       return NextResponse.json({ ok: true }, { status: 200 })
     }
 
@@ -457,6 +460,8 @@ export async function PATCH(req: Request, context: RouteContext) {
       if (!milestoneFresh.node) {
         return NextResponse.json({ message: 'Milestone not found' }, { status: 404 })
       }
+      revalidateWorkflowCampaignTreeCache(userId, workflowId)
+
       return NextResponse.json(milestoneFresh.node, { status: 200 })
     }
 
@@ -552,6 +557,8 @@ export async function PATCH(req: Request, context: RouteContext) {
       return { id: n.id, requirement: '', status: 'open' as const }
     })
 
+    revalidateWorkflowCampaignTreeCache(userId, workflowId)
+
     return NextResponse.json(
       {
         id: milestoneId,
@@ -572,7 +579,7 @@ export async function PATCH(req: Request, context: RouteContext) {
 export async function DELETE(_req: Request, context: RouteContext) {
   try {
     const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -597,6 +604,8 @@ export async function DELETE(_req: Request, context: RouteContext) {
     }
 
     await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: milestoneId }, userId)
+
+    revalidateWorkflowCampaignTreeCache(userId, workflowId)
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {

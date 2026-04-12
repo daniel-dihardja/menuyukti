@@ -1,6 +1,3 @@
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
-
 import type { Metadata } from 'next'
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'

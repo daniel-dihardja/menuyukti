@@ -263,20 +263,22 @@ function TimelineItemInner({
               onPointerDown={(e) => e.stopPropagation()}
             >
               <MilestoneItemTabs
-                addCriteriaInputId={addCriteriaInputId}
-                addCriteriaInputRef={addCriteriaInputRef}
-                criteriaRows={criteriaRows}
-                goalDraft={goalDraft}
-                goalFieldId={goalFieldId}
-                handleAddPassCriterion={handleAddPassCriterion}
-                handleGoalSave={handleGoalSave}
-                handleRemovePassCriterion={handleRemovePassCriterion}
-                hasResult={hasResult}
-                isMilestoneRunning={isMilestoneRunning}
-                milestone={milestone}
-                savingGoal={savingGoal}
-                savingPassCriteria={savingPassCriteria}
-                setGoalDraft={setGoalDraft}
+                model={{
+                  addCriteriaInputId,
+                  addCriteriaInputRef,
+                  criteriaRows,
+                  goalDraft,
+                  goalFieldId,
+                  handleAddPassCriterion,
+                  handleGoalSave,
+                  handleRemovePassCriterion,
+                  hasResult,
+                  isMilestoneRunning,
+                  milestone,
+                  savingGoal,
+                  savingPassCriteria,
+                  setGoalDraft,
+                }}
               />
             </CollapsibleContent>
           </Card>

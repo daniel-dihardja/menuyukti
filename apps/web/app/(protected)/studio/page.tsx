@@ -1,6 +1,3 @@
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
-
 import { getTranslations } from 'next-intl/server'
 import { auth } from '@clerk/nextjs/server'
 

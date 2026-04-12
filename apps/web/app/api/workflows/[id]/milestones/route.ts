@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
   CREATE_NODE_MUTATION,
   NODE_QUERY,
@@ -77,7 +78,7 @@ export async function GET(_req: Request, context: RouteContext) {
 export async function POST(req: Request, context: RouteContext) {
   try {
     const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -130,6 +131,8 @@ export async function POST(req: Request, context: RouteContext) {
     if (!node) {
       return NextResponse.json({ message: 'Failed to create milestone' }, { status: 500 })
     }
+
+    revalidateWorkflowCampaignTreeCache(userId, workflowId)
 
     return NextResponse.json(node, { status: 201 })
   } catch (error) {

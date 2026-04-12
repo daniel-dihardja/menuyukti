@@ -1,6 +1,3 @@
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
-
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import { routes } from '@/lib/routes'
@@ -9,9 +6,7 @@ import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { Button } from '@workspace/ui/components/button'
 import Link from 'next/link'
-import { graphqlQuery } from '@/lib/graphql/client'
-import { getCachedAnalyticsRun } from '@/lib/graphql/cached-queries'
-import { MENU_HEATMAPS_QUERY, type MenuHeatmapsData } from '@/lib/graphql/queries'
+import { getCachedAnalyticsRun, getCachedMenuHeatmaps } from '@/lib/graphql/cached-queries'
 import { DAILY_HEATMAP_END_HOUR, DAILY_HEATMAP_START_HOUR } from '@/lib/heatmap-config'
 import { adaptDailyHeatmapMatrix, adaptWeeklyHeatmapMatrix } from './heatmap.adapters'
 import { CreateCampaignFromReportButton } from '@/components/create-campaign-from-report-button'
@@ -42,11 +37,7 @@ export default async function Page({ params }: PageProps) {
   const run = runData.analyticsRun
   if (!run) notFound()
 
-  const heatmapsData = await graphqlQuery<MenuHeatmapsData>(
-    MENU_HEATMAPS_QUERY,
-    { id, locationId: String(run.locationId) },
-    userId,
-  )
+  const heatmapsData = await getCachedMenuHeatmaps(userId, id, String(run.locationId))
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
 

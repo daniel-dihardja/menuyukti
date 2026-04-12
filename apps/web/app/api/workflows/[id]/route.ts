@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { ZodError, z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
   DELETE_NODE_MUTATION,
   NODE_QUERY,
@@ -23,7 +24,7 @@ const idParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow id')
 export async function PATCH(req: Request, context: RouteContext) {
   try {
     const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -60,6 +61,8 @@ export async function PATCH(req: Request, context: RouteContext) {
       await graphqlQuery<UpdateNodeDataRaw>(UPDATE_NODE_MUTATION, variables, userId),
     )
 
+    revalidateWorkflowCampaignTreeCache(userId, workflowId)
+
     return NextResponse.json(updated.updateNode)
   } catch (error) {
     if (error instanceof ZodError) {
@@ -81,7 +84,7 @@ export async function PATCH(req: Request, context: RouteContext) {
 export async function DELETE(_req: Request, context: RouteContext) {
   try {
     const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -119,6 +122,8 @@ export async function DELETE(_req: Request, context: RouteContext) {
       }
       throw err
     }
+
+    revalidateWorkflowCampaignTreeCache(userId, workflowId)
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {

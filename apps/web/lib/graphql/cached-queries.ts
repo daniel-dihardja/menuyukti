@@ -1,58 +1,120 @@
-import { unstable_cache } from 'next/cache'
+import { cacheLife, cacheTag } from 'next/cache'
 
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   graphqlAnalyticsRunCacheTag,
+  graphqlAnalyticsRunComputationsCacheTag,
   graphqlImageAiFlowsCacheTag,
   graphqlLocationsDataCacheTag,
+  graphqlWorkflowCampaignTreeCacheTag,
 } from '@/lib/graphql/cache-tags'
 import {
   ANALYTICS_RUN_METADATA_QUERY,
   IMAGE_AI_FLOWS_QUERY,
   LOCATIONS_QUERY,
+  MENU_ENGINEERING_MATRIX_QUERY,
+  MENU_HEATMAPS_QUERY,
+  WORKFLOW_CAMPAIGN_TREE_QUERY,
   type AnalyticsRunMetadataData,
   type ImageAiFlowsData,
   type LocationsData,
+  type MenuEngineeringMatrixData,
+  type MenuHeatmapsData,
+  type WorkflowCampaignTreeDataRaw,
 } from '@/lib/graphql/queries'
 
 /** Cached per user; reduces duplicate GraphQL hits on analytics entry routes. */
-export function getCachedLocationsData(userId: string) {
-  const tag = graphqlLocationsDataCacheTag(userId)
-  return unstable_cache(
-    () => graphqlQuery<LocationsData>(LOCATIONS_QUERY, undefined, userId, 'Locations'),
-    ['graphql-locations-data', userId],
-    { revalidate: 60, tags: [tag] },
-  )()
+export async function getCachedLocationsData(userId: string): Promise<LocationsData> {
+  'use cache'
+  cacheTag(graphqlLocationsDataCacheTag(userId))
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<LocationsData>(LOCATIONS_QUERY, undefined, userId, 'Locations')
 }
 
 /** Cached per user and analytics run; metadata only (no `menuItemCogs`) for matrix/heatmap shells. */
-export function getCachedAnalyticsRun(userId: string, analyticsRunId: string) {
-  const tag = graphqlAnalyticsRunCacheTag(userId, analyticsRunId)
-  return unstable_cache(
-    () =>
-      graphqlQuery<AnalyticsRunMetadataData>(
-        ANALYTICS_RUN_METADATA_QUERY,
-        { id: analyticsRunId },
-        userId,
-        'AnalyticsRunMetadata',
-      ),
-    ['graphql-analytics-run', userId, analyticsRunId],
-    { revalidate: 60, tags: [tag] },
-  )()
+export async function getCachedAnalyticsRun(
+  userId: string,
+  analyticsRunId: string,
+): Promise<AnalyticsRunMetadataData> {
+  'use cache'
+  cacheTag(graphqlAnalyticsRunCacheTag(userId, analyticsRunId))
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<AnalyticsRunMetadataData>(
+    ANALYTICS_RUN_METADATA_QUERY,
+    { id: analyticsRunId },
+    userId,
+    'AnalyticsRunMetadata',
+  )
 }
 
 /** Cached per user; Studio list of image AI flows. */
-export function getCachedImageAiFlows(userId: string) {
-  const tag = graphqlImageAiFlowsCacheTag(userId)
-  return unstable_cache(
-    () =>
-      graphqlQuery<ImageAiFlowsData>(
-        IMAGE_AI_FLOWS_QUERY,
-        { includeInactive: true },
-        userId,
-        'ImageAiFlows',
-      ),
-    ['graphql-image-ai-flows', userId],
-    { revalidate: 60, tags: [tag] },
-  )()
+export async function getCachedImageAiFlows(userId: string): Promise<ImageAiFlowsData> {
+  'use cache'
+  cacheTag(graphqlImageAiFlowsCacheTag(userId))
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<ImageAiFlowsData>(
+    IMAGE_AI_FLOWS_QUERY,
+    { includeInactive: true },
+    userId,
+    'ImageAiFlows',
+  )
+}
+
+/**
+ * Menu engineering matrix for a run. Tagged with `graphqlAnalyticsRunComputationsCacheTag`
+ * (shared with heatmaps). Invalidate from API routes when COGS or order facts change.
+ */
+export async function getCachedMenuEngineeringMatrix(
+  userId: string,
+  analyticsRunId: string,
+  locationId: string,
+): Promise<MenuEngineeringMatrixData> {
+  'use cache'
+  const computationsTag = graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId)
+  cacheTag(computationsTag)
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<MenuEngineeringMatrixData>(
+    MENU_ENGINEERING_MATRIX_QUERY,
+    { id: analyticsRunId, locationId },
+    userId,
+    'MenuEngineeringMatrix',
+  )
+}
+
+/**
+ * Menu heatmaps for a run. Same computation cache tag as matrix so one invalidation clears both.
+ */
+export async function getCachedMenuHeatmaps(
+  userId: string,
+  analyticsRunId: string,
+  locationId: string,
+): Promise<MenuHeatmapsData> {
+  'use cache'
+  cacheTag(graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId))
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<MenuHeatmapsData>(
+    MENU_HEATMAPS_QUERY,
+    { id: analyticsRunId, locationId },
+    userId,
+    'MenuHeatmaps',
+  )
+}
+
+/**
+ * Full workflow campaign tree for the workflow detail page. Invalidate via
+ * `revalidateWorkflowCampaignTreeCache` after milestone/workflow BFF mutations.
+ */
+export async function getCachedWorkflowCampaignTree(
+  userId: string,
+  workflowId: string,
+): Promise<WorkflowCampaignTreeDataRaw> {
+  'use cache'
+  cacheTag(graphqlWorkflowCampaignTreeCacheTag(userId, workflowId))
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<WorkflowCampaignTreeDataRaw>(
+    WORKFLOW_CAMPAIGN_TREE_QUERY,
+    { workflowId },
+    userId,
+    'WorkflowCampaignTree',
+  )
 }

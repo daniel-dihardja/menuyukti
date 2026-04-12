@@ -1,6 +1,3 @@
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
-
 import { AlertCircle } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 

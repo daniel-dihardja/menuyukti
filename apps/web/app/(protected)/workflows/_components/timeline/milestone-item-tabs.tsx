@@ -23,7 +23,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/componen
 
 import type { PassCriteriaRow, TimelineMilestone } from './types'
 
-export type MilestoneItemTabsProps = {
+/** Tab panel state and handlers for one milestone (built in `timeline-item`). */
+export type MilestoneItemTabsModel = {
   milestone: TimelineMilestone
   goalFieldId: string
   addCriteriaInputId: string
@@ -40,22 +41,27 @@ export type MilestoneItemTabsProps = {
   handleRemovePassCriterion: (index: number) => Promise<void>
 }
 
-export function MilestoneItemTabs({
-  milestone,
-  goalFieldId,
-  addCriteriaInputId,
-  addCriteriaInputRef,
-  goalDraft,
-  setGoalDraft,
-  criteriaRows,
-  savingGoal,
-  savingPassCriteria,
-  hasResult,
-  isMilestoneRunning,
-  handleGoalSave,
-  handleAddPassCriterion,
-  handleRemovePassCriterion,
-}: MilestoneItemTabsProps) {
+export type MilestoneItemTabsProps = {
+  model: MilestoneItemTabsModel
+}
+
+export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
+  const {
+    milestone,
+    goalFieldId,
+    addCriteriaInputId,
+    addCriteriaInputRef,
+    goalDraft,
+    setGoalDraft,
+    criteriaRows,
+    savingGoal,
+    savingPassCriteria,
+    hasResult,
+    isMilestoneRunning,
+    handleGoalSave,
+    handleAddPassCriterion,
+    handleRemovePassCriterion,
+  } = model
   const t = useTranslations('analytics.campaigns.chat')
   const saveStatusMessages = useMemo(
     () => ({

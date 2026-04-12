@@ -1,6 +1,3 @@
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
-
 import { auth } from '@clerk/nextjs/server'
 import { Button } from '@workspace/ui/components/button'
 import { getTranslations } from 'next-intl/server'
@@ -9,12 +6,7 @@ import { routes } from '@/lib/routes'
 import { notFound } from 'next/navigation'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
-import { graphqlQuery } from '@/lib/graphql/client'
-import { getCachedAnalyticsRun } from '@/lib/graphql/cached-queries'
-import {
-  MENU_ENGINEERING_MATRIX_QUERY,
-  type MenuEngineeringMatrixData,
-} from '@/lib/graphql/queries'
+import { getCachedAnalyticsRun, getCachedMenuEngineeringMatrix } from '@/lib/graphql/cached-queries'
 import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
 import { matrixItemsToGroupedRows } from '@/lib/analytics/matrix-page-adapter'
 import { CreateCampaignFromReportButton } from '@/components/create-campaign-from-report-button'
@@ -45,11 +37,7 @@ export default async function Page({ params }: PageProps) {
   const run = runData.analyticsRun
   if (!run) notFound()
 
-  const matrixData = await graphqlQuery<MenuEngineeringMatrixData>(
-    MENU_ENGINEERING_MATRIX_QUERY,
-    { id, locationId: String(run.locationId) },
-    userId,
-  )
+  const matrixData = await getCachedMenuEngineeringMatrix(userId, id, String(run.locationId))
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
 
