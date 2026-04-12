@@ -11,7 +11,15 @@ description: >-
 
 Python **FastAPI** service: LangChain / LangGraph, streaming chat, and **milestone Prepare** (`skill_runner`). Agents call **GraphQL over HTTP** only—no SQLAlchemy or app DB connections.
 
-For monorepo boundaries and pnpm vs uv, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md). For graph/prompt patterns, see [`.cursor/rules/langgraph.mdc`](../../../.cursor/rules/langgraph.mdc) and [`.cursor/rules/langchain.mdc`](../../../.cursor/rules/langchain.mdc).
+For monorepo boundaries and pnpm vs uv, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md).
+
+## Companion skills
+
+When implementing in **`apps/agents`**, follow these skills in addition to this doc and [`.cursor/rules/langgraph.mdc`](../../../.cursor/rules/langgraph.mdc) / [`.cursor/rules/langchain.mdc`](../../../.cursor/rules/langchain.mdc):
+
+- [`langgraph-fundamentals`](../langgraph-fundamentals/SKILL.md) — LangGraph: graphs, state, nodes, streaming, Command.
+- [`langchain-fundamentals`](../langchain-fundamentals/SKILL.md) — LangChain agents, tools, middleware.
+- [`python-design-patterns`](../python-design-patterns/SKILL.md) — Structure, layering, composition.
 
 ## Layout
 

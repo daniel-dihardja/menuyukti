@@ -10,7 +10,17 @@ description: >-
 
 **Next.js** user-facing app: chat, campaigns, CRUD. **All product data** goes through **GraphQL** (no direct DB). Auth: **Clerk**. Copy: **next-intl** (no hardcoded user-facing strings).
 
-For monorepo boundaries, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md). For UI and i18n rules, see [`.cursor/rules/web-conventions.mdc`](../../../.cursor/rules/web-conventions.mdc). For Next.js patterns, see [`.agents/skills/next-best-practices/SKILL.md`](../next-best-practices/SKILL.md) and [`.agents/skills/clerk-nextjs-patterns/SKILL.md`](../clerk-nextjs-patterns/SKILL.md).
+For monorepo boundaries, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md). For UI and i18n rules, see [`.cursor/rules/web-conventions.mdc`](../../../.cursor/rules/web-conventions.mdc).
+
+## Companion skills
+
+When implementing in **`apps/web`**, follow these skills in addition to this doc:
+
+- [`vercel-react-best-practices`](../vercel-react-best-practices/SKILL.md) — React and Next.js performance patterns.
+- [`next-best-practices`](../next-best-practices/SKILL.md) — Next.js file conventions, RSC boundaries, data fetching.
+- [`shadcn`](../shadcn/SKILL.md) — UI components and styling with the project’s shadcn setup.
+
+For **Clerk** (auth, middleware, Server Actions), use [`clerk-nextjs-patterns`](../clerk-nextjs-patterns/SKILL.md).
 
 ## Layout (high level)
 

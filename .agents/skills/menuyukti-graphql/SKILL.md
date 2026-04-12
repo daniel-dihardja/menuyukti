@@ -13,6 +13,13 @@ Python **Strawberry** API: **single persistence layer** (SQLAlchemy + Alembic) a
 
 For monorepo boundaries, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md). For resolver/auth conventions, see [`.cursor/rules/python-graphql-conventions.mdc`](../../../.cursor/rules/python-graphql-conventions.mdc). For pandas analytics logic, see [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md).
 
+## Companion skills
+
+When implementing in **`apps/graphql`**, follow these skills in addition to this doc and the design rules below:
+
+- [`graphql-architect`](../graphql-architect/SKILL.md) — Schema design, federation-style thinking, DataLoader-style patterns, subscriptions guidance.
+- [`python-design-patterns`](../python-design-patterns/SKILL.md) — Structure, layering, composition.
+
 ## Layout
 
 | Area            | Path                                                                              | Role                                                                 |
