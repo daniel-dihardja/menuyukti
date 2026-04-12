@@ -44,6 +44,8 @@ When improving an existing implementation (not only greenfield features), also r
 | Shared GraphQL helpers | [`apps/web/lib/graphql/`](../../../apps/web/lib/graphql/)                               |
 | API routes             | [`apps/web/app/api/`](../../../apps/web/app/api/)                                       |
 
+Named product features and aliases (e.g. workflow presets): see [`.agents/menuyukti-features.md`](../../menuyukti-features.md).
+
 Commands: [AGENTS.md](../../../AGENTS.md) § Web.
 
 ## Milestone **Data** tab: `dataTask` and Prepare

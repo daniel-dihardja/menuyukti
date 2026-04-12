@@ -16,6 +16,10 @@ Persistent Cursor guidance lives in **`.cursor/rules/*.mdc`**.
 
 Menuyukti-specific agent workflows live under **`.agents/skills/menuyukti-*/`**: [`menuyukti-repo-orientation`](.agents/skills/menuyukti-repo-orientation/SKILL.md) (monorepo map and cross-app flows), [`menuyukti-agents`](.agents/skills/menuyukti-agents/SKILL.md) (`apps/agents`, skill_runner, prefetch), [`menuyukti-graphql`](.agents/skills/menuyukti-graphql/SKILL.md) (`apps/graphql`, schema, Alembic), [`menuyukti-web`](.agents/skills/menuyukti-web/SKILL.md) (`apps/web`, milestones, next-intl), [`menuyukti-analytics`](.agents/skills/menuyukti-analytics/SKILL.md) (`packages/menuyukti` pipelines and Instagram signals).
 
+## Feature glossary
+
+When the user mentions a **named product feature** (e.g. workflow presets), map it to code using [`.agents/menuyukti-features.md`](.agents/menuyukti-features.md). The Cursor rule **menuyukti-features** (`.cursor/rules/menuyukti-features.mdc`) summarizes the same and points there for the full table.
+
 ## Environment and secrets
 
 - Each app may use a local **`.env`** (see each app’s README or `.env.example` where present).
