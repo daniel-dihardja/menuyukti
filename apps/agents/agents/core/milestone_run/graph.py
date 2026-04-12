@@ -8,14 +8,23 @@ from functools import partial
 from typing import Any, Literal, cast
 
 import httpx
+from agents_app.agents.core.chat.graphql_client import fetch_milestone_node
 from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_graph
 from agents_app.agents.core.milestone_eval.nodes import fetch_context
-from agents_app.agents.core.milestone_run.graphql_client import fetch_prior_milestones_data
+from agents_app.agents.core.milestone_run.graphql_client import (
+    fetch_api_adapter_tools_for_location,
+    fetch_prior_milestones_data,
+)
 from agents_app.agents.core.milestone_run.prompts import (
     INTERMEDIATE_SKILL_PROMPT_SUFFIX,
     SKILL_SELECTOR_SYSTEM,
     execute_skill_task_message,
     skill_selector_human_message,
+    workspace_adapter_tools_prompt_suffix,
+)
+from agents_app.agents.core.milestone_run.skill_settings import (
+    normalize_skill_id_list,
+    resolve_skill_selection_from_milestone_data,
 )
 from agents_app.agents.core.milestone_run.skills import (
     DEFAULT_SKILL_ID,
@@ -102,15 +111,7 @@ def _normalize_skill_id(raw: str) -> str:
 
 def _normalize_skill_id_list(raw: list[str]) -> list[str]:
     """Deduplicate, keep order, cap at 2; fall back to default if empty."""
-    out: list[str] = []
-    seen: set[str] = set()
-    for item in raw:
-        sid = _normalize_skill_id(item)
-        if sid in SKILL_REGISTRY and sid not in seen:
-            out.append(sid)
-            seen.add(sid)
-        if len(out) >= 2:
-            break
+    out = normalize_skill_id_list([str(x) for x in raw], SKILL_REGISTRY)
     if not out:
         return [DEFAULT_SKILL_ID]
     return out
@@ -145,15 +146,64 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
                 mid,
             )
             raise
+    try:
+        adapters = await fetch_api_adapter_tools_for_location(
+            int(state["location_id"]),
+            str(state["user_id"]),
+            client=client,
+        )
+    except Exception:
+        _logger.exception(
+            "milestone_run.fetch_children: api adapter tools fetch failed milestone_id=%s",
+            mid,
+        )
+        raise
+
+    row = await fetch_milestone_node(mid, str(state["user_id"]), client=client)
+    raw_md = row.get("data") if isinstance(row, dict) else None
+    milestone_data = raw_md if isinstance(raw_md, dict) else {}
+    use_llm, fixed_ids = resolve_skill_selection_from_milestone_data(
+        milestone_data,
+        SKILL_REGISTRY,
+    )
+    base: dict[str, Any] = {
+        **out,
+        "prior_milestones_data": prior,
+        "api_adapter_tools": adapters,
+        "use_llm_skill_selector": use_llm,
+    }
+    if not use_llm and fixed_ids:
+        first = fixed_ids[0]
+        _trace_step(
+            state,
+            "select_skill",
+            source="fixed",
+            skill_ids=fixed_ids,
+        )
+        base["selected_skill_ids"] = fixed_ids
+        base["current_skill_index"] = 0
+        base["selected_skill_id"] = first
+        _logger.info(
+            "milestone_run.fetch_children: fixed skills milestone_id=%s skill_ids=%s",
+            mid,
+            fixed_ids,
+        )
+    else:
+        _logger.info(
+            "milestone_run.fetch_children: will use LLM skill selector milestone_id=%s",
+            mid,
+        )
+
     _logger.info(
-        "milestone_run.fetch_children: done milestone_id=%s criteria_count=%s goal_len=%s raw_data_len=%s prior_len=%s",
+        "milestone_run.fetch_children: done milestone_id=%s criteria_count=%s goal_len=%s raw_data_len=%s prior_len=%s adapters=%s",
         mid,
         len(out.get("criteria") or []),
         len(str(out.get("goal") or "")),
         len(str(out.get("raw_data") or "")),
         len(prior),
+        len(adapters),
     )
-    return {**out, "prior_milestones_data": prior}
+    return base
 
 
 async def _select_skills(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
@@ -228,15 +278,24 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         int(state["location_id"]),
         str(state["user_id"]),
         client=client,
+        extra_tool_ids=skill.extra_tool_ids,
     )
-    system_prompt = skill.prompt
+    raw_adapters = state.get("api_adapter_tools", [])
+    adapters_list = raw_adapters if isinstance(raw_adapters, list) else []
+    adapter_suffix = workspace_adapter_tools_prompt_suffix(adapters_list)
+    system_prompt = skill.prompt + adapter_suffix
     if not is_last:
-        system_prompt = skill.prompt + INTERMEDIATE_SKILL_PROMPT_SUFFIX
+        system_prompt = skill.prompt + adapter_suffix + INTERMEDIATE_SKILL_PROMPT_SUFFIX
     llm = get_llm()
     agent = create_react_agent(llm, tools, prompt=system_prompt)
+    task_body = execute_skill_task_message(
+        skill.id,
+        skill.name,
+        str(state.get("goal") or ""),
+    )
     agent_input = {
         "messages": [
-            HumanMessage(content=execute_skill_task_message(skill.id, skill.name)),
+            HumanMessage(content=task_body),
         ],
     }
     agent_cfg = cast(
@@ -258,10 +317,16 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         if et == "on_tool_start":
             tname = _astream_event_tool_name(ev)
             if tname:
+                _logger.info(
+                    "milestone_run.execute_skill: tool_start name=%s milestone_id=%s", tname, mid
+                )
                 _trace_agent_event(state, "tool_start", name=tname)
         elif et == "on_tool_end":
             tname = _astream_event_tool_name(ev)
             if tname:
+                _logger.info(
+                    "milestone_run.execute_skill: tool_end name=%s milestone_id=%s", tname, mid
+                )
                 _trace_agent_event(state, "tool_end", name=tname)
         elif et == "on_chat_model_start":
             _trace_agent_event(state, "chat_model_start")
@@ -288,6 +353,12 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         "last_criteria_verdicts": last_verdicts,
         "selected_skill_id": ids[next_idx] if next_idx < len(ids) else ids[-1],
     }
+
+
+def _route_after_fetch_children(state: MilestoneRunState) -> Literal["select_skills", "execute_skill"]:
+    if state.get("use_llm_skill_selector", True):
+        return "select_skills"
+    return "execute_skill"
 
 
 def _route_after_execute(state: MilestoneRunState) -> Literal["again", "finalize_eval"]:
@@ -380,7 +451,11 @@ def build_milestone_run_graph(client: httpx.AsyncClient):
     builder.add_node("execute_skill", partial(_execute_skill, client=client))
     builder.add_node("finalize_eval", partial(_finalize_eval, client=client))
     builder.add_edge(START, "fetch_children")
-    builder.add_edge("fetch_children", "select_skills")
+    builder.add_conditional_edges(
+        "fetch_children",
+        _route_after_fetch_children,
+        {"select_skills": "select_skills", "execute_skill": "execute_skill"},
+    )
     builder.add_edge("select_skills", "execute_skill")
     builder.add_conditional_edges(
         "execute_skill",

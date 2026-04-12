@@ -1,6 +1,3 @@
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
-
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
@@ -9,12 +6,8 @@ import { UpdateCogsForm } from './update-cogs-form'
 import { getAppCurrencyCode } from '@/lib/app-currency'
 import { routes } from '@/lib/routes'
 import { graphqlQuery } from '@/lib/graphql/client'
-import {
-  ANALYTICS_RUN_QUERY,
-  MENU_ENGINEERING_MATRIX_QUERY,
-  type AnalyticsRunData,
-  type MenuEngineeringMatrixData,
-} from '@/lib/graphql/queries'
+import { getCachedMenuEngineeringMatrix } from '@/lib/graphql/cached-queries'
+import { ANALYTICS_RUN_QUERY, type AnalyticsRunData } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 
 type PageProps = {
@@ -43,11 +36,7 @@ export default async function Page({ params }: PageProps) {
   const run = runData.analyticsRun
   if (!run) notFound()
 
-  const matrixData = await graphqlQuery<MenuEngineeringMatrixData>(
-    MENU_ENGINEERING_MATRIX_QUERY,
-    { id, locationId: String(run.locationId) },
-    userId,
-  )
+  const matrixData = await getCachedMenuEngineeringMatrix(userId, id, String(run.locationId))
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${analyticsId}`
   const currencyCode = getAppCurrencyCode()

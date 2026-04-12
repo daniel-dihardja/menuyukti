@@ -7,12 +7,14 @@ import { Skeleton } from '@workspace/ui/components/skeleton'
 export default async function HeatmapLoading() {
   const tSales = await getTranslations('analytics.sales')
   const tHeatmap = await getTranslations('analytics.heatmap')
+  const tShared = await getTranslations('analytics.shared')
 
   return (
     <AnalyticsPageShell
       title={tHeatmap('pageLoadingTitle')}
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
+        { label: tShared('breadcrumbRunLoading') },
         { label: tHeatmap('breadcrumb') },
       ]}
     >

@@ -27,4 +27,3 @@ def synthesis_human_message(goal: str, evaluated: list[dict[str, str]]) -> str:
         lines.append(f"- [{status.upper()}] {req} (id={sid}): {reason}")
     body = "\n".join(lines) if lines else "(no criteria)"
     return f"Goal:\n{goal}\n\nCriterion results:\n{body}\n\nWrite a 2–4 sentence summary of whether this milestone is achieved."
-

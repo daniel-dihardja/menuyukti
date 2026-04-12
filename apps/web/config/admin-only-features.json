@@ -1,0 +1,34 @@
+{
+  "features": [
+    {
+      "id": "assets",
+      "description": "Brand asset library, uploads, and campaign Assets tab / in-flow generation.",
+      "routePrefixes": ["/assets", "/studio"],
+      "navKeys": []
+    },
+    {
+      "id": "studio",
+      "description": "AI asset studio (brand library + generation).",
+      "routePrefixes": ["/studio"],
+      "navKeys": ["studio"]
+    },
+    {
+      "id": "printOrders",
+      "description": "Print orders listing and shop flow entry points tied to print.",
+      "routePrefixes": ["/print-orders"],
+      "navKeys": ["printOrders"]
+    },
+    {
+      "id": "staff",
+      "description": "Menuyukti staff console.",
+      "routePrefixes": ["/staff"],
+      "navKeys": ["staff"]
+    },
+    {
+      "id": "aiGatewayUsage",
+      "description": "Vercel AI Gateway usage and credits (admin).",
+      "routePrefixes": ["/usage"],
+      "navKeys": ["usage"]
+    }
+  ]
+}

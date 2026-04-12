@@ -9,19 +9,24 @@ import {
   type TimelineChatState,
   type TimelineWorkspaceStateValue,
 } from './timeline-context'
-import type { MilestoneDataTask, PassCriteriaRow } from './timeline/types'
+import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
+
+import type { MilestoneRunSkillMode, PassCriteriaRow } from './timeline/types'
 
 export type CampaignTimelineOpsHandles = {
-  handleCreateMilestone: () => void | Promise<void>
+  handleCreateMilestone: () => boolean | Promise<boolean>
+  handleCreateMilestoneFromPreset: (presetId: MilestonePresetId) => boolean | Promise<boolean>
   handleDeleteMilestone: (id: string) => void | Promise<void>
   handleRenameMilestone: (id: string, name: string) => Promise<boolean>
   handleMoveMilestone: (id: string, direction: 'up' | 'down') => void | Promise<void>
   handleUpdatePassCriteria: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
   handleUpdateMilestoneGoal: (id: string, goal: string) => Promise<boolean>
   handleUpdateMilestoneData: (id: string, milestoneData: string) => Promise<boolean>
+  handleUpdateMilestoneRunSettings: (
+    id: string,
+    settings: { milestoneRunSkillMode: MilestoneRunSkillMode; milestoneRunSkillIds: string[] },
+  ) => Promise<boolean>
   handleHydrateMilestoneData: (id: string) => Promise<void>
-  handleSetMilestoneDataTask: (id: string, dataTask: MilestoneDataTask) => Promise<boolean>
-  handlePrepareMilestone: (id: string, dataTask: MilestoneDataTask) => void | Promise<void>
   handleRunMilestone: (id: string) => void | Promise<void>
   handleExportWorkflow: () => void | Promise<void>
 }
@@ -48,15 +53,15 @@ export function useCampaignTimelineProviderSlices(
   const actions = useMemo<TimelineActions>(
     () => ({
       onCreateMilestone: ops.handleCreateMilestone,
+      onCreateMilestoneFromPreset: ops.handleCreateMilestoneFromPreset,
       onDeleteMilestone: ops.handleDeleteMilestone,
       onRenameMilestone: ops.handleRenameMilestone,
       onMoveMilestone: ops.handleMoveMilestone,
       onUpdatePassCriteria: ops.handleUpdatePassCriteria,
       onUpdateMilestoneGoal: ops.handleUpdateMilestoneGoal,
       onUpdateMilestoneData: ops.handleUpdateMilestoneData,
+      onUpdateMilestoneRunSettings: ops.handleUpdateMilestoneRunSettings,
       onHydrateMilestoneData: ops.handleHydrateMilestoneData,
-      onSetMilestoneDataTask: ops.handleSetMilestoneDataTask,
-      onPrepareMilestone: ops.handlePrepareMilestone,
       onRunMilestone: ops.handleRunMilestone,
       onExport: ops.handleExportWorkflow,
     }),

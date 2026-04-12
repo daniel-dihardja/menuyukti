@@ -9,6 +9,7 @@ import type { AnyNode } from '@/lib/graphql/queries'
 
 import type {
   MilestoneDataTask,
+  MilestoneRunSkillMode,
   PassCriteriaRow,
   TimelineMilestone,
   TimelineMilestoneStatus,
@@ -131,6 +132,26 @@ export function resultMarkdownFromChildNodes(
   return undefined
 }
 
+function milestoneRunSkillFieldsFromData(data: unknown): {
+  milestoneRunSkillMode: MilestoneRunSkillMode
+  milestoneRunSkillIds: string[]
+} {
+  const parsed = milestoneDataSchema.safeParse(data)
+  let milestoneRunSkillMode: MilestoneRunSkillMode = 'auto'
+  let milestoneRunSkillIds: string[] = []
+  if (parsed.success) {
+    if (parsed.data.milestoneRunSkillMode === 'fixed') {
+      milestoneRunSkillMode = 'fixed'
+    }
+    if (Array.isArray(parsed.data.milestoneRunSkillIds)) {
+      milestoneRunSkillIds = parsed.data.milestoneRunSkillIds.filter(
+        (x): x is string => typeof x === 'string' && x.trim().length > 0,
+      )
+    }
+  }
+  return { milestoneRunSkillMode, milestoneRunSkillIds }
+}
+
 export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): TimelineMilestone {
   const parsed = milestoneDataSchema.safeParse(node.data)
   const legacyGoal = parsed.success ? parsed.data.goal : undefined
@@ -138,17 +159,20 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   const data = milestoneDataFromChildNodes(node.milestonedataNodes)
   const passCriteria = passCriteriaFromChildNodes(node.passCriteriaNodes)
   const resultMarkdown = resultMarkdownFromChildNodes(node.resultNodes)
-  let dataTask: MilestoneDataTask = 'manual'
-  if (parsed.success && parsed.data.dataTask) {
-    dataTask = parsed.data.dataTask
+  let dataTask: MilestoneDataTask | undefined
+  if (parsed.success && parsed.data.dataTask === 'manual') {
+    dataTask = 'manual'
   }
+  const { milestoneRunSkillMode, milestoneRunSkillIds } = milestoneRunSkillFieldsFromData(node.data)
 
   return {
     id: node.id,
     title: node.name,
     goal,
     data,
-    dataTask,
+    ...(dataTask !== undefined ? { dataTask } : {}),
+    milestoneRunSkillMode,
+    milestoneRunSkillIds,
     passCriteria,
     resultMarkdown,
     status: deriveMilestoneRailStatus(passCriteria, resultMarkdown),

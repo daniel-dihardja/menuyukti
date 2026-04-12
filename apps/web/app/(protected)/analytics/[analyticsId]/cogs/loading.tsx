@@ -7,12 +7,14 @@ import { Skeleton } from '@workspace/ui/components/skeleton'
 export default async function CogsLoading() {
   const tSales = await getTranslations('analytics.sales')
   const tCogs = await getTranslations('analytics.cogs')
+  const tShared = await getTranslations('analytics.shared')
 
   return (
     <AnalyticsPageShell
       title={tCogs('pageLoadingTitle')}
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
+        { label: tShared('breadcrumbRunLoading') },
         { label: tCogs('title') },
       ]}
     >

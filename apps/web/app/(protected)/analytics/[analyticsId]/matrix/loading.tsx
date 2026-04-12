@@ -7,12 +7,14 @@ import { Skeleton } from '@workspace/ui/components/skeleton'
 export default async function MatrixLoading() {
   const tSales = await getTranslations('analytics.sales')
   const tMatrix = await getTranslations('analytics.matrix')
+  const tShared = await getTranslations('analytics.shared')
 
   return (
     <AnalyticsPageShell
       title={tMatrix('pageLoadingTitle')}
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
+        { label: tShared('breadcrumbRunLoading') },
         { label: tMatrix('breadcrumb') },
       ]}
     >

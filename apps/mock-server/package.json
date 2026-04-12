@@ -1,0 +1,25 @@
+{
+  "name": "mock-server",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "format-check": "prettier --check \"src/**/*.ts\"",
+    "lint": "eslint src --max-warnings 0",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.7",
+    "hono": "^4.11.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.9",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.2"
+  }
+}

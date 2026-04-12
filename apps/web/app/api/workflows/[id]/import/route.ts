@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
   IMPORT_WORKFLOW_MUTATION,
   NODE_QUERY,
@@ -23,7 +24,7 @@ const bodySchema = z.object({
 export async function POST(req: Request, context: RouteContext) {
   try {
     const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -59,6 +60,8 @@ export async function POST(req: Request, context: RouteContext) {
       { locationId: node.locationId, payload: parsedBody.data.payload },
       userId,
     )
+
+    revalidateWorkflowCampaignTreeCache(userId, workflowId)
 
     return NextResponse.json({ workflow: data.importWorkflow })
   } catch (error) {

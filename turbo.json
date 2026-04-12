@@ -2,6 +2,7 @@
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "globalEnv": [
+    "AI_GATEWAY_API_KEY",
     "AGENTS_API_URL",
     "AGENTS_URL",
     "PYTHON_AGENTS_URL",
@@ -14,8 +15,10 @@
     "GRAPHQL_INTERNAL_API_KEY",
     "LEONARDO_API_KEY",
     "NODE_ENV",
+    "PORT",
     "NEXT_PUBLIC_APP_CURRENCY",
     "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+    "VERCEL_OIDC_TOKEN",
     "WAREHOUSE_READS_ENABLED"
   ],
   "tasks": {

@@ -66,9 +66,10 @@ load-report:
 	@if [ -z "$(REPORT_PATH)" ]; then echo "REPORT_PATH is required"; exit 1; fi
 	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_sales_report "$(REPORT_PATH)"
 
-# Seeds Workspace + Location with clerk_user_id from DEV_CLERK_USER_ID (default dev_local_user); see README.
+# Seeds Workspace + Location. Clerk user id: USER_ID=... (this run only), or DEV_CLERK_USER_ID env, else dev_local_user.
 dev-data:
-	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_dev_data
+	PYTHONPATH=../.. $(PYTHON) -m graphql.scripts.load_dev_data \
+		$(if $(USER_ID),--clerk-user-id "$(USER_ID)",)
 
 lint:
 	uv run --group dev ruff check .

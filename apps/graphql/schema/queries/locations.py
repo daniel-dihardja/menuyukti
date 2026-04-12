@@ -35,6 +35,7 @@ class LocationsQuery:
                     country=row.country,
                     currency=row.currency,
                     node_id=str(row.node_id) if row.node_id is not None else None,
+                    workspace_id=str(row.workspace_id) if row.workspace_id is not None else None,
                 )
                 for row in rows
             ]
@@ -56,4 +57,5 @@ class LocationsQuery:
                 country=row.country,
                 currency=row.currency,
                 node_id=str(row.node_id) if row.node_id is not None else None,
+                workspace_id=str(row.workspace_id) if row.workspace_id is not None else None,
             )

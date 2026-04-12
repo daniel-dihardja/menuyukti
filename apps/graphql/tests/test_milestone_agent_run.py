@@ -217,3 +217,52 @@ def test_complete_milestone_agent_run_updates_row() -> None:
         assert isinstance(row.timeline, list)
     finally:
         session.close()
+
+
+DELETE_NODE = """
+mutation DeleteNode($id: ID!) {
+  deleteNode(id: $id)
+}
+"""
+
+
+def test_delete_milestone_removes_milestone_agent_runs() -> None:
+    """Deleting a milestone must clear milestone_agent_run FK rows."""
+    _location_id, workflow_id, milestone_id = _workflow_and_milestone()
+    run_id = str(uuid.uuid4())
+    ctx = graphql_auth_context()
+
+    asyncio.run(
+        schema.execute(
+            START_RUN,
+            variable_values={
+                "runId": run_id,
+                "milestoneId": milestone_id,
+                "workflowId": workflow_id,
+                "traceparent": None,
+            },
+            context_value=ctx,
+        )
+    )
+
+    session = SessionLocal()
+    try:
+        assert session.get(MilestoneAgentRun, run_id) is not None
+    finally:
+        session.close()
+
+    deleted = asyncio.run(
+        schema.execute(
+            DELETE_NODE,
+            variable_values={"id": milestone_id},
+            context_value=ctx,
+        )
+    )
+    assert not deleted.errors, deleted.errors
+    assert deleted.data["deleteNode"] is True
+
+    session = SessionLocal()
+    try:
+        assert session.get(MilestoneAgentRun, run_id) is None
+    finally:
+        session.close()

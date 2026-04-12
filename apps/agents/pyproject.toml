@@ -5,7 +5,7 @@ description = "FastAPI LangChain/LangGraph agent service"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "agent-skills",
+    "url-safety",
     "fastapi>=0.115.0",
     "httpx>=0.28.0",
     "uvicorn[standard]>=0.40.0",
@@ -16,11 +16,10 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "pydantic>=2.0.0",
     "pyyaml>=6.0.3",
-    "jinja2>=3.1.0",
 ]
 
 [tool.uv.sources]
-agent-skills = { workspace = true }
+url-safety = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -40,12 +39,11 @@ packages = [
     "agents_app",
     "agents_app.agents",
     "agents_app.agents.core",
+    "agents_app.agents.http",
     "agents_app.agents.core.chat",
     "agents_app.agents.core.format_markdown",
     "agents_app.agents.core.milestone_data",
     "agents_app.agents.core.milestone_eval",
-    "agents_app.agents.domain",
-    "agents_app.agents.domain.skill_runner",
     "agents_app.models",
     "agents_app.routers",
 ]

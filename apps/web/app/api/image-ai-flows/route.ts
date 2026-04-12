@@ -9,8 +9,6 @@ import { CREATE_IMAGE_AI_FLOW_MUTATION, type CreateImageAiFlowData } from '@/lib
 
 import { createImageAiFlowBodySchema } from './schema'
 
-export const runtime = 'nodejs'
-
 export async function POST(req: Request) {
   try {
     const authz = await requireMenuyuktiAdminApi()

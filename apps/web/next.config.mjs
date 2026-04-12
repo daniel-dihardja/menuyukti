@@ -8,6 +8,7 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig = {
+  cacheComponents: true,
   output: "standalone",
   transpilePackages: ["@workspace/ui"],
   experimental: {

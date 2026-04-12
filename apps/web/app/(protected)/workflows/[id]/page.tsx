@@ -1,19 +1,12 @@
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
-
 import { auth } from '@clerk/nextjs/server'
 import { getTranslations } from 'next-intl/server'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { z } from 'zod'
 import { routes } from '@/lib/routes'
-import { graphqlQuery } from '@/lib/graphql/client'
 import { parseNode, parseNodes } from '@/lib/graphql/node-schemas'
-import {
-  WORKFLOW_CAMPAIGN_TREE_QUERY,
-  type WorkflowCampaignTreeDataRaw,
-  type WorkflowNode,
-} from '@/lib/graphql/queries'
+import { getCachedWorkflowCampaignTree } from '@/lib/graphql/cached-queries'
+import type { WorkflowNode } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { CampaignWorkspace } from '../_components/campaign-workspace'
 import { milestoneNodeToTimelineMilestone } from '../_components/milestone-map'
@@ -51,12 +44,7 @@ export default async function Page({ params }: PageProps) {
   }
   const workflowId = parsed.data
 
-  const treeRaw = await graphqlQuery<WorkflowCampaignTreeDataRaw>(
-    WORKFLOW_CAMPAIGN_TREE_QUERY,
-    { workflowId },
-    authUserId,
-    'WorkflowCampaignTree',
-  )
+  const treeRaw = await getCachedWorkflowCampaignTree(authUserId, workflowId)
   const tree = treeRaw.workflowCampaignTree
   if (!tree) {
     notFound()

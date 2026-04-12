@@ -4,23 +4,27 @@ import type { Dispatch } from 'react'
 import { useCallback, useMemo } from 'react'
 
 import { milestoneDataSchema } from '@/lib/graphql/node-schemas'
+import {
+  getMilestonePresetCreateFields,
+  type MilestonePresetId,
+} from '@/lib/milestones/preset-definitions'
 
 import type { CampaignMilestoneAction } from './campaign-milestone-reducer'
 import { deriveMilestoneRailStatus, milestoneNodeToTimelineMilestone } from './milestone-map'
-import {
-  MILESTONE_PREPARE_DATA_TASKS,
-  type MilestoneDataTask,
-  type PassCriteriaRow,
-  type PassCriteriaStatus,
-  type TimelineMilestone,
+import type {
+  MilestoneDataTask,
+  MilestoneRunSkillMode,
+  PassCriteriaRow,
+  PassCriteriaStatus,
+  TimelineMilestone,
 } from './timeline/types'
 
-function milestoneDataTaskFromNodeData(data: unknown): MilestoneDataTask {
+function milestoneDataTaskFromNodeData(data: unknown): MilestoneDataTask | undefined {
   const parsed = milestoneDataSchema.safeParse(data)
-  if (!parsed.success) {
-    return 'manual'
+  if (!parsed.success || parsed.data.dataTask !== 'manual') {
+    return undefined
   }
-  return parsed.data.dataTask ?? 'manual'
+  return 'manual'
 }
 
 export function useMilestoneOperations(
@@ -36,7 +40,7 @@ export function useMilestoneOperations(
     t: (key: string) => string
   },
 ) {
-  const handleCreateMilestone = useCallback(async () => {
+  const handleCreateMilestone = useCallback(async (): Promise<boolean> => {
     dispatch({ type: 'PATCH', patch: { createError: null, creating: true } })
     try {
       const res = await fetch(`/api/workflows/${workflowId}/milestones`, {
@@ -61,7 +65,9 @@ export function useMilestoneOperations(
           type: 'UPDATE_MILESTONES',
           updater: (prev) => [...prev, milestoneNodeToTimelineMilestone(created)],
         })
+        return true
       }
+      return false
     } catch (err) {
       dispatch({
         type: 'PATCH',
@@ -69,10 +75,145 @@ export function useMilestoneOperations(
           createError: err instanceof Error ? err.message : t('milestonesCreateError'),
         },
       })
+      return false
     } finally {
       dispatch({ type: 'PATCH', patch: { creating: false } })
     }
   }, [workflowId, dispatch, t])
+
+  const handleCreateMilestoneFromPreset = useCallback(
+    async (presetId: MilestonePresetId): Promise<boolean> => {
+      const fields = getMilestonePresetCreateFields(presetId, t)
+      dispatch({ type: 'PATCH', patch: { createError: null, creating: true } })
+      let createdId: string | null = null
+      try {
+        const res = await fetch(`/api/workflows/${workflowId}/milestones`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        })
+        const body = (await res.json().catch(() => null)) as {
+          message?: string
+          id?: string
+          name?: string
+          data?: unknown | null
+        } | null
+        if (!res.ok) {
+          throw new Error(body?.message ?? t('milestonesCreateError'))
+        }
+        const id = body?.id
+        if (typeof id !== 'string') {
+          throw new Error(t('milestonesCreateError'))
+        }
+        createdId = id
+
+        const patchBody: Record<string, unknown> = {
+          name: fields.name,
+          dataTask: fields.dataTask,
+          milestoneData: fields.milestoneData,
+        }
+        if (fields.goal !== undefined) {
+          patchBody.goal = fields.goal
+        }
+        if (fields.milestoneRunSkillMode !== undefined) {
+          patchBody.milestoneRunSkillMode = fields.milestoneRunSkillMode
+        }
+        if (fields.milestoneRunSkillIds !== undefined) {
+          patchBody.milestoneRunSkillIds = fields.milestoneRunSkillIds
+        }
+
+        const patchRes = await fetch(`/api/workflows/${workflowId}/milestones/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patchBody),
+        })
+        const patchJson = (await patchRes.json().catch(() => null)) as {
+          message?: string
+          name?: string
+          data?: unknown
+        } | null
+        if (!patchRes.ok) {
+          throw new Error(patchJson?.message ?? t('milestonesCreateError'))
+        }
+
+        const title = typeof patchJson?.name === 'string' ? patchJson.name : fields.name
+        const dataTask: MilestoneDataTask | undefined =
+          milestoneDataTaskFromNodeData(patchJson?.data ?? { dataTask: fields.dataTask }) ??
+          'manual'
+
+        let passCriteria: PassCriteriaRow[] = []
+        const criteriaDraft = fields.passCriteria
+        if (criteriaDraft !== undefined && criteriaDraft.length > 0) {
+          const criteriaRes = await fetch(`/api/workflows/${workflowId}/milestones/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ passCriteria: criteriaDraft }),
+          })
+          const criteriaJson = (await criteriaRes.json().catch(() => null)) as {
+            message?: string
+            passCriteria?: PassCriteriaRow[]
+          } | null
+          if (!criteriaRes.ok) {
+            throw new Error(criteriaJson?.message ?? t('milestonesCreateError'))
+          }
+          passCriteria = criteriaJson?.passCriteria ?? criteriaDraft
+        }
+
+        const skillFromPatch = milestoneDataSchema.safeParse(patchJson?.data ?? {})
+        const next: TimelineMilestone = {
+          id,
+          title,
+          goal: fields.goal?.trim() ? fields.goal : undefined,
+          data: fields.milestoneData,
+          ...(dataTask !== undefined ? { dataTask } : {}),
+          ...(skillFromPatch.success && skillFromPatch.data.milestoneRunSkillMode === 'fixed'
+            ? { milestoneRunSkillMode: 'fixed' as const }
+            : skillFromPatch.success && skillFromPatch.data.milestoneRunSkillMode === 'auto'
+              ? { milestoneRunSkillMode: 'auto' as const }
+              : fields.milestoneRunSkillMode !== undefined
+                ? { milestoneRunSkillMode: fields.milestoneRunSkillMode }
+                : {}),
+          ...(skillFromPatch.success && Array.isArray(skillFromPatch.data.milestoneRunSkillIds)
+            ? {
+                milestoneRunSkillIds: skillFromPatch.data.milestoneRunSkillIds.filter(
+                  (x): x is string => typeof x === 'string' && x.length > 0,
+                ),
+              }
+            : fields.milestoneRunSkillIds !== undefined
+              ? { milestoneRunSkillIds: fields.milestoneRunSkillIds }
+              : {}),
+          passCriteria,
+          status: deriveMilestoneRailStatus(passCriteria, undefined),
+        }
+
+        dispatch({
+          type: 'UPDATE_MILESTONES',
+          updater: (prev) => [...prev, next],
+        })
+        return true
+      } catch (err) {
+        if (createdId !== null) {
+          try {
+            await fetch(`/api/workflows/${workflowId}/milestones/${createdId}`, {
+              method: 'DELETE',
+            })
+          } catch {
+            // best-effort rollback
+          }
+        }
+        dispatch({
+          type: 'PATCH',
+          patch: {
+            createError: err instanceof Error ? err.message : t('milestonesCreateError'),
+          },
+        })
+        return false
+      } finally {
+        dispatch({ type: 'PATCH', patch: { creating: false } })
+      }
+    },
+    [workflowId, dispatch, t],
+  )
 
   const handleDeleteMilestone = useCallback(
     async (milestoneId: string) => {
@@ -277,121 +418,13 @@ export function useMilestoneOperations(
     [workflowId, dispatch, t],
   )
 
-  const handleSetMilestoneDataTask = useCallback(
-    async (milestoneId: string, dataTask: MilestoneDataTask): Promise<boolean> => {
-      dispatch({ type: 'PATCH', patch: { milestonePrepareError: null } })
-      try {
-        const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ dataTask }),
-        })
-        const body = (await res.json().catch(() => null)) as {
-          message?: string
-          data?: unknown
-        } | null
-        if (!res.ok) {
-          throw new Error(body?.message ?? t('milestonesMilestoneDataError'))
-        }
-        const nodeBody = body as { data?: unknown }
-        const nextTask = milestoneDataTaskFromNodeData(nodeBody?.data)
-        dispatch({
-          type: 'UPDATE_MILESTONES',
-          updater: (prev) =>
-            prev.map((m) => (m.id === milestoneId ? { ...m, dataTask: nextTask } : m)),
-        })
-        return true
-      } catch (err) {
-        dispatch({
-          type: 'PATCH',
-          patch: {
-            milestonePrepareError: err instanceof Error ? err.message : t('milestonePrepareError'),
-          },
-        })
-        return false
-      }
-    },
-    [workflowId, dispatch, t],
-  )
-
-  const handlePrepareMilestone = useCallback(
-    async (milestoneId: string, dataTask: MilestoneDataTask) => {
-      if (!MILESTONE_PREPARE_DATA_TASKS.includes(dataTask)) {
-        return
-      }
-      dispatch({
-        type: 'PATCH',
-        patch: { milestonePrepareError: null, preparingMilestoneId: milestoneId },
-      })
-      try {
-        const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}/prepare`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locationId, dataTask }),
-        })
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null
-          throw new Error(body?.error ?? t('milestonePrepareError'))
-        }
-        if (!res.body) {
-          throw new Error(t('milestonePrepareError'))
-        }
-        const reader = res.body.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ''
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) {
-            break
-          }
-          buffer += decoder.decode(value, { stream: true })
-          const blocks = buffer.split('\n\n')
-          buffer = blocks.pop() ?? ''
-          for (const block of blocks) {
-            const m = block.match(/^data: (.+)$/m)
-            const raw = m?.[1]?.trim()
-            if (!raw) {
-              continue
-            }
-            let payload: Record<string, unknown>
-            try {
-              payload = JSON.parse(raw) as Record<string, unknown>
-            } catch {
-              continue
-            }
-            if (typeof payload.error === 'string') {
-              throw new Error(payload.error)
-            }
-            if (payload.done === true) {
-              const preview = typeof payload.dataPreview === 'string' ? payload.dataPreview : ''
-              dispatch({
-                type: 'UPDATE_MILESTONES',
-                updater: (prev) =>
-                  prev.map((m) => (m.id === milestoneId ? { ...m, data: preview || m.data } : m)),
-              })
-            }
-          }
-        }
-      } catch (err) {
-        dispatch({
-          type: 'PATCH',
-          patch: {
-            milestonePrepareError: err instanceof Error ? err.message : t('milestonePrepareError'),
-          },
-        })
-      } finally {
-        dispatch({ type: 'PATCH', patch: { preparingMilestoneId: null } })
-      }
-    },
-    [workflowId, dispatch, locationId, t],
-  )
-
   const handleRunMilestone = useCallback(
     async (milestoneId: string) => {
       dispatch({
         type: 'PATCH',
         patch: {
           milestoneRunError: null,
+          milestoneRunCriteriaHint: null,
           runningMilestoneId: milestoneId,
           runningStep: 'fetch_context',
         },
@@ -456,6 +489,7 @@ export function useMilestoneOperations(
                       c != null && typeof c === 'object',
                   )
                 : []
+              let criteriaHint: string | null = null
               dispatch({
                 type: 'UPDATE_MILESTONES',
                 updater: (prev) =>
@@ -477,6 +511,9 @@ export function useMilestoneOperations(
                       return row
                     })
                     const hasFail = nextPass.some((row) => row.status === 'fail')
+                    if (hasFail && milestone.milestoneRunSkillMode === 'fixed') {
+                      criteriaHint = t('milestoneRunFixedSkillsFailHint')
+                    }
                     return {
                       ...milestone,
                       status: hasFail ? ('failed' as const) : ('complete' as const),
@@ -485,6 +522,10 @@ export function useMilestoneOperations(
                       ...(dataPreview !== undefined ? { data: dataPreview } : {}),
                     }
                   }),
+              })
+              dispatch({
+                type: 'PATCH',
+                patch: { milestoneRunCriteriaHint: criteriaHint },
               })
             }
             if (payload.step === 'evaluate_criterion' && typeof payload.id === 'string') {
@@ -606,6 +647,68 @@ export function useMilestoneOperations(
     }
   }, [workflowId, dispatch, t])
 
+  const handleUpdateMilestoneRunSettings = useCallback(
+    async (
+      milestoneId: string,
+      settings: { milestoneRunSkillMode: MilestoneRunSkillMode; milestoneRunSkillIds: string[] },
+    ): Promise<boolean> => {
+      dispatch({
+        type: 'PATCH',
+        patch: { milestoneSettingsError: null, savingMilestoneSettingsMilestoneId: milestoneId },
+      })
+      try {
+        const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            milestoneRunSkillMode: settings.milestoneRunSkillMode,
+            milestoneRunSkillIds: settings.milestoneRunSkillIds,
+          }),
+        })
+        const body = (await res.json().catch(() => null)) as {
+          message?: string
+          data?: unknown
+        } | null
+        if (!res.ok) {
+          throw new Error(body?.message ?? t('milestoneSettingsSaveError'))
+        }
+        const parsed = milestoneDataSchema.safeParse(body?.data ?? {})
+        let mode: MilestoneRunSkillMode = settings.milestoneRunSkillMode
+        let ids = settings.milestoneRunSkillIds
+        if (parsed.success) {
+          mode = parsed.data.milestoneRunSkillMode === 'fixed' ? 'fixed' : 'auto'
+          if (Array.isArray(parsed.data.milestoneRunSkillIds)) {
+            ids = parsed.data.milestoneRunSkillIds.filter(
+              (x): x is string => typeof x === 'string' && x.length > 0,
+            )
+          }
+        }
+        dispatch({
+          type: 'UPDATE_MILESTONES',
+          updater: (prev) =>
+            prev.map((m) =>
+              m.id === milestoneId
+                ? { ...m, milestoneRunSkillMode: mode, milestoneRunSkillIds: ids }
+                : m,
+            ),
+        })
+        return true
+      } catch (err) {
+        dispatch({
+          type: 'PATCH',
+          patch: {
+            milestoneSettingsError:
+              err instanceof Error ? err.message : t('milestoneSettingsSaveError'),
+          },
+        })
+        return false
+      } finally {
+        dispatch({ type: 'PATCH', patch: { savingMilestoneSettingsMilestoneId: null } })
+      }
+    },
+    [workflowId, dispatch, t],
+  )
+
   /** Load persisted goal, pass criteria, milestonedata + dataTask from the API (navigation, chat tools). */
   const handleHydrateMilestoneData = useCallback(
     async (milestoneId: string) => {
@@ -619,6 +722,8 @@ export function useMilestoneOperations(
           dataTask?: MilestoneDataTask | null
           goal?: string
           passCriteria?: PassCriteriaRow[]
+          milestoneRunSkillMode?: MilestoneRunSkillMode
+          milestoneRunSkillIds?: string[]
         } | null
         if (!body) {
           return
@@ -643,8 +748,18 @@ export function useMilestoneOperations(
                 passCriteria,
                 status: deriveMilestoneRailStatus(passCriteria, m.resultMarkdown),
               }
-              if (body.dataTask) {
-                next.dataTask = body.dataTask
+              if (body.dataTask === 'manual') {
+                next.dataTask = 'manual'
+              }
+              if (body.milestoneRunSkillMode === 'fixed') {
+                next.milestoneRunSkillMode = 'fixed'
+              } else if (body.milestoneRunSkillMode === 'auto') {
+                next.milestoneRunSkillMode = 'auto'
+              }
+              if (Array.isArray(body.milestoneRunSkillIds)) {
+                next.milestoneRunSkillIds = body.milestoneRunSkillIds.filter(
+                  (x): x is string => typeof x === 'string' && x.length > 0,
+                )
               }
               return next
             }),
@@ -659,13 +774,13 @@ export function useMilestoneOperations(
   return useMemo(
     () => ({
       handleCreateMilestone,
+      handleCreateMilestoneFromPreset,
       handleDeleteMilestone,
       handleRenameMilestone,
       handleUpdatePassCriteria,
       handleUpdateMilestoneGoal,
       handleUpdateMilestoneData,
-      handleSetMilestoneDataTask,
-      handlePrepareMilestone,
+      handleUpdateMilestoneRunSettings,
       handleRunMilestone,
       handleMoveMilestone,
       handleExportWorkflow,
@@ -673,13 +788,13 @@ export function useMilestoneOperations(
     }),
     [
       handleCreateMilestone,
+      handleCreateMilestoneFromPreset,
       handleDeleteMilestone,
       handleRenameMilestone,
       handleUpdatePassCriteria,
       handleUpdateMilestoneGoal,
       handleUpdateMilestoneData,
-      handleSetMilestoneDataTask,
-      handlePrepareMilestone,
+      handleUpdateMilestoneRunSettings,
       handleRunMilestone,
       handleMoveMilestone,
       handleExportWorkflow,

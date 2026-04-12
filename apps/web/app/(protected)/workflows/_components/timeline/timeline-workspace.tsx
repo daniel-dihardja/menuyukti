@@ -12,9 +12,9 @@ import {
 } from '../timeline-context'
 import { TimelineInlineErrors, type TimelineErrorMap } from './timeline-inline-errors'
 import { ImportWorkflowDialog } from './import-workflow-dialog'
+import { MilestoneCreateControls } from './milestone-preset-select'
 import {
   TimelineToolbar,
-  TimelineToolbarCreateButton,
   TimelineToolbarExportButton,
   TimelineToolbarImportButton,
 } from './timeline-toolbar'
@@ -35,9 +35,10 @@ function toErrorMap(errors: TimelineErrors): TimelineErrorMap {
     passCriteria: errors.passCriteriaError,
     goal: errors.goalError,
     milestoneData: errors.milestoneDataError,
-    milestonePrepare: errors.milestonePrepareError,
     milestoneRun: errors.milestoneRunError,
+    milestoneSettings: errors.milestoneSettingsError,
     export: errors.exportError,
+    milestoneRunCriteriaHint: errors.milestoneRunCriteriaHint,
   }
 }
 
@@ -51,7 +52,7 @@ export function TimelineWorkspace({
   const { workflowId, milestoneState, errors, selectedMilestoneId, onSelectMilestone } =
     useTimelineWorkspaceState()
   const { milestones, creating, exporting } = milestoneState
-  const { onCreateMilestone, onExport } = useTimelineActions()
+  const { onCreateMilestone, onCreateMilestoneFromPreset, onExport } = useTimelineActions()
 
   const showReady = !isLoading && !loadError
   const showTimeline = showReady && milestones.length > 0
@@ -75,12 +76,11 @@ export function TimelineWorkspace({
             exportingLabel={t('exportingMilestones')}
             onExport={onExport}
           />
-          <TimelineToolbarCreateButton
-            createLabel={t('createMilestone')}
+          <MilestoneCreateControls
             creating={creating}
-            creatingLabel={t('creatingMilestone')}
-            exporting={exporting}
+            disabled={creating || exporting}
             onCreateMilestone={onCreateMilestone}
+            onCreateMilestoneFromPreset={onCreateMilestoneFromPreset}
           />
         </>
       ) : null}
@@ -109,7 +109,9 @@ export function TimelineWorkspace({
         <TimelineWorkspaceEmpty
           createError={errors.createError}
           creating={creating}
+          exporting={exporting}
           onCreateMilestone={onCreateMilestone}
+          onCreateMilestoneFromPreset={onCreateMilestoneFromPreset}
           timelineTrailing={timelineTrailing}
         />
       ) : (

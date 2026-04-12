@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import type { z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
   milestoneDataSchema,
   milestonedataDataSchema,
@@ -31,6 +32,27 @@ import { milestoneIdParamSchema, patchMilestoneSchema, workflowIdParamSchema } f
 
 type RouteContext = {
   params: Promise<{ id: string; milestoneId: string }>
+}
+
+function mergeMilestoneNodeDataJson(
+  prev: Record<string, unknown>,
+  patch: {
+    dataTask?: 'manual'
+    milestoneRunSkillMode?: 'auto' | 'fixed'
+    milestoneRunSkillIds?: string[]
+  },
+): Record<string, unknown> {
+  const next = { ...prev }
+  if (patch.dataTask !== undefined) {
+    next.dataTask = patch.dataTask
+  }
+  if (patch.milestoneRunSkillMode !== undefined) {
+    next.milestoneRunSkillMode = patch.milestoneRunSkillMode
+  }
+  if (patch.milestoneRunSkillIds !== undefined) {
+    next.milestoneRunSkillIds = patch.milestoneRunSkillIds
+  }
+  return next
 }
 
 function passCriterionDisplayName(requirement: string): string {
@@ -307,12 +329,30 @@ export async function GET(_req: Request, context: RouteContext) {
 
     const goal = goalFromNode ?? legacyGoal ?? ''
 
+    let milestoneRunSkillMode: 'auto' | 'fixed' = 'auto'
+    let milestoneRunSkillIds: string[] = []
+    if (mn.data != null && typeof mn.data === 'object') {
+      const mdParsed = milestoneDataSchema.safeParse(mn.data)
+      if (mdParsed.success) {
+        if (mdParsed.data.milestoneRunSkillMode === 'fixed') {
+          milestoneRunSkillMode = 'fixed'
+        }
+        if (Array.isArray(mdParsed.data.milestoneRunSkillIds)) {
+          milestoneRunSkillIds = mdParsed.data.milestoneRunSkillIds.filter(
+            (x): x is string => typeof x === 'string' && x.length > 0,
+          )
+        }
+      }
+    }
+
     return NextResponse.json(
       {
         milestoneData,
         dataTask,
         goal,
         passCriteria,
+        milestoneRunSkillMode,
+        milestoneRunSkillIds,
       },
       { status: 200 },
     )
@@ -326,7 +366,7 @@ export async function GET(_req: Request, context: RouteContext) {
 export async function PATCH(req: Request, context: RouteContext) {
   try {
     const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -412,20 +452,31 @@ export async function PATCH(req: Request, context: RouteContext) {
         }),
       )
 
+      revalidateWorkflowCampaignTreeCache(userId, workflowId)
+
       return NextResponse.json({ ok: true }, { status: 200 })
     }
 
     if (body.passCriteria === undefined) {
-      if (body.dataTask !== undefined) {
+      if (
+        body.dataTask !== undefined ||
+        body.milestoneRunSkillMode !== undefined ||
+        body.milestoneRunSkillIds !== undefined
+      ) {
         const mn = validated.milestoneNode
         const prevData =
           mn.data != null && typeof mn.data === 'object'
             ? { ...(mn.data as Record<string, unknown>) }
             : {}
+        const merged = mergeMilestoneNodeDataJson(prevData, {
+          dataTask: body.dataTask,
+          milestoneRunSkillMode: body.milestoneRunSkillMode,
+          milestoneRunSkillIds: body.milestoneRunSkillIds,
+        })
         parseUpdateNodeData(
           await graphqlQuery<UpdateNodeDataRaw>(
             UPDATE_NODE_MUTATION,
-            { id: milestoneId, data: { ...prevData, dataTask: body.dataTask } },
+            { id: milestoneId, data: merged },
             userId,
           ),
         )
@@ -457,6 +508,8 @@ export async function PATCH(req: Request, context: RouteContext) {
       if (!milestoneFresh.node) {
         return NextResponse.json({ message: 'Milestone not found' }, { status: 404 })
       }
+      revalidateWorkflowCampaignTreeCache(userId, workflowId)
+
       return NextResponse.json(milestoneFresh.node, { status: 200 })
     }
 
@@ -467,6 +520,30 @@ export async function PATCH(req: Request, context: RouteContext) {
         userId,
       )
       parseUpdateNodeData(u)
+    }
+
+    if (
+      body.dataTask !== undefined ||
+      body.milestoneRunSkillMode !== undefined ||
+      body.milestoneRunSkillIds !== undefined
+    ) {
+      const mn = validated.milestoneNode
+      const prevData =
+        mn.data != null && typeof mn.data === 'object'
+          ? { ...(mn.data as Record<string, unknown>) }
+          : {}
+      const merged = mergeMilestoneNodeDataJson(prevData, {
+        dataTask: body.dataTask,
+        milestoneRunSkillMode: body.milestoneRunSkillMode,
+        milestoneRunSkillIds: body.milestoneRunSkillIds,
+      })
+      parseUpdateNodeData(
+        await graphqlQuery<UpdateNodeDataRaw>(
+          UPDATE_NODE_MUTATION,
+          { id: milestoneId, data: merged },
+          userId,
+        ),
+      )
     }
 
     const existing = parseNodesData(
@@ -552,6 +629,8 @@ export async function PATCH(req: Request, context: RouteContext) {
       return { id: n.id, requirement: '', status: 'open' as const }
     })
 
+    revalidateWorkflowCampaignTreeCache(userId, workflowId)
+
     return NextResponse.json(
       {
         id: milestoneId,
@@ -572,7 +651,7 @@ export async function PATCH(req: Request, context: RouteContext) {
 export async function DELETE(_req: Request, context: RouteContext) {
   try {
     const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -597,6 +676,8 @@ export async function DELETE(_req: Request, context: RouteContext) {
     }
 
     await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: milestoneId }, userId)
+
+    revalidateWorkflowCampaignTreeCache(userId, workflowId)
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {

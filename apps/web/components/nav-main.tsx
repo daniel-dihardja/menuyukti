@@ -1,6 +1,8 @@
 'use client'
 
 import {
+  BarChart3,
+  BookOpen,
   ChevronRight,
   FileUp,
   LayoutDashboard,
@@ -10,6 +12,7 @@ import {
   Shield,
   Sparkles,
   User,
+  Wrench,
 } from 'lucide-react'
 import {
   Collapsible,
@@ -30,6 +33,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { usePathname } from 'next/navigation'
 import { useMenuyuktiRole } from '@/hooks/use-menuyukti-role'
+import { isNavItemHiddenFromNonAdmin } from '@/lib/admin-only-features'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { routes } from '@/lib/routes'
 import type { ReactNode } from 'react'
@@ -40,8 +44,6 @@ type NavItem = {
   href?: string
   icon?: ReactNode
   children?: NavItem[]
-  /** If true, only users with platform role `admin` see this item. */
-  adminOnly?: boolean
 }
 
 /** Day-to-day marketing work: overview, campaigns, performance, locations. */
@@ -57,6 +59,18 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'workflows',
     href: routes.workflows.list,
     icon: <Megaphone className="w-4 h-4" />,
+  },
+  {
+    key: 'skills',
+    labelKey: 'skills',
+    href: routes.skills,
+    icon: <BookOpen className="w-4 h-4" />,
+  },
+  {
+    key: 'customTools',
+    labelKey: 'customTools',
+    href: routes.customTools,
+    icon: <Wrench className="w-4 h-4" />,
   },
   {
     key: 'reports',
@@ -81,28 +95,31 @@ const NAV_ACCOUNT: NavItem[] = [
   },
 ]
 
-/** Platform tools; gated by `showAdminNav` at render time. */
+/** Platform tools; visibility keys listed in `config/admin-only-features.json`. */
 const NAV_ADMIN: NavItem[] = [
   {
     key: 'studio',
     labelKey: 'studio',
     href: routes.studio,
     icon: <Sparkles className="w-4 h-4" />,
-    adminOnly: true,
   },
   {
     key: 'printOrders',
     labelKey: 'printOrders',
     href: routes.printOrders,
     icon: <Package className="w-4 h-4" />,
-    adminOnly: true,
   },
   {
     key: 'staff',
     labelKey: 'staffTools',
     href: routes.staff,
     icon: <Shield className="w-4 h-4" />,
-    adminOnly: true,
+  },
+  {
+    key: 'usage',
+    labelKey: 'usage',
+    href: routes.usage,
+    icon: <BarChart3 className="w-4 h-4" />,
   },
 ]
 
@@ -193,6 +210,10 @@ function NavMenuItems({ items, t, isActive }: NavMenuItemsProps) {
   })
 }
 
+function visibleNavItemsForRole(items: NavItem[], showAdminNav: boolean): NavItem[] {
+  return items.filter((item) => !isNavItemHiddenFromNonAdmin(item.key) || showAdminNav)
+}
+
 export function NavMain() {
   const t = useTranslations('sidebar')
   const pathname = usePathname()
@@ -201,13 +222,14 @@ export function NavMain() {
 
   const isActive = (url?: string) => (url ? pathname.startsWith(url) : false)
 
-  const visibleAdminItems = NAV_ADMIN.filter((item) => !item.adminOnly || showAdminNav)
+  const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav)
+  const visibleAdminItems = visibleNavItemsForRole(NAV_ADMIN, showAdminNav)
 
   return (
     <>
       <SidebarGroup>
         <SidebarMenu>
-          <NavMenuItems items={NAV_WORKSPACE} t={t} isActive={isActive} />
+          <NavMenuItems items={visibleWorkspaceItems} t={t} isActive={isActive} />
         </SidebarMenu>
       </SidebarGroup>
 

@@ -171,6 +171,8 @@ def _create_milestone_node(
         milestone_data["dataTask"] = "social_caption_batch"
     elif dt_raw == "visual_creative_brief":
         milestone_data["dataTask"] = "visual_creative_brief"
+    elif dt_raw == "promotion_candidates":
+        milestone_data["dataTask"] = "promotion_candidates"
 
     milestone = Node(
         parent_id=root_node.id,

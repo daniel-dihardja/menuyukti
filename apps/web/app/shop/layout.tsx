@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server'
+import { connection } from 'next/server'
 
 import { CopyrightFooter } from '@/components/copyright-footer'
 import { ShopNav } from '@/components/shop/shop-nav'
@@ -8,14 +9,13 @@ import '@/components/shop/shop.css'
 
 import { cn } from '@workspace/ui/lib/utils'
 
-/** Presigned S3 URLs must not be frozen at build time. */
-export const dynamic = 'force-dynamic'
-
 export default async function ShopLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  /** Presigned S3 URLs and auth must not be frozen at build time (Cache Components). */
+  await connection()
   await requireMenuyuktiAdmin()
   const t = await getTranslations('shop')
 

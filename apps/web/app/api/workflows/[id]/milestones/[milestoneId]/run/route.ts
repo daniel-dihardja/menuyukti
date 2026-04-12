@@ -84,7 +84,10 @@ export async function POST(req: Request, context: RouteContext) {
         'X-Menuyukti-User-Id': userId,
         ...(traceparent ? { traceparent } : {}),
       },
-      body: JSON.stringify({ location_id: locationId, workflow_id: workflowId }),
+      body: JSON.stringify({
+        location_id: locationId,
+        workflow_id: workflowId,
+      }),
       signal: req.signal,
     })
   } catch (err) {

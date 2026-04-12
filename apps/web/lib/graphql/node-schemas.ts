@@ -14,6 +14,10 @@ export const passCriteriaDataSchema = z.object({
 export type PassCriteriaData = z.infer<typeof passCriteriaDataSchema>
 
 /** Milestone `data` JSON — `order` is the display sequence. */
+export const milestoneRunSkillModeSchema = z.enum(['auto', 'fixed'])
+
+export type MilestoneRunSkillMode = z.infer<typeof milestoneRunSkillModeSchema>
+
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
@@ -21,18 +25,14 @@ export const milestoneDataSchema = z
      * Legacy: goal text was stored on the milestone. New writes use a child node (`nodeType` `goal`).
      */
     goal: z.string().optional(),
-    /** How milestone Data tab content is produced (`manual` = textarea; prepare tasks use agent_skills). */
-    dataTask: z
-      .enum([
-        'manual',
-        'location_profile',
-        'instagram_campaign_schedule',
-        'restaurant_brand_brief',
-        'social_campaign_calendar',
-        'social_caption_batch',
-        'visual_creative_brief',
-      ])
-      .optional(),
+    /** Legacy values may exist in DB; new writes use `manual` only (see web PATCH schema). */
+    dataTask: z.string().optional(),
+    /**
+     * Milestone agent run: `auto` uses LLM skill selection; `fixed` uses `milestoneRunSkillIds` (max 2).
+     * Omitted defaults to auto in agents.
+     */
+    milestoneRunSkillMode: milestoneRunSkillModeSchema.optional(),
+    milestoneRunSkillIds: z.array(z.string()).max(2).optional(),
   })
   .passthrough()
 

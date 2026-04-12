@@ -14,7 +14,11 @@ This file helps AI coding agents (Cursor, Claude Code, Codex, etc.) run the righ
 
 Persistent Cursor guidance lives in **`.cursor/rules/*.mdc`**.
 
-Menuyukti-specific agent workflows (e.g. new GraphQL data providers) live under **`.agents/skills/menuyukti-*/`** — see [`menuyukti-repo-orientation`](.agents/skills/menuyukti-repo-orientation/SKILL.md) (boundaries, DB, pnpm vs uv), [`menuyukti-data-provider`](.agents/skills/menuyukti-data-provider/SKILL.md), and [`menuyukti-analytics`](.agents/skills/menuyukti-analytics/SKILL.md) (`packages/menuyukti` analytics conventions and Instagram signals).
+Menuyukti-specific agent workflows live under **`.agents/skills/menuyukti-*/`**: [`menuyukti-repo-orientation`](.agents/skills/menuyukti-repo-orientation/SKILL.md) (monorepo map and cross-app flows), [`menuyukti-agents`](.agents/skills/menuyukti-agents/SKILL.md) (`apps/agents`, LangGraph milestone run), [`menuyukti-graphql`](.agents/skills/menuyukti-graphql/SKILL.md) (`apps/graphql`, schema, Alembic), [`menuyukti-web`](.agents/skills/menuyukti-web/SKILL.md) (`apps/web`, milestones, next-intl), [`menuyukti-analytics`](.agents/skills/menuyukti-analytics/SKILL.md) (`packages/menuyukti` pipelines and Instagram signals).
+
+## Feature glossary
+
+When the user mentions a **named product feature** (e.g. workflow presets), map it to code using [`.agents/menuyukti-features.md`](.agents/menuyukti-features.md). The Cursor rule **menuyukti-features** (`.cursor/rules/menuyukti-features.mdc`) summarizes the same and points there for the full table.
 
 ## Environment and secrets
 
@@ -31,6 +35,7 @@ cd apps/web && pnpm dev
 
 - Production build: `pnpm build` then `pnpm start`
 - Lint: `pnpm lint` — Typecheck: `pnpm typecheck` / `pnpm check-types` (same as typecheck) — Format: `pnpm format:check` / `pnpm format` (includes `messages/*.json`) — Tests: `pnpm test`
+- Admin **AI usage** page (`/usage`): set `AI_GATEWAY_API_KEY` or `VERCEL_OIDC_TOKEN` in the web app environment (same as agents) so server-side fetches to Vercel AI Gateway can run.
 
 ### GraphQL (`apps/graphql`)
 
@@ -55,7 +60,7 @@ make dev       # FastAPI + uvicorn reload, port 8001
 ```
 
 - Streaming chat: `POST /chat` (SSE) — Health: `GET /health` — Tests: `make test` — Lint/format: `make lint` / `make format` — Types: `make typecheck` (mypy)
-- Set `OPENAI_API_KEY` in `.env` (see `.env.example`).
+- Set `AI_GATEWAY_API_KEY` in `.env` for LLM calls (see `.env.example` and `apps/agents/.env.example`).
 
 ### All services
 

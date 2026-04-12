@@ -124,7 +124,7 @@ export function TimelineToolbarCreateButton({
 }: {
   createLabel: string
   creatingLabel: string
-  onCreateMilestone: () => void | Promise<void>
+  onCreateMilestone: () => boolean | Promise<boolean>
   creating: boolean
   exporting: boolean
 }) {

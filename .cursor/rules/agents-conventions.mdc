@@ -15,42 +15,27 @@ alwaysApply: false
 
 ## Directory layout
 
-Split **platform** graphs from **domain** graphs so new data-source agents have an obvious home.
-
 ```
 agents/
-  graphql_base.py   # Shared GraphQL HTTP helpers (httpx + auth headers); used by core and domain
-  core/               # Platform-level agents — reusable across data sources
+  graphql_base.py   # Shared GraphQL HTTP helpers (httpx + auth headers)
+  core/
     chat/
-      graph.py        # build_chat_graph(); MessagesState
-      prompts.py      # build_system_prompt(), SYSTEM_PROMPT
-      tools.py        # make_get_milestone_data_tool (GraphQL read for chat)
-    milestone_eval/
-      graph.py        # build_milestone_eval_graph(client) — criterion loop + synthesis + result (internal)
-      state.py        # TypedDict state + reducers
-      prompts.py
-      graphql_client.py
-      # Invoked only from milestone_run finalize_eval; no separate HTTP route or SSE adapter.
-    milestone_data/   # Persist generated text to `milestonedata` nodes (GraphQL upsert; used by skill prepare)
-      graphql_client.py
-      persist.py
-  domain/             # Skill-driven domain workflows (e.g. restaurant brand brief / milestone prepare)
-    skill_runner/     # Load SKILL.md, prefetch handlers, LLM runner (persistence via core/milestone_data)
-      graphql_client.py
-      handlers.py
-      loader.py
-      prefetch.py
-      runner.py
+    milestone_eval/   # Criterion loop + synthesis; invoked from milestone_run only
+    milestone_data/   # GraphQL upsert for milestonedata (Markdown)
+    milestone_run/      # LangGraph run: fetch → skill select → ReAct + tools → eval
+      skills/<skill_id>/SKILL.md
+      skill_markdown.py
+      skill_paths.py
+      graph.py, tools.py, stream.py, state.py, graphql_client.py, prompts.py
 models/
-  llm_config.py       # get_llm(), get_llm_structured()
-routers/              # FastAPI APIRouter — thin handlers; one file per route group
+  llm_config.py
+routers/
 server.py
 tests/
-  core/               # e.g. test_chat HTTP tests
-  domain/             # domain agent tests as you add them
+  core/
 ```
 
-**Convention:** add new **skill-driven** milestone assets under `packages/agent-skills/src/agent_skills/skills/<skill_id>/SKILL.md` (see `agent_skills.get_skill_path`) and extend `agents/domain/skill_runner/` (prefetch handlers) as needed. **Milestone data persistence** lives in `agents/core/milestone_data/`, not in SKILL YAML. Add **cross-cutting** flows (milestone run with embedded evaluation, chat) under `agents/core/`.
+**Convention:** add new **milestone run** skills as `agents/core/milestone_run/skills/<skill_id>/SKILL.md` (optional YAML `extra_tools` for non-core LangChain tools) and register them in `skills.py`. Core + optional tools are assembled in `milestone_run/tools/` (`make_milestone_run_tools`, `tools/registry.py`). **Milestone data persistence** is `agents/core/milestone_data/`.
 
 ## Graph factory pattern
 
@@ -128,7 +113,7 @@ Always set SSE response headers: `Cache-Control: no-cache`, `Connection: keep-al
 - `get_llm()` — streaming `ChatOpenAI` (use for token streams and `astream`).
 - `get_llm_structured()` — non-streaming `ChatOpenAI` (use with `.with_structured_output(PydanticModel)`).
 
-Both read `OPENAI_API_KEY` (and optionally `OPENAI_MODEL`) from env.
+Both use **Vercel AI Gateway** (`ChatOpenAI` with `base_url` `https://ai-gateway.vercel.sh/v1`). Set `AI_GATEWAY_API_KEY`, or `VERCEL_OIDC_TOKEN` on Vercel. Optionally override with `OPENAI_MODEL` (bare names get `openai/` prefix; use `provider/model` for a full gateway id).
 
 ## Structured output
 
@@ -160,8 +145,9 @@ Routers authenticate with **`X-Menuyukti-User-Id`**. GraphQL calls use **`graphq
 
 | Variable | Required | Purpose |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes | LLM calls |
-| `OPENAI_MODEL` | No | Override model name |
+| `AI_GATEWAY_API_KEY` | Yes (unless `VERCEL_OIDC_TOKEN`) | LLM calls via Vercel AI Gateway |
+| `VERCEL_OIDC_TOKEN` | No | On Vercel; alternative to `AI_GATEWAY_API_KEY` |
+| `OPENAI_MODEL` | No | Override model (`gpt-4o-mini` → `openai/gpt-4o-mini`, or full `provider/model`) |
 | `GRAPHQL_ENDPOINT` | Yes (for non-chat flows) | GraphQL API base URL |
 | `GRAPHQL_INTERNAL_API_KEY` | No | Server-to-server auth header |
 

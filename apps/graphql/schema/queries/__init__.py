@@ -1,4 +1,5 @@
 from .analytics_run import AnalyticsRunQuery
+from .api_adapter_tools import ApiAdapterToolsQuery
 from .category_mix import CategoryMixQuery
 from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_signals import InstagramSignalsQuery
@@ -20,6 +21,7 @@ from .workspace import WorkspaceQuery
 
 __all__ = [
     "AnalyticsRunQuery",
+    "ApiAdapterToolsQuery",
     "WorkflowCampaignTreeQuery",
     "WorkflowExportsQuery",
     "CategoryMixQuery",

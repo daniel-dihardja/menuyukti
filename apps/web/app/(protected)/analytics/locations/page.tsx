@@ -1,6 +1,3 @@
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
-
 import { Suspense } from 'react'
 import { getTranslations } from 'next-intl/server'
 import { Button } from '@workspace/ui/components/button'

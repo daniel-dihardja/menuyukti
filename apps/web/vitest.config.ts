@@ -26,8 +26,4 @@ export default defineConfig({
       include: ['lib/**/*.ts'],
     },
   },
-
-  ssr: {
-    external: ['xlsx'],
-  },
 })

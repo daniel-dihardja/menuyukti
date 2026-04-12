@@ -2,6 +2,7 @@ import strawberry
 
 from graphql.schema.queries import (
     AnalyticsRunQuery,
+    ApiAdapterToolsQuery,
     CategoryMixQuery,
     ImageAiFlowsQuery,
     InstagramSignalsQuery,
@@ -26,10 +27,11 @@ from graphql.schema.queries import (
 @strawberry.type(
     description=(
         "Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, "
-        "and workspace membership."
+        "workspace membership, and custom API adapter tools."
     )
 )
 class Query(
+    ApiAdapterToolsQuery,
     WorkflowExportsQuery,
     WorkflowCampaignTreeQuery,
     LocationsQuery,

@@ -11,6 +11,7 @@ from pathlib import Path
 
 from graphql.data_sources import (
     AnalyticsRun,
+    ApiAdapterTool,
     Location,
     MenuItemCogs,
     Node,
@@ -22,6 +23,12 @@ from graphql.data_sources import (
     init_db,
 )
 from graphql.reports import normalize_sales_report, persist_sales_report
+from graphql.services.api_adapter_tool import (
+    normalize_description,
+    normalize_name,
+    tool_key_from_name,
+    validate_tool_url,
+)
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 DEFAULT_EXCEL = ROOT_DIR / "reports" / "Sales_Recapitulation_Detail_Report_Jan-Mar_2025.xlsx"
@@ -29,6 +36,10 @@ DEFAULT_COGS = ROOT_DIR / "notebooks" / "data" / "menu_cogs.json"
 
 # Must match the Clerk user id used by the web app (X-User-Id) so resolvers allow access.
 _DEFAULT_DEV_CLERK_USER_ID = "dev_local_user"
+
+# Seeded API proxy (API adapter tool) for milestone-run mock promotions; override URL if mock-server differs.
+_DEFAULT_DEV_MOCK_PROMOTIONS_URL = "http://127.0.0.1:3090/api/mock"
+_DEV_PROMO_TOOL_NAME = "Menu Promotions Mock API"
 
 
 def _resolve_clerk_user_id(cli_value: str | None) -> str:
@@ -61,6 +72,11 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
             print(f"ERROR: COGS file not found: {cogs_file}")
             return 1
 
+    mock_promotions_url = os.environ.get(
+        "DEV_MOCK_PROMOTIONS_URL",
+        _DEFAULT_DEV_MOCK_PROMOTIONS_URL,
+    )
+
     drop_db()
     init_db()
 
@@ -83,6 +99,23 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
                 role="owner",
                 invited_at=now,
                 accepted_at=now,
+            )
+        )
+        session.flush()
+
+        promo_name = normalize_name(_DEV_PROMO_TOOL_NAME)
+        session.add(
+            ApiAdapterTool(
+                workspace_id=workspace.id,
+                tool_key=tool_key_from_name(promo_name),
+                name=promo_name,
+                description=normalize_description(
+                    "HTTP GET to the mock promotions JSON feed (dev). Run apps/mock-server; "
+                    "set MENUYUKTI_ADAPTER_DEV_HTTP_LOCALHOST=1 on agents. "
+                    "tool_key menu_promotions_mock_api matches the custom-api-tool-mock-demo workflow preset."
+                ),
+                url=validate_tool_url(mock_promotions_url),
+                is_active=True,
             )
         )
         session.flush()
@@ -190,6 +223,11 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
     print(
         f"Workspace owner clerk_user_id={clerk_user_id!r}. "
         "Set DEV_CLERK_USER_ID or --clerk-user-id to your Clerk user id so the web app can query this data."
+    )
+    print(
+        f"Seeded API adapter tool {_DEV_PROMO_TOOL_NAME!r} "
+        f"(tool_key menu_promotions_mock_api) → {mock_promotions_url!r}. "
+        "Override with DEV_MOCK_PROMOTIONS_URL if needed."
     )
     if clerk_user_id == _DEFAULT_DEV_CLERK_USER_ID and not os.environ.get("DEV_CLERK_USER_ID"):
         print(

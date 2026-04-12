@@ -8,10 +8,10 @@ install:
 	uv sync --all-groups
 
 run:
-	PYTHONPATH=../.. $(UVICORN) agents_app.server:app --host 0.0.0.0 --port 8001
+	MENUYUKTI_ADAPTER_DEV_HTTP_LOCALHOST=1 PYTHONPATH=../.. $(UVICORN) agents_app.server:app --host 0.0.0.0 --port 8001
 
 dev:
-	PYTHONPATH=../.. $(UVICORN) agents_app.server:app --reload --host 0.0.0.0 --port 8001
+	MENUYUKTI_ADAPTER_DEV_HTTP_LOCALHOST=1 PYTHONPATH=../.. $(UVICORN) agents_app.server:app --reload --host 0.0.0.0 --port 8001
 
 test:
 	PYTHONPATH=../.. $(UV) pytest tests/ -v

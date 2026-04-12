@@ -85,6 +85,32 @@ query GetLocation($id: ID!) {
     city
     country
     currency
+    workspaceId
+  }
+}
+"""
+
+LOCATIONS_QUERY = """
+query LocationsForPrefetch {
+  locations {
+    id
+    name
+    street
+    city
+    country
+    currency
+  }
+}
+"""
+
+API_ADAPTER_TOOLS_QUERY = """
+query ApiAdapterToolsForRun($workspaceId: ID!) {
+  apiAdapterTools(workspaceId: $workspaceId) {
+    toolKey
+    name
+    description
+    url
+    isActive
   }
 }
 """
@@ -113,6 +139,66 @@ query PriorMilestonesMilestoneData(
     milestoneId: $milestoneId
     locationId: $locationId
   )
+}
+"""
+
+ANALYTICS_RUNS_QUERY = """
+query AnalyticsRunsForLocation($locationId: Int!, $first: Int) {
+  analyticsRuns(locationId: $locationId, first: $first) {
+    id
+    name
+  }
+}
+"""
+
+LOCATION_OPERATING_SIGNALS_QUERY = """
+query LocationOperatingSignals($locationId: ID!, $analyticsRunId: ID!) {
+  operatingProfile(locationId: $locationId, analyticsRunId: $analyticsRunId) {
+    totalOrders
+    totalRevenue
+    avgOrderSize
+    weekdayShare
+    weekendShare
+    peakDay
+    primaryMealPeriod
+    activeMealPeriods
+    operatingPattern
+    diningFocus
+    mealPeriodBreakdown {
+      period
+      label
+      orderCount
+      share
+    }
+    dayOfWeekBreakdown {
+      day
+      isWeekend
+      orderCount
+      share
+      isPeakDay
+    }
+  }
+  categoryMix(analyticsRunId: $analyticsRunId, locationId: $locationId) {
+    topRevenueCategory
+    rows {
+      category
+      revenueShare
+      quantityShare
+      topItem
+    }
+  }
+  promotionMenuItems(analyticsRunId: $analyticsRunId, locationId: $locationId) {
+    periodStart
+    periodEnd
+    items {
+      menu
+      quantity
+      totalRevenue
+      menuCategory
+      peakHour
+      peakDay
+    }
+  }
 }
 """
 

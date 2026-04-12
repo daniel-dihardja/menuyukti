@@ -10,6 +10,33 @@ const getEndpoint = (): string => {
   return endpoint
 }
 
+/** Host/path for error messages (no query string; strips userinfo if present). */
+function endpointLabel(url: string): string {
+  try {
+    const u = new URL(url)
+    return `${u.protocol}//${u.host}${u.pathname === '/' ? '' : u.pathname}`
+  } catch {
+    return url
+  }
+}
+
+function formatGraphqlFetchError(endpoint: string, err: unknown): string {
+  const label = endpointLabel(endpoint)
+  const hint =
+    'Check GRAPHQL_ENDPOINT in apps/web/.env, ensure the GraphQL app is running (e.g. make run in apps/graphql), ' +
+    'and that the URL is reachable from the Next.js server (use host.docker.internal instead of localhost if the web app runs in Docker).'
+  let detail = ''
+  if (err instanceof Error) {
+    const withCause = err as Error & { cause?: unknown }
+    if (withCause.cause instanceof Error) {
+      detail = ` ${withCause.cause.message}`
+    } else if (err.message && err.message !== 'fetch failed') {
+      detail = ` ${err.message}`
+    }
+  }
+  return `GraphQL request failed: could not connect to ${label}.${detail} ${hint}`
+}
+
 export type GraphQLResponse<T> = {
   data?: T
   errors?: Array<{ message: string }>
@@ -40,11 +67,17 @@ export async function graphqlQuery<T>(
   if (operationName) {
     body.operationName = operationName
   }
-  const res = await fetch(getEndpoint(), {
-    method: 'POST',
-    headers: buildHeaders(userId),
-    body: JSON.stringify(body),
-  })
+  const endpoint = getEndpoint()
+  let res: Response
+  try {
+    res = await fetch(endpoint, {
+      method: 'POST',
+      headers: buildHeaders(userId),
+      body: JSON.stringify(body),
+    })
+  } catch (err) {
+    throw new Error(formatGraphqlFetchError(endpoint, err))
+  }
 
   if (!res.ok) {
     throw new Error(`GraphQL request failed: ${res.status} ${await res.text()}`)

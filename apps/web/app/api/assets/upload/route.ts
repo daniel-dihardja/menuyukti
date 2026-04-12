@@ -108,8 +108,6 @@ async function applyFlow(
   }
 }
 
-export const runtime = 'nodejs'
-
 export async function POST(req: Request) {
   const authz = await requireMenuyuktiAdminApi()
   if (!authz.ok) return authz.response

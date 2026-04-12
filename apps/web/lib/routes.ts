@@ -1,4 +1,7 @@
-/** URL prefixes for the signed-in app shell (sidebar + header row). User profile lives in that header, not the global AppChrome bar. */
+/**
+ * URL prefixes for the signed-in app shell (sidebar + header row). User profile lives in that header, not the global AppChrome bar.
+ * Admin-only paths: also declare in `config/admin-only-features.json` (nav + route guards).
+ */
 export const PROTECTED_APP_SHELL_PREFIXES = [
   '/analytics',
   '/workflows',
@@ -6,7 +9,10 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/studio',
   '/print-orders',
   '/dashboard',
+  '/skills',
+  '/custom-tools',
   '/staff',
+  '/usage',
   '/profile',
 ] as const
 
@@ -20,7 +26,10 @@ export const routes = {
   signUp: '/sign-up',
   /** OAuth / SSO return URL (Clerk custom social sign-in). */
   ssoCallback: '/sso-callback',
-  news: '/news',
+
+  /** Public marketing / legal (not behind app shell). */
+  privacy: '/privacy',
+  terms: '/terms',
 
   analytics: {
     branches: '/analytics/locations',
@@ -46,6 +55,8 @@ export const routes = {
   dashboard: '/dashboard',
   /** Menuyukti staff-only console (platform role `admin`). */
   staff: '/staff',
+  /** Vercel AI Gateway credits and per-model usage (platform role `admin`). */
+  usage: '/usage',
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',
   /** Clerk `<UserProfile />` (manage account); optional catch-all under `/profile/account/...`. */
@@ -56,18 +67,8 @@ export const routes = {
     detail: (id: string | number) => `/workflows/${id}`,
   },
 
-  agents: {
-    list: '/agents',
-    detail: (agentId: string) => `/agents/${agentId}`,
-  },
-
-  branches: {
-    list: '/locations',
-
-    detail: (locationId: string | number) => `/locations/${locationId}`,
-  },
-
-  docs: '/docs',
+  skills: '/skills',
+  customTools: '/custom-tools',
 
   shop: '/shop',
   shopProduct: (slug: string) => `/shop/${slug}`,

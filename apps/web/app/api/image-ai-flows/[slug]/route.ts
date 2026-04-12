@@ -14,8 +14,6 @@ import {
 
 import { updateImageAiFlowBodySchema } from '../schema'
 
-export const runtime = 'nodejs'
-
 type RouteContext = {
   params: Promise<{ slug: string }>
 }

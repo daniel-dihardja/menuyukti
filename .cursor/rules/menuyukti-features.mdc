@@ -1,0 +1,13 @@
+---
+description: >-
+  Feature glossary — workflow preset, workflow import preset, import preset, WORKFLOW_IMPORT_PRESETS,
+  built-in workflow, preset JSON, feature glossary, named product feature. Maps user phrases to repo paths.
+  Read .agents/menuyukti-features.md for the full table.
+alwaysApply: false
+---
+
+# Menuyukti feature glossary (pointer)
+
+**Workflow presets** are built-in workflow **import** payloads: JSON under `apps/web/lib/workflows/presets/`, registered in `apps/web/lib/workflows/presets/index.ts` as `WORKFLOW_IMPORT_PRESETS` (shape matches `workflowImportPayload` from `apps/graphql/workflow_export_schema.json`). They appear in the import dialog and new-workflow preset pickers.
+
+For aliases, preset IDs, key symbols, and UI touchpoints, read the canonical table in [`.agents/menuyukti-features.md`](../../.agents/menuyukti-features.md). Add new features there; keep this rule as a short pointer only.
