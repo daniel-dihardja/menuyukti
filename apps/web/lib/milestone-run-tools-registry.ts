@@ -49,42 +49,6 @@ export const MILESTONE_RUN_TOOLS_REGISTRY: readonly MilestoneRunToolMeta[] = [
       'Upsert the milestonedata child under this milestone with the given Markdown body. Updates context result_data and returns a short confirmation including the node id.',
   },
   {
-    id: 'get_location_json',
-    name: 'Get location (JSON)',
-    description:
-      'Promotion-candidates skill only: load the location record from GraphQL as JSON (name, address, country, currency).',
-  },
-  {
-    id: 'get_promotion_menu_items_json',
-    name: 'Get promotion menu items (JSON)',
-    description:
-      'Promotion-candidates skill only: latest analytics run promotion menu items payload (camelCase JSON).',
-  },
-  {
-    id: 'get_instagram_signals_json',
-    name: 'Get Instagram signals (JSON)',
-    description:
-      'Promotion-candidates skill only: composite Instagram signals for the latest analytics run (camelCase JSON).',
-  },
-  {
-    id: 'get_menu_items_catalog_json',
-    name: 'Get menu catalog (JSON)',
-    description:
-      'Promotion-candidates skill only: menu catalog from the latest analytics run (camelCase JSON).',
-  },
-  {
-    id: 'get_prior_brand_brief_markdown',
-    name: 'Get prior brand brief (Markdown)',
-    description:
-      'Promotion-candidates skill only: Markdown from the most recent restaurant_brand_brief milestone in this workflow, if any.',
-  },
-  {
-    id: 'get_brand_brief_analytics_context_json',
-    name: 'Get brand brief analytics (JSON)',
-    description:
-      'Restaurant brand brief skill only: POS-backed JSON bundle (location, venue_name, operating_profile, category_mix, menu_items_catalog, analytics_run_id or analytics_note).',
-  },
-  {
     id: 'workspace_api_adapter_tools',
     name: 'Workspace API adapter tools (dynamic)',
     description:

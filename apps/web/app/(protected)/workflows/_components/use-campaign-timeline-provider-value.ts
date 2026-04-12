@@ -11,7 +11,7 @@ import {
 } from './timeline-context'
 import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 
-import type { MilestoneDataTask, PassCriteriaRow } from './timeline/types'
+import type { PassCriteriaRow } from './timeline/types'
 
 export type CampaignTimelineOpsHandles = {
   handleCreateMilestone: () => boolean | Promise<boolean>
@@ -23,8 +23,6 @@ export type CampaignTimelineOpsHandles = {
   handleUpdateMilestoneGoal: (id: string, goal: string) => Promise<boolean>
   handleUpdateMilestoneData: (id: string, milestoneData: string) => Promise<boolean>
   handleHydrateMilestoneData: (id: string) => Promise<void>
-  handleSetMilestoneDataTask: (id: string, dataTask: MilestoneDataTask) => Promise<boolean>
-  handlePrepareMilestone: (id: string, dataTask: MilestoneDataTask) => void | Promise<void>
   handleRunMilestone: (id: string) => void | Promise<void>
   handleExportWorkflow: () => void | Promise<void>
 }
@@ -59,8 +57,6 @@ export function useCampaignTimelineProviderSlices(
       onUpdateMilestoneGoal: ops.handleUpdateMilestoneGoal,
       onUpdateMilestoneData: ops.handleUpdateMilestoneData,
       onHydrateMilestoneData: ops.handleHydrateMilestoneData,
-      onSetMilestoneDataTask: ops.handleSetMilestoneDataTask,
-      onPrepareMilestone: ops.handlePrepareMilestone,
       onRunMilestone: ops.handleRunMilestone,
       onExport: ops.handleExportWorkflow,
     }),

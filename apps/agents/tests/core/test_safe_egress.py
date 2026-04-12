@@ -42,7 +42,9 @@ async def test_safe_https_get_redirect_to_private_rejected():
 
 
 @pytest.mark.asyncio
-async def test_adapter_http_get_http_rejects_without_dev_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_adapter_http_get_http_rejects_without_dev_flag(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.delenv("MENUYUKTI_ADAPTER_DEV_HTTP_LOCALHOST", raising=False)
     body, err = await adapter_http_get("http://127.0.0.1:3090/api/mock")
     assert body is None
@@ -80,7 +82,9 @@ async def test_adapter_http_get_dev_localhost_ok(monkeypatch: pytest.MonkeyPatch
 
 
 @pytest.mark.asyncio
-async def test_adapter_http_get_dev_localhost_rejects_wrong_port(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_adapter_http_get_dev_localhost_rejects_wrong_port(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("MENUYUKTI_ADAPTER_DEV_HTTP_LOCALHOST", "1")
     body, err = await adapter_http_get("http://127.0.0.1:8080/")
     assert body is None
@@ -89,7 +93,9 @@ async def test_adapter_http_get_dev_localhost_rejects_wrong_port(monkeypatch: py
 
 
 @pytest.mark.asyncio
-async def test_adapter_http_get_delegates_https_to_safe_path(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_adapter_http_get_delegates_https_to_safe_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.delenv("MENUYUKTI_ADAPTER_DEV_HTTP_LOCALHOST", raising=False)
     body, err = await adapter_http_get("https://127.0.0.1/")
     assert body is None

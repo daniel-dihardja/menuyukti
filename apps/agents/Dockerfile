@@ -14,7 +14,6 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
 COPY packages/menuyukti ./packages/menuyukti
-COPY packages/agent-skills ./packages/agent-skills
 COPY apps/agents ./apps/agents
 COPY apps/graphql/pyproject.toml ./apps/graphql/pyproject.toml
 
@@ -22,5 +21,5 @@ RUN uv sync --frozen --no-dev --package agents-app
 
 EXPOSE 8001
 
-# Skip runtime sync: root workspace lists sibling packages; this image ships agents-app + menuyukti + agent-skills.
+# Skip runtime sync: root workspace lists sibling packages; this image ships agents-app + menuyukti.
 CMD ["uv", "run", "--no-sync", "uvicorn", "agents_app.server:app", "--host", "0.0.0.0", "--port", "8001"]

@@ -32,6 +32,28 @@ async def _fake_eval_astream(*_a: object, **_k: object):
     )
 
 
+def _minimal_initial() -> dict:
+    return {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "workflow_id": None,
+        "goal": "",
+        "raw_data": "",
+        "criteria": [],
+        "prior_milestones_data": "",
+        "api_adapter_tools": [],
+        "selected_skill_id": None,
+        "selected_skill_ids": [],
+        "current_skill_index": 0,
+        "result_data": "",
+        "milestonedata_written": False,
+        "result_summary": "",
+        "result_node_id": None,
+        "last_criteria_verdicts": [],
+    }
+
+
 def test_build_milestone_run_graph_compiles() -> None:
     client = MagicMock(spec=AsyncMock)
     graph = build_milestone_run_graph(client)
@@ -60,10 +82,6 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
         patch(
             "agents_app.agents.core.milestone_run.graph.fetch_api_adapter_tools_for_location",
             new=AsyncMock(return_value=[]),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_data_task",
-            new=AsyncMock(return_value=None),
         ),
         patch(
             "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
@@ -97,30 +115,7 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
         mock_agent.astream_events = MagicMock(side_effect=_empty_astream_events)
         mock_create.return_value = mock_agent
         graph = build_milestone_run_graph(client)
-        out = await graph.ainvoke(
-            {
-                "milestone_id": "m1",
-                "location_id": 1,
-                "user_id": "u1",
-                "workflow_id": None,
-                "goal": "",
-                "raw_data": "",
-                "criteria": [],
-                "prior_milestones_data": "",
-                "api_adapter_tools": [],
-                "bff_data_task": None,
-                "data_task": None,
-                "restaurant_brand_brief_context": {},
-                "selected_skill_id": None,
-                "selected_skill_ids": [],
-                "current_skill_index": 0,
-                "result_data": "",
-                "milestonedata_written": False,
-                "result_summary": "",
-                "result_node_id": None,
-                "last_criteria_verdicts": [],
-            },
-        )
+        out = await graph.ainvoke(_minimal_initial())
     assert out.get("goal") == "G1"
     assert out.get("selected_skill_id") == "generic"
     assert out.get("selected_skill_ids") == ["generic"]
@@ -157,10 +152,6 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
             new=AsyncMock(return_value=[]),
         ),
         patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_data_task",
-            new=AsyncMock(return_value=None),
-        ),
-        patch(
             "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
@@ -192,378 +183,9 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
         mock_agent.astream_events = MagicMock(side_effect=_empty_astream_events)
         mock_create.return_value = mock_agent
         graph = build_milestone_run_graph(client)
-        out = await graph.ainvoke(
-            {
-                "milestone_id": "m1",
-                "location_id": 1,
-                "user_id": "u1",
-                "workflow_id": None,
-                "goal": "",
-                "raw_data": "",
-                "criteria": [],
-                "prior_milestones_data": "",
-                "api_adapter_tools": [],
-                "bff_data_task": None,
-                "data_task": None,
-                "restaurant_brand_brief_context": {},
-                "selected_skill_id": None,
-                "selected_skill_ids": [],
-                "current_skill_index": 0,
-                "result_data": "",
-                "milestonedata_written": False,
-                "result_summary": "",
-                "result_node_id": None,
-                "last_criteria_verdicts": [],
-            },
-        )
+        out = await graph.ainvoke(_minimal_initial())
     assert out.get("selected_skill_ids") == ["public_holidays", "generic"]
     assert mock_create.call_count == 2
     assert mock_agent.astream_events.call_count == 2
     assert out.get("result_summary") == "S1"
     assert out.get("last_criteria_verdicts") == [{"id": "c1", "status": "pass"}]
-
-
-@pytest.mark.asyncio
-async def test_graph_selects_restaurant_brand_brief_without_structured_llm() -> None:
-    """When fetch_milestone_data_task returns restaurant_brand_brief, skip skill-selector LLM."""
-    client = MagicMock(spec=AsyncMock)
-
-    mock_eval = MagicMock()
-    mock_eval.astream = _fake_eval_astream
-
-    with (
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(
-                return_value=[
-                    {"nodeType": "goal", "data": {"goal": "G1"}},
-                ],
-            ),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_api_adapter_tools_for_location",
-            new=AsyncMock(return_value=[]),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_data_task",
-            new=AsyncMock(return_value="restaurant_brand_brief"),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
-            return_value=lambda _x: None,
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_stream_writer",
-            return_value=lambda _x: None,
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_config",
-            return_value={},
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph",
-            return_value=mock_eval,
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_llm_structured",
-        ) as mock_get_llm_structured,
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_llm",
-            return_value=MagicMock(),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.create_react_agent",
-        ) as mock_create,
-    ):
-        mock_agent = MagicMock()
-        mock_agent.astream_events = MagicMock(side_effect=_empty_astream_events)
-        mock_create.return_value = mock_agent
-        graph = build_milestone_run_graph(client)
-        out = await graph.ainvoke(
-            {
-                "milestone_id": "m1",
-                "location_id": 1,
-                "user_id": "u1",
-                "workflow_id": None,
-                "goal": "",
-                "raw_data": "",
-                "criteria": [],
-                "prior_milestones_data": "",
-                "api_adapter_tools": [],
-                "bff_data_task": None,
-                "data_task": None,
-                "restaurant_brand_brief_context": {},
-                "selected_skill_id": None,
-                "selected_skill_ids": [],
-                "current_skill_index": 0,
-                "result_data": "",
-                "milestonedata_written": False,
-                "result_summary": "",
-                "result_node_id": None,
-                "last_criteria_verdicts": [],
-            },
-        )
-
-    mock_get_llm_structured.assert_not_called()
-    assert out.get("selected_skill_ids") == ["restaurant_brand_brief"]
-    assert out.get("selected_skill_id") == "restaurant_brand_brief"
-    mock_create.assert_called_once()
-    assert mock_agent.astream_events.call_count == 1
-
-
-@pytest.mark.asyncio
-async def test_graph_uses_bff_hint_for_restaurant_brand_brief() -> None:
-    """BFF ``bff_data_task`` forces brand-brief routing when GraphQL fetch returns None."""
-    client = MagicMock(spec=AsyncMock)
-
-    mock_eval = MagicMock()
-    mock_eval.astream = _fake_eval_astream
-
-    with (
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(
-                return_value=[
-                    {"nodeType": "goal", "data": {"goal": "G1"}},
-                ],
-            ),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_api_adapter_tools_for_location",
-            new=AsyncMock(return_value=[]),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_data_task",
-            new=AsyncMock(return_value=None),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
-            return_value=lambda _x: None,
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_stream_writer",
-            return_value=lambda _x: None,
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_config",
-            return_value={},
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph",
-            return_value=mock_eval,
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_llm_structured",
-        ) as mock_get_llm_structured,
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_llm",
-            return_value=MagicMock(),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.create_react_agent",
-        ) as mock_create,
-    ):
-        mock_agent = MagicMock()
-        mock_agent.astream_events = MagicMock(side_effect=_empty_astream_events)
-        mock_create.return_value = mock_agent
-        graph = build_milestone_run_graph(client)
-        out = await graph.ainvoke(
-            {
-                "milestone_id": "m1",
-                "location_id": 1,
-                "user_id": "u1",
-                "workflow_id": None,
-                "goal": "",
-                "raw_data": "",
-                "criteria": [],
-                "prior_milestones_data": "",
-                "api_adapter_tools": [],
-                "bff_data_task": "restaurant_brand_brief",
-                "data_task": None,
-                "restaurant_brand_brief_context": {},
-                "selected_skill_id": None,
-                "selected_skill_ids": [],
-                "current_skill_index": 0,
-                "result_data": "",
-                "milestonedata_written": False,
-                "result_summary": "",
-                "result_node_id": None,
-                "last_criteria_verdicts": [],
-            },
-        )
-
-    mock_get_llm_structured.assert_not_called()
-    assert out.get("selected_skill_ids") == ["restaurant_brand_brief"]
-
-
-@pytest.mark.asyncio
-async def test_graph_selects_promotion_candidates_without_structured_llm() -> None:
-    """When fetch_milestone_data_task returns promotion_candidates, skip skill-selector LLM."""
-    client = MagicMock(spec=AsyncMock)
-
-    mock_eval = MagicMock()
-    mock_eval.astream = _fake_eval_astream
-
-    with (
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(
-                return_value=[
-                    {"nodeType": "goal", "data": {"goal": "G1"}},
-                ],
-            ),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_api_adapter_tools_for_location",
-            new=AsyncMock(return_value=[]),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_data_task",
-            new=AsyncMock(return_value="promotion_candidates"),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
-            return_value=lambda _x: None,
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_stream_writer",
-            return_value=lambda _x: None,
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_config",
-            return_value={},
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph",
-            return_value=mock_eval,
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_llm_structured",
-        ) as mock_get_llm_structured,
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_llm",
-            return_value=MagicMock(),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.create_react_agent",
-        ) as mock_create,
-    ):
-        mock_agent = MagicMock()
-        mock_agent.astream_events = MagicMock(side_effect=_empty_astream_events)
-        mock_create.return_value = mock_agent
-        graph = build_milestone_run_graph(client)
-        out = await graph.ainvoke(
-            {
-                "milestone_id": "m1",
-                "location_id": 1,
-                "user_id": "u1",
-                "workflow_id": None,
-                "goal": "",
-                "raw_data": "",
-                "criteria": [],
-                "prior_milestones_data": "",
-                "api_adapter_tools": [],
-                "bff_data_task": None,
-                "data_task": None,
-                "restaurant_brand_brief_context": {},
-                "selected_skill_id": None,
-                "selected_skill_ids": [],
-                "current_skill_index": 0,
-                "result_data": "",
-                "milestonedata_written": False,
-                "result_summary": "",
-                "result_node_id": None,
-                "last_criteria_verdicts": [],
-            },
-        )
-
-    mock_get_llm_structured.assert_not_called()
-    assert out.get("selected_skill_ids") == ["promotion_candidates"]
-    assert out.get("selected_skill_id") == "promotion_candidates"
-    mock_create.assert_called_once()
-    assert mock_agent.astream_events.call_count == 1
-
-
-@pytest.mark.asyncio
-async def test_graph_uses_bff_hint_for_promotion_candidates() -> None:
-    """BFF ``bff_data_task`` forces promotion_candidates when GraphQL fetch returns None."""
-    client = MagicMock(spec=AsyncMock)
-
-    mock_eval = MagicMock()
-    mock_eval.astream = _fake_eval_astream
-
-    with (
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(
-                return_value=[
-                    {"nodeType": "goal", "data": {"goal": "G1"}},
-                ],
-            ),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_api_adapter_tools_for_location",
-            new=AsyncMock(return_value=[]),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_data_task",
-            new=AsyncMock(return_value=None),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
-            return_value=lambda _x: None,
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_stream_writer",
-            return_value=lambda _x: None,
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_config",
-            return_value={},
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph",
-            return_value=mock_eval,
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_llm_structured",
-        ) as mock_get_llm_structured,
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_llm",
-            return_value=MagicMock(),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.create_react_agent",
-        ) as mock_create,
-    ):
-        mock_agent = MagicMock()
-        mock_agent.astream_events = MagicMock(side_effect=_empty_astream_events)
-        mock_create.return_value = mock_agent
-        graph = build_milestone_run_graph(client)
-        out = await graph.ainvoke(
-            {
-                "milestone_id": "m1",
-                "location_id": 1,
-                "user_id": "u1",
-                "workflow_id": None,
-                "goal": "",
-                "raw_data": "",
-                "criteria": [],
-                "prior_milestones_data": "",
-                "api_adapter_tools": [],
-                "bff_data_task": "promotion_candidates",
-                "data_task": None,
-                "restaurant_brand_brief_context": {},
-                "selected_skill_id": None,
-                "selected_skill_ids": [],
-                "current_skill_index": 0,
-                "result_data": "",
-                "milestonedata_written": False,
-                "result_summary": "",
-                "result_node_id": None,
-                "last_criteria_verdicts": [],
-            },
-        )
-
-    mock_get_llm_structured.assert_not_called()
-    assert out.get("selected_skill_ids") == ["promotion_candidates"]

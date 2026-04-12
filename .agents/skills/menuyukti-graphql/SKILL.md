@@ -4,7 +4,7 @@ description: >-
   GraphQL API app (apps/graphql): Strawberry schema, query modules, services, SQLAlchemy and Alembic,
   reports/transform integration with packages/menuyukti, auth, and tests. Use when adding queries or
   mutations for web/agents, resolver logic, migrations, or analytics-shaped API fields consumed by
-  skill_runner prefetch.
+  agents milestone run tools.
 ---
 
 # Menuyukti: `apps/graphql`
@@ -42,12 +42,11 @@ Commands: [AGENTS.md](../../../AGENTS.md) § GraphQL API. Deep SQLAlchemy patter
 4. **Tests** — add coverage under `apps/graphql/tests/`.
 5. **Workflow roots** — location-scoped workflow container is a GraphQL `Node` with **`nodeType` `workflow`** (milestones hang under it).
 
-## Prefetch-facing queries
+## Agents-facing queries
 
-`apps/agents` `skill_runner` calls GraphQL via `graphql_post` — see [`menuyukti-agents`](../menuyukti-agents/SKILL.md). When adding fields used by prefetch:
+`apps/agents` calls GraphQL via `graphql_post` — see [`menuyukti-agents`](../menuyukti-agents/SKILL.md). When adding fields used by milestone run tools:
 
-- Keep response shapes **stable** and **JSON-friendly** for `graphql_client.fetch_*` helpers.
-- Align naming with handler `use` keys where helpful (e.g. category mix, instagram signals).
+- Keep response shapes **stable** and **JSON-friendly** for `milestone_run/graphql_client` helpers.
 
 Example query/service touchpoints (not exhaustive): [`menu_heatmaps.py`](../../../apps/graphql/schema/queries/menu_heatmaps.py), [`services/menu_engineering.py`](../../../apps/graphql/services/menu_engineering.py), [`instagram_signals.py`](../../../apps/graphql/schema/queries/instagram_signals.py).
 

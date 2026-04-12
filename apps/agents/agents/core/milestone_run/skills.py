@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from agents_app.agents.core.milestone_run.skill_markdown import load_skill_markdown
 from agents_app.agents.core.milestone_run.skill_paths import get_milestone_run_skill_path
-from agents_app.agents.domain.skill_runner.loader import load_skill_markdown
 
 
 @dataclass(frozen=True)
@@ -30,8 +30,6 @@ def _build_registry() -> dict[str, SkillDef]:
     return {
         "public_holidays": _load_disk_skill("public_holidays"),
         "generic": _load_disk_skill("generic"),
-        "promotion_candidates": _load_disk_skill("promotion_candidates"),
-        "restaurant_brand_brief": _load_disk_skill("restaurant_brand_brief"),
     }
 
 

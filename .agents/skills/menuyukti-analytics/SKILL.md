@@ -10,7 +10,7 @@ description: >-
 
 # Menuyukti analytics (`packages/menuyukti`)
 
-This skill is for **Cursor/agents** working on the **shared Python package** [`packages/menuyukti`](../../../packages/menuyukti). It is **not** a runtime milestone skill under `packages/agent-skills/` (those feed `skill_runner` in `apps/agents`).
+This skill is for **Cursor/agents** working on the **shared Python package** [`packages/menuyukti`](../../../packages/menuyukti). Runtime milestone prompts for agents live under `apps/agents/.../milestone_run/skills/`, not this package.
 
 ## Companion skills
 
@@ -89,4 +89,4 @@ If this file grows, split long API tables into `reference.md` in this folder.
 
 - [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md) — monorepo boundaries, pnpm vs uv.
 - [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md) — Strawberry layer and `reports/transform` integration.
-- [`menuyukti-agents`](../menuyukti-agents/SKILL.md) — skill_runner prefetch consumes GraphQL payloads derived from this package.
+- [`menuyukti-agents`](../menuyukti-agents/SKILL.md) — milestone run tools may call GraphQL payloads derived from this package.

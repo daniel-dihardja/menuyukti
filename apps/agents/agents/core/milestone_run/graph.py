@@ -12,7 +12,6 @@ from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_gra
 from agents_app.agents.core.milestone_eval.nodes import fetch_context
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_api_adapter_tools_for_location,
-    fetch_milestone_data_task,
     fetch_prior_milestones_data,
 )
 from agents_app.agents.core.milestone_run.prompts import (
@@ -105,17 +104,6 @@ def _normalize_skill_id(raw: str) -> str:
     return s
 
 
-def _infer_restaurant_brand_brief_from_milestone_content(goal: str, raw_data: str) -> bool:
-    """When ``dataTask`` is missing on the node, detect preset/heuristic brand-brief milestones."""
-    g = goal.lower()
-    d = raw_data.lower()
-    return (
-        ("## venue snapshot" in d and "## content pillars" in d)
-        or ("## proof-oriented angles" in d and "## tone guardrails" in d)
-        or ("brand brief" in g and ("data tab" in g or "downstream" in g))
-    )
-
-
 def _normalize_skill_id_list(raw: list[str]) -> list[str]:
     """Deduplicate, keep order, cap at 2; fall back to default if empty."""
     out: list[str] = []
@@ -173,64 +161,20 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
             mid,
         )
         raise
-    try:
-        data_task = await fetch_milestone_data_task(
-            mid,
-            int(state["location_id"]),
-            str(state["user_id"]),
-            client=client,
-        )
-    except Exception:
-        _logger.exception(
-            "milestone_run.fetch_children: milestone dataTask fetch failed milestone_id=%s",
-            mid,
-        )
-        raise
-    hint_raw = state.get("bff_data_task")
-    if isinstance(hint_raw, str) and hint_raw.strip():
-        hn = hint_raw.strip().lower().replace("-", "_")
-        if hn == "restaurant_brand_brief":
-            if data_task != "restaurant_brand_brief":
-                _logger.info(
-                    "milestone_run.fetch_children: data_task set from BFF hint (overrides fetch=%r) milestone_id=%s",
-                    data_task,
-                    mid,
-                )
-            data_task = "restaurant_brand_brief"
-        elif hn == "promotion_candidates":
-            if data_task != "promotion_candidates":
-                _logger.info(
-                    "milestone_run.fetch_children: data_task set from BFF hint promotion_candidates (overrides fetch=%r) milestone_id=%s",
-                    data_task,
-                    mid,
-                )
-            data_task = "promotion_candidates"
-    if data_task is None and _infer_restaurant_brand_brief_from_milestone_content(
-        str(out.get("goal", "")),
-        str(out.get("raw_data", "")),
-    ):
-        data_task = "restaurant_brand_brief"
-        _logger.info(
-            "milestone_run.fetch_children: inferred data_task=restaurant_brand_brief milestone_id=%s",
-            mid,
-        )
 
     _logger.info(
-        "milestone_run.fetch_children: done milestone_id=%s criteria_count=%s goal_len=%s raw_data_len=%s prior_len=%s adapters=%s data_task=%s",
+        "milestone_run.fetch_children: done milestone_id=%s criteria_count=%s goal_len=%s raw_data_len=%s prior_len=%s adapters=%s",
         mid,
         len(out.get("criteria") or []),
         len(str(out.get("goal") or "")),
         len(str(out.get("raw_data") or "")),
         len(prior),
         len(adapters),
-        data_task,
     )
     return {
         **out,
         "prior_milestones_data": prior,
         "api_adapter_tools": adapters,
-        "data_task": data_task,
-        "restaurant_brand_brief_context": {},
     }
 
 
@@ -239,26 +183,6 @@ async def _select_skills(state: MilestoneRunState, *, client: httpx.AsyncClient)
     mid = str(state["milestone_id"])
     _logger.info("milestone_run.select_skills: start milestone_id=%s", mid)
     _trace_step(state, "select_skill")
-    if state.get("data_task") == "restaurant_brand_brief":
-        _logger.info(
-            "milestone_run.select_skills: deterministic restaurant_brand_brief milestone_id=%s",
-            mid,
-        )
-        return {
-            "selected_skill_ids": ["restaurant_brand_brief"],
-            "current_skill_index": 0,
-            "selected_skill_id": "restaurant_brand_brief",
-        }
-    if state.get("data_task") == "promotion_candidates":
-        _logger.info(
-            "milestone_run.select_skills: deterministic promotion_candidates milestone_id=%s",
-            mid,
-        )
-        return {
-            "selected_skill_ids": ["promotion_candidates"],
-            "current_skill_index": 0,
-            "selected_skill_id": "promotion_candidates",
-        }
     skills_md = format_skills_for_selector(SKILL_REGISTRY)
     human = skill_selector_human_message(
         str(state.get("goal", "")),
@@ -326,7 +250,6 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         int(state["location_id"]),
         str(state["user_id"]),
         client=client,
-        skill_id=sid,
     )
     raw_adapters = state.get("api_adapter_tools", [])
     adapters_list = raw_adapters if isinstance(raw_adapters, list) else []
@@ -365,12 +288,16 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         if et == "on_tool_start":
             tname = _astream_event_tool_name(ev)
             if tname:
-                _logger.info("milestone_run.execute_skill: tool_start name=%s milestone_id=%s", tname, mid)
+                _logger.info(
+                    "milestone_run.execute_skill: tool_start name=%s milestone_id=%s", tname, mid
+                )
                 _trace_agent_event(state, "tool_start", name=tname)
         elif et == "on_tool_end":
             tname = _astream_event_tool_name(ev)
             if tname:
-                _logger.info("milestone_run.execute_skill: tool_end name=%s milestone_id=%s", tname, mid)
+                _logger.info(
+                    "milestone_run.execute_skill: tool_end name=%s milestone_id=%s", tname, mid
+                )
                 _trace_agent_event(state, "tool_end", name=tname)
         elif et == "on_chat_model_start":
             _trace_agent_event(state, "chat_model_start")

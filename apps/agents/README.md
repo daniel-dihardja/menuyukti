@@ -23,10 +23,10 @@ make dev
 - Streaming chat: `POST /chat` — `text/event-stream` (SSE), JSON body `{"messages":[{"role":"user","content":"..."}]}`
 - **Core:** `POST /format-markdown` — JSON body `{"content":"...","preset":"milestone-goal"|"milestone-data"|...}` returns `{"formatted":"..."}`. Preset-driven Markdown cleanup (platform helper in `agents/core/format_markdown/`, not a domain graph).
 
-## Core vs domain
+## Milestone run
 
-- **Core** (`agents/core/`): cross-cutting flows (chat, milestone evaluation, **format-markdown** presets, **`milestone_data`** GraphQL upsert for persisting generated milestone text).
-- **Domain** (`agents/domain/skill_runner/`): skill-driven prepare flows. **`POST /milestones/{id}/prepare`** resolves `SKILL.md` via **`agents/core/milestone_run/skills/<data_task>/`** first, then the legacy **`agent-skills`** package (deprecated; logged) for unmigrated tasks. Skills **without** a `menuyukti` block (e.g. `promotion_candidates`) use **ReAct + tools** + GraphQL; legacy skills still use **prefetch + single LLM** turn. Default `data_task` in the JSON body is `restaurant_brand_brief`. Saving to `milestonedata` uses core `milestone_data`. The format endpoint is **not** domain-specific; milestone UI is one client.
+- **`POST /milestones/{id}/run`** — LangGraph flow: fetch milestone context → structured LLM skill selection → ReAct execute with tools → shared evaluation graph. Runtime skills and prompts live under **`agents/core/milestone_run/skills/<skill_id>/SKILL.md`** (see `skill_paths.get_milestone_run_skill_path`). **`milestone_data`** persists Data tab Markdown via GraphQL upsert.
+- **Core** (`agents/core/`): chat, milestone run/eval, format-markdown presets, milestone data persistence.
 
 ## Quality
 

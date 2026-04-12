@@ -12,7 +12,7 @@ That pattern applies broadly to use cases where the deliverable is **data artifa
 
 - **Workflow-oriented campaigns** — Milestones as steps: configurable data preparation, LLM processing, and stored milestone data for evaluation or further processing.
 - **Data-driven marketing (product focus)** — Instagram-oriented campaigns from sales trends, menu performance, and seasonal patterns.
-- **Agentic AI** — LangGraph / LangChain agent service (`apps/agents`) for chat, milestone prepare/run flows, and skill-driven pipelines.
+- **Agentic AI** — LangGraph / LangChain agent service (`apps/agents`) for chat and milestone run (skill selection + ReAct + evaluation).
 - **Chat UI** — Navigate the platform, refine outputs, and collaborate through conversation where it fits.
 - **Artifacts** — Review, edit, and reuse generated assets (captions, post ideas, etc.).
 

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from copy import deepcopy
 from typing import Any
@@ -15,18 +14,10 @@ from agents_app.agents.core.milestone_eval.graphql_client import (
     fetch_milestone_children,
     update_passcriteria_status,
 )
-from agents_app.agents.domain.skill_runner.graphql_client import (
-    fetch_category_mix_dict,
-    fetch_location_dict,
-    fetch_menu_items_catalog_dict,
-    fetch_operating_profile_dict,
-    get_or_fetch_latest_analytics_run_id,
-)
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
     API_ADAPTER_TOOLS_QUERY,
     LOCATION_QUERY,
-    NODE_BY_ID_QUERY,
     PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
     PUBLIC_HOLIDAYS_QUERY,
 )
@@ -84,131 +75,6 @@ async def fetch_api_adapter_tools_for_location(
                 "description": desc.strip() if isinstance(desc, str) else "",
             }
         )
-    return out
-
-
-def _coerce_node_data_blob(blob: object) -> dict[str, Any] | None:
-    if blob is None:
-        return None
-    if isinstance(blob, dict):
-        return blob
-    if isinstance(blob, str) and blob.strip():
-        try:
-            parsed = json.loads(blob)
-        except json.JSONDecodeError:
-            return None
-        return parsed if isinstance(parsed, dict) else None
-    return None
-
-
-async def fetch_milestone_data_task(
-    milestone_id: str,
-    location_id: int,
-    user_id: str,
-    *,
-    client: httpx.AsyncClient,
-) -> str | None:
-    """Return ``restaurant_brand_brief`` or ``promotion_candidates`` when the milestone matches (and location matches)."""
-
-    data = await graphql_post(
-        client,
-        NODE_BY_ID_QUERY,
-        {"id": str(milestone_id)},
-        user_id,
-    )
-    raw = data.get("node")
-    if not isinstance(raw, dict):
-        _logger.info(
-            "milestone_run.fetch_milestone_data_task: no node payload milestone_id=%s",
-            milestone_id,
-        )
-        return None
-    nt = str(raw.get("nodeType") or raw.get("node_type") or "")
-    if nt != "milestone":
-        _logger.info(
-            "milestone_run.fetch_milestone_data_task: wrong nodeType=%s milestone_id=%s",
-            nt,
-            milestone_id,
-        )
-        return None
-    loc_raw = raw.get("locationId")
-    if loc_raw is None:
-        loc_raw = raw.get("location_id")
-    try:
-        if loc_raw is None or int(loc_raw) != int(location_id):
-            _logger.info(
-                "milestone_run.fetch_milestone_data_task: location mismatch node_loc=%s run_loc=%s milestone_id=%s",
-                loc_raw,
-                location_id,
-                milestone_id,
-            )
-            return None
-    except (TypeError, ValueError):
-        return None
-    blob = _coerce_node_data_blob(raw.get("data"))
-    if blob is None:
-        _logger.info(
-            "milestone_run.fetch_milestone_data_task: missing or invalid data JSON milestone_id=%s",
-            milestone_id,
-        )
-        return None
-    task = blob.get("dataTask") or blob.get("data_task")
-    if not isinstance(task, str) or not task.strip():
-        _logger.info(
-            "milestone_run.fetch_milestone_data_task: no dataTask in milestone data milestone_id=%s keys=%s",
-            milestone_id,
-            list(blob.keys())[:12],
-        )
-        return None
-    normalized = task.strip().lower().replace("-", "_")
-    if normalized == "restaurant_brand_brief":
-        return "restaurant_brand_brief"
-    if normalized == "promotion_candidates":
-        return "promotion_candidates"
-    return None
-
-
-def _venue_name_from_location_dict(loc: dict[str, Any] | None) -> str | None:
-    if not isinstance(loc, dict):
-        return None
-    for key in ("name", "Name"):
-        v = loc.get(key)
-        if isinstance(v, str) and v.strip():
-            return v.strip()
-    return None
-
-
-async def prefetch_restaurant_brand_brief_context(
-    location_id: int,
-    user_id: str,
-    *,
-    client: httpx.AsyncClient,
-) -> dict[str, Any]:
-    """Load the same POS-backed JSON blocks as the Prepare ``restaurant_brand_brief`` skill (best-effort)."""
-
-    out: dict[str, Any] = {}
-    loc = await fetch_location_dict(location_id, user_id, client=client)
-    if isinstance(loc, dict) and loc:
-        out["location"] = loc
-    vn = _venue_name_from_location_dict(loc)
-    if vn:
-        out["venue_name"] = vn
-    run_id = await get_or_fetch_latest_analytics_run_id(location_id, user_id, client=client)
-    if not run_id:
-        out["analytics_note"] = (
-            "No analytics run for this location; upload sales data before expecting POS-backed facts."
-        )
-        return out
-    out["analytics_run_id"] = run_id
-    op = await fetch_operating_profile_dict(location_id, run_id, user_id, client=client)
-    if op:
-        out["operating_profile"] = op
-    cm = await fetch_category_mix_dict(location_id, run_id, user_id, client=client)
-    if cm:
-        out["category_mix"] = cm
-    menu = await fetch_menu_items_catalog_dict(location_id, user_id, client=client)
-    if menu:
-        out["menu_items_catalog"] = menu
     return out
 
 
@@ -322,9 +188,7 @@ __all__ = [
     "delete_node",
     "fetch_api_adapter_tools_for_location",
     "fetch_milestone_children",
-    "fetch_milestone_data_task",
     "fetch_prior_milestones_data",
-    "prefetch_restaurant_brand_brief_context",
     "fetch_public_holidays_for_milestone",
     "update_passcriteria_status",
     "upsert_milestonedata_node",

@@ -10,7 +10,6 @@ export const TIMELINE_ERROR_KEYS = [
   'passCriteria',
   'goal',
   'milestoneData',
-  'milestonePrepare',
   'milestoneRun',
   'export',
 ] as const

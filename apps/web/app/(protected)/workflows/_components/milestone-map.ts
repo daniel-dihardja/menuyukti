@@ -138,9 +138,9 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   const data = milestoneDataFromChildNodes(node.milestonedataNodes)
   const passCriteria = passCriteriaFromChildNodes(node.passCriteriaNodes)
   const resultMarkdown = resultMarkdownFromChildNodes(node.resultNodes)
-  let dataTask: MilestoneDataTask = 'manual'
-  if (parsed.success && parsed.data.dataTask) {
-    dataTask = parsed.data.dataTask
+  let dataTask: MilestoneDataTask | undefined
+  if (parsed.success && parsed.data.dataTask === 'manual') {
+    dataTask = 'manual'
   }
 
   return {
@@ -148,7 +148,7 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
     title: node.name,
     goal,
     data,
-    dataTask,
+    ...(dataTask !== undefined ? { dataTask } : {}),
     passCriteria,
     resultMarkdown,
     status: deriveMilestoneRailStatus(passCriteria, resultMarkdown),

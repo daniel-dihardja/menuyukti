@@ -10,32 +10,14 @@ export type PassCriteriaRow = {
   status: PassCriteriaStatus
 }
 
-export type MilestoneDataTask =
-  | 'manual'
-  | 'location_profile'
-  | 'instagram_campaign_schedule'
-  | 'restaurant_brand_brief'
-  | 'social_campaign_calendar'
-  | 'social_caption_batch'
-  | 'visual_creative_brief'
-  | 'promotion_candidates'
-
-/** Data sources that support Generate from analytics (Prepare). */
-export const MILESTONE_PREPARE_DATA_TASKS: readonly MilestoneDataTask[] = [
-  'location_profile',
-  'instagram_campaign_schedule',
-  'restaurant_brand_brief',
-  'social_campaign_calendar',
-  'social_caption_batch',
-  'visual_creative_brief',
-  'promotion_candidates',
-] as const
+/** Stored on milestone `data.dataTask` when the Data tab is manual entry only. */
+export type MilestoneDataTask = 'manual'
 
 export type TimelineMilestone = {
   id: string
   title: string
   passCriteria: PassCriteriaRow[]
-  /** Free-form goal text for the Goal tab (stored on the milestone node). */
+  /** Free-form goal text for the Goal tab (stored on the goal child node). */
   goal?: string
   /** Data tab text; stored on a child `milestonedata` node as `{ data: string }`. */
   data?: string
@@ -43,11 +25,10 @@ export type TimelineMilestone = {
   dataTask?: MilestoneDataTask
   /** Markdown body for the Result tab. */
   resultMarkdown?: string
-  /** Defaults to `empty` when omitted. */
+  /** Derived rail status from pass criteria + optional run outcome. */
   status?: TimelineMilestoneStatus
 }
 
-/** Optional loading/error when milestones are not yet in `TimelineProvider`. */
 export type TimelineWorkspaceProps = {
   isLoading?: boolean
   loadError?: string | null

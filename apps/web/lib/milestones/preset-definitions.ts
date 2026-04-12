@@ -56,7 +56,7 @@ export function getMilestonePresetCreateFields(
     case 'restaurant_brand_brief':
       return {
         name: t('milestonePreset.restaurant_brand_brief.title'),
-        dataTask: 'restaurant_brand_brief',
+        dataTask: 'manual',
         milestoneData: t('milestonePreset.restaurant_brand_brief.dataMarkdown'),
         goal: t('milestonePreset.restaurant_brand_brief.goal'),
         passCriteria: [
@@ -85,7 +85,7 @@ export function getMilestonePresetCreateFields(
     case 'candidates':
       return {
         name: t('milestonePreset.candidates.title'),
-        dataTask: 'promotion_candidates',
+        dataTask: 'manual',
         milestoneData: t('milestonePreset.candidates.dataMarkdown'),
         goal: t('milestonePreset.candidates.goal'),
         passCriteria: [

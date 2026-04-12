@@ -48,20 +48,15 @@ Named product features and aliases (e.g. workflow presets): see [`.agents/menuyu
 
 Commands: [AGENTS.md](../../../AGENTS.md) § Web.
 
-## Milestone **Data** tab: `dataTask` and Prepare
+## Milestone **Data** tab and run
 
-The agents service resolves the runtime skill from **`data_task`** ([`menuyukti-agents`](../menuyukti-agents/SKILL.md)). The web app must expose the same identifiers in the milestone **Data** UI and forward them to the Prepare/BFF flow.
+Milestone **run** uses LangGraph + a structured skill selector over [`milestone_run/skills`](../../../apps/agents/agents/core/milestone_run/skills/) ([`menuyukti-agents`](../menuyukti-agents/SKILL.md)). The web app stores optional **`dataTask: 'manual'`** on milestone node JSON for manual Data-tab entry; the run BFF calls **`POST .../run`** with `location_id` and `workflow_id` only.
 
-### Checklist: new `dataTask` / prepare flow
+### Checklist: new milestone-run skill (agents + UI copy)
 
-1. **Runtime skill** — add `apps/agents/agents/core/milestone_run/skills/<skill_id>/SKILL.md` (preferred; see [`menuyukti-agents`](../menuyukti-agents/SKILL.md)) or legacy `packages/agent-skills/.../skills/<skill_id>/SKILL.md`.
-2. **Types & enums** — extend **`dataTask`** in:
-   - [`timeline/types.ts`](<../../../apps/web/app/(protected)/workflows/_components/timeline/types.ts>)
-   - [`node-schemas.ts`](../../../apps/web/lib/graphql/node-schemas.ts)
-   - [`app/api/workflows/[id]/milestones/schema.ts`](../../../apps/web/app/api/workflows/[id]/milestones/schema.ts)
-3. **UI** — wire the Select / tabs in [`milestone-item-tabs.tsx`](<../../../apps/web/app/(protected)/workflows/_components/timeline/milestone-item-tabs.tsx>) (and any related components).
-4. **next-intl** — add messages for the new option labels/descriptions (no hardcoded copy).
-5. **GraphQL export/import** — ensure new values round-trip when workflows are exported/imported ([`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)).
+1. **Runtime skill** — add `apps/agents/agents/core/milestone_run/skills/<skill_id>/SKILL.md` and register in `skills.py` ([`menuyukti-agents`](../menuyukti-agents/SKILL.md)).
+2. **Web registries** — update [`milestone-run-skill-registry.ts`](../../../apps/web/lib/milestone-run-skill-registry.ts) / [`milestone-run-tools-registry.ts`](../../../apps/web/lib/milestone-run-tools-registry.ts) if the UI documents tools or skills.
+3. **GraphQL export/import** — keep milestone `data` JSON compatible when workflows round-trip ([`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)).
 
 ## GraphQL from the web
 
@@ -70,11 +65,11 @@ The agents service resolves the runtime skill from **`data_task`** ([`menuyukti-
 
 ## Related
 
-| Topic              | Skill                                                                  |
-| ------------------ | ---------------------------------------------------------------------- |
-| Prepare / prefetch | [`menuyukti-agents`](../menuyukti-agents/SKILL.md)                     |
-| Backend schema     | [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)                   |
-| Monorepo map       | [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md) |
+| Topic          | Skill                                                                  |
+| -------------- | ---------------------------------------------------------------------- |
+| Milestone run  | [`menuyukti-agents`](../menuyukti-agents/SKILL.md)                     |
+| Backend schema | [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)                   |
+| Monorepo map   | [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md) |
 
 ## Canonical docs
 

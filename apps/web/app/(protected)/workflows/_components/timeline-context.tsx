@@ -5,7 +5,7 @@ import { createContext, useContext, type ReactNode } from 'react'
 import type { CampaignMilestoneUiState } from './campaign-milestone-reducer'
 import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 
-import type { MilestoneDataTask, PassCriteriaRow } from './timeline/types'
+import type { PassCriteriaRow } from './timeline/types'
 
 /** Milestone list + in-flight ids (no error strings). */
 export type TimelineMilestoneState = Pick<
@@ -20,7 +20,6 @@ export type TimelineMilestoneState = Pick<
   | 'movingMilestoneId'
   | 'runningMilestoneId'
   | 'runningStep'
-  | 'preparingMilestoneId'
   | 'exporting'
 >
 
@@ -33,7 +32,6 @@ export type TimelineErrors = Pick<
   | 'passCriteriaError'
   | 'goalError'
   | 'milestoneDataError'
-  | 'milestonePrepareError'
   | 'milestoneRunError'
   | 'exportError'
 >
@@ -48,8 +46,6 @@ export type TimelineActions = {
   onUpdateMilestoneGoal: (id: string, goal: string) => Promise<boolean>
   onUpdateMilestoneData: (id: string, milestoneData: string) => Promise<boolean>
   onHydrateMilestoneData: (id: string) => Promise<void>
-  onSetMilestoneDataTask: (id: string, dataTask: MilestoneDataTask) => Promise<boolean>
-  onPrepareMilestone: (id: string, dataTask: MilestoneDataTask) => void | Promise<void>
   onRunMilestone: (id: string) => void | Promise<void>
   onExport: () => void | Promise<void>
 }
@@ -87,7 +83,6 @@ export function splitMilestoneUiState(ui: CampaignMilestoneUiState): {
     passCriteriaError,
     goalError,
     milestoneDataError,
-    milestonePrepareError,
     milestoneRunError,
     exportError,
     ...milestoneState
@@ -102,7 +97,6 @@ export function splitMilestoneUiState(ui: CampaignMilestoneUiState): {
       passCriteriaError,
       goalError,
       milestoneDataError,
-      milestonePrepareError,
       milestoneRunError,
       exportError,
     },

@@ -23,10 +23,6 @@ class MilestoneRunBody(BaseModel):
         default=None,
         description="Parent workflow node id — enables reading earlier milestones' Data tabs.",
     )
-    data_task: str | None = Field(
-        default=None,
-        description="Milestone ``data.dataTask`` from the web BFF (authoritative when GraphQL node fetch differs).",
-    )
 
 
 @router.post("/milestones/{milestone_id}/run")
@@ -50,7 +46,6 @@ async def milestone_run(
                 location_id=body.location_id,
                 user_id=x_menuyukti_user_id,
                 workflow_id=body.workflow_id,
-                bff_data_task=body.data_task,
                 traceparent=tp,
             ):
                 yield line

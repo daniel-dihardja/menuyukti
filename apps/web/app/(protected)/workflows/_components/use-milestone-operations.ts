@@ -11,20 +11,19 @@ import {
 
 import type { CampaignMilestoneAction } from './campaign-milestone-reducer'
 import { deriveMilestoneRailStatus, milestoneNodeToTimelineMilestone } from './milestone-map'
-import {
-  MILESTONE_PREPARE_DATA_TASKS,
-  type MilestoneDataTask,
-  type PassCriteriaRow,
-  type PassCriteriaStatus,
-  type TimelineMilestone,
+import type {
+  MilestoneDataTask,
+  PassCriteriaRow,
+  PassCriteriaStatus,
+  TimelineMilestone,
 } from './timeline/types'
 
-function milestoneDataTaskFromNodeData(data: unknown): MilestoneDataTask {
+function milestoneDataTaskFromNodeData(data: unknown): MilestoneDataTask | undefined {
   const parsed = milestoneDataSchema.safeParse(data)
-  if (!parsed.success) {
-    return 'manual'
+  if (!parsed.success || parsed.data.dataTask !== 'manual') {
+    return undefined
   }
-  return parsed.data.dataTask ?? 'manual'
+  return 'manual'
 }
 
 export function useMilestoneOperations(
@@ -131,9 +130,9 @@ export function useMilestoneOperations(
         }
 
         const title = typeof patchJson?.name === 'string' ? patchJson.name : fields.name
-        const dataTask = milestoneDataTaskFromNodeData(
-          patchJson?.data ?? { dataTask: fields.dataTask },
-        )
+        const dataTask: MilestoneDataTask | undefined =
+          milestoneDataTaskFromNodeData(patchJson?.data ?? { dataTask: fields.dataTask }) ??
+          'manual'
 
         let passCriteria: PassCriteriaRow[] = []
         const criteriaDraft = fields.passCriteria
@@ -158,7 +157,7 @@ export function useMilestoneOperations(
           title,
           goal: fields.goal?.trim() ? fields.goal : undefined,
           data: fields.milestoneData,
-          dataTask,
+          ...(dataTask !== undefined ? { dataTask } : {}),
           passCriteria,
           status: deriveMilestoneRailStatus(passCriteria, undefined),
         }
@@ -393,115 +392,6 @@ export function useMilestoneOperations(
       }
     },
     [workflowId, dispatch, t],
-  )
-
-  const handleSetMilestoneDataTask = useCallback(
-    async (milestoneId: string, dataTask: MilestoneDataTask): Promise<boolean> => {
-      dispatch({ type: 'PATCH', patch: { milestonePrepareError: null } })
-      try {
-        const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ dataTask }),
-        })
-        const body = (await res.json().catch(() => null)) as {
-          message?: string
-          data?: unknown
-        } | null
-        if (!res.ok) {
-          throw new Error(body?.message ?? t('milestonesMilestoneDataError'))
-        }
-        const nodeBody = body as { data?: unknown }
-        const nextTask = milestoneDataTaskFromNodeData(nodeBody?.data)
-        dispatch({
-          type: 'UPDATE_MILESTONES',
-          updater: (prev) =>
-            prev.map((m) => (m.id === milestoneId ? { ...m, dataTask: nextTask } : m)),
-        })
-        return true
-      } catch (err) {
-        dispatch({
-          type: 'PATCH',
-          patch: {
-            milestonePrepareError: err instanceof Error ? err.message : t('milestonePrepareError'),
-          },
-        })
-        return false
-      }
-    },
-    [workflowId, dispatch, t],
-  )
-
-  const handlePrepareMilestone = useCallback(
-    async (milestoneId: string, dataTask: MilestoneDataTask) => {
-      if (!MILESTONE_PREPARE_DATA_TASKS.includes(dataTask)) {
-        return
-      }
-      dispatch({
-        type: 'PATCH',
-        patch: { milestonePrepareError: null, preparingMilestoneId: milestoneId },
-      })
-      try {
-        const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}/prepare`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locationId, dataTask }),
-        })
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { error?: string } | null
-          throw new Error(body?.error ?? t('milestonePrepareError'))
-        }
-        if (!res.body) {
-          throw new Error(t('milestonePrepareError'))
-        }
-        const reader = res.body.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ''
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) {
-            break
-          }
-          buffer += decoder.decode(value, { stream: true })
-          const blocks = buffer.split('\n\n')
-          buffer = blocks.pop() ?? ''
-          for (const block of blocks) {
-            const m = block.match(/^data: (.+)$/m)
-            const raw = m?.[1]?.trim()
-            if (!raw) {
-              continue
-            }
-            let payload: Record<string, unknown>
-            try {
-              payload = JSON.parse(raw) as Record<string, unknown>
-            } catch {
-              continue
-            }
-            if (typeof payload.error === 'string') {
-              throw new Error(payload.error)
-            }
-            if (payload.done === true) {
-              const preview = typeof payload.dataPreview === 'string' ? payload.dataPreview : ''
-              dispatch({
-                type: 'UPDATE_MILESTONES',
-                updater: (prev) =>
-                  prev.map((m) => (m.id === milestoneId ? { ...m, data: preview || m.data } : m)),
-              })
-            }
-          }
-        }
-      } catch (err) {
-        dispatch({
-          type: 'PATCH',
-          patch: {
-            milestonePrepareError: err instanceof Error ? err.message : t('milestonePrepareError'),
-          },
-        })
-      } finally {
-        dispatch({ type: 'PATCH', patch: { preparingMilestoneId: null } })
-      }
-    },
-    [workflowId, dispatch, locationId, t],
   )
 
   const handleRunMilestone = useCallback(
@@ -761,8 +651,8 @@ export function useMilestoneOperations(
                 passCriteria,
                 status: deriveMilestoneRailStatus(passCriteria, m.resultMarkdown),
               }
-              if (body.dataTask) {
-                next.dataTask = body.dataTask
+              if (body.dataTask === 'manual') {
+                next.dataTask = 'manual'
               }
               return next
             }),
@@ -783,8 +673,6 @@ export function useMilestoneOperations(
       handleUpdatePassCriteria,
       handleUpdateMilestoneGoal,
       handleUpdateMilestoneData,
-      handleSetMilestoneDataTask,
-      handlePrepareMilestone,
       handleRunMilestone,
       handleMoveMilestone,
       handleExportWorkflow,
@@ -798,8 +686,6 @@ export function useMilestoneOperations(
       handleUpdatePassCriteria,
       handleUpdateMilestoneGoal,
       handleUpdateMilestoneData,
-      handleSetMilestoneDataTask,
-      handlePrepareMilestone,
       handleRunMilestone,
       handleMoveMilestone,
       handleExportWorkflow,

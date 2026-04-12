@@ -80,7 +80,9 @@ async def test_iter_milestone_run_sse_lines_yields_done_payload() -> None:
     assert done.get("run_id") == rid
     assert done.get("resultId") == "node-99"
     assert done.get("summary") == "All good"
-    assert any(c.get("id") == "c1" and c.get("status") == "pass" for c in (done.get("criteria") or []))
+    assert any(
+        c.get("id") == "c1" and c.get("status") == "pass" for c in (done.get("criteria") or [])
+    )
     assert "dataPreview" not in done
 
     init = captured["initial"]
@@ -95,7 +97,9 @@ async def test_iter_milestone_run_sse_lines_yields_done_payload() -> None:
 
 
 @pytest.mark.asyncio
-async def test_iter_milestone_run_sse_done_includes_data_preview_when_milestonedata_written() -> None:
+async def test_iter_milestone_run_sse_done_includes_data_preview_when_milestonedata_written() -> (
+    None
+):
     async def fake_astream(*_a: object, **_k: object):
         yield (
             "values",

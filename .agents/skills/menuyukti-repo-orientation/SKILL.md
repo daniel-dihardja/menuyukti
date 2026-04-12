@@ -8,16 +8,16 @@ description: >-
 
 # Menuyukti: repository orientation
 
-This skill is for **Cursor/agents** navigating the repo. It is **not** a runtime milestone skill under `packages/agent-skills/` (those feed `skill_runner` in `apps/agents`).
+This skill is for **Cursor/agents** navigating the repo. Runtime milestone skills for agents live under `apps/agents/agents/core/milestone_run/skills/`.
 
 ## Service map
 
-| Area                 | Path           | Role                                                                                                                                                                                                                                   |
-| -------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Web**              | `apps/web`     | Next.js UI: chat, campaigns, CRUD. **Reads/writes go through GraphQL** (not direct DB). Workflow roots use GraphQL **`nodeType` `workflow`**.                                                                                          |
-| **GraphQL API**      | `apps/graphql` | Strawberry schema, **SQLAlchemy persistence**, analytics. **Single HTTP API** for structured data used by web and agents.                                                                                                              |
-| **LangGraph agents** | `apps/agents`  | FastAPI, LangChain / LangGraph. **Calls GraphQL over HTTP** (e.g. `httpx`); **does not** open database connections.                                                                                                                    |
-| **Shared packages**  | `packages/*`   | Shared TypeScript libraries; Python: [`packages/menuyukti`](../../../packages/menuyukti) (analytics), [`packages/agent-skills`](../../../packages/agent-skills) (runtime milestone `SKILL.md` for prepare), per root workspace config. |
+| Area                 | Path           | Role                                                                                                                                                      |
+| -------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Web**              | `apps/web`     | Next.js UI: chat, campaigns, CRUD. **Reads/writes go through GraphQL** (not direct DB). Workflow roots use GraphQL **`nodeType` `workflow`**.             |
+| **GraphQL API**      | `apps/graphql` | Strawberry schema, **SQLAlchemy persistence**, analytics. **Single HTTP API** for structured data used by web and agents.                                 |
+| **LangGraph agents** | `apps/agents`  | FastAPI, LangChain / LangGraph. **Calls GraphQL over HTTP** (e.g. `httpx`); **does not** open database connections.                                       |
+| **Shared packages**  | `packages/*`   | Shared TypeScript libraries; Python: [`packages/menuyukti`](../../../packages/menuyukti) (analytics), optional legacy workspace packages per root config. |
 
 ```mermaid
 flowchart LR
@@ -32,40 +32,14 @@ flowchart LR
 
 | Skill                                                    | When to open it                                                                                   |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| [`menuyukti-agents`](../menuyukti-agents/SKILL.md)       | `apps/agents`: FastAPI, LangGraph, skill_runner, milestone prepare, prefetch, runtime `SKILL.md`. |
+| [`menuyukti-agents`](../menuyukti-agents/SKILL.md)       | `apps/agents`: FastAPI, LangGraph milestone run, runtime `SKILL.md` under `milestone_run/skills`. |
 | [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)     | `apps/graphql`: Strawberry, Alembic, resolvers, queries for web/agents.                           |
 | [`menuyukti-web`](../menuyukti-web/SKILL.md)             | `apps/web`: Next.js, Clerk, next-intl, GraphQL from the browser/BFF, milestone UI.                |
 | [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md) | `packages/menuyukti`: pandas pipelines, Instagram signals, GraphQL `transform` integration.       |
 
-## Cross-app flow: milestone Prepare (skill_runner)
+## Cross-app flow: milestone run
 
-When a milestone **Data** task uses **Prepare**, the web app streams to agents; agents prefetch via GraphQL, run the LLM, then persist milestonedata. Details are split across the three app skills—this is only the map.
-
-```mermaid
-flowchart LR
-  subgraph webLayer [apps_web]
-    Card[Milestone_Data_tab]
-    Task[dataTask_select]
-  end
-  subgraph agentsLayer [apps_agents]
-    Prepare[POST_prepare_SSE]
-    SR[skill_runner]
-    GC[graphql_client]
-  end
-  subgraph gqlLayer [apps_graphql]
-    API[Strawberry_API]
-  end
-  Card --> Task
-  Card --> Prepare
-  Prepare --> SR
-  SR --> GC
-  GC -->|"graphql_post"| API
-```
-
-- **Web:** UI enums, BFF, next-intl — [`menuyukti-web`](../menuyukti-web/SKILL.md).
-- **Agents:** `skill_runner`, handlers, runtime `SKILL.md` under `packages/agent-skills` — [`menuyukti-agents`](../menuyukti-agents/SKILL.md).
-- **GraphQL:** queries and resolvers backing prefetch — [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md).
-- **Heavy analytics:** [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md) + thin GraphQL layer.
+The web BFF streams **`POST .../milestones/{id}/run`** to agents; the LangGraph run calls GraphQL for context, tools, and persistence. See [`menuyukti-agents`](../menuyukti-agents/SKILL.md), [`menuyukti-web`](../menuyukti-web/SKILL.md), and [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md).
 
 ## Database ownership
 
