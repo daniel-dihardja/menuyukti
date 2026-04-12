@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
@@ -23,6 +23,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request, context: RouteContext) {
   try {
+    await connection()
     const { isAuthenticated, userId } = await auth()
     if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

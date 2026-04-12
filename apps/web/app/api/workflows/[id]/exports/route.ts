@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
@@ -18,6 +18,7 @@ const idParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow id')
 
 export async function GET(_req: Request, context: RouteContext) {
   try {
+    await connection()
     const { isAuthenticated, userId } = await auth()
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

@@ -1,5 +1,5 @@
 import { revalidateTag } from 'next/cache'
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createLocationSchema } from './schema'
 import { ZodError } from 'zod'
@@ -16,6 +16,7 @@ import {
 
 export async function POST(req: Request) {
   try {
+    await connection()
     const { isAuthenticated, userId } = await auth()
     if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

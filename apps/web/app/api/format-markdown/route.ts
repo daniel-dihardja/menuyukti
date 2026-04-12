@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 
@@ -15,6 +15,7 @@ function jsonError(message: string, status: number) {
 }
 
 export async function POST(req: Request) {
+  await connection()
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated) {
     return jsonError('Unauthorized', 401)

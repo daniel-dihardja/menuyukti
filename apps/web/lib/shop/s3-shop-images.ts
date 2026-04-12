@@ -36,6 +36,11 @@ export async function listShopImagesForSlug(slug: string): Promise<ShopS3Image[]
     return []
   }
 
+  // Docker/CI builds often omit AWS env; static generation still uses catalog + placeholders (resolveShopImages).
+  if (!process.env.AWS_REGION?.trim()) {
+    return []
+  }
+
   const bucket = getS3Bucket()
   const s3 = getS3Client()
   const prefix = shopPrefixForSlug(slug)

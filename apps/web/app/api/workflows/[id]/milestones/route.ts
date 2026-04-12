@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
@@ -38,6 +38,7 @@ async function loadWorkflowRootOrThrow(workflowId: string, userId: string) {
 
 export async function GET(_req: Request, context: RouteContext) {
   try {
+    await connection()
     const { isAuthenticated, userId } = await auth()
     if (!isAuthenticated) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -77,6 +78,7 @@ export async function GET(_req: Request, context: RouteContext) {
 
 export async function POST(req: Request, context: RouteContext) {
   try {
+    await connection()
     const { isAuthenticated, userId } = await auth()
     if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

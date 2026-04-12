@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server'
+import { connection, NextResponse } from 'next/server'
 
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { resolveMenuyuktiRole } from '@/lib/menuyukti-role-server'
@@ -8,6 +8,7 @@ import { resolveMenuyuktiRole } from '@/lib/menuyukti-role-server'
 export async function requireMenuyuktiAdminApi(): Promise<
   { ok: true; userId: string } | { ok: false; response: NextResponse }
 > {
+  await connection()
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
     return {

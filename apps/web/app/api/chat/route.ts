@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import type { UIMessage } from 'ai'
 import { getPythonAgentsUrl } from '@/lib/config'
@@ -101,6 +101,7 @@ async function parsePythonSSEAndForward(
 }
 
 export async function POST(req: Request) {
+  await connection()
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated) {
     return jsonError('Unauthorized', 401)
