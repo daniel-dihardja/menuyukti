@@ -1,0 +1,62 @@
+---
+name: menuyukti-web
+description: >-
+  Next.js web app (apps/web): GraphQL data fetching, Clerk auth, next-intl, workflow/milestone UI including
+  Data tab Prepare and dataTask enums, API routes and Zod schemas. Use when changing milestone cards,
+  BFF routes, workflow timeline types, or web-side GraphQL usage.
+---
+
+# Menuyukti: `apps/web`
+
+**Next.js** user-facing app: chat, campaigns, CRUD. **All product data** goes through **GraphQL** (no direct DB). Auth: **Clerk**. Copy: **next-intl** (no hardcoded user-facing strings).
+
+For monorepo boundaries, see [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md). For UI and i18n rules, see [`.cursor/rules/web-conventions.mdc`](../../../.cursor/rules/web-conventions.mdc). For Next.js patterns, see [`.agents/skills/next-best-practices/SKILL.md`](../next-best-practices/SKILL.md) and [`.agents/skills/clerk-nextjs-patterns/SKILL.md`](../clerk-nextjs-patterns/SKILL.md).
+
+## Layout (high level)
+
+| Concern                | Typical locations                                                                       |
+| ---------------------- | --------------------------------------------------------------------------------------- |
+| App Router             | [`apps/web/app/`](../../../apps/web/app/)                                               |
+| GraphQL client         | Co-located data fetching / server actions per feature (see existing workflows)          |
+| Workflow UI            | [`apps/web/app/(protected)/workflows/`](<../../../apps/web/app/(protected)/workflows/>) |
+| Shared GraphQL helpers | [`apps/web/lib/graphql/`](../../../apps/web/lib/graphql/)                               |
+| API routes             | [`apps/web/app/api/`](../../../apps/web/app/api/)                                       |
+
+Commands: [AGENTS.md](../../../AGENTS.md) § Web.
+
+## Milestone **Data** tab: `dataTask` and Prepare
+
+The agents service resolves the runtime skill from **`data_task`** ([`menuyukti-agents`](../menuyukti-agents/SKILL.md)). The web app must expose the same identifiers in the milestone **Data** UI and forward them to the Prepare/BFF flow.
+
+### Checklist: new `dataTask` / prepare flow
+
+1. **Runtime skill** — add `packages/agent-skills/src/agent_skills/skills/<skill_id>/SKILL.md` (see [`menuyukti-agents`](../menuyukti-agents/SKILL.md)).
+2. **Types & enums** — extend **`dataTask`** in:
+   - [`timeline/types.ts`](<../../../apps/web/app/(protected)/workflows/_components/timeline/types.ts>)
+   - [`node-schemas.ts`](../../../apps/web/lib/graphql/node-schemas.ts)
+   - [`app/api/workflows/[id]/milestones/schema.ts`](../../../apps/web/app/api/workflows/[id]/milestones/schema.ts)
+3. **UI** — wire the Select / tabs in [`milestone-item-tabs.tsx`](<../../../apps/web/app/(protected)/workflows/_components/timeline/milestone-item-tabs.tsx>) (and any related components).
+4. **next-intl** — add messages for the new option labels/descriptions (no hardcoded copy).
+5. **GraphQL export/import** — ensure new values round-trip when workflows are exported/imported ([`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)).
+
+## GraphQL from the web
+
+- Prefer existing patterns in the workflows and protected areas for **authenticated** requests.
+- Keep server/client boundaries aligned with Next.js conventions ([`next-best-practices`](../next-best-practices/SKILL.md)).
+
+## Related
+
+| Topic              | Skill                                                                  |
+| ------------------ | ---------------------------------------------------------------------- |
+| Prepare / prefetch | [`menuyukti-agents`](../menuyukti-agents/SKILL.md)                     |
+| Backend schema     | [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)                   |
+| Monorepo map       | [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md) |
+
+## Canonical docs
+
+- [`apps/web/README.md`](../../../apps/web/README.md) (if present)
+- [`AGENTS.md`](../../../AGENTS.md)
+
+## Progressive disclosure
+
+Split long route or component maps into `reference.md` in this folder if this file grows.

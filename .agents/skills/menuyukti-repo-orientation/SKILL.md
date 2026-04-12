@@ -1,14 +1,14 @@
 ---
 name: menuyukti-repo-orientation
 description: >-
-  Monorepo map for Menuyukti: which app owns persistence and APIs, where migrations live, and when to
-  use pnpm (Node/TypeScript) versus uv (Python). Use for onboarding, "where does X belong?", Turbo
-  workspaces, or avoiding wrong package manager or database layer.
+  Monorepo map for Menuyukti: which app owns persistence and APIs, where migrations live, when to use
+  pnpm (Node/TypeScript) versus uv (Python), and where to find per-app skills. Use for onboarding,
+  "where does X belong?", Turbo workspaces, or avoiding wrong package manager or database layer.
 ---
 
 # Menuyukti: repository orientation
 
-This skill is for **Cursor/agents** navigating the repo. It is **not** a runtime milestone skill under `packages/agent-skills/` (those feed `skill_runner`).
+This skill is for **Cursor/agents** navigating the repo. It is **not** a runtime milestone skill under `packages/agent-skills/` (those feed `skill_runner` in `apps/agents`).
 
 ## Service map
 
@@ -27,6 +27,45 @@ flowchart LR
   web -->|"GraphQL HTTP"| gql
   ag -->|"GraphQL HTTP"| gql
 ```
+
+## Domain skills (go deeper)
+
+| Skill                                                    | When to open it                                                                                   |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [`menuyukti-agents`](../menuyukti-agents/SKILL.md)       | `apps/agents`: FastAPI, LangGraph, skill_runner, milestone prepare, prefetch, runtime `SKILL.md`. |
+| [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md)     | `apps/graphql`: Strawberry, Alembic, resolvers, queries for web/agents.                           |
+| [`menuyukti-web`](../menuyukti-web/SKILL.md)             | `apps/web`: Next.js, Clerk, next-intl, GraphQL from the browser/BFF, milestone UI.                |
+| [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md) | `packages/menuyukti`: pandas pipelines, Instagram signals, GraphQL `transform` integration.       |
+
+## Cross-app flow: milestone Prepare (skill_runner)
+
+When a milestone **Data** task uses **Prepare**, the web app streams to agents; agents prefetch via GraphQL, run the LLM, then persist milestonedata. Details are split across the three app skills—this is only the map.
+
+```mermaid
+flowchart LR
+  subgraph webLayer [apps_web]
+    Card[Milestone_Data_tab]
+    Task[dataTask_select]
+  end
+  subgraph agentsLayer [apps_agents]
+    Prepare[POST_prepare_SSE]
+    SR[skill_runner]
+    GC[graphql_client]
+  end
+  subgraph gqlLayer [apps_graphql]
+    API[Strawberry_API]
+  end
+  Card --> Task
+  Card --> Prepare
+  Prepare --> SR
+  SR --> GC
+  GC -->|"graphql_post"| API
+```
+
+- **Web:** UI enums, BFF, next-intl — [`menuyukti-web`](../menuyukti-web/SKILL.md).
+- **Agents:** `skill_runner`, handlers, runtime `SKILL.md` under `packages/agent-skills` — [`menuyukti-agents`](../menuyukti-agents/SKILL.md).
+- **GraphQL:** queries and resolvers backing prefetch — [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md).
+- **Heavy analytics:** [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md) + thin GraphQL layer.
 
 ## Database ownership
 
@@ -53,7 +92,7 @@ flowchart LR
 ## Non-goals
 
 - **Duplicating** full command matrices — link **AGENTS.md** instead.
-- **Runtime milestone SKILL.md** authoring — see [`menuyukti-data-provider`](../menuyukti-data-provider/SKILL.md).
+- **Per-app implementation detail** — use the domain skills above.
 
 ## Progressive disclosure
 
