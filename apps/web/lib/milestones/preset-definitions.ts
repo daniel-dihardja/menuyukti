@@ -64,6 +64,8 @@ export function getMilestonePresetCreateFields(
         dataTask: 'manual',
         milestoneData: t('milestonePreset.restaurant_brand_brief.dataMarkdown'),
         goal: t('milestonePreset.restaurant_brand_brief.goal'),
+        milestoneRunSkillMode: 'fixed',
+        milestoneRunSkillIds: ['brand_brief'],
         passCriteria: [
           {
             requirement: t('milestonePreset.restaurant_brand_brief.criterionVenueSnapshot'),

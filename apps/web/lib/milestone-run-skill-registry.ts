@@ -18,6 +18,12 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
       "Use when the milestone goal or pass criteria require listing, confirming, or filling in public holidays for a date range for this location's country.",
   },
   {
+    id: 'brand_brief',
+    name: 'Brand brief',
+    description:
+      'Use for the brand brief milestone: location-only brief from profile and operating signals—venue snapshot, pillars, audience hypotheses, tone guardrails. No campaign start/end dates.',
+  },
+  {
     id: 'generic',
     name: 'Generic milestone data prep',
     description:
