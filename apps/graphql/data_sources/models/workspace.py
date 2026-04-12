@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from graphql.data_sources.database import Base
 
 if TYPE_CHECKING:
+    from graphql.data_sources.models.api_adapter_tool import ApiAdapterTool
     from graphql.data_sources.models.location import Location
 
 
@@ -32,7 +33,7 @@ class Workspace(Base):
 
     memberships: Mapped[list[WorkspaceMembership]] = relationship(back_populates="workspace")
     locations: Mapped[list[Location]] = relationship(back_populates="workspace")
-    api_adapter_tools: Mapped[list["ApiAdapterTool"]] = relationship(back_populates="workspace")
+    api_adapter_tools: Mapped[list[ApiAdapterTool]] = relationship(back_populates="workspace")
 
 
 class WorkspaceMembership(Base):

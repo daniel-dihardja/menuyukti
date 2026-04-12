@@ -5,14 +5,13 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 
 import httpx
-from langchain_core.tools import BaseTool
-
 from agents_app.agents.core.milestone_run.tools.get_location_profile import (
     make_get_location_profile_tool,
 )
 from agents_app.agents.core.milestone_run.tools.get_public_holidays import (
     make_get_public_holidays_tool,
 )
+from langchain_core.tools import BaseTool
 
 CORE_READ_TOOL_IDS: tuple[str, ...] = (
     "read_goal",

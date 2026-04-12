@@ -8,6 +8,7 @@ from functools import partial
 from typing import Any, Literal, cast
 
 import httpx
+from agents_app.agents.core.chat.graphql_client import fetch_milestone_node
 from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_graph
 from agents_app.agents.core.milestone_eval.nodes import fetch_context
 from agents_app.agents.core.milestone_run.graphql_client import (
@@ -21,7 +22,6 @@ from agents_app.agents.core.milestone_run.prompts import (
     skill_selector_human_message,
     workspace_adapter_tools_prompt_suffix,
 )
-from agents_app.agents.core.chat.graphql_client import fetch_milestone_node
 from agents_app.agents.core.milestone_run.skill_settings import (
     normalize_skill_id_list,
     resolve_skill_selection_from_milestone_data,

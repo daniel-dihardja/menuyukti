@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from agents_app.agents.core.milestone_run.skill_markdown import load_skill_markdown
 
 

@@ -6,8 +6,6 @@ from collections.abc import Sequence
 from typing import Any
 
 import httpx
-from langchain_core.tools import BaseTool
-
 from agents_app.agents.core.milestone_run.tools.read_criteria import make_read_criteria_tool
 from agents_app.agents.core.milestone_run.tools.read_data import make_read_data_tool
 from agents_app.agents.core.milestone_run.tools.read_goal import make_read_goal_tool
@@ -15,8 +13,11 @@ from agents_app.agents.core.milestone_run.tools.read_prior_milestones_data impor
     make_read_prior_milestones_data_tool,
 )
 from agents_app.agents.core.milestone_run.tools.registry import make_extra_tools
-from agents_app.agents.core.milestone_run.tools.workspace_adapter import make_workspace_adapter_tools
+from agents_app.agents.core.milestone_run.tools.workspace_adapter import (
+    make_workspace_adapter_tools,
+)
 from agents_app.agents.core.milestone_run.tools.write_result_data import make_write_result_data_tool
+from langchain_core.tools import BaseTool
 
 
 def make_milestone_run_tools(
