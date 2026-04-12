@@ -20,6 +20,7 @@ const prepareBodySchema = z.object({
       'social_campaign_calendar',
       'social_caption_batch',
       'visual_creative_brief',
+      'promotion_candidates',
     ])
     .optional(),
 })

@@ -18,6 +18,7 @@ export type MilestoneDataTask =
   | 'social_campaign_calendar'
   | 'social_caption_batch'
   | 'visual_creative_brief'
+  | 'promotion_candidates'
 
 /** Data sources that support Generate from analytics (Prepare). */
 export const MILESTONE_PREPARE_DATA_TASKS: readonly MilestoneDataTask[] = [
@@ -27,6 +28,7 @@ export const MILESTONE_PREPARE_DATA_TASKS: readonly MilestoneDataTask[] = [
   'social_campaign_calendar',
   'social_caption_batch',
   'visual_creative_brief',
+  'promotion_candidates',
 ] as const
 
 export type TimelineMilestone = {

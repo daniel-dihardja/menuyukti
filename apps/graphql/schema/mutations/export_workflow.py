@@ -45,6 +45,8 @@ def _milestone_data_task(data: object | None) -> str:
         return "social_caption_batch"
     if dt == "visual_creative_brief":
         return "visual_creative_brief"
+    if dt == "promotion_candidates":
+        return "promotion_candidates"
     return "manual"
 
 

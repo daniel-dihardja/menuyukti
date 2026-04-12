@@ -10,6 +10,7 @@ from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
     LOCATION_QUERY,
     LOCATIONS_QUERY,
+    PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
     PUBLIC_HOLIDAYS_QUERY,
 )
 
@@ -523,6 +524,31 @@ async def fetch_location_social_settings_dict(
     if not isinstance(raw, dict):
         return None
     return deepcopy(raw)
+
+
+async def fetch_prior_milestones_ordered_str(
+    workflow_id: str,
+    milestone_id: str,
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> str:
+    """Markdown bodies of milestones strictly before ``milestone_id`` in workflow order."""
+    data = await graphql_post(
+        client,
+        PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
+        {
+            "workflowId": str(workflow_id),
+            "milestoneId": str(milestone_id),
+            "locationId": location_id,
+        },
+        user_id,
+    )
+    raw = data.get("priorMilestonesMilestoneData")
+    if not isinstance(raw, str):
+        return ""
+    return raw.strip()
 
 
 async def fetch_most_recent_milestone_data_str(

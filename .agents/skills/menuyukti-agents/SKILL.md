@@ -2,9 +2,9 @@
 name: menuyukti-agents
 description: >-
   LangGraph agents app (apps/agents): FastAPI routers, skill_runner milestone Prepare pipeline, prefetch
-  handlers calling GraphQL, runtime SKILL.md under packages/agent-skills, graphql_post and env. Use when
-  adding prefetch handlers, extending skill_runner, milestone prepare SSE, LangChain/LangGraph graphs, or
-  agents-side GraphQL clients.
+  handlers calling GraphQL, runtime SKILL.md under milestone_run/skills (preferred) or legacy packages/agent-skills,
+  graphql_post and env. Use when adding prefetch handlers, extending skill_runner, milestone prepare SSE,
+  LangChain/LangGraph graphs, or agents-side GraphQL clients.
 ---
 
 # Menuyukti: `apps/agents`
@@ -34,9 +34,9 @@ When implementing in **`apps/agents`**, follow these skills in addition to this 
 
 Commands and ports: [AGENTS.md](../../../AGENTS.md) § LangGraph agents.
 
-## Runtime milestone `SKILL.md` (agent-skills package)
+## Runtime milestone `SKILL.md` (milestone_run vs legacy package)
 
-Milestone **Data** tasks that use **Prepare** load **`SKILL.md`** from [`packages/agent-skills/src/agent_skills/skills/<skill_id>/`](../../../packages/agent-skills/src/agent_skills/skills/) (resolved at runtime via `agent_skills.get_skill_path`). Examples: [`location_profile/SKILL.md`](../../../packages/agent-skills/src/agent_skills/skills/location_profile/SKILL.md), [`restaurant_brand_brief/SKILL.md`](../../../packages/agent-skills/src/agent_skills/skills/restaurant_brand_brief/SKILL.md).
+**New domain Prepare skills** live under [`apps/agents/agents/core/milestone_run/skills/<skill_id>/SKILL.md`](../../../apps/agents/agents/core/milestone_run/skills/) (folder name = `data_task`). [`get_prepare_skill_path`](../../../apps/agents/agents/core/milestone_run/skill_paths.py) tries that directory first, then falls back to [`packages/agent-skills/src/agent_skills/skills/<skill_id>/`](../../../packages/agent-skills/src/agent_skills/skills/) via `agent_skills.get_skill_path`. Example new skill: [`promotion_candidates/SKILL.md`](../../../apps/agents/agents/core/milestone_run/skills/promotion_candidates/SKILL.md). Legacy examples: [`location_profile/SKILL.md`](../../../packages/agent-skills/src/agent_skills/skills/location_profile/SKILL.md).
 
 ### Loader contract
 
@@ -98,34 +98,35 @@ You are a helpful assistant. Follow the product rules below.
 
 ### Registered `use` keys (`PREFETCH_HANDLERS`)
 
-| `use`                                   | Role                                                               |
-| --------------------------------------- | ------------------------------------------------------------------ |
-| `platform.location`                     | Location record for `location_id`.                                 |
-| `platform.public_holidays`              | Holidays for country + date range.                                 |
-| `platform.public_holidays_for_location` | Holidays for `location_id` date range (country from location).     |
-| `analytics.latest_operating_profile`    | Latest analytics run + operating profile for `location_id`.        |
-| `analytics.instagram_signals`           | Latest run: composite Instagram signals.                           |
-| `analytics.promotion_menu_items`        | Latest run: per-menu promotion rows.                               |
-| `analytics.category_mix`                | Latest run: category revenue/qty mix.                              |
-| `analytics.revenue_trends`              | Latest run: per-menu revenue vs prior period.                      |
-| `platform.menu_items`                   | Latest run: distinct menu lines (category, avg unit price).        |
-| `analytics.weekly_demand_pattern`       | Latest run: ISO-week revenue/tx indices vs location mean.          |
-| `platform.location_social_settings`     | Brand voice, pillars, hashtags (optional row per location).        |
-| `milestone.prior_data`                  | Latest milestonedata Markdown for `data_task` under `workflow_id`. |
+| `use`                                   | Role                                                                                                |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `platform.location`                     | Location record for `location_id`.                                                                  |
+| `platform.public_holidays`              | Holidays for country + date range.                                                                  |
+| `platform.public_holidays_for_location` | Holidays for `location_id` date range (country from location).                                      |
+| `analytics.latest_operating_profile`    | Latest analytics run + operating profile for `location_id`.                                         |
+| `analytics.instagram_signals`           | Latest run: composite Instagram signals.                                                            |
+| `analytics.promotion_menu_items`        | Latest run: per-menu promotion rows.                                                                |
+| `analytics.category_mix`                | Latest run: category revenue/qty mix.                                                               |
+| `analytics.revenue_trends`              | Latest run: per-menu revenue vs prior period.                                                       |
+| `platform.menu_items`                   | Latest run: distinct menu lines (category, avg unit price).                                         |
+| `analytics.weekly_demand_pattern`       | Latest run: ISO-week revenue/tx indices vs location mean.                                           |
+| `platform.location_social_settings`     | Brand voice, pillars, hashtags (optional row per location).                                         |
+| `milestone.prior_data`                  | Latest milestonedata Markdown for `data_task` under `workflow_id`.                                  |
+| `milestone.prior_milestones_ordered`    | Prior milestones’ Data tabs in workflow order (needs `workflow_id`, `milestone_id`, `location_id`). |
 
 **Adding new prefetch data:** implement an async handler → register in `PREFETCH_HANDLERS` → add `fetch_*` in `graphql_client.py` using the same `graphql_post` pattern. Non-trivial analytics belong in **`packages/menuyukti`** with thin GraphQL resolvers — see [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md) and [`menuyukti-analytics`](../menuyukti-analytics/SKILL.md).
 
 ## Milestone Prepare API
 
-[`milestone_prepare.py`](../../../apps/agents/routers/milestone_prepare.py) resolves the skill with **`get_skill_path(body.data_task)`** (defaults when the client omits `data_task`). The Next.js BFF forwards `data_task` from the milestone Data source — see [`menuyukti-web`](../menuyukti-web/SKILL.md).
+[`milestone_prepare.py`](../../../apps/agents/routers/milestone_prepare.py) resolves the skill with **`get_prepare_skill_path(body.data_task)`** (defaults when the client omits `data_task`). The Next.js BFF forwards `data_task` from the milestone Data source — see [`menuyukti-web`](../menuyukti-web/SKILL.md).
 
-New runtime skills can be exercised with `run_skill_events(get_skill_path("your_skill_id"), ...)` in tests.
+New skills under `milestone_run/skills` can be exercised with `run_skill_events(get_prepare_skill_path("your_skill_id"), ...)` in tests.
 
 ## Checklist (agents-only)
 
 1. **`graphql_post`** — correct env and headers in [`graphql_base.py`](../../../apps/agents/agents/graphql_base.py).
 2. **Prefetch** — `fetch_*` in `skill_runner/graphql_client.py`; handler in `handlers.py` with a dot-separated `use` string.
-3. **Runtime skill file** — `packages/agent-skills/.../skills/<skill_id>/SKILL.md` with valid `menuyukti` YAML (folder name matches `data_task` / milestone `dataTask`).
+3. **Runtime skill file** — `milestone_run/skills/<skill_id>/SKILL.md` (preferred) or legacy `packages/agent-skills/.../skills/<skill_id>/SKILL.md`; valid `menuyukti` YAML; folder name matches `data_task` / milestone `dataTask`.
 
 ## Related
 

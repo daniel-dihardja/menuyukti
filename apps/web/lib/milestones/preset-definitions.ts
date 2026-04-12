@@ -3,7 +3,7 @@ import type {
   PassCriteriaRow,
 } from '@/app/(protected)/workflows/_components/timeline/types'
 
-export const MILESTONE_PRESET_IDS = ['dates', 'restaurant_brand_brief'] as const
+export const MILESTONE_PRESET_IDS = ['dates', 'restaurant_brand_brief', 'candidates'] as const
 
 export type MilestonePresetId = (typeof MILESTONE_PRESET_IDS)[number]
 
@@ -78,6 +78,31 @@ export function getMilestonePresetCreateFields(
           },
           {
             requirement: t('milestonePreset.restaurant_brand_brief.criterionToneGuardrails'),
+            status: 'open',
+          },
+        ],
+      }
+    case 'candidates':
+      return {
+        name: t('milestonePreset.candidates.title'),
+        dataTask: 'promotion_candidates',
+        milestoneData: t('milestonePreset.candidates.dataMarkdown'),
+        goal: t('milestonePreset.candidates.goal'),
+        passCriteria: [
+          {
+            requirement: t('milestonePreset.candidates.criterionVariationA'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.candidates.criterionVariationB'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.candidates.criterionCampaignWindow'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.candidates.criterionBrandBrief'),
             status: 'open',
           },
         ],

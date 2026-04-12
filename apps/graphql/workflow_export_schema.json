@@ -152,9 +152,10 @@
             "restaurant_brand_brief",
             "social_campaign_calendar",
             "social_caption_batch",
-            "visual_creative_brief"
+            "visual_creative_brief",
+            "promotion_candidates"
           ],
-          "description": "manual: user supplies milestone markdown (data). Other values: milestone Data uses the corresponding prepare pipeline in agent_skills (see apps/web milestone dataTask enum)."
+          "description": "manual: user supplies milestone markdown (data). Other values: milestone Data uses the corresponding prepare pipeline (milestone_run/skills or legacy agent_skills; see apps/web milestone dataTask enum)."
         },
         "data": {
           "type": "string",

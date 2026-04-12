@@ -14,6 +14,7 @@ from agents_app.agents.domain.skill_runner.graphql_client import (
     fetch_menu_items_catalog_dict,
     fetch_most_recent_milestone_data_str,
     fetch_operating_profile_dict,
+    fetch_prior_milestones_ordered_str,
     fetch_promotion_menu_items_dict,
     fetch_public_holidays_list,
     fetch_revenue_trends_dict,
@@ -287,6 +288,31 @@ async def _handle_prior_milestone_data(
     )
 
 
+async def _handle_prior_milestones_ordered(
+    inputs: dict[str, object],
+    *,
+    client: httpx.AsyncClient,
+    user_id: str,
+    prefetch_cache: dict[int, str | None] | None = None,
+) -> str:
+    """Ordered prior milestone Data tabs (e.g. Dates) for the current Prepare milestone."""
+    _ = prefetch_cache
+    raw_wf = inputs.get("workflow_id")
+    raw_ms = inputs.get("milestone_id")
+    if raw_wf is None or (isinstance(raw_wf, str) and not str(raw_wf).strip()):
+        return ""
+    if raw_ms is None or (isinstance(raw_ms, str) and not str(raw_ms).strip()):
+        return ""
+    location_id = _coerce_location_id(inputs["location_id"])
+    return await fetch_prior_milestones_ordered_str(
+        str(raw_wf).strip(),
+        str(raw_ms).strip(),
+        location_id,
+        user_id,
+        client=client,
+    )
+
+
 PREFETCH_HANDLERS: dict[str, PrefetchHandler] = {
     "platform.location": _handle_location,
     "platform.public_holidays": _handle_public_holidays,
@@ -300,4 +326,5 @@ PREFETCH_HANDLERS: dict[str, PrefetchHandler] = {
     "analytics.weekly_demand_pattern": _handle_weekly_demand_pattern,
     "platform.location_social_settings": _handle_location_social_settings,
     "milestone.prior_data": _handle_prior_milestone_data,
+    "milestone.prior_milestones_ordered": _handle_prior_milestones_ordered,
 }

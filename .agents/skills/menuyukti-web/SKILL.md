@@ -54,7 +54,7 @@ The agents service resolves the runtime skill from **`data_task`** ([`menuyukti-
 
 ### Checklist: new `dataTask` / prepare flow
 
-1. **Runtime skill** — add `packages/agent-skills/src/agent_skills/skills/<skill_id>/SKILL.md` (see [`menuyukti-agents`](../menuyukti-agents/SKILL.md)).
+1. **Runtime skill** — add `apps/agents/agents/core/milestone_run/skills/<skill_id>/SKILL.md` (preferred; see [`menuyukti-agents`](../menuyukti-agents/SKILL.md)) or legacy `packages/agent-skills/.../skills/<skill_id>/SKILL.md`.
 2. **Types & enums** — extend **`dataTask`** in:
    - [`timeline/types.ts`](<../../../apps/web/app/(protected)/workflows/_components/timeline/types.ts>)
    - [`node-schemas.ts`](../../../apps/web/lib/graphql/node-schemas.ts)

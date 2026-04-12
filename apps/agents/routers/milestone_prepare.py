@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator
 from typing import Annotated, Literal
 
 import httpx
-from agent_skills import get_skill_path
+from agents_app.agents.core.milestone_run.skill_paths import get_prepare_skill_path
 from agents_app.agents.domain.skill_runner.runner import run_skill_events
 from agents_app.deps import get_http_client
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -23,6 +23,7 @@ PrepareDataTask = Literal[
     "social_campaign_calendar",
     "social_caption_batch",
     "visual_creative_brief",
+    "promotion_candidates",
 ]
 
 
@@ -30,7 +31,9 @@ class MilestonePrepareBody(BaseModel):
     location_id: int = Field(..., ge=1)
     data_task: PrepareDataTask = Field(
         default="restaurant_brand_brief",
-        description="Milestone data task / skill id (folder name under agent_skills.skills).",
+        description=(
+            "Milestone data task / skill id (folder under milestone_run/skills or legacy agent_skills)."
+        ),
     )
     workflow_id: str = Field(
         default="",
@@ -54,7 +57,7 @@ async def milestone_prepare(
 
     async def event_stream() -> AsyncIterator[str]:
         try:
-            skill_path = get_skill_path(body.data_task)
+            skill_path = get_prepare_skill_path(body.data_task)
             async for payload in run_skill_events(
                 skill_path,
                 milestone_id,

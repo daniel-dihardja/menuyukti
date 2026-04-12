@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 from agent_skills import get_skill_path
+from agents_app.agents.core.milestone_run.skill_paths import get_prepare_skill_path
 from agents_app.agents.domain.skill_runner.env import (
     RunEnv,
     render_human_message,
@@ -35,6 +36,26 @@ def http_client() -> TestClient:
 @pytest.fixture
 def skill_path() -> Path:
     return get_skill_path("location_profile")
+
+
+def test_get_prepare_skill_path_prefers_milestone_run_promotion_candidates() -> None:
+    p = get_prepare_skill_path("promotion_candidates")
+    assert p.name == "SKILL.md"
+    assert "promotion_candidates" in str(p)
+    assert "milestone_run" in str(p) and "skills" in str(p)
+
+
+def test_get_prepare_skill_path_falls_back_to_legacy_package() -> None:
+    p = get_prepare_skill_path("location_profile")
+    assert p.name == "SKILL.md"
+    assert "location_profile" in str(p)
+
+
+def test_load_promotion_candidates_skill() -> None:
+    cfg = load_skill(get_prepare_skill_path("promotion_candidates"))
+    assert cfg.name == "promotion-candidates"
+    assert len(cfg.menuyukti.data_requirements) >= 4
+    assert any(r.id == "prior_milestones" for r in cfg.menuyukti.data_requirements)
 
 
 def test_load_location_profile_skill(skill_path: Path) -> None:
