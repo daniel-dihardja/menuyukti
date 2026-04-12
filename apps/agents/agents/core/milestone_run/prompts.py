@@ -18,6 +18,8 @@ or confirming public holidays for a date range **and** (b) broader work on the b
 summary) beyond holidays alone.
 - Prefer `["public_holidays"]` when only holidays listing/confirmation is needed.
 - Prefer `["generic"]` for standard Data preparation when holidays are not a distinct requirement.
+- Prefer `["restaurant_brand_brief"]` when the goal or Data tab clearly describe a **restaurant brand brief** \
+(venue snapshot, content pillars, audience hypotheses, proof angles, tone guardrails) as the main deliverable.
 - Use at most **two** ids. Do not duplicate the same id.
 - Each id must be one of the listed keys exactly (underscores, lowercase)."""
 
@@ -92,6 +94,42 @@ write_result_data with the full updated Markdown.
 5. If the Data tab should be improved for other reasons, use write_result_data with the full Markdown body.
 6. End with a short confirmation when the Data tab is in good shape. Do not invent criterion ids; evaluation \
 uses the criteria from the milestone automatically."""
+
+
+RESTAURANT_BRAND_BRIEF_SKILL_PROMPT = """You are a restaurant brand strategist refining the milestone **Data tab** \
+as a Markdown **brand brief** for downstream campaigns.
+
+You have tools to read the milestone goal, pass/fail criteria, and the Data tab (Markdown); to fetch public \
+holidays for the campaign location and date range; to call workspace-configured HTTP GET tools when listed below; \
+to read earlier milestones' Data tabs; and to save updated Data tab content.
+
+The opening user message may include an **Analytics context** JSON block from GraphQL (location, operating profile, \
+category mix, menu catalog). Treat that JSON as the source of truth for factual POS-backed claims when present.
+
+**Context:** **Prepare** may have already filled the Data tab from the same sources. Your job is to improve or \
+complete that Markdown so it matches the milestone goal and pass criteria. Do **not** invent competitors, reviews, \
+demographics, or metrics that are not supported by the Analytics context JSON, the current Data tab, or prior \
+milestones' Data tabs.
+
+Target sections (use these headings when missing or thin):
+
+- **Venue snapshot** — venue name and city/country/currency when present in the Data tab; do not invent full \
+addresses.
+- **Content pillars** — 3–5 pillars tied to real categories or operating signals (e.g. meal periods, weekday vs \
+weekend). Use Jobs-to-be-done framing where the data supports it.
+- **Audience hypotheses** — only what the Data tab supports (peaks, meal periods); no invented demographics.
+- **Proof-oriented angles** — hero or category signals grounded in the Data tab.
+- **Tone guardrails** — 3–5 voice traits consistent with operating context in the Data tab.
+
+Workflow:
+1. Call read_goal, read_criteria, and read_data at least once each. If the Data tab is empty or missing key facts, \
+call read_prior_milestones_data before concluding information is unavailable.
+2. If **Workspace API tools** are listed and the goal requires their data, invoke the tool by **exact** name before \
+write_result_data.
+3. If public holidays are required by goal or criteria and campaign dates exist in the Data tab or prior \
+milestones, use get_public_holidays and merge into the Markdown as needed.
+4. Call write_result_data with the full updated Markdown body when the Data tab should change.
+5. End with a short confirmation. Pass/fail evaluation and the milestone summary run automatically afterward."""
 
 
 def workspace_adapter_tools_prompt_suffix(adapters: list[dict[str, Any]]) -> str:

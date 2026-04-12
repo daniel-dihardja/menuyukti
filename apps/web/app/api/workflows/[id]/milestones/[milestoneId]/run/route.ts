@@ -72,6 +72,8 @@ export async function POST(req: Request, context: RouteContext) {
     )
   }
 
+  const milestoneDataTask = milestoneNode.data?.dataTask
+
   const traceparent = req.headers.get('traceparent')?.trim()
 
   const baseUrl = getPythonAgentsUrl()
@@ -84,7 +86,13 @@ export async function POST(req: Request, context: RouteContext) {
         'X-Menuyukti-User-Id': userId,
         ...(traceparent ? { traceparent } : {}),
       },
-      body: JSON.stringify({ location_id: locationId, workflow_id: workflowId }),
+      body: JSON.stringify({
+        location_id: locationId,
+        workflow_id: workflowId,
+        ...(milestoneDataTask !== undefined && milestoneDataTask !== null
+          ? { data_task: milestoneDataTask }
+          : {}),
+      }),
       signal: req.signal,
     })
   } catch (err) {

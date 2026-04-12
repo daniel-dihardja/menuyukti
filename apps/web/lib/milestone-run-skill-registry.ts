@@ -24,4 +24,10 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
     description:
       'Use for standard milestone runs: read goal, criteria, and Data tab; improve or complete the Data tab (Markdown). Evaluation and summary run automatically after skills.',
   },
+  {
+    id: 'restaurant_brand_brief',
+    name: 'Restaurant brand brief',
+    description:
+      'Produces or refines a Markdown restaurant brand brief from the Data tab (often pre-filled from POS operating profile, category mix, and menu catalog via Prepare)—foundation for multi-week social campaigns.',
+  },
 ] as const

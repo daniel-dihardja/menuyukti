@@ -58,6 +58,7 @@ async def iter_milestone_run_sse_lines(
     location_id: int,
     user_id: str,
     workflow_id: str | None = None,
+    bff_data_task: str | None = None,
     traceparent: str | None = None,
 ) -> AsyncIterator[str]:
     """Stream Server-Sent Event lines: run_id, custom step payloads, then a final ``done`` object."""
@@ -84,6 +85,9 @@ async def iter_milestone_run_sse_lines(
         "criteria": [],
         "prior_milestones_data": "",
         "api_adapter_tools": [],
+        "bff_data_task": bff_data_task,
+        "data_task": None,
+        "restaurant_brand_brief_context": {},
         "result_data": "",
         "milestonedata_written": False,
         "result_summary": "",

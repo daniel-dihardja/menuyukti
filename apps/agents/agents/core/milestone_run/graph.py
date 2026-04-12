@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from functools import partial
@@ -12,7 +13,9 @@ from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_gra
 from agents_app.agents.core.milestone_eval.nodes import fetch_context
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_api_adapter_tools_for_location,
+    fetch_milestone_data_task,
     fetch_prior_milestones_data,
+    prefetch_restaurant_brand_brief_context,
 )
 from agents_app.agents.core.milestone_run.prompts import (
     INTERMEDIATE_SKILL_PROMPT_SUFFIX,
@@ -104,6 +107,17 @@ def _normalize_skill_id(raw: str) -> str:
     return s
 
 
+def _infer_restaurant_brand_brief_from_milestone_content(goal: str, raw_data: str) -> bool:
+    """When ``dataTask`` is missing on the node, detect preset/heuristic brand-brief milestones."""
+    g = goal.lower()
+    d = raw_data.lower()
+    return (
+        ("## venue snapshot" in d and "## content pillars" in d)
+        or ("## proof-oriented angles" in d and "## tone guardrails" in d)
+        or ("restaurant brand brief" in g and ("data tab" in g or "downstream" in g))
+    )
+
+
 def _normalize_skill_id_list(raw: list[str]) -> list[str]:
     """Deduplicate, keep order, cap at 2; fall back to default if empty."""
     out: list[str] = []
@@ -161,16 +175,73 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
             mid,
         )
         raise
+    try:
+        data_task = await fetch_milestone_data_task(
+            mid,
+            int(state["location_id"]),
+            str(state["user_id"]),
+            client=client,
+        )
+    except Exception:
+        _logger.exception(
+            "milestone_run.fetch_children: milestone dataTask fetch failed milestone_id=%s",
+            mid,
+        )
+        raise
+    hint_raw = state.get("bff_data_task")
+    if isinstance(hint_raw, str) and hint_raw.strip():
+        hn = hint_raw.strip().lower().replace("-", "_")
+        if hn == "restaurant_brand_brief":
+            if data_task != "restaurant_brand_brief":
+                _logger.info(
+                    "milestone_run.fetch_children: data_task set from BFF hint (overrides fetch=%r) milestone_id=%s",
+                    data_task,
+                    mid,
+                )
+            data_task = "restaurant_brand_brief"
+    if data_task is None and _infer_restaurant_brand_brief_from_milestone_content(
+        str(out.get("goal", "")),
+        str(out.get("raw_data", "")),
+    ):
+        data_task = "restaurant_brand_brief"
+        _logger.info(
+            "milestone_run.fetch_children: inferred data_task=restaurant_brand_brief milestone_id=%s",
+            mid,
+        )
+
+    rb_ctx: dict[str, Any] = {}
+    if data_task == "restaurant_brand_brief":
+        try:
+            rb_ctx = await prefetch_restaurant_brand_brief_context(
+                int(state["location_id"]),
+                str(state["user_id"]),
+                client=client,
+            )
+        except Exception:
+            _logger.exception(
+                "milestone_run.fetch_children: brand brief prefetch failed milestone_id=%s",
+                mid,
+            )
+            rb_ctx = {"prefetch_error": "Could not load analytics context from GraphQL."}
+
     _logger.info(
-        "milestone_run.fetch_children: done milestone_id=%s criteria_count=%s goal_len=%s raw_data_len=%s prior_len=%s adapters=%s",
+        "milestone_run.fetch_children: done milestone_id=%s criteria_count=%s goal_len=%s raw_data_len=%s prior_len=%s adapters=%s data_task=%s rb_ctx_keys=%s",
         mid,
         len(out.get("criteria") or []),
         len(str(out.get("goal") or "")),
         len(str(out.get("raw_data") or "")),
         len(prior),
         len(adapters),
+        data_task,
+        list(rb_ctx.keys()) if rb_ctx else [],
     )
-    return {**out, "prior_milestones_data": prior, "api_adapter_tools": adapters}
+    return {
+        **out,
+        "prior_milestones_data": prior,
+        "api_adapter_tools": adapters,
+        "data_task": data_task,
+        "restaurant_brand_brief_context": rb_ctx,
+    }
 
 
 async def _select_skills(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
@@ -178,6 +249,16 @@ async def _select_skills(state: MilestoneRunState, *, client: httpx.AsyncClient)
     mid = str(state["milestone_id"])
     _logger.info("milestone_run.select_skills: start milestone_id=%s", mid)
     _trace_step(state, "select_skill")
+    if state.get("data_task") == "restaurant_brand_brief":
+        _logger.info(
+            "milestone_run.select_skills: deterministic restaurant_brand_brief milestone_id=%s",
+            mid,
+        )
+        return {
+            "selected_skill_ids": ["restaurant_brand_brief"],
+            "current_skill_index": 0,
+            "selected_skill_id": "restaurant_brand_brief",
+        }
     skills_md = format_skills_for_selector(SKILL_REGISTRY)
     human = skill_selector_human_message(
         str(state.get("goal", "")),
@@ -254,15 +335,21 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         system_prompt = skill.prompt + adapter_suffix + INTERMEDIATE_SKILL_PROMPT_SUFFIX
     llm = get_llm()
     agent = create_react_agent(llm, tools, prompt=system_prompt)
+    task_body = execute_skill_task_message(
+        skill.id,
+        skill.name,
+        str(state.get("goal") or ""),
+    )
+    rb_ctx = state.get("restaurant_brand_brief_context")
+    if sid == "restaurant_brand_brief" and isinstance(rb_ctx, dict) and rb_ctx:
+        task_body += (
+            "\n\n## Analytics context (JSON from GraphQL; use **only** these facts for numbers, "
+            "categories, menu names, and operating signals — do not invent metrics or items)\n\n"
+            f"```json\n{json.dumps(rb_ctx, ensure_ascii=False, indent=2)}\n```"
+        )
     agent_input = {
         "messages": [
-            HumanMessage(
-                content=execute_skill_task_message(
-                    skill.id,
-                    skill.name,
-                    str(state.get("goal") or ""),
-                ),
-            ),
+            HumanMessage(content=task_body),
         ],
     }
     agent_cfg = cast(

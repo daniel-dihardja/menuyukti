@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from agents_app.agents.core.milestone_run.prompts import (
     GENERIC_SKILL_PROMPT,
     PUBLIC_HOLIDAYS_SKILL_PROMPT,
+    RESTAURANT_BRAND_BRIEF_SKILL_PROMPT,
 )
 
 
@@ -39,6 +40,16 @@ def _build_registry() -> dict[str, SkillDef]:
                 "complete the Data tab (Markdown). Evaluation and summary run automatically after skills."
             ),
             prompt=GENERIC_SKILL_PROMPT,
+        ),
+        "restaurant_brand_brief": SkillDef(
+            id="restaurant_brand_brief",
+            name="Restaurant brand brief",
+            description=(
+                "Produces or refines a Markdown restaurant brand brief from the Data tab (often pre-filled from "
+                "POS operating profile, category mix, and menu catalog via Prepare)—foundation for multi-week "
+                "social campaigns."
+            ),
+            prompt=RESTAURANT_BRAND_BRIEF_SKILL_PROMPT,
         ),
     }
 
