@@ -4,12 +4,20 @@ description: >-
   Author and consume analytics in packages/menuyukti: DataFrame contracts, calculate_*/compute_*_from_orders
   pipelines, Instagram signal composition, weekly demand patterns, and boundaries with apps/graphql. Use when
   adding or changing sales analytics, category mix, revenue trends, menu engineering, operating profile,
-  weekly demand, or agent-facing analytics payloads.
+  weekly demand, or agent-facing analytics payloads. For pandas pipelines and Python structure, also use
+  pandas-pro and python-design-patterns (see Companion skills).
 ---
 
 # Menuyukti analytics (`packages/menuyukti`)
 
 This skill is for **Cursor/agents** working on the **shared Python package** [`packages/menuyukti`](../../../packages/menuyukti). It is **not** a runtime milestone skill under `packages/agent-skills/` (those feed `skill_runner` in `apps/agents`).
+
+## Companion skills
+
+When implementing in **`packages/menuyukti` analytics**, follow these skills in addition to this doc.
+
+- [`pandas-pro`](../pandas-pro/SKILL.md) — DataFrame manipulation, cleaning, aggregation, merges, and performance (vectorized patterns align with conventions here).
+- [`python-design-patterns`](../python-design-patterns/SKILL.md) — Layering, single responsibility, composition over inheritance, and keeping calculate/compute boundaries clear.
 
 ## Where the code lives
 
@@ -49,7 +57,7 @@ Authoritative exports: [`analytics/__init__.py`](../../../packages/menuyukti/src
 1. **`TypedDict`** for line-level inputs lives **next to** the module that consumes it (`OrderRowForHeatmap`, `OrderRowForCategoryMix`, …).
 2. **`calculate_<name>(df)`** starts with **`require_columns(df, <name>_columns(), context="calculate_<name>")`** (or `line_item_columns_full()` / `ensure_optional_category_columns` where categories are optional).
 3. **`compute_<name>_from_orders(rows)`** builds `pd.DataFrame(rows)` and calls `calculate_<name>`; empty inputs: raise `ValueError` or return an empty structured result **consistently** with sibling modules.
-4. **Vectorized pandas** — groupby/merge/resample; avoid `iterrows` for aggregations (see [pandas-pro](../pandas-pro/SKILL.md)).
+4. **Vectorized pandas** — groupby/merge/resample; avoid `iterrows` for aggregations (see Companion skills — [pandas-pro](../pandas-pro/SKILL.md)).
 5. **Composition-only** modules (e.g. `calculate_instagram_signals`) take **structured results**, not raw `DataFrame`s — no pandas inside those files.
 
 Details: [`analytics/__init__.py`](../../../packages/menuyukti/src/menuyukti/core/analytics/__init__.py) module docstring and [`frame_contracts.py`](../../../packages/menuyukti/src/menuyukti/core/analytics/frame_contracts.py).
@@ -82,4 +90,3 @@ If this file grows, split long API tables into `reference.md` in this folder.
 - [`menuyukti-repo-orientation`](../menuyukti-repo-orientation/SKILL.md) — monorepo boundaries, pnpm vs uv.
 - [`menuyukti-graphql`](../menuyukti-graphql/SKILL.md) — Strawberry layer and `reports/transform` integration.
 - [`menuyukti-agents`](../menuyukti-agents/SKILL.md) — skill_runner prefetch consumes GraphQL payloads derived from this package.
-- [`.agents/skills/pandas-pro/SKILL.md`](../pandas-pro/SKILL.md) — DataFrame performance and validation patterns.
