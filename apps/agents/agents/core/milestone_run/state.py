@@ -23,9 +23,9 @@ class MilestoneRunState(TypedDict):
     api_adapter_tools: list[dict[str, Any]]
     # Optional hint from the Next.js BFF (parsed milestone ``data.dataTask`` before the graph runs).
     bff_data_task: NotRequired[str | None]
-    # Milestone node ``data.dataTask`` when it is ``restaurant_brand_brief``; else ``None`` (set in fetch_children).
+    # Milestone node ``data.dataTask`` when ``restaurant_brand_brief`` or ``promotion_candidates``; else None (fetch_children).
     data_task: NotRequired[str | None]
-    # POS-backed JSON for ``restaurant_brand_brief`` runs (Prepare parity); empty dict when not applicable.
+    # Reserved; brand-brief analytics load via ``get_brand_brief_analytics_context_json`` tool (often empty).
     restaurant_brand_brief_context: NotRequired[dict[str, Any]]
     # Set by select_skills node (structured LLM); ordered execution
     selected_skill_ids: list[str]

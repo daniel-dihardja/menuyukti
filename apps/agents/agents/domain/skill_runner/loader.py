@@ -30,6 +30,14 @@ class SkillConfig(BaseModel):
     body: str
 
 
+class SkillMarkdownConfig(BaseModel):
+    """SKILL.md with frontmatter + body only (tool-based skills; no ``menuyukti`` prefetch block)."""
+
+    name: str
+    description: str
+    body: str
+
+
 _FRONTMATTER_SPLIT = re.compile(r"^---\s*$", re.MULTILINE)
 
 
@@ -51,8 +59,20 @@ def parse_frontmatter(markdown: str) -> tuple[dict[str, Any], str]:
     return data, body.strip()
 
 
+def load_skill_markdown(path: Path | str) -> SkillMarkdownConfig:
+    """Load SKILL.md frontmatter + markdown body (no ``menuyukti`` required)."""
+    p = Path(path)
+    raw = p.read_text(encoding="utf-8")
+    fm, body = parse_frontmatter(raw)
+    return SkillMarkdownConfig(
+        name=str(fm.get("name", "")),
+        description=str(fm.get("description", "")),
+        body=body,
+    )
+
+
 def load_skill(path: Path | str) -> SkillConfig:
-    """Load and validate a SKILL.md file."""
+    """Load and validate a legacy prefetch SKILL.md (requires ``menuyukti``)."""
     p = Path(path)
     raw = p.read_text(encoding="utf-8")
     fm, body = parse_frontmatter(raw)

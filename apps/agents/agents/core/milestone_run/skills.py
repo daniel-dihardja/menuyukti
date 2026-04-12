@@ -4,11 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from agents_app.agents.core.milestone_run.prompts import (
-    GENERIC_SKILL_PROMPT,
-    PUBLIC_HOLIDAYS_SKILL_PROMPT,
-    RESTAURANT_BRAND_BRIEF_SKILL_PROMPT,
-)
+from agents_app.agents.core.milestone_run.skill_paths import get_milestone_run_skill_path
+from agents_app.agents.domain.skill_runner.loader import load_skill_markdown
 
 
 @dataclass(frozen=True)
@@ -21,36 +18,20 @@ class SkillDef:
     prompt: str
 
 
+def _load_disk_skill(skill_id: str) -> SkillDef:
+    path = get_milestone_run_skill_path(skill_id)
+    md = load_skill_markdown(path)
+    desc = md.description.strip() if md.description else ""
+    name = (md.name or skill_id).strip() or skill_id
+    return SkillDef(id=skill_id, name=name, description=desc, prompt=md.body)
+
+
 def _build_registry() -> dict[str, SkillDef]:
     return {
-        "public_holidays": SkillDef(
-            id="public_holidays",
-            name="Public holidays",
-            description=(
-                "Use when the milestone goal or pass criteria require listing, confirming, or "
-                "filling in public holidays for a date range for this location's country."
-            ),
-            prompt=PUBLIC_HOLIDAYS_SKILL_PROMPT,
-        ),
-        "generic": SkillDef(
-            id="generic",
-            name="Generic milestone data prep",
-            description=(
-                "Use for standard milestone runs: read goal, criteria, and Data tab; improve or "
-                "complete the Data tab (Markdown). Evaluation and summary run automatically after skills."
-            ),
-            prompt=GENERIC_SKILL_PROMPT,
-        ),
-        "restaurant_brand_brief": SkillDef(
-            id="restaurant_brand_brief",
-            name="Brand brief",
-            description=(
-                "Produces or refines a Markdown brand brief from the Data tab (often pre-filled from "
-                "POS operating profile, category mix, and menu catalog via Prepare)—foundation for multi-week "
-                "social campaigns."
-            ),
-            prompt=RESTAURANT_BRAND_BRIEF_SKILL_PROMPT,
-        ),
+        "public_holidays": _load_disk_skill("public_holidays"),
+        "generic": _load_disk_skill("generic"),
+        "promotion_candidates": _load_disk_skill("promotion_candidates"),
+        "restaurant_brand_brief": _load_disk_skill("restaurant_brand_brief"),
     }
 
 

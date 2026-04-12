@@ -108,7 +108,7 @@ async def fetch_milestone_data_task(
     *,
     client: httpx.AsyncClient,
 ) -> str | None:
-    """Return ``restaurant_brand_brief`` when the milestone node's ``data.dataTask`` matches (and location matches)."""
+    """Return ``restaurant_brand_brief`` or ``promotion_candidates`` when the milestone matches (and location matches)."""
 
     data = await graphql_post(
         client,
@@ -163,6 +163,8 @@ async def fetch_milestone_data_task(
     normalized = task.strip().lower().replace("-", "_")
     if normalized == "restaurant_brand_brief":
         return "restaurant_brand_brief"
+    if normalized == "promotion_candidates":
+        return "promotion_candidates"
     return None
 
 

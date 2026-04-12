@@ -12,6 +12,7 @@ def _tools_for_context(
     context: dict[str, Any],
     *,
     client: Any | None = None,
+    skill_id: str | None = None,
 ) -> list[Any]:
     from agents_app.agents.core.milestone_run.tools import make_milestone_run_tools
 
@@ -22,6 +23,7 @@ def _tools_for_context(
         42,
         "user-1",
         client=c,
+        skill_id=skill_id,
     )
 
 
@@ -30,6 +32,23 @@ def test_make_milestone_run_tools_has_no_write_result() -> None:
     names = [getattr(t, "name", "") for t in tools]
     assert len(tools) == 6
     assert "write_result" not in names
+
+
+def test_make_milestone_run_tools_restaurant_brand_brief_adds_analytics_tool() -> None:
+    tools = _tools_for_context({}, skill_id="restaurant_brand_brief")
+    names = {getattr(t, "name", "") for t in tools}
+    assert "get_brand_brief_analytics_context_json" in names
+
+
+def test_make_milestone_run_tools_promotion_adds_analytics_tools() -> None:
+    ctx: dict[str, Any] = {"workflow_id": "wf-1"}
+    tools = _tools_for_context(ctx, skill_id="promotion_candidates")
+    names = {getattr(t, "name", "") for t in tools}
+    assert "get_location_json" in names
+    assert "get_promotion_menu_items_json" in names
+    assert "get_instagram_signals_json" in names
+    assert "get_menu_items_catalog_json" in names
+    assert "get_prior_brand_brief_markdown" in names
 
 
 def test_make_milestone_run_tools_appends_workspace_adapter_tools() -> None:

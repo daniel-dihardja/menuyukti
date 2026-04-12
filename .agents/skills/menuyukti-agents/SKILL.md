@@ -1,10 +1,10 @@
 ---
 name: menuyukti-agents
 description: >-
-  LangGraph agents app (apps/agents): FastAPI routers, skill_runner milestone Prepare pipeline, prefetch
-  handlers calling GraphQL, runtime SKILL.md under milestone_run/skills (preferred) or legacy packages/agent-skills,
-  graphql_post and env. Use when adding prefetch handlers, extending skill_runner, milestone prepare SSE,
-  LangChain/LangGraph graphs, or agents-side GraphQL clients.
+  LangGraph agents app (apps/agents): FastAPI routers, skill_runner Prepare (prefetch or ReAct+tools),
+  milestone_run SKILL.md under apps/agents (tool-based or legacy menuyukti), optional legacy packages/agent-skills,
+  graphql_post and env. Use when adding handlers/tools, skill_runner, milestone prepare SSE, LangGraph graphs,
+  or agents-side GraphQL clients.
 ---
 
 # Menuyukti: `apps/agents`
@@ -26,7 +26,7 @@ When implementing in **`apps/agents`**, follow these skills in addition to this 
 | Area           | Path                                                                                          | Role                                                                                      |
 | -------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | Domain graphs  | [`apps/agents/agents/`](../../../apps/agents/agents/)                                         | LangGraph graphs, co-located `prompts.py`, domain modules.                                |
-| Skill runner   | [`apps/agents/agents/domain/skill_runner/`](../../../apps/agents/agents/domain/skill_runner/) | Load runtime `SKILL.md`, prefetch, Jinja human template, LLM stream.                      |
+| Skill runner   | [`apps/agents/agents/domain/skill_runner/`](../../../apps/agents/agents/domain/skill_runner/) | Load `SKILL.md`; legacy prefetch + Jinja **or** ReAct + tools when no `menuyukti`.        |
 | Routers        | [`apps/agents/routers/`](../../../apps/agents/routers/)                                       | FastAPI routes (e.g. chat, milestone prepare).                                            |
 | GraphQL helper | [`apps/agents/agents/graphql_base.py`](../../../apps/agents/agents/graphql_base.py)           | `graphql_post`; env `GRAPHQL_ENDPOINT`, optional `GRAPHQL_INTERNAL_API_KEY`, `X-User-Id`. |
 | Milestone data | [`apps/agents/agents/core/milestone_data/`](../../../apps/agents/agents/core/milestone_data/) | Persist milestonedata Markdown after generation.                                          |
@@ -36,9 +36,11 @@ Commands and ports: [AGENTS.md](../../../AGENTS.md) § LangGraph agents.
 
 ## Runtime milestone `SKILL.md` (milestone_run vs legacy package)
 
-**New domain Prepare skills** live under [`apps/agents/agents/core/milestone_run/skills/<skill_id>/SKILL.md`](../../../apps/agents/agents/core/milestone_run/skills/) (folder name = `data_task`). [`get_prepare_skill_path`](../../../apps/agents/agents/core/milestone_run/skill_paths.py) tries that directory first, then falls back to [`packages/agent-skills/src/agent_skills/skills/<skill_id>/`](../../../packages/agent-skills/src/agent_skills/skills/) via `agent_skills.get_skill_path`. Example new skill: [`promotion_candidates/SKILL.md`](../../../apps/agents/agents/core/milestone_run/skills/promotion_candidates/SKILL.md). Legacy examples: [`location_profile/SKILL.md`](../../../packages/agent-skills/src/agent_skills/skills/location_profile/SKILL.md).
+**Milestone-run and Prepare skills** under [`apps/agents/agents/core/milestone_run/skills/<skill_id>/SKILL.md`](../../../apps/agents/agents/core/milestone_run/skills/) (folder name = `data_task` / registry id). [`get_milestone_run_skill_path`](../../../apps/agents/agents/core/milestone_run/skill_paths.py) resolves **only** that tree (used by the milestone **run** registry). [`get_prepare_skill_path`](../../../apps/agents/agents/core/milestone_run/skill_paths.py) prefers the same tree, then falls back to [`packages/agent-skills/`](../../../packages/agent-skills/) with a **deprecation** log until all prepare tasks migrate.
 
-### Loader contract
+**Tool-first skills** (`public_holidays`, `generic`, `promotion_candidates`, `restaurant_brand_brief`): frontmatter `name` / `description` + markdown body; **no** `menuyukti`. [`load_skill_markdown`](../../../apps/agents/agents/domain/skill_runner/loader.py) parses them. Milestone **run** uses the body as the ReAct system prompt; **Prepare** [`run_skill_events`](../../../apps/agents/agents/domain/skill_runner/runner.py) runs ReAct with [`make_milestone_run_tools`](../../../apps/agents/agents/core/milestone_run/tools.py) (e.g. `promotion_candidates` adds GraphQL-backed `get_*_json` tools; `restaurant_brand_brief` adds `get_brand_brief_analytics_context_json`). **Legacy package** example still on prefetch: [`location_profile/SKILL.md`](../../../packages/agent-skills/src/agent_skills/skills/location_profile/SKILL.md).
+
+### Legacy loader contract (`menuyukti` prefetch)
 
 [`load_skill`](../../../apps/agents/agents/domain/skill_runner/loader.py) expects:
 
@@ -90,9 +92,9 @@ You are a helpful assistant. Follow the product rules below.
 | `inputs`   | Strings; may use `{{ env.milestone_id }}`, `{{ env.location_id }}`, `{{ env.user_id }}` — [`RunEnv`](../../../apps/agents/agents/domain/skill_runner/env.py). |
 | `required` | If `true`, empty/falsy result raises before the LLM runs.                                                                                                     |
 
-## Prefetch pipeline
+## Prefetch pipeline (legacy) and Prepare ReAct branch
 
-- **Orchestration:** [`run_skill_events`](../../../apps/agents/agents/domain/skill_runner/runner.py) — prefetch → render `human_message_template` → LLM stream → [`persist_milestonedata_markdown`](../../../apps/agents/agents/core/milestone_data/). The model does **not** call a save tool; persistence runs after generation.
+- **Orchestration:** [`run_skill_events`](../../../apps/agents/agents/domain/skill_runner/runner.py) — if `menuyukti` is present: prefetch → render `human_message_template` → LLM stream → [`persist_milestonedata_markdown`](../../../apps/agents/agents/core/milestone_data/). If **no** `menuyukti`: ReAct with tools (may call `write_result_data` and/or final persist with model output). The legacy prefetch path does **not** use tools; the tool-based path does.
 - **Prefetch steps:** [`prefetch.py`](../../../apps/agents/agents/domain/skill_runner/prefetch.py).
 - **GraphQL calls:** [`graphql_client.py`](../../../apps/agents/agents/domain/skill_runner/graphql_client.py) (`fetch_*` helpers, `graphql_post`).
 
@@ -125,8 +127,8 @@ New skills under `milestone_run/skills` can be exercised with `run_skill_events(
 ## Checklist (agents-only)
 
 1. **`graphql_post`** — correct env and headers in [`graphql_base.py`](../../../apps/agents/agents/graphql_base.py).
-2. **Prefetch** — `fetch_*` in `skill_runner/graphql_client.py`; handler in `handlers.py` with a dot-separated `use` string.
-3. **Runtime skill file** — `milestone_run/skills/<skill_id>/SKILL.md` (preferred) or legacy `packages/agent-skills/.../skills/<skill_id>/SKILL.md`; valid `menuyukti` YAML; folder name matches `data_task` / milestone `dataTask`.
+2. **Data for skills** — either **tools** in `milestone_run/tools.py` delegating to `skill_runner/graphql_client.py`, **or** prefetch `fetch_*` + `PREFETCH_HANDLERS` for legacy `menuyukti` skills.
+3. **Runtime skill file** — `milestone_run/skills/<skill_id>/SKILL.md` (tool-based **or** legacy `menuyukti`); unmigrated prepare ids still under `packages/agent-skills/` (obsolete; remove package once all migrated).
 
 ## Related
 

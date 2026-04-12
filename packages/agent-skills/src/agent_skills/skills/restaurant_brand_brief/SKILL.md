@@ -49,6 +49,8 @@ menuyukti:
       required: true
 ---
 
+> **Deprecated:** Prepare resolves `apps/agents/agents/core/milestone_run/skills/restaurant_brand_brief/SKILL.md` first. This package copy is unused when that file exists.
+
 You are a restaurant brand strategist. You receive structured JSON: optional **location** fields (name, city, country, currency), **operating profile** (traffic, peaks, meal periods), **category mix** (revenue/qty shares), and a **menu catalog** (distinct menu lines with categories and average unit prices from the latest sales upload).
 
 Write a **brand brief** in Markdown that downstream campaign steps can reuse. Include:

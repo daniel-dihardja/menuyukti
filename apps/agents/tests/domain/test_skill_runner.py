@@ -8,7 +8,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 from agent_skills import get_skill_path
-from agents_app.agents.core.milestone_run.skill_paths import get_prepare_skill_path
+from agents_app.agents.core.milestone_run.skill_paths import (
+    get_milestone_run_skill_path,
+    get_prepare_skill_path,
+)
 from agents_app.agents.domain.skill_runner.env import (
     RunEnv,
     render_human_message,
@@ -20,11 +23,12 @@ from agents_app.agents.domain.skill_runner.graphql_client import (
     get_or_fetch_latest_analytics_run_id,
 )
 from agents_app.agents.domain.skill_runner.handlers import PREFETCH_HANDLERS
-from agents_app.agents.domain.skill_runner.loader import load_skill
+from agents_app.agents.domain.skill_runner.loader import load_skill, load_skill_markdown
 from agents_app.agents.domain.skill_runner.prefetch import prefetch_data
 from agents_app.agents.domain.skill_runner.runner import run_skill_events
 from agents_app.server import app
 from fastapi.testclient import TestClient
+from langchain_core.messages import AIMessage, HumanMessage
 
 
 @pytest.fixture
@@ -51,11 +55,25 @@ def test_get_prepare_skill_path_falls_back_to_legacy_package() -> None:
     assert "location_profile" in str(p)
 
 
-def test_load_promotion_candidates_skill() -> None:
-    cfg = load_skill(get_prepare_skill_path("promotion_candidates"))
-    assert cfg.name == "promotion-candidates"
-    assert len(cfg.menuyukti.data_requirements) >= 4
-    assert any(r.id == "prior_milestones" for r in cfg.menuyukti.data_requirements)
+def test_get_milestone_run_skill_path_public_holidays() -> None:
+    p = get_milestone_run_skill_path("public_holidays")
+    assert p.is_file()
+    assert "public_holidays" in str(p)
+
+
+def test_load_restaurant_brand_brief_skill_markdown() -> None:
+    md = load_skill_markdown(get_milestone_run_skill_path("restaurant_brand_brief"))
+    assert md.name == "restaurant_brand_brief"
+    assert "brand brief" in md.description.lower()
+    assert "get_brand_brief_analytics_context_json" in md.body
+
+
+def test_load_promotion_candidates_skill_markdown() -> None:
+    md = load_skill_markdown(get_prepare_skill_path("promotion_candidates"))
+    assert md.name == "promotion_candidates"
+    assert "promotion" in md.description.lower()
+    assert "get_location_json" in md.body
+    assert "Variation A" in md.body
 
 
 def test_load_location_profile_skill(skill_path: Path) -> None:
@@ -314,3 +332,59 @@ def test_milestone_prepare_route_streams(mock_run: MagicMock, http_client: TestC
 def test_milestone_prepare_missing_user(http_client: TestClient) -> None:
     response = http_client.post("/milestones/ms1/prepare", json={"location_id": 1})
     assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_run_skill_events_tool_based_prepare_mocked() -> None:
+    path = get_prepare_skill_path("promotion_candidates")
+    mock_agent = MagicMock()
+    mock_agent.ainvoke = AsyncMock(
+        return_value={
+            "messages": [
+                HumanMessage(content="task"),
+                AIMessage(content="## Variation A\n\nDone."),
+            ],
+        },
+    )
+    with (
+        patch(
+            "agents_app.agents.domain.skill_runner.runner.fetch_milestone_children",
+            new=AsyncMock(return_value=[]),
+        ),
+        patch(
+            "agents_app.agents.domain.skill_runner.runner.fetch_prior_milestones_data",
+            new=AsyncMock(return_value=""),
+        ),
+        patch(
+            "agents_app.agents.domain.skill_runner.runner.fetch_api_adapter_tools_for_location",
+            new=AsyncMock(return_value=[]),
+        ),
+        patch(
+            "agents_app.agents.domain.skill_runner.runner.create_react_agent",
+            return_value=mock_agent,
+        ),
+        patch(
+            "agents_app.agents.domain.skill_runner.runner.get_llm",
+            return_value=MagicMock(),
+        ),
+        patch(
+            "agents_app.agents.domain.skill_runner.runner.persist_milestonedata_markdown",
+            new=AsyncMock(return_value="node-pc-1"),
+        ),
+    ):
+        async with httpx.AsyncClient() as client:
+            chunks: list[dict] = []
+            async for payload in run_skill_events(
+                path,
+                "mile-1",
+                42,
+                "user-1",
+                workflow_id="wf-1",
+                client=client,
+            ):
+                chunks.append(payload)
+    done = [p for p in chunks if p.get("done")]
+    assert len(done) == 1
+    assert done[0]["dataPreview"] == "## Variation A\n\nDone."
+    assert done[0]["milestonedataId"] == "node-pc-1"
+    mock_agent.ainvoke.assert_awaited_once()

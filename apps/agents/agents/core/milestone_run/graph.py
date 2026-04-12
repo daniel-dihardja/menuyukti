@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import re
 from functools import partial
@@ -15,7 +14,6 @@ from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_api_adapter_tools_for_location,
     fetch_milestone_data_task,
     fetch_prior_milestones_data,
-    prefetch_restaurant_brand_brief_context,
 )
 from agents_app.agents.core.milestone_run.prompts import (
     INTERMEDIATE_SKILL_PROMPT_SUFFIX,
@@ -199,6 +197,14 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
                     mid,
                 )
             data_task = "restaurant_brand_brief"
+        elif hn == "promotion_candidates":
+            if data_task != "promotion_candidates":
+                _logger.info(
+                    "milestone_run.fetch_children: data_task set from BFF hint promotion_candidates (overrides fetch=%r) milestone_id=%s",
+                    data_task,
+                    mid,
+                )
+            data_task = "promotion_candidates"
     if data_task is None and _infer_restaurant_brand_brief_from_milestone_content(
         str(out.get("goal", "")),
         str(out.get("raw_data", "")),
@@ -209,23 +215,8 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
             mid,
         )
 
-    rb_ctx: dict[str, Any] = {}
-    if data_task == "restaurant_brand_brief":
-        try:
-            rb_ctx = await prefetch_restaurant_brand_brief_context(
-                int(state["location_id"]),
-                str(state["user_id"]),
-                client=client,
-            )
-        except Exception:
-            _logger.exception(
-                "milestone_run.fetch_children: brand brief prefetch failed milestone_id=%s",
-                mid,
-            )
-            rb_ctx = {"prefetch_error": "Could not load analytics context from GraphQL."}
-
     _logger.info(
-        "milestone_run.fetch_children: done milestone_id=%s criteria_count=%s goal_len=%s raw_data_len=%s prior_len=%s adapters=%s data_task=%s rb_ctx_keys=%s",
+        "milestone_run.fetch_children: done milestone_id=%s criteria_count=%s goal_len=%s raw_data_len=%s prior_len=%s adapters=%s data_task=%s",
         mid,
         len(out.get("criteria") or []),
         len(str(out.get("goal") or "")),
@@ -233,14 +224,13 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
         len(prior),
         len(adapters),
         data_task,
-        list(rb_ctx.keys()) if rb_ctx else [],
     )
     return {
         **out,
         "prior_milestones_data": prior,
         "api_adapter_tools": adapters,
         "data_task": data_task,
-        "restaurant_brand_brief_context": rb_ctx,
+        "restaurant_brand_brief_context": {},
     }
 
 
@@ -258,6 +248,16 @@ async def _select_skills(state: MilestoneRunState, *, client: httpx.AsyncClient)
             "selected_skill_ids": ["restaurant_brand_brief"],
             "current_skill_index": 0,
             "selected_skill_id": "restaurant_brand_brief",
+        }
+    if state.get("data_task") == "promotion_candidates":
+        _logger.info(
+            "milestone_run.select_skills: deterministic promotion_candidates milestone_id=%s",
+            mid,
+        )
+        return {
+            "selected_skill_ids": ["promotion_candidates"],
+            "current_skill_index": 0,
+            "selected_skill_id": "promotion_candidates",
         }
     skills_md = format_skills_for_selector(SKILL_REGISTRY)
     human = skill_selector_human_message(
@@ -326,6 +326,7 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         int(state["location_id"]),
         str(state["user_id"]),
         client=client,
+        skill_id=sid,
     )
     raw_adapters = state.get("api_adapter_tools", [])
     adapters_list = raw_adapters if isinstance(raw_adapters, list) else []
@@ -340,13 +341,6 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         skill.name,
         str(state.get("goal") or ""),
     )
-    rb_ctx = state.get("restaurant_brand_brief_context")
-    if sid == "restaurant_brand_brief" and isinstance(rb_ctx, dict) and rb_ctx:
-        task_body += (
-            "\n\n## Analytics context (JSON from GraphQL; use **only** these facts for numbers, "
-            "categories, menu names, and operating signals — do not invent metrics or items)\n\n"
-            f"```json\n{json.dumps(rb_ctx, ensure_ascii=False, indent=2)}\n```"
-        )
     agent_input = {
         "messages": [
             HumanMessage(content=task_body),

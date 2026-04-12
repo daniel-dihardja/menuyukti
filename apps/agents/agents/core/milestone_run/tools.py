@@ -11,7 +11,16 @@ _logger = logging.getLogger(__name__)
 import httpx
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_public_holidays_for_milestone,
+    prefetch_restaurant_brand_brief_context,
     upsert_milestonedata_node,
+)
+from agents_app.agents.domain.skill_runner.graphql_client import (
+    fetch_instagram_signals_dict,
+    fetch_location_dict,
+    fetch_menu_items_catalog_dict,
+    fetch_most_recent_milestone_data_str,
+    fetch_promotion_menu_items_dict,
+    get_or_fetch_latest_analytics_run_id,
 )
 from agents_app.agents.http.safe_egress import adapter_http_get
 from langchain_core.tools import BaseTool, StructuredTool, tool
@@ -47,6 +56,12 @@ def _make_workspace_adapter_tool(
     )
 
 
+def _normalize_skill_id(skill_id: str | None) -> str:
+    if not skill_id or not str(skill_id).strip():
+        return ""
+    return str(skill_id).strip().lower().replace("-", "_")
+
+
 def make_milestone_run_tools(
     context: dict[str, Any],
     milestone_id: str,
@@ -54,6 +69,7 @@ def make_milestone_run_tools(
     user_id: str,
     *,
     client: httpx.AsyncClient,
+    skill_id: str | None = None,
 ) -> list[BaseTool]:
     """Build bound tools that read/write :class:`~agents_app.agents.core.milestone_run.state.MilestoneRunState` fields.
 
@@ -70,6 +86,10 @@ def make_milestone_run_tools(
 
     When ``context`` includes ``api_adapter_tools`` (from GraphQL), one parameterless GET tool per \
     active row is appended (LangChain name = ``tool_key``). See :func:`adapter_http_get` for HTTPS vs dev HTTP.
+
+    When ``skill_id`` is ``promotion_candidates``, append promotion analytics tools. When ``skill_id`` is \
+    ``restaurant_brand_brief``, append ``get_brand_brief_analytics_context_json`` (POS bundle: location, \
+    operating profile, category mix, menu catalog).
     """
 
     @tool
@@ -164,6 +184,96 @@ def make_milestone_run_tools(
         context["milestonedata_written"] = True
         return f"Saved milestonedata node id={nid} ({len(new_data)} characters)."
 
+    promotion_tools: list[BaseTool] = []
+    if _normalize_skill_id(skill_id) == "promotion_candidates":
+
+        @tool
+        async def get_location_json() -> str:
+            """Load this milestone's location record from GraphQL as JSON (name, address, country, currency)."""
+            loc = await fetch_location_dict(location_id, user_id, client=client)
+            if not loc:
+                return json.dumps({"error": "Location not found"}, ensure_ascii=False)
+            return json.dumps(loc, ensure_ascii=False, indent=2)
+
+        @tool
+        async def get_promotion_menu_items_json() -> str:
+            """Latest analytics run: promotion menu items payload (camelCase JSON from GraphQL)."""
+            run_id = await get_or_fetch_latest_analytics_run_id(location_id, user_id, client=client)
+            if not run_id:
+                return json.dumps(
+                    {"error": "No analytics run for this location; upload sales data first."},
+                    ensure_ascii=False,
+                )
+            payload = await fetch_promotion_menu_items_dict(
+                location_id, run_id, user_id, client=client
+            )
+            if not payload:
+                return json.dumps({"error": "No promotion menu items for this run."}, ensure_ascii=False)
+            return json.dumps(payload, ensure_ascii=False, indent=2)
+
+        @tool
+        async def get_instagram_signals_json() -> str:
+            """Latest analytics run: composite Instagram signals (camelCase JSON from GraphQL)."""
+            run_id = await get_or_fetch_latest_analytics_run_id(location_id, user_id, client=client)
+            if not run_id:
+                return json.dumps(
+                    {"error": "No analytics run for this location; upload sales data first."},
+                    ensure_ascii=False,
+                )
+            payload = await fetch_instagram_signals_dict(
+                location_id, run_id, user_id, client=client
+            )
+            if not payload:
+                return json.dumps({"error": "No Instagram signals for this run."}, ensure_ascii=False)
+            return json.dumps(payload, ensure_ascii=False, indent=2)
+
+        @tool
+        async def get_menu_items_catalog_json() -> str:
+            """Menu catalog from the latest analytics run (camelCase JSON from GraphQL)."""
+            payload = await fetch_menu_items_catalog_dict(location_id, user_id, client=client)
+            if not payload:
+                return json.dumps({"error": "No menu catalog available."}, ensure_ascii=False)
+            return json.dumps(payload, ensure_ascii=False, indent=2)
+
+        @tool
+        async def get_prior_brand_brief_markdown() -> str:
+            """Markdown from the most recent ``restaurant_brand_brief`` milestone in this workflow, if any."""
+            wf = context.get("workflow_id")
+            if not isinstance(wf, str) or not wf.strip():
+                return "No workflow id in context; brand brief lookup skipped."
+            md = await fetch_most_recent_milestone_data_str(
+                wf.strip(),
+                "restaurant_brand_brief",
+                user_id,
+                client=client,
+            )
+            if not md:
+                return "No prior brand brief milestone data in this workflow."
+            return md
+
+        promotion_tools = [
+            get_location_json,
+            get_promotion_menu_items_json,
+            get_instagram_signals_json,
+            get_menu_items_catalog_json,
+            get_prior_brand_brief_markdown,
+        ]
+
+    brand_brief_tools: list[BaseTool] = []
+    if _normalize_skill_id(skill_id) == "restaurant_brand_brief":
+
+        @tool
+        async def get_brand_brief_analytics_context_json() -> str:
+            """POS-backed bundle: location, optional venue_name, operating_profile, category_mix, menu_items_catalog, analytics_run_id or analytics_note."""
+            payload = await prefetch_restaurant_brand_brief_context(
+                location_id,
+                user_id,
+                client=client,
+            )
+            return json.dumps(payload, ensure_ascii=False, indent=2)
+
+        brand_brief_tools = [get_brand_brief_analytics_context_json]
+
     raw_adapters = context.get("api_adapter_tools", [])
     adapters: list[dict[str, Any]] = raw_adapters if isinstance(raw_adapters, list) else []
     adapter_tools: list[BaseTool] = []
@@ -194,5 +304,7 @@ def make_milestone_run_tools(
         read_prior_milestones_data,
         get_public_holidays,
         write_result_data,
+        *promotion_tools,
+        *brand_brief_tools,
         *adapter_tools,
     ]
