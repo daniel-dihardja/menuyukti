@@ -14,8 +14,8 @@ import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 import type { MilestoneDataTask, PassCriteriaRow } from './timeline/types'
 
 export type CampaignTimelineOpsHandles = {
-  handleCreateMilestone: () => void | Promise<void>
-  handleCreateMilestoneFromPreset: (presetId: MilestonePresetId) => void | Promise<void>
+  handleCreateMilestone: () => boolean | Promise<boolean>
+  handleCreateMilestoneFromPreset: (presetId: MilestonePresetId) => boolean | Promise<boolean>
   handleDeleteMilestone: (id: string) => void | Promise<void>
   handleRenameMilestone: (id: string, name: string) => Promise<boolean>
   handleMoveMilestone: (id: string, direction: 'up' | 'down') => void | Promise<void>

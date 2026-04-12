@@ -39,8 +39,8 @@ export type TimelineErrors = Pick<
 >
 
 export type TimelineActions = {
-  onCreateMilestone: () => void | Promise<void>
-  onCreateMilestoneFromPreset: (presetId: MilestonePresetId) => void | Promise<void>
+  onCreateMilestone: () => boolean | Promise<boolean>
+  onCreateMilestoneFromPreset: (presetId: MilestonePresetId) => boolean | Promise<boolean>
   onDeleteMilestone: (id: string) => void | Promise<void>
   onRenameMilestone: (id: string, name: string) => Promise<boolean>
   onMoveMilestone: (id: string, direction: 'up' | 'down') => void | Promise<void>

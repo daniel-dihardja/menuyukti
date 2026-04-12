@@ -40,7 +40,7 @@ export function useMilestoneOperations(
     t: (key: string) => string
   },
 ) {
-  const handleCreateMilestone = useCallback(async () => {
+  const handleCreateMilestone = useCallback(async (): Promise<boolean> => {
     dispatch({ type: 'PATCH', patch: { createError: null, creating: true } })
     try {
       const res = await fetch(`/api/workflows/${workflowId}/milestones`, {
@@ -65,7 +65,9 @@ export function useMilestoneOperations(
           type: 'UPDATE_MILESTONES',
           updater: (prev) => [...prev, milestoneNodeToTimelineMilestone(created)],
         })
+        return true
       }
+      return false
     } catch (err) {
       dispatch({
         type: 'PATCH',
@@ -73,13 +75,14 @@ export function useMilestoneOperations(
           createError: err instanceof Error ? err.message : t('milestonesCreateError'),
         },
       })
+      return false
     } finally {
       dispatch({ type: 'PATCH', patch: { creating: false } })
     }
   }, [workflowId, dispatch, t])
 
   const handleCreateMilestoneFromPreset = useCallback(
-    async (presetId: MilestonePresetId) => {
+    async (presetId: MilestonePresetId): Promise<boolean> => {
       const fields = getMilestonePresetCreateFields(presetId, t)
       dispatch({ type: 'PATCH', patch: { createError: null, creating: true } })
       let createdId: string | null = null
@@ -164,6 +167,7 @@ export function useMilestoneOperations(
           type: 'UPDATE_MILESTONES',
           updater: (prev) => [...prev, next],
         })
+        return true
       } catch (err) {
         if (createdId !== null) {
           try {
@@ -180,6 +184,7 @@ export function useMilestoneOperations(
             createError: err instanceof Error ? err.message : t('milestonesCreateError'),
           },
         })
+        return false
       } finally {
         dispatch({ type: 'PATCH', patch: { creating: false } })
       }

@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { Plus } from 'lucide-react'
 
 import {
   MILESTONE_PRESET_IDS,
   isMilestonePresetId,
   type MilestonePresetId,
 } from '@/lib/milestones/preset-definitions'
+import { Button } from '@workspace/ui/components/button'
 import {
   Select,
   SelectContent,
@@ -15,47 +17,78 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select'
+import { Spinner } from '@workspace/ui/components/spinner'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 
-export type MilestonePresetSelectProps = {
+const MILESTONE_PRESET_NONE = '__none__' as const
+
+export type MilestoneCreateControlsProps = {
   disabled: boolean
-  onCreateFromPreset: (presetId: MilestonePresetId) => void | Promise<void>
+  creating: boolean
+  onCreateMilestone: () => boolean | Promise<boolean>
+  onCreateMilestoneFromPreset: (presetId: MilestonePresetId) => boolean | Promise<boolean>
 }
 
-export function MilestonePresetSelect({
+export function MilestoneCreateControls({
   disabled,
-  onCreateFromPreset,
-}: MilestonePresetSelectProps) {
+  creating,
+  onCreateMilestone,
+  onCreateMilestoneFromPreset,
+}: MilestoneCreateControlsProps) {
   const t = useTranslations('analytics.campaigns.chat')
-  const [instanceKey, setInstanceKey] = useState(0)
+  const [presetChoice, setPresetChoice] = useState<string>(MILESTONE_PRESET_NONE)
+
+  const handleCreateClick = async () => {
+    let ok = false
+    if (presetChoice === MILESTONE_PRESET_NONE) {
+      ok = await onCreateMilestone()
+    } else if (isMilestonePresetId(presetChoice)) {
+      ok = await onCreateMilestoneFromPreset(presetChoice)
+    }
+    if (ok) {
+      setPresetChoice(MILESTONE_PRESET_NONE)
+    }
+  }
 
   return (
-    <Select
-      key={instanceKey}
-      disabled={disabled}
-      onValueChange={(value) => {
-        if (!isMilestonePresetId(value)) {
-          return
-        }
-        void (async () => {
-          await onCreateFromPreset(value)
-          setInstanceKey((k) => k + 1)
-        })()
-      }}
-    >
-      <SelectTrigger
-        aria-label={t('milestonePreset.selectAriaLabel')}
-        className="w-[min(100%,11rem)]"
-      >
-        <SelectValue placeholder={t('milestonePreset.selectPlaceholder')} />
-      </SelectTrigger>
-      <SelectContent position="popper">
-        {MILESTONE_PRESET_IDS.map((id) => (
-          <SelectItem key={id} value={id}>
-            {presetOptionLabel(id, t)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex shrink-0 items-center gap-2">
+      <Select disabled={disabled} onValueChange={setPresetChoice} value={presetChoice}>
+        <SelectTrigger
+          aria-label={t('milestonePreset.selectAriaLabel')}
+          className="w-[min(100%,11rem)]"
+        >
+          <SelectValue placeholder={t('milestonePreset.selectPlaceholder')} />
+        </SelectTrigger>
+        <SelectContent position="popper">
+          <SelectItem value={MILESTONE_PRESET_NONE}>{t('milestonePreset.noneLabel')}</SelectItem>
+          {MILESTONE_PRESET_IDS.map((id) => (
+            <SelectItem key={id} value={id}>
+              {presetOptionLabel(id, t)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex">
+            <Button
+              aria-busy={creating}
+              aria-label={creating ? t('creatingMilestone') : t('createMilestone')}
+              disabled={disabled}
+              onClick={() => void handleCreateClick()}
+              size="icon"
+              type="button"
+              variant="default"
+            >
+              {creating ? <Spinner /> : <Plus aria-hidden />}
+            </Button>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>{creating ? t('creatingMilestone') : t('createMilestone')}</p>
+        </TooltipContent>
+      </Tooltip>
+    </div>
   )
 }
 

@@ -4,19 +4,11 @@ import type { ReactNode } from 'react'
 import { useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
-import { Plus } from 'lucide-react'
 
-import { Button } from '@workspace/ui/components/button'
 import { Skeleton } from '@workspace/ui/components/skeleton'
-import { Spinner } from '@workspace/ui/components/spinner'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@workspace/ui/components/tooltip'
+import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
-import { MilestonePresetSelect } from './milestone-preset-select'
+import { MilestoneCreateControls } from './milestone-preset-select'
 import { TimelineBody } from './timeline-body'
 
 export function TimelineWorkspaceLoading() {
@@ -55,8 +47,8 @@ export function TimelineWorkspaceEmpty({
   creating: boolean
   createError: string | null
   exporting: boolean
-  onCreateMilestone: () => void | Promise<void>
-  onCreateMilestoneFromPreset: (presetId: MilestonePresetId) => void | Promise<void>
+  onCreateMilestone: () => boolean | Promise<boolean>
+  onCreateMilestoneFromPreset: (presetId: MilestonePresetId) => boolean | Promise<boolean>
   timelineTrailing: ReactNode
 }) {
   const t = useTranslations('analytics.campaigns.chat')
@@ -74,29 +66,11 @@ export function TimelineWorkspaceEmpty({
       </div>
       <TooltipProvider delayDuration={300}>
         <div className="flex flex-wrap items-center justify-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex">
-                <Button
-                  aria-busy={creating}
-                  aria-label={creating ? t('creatingMilestone') : t('createMilestone')}
-                  disabled={creating || exporting}
-                  onClick={() => void onCreateMilestone()}
-                  size="icon"
-                  type="button"
-                  variant="default"
-                >
-                  {creating ? <Spinner /> : <Plus aria-hidden />}
-                </Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>{creating ? t('creatingMilestone') : t('createMilestone')}</p>
-            </TooltipContent>
-          </Tooltip>
-          <MilestonePresetSelect
+          <MilestoneCreateControls
+            creating={creating}
             disabled={creating || exporting}
-            onCreateFromPreset={onCreateMilestoneFromPreset}
+            onCreateMilestone={onCreateMilestone}
+            onCreateMilestoneFromPreset={onCreateMilestoneFromPreset}
           />
           {timelineTrailing}
         </div>

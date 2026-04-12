@@ -785,8 +785,9 @@
         "createMilestone": "Create milestone",
         "creatingMilestone": "Creating…",
         "milestonePreset": {
-          "selectPlaceholder": "Preset…",
-          "selectAriaLabel": "Create milestone from preset",
+          "noneLabel": "Empty milestone",
+          "selectPlaceholder": "Template",
+          "selectAriaLabel": "Milestone template",
           "dates": {
             "label": "Dates",
             "title": "Dates",
