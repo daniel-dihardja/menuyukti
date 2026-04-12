@@ -18,7 +18,7 @@ or confirming public holidays for a date range **and** (b) broader work on the b
 summary) beyond holidays alone.
 - Prefer `["public_holidays"]` when only holidays listing/confirmation is needed.
 - Prefer `["generic"]` for standard Data preparation when holidays are not a distinct requirement.
-- Prefer `["restaurant_brand_brief"]` when the goal or Data tab clearly describe a **restaurant brand brief** \
+- Prefer `["restaurant_brand_brief"]` when the goal or Data tab clearly describe a **brand brief** \
 (venue snapshot, content pillars, audience hypotheses, proof angles, tone guardrails) as the main deliverable.
 - Use at most **two** ids. Do not duplicate the same id.
 - Each id must be one of the listed keys exactly (underscores, lowercase)."""

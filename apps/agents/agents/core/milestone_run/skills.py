@@ -43,9 +43,9 @@ def _build_registry() -> dict[str, SkillDef]:
         ),
         "restaurant_brand_brief": SkillDef(
             id="restaurant_brand_brief",
-            name="Restaurant brand brief",
+            name="Brand brief",
             description=(
-                "Produces or refines a Markdown restaurant brand brief from the Data tab (often pre-filled from "
+                "Produces or refines a Markdown brand brief from the Data tab (often pre-filled from "
                 "POS operating profile, category mix, and menu catalog via Prepare)—foundation for multi-week "
                 "social campaigns."
             ),

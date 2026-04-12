@@ -114,7 +114,7 @@ def _infer_restaurant_brand_brief_from_milestone_content(goal: str, raw_data: st
     return (
         ("## venue snapshot" in d and "## content pillars" in d)
         or ("## proof-oriented angles" in d and "## tone guardrails" in d)
-        or ("restaurant brand brief" in g and ("data tab" in g or "downstream" in g))
+        or ("brand brief" in g and ("data tab" in g or "downstream" in g))
     )
 
 

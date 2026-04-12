@@ -798,9 +798,9 @@
             "dataMarkdown": "## Start date\n\n\n## End date\n\n\n## Public holidays\n\n"
           },
           "restaurant_brand_brief": {
-            "label": "Restaurant brand brief",
-            "title": "Restaurant brand brief",
-            "goal": "The Data tab holds a factual restaurant brand brief grounded in venue and sales signals: venue snapshot, content pillars tied to operations, audience hypotheses supported by data, proof-oriented angles, and tone guardrails—ready for downstream campaign work.",
+            "label": "Brand brief",
+            "title": "Brand brief",
+            "goal": "The Data tab holds a factual brand brief grounded in venue and sales signals: venue snapshot, content pillars tied to operations, audience hypotheses supported by data, proof-oriented angles, and tone guardrails—ready for downstream campaign work.",
             "criterionVenueSnapshot": "**Venue snapshot** in the Data tab names the venue and uses city/country/currency when known; it does not invent full addresses.",
             "criterionContentPillars": "**Content pillars** (3–5) are listed and tied to real categories or operating signals (e.g. meal periods, weekday vs weekend).",
             "criterionAudienceHypotheses": "**Audience hypotheses** reflect only what the Data tab supports (e.g. peaks, meal periods); no invented demographics.",
@@ -889,7 +889,7 @@
         "milestoneDataTaskManual": "Manual entry",
         "milestoneDataTaskLocationProfile": "Generate location profile",
         "milestoneDataTaskInstagramCampaignSchedule": "Instagram campaign schedule",
-        "milestoneDataTaskRestaurantBrandBrief": "Restaurant brand brief",
+        "milestoneDataTaskRestaurantBrandBrief": "Brand brief",
         "milestoneDataTaskSocialCampaignCalendar": "Social campaign calendar (4 weeks)",
         "milestoneDataTaskSocialCaptionBatch": "Social caption batch",
         "milestoneDataTaskVisualCreativeBrief": "Visual creative brief",

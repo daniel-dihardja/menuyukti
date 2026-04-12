@@ -26,8 +26,8 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
   },
   {
     id: 'restaurant_brand_brief',
-    name: 'Restaurant brand brief',
+    name: 'Brand brief',
     description:
-      'Produces or refines a Markdown restaurant brand brief from the Data tab (often pre-filled from POS operating profile, category mix, and menu catalog via Prepare)—foundation for multi-week social campaigns.',
+      'Produces or refines a Markdown brand brief from the Data tab (often pre-filled from POS operating profile, category mix, and menu catalog via Prepare)—foundation for multi-week social campaigns.',
   },
 ] as const
