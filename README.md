@@ -2,7 +2,7 @@
 
 **Turn restaurant sales and operating data into structured, Instagram-ready marketing—guided by agentic AI**
 
-![Menuyukti screenshot](./screenshot.png)
+![Menuyukti workflow UI: milestones, criteria, and preview](./screenshots/screenshot-workflow-with-milestones.png)
 
 Menuyukti helps **restaurant marketers** go from spreadsheets and POS signals to **campaign briefs, post ideas, and copy** without rebuilding the same research and drafting work for every promotion. Each campaign produces **structured artifacts** you can review, edit, and reuse—not only a one-off chat transcript.
 
@@ -25,6 +25,34 @@ flowchart LR
   steps --> outputs
   outputs --> review
 ```
+
+## Screenshots
+
+These images come from the workflows experience in the web app (plus one observability view). File names hint at the focus of each capture.
+
+### Workflows overview — create and list campaigns
+
+![Workflows screen: new workflow form and list for a location](./screenshots/screenshot-overflows-overview.png)
+
+Pick a **location**, attach the **sales report** that feeds milestone **Data**, choose a **starter template** or a blank workflow, then **Create workflow**. Existing campaigns for that location appear in the table below.
+
+### Inside a workflow — milestones, criteria, and preview
+
+![Workflow detail: milestones, brand brief criteria, and markdown preview](./screenshots/screenshot-workflow-with-milestones.png)
+
+The **Brief & milestones** view shows the ordered timeline. Each milestone can define **goals**, **criteria** (pass checks the run must satisfy), and a **preview** of the saved result—here a data-grounded brand brief (pillars, audience hypotheses). **Chat** sits beside the timeline for refinement without losing structured outputs.
+
+### Same workflow with assets
+
+![Workflow detail with AI asset studio for images](./screenshots/screenshot-workflow-with-assets.png)
+
+With **Assets** (and the asset studio) open, you can upload or generate images and run lightweight AI flows (for example background removal) while staying in the same campaign context as milestones and preview.
+
+### Under the hood — LangSmith trace of a full milestone run
+
+![LangSmith waterfall trace of a complete Menuyukti milestone run](./screenshots/screenshot-langsmith-full-traces-of-a-complete-run.png)
+
+When a milestone runs, the agent service executes a **LangGraph** graph. **LangSmith** (or similar tracing) shows the full waterfall: skill selection, model calls, and tools such as reading the goal, criteria, and linked data—useful for debugging, latency, and token usage during development and operations.
 
 ## How workflows are built
 
