@@ -1,6 +1,6 @@
 # Menuyukti platform architecture
 
-This document describes how the Menuyukti services and packages fit together, with emphasis on the **agentic AI** path (milestone runs, skills, and tools). For local commands, ports, and CI, see [AGENTS.md](AGENTS.md). For product positioning and feature bullets, see [README.md](README.md).
+This document describes how the Menuyukti services and packages fit together, with emphasis on the **agentic AI** path (milestone runs, skills, and tools). For local commands, ports, and CI, see [AGENTS.md](AGENTS.md). For a **user-facing overview and marketer positioning**, see [README.md](README.md).
 
 ## Platform model
 
