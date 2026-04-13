@@ -30,7 +30,7 @@ flowchart LR
 
 ## Screenshots
 
-These images come from the workflows experience in the web app (plus one observability view). File names hint at the focus of each capture.
+These images come from the workflows experience in the web app, plus observability views and a catalog of agent skills and tools. File names hint at the focus of each capture.
 
 ### Workflows overview — create and list campaigns
 
@@ -55,6 +55,12 @@ With **Assets** (and the asset studio) open, you can upload or generate images a
 ![LangSmith waterfall trace of a complete Menuyukti milestone run](./screenshots/screenshot-langsmith-full-traces-of-a-complete-run.png)
 
 When a milestone runs, the agent service executes a **LangGraph** graph. **LangSmith** (or similar tracing) shows the full waterfall: skill selection, model calls, and tools such as reading the goal, criteria, and linked data—useful for debugging, latency, and token usage during development and operations.
+
+### Platform skills and tools
+
+![List of skills and tools used in the Menuyukti platform](./screenshots/screenshot-list-of-skills-and-tools.png)
+
+The platform surfaces the **skills** and **tools** available to milestone runs—specialized agent capabilities and integrations (for example data access, generation, and quality checks)—so teams can see what the automation layer can invoke without digging through code.
 
 ## How workflows are built
 
