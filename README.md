@@ -2,7 +2,7 @@
 
 **Turn restaurant sales and operating data into structured, Instagram-ready marketing—guided by agentic AI**
 
-Live product: [https://menuyukti.com/](https://menuyukti.com/)
+Live product: <a href="https://menuyukti.com/" target="_blank" rel="noopener noreferrer">https://menuyukti.com/</a>
 
 ![Menuyukti workflow UI: milestones, criteria, and preview](./screenshots/screenshot-workflow-with-milestones.png)
 
