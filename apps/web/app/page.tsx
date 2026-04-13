@@ -71,11 +71,8 @@ export default async function LandingPage() {
             <p className="truncate text-xl font-semibold tracking-tight">{t('brand')}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={routes.login}>{t('header.signIn')}</Link>
-            </Button>
             <Button size="sm" asChild>
-              <Link href={routes.signUp}>{t('header.signUp')}</Link>
+              <Link href={routes.login}>{t('header.signIn')}</Link>
             </Button>
           </div>
         </div>
