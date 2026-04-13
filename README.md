@@ -2,6 +2,8 @@
 
 **Turn restaurant sales and operating data into structured, Instagram-ready marketing—guided by agentic AI**
 
+Live product: [https://menuyukti.com/](https://menuyukti.com/)
+
 ![Menuyukti workflow UI: milestones, criteria, and preview](./screenshots/screenshot-workflow-with-milestones.png)
 
 Menuyukti helps **restaurant marketers** go from spreadsheets and POS signals to **campaign briefs, post ideas, and copy** without rebuilding the same research and drafting work for every promotion. Each campaign produces **structured artifacts** you can review, edit, and reuse—not only a one-off chat transcript.
