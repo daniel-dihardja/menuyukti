@@ -77,7 +77,7 @@ When a milestone runs, the agent service executes a **LangGraph** graph. **LangS
 - **Chat** — Collaborate and refine alongside the structured campaign surface.
 - **Artifacts** — Work with generated briefs, ideas, captions, and other assets in one place.
 
-## For developers and the curious
+## Setup and architecture
 
 This repository is a monorepo: web app, GraphQL API, and agent service. For **local setup, environment variables, scripts, and CI**, see [AGENTS.md](AGENTS.md). Per-app details live in [apps/web/README.md](apps/web/README.md), [apps/graphql/README.md](apps/graphql/README.md), and [apps/agents/README.md](apps/agents/README.md).
 
