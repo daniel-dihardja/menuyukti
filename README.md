@@ -1,38 +1,56 @@
 # Menuyukti
 
-**Agentic AI platform for composable data workflows — with restaurant marketing as the flagship product**
+**Turn restaurant sales and operating data into structured, Instagram-ready marketing—guided by agentic AI**
 
 ![Menuyukti screenshot](./screenshot.png)
 
-At its core, Menuyukti is a **platform for defining and running data workflows**. A **campaign** is a workflow: an ordered sequence of **milestones**, each of which is a working unit. In GraphQL, the root of that tree uses **`nodeType` `workflow`** on the corresponding `node` record. Per milestone, the system can **fetch** the inputs it needs, **instruct an LLM** (and supporting logic) to process that data, and **persist the output** as **milestone data** for the next step or for downstream use. The end goal of a workflow is **structured, reusable data**—not only chat.
+Menuyukti helps **restaurant marketers** go from spreadsheets and POS signals to **campaign briefs, post ideas, and copy** without rebuilding the same research and drafting work for every promotion. Each campaign produces **structured artifacts** you can review, edit, and reuse—not only a one-off chat transcript.
 
-That pattern applies broadly to use cases where the deliverable is **data artifacts** (profiles, evaluations, generated text, scored results, etc.). **Menuyukti’s current product** applies it to **data-driven restaurant marketing**: sales and operating signals feed workflows whose outputs support **targeted Instagram-style campaigns**—analytics-informed content with less manual assembly.
+The product is built around **data-informed workflows**: your venue’s sales trends, menu performance, and related context ground what the AI proposes, so suggestions stay tied to what actually sells and how you operate.
 
-## Key features
+## How it works
 
-- **Workflow-oriented campaigns** — Milestones as steps: configurable data preparation, LLM processing, and stored milestone data for evaluation or further processing.
-- **Data-driven marketing (product focus)** — Instagram-oriented campaigns from sales trends, menu performance, and seasonal patterns.
-- **Agentic AI** — LangGraph / LangChain agent service (`apps/agents`) for chat and milestone run (skill selection + ReAct + evaluation).
-- **Chat UI** — Navigate the platform, refine outputs, and collaborate through conversation where it fits.
-- **Artifacts** — Review, edit, and reuse generated assets (captions, post ideas, etc.).
+- **Campaigns as guided workflows** — A campaign is an **ordered sequence of steps** (milestones). Each step has a goal and saves its output so the next step—or your team—can build on it.
+- **Your data grounds the AI** — When you link analytics to a location, that picture of demand, dishes, and patterns flows into preparation and generation, so outputs reflect your menu and performance—not generic restaurant advice.
+- **AI does the heavy lifting** — For each milestone, the system can pull the right context, run **specialized AI capabilities** suited to that step, write results into the milestone, and run **automatic quality checks** against **pass criteria** you define (or start from presets).
+- **Chat where it helps** — Use conversation to navigate the campaign, clarify direction, and refine drafts while the **timeline and artifacts** stay the system of record.
 
-## Architecture
+```mermaid
+flowchart LR
+  yourData[YourSalesAndMenuData]
+  steps[CampaignSteps]
+  outputs[DraftsAndBriefs]
+  review[ReviewAndPublish]
+  yourData --> steps
+  steps --> outputs
+  outputs --> review
+```
 
-Menuyukti is split into three cooperating services:
+## How workflows are built
 
-1. **GraphQL data provider** — A Python backend that exposes GraphQL for structured data, analytics, and persistence. The web app and the agents both use this API as the single source of truth for reads and writes.
-2. **Web app** — The user-facing application: conversational chat, artifact review and editing, and CRUD-style forms for entities the product manages (workflows, milestones, and related nodes; primary UI under `/workflows`).
-3. **Agent service** — A **Python** FastAPI service (**`apps/agents`**) using LangChain / LangGraph: streaming chat, milestone preparation (e.g. skill-driven generation into milestone data), and milestone evaluation. It calls the GraphQL API over HTTP when it needs platform data.
+- **A workflow is a timeline** — Steps run in sequence. Later milestones can see **prior step outputs**, so the campaign stays one coherent thread (e.g. dates and holidays → brand angle → concrete post ideas).
 
-## Agentic patterns
+- **Start from a template or from scratch** — When you **create a campaign**, you attach **sales/analytics** for the location. You can optionally pick a **built-in workflow template** that loads a ready-made multi-step structure with names, goals, and starter content—or start **blank** and design your own sequence.
 
-- **Milestone pipelines** — Work is scoped to **milestones** inside a **campaign** (workflow): fetch context, run model steps, write **milestone data**, then optionally **run** automated evaluation against pass criteria.
-- **Planning** — **Plan-and-execute** style flows for richer pipelines: explicit multi-step plans (e.g. data → slots → schedule → formats → brief), executed in order until complete—aligned with the same “staged data” idea at a larger grain.
-- **Tool use** — LangGraph graphs and services interleave model steps with tools and GraphQL-backed helpers where needed.
-- **Reflect** — Draft outputs (e.g. location profiles and format plans) can pass through **generate → reflect → revise** cycles: a critic step scores or critiques the draft, and the model revises until quality checks pass or a max iteration bound is hit.
+- **Milestone presets compose the workflow** — Each time you **add a milestone**, you can insert a **blank** step or choose a **milestone preset** from the toolbar. Presets **prefill** the step: title, starter notes, task type, default **goal**, starter **quality criteria**, and (where it applies) how the AI should tackle the step first. That lets you assemble campaigns from meaningful blocks—for example **key dates and public holidays**, a **restaurant brand brief**, or **promotion and post ideas tied to menu performance**—without configuring everything by hand.
 
-## Tech stack
+## Why restaurant marketers use it
 
-- **Backend:** Python, GraphQL, PostgreSQL — GraphQL API for structured data and analytics.
-- **Frontend:** React, Next.js, TypeScript, Node.js.
-- **AI:** Python (**`apps/agents`**, LangChain / LangGraph) for the agent HTTP service; **Vercel AI SDK** / **AI Elements** on the web for chat UI.
+- **On-brand, on-strategy continuity** — Steps build on each other and on criteria you set, so outputs stay aligned with the campaign’s intent.
+- **Faster from data to creatives** — Less manual research and first-draft copy; more time on judgment, edits, and scheduling.
+- **Repeatable playbooks** — Reuse templates and preset-based milestones across locations or time periods for consistent process.
+- **Transparent outputs** — Artifacts and milestone data you can inspect and edit, not only a black-box chat.
+
+## What you can do in the product
+
+- **Campaign workflows and milestones** — Run ordered steps with clear goals and saved outputs between steps.
+- **Templates and milestone presets** — Jump-start whole campaigns or individual steps with sensible defaults.
+- **Data-driven suggestions** — Ground ideas in sales, menu, and related signals for the selected location.
+- **Chat** — Collaborate and refine alongside the structured campaign surface.
+- **Artifacts** — Work with generated briefs, ideas, captions, and other assets in one place.
+
+## For developers and the curious
+
+This repository is a monorepo: web app, GraphQL API, and agent service. For **local setup, environment variables, scripts, and CI**, see [AGENTS.md](AGENTS.md). Per-app details live in [apps/web/README.md](apps/web/README.md), [apps/graphql/README.md](apps/graphql/README.md), and [apps/agents/README.md](apps/agents/README.md).
+
+If you want to understand **how the system is put together**—how the web app, GraphQL API, and agent service cooperate, and how **milestone runs** and **skills** work under the hood—see [ARCHITECTURE.md](ARCHITECTURE.md).

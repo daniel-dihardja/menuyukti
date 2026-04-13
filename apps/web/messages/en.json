@@ -164,7 +164,7 @@
     },
     "cta": {
       "title": "Explore your workspace",
-      "description": "Sign in to connect locations, upload sales data, and run workflows with agentic support—analytics, milestones, and editable outputs in one stack.",
+      "description": "If you've been invited, sign in to connect locations, upload sales data, and run workflows with agentic support—analytics, milestones, and editable outputs in one stack.",
       "secondary": "Sign in"
     },
     "footer": {
@@ -177,8 +177,7 @@
       "copyrightName": "Menuyukti"
     },
     "header": {
-      "signIn": "Sign in",
-      "signUp": "Sign up"
+      "signIn": "Sign in"
     },
     "mobileCta": {
       "primary": "Sign in",
