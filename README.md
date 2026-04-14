@@ -46,7 +46,7 @@ The **Brief & milestones** view shows the ordered timeline. Each milestone can d
 
 ### Same workflow with assets
 
-![Workflow detail with AI asset studio for images](./screenshots/screenshot-workflow-with-assets.png)
+![Workflow detail with AI asset studio for images](./screenshots/screenshot-workflow-with-assets-02.png)
 
 With **Assets** (and the asset studio) open, you can upload or generate images and run lightweight AI flows (for example background removal) while staying in the same campaign context as milestones and preview.
 
