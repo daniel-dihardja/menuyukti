@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from functools import partial
@@ -166,8 +167,25 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
         milestone_data,
         SKILL_REGISTRY,
     )
+    request_goal = state.get("request_goal")
+    goal = str(request_goal).strip() if isinstance(request_goal, str) and request_goal.strip() else str(out.get("goal", ""))
+    request_data = state.get("milestone_data")
+    if request_data is None:
+        milestone_data_payload: dict[str, Any] | str | None = None
+        raw_data = str(out.get("raw_data", ""))
+    else:
+        milestone_data_payload = request_data if isinstance(request_data, (dict, str)) else str(request_data)
+        raw_data = (
+            json.dumps(milestone_data_payload, ensure_ascii=False, indent=2)
+            if isinstance(milestone_data_payload, dict)
+            else str(milestone_data_payload)
+        )
     base: dict[str, Any] = {
         **out,
+        "goal": goal,
+        "raw_data": raw_data,
+        "milestone_data": milestone_data_payload,
+        "milestone_input": state.get("milestone_input"),
         "prior_milestones_data": prior,
         "api_adapter_tools": adapters,
         "use_llm_skill_selector": use_llm,
@@ -292,6 +310,9 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         skill.id,
         skill.name,
         str(state.get("goal") or ""),
+        milestone_input=state.get("milestone_input"),
+        milestone_data=state.get("milestone_data"),
+        raw_data=str(state.get("raw_data") or ""),
     )
     agent_input = {
         "messages": [
@@ -343,10 +364,12 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         next_idx,
     )
     updated_data = str(state.get("result_data", "") or state.get("raw_data", ""))
+    updated_payload = state.get("milestone_data")
     return {
         "current_skill_index": next_idx,
         "result_data": str(state.get("result_data", "")),
         "raw_data": updated_data,
+        "milestone_data": updated_payload,
         "milestonedata_written": bool(state.get("milestonedata_written")),
         "result_summary": str(state.get("result_summary", "")),
         "result_node_id": state.get("result_node_id"),

@@ -215,14 +215,14 @@ async def fetch_location_operating_signals(
 async def upsert_milestonedata_node(
     milestone_id: str,
     location_id: int,
-    data: str,
+    data: Any,
     user_id: str,
     *,
     client: httpx.AsyncClient,
 ) -> dict[str, Any]:
     """Create or update the single ``milestonedata`` child under ``milestone_id``.
 
-    ``data`` is the Markdown body stored in the node's ``data.data`` field.
+    ``data`` is the payload stored in the node's ``data.data`` field.
     Delegates to :func:`agents_app.agents.core.milestone_data.graphql_client.upsert_milestonedata`.
     """
     return await upsert_milestonedata(

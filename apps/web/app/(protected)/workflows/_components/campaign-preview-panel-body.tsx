@@ -2,12 +2,8 @@
 
 import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 
-import {
-  MarkdownEditField,
-  type MarkdownEditFieldManualSave,
-} from '@/components/markdown-edit-field'
 import {
   Card,
   CardContent,
@@ -15,8 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@workspace/ui/components/card'
+import { datesMilestoneDataSchema } from '@/lib/graphql/node-schemas'
 
-import { useTimelineActions, useTimelineWorkspaceState } from './timeline-context'
+import { useTimelineWorkspaceState } from './timeline-context'
 
 const PREVIEW_TITLE_ID = 'campaign-preview-panel-title'
 
@@ -24,88 +21,23 @@ export function CampaignPreviewPanelBody() {
   const t = useTranslations('analytics.campaigns.chat')
   const tWorkspace = useTranslations('analytics.campaigns.workspace')
   const {
-    milestoneState: { milestones, savingDataMilestoneId },
+    milestoneState: { milestones },
   } = useTimelineWorkspaceState()
-  const { onHydrateMilestoneData, onUpdateMilestoneData } = useTimelineActions()
   const [selectedId] = useQueryState('milestone', parseAsString)
 
   const selectedMilestone =
     selectedId !== null ? milestones.find((m) => m.id === selectedId) : undefined
   const showMilestonePreview = selectedMilestone !== undefined
-  const savingData = showMilestonePreview && savingDataMilestoneId === selectedMilestone.id
-
-  const [dataDraft, setDataDraft] = useState('')
-
-  /** Single source from list so RESET / refetches update the draft even when the object reference was stale. */
-  const milestoneDataFromList = useMemo(() => {
-    if (selectedId == null) {
-      return ''
+  const datesData = useMemo(() => {
+    if (!selectedMilestone || selectedMilestone.presetId !== 'dates') {
+      return null
     }
-    return milestones.find((m) => m.id === selectedId)?.data ?? ''
-  }, [milestones, selectedId])
-
-  useLayoutEffect(() => {
-    setDataDraft(milestoneDataFromList)
-  }, [milestoneDataFromList])
-
-  const hydrateAttempted = useRef<Set<string>>(new Set())
-  useEffect(() => {
-    if (selectedId == null) {
-      return
+    const parsed = datesMilestoneDataSchema.safeParse(selectedMilestone.data)
+    if (!parsed.success) {
+      return null
     }
-    const row = milestones.find((m) => m.id === selectedId)
-    if (!row) {
-      return
-    }
-    if ((row.data ?? '').trim().length > 0) {
-      return
-    }
-    if (hydrateAttempted.current.has(selectedId)) {
-      return
-    }
-    hydrateAttempted.current.add(selectedId)
-    void onHydrateMilestoneData(selectedId)
-  }, [selectedId, milestones, onHydrateMilestoneData])
-
-  const handleDataSave = useCallback(() => {
-    if (!selectedMilestone || savingData) {
-      return
-    }
-    const server = selectedMilestone.data ?? ''
-    if (dataDraft === server) {
-      return
-    }
-    void (async () => {
-      const ok = await onUpdateMilestoneData(selectedMilestone.id, dataDraft)
-      if (!ok) {
-        setDataDraft(server)
-      }
-    })()
-  }, [selectedMilestone, dataDraft, savingData, onUpdateMilestoneData])
-
-  const dataSaveStatus = savingData
-    ? 'saving'
-    : selectedMilestone && dataDraft !== (selectedMilestone.data ?? '')
-      ? 'unsaved'
-      : 'saved'
-
-  const saveStatusMessages = useMemo(
-    () => ({
-      saving: t('fieldSaveStatusSaving'),
-      saved: t('fieldSaveStatusSaved'),
-      unsaved: t('fieldSaveStatusUnsaved'),
-    }),
-    [t],
-  )
-
-  const dataManualSave = useMemo(
-    (): MarkdownEditFieldManualSave => ({
-      messages: saveStatusMessages,
-      onSave: handleDataSave,
-      status: dataSaveStatus,
-    }),
-    [dataSaveStatus, handleDataSave, saveStatusMessages],
-  )
+    return parsed.data
+  }, [selectedMilestone])
 
   return (
     <Card className="flex h-full min-h-0 flex-col overflow-hidden border-dashed">
@@ -122,23 +54,38 @@ export function CampaignPreviewPanelBody() {
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden pt-0">
         {showMilestonePreview ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-2">
-            <MarkdownEditField
-              disabled={savingData}
-              editTabLabel={t('milestoneDataEditTab')}
-              embeddedHeight="fill"
-              formatPreset="milestone-data"
-              id={`campaign-milestone-data-preview-${selectedMilestone.id}`}
-              key={selectedMilestone.id}
-              manualSave={dataManualSave}
-              onChange={setDataDraft}
-              placeholder={t('milestoneDataPlaceholder')}
-              previewEmptyLabel={t('milestoneDataPreviewEmpty')}
-              previewTabLabel={t('milestoneDataPreviewTab')}
-              textareaClassName="min-h-0 resize-y whitespace-pre-wrap"
-              value={dataDraft}
-            />
-          </div>
+          datesData ? (
+            <div className="min-h-0 overflow-auto rounded-md border p-4">
+              <dl className="grid grid-cols-[140px_1fr] gap-y-2 text-sm">
+                <dt className="font-medium text-foreground">
+                  {t('milestoneDatesPreviewStartDate')}
+                </dt>
+                <dd className="text-muted-foreground">
+                  {datesData.startDate || t('milestoneDatesPreviewValueEmpty')}
+                </dd>
+                <dt className="font-medium text-foreground">{t('milestoneDatesPreviewEndDate')}</dt>
+                <dd className="text-muted-foreground">
+                  {datesData.endDate || t('milestoneDatesPreviewValueEmpty')}
+                </dd>
+                <dt className="font-medium text-foreground">
+                  {t('milestoneDatesPreviewPublicHolidays')}
+                </dt>
+                <dd className="text-muted-foreground">
+                  {datesData.publicHolidays.length === 0
+                    ? t('milestoneDatesPreviewNoHolidays')
+                    : datesData.publicHolidays
+                        .map((holiday) =>
+                          [holiday.name, holiday.date, holiday.description]
+                            .filter((part) => part.trim().length > 0)
+                            .join(' - '),
+                        )
+                        .join(', ')}
+                </dd>
+              </dl>
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm">{t('milestonePreviewUnsupported')}</p>
+          )
         ) : (
           <p className="text-muted-foreground text-sm">
             {tWorkspace('previewNoMilestoneSelected')}

@@ -1,6 +1,13 @@
 import { z } from 'zod'
 
-import { milestoneRunSkillModeSchema, passCriteriaDataSchema } from '@/lib/graphql/node-schemas'
+import {
+  datesMilestoneDataSchema,
+  datesMilestoneInputSchema,
+  milestonePresetIdSchema,
+  milestoneInputSchema,
+  milestoneRunSkillModeSchema,
+  passCriteriaDataSchema,
+} from '@/lib/graphql/node-schemas'
 
 export const workflowIdParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow id')
 
@@ -19,10 +26,18 @@ export const patchMilestoneSchema = z
     name: z.string().trim().min(1).max(500).optional(),
     /** Free-form text; not trimmed so spaces inside and at edges are preserved. */
     goal: z.string().optional(),
-    /** Milestone Data tab; persisted on a child `milestonedata` node as `{ data: string }`. */
-    milestoneData: z.string().optional(),
+    /** Milestone Data tab; persisted on a child `milestonedata` node. */
+    milestoneData: z.union([z.string(), datesMilestoneDataSchema]).optional(),
+    /** Typed milestone input; stored on milestone node `data` JSON. */
+    milestoneInput: z
+      .union([
+        z.object({ type: z.literal('dates'), value: datesMilestoneInputSchema }),
+        milestoneInputSchema,
+      ])
+      .optional(),
     /** Stored on milestone node `data` JSON. */
     dataTask: z.enum(['manual']).optional(),
+    presetId: milestonePresetIdSchema.optional(),
     /** Stored on milestone node `data` JSON; agents skip LLM skill pick when `fixed` + valid ids. */
     milestoneRunSkillMode: milestoneRunSkillModeSchema.optional(),
     milestoneRunSkillIds: z.array(z.string().trim().min(1)).max(2).optional(),
@@ -34,13 +49,15 @@ export const patchMilestoneSchema = z
       v.name !== undefined ||
       v.goal !== undefined ||
       v.milestoneData !== undefined ||
+      v.milestoneInput !== undefined ||
       v.dataTask !== undefined ||
+      v.presetId !== undefined ||
       v.milestoneRunSkillMode !== undefined ||
       v.milestoneRunSkillIds !== undefined ||
       v.passCriteria !== undefined ||
       v.move !== undefined,
     {
       message:
-        'Provide at least one of name, goal, milestoneData, dataTask, milestoneRunSkillMode, milestoneRunSkillIds, passCriteria, or move',
+        'Provide at least one of name, goal, milestoneData, milestoneInput, dataTask, presetId, milestoneRunSkillMode, milestoneRunSkillIds, passCriteria, or move',
     },
   )

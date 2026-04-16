@@ -58,6 +58,9 @@ async def iter_milestone_run_sse_lines(
     location_id: int,
     user_id: str,
     workflow_id: str | None = None,
+    goal: str | None = None,
+    milestone_input: dict[str, Any] | None = None,
+    milestone_data: dict[str, Any] | str | None = None,
     traceparent: str | None = None,
 ) -> AsyncIterator[str]:
     """Stream Server-Sent Event lines: run_id, custom step payloads, then a final ``done`` object."""
@@ -81,6 +84,9 @@ async def iter_milestone_run_sse_lines(
         "run_id": run_id,
         "goal": "",
         "raw_data": "",
+        "milestone_data": milestone_data,
+        "milestone_input": milestone_input,
+        "request_goal": goal,
         "criteria": [],
         "prior_milestones_data": "",
         "api_adapter_tools": [],
@@ -168,7 +174,11 @@ async def iter_milestone_run_sse_lines(
                 "criteria": criteria_payload,
             }
             if final_state.get("milestonedata_written"):
-                done_payload["dataPreview"] = str(final_state.get("result_data") or "")
+                final_preview = final_state.get("milestone_data")
+                if isinstance(final_preview, (dict, list)):
+                    done_payload["dataPreview"] = final_preview
+                else:
+                    done_payload["dataPreview"] = str(final_state.get("result_data") or "")
             yield format_sse_line(done_payload)
             run_ok = True
         else:

@@ -12,7 +12,7 @@ import { MilestoneItemTabs } from './milestone-item-tabs'
 import { MilestoneRunProgressStrip } from './milestone-run-progress'
 import { isKeyboardEventFromNestedInteractive, TimelineRailMarker } from './timeline-rail'
 import type {
-  MilestoneRunSkillMode,
+  DatesMilestoneInput,
   PassCriteriaRow,
   TimelineMilestone,
   TimelineMilestoneStatus,
@@ -37,14 +37,26 @@ function TimelineItemInner({
   onSelect,
   showDelete,
 }: TimelineItemProps) {
+  const datesInputFromMilestone = (row: TimelineMilestone): DatesMilestoneInput => {
+    const raw = row.milestoneInput
+    if (raw?.type === 'dates' && raw.value != null && typeof raw.value === 'object') {
+      const value = raw.value as Partial<DatesMilestoneInput>
+      return {
+        startDate: typeof value.startDate === 'string' ? value.startDate : '',
+        endDate: typeof value.endDate === 'string' ? value.endDate : '',
+      }
+    }
+    return { startDate: '', endDate: '' }
+  }
+
   const {
     onDeleteMilestone,
     onRenameMilestone,
     onUpdatePassCriteria,
     onUpdateMilestoneGoal,
+    onUpdateMilestoneInput,
     onMoveMilestone,
     onRunMilestone,
-    onUpdateMilestoneRunSettings,
   } = useTimelineActions()
   const {
     milestoneState: {
@@ -53,7 +65,7 @@ function TimelineItemInner({
       renamingMilestoneId,
       savingPassCriteriaMilestoneId,
       savingGoalMilestoneId,
-      savingMilestoneSettingsMilestoneId,
+      savingDataMilestoneId,
       runningMilestoneId,
       runningStep,
     },
@@ -81,38 +93,16 @@ function TimelineItemInner({
 
   const savingPassCriteria = savingPassCriteriaMilestoneId === milestone.id
   const savingGoal = savingGoalMilestoneId === milestone.id
-  const savingMilestoneSettings = savingMilestoneSettingsMilestoneId === milestone.id
+  const savingInput = savingDataMilestoneId === milestone.id
+  const isDatesPreset = milestone.presetId === 'dates'
 
-  const [settingsMode, setSettingsMode] = useState<MilestoneRunSkillMode>(
-    () => milestone.milestoneRunSkillMode ?? 'auto',
-  )
-  const [settingsSkillIds, setSettingsSkillIds] = useState<string[]>(
-    () => milestone.milestoneRunSkillIds ?? [],
+  const [inputDraft, setInputDraft] = useState<DatesMilestoneInput>(() =>
+    datesInputFromMilestone(milestone),
   )
 
   useEffect(() => {
-    setSettingsMode(milestone.milestoneRunSkillMode ?? 'auto')
-    setSettingsSkillIds(milestone.milestoneRunSkillIds ?? [])
-  }, [milestone.id, milestone.milestoneRunSkillMode, milestone.milestoneRunSkillIds])
-
-  const toggleSettingsSkill = useCallback((skillId: string) => {
-    setSettingsSkillIds((prev) => {
-      if (prev.includes(skillId)) {
-        return prev.filter((x) => x !== skillId)
-      }
-      if (prev.length >= 2) {
-        return prev
-      }
-      return [...prev, skillId]
-    })
-  }, [])
-
-  const handleSaveMilestoneSettings = useCallback(async () => {
-    await onUpdateMilestoneRunSettings(milestone.id, {
-      milestoneRunSkillMode: settingsMode,
-      milestoneRunSkillIds: settingsMode === 'fixed' ? settingsSkillIds : [],
-    })
-  }, [milestone.id, onUpdateMilestoneRunSettings, settingsMode, settingsSkillIds])
+    setInputDraft(datesInputFromMilestone(milestone))
+  }, [milestone.id, milestone.milestoneInput])
   useEffect(() => {
     setGoalDraft(milestone.goal ?? '')
   }, [milestone.id, milestone.goal])
@@ -191,6 +181,10 @@ function TimelineItemInner({
 
   const goalFieldId = `milestone-goal-${milestone.id}`
   const hasResult = Boolean(milestone.resultMarkdown?.trim())
+  const serverDatesInput = datesInputFromMilestone(milestone)
+  const inputDirty =
+    inputDraft.startDate !== serverDatesInput.startDate ||
+    inputDraft.endDate !== serverDatesInput.endDate
 
   const handleGoalSave = () => {
     if (!onUpdateMilestoneGoal || savingGoal) {
@@ -206,6 +200,22 @@ function TimelineItemInner({
         setGoalDraft(server)
       }
     })()
+  }
+
+  const handleInputSave = async () => {
+    if (!isDatesPreset || savingInput || !onUpdateMilestoneInput) {
+      return
+    }
+    if (!inputDirty) {
+      return
+    }
+    const ok = await onUpdateMilestoneInput(milestone.id, {
+      type: 'dates',
+      value: inputDraft,
+    })
+    if (!ok) {
+      setInputDraft(serverDatesInput)
+    }
   }
 
   const isDeleting = deletingMilestoneId === milestone.id
@@ -310,19 +320,19 @@ function TimelineItemInner({
                   goalFieldId,
                   handleAddPassCriterion,
                   handleGoalSave,
+                  handleInputSave,
                   handleRemovePassCriterion,
                   hasResult,
+                  inputDirty,
+                  inputDraft,
                   isMilestoneRunning,
+                  isDatesPreset,
                   milestone,
                   savingGoal,
+                  savingInput,
                   savingPassCriteria,
                   setGoalDraft,
-                  settingsMode,
-                  setSettingsMode,
-                  settingsSkillIds,
-                  toggleSettingsSkill,
-                  handleSaveMilestoneSettings,
-                  savingMilestoneSettings,
+                  setInputDraft,
                 }}
               />
             </CollapsibleContent>

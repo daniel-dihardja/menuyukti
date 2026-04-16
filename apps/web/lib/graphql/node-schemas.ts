@@ -18,6 +18,44 @@ export const milestoneRunSkillModeSchema = z.enum(['auto', 'fixed'])
 
 export type MilestoneRunSkillMode = z.infer<typeof milestoneRunSkillModeSchema>
 
+export const milestonePresetIdSchema = z.enum([
+  'dates',
+  'restaurant_brand_brief',
+  'promotion_candidates',
+])
+
+export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
+
+export const datesMilestoneInputSchema = z.object({
+  startDate: z.string(),
+  endDate: z.string(),
+})
+
+export type DatesMilestoneInput = z.infer<typeof datesMilestoneInputSchema>
+
+export const milestoneInputSchema = z.object({
+  type: z.string().trim().min(1),
+  value: z.unknown().optional(),
+})
+
+export type MilestoneInput = z.infer<typeof milestoneInputSchema>
+
+export const datesPublicHolidaySchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  date: z.string(),
+})
+
+export type DatesPublicHoliday = z.infer<typeof datesPublicHolidaySchema>
+
+export const datesMilestoneDataSchema = z.object({
+  startDate: z.string(),
+  endDate: z.string(),
+  publicHolidays: z.array(datesPublicHolidaySchema),
+})
+
+export type DatesMilestoneData = z.infer<typeof datesMilestoneDataSchema>
+
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
@@ -33,6 +71,8 @@ export const milestoneDataSchema = z
      */
     milestoneRunSkillMode: milestoneRunSkillModeSchema.optional(),
     milestoneRunSkillIds: z.array(z.string()).max(2).optional(),
+    presetId: milestonePresetIdSchema.optional(),
+    milestoneInput: milestoneInputSchema.optional(),
   })
   .passthrough()
 
@@ -45,9 +85,13 @@ export const goalDataSchema = z.object({
 
 export type GoalData = z.infer<typeof goalDataSchema>
 
-/** Child `milestonedata` node JSON — matches backend `MilestoneDataHandler` validation. */
+/** Child `milestonedata` node JSON — string markdown or structured preset data. */
+export const milestonedataValueSchema = z.union([z.string(), datesMilestoneDataSchema])
+
+export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>
+
 export const milestonedataDataSchema = z.object({
-  data: z.string(),
+  data: milestonedataValueSchema,
 })
 
 export type MilestonedataData = z.infer<typeof milestonedataDataSchema>

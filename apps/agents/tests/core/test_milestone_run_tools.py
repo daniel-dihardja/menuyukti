@@ -88,6 +88,20 @@ def test_read_data_returns_raw_data() -> None:
     assert out.startswith("# Notes")
 
 
+def test_read_data_returns_json_when_structured_data_present() -> None:
+    ctx = {
+        "milestone_data": {
+            "startDate": "2026-06-01",
+            "endDate": "2026-06-30",
+            "publicHolidays": [],
+        }
+    }
+    tools = _tools_for_context(ctx)
+    read_data = _tool_by_name(tools, "read_data")
+    out = read_data.invoke({})
+    assert '"startDate": "2026-06-01"' in out
+
+
 def test_read_prior_milestones_returns_context() -> None:
     ctx = {"prior_milestones_data": "## Campaign Brief\n\n**Start:** 2026-05-01"}
     tools = _tools_for_context(ctx)
@@ -273,6 +287,40 @@ async def test_write_result_data_upserts_and_updates_context() -> None:
     mock_upsert.assert_awaited_once()
     assert ctx.get("result_data") == "Updated body"
     assert "md-9" in out
+
+
+@pytest.mark.asyncio
+async def test_write_result_data_parses_structured_json_when_context_is_structured() -> None:
+    ctx: dict[str, Any] = {
+        "milestone_data": {
+            "startDate": "",
+            "endDate": "",
+            "publicHolidays": [],
+        }
+    }
+    client = MagicMock(spec=AsyncMock)
+
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
+        new=AsyncMock(return_value={"id": "md-10"}),
+    ) as mock_upsert:
+        tools = _tools_for_context(ctx, client=client)
+        write_result_data = _tool_by_name(tools, "write_result_data")
+        out = await write_result_data.ainvoke(
+            {
+                "new_data": '{"startDate":"2026-06-01","endDate":"2026-06-30","publicHolidays":[]}'
+            }
+        )
+
+    mock_upsert.assert_awaited_once()
+    awaited_payload = mock_upsert.await_args.args[2]
+    assert awaited_payload == {
+        "startDate": "2026-06-01",
+        "endDate": "2026-06-30",
+        "publicHolidays": [],
+    }
+    assert isinstance(ctx.get("milestone_data"), dict)
+    assert "md-10" in out
 
 
 def test_validate_extra_tool_ids_rejects_unknown() -> None:

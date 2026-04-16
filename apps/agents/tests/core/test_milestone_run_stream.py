@@ -142,3 +142,64 @@ async def test_iter_milestone_run_sse_done_includes_data_preview_when_milestoned
     assert len(payloads) == 2
     done = payloads[1]
     assert done.get("dataPreview") == "## Updated\n\nBody"
+
+
+@pytest.mark.asyncio
+async def test_iter_milestone_run_sse_done_includes_object_data_preview() -> None:
+    async def fake_astream(*_a: object, **_k: object):
+        yield (
+            "values",
+            {
+                "result_node_id": "node-99",
+                "result_summary": "Done",
+                "result_data": "",
+                "milestone_data": {
+                    "startDate": "2026-06-01",
+                    "endDate": "2026-06-30",
+                    "publicHolidays": [],
+                },
+                "milestonedata_written": True,
+                "last_criteria_verdicts": [],
+            },
+        )
+
+    mock_graph = MagicMock()
+    mock_graph.astream = fake_astream
+
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.stream.build_milestone_run_graph",
+            return_value=mock_graph,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.stream.start_milestone_agent_run_record",
+            new=AsyncMock(return_value=True),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.stream.complete_milestone_agent_run_record",
+            new=AsyncMock(),
+        ),
+    ):
+        lines: list[str] = []
+        async for line in iter_milestone_run_sse_lines(
+            client=MagicMock(spec=AsyncMock),
+            milestone_id="m1",
+            location_id=2,
+            user_id="u1",
+            goal="Generate holiday ranges",
+            milestone_input={"type": "dates", "value": {"startDate": "2026-06-01", "endDate": "2026-06-30"}},
+            milestone_data={
+                "startDate": "2026-06-01",
+                "endDate": "2026-06-30",
+                "publicHolidays": [],
+            },
+        ):
+            lines.append(line)
+
+    payloads = _parse_sse_data_lines(lines)
+    done = payloads[1]
+    assert done.get("dataPreview") == {
+        "startDate": "2026-06-01",
+        "endDate": "2026-06-30",
+        "publicHolidays": [],
+    }

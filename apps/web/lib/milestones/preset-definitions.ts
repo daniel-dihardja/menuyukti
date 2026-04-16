@@ -3,6 +3,7 @@ import type {
   MilestoneRunSkillMode,
   PassCriteriaRow,
 } from '@/app/(protected)/workflows/_components/timeline/types'
+import type { MilestoneInput, MilestonedataValue } from '@/lib/graphql/node-schemas'
 
 export const MILESTONE_PRESET_IDS = [
   'dates',
@@ -22,7 +23,9 @@ export type MilestonePresetPassCriterionDraft = Pick<PassCriteriaRow, 'requireme
 export type MilestonePresetCreateFields = {
   name: string
   dataTask: MilestoneDataTask
-  milestoneData: string
+  presetId: MilestonePresetId
+  milestoneData: MilestonedataValue
+  milestoneInput?: MilestoneInput
   goal?: string
   milestoneRunSkillMode?: MilestoneRunSkillMode
   milestoneRunSkillIds?: string[]
@@ -41,9 +44,21 @@ export function getMilestonePresetCreateFields(
   switch (presetId) {
     case 'dates':
       return {
+        presetId: 'dates',
         name: t('milestonePreset.dates.title'),
         dataTask: 'manual',
-        milestoneData: t('milestonePreset.dates.dataMarkdown'),
+        milestoneInput: {
+          type: 'dates',
+          value: {
+            startDate: '',
+            endDate: '',
+          },
+        },
+        milestoneData: {
+          startDate: '',
+          endDate: '',
+          publicHolidays: [],
+        },
         goal: t('milestonePreset.dates.goal'),
         milestoneRunSkillMode: 'fixed',
         milestoneRunSkillIds: ['public_holidays'],
@@ -64,6 +79,7 @@ export function getMilestonePresetCreateFields(
       }
     case 'restaurant_brand_brief':
       return {
+        presetId: 'restaurant_brand_brief',
         name: t('milestonePreset.restaurant_brand_brief.title'),
         dataTask: 'manual',
         milestoneData: t('milestonePreset.restaurant_brand_brief.dataMarkdown'),
@@ -95,6 +111,7 @@ export function getMilestonePresetCreateFields(
       }
     case 'promotion_candidates':
       return {
+        presetId: 'promotion_candidates',
         name: t('milestonePreset.promotion_candidates.title'),
         dataTask: 'manual',
         milestoneData: t('milestonePreset.promotion_candidates.dataMarkdown'),
