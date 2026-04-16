@@ -1,11 +1,13 @@
 import {
   brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
+  emptyPromotionCandidatesMilestoneData,
   goalDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataDataSchema,
   passCriteriaDataSchema,
+  promotionCandidatesMilestoneDataSchema,
   resultDataSchema,
 } from '@/lib/graphql/node-schemas'
 import type { AnyNode } from '@/lib/graphql/queries'
@@ -208,6 +210,14 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
         proofOrientedAngles: [],
         toneGuardrails: [],
       }
+    }
+  }
+  if (presetId === 'promotion_candidates') {
+    const parsedPromotionData = promotionCandidatesMilestoneDataSchema.safeParse(data)
+    if (parsedPromotionData.success) {
+      normalizedData = parsedPromotionData.data
+    } else {
+      normalizedData = emptyPromotionCandidatesMilestoneData()
     }
   }
 

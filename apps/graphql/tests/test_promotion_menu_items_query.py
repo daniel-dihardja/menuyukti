@@ -1,6 +1,7 @@
 """Integration tests for promotionMenuItems GraphQL field."""
 
 import asyncio
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
@@ -27,6 +28,8 @@ query PromotionMenuItems($runId: ID!, $locationId: ID) {
     analyticsRunId
     periodStart
     periodEnd
+    itemsTotalCount
+    itemsTruncated
     items {
       menu
       quantity
@@ -101,7 +104,10 @@ def test_promotion_menu_items_with_qa_data(
     payload = result.data["promotionMenuItems"]
     assert payload is not None
     items = payload["items"]
-    assert len(items) == _expected_extracted_count()
+    expected_n = _expected_extracted_count()
+    assert len(items) == expected_n
+    assert payload["itemsTotalCount"] == expected_n
+    assert payload["itemsTruncated"] is False
 
     by_menu = {i["menu"]: i for i in items}
     for menu, exp in matrix_by_menu.items():
@@ -139,7 +145,10 @@ def test_promotion_menu_items_none_without_cogs(analytics_run_with_qa_sales_only
     payload = result.data["promotionMenuItems"]
     assert payload is not None
     items = payload["items"]
-    assert len(items) == _expected_extracted_count()
+    expected_n = _expected_extracted_count()
+    assert len(items) == expected_n
+    assert payload["itemsTotalCount"] == expected_n
+    assert payload["itemsTruncated"] is False
 
     for row in items:
         assert row["cogs"] is None
@@ -152,6 +161,31 @@ def test_promotion_menu_items_none_without_cogs(analytics_run_with_qa_sales_only
         assert row["action"] is None
         assert isinstance(row["quantity"], int)
         assert float(row["totalRevenue"]) > 0
+
+
+def test_promotion_menu_items_truncates_when_cap_exceeded(analytics_run_with_qa_data):
+    """With a lowered cap, fewer items are returned than menus evaluated."""
+    run_id = analytics_run_with_qa_data
+    expected_n = _expected_extracted_count()
+    assert expected_n == 4
+
+    with patch(
+        "graphql.services.promotion_menu_items._MAX_PROMOTION_MENU_ITEMS",
+        3,
+    ):
+        result = asyncio.run(
+            schema.execute(
+                PROMOTION_MENU_ITEMS_QUERY,
+                variable_values={"runId": str(run_id), "locationId": None},
+                context_value=graphql_auth_context(),
+            )
+        )
+    assert not result.errors
+    payload = result.data["promotionMenuItems"]
+    assert payload is not None
+    assert len(payload["items"]) == 3
+    assert payload["itemsTotalCount"] == 4
+    assert payload["itemsTruncated"] is True
 
 
 def test_promotion_menu_items_wrong_location_returns_none(analytics_run_with_qa_data):

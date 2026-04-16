@@ -6,10 +6,12 @@ import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-wo
 import {
   brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
+  emptyPromotionCandidatesMilestoneData,
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataDataSchema,
   passCriteriaDataSchema,
+  promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import {
   CREATE_NODE_MUTATION,
@@ -131,11 +133,11 @@ async function assertPassCriteriaBelongsToMilestone(
   }
 }
 
-/** Persist Data tab payload on a child `milestonedata` node; empty markdown removes node(s). */
+/** Persist Data tab payload on a child `milestonedata` node; `null` removes milestonedata child node(s). */
 async function syncMilestonedataChild(
   locationId: number,
   milestoneId: string,
-  dataValue: z.infer<typeof milestonedataDataSchema>['data'],
+  dataValue: z.infer<typeof milestonedataDataSchema>['data'] | null,
   userId: string,
 ) {
   const existing = parseNodesData(
@@ -150,7 +152,7 @@ async function syncMilestonedataChild(
     ),
   )
   const rows = existing.nodes.filter((n) => n.nodeType === 'milestonedata')
-  if (typeof dataValue === 'string' && dataValue === '') {
+  if (dataValue === null) {
     for (const g of rows) {
       await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: g.id }, userId)
     }
@@ -305,7 +307,7 @@ export async function GET(_req: Request, context: RouteContext) {
     ])
 
     const milestonedataParsed = parseNodesData(milestonedataRes)
-    let milestoneData: z.infer<typeof milestonedataDataSchema>['data'] = ''
+    let milestoneData: z.infer<typeof milestonedataDataSchema>['data'] | null = null
     for (const n of milestonedataParsed.nodes) {
       if (n.nodeType !== 'milestonedata') {
         continue
@@ -366,6 +368,15 @@ export async function GET(_req: Request, context: RouteContext) {
           proofOrientedAngles: [],
           toneGuardrails: [],
         }
+      }
+    }
+    if (
+      parsedMilestoneNodeData?.success &&
+      parsedMilestoneNodeData.data.presetId === 'promotion_candidates'
+    ) {
+      const promotionParsed = promotionCandidatesMilestoneDataSchema.safeParse(milestoneData)
+      if (!promotionParsed.success) {
+        milestoneData = emptyPromotionCandidatesMilestoneData()
       }
     }
 

@@ -3,7 +3,11 @@ import type {
   MilestoneRunSkillMode,
   PassCriteriaRow,
 } from '@/app/(protected)/workflows/_components/timeline/types'
-import type { MilestoneInput, MilestonedataValue } from '@/lib/graphql/node-schemas'
+import {
+  emptyPromotionCandidatesMilestoneData,
+  type MilestoneInput,
+  type MilestonedataValue,
+} from '@/lib/graphql/node-schemas'
 
 export const MILESTONE_PRESET_IDS = [
   'dates',
@@ -125,7 +129,9 @@ export function getMilestonePresetCreateFields(
         presetId: 'promotion_candidates',
         name: t('milestonePreset.promotion_candidates.title'),
         dataTask: 'manual',
-        milestoneData: t('milestonePreset.promotion_candidates.dataMarkdown'),
+        milestoneData: emptyPromotionCandidatesMilestoneData(
+          t('milestonePreset.promotion_candidates.placementHint'),
+        ) satisfies MilestonedataValue,
         goal: t('milestonePreset.promotion_candidates.goal'),
         milestoneRunSkillMode: 'fixed',
         milestoneRunSkillIds: ['promotion_candidates'],

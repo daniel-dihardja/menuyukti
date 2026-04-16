@@ -2,13 +2,17 @@
 
 import { useTranslations } from 'next-intl'
 
-import { MarkdownMessage } from '@/components/markdown-message'
-import { brandBriefMilestoneDataSchema, datesMilestoneDataSchema } from '@/lib/graphql/node-schemas'
+import {
+  brandBriefMilestoneDataSchema,
+  datesMilestoneDataSchema,
+  promotionCandidatesMilestoneDataSchema,
+} from '@/lib/graphql/node-schemas'
 
 import type { TimelineMilestone } from '../timeline/types'
 
 import { MilestoneBrandBriefDataPreview } from './milestone-brand-brief-data-preview'
 import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
+import { MilestonePromotionDataPreview } from './milestone-promotion-data-preview'
 
 export type MilestoneDataPreviewProps = {
   milestone: TimelineMilestone
@@ -18,19 +22,8 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const data = milestone.data
 
-  if (data == null || (typeof data === 'string' && data.trim().length === 0)) {
+  if (data == null) {
     return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataEmpty')}</p>
-  }
-
-  if (typeof data === 'string') {
-    return (
-      <div className="min-h-0 overflow-auto rounded-md border p-4">
-        <MarkdownMessage
-          className="text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground/90 prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0 first:prose-p:mt-0 last:prose-p:mb-0"
-          content={data}
-        />
-      </div>
-    )
   }
 
   if (typeof data === 'object') {
@@ -76,6 +69,41 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
               audienceHypotheses: t('milestoneBrandBriefPreviewAudienceHypotheses'),
               proofOrientedAngles: t('milestoneBrandBriefPreviewProofOrientedAngles'),
               toneGuardrails: t('milestoneBrandBriefPreviewToneGuardrails'),
+              emptyList: t('milestoneBrandBriefPreviewEmptyList'),
+              emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
+            }}
+          />
+        </div>
+      )
+    }
+
+    if (milestone.presetId === 'promotion_candidates') {
+      const parsedPromotion = promotionCandidatesMilestoneDataSchema.safeParse(data)
+      if (!parsedPromotion.success) {
+        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+      }
+
+      return (
+        <div className="min-h-0 overflow-auto rounded-md border p-4">
+          <MilestonePromotionDataPreview
+            data={parsedPromotion.data}
+            labels={{
+              placement: t('milestonePromotionPreviewPlacement'),
+              puzzlePool: t('milestonePromotionPreviewPuzzlePool'),
+              puzzleItemsFound: t('milestonePromotionPreviewPuzzleItemsFound'),
+              threshold: t('milestonePromotionPreviewThreshold'),
+              selectedCount: t('milestonePromotionPreviewSelectedCount'),
+              promotionCandidates: t('milestonePromotionPreviewPromotionCandidates'),
+              rankedCandidates: t('milestonePromotionPreviewRankedCandidates'),
+              rankedCandidatesCount: t('milestonePromotionPreviewRankedCandidatesCount', {
+                count: parsedPromotion.data.rankedCandidates.length,
+              }),
+              context: t('milestonePromotionPreviewContext'),
+              campaignWindow: t('milestonePromotionPreviewCampaignWindow'),
+              brandBrief: t('milestonePromotionPreviewBrandBrief'),
+              menu: t('milestonePromotionPreviewMenu'),
+              rationale: t('milestonePromotionPreviewRationale'),
+              instagram: t('milestonePromotionPreviewInstagram'),
               emptyList: t('milestoneBrandBriefPreviewEmptyList'),
               emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
             }}

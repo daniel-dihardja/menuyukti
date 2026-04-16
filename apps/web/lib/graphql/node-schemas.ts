@@ -75,6 +75,86 @@ export const brandBriefMilestoneDataSchema = z.object({
 
 export type BrandBriefMilestoneData = z.infer<typeof brandBriefMilestoneDataSchema>
 
+/** Instagram promotion guidance for one candidate menu item. */
+export const promotionInstagramPromotionSchema = z.object({
+  angle: z.string(),
+  format: z.string(),
+  cta: z.string(),
+  timing: z.string(),
+})
+
+export type PromotionInstagramPromotion = z.infer<typeof promotionInstagramPromotionSchema>
+
+/** One curated promotion candidate (POS-exact menu name + rationale + optional puzzle analysis). */
+export const promotionCandidateItemSchema = z.object({
+  menu: z.string(),
+  rationale: z.array(z.string()),
+  puzzleAnalysis: z.string().optional(),
+  instagramPromotion: promotionInstagramPromotionSchema.optional(),
+})
+
+export type PromotionCandidateItem = z.infer<typeof promotionCandidateItemSchema>
+
+/** Summary counts for the puzzle opportunity pool (from analytics + menu engineering). */
+export const promotionPuzzleOpportunityPoolSchema = z.object({
+  puzzleItemsFound: z.number().int().nonnegative(),
+  threshold: z.number(),
+  selectedCount: z.number().int().nonnegative(),
+})
+
+export type PromotionPuzzleOpportunityPool = z.infer<typeof promotionPuzzleOpportunityPoolSchema>
+
+/** Prior milestone alignment notes (filled by the milestone agent). */
+export const promotionCandidatesContextSchema = z.object({
+  campaignWindowNotes: z.string().optional(),
+  brandBriefAlignmentNotes: z.string().optional(),
+})
+
+export type PromotionCandidatesContext = z.infer<typeof promotionCandidatesContextSchema>
+
+/** One ranked row from promotion signals (extra fields allowed from analytics). */
+export const promotionRankedCandidateSchema = z
+  .object({
+    menu: z.string(),
+    recommendation: z.string(),
+    score: z.number(),
+    quantity: z.number().int(),
+    totalRevenue: z.number(),
+    signalReasons: z.array(z.string()),
+  })
+  .passthrough()
+
+export type PromotionRankedCandidate = z.infer<typeof promotionRankedCandidateSchema>
+
+/** Structured Data tab for the Promotion Candidates milestone preset. */
+export const promotionCandidatesMilestoneDataSchema = z.object({
+  placement: z.string(),
+  puzzleOpportunityPool: promotionPuzzleOpportunityPoolSchema,
+  promotionCandidates: z.array(promotionCandidateItemSchema),
+  rankedCandidates: z.array(promotionRankedCandidateSchema),
+  context: promotionCandidatesContextSchema.optional(),
+})
+
+export type PromotionCandidatesMilestoneData = z.infer<
+  typeof promotionCandidatesMilestoneDataSchema
+>
+
+export function emptyPromotionCandidatesMilestoneData(
+  placement = '',
+): PromotionCandidatesMilestoneData {
+  return {
+    placement,
+    puzzleOpportunityPool: {
+      puzzleItemsFound: 0,
+      threshold: 0,
+      selectedCount: 0,
+    },
+    promotionCandidates: [],
+    rankedCandidates: [],
+    context: {},
+  }
+}
+
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
@@ -104,11 +184,11 @@ export const goalDataSchema = z.object({
 
 export type GoalData = z.infer<typeof goalDataSchema>
 
-/** Child `milestonedata` node JSON — string markdown or structured preset data. */
+/** Child `milestonedata` node JSON — structured preset data only (breaking change: no markdown string). */
 export const milestonedataValueSchema = z.union([
-  z.string(),
   datesMilestoneDataSchema,
   brandBriefMilestoneDataSchema,
+  promotionCandidatesMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>

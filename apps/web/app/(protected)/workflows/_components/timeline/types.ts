@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import type { PromotionCandidatesMilestoneData } from '@/lib/graphql/node-schemas'
+
 export type TimelineMilestoneStatus = 'complete' | 'failed' | 'pending' | 'empty'
 
 export type PassCriteriaStatus = 'pass' | 'fail' | 'open'
@@ -60,7 +62,10 @@ export type BrandBriefMilestoneData = {
   toneGuardrails: string[]
 }
 
-export type MilestoneDataValue = string | DatesMilestoneData | BrandBriefMilestoneData
+export type MilestoneDataValue =
+  | DatesMilestoneData
+  | BrandBriefMilestoneData
+  | PromotionCandidatesMilestoneData
 
 export type TimelineMilestone = {
   id: string
@@ -68,7 +73,7 @@ export type TimelineMilestone = {
   passCriteria: PassCriteriaRow[]
   /** Free-form goal text for the Goal tab (stored on the goal child node). */
   goal?: string
-  /** Data tab content; stored on a child `milestonedata` node as `{ data: string | object }`. */
+  /** Data tab content; stored on a child `milestonedata` node as `{ data: object }`. */
   data?: MilestoneDataValue
   /** Preset marker for milestone-specific UI behavior. */
   presetId?: MilestonePresetId

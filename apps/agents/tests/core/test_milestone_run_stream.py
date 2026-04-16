@@ -106,7 +106,8 @@ async def test_iter_milestone_run_sse_done_includes_data_preview_when_milestoned
             {
                 "result_node_id": "node-99",
                 "result_summary": "Done",
-                "result_data": "## Updated\n\nBody",
+                "result_data": '{"placement":"x"}',
+                "milestone_data": {"placement": "x", "puzzleOpportunityPool": {"puzzleItemsFound": 0, "threshold": 0.0, "selectedCount": 0}, "promotionCandidates": [], "rankedCandidates": []},
                 "milestonedata_written": True,
                 "last_criteria_verdicts": [],
             },
@@ -141,7 +142,12 @@ async def test_iter_milestone_run_sse_done_includes_data_preview_when_milestoned
     payloads = _parse_sse_data_lines(lines)
     assert len(payloads) == 2
     done = payloads[1]
-    assert done.get("dataPreview") == "## Updated\n\nBody"
+    assert done.get("dataPreview") == {
+        "placement": "x",
+        "puzzleOpportunityPool": {"puzzleItemsFound": 0, "threshold": 0.0, "selectedCount": 0},
+        "promotionCandidates": [],
+        "rankedCandidates": [],
+    }
 
 
 @pytest.mark.asyncio

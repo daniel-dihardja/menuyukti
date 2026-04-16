@@ -7,7 +7,7 @@ from typing import Any
 
 SKILL_SELECTOR_SYSTEM = """You are a routing assistant for a restaurant campaign milestone run.
 
-Given the milestone goal, pass/fail criteria, and the current Data tab (Markdown), choose an **ordered list** \
+Given the milestone goal, pass/fail criteria, and the current Data tab (structured JSON or text snapshot), choose an **ordered list** \
 of one or two skill ids from the provided list. The run executes them in order: skills may only update the \
 Data tab state. After all skills finish, the system **automatically** evaluates pass criteria against the \
 Data tab state, writes the milestone summary, and persists the result — skills do not do that.
@@ -19,8 +19,7 @@ summary) beyond holidays alone.
 - Prefer `["public_holidays"]` when only holidays listing/confirmation is needed.
 - Prefer `["generic"]` for standard Data preparation when holidays are not a distinct requirement.
 - Prefer `["promotion_candidates"]` when the goal or criteria require **promotion candidate dishes** or **social post** \
-ideas grounded in **POS/analytics** (menu performance, Instagram signals), typically two Markdown variations with \
-named menu lines from data.
+ideas grounded in **POS/analytics** (menu performance, Instagram signals), producing a **structured JSON** Data tab.
 - Prefer `["brand_brief"]` when the goal or Data tab clearly describe a **brand brief** \
 (venue snapshot, content pillars, audience hypotheses, proof angles, tone guardrails) as the main deliverable.
 - Use at most **two** ids. Do not duplicate the same id.
@@ -91,7 +90,7 @@ def workspace_adapter_tools_prompt_suffix(adapters: list[dict[str, Any]]) -> str
 
 **Mandatory when applicable:** If the milestone goal names one of these tools (including in backticks) or asks to \
 fetch JSON from the workspace feed, you **must** invoke that tool by **exact name** at least once **before** \
-write_result_data. Merge the response into the Data tab as Markdown. Never invent feed data without calling the tool. \
+write_result_data. Merge the response into the Data tab (Markdown or structured JSON, matching the milestone). Never invent feed data without calling the tool. \
 If the tool returns an error message, write a short note in the Data tab."""
 
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import uuid
@@ -38,6 +39,51 @@ def _compact_trace_entry(chunk: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+async def _safe_complete_milestone_agent_run_record(
+    client: httpx.AsyncClient,
+    *,
+    run_id: str,
+    user_id: str,
+    run_ok: bool,
+    final_state: dict[str, Any] | None,
+    timeline: list[dict[str, Any]],
+    stream_error: str | None,
+) -> None:
+    """Persist run completion; never raises (avoids errors when the client is closed on cancel/shutdown)."""
+    if getattr(client, "is_closed", False):
+        _logger.warning(
+            "milestone_run.sse: skip completeMilestoneAgentRun (http client closed) run_id=%s",
+            run_id,
+        )
+        return
+    try:
+        await complete_milestone_agent_run_record(
+            client,
+            run_id=run_id,
+            user_id=user_id,
+            status="success" if run_ok else "error",
+            summary=_summary_from_final_state(final_state),
+            timeline=timeline or None,
+            error_message=None if run_ok else stream_error,
+        )
+    except RuntimeError as e:
+        if "closed" in str(e).lower():
+            _logger.warning(
+                "milestone_run.sse: completeMilestoneAgentRun skipped (client closed) run_id=%s",
+                run_id,
+            )
+        else:
+            _logger.exception(
+                "milestone_run.sse: completeMilestoneAgentRun RuntimeError run_id=%s",
+                run_id,
+            )
+    except Exception:
+        _logger.exception(
+            "milestone_run.sse: completeMilestoneAgentRun failed run_id=%s",
+            run_id,
+        )
+
+
 def _summary_from_final_state(fs: dict[str, Any] | None) -> dict[str, Any]:
     if not isinstance(fs, dict):
         return {}
@@ -60,7 +106,7 @@ async def iter_milestone_run_sse_lines(
     workflow_id: str | None = None,
     goal: str | None = None,
     milestone_input: dict[str, Any] | None = None,
-    milestone_data: dict[str, Any] | str | None = None,
+    milestone_data: dict[str, Any] | list[Any] | None = None,
     traceparent: str | None = None,
 ) -> AsyncIterator[str]:
     """Stream Server-Sent Event lines: run_id, custom step payloads, then a final ``done`` object."""
@@ -177,8 +223,6 @@ async def iter_milestone_run_sse_lines(
                 final_preview = final_state.get("milestone_data")
                 if isinstance(final_preview, (dict, list)):
                     done_payload["dataPreview"] = final_preview
-                else:
-                    done_payload["dataPreview"] = str(final_state.get("result_data") or "")
             yield format_sse_line(done_payload)
             run_ok = True
         else:
@@ -188,17 +232,20 @@ async def iter_milestone_run_sse_lines(
                 run_id,
                 milestone_id,
             )
+    except asyncio.CancelledError:
+        stream_error = "cancelled"
+        raise
     except Exception as e:
         stream_error = str(e)
         raise
     finally:
         if started:
-            await complete_milestone_agent_run_record(
+            await _safe_complete_milestone_agent_run_record(
                 client,
                 run_id=run_id,
                 user_id=user_id,
-                status="success" if run_ok else "error",
-                summary=_summary_from_final_state(final_state),
-                timeline=timeline or None,
-                error_message=None if run_ok else stream_error,
+                run_ok=run_ok,
+                final_state=final_state,
+                timeline=timeline,
+                stream_error=stream_error,
             )

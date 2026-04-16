@@ -540,8 +540,8 @@ export function useMilestoneOperations(
               const summary = typeof payload.summary === 'string' ? payload.summary : ''
               const dataPreview =
                 'dataPreview' in payload &&
-                (typeof payload.dataPreview === 'string' ||
-                  (payload.dataPreview != null && typeof payload.dataPreview === 'object'))
+                payload.dataPreview != null &&
+                typeof payload.dataPreview === 'object'
                   ? (payload.dataPreview as MilestoneDataValue)
                   : undefined
               const criteriaRaw = payload.criteria
@@ -780,7 +780,7 @@ export function useMilestoneOperations(
           return
         }
         const body = (await res.json().catch(() => null)) as {
-          milestoneData?: MilestoneDataValue
+          milestoneData?: MilestoneDataValue | null
           milestoneInput?: MilestoneInput | null
           presetId?: TimelineMilestone['presetId'] | null
           dataTask?: MilestoneDataTask | null
@@ -792,7 +792,7 @@ export function useMilestoneOperations(
         if (!body) {
           return
         }
-        const dataValue = body.milestoneData ?? ''
+        const dataValue = body.milestoneData
         dispatch({
           type: 'UPDATE_MILESTONES',
           updater: (prev) =>
@@ -807,7 +807,9 @@ export function useMilestoneOperations(
               const goalText = typeof body.goal === 'string' ? body.goal : (m.goal ?? '')
               const next: TimelineMilestone = {
                 ...m,
-                data: dataValue,
+                ...(dataValue !== undefined
+                  ? { data: dataValue === null ? undefined : dataValue }
+                  : {}),
                 presetId: body.presetId ?? m.presetId,
                 milestoneInput: body.milestoneInput ?? m.milestoneInput,
                 goal: goalText.trim() ? goalText : undefined,

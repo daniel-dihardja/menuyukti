@@ -190,6 +190,8 @@ query LocationOperatingSignals($locationId: ID!, $analyticsRunId: ID!) {
   promotionMenuItems(analyticsRunId: $analyticsRunId, locationId: $locationId) {
     periodStart
     periodEnd
+    itemsTotalCount
+    itemsTruncated
     items {
       menu
       quantity

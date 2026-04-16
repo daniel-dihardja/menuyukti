@@ -17,7 +17,7 @@ class MilestoneRunState(TypedDict):
     goal: str
     raw_data: str
     # Structured milestone payload from request (Dates uses object state).
-    milestone_data: NotRequired[dict[str, Any] | str | None]
+    milestone_data: NotRequired[dict[str, Any] | list[Any] | None]
     # Typed input payload from request.
     milestone_input: NotRequired[dict[str, Any] | None]
     # Goal override from request, if provided.

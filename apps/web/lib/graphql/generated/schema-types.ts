@@ -595,6 +595,8 @@ export type PromotionMenuItemsPayloadType = {
   __typename?: 'PromotionMenuItemsPayloadType'
   analyticsRunId: Scalars['ID']['output']
   items: Array<PromotionMenuItemType>
+  itemsTotalCount: Scalars['Int']['output']
+  itemsTruncated: Scalars['Boolean']['output']
   periodEnd?: Maybe<Scalars['Date']['output']>
   periodStart?: Maybe<Scalars['Date']['output']>
 }

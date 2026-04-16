@@ -8,6 +8,7 @@ import {
   brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   milestoneInputSchema,
+  promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
 import { milestoneIdParamSchema, workflowIdParamSchema } from '../../schema'
@@ -19,7 +20,11 @@ const runBodySchema = z.object({
   goal: z.string().optional(),
   milestoneInput: milestoneInputSchema.optional(),
   milestoneData: z
-    .union([z.string(), datesMilestoneDataSchema, brandBriefMilestoneDataSchema])
+    .union([
+      datesMilestoneDataSchema,
+      brandBriefMilestoneDataSchema,
+      promotionCandidatesMilestoneDataSchema,
+    ])
     .optional(),
 })
 

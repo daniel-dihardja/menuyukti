@@ -31,9 +31,9 @@ class MilestoneRunBody(BaseModel):
         default=None,
         description="Optional typed milestone input payload (preset specific).",
     )
-    milestone_data: dict[str, Any] | str | None = Field(
+    milestone_data: dict[str, Any] | list[Any] | None = Field(
         default=None,
-        description="Optional current milestone data payload from preview state.",
+        description="Optional current milestone structured data from preview state (object only).",
     )
 
 

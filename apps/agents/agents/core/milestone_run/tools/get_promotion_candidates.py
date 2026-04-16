@@ -11,6 +11,13 @@ from agents_app.agents.core.milestone_run.graphql_client import (
 )
 from langchain_core.tools import BaseTool, tool
 
+# Cap rows + field verbosity: large tool messages stall the ReAct model on the next turn
+# and inflate the follow-up write_result_data tool call.
+_MAX_RANKED_CANDIDATES_IN_TOOL = 30
+_MAX_SIGNAL_REASONS_PER_ROW = 3
+_MAX_SIGNAL_REASON_CHARS = 96
+_JSON_SEPARATORS = (",", ":")
+
 
 def _safe_float(value: Any) -> float | None:
     if isinstance(value, (int, float)) and not isinstance(value, bool):
@@ -82,6 +89,32 @@ def _score_promotion_item(
         reasons.append("Included for full-menu coverage; no strong signal flags found")
 
     return round(score, 2), reasons, recommendation
+
+
+def _slim_signal_reasons(reasons: Any) -> list[str]:
+    if not isinstance(reasons, list):
+        return []
+    out: list[str] = []
+    for raw in reasons[:_MAX_SIGNAL_REASONS_PER_ROW]:
+        s = str(raw).strip()
+        if not s:
+            continue
+        if len(s) > _MAX_SIGNAL_REASON_CHARS:
+            s = s[: _MAX_SIGNAL_REASON_CHARS - 1] + "…"
+        out.append(s)
+    return out
+
+
+def _slim_ranked_export_row(row: dict[str, Any]) -> dict[str, Any]:
+    """Minimal row shape aligned with web `promotionRankedCandidateSchema` (passthrough allows extras)."""
+    return {
+        "menu": str(row.get("menu") or ""),
+        "recommendation": str(row.get("recommendation") or ""),
+        "score": float(row.get("score") or 0.0),
+        "quantity": int(row.get("quantity") or 0),
+        "totalRevenue": float(row.get("totalRevenue") or 0.0),
+        "signalReasons": _slim_signal_reasons(row.get("signalReasons")),
+    }
 
 
 def _median(values: list[float]) -> float:
@@ -195,12 +228,11 @@ def make_get_promotion_candidates_tool(
 ) -> BaseTool:
     @tool
     async def get_promotion_candidates() -> str:
-        """Return ranked promotion candidates for all menu items from latest analytics run.
+        """Return ranked promotion signals from the latest analytics run as JSON text.
 
-        Uses GraphQL promotionMenuItems + instagramSignals and returns Markdown with:
-        - period + posting window context
-        - short top picks / avoid picks
-        - full ranked JSON list (all menu items) with score and evidence
+        Uses GraphQL promotionMenuItems + instagramSignals. The payload includes
+        reporting period, posting window hints, top promote/avoid slices, puzzle pool
+        with selected puzzle rows (why/how-to-promote), and the full ranked candidate list.
         """
         signals = await fetch_location_operating_signals(location_id, user_id, client=client)
         run = signals.get("analytics_run")
@@ -216,9 +248,19 @@ def make_get_promotion_candidates_tool(
         if not isinstance(items_raw, list) or not items_raw:
             return "No promotion menu items found for the latest analytics run."
 
-        heroes = instagram.get("contentHeroes") if isinstance(instagram, dict) else []
-        trending = instagram.get("trendingItems") if isinstance(instagram, dict) else []
-        avoid = instagram.get("avoidItems") if isinstance(instagram, dict) else []
+        heroes = (
+            instagram.get("contentHeroes") if isinstance(instagram, dict) else None
+        ) or []
+        trending = (
+            instagram.get("trendingItems") if isinstance(instagram, dict) else None
+        ) or []
+        avoid = (instagram.get("avoidItems") if isinstance(instagram, dict) else None) or []
+        if not isinstance(heroes, list):
+            heroes = []
+        if not isinstance(trending, list):
+            trending = []
+        if not isinstance(avoid, list):
+            avoid = []
 
         hero_menus = {
             str(x.get("menu"))
@@ -274,13 +316,14 @@ def make_get_promotion_candidates_tool(
 
         scored.sort(key=lambda row: (-float(row["score"]), -int(row["quantity"]), row["menu"]))
 
-        top_promote = [x for x in scored if x["recommendation"] == "promote"][:8]
-        top_avoid = [x for x in scored if x["recommendation"] == "avoid"][:8]
+        top_promote = [
+            _slim_ranked_export_row(x) for x in scored if x["recommendation"] == "promote"
+        ][:8]
+        top_avoid = [_slim_ranked_export_row(x) for x in scored if x["recommendation"] == "avoid"][:8]
         selected_puzzles, puzzle_threshold = _build_puzzle_pool(scored)
 
         period_start = promotion.get("periodStart")
         period_end = promotion.get("periodEnd")
-        period_text = f"{period_start} to {period_end}" if period_start and period_end else "n/a"
 
         posting = instagram.get("bestPostingWindow") if isinstance(instagram, dict) else None
         posting_parts: list[str] = []
@@ -293,82 +336,44 @@ def make_get_promotion_candidates_tool(
                 posting_parts.append(f"primary meal period: {posting.get('primaryMealPeriod')}")
         posting_text = ", ".join(posting_parts) if posting_parts else "not available"
 
-        lines: list[str] = [
-            "## Promotion candidates signals",
-            f"- Analytics run: {run.get('name') or run.get('id')}",
-            f"- Reporting period: {period_text}",
-            f"- Best posting window: {posting_text}",
-            f"- Total menu items evaluated: {len(scored)}",
-            "",
-            "## Top promote picks",
-        ]
-
-        if top_promote:
-            for row in top_promote:
-                lines.append(
-                    f"- {row['menu']} (score {row['score']}, qty {row['quantity']}, revenue {row['totalRevenue']:.2f})"
-                )
-        else:
-            lines.append("- No strong promote picks found from current signals.")
-
-        lines.extend(["", "## Top avoid picks"])
-        if top_avoid:
-            for row in top_avoid:
-                lines.append(
-                    f"- {row['menu']} (score {row['score']}, qty {row['quantity']}, revenue {row['totalRevenue']:.2f})"
-                )
-        else:
-            lines.append("- No avoid picks found from current signals.")
-
-        lines.extend(
-            [
-                "",
-                "## Puzzle opportunity pool",
-                f"- Puzzle items found: {len([x for x in scored if str(x.get('matrixCategory') or '').lower() == 'puzzle'])}",
-                f"- Dynamic threshold (balanced opportunity score): {puzzle_threshold}",
-                f"- Selected puzzle items: {len(selected_puzzles)}",
-            ]
+        puzzle_items_count = len(
+            [x for x in scored if str(x.get("matrixCategory") or "").lower() == "puzzle"]
         )
-        if not selected_puzzles:
-            lines.append("- No puzzle items available in current menu engineering output.")
+        selected_payload: list[dict[str, Any]] = []
+        for row in selected_puzzles:
+            compact = {**row, "signalReasons": _slim_signal_reasons(row.get("signalReasons"))}
+            selected_payload.append(
+                {
+                    **compact,
+                    "whySelected": _puzzle_why(row),
+                    "howToPromoteOnInstagram": _puzzle_how_to_promote(row),
+                }
+            )
 
-        lines.extend(["", "## Selected puzzle items (why + how to promote)"])
-        if selected_puzzles:
-            for row in selected_puzzles:
-                margin_value = (
-                    f"{(float(row['contributionMarginPct']) * 100):.1f}"
-                    if row.get("contributionMarginPct") is not None
-                    else "n/a"
-                )
-                peak_value = (
-                    f"{row.get('peakDay') or 'n/a'} "
-                    f"{f'{int(row.get('peakHour')):02d}:00' if row.get('peakHour') is not None else ''}"
-                ).strip()
-                lines.append(
-                    f"### {row['menu']} (puzzle opportunity score {float(row['puzzleOpportunityScore']):.2f})"
-                )
-                lines.append(
-                    f"- Metrics: qty {int(row['quantity'])}, revenue {float(row['totalRevenue']):.2f}, "
-                    f"margin {margin_value}%, peak {peak_value}"
-                )
-                lines.append("- Why selected:")
-                for bullet in _puzzle_why(row):
-                    lines.append(f"  - {bullet}")
-                lines.append("- How to promote on Instagram:")
-                for bullet in _puzzle_how_to_promote(row):
-                    lines.append(f"  - {bullet}")
-        else:
-            lines.append("- No puzzle items passed selection rules for this run.")
-
-        lines.extend(
-            [
-                "",
-                "## Full ranked candidate list (JSON)",
-                "```json",
-                json.dumps(scored, ensure_ascii=True, indent=2),
-                "```",
-            ]
+        total_ranked = len(scored)
+        ranked_slice = (
+            scored if total_ranked <= _MAX_RANKED_CANDIDATES_IN_TOOL else scored[:_MAX_RANKED_CANDIDATES_IN_TOOL]
         )
-        return "\n".join(lines)
+        ranked_export = [_slim_ranked_export_row(r) for r in ranked_slice]
+
+        payload: dict[str, Any] = {
+            "analyticsRun": {"id": run.get("id"), "name": run.get("name")},
+            "reportingPeriod": {"start": period_start, "end": period_end},
+            "bestPostingWindow": posting if isinstance(posting, dict) else None,
+            "bestPostingWindowSummary": posting_text,
+            "totals": {"menuItemsEvaluated": len(scored)},
+            "topPromote": top_promote,
+            "topAvoid": top_avoid,
+            "puzzleOpportunityPool": {
+                "puzzleItemsFound": puzzle_items_count,
+                "threshold": puzzle_threshold,
+                "selectedCount": len(selected_puzzles),
+                "selected": selected_payload,
+            },
+            "rankedCandidates": ranked_export,
+            "rankedCandidatesTotalCount": total_ranked,
+            "rankedCandidatesTruncated": total_ranked > len(ranked_export),
+        }
+        return json.dumps(payload, ensure_ascii=False, separators=_JSON_SEPARATORS)
 
     return get_promotion_candidates

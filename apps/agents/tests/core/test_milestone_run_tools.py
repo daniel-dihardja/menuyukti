@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -245,17 +246,91 @@ async def test_get_promotion_candidates_formats_ranked_output() -> None:
         get_promotion_candidates = _tool_by_name(tools, "get_promotion_candidates")
         out = await get_promotion_candidates.ainvoke({})
 
-    assert "Promotion candidates signals" in out
-    assert "Top promote picks" in out
-    assert "Top avoid picks" in out
-    assert "Puzzle opportunity pool" in out
-    assert "Selected puzzle items (why + how to promote)" in out
-    assert "Truffle Pasta" in out
-    assert "Why selected:" in out
-    assert "How to promote on Instagram:" in out
-    assert "Full ranked candidate list (JSON)" in out
-    assert "Nasi Goreng" in out
-    assert "Iced Tea" in out
+    payload = json.loads(out)
+    assert payload["analyticsRun"]["name"] == "Run 1"
+    assert payload["totals"]["menuItemsEvaluated"] == 4
+    assert len(payload["topPromote"]) >= 1
+    assert any(r["menu"] == "Nasi Goreng" for r in payload["rankedCandidates"])
+    assert any(r["menu"] == "Truffle Pasta" for r in payload["rankedCandidates"])
+    assert any(r["menu"] == "Iced Tea" for r in payload["rankedCandidates"])
+    assert payload.get("rankedCandidatesTotalCount") == 4
+    assert payload.get("rankedCandidatesTruncated") is False
+    assert len(payload["rankedCandidates"]) == 4
+    rc0 = payload["rankedCandidates"][0]
+    assert set(rc0.keys()) == {
+        "menu",
+        "recommendation",
+        "score",
+        "quantity",
+        "totalRevenue",
+        "signalReasons",
+    }
+    pool = payload["puzzleOpportunityPool"]
+    assert pool["puzzleItemsFound"] == 2
+    assert pool["selectedCount"] >= 1
+    selected = pool["selected"]
+    assert isinstance(selected, list)
+    assert any(s.get("menu") == "Truffle Pasta" for s in selected)
+    for row in selected:
+        assert "whySelected" in row
+        assert "howToPromoteOnInstagram" in row
+
+
+@pytest.mark.asyncio
+async def test_get_promotion_candidates_truncates_large_menu() -> None:
+    """Large menus cap rankedCandidates so the ReAct LLM turn stays bounded."""
+    ctx: dict[str, Any] = {}
+    client = MagicMock(spec=AsyncMock)
+    items: list[dict[str, Any]] = []
+    for i in range(40):
+        items.append(
+            {
+                "menu": f"Dish {i:02d}",
+                "quantity": 10 + i,
+                "totalRevenue": float(100 + i * 10),
+                "menuCategory": "Main",
+                "menuCategoryDetail": "X",
+                "category": "plow_horse",
+                "action": "promote",
+                "peakDay": "mon",
+                "peakHour": 12,
+                "contributionMarginPercentage": 0.2,
+            }
+        )
+
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.get_promotion_candidates.fetch_location_operating_signals",
+        new=AsyncMock(
+            return_value={
+                "analytics_run": {"id": "1", "name": "Run 1"},
+                "operating_profile": None,
+                "category_mix": None,
+                "promotion_menu_items": {
+                    "periodStart": "2026-01-01",
+                    "periodEnd": "2026-01-31",
+                    "items": items,
+                },
+                "instagram_signals": {},
+            }
+        ),
+    ):
+        tools = _tools_for_context(ctx, client=client, extra_tool_ids=["get_promotion_candidates"])
+        get_promotion_candidates = _tool_by_name(tools, "get_promotion_candidates")
+        out = await get_promotion_candidates.ainvoke({})
+
+    payload = json.loads(out)
+    assert payload["totals"]["menuItemsEvaluated"] == 40
+    assert payload["rankedCandidatesTotalCount"] == 40
+    assert payload["rankedCandidatesTruncated"] is True
+    assert len(payload["rankedCandidates"]) == 30
+    assert set(payload["rankedCandidates"][0].keys()) == {
+        "menu",
+        "recommendation",
+        "score",
+        "quantity",
+        "totalRevenue",
+        "signalReasons",
+    }
 
 
 def test_get_prior_campaign_context_extracts_dates_and_brand_brief() -> None:
