@@ -4,7 +4,11 @@ import type {
   PassCriteriaRow,
 } from '@/app/(protected)/workflows/_components/timeline/types'
 
-export const MILESTONE_PRESET_IDS = ['dates', 'restaurant_brand_brief', 'candidates'] as const
+export const MILESTONE_PRESET_IDS = [
+  'dates',
+  'restaurant_brand_brief',
+  'promotion_candidates',
+] as const
 
 export type MilestonePresetId = (typeof MILESTONE_PRESET_IDS)[number]
 
@@ -89,27 +93,29 @@ export function getMilestonePresetCreateFields(
           },
         ],
       }
-    case 'candidates':
+    case 'promotion_candidates':
       return {
-        name: t('milestonePreset.candidates.title'),
+        name: t('milestonePreset.promotion_candidates.title'),
         dataTask: 'manual',
-        milestoneData: t('milestonePreset.candidates.dataMarkdown'),
-        goal: t('milestonePreset.candidates.goal'),
+        milestoneData: t('milestonePreset.promotion_candidates.dataMarkdown'),
+        goal: t('milestonePreset.promotion_candidates.goal'),
+        milestoneRunSkillMode: 'fixed',
+        milestoneRunSkillIds: ['promotion_candidates'],
         passCriteria: [
           {
-            requirement: t('milestonePreset.candidates.criterionVariationA'),
+            requirement: t('milestonePreset.promotion_candidates.criterionPromotionCandidates'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.candidates.criterionVariationB'),
+            requirement: t('milestonePreset.promotion_candidates.criterionEvidenceGrounding'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.candidates.criterionCampaignWindow'),
+            requirement: t('milestonePreset.promotion_candidates.criterionCampaignWindow'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.candidates.criterionBrandBrief'),
+            requirement: t('milestonePreset.promotion_candidates.criterionBrandBrief'),
             status: 'open',
           },
         ],

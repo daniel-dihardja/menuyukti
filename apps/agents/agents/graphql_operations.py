@@ -195,8 +195,61 @@ query LocationOperatingSignals($locationId: ID!, $analyticsRunId: ID!) {
       quantity
       totalRevenue
       menuCategory
+      menuCategoryDetail
+      cogs
+      totalCogs
+      contributionMargin
+      contributionMarginPercentage
+      marginPerUnit
+      weValue
+      category
+      action
       peakHour
       peakDay
+    }
+  }
+  instagramSignals(analyticsRunId: $analyticsRunId, locationId: $locationId) {
+    contentHeroes {
+      menu
+      matrixCategory
+      totalRevenue
+      menuCategory
+      menuCategoryDetail
+    }
+    trendingItems {
+      menu
+      currentRevenue
+      previousRevenue
+      changePct
+      rankCurrent
+      rankPrevious
+      trendLabel
+    }
+    avoidItems {
+      menu
+      matrixCategory
+      totalRevenue
+      menuCategory
+      menuCategoryDetail
+    }
+    categoryFocus {
+      category
+      revenueShare
+      quantityShare
+    }
+    bestPostingWindow {
+      peakDay
+      peakRevenueDay
+      primaryMealPeriod
+      peakRevenueMealPeriod
+      peakHour
+    }
+    periodHeadline {
+      periodStart
+      periodEnd
+      totalRevenue
+      previousPeriodTotalRevenue
+      revenueVsPreviousPct
     }
   }
 }

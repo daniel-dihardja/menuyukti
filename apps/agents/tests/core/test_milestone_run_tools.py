@@ -112,6 +112,20 @@ def test_extra_tool_ids_includes_get_public_holidays() -> None:
     assert names.index("get_public_holidays") < names.index("write_result_data")
 
 
+def test_extra_tool_ids_includes_get_promotion_candidates() -> None:
+    tools = _tools_for_context({}, extra_tool_ids=["get_promotion_candidates"])
+    names = [getattr(t, "name", "") for t in tools]
+    assert "get_promotion_candidates" in names
+    assert names.index("get_promotion_candidates") < names.index("write_result_data")
+
+
+def test_extra_tool_ids_includes_get_prior_campaign_context() -> None:
+    tools = _tools_for_context({}, extra_tool_ids=["get_prior_campaign_context"])
+    names = [getattr(t, "name", "") for t in tools]
+    assert "get_prior_campaign_context" in names
+    assert names.index("get_prior_campaign_context") < names.index("write_result_data")
+
+
 @pytest.mark.asyncio
 async def test_get_public_holidays_formats_list() -> None:
     ctx: dict[str, Any] = {}
@@ -136,6 +150,82 @@ async def test_get_public_holidays_formats_list() -> None:
 
     assert "2025-01-01" in out
     assert "New Year's Day" in out
+
+
+@pytest.mark.asyncio
+async def test_get_promotion_candidates_formats_ranked_output() -> None:
+    ctx: dict[str, Any] = {}
+    client = MagicMock(spec=AsyncMock)
+
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.get_promotion_candidates.fetch_location_operating_signals",
+        new=AsyncMock(
+            return_value={
+                "analytics_run": {"id": "1", "name": "Run 1"},
+                "operating_profile": None,
+                "category_mix": None,
+                "promotion_menu_items": {
+                    "periodStart": "2026-01-01",
+                    "periodEnd": "2026-01-31",
+                    "items": [
+                        {
+                            "menu": "Nasi Goreng",
+                            "quantity": 100,
+                            "totalRevenue": 5000.0,
+                            "menuCategory": "Main",
+                            "menuCategoryDetail": "Rice",
+                            "category": "star",
+                            "action": "promote",
+                            "peakDay": "fri",
+                            "peakHour": 19,
+                            "contributionMarginPercentage": 0.35,
+                        },
+                        {
+                            "menu": "Iced Tea",
+                            "quantity": 50,
+                            "totalRevenue": 1000.0,
+                            "menuCategory": "Drink",
+                            "menuCategoryDetail": "Tea",
+                            "category": "low_end",
+                            "action": "remove",
+                            "peakDay": "sat",
+                            "peakHour": 14,
+                            "contributionMarginPercentage": 0.1,
+                        },
+                    ],
+                },
+                "instagram_signals": {
+                    "contentHeroes": [{"menu": "Nasi Goreng"}],
+                    "trendingItems": [{"menu": "Nasi Goreng"}],
+                    "avoidItems": [{"menu": "Iced Tea"}],
+                    "bestPostingWindow": {"peakDay": "fri", "peakHour": 19},
+                },
+            }
+        ),
+    ):
+        tools = _tools_for_context(ctx, client=client, extra_tool_ids=["get_promotion_candidates"])
+        get_promotion_candidates = _tool_by_name(tools, "get_promotion_candidates")
+        out = await get_promotion_candidates.ainvoke({})
+
+    assert "Promotion candidates signals" in out
+    assert "Top promote picks" in out
+    assert "Top avoid picks" in out
+    assert "Full ranked candidate list (JSON)" in out
+    assert "Nasi Goreng" in out
+    assert "Iced Tea" in out
+
+
+def test_get_prior_campaign_context_extracts_dates_and_brand_brief() -> None:
+    tools = _tools_for_context({}, extra_tool_ids=["get_prior_campaign_context"])
+    get_prior_campaign_context = _tool_by_name(tools, "get_prior_campaign_context")
+    sample = (
+        "## Dates\n\n## Start date\n\n2026-05-01\n\n## End date\n\n2026-05-31\n\n"
+        "## Brand brief\n\nTone: warm and premium.\n"
+    )
+    out = get_prior_campaign_context.invoke({"prior_milestones_markdown": sample})
+    assert "Start date: 2026-05-01" in out
+    assert "End date: 2026-05-31" in out
+    assert "Brand brief found: yes" in out
 
 
 @pytest.mark.asyncio

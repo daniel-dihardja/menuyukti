@@ -8,6 +8,12 @@ import httpx
 from agents_app.agents.core.milestone_run.tools.get_location_profile import (
     make_get_location_profile_tool,
 )
+from agents_app.agents.core.milestone_run.tools.get_prior_campaign_context import (
+    make_get_prior_campaign_context_tool,
+)
+from agents_app.agents.core.milestone_run.tools.get_promotion_candidates import (
+    make_get_promotion_candidates_tool,
+)
 from agents_app.agents.core.milestone_run.tools.get_public_holidays import (
     make_get_public_holidays_tool,
 )
@@ -33,6 +39,10 @@ EXTRA_TOOL_FACTORIES: dict[str, ExtraToolFactory] = {
     "get_location_profile": lambda lid, uid, client: make_get_location_profile_tool(
         lid, uid, client=client
     ),
+    "get_promotion_candidates": lambda lid, uid, client: make_get_promotion_candidates_tool(
+        lid, uid, client=client
+    ),
+    "get_prior_campaign_context": lambda lid, uid, client: make_get_prior_campaign_context_tool(),
 }
 
 

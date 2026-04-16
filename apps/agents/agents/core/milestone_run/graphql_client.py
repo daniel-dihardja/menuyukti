@@ -173,7 +173,8 @@ async def fetch_location_operating_signals(
 
     Returns a dict with keys ``analytics_run`` (id/name from list; period is on
     ``promotion_menu_items`` when present),
-    ``operating_profile``, ``category_mix``, and ``promotion_menu_items``.
+    ``operating_profile``, ``category_mix``, ``promotion_menu_items``,
+    and ``instagram_signals``.
     Any key is ``None`` when no analytics run exists or when the query returns nothing.
     """
     runs_data = await graphql_post(
@@ -189,6 +190,7 @@ async def fetch_location_operating_signals(
             "operating_profile": None,
             "category_mix": None,
             "promotion_menu_items": None,
+            "instagram_signals": None,
         }
 
     run = runs[0]
@@ -206,6 +208,7 @@ async def fetch_location_operating_signals(
         "operating_profile": signals_data.get("operatingProfile"),
         "category_mix": signals_data.get("categoryMix"),
         "promotion_menu_items": signals_data.get("promotionMenuItems"),
+        "instagram_signals": signals_data.get("instagramSignals"),
     }
 
 

@@ -21,7 +21,7 @@ summary) beyond holidays alone.
 - Prefer `["promotion_candidates"]` when the goal or criteria require **promotion candidate dishes** or **social post** \
 ideas grounded in **POS/analytics** (menu performance, Instagram signals), typically two Markdown variations with \
 named menu lines from data.
-- Prefer `["restaurant_brand_brief"]` when the goal or Data tab clearly describe a **brand brief** \
+- Prefer `["brand_brief"]` when the goal or Data tab clearly describe a **brand brief** \
 (venue snapshot, content pillars, audience hypotheses, proof angles, tone guardrails) as the main deliverable.
 - Use at most **two** ids. Do not duplicate the same id.
 - Each id must be one of the listed keys exactly (underscores, lowercase)."""
