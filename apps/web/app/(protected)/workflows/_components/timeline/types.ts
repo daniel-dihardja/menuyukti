@@ -45,7 +45,22 @@ export type DatesMilestoneData = {
   publicHolidays: DatesPublicHoliday[]
 }
 
-export type MilestoneDataValue = string | DatesMilestoneData
+export type BrandBriefVenueSnapshot = {
+  venueName: string
+  city: string
+  country: string
+  currency: string
+}
+
+export type BrandBriefMilestoneData = {
+  venueSnapshot: BrandBriefVenueSnapshot
+  contentPillars: string[]
+  audienceHypotheses: string[]
+  proofOrientedAngles: string[]
+  toneGuardrails: string[]
+}
+
+export type MilestoneDataValue = string | DatesMilestoneData | BrandBriefMilestoneData
 
 export type TimelineMilestone = {
   id: string

@@ -1,5 +1,7 @@
 export { TimelineWorkspace } from './timeline/timeline-workspace'
 export type {
+  BrandBriefMilestoneData,
+  BrandBriefVenueSnapshot,
   DatesMilestoneData,
   DatesMilestoneInput,
   DatesMilestoneInputEnvelope,

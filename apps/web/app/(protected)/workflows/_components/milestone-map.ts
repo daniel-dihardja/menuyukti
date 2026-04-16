@@ -1,4 +1,5 @@
 import {
+  brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   goalDataSchema,
   milestoneDataSchema,
@@ -188,6 +189,25 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
     const parsedDatesData = datesMilestoneDataSchema.safeParse(data)
     if (parsedDatesData.success) {
       normalizedData = parsedDatesData.data
+    }
+  }
+  if (presetId === 'restaurant_brand_brief') {
+    const parsedBrandBriefData = brandBriefMilestoneDataSchema.safeParse(data)
+    if (parsedBrandBriefData.success) {
+      normalizedData = parsedBrandBriefData.data
+    } else {
+      normalizedData = {
+        venueSnapshot: {
+          venueName: '',
+          city: '',
+          country: '',
+          currency: '',
+        },
+        contentPillars: [],
+        audienceHypotheses: [],
+        proofOrientedAngles: [],
+        toneGuardrails: [],
+      }
     }
   }
 

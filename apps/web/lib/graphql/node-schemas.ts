@@ -56,6 +56,25 @@ export const datesMilestoneDataSchema = z.object({
 
 export type DatesMilestoneData = z.infer<typeof datesMilestoneDataSchema>
 
+export const brandBriefVenueSnapshotSchema = z.object({
+  venueName: z.string(),
+  city: z.string(),
+  country: z.string(),
+  currency: z.string(),
+})
+
+export type BrandBriefVenueSnapshot = z.infer<typeof brandBriefVenueSnapshotSchema>
+
+export const brandBriefMilestoneDataSchema = z.object({
+  venueSnapshot: brandBriefVenueSnapshotSchema,
+  contentPillars: z.array(z.string()),
+  audienceHypotheses: z.array(z.string()),
+  proofOrientedAngles: z.array(z.string()),
+  toneGuardrails: z.array(z.string()),
+})
+
+export type BrandBriefMilestoneData = z.infer<typeof brandBriefMilestoneDataSchema>
+
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
@@ -86,7 +105,11 @@ export const goalDataSchema = z.object({
 export type GoalData = z.infer<typeof goalDataSchema>
 
 /** Child `milestonedata` node JSON — string markdown or structured preset data. */
-export const milestonedataValueSchema = z.union([z.string(), datesMilestoneDataSchema])
+export const milestonedataValueSchema = z.union([
+  z.string(),
+  datesMilestoneDataSchema,
+  brandBriefMilestoneDataSchema,
+])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>
 

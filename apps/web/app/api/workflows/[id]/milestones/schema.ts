@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import {
+  brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   datesMilestoneInputSchema,
   milestonePresetIdSchema,
@@ -27,7 +28,9 @@ export const patchMilestoneSchema = z
     /** Free-form text; not trimmed so spaces inside and at edges are preserved. */
     goal: z.string().optional(),
     /** Milestone Data tab; persisted on a child `milestonedata` node. */
-    milestoneData: z.union([z.string(), datesMilestoneDataSchema]).optional(),
+    milestoneData: z
+      .union([z.string(), datesMilestoneDataSchema, brandBriefMilestoneDataSchema])
+      .optional(),
     /** Typed milestone input; stored on milestone node `data` JSON. */
     milestoneInput: z
       .union([

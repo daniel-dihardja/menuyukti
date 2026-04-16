@@ -4,7 +4,11 @@ import { z } from 'zod'
 
 import { getPythonAgentsUrl } from '@/lib/config'
 import { graphqlQuery } from '@/lib/graphql/client'
-import { datesMilestoneDataSchema, milestoneInputSchema } from '@/lib/graphql/node-schemas'
+import {
+  brandBriefMilestoneDataSchema,
+  datesMilestoneDataSchema,
+  milestoneInputSchema,
+} from '@/lib/graphql/node-schemas'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
 import { milestoneIdParamSchema, workflowIdParamSchema } from '../../schema'
 
@@ -14,7 +18,9 @@ const runBodySchema = z.object({
   locationId: z.number().int().positive(),
   goal: z.string().optional(),
   milestoneInput: milestoneInputSchema.optional(),
-  milestoneData: z.union([z.string(), datesMilestoneDataSchema]).optional(),
+  milestoneData: z
+    .union([z.string(), datesMilestoneDataSchema, brandBriefMilestoneDataSchema])
+    .optional(),
 })
 
 type RouteContext = {

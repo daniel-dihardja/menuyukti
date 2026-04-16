@@ -4,6 +4,7 @@ import type { z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
+  brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
@@ -344,6 +345,26 @@ export async function GET(_req: Request, context: RouteContext) {
           startDate: '',
           endDate: '',
           publicHolidays: [],
+        }
+      }
+    }
+    if (
+      parsedMilestoneNodeData?.success &&
+      parsedMilestoneNodeData.data.presetId === 'restaurant_brand_brief'
+    ) {
+      const brandBriefDataParsed = brandBriefMilestoneDataSchema.safeParse(milestoneData)
+      if (!brandBriefDataParsed.success) {
+        milestoneData = {
+          venueSnapshot: {
+            venueName: '',
+            city: '',
+            country: '',
+            currency: '',
+          },
+          contentPillars: [],
+          audienceHypotheses: [],
+          proofOrientedAngles: [],
+          toneGuardrails: [],
         }
       }
     }

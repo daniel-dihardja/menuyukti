@@ -1,9 +1,10 @@
-"""LangChain tool: extract dates and brand-brief context from prior milestones markdown."""
+"""LangChain tool: extract dates and brand-brief context from prior milestone data."""
 
 from __future__ import annotations
 
 import json
 import re
+
 from langchain_core.tools import BaseTool, tool
 
 _ISO_DATE_RE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
@@ -29,6 +30,12 @@ def _extract_brand_brief_block(markdown: str) -> str:
     pat = re.compile(r"(?ims)^##\s*Brand\s*brief\s*\n+(.*?)(?=^##\s|\Z)")
     m = pat.search(markdown)
     if not m:
+        venue_snapshot_pat = re.compile(
+            r"(?ims)^##\s*Venue\s*snapshot\s*\n+(.*?)(?=^##\s|\Z)"
+        )
+        venue_match = venue_snapshot_pat.search(markdown)
+        if venue_match:
+            return venue_match.group(0).strip()
         return ""
     return m.group(1).strip()
 
@@ -38,7 +45,7 @@ def make_get_prior_campaign_context_tool() -> BaseTool:
     def get_prior_campaign_context(prior_milestones_markdown: str) -> str:
         """Extract start/end date and brand-brief clues from prior milestone Data tabs.
 
-        Provide the exact markdown returned by `read_prior_milestones_data`.
+        Provide the exact text returned by `read_prior_milestones_data`.
         Returns a compact markdown + JSON summary with detected campaign window and
         brand-brief presence.
         """
