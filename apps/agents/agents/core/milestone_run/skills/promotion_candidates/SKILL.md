@@ -22,10 +22,15 @@ Workflow:
 3. Call `get_promotion_candidates` and use its output as the main evidence source.
 4. Build or improve the Data tab with these sections:
    - `## Placement` (keep/update implementation notes if present)
+   - `## Puzzle opportunity pool`
    - `## Promotion candidates`
 5. For the candidate set:
    - Include POS-exact menu names.
    - Include concise rationale grounded in analytics evidence (score signals, trend, demand timing, matrix category/action).
+   - Include a dedicated analysis of selected **puzzle** items from the tool output.
+   - For each selected puzzle item, include:
+     - why it was selected (2-3 evidence bullets)
+     - how to promote it on Instagram (specific angle, format, CTA, and timing cue)
 6. Respect prior milestone context:
    - If prior milestones include **Dates** (`Start date` / `End date`), note how choices fit that campaign window.
    - If prior milestones include **Brand brief**, keep tone/angles aligned.

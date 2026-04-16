@@ -192,11 +192,35 @@ async def test_get_promotion_candidates_formats_ranked_output() -> None:
                             "peakHour": 14,
                             "contributionMarginPercentage": 0.1,
                         },
+                        {
+                            "menu": "Truffle Pasta",
+                            "quantity": 40,
+                            "totalRevenue": 3200.0,
+                            "menuCategory": "Main",
+                            "menuCategoryDetail": "Pasta",
+                            "category": "puzzle",
+                            "action": "promote",
+                            "peakDay": "sat",
+                            "peakHour": 20,
+                            "contributionMarginPercentage": 0.42,
+                        },
+                        {
+                            "menu": "Lava Cake",
+                            "quantity": 30,
+                            "totalRevenue": 1800.0,
+                            "menuCategory": "Dessert",
+                            "menuCategoryDetail": "Cake",
+                            "category": "puzzle",
+                            "action": "promote",
+                            "peakDay": "sun",
+                            "peakHour": 19,
+                            "contributionMarginPercentage": 0.38,
+                        },
                     ],
                 },
                 "instagram_signals": {
                     "contentHeroes": [{"menu": "Nasi Goreng"}],
-                    "trendingItems": [{"menu": "Nasi Goreng"}],
+                    "trendingItems": [{"menu": "Nasi Goreng"}, {"menu": "Truffle Pasta"}],
                     "avoidItems": [{"menu": "Iced Tea"}],
                     "bestPostingWindow": {"peakDay": "fri", "peakHour": 19},
                 },
@@ -210,6 +234,11 @@ async def test_get_promotion_candidates_formats_ranked_output() -> None:
     assert "Promotion candidates signals" in out
     assert "Top promote picks" in out
     assert "Top avoid picks" in out
+    assert "Puzzle opportunity pool" in out
+    assert "Selected puzzle items (why + how to promote)" in out
+    assert "Truffle Pasta" in out
+    assert "Why selected:" in out
+    assert "How to promote on Instagram:" in out
     assert "Full ranked candidate list (JSON)" in out
     assert "Nasi Goreng" in out
     assert "Iced Tea" in out

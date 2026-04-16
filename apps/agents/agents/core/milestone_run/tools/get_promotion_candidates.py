@@ -84,6 +84,109 @@ def _score_promotion_item(
     return round(score, 2), reasons, recommendation
 
 
+def _median(values: list[float]) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    n = len(ordered)
+    mid = n // 2
+    if n % 2 == 1:
+        return ordered[mid]
+    return (ordered[mid - 1] + ordered[mid]) / 2.0
+
+
+def _build_puzzle_pool(scored: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], float]:
+    puzzle_items = [x for x in scored if str(x.get("matrixCategory") or "").lower() == "puzzle"]
+    if not puzzle_items:
+        return [], 0.0
+
+    max_qty = max(int(x.get("quantity") or 0) for x in puzzle_items) or 1
+    max_rev = max(float(x.get("totalRevenue") or 0.0) for x in puzzle_items) or 1.0
+    max_margin = max(float(x.get("contributionMarginPct") or 0.0) for x in puzzle_items) or 1.0
+
+    for row in puzzle_items:
+        qty_norm = float(row.get("quantity") or 0) / max_qty
+        rev_norm = float(row.get("totalRevenue") or 0.0) / max_rev
+        margin_norm = float(row.get("contributionMarginPct") or 0.0) / max_margin
+
+        modifier = 0.0
+        reasons = row.get("signalReasons") or []
+        if any("rising trend" in str(r).lower() for r in reasons):
+            modifier += 0.08
+        if any("content hero" in str(r).lower() for r in reasons):
+            modifier += 0.05
+        if str(row.get("matrixAction") or "").lower() == "promote":
+            modifier += 0.08
+        if str(row.get("matrixAction") or "").lower() == "remove":
+            modifier -= 0.20
+        if str(row.get("recommendation") or "").lower() == "avoid":
+            modifier -= 0.12
+
+        puzzle_score = ((qty_norm * 0.35) + (rev_norm * 0.35) + (margin_norm * 0.20) + modifier) * 100
+        row["puzzleOpportunityScore"] = round(puzzle_score, 2)
+
+    scores = [float(x["puzzleOpportunityScore"]) for x in puzzle_items]
+    threshold = _median(scores)
+    selected = [x for x in puzzle_items if float(x["puzzleOpportunityScore"]) >= threshold]
+
+    if not selected:
+        selected = sorted(puzzle_items, key=lambda x: float(x["puzzleOpportunityScore"]), reverse=True)[:1]
+
+    # Secondary cap for overly large pools.
+    if len(selected) > 8:
+        raised_threshold = threshold + 5.0
+        raised = [x for x in selected if float(x["puzzleOpportunityScore"]) >= raised_threshold]
+        selected = raised if raised else selected
+        if len(selected) > 8:
+            selected = sorted(selected, key=lambda x: float(x["puzzleOpportunityScore"]), reverse=True)[:8]
+
+    selected.sort(key=lambda x: (-float(x["puzzleOpportunityScore"]), -int(x.get("quantity") or 0), x["menu"]))
+    return selected, round(threshold, 2)
+
+
+def _puzzle_why(row: dict[str, Any]) -> list[str]:
+    bullets: list[str] = []
+    qty = int(row.get("quantity") or 0)
+    revenue = float(row.get("totalRevenue") or 0.0)
+    margin = row.get("contributionMarginPct")
+    if margin is not None:
+        bullets.append(
+            f"Balanced potential: qty {qty}, revenue {revenue:.2f}, margin signal {float(margin) * 100:.1f}%."
+        )
+    else:
+        bullets.append(f"Balanced potential: qty {qty}, revenue {revenue:.2f}.")
+    for r in (row.get("signalReasons") or [])[:2]:
+        bullets.append(str(r))
+    return bullets[:3]
+
+
+def _puzzle_how_to_promote(row: dict[str, Any]) -> list[str]:
+    menu = str(row.get("menu") or "this item")
+    category = row.get("menuCategory") or row.get("menuCategoryDetail") or "menu"
+    peak_day = row.get("peakDay")
+    peak_hour = row.get("peakHour")
+    timing = "near venue peak time"
+    if peak_day and peak_hour is not None:
+        timing = f"around {peak_day} {int(peak_hour):02d}:00"
+    elif peak_day:
+        timing = f"on {peak_day}"
+    elif peak_hour is not None:
+        timing = f"around {int(peak_hour):02d}:00"
+
+    cta = "Try it this week and save this post for your next order."
+    action = str(row.get("matrixAction") or "").lower()
+    if action == "promote":
+        cta = "Order now while this featured item is highlighted."
+    elif action == "remove":
+        cta = "Limited-time spotlight: try it before the menu refresh."
+
+    return [
+        f"Angle: position {menu} as a high-value {category} choice with clear sensory and value cues.",
+        "Format: use a short Reel (prep + close-up) plus one carousel slide for price/value framing.",
+        f"Timing & CTA: post {timing}; CTA: {cta}",
+    ]
+
+
 def make_get_promotion_candidates_tool(
     location_id: int,
     user_id: str,
@@ -173,6 +276,7 @@ def make_get_promotion_candidates_tool(
 
         top_promote = [x for x in scored if x["recommendation"] == "promote"][:8]
         top_avoid = [x for x in scored if x["recommendation"] == "avoid"][:8]
+        selected_puzzles, puzzle_threshold = _build_puzzle_pool(scored)
 
         period_start = promotion.get("periodStart")
         period_end = promotion.get("periodEnd")
@@ -215,6 +319,46 @@ def make_get_promotion_candidates_tool(
                 )
         else:
             lines.append("- No avoid picks found from current signals.")
+
+        lines.extend(
+            [
+                "",
+                "## Puzzle opportunity pool",
+                f"- Puzzle items found: {len([x for x in scored if str(x.get('matrixCategory') or '').lower() == 'puzzle'])}",
+                f"- Dynamic threshold (balanced opportunity score): {puzzle_threshold}",
+                f"- Selected puzzle items: {len(selected_puzzles)}",
+            ]
+        )
+        if not selected_puzzles:
+            lines.append("- No puzzle items available in current menu engineering output.")
+
+        lines.extend(["", "## Selected puzzle items (why + how to promote)"])
+        if selected_puzzles:
+            for row in selected_puzzles:
+                margin_value = (
+                    f"{(float(row['contributionMarginPct']) * 100):.1f}"
+                    if row.get("contributionMarginPct") is not None
+                    else "n/a"
+                )
+                peak_value = (
+                    f"{row.get('peakDay') or 'n/a'} "
+                    f"{f'{int(row.get('peakHour')):02d}:00' if row.get('peakHour') is not None else ''}"
+                ).strip()
+                lines.append(
+                    f"### {row['menu']} (puzzle opportunity score {float(row['puzzleOpportunityScore']):.2f})"
+                )
+                lines.append(
+                    f"- Metrics: qty {int(row['quantity'])}, revenue {float(row['totalRevenue']):.2f}, "
+                    f"margin {margin_value}%, peak {peak_value}"
+                )
+                lines.append("- Why selected:")
+                for bullet in _puzzle_why(row):
+                    lines.append(f"  - {bullet}")
+                lines.append("- How to promote on Instagram:")
+                for bullet in _puzzle_how_to_promote(row):
+                    lines.append(f"  - {bullet}")
+        else:
+            lines.append("- No puzzle items passed selection rules for this run.")
 
         lines.extend(
             [
