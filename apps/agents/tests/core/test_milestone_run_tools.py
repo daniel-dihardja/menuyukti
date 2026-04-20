@@ -547,7 +547,220 @@ async def test_write_result_data_rejects_invalid_scheduler_payload() -> None:
         out = await write_result_data.ainvoke({"new_data": invalid})
 
     mock_upsert.assert_not_awaited()
-    assert "Scheduler output validation failed" in out
+    assert "Output validation failed for skill 'scheduler'" in out
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("selected_skill_id", "payload"),
+    [
+        (
+            "public_holidays",
+            {
+                "startDate": "2026-06-01",
+                "endDate": "2026-06-30",
+                "publicHolidays": [
+                    {
+                        "name": "Hari Raya",
+                        "description": "National holiday",
+                        "date": "2026-06-17",
+                    }
+                ],
+            },
+        ),
+        (
+            "dates",
+            {
+                "startDate": "2026-06-01",
+                "endDate": "2026-06-30",
+                "publicHolidays": [],
+            },
+        ),
+        (
+            "brand_brief",
+            {
+                "venueSnapshot": {
+                    "venueName": "Warung Maju",
+                    "city": "Jakarta",
+                    "country": "Indonesia",
+                    "currency": "IDR",
+                },
+                "contentPillars": ["Signature menu"],
+                "audienceHypotheses": ["Office workers"],
+                "proofOrientedAngles": ["Best seller"],
+                "toneGuardrails": ["Warm", "Helpful"],
+            },
+        ),
+        (
+            "promotion_candidates",
+            {
+                "placement": "grid",
+                "puzzleOpportunityPool": {
+                    "puzzleItemsFound": 2,
+                    "threshold": 72.0,
+                    "selectedCount": 1,
+                },
+                "promotionCandidates": [
+                    {
+                        "menu": "Nasi Goreng",
+                        "rationale": ["High repeat orders"],
+                        "instagramPromotion": {
+                            "angle": "Chef spotlight",
+                            "format": "carousel",
+                            "cta": "Book now",
+                            "timing": "Dinner",
+                        },
+                    }
+                ],
+                "rankedCandidates": [
+                    {
+                        "menu": "Nasi Goreng",
+                        "recommendation": "promote",
+                        "score": 94.2,
+                        "quantity": 100,
+                        "totalRevenue": 5000.0,
+                        "signalReasons": ["Content hero"],
+                        "extraSignal": "allowed",
+                    }
+                ],
+                "context": {
+                    "campaignWindowNotes": "Align with holiday week",
+                    "brandBriefAlignmentNotes": "Fits warm tone",
+                },
+            },
+        ),
+        (
+            "scheduler",
+            {
+                "schedules": [
+                    {
+                        "dateTime": "2026-06-03T19:00:00",
+                        "type": "carousel",
+                        "promotedMenuItems": ["Nasi Goreng"],
+                        "visualIdea": "Kitchen prep and plated close-up",
+                        "captionIdea": "Dinner spotlight",
+                    }
+                ]
+            },
+        ),
+    ],
+)
+async def test_write_result_data_accepts_registered_skill_payloads(
+    selected_skill_id: str, payload: dict[str, Any]
+) -> None:
+    ctx: dict[str, Any] = {"selected_skill_id": selected_skill_id}
+    client = MagicMock(spec=AsyncMock)
+
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
+        new=AsyncMock(return_value={"id": "md-registered-ok"}),
+    ) as mock_upsert:
+        tools = _tools_for_context(ctx, client=client)
+        write_result_data = _tool_by_name(tools, "write_result_data")
+        out = await write_result_data.ainvoke({"new_data": payload})
+
+    mock_upsert.assert_awaited_once()
+    awaited_payload = mock_upsert.await_args.args[2]
+    assert "md-registered-ok" in out
+    assert ctx.get("milestone_data") == awaited_payload
+    assert isinstance(ctx.get("milestone_data"), dict)
+    assert ctx.get("milestonedata_written") is True
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("selected_skill_id", "payload"),
+    [
+        (
+            "public_holidays",
+            {
+                "startDate": "2026-06-01",
+                "endDate": "2026-06-30",
+                # invalid: description missing
+                "publicHolidays": [{"name": "Hari Raya", "date": "2026-06-17"}],
+            },
+        ),
+        (
+            "brand_brief",
+            {
+                "venueSnapshot": {
+                    "venueName": "Warung Maju",
+                    "city": "Jakarta",
+                    "country": "Indonesia",
+                    # invalid: currency missing
+                },
+                "contentPillars": ["Signature menu"],
+                "audienceHypotheses": ["Office workers"],
+                "proofOrientedAngles": ["Best seller"],
+                "toneGuardrails": ["Warm", "Helpful"],
+            },
+        ),
+        (
+            "promotion_candidates",
+            {
+                "placement": "grid",
+                "puzzleOpportunityPool": {
+                    "puzzleItemsFound": 2,
+                    "threshold": 72.0,
+                    # invalid: selectedCount missing
+                },
+                "promotionCandidates": [],
+                "rankedCandidates": [],
+            },
+        ),
+        (
+            "scheduler",
+            {
+                "schedules": [
+                    {
+                        "dateTime": "2026-06-03T19:00:00",
+                        # invalid literal
+                        "type": "video",
+                        "promotedMenuItems": ["Nasi Goreng"],
+                        "visualIdea": "Kitchen prep and plated close-up",
+                        "captionIdea": "Dinner spotlight",
+                    }
+                ]
+            },
+        ),
+    ],
+)
+async def test_write_result_data_rejects_invalid_registered_skill_payloads(
+    selected_skill_id: str, payload: dict[str, Any]
+) -> None:
+    ctx: dict[str, Any] = {"selected_skill_id": selected_skill_id}
+    client = MagicMock(spec=AsyncMock)
+
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
+        new=AsyncMock(return_value={"id": "md-registered-bad"}),
+    ) as mock_upsert:
+        tools = _tools_for_context(ctx, client=client)
+        write_result_data = _tool_by_name(tools, "write_result_data")
+        out = await write_result_data.ainvoke({"new_data": payload})
+
+    mock_upsert.assert_not_awaited()
+    assert f"Output validation failed for skill '{selected_skill_id}'" in out
+
+
+@pytest.mark.asyncio
+async def test_write_result_data_unknown_skill_passthrough() -> None:
+    ctx: dict[str, Any] = {"selected_skill_id": "future_skill"}
+    payload: dict[str, Any] = {"arbitrary": "shape", "nested": {"ok": True}}
+    client = MagicMock(spec=AsyncMock)
+
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
+        new=AsyncMock(return_value={"id": "md-unknown"}),
+    ) as mock_upsert:
+        tools = _tools_for_context(ctx, client=client)
+        write_result_data = _tool_by_name(tools, "write_result_data")
+        out = await write_result_data.ainvoke({"new_data": payload})
+
+    mock_upsert.assert_awaited_once()
+    awaited_payload = mock_upsert.await_args.args[2]
+    assert awaited_payload == payload
+    assert "md-unknown" in out
 
 
 def test_validate_extra_tool_ids_rejects_unknown() -> None:

@@ -6,7 +6,7 @@ import json
 from typing import Any
 
 import httpx
-from agents_app.agents.core.milestone_run.output_schema import validate_scheduler_output
+from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
 from langchain_core.tools import BaseTool, tool
 
@@ -35,15 +35,15 @@ def make_write_result_data_tool(
                 payload = parsed_json
 
         selected_skill_id = context.get("selected_skill_id")
-        if selected_skill_id == "scheduler":
-            normalized, error = validate_scheduler_output(payload)
-            if error is not None:
-                return (
-                    "Scheduler output validation failed. Expected "
-                    '{"schedules":[{"dateTime","type","promotedMenuItems","visualIdea","captionIdea"}]}. '
-                    f"Validation error: {error}"
-                )
-            payload = normalized
+        normalized, error = validate_skill_output(selected_skill_id, payload)
+        if error is not None:
+            skill_label = selected_skill_id or "unknown"
+            return (
+                f"Output validation failed for skill '{skill_label}'. "
+                "Use the expected structured JSON shape for this milestone skill and retry. "
+                f"Validation error: {error}"
+            )
+        payload = normalized
 
         node = await upsert_milestonedata_node(
             milestone_id,
