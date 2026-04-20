@@ -9,6 +9,7 @@ import {
   milestoneRunSkillModeSchema,
   passCriteriaDataSchema,
   promotionCandidatesMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
 export const workflowIdParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow id')
@@ -34,6 +35,7 @@ export const patchMilestoneSchema = z
         datesMilestoneDataSchema,
         brandBriefMilestoneDataSchema,
         promotionCandidatesMilestoneDataSchema,
+        schedulerMilestoneDataSchema,
       ])
       .nullable()
       .optional(),

@@ -6,6 +6,7 @@ import {
   brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
 import type { TimelineMilestone } from '../timeline/types'
@@ -13,6 +14,7 @@ import type { TimelineMilestone } from '../timeline/types'
 import { MilestoneBrandBriefDataPreview } from './milestone-brand-brief-data-preview'
 import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
 import { MilestonePromotionDataPreview } from './milestone-promotion-data-preview'
+import { MilestoneSchedulerDataPreview } from './milestone-scheduler-data-preview'
 
 export type MilestoneDataPreviewProps = {
   milestone: TimelineMilestone
@@ -104,6 +106,31 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
               menu: t('milestonePromotionPreviewMenu'),
               rationale: t('milestonePromotionPreviewRationale'),
               instagram: t('milestonePromotionPreviewInstagram'),
+              emptyList: t('milestoneBrandBriefPreviewEmptyList'),
+              emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
+            }}
+          />
+        </div>
+      )
+    }
+
+    if (milestone.presetId === 'scheduler') {
+      const parsedScheduler = schedulerMilestoneDataSchema.safeParse(data)
+      if (!parsedScheduler.success) {
+        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+      }
+
+      return (
+        <div className="min-h-0 overflow-auto rounded-md border p-4">
+          <MilestoneSchedulerDataPreview
+            data={parsedScheduler.data}
+            labels={{
+              schedules: t('milestoneSchedulerPreviewSchedules'),
+              dateTime: t('milestoneSchedulerPreviewDateTime'),
+              type: t('milestoneSchedulerPreviewType'),
+              promotedMenuItems: t('milestoneSchedulerPreviewPromotedMenuItems'),
+              visualIdea: t('milestoneSchedulerPreviewVisualIdea'),
+              captionIdea: t('milestoneSchedulerPreviewCaptionIdea'),
               emptyList: t('milestoneBrandBriefPreviewEmptyList'),
               emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
             }}

@@ -879,6 +879,14 @@
             "criterionCampaignWindow": "When **Start date** and **End date** appear in earlier milestone Data tabs (e.g. a **Dates** milestone), candidate choices and rationale respect that window; otherwise the Data tab states that no window was provided.",
             "criterionBrandBrief": "When a **Brand brief** milestone exists in the workflow, angles and tone do not contradict it; if none exists, the Data tab stays neutral and operational.",
             "placementHint": "Add **Dates** and **Brand brief** milestones before this one in the timeline so **Generate** can pull their Data tabs. Edit **placement** below if you have implementation notes."
+          },
+          "scheduler": {
+            "label": "Scheduler",
+            "title": "Scheduler",
+            "goal": "The Data tab contains a complete Instagram posting schedule for the campaign window with each post's date/time, type, promoted menu items, visual idea, and caption idea.",
+            "criterionHasScheduleRows": "The Data tab includes scheduled posts with all required fields: date/time, post type, promoted menu items, visual idea, and caption idea.",
+            "criterionWithinCampaignWindow": "All scheduled posts fall within the **Start date** and **End date** defined in the **Dates** milestone Data tab.",
+            "criterionAnalyticsGrounding": "Post timing and promoted menu choices are grounded in available analytics signals (posting windows, demand, and promotion candidate evidence) without inventing unsupported claims."
           }
         },
         "exportMilestones": "Export",
@@ -991,6 +999,12 @@
         "milestonePromotionPreviewMenu": "Menu",
         "milestonePromotionPreviewRationale": "Rationale",
         "milestonePromotionPreviewInstagram": "Instagram promotion",
+        "milestoneSchedulerPreviewSchedules": "Schedules",
+        "milestoneSchedulerPreviewDateTime": "Date and time",
+        "milestoneSchedulerPreviewType": "Type",
+        "milestoneSchedulerPreviewPromotedMenuItems": "Promoted menu items",
+        "milestoneSchedulerPreviewVisualIdea": "Visual idea",
+        "milestoneSchedulerPreviewCaptionIdea": "Caption idea",
         "milestonePreviewUnsupported": "This milestone data format is not supported in the preview yet.",
         "milestonePreviewDataEmpty": "No data has been added for this milestone yet.",
         "milestonePreviewDataInvalid": "This milestone contains invalid structured data and cannot be previewed.",

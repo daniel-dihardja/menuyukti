@@ -315,6 +315,34 @@ query LocationOperatingSignals($locationId: ID!, $analyticsRunId: ID!) {
 }
 """
 
+CAMPAIGN_SCHEDULE_PLAN_QUERY = """
+query CampaignSchedulePlan(
+  $workflowId: ID!
+  $milestoneId: ID!
+  $locationId: Int!
+) {
+  campaignSchedulePlan(
+    workflowId: $workflowId
+    milestoneId: $milestoneId
+    locationId: $locationId
+  ) {
+    analyticsRunId
+    campaignStart
+    campaignEnd
+    timezone
+    postsPerWeek
+    sourceSignalsSummary
+    slots {
+      dateTime
+      postType
+      promotedMenuItems
+      visualIdea
+      captionIdea
+    }
+  }
+}
+"""
+
 REPLACE_PASS_CRITERIA_MUTATION = """
 mutation ReplacePassCriteria(
   $milestoneId: ID!

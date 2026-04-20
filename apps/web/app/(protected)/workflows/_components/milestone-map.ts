@@ -2,12 +2,14 @@ import {
   brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   emptyPromotionCandidatesMilestoneData,
+  emptySchedulerMilestoneData,
   goalDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataDataSchema,
   passCriteriaDataSchema,
   promotionCandidatesMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
   resultDataSchema,
 } from '@/lib/graphql/node-schemas'
 import type { AnyNode } from '@/lib/graphql/queries'
@@ -218,6 +220,14 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
       normalizedData = parsedPromotionData.data
     } else {
       normalizedData = emptyPromotionCandidatesMilestoneData()
+    }
+  }
+  if (presetId === 'scheduler') {
+    const parsedSchedulerData = schedulerMilestoneDataSchema.safeParse(data)
+    if (parsedSchedulerData.success) {
+      normalizedData = parsedSchedulerData.data
+    } else {
+      normalizedData = emptySchedulerMilestoneData()
     }
   }
 

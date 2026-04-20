@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from typing import Any
 
 import httpx
 from agents_app.agents.core.milestone_run.tools.get_location_profile import (
@@ -17,6 +18,9 @@ from agents_app.agents.core.milestone_run.tools.get_promotion_candidates import 
 from agents_app.agents.core.milestone_run.tools.get_public_holidays import (
     make_get_public_holidays_tool,
 )
+from agents_app.agents.core.milestone_run.tools.get_scheduler_plan import (
+    make_get_scheduler_plan_tool,
+)
 from langchain_core.tools import BaseTool
 
 CORE_READ_TOOL_IDS: tuple[str, ...] = (
@@ -30,19 +34,25 @@ WRITE_TOOL_ID = "write_result_data"
 
 _RESERVED_TOOL_IDS: frozenset[str] = frozenset((*CORE_READ_TOOL_IDS, WRITE_TOOL_ID))
 
-ExtraToolFactory = Callable[[int, str, httpx.AsyncClient], BaseTool]
+ExtraToolFactory = Callable[[dict[str, Any], int, str, httpx.AsyncClient], BaseTool]
 
 EXTRA_TOOL_FACTORIES: dict[str, ExtraToolFactory] = {
-    "get_public_holidays": lambda lid, uid, client: make_get_public_holidays_tool(
+    "get_public_holidays": lambda context, lid, uid, client: make_get_public_holidays_tool(
         lid, uid, client=client
     ),
-    "get_location_profile": lambda lid, uid, client: make_get_location_profile_tool(
+    "get_location_profile": lambda context, lid, uid, client: make_get_location_profile_tool(
         lid, uid, client=client
     ),
-    "get_promotion_candidates": lambda lid, uid, client: make_get_promotion_candidates_tool(
+    "get_promotion_candidates": lambda context, lid, uid, client: make_get_promotion_candidates_tool(
         lid, uid, client=client
     ),
-    "get_prior_campaign_context": lambda lid, uid, client: make_get_prior_campaign_context_tool(),
+    "get_prior_campaign_context": lambda context, lid, uid, client: make_get_prior_campaign_context_tool(),
+    "get_scheduler_plan": lambda context, lid, uid, client: make_get_scheduler_plan_tool(
+        context,
+        lid,
+        uid,
+        client=client,
+    ),
 }
 
 
@@ -73,6 +83,7 @@ def dedupe_extra_tool_ids(ids: Sequence[str]) -> list[str]:
 
 
 def make_extra_tools(
+    context: dict[str, Any],
     extra_tool_ids: Sequence[str],
     location_id: int,
     user_id: str,
@@ -83,5 +94,5 @@ def make_extra_tools(
     tools: list[BaseTool] = []
     for tid in dedupe_extra_tool_ids(extra_tool_ids):
         factory = EXTRA_TOOL_FACTORIES[tid]
-        tools.append(factory(location_id, user_id, client))
+        tools.append(factory(context, location_id, user_id, client))
     return tools

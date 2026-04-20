@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 import httpx
+from agents_app.agents.core.milestone_run.output_schema import validate_scheduler_output
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
 from langchain_core.tools import BaseTool, tool
 
@@ -25,13 +26,25 @@ def make_write_result_data_tool(
         Updates context ``result_data`` and returns a short confirmation including the node id.
         """
         payload: Any = new_data
-        if isinstance(new_data, str) and isinstance(context.get("milestone_data"), dict):
+        if isinstance(new_data, str):
             try:
                 parsed_json = json.loads(new_data)
             except Exception:
                 parsed_json = None
             if isinstance(parsed_json, dict):
                 payload = parsed_json
+
+        selected_skill_id = context.get("selected_skill_id")
+        if selected_skill_id == "scheduler":
+            normalized, error = validate_scheduler_output(payload)
+            if error is not None:
+                return (
+                    "Scheduler output validation failed. Expected "
+                    '{"schedules":[{"dateTime","type","promotedMenuItems","visualIdea","captionIdea"}]}. '
+                    f"Validation error: {error}"
+                )
+            payload = normalized
+
         node = await upsert_milestonedata_node(
             milestone_id,
             location_id,

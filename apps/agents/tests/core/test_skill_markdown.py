@@ -43,3 +43,9 @@ def test_promotion_candidates_skill_declares_expected_extra_tool() -> None:
     md = load_skill_markdown(get_milestone_run_skill_path("promotion_candidates"))
     assert md.name == "promotion_candidates"
     assert md.extra_tools == ["get_promotion_candidates", "get_prior_campaign_context"]
+
+
+def test_scheduler_skill_declares_expected_extra_tool() -> None:
+    md = load_skill_markdown(get_milestone_run_skill_path("scheduler"))
+    assert md.name == "scheduler"
+    assert md.extra_tools == ["get_scheduler_plan"]
