@@ -12,7 +12,9 @@ from graphql.services.instagram_signals import build_instagram_signals
 from graphql.services.promotion_menu_items import build_promotion_menu_items
 
 
-def build_promotion_candidates_signals(session: Session, run: AnalyticsRun) -> dict[str, Any] | None:
+def build_promotion_candidates_signals(
+    session: Session, run: AnalyticsRun
+) -> dict[str, Any] | None:
     """Return promotion-candidate signals for one analytics run."""
     promotion = build_promotion_menu_items(session, run)
     if not promotion.rows:
@@ -38,7 +40,9 @@ def build_promotion_candidates_signals(session: Session, run: AnalyticsRun) -> d
                 "category": row.get("category") if isinstance(row.get("category"), str) else None,
                 "action": row.get("action") if isinstance(row.get("action"), str) else None,
                 "peak_day": row.get("peak_day") if isinstance(row.get("peak_day"), str) else None,
-                "peak_hour": row.get("peak_hour") if isinstance(row.get("peak_hour"), int) else None,
+                "peak_hour": row.get("peak_hour")
+                if isinstance(row.get("peak_hour"), int)
+                else None,
                 "contribution_margin_percentage": (
                     float(row["contribution_margin_percentage"])
                     if isinstance(row.get("contribution_margin_percentage"), (int, float))
@@ -86,4 +90,3 @@ def build_promotion_candidates_signals(session: Session, run: AnalyticsRun) -> d
         "items_total_count": promotion.items_total_count,
         "items_truncated": promotion.items_truncated,
     }
-

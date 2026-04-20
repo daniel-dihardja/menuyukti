@@ -64,7 +64,11 @@ def test_calculate_promotion_candidates_builds_ranked_slices_and_puzzle_pool() -
         content_heroes=[{"menu": "Nasi Goreng"}],
         trending_items=[{"menu": "Nasi Goreng"}, {"menu": "Truffle Pasta"}],
         avoid_items=[{"menu": "Iced Tea"}],
-        best_posting_window={"peak_day": "fri", "peak_hour": 19, "primary_meal_period": None},
+        best_posting_window={
+            "peak_day": "fri",
+            "peak_hour": 19,
+            "primary_meal_period": None,
+        },
     )
 
     assert result["ranked_candidates_total_count"] == 4
@@ -105,4 +109,3 @@ def test_calculate_promotion_candidates_posting_window_summary() -> None:
     assert "peak day: sat" in result["best_posting_window_summary"]
     assert "peak hour: 18:00" in result["best_posting_window_summary"]
     assert "primary meal period: dinner" in result["best_posting_window_summary"]
-

@@ -209,14 +209,20 @@ def _puzzle_how_to_promote(row: dict[str, object]) -> list[str]:
     ]
 
 
-def _build_puzzle_pool(scored: list[dict[str, object]]) -> tuple[list[dict[str, object]], float]:
-    puzzle_items = [x for x in scored if str(x.get("matrix_category") or "").lower() == "puzzle"]
+def _build_puzzle_pool(
+    scored: list[dict[str, object]],
+) -> tuple[list[dict[str, object]], float]:
+    puzzle_items = [
+        x for x in scored if str(x.get("matrix_category") or "").lower() == "puzzle"
+    ]
     if not puzzle_items:
         return [], 0.0
 
     max_qty = max(int(x.get("quantity") or 0) for x in puzzle_items) or 1
     max_rev = max(float(x.get("total_revenue") or 0.0) for x in puzzle_items) or 1.0
-    max_margin = max(float(x.get("contribution_margin_pct") or 0.0) for x in puzzle_items) or 1.0
+    max_margin = (
+        max(float(x.get("contribution_margin_pct") or 0.0) for x in puzzle_items) or 1.0
+    )
 
     for row in puzzle_items:
         qty_norm = float(row.get("quantity") or 0) / max_qty
@@ -236,12 +242,16 @@ def _build_puzzle_pool(scored: list[dict[str, object]]) -> tuple[list[dict[str, 
         if str(row.get("recommendation") or "").lower() == "avoid":
             modifier -= 0.12
 
-        puzzle_score = ((qty_norm * 0.35) + (rev_norm * 0.35) + (margin_norm * 0.20) + modifier) * 100
+        puzzle_score = (
+            (qty_norm * 0.35) + (rev_norm * 0.35) + (margin_norm * 0.20) + modifier
+        ) * 100
         row["puzzle_opportunity_score"] = round(puzzle_score, 2)
 
     scores = [float(x["puzzle_opportunity_score"]) for x in puzzle_items]
     threshold = _median(scores)
-    selected = [x for x in puzzle_items if float(x["puzzle_opportunity_score"]) >= threshold]
+    selected = [
+        x for x in puzzle_items if float(x["puzzle_opportunity_score"]) >= threshold
+    ]
 
     if not selected:
         selected = sorted(
@@ -252,7 +262,11 @@ def _build_puzzle_pool(scored: list[dict[str, object]]) -> tuple[list[dict[str, 
 
     if len(selected) > _MAX_PUZZLE_SELECTED:
         raised_threshold = threshold + 5.0
-        raised = [x for x in selected if float(x["puzzle_opportunity_score"]) >= raised_threshold]
+        raised = [
+            x
+            for x in selected
+            if float(x["puzzle_opportunity_score"]) >= raised_threshold
+        ]
         selected = raised if raised else selected
         if len(selected) > _MAX_PUZZLE_SELECTED:
             selected = sorted(
@@ -304,7 +318,11 @@ def calculate_promotion_candidates(
     best_posting_window: BestPostingWindowInput | None,
 ) -> PromotionCandidatesResult:
     """Rank promotion candidates and build puzzle opportunity signals."""
-    valid_items = [x for x in promotion_menu_items if isinstance(x.get("menu"), str) and x.get("menu")]
+    valid_items = [
+        x
+        for x in promotion_menu_items
+        if isinstance(x.get("menu"), str) and x.get("menu")
+    ]
     if not valid_items:
         return PromotionCandidatesResult(
             top_promote=[],
@@ -321,11 +339,21 @@ def calculate_promotion_candidates(
             best_posting_window_summary=_posting_window_summary(best_posting_window),
         )
 
-    hero_menus = {str(x["menu"]) for x in content_heroes if isinstance(x.get("menu"), str) and x.get("menu")}
-    trending_menus = {
-        str(x["menu"]) for x in trending_items if isinstance(x.get("menu"), str) and x.get("menu")
+    hero_menus = {
+        str(x["menu"])
+        for x in content_heroes
+        if isinstance(x.get("menu"), str) and x.get("menu")
     }
-    avoid_menus = {str(x["menu"]) for x in avoid_items if isinstance(x.get("menu"), str) and x.get("menu")}
+    trending_menus = {
+        str(x["menu"])
+        for x in trending_items
+        if isinstance(x.get("menu"), str) and x.get("menu")
+    }
+    avoid_menus = {
+        str(x["menu"])
+        for x in avoid_items
+        if isinstance(x.get("menu"), str) and x.get("menu")
+    }
 
     max_quantity = max(int(x.get("quantity") or 0) for x in valid_items)
     max_revenue = max(float(x.get("total_revenue") or 0.0) for x in valid_items)
@@ -358,10 +386,16 @@ def calculate_promotion_candidates(
             }
         )
 
-    scored.sort(key=lambda row: (-float(row["score"]), -int(row["quantity"]), str(row["menu"])))
+    scored.sort(
+        key=lambda row: (-float(row["score"]), -int(row["quantity"]), str(row["menu"]))
+    )
 
-    top_promote = [_ranked_minimal(x) for x in scored if x["recommendation"] == "promote"][:_MAX_PROMOTION_SLICE]
-    top_avoid = [_ranked_minimal(x) for x in scored if x["recommendation"] == "avoid"][:_MAX_PROMOTION_SLICE]
+    top_promote = [
+        _ranked_minimal(x) for x in scored if x["recommendation"] == "promote"
+    ][:_MAX_PROMOTION_SLICE]
+    top_avoid = [_ranked_minimal(x) for x in scored if x["recommendation"] == "avoid"][
+        :_MAX_PROMOTION_SLICE
+    ]
     ranked_candidates = [_ranked_minimal(x) for x in scored]
 
     selected_puzzles, puzzle_threshold = _build_puzzle_pool(scored)
@@ -374,25 +408,45 @@ def calculate_promotion_candidates(
                 score=float(row.get("score") or 0.0),
                 quantity=int(row.get("quantity") or 0),
                 total_revenue=float(row.get("total_revenue") or 0.0),
-                menu_category=(row.get("menu_category") if isinstance(row.get("menu_category"), str) else None),
+                menu_category=(
+                    row.get("menu_category")
+                    if isinstance(row.get("menu_category"), str)
+                    else None
+                ),
                 menu_category_detail=(
                     row.get("menu_category_detail")
                     if isinstance(row.get("menu_category_detail"), str)
                     else None
                 ),
-                peak_day=(row.get("peak_day") if isinstance(row.get("peak_day"), str) else None),
-                peak_hour=(row.get("peak_hour") if isinstance(row.get("peak_hour"), int) else None),
-                matrix_category=(
-                    row.get("matrix_category") if isinstance(row.get("matrix_category"), str) else None
+                peak_day=(
+                    row.get("peak_day")
+                    if isinstance(row.get("peak_day"), str)
+                    else None
                 ),
-                matrix_action=(row.get("matrix_action") if isinstance(row.get("matrix_action"), str) else None),
+                peak_hour=(
+                    row.get("peak_hour")
+                    if isinstance(row.get("peak_hour"), int)
+                    else None
+                ),
+                matrix_category=(
+                    row.get("matrix_category")
+                    if isinstance(row.get("matrix_category"), str)
+                    else None
+                ),
+                matrix_action=(
+                    row.get("matrix_action")
+                    if isinstance(row.get("matrix_action"), str)
+                    else None
+                ),
                 contribution_margin_pct=(
                     float(row["contribution_margin_pct"])
                     if isinstance(row.get("contribution_margin_pct"), (int, float))
                     else None
                 ),
                 signal_reasons=[str(r) for r in (row.get("signal_reasons") or [])],
-                puzzle_opportunity_score=float(row.get("puzzle_opportunity_score") or 0.0),
+                puzzle_opportunity_score=float(
+                    row.get("puzzle_opportunity_score") or 0.0
+                ),
                 why_selected=_puzzle_why(row),
                 how_to_promote_on_instagram=_puzzle_how_to_promote(row),
             )
@@ -415,4 +469,3 @@ def calculate_promotion_candidates(
         best_posting_window=best_posting_window,
         best_posting_window_summary=_posting_window_summary(best_posting_window),
     )
-

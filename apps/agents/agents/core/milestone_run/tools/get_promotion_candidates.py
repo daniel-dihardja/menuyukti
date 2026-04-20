@@ -84,7 +84,9 @@ def make_get_promotion_candidates_tool(
         ranked_clean = [row for row in ranked_raw if isinstance(row, dict)]
 
         total_ranked_raw = composed.get("rankedCandidatesTotalCount")
-        total_ranked = int(total_ranked_raw) if isinstance(total_ranked_raw, int) else len(ranked_clean)
+        total_ranked = (
+            int(total_ranked_raw) if isinstance(total_ranked_raw, int) else len(ranked_clean)
+        )
         ranked_slice = (
             ranked_clean
             if len(ranked_clean) <= _MAX_RANKED_CANDIDATES_IN_TOOL
@@ -120,14 +122,21 @@ def make_get_promotion_candidates_tool(
                 "selected": selected_payload,
             }
         else:
-            puzzle_pool = {"puzzleItemsFound": 0, "threshold": 0.0, "selectedCount": 0, "selected": []}
+            puzzle_pool = {
+                "puzzleItemsFound": 0,
+                "threshold": 0.0,
+                "selectedCount": 0,
+                "selected": [],
+            }
 
         posting = composed.get("bestPostingWindow")
         payload: dict[str, Any] = {
             "analyticsRun": {"id": run.get("id"), "name": run.get("name")},
             "reportingPeriod": {"start": period_start, "end": period_end},
             "bestPostingWindow": posting if isinstance(posting, dict) else None,
-            "bestPostingWindowSummary": str(composed.get("bestPostingWindowSummary") or "not available"),
+            "bestPostingWindowSummary": str(
+                composed.get("bestPostingWindowSummary") or "not available"
+            ),
             "totals": {"menuItemsEvaluated": int(composed.get("itemsTotalCount") or total_ranked)},
             "topPromote": top_promote,
             "topAvoid": top_avoid,

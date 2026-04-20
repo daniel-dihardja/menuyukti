@@ -88,16 +88,22 @@ def _selected_puzzle(row: dict) -> PromotionPuzzleSelectedType:
         score=float(row["score"]),
         quantity=int(row["quantity"]),
         total_revenue=float(row["total_revenue"]),
-        menu_category=row.get("menu_category") if isinstance(row.get("menu_category"), str) else None,
+        menu_category=row.get("menu_category")
+        if isinstance(row.get("menu_category"), str)
+        else None,
         menu_category_detail=(
-            row.get("menu_category_detail") if isinstance(row.get("menu_category_detail"), str) else None
+            row.get("menu_category_detail")
+            if isinstance(row.get("menu_category_detail"), str)
+            else None
         ),
         peak_day=row.get("peak_day") if isinstance(row.get("peak_day"), str) else None,
         peak_hour=row.get("peak_hour") if isinstance(row.get("peak_hour"), int) else None,
         matrix_category=(
             row.get("matrix_category") if isinstance(row.get("matrix_category"), str) else None
         ),
-        matrix_action=row.get("matrix_action") if isinstance(row.get("matrix_action"), str) else None,
+        matrix_action=row.get("matrix_action")
+        if isinstance(row.get("matrix_action"), str)
+        else None,
         contribution_margin_pct=(
             float(row["contribution_margin_pct"])
             if isinstance(row.get("contribution_margin_pct"), (int, float))
@@ -140,9 +146,13 @@ class PromotionCandidatesSignalsQuery:
             posting_window = None
             if isinstance(posting, dict):
                 posting_window = PromotionBestPostingWindowType(
-                    peak_day=posting.get("peak_day") if isinstance(posting.get("peak_day"), str) else None,
+                    peak_day=posting.get("peak_day")
+                    if isinstance(posting.get("peak_day"), str)
+                    else None,
                     peak_hour=(
-                        posting.get("peak_hour") if isinstance(posting.get("peak_hour"), int) else None
+                        posting.get("peak_hour")
+                        if isinstance(posting.get("peak_hour"), int)
+                        else None
                     ),
                     primary_meal_period=(
                         posting.get("primary_meal_period")
@@ -169,6 +179,7 @@ class PromotionCandidatesSignalsQuery:
                 ranked_candidates=[_ranked_candidate(x) for x in raw.get("ranked_candidates", [])],
                 ranked_candidates_total_count=int(raw.get("ranked_candidates_total_count") or 0),
                 best_posting_window=posting_window,
-                best_posting_window_summary=str(raw.get("best_posting_window_summary") or "not available"),
+                best_posting_window_summary=str(
+                    raw.get("best_posting_window_summary") or "not available"
+                ),
             )
-
