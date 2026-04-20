@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 
 import { Card } from '@workspace/ui/components/card'
 import { Collapsible, CollapsibleContent } from '@workspace/ui/components/collapsible'
@@ -37,8 +37,9 @@ function TimelineItemInner({
   onSelect,
   showDelete,
 }: TimelineItemProps) {
-  const datesInputFromMilestone = (row: TimelineMilestone): DatesMilestoneInput => {
-    const raw = row.milestoneInput
+  const datesInputFromMilestone = (
+    raw: TimelineMilestone['milestoneInput'],
+  ): DatesMilestoneInput => {
     if (raw?.type === 'dates' && raw.value != null && typeof raw.value === 'object') {
       const value = raw.value as Partial<DatesMilestoneInput>
       return {
@@ -97,12 +98,12 @@ function TimelineItemInner({
   const isDatesPreset = milestone.presetId === 'dates'
 
   const [inputDraft, setInputDraft] = useState<DatesMilestoneInput>(() =>
-    datesInputFromMilestone(milestone),
+    datesInputFromMilestone(milestone.milestoneInput),
   )
 
   useEffect(() => {
-    setInputDraft(datesInputFromMilestone(milestone))
-  }, [milestone.id, milestone.milestoneInput])
+    setInputDraft(datesInputFromMilestone(milestone.milestoneInput))
+  }, [milestone.milestoneInput])
   useEffect(() => {
     setGoalDraft(milestone.goal ?? '')
   }, [milestone.id, milestone.goal])
@@ -181,7 +182,7 @@ function TimelineItemInner({
 
   const goalFieldId = `milestone-goal-${milestone.id}`
   const hasResult = Boolean(milestone.resultMarkdown?.trim())
-  const serverDatesInput = datesInputFromMilestone(milestone)
+  const serverDatesInput = datesInputFromMilestone(milestone.milestoneInput)
   const inputDirty =
     inputDraft.startDate !== serverDatesInput.startDate ||
     inputDraft.endDate !== serverDatesInput.endDate
