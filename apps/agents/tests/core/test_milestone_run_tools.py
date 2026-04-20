@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -88,6 +89,20 @@ def test_read_data_returns_raw_data() -> None:
     assert out.startswith("# Notes")
 
 
+def test_read_data_returns_json_when_structured_data_present() -> None:
+    ctx = {
+        "milestone_data": {
+            "startDate": "2026-06-01",
+            "endDate": "2026-06-30",
+            "publicHolidays": [],
+        }
+    }
+    tools = _tools_for_context(ctx)
+    read_data = _tool_by_name(tools, "read_data")
+    out = read_data.invoke({})
+    assert '"startDate": "2026-06-01"' in out
+
+
 def test_read_prior_milestones_returns_context() -> None:
     ctx = {"prior_milestones_data": "## Campaign Brief\n\n**Start:** 2026-05-01"}
     tools = _tools_for_context(ctx)
@@ -110,6 +125,20 @@ def test_extra_tool_ids_includes_get_public_holidays() -> None:
     names = [getattr(t, "name", "") for t in tools]
     assert "get_public_holidays" in names
     assert names.index("get_public_holidays") < names.index("write_result_data")
+
+
+def test_extra_tool_ids_includes_get_promotion_candidates() -> None:
+    tools = _tools_for_context({}, extra_tool_ids=["get_promotion_candidates"])
+    names = [getattr(t, "name", "") for t in tools]
+    assert "get_promotion_candidates" in names
+    assert names.index("get_promotion_candidates") < names.index("write_result_data")
+
+
+def test_extra_tool_ids_includes_get_prior_campaign_context() -> None:
+    tools = _tools_for_context({}, extra_tool_ids=["get_prior_campaign_context"])
+    names = [getattr(t, "name", "") for t in tools]
+    assert "get_prior_campaign_context" in names
+    assert names.index("get_prior_campaign_context") < names.index("write_result_data")
 
 
 @pytest.mark.asyncio
@@ -139,6 +168,229 @@ async def test_get_public_holidays_formats_list() -> None:
 
 
 @pytest.mark.asyncio
+async def test_get_promotion_candidates_formats_ranked_output() -> None:
+    ctx: dict[str, Any] = {}
+    client = MagicMock(spec=AsyncMock)
+
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.get_promotion_candidates.fetch_location_operating_signals",
+        new=AsyncMock(
+            return_value={
+                "analytics_run": {"id": "1", "name": "Run 1"},
+                "operating_profile": None,
+                "category_mix": None,
+                "promotion_menu_items": {
+                    "periodStart": "2026-01-01",
+                    "periodEnd": "2026-01-31",
+                    "items": [],
+                },
+                "promotion_candidates_signals": {
+                    "itemsTotalCount": 4,
+                    "itemsTruncated": False,
+                    "topPromote": [
+                        {
+                            "menu": "Nasi Goreng",
+                            "recommendation": "promote",
+                            "score": 100.0,
+                            "quantity": 100,
+                            "totalRevenue": 5000.0,
+                            "signalReasons": ["Tagged as content hero in Instagram signals"],
+                        }
+                    ],
+                    "topAvoid": [
+                        {
+                            "menu": "Iced Tea",
+                            "recommendation": "avoid",
+                            "score": 12.0,
+                            "quantity": 50,
+                            "totalRevenue": 1000.0,
+                            "signalReasons": ["Flagged as avoid or low_end"],
+                        }
+                    ],
+                    "puzzleOpportunityPool": {
+                        "puzzleItemsFound": 2,
+                        "threshold": 72.0,
+                        "selectedCount": 1,
+                        "selected": [
+                            {
+                                "menu": "Truffle Pasta",
+                                "recommendation": "promote",
+                                "score": 78.0,
+                                "quantity": 40,
+                                "totalRevenue": 3200.0,
+                                "signalReasons": ["Tagged as rising trend in Instagram signals"],
+                                "whySelected": ["Balanced potential: qty 40, revenue 3200.00."],
+                                "howToPromoteOnInstagram": [
+                                    "Angle",
+                                    "Format",
+                                    "Timing & CTA",
+                                ],
+                            }
+                        ],
+                    },
+                    "rankedCandidates": [
+                        {
+                            "menu": "Nasi Goreng",
+                            "recommendation": "promote",
+                            "score": 100.0,
+                            "quantity": 100,
+                            "totalRevenue": 5000.0,
+                            "signalReasons": ["Tagged as content hero in Instagram signals"],
+                        },
+                        {
+                            "menu": "Truffle Pasta",
+                            "recommendation": "promote",
+                            "score": 78.0,
+                            "quantity": 40,
+                            "totalRevenue": 3200.0,
+                            "signalReasons": ["Tagged as rising trend in Instagram signals"],
+                        },
+                        {
+                            "menu": "Lava Cake",
+                            "recommendation": "test",
+                            "score": 52.0,
+                            "quantity": 30,
+                            "totalRevenue": 1800.0,
+                            "signalReasons": ["Menu engineering category is puzzle"],
+                        },
+                        {
+                            "menu": "Iced Tea",
+                            "recommendation": "avoid",
+                            "score": 12.0,
+                            "quantity": 50,
+                            "totalRevenue": 1000.0,
+                            "signalReasons": ["Flagged as avoid or low_end"],
+                        },
+                    ],
+                    "rankedCandidatesTotalCount": 4,
+                    "bestPostingWindow": {"peakDay": "fri", "peakHour": 19},
+                    "bestPostingWindowSummary": "peak day: fri, peak hour: 19:00",
+                },
+                "instagram_signals": {},
+            }
+        ),
+    ):
+        tools = _tools_for_context(ctx, client=client, extra_tool_ids=["get_promotion_candidates"])
+        get_promotion_candidates = _tool_by_name(tools, "get_promotion_candidates")
+        out = await get_promotion_candidates.ainvoke({})
+
+    payload = json.loads(out)
+    assert payload["analyticsRun"]["name"] == "Run 1"
+    assert payload["totals"]["menuItemsEvaluated"] == 4
+    assert len(payload["topPromote"]) >= 1
+    assert any(r["menu"] == "Nasi Goreng" for r in payload["rankedCandidates"])
+    assert any(r["menu"] == "Truffle Pasta" for r in payload["rankedCandidates"])
+    assert any(r["menu"] == "Iced Tea" for r in payload["rankedCandidates"])
+    assert payload.get("rankedCandidatesTotalCount") == 4
+    assert payload.get("rankedCandidatesTruncated") is False
+    assert len(payload["rankedCandidates"]) == 4
+    rc0 = payload["rankedCandidates"][0]
+    assert set(rc0.keys()) == {
+        "menu",
+        "recommendation",
+        "score",
+        "quantity",
+        "totalRevenue",
+        "signalReasons",
+    }
+    pool = payload["puzzleOpportunityPool"]
+    assert pool["puzzleItemsFound"] == 2
+    assert pool["selectedCount"] >= 1
+    selected = pool["selected"]
+    assert isinstance(selected, list)
+    assert any(s.get("menu") == "Truffle Pasta" for s in selected)
+    for row in selected:
+        assert "whySelected" in row
+        assert "howToPromoteOnInstagram" in row
+
+
+@pytest.mark.asyncio
+async def test_get_promotion_candidates_truncates_large_menu() -> None:
+    """Large menus cap rankedCandidates so the ReAct LLM turn stays bounded."""
+    ctx: dict[str, Any] = {}
+    client = MagicMock(spec=AsyncMock)
+    items: list[dict[str, Any]] = []
+    for i in range(40):
+        items.append(
+            {
+                "menu": f"Dish {i:02d}",
+                "quantity": 10 + i,
+                "totalRevenue": float(100 + i * 10),
+                "menuCategory": "Main",
+                "menuCategoryDetail": "X",
+                "category": "plow_horse",
+                "action": "promote",
+                "peakDay": "mon",
+                "peakHour": 12,
+                "contributionMarginPercentage": 0.2,
+            }
+        )
+
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.get_promotion_candidates.fetch_location_operating_signals",
+        new=AsyncMock(
+            return_value={
+                "analytics_run": {"id": "1", "name": "Run 1"},
+                "operating_profile": None,
+                "category_mix": None,
+                "promotion_menu_items": {
+                    "periodStart": "2026-01-01",
+                    "periodEnd": "2026-01-31",
+                    "items": items,
+                },
+                "promotion_candidates_signals": {
+                    "itemsTotalCount": 40,
+                    "itemsTruncated": False,
+                    "topPromote": items[:8],
+                    "topAvoid": [],
+                    "puzzleOpportunityPool": {
+                        "puzzleItemsFound": 0,
+                        "threshold": 0.0,
+                        "selectedCount": 0,
+                        "selected": [],
+                    },
+                    "rankedCandidates": items,
+                    "rankedCandidatesTotalCount": 40,
+                    "bestPostingWindow": None,
+                    "bestPostingWindowSummary": "not available",
+                },
+                "instagram_signals": {},
+            }
+        ),
+    ):
+        tools = _tools_for_context(ctx, client=client, extra_tool_ids=["get_promotion_candidates"])
+        get_promotion_candidates = _tool_by_name(tools, "get_promotion_candidates")
+        out = await get_promotion_candidates.ainvoke({})
+
+    payload = json.loads(out)
+    assert payload["totals"]["menuItemsEvaluated"] == 40
+    assert payload["rankedCandidatesTotalCount"] == 40
+    assert payload["rankedCandidatesTruncated"] is True
+    assert len(payload["rankedCandidates"]) == 30
+    assert set(payload["rankedCandidates"][0].keys()) == {
+        "menu",
+        "recommendation",
+        "score",
+        "quantity",
+        "totalRevenue",
+        "signalReasons",
+    }
+
+
+def test_get_prior_campaign_context_extracts_dates_and_brand_brief() -> None:
+    tools = _tools_for_context({}, extra_tool_ids=["get_prior_campaign_context"])
+    get_prior_campaign_context = _tool_by_name(tools, "get_prior_campaign_context")
+    sample = (
+        "## Dates\n\n## Start date\n\n2026-05-01\n\n## End date\n\n2026-05-31\n\n"
+        "## Brand brief\n\nTone: warm and premium.\n"
+    )
+    out = get_prior_campaign_context.invoke({"prior_milestones_markdown": sample})
+    assert "Start date: 2026-05-01" in out
+    assert "End date: 2026-05-31" in out
+    assert "Brand brief found: yes" in out
+
+
+@pytest.mark.asyncio
 async def test_write_result_data_upserts_and_updates_context() -> None:
     ctx: dict[str, Any] = {}
     client = MagicMock(spec=AsyncMock)
@@ -154,6 +406,40 @@ async def test_write_result_data_upserts_and_updates_context() -> None:
     mock_upsert.assert_awaited_once()
     assert ctx.get("result_data") == "Updated body"
     assert "md-9" in out
+
+
+@pytest.mark.asyncio
+async def test_write_result_data_parses_structured_json_when_context_is_structured() -> None:
+    ctx: dict[str, Any] = {
+        "milestone_data": {
+            "startDate": "",
+            "endDate": "",
+            "publicHolidays": [],
+        }
+    }
+    client = MagicMock(spec=AsyncMock)
+
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
+        new=AsyncMock(return_value={"id": "md-10"}),
+    ) as mock_upsert:
+        tools = _tools_for_context(ctx, client=client)
+        write_result_data = _tool_by_name(tools, "write_result_data")
+        out = await write_result_data.ainvoke(
+            {
+                "new_data": '{"startDate":"2026-06-01","endDate":"2026-06-30","publicHolidays":[]}'
+            }
+        )
+
+    mock_upsert.assert_awaited_once()
+    awaited_payload = mock_upsert.await_args.args[2]
+    assert awaited_payload == {
+        "startDate": "2026-06-01",
+        "endDate": "2026-06-30",
+        "publicHolidays": [],
+    }
+    assert isinstance(ctx.get("milestone_data"), dict)
+    assert "md-10" in out
 
 
 def test_validate_extra_tool_ids_rejects_unknown() -> None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -12,6 +13,26 @@ async def _empty_astream_events(*_a: object, **_k: object):
     """Async generator that yields no LangGraph stream events."""
     if False:  # pragma: no cover
         yield None
+
+
+def _get_llm_structured_side_effect(
+    *,
+    structured_invoke: MagicMock,
+    react_llm: MagicMock,
+) -> Callable[[], MagicMock]:
+    """First call: skill-selector chain; later calls: ReAct agent model."""
+
+    selector_llm = MagicMock()
+    selector_llm.with_structured_output.return_value = structured_invoke
+    state = {"n": 0}
+
+    def side_effect() -> MagicMock:
+        state["n"] += 1
+        if state["n"] == 1:
+            return selector_llm
+        return react_llm
+
+    return side_effect
 
 
 async def _fake_eval_astream(*_a: object, **_k: object):
@@ -65,7 +86,7 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
     client = MagicMock(spec=AsyncMock)
     mock_structured = MagicMock()
     mock_structured.ainvoke = AsyncMock(return_value=SkillSelections(skill_ids=["generic"]))
-    mock_with_structured = MagicMock(return_value=mock_structured)
+    react_llm = MagicMock()
 
     mock_eval = MagicMock()
     mock_eval.astream = _fake_eval_astream
@@ -105,11 +126,7 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.get_llm_structured",
-            return_value=MagicMock(with_structured_output=mock_with_structured),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_llm",
-            return_value=MagicMock(),
+            side_effect=_get_llm_structured_side_effect(structured_invoke=mock_structured, react_llm=react_llm),
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.create_react_agent",
@@ -137,7 +154,7 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
     mock_structured.ainvoke = AsyncMock(
         return_value=SkillSelections(skill_ids=["public_holidays", "generic"]),
     )
-    mock_with_structured = MagicMock(return_value=mock_structured)
+    react_llm = MagicMock()
 
     mock_eval = MagicMock()
     mock_eval.astream = _fake_eval_astream
@@ -177,11 +194,7 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.get_llm_structured",
-            return_value=MagicMock(with_structured_output=mock_with_structured),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_llm",
-            return_value=MagicMock(),
+            side_effect=_get_llm_structured_side_effect(structured_invoke=mock_structured, react_llm=react_llm),
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.create_react_agent",
@@ -202,9 +215,7 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
 @pytest.mark.asyncio
 async def test_graph_skips_llm_selector_when_milestone_fixed_skills() -> None:
     client = MagicMock(spec=AsyncMock)
-    mock_structured = MagicMock()
-    mock_structured.ainvoke = AsyncMock(return_value=SkillSelections(skill_ids=["generic"]))
-    mock_with_structured = MagicMock(return_value=mock_structured)
+    react_llm = MagicMock()
 
     mock_eval = MagicMock()
     mock_eval.astream = _fake_eval_astream
@@ -251,11 +262,7 @@ async def test_graph_skips_llm_selector_when_milestone_fixed_skills() -> None:
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.get_llm_structured",
-            return_value=MagicMock(with_structured_output=mock_with_structured),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.get_llm",
-            return_value=MagicMock(),
+            return_value=react_llm,
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.create_react_agent",
@@ -266,6 +273,6 @@ async def test_graph_skips_llm_selector_when_milestone_fixed_skills() -> None:
         mock_create.return_value = mock_agent
         graph = build_milestone_run_graph(client)
         out = await graph.ainvoke(_minimal_initial())
-    mock_with_structured.assert_not_called()
+    react_llm.with_structured_output.assert_not_called()
     assert out.get("selected_skill_ids") == ["public_holidays"]
     assert mock_create.call_count == 1

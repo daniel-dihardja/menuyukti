@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import httpx
@@ -18,21 +19,35 @@ def make_write_result_data_tool(
     client: httpx.AsyncClient,
 ) -> BaseTool:
     @tool
-    async def write_result_data(new_data: str) -> str:
-        """Upsert the milestonedata child under this milestone with the given Markdown body.
+    async def write_result_data(new_data: Any) -> str:
+        """Upsert the milestonedata child under this milestone with the given payload.
 
         Updates context ``result_data`` and returns a short confirmation including the node id.
         """
+        payload: Any = new_data
+        if isinstance(new_data, str) and isinstance(context.get("milestone_data"), dict):
+            try:
+                parsed_json = json.loads(new_data)
+            except Exception:
+                parsed_json = None
+            if isinstance(parsed_json, dict):
+                payload = parsed_json
         node = await upsert_milestonedata_node(
             milestone_id,
             location_id,
-            new_data,
+            payload,
             user_id,
             client=client,
         )
         nid = str(node.get("id", ""))
-        context["result_data"] = new_data
+        context["milestone_data"] = payload
+        context["result_data"] = (
+            json.dumps(payload, ensure_ascii=False, indent=2)
+            if isinstance(payload, (dict, list))
+            else str(payload)
+        )
+        context["raw_data"] = context["result_data"]
         context["milestonedata_written"] = True
-        return f"Saved milestonedata node id={nid} ({len(new_data)} characters)."
+        return f"Saved milestonedata node id={nid} ({len(context['result_data'])} characters)."
 
     return write_result_data

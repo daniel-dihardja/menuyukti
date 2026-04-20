@@ -173,7 +173,8 @@ async def fetch_location_operating_signals(
 
     Returns a dict with keys ``analytics_run`` (id/name from list; period is on
     ``promotion_menu_items`` when present),
-    ``operating_profile``, ``category_mix``, and ``promotion_menu_items``.
+    ``operating_profile``, ``category_mix``, ``promotion_menu_items``,
+    ``promotion_candidates_signals``, and ``instagram_signals``.
     Any key is ``None`` when no analytics run exists or when the query returns nothing.
     """
     runs_data = await graphql_post(
@@ -189,6 +190,8 @@ async def fetch_location_operating_signals(
             "operating_profile": None,
             "category_mix": None,
             "promotion_menu_items": None,
+            "promotion_candidates_signals": None,
+            "instagram_signals": None,
         }
 
     run = runs[0]
@@ -206,20 +209,22 @@ async def fetch_location_operating_signals(
         "operating_profile": signals_data.get("operatingProfile"),
         "category_mix": signals_data.get("categoryMix"),
         "promotion_menu_items": signals_data.get("promotionMenuItems"),
+        "promotion_candidates_signals": signals_data.get("promotionCandidatesSignals"),
+        "instagram_signals": signals_data.get("instagramSignals"),
     }
 
 
 async def upsert_milestonedata_node(
     milestone_id: str,
     location_id: int,
-    data: str,
+    data: Any,
     user_id: str,
     *,
     client: httpx.AsyncClient,
 ) -> dict[str, Any]:
     """Create or update the single ``milestonedata`` child under ``milestone_id``.
 
-    ``data`` is the Markdown body stored in the node's ``data.data`` field.
+    ``data`` is the payload stored in the node's ``data.data`` field.
     Delegates to :func:`agents_app.agents.core.milestone_data.graphql_client.upsert_milestonedata`.
     """
     return await upsert_milestonedata(

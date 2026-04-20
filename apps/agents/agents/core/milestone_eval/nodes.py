@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any, Literal
 
@@ -83,6 +84,8 @@ async def fetch_context(
             d = data.get("data")
             if isinstance(d, str):
                 raw_data = d
+            elif isinstance(d, (dict, list)):
+                raw_data = json.dumps(d, ensure_ascii=False, indent=2)
         elif nt == "passcriteria":
             req = data.get("requirement", "")
             cid = str(ch.get("id", ""))

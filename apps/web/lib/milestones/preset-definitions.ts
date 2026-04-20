@@ -3,8 +3,17 @@ import type {
   MilestoneRunSkillMode,
   PassCriteriaRow,
 } from '@/app/(protected)/workflows/_components/timeline/types'
+import {
+  emptyPromotionCandidatesMilestoneData,
+  type MilestoneInput,
+  type MilestonedataValue,
+} from '@/lib/graphql/node-schemas'
 
-export const MILESTONE_PRESET_IDS = ['dates', 'restaurant_brand_brief', 'candidates'] as const
+export const MILESTONE_PRESET_IDS = [
+  'dates',
+  'restaurant_brand_brief',
+  'promotion_candidates',
+] as const
 
 export type MilestonePresetId = (typeof MILESTONE_PRESET_IDS)[number]
 
@@ -18,7 +27,9 @@ export type MilestonePresetPassCriterionDraft = Pick<PassCriteriaRow, 'requireme
 export type MilestonePresetCreateFields = {
   name: string
   dataTask: MilestoneDataTask
-  milestoneData: string
+  presetId: MilestonePresetId
+  milestoneData: MilestonedataValue
+  milestoneInput?: MilestoneInput
   goal?: string
   milestoneRunSkillMode?: MilestoneRunSkillMode
   milestoneRunSkillIds?: string[]
@@ -37,9 +48,21 @@ export function getMilestonePresetCreateFields(
   switch (presetId) {
     case 'dates':
       return {
+        presetId: 'dates',
         name: t('milestonePreset.dates.title'),
         dataTask: 'manual',
-        milestoneData: t('milestonePreset.dates.dataMarkdown'),
+        milestoneInput: {
+          type: 'dates',
+          value: {
+            startDate: '',
+            endDate: '',
+          },
+        },
+        milestoneData: {
+          startDate: '',
+          endDate: '',
+          publicHolidays: [],
+        },
         goal: t('milestonePreset.dates.goal'),
         milestoneRunSkillMode: 'fixed',
         milestoneRunSkillIds: ['public_holidays'],
@@ -60,9 +83,21 @@ export function getMilestonePresetCreateFields(
       }
     case 'restaurant_brand_brief':
       return {
+        presetId: 'restaurant_brand_brief',
         name: t('milestonePreset.restaurant_brand_brief.title'),
         dataTask: 'manual',
-        milestoneData: t('milestonePreset.restaurant_brand_brief.dataMarkdown'),
+        milestoneData: {
+          venueSnapshot: {
+            venueName: '',
+            city: '',
+            country: '',
+            currency: '',
+          },
+          contentPillars: [],
+          audienceHypotheses: [],
+          proofOrientedAngles: [],
+          toneGuardrails: [],
+        },
         goal: t('milestonePreset.restaurant_brand_brief.goal'),
         milestoneRunSkillMode: 'fixed',
         milestoneRunSkillIds: ['brand_brief'],
@@ -89,27 +124,32 @@ export function getMilestonePresetCreateFields(
           },
         ],
       }
-    case 'candidates':
+    case 'promotion_candidates':
       return {
-        name: t('milestonePreset.candidates.title'),
+        presetId: 'promotion_candidates',
+        name: t('milestonePreset.promotion_candidates.title'),
         dataTask: 'manual',
-        milestoneData: t('milestonePreset.candidates.dataMarkdown'),
-        goal: t('milestonePreset.candidates.goal'),
+        milestoneData: emptyPromotionCandidatesMilestoneData(
+          t('milestonePreset.promotion_candidates.placementHint'),
+        ) satisfies MilestonedataValue,
+        goal: t('milestonePreset.promotion_candidates.goal'),
+        milestoneRunSkillMode: 'fixed',
+        milestoneRunSkillIds: ['promotion_candidates'],
         passCriteria: [
           {
-            requirement: t('milestonePreset.candidates.criterionVariationA'),
+            requirement: t('milestonePreset.promotion_candidates.criterionPromotionCandidates'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.candidates.criterionVariationB'),
+            requirement: t('milestonePreset.promotion_candidates.criterionEvidenceGrounding'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.candidates.criterionCampaignWindow'),
+            requirement: t('milestonePreset.promotion_candidates.criterionCampaignWindow'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.candidates.criterionBrandBrief'),
+            requirement: t('milestonePreset.promotion_candidates.criterionBrandBrief'),
             status: 'open',
           },
         ],

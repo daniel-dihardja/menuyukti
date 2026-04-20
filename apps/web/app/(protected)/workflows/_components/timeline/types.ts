@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import type { PromotionCandidatesMilestoneData } from '@/lib/graphql/node-schemas'
+
 export type TimelineMilestoneStatus = 'complete' | 'failed' | 'pending' | 'empty'
 
 export type PassCriteriaStatus = 'pass' | 'fail' | 'open'
@@ -16,14 +18,67 @@ export type MilestoneDataTask = 'manual'
 /** Milestone agent run skill selection; stored on milestone `data` JSON. */
 export type MilestoneRunSkillMode = 'auto' | 'fixed'
 
+export type MilestonePresetId = 'dates' | 'restaurant_brand_brief' | 'promotion_candidates'
+
+export type DatesMilestoneInput = {
+  startDate: string
+  endDate: string
+}
+
+export type DatesMilestoneInputEnvelope = {
+  type: 'dates'
+  value: DatesMilestoneInput
+}
+
+export type MilestoneInput = {
+  type: string
+  value?: unknown
+}
+
+export type DatesPublicHoliday = {
+  name: string
+  description: string
+  date: string
+}
+
+export type DatesMilestoneData = {
+  startDate: string
+  endDate: string
+  publicHolidays: DatesPublicHoliday[]
+}
+
+export type BrandBriefVenueSnapshot = {
+  venueName: string
+  city: string
+  country: string
+  currency: string
+}
+
+export type BrandBriefMilestoneData = {
+  venueSnapshot: BrandBriefVenueSnapshot
+  contentPillars: string[]
+  audienceHypotheses: string[]
+  proofOrientedAngles: string[]
+  toneGuardrails: string[]
+}
+
+export type MilestoneDataValue =
+  | DatesMilestoneData
+  | BrandBriefMilestoneData
+  | PromotionCandidatesMilestoneData
+
 export type TimelineMilestone = {
   id: string
   title: string
   passCriteria: PassCriteriaRow[]
   /** Free-form goal text for the Goal tab (stored on the goal child node). */
   goal?: string
-  /** Data tab text; stored on a child `milestonedata` node as `{ data: string }`. */
-  data?: string
+  /** Data tab content; stored on a child `milestonedata` node as `{ data: object }`. */
+  data?: MilestoneDataValue
+  /** Preset marker for milestone-specific UI behavior. */
+  presetId?: MilestonePresetId
+  /** Typed per-milestone input (e.g. Dates fields); stored on milestone `data` JSON. */
+  milestoneInput?: MilestoneInput
   /** How Data tab content is produced; stored on milestone `data` JSON. */
   dataTask?: MilestoneDataTask
   /** Auto: LLM picks skills. Fixed: use `milestoneRunSkillIds` (max 2). */

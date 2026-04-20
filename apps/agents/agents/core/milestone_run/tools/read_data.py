@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from langchain_core.tools import BaseTool, tool
@@ -10,7 +11,10 @@ from langchain_core.tools import BaseTool, tool
 def make_read_data_tool(context: dict[str, Any]) -> BaseTool:
     @tool
     def read_data() -> str:
-        """Return the current milestone Data tab content (Markdown in the milestonedata node)."""
+        """Return the current milestone Data tab content."""
+        structured = context.get("milestone_data")
+        if isinstance(structured, (dict, list)):
+            return json.dumps(structured, ensure_ascii=False, indent=2)
         updated = context.get("result_data", "")
         if isinstance(updated, str) and updated.strip():
             return updated

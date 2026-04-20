@@ -4,6 +4,12 @@ import { z } from 'zod'
 
 import { getPythonAgentsUrl } from '@/lib/config'
 import { graphqlQuery } from '@/lib/graphql/client'
+import {
+  brandBriefMilestoneDataSchema,
+  datesMilestoneDataSchema,
+  milestoneInputSchema,
+  promotionCandidatesMilestoneDataSchema,
+} from '@/lib/graphql/node-schemas'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
 import { milestoneIdParamSchema, workflowIdParamSchema } from '../../schema'
 
@@ -11,6 +17,15 @@ export const maxDuration = 180
 
 const runBodySchema = z.object({
   locationId: z.number().int().positive(),
+  goal: z.string().optional(),
+  milestoneInput: milestoneInputSchema.optional(),
+  milestoneData: z
+    .union([
+      datesMilestoneDataSchema,
+      brandBriefMilestoneDataSchema,
+      promotionCandidatesMilestoneDataSchema,
+    ])
+    .optional(),
 })
 
 type RouteContext = {
@@ -46,7 +61,7 @@ export async function POST(req: Request, context: RouteContext) {
       { status: 400 },
     )
   }
-  const { locationId } = parsed.data
+  const { locationId, goal, milestoneData: milestoneDataPayload, milestoneInput } = parsed.data
 
   const rootData = parseNodeData(
     await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowId }, userId),
@@ -59,10 +74,10 @@ export async function POST(req: Request, context: RouteContext) {
     return NextResponse.json({ error: 'Location mismatch' }, { status: 400 })
   }
 
-  const milestoneData = parseNodeData(
+  const milestoneNodeData = parseNodeData(
     await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: milestoneId }, userId),
   )
-  const milestoneNode = milestoneData.node
+  const milestoneNode = milestoneNodeData.node
   if (!milestoneNode || milestoneNode.nodeType !== 'milestone') {
     return NextResponse.json({ error: 'Milestone not found' }, { status: 404 })
   }
@@ -88,6 +103,9 @@ export async function POST(req: Request, context: RouteContext) {
       body: JSON.stringify({
         location_id: locationId,
         workflow_id: workflowId,
+        goal,
+        milestone_input: milestoneInput,
+        milestone_data: milestoneDataPayload,
       }),
       signal: req.signal,
     })

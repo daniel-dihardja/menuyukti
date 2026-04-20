@@ -45,6 +45,12 @@ class PromotionMenuItemsPayloadType:
     periodStart: date | None
     periodEnd: date | None
     items: list[PromotionMenuItemType]
+    items_total_count: int = strawberry.field(
+        description="Menus evaluated before applying the promotion list cap (same as pre-cap row count).",
+    )
+    items_truncated: bool = strawberry.field(
+        description="True when more menus existed than returned in items (see cap in API docs).",
+    )
 
 
 def _row_to_promotion_item(row: dict) -> PromotionMenuItemType:
@@ -91,12 +97,14 @@ class PromotionMenuItemsQuery:
             if location_id is not None and run.location_id != int(location_id):
                 return None
 
-            rows = build_promotion_menu_items(session, run)
-            items = [_row_to_promotion_item(r) for r in rows]
+            built = build_promotion_menu_items(session, run)
+            items = [_row_to_promotion_item(r) for r in built.rows]
 
             return PromotionMenuItemsPayloadType(
                 analyticsRunId=strawberry.ID(str(run.id)),
                 periodStart=run.period_start,
                 periodEnd=run.period_end,
                 items=items,
+                items_total_count=built.items_total_count,
+                items_truncated=built.items_truncated,
             )

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from functools import partial
@@ -33,7 +34,7 @@ from agents_app.agents.core.milestone_run.skills import (
 )
 from agents_app.agents.core.milestone_run.state import MilestoneRunState
 from agents_app.agents.core.milestone_run.tools import make_milestone_run_tools
-from agents_app.models.llm_config import get_llm, get_llm_structured
+from agents_app.models.llm_config import get_llm_structured
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.config import get_config, get_stream_writer
@@ -166,8 +167,24 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
         milestone_data,
         SKILL_REGISTRY,
     )
+    request_goal = state.get("request_goal")
+    goal = str(request_goal).strip() if isinstance(request_goal, str) and request_goal.strip() else str(out.get("goal", ""))
+    request_data = state.get("milestone_data")
+    if request_data is None:
+        milestone_data_payload: dict[str, Any] | list[Any] | None = None
+        raw_data = str(out.get("raw_data", ""))
+    elif isinstance(request_data, (dict, list)):
+        milestone_data_payload = request_data
+        raw_data = json.dumps(milestone_data_payload, ensure_ascii=False, indent=2)
+    else:
+        milestone_data_payload = None
+        raw_data = str(request_data)
     base: dict[str, Any] = {
         **out,
+        "goal": goal,
+        "raw_data": raw_data,
+        "milestone_data": milestone_data_payload,
+        "milestone_input": state.get("milestone_input"),
         "prior_milestones_data": prior,
         "api_adapter_tools": adapters,
         "use_llm_skill_selector": use_llm,
@@ -286,12 +303,16 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
     system_prompt = skill.prompt + adapter_suffix
     if not is_last:
         system_prompt = skill.prompt + adapter_suffix + INTERMEDIATE_SKILL_PROMPT_SUFFIX
-    llm = get_llm()
+    # Non-streaming model avoids long stalls after large tool results (e.g. promotion JSON).
+    llm = get_llm_structured()
     agent = create_react_agent(llm, tools, prompt=system_prompt)
     task_body = execute_skill_task_message(
         skill.id,
         skill.name,
         str(state.get("goal") or ""),
+        milestone_input=state.get("milestone_input"),
+        milestone_data=state.get("milestone_data"),
+        raw_data=str(state.get("raw_data") or ""),
     )
     agent_input = {
         "messages": [
@@ -300,12 +321,16 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
     }
     agent_cfg = cast(
         RunnableConfig,
-        _lc_run_config(
-            state,
-            langgraph_node="execute_skill",
-            skill_id=sid,
-            skill_index=idx,
-        ),
+        {
+            **_lc_run_config(
+                state,
+                langgraph_node="execute_skill",
+                skill_id=sid,
+                skill_index=idx,
+            ),
+            # ReAct loop: parallel reads + prior + promotion tool + write + reply needs headroom.
+            "recursion_limit": 48,
+        },
     )
     async for event in agent.astream_events(
         agent_input,
@@ -343,10 +368,12 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         next_idx,
     )
     updated_data = str(state.get("result_data", "") or state.get("raw_data", ""))
+    updated_payload = state.get("milestone_data")
     return {
         "current_skill_index": next_idx,
         "result_data": str(state.get("result_data", "")),
         "raw_data": updated_data,
+        "milestone_data": updated_payload,
         "milestonedata_written": bool(state.get("milestonedata_written")),
         "result_summary": str(state.get("result_summary", "")),
         "result_node_id": state.get("result_node_id"),

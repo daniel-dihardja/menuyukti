@@ -1,4 +1,4 @@
-"""Milestone data nodes: single child under milestone; payload `{data: str}`."""
+"""Milestone data nodes: single child under milestone; payload `{data: str | object}`."""
 
 from __future__ import annotations
 
@@ -10,8 +10,11 @@ from graphql.schema.node_handlers.base import NodeHandler
 
 def _validate_milestonedata_payload(data: dict) -> None:
     raw = data.get("data")
-    if not isinstance(raw, str):
-        raise ValueError("milestonedata must include a string field data")
+    if isinstance(raw, str):
+        return
+    if isinstance(raw, dict):
+        return
+    raise ValueError("milestonedata must include a string or object field data")
 
 
 class MilestoneDataHandler(NodeHandler):

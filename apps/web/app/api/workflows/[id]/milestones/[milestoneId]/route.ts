@@ -4,9 +4,14 @@ import type { z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
+  brandBriefMilestoneDataSchema,
+  datesMilestoneDataSchema,
+  emptyPromotionCandidatesMilestoneData,
   milestoneDataSchema,
+  milestoneInputSchema,
   milestonedataDataSchema,
   passCriteriaDataSchema,
+  promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import {
   CREATE_NODE_MUTATION,
@@ -40,6 +45,8 @@ function mergeMilestoneNodeDataJson(
     dataTask?: 'manual'
     milestoneRunSkillMode?: 'auto' | 'fixed'
     milestoneRunSkillIds?: string[]
+    presetId?: 'dates' | 'restaurant_brand_brief' | 'promotion_candidates'
+    milestoneInput?: { type: string; value?: unknown }
   },
 ): Record<string, unknown> {
   const next = { ...prev }
@@ -51,6 +58,12 @@ function mergeMilestoneNodeDataJson(
   }
   if (patch.milestoneRunSkillIds !== undefined) {
     next.milestoneRunSkillIds = patch.milestoneRunSkillIds
+  }
+  if (patch.presetId !== undefined) {
+    next.presetId = patch.presetId
+  }
+  if (patch.milestoneInput !== undefined) {
+    next.milestoneInput = patch.milestoneInput
   }
   return next
 }
@@ -120,11 +133,11 @@ async function assertPassCriteriaBelongsToMilestone(
   }
 }
 
-/** Persist Data tab text on a child `milestonedata` node; empty string removes node(s). */
+/** Persist Data tab payload on a child `milestonedata` node; `null` removes milestonedata child node(s). */
 async function syncMilestonedataChild(
   locationId: number,
   milestoneId: string,
-  dataText: string,
+  dataValue: z.infer<typeof milestonedataDataSchema>['data'] | null,
   userId: string,
 ) {
   const existing = parseNodesData(
@@ -139,7 +152,7 @@ async function syncMilestonedataChild(
     ),
   )
   const rows = existing.nodes.filter((n) => n.nodeType === 'milestonedata')
-  if (dataText === '') {
+  if (dataValue === null) {
     for (const g of rows) {
       await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: g.id }, userId)
     }
@@ -154,7 +167,7 @@ async function syncMilestonedataChild(
           nodeType: 'milestonedata',
           parentId: milestoneId,
           name: 'Data',
-          data: { data: dataText },
+          data: { data: dataValue },
         },
         userId,
       ),
@@ -169,7 +182,7 @@ async function syncMilestonedataChild(
     parseUpdateNodeData(
       await graphqlQuery<UpdateNodeDataRaw>(
         UPDATE_NODE_MUTATION,
-        { id: primary.id, data: { data: dataText } },
+        { id: primary.id, data: { data: dataValue } },
         userId,
       ),
     )
@@ -294,7 +307,7 @@ export async function GET(_req: Request, context: RouteContext) {
     ])
 
     const milestonedataParsed = parseNodesData(milestonedataRes)
-    let milestoneData = ''
+    let milestoneData: z.infer<typeof milestonedataDataSchema>['data'] | null = null
     for (const n of milestonedataParsed.nodes) {
       if (n.nodeType !== 'milestonedata') {
         continue
@@ -316,15 +329,54 @@ export async function GET(_req: Request, context: RouteContext) {
     const passCriteria = passCriteriaFromChildNodes(passParsed.nodes)
 
     const mn = validated.milestoneNode
+    const parsedMilestoneNodeData =
+      mn.data != null && typeof mn.data === 'object' ? milestoneDataSchema.safeParse(mn.data) : null
     let dataTask: z.infer<typeof milestoneDataSchema>['dataTask'] | null = null
     let legacyGoal: string | undefined
-    if (mn.data != null && typeof mn.data === 'object') {
-      const parsed = milestoneDataSchema.safeParse(mn.data)
-      if (parsed.success) {
-        if (parsed.data.dataTask) {
-          dataTask = parsed.data.dataTask
+    if (parsedMilestoneNodeData?.success) {
+      if (parsedMilestoneNodeData.data.dataTask) {
+        dataTask = parsedMilestoneNodeData.data.dataTask
+      }
+      legacyGoal = parsedMilestoneNodeData.data.goal
+    }
+
+    if (parsedMilestoneNodeData?.success && parsedMilestoneNodeData.data.presetId === 'dates') {
+      const datesDataParsed = datesMilestoneDataSchema.safeParse(milestoneData)
+      if (!datesDataParsed.success) {
+        milestoneData = {
+          startDate: '',
+          endDate: '',
+          publicHolidays: [],
         }
-        legacyGoal = parsed.data.goal
+      }
+    }
+    if (
+      parsedMilestoneNodeData?.success &&
+      parsedMilestoneNodeData.data.presetId === 'restaurant_brand_brief'
+    ) {
+      const brandBriefDataParsed = brandBriefMilestoneDataSchema.safeParse(milestoneData)
+      if (!brandBriefDataParsed.success) {
+        milestoneData = {
+          venueSnapshot: {
+            venueName: '',
+            city: '',
+            country: '',
+            currency: '',
+          },
+          contentPillars: [],
+          audienceHypotheses: [],
+          proofOrientedAngles: [],
+          toneGuardrails: [],
+        }
+      }
+    }
+    if (
+      parsedMilestoneNodeData?.success &&
+      parsedMilestoneNodeData.data.presetId === 'promotion_candidates'
+    ) {
+      const promotionParsed = promotionCandidatesMilestoneDataSchema.safeParse(milestoneData)
+      if (!promotionParsed.success) {
+        milestoneData = emptyPromotionCandidatesMilestoneData()
       }
     }
 
@@ -332,17 +384,26 @@ export async function GET(_req: Request, context: RouteContext) {
 
     let milestoneRunSkillMode: 'auto' | 'fixed' = 'auto'
     let milestoneRunSkillIds: string[] = []
-    if (mn.data != null && typeof mn.data === 'object') {
-      const mdParsed = milestoneDataSchema.safeParse(mn.data)
-      if (mdParsed.success) {
-        if (mdParsed.data.milestoneRunSkillMode === 'fixed') {
-          milestoneRunSkillMode = 'fixed'
-        }
-        if (Array.isArray(mdParsed.data.milestoneRunSkillIds)) {
-          milestoneRunSkillIds = mdParsed.data.milestoneRunSkillIds.filter(
-            (x): x is string => typeof x === 'string' && x.length > 0,
-          )
-        }
+    if (parsedMilestoneNodeData?.success) {
+      if (parsedMilestoneNodeData.data.milestoneRunSkillMode === 'fixed') {
+        milestoneRunSkillMode = 'fixed'
+      }
+      if (Array.isArray(parsedMilestoneNodeData.data.milestoneRunSkillIds)) {
+        milestoneRunSkillIds = parsedMilestoneNodeData.data.milestoneRunSkillIds.filter(
+          (x): x is string => typeof x === 'string' && x.length > 0,
+        )
+      }
+    }
+    let milestoneInput: z.infer<typeof milestoneInputSchema> | null = null
+    if (
+      parsedMilestoneNodeData?.success &&
+      parsedMilestoneNodeData.data.milestoneInput !== undefined
+    ) {
+      const inputParsed = milestoneInputSchema.safeParse(
+        parsedMilestoneNodeData.data.milestoneInput,
+      )
+      if (inputParsed.success) {
+        milestoneInput = inputParsed.data
       }
     }
 
@@ -354,6 +415,10 @@ export async function GET(_req: Request, context: RouteContext) {
         passCriteria,
         milestoneRunSkillMode,
         milestoneRunSkillIds,
+        presetId: parsedMilestoneNodeData?.success
+          ? (parsedMilestoneNodeData.data.presetId ?? null)
+          : null,
+        milestoneInput,
       },
       { status: 200 },
     )
@@ -462,8 +527,10 @@ export async function PATCH(req: Request, context: RouteContext) {
     if (body.passCriteria === undefined) {
       if (
         body.dataTask !== undefined ||
+        body.presetId !== undefined ||
         body.milestoneRunSkillMode !== undefined ||
-        body.milestoneRunSkillIds !== undefined
+        body.milestoneRunSkillIds !== undefined ||
+        body.milestoneInput !== undefined
       ) {
         const mn = validated.milestoneNode
         const prevData =
@@ -472,8 +539,10 @@ export async function PATCH(req: Request, context: RouteContext) {
             : {}
         const merged = mergeMilestoneNodeDataJson(prevData, {
           dataTask: body.dataTask,
+          presetId: body.presetId,
           milestoneRunSkillMode: body.milestoneRunSkillMode,
           milestoneRunSkillIds: body.milestoneRunSkillIds,
+          milestoneInput: body.milestoneInput,
         })
         parseUpdateNodeData(
           await graphqlQuery<UpdateNodeDataRaw>(
@@ -526,8 +595,10 @@ export async function PATCH(req: Request, context: RouteContext) {
 
     if (
       body.dataTask !== undefined ||
+      body.presetId !== undefined ||
       body.milestoneRunSkillMode !== undefined ||
-      body.milestoneRunSkillIds !== undefined
+      body.milestoneRunSkillIds !== undefined ||
+      body.milestoneInput !== undefined
     ) {
       const mn = validated.milestoneNode
       const prevData =
@@ -536,8 +607,10 @@ export async function PATCH(req: Request, context: RouteContext) {
           : {}
       const merged = mergeMilestoneNodeDataJson(prevData, {
         dataTask: body.dataTask,
+        presetId: body.presetId,
         milestoneRunSkillMode: body.milestoneRunSkillMode,
         milestoneRunSkillIds: body.milestoneRunSkillIds,
+        milestoneInput: body.milestoneInput,
       })
       parseUpdateNodeData(
         await graphqlQuery<UpdateNodeDataRaw>(

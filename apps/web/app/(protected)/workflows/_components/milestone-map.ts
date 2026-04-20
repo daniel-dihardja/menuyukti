@@ -1,15 +1,23 @@
 import {
+  brandBriefMilestoneDataSchema,
+  datesMilestoneDataSchema,
+  emptyPromotionCandidatesMilestoneData,
   goalDataSchema,
   milestoneDataSchema,
+  milestoneInputSchema,
   milestonedataDataSchema,
   passCriteriaDataSchema,
+  promotionCandidatesMilestoneDataSchema,
   resultDataSchema,
 } from '@/lib/graphql/node-schemas'
 import type { AnyNode } from '@/lib/graphql/queries'
 
 import type {
   MilestoneDataTask,
+  MilestoneInput,
   MilestoneRunSkillMode,
+  MilestonePresetId,
+  MilestoneDataValue,
   PassCriteriaRow,
   TimelineMilestone,
   TimelineMilestoneStatus,
@@ -89,7 +97,7 @@ export function goalFromChildNodes(nodes: AnyNode[] | undefined | null): string 
 /** First valid `milestonedata` child wins (at most one is expected). */
 export function milestoneDataFromChildNodes(
   nodes: AnyNode[] | undefined | null,
-): string | undefined {
+): MilestoneDataValue | undefined {
   if (nodes == null || !Array.isArray(nodes)) {
     return undefined
   }
@@ -135,10 +143,14 @@ export function resultMarkdownFromChildNodes(
 function milestoneRunSkillFieldsFromData(data: unknown): {
   milestoneRunSkillMode: MilestoneRunSkillMode
   milestoneRunSkillIds: string[]
+  presetId?: MilestonePresetId
+  milestoneInput?: MilestoneInput
 } {
   const parsed = milestoneDataSchema.safeParse(data)
   let milestoneRunSkillMode: MilestoneRunSkillMode = 'auto'
   let milestoneRunSkillIds: string[] = []
+  let presetId: MilestonePresetId | undefined
+  let milestoneInput: MilestoneInput | undefined
   if (parsed.success) {
     if (parsed.data.milestoneRunSkillMode === 'fixed') {
       milestoneRunSkillMode = 'fixed'
@@ -148,8 +160,17 @@ function milestoneRunSkillFieldsFromData(data: unknown): {
         (x): x is string => typeof x === 'string' && x.trim().length > 0,
       )
     }
+    if (parsed.data.presetId !== undefined) {
+      presetId = parsed.data.presetId
+    }
+    if (parsed.data.milestoneInput !== undefined) {
+      const inputParsed = milestoneInputSchema.safeParse(parsed.data.milestoneInput)
+      if (inputParsed.success) {
+        milestoneInput = inputParsed.data
+      }
+    }
   }
-  return { milestoneRunSkillMode, milestoneRunSkillIds }
+  return { milestoneRunSkillMode, milestoneRunSkillIds, presetId, milestoneInput }
 }
 
 export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): TimelineMilestone {
@@ -163,16 +184,53 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   if (parsed.success && parsed.data.dataTask === 'manual') {
     dataTask = 'manual'
   }
-  const { milestoneRunSkillMode, milestoneRunSkillIds } = milestoneRunSkillFieldsFromData(node.data)
+  const { milestoneRunSkillMode, milestoneRunSkillIds, presetId, milestoneInput } =
+    milestoneRunSkillFieldsFromData(node.data)
+  let normalizedData = data
+  if (presetId === 'dates') {
+    const parsedDatesData = datesMilestoneDataSchema.safeParse(data)
+    if (parsedDatesData.success) {
+      normalizedData = parsedDatesData.data
+    }
+  }
+  if (presetId === 'restaurant_brand_brief') {
+    const parsedBrandBriefData = brandBriefMilestoneDataSchema.safeParse(data)
+    if (parsedBrandBriefData.success) {
+      normalizedData = parsedBrandBriefData.data
+    } else {
+      normalizedData = {
+        venueSnapshot: {
+          venueName: '',
+          city: '',
+          country: '',
+          currency: '',
+        },
+        contentPillars: [],
+        audienceHypotheses: [],
+        proofOrientedAngles: [],
+        toneGuardrails: [],
+      }
+    }
+  }
+  if (presetId === 'promotion_candidates') {
+    const parsedPromotionData = promotionCandidatesMilestoneDataSchema.safeParse(data)
+    if (parsedPromotionData.success) {
+      normalizedData = parsedPromotionData.data
+    } else {
+      normalizedData = emptyPromotionCandidatesMilestoneData()
+    }
+  }
 
   return {
     id: node.id,
     title: node.name,
     goal,
-    data,
+    data: normalizedData,
     ...(dataTask !== undefined ? { dataTask } : {}),
     milestoneRunSkillMode,
     milestoneRunSkillIds,
+    presetId,
+    milestoneInput,
     passCriteria,
     resultMarkdown,
     status: deriveMilestoneRailStatus(passCriteria, resultMarkdown),

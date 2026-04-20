@@ -18,7 +18,7 @@ from agents_app.agents.graphql_operations import (
 async def upsert_milestonedata(
     milestone_id: str,
     location_id: int,
-    text: str,
+    payload: Any,
     user_id: str,
     *,
     client: httpx.AsyncClient,
@@ -52,7 +52,7 @@ async def upsert_milestonedata(
                 "nodeType": "milestonedata",
                 "parentId": milestone_id,
                 "name": "Data",
-                "data": {"data": text},
+                "data": {"data": payload},
             },
             user_id,
         )
@@ -75,7 +75,7 @@ async def upsert_milestonedata(
     upd = await graphql_post(
         client,
         UPDATE_NODE_MUTATION,
-        {"id": str(pid), "data": {"data": text}},
+        {"id": str(pid), "data": {"data": payload}},
         user_id,
     )
     node = upd.get("updateNode")

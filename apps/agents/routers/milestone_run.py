@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Any
 
 import httpx
 from agents_app.agents.core.milestone_run.stream import (
@@ -22,6 +22,18 @@ class MilestoneRunBody(BaseModel):
     workflow_id: str | None = Field(
         default=None,
         description="Parent workflow node id — enables reading earlier milestones' Data tabs.",
+    )
+    goal: str | None = Field(
+        default=None,
+        description="Optional goal override from the web milestone editor.",
+    )
+    milestone_input: dict[str, Any] | None = Field(
+        default=None,
+        description="Optional typed milestone input payload (preset specific).",
+    )
+    milestone_data: dict[str, Any] | list[Any] | None = Field(
+        default=None,
+        description="Optional current milestone structured data from preview state (object only).",
     )
 
 
@@ -46,6 +58,9 @@ async def milestone_run(
                 location_id=body.location_id,
                 user_id=x_menuyukti_user_id,
                 workflow_id=body.workflow_id,
+                goal=body.goal,
+                milestone_input=body.milestone_input,
+                milestone_data=body.milestone_data,
                 traceparent=tp,
             ):
                 yield line

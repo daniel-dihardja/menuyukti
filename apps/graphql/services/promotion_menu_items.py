@@ -1,8 +1,12 @@
-"""Build promotion-oriented per-menu rows from a single OrderFact load."""
+"""Build promotion-oriented per-menu rows from a single OrderFact load.
+
+OrderFact rows are loaded only inside this module for analytics; the public API returns
+aggregated per-menu dicts capped at ``_MAX_PROMOTION_MENU_ITEMS`` (sorted by revenue, then quantity).
+"""
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NamedTuple
 
 import pandas as pd
 from menuyukti.core.analytics import compute_menu_heatmaps_from_orders
@@ -12,6 +16,18 @@ from sqlalchemy.orm import Session
 
 from graphql.data_sources import AnalyticsRun, OrderFact
 from graphql.services.menu_engineering import compute_menu_engineering_matrix
+
+# Cap returned rows so agents and clients never receive unbounded promotion payloads.
+# OrderFact rows stay inside this service; only aggregated rows cross the API boundary.
+_MAX_PROMOTION_MENU_ITEMS = 50
+
+
+class PromotionMenuItemsBuildResult(NamedTuple):
+    """Aggregated promotion rows plus counts for API transparency."""
+
+    rows: list[dict[str, Any]]
+    items_total_count: int
+    items_truncated: bool
 
 
 def _peak_hour_from_daily(daily: list[dict[str, Any]]) -> int | None:
@@ -48,16 +64,19 @@ def _heatmap_peaks_by_menu(
     return out
 
 
-def build_promotion_menu_items(session: Session, run: AnalyticsRun) -> list[dict[str, Any]]:
+def build_promotion_menu_items(session: Session, run: AnalyticsRun) -> PromotionMenuItemsBuildResult:
     """
     One ``OrderFact`` query per call; matrix reuses those rows via ``order_facts``.
+
+    Raw facts are used only inside analytics helpers here; the return value is capped
+    aggregated rows (never raw line-level facts).
 
     Returns JSON-friendly dicts with snake_case keys aligned with menuyukti outputs,
     plus ``peak_hour`` and ``peak_day`` (string weekday code, e.g. ``mon``).
     """
     facts = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
     if not facts:
-        return []
+        return PromotionMenuItemsBuildResult(rows=[], items_total_count=0, items_truncated=False)
 
     df = pd.DataFrame(
         [
@@ -136,4 +155,16 @@ def build_promotion_menu_items(session: Session, run: AnalyticsRun) -> list[dict
 
         rows.append(base)
 
-    return rows
+    rows.sort(
+        key=lambda r: (-float(r["total_revenue"]), -int(r["quantity"]), str(r["menu"])),
+    )
+    total = len(rows)
+    truncated = total > _MAX_PROMOTION_MENU_ITEMS
+    if truncated:
+        rows = rows[:_MAX_PROMOTION_MENU_ITEMS]
+
+    return PromotionMenuItemsBuildResult(
+        rows=rows,
+        items_total_count=total,
+        items_truncated=truncated,
+    )

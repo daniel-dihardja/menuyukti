@@ -428,6 +428,16 @@ type PromotionMenuItemsPayloadType {
   periodStart: Date
   periodEnd: Date
   items: [PromotionMenuItemType!]!
+
+  """
+  Menus evaluated before applying the promotion list cap (same as pre-cap row count).
+  """
+  itemsTotalCount: Int!
+
+  """
+  True when more menus existed than returned in items (see cap in API docs).
+  """
+  itemsTruncated: Boolean!
 }
 
 type PublicHolidayType {

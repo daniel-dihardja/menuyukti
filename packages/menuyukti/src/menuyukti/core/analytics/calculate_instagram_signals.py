@@ -19,6 +19,11 @@ from menuyukti.core.analytics.calculate_revenue_trends import (
     RevenueTrendsResult,
 )
 
+# Cap list sizes returned to API / LLM consumers (full matrix still used upstream).
+_MAX_INSTAGRAM_CONTENT_HEROES = 20
+_MAX_INSTAGRAM_AVOID_ITEMS = 20
+_MAX_INSTAGRAM_TRENDING_RISING = 24
+
 
 class MatrixBackedItem(TypedDict):
     """Subset of menu engineering fields useful for caption guardrails."""
@@ -106,6 +111,12 @@ def _coerce_float(value: object, field: str) -> float:
     raise TypeError(msg)
 
 
+def _trending_rising_sort_key(row: RevenueTrendRow) -> tuple[float, float, str]:
+    raw_pct = row.get("pct_change")
+    pct = float("-inf") if raw_pct is None else float(raw_pct)
+    return (-pct, -float(row["current_revenue"]), str(row["menu"]))
+
+
 def calculate_instagram_signals(
     *,
     category_mix: CategoryMixResult,
@@ -119,6 +130,8 @@ def calculate_instagram_signals(
     menu engineering into a single JSON-friendly structure for LLM prompts.
 
     ``menu_engineering`` may be ``None`` when COGS is unavailable; hero/avoid lists are then empty.
+
+    Output list fields are capped (see module constants) so consumers never receive unbounded arrays.
 
     **Matrix categories** follow :func:`calculate_menu_engineering_matrix` (``star``,
     ``plow_horse``, ``puzzle``, ``low_end``). ``avoid_items`` uses ``low_end`` (classic
@@ -137,8 +150,12 @@ def calculate_instagram_signals(
 
         content_heroes.sort(key=lambda x: (-x["total_revenue"], x["menu"]))
         avoid_items.sort(key=lambda x: (-x["total_revenue"], x["menu"]))
+        content_heroes = content_heroes[:_MAX_INSTAGRAM_CONTENT_HEROES]
+        avoid_items = avoid_items[:_MAX_INSTAGRAM_AVOID_ITEMS]
 
     trending_items = [r for r in revenue_trends["rows"] if r["trend_label"] == "rising"]
+    trending_items.sort(key=_trending_rising_sort_key)
+    trending_items = trending_items[:_MAX_INSTAGRAM_TRENDING_RISING]
 
     rows = category_mix.get("rows") or []
     category_focus: CategoryMixRow | None = rows[0] if rows else None

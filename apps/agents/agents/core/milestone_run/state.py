@@ -16,6 +16,12 @@ class MilestoneRunState(TypedDict):
     # Filled before the agent step (e.g. fetch_context node)
     goal: str
     raw_data: str
+    # Structured milestone payload from request (Dates uses object state).
+    milestone_data: NotRequired[dict[str, Any] | list[Any] | None]
+    # Typed input payload from request.
+    milestone_input: NotRequired[dict[str, Any] | None]
+    # Goal override from request, if provided.
+    request_goal: NotRequired[str | None]
     criteria: list[dict[str, str]]
     # Markdown: prior milestones' Data tabs (empty if no workflow_id or no earlier milestones).
     prior_milestones_data: str

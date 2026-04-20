@@ -190,13 +190,126 @@ query LocationOperatingSignals($locationId: ID!, $analyticsRunId: ID!) {
   promotionMenuItems(analyticsRunId: $analyticsRunId, locationId: $locationId) {
     periodStart
     periodEnd
+    itemsTotalCount
+    itemsTruncated
     items {
       menu
       quantity
       totalRevenue
       menuCategory
+      menuCategoryDetail
+      cogs
+      totalCogs
+      contributionMargin
+      contributionMarginPercentage
+      marginPerUnit
+      weValue
+      category
+      action
       peakHour
       peakDay
+    }
+  }
+  promotionCandidatesSignals(analyticsRunId: $analyticsRunId, locationId: $locationId) {
+    itemsTotalCount
+    itemsTruncated
+    topPromote {
+      menu
+      recommendation
+      score
+      quantity
+      totalRevenue
+      signalReasons
+    }
+    topAvoid {
+      menu
+      recommendation
+      score
+      quantity
+      totalRevenue
+      signalReasons
+    }
+    puzzleOpportunityPool {
+      puzzleItemsFound
+      threshold
+      selectedCount
+      selected {
+        menu
+        recommendation
+        score
+        quantity
+        totalRevenue
+        menuCategory
+        menuCategoryDetail
+        peakDay
+        peakHour
+        matrixCategory
+        matrixAction
+        contributionMarginPct
+        signalReasons
+        puzzleOpportunityScore
+        whySelected
+        howToPromoteOnInstagram
+      }
+    }
+    rankedCandidates {
+      menu
+      recommendation
+      score
+      quantity
+      totalRevenue
+      signalReasons
+    }
+    rankedCandidatesTotalCount
+    bestPostingWindow {
+      peakDay
+      peakHour
+      primaryMealPeriod
+    }
+    bestPostingWindowSummary
+  }
+  instagramSignals(analyticsRunId: $analyticsRunId, locationId: $locationId) {
+    contentHeroes {
+      menu
+      matrixCategory
+      totalRevenue
+      menuCategory
+      menuCategoryDetail
+    }
+    trendingItems {
+      menu
+      currentRevenue
+      previousRevenue
+      changePct
+      rankCurrent
+      rankPrevious
+      trendLabel
+    }
+    avoidItems {
+      menu
+      matrixCategory
+      totalRevenue
+      menuCategory
+      menuCategoryDetail
+    }
+    categoryFocus {
+      category
+      revenueShare
+      quantityShare
+    }
+    bestPostingWindow {
+      peakDay
+      peakRevenueDay
+      primaryMealPeriod
+      peakRevenueMealPeriod
+      peakHour
+    }
+    periodHeadline {
+      periodStart
+      periodEnd
+      totalRevenue
+      previousPeriodTotalRevenue
+      revenueVsPreviousPct
     }
   }
 }

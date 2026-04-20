@@ -1,5 +1,7 @@
 """Unit tests for Instagram signal composition."""
 
+from unittest.mock import patch
+
 from menuyukti.core.analytics.calculate_instagram_signals import calculate_instagram_signals
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import compute_menu_engineering_from_orders
 
@@ -147,3 +149,99 @@ def test_instagram_signals_with_matrix_filters_heroes_and_avoid():
     avoid_menus = {a["menu"] for a in sig["avoid_items"]}
     assert "StarItem" in hero_menus
     assert "LowEndItem" in avoid_menus
+
+
+def _matrix_stub_item(menu: str, category: str, total_revenue: float) -> dict:
+    return {
+        "menu": menu,
+        "category": category,
+        "total_revenue": total_revenue,
+        "menu_category": None,
+        "menu_category_detail": None,
+    }
+
+
+def test_instagram_signals_caps_heroes_avoid_and_trending():
+    many_stars = [_matrix_stub_item(f"star_{i}", "star", 200.0 - i) for i in range(30)]
+    many_low = [_matrix_stub_item(f"low_{i}", "low_end", 50.0 - i) for i in range(35)]
+    matrix = {"items": many_stars + many_low, "thresholds": {}, "distribution": []}
+
+    rising_rows = [
+        {
+            "menu": f"rise_{i}",
+            "current_revenue": 100.0 - i,
+            "previous_revenue": 10.0,
+            "revenue_delta": 90.0,
+            "pct_change": 2.0 + i * 0.01,
+            "current_rank": i + 1,
+            "previous_rank": 10,
+            "rank_change": -1,
+            "trend_label": "rising",
+        }
+        for i in range(40)
+    ]
+    trends = {
+        "rows": rising_rows
+        + [
+            {
+                "menu": "flat",
+                "current_revenue": 5.0,
+                "previous_revenue": 5.0,
+                "revenue_delta": 0.0,
+                "pct_change": 0.0,
+                "current_rank": 99,
+                "previous_rank": 99,
+                "rank_change": 0,
+                "trend_label": "stable",
+            }
+        ],
+        "current_period_total_revenue": 500.0,
+        "previous_period_total_revenue": 100.0,
+    }
+
+    sig = calculate_instagram_signals(
+        category_mix=_category_mix_stub(),
+        revenue_trends=trends,
+        sales_analytics=_sales_analytics_stub(),
+        operating_profile=_operating_profile_stub(),
+        menu_engineering=matrix,
+    )
+    assert len(sig["content_heroes"]) == 20
+    assert len(sig["avoid_items"]) == 20
+    assert len(sig["trending_items"]) == 24
+    assert sig["trending_items"][0]["pct_change"] >= sig["trending_items"][-1]["pct_change"]
+
+
+def test_instagram_signals_trending_cap_respects_lower_constant():
+    matrix = {"items": [_matrix_stub_item("S", "star", 100.0)], "thresholds": {}, "distribution": []}
+    rising = [
+        {
+            "menu": f"r{i}",
+            "current_revenue": 10.0,
+            "previous_revenue": 5.0,
+            "revenue_delta": 5.0,
+            "pct_change": 0.5,
+            "current_rank": 1,
+            "previous_rank": 2,
+            "rank_change": 1,
+            "trend_label": "rising",
+        }
+        for i in range(10)
+    ]
+    trends = {
+        "rows": rising,
+        "current_period_total_revenue": 100.0,
+        "previous_period_total_revenue": 50.0,
+    }
+    with patch(
+        "menuyukti.core.analytics.calculate_instagram_signals._MAX_INSTAGRAM_TRENDING_RISING",
+        3,
+    ):
+        sig = calculate_instagram_signals(
+            category_mix=_category_mix_stub(),
+            revenue_trends=trends,
+            sales_analytics=_sales_analytics_stub(),
+            operating_profile=None,
+            menu_engineering=matrix,
+        )
+    assert len(sig["trending_items"]) == 3

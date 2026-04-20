@@ -23,13 +23,16 @@ def test_resolve_auto_when_mode_auto() -> None:
 
 
 def test_resolve_fixed_with_valid_ids() -> None:
-    reg = {"public_holidays": 1, "generic": 2}
+    reg = {"public_holidays": 1, "generic": 2, "promotion_candidates": 3}
     use_llm, ids = resolve_skill_selection_from_milestone_data(
-        {"milestoneRunSkillMode": "fixed", "milestoneRunSkillIds": ["public_holidays"]},
+        {
+            "milestoneRunSkillMode": "fixed",
+            "milestoneRunSkillIds": ["public_holidays", "promotion-candidates"],
+        },
         reg,
     )
     assert use_llm is False
-    assert ids == ["public_holidays"]
+    assert ids == ["public_holidays", "promotion_candidates"]
 
 
 def test_resolve_fixed_empty_ids_falls_back_to_llm() -> None:

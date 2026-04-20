@@ -81,6 +81,8 @@ flowchart LR
 
 `calculate_instagram_signals` expects **already computed** `CategoryMixResult`, `RevenueTrendsResult`, the **dict** from `calculate_sales_analytics`, optional `OperatingProfileResult`, and optional `MenuEngineeringMatrixResult` (omit when COGS is unavailable).
 
+Returned lists (`content_heroes`, `avoid_items`, `trending_items`) are **top-N capped** for API/LLM size; full matrix input is unchanged.
+
 ## Progressive disclosure
 
 If this file grows, split long API tables into `reference.md` in this folder.
