@@ -210,6 +210,64 @@ query LocationOperatingSignals($locationId: ID!, $analyticsRunId: ID!) {
       peakDay
     }
   }
+  promotionCandidatesSignals(analyticsRunId: $analyticsRunId, locationId: $locationId) {
+    itemsTotalCount
+    itemsTruncated
+    topPromote {
+      menu
+      recommendation
+      score
+      quantity
+      totalRevenue
+      signalReasons
+    }
+    topAvoid {
+      menu
+      recommendation
+      score
+      quantity
+      totalRevenue
+      signalReasons
+    }
+    puzzleOpportunityPool {
+      puzzleItemsFound
+      threshold
+      selectedCount
+      selected {
+        menu
+        recommendation
+        score
+        quantity
+        totalRevenue
+        menuCategory
+        menuCategoryDetail
+        peakDay
+        peakHour
+        matrixCategory
+        matrixAction
+        contributionMarginPct
+        signalReasons
+        puzzleOpportunityScore
+        whySelected
+        howToPromoteOnInstagram
+      }
+    }
+    rankedCandidates {
+      menu
+      recommendation
+      score
+      quantity
+      totalRevenue
+      signalReasons
+    }
+    rankedCandidatesTotalCount
+    bestPostingWindow {
+      peakDay
+      peakHour
+      primaryMealPeriod
+    }
+    bestPostingWindowSummary
+  }
   instagramSignals(analyticsRunId: $analyticsRunId, locationId: $locationId) {
     contentHeroes {
       menu

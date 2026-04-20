@@ -76,6 +76,16 @@ from menuyukti.core.analytics.calculate_operating_profile import (
 from menuyukti.core.analytics.calculate_popularity_index import (
     calculate_popularity_index,
 )
+from menuyukti.core.analytics.calculate_promotion_candidates import (
+    BestPostingWindowInput,
+    InstagramSignalMenuItem,
+    PromotionCandidatesResult,
+    PromotionMenuItemForCandidates,
+    PromotionRankedCandidate,
+    PuzzleOpportunityPool,
+    PuzzleSelectedCandidate,
+    calculate_promotion_candidates,
+)
 from menuyukti.core.analytics.calculate_revenue_trends import (
     OrderRowForRevenueTrends,
     RevenueTrendRow,
@@ -147,6 +157,14 @@ __all__ = [
     "compute_operating_profile_from_orders",
     "compute_revenue_trends_from_orders",
     "calculate_popularity_index",
+    "BestPostingWindowInput",
+    "InstagramSignalMenuItem",
+    "PromotionCandidatesResult",
+    "PromotionMenuItemForCandidates",
+    "PromotionRankedCandidate",
+    "PuzzleOpportunityPool",
+    "PuzzleSelectedCandidate",
+    "calculate_promotion_candidates",
     "calculate_menu_engineering_matrix",
     "compute_menu_engineering_from_orders",
     "category_mix_columns",

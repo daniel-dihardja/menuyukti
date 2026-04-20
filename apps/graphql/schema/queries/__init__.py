@@ -12,6 +12,7 @@ from .milestone_prior_data import MilestonePriorDataQuery
 from .nodes import NodesQuery
 from .operating_profile import OperatingProfileQuery
 from .promotion_menu_items import PromotionMenuItemsQuery
+from .promotion_candidates_signals import PromotionCandidatesSignalsQuery
 from .public_holidays import PublicHolidaysQuery
 from .revenue_trends import RevenueTrendsQuery
 from .weekly_demand_pattern import WeeklyDemandPatternQuery
@@ -34,6 +35,7 @@ __all__ = [
     "MenuEngineeringMatrixQuery",
     "MenuHeatmapsQuery",
     "PromotionMenuItemsQuery",
+    "PromotionCandidatesSignalsQuery",
     "PublicHolidaysQuery",
     "NodesQuery",
     "OperatingProfileQuery",
