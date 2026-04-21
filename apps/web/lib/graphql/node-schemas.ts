@@ -22,6 +22,7 @@ export const milestonePresetIdSchema = z.enum([
   'dates',
   'restaurant_brand_brief',
   'promotion_candidates',
+  'scheduler',
 ])
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
@@ -74,6 +75,28 @@ export const brandBriefMilestoneDataSchema = z.object({
 })
 
 export type BrandBriefMilestoneData = z.infer<typeof brandBriefMilestoneDataSchema>
+
+export const schedulerPostTypeSchema = z.enum(['single', 'carousel'])
+
+export type SchedulerPostType = z.infer<typeof schedulerPostTypeSchema>
+
+/** One scheduled Instagram post row. */
+export const schedulerScheduleItemSchema = z.object({
+  dateTime: z.string(),
+  type: schedulerPostTypeSchema,
+  promotedMenuItems: z.array(z.string()),
+  visualIdea: z.string(),
+  captionIdea: z.string(),
+})
+
+export type SchedulerScheduleItem = z.infer<typeof schedulerScheduleItemSchema>
+
+/** Structured Data tab for the Scheduler milestone preset. */
+export const schedulerMilestoneDataSchema = z.object({
+  schedules: z.array(schedulerScheduleItemSchema),
+})
+
+export type SchedulerMilestoneData = z.infer<typeof schedulerMilestoneDataSchema>
 
 /** Instagram promotion guidance for one candidate menu item. */
 export const promotionInstagramPromotionSchema = z.object({
@@ -155,6 +178,12 @@ export function emptyPromotionCandidatesMilestoneData(
   }
 }
 
+export function emptySchedulerMilestoneData(): SchedulerMilestoneData {
+  return {
+    schedules: [],
+  }
+}
+
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
@@ -189,6 +218,7 @@ export const milestonedataValueSchema = z.union([
   datesMilestoneDataSchema,
   brandBriefMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>

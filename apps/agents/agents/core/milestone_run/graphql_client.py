@@ -18,6 +18,7 @@ from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
     ANALYTICS_RUNS_QUERY,
     API_ADAPTER_TOOLS_QUERY,
+    CAMPAIGN_SCHEDULE_PLAN_QUERY,
     LOCATION_OPERATING_SIGNALS_QUERY,
     LOCATION_QUERY,
     PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
@@ -214,6 +215,29 @@ async def fetch_location_operating_signals(
     }
 
 
+async def fetch_campaign_schedule_plan(
+    workflow_id: str,
+    milestone_id: str,
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Return campaignSchedulePlan payload for scheduler milestone tools."""
+    data = await graphql_post(
+        client,
+        CAMPAIGN_SCHEDULE_PLAN_QUERY,
+        {
+            "workflowId": workflow_id,
+            "milestoneId": milestone_id,
+            "locationId": location_id,
+        },
+        user_id,
+    )
+    raw = data.get("campaignSchedulePlan")
+    return raw if isinstance(raw, dict) else None
+
+
 async def upsert_milestonedata_node(
     milestone_id: str,
     location_id: int,
@@ -240,6 +264,7 @@ __all__ = [
     "create_result_node",
     "delete_node",
     "fetch_api_adapter_tools_for_location",
+    "fetch_campaign_schedule_plan",
     "fetch_location_operating_signals",
     "fetch_milestone_children",
     "fetch_prior_milestones_data",

@@ -50,6 +50,14 @@ from menuyukti.core.analytics.calculate_category_mix import (
     calculate_category_mix,
     compute_category_mix_from_orders,
 )
+from menuyukti.core.analytics.calculate_campaign_schedule_plan import (
+    CampaignScheduleBestPostingWindow,
+    CampaignScheduleCandidate,
+    CampaignSchedulePlanResult,
+    CampaignScheduleSlot,
+    CampaignScheduleWeeklyDemandRow,
+    calculate_campaign_schedule_plan,
+)
 from menuyukti.core.analytics.calculate_instagram_signals import (
     BestPostingWindow,
     InstagramSignalsResult,
@@ -118,6 +126,11 @@ from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
 
 __all__ = [
     "BestPostingWindow",
+    "CampaignScheduleBestPostingWindow",
+    "CampaignScheduleCandidate",
+    "CampaignSchedulePlanResult",
+    "CampaignScheduleSlot",
+    "CampaignScheduleWeeklyDemandRow",
     "CategoryMixResult",
     "CategoryMixRow",
     "DailyHeatmapRow",
@@ -145,6 +158,7 @@ __all__ = [
     "WeeklyDemandPatternRow",
     "OrderRowForWeeklyDemand",
     "calculate_category_mix",
+    "calculate_campaign_schedule_plan",
     "calculate_instagram_signals",
     "calculate_revenue_trends",
     "calculate_sales_analytics",

@@ -7,11 +7,13 @@ import {
   brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   emptyPromotionCandidatesMilestoneData,
+  emptySchedulerMilestoneData,
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataDataSchema,
   passCriteriaDataSchema,
   promotionCandidatesMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import {
   CREATE_NODE_MUTATION,
@@ -45,7 +47,7 @@ function mergeMilestoneNodeDataJson(
     dataTask?: 'manual'
     milestoneRunSkillMode?: 'auto' | 'fixed'
     milestoneRunSkillIds?: string[]
-    presetId?: 'dates' | 'restaurant_brand_brief' | 'promotion_candidates'
+    presetId?: 'dates' | 'restaurant_brand_brief' | 'promotion_candidates' | 'scheduler'
     milestoneInput?: { type: string; value?: unknown }
   },
 ): Record<string, unknown> {
@@ -377,6 +379,12 @@ export async function GET(_req: Request, context: RouteContext) {
       const promotionParsed = promotionCandidatesMilestoneDataSchema.safeParse(milestoneData)
       if (!promotionParsed.success) {
         milestoneData = emptyPromotionCandidatesMilestoneData()
+      }
+    }
+    if (parsedMilestoneNodeData?.success && parsedMilestoneNodeData.data.presetId === 'scheduler') {
+      const schedulerParsed = schedulerMilestoneDataSchema.safeParse(milestoneData)
+      if (!schedulerParsed.success) {
+        milestoneData = emptySchedulerMilestoneData()
       }
     }
 

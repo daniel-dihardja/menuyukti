@@ -5,6 +5,7 @@ import type {
 } from '@/app/(protected)/workflows/_components/timeline/types'
 import {
   emptyPromotionCandidatesMilestoneData,
+  emptySchedulerMilestoneData,
   type MilestoneInput,
   type MilestonedataValue,
 } from '@/lib/graphql/node-schemas'
@@ -13,6 +14,7 @@ export const MILESTONE_PRESET_IDS = [
   'dates',
   'restaurant_brand_brief',
   'promotion_candidates',
+  'scheduler',
 ] as const
 
 export type MilestonePresetId = (typeof MILESTONE_PRESET_IDS)[number]
@@ -150,6 +152,30 @@ export function getMilestonePresetCreateFields(
           },
           {
             requirement: t('milestonePreset.promotion_candidates.criterionBrandBrief'),
+            status: 'open',
+          },
+        ],
+      }
+    case 'scheduler':
+      return {
+        presetId: 'scheduler',
+        name: t('milestonePreset.scheduler.title'),
+        dataTask: 'manual',
+        milestoneData: emptySchedulerMilestoneData() satisfies MilestonedataValue,
+        goal: t('milestonePreset.scheduler.goal'),
+        milestoneRunSkillMode: 'fixed',
+        milestoneRunSkillIds: ['scheduler'],
+        passCriteria: [
+          {
+            requirement: t('milestonePreset.scheduler.criterionHasScheduleRows'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.scheduler.criterionWithinCampaignWindow'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.scheduler.criterionAnalyticsGrounding'),
             status: 'open',
           },
         ],

@@ -45,6 +45,7 @@ def make_milestone_run_tools(
     """
     adapter_tools = make_workspace_adapter_tools(context, http_client=client)
     extra_tools = make_extra_tools(
+        context,
         extra_tool_ids,
         location_id,
         user_id,
