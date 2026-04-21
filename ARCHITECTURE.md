@@ -43,6 +43,7 @@ Auth and resolver conventions follow `.cursor/rules/python-graphql-conventions.m
 | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `POST /chat`                          | Streaming **SSE** chat over a LangGraph graph under `apps/agents/agents/core/chat/`.                                                                                                                      |
 | `POST /milestones/{milestone_id}/run` | **Milestone run**: fetch context → skill selection → ReAct with tools → persist milestone data → `finalize_eval` (shared eval subgraph). Implemented in `apps/agents/agents/core/milestone_run/graph.py`. |
+| `POST /format-markdown`               | Platform helper endpoint for preset-driven Markdown cleanup used by the web BFF flow (implemented in `apps/agents/agents/core/format_markdown/` and `apps/agents/routers/format_markdown.py`).            |
 
 Shared GraphQL access uses `apps/agents/agents/graphql_base.py` (`graphql_post`, `GRAPHQL_ENDPOINT`, optional internal API key header). Routers authenticate callers with headers such as **`X-Menuyukti-User-Id`**; GraphQL calls use the project’s server-to-server header conventions (see `.cursor/rules/agents-conventions.mdc`).
 
@@ -126,6 +127,8 @@ Tools are assembled in order by `make_milestone_run_tools` (see [.agents/skills/
 
 ## Packages (`packages/*`)
 
+This table lists notable runtime/shared package directories, plus docs-only package content when relevant.
+
 | Package                      | Stack                 | Role                                                                                                                                                                                    |
 | ---------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/menuyukti`         | Python (uv workspace) | Shared **pandas** analytics: `calculate_*` / `compute_*`, Instagram signal composition, ingest helpers. Consumed by **`apps/graphql`** via `reports/transform`, not by agents directly. |
@@ -134,6 +137,7 @@ Tools are assembled in order by `make_milestone_run_tools` (see [.agents/skills/
 | `packages/eslint-config`     | JS                    | Shared ESLint presets for web and UI.                                                                                                                                                   |
 | `packages/url-safety`        | Python                | URL egress / safety utilities (workspace member in root `pyproject.toml`).                                                                                                              |
 | `packages/agent-skills`      | Python                | **Legacy** skill path resolution for old Prepare flows; prefer `milestone_run/skills` only for new work.                                                                                |
+| `packages/docs`              | Markdown docs         | Product/domain documentation (for example workflow model docs under `packages/docs/workflows/`); no runtime package consumed by app code.                                               |
 
 ## Related documentation
 
