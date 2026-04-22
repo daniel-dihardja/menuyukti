@@ -62,6 +62,28 @@ When a milestone runs, the agent service executes a **LangGraph** graph. **LangS
 
 The platform surfaces the **skills** and **tools** available to milestone runs—specialized agent capabilities and integrations (for example data access, generation, and quality checks)—so teams can see what the automation layer can invoke without digging through code.
 
+### Promotion candidates — milestone inputs and generated results
+
+![Promotion candidates milestone configuration and context](./screenshots/screenshot-promotion-candidates.png)
+
+![Promotion candidates milestone result output](./screenshots/screenshot-promotion-candidates-result.png)
+
+This pair tells a complete story: first the milestone context and setup, then the generated output. It helps readers quickly understand how a workflow step turns structured inputs into usable marketing ideas.
+
+### Quality checks — post scheduler invalid examples
+
+![Post scheduler invalid example checks](./screenshots/screenshot-post-scheduler-invalid-example-checks.png)
+
+![Post scheduler invalid example summary](./screenshots/screenshot-post-scheduler-invalid-example-summary.png)
+
+These captures highlight the quality-gate UX: explicit failed checks plus a summary view. They are useful to show that workflow outputs are not only generated, but also evaluated against criteria before moving forward.
+
+### Full screenshot index
+
+- Core workflow: `screenshot-overflows-overview.png`, `screenshot-workflow-with-milestones.png`, `screenshot-workflow-with-assets-02.png`
+- Observability and platform internals: `screenshot-langsmith-full-traces-of-a-complete-run.png`, `screenshot-list-of-skills-and-tools.png`
+- Milestone examples and quality gates: `screenshot-promotion-candidates.png`, `screenshot-promotion-candidates-result.png`, `screenshot-post-scheduler-invalid-example-checks.png`, `screenshot-post-scheduler-invalid-example-summary.png`
+
 ## How workflows are built
 
 - **A workflow is a timeline** — Steps run in sequence. Later milestones can see **prior step outputs**, so the campaign stays one coherent thread (e.g. dates and holidays → brand angle → concrete post ideas).
