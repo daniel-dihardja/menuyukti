@@ -17,17 +17,6 @@ The product is built around **data-informed workflows**: your venue’s sales tr
 - **AI does the heavy lifting** — For each milestone, the system can pull the right context, run **specialized AI capabilities** suited to that step, write results into the milestone, and run **automatic quality checks** against **pass criteria** you define (or start from presets).
 - **Chat where it helps** — Use conversation to navigate the campaign, clarify direction, and refine drafts while the **timeline and artifacts** stay the system of record.
 
-```mermaid
-flowchart LR
-  yourData[YourSalesAndMenuData]
-  steps[CampaignSteps]
-  outputs[DraftsAndBriefs]
-  review[ReviewAndPublish]
-  yourData --> steps
-  steps --> outputs
-  outputs --> review
-```
-
 ## Screenshots
 
 These images come from the workflows experience in the web app, plus observability views and a catalog of agent skills and tools. File names hint at the focus of each capture.
