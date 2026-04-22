@@ -3,7 +3,13 @@
 import type { Dispatch } from 'react'
 import { useCallback, useMemo } from 'react'
 
-import { milestoneDataSchema } from '@/lib/graphql/node-schemas'
+import {
+  brandBriefMilestoneDataSchema,
+  datesMilestoneDataSchema,
+  milestoneDataSchema,
+  promotionCandidatesMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
+} from '@/lib/graphql/node-schemas'
 import {
   getMilestonePresetCreateFields,
   type MilestonePresetId,
@@ -20,6 +26,29 @@ import type {
   PassCriteriaStatus,
   TimelineMilestone,
 } from './timeline/types'
+
+function parseDataPreviewForPreset(
+  presetId: TimelineMilestone['presetId'],
+  dataPreview: object,
+): MilestoneDataValue | undefined {
+  if (presetId === 'dates') {
+    const parsed = datesMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'restaurant_brand_brief') {
+    const parsed = brandBriefMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'promotion_candidates') {
+    const parsed = promotionCandidatesMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'scheduler') {
+    const parsed = schedulerMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  return undefined
+}
 
 function milestoneDataTaskFromNodeData(data: unknown): MilestoneDataTask | undefined {
   const parsed = milestoneDataSchema.safeParse(data)
@@ -538,11 +567,11 @@ export function useMilestoneOperations(
             }
             if (payload.done === true) {
               const summary = typeof payload.summary === 'string' ? payload.summary : ''
-              const dataPreview =
+              const rawDataPreview =
                 'dataPreview' in payload &&
                 payload.dataPreview != null &&
                 typeof payload.dataPreview === 'object'
-                  ? (payload.dataPreview as MilestoneDataValue)
+                  ? payload.dataPreview
                   : undefined
               const criteriaRaw = payload.criteria
               const criteriaList = Array.isArray(criteriaRaw)
@@ -576,6 +605,10 @@ export function useMilestoneOperations(
                     if (hasFail && milestone.milestoneRunSkillMode === 'fixed') {
                       criteriaHint = t('milestoneRunFixedSkillsFailHint')
                     }
+                    const dataPreview =
+                      rawDataPreview !== undefined
+                        ? parseDataPreviewForPreset(milestone.presetId, rawDataPreview)
+                        : undefined
                     return {
                       ...milestone,
                       status: hasFail ? ('failed' as const) : ('complete' as const),

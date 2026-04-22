@@ -116,7 +116,7 @@ def validate_skill_output(
         first_error = exc.errors(include_url=False)[0]["msg"]
         return None, f"[{skill_id}] {first_error}"
 
-    return validated.model_dump(), None
+    return validated.model_dump(exclude_none=True), None
 
 
 def validate_scheduler_output(payload: Any) -> tuple[Any | None, str | None]:

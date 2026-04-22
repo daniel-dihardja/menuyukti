@@ -668,6 +668,52 @@ async def test_write_result_data_accepts_registered_skill_payloads(
 
 
 @pytest.mark.asyncio
+async def test_write_result_data_promotion_candidates_omits_optional_null_fields() -> None:
+    ctx: dict[str, Any] = {"selected_skill_id": "promotion_candidates"}
+    payload: dict[str, Any] = {
+        "placement": "grid",
+        "puzzleOpportunityPool": {
+            "puzzleItemsFound": 2,
+            "threshold": 72.0,
+            "selectedCount": 1,
+        },
+        "promotionCandidates": [
+            {
+                "menu": "Nasi Goreng",
+                "rationale": ["High repeat orders"],
+            }
+        ],
+        "rankedCandidates": [
+            {
+                "menu": "Nasi Goreng",
+                "recommendation": "promote",
+                "score": 94.2,
+                "quantity": 100,
+                "totalRevenue": 5000.0,
+                "signalReasons": ["Content hero"],
+            }
+        ],
+    }
+    client = MagicMock(spec=AsyncMock)
+
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
+        new=AsyncMock(return_value={"id": "md-promo-no-nulls"}),
+    ) as mock_upsert:
+        tools = _tools_for_context(ctx, client=client)
+        write_result_data = _tool_by_name(tools, "write_result_data")
+        out = await write_result_data.ainvoke({"new_data": payload})
+
+    mock_upsert.assert_awaited_once()
+    awaited_payload = mock_upsert.await_args.args[2]
+    assert "md-promo-no-nulls" in out
+    assert "context" not in awaited_payload
+    promoted = awaited_payload["promotionCandidates"][0]
+    assert "puzzleAnalysis" not in promoted
+    assert "instagramPromotion" not in promoted
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("selected_skill_id", "payload"),
     [
