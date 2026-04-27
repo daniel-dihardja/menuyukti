@@ -3,7 +3,6 @@ import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 export type MilestoneSchedulerDataPreviewProps = {
   data: SchedulerMilestoneData
   labels: {
-    schedules: string
     dateTime: string
     type: string
     promotedMenuItems: string
@@ -14,6 +13,28 @@ export type MilestoneSchedulerDataPreviewProps = {
   }
 }
 
+function formatScheduleDateTime(value: string, emptyValue: string): string {
+  const trimmedValue = value.trim()
+  if (!trimmedValue) {
+    return emptyValue
+  }
+
+  const parsedDate = new Date(trimmedValue)
+  if (Number.isNaN(parsedDate.getTime())) {
+    return value
+  }
+
+  const weekday = new Intl.DateTimeFormat('de-DE', { weekday: 'short' }).format(parsedDate)
+  const date = new Intl.DateTimeFormat('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(parsedDate)
+  const weekdayWithSuffix = weekday.endsWith('.') ? weekday : `${weekday}.`
+
+  return `${weekdayWithSuffix} ${date}`
+}
+
 export function MilestoneSchedulerDataPreview({
   data,
   labels,
@@ -21,17 +42,16 @@ export function MilestoneSchedulerDataPreview({
   return (
     <div className="flex flex-col gap-4 text-sm">
       <section>
-        <h3 className="mb-1 font-medium text-foreground">{labels.schedules}</h3>
         {data.schedules.length === 0 ? (
           <p className="text-muted-foreground">{labels.emptyList}</p>
         ) : (
           <ul className="list-none space-y-4">
             {data.schedules.map((schedule, index) => (
-              <li className="rounded-md border p-3" key={`${schedule.dateTime}-${index}`}>
+              <li className="rounded-md p-3" key={`${schedule.dateTime}-${index}`}>
                 <dl className="grid grid-cols-[180px_1fr] gap-y-1">
                   <dt className="font-medium text-foreground">{labels.dateTime}</dt>
                   <dd className="text-muted-foreground">
-                    {schedule.dateTime.trim() ? schedule.dateTime : labels.emptyValue}
+                    {formatScheduleDateTime(schedule.dateTime, labels.emptyValue)}
                   </dd>
                   <dt className="font-medium text-foreground">{labels.type}</dt>
                   <dd className="text-muted-foreground">{schedule.type}</dd>
