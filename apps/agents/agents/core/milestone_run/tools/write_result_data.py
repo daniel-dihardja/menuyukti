@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import json
-from typing import Any
 import re
+from typing import Any
 
 import httpx
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from langchain_core.tools import BaseTool, tool
+
 
 def _contains_forbidden_snapshot_text(value: str) -> bool:
     text = value.strip().lower()
@@ -27,9 +28,7 @@ def _contains_forbidden_snapshot_text(value: str) -> bool:
         text,
     ):
         return True
-    if re.search(r"\bq[1-4]\s+\d{4}\b", text):
-        return True
-    return False
+    return bool(re.search(r"\bq[1-4]\s+\d{4}\b", text))
 
 
 def _sanitize_venue_name(venue_name: str) -> str:
@@ -45,6 +44,8 @@ def _sanitize_venue_name(venue_name: str) -> str:
         cleaned,
         flags=re.IGNORECASE,
     ).strip()
+
+
 def make_write_result_data_tool(
     context: dict[str, Any],
     milestone_id: str,

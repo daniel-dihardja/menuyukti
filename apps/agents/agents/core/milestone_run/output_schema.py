@@ -47,9 +47,7 @@ class BrandBriefVenueSnapshot(BaseModel):
             text,
         ):
             return True
-        if re.search(r"\bq[1-4]\s+\d{4}\b", text):
-            return True
-        return False
+        return bool(re.search(r"\bq[1-4]\s+\d{4}\b", text))
 
     @field_validator("venueName", "city", "country", "currency")
     @classmethod

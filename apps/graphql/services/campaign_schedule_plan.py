@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from menuyukti.core.analytics import calculate_campaign_schedule_plan
-from menuyukti.core.analytics.calculate_operating_profile import compute_operating_profile_from_orders
+from menuyukti.core.analytics.calculate_operating_profile import (
+    compute_operating_profile_from_orders,
+)
 from sqlalchemy.orm import Session
 
 from graphql.data_sources import AnalyticsRun, Node, OrderFact
