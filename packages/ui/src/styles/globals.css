@@ -120,9 +120,19 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-color: color-mix(in oklch, var(--muted-foreground) 42%, transparent) transparent;
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+    border: none;
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }
 
