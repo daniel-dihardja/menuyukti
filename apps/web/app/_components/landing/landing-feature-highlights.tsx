@@ -11,7 +11,7 @@ import {
 type FeatureCard = {
   title: string
   description: string
-  image: StaticImageData
+  image: StaticImageData | string
   alt: string
 }
 
@@ -51,6 +51,8 @@ export function LandingFeatureHighlights({
                   <Image
                     src={card.image}
                     alt={card.alt}
+                    width={1200}
+                    height={720}
                     className="h-auto w-full object-cover"
                     sizes="(max-width: 768px) 100vw, 50vw"
                   />

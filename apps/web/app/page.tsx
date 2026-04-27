@@ -34,8 +34,6 @@ import {
   ChartNoAxesCombined,
   CircleCheckBig,
 } from 'lucide-react'
-import workflowMilestonesScreenshot from '../../../screenshots/screenshot-workflow-with-milestones.png'
-import promotionCandidatesScreenshot from '../../../screenshots/screenshot-promotion-candidates-result.png'
 
 export default async function LandingPage() {
   const { isAuthenticated } = await auth()
@@ -110,13 +108,13 @@ export default async function LandingPage() {
     {
       title: t('featureHighlights.cards.workflowTitle'),
       description: t('featureHighlights.cards.workflowDescription'),
-      image: workflowMilestonesScreenshot,
+      image: '/images/landing-workflow.png',
       alt: t('featureHighlights.cards.workflowAlt'),
     },
     {
       title: t('featureHighlights.cards.promotionTitle'),
       description: t('featureHighlights.cards.promotionDescription'),
-      image: promotionCandidatesScreenshot,
+      image: '/images/landing-promotion.png',
       alt: t('featureHighlights.cards.promotionAlt'),
     },
   ] as const
