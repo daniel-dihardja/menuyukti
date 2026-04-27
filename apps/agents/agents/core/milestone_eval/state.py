@@ -20,6 +20,7 @@ class MilestoneEvalState(TypedDict):
     milestone_id: str
     location_id: int
     user_id: str
+    workflow_id: NotRequired[str]
     goal: str
     raw_data: str
     criteria: list[dict[str, str]]

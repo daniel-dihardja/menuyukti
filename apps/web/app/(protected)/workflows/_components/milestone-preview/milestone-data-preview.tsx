@@ -125,7 +125,10 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
           <MilestoneSchedulerDataPreview
             data={parsedScheduler.data}
             labels={{
-              schedules: t('milestoneSchedulerPreviewSchedules'),
+              metadata: t('milestoneSchedulerPreviewMetadata'),
+              scheduledPosts: t('milestoneSchedulerPreviewScheduledPosts'),
+              singlePosts: t('milestoneSchedulerPreviewSinglePosts'),
+              carouselPosts: t('milestoneSchedulerPreviewCarouselPosts'),
               dateTime: t('milestoneSchedulerPreviewDateTime'),
               type: t('milestoneSchedulerPreviewType'),
               promotedMenuItems: t('milestoneSchedulerPreviewPromotedMenuItems'),

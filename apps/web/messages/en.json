@@ -862,20 +862,20 @@
           "restaurant_brand_brief": {
             "label": "Brand brief",
             "title": "Brand brief",
-            "goal": "The Data tab holds a factual brand brief for this location only: venue snapshot, content pillars tied to operations, audience hypotheses supported by analytics where available, proof-oriented angles grounded in menu or category signals, and tone guardrails. Campaign start or end dates are not required for this milestone.",
-            "criterionVenueSnapshot": "**Venue snapshot** in the Data tab names the venue and uses city/country/currency when known; it does not invent full addresses.",
-            "criterionContentPillars": "**Content pillars** (3–5) are listed and tied to real categories or operating signals (e.g. meal periods, weekday vs weekend).",
-            "criterionAudienceHypotheses": "**Audience hypotheses** reflect only what the Data tab supports (e.g. peaks, meal periods); no invented demographics.",
-            "criterionProofAngles": "**Proof-oriented angles** reference real menu or category signals from the Data tab where applicable (e.g. top items, category mix).",
-            "criterionToneGuardrails": "**Tone guardrails** (3–5 bullets) are consistent with operating context in the Data tab.",
+            "goal": "The Data tab holds a factual location-only brand brief: venue snapshot, 3-5 content pillars tied to operating/category signals, 3-5 audience hypotheses supported by available analytics, 3-5 proof-oriented angles grounded in menu/category signals, and 3-5 tone guardrails. The Data tab must not include campaign start or end dates for this milestone.",
+            "criterionVenueSnapshot": "**Venue snapshot** in the Data tab names the venue and uses city/country/currency when known; it does not invent full addresses and does not add campaign start/end dates.",
+            "criterionContentPillars": "**Content pillars** include 3-5 unique non-empty items tied to real categories or operating signals (for example meal periods or weekday vs weekend patterns).",
+            "criterionAudienceHypotheses": "**Audience hypotheses** include 3-5 unique non-empty items reflecting only what the Data tab supports (for example peaks, meal periods, weekday/weekend split); no invented demographics.",
+            "criterionProofAngles": "**Proof-oriented angles** include 3-5 unique non-empty items and reference real menu/category signals already present in the Data tab (for example top items or category mix).",
+            "criterionToneGuardrails": "**Tone guardrails** include 3-5 unique non-empty items and stay consistent with operating context in the Data tab.",
             "dataMarkdown": "## Venue snapshot\n\n\n## Content pillars\n\n\n## Audience hypotheses\n\n\n## Proof-oriented angles\n\n\n## Tone guardrails\n\n"
           },
           "promotion_candidates": {
             "label": "Promotion Candidates",
             "title": "Promotion Candidates",
             "goal": "The Data tab holds one prioritized set of promotion candidate menu items for social posts—grounded in sales and Instagram signals, aligned with the campaign window when prior milestones document dates, and consistent with the location brand brief when available.",
-            "criterionPromotionCandidates": "**Promotion candidates** in the Data tab list prioritized menu items (menu names exactly as in POS) with concise rationale.",
-            "criterionEvidenceGrounding": "Each recommended item cites concrete analytics evidence (for example demand timing, revenue or margin signal, trend signal, or matrix action/category).",
+            "criterionPromotionCandidates": "**Promotion candidates** in the Data tab list prioritized menu items (menu names exactly as in POS) with concise rationale and practical Instagram guidance (angle/format/CTA/timing).",
+            "criterionEvidenceGrounding": "Each recommended item cites concrete analytics evidence (for example demand timing, revenue or margin signal, trend signal, or matrix action/category), and avoids unsupported claims.",
             "criterionCampaignWindow": "When **Start date** and **End date** appear in earlier milestone Data tabs (e.g. a **Dates** milestone), candidate choices and rationale respect that window; otherwise the Data tab states that no window was provided.",
             "criterionBrandBrief": "When a **Brand brief** milestone exists in the workflow, angles and tone do not contradict it; if none exists, the Data tab stays neutral and operational.",
             "placementHint": "Add **Dates** and **Brand brief** milestones before this one in the timeline so **Generate** can pull their Data tabs. Edit **placement** below if you have implementation notes."
@@ -884,9 +884,10 @@
             "label": "Post Scheduler",
             "title": "Post Scheduler",
             "goal": "The Data tab contains a complete Instagram posting schedule for the campaign window with each post's date/time, type, promoted menu items, visual idea, and caption idea.",
-            "criterionHasScheduleRows": "The Data tab includes scheduled posts with all required fields: date/time, post type, promoted menu items, visual idea, and caption idea.",
+            "criterionHasScheduleRows": "The Data tab includes scheduled posts with all required fields: date/time, post type, promoted menu items, visual idea, and caption idea, with usable execution detail in visual/caption ideas.",
             "criterionWithinCampaignWindow": "All scheduled posts fall within the **Start date** and **End date** defined in the **Dates** milestone Data tab.",
-            "criterionAnalyticsGrounding": "Post timing and promoted menu choices are grounded in available analytics signals (posting windows, demand, and promotion candidate evidence) without inventing unsupported claims."
+            "criterionAnalyticsGrounding": "Post timing and promoted menu choices are grounded in available analytics signals (posting windows, demand, and promotion candidate evidence) without inventing unsupported claims, while maintaining reasonable variety across posts.",
+            "criterionOperatingDays": "All scheduled posts land only on operating days supported by upstream operating-profile context; do not schedule posts on inferred closed days."
           }
         },
         "exportMilestones": "Export",
@@ -1000,6 +1001,10 @@
         "milestonePromotionPreviewRationale": "Rationale",
         "milestonePromotionPreviewInstagram": "Instagram promotion",
         "milestoneSchedulerPreviewSchedules": "Schedules",
+        "milestoneSchedulerPreviewMetadata": "Schedule summary",
+        "milestoneSchedulerPreviewScheduledPosts": "Scheduled posts",
+        "milestoneSchedulerPreviewSinglePosts": "Singles",
+        "milestoneSchedulerPreviewCarouselPosts": "Carousels",
         "milestoneSchedulerPreviewDateTime": "Date and time",
         "milestoneSchedulerPreviewType": "Type",
         "milestoneSchedulerPreviewPromotedMenuItems": "Promoted menu items",

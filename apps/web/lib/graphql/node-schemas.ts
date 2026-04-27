@@ -94,6 +94,9 @@ export type SchedulerScheduleItem = z.infer<typeof schedulerScheduleItemSchema>
 /** Structured Data tab for the Scheduler milestone preset. */
 export const schedulerMilestoneDataSchema = z.object({
   schedules: z.array(schedulerScheduleItemSchema),
+  campaignStart: z.string().optional(),
+  campaignEnd: z.string().optional(),
+  sourceSignalsSummary: z.string().optional(),
 })
 
 export type SchedulerMilestoneData = z.infer<typeof schedulerMilestoneDataSchema>

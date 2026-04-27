@@ -1,0 +1,24 @@
+# Social Content Quality Standard
+
+This runtime standard aligns milestone skills with the legacy strategic/tactical social-content skills:
+
+- Strategic benchmark: `social_campaign_calendar` (4-week balance, demand-aware pacing, holiday anchoring).
+- Tactical benchmark: `instagram_campaign_schedule` (slot-level timing, item, and angle grounding).
+
+## Milestone Chain Requirements
+
+1. `public_holidays`
+   - Dates are validated and holiday rows are normalized for downstream use.
+2. `brand_brief`
+   - Pillars and tone are operational, reusable, and evidence-based.
+3. `promotion_candidates`
+   - Candidate menus are POS-exact, evidence-grounded, and include scheduler-ready Instagram guidance.
+4. `scheduler`
+   - Schedule rows are campaign-window valid, use analytics-backed timing, and maintain post/item variety.
+
+## Quality Gates
+
+- No fabricated metrics, demographics, or menu items.
+- Upstream context caveats are explicit when data is missing.
+- Post plans should avoid repetitive adjacent item focus when alternatives exist.
+- Holiday and demand signals should influence scheduling when available.

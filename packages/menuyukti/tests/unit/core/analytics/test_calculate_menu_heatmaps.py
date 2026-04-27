@@ -3,7 +3,6 @@
 from datetime import datetime
 
 import pandas as pd
-import pytest
 
 from menuyukti.core.analytics.calculate_menu_heatmaps import (
     WEEKDAY_ORDER,

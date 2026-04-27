@@ -1,5 +1,7 @@
 """Unit tests for campaign schedule planning composition."""
 
+from datetime import datetime
+
 from menuyukti.core.analytics.calculate_campaign_schedule_plan import (
     calculate_campaign_schedule_plan,
 )
@@ -71,3 +73,72 @@ def test_calculate_campaign_schedule_plan_rejects_invalid_window() -> None:
         assert "campaign_start must be on or before campaign_end" in str(exc)
         return
     raise AssertionError("Expected ValueError for inverted campaign window")
+
+
+def test_calculate_campaign_schedule_plan_applies_holiday_hook() -> None:
+    result = calculate_campaign_schedule_plan(
+        campaign_start="2026-06-17",
+        campaign_end="2026-06-17",
+        ranked_candidates=[
+            {
+                "menu": "Nasi Goreng",
+                "recommendation": "promote",
+                "score": 82.0,
+                "signal_reasons": ["Tagged as content hero"],
+            }
+        ],
+        public_holidays=[{"date": "2026-06-17", "name": "Independence Day"}],
+    )
+
+    assert len(result["slots"]) == 1
+    assert "Holiday hook: Independence Day." in result["slots"][0]["caption_idea"]
+    assert "holiday anchors: 1" in result["source_signals_summary"]
+
+
+def test_calculate_campaign_schedule_plan_excludes_closed_weekend_days() -> None:
+    result = calculate_campaign_schedule_plan(
+        campaign_start="2026-06-01",
+        campaign_end="2026-06-14",
+        ranked_candidates=[
+            {
+                "menu": "Nasi Goreng",
+                "recommendation": "promote",
+                "score": 82.0,
+                "signal_reasons": ["Tagged as content hero"],
+            }
+        ],
+        allowed_weekdays={0, 1, 2, 3, 4},
+    )
+
+    assert len(result["slots"]) >= 1
+    for slot in result["slots"]:
+        dt = datetime.fromisoformat(slot["date_time"])
+        assert dt.weekday() in {0, 1, 2, 3, 4}
+
+
+def test_calculate_campaign_schedule_plan_reduces_slots_when_open_days_limited() -> None:
+    result = calculate_campaign_schedule_plan(
+        campaign_start="2026-06-01",
+        campaign_end="2026-06-03",
+        ranked_candidates=[
+            {
+                "menu": "Nasi Goreng",
+                "recommendation": "promote",
+                "score": 82.0,
+                "signal_reasons": ["Tagged as content hero"],
+            }
+        ],
+        weekly_demand_pattern=[
+            {
+                "iso_week": "2026-W23",
+                "revenue_index": 1.0,
+                "tx_index": 1.0,
+                "relative_demand": "average",
+            }
+        ],
+        allowed_weekdays={0},
+    )
+
+    # Campaign spans 3 days; with only Monday open, we schedule one post.
+    assert len(result["slots"]) == 1
+    assert datetime.fromisoformat(result["slots"][0]["date_time"]).weekday() == 0

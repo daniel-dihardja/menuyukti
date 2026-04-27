@@ -5,7 +5,6 @@ All tests use inline order rows — no DB or file fixtures required.
 
 from datetime import datetime, date
 
-import pytest
 
 from menuyukti.core.analytics.calculate_operating_profile import (
     compute_operating_profile_from_orders,

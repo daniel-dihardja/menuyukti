@@ -505,7 +505,10 @@ async def test_write_result_data_validates_scheduler_payload() -> None:
                 "visualIdea": "Kitchen prep and plated close-up",
                 "captionIdea": "Dinner spotlight",
             }
-        ]
+        ],
+        "campaignStart": "2026-06-01",
+        "campaignEnd": "2026-06-30",
+        "sourceSignalsSummary": "peak day hint: fri; high-demand weeks: 2",
     }
 
     with patch(
@@ -520,6 +523,7 @@ async def test_write_result_data_validates_scheduler_payload() -> None:
     assert "md-11" in out
     assert isinstance(ctx.get("milestone_data"), dict)
     assert ctx["milestone_data"]["schedules"][0]["type"] == "carousel"
+    assert ctx["milestone_data"]["campaignStart"] == "2026-06-01"
 
 
 @pytest.mark.asyncio
@@ -585,10 +589,22 @@ async def test_write_result_data_rejects_invalid_scheduler_payload() -> None:
                     "country": "Indonesia",
                     "currency": "IDR",
                 },
-                "contentPillars": ["Signature menu"],
-                "audienceHypotheses": ["Office workers"],
-                "proofOrientedAngles": ["Best seller"],
-                "toneGuardrails": ["Warm", "Helpful"],
+                "contentPillars": [
+                    "Signature menu heroes",
+                    "Category variety moments",
+                    "Kitchen craft stories",
+                ],
+                "audienceHypotheses": [
+                    "Office lunch audience",
+                    "After-work dinner crowd",
+                    "Weekend family groups",
+                ],
+                "proofOrientedAngles": [
+                    "Top-selling dishes",
+                    "Peak-day demand proof",
+                    "Meal-period fit proof",
+                ],
+                "toneGuardrails": ["Warm", "Helpful", "Clear"],
             },
         ),
         (

@@ -417,6 +417,9 @@ async def _finalize_eval(state: MilestoneRunState, *, client: httpx.AsyncClient)
     rid = state.get("run_id")
     if isinstance(rid, str) and rid:
         initial["run_id"] = rid
+    workflow_id = state.get("workflow_id")
+    if isinstance(workflow_id, str) and workflow_id.strip():
+        initial["workflow_id"] = workflow_id.strip()
 
     try:
         run_cfg = get_config()

@@ -1,7 +1,10 @@
 """System / human prompts for criterion evaluation and result synthesis."""
 
 EVAL_SYSTEM = """You evaluate whether provided data satisfies a single requirement in the context of a milestone goal.
-Respond with pass only if the data clearly supports satisfying the requirement; otherwise fail.
+Respond with pass only if the data clearly and concretely supports satisfying the requirement; otherwise fail.
+Do not pass vague, generic, or weakly supported outputs.
+For scheduling/planning requirements, check practical quality (valid window, evidence grounding, variety, and consistency with upstream context when requested).
+Do not infer or invent rows/dates/times that are not explicitly present in Data; never use speculative wording such as "likely closed."
 Be concise."""
 
 SYNTHESIS_SYSTEM = """You reflect on the milestone goal and each pass/fail outcome, then write a short result \
