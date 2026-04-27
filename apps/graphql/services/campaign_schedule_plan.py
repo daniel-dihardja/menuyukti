@@ -5,13 +5,68 @@ from __future__ import annotations
 from typing import Any
 
 from menuyukti.core.analytics import calculate_campaign_schedule_plan
+from menuyukti.core.analytics.calculate_operating_profile import compute_operating_profile_from_orders
 from sqlalchemy.orm import Session
 
-from graphql.data_sources import AnalyticsRun, Node
+from graphql.data_sources import AnalyticsRun, Node, OrderFact
 from graphql.schema.node_handlers.milestone import _milestone_sort_key
 from graphql.services.instagram_signals import build_instagram_signals
+from graphql.services.order_fact_rows import facts_to_operating_profile_rows
 from graphql.services.promotion_candidates import build_promotion_candidates_signals
 from graphql.services.weekly_demand_pattern import build_weekly_demand_pattern
+
+_DAY_TO_INDEX = {
+    "mon": 0,
+    "monday": 0,
+    "tue": 1,
+    "tues": 1,
+    "tuesday": 1,
+    "wed": 2,
+    "wednesday": 2,
+    "thu": 3,
+    "thurs": 3,
+    "thursday": 3,
+    "fri": 4,
+    "friday": 4,
+    "sat": 5,
+    "saturday": 5,
+    "sun": 6,
+    "sunday": 6,
+}
+
+
+def _resolve_allowed_weekdays(session: Session, run: AnalyticsRun) -> set[int] | None:
+    facts = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
+    if not facts:
+        return None
+
+    op_rows = facts_to_operating_profile_rows(facts)
+    operating_profile = compute_operating_profile_from_orders(op_rows)
+    if operating_profile is None:
+        return None
+
+    day_rows = operating_profile.get("day_of_week_breakdown")
+    if isinstance(day_rows, list):
+        allowed_days = {
+            _DAY_TO_INDEX[day_name]
+            for row in day_rows
+            if isinstance(row, dict)
+            and int(row.get("order_count") or 0) > 0
+            and isinstance((day_name := str(row.get("day") or "").strip().lower()), str)
+            and day_name in _DAY_TO_INDEX
+        }
+        if allowed_days:
+            return allowed_days
+
+    weekday_share = operating_profile.get("weekday_share")
+    weekend_share = operating_profile.get("weekend_share")
+    if isinstance(weekday_share, float) and isinstance(weekend_share, float):
+        if weekday_share > 0 and weekend_share == 0:
+            return {0, 1, 2, 3, 4}
+        if weekend_share > 0 and weekday_share == 0:
+            return {5, 6}
+
+    return None
 
 
 def _resolve_campaign_window(
@@ -121,6 +176,7 @@ def build_campaign_schedule_plan(
     if not isinstance(posting, dict):
         fallback_posting = instagram.get("best_posting_window")
         posting = fallback_posting if isinstance(fallback_posting, dict) else None
+    allowed_weekdays = _resolve_allowed_weekdays(session, run)
 
     computed = calculate_campaign_schedule_plan(
         campaign_start=campaign_start,
@@ -161,6 +217,7 @@ def build_campaign_schedule_plan(
             if isinstance(posting, dict)
             else None
         ),
+        allowed_weekdays=allowed_weekdays,
     )
 
     return {

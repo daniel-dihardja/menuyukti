@@ -1,6 +1,7 @@
 """Integration tests for campaignSchedulePlan GraphQL field."""
 
 import asyncio
+from datetime import datetime
 
 from graphql.data_sources import AnalyticsRun, Node, SessionLocal
 from graphql.schema import schema
@@ -158,3 +159,7 @@ def test_campaign_schedule_plan_returns_slots(analytics_run_with_qa_data):
     first = payload["slots"][0]
     assert first["postType"] in {"single", "carousel"}
     assert len(first["promotedMenuItems"]) >= 1
+    for slot in payload["slots"]:
+        weekday = datetime.fromisoformat(slot["dateTime"]).weekday()
+        # QA fixture for operating-profile tests uses only Monday and Friday traffic.
+        assert weekday in {0, 4}

@@ -886,7 +886,8 @@
             "goal": "The Data tab contains a complete Instagram posting schedule for the campaign window with each post's date/time, type, promoted menu items, visual idea, and caption idea.",
             "criterionHasScheduleRows": "The Data tab includes scheduled posts with all required fields: date/time, post type, promoted menu items, visual idea, and caption idea, with usable execution detail in visual/caption ideas.",
             "criterionWithinCampaignWindow": "All scheduled posts fall within the **Start date** and **End date** defined in the **Dates** milestone Data tab.",
-            "criterionAnalyticsGrounding": "Post timing and promoted menu choices are grounded in available analytics signals (posting windows, demand, and promotion candidate evidence) without inventing unsupported claims, while maintaining reasonable variety across posts."
+            "criterionAnalyticsGrounding": "Post timing and promoted menu choices are grounded in available analytics signals (posting windows, demand, and promotion candidate evidence) without inventing unsupported claims, while maintaining reasonable variety across posts.",
+            "criterionOperatingDays": "All scheduled posts land only on operating days supported by upstream operating-profile context; do not schedule posts on inferred closed days."
           }
         },
         "exportMilestones": "Export",

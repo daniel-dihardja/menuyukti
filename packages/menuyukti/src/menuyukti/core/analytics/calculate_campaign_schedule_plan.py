@@ -164,6 +164,7 @@ def calculate_campaign_schedule_plan(
     weekly_demand_pattern: list[CampaignScheduleWeeklyDemandRow] | None = None,
     public_holidays: list[CampaignScheduleHolidayRow] | None = None,
     best_posting_window: CampaignScheduleBestPostingWindow | None = None,
+    allowed_weekdays: set[int] | None = None,
     timezone: str = "Asia/Jakarta",
 ) -> CampaignSchedulePlanResult:
     """Generate adaptive posting slots across the campaign window."""
@@ -200,7 +201,12 @@ def calculate_campaign_schedule_plan(
             holiday_map[raw_date] = raw_name
 
     week_buckets: dict[str, list[tuple[date, int]]] = defaultdict(list)
+    allowed_days = (
+        {dow for dow in allowed_weekdays if 0 <= dow <= 6} if allowed_weekdays is not None else None
+    )
     for day in _daterange(start, end):
+        if allowed_days is not None and day.weekday() not in allowed_days:
+            continue
         iso_week = f"{day.isocalendar().year}-W{day.isocalendar().week:02d}"
         rel = demand_by_week.get(iso_week, "average")
         rel_score = 2 if rel == "high" else 1 if rel == "average" else 0
@@ -213,17 +219,18 @@ def calculate_campaign_schedule_plan(
 
     week_keys = sorted(week_buckets.keys())
     selected_dates: list[date] = []
-    week_idx = 0
-    while len(selected_dates) < target_slots and week_keys:
-        key = week_keys[week_idx % len(week_keys)]
-        bucket = week_buckets[key]
-        while bucket and bucket[0][0] in selected_dates:
-            bucket.pop(0)
-        if bucket:
-            selected_dates.append(bucket.pop(0)[0])
-        if all(not week_buckets[wk] for wk in week_keys):
-            break
-        week_idx += 1
+    if week_keys:
+        week_idx = 0
+        while len(selected_dates) < target_slots:
+            key = week_keys[week_idx % len(week_keys)]
+            bucket = week_buckets[key]
+            while bucket and bucket[0][0] in selected_dates:
+                bucket.pop(0)
+            if bucket:
+                selected_dates.append(bucket.pop(0)[0])
+            if all(not week_buckets[wk] for wk in week_keys):
+                break
+            week_idx += 1
 
     selected_dates.sort()
     candidate_pool = _recommended_candidates(ranked_candidates)

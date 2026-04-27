@@ -19,16 +19,31 @@ function formatScheduleDateTime(value: string, emptyValue: string): string {
     return emptyValue
   }
 
-  const parsedDate = new Date(trimmedValue)
-  if (Number.isNaN(parsedDate.getTime())) {
-    return value
+  const isoDateMatch = trimmedValue.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  let parsedDate: Date | null = null
+  if (isoDateMatch) {
+    const [, year, month, day] = isoDateMatch
+    parsedDate = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)))
+  } else {
+    const fallbackDate = new Date(trimmedValue)
+    if (!Number.isNaN(fallbackDate.getTime())) {
+      parsedDate = fallbackDate
+    }
   }
 
-  const weekday = new Intl.DateTimeFormat('de-DE', { weekday: 'short' }).format(parsedDate)
+  if (parsedDate == null) {
+    return trimmedValue
+  }
+
+  const weekday = new Intl.DateTimeFormat('de-DE', {
+    weekday: 'short',
+    timeZone: 'UTC',
+  }).format(parsedDate)
   const date = new Intl.DateTimeFormat('de-DE', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
+    timeZone: 'UTC',
   }).format(parsedDate)
   const weekdayWithSuffix = weekday.endsWith('.') ? weekday : `${weekday}.`
 
