@@ -3,6 +3,10 @@ import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 export type MilestoneSchedulerDataPreviewProps = {
   data: SchedulerMilestoneData
   labels: {
+    metadata: string
+    scheduledPosts: string
+    singlePosts: string
+    carouselPosts: string
     dateTime: string
     type: string
     promotedMenuItems: string
@@ -54,8 +58,26 @@ export function MilestoneSchedulerDataPreview({
   data,
   labels,
 }: MilestoneSchedulerDataPreviewProps) {
+  const totalPosts = data.schedules.length
+  const singlePosts = data.schedules.filter((schedule) => schedule.type === 'single').length
+  const carouselPosts = data.schedules.filter((schedule) => schedule.type === 'carousel').length
+
   return (
     <div className="flex flex-col gap-4 text-sm">
+      <section>
+        <h4 className="font-medium text-foreground">{labels.metadata}</h4>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
+          <li>
+            {labels.scheduledPosts}: {totalPosts}
+          </li>
+          <li>
+            {labels.singlePosts}: {singlePosts}
+          </li>
+          <li>
+            {labels.carouselPosts}: {carouselPosts}
+          </li>
+        </ul>
+      </section>
       <section>
         {data.schedules.length === 0 ? (
           <p className="text-muted-foreground">{labels.emptyList}</p>
