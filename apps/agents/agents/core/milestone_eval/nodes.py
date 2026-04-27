@@ -28,7 +28,6 @@ from pydantic import BaseModel, Field
 
 _logger = logging.getLogger(__name__)
 
-
 class CriterionVerdict(BaseModel):
     """Structured LLM output for a single pass/fail decision."""
 

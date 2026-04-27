@@ -862,12 +862,12 @@
           "restaurant_brand_brief": {
             "label": "Brand brief",
             "title": "Brand brief",
-            "goal": "The Data tab holds a factual brand brief for this location only: venue snapshot, content pillars tied to operations, audience hypotheses supported by analytics where available, proof-oriented angles grounded in menu or category signals, and tone guardrails. Campaign start or end dates are not required for this milestone.",
-            "criterionVenueSnapshot": "**Venue snapshot** in the Data tab names the venue and uses city/country/currency when known; it does not invent full addresses.",
-            "criterionContentPillars": "**Content pillars** (3–5) are listed and tied to real categories or operating signals (e.g. meal periods, weekday vs weekend).",
-            "criterionAudienceHypotheses": "**Audience hypotheses** reflect only what the Data tab supports (e.g. peaks, meal periods); no invented demographics.",
-            "criterionProofAngles": "**Proof-oriented angles** reference real menu or category signals from the Data tab where applicable (e.g. top items, category mix).",
-            "criterionToneGuardrails": "**Tone guardrails** (3–5 bullets) are consistent with operating context in the Data tab.",
+            "goal": "The Data tab holds a factual location-only brand brief: venue snapshot, 3-5 content pillars tied to operating/category signals, 3-5 audience hypotheses supported by available analytics, 3-5 proof-oriented angles grounded in menu/category signals, and 3-5 tone guardrails. The Data tab must not include campaign start or end dates for this milestone.",
+            "criterionVenueSnapshot": "**Venue snapshot** in the Data tab names the venue and uses city/country/currency when known; it does not invent full addresses and does not add campaign start/end dates.",
+            "criterionContentPillars": "**Content pillars** include 3-5 unique non-empty items tied to real categories or operating signals (for example meal periods or weekday vs weekend patterns).",
+            "criterionAudienceHypotheses": "**Audience hypotheses** include 3-5 unique non-empty items reflecting only what the Data tab supports (for example peaks, meal periods, weekday/weekend split); no invented demographics.",
+            "criterionProofAngles": "**Proof-oriented angles** include 3-5 unique non-empty items and reference real menu/category signals already present in the Data tab (for example top items or category mix).",
+            "criterionToneGuardrails": "**Tone guardrails** include 3-5 unique non-empty items and stay consistent with operating context in the Data tab.",
             "dataMarkdown": "## Venue snapshot\n\n\n## Content pillars\n\n\n## Audience hypotheses\n\n\n## Proof-oriented angles\n\n\n## Tone guardrails\n\n"
           },
           "promotion_candidates": {
