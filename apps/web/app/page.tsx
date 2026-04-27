@@ -6,6 +6,7 @@ import { Button } from '@workspace/ui/components/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { Separator } from '@workspace/ui/components/separator'
 import { LandingBento } from '@/app/_components/landing/landing-bento'
+import { LandingFeatureHighlights } from '@/app/_components/landing/landing-feature-highlights'
 import { LandingFaq } from '@/app/_components/landing/landing-faq'
 import { LandingFooter } from '@/app/_components/landing/landing-footer'
 import { LandingTrustStrip } from '@/app/_components/landing/landing-trust-strip'
@@ -25,7 +26,16 @@ import {
   Sparkles,
   PieChart,
   UtensilsCrossed,
+  CalendarRange,
+  ScrollText,
+  Megaphone,
+  Clock3,
+  Activity,
+  ChartNoAxesCombined,
+  CircleCheckBig,
 } from 'lucide-react'
+import workflowMilestonesScreenshot from '../../../screenshots/screenshot-workflow-with-milestones.png'
+import promotionCandidatesScreenshot from '../../../screenshots/screenshot-promotion-candidates-result.png'
 
 export default async function LandingPage() {
   const { isAuthenticated } = await auth()
@@ -54,6 +64,62 @@ export default async function LandingPage() {
     { question: t('faq.q4'), answer: t('faq.a4') },
     { question: t('faq.q5'), answer: t('faq.a5') },
   ]
+
+  const pipelineItems = [
+    {
+      Icon: CalendarRange,
+      title: t('pipeline.nodes.datesTitle'),
+      description: t('pipeline.nodes.datesDescription'),
+    },
+    {
+      Icon: ScrollText,
+      title: t('pipeline.nodes.brandBriefTitle'),
+      description: t('pipeline.nodes.brandBriefDescription'),
+    },
+    {
+      Icon: Megaphone,
+      title: t('pipeline.nodes.promotionTitle'),
+      description: t('pipeline.nodes.promotionDescription'),
+    },
+    {
+      Icon: Clock3,
+      title: t('pipeline.nodes.schedulerTitle'),
+      description: t('pipeline.nodes.schedulerDescription'),
+    },
+  ] as const
+
+  const signalItems = [
+    {
+      Icon: Activity,
+      title: t('signals.items.demandTitle'),
+      description: t('signals.items.demandDescription'),
+    },
+    {
+      Icon: ChartNoAxesCombined,
+      title: t('signals.items.mixTitle'),
+      description: t('signals.items.mixDescription'),
+    },
+    {
+      Icon: CircleCheckBig,
+      title: t('signals.items.evidenceTitle'),
+      description: t('signals.items.evidenceDescription'),
+    },
+  ] as const
+
+  const featureCards = [
+    {
+      title: t('featureHighlights.cards.workflowTitle'),
+      description: t('featureHighlights.cards.workflowDescription'),
+      image: workflowMilestonesScreenshot,
+      alt: t('featureHighlights.cards.workflowAlt'),
+    },
+    {
+      title: t('featureHighlights.cards.promotionTitle'),
+      description: t('featureHighlights.cards.promotionDescription'),
+      image: promotionCandidatesScreenshot,
+      alt: t('featureHighlights.cards.promotionAlt'),
+    },
+  ] as const
 
   return (
     <div className="relative flex min-h-screen flex-col bg-background pb-[max(6rem,env(safe-area-inset-bottom,0px))] text-foreground md:pb-0">
@@ -187,6 +253,62 @@ export default async function LandingPage() {
             </div>
           </div>
         </section>
+
+        <section id="pipeline" className="bg-background py-24">
+          <div className="mx-auto max-w-6xl px-6">
+            <h2 className="text-balance text-center text-3xl font-bold md:text-4xl">
+              {t('pipeline.title')}
+            </h2>
+            <p className="mx-auto mt-4 max-w-3xl text-center text-pretty text-foreground/80">
+              {t('pipeline.subtitle')}
+            </p>
+
+            <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {pipelineItems.map(({ Icon, title, description }) => (
+                <Card key={title} className="shadow-md">
+                  <CardHeader>
+                    <div className="mb-3 flex size-10 items-center justify-center rounded-md bg-primary/10">
+                      <Icon className="size-5 text-primary" aria-hidden />
+                    </div>
+                    <CardTitle className="text-lg">{title}</CardTitle>
+                    <CardDescription className="text-pretty">{description}</CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="signals" className="bg-muted py-24">
+          <div className="mx-auto max-w-6xl px-6">
+            <h2 className="text-balance text-center text-3xl font-bold md:text-4xl">
+              {t('signals.title')}
+            </h2>
+            <p className="mx-auto mt-4 max-w-3xl text-center text-pretty text-foreground/80">
+              {t('signals.subtitle')}
+            </p>
+
+            <div className="mt-12 grid gap-6 md:grid-cols-3">
+              {signalItems.map(({ Icon, title, description }) => (
+                <Card key={title} className="shadow-md">
+                  <CardHeader>
+                    <div className="mb-3 flex size-10 items-center justify-center rounded-md bg-primary/10">
+                      <Icon className="size-5 text-primary" aria-hidden />
+                    </div>
+                    <CardTitle className="text-lg">{title}</CardTitle>
+                    <CardDescription className="text-pretty">{description}</CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <LandingFeatureHighlights
+          title={t('featureHighlights.title')}
+          subtitle={t('featureHighlights.subtitle')}
+          cards={featureCards}
+        />
 
         <LandingBento title={t('bento.title')} subtitle={t('bento.subtitle')} items={bentoItems} />
 
