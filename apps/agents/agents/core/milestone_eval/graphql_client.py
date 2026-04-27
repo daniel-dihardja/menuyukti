@@ -11,6 +11,7 @@ from agents_app.agents.graphql_operations import (
     DEFAULT_NODES_FIRST,
     DELETE_NODE_MUTATION,
     NODES_QUERY,
+    PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
     UPDATE_NODE_MUTATION,
 )
 
@@ -121,6 +122,38 @@ async def create_result_node(
             msg = "createNode returned invalid payload"
             raise RuntimeError(msg)
         return node
+
+    if client is not None:
+        return await _run(client)
+    async with httpx.AsyncClient() as c:
+        return await _run(c)
+
+
+async def fetch_prior_milestones_data_for_eval(
+    workflow_id: str,
+    milestone_id: str,
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient | None = None,
+) -> str:
+    """Return markdown Data-tab snapshots for prior milestones (empty when unavailable)."""
+
+    async def _run(c: httpx.AsyncClient) -> str:
+        data = await graphql_post(
+            c,
+            PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
+            {
+                "workflowId": workflow_id,
+                "milestoneId": milestone_id,
+                "locationId": location_id,
+            },
+            user_id,
+        )
+        raw = data.get("priorMilestonesMilestoneData")
+        if not isinstance(raw, str):
+            return ""
+        return raw.strip()
 
     if client is not None:
         return await _run(client)

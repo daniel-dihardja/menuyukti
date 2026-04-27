@@ -11,6 +11,7 @@ from agents_app.agents.core.milestone_eval.graphql_client import (
     create_result_node,
     delete_node,
     fetch_milestone_children,
+    fetch_prior_milestones_data_for_eval,
     update_passcriteria_status,
 )
 from agents_app.agents.core.milestone_eval.prompts import (
@@ -90,6 +91,22 @@ async def fetch_context(
             cid = str(ch.get("id", ""))
             if isinstance(req, str) and cid:
                 criteria.append({"id": cid, "requirement": req})
+    prior_context = ""
+    workflow_id = state.get("workflow_id")
+    if isinstance(workflow_id, str) and workflow_id.strip():
+        prior_context = await fetch_prior_milestones_data_for_eval(
+            workflow_id.strip(),
+            mid,
+            loc,
+            state["user_id"],
+            client=client,
+        )
+    if prior_context:
+        raw_data = (
+            f"{raw_data}\n\n---\nPrior milestone context (for requirement checks):\n{prior_context}"
+            if raw_data
+            else f"Prior milestone context (for requirement checks):\n{prior_context}"
+        )
     return {"goal": goal, "raw_data": raw_data, "criteria": criteria}
 
 

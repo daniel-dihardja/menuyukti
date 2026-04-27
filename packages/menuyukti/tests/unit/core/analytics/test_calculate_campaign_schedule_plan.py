@@ -71,3 +71,23 @@ def test_calculate_campaign_schedule_plan_rejects_invalid_window() -> None:
         assert "campaign_start must be on or before campaign_end" in str(exc)
         return
     raise AssertionError("Expected ValueError for inverted campaign window")
+
+
+def test_calculate_campaign_schedule_plan_applies_holiday_hook() -> None:
+    result = calculate_campaign_schedule_plan(
+        campaign_start="2026-06-17",
+        campaign_end="2026-06-17",
+        ranked_candidates=[
+            {
+                "menu": "Nasi Goreng",
+                "recommendation": "promote",
+                "score": 82.0,
+                "signal_reasons": ["Tagged as content hero"],
+            }
+        ],
+        public_holidays=[{"date": "2026-06-17", "name": "Independence Day"}],
+    )
+
+    assert len(result["slots"]) == 1
+    assert "Holiday hook: Independence Day." in result["slots"][0]["caption_idea"]
+    assert "holiday anchors: 1" in result["source_signals_summary"]

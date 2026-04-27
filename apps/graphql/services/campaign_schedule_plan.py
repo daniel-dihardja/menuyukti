@@ -20,7 +20,7 @@ def _resolve_campaign_window(
     workflow_id: int,
     milestone_id: int,
     location_id: int,
-) -> tuple[str, str] | None:
+) -> tuple[str, str, list[dict[str, str]]] | None:
     milestones = (
         session.query(Node)
         .filter(
@@ -73,7 +73,22 @@ def _resolve_campaign_window(
     end = end.strip()
     if not start or not end:
         return None
-    return start, end
+    holidays_raw = raw_data.get("publicHolidays")
+    holidays: list[dict[str, str]] = []
+    if isinstance(holidays_raw, list):
+        for row in holidays_raw:
+            if not isinstance(row, dict):
+                continue
+            date = row.get("date")
+            name = row.get("name")
+            if isinstance(date, str) and date.strip():
+                holidays.append(
+                    {
+                        "date": date.strip(),
+                        "name": str(name).strip() if isinstance(name, str) else "",
+                    }
+                )
+    return start, end, holidays
 
 
 def build_campaign_schedule_plan(
@@ -93,7 +108,7 @@ def build_campaign_schedule_plan(
     )
     if campaign_window is None:
         return None
-    campaign_start, campaign_end = campaign_window
+    campaign_start, campaign_end, public_holidays = campaign_window
 
     promotion = build_promotion_candidates_signals(session, run) or {}
     instagram = build_instagram_signals(session, run) or {}
@@ -130,6 +145,7 @@ def build_campaign_schedule_plan(
             for row in weekly_rows
             if isinstance(row, dict)
         ],
+        public_holidays=public_holidays,
         best_posting_window=(
             {
                 "peak_day": posting.get("peak_day")

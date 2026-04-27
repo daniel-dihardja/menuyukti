@@ -167,6 +167,9 @@ class SchedulerScheduleRow(BaseModel):
 
 class SchedulerMilestoneOutput(BaseModel):
     schedules: list[SchedulerScheduleRow]
+    campaignStart: str | None = None
+    campaignEnd: str | None = None
+    sourceSignalsSummary: str | None = None
 
 
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {

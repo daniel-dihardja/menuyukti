@@ -33,6 +33,11 @@ class CampaignScheduleWeeklyDemandRow(TypedDict):
     relative_demand: Literal["low", "average", "high"]
 
 
+class CampaignScheduleHolidayRow(TypedDict):
+    date: str
+    name: str
+
+
 class CampaignScheduleSlot(TypedDict):
     date_time: str
     post_type: Literal["single", "carousel"]
@@ -133,6 +138,7 @@ def _build_source_summary(
     peak_hour: int,
     candidates_count: int,
     weekly_rows: list[CampaignScheduleWeeklyDemandRow],
+    holidays_count: int,
 ) -> str:
     parts = [f"{candidates_count} promotion candidates considered"]
     if peak_day:
@@ -143,6 +149,10 @@ def _build_source_summary(
         parts.append(f"high-demand weeks: {high_weeks}")
     else:
         parts.append("weekly demand unavailable")
+    if holidays_count > 0:
+        parts.append(f"holiday anchors: {holidays_count}")
+    else:
+        parts.append("holiday anchors unavailable")
     return "; ".join(parts)
 
 
@@ -152,6 +162,7 @@ def calculate_campaign_schedule_plan(
     campaign_end: str,
     ranked_candidates: list[CampaignScheduleCandidate],
     weekly_demand_pattern: list[CampaignScheduleWeeklyDemandRow] | None = None,
+    public_holidays: list[CampaignScheduleHolidayRow] | None = None,
     best_posting_window: CampaignScheduleBestPostingWindow | None = None,
     timezone: str = "Asia/Jakarta",
 ) -> CampaignSchedulePlanResult:
@@ -181,13 +192,20 @@ def calculate_campaign_schedule_plan(
         for row in weekly_rows
         if str(row.get("iso_week") or "")
     }
+    holiday_map: dict[str, str] = {}
+    for raw in public_holidays or []:
+        raw_date = str(raw.get("date") or "").strip()
+        raw_name = str(raw.get("name") or "").strip()
+        if raw_date:
+            holiday_map[raw_date] = raw_name
 
     week_buckets: dict[str, list[tuple[date, int]]] = defaultdict(list)
     for day in _daterange(start, end):
         iso_week = f"{day.isocalendar().year}-W{day.isocalendar().week:02d}"
         rel = demand_by_week.get(iso_week, "average")
         rel_score = 2 if rel == "high" else 1 if rel == "average" else 0
-        day_score = (2 - weekday_rank.get(day.weekday(), 6)) + rel_score
+        holiday_boost = 2 if day.isoformat() in holiday_map else 0
+        day_score = (2 - weekday_rank.get(day.weekday(), 6)) + rel_score + holiday_boost
         week_buckets[iso_week].append((day, day_score))
 
     for rows in week_buckets.values():
@@ -222,20 +240,32 @@ def calculate_campaign_schedule_plan(
     base_hour = _base_hour(best_posting_window)
     hour_offsets = (0, 1, -1, 0)
     slots: list[CampaignScheduleSlot] = []
+    last_primary_menu = ""
+    post_type_cycle: tuple[Literal["single", "carousel"], ...] = (
+        "carousel",
+        "single",
+        "single",
+        "carousel",
+    )
     for idx, day in enumerate(selected_dates):
         primary = candidate_pool[idx % len(candidate_pool)]
+        if str(primary.get("menu") or "") == last_primary_menu and len(candidate_pool) > 1:
+            primary = candidate_pool[(idx + 1) % len(candidate_pool)]
         promoted = [str(primary["menu"])]
         if len(candidate_pool) > 1 and idx % 3 == 0:
             secondary = candidate_pool[(idx + 1) % len(candidate_pool)]
             if secondary["menu"] != primary["menu"]:
                 promoted.append(str(secondary["menu"]))
         promoted = promoted[:_MAX_PROMOTED_ITEMS]
+        last_primary_menu = promoted[0]
 
         hour = max(_HOUR_MIN, min(_HOUR_MAX, base_hour + hour_offsets[idx % len(hour_offsets)]))
         dt = f"{day.isoformat()}T{hour:02d}:00:00"
-        post_type: Literal["single", "carousel"] = "carousel" if idx % 2 == 0 else "single"
+        post_type = post_type_cycle[idx % len(post_type_cycle)]
         reason = primary.get("signal_reasons") or []
         reason_text = str(reason[0]) if reason else "strong promotion potential"
+        holiday_name = holiday_map.get(day.isoformat())
+        holiday_note = f" Holiday hook: {holiday_name}." if holiday_name else ""
 
         slots.append(
             CampaignScheduleSlot(
@@ -248,7 +278,7 @@ def calculate_campaign_schedule_plan(
                 ),
                 caption_idea=(
                     f"Spotlight {', '.join(promoted)} this {day.strftime('%A')} around {hour:02d}:00. "
-                    f"Angle: {reason_text}."
+                    f"Signal: {reason_text}.{holiday_note}"
                 ),
             )
         )
@@ -264,5 +294,6 @@ def calculate_campaign_schedule_plan(
             peak_hour=base_hour,
             candidates_count=len(candidate_pool),
             weekly_rows=weekly_rows,
+            holidays_count=len(holiday_map),
         ),
     )

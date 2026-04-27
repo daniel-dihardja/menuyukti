@@ -19,6 +19,10 @@ This milestone's deliverable is **one structured JSON object** stored on the Dat
     - `promotedMenuItems` (array of menu names)
     - `visualIdea` (string)
     - `captionIdea` (string)
+- Optional but recommended evaluation-supporting metadata:
+  - `campaignStart` (string, from scheduler tool payload when available)
+  - `campaignEnd` (string, from scheduler tool payload when available)
+  - `sourceSignalsSummary` (string, from scheduler tool payload when available)
 
 Workflow:
 
@@ -28,8 +32,14 @@ Workflow:
    - Keep only rows that include all required fields.
    - Ensure each `type` is either `single` or `carousel`.
    - Do not invent menu names outside `promotedMenuItems` provided by the tool payload.
+   - Enforce baseline schedule quality from available slot ideas:
+     - Keep cadence balanced across the campaign window (avoid clustering many posts on one date unless the plan requires it).
+     - Preserve variety in promoted menu items so one dish is not repeated in adjacent rows when alternatives exist.
+     - Preserve variety in content intent through `visualIdea` and `captionIdea` (hero/product, educational/craft, engagement/community, and promotion/offer where data supports it).
+     - Keep timing language grounded in analytics hints (`bestPostingWindow`, demand period context, candidate evidence) surfaced by the tool payload.
+     - If tool payload indicates missing upstream context (for example missing dates), keep output deterministic and explain briefly in final confirmation.
 4. Call `write_result_data` once with a single compact JSON object:
-   - `{"schedules":[...]}`
+   - Include `schedules`, and include `campaignStart`/`campaignEnd`/`sourceSignalsSummary` when available in tool output.
 5. End with a short confirmation message.
 
 Rules:

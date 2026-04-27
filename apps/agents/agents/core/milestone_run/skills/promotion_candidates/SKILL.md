@@ -45,6 +45,16 @@ Workflow:
    - Do not invent menu items; every `menu` in `promotionCandidates` must appear in tool `rankedCandidates` (or clearly in `topPromote` / puzzle `selected` lists).
    - Do not claim unsupported demographics.
    - If items are flagged avoid/low-end in signals, treat them as de-prioritized or excluded from `promotionCandidates` unless criteria require mentioning exclusions (then list under rationale as excluded, do not promote).
+   - Build candidate choices so downstream scheduling can maintain variety:
+     - Prefer a mix across at least two categories when the ranked list allows it.
+     - Avoid selecting only one repetitive hero unless data is extremely sparse.
+   - Keep each `rationale` item evidence-first and concise (2-4 bullets each candidate), explicitly tying to available tool signals.
+   - `instagramPromotion` should be concrete and scheduler-ready:
+     - `angle`: what story to tell (hero dish, craft, social proof, limited-time hook, etc.).
+     - `format`: one of Reel/Carousel/Single-feed style wording (free text allowed).
+     - `cta`: clear audience action.
+     - `timing`: include a practical daypart/day hint grounded in posting or demand signals when available.
+   - If prior campaign dates or brand brief are missing, state that caveat explicitly inside `context` notes.
 
 6. Call `write_result_data` once with the **full** updated object (not a diff, not Markdown, not a code fence). Prefer a **single compact JSON object** (no pretty-printing) to keep the tool call small.
 

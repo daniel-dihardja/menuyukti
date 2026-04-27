@@ -55,7 +55,10 @@ Workflow:
    - Keep arrays grounded in existing Data tab context where possible, otherwise return conservative placeholders like `"Operating signals unavailable from analytics."`.
    - Still do **not** introduce campaign dates.
 8. Ensure downstream compatibility:
-   - Keep wording concise and operational so `social_campaign_calendar` and caption planning can reuse pillars and tone.
+   - Keep wording concise and operational so scheduler and caption planning can reuse pillars and tone directly.
+   - Make `contentPillars` reusable for content planning (for example: hero signatures, category variety, behind-the-scenes craft, engagement/community, promotional pushes when demand is low).
+   - Ensure `toneGuardrails` are execution-ready (short, imperative guidance suitable for captions/creative prompts).
+   - Where signals exist, include at least one explicit timing-oriented hypothesis or proof angle (meal period, peak day, weekday/weekend split) that can guide posting windows.
    - Keep naming consistent: this runtime skill id is `brand_brief`, while the milestone data task is `restaurant_brand_brief`.
 9. Call `write_result_data` with the full updated JSON object (not markdown).
 10. End with a short confirmation. Pass/fail evaluation and the milestone summary run automatically afterward.

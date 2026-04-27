@@ -76,3 +76,36 @@ async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
     assert out["goal"] == "Increase covers"
     assert out["raw_data"] == "Sales up 10%"
     assert out["criteria"] == [{"id": "pc-1", "requirement": "Has baseline"}]
+
+
+@pytest.mark.asyncio
+async def test_fetch_context_appends_prior_milestone_context_when_workflow_present() -> None:
+    fake_children = [
+        {"nodeType": "goal", "data": {"goal": "Schedule posts"}},
+        {"nodeType": "milestonedata", "data": {"data": '{"schedules":[]}' }},
+        {
+            "nodeType": "passcriteria",
+            "id": "pc-2",
+            "data": {"requirement": "Within campaign window"},
+        },
+    ]
+    with (
+        patch(
+            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
+            new=AsyncMock(return_value=fake_children),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_eval.nodes.fetch_prior_milestones_data_for_eval",
+            new=AsyncMock(return_value="## Dates\n\nstartDate: 2026-06-01\nendDate: 2026-06-30"),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+    ):
+        out = await nodes.fetch_context(
+            _base_state(workflow_id="wf-1"),
+            client=MagicMock(spec=AsyncMock),
+        )
+    assert "Prior milestone context" in out["raw_data"]
+    assert "2026-06-01" in out["raw_data"]
