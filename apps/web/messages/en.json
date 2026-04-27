@@ -93,34 +93,75 @@
     "brand": "Menuyukti",
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Agentic AI workflows for data-driven restaurant marketing",
-      "subtitle": "Upload sales data, explore analytics-backed signals, then run workflow milestones that produce structured outputs—schedules, angles, and copy—through agentic pipelines, chat, and reusable artifacts.",
-      "badge": "Milestones · Analytics · Agents",
+      "headline": "Node-based workflow engine for restaurant marketing teams",
+      "subtitle": "Turn sales reports into analytical signals, compose milestone nodes into strategy pipelines, and ship Instagram-ready schedules and copy with confidence.",
+      "badge": "Node-based workflows · Sales signals · Social execution",
       "ctaSecondary": "Sign in",
       "previewWorkflowCardTitle": "Workflow"
     },
-    "problem": "Most restaurant marketing still runs on spreadsheets, static playbooks, and gut feel—without agentic automation that turns live sales data into repeatable workflow outputs. Teams miss demand signals, burn budget on the wrong promos, and never get from insight to publish-ready assets in one system.",
+    "problem": "Most restaurant marketing still relies on disconnected dashboards, spreadsheets, and one-off prompting. Strategy gets lost between data review and campaign execution, so teams miss timing windows and promote the wrong menu stories.",
     "problemImageAlt": "Abstract analytics dashboard showing sales performance bars and insight summary.",
-    "solution": "Menuyukti is built as a workflow platform: workflows are sequences of milestones that fetch context, run AI steps (LangGraph-style agent service), and persist structured milestone data—not only chat. Your flagship use case is restaurant marketing: sales and menu signals feed those workflows so you get Instagram-oriented schedules and content you can refine in the app and reuse across locations.",
+    "solution": "Menuyukti gives marketers a node-based workflow canvas: connect milestones like Dates, Brand brief, Promotion candidates, and Scheduler into a flexible social strategy pipeline. Every node is grounded in sales-report analytics, and each output is stored as structured, reusable campaign data.",
     "solutionImageAlt": "Workflow diagram from POS data through AI milestones to stored workflow outputs and artifacts.",
     "trust": {
-      "title": "What the platform is",
-      "stat1Value": "Milestones",
-      "stat1Label": "Workflows with steps that ingest data, run models, and save outputs for what comes next.",
-      "stat2Value": "One stack",
-      "stat2Label": "Web app, GraphQL API, and Python agent service share the same workspace data—analytics plus agents.",
-      "stat3Value": "Artifacts",
-      "stat3Label": "Chat to steer work; review and edit generated captions, ideas, and plans as reusable assets."
+      "title": "Built for restaurant marketers",
+      "stat1Value": "Composable nodes",
+      "stat1Label": "Mix and match milestone nodes per campaign objective, from brand positioning to scheduling.",
+      "stat2Value": "Signals-first",
+      "stat2Label": "Recommendations are grounded in demand timing, category mix, and menu performance from your sales data.",
+      "stat3Value": "Execution-ready",
+      "stat3Label": "Convert strategy into scheduled posts, angles, and captions your team can review and publish."
     },
     "bento": {
       "title": "Analytics, agents, and deliverables together",
-      "subtitle": "The product focuses on composable pipelines: structured data in, milestone results out—grounded in how your locations actually perform.",
-      "item1Title": "Sales- and menu-native analytics",
-      "item1Description": "Insights computed from uploaded POS or spreadsheet reports—what sells, mix shifts, and patterns worth promoting before you brief creative.",
-      "item2Title": "Agentic milestone pipelines",
-      "item2Description": "Prepare and run workflow steps with LLM-backed graphs: plan-and-execute style flows, reflection where drafts are critiqued and revised, and outputs written back as milestone data.",
-      "item3Title": "Chat, artifacts, and reuse",
-      "item3Description": "Steer agents in conversation, iterate on drafts, and keep schedules and copy as artifacts you can revisit—not a one-off thread that disappears."
+      "subtitle": "A strategy operations layer for social teams: analytical signals in, campaign outputs out, with reusable milestone data at every step.",
+      "item1Title": "Sales-report signal intelligence",
+      "item1Description": "Upload POS exports and spreadsheet sales reports to surface menu demand, daypart peaks, and category opportunities before creative planning.",
+      "item2Title": "Flexible strategy pipelines",
+      "item2Description": "Compose node-based milestones per objective: keep the same core flow or swap nodes as briefs, promotions, and campaign windows change.",
+      "item3Title": "Reusable social deliverables",
+      "item3Description": "Store post schedules, promotion rationales, and messaging guidance as structured artifacts your team can refine and reuse across locations."
+    },
+    "pipeline": {
+      "title": "Compose your social strategy pipeline",
+      "subtitle": "Use milestone nodes like building blocks. Keep the sequence that matches your campaign, then rerun with new sales reports for continuous optimization.",
+      "nodes": {
+        "datesTitle": "Dates node",
+        "datesDescription": "Defines campaign start/end windows and public-holiday context to keep posting plans realistic.",
+        "brandBriefTitle": "Brand Brief node",
+        "brandBriefDescription": "Builds audience hypotheses, content pillars, and tone guardrails from operating and menu signals.",
+        "promotionTitle": "Promotion Candidates node",
+        "promotionDescription": "Ranks menu items with evidence-first rationale and Instagram promotion angles for each candidate.",
+        "schedulerTitle": "Scheduler node",
+        "schedulerDescription": "Turns approved candidates into balanced post schedules with timing, visual ideas, and caption direction."
+      }
+    },
+    "signals": {
+      "title": "Signals grounded in sales reports",
+      "subtitle": "Each recommendation is traceable to operational and menu performance data, so marketers can justify strategy decisions.",
+      "items": {
+        "demandTitle": "Demand timing signals",
+        "demandDescription": "Identify dayparts and weekday patterns where audience attention and purchase intent are strongest.",
+        "mixTitle": "Category and menu mix",
+        "mixDescription": "Detect which categories and hero items deserve promotion versus items that need repositioning.",
+        "evidenceTitle": "Evidence-first recommendations",
+        "evidenceDescription": "Every candidate and schedule row carries the why: score, trend, and context used to generate it."
+      }
+    },
+    "featureHighlights": {
+      "title": "Product proof across the workflow",
+      "subtitle": "See how marketers go from milestone planning to evidence-backed promotion and transparent execution.",
+      "cards": {
+        "workflowTitle": "Workflow milestone board",
+        "workflowDescription": "Plan and run milestone nodes in sequence, with criteria and structured outputs visible in one workspace.",
+        "workflowAlt": "Workflow board with milestones and brand brief preview.",
+        "promotionTitle": "Promotion candidate results",
+        "promotionDescription": "Review prioritized menu items with rationale and Instagram guidance before scheduling.",
+        "promotionAlt": "Promotion candidates panel with prioritized menu items and rationale.",
+        "skillsTitle": "Skill and tool transparency",
+        "skillsDescription": "Inspect which marketing skills and tools power each milestone run, so teams keep control of strategy logic.",
+        "skillsAlt": "Skills and tools page listing milestone skills and available tools."
+      }
     },
     "faq": {
       "title": "Common questions",
@@ -139,16 +180,16 @@
       "title": "How it works",
       "steps": {
         "upload": {
-          "title": "1. Connect data",
-          "description": "Upload POS exports or spreadsheet sales reports into your workspace—the GraphQL API persists them for analytics and for agents to query."
+          "title": "1. Ingest sales reports",
+          "description": "Upload POS exports or spreadsheets and convert them into structured analytics signals in your workspace."
         },
         "analyze": {
-          "title": "2. Get analytics-backed signals",
-          "description": "The platform computes menu, mix, and trend-style views from your files so priorities are tied to what actually sells."
+          "title": "2. Compose node sequence",
+          "description": "Arrange workflow nodes (Dates, Brand brief, Promotion candidates, Scheduler) around your campaign objective."
         },
         "act": {
-          "title": "3. Run workflow milestones",
-          "description": "Open or continue a workflow: each milestone can prepare context, run agentic AI steps, and save structured outputs—schedules, ideas, copy—for Instagram-style execution and iteration in chat."
+          "title": "3. Execute and refine",
+          "description": "Run the pipeline to produce schedules, promotion angles, and copy; then refine in chat and publish with your team."
         }
       }
     },
