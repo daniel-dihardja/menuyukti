@@ -1,12 +1,12 @@
 {
   "metadata": {
-    "title": "Menuyukti — Agentic AI workflows for restaurant marketing",
-    "description": "Composable workflows: sales analytics, LangGraph-style agents, milestone data, and Instagram-ready artifacts—one GraphQL-backed workspace for restaurant marketing.",
+    "title": "Menuyukti — Agentic AI for restaurant marketing",
+    "description": "Agentic AI for restaurant marketing: composable workflows, sales analytics, LangGraph-style agents, milestone data, and Instagram-ready artifacts in one GraphQL-backed workspace.",
     "ogLocale": "en_US"
   },
   "login": {
     "title": "Menuyukti",
-    "slogan": "AI-powered restaurant marketing",
+    "slogan": "Agentic AI for restaurant marketing",
     "backToHome": "Back to home",
     "signUpTitle": "Join Menuyukti",
     "signUpDescription": "Create an account to connect your locations and workflows.",
@@ -93,18 +93,18 @@
     "brand": "Menuyukti",
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Node-based workflow engine for restaurant marketing",
-      "subtitle": "Turn sales reports into analytical signals, compose milestone nodes into strategy pipelines, and ship Instagram-ready schedules and copy faster with confidence.",
-      "badge": "Node-based workflows · Sales signals · Social execution",
+      "headline": "The agentic AI system for restaurant marketing",
+      "subtitle": "Menuyukti is an agentic AI system for restaurant marketing: node-based workflows turn sales data into signals, run milestone pipelines, and produce Instagram-ready schedules and copy you can trust and refine. Within each step you can add input and influence the run—so you get automated AI execution balanced with your briefs, edits, and judgment.",
+      "badge": "Agentic AI · Data-grounded agents · Sales-to-social workflows",
       "ctaSecondary": "Sign in",
       "previewWorkflowCardTitle": "Workflow"
     },
-    "problem": "Most restaurant marketing still relies on disconnected dashboards, spreadsheets, and one-off prompting. Strategy gets lost between data review and campaign execution, so you miss timing windows and promote the wrong menu stories.",
+    "problem": "Most restaurant marketing still relies on disconnected dashboards, spreadsheets, and tools bolted onto legacy stacks—not coordinated agentic systems. Strategy gets lost between data review and campaign execution, so you miss timing windows and promote the wrong menu stories.",
     "problemImageAlt": "Abstract analytics dashboard showing sales performance bars and insight summary.",
-    "solution": "Menuyukti gives you a node-based workflow canvas: connect milestones like Dates, Brand brief, Promotion candidates, and Scheduler into a flexible social strategy pipeline. Every node is grounded in sales-report analytics, and each output is stored as structured, reusable campaign data.",
+    "solution": "Menuyukti is an agentic AI system for restaurant marketing: a node-based workflow canvas where agents connect milestones like Dates, Brand brief, Promotion candidates, and Scheduler into a flexible social strategy pipeline. Every node is grounded in sales-report analytics, and each output is stored as structured, reusable campaign data.",
     "solutionImageAlt": "Workflow diagram from POS data through AI milestones to stored workflow outputs and artifacts.",
     "trust": {
-      "title": "Built for restaurant marketing",
+      "title": "Agentic AI, built for restaurant marketing",
       "stat1Value": "Composable nodes",
       "stat1Label": "Mix and match milestone nodes per campaign objective, from brand positioning to scheduling.",
       "stat2Value": "Signals-first",
@@ -114,7 +114,7 @@
     },
     "bento": {
       "title": "Analytics, agents, and deliverables together",
-      "subtitle": "A strategy layer for your social channels: analytical signals in, campaign outputs out, with reusable milestone data at every step.",
+      "subtitle": "Agentic workflows sit on your data: analytical signals in, agent-run milestones in the middle, and campaign outputs out—with reusable structured data at every step.",
       "item1Title": "Sales-report signal intelligence",
       "item1Description": "Upload POS exports and spreadsheet sales reports to surface menu demand, daypart peaks, and category opportunities before creative planning.",
       "item2Title": "Flexible strategy pipelines",
@@ -123,8 +123,8 @@
       "item3Description": "Store post schedules, promotion rationales, and messaging guidance as structured artifacts you can refine and reuse across locations."
     },
     "pipeline": {
-      "title": "Compose your social strategy pipeline",
-      "subtitle": "Use milestone nodes like building blocks. Keep the sequence that matches your campaign, then rerun with new sales reports for continuous optimization.",
+      "title": "Compose your agentic social strategy pipeline",
+      "subtitle": "Use milestone nodes like building blocks for your agents. Keep the sequence that matches your campaign, then rerun with new sales reports for continuous optimization.",
       "nodes": {
         "datesTitle": "Dates node",
         "datesDescription": "Defines campaign start/end windows and public-holiday context to keep posting plans realistic.",
@@ -150,7 +150,7 @@
     },
     "featureHighlights": {
       "title": "Product proof across the workflow",
-      "subtitle": "See how you go from milestone planning to evidence-backed promotion and transparent execution.",
+      "subtitle": "See how your workspace goes from milestone planning to agentic runs, evidence-backed promotion, and transparent execution.",
       "cards": {
         "workflowTitle": "Workflow milestone board",
         "workflowDescription": "Plan and run milestone nodes in sequence, with criteria and structured outputs visible in one workspace.",
@@ -170,7 +170,7 @@
       "q2": "Is my sales data shared with third parties?",
       "a2": "Your data powers your workspace and insights. We do not sell your data. See our Privacy Policy for details.",
       "q3": "Is Menuyukti only a chatbot?",
-      "a3": "Chat is how you collaborate, but the core model is workflows: ordered milestones that produce stored, structured outputs—schedules, profiles, evaluations—not only messages. Agents call platform APIs when they need your data.",
+      "a3": "Chat is how you collaborate, but Menuyukti is an agentic AI system at heart: ordered milestones run by agents produce stored, structured outputs—schedules, profiles, evaluations—not only messages. Agents call platform APIs when they need your data.",
       "q4": "Who is it for?",
       "a4": "Restaurant owners and operators, people hired by restaurants to run social media (staff, freelancers, or small agencies on your account), and multi-location brands that want analytics plus agentic automation in one place—not disconnected dashboards and ad hoc prompts.",
       "q5": "Can we collaborate across locations?",
@@ -189,13 +189,13 @@
         },
         "act": {
           "title": "3. Execute and refine",
-          "description": "Run the pipeline to produce schedules, promotion angles, and copy; then refine in chat and publish when you are ready."
+          "description": "Agents run the pipeline to produce schedules, promotion angles, and copy; then refine in chat and publish when you are ready."
         }
       }
     },
     "why": {
       "title": "Why restaurants use Menuyukti",
-      "subtitle": "A workflow platform first: milestones and milestone data, plus chat and artifacts—built for restaurant marketing as the flagship product.",
+      "subtitle": "A workflow product built around agentic AI: milestones and milestone data, plus chat and artifacts—purpose-built for restaurant marketing, not a generic assistant pasted onto a dashboard.",
       "cards": {
         "insights": "Real sales data, not generic benchmarks",
         "waste": "From signals to publish-ready artifacts",
@@ -205,7 +205,7 @@
     },
     "cta": {
       "title": "Explore your workspace",
-      "description": "If you've been invited, sign in to connect locations, upload sales data, and run workflows with agentic support—analytics, milestones, and editable outputs in one stack.",
+      "description": "If you've been invited, sign in to connect locations, upload sales data, and run this agentic stack—analytics, agent-driven milestones, and editable outputs in one place.",
       "secondary": "Sign in"
     },
     "footer": {
