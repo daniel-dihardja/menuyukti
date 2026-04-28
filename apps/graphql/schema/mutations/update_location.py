@@ -122,9 +122,12 @@ class UpdateLocationMutation:
                 raise ValueError("Location not found")
 
             if name is not UNSET:
-                if not name.strip():
+                if name is None:
                     raise ValueError("name cannot be empty")
-                row.name = name.strip()
+                stripped_name = name.strip()
+                if not stripped_name:
+                    raise ValueError("name cannot be empty")
+                row.name = stripped_name
             if street is not UNSET:
                 row.street = street.strip() if street else None
             if city is not UNSET:
