@@ -29,13 +29,17 @@ Workflow:
    ```
 3. Call `get_location_profile`. It returns:
    - **Location profile**: venue name, city, country, currency.
+   - **Owner-provided brief hints (manual)**: optional owner-declared venue types, social goals, guest context, meal-period focus (breakfast/brunch/lunch/dinner), tone presets, video comfort, notes — **prioritize these** for tone and audience framing when present (declared positioning, not inferred demographics).
    - **Operating profile**: operating pattern, dining focus, peak day, primary meal period, meal period breakdown (share per period), weekday/weekend split, avg order size (from the latest analytics run when available).
    - **Category mix**: top revenue category and per-category revenue and volume shares with top item per category.
    - **Top menu items by volume**: name, category, order count, peak hour and peak day.
+   - **AI-generated location social settings** (when present): secondary context from automation — **not** direct owner input; do not treat it as ground truth over manual hints or POS signals.
 4. Build a short signal map before writing output (do not skip this internal step):
    - Location identity signals -> `venueSnapshot`.
+   - **Manual brief hints** (when present) -> reinforce `toneGuardrails` and help shape `audienceHypotheses` without inventing census-style demographics.
    - Operating profile signals (operating pattern, dining focus, meal periods, weekday/weekend split, peak day) -> `audienceHypotheses` and `toneGuardrails`.
    - Category mix + top menu item signals -> `contentPillars` and `proofOrientedAngles`.
+   - AI social settings block -> optional nuance only; never replace missing manual or analytics signals with invented claims.
    - If a signal is missing, do not invent it. Use only available fields and note the gap in the generated statements.
 5. Build the output deterministically:
    - `venueSnapshot`: fill `venueName`, `city`, `country`, `currency` from location profile only. Do not invent addresses or missing attributes.

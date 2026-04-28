@@ -92,6 +92,102 @@ def _fmt_category_mix(cm: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _fmt_manual_brief_hints(raw_loc: dict[str, Any]) -> str:
+    """Markdown for owner-provided quick profile (camelCase GraphQL keys)."""
+    mb = raw_loc.get("manualBriefInput")
+    if not isinstance(mb, dict):
+        return ""
+    qp = mb.get("quickProfile")
+    if not isinstance(qp, dict) or not qp:
+        return ""
+    lines: list[str] = [
+        "## Owner-provided brief hints (manual)",
+        "_Declared by the venue owner in settings — not inferred from sales data._",
+    ]
+    vcs = qp.get("venueConcepts")
+    if isinstance(vcs, list) and vcs:
+        lines.append(f"- **Venue types**: {', '.join(str(x) for x in vcs)}")
+    else:
+        legacy_v = qp.get("venueConcept")
+        if isinstance(legacy_v, str) and legacy_v.strip():
+            lines.append(f"- **Venue type**: {legacy_v.strip()}")
+
+    sg = qp.get("socialGoals")
+    if isinstance(sg, list) and sg:
+        lines.append(f"- **Social goals**: {', '.join(str(x) for x in sg)}")
+
+    gt = qp.get("guestTags")
+    if isinstance(gt, list) and gt:
+        lines.append(f"- **Guest context**: {', '.join(str(x) for x in gt)}")
+
+    lf = qp.get("locationFocus")
+    if isinstance(lf, list) and lf:
+        lines.append(f"- **Location focus (meal periods)**: {', '.join(str(x) for x in lf)}")
+
+    tps = qp.get("tonePresets")
+    if isinstance(tps, list) and tps:
+        lines.append(f"- **Tone presets**: {', '.join(str(x) for x in tps)}")
+    else:
+        legacy_t = qp.get("tonePreset")
+        if isinstance(legacy_t, str) and legacy_t.strip():
+            lines.append(f"- **Tone preset**: {legacy_t.strip()}")
+
+    vc_video = qp.get("videoComfort")
+    if isinstance(vc_video, bool):
+        lines.append(f"- **Comfortable with Reels / short video**: {'yes' if vc_video else 'no'}")
+
+    notes = qp.get("notes")
+    if isinstance(notes, str) and notes.strip():
+        lines.append(f"- **Notes**: {notes.strip()}")
+    if len(lines) <= 2:
+        return ""
+    return "\n".join(lines)
+
+
+def _fmt_ai_social_settings(data: dict[str, Any]) -> str:
+    """Markdown for AI-generated location_social_settings (may be empty)."""
+    raw = data.get("locationSocialSettings")
+    if not isinstance(raw, dict):
+        return ""
+    tone = raw.get("tone")
+    personality = raw.get("brandPersonality")
+    pillars = raw.get("contentPillars") or []
+    platforms = raw.get("platformFocus") or []
+    hashtags = raw.get("brandHashtags") or []
+    avoid = raw.get("avoidTopics") or []
+    audience = raw.get("targetAudience")
+    has_any = bool(
+        (isinstance(tone, str) and tone.strip())
+        or (isinstance(personality, str) and personality.strip())
+        or (isinstance(pillars, list) and len(pillars) > 0)
+        or (isinstance(platforms, list) and len(platforms) > 0)
+        or (isinstance(hashtags, list) and len(hashtags) > 0)
+        or (isinstance(avoid, list) and len(avoid) > 0)
+        or (isinstance(audience, str) and audience.strip())
+    )
+    if not has_any:
+        return ""
+    lines: list[str] = [
+        "## AI-generated location social settings",
+        "_Produced by automation — not direct owner input. Use as secondary context._",
+    ]
+    if isinstance(tone, str) and tone.strip():
+        lines.append(f"- **Tone**: {tone.strip()}")
+    if isinstance(personality, str) and personality.strip():
+        lines.append(f"- **Brand personality**: {personality.strip()}")
+    if isinstance(pillars, list) and pillars:
+        lines.append(f"- **Content pillars**: {', '.join(str(x) for x in pillars)}")
+    if isinstance(platforms, list) and platforms:
+        lines.append(f"- **Platform focus**: {', '.join(str(x) for x in platforms)}")
+    if isinstance(hashtags, list) and hashtags:
+        lines.append(f"- **Brand hashtags**: {', '.join(str(x) for x in hashtags)}")
+    if isinstance(avoid, list) and avoid:
+        lines.append(f"- **Avoid topics**: {', '.join(str(x) for x in avoid)}")
+    if isinstance(audience, str) and audience.strip():
+        lines.append(f"- **Target audience (AI)**: {audience.strip()}")
+    return "\n".join(lines)
+
+
 def _fmt_top_items(pmi: dict[str, Any]) -> str:
     items = pmi.get("items") or []
     if not items:
@@ -135,7 +231,7 @@ def make_get_location_profile_tool(
         loc_data = await graphql_post(
             client,
             LOCATION_QUERY,
-            {"id": str(location_id)},
+            {"id": str(location_id), "locationId": location_id},
             user_id,
         )
         raw_loc = loc_data.get("location")
@@ -163,6 +259,10 @@ def make_get_location_profile_tool(
         else:
             sections.append("_No profile fields set._")
 
+        manual_md = _fmt_manual_brief_hints(raw_loc)
+        if manual_md:
+            sections.append(manual_md)
+
         # 2. Operating signals from latest analytics run
         signals = await fetch_location_operating_signals(location_id, user_id, client=client)
 
@@ -171,6 +271,9 @@ def make_get_location_profile_tool(
             sections.append(
                 "\n_No analytics run found for this location — operating signals unavailable._"
             )
+            ai_social = _fmt_ai_social_settings(loc_data)
+            if ai_social:
+                sections.append(ai_social)
             return "\n\n".join(sections)
 
         pmi = signals.get("promotion_menu_items")
@@ -201,6 +304,10 @@ def make_get_location_profile_tool(
             if top_items_md:
                 sections.append("## Top menu items by volume")
                 sections.append(top_items_md)
+
+        ai_social = _fmt_ai_social_settings(loc_data)
+        if ai_social:
+            sections.append(ai_social)
 
         return "\n\n".join(sections)
 

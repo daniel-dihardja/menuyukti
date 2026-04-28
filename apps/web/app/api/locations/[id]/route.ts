@@ -6,7 +6,12 @@ import { ZodError } from 'zod'
 import { openingHoursWeekToMutationInput, updateLocationSchema } from '../schema'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { graphqlLocationsDataCacheTag } from '@/lib/graphql/cache-tags'
-import { UPDATE_LOCATION_MUTATION, type UpdateLocationData } from '@/lib/graphql/queries'
+import {
+  UPDATE_LOCATION_MANUAL_BRIEF_MUTATION,
+  UPDATE_LOCATION_MUTATION,
+  type UpdateLocationData,
+  type UpdateLocationManualBriefData,
+} from '@/lib/graphql/queries'
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -39,6 +44,17 @@ export async function PATCH(req: Request, context: RouteContext) {
       },
       userId,
     )
+
+    if (payload.quickProfile !== undefined) {
+      await graphqlQuery<UpdateLocationManualBriefData>(
+        UPDATE_LOCATION_MANUAL_BRIEF_MUTATION,
+        {
+          locationId: Number.parseInt(id, 10),
+          quickProfile: payload.quickProfile,
+        },
+        userId,
+      )
+    }
 
     revalidateTag(graphqlLocationsDataCacheTag(userId), 'max')
     return NextResponse.json(data.updateLocation, { status: 200 })

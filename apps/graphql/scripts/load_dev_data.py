@@ -13,6 +13,7 @@ from graphql.data_sources import (
     AnalyticsRun,
     ApiAdapterTool,
     Location,
+    LocationManualBriefInput,
     LocationOpeningHour,
     MenuItemCogs,
     Node,
@@ -30,6 +31,7 @@ from graphql.services.api_adapter_tool import (
     tool_key_from_name,
     validate_tool_url,
 )
+from graphql.services.manual_quick_profile import validate_and_normalize_quick_profile
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 DEFAULT_EXCEL = ROOT_DIR / "reports" / "Sales_Recapitulation_Detail_Report_Jan-Mar_2025.xlsx"
@@ -164,6 +166,23 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
         session.flush()
         loc_node.path = f"/{loc_node.id}"
         location.node_id = loc_node.id
+
+        # Sample owner manual brief hints (separate from AI location_social_settings) for local UI / agents.
+        session.add(
+            LocationManualBriefInput(
+                location_id=location.id,
+                quick_profile=validate_and_normalize_quick_profile(
+                    {
+                        "venueConcepts": ["restaurant"],
+                        "socialGoals": ["awareness"],
+                        "guestTags": ["families"],
+                        "locationFocus": ["lunch", "dinner"],
+                        "tonePresets": ["warm"],
+                        "videoComfort": True,
+                    }
+                ),
+            )
+        )
 
         session.commit()
         session.refresh(location)

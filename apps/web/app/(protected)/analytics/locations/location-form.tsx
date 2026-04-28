@@ -2,12 +2,34 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@workspace/ui/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@workspace/ui/components/collapsible'
 import { Input } from '@workspace/ui/components/input'
 import { Label } from '@workspace/ui/components/label'
 import { Switch } from '@workspace/ui/components/switch'
+import { Textarea } from '@workspace/ui/components/textarea'
+import { cn } from '@workspace/ui/lib/utils'
+
+import {
+  GUEST_TAG_IDS,
+  LOCATION_FOCUS_IDS,
+  SOCIAL_GOAL_IDS,
+  TONE_PRESET_IDS,
+  VENUE_CONCEPT_IDS,
+  briefHintsFromQuickProfile,
+  briefHintsHasAnySelection,
+  buildQuickProfilePayload,
+  defaultBriefHintsState,
+  toggleIdInList,
+  type BriefHintsState,
+} from '@/lib/location-quick-profile'
 
 export type Weekday =
   | 'monday'
@@ -39,6 +61,8 @@ type LocationFormProps = {
   mode: 'create' | 'edit'
   locationId?: string
   initialValues?: LocationFormValues
+  /** Server `manualBriefInput.quickProfile` when editing. */
+  initialManualQuickProfile?: Record<string, unknown> | null
 }
 
 const WEEKDAYS: Weekday[] = [
@@ -63,8 +87,14 @@ function defaultOpeningHours(): OpeningHourRow[] {
   }))
 }
 
-export function LocationForm({ mode, locationId, initialValues }: LocationFormProps) {
+export function LocationForm({
+  mode,
+  locationId,
+  initialValues,
+  initialManualQuickProfile,
+}: LocationFormProps) {
   const t = useTranslations('analytics.branches.form')
+  const tm = useTranslations('analytics.branches.form.manualBrief')
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -75,6 +105,12 @@ export function LocationForm({ mode, locationId, initialValues }: LocationFormPr
   const [currency, setCurrency] = useState(initialValues?.currency ?? '')
   const [openingHours, setOpeningHours] = useState<OpeningHourRow[]>(
     initialValues?.openingHours ?? defaultOpeningHours(),
+  )
+  const [hints, setHints] = useState<BriefHintsState>(() =>
+    briefHintsFromQuickProfile(initialManualQuickProfile ?? null),
+  )
+  const [briefOpen, setBriefOpen] = useState(() =>
+    briefHintsHasAnySelection(briefHintsFromQuickProfile(initialManualQuickProfile ?? null)),
   )
 
   const endpoint = useMemo(() => {
@@ -157,7 +193,7 @@ export function LocationForm({ mode, locationId, initialValues }: LocationFormPr
     setLoading(true)
 
     try {
-      const payload = {
+      const payloadBase = {
         name,
         street,
         city,
@@ -165,10 +201,15 @@ export function LocationForm({ mode, locationId, initialValues }: LocationFormPr
         currency,
         openingHours,
       }
+      const body =
+        mode === 'edit'
+          ? { ...payloadBase, quickProfile: buildQuickProfilePayload(hints) }
+          : payloadBase
+
       const res = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(body),
       })
 
       if (!res.ok) {
@@ -258,6 +299,189 @@ export function LocationForm({ mode, locationId, initialValues }: LocationFormPr
               />
             </div>
           </div>
+
+          {mode === 'edit' ? (
+            <Collapsible open={briefOpen} onOpenChange={setBriefOpen}>
+              <div className="rounded-lg border border-border/80 bg-muted/10">
+                <CollapsibleTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="flex h-auto w-full items-center justify-between gap-2 rounded-none px-4 py-3 text-left font-medium hover:bg-muted/40"
+                    disabled={loading}
+                  >
+                    <span>{tm('trigger')}</span>
+                    <ChevronDown
+                      className={cn(
+                        'size-4 shrink-0 text-muted-foreground transition-transform',
+                        briefOpen ? 'rotate-180' : '',
+                      )}
+                      aria-hidden
+                    />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="space-y-5 border-t border-border/60 px-4 pb-4 pt-3">
+                    <p className="text-sm text-muted-foreground">{tm('intro')}</p>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">{tm('venueLabel')}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {VENUE_CONCEPT_IDS.map((id) => (
+                          <Button
+                            key={id}
+                            type="button"
+                            size="sm"
+                            variant={hints.venueConcepts.includes(id) ? 'default' : 'outline'}
+                            disabled={loading}
+                            onClick={() =>
+                              setHints((h) => ({
+                                ...h,
+                                venueConcepts: toggleIdInList(h.venueConcepts, id),
+                              }))
+                            }
+                          >
+                            {tm(`venues.${id}`)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">{tm('goalLabel')}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {SOCIAL_GOAL_IDS.map((id) => (
+                          <Button
+                            key={id}
+                            type="button"
+                            size="sm"
+                            variant={hints.socialGoals.includes(id) ? 'default' : 'outline'}
+                            disabled={loading}
+                            onClick={() =>
+                              setHints((h) => ({
+                                ...h,
+                                socialGoals: toggleIdInList(h.socialGoals, id),
+                              }))
+                            }
+                          >
+                            {tm(`goals.${id}`)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">{tm('guestLabel')}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {GUEST_TAG_IDS.map((id) => (
+                          <Button
+                            key={id}
+                            type="button"
+                            size="sm"
+                            variant={hints.guestTags.includes(id) ? 'default' : 'outline'}
+                            disabled={loading}
+                            onClick={() =>
+                              setHints((h) => ({
+                                ...h,
+                                guestTags: toggleIdInList(h.guestTags, id),
+                              }))
+                            }
+                          >
+                            {tm(`guests.${id}`)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">{tm('focusLabel')}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {LOCATION_FOCUS_IDS.map((id) => (
+                          <Button
+                            key={id}
+                            type="button"
+                            size="sm"
+                            variant={hints.locationFocus.includes(id) ? 'default' : 'outline'}
+                            disabled={loading}
+                            onClick={() =>
+                              setHints((h) => ({
+                                ...h,
+                                locationFocus: toggleIdInList(h.locationFocus, id),
+                              }))
+                            }
+                          >
+                            {tm(`focus.${id}`)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">{tm('toneLabel')}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {TONE_PRESET_IDS.map((id) => (
+                          <Button
+                            key={id}
+                            type="button"
+                            size="sm"
+                            variant={hints.tonePresets.includes(id) ? 'default' : 'outline'}
+                            disabled={loading}
+                            onClick={() =>
+                              setHints((h) => ({
+                                ...h,
+                                tonePresets: toggleIdInList(h.tonePresets, id),
+                              }))
+                            }
+                          >
+                            {tm(`tones.${id}`)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/80 px-3 py-2">
+                      <Label htmlFor="video-comfort" className="cursor-pointer text-sm font-normal">
+                        {tm('videoLabel')}
+                      </Label>
+                      <Switch
+                        id="video-comfort"
+                        checked={hints.videoComfort}
+                        disabled={loading}
+                        onCheckedChange={(checked) =>
+                          setHints((h) => ({ ...h, videoComfort: Boolean(checked) }))
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="brief-notes">{tm('notesLabel')}</Label>
+                      <Textarea
+                        id="brief-notes"
+                        rows={2}
+                        maxLength={280}
+                        disabled={loading}
+                        placeholder={tm('notesPlaceholder')}
+                        value={hints.notes}
+                        onChange={(e) => setHints((h) => ({ ...h, notes: e.target.value }))}
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={loading}
+                      onClick={() => {
+                        setHints(defaultBriefHintsState())
+                      }}
+                    >
+                      {tm('resetHints')}
+                    </Button>
+                  </div>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
+          ) : null}
 
           <fieldset className="space-y-3 rounded-lg border p-4">
             <legend className="px-1 text-sm font-medium">{t('openingHoursTitle')}</legend>

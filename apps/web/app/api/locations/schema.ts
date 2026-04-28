@@ -102,6 +102,8 @@ export const updateLocationSchema = z.object({
   country: z.string().optional().default(''),
   currency: z.string().optional().default(''),
   openingHours: openingHoursWeekSchema,
+  /** Owner brief hints; omit to leave unchanged, `{}` clears stored profile. */
+  quickProfile: z.record(z.string(), z.unknown()).optional(),
 })
 
 export type UpdateLocationInput = z.infer<typeof updateLocationSchema>

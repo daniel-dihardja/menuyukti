@@ -53,8 +53,10 @@ export default async function Page({ params }: PageProps) {
     >
       <PageHeading title={location.name} description={t('detailDescription')} />
       <LocationForm
+        key={`${location.id}-${JSON.stringify(location.manualBriefInput?.quickProfile ?? {})}`}
         mode="edit"
         locationId={location.id}
+        initialManualQuickProfile={location.manualBriefInput?.quickProfile ?? null}
         initialValues={{
           name: location.name,
           street: location.street ?? '',

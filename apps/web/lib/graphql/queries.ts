@@ -65,6 +65,10 @@ export const LOCATION_QUERY = `
         openTime
         closeTime
       }
+      manualBriefInput {
+        locationId
+        quickProfile
+      }
     }
   }
 `
@@ -83,7 +87,27 @@ export type LocationData = {
       openTime: string
       closeTime: string
     }>
+    manualBriefInput: {
+      locationId: number
+      quickProfile: Record<string, unknown>
+    } | null
   } | null
+}
+
+export const UPDATE_LOCATION_MANUAL_BRIEF_MUTATION = `
+  mutation UpdateLocationManualBriefInput($locationId: Int!, $quickProfile: JSON!) {
+    updateLocationManualBriefInput(locationId: $locationId, quickProfile: $quickProfile) {
+      locationId
+      quickProfile
+    }
+  }
+`
+
+export type UpdateLocationManualBriefData = {
+  updateLocationManualBriefInput: {
+    locationId: number
+    quickProfile: Record<string, unknown>
+  }
 }
 
 export const MY_WORKSPACE_QUERY = `

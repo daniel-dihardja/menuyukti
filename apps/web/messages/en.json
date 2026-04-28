@@ -790,6 +790,59 @@
           "friday": "Friday",
           "saturday": "Saturday",
           "sunday": "Sunday"
+        },
+        "manualBrief": {
+          "trigger": "Optional: help AI tailor your venue",
+          "resetHints": "Clear all brief hints",
+          "intro": "A few taps help campaign and brand-brief steps match how you run the business. All optional.",
+          "venueLabel": "Venue types",
+          "goalLabel": "Social goals",
+          "guestLabel": "Who you mainly welcome",
+          "focusLabel": "Location focus (meal periods)",
+          "toneLabel": "Tone",
+          "videoLabel": "Comfortable posting Reels or short video",
+          "notesLabel": "Short note",
+          "notesPlaceholder": "Optional detail for the AI (max 280 characters)",
+          "venues": {
+            "cafe": "Cafe",
+            "bistro": "Bistro",
+            "restaurant": "Restaurant",
+            "fast_casual": "Fast casual",
+            "bar": "Bar / pub",
+            "bakery_cafe": "Bakery & cafe",
+            "fine_dining": "Fine dining",
+            "other": "Other"
+          },
+          "goals": {
+            "awareness": "Brand awareness",
+            "reservations": "Reservations",
+            "walk_ins": "Walk-ins",
+            "delivery": "Delivery / takeaway",
+            "events": "Events & private dining",
+            "community": "Community & regulars"
+          },
+          "guests": {
+            "office_lunch": "Office lunch",
+            "tourists": "Tourists",
+            "families": "Families",
+            "date_night": "Date night",
+            "nightlife": "Nightlife",
+            "neighborhood_locals": "Neighborhood locals",
+            "students": "Students"
+          },
+          "tones": {
+            "warm": "Warm & welcoming",
+            "professional": "Professional",
+            "playful": "Playful",
+            "minimal": "Minimal & calm",
+            "bold": "Bold"
+          },
+          "focus": {
+            "breakfast": "Breakfast",
+            "brunch": "Brunch",
+            "lunch": "Lunch",
+            "dinner": "Dinner"
+          }
         }
       }
     },

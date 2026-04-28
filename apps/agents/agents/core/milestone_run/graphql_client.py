@@ -38,7 +38,7 @@ async def fetch_api_adapter_tools_for_location(
     data = await graphql_post(
         client,
         LOCATION_QUERY,
-        {"id": str(location_id)},
+        {"id": str(location_id), "locationId": location_id},
         user_id,
     )
     raw = data.get("location")
@@ -136,7 +136,7 @@ async def fetch_public_holidays_for_milestone(
     data = await graphql_post(
         client,
         LOCATION_QUERY,
-        {"id": str(location_id)},
+        {"id": str(location_id), "locationId": location_id},
         user_id,
     )
     raw = data.get("location")

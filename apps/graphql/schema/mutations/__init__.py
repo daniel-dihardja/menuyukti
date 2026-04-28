@@ -15,6 +15,7 @@ from .replace_pass_criteria import ReplacePassCriteriaMutation
 from .update_api_adapter_tool import UpdateApiAdapterToolMutation
 from .update_image_ai_flow import UpdateImageAiFlowMutation
 from .update_location import UpdateLocationMutation
+from .update_location_manual_brief_input import UpdateLocationManualBriefInputMutation
 from .update_menu_item_cogs_bulk import UpdateMenuItemCogsBulkMutation
 from .update_node import UpdateNodeMutation
 from .upload_sales_report import UploadSalesReportMutation
@@ -37,6 +38,7 @@ __all__ = [
     "UpdateApiAdapterToolMutation",
     "UpdateImageAiFlowMutation",
     "UpdateLocationMutation",
+    "UpdateLocationManualBriefInputMutation",
     "UpdateNodeMutation",
     "UpdateMenuItemCogsBulkMutation",
     "UploadSalesReportMutation",
