@@ -31,7 +31,7 @@ type AnalyticsRunType {
 }
 
 """
-Workspace-owned HTTP tool definition for custom agent integrations (URL invoked at runtime).
+Workspace-owned tool definition for custom agent integrations (endpoint invoked at runtime).
 """
 type ApiAdapterToolType {
   id: ID!
@@ -52,6 +52,24 @@ type BestPostingWindowType {
   primaryMealPeriod: String
   peakRevenueMealPeriod: String
   peakHour: Int
+}
+
+type CampaignSchedulePlanType {
+  analyticsRunId: ID!
+  campaignStart: String!
+  campaignEnd: String!
+  timezone: String!
+  postsPerWeek: Int!
+  slots: [CampaignScheduleSlotType!]!
+  sourceSignalsSummary: String!
+}
+
+type CampaignScheduleSlotType {
+  dateTime: String!
+  postType: String!
+  promotedMenuItems: [String!]!
+  visualIdea: String!
+  captionIdea: String!
 }
 
 """Top revenue category from category mix."""
@@ -175,6 +193,7 @@ type LocationType {
   country: String
   currency: String
   nodeId: ID
+  workspaceId: ID
 }
 
 """Menu engineering fields surfaced for Instagram hero/avoid copy."""
@@ -399,6 +418,27 @@ type PeriodHeadlineType {
   revenueVsPreviousPct: Float
 }
 
+type PromotionBestPostingWindowType {
+  peakDay: String
+  peakHour: Int
+  primaryMealPeriod: String
+}
+
+type PromotionCandidatesSignalsType {
+  analyticsRunId: ID!
+  periodStart: Date
+  periodEnd: Date
+  itemsTotalCount: Int!
+  itemsTruncated: Boolean!
+  topPromote: [PromotionRankedCandidateType!]!
+  topAvoid: [PromotionRankedCandidateType!]!
+  puzzleOpportunityPool: PromotionPuzzleOpportunityPoolType!
+  rankedCandidates: [PromotionRankedCandidateType!]!
+  rankedCandidatesTotalCount: Int!
+  bestPostingWindow: PromotionBestPostingWindowType
+  bestPostingWindowSummary: String!
+}
+
 """
 Per-menu signals for choosing promotion content: sales totals, optional menu-engineering classification when COGS exist, and optional peak demand timing.
 """
@@ -440,6 +480,41 @@ type PromotionMenuItemsPayloadType {
   itemsTruncated: Boolean!
 }
 
+type PromotionPuzzleOpportunityPoolType {
+  puzzleItemsFound: Int!
+  threshold: Float!
+  selectedCount: Int!
+  selected: [PromotionPuzzleSelectedType!]!
+}
+
+type PromotionPuzzleSelectedType {
+  menu: String!
+  recommendation: String!
+  score: Float!
+  quantity: Int!
+  totalRevenue: Float!
+  menuCategory: String
+  menuCategoryDetail: String
+  peakDay: String
+  peakHour: Int
+  matrixCategory: String
+  matrixAction: String
+  contributionMarginPct: Float
+  signalReasons: [String!]!
+  puzzleOpportunityScore: Float!
+  whySelected: [String!]!
+  howToPromoteOnInstagram: [String!]!
+}
+
+type PromotionRankedCandidateType {
+  menu: String!
+  recommendation: String!
+  score: Float!
+  quantity: Int!
+  totalRevenue: Float!
+  signalReasons: [String!]!
+}
+
 type PublicHolidayType {
   id: String!
   date: String!
@@ -457,6 +532,11 @@ type Query {
   Custom API adapter tools for a workspace. Empty list if the user is not a member.
   """
   apiAdapterTools(workspaceId: ID!): [ApiAdapterToolType!]!
+
+  """
+  Schedule plan for a Scheduler milestone. Requires a prior Dates milestone with structured start/end date data in the same workflow.
+  """
+  campaignSchedulePlan(workflowId: ID!, milestoneId: ID!, locationId: Int!, analyticsRunId: ID = null): CampaignSchedulePlanType
   workflowExports(locationId: Int!): [WorkflowExportType!]!
 
   """
@@ -512,6 +592,11 @@ type Query {
   Return per-menu promotion signals for an analytics run: volume and revenue, optional BCG-style menu-engineering metrics when COGS allow, and peak hour/day from demand heatmaps. When locationId is set, the run must belong to that location (otherwise returns null).
   """
   promotionMenuItems(analyticsRunId: ID!, locationId: ID = null): PromotionMenuItemsPayloadType
+
+  """
+  Promotion-candidate signals composed from promotion menu items and Instagram signals. Returns ranked recommendations plus puzzle opportunity pool for campaign drafting.
+  """
+  promotionCandidatesSignals(analyticsRunId: ID!, locationId: ID = null): PromotionCandidatesSignalsType
   publicHolidays(country: String!, startDate: String!, endDate: String!): [PublicHolidayType!]!
   operatingProfile(locationId: ID!, analyticsRunId: ID!): OperatingProfileType
 
@@ -539,11 +624,6 @@ type Query {
   Social and brand-voice settings for a location. Returns empty lists and null strings when no row exists.
   """
   locationSocialSettings(locationId: Int!): LocationSocialSettingsType
-
-  """
-  Markdown body from the milestonedata child of the most recently updated milestone under the workflow whose milestone.data.dataTask matches ``data_task``. Returns null when none match or content is empty.
-  """
-  mostRecentMilestoneData(workflowId: ID!, dataTask: String!): String
 
   """
   Markdown sections (## title + body) for each milestone strictly before the given milestone in workflow display order, using each prior milestone's first milestonedata child body. Empty string when there are no prior milestones or no content.

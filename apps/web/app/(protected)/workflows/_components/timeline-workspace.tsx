@@ -6,7 +6,6 @@ export type {
   DatesMilestoneInput,
   DatesMilestoneInputEnvelope,
   DatesPublicHoliday,
-  MilestoneDataTask,
   MilestoneDataValue,
   MilestoneInput,
   MilestonePresetId,

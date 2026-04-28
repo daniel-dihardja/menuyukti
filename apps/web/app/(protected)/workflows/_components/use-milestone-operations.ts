@@ -19,7 +19,6 @@ import type { CampaignMilestoneAction } from './campaign-milestone-reducer'
 import { deriveMilestoneRailStatus, milestoneNodeToTimelineMilestone } from './milestone-map'
 import type {
   MilestoneDataValue,
-  MilestoneDataTask,
   MilestoneInput,
   MilestoneRunSkillMode,
   PassCriteriaRow,
@@ -48,14 +47,6 @@ function parseDataPreviewForPreset(
     return parsed.success ? parsed.data : undefined
   }
   return undefined
-}
-
-function milestoneDataTaskFromNodeData(data: unknown): MilestoneDataTask | undefined {
-  const parsed = milestoneDataSchema.safeParse(data)
-  if (!parsed.success || parsed.data.dataTask !== 'manual') {
-    return undefined
-  }
-  return 'manual'
 }
 
 export function useMilestoneOperations(
@@ -140,7 +131,6 @@ export function useMilestoneOperations(
 
         const patchBody: Record<string, unknown> = {
           name: fields.name,
-          dataTask: fields.dataTask,
           presetId: fields.presetId,
           milestoneData: fields.milestoneData,
         }
@@ -172,9 +162,6 @@ export function useMilestoneOperations(
         }
 
         const title = typeof patchJson?.name === 'string' ? patchJson.name : fields.name
-        const dataTask: MilestoneDataTask | undefined =
-          milestoneDataTaskFromNodeData(patchJson?.data ?? { dataTask: fields.dataTask }) ??
-          'manual'
 
         let passCriteria: PassCriteriaRow[] = []
         const criteriaDraft = fields.passCriteria
@@ -202,7 +189,6 @@ export function useMilestoneOperations(
           data: fields.milestoneData,
           presetId: fields.presetId,
           ...(fields.milestoneInput !== undefined ? { milestoneInput: fields.milestoneInput } : {}),
-          ...(dataTask !== undefined ? { dataTask } : {}),
           ...(skillFromPatch.success && skillFromPatch.data.milestoneRunSkillMode === 'fixed'
             ? { milestoneRunSkillMode: 'fixed' as const }
             : skillFromPatch.success && skillFromPatch.data.milestoneRunSkillMode === 'auto'
@@ -804,7 +790,7 @@ export function useMilestoneOperations(
     [workflowId, dispatch, t],
   )
 
-  /** Load persisted goal, pass criteria, milestonedata + dataTask from the API (navigation, chat tools). */
+  /** Load persisted goal, pass criteria, and milestonedata from the API (navigation, chat tools). */
   const handleHydrateMilestoneData = useCallback(
     async (milestoneId: string) => {
       try {
@@ -816,7 +802,6 @@ export function useMilestoneOperations(
           milestoneData?: MilestoneDataValue | null
           milestoneInput?: MilestoneInput | null
           presetId?: TimelineMilestone['presetId'] | null
-          dataTask?: MilestoneDataTask | null
           goal?: string
           passCriteria?: PassCriteriaRow[]
           milestoneRunSkillMode?: MilestoneRunSkillMode
@@ -848,9 +833,6 @@ export function useMilestoneOperations(
                 goal: goalText.trim() ? goalText : undefined,
                 passCriteria,
                 status: deriveMilestoneRailStatus(passCriteria, m.resultMarkdown),
-              }
-              if (body.dataTask === 'manual') {
-                next.dataTask = 'manual'
               }
               if (body.milestoneRunSkillMode === 'fixed') {
                 next.milestoneRunSkillMode = 'fixed'

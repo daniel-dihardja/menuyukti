@@ -65,6 +65,8 @@ The seeded `Location` row gets `clerk_user_id` from, in order: **`USER_ID` on th
 
 The same run seeds one **workspace API adapter tool** (API proxy) on the dev workspace: **Menu Promotions Mock API** (`tool_key` `menu_promotions_mock_api`), URL `http://127.0.0.1:3090/api/mock` by default, aligned with the `custom-api-tool-mock-demo` workflow preset and `apps/mock-server`. Override the URL with **`DEV_MOCK_PROMOTIONS_URL`** if your mock server listens elsewhere.
 
+It also seeds a sample **`location_manual_brief_input`** row (owner click-first brief hints) on the dev location so the location edit UI and `get_location_profile` have realistic manual context without extra clicks.
+
 ## Orders fact schema (next step)
 
 The normalized upload mutation now feeds a dedicated Orders fact table (`apps/graphql/data_sources/database.py::OrderFact`). Each record captures the `POSTransactionLineItem` contract, plus a `pos_system` column so you can trace the ingestion source. The column definitions are:

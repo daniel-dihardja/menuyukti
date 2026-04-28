@@ -6,13 +6,15 @@ import argparse
 import json
 import os
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, datetime, time
 from pathlib import Path
 
 from graphql.data_sources import (
     AnalyticsRun,
     ApiAdapterTool,
     Location,
+    LocationManualBriefInput,
+    LocationOpeningHour,
     MenuItemCogs,
     Node,
     OrderFact,
@@ -29,6 +31,7 @@ from graphql.services.api_adapter_tool import (
     tool_key_from_name,
     validate_tool_url,
 )
+from graphql.services.manual_quick_profile import validate_and_normalize_quick_profile
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 DEFAULT_EXCEL = ROOT_DIR / "reports" / "Sales_Recapitulation_Detail_Report_Jan-Mar_2025.xlsx"
@@ -121,7 +124,7 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
         session.flush()
 
         location = Location(
-            name="Dev (Jan-Mar 2025)",
+            name="SNABB",
             city="Jakarta",
             country="Indonesia",
             currency="IDR",
@@ -130,6 +133,17 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
         )
         session.add(location)
         session.flush()
+
+        # Mon–Fri 08:00–18:00; weekend rows omitted (UI treats missing days as closed).
+        for day in ("monday", "tuesday", "wednesday", "thursday", "friday"):
+            session.add(
+                LocationOpeningHour(
+                    location_id=location.id,
+                    day_of_week=day,
+                    open_time=time(hour=8, minute=0),
+                    close_time=time(hour=18, minute=0),
+                )
+            )
 
         loc_node = Node(
             parent_id=None,
@@ -144,6 +158,23 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
         session.flush()
         loc_node.path = f"/{loc_node.id}"
         location.node_id = loc_node.id
+
+        # Sample owner manual brief hints (separate from AI location_social_settings) for local UI / agents.
+        session.add(
+            LocationManualBriefInput(
+                location_id=location.id,
+                quick_profile=validate_and_normalize_quick_profile(
+                    {
+                        "venueConcepts": ["cafe", "bistro"],
+                        "socialGoals": ["awareness"],
+                        "guestTags": ["families"],
+                        "locationFocus": ["breakfast", "lunch"],
+                        "tonePresets": ["warm"],
+                        "videoComfort": True,
+                    }
+                ),
+            )
+        )
 
         session.commit()
         session.refresh(location)

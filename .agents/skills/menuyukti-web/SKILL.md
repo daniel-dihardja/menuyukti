@@ -2,7 +2,7 @@
 name: menuyukti-web
 description: >-
   Next.js web app (apps/web): GraphQL data fetching, Clerk auth, next-intl, workflow/milestone UI including
-  Data tab Prepare and dataTask enums, API routes and Zod schemas. Use when changing milestone cards,
+  Data tab and milestone run settings, API routes and Zod schemas. Use when changing milestone cards,
   BFF routes, workflow timeline types, or web-side GraphQL usage. For performance, caching, and composition
   refactors, also use nextjs-performance, next-cache-components, and vercel-composition-patterns (see
   Companion skills).
@@ -50,7 +50,7 @@ Commands: [AGENTS.md](../../../AGENTS.md) § Web.
 
 ## Milestone **Data** tab and run
 
-Milestone **run** uses LangGraph + a structured skill selector over [`milestone_run/skills`](../../../apps/agents/agents/core/milestone_run/skills/) ([`menuyukti-agents`](../menuyukti-agents/SKILL.md)). The web app stores optional **`dataTask: 'manual'`** on milestone node JSON for manual Data-tab entry; the run BFF calls **`POST .../run`** with `location_id` and `workflow_id` only.
+Milestone **run** uses LangGraph + a structured skill selector over [`milestone_run/skills`](../../../apps/agents/agents/core/milestone_run/skills/) ([`menuyukti-agents`](../menuyukti-agents/SKILL.md)). Milestone Data tab content lives on **`milestonedata`** child nodes; the run BFF calls **`POST .../run`** with `location_id` and `workflow_id` only.
 
 ### Checklist: new milestone-run skill (agents + UI copy)
 

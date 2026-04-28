@@ -739,6 +739,7 @@
       "title": "Location List",
       "description": "Manage your locations and configure location-level settings before uploading sales reports.",
       "createDescription": "Create a new location to organize analytics, fixed costs, and sales reports by location.",
+      "detailDescription": "Update location information and opening hours.",
       "table": {
         "index": "#",
         "branchName": "Location Name",
@@ -748,7 +749,102 @@
         "delete": "Delete",
         "empty": "No locations available yet."
       },
-      "create": "Create New Location"
+      "create": "Create New Location",
+      "form": {
+        "createTitle": "Create Location",
+        "editTitle": "Edit Location",
+        "nameLabel": "Location name",
+        "namePlaceholder": "Berlin Mitte",
+        "streetLabel": "Street address",
+        "streetPlaceholder": "Rosenthaler Str. 1",
+        "cityLabel": "City",
+        "cityPlaceholder": "Berlin",
+        "countryLabel": "Country",
+        "countryPlaceholder": "Germany",
+        "currencyLabel": "Currency",
+        "currencyPlaceholder": "EUR",
+        "openingHoursTitle": "Opening hours",
+        "openingHoursDescription": "Mark days as closed, or set open and close times only on days you serve guests. You can use a preset for common patterns.",
+        "openingHoursPresetsAria": "Quick presets for opening hours",
+        "presetWeekdays": "Mon–Fri, 9:00–22:00 (weekends closed)",
+        "presetAllClosed": "Mark every day closed",
+        "dayClosed": "Closed",
+        "dayOpen": "Open",
+        "opensAt": "Opens",
+        "closesAt": "Closes",
+        "openDaySwitchAria": "Open on {day}",
+        "createAction": "Create Location",
+        "saveAction": "Save Changes",
+        "creating": "Creating...",
+        "saving": "Saving...",
+        "errors": {
+          "saveFailed": "Failed to save location.",
+          "openingHoursIncomplete": "On {day}, add both open and close times or mark the day closed.",
+          "openingHoursOrder": "On {day}, close time must be after open time."
+        },
+        "weekdays": {
+          "monday": "Monday",
+          "tuesday": "Tuesday",
+          "wednesday": "Wednesday",
+          "thursday": "Thursday",
+          "friday": "Friday",
+          "saturday": "Saturday",
+          "sunday": "Sunday"
+        },
+        "manualBrief": {
+          "trigger": "Optional: help AI tailor your venue",
+          "resetHints": "Clear all brief hints",
+          "intro": "A few taps help campaign and brand-brief steps match how you run the business. All optional.",
+          "venueLabel": "Venue types",
+          "goalLabel": "Social goals",
+          "guestLabel": "Who you mainly welcome",
+          "focusLabel": "Location focus (meal periods)",
+          "toneLabel": "Tone",
+          "videoLabel": "Comfortable posting Reels or short video",
+          "notesLabel": "Short note",
+          "notesPlaceholder": "Optional detail for the AI (max 280 characters)",
+          "venues": {
+            "cafe": "Cafe",
+            "bistro": "Bistro",
+            "restaurant": "Restaurant",
+            "fast_casual": "Fast casual",
+            "bar": "Bar / pub",
+            "bakery_cafe": "Bakery & cafe",
+            "fine_dining": "Fine dining",
+            "other": "Other"
+          },
+          "goals": {
+            "awareness": "Brand awareness",
+            "reservations": "Reservations",
+            "walk_ins": "Walk-ins",
+            "delivery": "Delivery / takeaway",
+            "events": "Events & private dining",
+            "community": "Community & regulars"
+          },
+          "guests": {
+            "office_lunch": "Office lunch",
+            "tourists": "Tourists",
+            "families": "Families",
+            "date_night": "Date night",
+            "nightlife": "Nightlife",
+            "neighborhood_locals": "Neighborhood locals",
+            "students": "Students"
+          },
+          "tones": {
+            "warm": "Warm & welcoming",
+            "professional": "Professional",
+            "playful": "Playful",
+            "minimal": "Minimal & calm",
+            "bold": "Bold"
+          },
+          "focus": {
+            "breakfast": "Breakfast",
+            "brunch": "Brunch",
+            "lunch": "Lunch",
+            "dinner": "Dinner"
+          }
+        }
+      }
     },
     "sales": {
       "title": "Sales Reports",
@@ -1068,14 +1164,6 @@
         "milestonePlayAriaLabel": "Run milestone",
         "milestoneRunUserMessage": "Run this milestone now.",
         "milestoneRunError": "Could not run milestone evaluation. Please try again.",
-        "milestoneDataTaskLabel": "Data source",
-        "milestoneDataTaskManual": "Manual entry",
-        "milestoneDataTaskLocationProfile": "Generate location profile",
-        "milestoneDataTaskInstagramCampaignSchedule": "Instagram campaign schedule",
-        "milestoneDataTaskRestaurantBrandBrief": "Brand brief",
-        "milestoneDataTaskSocialCampaignCalendar": "Social campaign calendar (4 weeks)",
-        "milestoneDataTaskSocialCaptionBatch": "Social caption batch",
-        "milestoneDataTaskVisualCreativeBrief": "Visual creative brief",
         "milestoneDataDescriptionLocationProfile": "Uses your latest analytics run and operating profile metrics. Generate to fill milestone data, then edit the Markdown in the Preview panel if needed. Adjust the goal and criteria as needed before you run evaluation.",
         "milestoneDataDescriptionInstagramCampaignSchedule": "Uses your latest analytics run, Instagram signals, promotion menu items, category mix, and revenue trends. Generate to fill milestone data, then edit the Markdown in the Preview panel if needed.",
         "milestoneDataDescriptionRestaurantBrandBrief": "Uses operating profile, category mix, and full menu catalog from your latest sales upload. Generate a brand brief for downstream campaign milestones.",

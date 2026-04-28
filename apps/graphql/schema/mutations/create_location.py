@@ -64,4 +64,6 @@ class CreateLocationMutation:
                 country=loc.country,
                 currency=loc.currency,
                 node_id=str(loc.node_id) if loc.node_id is not None else None,
+                workspace_id=str(loc.workspace_id) if loc.workspace_id is not None else None,
+                opening_hours=[],
             )

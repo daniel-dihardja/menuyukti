@@ -8,14 +8,12 @@ dependencies = [
   "url-safety",
   "graphql",
   "agents-app",
-  "agent-skills",
 ]
 
 [tool.uv.workspace]
 members = [
   "packages/menuyukti",
   "packages/url-safety",
-  "packages/agent-skills",
   "apps/graphql",
   "apps/agents",
 ]
@@ -25,7 +23,6 @@ menuyukti = { workspace = true }
 url-safety = { workspace = true }
 graphql = { workspace = true }
 agents-app = { workspace = true }
-agent-skills = { workspace = true }
 
 [dependency-groups]
 dev = [

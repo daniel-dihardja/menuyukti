@@ -8,6 +8,8 @@ __all__ = [
     "Workspace",
     "WorkspaceMembership",
     "Location",
+    "LocationOpeningHour",
+    "LocationManualBriefInput",
     "LocationSocialSettings",
     "AnalyticsRun",
     "OrderFact",

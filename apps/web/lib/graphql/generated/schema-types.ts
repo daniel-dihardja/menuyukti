@@ -56,7 +56,7 @@ export type AnalyticsRunType = {
   posSystem: Scalars['String']['output']
 }
 
-/** Workspace-owned HTTP tool definition for custom agent integrations (URL invoked at runtime). */
+/** Workspace-owned tool definition for custom agent integrations (endpoint invoked at runtime). */
 export type ApiAdapterToolType = {
   __typename?: 'ApiAdapterToolType'
   createdAt: Scalars['DateTime']['output']
@@ -78,6 +78,26 @@ export type BestPostingWindowType = {
   peakRevenueDay?: Maybe<Scalars['String']['output']>
   peakRevenueMealPeriod?: Maybe<Scalars['String']['output']>
   primaryMealPeriod?: Maybe<Scalars['String']['output']>
+}
+
+export type CampaignSchedulePlanType = {
+  __typename?: 'CampaignSchedulePlanType'
+  analyticsRunId: Scalars['ID']['output']
+  campaignEnd: Scalars['String']['output']
+  campaignStart: Scalars['String']['output']
+  postsPerWeek: Scalars['Int']['output']
+  slots: Array<CampaignScheduleSlotType>
+  sourceSignalsSummary: Scalars['String']['output']
+  timezone: Scalars['String']['output']
+}
+
+export type CampaignScheduleSlotType = {
+  __typename?: 'CampaignScheduleSlotType'
+  captionIdea: Scalars['String']['output']
+  dateTime: Scalars['String']['output']
+  postType: Scalars['String']['output']
+  promotedMenuItems: Array<Scalars['String']['output']>
+  visualIdea: Scalars['String']['output']
 }
 
 /** Top revenue category from category mix. */
@@ -195,6 +215,7 @@ export type LocationType = {
   name: Scalars['String']['output']
   nodeId?: Maybe<Scalars['ID']['output']>
   street?: Maybe<Scalars['String']['output']>
+  workspaceId?: Maybe<Scalars['ID']['output']>
 }
 
 /** Menu engineering fields surfaced for Instagram hero/avoid copy. */
@@ -570,6 +591,29 @@ export type PeriodHeadlineType = {
   totalRevenue: Scalars['Float']['output']
 }
 
+export type PromotionBestPostingWindowType = {
+  __typename?: 'PromotionBestPostingWindowType'
+  peakDay?: Maybe<Scalars['String']['output']>
+  peakHour?: Maybe<Scalars['Int']['output']>
+  primaryMealPeriod?: Maybe<Scalars['String']['output']>
+}
+
+export type PromotionCandidatesSignalsType = {
+  __typename?: 'PromotionCandidatesSignalsType'
+  analyticsRunId: Scalars['ID']['output']
+  bestPostingWindow?: Maybe<PromotionBestPostingWindowType>
+  bestPostingWindowSummary: Scalars['String']['output']
+  itemsTotalCount: Scalars['Int']['output']
+  itemsTruncated: Scalars['Boolean']['output']
+  periodEnd?: Maybe<Scalars['Date']['output']>
+  periodStart?: Maybe<Scalars['Date']['output']>
+  puzzleOpportunityPool: PromotionPuzzleOpportunityPoolType
+  rankedCandidates: Array<PromotionRankedCandidateType>
+  rankedCandidatesTotalCount: Scalars['Int']['output']
+  topAvoid: Array<PromotionRankedCandidateType>
+  topPromote: Array<PromotionRankedCandidateType>
+}
+
 /** Per-menu signals for choosing promotion content: sales totals, optional menu-engineering classification when COGS exist, and optional peak demand timing. */
 export type PromotionMenuItemType = {
   __typename?: 'PromotionMenuItemType'
@@ -595,10 +639,50 @@ export type PromotionMenuItemsPayloadType = {
   __typename?: 'PromotionMenuItemsPayloadType'
   analyticsRunId: Scalars['ID']['output']
   items: Array<PromotionMenuItemType>
+  /** Menus evaluated before applying the promotion list cap (same as pre-cap row count). */
   itemsTotalCount: Scalars['Int']['output']
+  /** True when more menus existed than returned in items (see cap in API docs). */
   itemsTruncated: Scalars['Boolean']['output']
   periodEnd?: Maybe<Scalars['Date']['output']>
   periodStart?: Maybe<Scalars['Date']['output']>
+}
+
+export type PromotionPuzzleOpportunityPoolType = {
+  __typename?: 'PromotionPuzzleOpportunityPoolType'
+  puzzleItemsFound: Scalars['Int']['output']
+  selected: Array<PromotionPuzzleSelectedType>
+  selectedCount: Scalars['Int']['output']
+  threshold: Scalars['Float']['output']
+}
+
+export type PromotionPuzzleSelectedType = {
+  __typename?: 'PromotionPuzzleSelectedType'
+  contributionMarginPct?: Maybe<Scalars['Float']['output']>
+  howToPromoteOnInstagram: Array<Scalars['String']['output']>
+  matrixAction?: Maybe<Scalars['String']['output']>
+  matrixCategory?: Maybe<Scalars['String']['output']>
+  menu: Scalars['String']['output']
+  menuCategory?: Maybe<Scalars['String']['output']>
+  menuCategoryDetail?: Maybe<Scalars['String']['output']>
+  peakDay?: Maybe<Scalars['String']['output']>
+  peakHour?: Maybe<Scalars['Int']['output']>
+  puzzleOpportunityScore: Scalars['Float']['output']
+  quantity: Scalars['Int']['output']
+  recommendation: Scalars['String']['output']
+  score: Scalars['Float']['output']
+  signalReasons: Array<Scalars['String']['output']>
+  totalRevenue: Scalars['Float']['output']
+  whySelected: Array<Scalars['String']['output']>
+}
+
+export type PromotionRankedCandidateType = {
+  __typename?: 'PromotionRankedCandidateType'
+  menu: Scalars['String']['output']
+  quantity: Scalars['Int']['output']
+  recommendation: Scalars['String']['output']
+  score: Scalars['Float']['output']
+  signalReasons: Array<Scalars['String']['output']>
+  totalRevenue: Scalars['Float']['output']
 }
 
 export type PublicHolidayType = {
@@ -620,6 +704,8 @@ export type Query = {
   analyticsRuns: Array<AnalyticsRunListItemType>
   /** Custom API adapter tools for a workspace. Empty list if the user is not a member. */
   apiAdapterTools: Array<ApiAdapterToolType>
+  /** Schedule plan for a Scheduler milestone. Requires a prior Dates milestone with structured start/end date data in the same workflow. */
+  campaignSchedulePlan?: Maybe<CampaignSchedulePlanType>
   /** Revenue and quantity share per menu category for an analytics run. Returns null when the run has no order lines. */
   categoryMix?: Maybe<CategoryMixPayloadType>
   imageAiFlow?: Maybe<ImageAiFlowType>
@@ -638,8 +724,6 @@ export type Query = {
   menuHeatmaps: Array<MenuHeatmapType>
   /** Distinct menu items from the latest analytics run for a location: aggregated from order lines (category, avg unit price). Returns null when there is no run or no order data. */
   menuItemsCatalog?: Maybe<MenuCatalogPayloadType>
-  /** Markdown body from the milestonedata child of the most recently updated milestone under the workflow whose milestone.data.dataTask matches ``data_task``. Returns null when none match or content is empty. */
-  mostRecentMilestoneData?: Maybe<Scalars['String']['output']>
   myWorkspace?: Maybe<WorkspaceType>
   /** Fetch a single node by id if the caller owns its location. */
   node?: Maybe<NodeType>
@@ -650,6 +734,8 @@ export type Query = {
   orderMetrics?: Maybe<AnalyticsRunOrderMetricsType>
   /** Markdown sections (## title + body) for each milestone strictly before the given milestone in workflow display order, using each prior milestone's first milestonedata child body. Empty string when there are no prior milestones or no content. */
   priorMilestonesMilestoneData: Scalars['String']['output']
+  /** Promotion-candidate signals composed from promotion menu items and Instagram signals. Returns ranked recommendations plus puzzle opportunity pool for campaign drafting. */
+  promotionCandidatesSignals?: Maybe<PromotionCandidatesSignalsType>
   /** Return per-menu promotion signals for an analytics run: volume and revenue, optional BCG-style menu-engineering metrics when COGS allow, and peak hour/day from demand heatmaps. When locationId is set, the run must belong to that location (otherwise returns null). */
   promotionMenuItems?: Maybe<PromotionMenuItemsPayloadType>
   publicHolidays: Array<PublicHolidayType>
@@ -677,6 +763,14 @@ export type QueryAnalyticsRunsArgs = {
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryApiAdapterToolsArgs = {
   workspaceId: Scalars['ID']['input']
+}
+
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
+export type QueryCampaignSchedulePlanArgs = {
+  analyticsRunId?: InputMaybe<Scalars['ID']['input']>
+  locationId: Scalars['Int']['input']
+  milestoneId: Scalars['ID']['input']
+  workflowId: Scalars['ID']['input']
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
@@ -730,12 +824,6 @@ export type QueryMenuItemsCatalogArgs = {
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
-export type QueryMostRecentMilestoneDataArgs = {
-  dataTask: Scalars['String']['input']
-  workflowId: Scalars['ID']['input']
-}
-
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryNodeArgs = {
   id: Scalars['ID']['input']
 }
@@ -765,6 +853,12 @@ export type QueryPriorMilestonesMilestoneDataArgs = {
   locationId: Scalars['Int']['input']
   milestoneId: Scalars['ID']['input']
   workflowId: Scalars['ID']['input']
+}
+
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
+export type QueryPromotionCandidatesSignalsArgs = {
+  analyticsRunId: Scalars['ID']['input']
+  locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */

@@ -34,6 +34,7 @@ export const routes = {
   analytics: {
     branches: '/analytics/locations',
     branchesCreate: '/analytics/locations/create',
+    branchesDetail: (id: string | number) => `/analytics/locations/${id}`,
     sales: '/analytics/sales',
 
     matrix: (analyticsId: string | number) => `/analytics/${analyticsId}/matrix`,

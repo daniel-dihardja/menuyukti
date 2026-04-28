@@ -58,7 +58,17 @@ export const LOCATION_QUERY = `
       street
       city
       country
+      currency
       nodeId
+      openingHours {
+        dayOfWeek
+        openTime
+        closeTime
+      }
+      manualBriefInput {
+        locationId
+        quickProfile
+      }
     }
   }
 `
@@ -70,8 +80,34 @@ export type LocationData = {
     street: string | null
     city: string | null
     country: string | null
+    currency: string | null
     nodeId: string | null
+    openingHours: Array<{
+      dayOfWeek: string
+      openTime: string
+      closeTime: string
+    }>
+    manualBriefInput: {
+      locationId: number
+      quickProfile: Record<string, unknown>
+    } | null
   } | null
+}
+
+export const UPDATE_LOCATION_MANUAL_BRIEF_MUTATION = `
+  mutation UpdateLocationManualBriefInput($locationId: Int!, $quickProfile: JSON!) {
+    updateLocationManualBriefInput(locationId: $locationId, quickProfile: $quickProfile) {
+      locationId
+      quickProfile
+    }
+  }
+`
+
+export type UpdateLocationManualBriefData = {
+  updateLocationManualBriefInput: {
+    locationId: number
+    quickProfile: Record<string, unknown>
+  }
 }
 
 export const MY_WORKSPACE_QUERY = `
@@ -115,8 +151,22 @@ export type CreateWorkspaceData = {
 }
 
 export const CREATE_LOCATION_MUTATION = `
-  mutation CreateLocation($workspaceId: ID!, $name: String!) {
-    createLocation(workspaceId: $workspaceId, name: $name) {
+  mutation CreateLocation(
+    $workspaceId: ID!
+    $name: String!
+    $street: String
+    $city: String
+    $country: String
+    $currency: String
+  ) {
+    createLocation(
+      workspaceId: $workspaceId
+      name: $name
+      street: $street
+      city: $city
+      country: $country
+      currency: $currency
+    ) {
       id
       name
       nodeId
@@ -126,6 +176,58 @@ export const CREATE_LOCATION_MUTATION = `
 
 export type CreateLocationData = {
   createLocation: { id: string; name: string; nodeId: string | null }
+}
+
+export const UPDATE_LOCATION_MUTATION = `
+  mutation UpdateLocation(
+    $id: ID!
+    $name: String
+    $street: String
+    $city: String
+    $country: String
+    $currency: String
+    $openingHours: [OpeningHourInput!]
+  ) {
+    updateLocation(
+      id: $id
+      name: $name
+      street: $street
+      city: $city
+      country: $country
+      currency: $currency
+      openingHours: $openingHours
+    ) {
+      id
+      name
+      street
+      city
+      country
+      currency
+      nodeId
+      openingHours {
+        dayOfWeek
+        openTime
+        closeTime
+      }
+    }
+  }
+`
+
+export type UpdateLocationData = {
+  updateLocation: {
+    id: string
+    name: string
+    street: string | null
+    city: string | null
+    country: string | null
+    currency: string | null
+    nodeId: string | null
+    openingHours: Array<{
+      dayOfWeek: string
+      openTime: string
+      closeTime: string
+    }>
+  }
 }
 
 export const CREATE_NODE_MUTATION = `

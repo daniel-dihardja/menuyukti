@@ -9,10 +9,13 @@ import {
   CREATE_LOCATION_MUTATION,
   CREATE_WORKSPACE_MUTATION,
   MY_WORKSPACE_QUERY,
+  UPDATE_LOCATION_MUTATION,
   type CreateLocationData,
   type CreateWorkspaceData,
   type MyWorkspaceData,
+  type UpdateLocationData,
 } from '@/lib/graphql/queries'
+import { openingHoursWeekToMutationInput } from './schema'
 
 export async function POST(req: Request) {
   try {
@@ -23,7 +26,7 @@ export async function POST(req: Request) {
     }
 
     const json = await req.json()
-    const { name } = createLocationSchema.parse(json)
+    const { name, street, city, country, currency, openingHours } = createLocationSchema.parse(json)
 
     let workspaceId: string | undefined
     const wsData = await graphqlQuery<MyWorkspaceData>(MY_WORKSPACE_QUERY, {}, userId)
@@ -39,13 +42,39 @@ export async function POST(req: Request) {
 
     const data = await graphqlQuery<CreateLocationData>(
       CREATE_LOCATION_MUTATION,
-      { workspaceId, name },
+      {
+        workspaceId,
+        name,
+        street: street || null,
+        city: city || null,
+        country: country || null,
+        currency: currency || null,
+      },
       userId,
     )
 
     const location = data.createLocation
     if (!location) {
       return NextResponse.json({ message: 'Failed to create location' }, { status: 500 })
+    }
+
+    if (openingHours) {
+      const hoursPayload = openingHoursWeekToMutationInput(openingHours)
+      if (hoursPayload.length > 0) {
+        await graphqlQuery<UpdateLocationData>(
+          UPDATE_LOCATION_MUTATION,
+          {
+            id: location.id,
+            name,
+            street: street || null,
+            city: city || null,
+            country: country || null,
+            currency: currency || null,
+            openingHours: hoursPayload,
+          },
+          userId,
+        )
+      }
     }
 
     revalidateTag(graphqlLocationsDataCacheTag(userId), 'max')

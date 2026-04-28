@@ -194,8 +194,6 @@ export const milestoneDataSchema = z
      * Legacy: goal text was stored on the milestone. New writes use a child node (`nodeType` `goal`).
      */
     goal: z.string().optional(),
-    /** Legacy values may exist in DB; new writes use `manual` only (see web PATCH schema). */
-    dataTask: z.string().optional(),
     /**
      * Milestone agent run: `auto` uses LLM skill selection; `fixed` uses `milestoneRunSkillIds` (max 2).
      * Omitted defaults to auto in agents.

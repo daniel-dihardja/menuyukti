@@ -17,6 +17,8 @@ from graphql.schema.mutations import (
     ReplacePassCriteriaMutation,
     UpdateApiAdapterToolMutation,
     UpdateImageAiFlowMutation,
+    UpdateLocationManualBriefInputMutation,
+    UpdateLocationMutation,
     UpdateMenuItemCogsBulkMutation,
     UpdateNodeMutation,
     UploadSalesReportMutation,
@@ -49,5 +51,7 @@ class Mutation(
     DeleteApiAdapterToolMutation,
     DeleteImageAiFlowMutation,
     UpdateApiAdapterToolMutation,
+    UpdateLocationMutation,
+    UpdateLocationManualBriefInputMutation,
 ):
     pass
