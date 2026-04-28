@@ -19,6 +19,20 @@ def detect_pos_from_excel_bytes(data: bytes) -> Optional[str]:
     ws = wb.worksheets[0]
     value = ws["A1"].value
 
+    # QUINO TransactionDetailReport.xlsx uses a fixed first-row header:
+    # Name | Qty | Amount, followed by invoice blocks starting with INV-...
+    if (
+        isinstance(ws["A1"].value, str)
+        and isinstance(ws["B1"].value, str)
+        and isinstance(ws["C1"].value, str)
+        and ws["A1"].value.strip().lower() == "name"
+        and ws["B1"].value.strip().lower() == "qty"
+        and ws["C1"].value.strip().lower() == "amount"
+        and isinstance(ws["A2"].value, str)
+        and ws["A2"].value.strip().upper().startswith("INV-")
+    ):
+        return "quino"
+
     if not isinstance(value, str):
         return None
 

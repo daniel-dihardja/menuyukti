@@ -5,6 +5,7 @@ from typing import Any
 
 import pandas as pd
 from menuyukti.core.analytics.esb import normalize_esb_excel
+from menuyukti.core.analytics.quino import normalize_quino_excel
 from menuyukti.core.analytics.pos_detector import detect_pos_from_excel_bytes
 from menuyukti.core.models.pos_mapping import get_config
 from menuyukti.core.models.pos_transaction import POSTransactionLineItem
@@ -15,6 +16,7 @@ from graphql.data_sources import OrderFact
 
 SUPPORTED_NORMALIZERS = {
     "esb": normalize_esb_excel,
+    "quino": normalize_quino_excel,
 }
 
 
