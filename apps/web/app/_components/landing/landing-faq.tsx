@@ -16,7 +16,10 @@ export function LandingFaq({ title, items }: LandingFaqProps) {
       aria-labelledby="faq-heading"
     >
       <div className="mx-auto max-w-3xl px-6">
-        <h2 id="faq-heading" className="text-balance text-center text-3xl font-bold md:text-4xl">
+        <h2
+          id="faq-heading"
+          className="text-balance text-center text-3xl font-bold leading-tight md:text-4xl md:leading-tight"
+        >
           {title}
         </h2>
         <div className="mt-10 flex flex-col gap-3">
@@ -25,7 +28,7 @@ export function LandingFaq({ title, items }: LandingFaqProps) {
               key={item.question}
               className="group rounded-lg border border-border bg-card px-4 py-3 shadow-sm"
             >
-              <summary className="cursor-pointer list-none font-medium text-foreground outline-none transition-colors marker:content-none [&::-webkit-details-marker]:hidden">
+              <summary className="cursor-pointer list-none text-base font-medium leading-snug text-foreground outline-none transition-colors marker:content-none md:text-lg md:leading-snug [&::-webkit-details-marker]:hidden">
                 <span className="flex items-center justify-between gap-2">
                   {item.question}
                   <span
@@ -36,7 +39,7 @@ export function LandingFaq({ title, items }: LandingFaqProps) {
                   </span>
                 </span>
               </summary>
-              <p className="mt-3 text-pretty text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-3 text-pretty text-base leading-relaxed text-muted-foreground">
                 {item.answer}
               </p>
             </details>

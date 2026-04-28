@@ -13,7 +13,7 @@ export function LandingTrustStrip({ title, stats }: TrustStripProps) {
       <div className="mx-auto max-w-6xl px-6">
         <h2
           id="trust-heading"
-          className="mb-8 text-center text-sm font-medium uppercase tracking-wider text-muted-foreground"
+          className="mb-8 text-center text-base font-medium uppercase tracking-wider text-muted-foreground"
         >
           {title}
         </h2>
@@ -23,7 +23,9 @@ export function LandingTrustStrip({ title, stats }: TrustStripProps) {
               <span className="text-3xl font-semibold tabular-nums tracking-tight text-foreground md:text-4xl">
                 {s.value}
               </span>
-              <span className="mt-1 max-w-[12rem] text-sm text-muted-foreground">{s.label}</span>
+              <span className="mt-1.5 max-w-[14rem] text-base leading-snug text-muted-foreground">
+                {s.label}
+              </span>
             </li>
           ))}
         </ul>

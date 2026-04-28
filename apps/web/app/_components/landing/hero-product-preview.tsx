@@ -26,7 +26,7 @@ export function HeroProductPreview({ workflowCardTitle }: HeroProductPreviewProp
               />
             ))}
           </div>
-          <div className="grid grid-cols-2 gap-2 text-left text-xs text-muted-foreground">
+          <div className="grid grid-cols-2 gap-2 text-left text-sm leading-snug text-muted-foreground">
             <div className="rounded-lg border border-border bg-background p-3">
               <div className="mb-2 font-medium text-foreground">Top movers</div>
               <div className="space-y-1">

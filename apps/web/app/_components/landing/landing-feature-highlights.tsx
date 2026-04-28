@@ -35,15 +35,15 @@ export function LandingFeatureHighlights({
       <div className="mx-auto max-w-6xl px-6">
         <h2
           id="feature-highlights-heading"
-          className="text-balance text-center text-3xl font-bold md:text-4xl"
+          className="text-balance text-center text-3xl font-bold leading-tight md:text-4xl md:leading-tight"
         >
           {title}
         </h2>
-        <p className="mx-auto mt-4 max-w-3xl text-center text-pretty text-foreground/80">
+        <p className="mx-auto mt-5 max-w-3xl text-center text-pretty text-base leading-relaxed text-foreground/80 md:text-lg">
           {subtitle}
         </p>
 
-        <div className="mt-12 space-y-6">
+        <div className="mt-12 flex flex-col gap-6">
           {cards.map((card) => (
             <Card key={card.title} className="overflow-hidden border-border/80 shadow-md">
               <div className="border-b border-border bg-background p-2">
@@ -59,10 +59,10 @@ export function LandingFeatureHighlights({
                 </div>
               </div>
               <CardHeader>
-                <CardTitle className="text-xl">{card.title}</CardTitle>
+                <CardTitle className="text-xl leading-snug">{card.title}</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <CardDescription className="text-pretty text-sm text-foreground/75">
+                <CardDescription className="text-pretty text-base leading-relaxed text-foreground/80">
                   {card.description}
                 </CardDescription>
               </CardContent>

@@ -132,7 +132,9 @@ export default async function LandingPage() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
           <div className="flex min-w-0 items-center gap-2">
             <UtensilsCrossed className="size-5 shrink-0 text-primary" aria-hidden />
-            <p className="truncate text-xl font-semibold tracking-tight">{t('brand')}</p>
+            <p className="truncate text-xl font-semibold tracking-tight md:text-2xl">
+              {t('brand')}
+            </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Button size="sm" asChild>
@@ -148,11 +150,11 @@ export default async function LandingPage() {
             <Badge variant="secondary" className="mb-4">
               {t('hero.badge')}
             </Badge>
-            <h1 className="text-balance text-4xl font-bold leading-tight md:text-6xl">
+            <h1 className="text-balance text-4xl font-bold leading-[1.1] sm:text-5xl md:text-6xl md:leading-[1.08]">
               {t('hero.headline')}
             </h1>
 
-            <p className="mx-auto mt-4 max-w-2xl text-pretty text-base text-foreground/80 md:text-lg">
+            <p className="mx-auto mt-5 max-w-2xl text-pretty text-lg leading-relaxed text-foreground/80 md:mt-6 md:text-xl md:leading-relaxed">
               {t('hero.subtitle')}
             </p>
 
@@ -212,7 +214,7 @@ export default async function LandingPage() {
 
         <section id="how-it-works" className="bg-muted py-24">
           <div className="mx-auto max-w-6xl px-6">
-            <h2 className="mb-16 text-balance text-center text-3xl font-bold md:text-4xl">
+            <h2 className="mb-16 text-balance text-center text-3xl font-bold leading-tight md:text-4xl md:leading-tight">
               {t('how.title')}
             </h2>
 
@@ -243,8 +245,10 @@ export default async function LandingPage() {
                         <Icon className="size-6 text-primary" aria-hidden />
                       </div>
                     </div>
-                    <CardTitle className="text-xl">{t(titleKey)}</CardTitle>
-                    <CardDescription className="text-pretty">{t(descKey)}</CardDescription>
+                    <CardTitle className="text-xl leading-snug">{t(titleKey)}</CardTitle>
+                    <CardDescription className="text-pretty text-base leading-relaxed">
+                      {t(descKey)}
+                    </CardDescription>
                   </CardHeader>
                 </Card>
               ))}
@@ -254,10 +258,10 @@ export default async function LandingPage() {
 
         <section id="pipeline" className="bg-background py-24">
           <div className="mx-auto max-w-6xl px-6">
-            <h2 className="text-balance text-center text-3xl font-bold md:text-4xl">
+            <h2 className="text-balance text-center text-3xl font-bold leading-tight md:text-4xl md:leading-tight">
               {t('pipeline.title')}
             </h2>
-            <p className="mx-auto mt-4 max-w-3xl text-center text-pretty text-foreground/80">
+            <p className="mx-auto mt-5 max-w-3xl text-center text-pretty text-base leading-relaxed text-foreground/80 md:text-lg">
               {t('pipeline.subtitle')}
             </p>
 
@@ -268,8 +272,10 @@ export default async function LandingPage() {
                     <div className="mb-3 flex size-10 items-center justify-center rounded-md bg-primary/10">
                       <Icon className="size-5 text-primary" aria-hidden />
                     </div>
-                    <CardTitle className="text-lg">{title}</CardTitle>
-                    <CardDescription className="text-pretty">{description}</CardDescription>
+                    <CardTitle className="text-lg leading-snug">{title}</CardTitle>
+                    <CardDescription className="text-pretty text-base leading-relaxed">
+                      {description}
+                    </CardDescription>
                   </CardHeader>
                 </Card>
               ))}
@@ -279,10 +285,10 @@ export default async function LandingPage() {
 
         <section id="signals" className="bg-muted py-24">
           <div className="mx-auto max-w-6xl px-6">
-            <h2 className="text-balance text-center text-3xl font-bold md:text-4xl">
+            <h2 className="text-balance text-center text-3xl font-bold leading-tight md:text-4xl md:leading-tight">
               {t('signals.title')}
             </h2>
-            <p className="mx-auto mt-4 max-w-3xl text-center text-pretty text-foreground/80">
+            <p className="mx-auto mt-5 max-w-3xl text-center text-pretty text-base leading-relaxed text-foreground/80 md:text-lg">
               {t('signals.subtitle')}
             </p>
 
@@ -293,8 +299,10 @@ export default async function LandingPage() {
                     <div className="mb-3 flex size-10 items-center justify-center rounded-md bg-primary/10">
                       <Icon className="size-5 text-primary" aria-hidden />
                     </div>
-                    <CardTitle className="text-lg">{title}</CardTitle>
-                    <CardDescription className="text-pretty">{description}</CardDescription>
+                    <CardTitle className="text-lg leading-snug">{title}</CardTitle>
+                    <CardDescription className="text-pretty text-base leading-relaxed">
+                      {description}
+                    </CardDescription>
                   </CardHeader>
                 </Card>
               ))}
@@ -312,11 +320,11 @@ export default async function LandingPage() {
 
         <section className="bg-background py-24">
           <div className="mx-auto max-w-6xl px-6">
-            <h2 className="mb-6 text-balance text-center text-3xl font-bold md:text-4xl">
+            <h2 className="mb-6 text-balance text-center text-3xl font-bold leading-tight md:text-4xl md:leading-tight">
               {t('why.title')}
             </h2>
 
-            <p className="mx-auto mb-16 max-w-3xl text-center text-pretty text-foreground/80">
+            <p className="mx-auto mb-16 max-w-3xl text-center text-pretty text-base leading-relaxed text-foreground/80 md:text-lg">
               {t('why.subtitle')}
             </p>
 
@@ -336,7 +344,9 @@ export default async function LandingPage() {
                         <Icon className="size-6 text-primary" aria-hidden />
                       </div>
                     </div>
-                    <CardTitle className="text-lg">{t(`why.cards.${cardKey}`)}</CardTitle>
+                    <CardTitle className="text-lg leading-snug">
+                      {t(`why.cards.${cardKey}`)}
+                    </CardTitle>
                   </CardHeader>
                 </Card>
               ))}
@@ -348,9 +358,11 @@ export default async function LandingPage() {
 
         <section id="cta" className="bg-muted py-24">
           <div className="mx-auto max-w-3xl px-6 text-center">
-            <h2 className="mb-6 text-balance text-3xl font-bold md:text-4xl">{t('cta.title')}</h2>
+            <h2 className="mb-6 text-balance text-3xl font-bold leading-tight md:text-4xl md:leading-tight">
+              {t('cta.title')}
+            </h2>
 
-            <p className="mb-10 text-pretty leading-relaxed text-foreground/80">
+            <p className="mb-10 text-pretty text-base leading-relaxed text-foreground/80 md:text-lg md:leading-relaxed">
               {t('cta.description')}
             </p>
 
