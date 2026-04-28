@@ -31,7 +31,7 @@ export function LandingFooter({
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 sm:flex-row sm:justify-between">
         <nav
           aria-label={navLabel}
-          className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm"
+          className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-base"
         >
           <Link href="#how-it-works" className={linkClassName}>
             {aboutLabel}
@@ -49,7 +49,7 @@ export function LandingFooter({
             {termsLabel}
           </Link>
         </nav>
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-base text-muted-foreground">
           © {year} {copyright}
         </p>
       </div>
