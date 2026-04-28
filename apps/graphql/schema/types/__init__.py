@@ -1,6 +1,6 @@
 from .api_adapter_tool import ApiAdapterToolType
 from .image_ai_flow import ImageAiFlowType
-from .location import LocationType
+from .location import LocationType, OpeningHourType
 from .menu_item_cogs import MenuItemCogsType
 from .node import NodeType
 from .public_holiday import PublicHolidayType
@@ -13,6 +13,7 @@ __all__ = [
     "WorkflowExportType",
     "ImageAiFlowType",
     "LocationType",
+    "OpeningHourType",
     "MenuItemCogsType",
     "PublicHolidayType",
     "NodeType",

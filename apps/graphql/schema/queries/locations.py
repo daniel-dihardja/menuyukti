@@ -3,7 +3,29 @@ from sqlalchemy import or_
 
 from graphql.data_sources import Location, SessionLocal, WorkspaceMembership
 from graphql.schema.auth import is_location_owner, user_id_from_info
-from graphql.schema.types import LocationType
+from graphql.schema.types import LocationType, OpeningHourType
+
+
+def _location_to_gql(row: Location) -> LocationType:
+    opening_hours = [
+        OpeningHourType(
+            day_of_week=hour.day_of_week,
+            open_time=hour.open_time.strftime("%H:%M"),
+            close_time=hour.close_time.strftime("%H:%M"),
+        )
+        for hour in row.opening_hours
+    ]
+    return LocationType(
+        id=row.id,
+        name=row.name,
+        street=row.street,
+        city=row.city,
+        country=row.country,
+        currency=row.currency,
+        node_id=str(row.node_id) if row.node_id is not None else None,
+        workspace_id=str(row.workspace_id) if row.workspace_id is not None else None,
+        opening_hours=opening_hours,
+    )
 
 
 @strawberry.type
@@ -26,19 +48,7 @@ class LocationsQuery:
             if workspace_ids:
                 access.append(Location.workspace_id.in_(workspace_ids))
             rows = session.query(Location).filter(or_(*access)).all()
-            return [
-                LocationType(
-                    id=row.id,
-                    name=row.name,
-                    street=row.street,
-                    city=row.city,
-                    country=row.country,
-                    currency=row.currency,
-                    node_id=str(row.node_id) if row.node_id is not None else None,
-                    workspace_id=str(row.workspace_id) if row.workspace_id is not None else None,
-                )
-                for row in rows
-            ]
+            return [_location_to_gql(row) for row in rows]
 
     @strawberry.field(description="Fetch one location by id if the caller has access.")
     def location(self, info: strawberry.Info, id: strawberry.ID) -> LocationType | None:
@@ -49,13 +59,4 @@ class LocationsQuery:
             row = session.get(Location, int(id))
             if row is None or not is_location_owner(session, row.id, user_id):
                 return None
-            return LocationType(
-                id=row.id,
-                name=row.name,
-                street=row.street,
-                city=row.city,
-                country=row.country,
-                currency=row.currency,
-                node_id=str(row.node_id) if row.node_id is not None else None,
-                workspace_id=str(row.workspace_id) if row.workspace_id is not None else None,
-            )
+            return _location_to_gql(row)

@@ -11,6 +11,7 @@ from graphql.data_sources.database import Base
 
 if TYPE_CHECKING:
     from graphql.data_sources.models.instagram import InstagramPost
+    from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
     from graphql.data_sources.models.location_social_settings import LocationSocialSettings
     from graphql.data_sources.models.node import Node
     from graphql.data_sources.models.workspace import Workspace
@@ -59,4 +60,10 @@ class Location(Base):
         "LocationSocialSettings",
         back_populates="location",
         uselist=False,
+    )
+    opening_hours: Mapped[list[LocationOpeningHour]] = relationship(
+        "LocationOpeningHour",
+        back_populates="location",
+        cascade="all, delete-orphan",
+        order_by="LocationOpeningHour.day_of_week",
     )

@@ -6,13 +6,14 @@ import argparse
 import json
 import os
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, datetime, time
 from pathlib import Path
 
 from graphql.data_sources import (
     AnalyticsRun,
     ApiAdapterTool,
     Location,
+    LocationOpeningHour,
     MenuItemCogs,
     Node,
     OrderFact,
@@ -130,6 +131,25 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
         )
         session.add(location)
         session.flush()
+
+        # Seed a simple one-range schedule for all weekdays for local development.
+        for day in (
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ):
+            session.add(
+                LocationOpeningHour(
+                    location_id=location.id,
+                    day_of_week=day,
+                    open_time=time(hour=9, minute=0),
+                    close_time=time(hour=22, minute=0),
+                )
+            )
 
         loc_node = Node(
             parent_id=None,

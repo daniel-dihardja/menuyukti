@@ -8,6 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
+import Link from 'next/link'
+import { routes } from '@/lib/routes'
 
 interface Branch {
   id: string
@@ -49,7 +51,14 @@ export function LocationsTable({
           {branches.map((branch, index) => (
             <TableRow key={branch.id}>
               <TableCell>{index + 1}</TableCell>
-              <TableCell>{branch.name}</TableCell>
+              <TableCell>
+                <Link
+                  href={routes.analytics.branchesDetail(branch.id)}
+                  className="underline-offset-4 hover:underline"
+                >
+                  {branch.name}
+                </Link>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

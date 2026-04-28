@@ -739,6 +739,7 @@
       "title": "Location List",
       "description": "Manage your locations and configure location-level settings before uploading sales reports.",
       "createDescription": "Create a new location to organize analytics, fixed costs, and sales reports by location.",
+      "detailDescription": "Update location information and opening hours.",
       "table": {
         "index": "#",
         "branchName": "Location Name",
@@ -748,7 +749,49 @@
         "delete": "Delete",
         "empty": "No locations available yet."
       },
-      "create": "Create New Location"
+      "create": "Create New Location",
+      "form": {
+        "createTitle": "Create Location",
+        "editTitle": "Edit Location",
+        "nameLabel": "Location name",
+        "namePlaceholder": "Berlin Mitte",
+        "streetLabel": "Street address",
+        "streetPlaceholder": "Rosenthaler Str. 1",
+        "cityLabel": "City",
+        "cityPlaceholder": "Berlin",
+        "countryLabel": "Country",
+        "countryPlaceholder": "Germany",
+        "currencyLabel": "Currency",
+        "currencyPlaceholder": "EUR",
+        "openingHoursTitle": "Opening hours",
+        "openingHoursDescription": "Mark days as closed, or set open and close times only on days you serve guests. You can use a preset for common patterns.",
+        "openingHoursPresetsAria": "Quick presets for opening hours",
+        "presetWeekdays": "Mon–Fri, 9:00–22:00 (weekends closed)",
+        "presetAllClosed": "Mark every day closed",
+        "dayClosed": "Closed",
+        "dayOpen": "Open",
+        "opensAt": "Opens",
+        "closesAt": "Closes",
+        "openDaySwitchAria": "Open on {day}",
+        "createAction": "Create Location",
+        "saveAction": "Save Changes",
+        "creating": "Creating...",
+        "saving": "Saving...",
+        "errors": {
+          "saveFailed": "Failed to save location.",
+          "openingHoursIncomplete": "On {day}, add both open and close times or mark the day closed.",
+          "openingHoursOrder": "On {day}, close time must be after open time."
+        },
+        "weekdays": {
+          "monday": "Monday",
+          "tuesday": "Tuesday",
+          "wednesday": "Wednesday",
+          "thursday": "Thursday",
+          "friday": "Friday",
+          "saturday": "Saturday",
+          "sunday": "Sunday"
+        }
+      }
     },
     "sales": {
       "title": "Sales Reports",
