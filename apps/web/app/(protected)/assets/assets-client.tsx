@@ -37,6 +37,11 @@ function formatBytes(n: number): string {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`
 }
 
+function formatDimensions(width?: number, height?: number): string | null {
+  if (!width || !height) return null
+  return `${width} X ${height}`
+}
+
 function assetDownloadHref(name: string): string {
   return `/api/assets/download?name=${encodeURIComponent(name)}`
 }
@@ -54,6 +59,9 @@ export function AssetsClient() {
   const [cardFlows, setCardFlows] = useState<Record<string, string>>({})
   const [cardCustomPrompts, setCardCustomPrompts] = useState<Record<string, string>>({})
   const [generatingByName, setGeneratingByName] = useState<Record<string, boolean>>({})
+  const [imageDimensionsByName, setImageDimensionsByName] = useState<
+    Record<string, { width: number; height: number }>
+  >({})
   const [aiFlows, setAiFlows] = useState<Array<{ slug: string; displayName: string }>>([])
   const [flowsLoading, setFlowsLoading] = useState(true)
   const [previewItem, setPreviewItem] = useState<AssetItem | null>(null)
@@ -494,178 +502,197 @@ export function AssetsClient() {
           </Card>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {items.map((item) => (
-              <figure
-                key={item.name}
-                className="group/tile min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md"
-              >
-                <div
-                  className="relative aspect-[4/3] cursor-zoom-in overflow-hidden bg-muted/30 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  role="button"
-                  tabIndex={0}
-                  aria-label={t('grid.viewLarge')}
-                  onClick={() => setPreviewItem(item)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      setPreviewItem(item)
-                    }
-                  }}
+            {items.map((item) => {
+              const dimensions = formatDimensions(
+                imageDimensionsByName[item.name]?.width,
+                imageDimensionsByName[item.name]?.height,
+              )
+              const sizeWithDimensions = `${formatBytes(item.size)}${dimensions ? ` - ${dimensions}` : ''}`
+              return (
+                <figure
+                  key={item.name}
+                  className="group/tile min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element -- dynamic user uploads; dimensions vary */}
-                  <img
-                    src={item.url}
-                    alt=""
-                    loading="lazy"
-                    className="size-full object-cover transition duration-300 group-hover/tile:scale-[1.02]"
-                  />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100" />
-                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex items-end justify-between gap-2 p-3 opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100">
-                    <figcaption className="min-w-0 flex-1 truncate text-left text-xs font-medium text-white drop-shadow">
-                      {item.name}
-                    </figcaption>
-                    <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="secondary"
-                        className="h-9 w-9 rounded-full bg-white/95 text-foreground shadow-md hover:bg-white"
-                        aria-label={t('grid.viewLarge')}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setPreviewItem(item)
-                        }}
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="secondary"
-                        className="h-9 w-9 rounded-full bg-white/95 text-foreground shadow-md hover:bg-white"
-                        aria-label={t('grid.download')}
-                        asChild
-                      >
-                        <a
-                          href={assetDownloadHref(item.name)}
-                          download={item.name}
-                          onClick={(e) => e.stopPropagation()}
+                  <div
+                    className="relative aspect-[4/3] cursor-zoom-in overflow-hidden bg-muted/30 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={t('grid.viewLarge')}
+                    onClick={() => setPreviewItem(item)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setPreviewItem(item)
+                      }
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- dynamic user uploads; dimensions vary */}
+                    <img
+                      src={item.url}
+                      alt=""
+                      loading="lazy"
+                      className="size-full object-cover transition duration-300 group-hover/tile:scale-[1.02]"
+                      onLoad={(e) => {
+                        const width = e.currentTarget.naturalWidth
+                        const height = e.currentTarget.naturalHeight
+                        setImageDimensionsByName((prev) => {
+                          const current = prev[item.name]
+                          if (current?.width === width && current?.height === height) return prev
+                          return { ...prev, [item.name]: { width, height } }
+                        })
+                      }}
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100" />
+                    <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex items-end justify-between gap-2 p-3 opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100">
+                      <figcaption className="min-w-0 flex-1 truncate text-left text-xs font-medium text-white drop-shadow">
+                        {item.name}
+                      </figcaption>
+                      <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="secondary"
+                          className="h-9 w-9 rounded-full bg-white/95 text-foreground shadow-md hover:bg-white"
+                          aria-label={t('grid.viewLarge')}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setPreviewItem(item)
+                          }}
                         >
-                          <Download className="h-4 w-4" />
-                        </a>
-                      </Button>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="secondary"
-                        className="h-9 w-9 shrink-0 rounded-full bg-white/95 text-destructive shadow-md hover:bg-white"
-                        disabled={deleting === item.name}
-                        aria-label={t('grid.delete')}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          void onDelete(item.name)
-                        }}
-                      >
-                        {deleting === item.name ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </Button>
+                          <Maximize2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="secondary"
+                          className="h-9 w-9 rounded-full bg-white/95 text-foreground shadow-md hover:bg-white"
+                          aria-label={t('grid.download')}
+                          asChild
+                        >
+                          <a
+                            href={assetDownloadHref(item.name)}
+                            download={item.name}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Download className="h-4 w-4" />
+                          </a>
+                        </Button>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="secondary"
+                          className="h-9 w-9 shrink-0 rounded-full bg-white/95 text-destructive shadow-md hover:bg-white"
+                          disabled={deleting === item.name}
+                          aria-label={t('grid.delete')}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            void onDelete(item.name)
+                          }}
+                        >
+                          {deleting === item.name ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center justify-between border-t border-border/50 px-3 py-2 text-xs text-muted-foreground">
-                  <span>{formatBytes(item.size)}</span>
-                  <time dateTime={item.createdAt}>
-                    {new Date(item.createdAt).toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </time>
-                </div>
-                <div className="flex flex-col gap-2 border-t border-border/50 px-3 py-3">
-                  <Field className="gap-1.5">
-                    <FieldLabel
-                      htmlFor={`asset-flow-${item.name}`}
-                      className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
-                    >
-                      {t('grid.generate.flowLabel')}
-                    </FieldLabel>
-                    <Select
-                      value={cardFlows[item.name] ?? 'none'}
-                      onValueChange={(value) => {
-                        setCardFlows((prev) => ({ ...prev, [item.name]: value }))
-                      }}
-                      disabled={flowsLoading || generatingByName[item.name]}
-                    >
-                      <SelectTrigger id={`asset-flow-${item.name}`} size="sm" className="w-full">
-                        <SelectValue placeholder={t('grid.generate.flowPlaceholder')} />
-                      </SelectTrigger>
-                      <SelectContent
-                        align="start"
-                        position="popper"
-                        className="min-w-[var(--radix-select-trigger-width)]"
-                      >
-                        <SelectItem value="none">{t('upload.flow.none')}</SelectItem>
-                        <SelectItem value="custom">{t('grid.generate.customOption')}</SelectItem>
-                        {aiFlows.map((flow) => (
-                          <SelectItem key={`${item.name}-${flow.slug}`} value={flow.slug}>
-                            {flow.displayName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  {(cardFlows[item.name] ?? 'none') === 'custom' ? (
+                  <div className="flex items-center justify-between border-t border-border/50 px-3 py-2 text-xs text-muted-foreground">
+                    <span className="truncate">{sizeWithDimensions}</span>
+                    <time dateTime={item.createdAt}>
+                      {new Date(item.createdAt).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </time>
+                  </div>
+                  <div className="flex flex-col gap-2 border-t border-border/50 px-3 py-3">
                     <Field className="gap-1.5">
                       <FieldLabel
-                        htmlFor={`asset-custom-prompt-${item.name}`}
+                        htmlFor={`asset-flow-${item.name}`}
                         className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
                       >
-                        {t('grid.generate.customPromptLabel')}
+                        {t('grid.generate.flowLabel')}
                       </FieldLabel>
-                      <Textarea
-                        id={`asset-custom-prompt-${item.name}`}
-                        value={cardCustomPrompts[item.name] ?? ''}
-                        onChange={(e) => {
-                          setCardCustomPrompts((prev) => ({ ...prev, [item.name]: e.target.value }))
+                      <Select
+                        value={cardFlows[item.name] ?? 'none'}
+                        onValueChange={(value) => {
+                          setCardFlows((prev) => ({ ...prev, [item.name]: value }))
                         }}
-                        placeholder={t('grid.generate.customPromptPlaceholder')}
-                        rows={3}
-                        disabled={generatingByName[item.name]}
-                      />
+                        disabled={flowsLoading || generatingByName[item.name]}
+                      >
+                        <SelectTrigger id={`asset-flow-${item.name}`} size="sm" className="w-full">
+                          <SelectValue placeholder={t('grid.generate.flowPlaceholder')} />
+                        </SelectTrigger>
+                        <SelectContent
+                          align="start"
+                          position="popper"
+                          className="min-w-[var(--radix-select-trigger-width)]"
+                        >
+                          <SelectItem value="none">{t('upload.flow.none')}</SelectItem>
+                          <SelectItem value="custom">{t('grid.generate.customOption')}</SelectItem>
+                          {aiFlows.map((flow) => (
+                            <SelectItem key={`${item.name}-${flow.slug}`} value={flow.slug}>
+                              {flow.displayName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </Field>
-                  ) : null}
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="w-full"
-                    disabled={
-                      flowsLoading ||
-                      generatingByName[item.name] ||
-                      (cardFlows[item.name] ?? 'none') === 'none' ||
-                      ((cardFlows[item.name] ?? 'none') === 'custom' &&
-                        (cardCustomPrompts[item.name]?.trim() ?? '').length === 0)
-                    }
-                    onClick={() => void onGenerate(item)}
-                  >
-                    {generatingByName[item.name] ? (
-                      <>
-                        <Loader2 className="animate-spin" data-icon="inline-start" />
-                        {t('grid.generate.generating')}
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles data-icon="inline-start" />
-                        {t('grid.generate.button')}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </figure>
-            ))}
+                    {(cardFlows[item.name] ?? 'none') === 'custom' ? (
+                      <Field className="gap-1.5">
+                        <FieldLabel
+                          htmlFor={`asset-custom-prompt-${item.name}`}
+                          className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
+                        >
+                          {t('grid.generate.customPromptLabel')}
+                        </FieldLabel>
+                        <Textarea
+                          id={`asset-custom-prompt-${item.name}`}
+                          value={cardCustomPrompts[item.name] ?? ''}
+                          onChange={(e) => {
+                            setCardCustomPrompts((prev) => ({
+                              ...prev,
+                              [item.name]: e.target.value,
+                            }))
+                          }}
+                          placeholder={t('grid.generate.customPromptPlaceholder')}
+                          rows={3}
+                          disabled={generatingByName[item.name]}
+                        />
+                      </Field>
+                    ) : null}
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="w-full"
+                      disabled={
+                        flowsLoading ||
+                        generatingByName[item.name] ||
+                        (cardFlows[item.name] ?? 'none') === 'none' ||
+                        ((cardFlows[item.name] ?? 'none') === 'custom' &&
+                          (cardCustomPrompts[item.name]?.trim() ?? '').length === 0)
+                      }
+                      onClick={() => void onGenerate(item)}
+                    >
+                      {generatingByName[item.name] ? (
+                        <>
+                          <Loader2 className="animate-spin" data-icon="inline-start" />
+                          {t('grid.generate.generating')}
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles data-icon="inline-start" />
+                          {t('grid.generate.button')}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </figure>
+              )
+            })}
           </div>
         )}
       </section>
