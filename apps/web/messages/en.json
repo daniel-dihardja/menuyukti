@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "title": "Menuyukti — Agentic AI for restaurant marketing",
-    "description": "Agentic AI for restaurant marketing: composable workflows, sales analytics, LangGraph-style agents, milestone data, and Instagram-ready artifacts in one GraphQL-backed workspace.",
+    "title": "Menuyukti — Agentic AI for restaurant social media marketing",
+    "description": "Agentic AI for restaurant social media marketing: composable workflows, sales analytics, LangGraph-style agents, milestone data, and Instagram-ready artifacts in one GraphQL-backed workspace.",
     "ogLocale": "en_US"
   },
   "login": {
@@ -93,18 +93,18 @@
     "brand": "Menuyukti",
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Agentic AI system for restaurant marketing",
-      "subtitle": "Menuyukti is an agentic AI system for restaurant marketing: node-based workflows turn sales data into signals, run milestone pipelines, and produce Instagram-ready schedules and copy you can trust and refine. Within each step you can add input and influence the run—so you get automated AI execution balanced with your briefs, edits, and judgment.",
+      "headline": "Agentic AI system for restaurant social media marketing",
+      "subtitle": "Menuyukti is an agentic AI system for restaurant social media marketing: node-based workflows turn sales data into signals, run milestone pipelines, and produce Instagram-ready schedules and copy you can trust and refine. Within each step you can add input and influence the run—so you get automated AI execution balanced with your briefs, edits, and judgment.",
       "badge": "Agentic AI · Data-grounded agents · Sales-to-social workflows",
       "ctaSecondary": "Sign in",
       "previewWorkflowCardTitle": "Workflow"
     },
-    "problem": "Most restaurant marketing still relies on disconnected dashboards, spreadsheets, and tools bolted onto legacy stacks—not coordinated agentic systems. Strategy gets lost between data review and campaign execution, so you miss timing windows and promote the wrong menu stories.",
+    "problem": "Most restaurant social media marketing still relies on disconnected dashboards, spreadsheets, and tools bolted onto legacy stacks—not coordinated agentic systems. Strategy gets lost between data review and campaign execution, so you miss timing windows and promote the wrong menu stories.",
     "problemImageAlt": "Abstract analytics dashboard showing sales performance bars and insight summary.",
-    "solution": "Menuyukti is an agentic AI system for restaurant marketing: a node-based workflow canvas where agents connect milestones like Dates, Brand brief, Promotion candidates, and Scheduler into a flexible social strategy pipeline. Every node is grounded in sales-report analytics, and each output is stored as structured, reusable campaign data.",
+    "solution": "Menuyukti is an agentic AI system for restaurant social media marketing: a node-based workflow canvas where agents connect milestones like Dates, Brand brief, Promotion candidates, and Scheduler into a flexible social strategy pipeline. Every node is grounded in sales-report analytics, and each output is stored as structured, reusable campaign data.",
     "solutionImageAlt": "Workflow diagram from POS data through AI milestones to stored workflow outputs and artifacts.",
     "trust": {
-      "title": "Agentic AI, built for restaurant marketing",
+      "title": "Agentic AI, built for restaurant social media marketing",
       "stat1Value": "Composable nodes",
       "stat1Label": "Mix and match milestone nodes per campaign objective, from brand positioning to scheduling.",
       "stat2Value": "Signals-first",
@@ -193,7 +193,7 @@
     },
     "why": {
       "title": "Why restaurants use Menuyukti",
-      "subtitle": "A workflow product built around agentic AI: milestones and milestone data, artifacts, and chat to refine pipeline outputs—purpose-built for restaurant marketing, not a generic assistant pasted onto a dashboard.",
+      "subtitle": "A workflow product built around agentic AI: milestones and milestone data, artifacts, and chat to refine pipeline outputs—purpose-built for restaurant social media marketing, not a generic assistant pasted onto a dashboard.",
       "cards": {
         "insights": "Real sales data, not generic benchmarks",
         "waste": "From signals to publish-ready artifacts",
