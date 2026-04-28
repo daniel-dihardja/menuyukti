@@ -532,6 +532,12 @@
         "title": "No images yet",
         "description": "Upload your first restaurant photo, logo, or workflow visual to keep everything in one place."
       },
+      "generate": {
+        "flowLabel": "Generate with",
+        "flowPlaceholder": "Choose AI flow",
+        "button": "Generate",
+        "generating": "Generating…"
+      },
       "delete": "Remove",
       "deleteConfirm": "Remove this image?",
       "viewLarge": "View larger",
@@ -543,6 +549,8 @@
       "leonardoError": "AI processing failed. Check your Leonardo API key and model, then try again.",
       "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
       "uploadPartial": "Some files couldn’t be uploaded. Check your images and try again.",
+      "generated": "Generated image saved to your library",
+      "generateError": "Couldn’t generate a new image. Try again.",
       "loadError": "Couldn’t load your library. Refresh the page.",
       "flowsLoadError": "Couldn’t load AI flows. You can still upload without AI.",
       "deleted": "Image removed",

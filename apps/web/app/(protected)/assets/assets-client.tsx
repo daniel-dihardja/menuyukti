@@ -50,6 +50,8 @@ export function AssetsClient() {
   const [toast, setToast] = useState<ToastState>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [selectedFlow, setSelectedFlow] = useState<string>('none')
+  const [cardFlows, setCardFlows] = useState<Record<string, string>>({})
+  const [generatingByName, setGeneratingByName] = useState<Record<string, boolean>>({})
   const [aiFlows, setAiFlows] = useState<Array<{ slug: string; displayName: string }>>([])
   const [flowsLoading, setFlowsLoading] = useState(true)
   const [previewItem, setPreviewItem] = useState<AssetItem | null>(null)
@@ -216,6 +218,40 @@ export function AssetsClient() {
       showToast('error', t('toast.deleteError'))
     } finally {
       setDeleting(null)
+    }
+  }
+
+  const onGenerate = async (item: AssetItem) => {
+    const flow = cardFlows[item.name] ?? 'none'
+    if (flow === 'none') return
+
+    setGeneratingByName((prev) => ({ ...prev, [item.name]: true }))
+    try {
+      const res = await fetch('/api/assets/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: item.name, flow }),
+      })
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { message?: string; code?: string }
+        const e = new Error(err.message ?? 'generate') as Error & { code?: string }
+        if (err.code === 'leonardo' || err.code === 'leonardo_tokens') e.code = err.code
+        throw e
+      }
+      const created = (await res.json()) as AssetItem
+      setItems((prev) => [created, ...prev])
+      showToast('success', t('toast.generated'))
+    } catch (err) {
+      const reason = err as Error & { code?: string }
+      if (reason.code === 'leonardo_tokens') {
+        showToast('error', t('toast.leonardoInsufficientTokens'))
+      } else if (reason.code === 'leonardo') {
+        showToast('error', t('toast.leonardoError'))
+      } else {
+        showToast('error', t('toast.generateError'))
+      }
+    } finally {
+      setGeneratingByName((prev) => ({ ...prev, [item.name]: false }))
     }
   }
 
@@ -537,6 +573,62 @@ export function AssetsClient() {
                       year: 'numeric',
                     })}
                   </time>
+                </div>
+                <div className="flex flex-col gap-2 border-t border-border/50 px-3 py-3">
+                  <Field className="gap-1.5">
+                    <FieldLabel
+                      htmlFor={`asset-flow-${item.name}`}
+                      className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
+                    >
+                      {t('grid.generate.flowLabel')}
+                    </FieldLabel>
+                    <Select
+                      value={cardFlows[item.name] ?? 'none'}
+                      onValueChange={(value) => {
+                        setCardFlows((prev) => ({ ...prev, [item.name]: value }))
+                      }}
+                      disabled={flowsLoading || generatingByName[item.name]}
+                    >
+                      <SelectTrigger id={`asset-flow-${item.name}`} size="sm" className="w-full">
+                        <SelectValue placeholder={t('grid.generate.flowPlaceholder')} />
+                      </SelectTrigger>
+                      <SelectContent
+                        align="start"
+                        position="popper"
+                        className="min-w-[var(--radix-select-trigger-width)]"
+                      >
+                        <SelectItem value="none">{t('upload.flow.none')}</SelectItem>
+                        {aiFlows.map((flow) => (
+                          <SelectItem key={`${item.name}-${flow.slug}`} value={flow.slug}>
+                            {flow.displayName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="w-full"
+                    disabled={
+                      flowsLoading ||
+                      generatingByName[item.name] ||
+                      (cardFlows[item.name] ?? 'none') === 'none'
+                    }
+                    onClick={() => void onGenerate(item)}
+                  >
+                    {generatingByName[item.name] ? (
+                      <>
+                        <Loader2 className="animate-spin" data-icon="inline-start" />
+                        {t('grid.generate.generating')}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles data-icon="inline-start" />
+                        {t('grid.generate.button')}
+                      </>
+                    )}
+                  </Button>
                 </div>
               </figure>
             ))}
