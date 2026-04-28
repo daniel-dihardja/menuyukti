@@ -4,14 +4,9 @@ import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { randomUUID } from 'crypto'
 import sharp from 'sharp'
 
-import { graphqlQuery } from '@/lib/graphql/client'
-import { IMAGE_AI_FLOW_BY_SLUG_QUERY, type ImageAiFlowBySlugData } from '@/lib/graphql/queries'
+import { getBuiltinAiFlowConfig } from '@/lib/assets/builtin-ai-flows'
 import { getPresignedGetUrl, getS3Bucket, getS3Client, userObjectKey } from '@/lib/assets/storage'
-import {
-  type ImageReferenceStrength,
-  type NanoBananaFlowConfig,
-  runRemoveBackground,
-} from '@/lib/leonardo'
+import { runRemoveBackground } from '@/lib/leonardo'
 
 const ALLOWED_TYPES = new Set([
   'image/jpeg',
@@ -36,44 +31,12 @@ function normalizeFlow(raw: unknown): string {
   return s
 }
 
-/** Thrown when Leonardo `runRemoveBackground` fails (distinct from GraphQL/config errors). */
+/** Thrown when Leonardo `runRemoveBackground` fails (distinct from built-in config errors). */
 class LeonardoInvocationError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
     super(message, options)
     this.name = 'LeonardoInvocationError'
   }
-}
-
-function toNanoBananaConfig(
-  row: NonNullable<ImageAiFlowBySlugData['imageAiFlow']>,
-): NanoBananaFlowConfig {
-  const styleIds = row.styleIds
-  const parsedStyleIds =
-    Array.isArray(styleIds) && styleIds.every((x) => typeof x === 'string')
-      ? (styleIds as string[])
-      : undefined
-
-  const strength = row.imageReferenceStrength
-  const imageReferenceStrength: ImageReferenceStrength | undefined =
-    strength === 'LOW' || strength === 'MID' || strength === 'HIGH' ? strength : undefined
-
-  const pe = row.promptEnhance
-  const promptEnhance: 'OFF' | 'ON' | undefined = pe === 'OFF' || pe === 'ON' ? pe : undefined
-
-  return {
-    model: row.model,
-    prompt: row.prompt,
-    ...(parsedStyleIds && parsedStyleIds.length > 0 ? { styleIds: parsedStyleIds } : {}),
-    ...(imageReferenceStrength ? { imageReferenceStrength } : {}),
-    ...(promptEnhance ? { promptEnhance } : {}),
-  }
-}
-
-async function fetchFlowRow(slug: string): Promise<ImageAiFlowBySlugData['imageAiFlow']> {
-  const data = await graphqlQuery<ImageAiFlowBySlugData>(IMAGE_AI_FLOW_BY_SLUG_QUERY, {
-    slug,
-  })
-  return data.imageAiFlow
 }
 
 /** Flow-specific post-processing after resize + WebP encode. */
@@ -87,20 +50,13 @@ async function applyFlow(
     return buffer
   }
 
-  let row: ImageAiFlowBySlugData['imageAiFlow']
-  try {
-    row = await fetchFlowRow(flow)
-  } catch {
-    throw new Error('Could not load AI flow configuration')
-  }
-
-  if (!row?.isActive || !row.prompt || !row.model) {
+  const config = getBuiltinAiFlowConfig(flow)
+  if (!config) {
     return buffer
   }
 
-  const cfg = toNanoBananaConfig(row)
   try {
-    return await runRemoveBackground(buffer, cfg, width, height)
+    return await runRemoveBackground(buffer, config, width, height)
   } catch (err) {
     throw new LeonardoInvocationError(err instanceof Error ? err.message : 'Processing failed', {
       cause: err,

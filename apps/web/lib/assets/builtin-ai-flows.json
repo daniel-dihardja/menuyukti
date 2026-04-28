@@ -1,0 +1,8 @@
+[
+  {
+    "slug": "remove-background",
+    "displayName": "Remove Background",
+    "model": "gemini-2.5-flash-image",
+    "prompt": "Remove the background completely. Keep only the main subject centered on a solid white background (opaque, not transparent). Preserve edges and fine details of the subject."
+  }
+]
