@@ -170,7 +170,7 @@
       "q2": "Is my sales data shared with third parties?",
       "a2": "Your data powers your workspace and insights. We do not sell your data. See our Privacy Policy for details.",
       "q3": "Is Menuyukti only a chatbot?",
-      "a3": "Chat is how you collaborate, but Menuyukti is an agentic AI system at heart: ordered milestones run by agents produce stored, structured outputs—schedules, profiles, evaluations—not only messages. Agents call platform APIs when they need your data.",
+      "a3": "No. Menuyukti is an agentic AI system at heart: ordered milestones run by agents produce stored, structured outputs—schedules, profiles, evaluations—not a chat transcript. Chat is there to help you refine pipeline results, explore alternatives, and carry context between steps—not as the main surface where strategy happens. Agents call platform APIs when they need your data.",
       "q4": "Who is it for?",
       "a4": "Restaurant owners and operators, people hired by restaurants to run social media (staff, freelancers, or small agencies on your account), and multi-location brands that want analytics plus agentic automation in one place—not disconnected dashboards and ad hoc prompts.",
       "q5": "Can we collaborate across locations?",
@@ -189,13 +189,13 @@
         },
         "act": {
           "title": "3. Execute and refine",
-          "description": "Agents run the pipeline to produce schedules, promotion angles, and copy; then refine in chat and publish when you are ready."
+          "description": "Agents run the pipeline to produce schedules, promotion angles, and copy; use chat to refine those results and tune the pipeline, then publish when you are ready."
         }
       }
     },
     "why": {
       "title": "Why restaurants use Menuyukti",
-      "subtitle": "A workflow product built around agentic AI: milestones and milestone data, plus chat and artifacts—purpose-built for restaurant marketing, not a generic assistant pasted onto a dashboard.",
+      "subtitle": "A workflow product built around agentic AI: milestones and milestone data, artifacts, and chat to refine pipeline outputs—purpose-built for restaurant marketing, not a generic assistant pasted onto a dashboard.",
       "cards": {
         "insights": "Real sales data, not generic benchmarks",
         "waste": "From signals to publish-ready artifacts",
