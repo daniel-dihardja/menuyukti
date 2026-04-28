@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select'
+import { Textarea } from '@workspace/ui/components/textarea'
 import { cn } from '@workspace/ui/lib/utils'
 
 type AssetItem = {
@@ -51,6 +52,7 @@ export function AssetsClient() {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [selectedFlow, setSelectedFlow] = useState<string>('none')
   const [cardFlows, setCardFlows] = useState<Record<string, string>>({})
+  const [cardCustomPrompts, setCardCustomPrompts] = useState<Record<string, string>>({})
   const [generatingByName, setGeneratingByName] = useState<Record<string, boolean>>({})
   const [aiFlows, setAiFlows] = useState<Array<{ slug: string; displayName: string }>>([])
   const [flowsLoading, setFlowsLoading] = useState(true)
@@ -223,14 +225,23 @@ export function AssetsClient() {
 
   const onGenerate = async (item: AssetItem) => {
     const flow = cardFlows[item.name] ?? 'none'
+    const customPrompt = cardCustomPrompts[item.name]?.trim() ?? ''
     if (flow === 'none') return
+    if (flow === 'custom' && customPrompt.length === 0) {
+      showToast('error', t('toast.customPromptRequired'))
+      return
+    }
 
     setGeneratingByName((prev) => ({ ...prev, [item.name]: true }))
     try {
       const res = await fetch('/api/assets/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: item.name, flow }),
+        body: JSON.stringify({
+          name: item.name,
+          flow,
+          prompt: flow === 'custom' ? customPrompt : undefined,
+        }),
       })
       if (!res.ok) {
         const err = (await res.json().catch(() => ({}))) as { message?: string; code?: string }
@@ -598,6 +609,7 @@ export function AssetsClient() {
                         className="min-w-[var(--radix-select-trigger-width)]"
                       >
                         <SelectItem value="none">{t('upload.flow.none')}</SelectItem>
+                        <SelectItem value="custom">{t('grid.generate.customOption')}</SelectItem>
                         {aiFlows.map((flow) => (
                           <SelectItem key={`${item.name}-${flow.slug}`} value={flow.slug}>
                             {flow.displayName}
@@ -606,6 +618,26 @@ export function AssetsClient() {
                       </SelectContent>
                     </Select>
                   </Field>
+                  {(cardFlows[item.name] ?? 'none') === 'custom' ? (
+                    <Field className="gap-1.5">
+                      <FieldLabel
+                        htmlFor={`asset-custom-prompt-${item.name}`}
+                        className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
+                      >
+                        {t('grid.generate.customPromptLabel')}
+                      </FieldLabel>
+                      <Textarea
+                        id={`asset-custom-prompt-${item.name}`}
+                        value={cardCustomPrompts[item.name] ?? ''}
+                        onChange={(e) => {
+                          setCardCustomPrompts((prev) => ({ ...prev, [item.name]: e.target.value }))
+                        }}
+                        placeholder={t('grid.generate.customPromptPlaceholder')}
+                        rows={3}
+                        disabled={generatingByName[item.name]}
+                      />
+                    </Field>
+                  ) : null}
                   <Button
                     type="button"
                     size="sm"
@@ -613,7 +645,9 @@ export function AssetsClient() {
                     disabled={
                       flowsLoading ||
                       generatingByName[item.name] ||
-                      (cardFlows[item.name] ?? 'none') === 'none'
+                      (cardFlows[item.name] ?? 'none') === 'none' ||
+                      ((cardFlows[item.name] ?? 'none') === 'custom' &&
+                        (cardCustomPrompts[item.name]?.trim() ?? '').length === 0)
                     }
                     onClick={() => void onGenerate(item)}
                   >

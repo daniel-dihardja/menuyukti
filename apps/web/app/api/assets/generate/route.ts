@@ -18,9 +18,13 @@ import { runRemoveBackground } from '@/lib/leonardo'
 const bodySchema = z.object({
   name: z.string().min(1),
   flow: z.string().min(1),
+  prompt: z.string().optional(),
 })
 
 const MAX_FLOW_SLUG_LEN = 128
+const MAX_CUSTOM_PROMPT_LEN = 3000
+const CUSTOM_FLOW_SLUG = 'custom'
+const DEFAULT_CUSTOM_MODEL_FLOW = 'remove-background'
 
 function normalizeFlow(raw: unknown): string {
   const s = typeof raw === 'string' ? raw.trim() : ''
@@ -53,6 +57,7 @@ export async function POST(req: Request) {
 
   const { name } = parsed.data
   const flow = normalizeFlow(parsed.data.flow)
+  const customPrompt = parsed.data.prompt?.trim() ?? ''
   if (!isSafeAssetFilename(name)) {
     return NextResponse.json({ message: 'Invalid filename' }, { status: 400 })
   }
@@ -60,9 +65,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: 'Flow is required' }, { status: 400 })
   }
 
-  const config = getBuiltinAiFlowConfig(flow)
+  const config =
+    flow === CUSTOM_FLOW_SLUG
+      ? (() => {
+          if (!customPrompt) return null
+          if (customPrompt.length > MAX_CUSTOM_PROMPT_LEN) return null
+          const fallback = getBuiltinAiFlowConfig(DEFAULT_CUSTOM_MODEL_FLOW)
+          if (!fallback) return null
+          return {
+            ...fallback,
+            prompt: customPrompt,
+          }
+        })()
+      : getBuiltinAiFlowConfig(flow)
   if (!config) {
-    return NextResponse.json({ message: 'Unknown AI flow' }, { status: 400 })
+    return NextResponse.json(
+      { message: flow === CUSTOM_FLOW_SLUG ? 'Invalid custom prompt' : 'Unknown AI flow' },
+      { status: 400 },
+    )
   }
 
   const s3 = getS3Client()

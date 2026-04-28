@@ -535,6 +535,9 @@
       "generate": {
         "flowLabel": "Generate with",
         "flowPlaceholder": "Choose AI flow",
+        "customOption": "Custom",
+        "customPromptLabel": "Custom prompt",
+        "customPromptPlaceholder": "Describe how the generated image should look…",
         "button": "Generate",
         "generating": "Generating…"
       },
@@ -550,6 +553,7 @@
       "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
       "uploadPartial": "Some files couldn’t be uploaded. Check your images and try again.",
       "generated": "Generated image saved to your library",
+      "customPromptRequired": "Enter a prompt when using Custom flow.",
       "generateError": "Couldn’t generate a new image. Try again.",
       "loadError": "Couldn’t load your library. Refresh the page.",
       "flowsLoadError": "Couldn’t load AI flows. You can still upload without AI.",
