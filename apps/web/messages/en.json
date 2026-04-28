@@ -166,15 +166,13 @@
     "faq": {
       "title": "Common questions",
       "q1": "What data do I need to upload?",
-      "a1": "Typical POS or spreadsheet exports work—sales by item, category, or ticket over time. The GraphQL-backed workspace stores what you import so analytics and agents can use the same source of truth.",
-      "q2": "Is my sales data shared with third parties?",
-      "a2": "Your data powers your workspace and insights. We do not sell your data. See our Privacy Policy for details.",
+      "a1": "Start by uploading your POS sales report to unlock data-driven insights. Your POS system must be supported before you can upload, because each POS uses different column names that need to be normalized first. The list of supported POS systems will be shown on this page soon.",
       "q3": "Is Menuyukti only a chatbot?",
-      "a3": "No. Menuyukti is an agentic AI system at heart: ordered milestones run by agents produce stored, structured outputs—schedules, profiles, evaluations—not a chat transcript. Chat is there to help you refine pipeline results, explore alternatives, and carry context between steps—not as the main surface where strategy happens. Agents call platform APIs when they need your data.",
+      "a3": "No. Menuyukti is built as an agentic workflow platform, not just a chat window. AI agents run milestone pipelines to produce structured outputs like schedules, profiles, and evaluations you can reuse and improve over time. Chat helps you refine results and explore alternatives while your strategy stays grounded in workspace data.",
       "q4": "Who is it for?",
-      "a4": "Restaurant owners and operators, people hired by restaurants to run social media (staff, freelancers, or small agencies on your account), and multi-location brands that want analytics plus agentic automation in one place—not disconnected dashboards and ad hoc prompts.",
+      "a4": "Menuyukti is made for restaurant owners, operators, in-house social teams, freelancers, and small agencies supporting restaurant brands. It is especially useful for multi-location teams that want analytics and AI-powered execution in one connected workspace.",
       "q5": "Can we collaborate across locations?",
-      "a5": "Yes—share locations, workflows, milestones, and brand assets as your organization grows."
+      "a5": "Yes. Collaborate across locations by sharing workflows, milestones, and brand assets as your team grows."
     },
     "how": {
       "title": "How it works",
