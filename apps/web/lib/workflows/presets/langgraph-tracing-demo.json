@@ -6,7 +6,6 @@
       "order": 0,
       "title": "Campaign window and public holidays",
       "goal": "Using the Data tab: confirm the campaign start and end dates are present and correct, and list all public holidays in that window for this location's country (or state clearly if there are none).",
-      "dataTask": "manual",
       "data": "## Campaign window\n\n**Start date:** 01.05.2026\n**End date:** 31.05.2026\n\n## Public Holidays\n\n<!-- Populated when Run is executed -->\n",
       "passCriteria": [
         {

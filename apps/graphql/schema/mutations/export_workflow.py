@@ -29,27 +29,6 @@ def _milestone_order(data: object | None) -> int:
     return raw if isinstance(raw, int) else 0
 
 
-def _milestone_data_task(data: object | None) -> str:
-    if not isinstance(data, dict):
-        return "manual"
-    dt = data.get("dataTask")
-    if dt == "location_profile":
-        return "location_profile"
-    if dt == "instagram_campaign_schedule":
-        return "instagram_campaign_schedule"
-    if dt == "restaurant_brand_brief":
-        return "restaurant_brand_brief"
-    if dt == "social_campaign_calendar":
-        return "social_campaign_calendar"
-    if dt == "social_caption_batch":
-        return "social_caption_batch"
-    if dt == "visual_creative_brief":
-        return "visual_creative_brief"
-    if dt == "promotion_candidates":
-        return "promotion_candidates"
-    return "manual"
-
-
 def _derive_rail_status(
     pass_rows: list[dict[str, object]],
     result_summary: str | None,
@@ -131,7 +110,6 @@ def _serialize_milestone(children: list[Node], milestone: Node) -> dict[str, obj
         "order": _milestone_order(milestone.data),
         "passCriteria": pass_criteria,
         "status": status,
-        "dataTask": _milestone_data_task(milestone.data),
     }
     if goal_text is not None:
         out_m["goal"] = goal_text

@@ -50,14 +50,9 @@ Commands: [AGENTS.md](../../../AGENTS.md) § GraphQL API. Deep SQLAlchemy patter
 
 Example query/service touchpoints (not exhaustive): [`menu_heatmaps.py`](../../../apps/graphql/schema/queries/menu_heatmaps.py), [`services/menu_engineering.py`](../../../apps/graphql/services/menu_engineering.py), [`instagram_signals.py`](../../../apps/graphql/schema/queries/instagram_signals.py).
 
-## Workflow export / import and milestone `dataTask`
+## Workflow export / import
 
-If the web app adds a new milestone **`dataTask`** value, ensure **export/import** round-trips it:
-
-- [`schema/mutations/export_workflow.py`](../../../apps/graphql/schema/mutations/export_workflow.py)
-- [`schema/mutations/import_workflow.py`](../../../apps/graphql/schema/mutations/import_workflow.py)
-
-Coordinate with [`menuyukti-web`](../menuyukti-web/SKILL.md) for Zod enums and UI.
+Milestone snapshots are serialized in [`schema/mutations/export_workflow.py`](../../../apps/graphql/schema/mutations/export_workflow.py) and recreated from JSON in [`schema/mutations/import_workflow.py`](../../../apps/graphql/schema/mutations/import_workflow.py). Shape is documented in [`workflow_export_schema.json`](../../../apps/graphql/workflow_export_schema.json).
 
 ## Checklist (GraphQL-only)
 

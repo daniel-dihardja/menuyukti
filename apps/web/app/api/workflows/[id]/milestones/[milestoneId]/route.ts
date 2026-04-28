@@ -44,7 +44,6 @@ type RouteContext = {
 function mergeMilestoneNodeDataJson(
   prev: Record<string, unknown>,
   patch: {
-    dataTask?: 'manual'
     milestoneRunSkillMode?: 'auto' | 'fixed'
     milestoneRunSkillIds?: string[]
     presetId?: 'dates' | 'restaurant_brand_brief' | 'promotion_candidates' | 'scheduler'
@@ -52,9 +51,6 @@ function mergeMilestoneNodeDataJson(
   },
 ): Record<string, unknown> {
   const next = { ...prev }
-  if (patch.dataTask !== undefined) {
-    next.dataTask = patch.dataTask
-  }
   if (patch.milestoneRunSkillMode !== undefined) {
     next.milestoneRunSkillMode = patch.milestoneRunSkillMode
   }
@@ -247,7 +243,7 @@ async function syncGoalChild(
   }
 }
 
-/** Load persisted Data-tab markdown and milestone `dataTask` (same sources as the workflow page SSR). */
+/** Load persisted Data-tab payload and milestone run settings (same sources as the workflow page SSR). */
 export async function GET(_req: Request, context: RouteContext) {
   try {
     await connection()
@@ -333,12 +329,8 @@ export async function GET(_req: Request, context: RouteContext) {
     const mn = validated.milestoneNode
     const parsedMilestoneNodeData =
       mn.data != null && typeof mn.data === 'object' ? milestoneDataSchema.safeParse(mn.data) : null
-    let dataTask: z.infer<typeof milestoneDataSchema>['dataTask'] | null = null
     let legacyGoal: string | undefined
     if (parsedMilestoneNodeData?.success) {
-      if (parsedMilestoneNodeData.data.dataTask) {
-        dataTask = parsedMilestoneNodeData.data.dataTask
-      }
       legacyGoal = parsedMilestoneNodeData.data.goal
     }
 
@@ -418,7 +410,6 @@ export async function GET(_req: Request, context: RouteContext) {
     return NextResponse.json(
       {
         milestoneData,
-        dataTask,
         goal,
         passCriteria,
         milestoneRunSkillMode,
@@ -534,7 +525,6 @@ export async function PATCH(req: Request, context: RouteContext) {
 
     if (body.passCriteria === undefined) {
       if (
-        body.dataTask !== undefined ||
         body.presetId !== undefined ||
         body.milestoneRunSkillMode !== undefined ||
         body.milestoneRunSkillIds !== undefined ||
@@ -546,7 +536,6 @@ export async function PATCH(req: Request, context: RouteContext) {
             ? { ...(mn.data as Record<string, unknown>) }
             : {}
         const merged = mergeMilestoneNodeDataJson(prevData, {
-          dataTask: body.dataTask,
           presetId: body.presetId,
           milestoneRunSkillMode: body.milestoneRunSkillMode,
           milestoneRunSkillIds: body.milestoneRunSkillIds,
@@ -602,7 +591,6 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
 
     if (
-      body.dataTask !== undefined ||
       body.presetId !== undefined ||
       body.milestoneRunSkillMode !== undefined ||
       body.milestoneRunSkillIds !== undefined ||
@@ -614,7 +602,6 @@ export async function PATCH(req: Request, context: RouteContext) {
           ? { ...(mn.data as Record<string, unknown>) }
           : {}
       const merged = mergeMilestoneNodeDataJson(prevData, {
-        dataTask: body.dataTask,
         presetId: body.presetId,
         milestoneRunSkillMode: body.milestoneRunSkillMode,
         milestoneRunSkillIds: body.milestoneRunSkillIds,

@@ -1,5 +1,4 @@
 import type {
-  MilestoneDataTask,
   MilestoneRunSkillMode,
   PassCriteriaRow,
 } from '@/app/(protected)/workflows/_components/timeline/types'
@@ -28,7 +27,6 @@ export type MilestonePresetPassCriterionDraft = Pick<PassCriteriaRow, 'requireme
 
 export type MilestonePresetCreateFields = {
   name: string
-  dataTask: MilestoneDataTask
   presetId: MilestonePresetId
   milestoneData: MilestonedataValue
   milestoneInput?: MilestoneInput
@@ -52,7 +50,6 @@ export function getMilestonePresetCreateFields(
       return {
         presetId: 'dates',
         name: t('milestonePreset.dates.title'),
-        dataTask: 'manual',
         milestoneInput: {
           type: 'dates',
           value: {
@@ -87,7 +84,6 @@ export function getMilestonePresetCreateFields(
       return {
         presetId: 'restaurant_brand_brief',
         name: t('milestonePreset.restaurant_brand_brief.title'),
-        dataTask: 'manual',
         milestoneData: {
           venueSnapshot: {
             venueName: '',
@@ -130,7 +126,6 @@ export function getMilestonePresetCreateFields(
       return {
         presetId: 'promotion_candidates',
         name: t('milestonePreset.promotion_candidates.title'),
-        dataTask: 'manual',
         milestoneData: emptyPromotionCandidatesMilestoneData(
           t('milestonePreset.promotion_candidates.placementHint'),
         ) satisfies MilestonedataValue,
@@ -160,7 +155,6 @@ export function getMilestonePresetCreateFields(
       return {
         presetId: 'scheduler',
         name: t('milestonePreset.scheduler.title'),
-        dataTask: 'manual',
         milestoneData: emptySchedulerMilestoneData() satisfies MilestonedataValue,
         goal: t('milestonePreset.scheduler.goal'),
         milestoneRunSkillMode: 'fixed',

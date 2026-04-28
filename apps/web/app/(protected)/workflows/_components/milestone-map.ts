@@ -15,7 +15,6 @@ import {
 import type { AnyNode } from '@/lib/graphql/queries'
 
 import type {
-  MilestoneDataTask,
   MilestoneInput,
   MilestoneRunSkillMode,
   MilestonePresetId,
@@ -182,10 +181,6 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   const data = milestoneDataFromChildNodes(node.milestonedataNodes)
   const passCriteria = passCriteriaFromChildNodes(node.passCriteriaNodes)
   const resultMarkdown = resultMarkdownFromChildNodes(node.resultNodes)
-  let dataTask: MilestoneDataTask | undefined
-  if (parsed.success && parsed.data.dataTask === 'manual') {
-    dataTask = 'manual'
-  }
   const { milestoneRunSkillMode, milestoneRunSkillIds, presetId, milestoneInput } =
     milestoneRunSkillFieldsFromData(node.data)
   let normalizedData = data
@@ -236,7 +231,6 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
     title: node.name,
     goal,
     data: normalizedData,
-    ...(dataTask !== undefined ? { dataTask } : {}),
     milestoneRunSkillMode,
     milestoneRunSkillIds,
     presetId,

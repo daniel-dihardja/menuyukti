@@ -16,7 +16,6 @@
         {
           "order": 0,
           "title": "Define audience and offer",
-          "dataTask": "manual",
           "goal": "Agree on target guest and single primary offer.",
           "passCriteria": [
             { "requirement": "Offer is specific and measurable", "status": "open" },
@@ -26,7 +25,6 @@
         {
           "order": 1,
           "title": "Brand foundation",
-          "dataTask": "restaurant_brand_brief",
           "passCriteria": []
         }
       ]
@@ -43,7 +41,6 @@
           "title": "Kickoff",
           "order": 0,
           "goal": "Align on KPIs",
-          "dataTask": "manual",
           "data": "## Notes\nPrefilled markdown from milestonedata.",
           "status": "pending",
           "passCriteria": [{ "id": "201", "requirement": "KPIs documented", "status": "open" }],
@@ -142,20 +139,6 @@
         "goal": {
           "type": "string",
           "description": "Milestone-level goal text; creates a goal child node when non-empty after trim."
-        },
-        "dataTask": {
-          "type": "string",
-          "enum": [
-            "manual",
-            "location_profile",
-            "instagram_campaign_schedule",
-            "restaurant_brand_brief",
-            "social_campaign_calendar",
-            "social_caption_batch",
-            "visual_creative_brief",
-            "promotion_candidates"
-          ],
-          "description": "manual: user supplies milestone markdown (data). Other values: milestone Data uses the corresponding prepare pipeline (`apps/agents` milestone_run/skills and related flows; see apps/web milestone dataTask where applicable)."
         },
         "data": {
           "type": "string",
