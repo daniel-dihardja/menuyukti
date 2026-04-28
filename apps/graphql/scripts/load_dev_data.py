@@ -124,7 +124,7 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
         session.flush()
 
         location = Location(
-            name="Dev (Jan-Mar 2025)",
+            name="SNABB",
             city="Jakarta",
             country="Indonesia",
             currency="IDR",
@@ -134,22 +134,14 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
         session.add(location)
         session.flush()
 
-        # Seed a simple one-range schedule for all weekdays for local development.
-        for day in (
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday",
-            "sunday",
-        ):
+        # Mon–Fri 08:00–18:00; weekend rows omitted (UI treats missing days as closed).
+        for day in ("monday", "tuesday", "wednesday", "thursday", "friday"):
             session.add(
                 LocationOpeningHour(
                     location_id=location.id,
                     day_of_week=day,
-                    open_time=time(hour=9, minute=0),
-                    close_time=time(hour=22, minute=0),
+                    open_time=time(hour=8, minute=0),
+                    close_time=time(hour=18, minute=0),
                 )
             )
 
@@ -173,10 +165,10 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
                 location_id=location.id,
                 quick_profile=validate_and_normalize_quick_profile(
                     {
-                        "venueConcepts": ["restaurant"],
+                        "venueConcepts": ["cafe", "bistro"],
                         "socialGoals": ["awareness"],
                         "guestTags": ["families"],
-                        "locationFocus": ["lunch", "dinner"],
+                        "locationFocus": ["breakfast", "lunch"],
                         "tonePresets": ["warm"],
                         "videoComfort": True,
                     }
