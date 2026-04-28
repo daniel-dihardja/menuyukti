@@ -7,7 +7,12 @@ import { getAppCurrencyCode } from '@/lib/app-currency'
 import { routes } from '@/lib/routes'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { getCachedMenuEngineeringMatrix } from '@/lib/graphql/cached-queries'
-import { ANALYTICS_RUN_QUERY, type AnalyticsRunData } from '@/lib/graphql/queries'
+import {
+  ANALYTICS_RUN_QUERY,
+  MENU_ITEMS_CATALOG_QUERY,
+  type AnalyticsRunData,
+  type MenuItemsCatalogData,
+} from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 
 type PageProps = {
@@ -37,30 +42,73 @@ export default async function Page({ params }: PageProps) {
   if (!run) notFound()
 
   const matrixData = await getCachedMenuEngineeringMatrix(userId, id, String(run.locationId))
+  const menuCatalogData = await graphqlQuery<MenuItemsCatalogData>(
+    MENU_ITEMS_CATALOG_QUERY,
+    { locationId: run.locationId },
+    userId,
+    'MenuItemsCatalog',
+  )
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${analyticsId}`
   const currencyCode = getAppCurrencyCode()
 
-  // Enrich COGS rows with quantity/totalRevenue from the matrix
+  // Seed rows from matrix items (sales-extracted menus), then overlay existing COGS.
   const byMenu = new Map(
     matrixData.menuEngineeringMatrix?.items.map((row) => [
       row.menu,
-      { quantity: row.quantity, totalRevenue: row.totalRevenue },
+      {
+        menuName: row.menu,
+        quantity: row.quantity,
+        totalRevenue: row.totalRevenue,
+        menuCategory: row.menuCategory ?? null,
+      },
     ]) ?? [],
   )
-  const menuItems = run.menuItemCogs
-    .map((cog) => {
-      const extra = byMenu.get(cog.menu)
+
+  const cogsByMenu = new Map(run.menuItemCogs.map((cog) => [cog.menu, cog]))
+
+  let menuItems = Array.from(byMenu.values())
+    .map((row, index) => {
+      const existing = cogsByMenu.get(row.menuName)
       return {
-        id: cog.id,
-        menuName: cog.menu,
-        cogs: cog.cogs,
-        quantity: extra?.quantity ?? 0,
-        totalRevenue: extra?.totalRevenue ?? 0,
-        menuCategory: cog.menuCategory ?? null,
+        // Use stable synthetic negative IDs for rows that do not exist in menu_item_cogs yet.
+        id: existing?.id ?? -(index + 1),
+        menuName: row.menuName,
+        cogs: existing?.cogs ?? null,
+        quantity: row.quantity,
+        totalRevenue: row.totalRevenue,
+        menuCategory: existing?.menuCategory ?? row.menuCategory,
       }
     })
-    .sort((a, b) => b.quantity - a.quantity)
+    .concat(
+      run.menuItemCogs
+        .filter((cog) => !byMenu.has(cog.menu))
+        .map((cog) => ({
+          id: cog.id,
+          menuName: cog.menu,
+          cogs: cog.cogs,
+          quantity: 0,
+          totalRevenue: 0,
+          menuCategory: cog.menuCategory ?? null,
+        })),
+    )
+  if (menuItems.length === 0) {
+    const payload = menuCatalogData.menuItemsCatalog
+    if (payload && payload.analyticsRunId === id) {
+      menuItems = payload.items.map((item, index) => {
+        const parsedId = Number(item.id)
+        return {
+          id: Number.isFinite(parsedId) ? parsedId : -(index + 1),
+          menuName: item.name,
+          cogs: cogsByMenu.get(item.name)?.cogs ?? null,
+          quantity: 0,
+          totalRevenue: 0,
+          menuCategory: item.category || null,
+        }
+      })
+    }
+  }
+  menuItems = menuItems.sort((a, b) => b.quantity - a.quantity)
 
   const analyticsOptions: Array<{ id: number; name: string }> = []
 

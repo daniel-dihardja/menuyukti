@@ -595,6 +595,36 @@ export type MenuEngineeringMatrixData = {
   } | null
 }
 
+export const MENU_ITEMS_CATALOG_QUERY = `
+  query MenuItemsCatalog($locationId: Int!) {
+    menuItemsCatalog(locationId: $locationId) {
+      analyticsRunId
+      items {
+        id
+        name
+        category
+        categoryDetail
+        price
+        isActive
+      }
+    }
+  }
+`
+
+export type MenuItemsCatalogData = {
+  menuItemsCatalog: {
+    analyticsRunId: string
+    items: Array<{
+      id: string
+      name: string
+      category: string
+      categoryDetail: string | null
+      price: number
+      isActive: boolean
+    }>
+  } | null
+}
+
 export const MENU_HEATMAPS_QUERY = `
   query MenuHeatmaps($id: ID!, $locationId: ID) {
     menuHeatmaps(analyticsRunId: $id, locationId: $locationId) {
