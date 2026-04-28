@@ -103,8 +103,6 @@ Both flows ground the model in **GraphQL-backed product state**, but they use di
 | **Runtime milestone skills**   | `apps/agents/agents/core/milestone_run/skills/<skill_id>/SKILL.md` | Loaded by `skill_markdown.py`: YAML frontmatter (`name`, `description`, optional **`extra_tools`**) plus a markdown **body** that instructs the ReAct agent for that milestone. Path resolution: `skill_paths.py` (`get_milestone_run_skill_path`). Each skill must be registered in `skills.py` (`SKILL_REGISTRY`). |
 | **Repository / Cursor skills** | `.agents/skills/`                                                  | **Developer documentation** for humans and IDE agents (how to change GraphQL, web, agents, analytics). **Not executed at runtime.**                                                                                                                                                                                  |
 
-**Legacy note:** `packages/agent-skills` still exists for some **Prepare** fallbacks that reference an old `menuyukti` prefetch block. **New and migrated skills** live only under `milestone_run/skills/`; see [packages/agent-skills/README.md](packages/agent-skills/README.md).
-
 ## Tools (milestone run)
 
 Tools are assembled in order by `make_milestone_run_tools` (see [.agents/skills/menuyukti-agents/SKILL.md](.agents/skills/menuyukti-agents/SKILL.md)):
@@ -136,7 +134,6 @@ This table lists notable runtime/shared package directories, plus docs-only pack
 | `packages/typescript-config` | JSON                  | Shared TS config presets.                                                                                                                                                               |
 | `packages/eslint-config`     | JS                    | Shared ESLint presets for web and UI.                                                                                                                                                   |
 | `packages/url-safety`        | Python                | URL egress / safety utilities (workspace member in root `pyproject.toml`).                                                                                                              |
-| `packages/agent-skills`      | Python                | **Legacy** skill path resolution for old Prepare flows; prefer `milestone_run/skills` only for new work.                                                                                |
 | `packages/docs`              | Markdown docs         | Product/domain documentation (for example workflow model docs under `packages/docs/workflows/`); no runtime package consumed by app code.                                               |
 
 ## Related documentation

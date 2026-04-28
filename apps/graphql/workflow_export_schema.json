@@ -155,7 +155,7 @@
             "visual_creative_brief",
             "promotion_candidates"
           ],
-          "description": "manual: user supplies milestone markdown (data). Other values: milestone Data uses the corresponding prepare pipeline (milestone_run/skills or legacy agent_skills; see apps/web milestone dataTask enum)."
+          "description": "manual: user supplies milestone markdown (data). Other values: milestone Data uses the corresponding prepare pipeline (`apps/agents` milestone_run/skills and related flows; see apps/web milestone dataTask where applicable)."
         },
         "data": {
           "type": "string",
