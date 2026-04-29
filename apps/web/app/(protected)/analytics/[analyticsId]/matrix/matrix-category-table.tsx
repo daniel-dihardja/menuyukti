@@ -3,36 +3,18 @@
 import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { Badge } from '@workspace/ui/components/badge'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 import { formatCurrencyWithCode } from '@/lib/currency'
 import { SortableTable, useSortableColumns } from '@/components/sortable-table'
 import { TableCell, TableRow } from '@workspace/ui/components/table'
 import type { MatrixCategory, MatrixDisplayRow } from '@/lib/analytics/matrix-page-adapter'
 
-type SortKey = 'menuItem' | 'unitsSold' | 'revenue' | 'marginPct' | 'action'
-
-type ActionType = 'keep' | 'promote' | 'reprice' | 'remove'
+type SortKey = 'menuItem' | 'unitsSold' | 'revenue' | 'marginPct'
 
 const CATEGORY_BADGE_CLASS: Record<MatrixCategory, string> = {
   star: 'bg-emerald-600 text-white border-transparent',
   plow_horse: 'bg-amber-500 text-black border-transparent',
   puzzle: 'bg-sky-100 text-sky-800 border-sky-300',
   low_end: 'bg-rose-100 text-rose-700 border-rose-300',
-}
-
-function actionVariant(action: ActionType): 'default' | 'secondary' | 'destructive' | 'outline' {
-  switch (action) {
-    case 'remove':
-      return 'destructive'
-    case 'reprice':
-      return 'secondary'
-    case 'promote':
-      return 'default'
-    case 'keep':
-      return 'outline'
-    default:
-      return 'outline'
-  }
 }
 
 type Props = {
@@ -78,16 +60,15 @@ export function MatrixCategoryTable({ category, items, locale, currency }: Props
             { id: 'unitsSold', label: tTable('qty') },
             { id: 'revenue', label: tTable('revenue') },
             { id: 'marginPct', label: tTable('percentage') },
-            { id: 'action', label: tTable('action'), align: 'center', sortable: false },
           ]}
           sortKey={sortKey}
           sortDirection={sortDirection}
           onSort={toggleSort}
-          caption={`${tCategories(category)} menu items: Menu, Units sold, Revenue, Margin %, Action.`}
+          caption={`${tCategories(category)} menu items: Menu, Units sold, Revenue, Margin %.`}
         >
           {items.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="py-6 text-center text-sm text-muted-foreground">
+              <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
                 No items in this category.
               </TableCell>
             </TableRow>
@@ -106,33 +87,6 @@ export function MatrixCategoryTable({ category, items, locale, currency }: Props
                 </TableCell>
                 <TableCell className="px-3 py-2 text-right">
                   {(item.marginPct * 100).toFixed(1)}%
-                </TableCell>
-                <TableCell className="px-3 py-2 text-center">
-                  {item.action ? (
-                    item.actionReason ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Badge
-                            variant={actionVariant(item.action)}
-                            className="cursor-help tracking-wide"
-                            aria-label={`${tTable(`actions.${item.action}`)}. ${item.actionReason}`}
-                          >
-                            {tTable(`actions.${item.action}`)}
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs text-xs leading-relaxed">
-                          <p className="font-semibold">{tTable('actionReasonLabel')}</p>
-                          <p>{item.actionReason}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <Badge variant={actionVariant(item.action)} className="tracking-wide">
-                        {tTable(`actions.${item.action}`)}
-                      </Badge>
-                    )
-                  ) : (
-                    '—'
-                  )}
                 </TableCell>
               </TableRow>
             ))
