@@ -859,6 +859,21 @@
     "sales": {
       "title": "Sales Reports",
       "description": "Upload and manage sales report snapshots for each location to power analytics features.",
+      "uploadInfo": {
+        "title": "Required Excel report by POS",
+        "description": "Upload the matching report file format below so the system can parse your sales data correctly.",
+        "reportLabel": "Upload this report",
+        "reports": {
+          "esb": {
+            "pos": "ESB",
+            "report": "SalesRecapitulationDetail.xlsx"
+          },
+          "quino": {
+            "pos": "Quino",
+            "report": "ItemSalesReport.xlsx"
+          }
+        }
+      },
       "branchLabel": "Location",
       "branchPlaceholder": "Select a location",
       "branchDescription": "Select a location to load and manage its sales reports.",
