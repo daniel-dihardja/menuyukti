@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import * as d3 from 'd3'
+import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 
 import { formatCurrencyWithCode } from '@/lib/currency'
 import type { MenuItemsDisplayRow } from '@/lib/analytics/menu-items-page-adapter'
@@ -24,9 +25,25 @@ type BubbleData = {
 }
 
 type BubbleHierarchyDatum = BubbleData | { children: BubbleData[] }
+type BubbleSizeMetric = 'quantity' | 'revenue'
 
 const CHART_SIZE = 928
 const CHART_MARGIN = 1
+// Intentionally soft palette for category background separation in bubbles.
+const CATEGORY_BUBBLE_COLORS = [
+  '#CFE8FF',
+  '#CFF6E8',
+  '#FFE3C2',
+  '#DDD3FF',
+  '#FFCFE1',
+  '#C9F1EA',
+  '#FFF0B8',
+  '#D7E9D9',
+  '#D6E6FF',
+  '#E7D6FF',
+  '#FFDCCF',
+  '#CCF8E4',
+] as const
 
 function normalizeIdPart(value: string): string {
   return value.trim().replaceAll('.', '_').replaceAll(' ', '_')
@@ -65,6 +82,7 @@ function buildBubbleData(rows: MenuItemsDisplayRow[]): BubbleData[] {
 export function MenuItemsBubbleChart({ rows, locale, currency }: Props) {
   const t = useTranslations('analytics.menuItems')
   const formatNumber = useMemo(() => d3.format(',d'), [])
+  const [sizeMetric, setSizeMetric] = useState<BubbleSizeMetric>('quantity')
 
   const chart = useMemo(() => {
     const data = buildBubbleData(rows)
@@ -72,7 +90,10 @@ export function MenuItemsBubbleChart({ rows, locale, currency }: Props) {
       return null
     }
 
-    const color = d3.scaleOrdinal(d3.schemeTableau10)
+    const categoryDomain = Array.from(new Set(data.map((item) => item.group))).sort((a, b) =>
+      a.localeCompare(b),
+    )
+    const color = d3.scaleOrdinal<string, string>(categoryDomain, CATEGORY_BUBBLE_COLORS)
     const pack = d3
       .pack<BubbleHierarchyDatum>()
       .size([CHART_SIZE - CHART_MARGIN * 2, CHART_SIZE - CHART_MARGIN * 2])
@@ -80,7 +101,10 @@ export function MenuItemsBubbleChart({ rows, locale, currency }: Props) {
 
     const root = pack(
       d3.hierarchy<BubbleHierarchyDatum>({ children: data }).sum((d) => {
-        return 'quantity' in d ? d.quantity : 0
+        if (!('quantity' in d)) {
+          return 0
+        }
+        return sizeMetric === 'quantity' ? d.quantity : d.totalRevenue
       }),
     )
 
@@ -90,7 +114,7 @@ export function MenuItemsBubbleChart({ rows, locale, currency }: Props) {
       leaves,
       color,
     }
-  }, [rows])
+  }, [rows, sizeMetric])
 
   if (!chart) {
     return (
@@ -102,13 +126,31 @@ export function MenuItemsBubbleChart({ rows, locale, currency }: Props) {
 
   return (
     <div className="overflow-hidden rounded-lg border bg-card p-2 shadow-sm">
+      <div className="flex items-center justify-between px-2 pb-2 pt-1">
+        <p className="text-xs font-medium text-muted-foreground">{t('chart.sizeMetricLabel')}</p>
+        <ToggleGroup
+          type="single"
+          value={sizeMetric}
+          onValueChange={(value) => {
+            if (value === 'quantity' || value === 'revenue') {
+              setSizeMetric(value)
+            }
+          }}
+          aria-label={t('chart.sizeMetricLabel')}
+        >
+          <ToggleGroupItem value="quantity">{t('chart.sizeMetricQuantity')}</ToggleGroupItem>
+          <ToggleGroupItem value="revenue">{t('chart.sizeMetricRevenue')}</ToggleGroupItem>
+        </ToggleGroup>
+      </div>
       <svg
         width={CHART_SIZE}
         height={CHART_SIZE}
         viewBox={`${-CHART_MARGIN} ${-CHART_MARGIN} ${CHART_SIZE} ${CHART_SIZE}`}
         className="h-auto w-full max-w-full"
         role="img"
-        aria-label={t('chart.ariaLabel')}
+        aria-label={
+          sizeMetric === 'quantity' ? t('chart.ariaLabelQuantity') : t('chart.ariaLabelRevenue')
+        }
       >
         <g>
           {chart.leaves.map((leaf) => {
@@ -126,7 +168,7 @@ export function MenuItemsBubbleChart({ rows, locale, currency }: Props) {
                 <circle
                   r={r}
                   fill={chart.color(data.group)}
-                  fillOpacity={0.7}
+                  fillOpacity={0.95}
                   stroke="currentColor"
                   strokeOpacity={0.08}
                 />
@@ -149,7 +191,9 @@ export function MenuItemsBubbleChart({ rows, locale, currency }: Props) {
           })}
         </g>
       </svg>
-      <p className="px-2 pb-2 pt-1 text-xs text-muted-foreground">{t('chart.caption')}</p>
+      <p className="px-2 pb-2 pt-1 text-xs text-muted-foreground">
+        {sizeMetric === 'quantity' ? t('chart.captionQuantity') : t('chart.captionRevenue')}
+      </p>
     </div>
   )
 }

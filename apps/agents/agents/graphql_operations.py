@@ -9,8 +9,8 @@ from __future__ import annotations
 DEFAULT_NODES_FIRST = 500
 
 NODES_QUERY = """
-query Nodes($locationId: Int!, $nodeType: String, $parentId: ID, $first: Int) {
-  nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId, first: $first) {
+query Nodes($locationId: Int!, $nodeType: String, $parentId: ID, $first: Int, $afterId: ID) {
+  nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId, first: $first, afterId: $afterId) {
     id
     name
     nodeType

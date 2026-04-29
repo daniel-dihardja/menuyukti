@@ -2,8 +2,8 @@ import { revalidateTag } from 'next/cache'
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createLocationSchema } from './schema'
-import { ZodError } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { apiError, apiErrorFromUnknown } from '@/lib/api/error-response'
 import { graphqlLocationsDataCacheTag } from '@/lib/graphql/cache-tags'
 import {
   CREATE_LOCATION_MUTATION,
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     await connection()
     const { isAuthenticated, userId } = await auth()
     if (!isAuthenticated || !userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return apiError('UNAUTHORIZED', 'Unauthorized', 401)
     }
 
     const json = await req.json()
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 
     const location = data.createLocation
     if (!location) {
-      return NextResponse.json({ message: 'Failed to create location' }, { status: 500 })
+      return apiError('INTERNAL_ERROR', 'Failed to create location', 500)
     }
 
     if (openingHours) {
@@ -81,17 +81,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(location, { status: 201 })
   } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          message: 'Invalid input',
-          issues: error.issues,
-        },
-        { status: 400 },
-      )
-    }
-
     console.error(error)
-    return NextResponse.json({ message: 'Failed to create location' }, { status: 500 })
+    return apiErrorFromUnknown(error, 'Failed to create location')
   }
 }

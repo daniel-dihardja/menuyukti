@@ -36,7 +36,23 @@ class LocationType:
         if not user_id:
             return None
         location_id = int(self.id)
-        with SessionLocal() as session:
-            if not is_location_owner(session, location_id, user_id):
+        if isinstance(info.context, dict):
+            owner_cache = info.context.setdefault("_location_owner_cache", {})
+            brief_cache = info.context.setdefault("_manual_brief_cache", {})
+            owner_key = (location_id, user_id)
+            if owner_key in owner_cache and not owner_cache[owner_key]:
                 return None
-            return load_manual_brief_type(session, location_id)
+            if location_id in brief_cache:
+                return brief_cache[location_id]
+        with SessionLocal() as session:
+            is_owner = is_location_owner(session, location_id, user_id)
+            if isinstance(info.context, dict):
+                owner_cache = info.context.setdefault("_location_owner_cache", {})
+                owner_cache[(location_id, user_id)] = is_owner
+            if not is_owner:
+                return None
+            manual = load_manual_brief_type(session, location_id)
+            if isinstance(info.context, dict):
+                brief_cache = info.context.setdefault("_manual_brief_cache", {})
+                brief_cache[location_id] = manual
+            return manual

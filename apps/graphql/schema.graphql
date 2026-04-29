@@ -171,6 +171,12 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](https:/
 """
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
+"""Owner-provided click-first brief hints; not AI-generated."""
+type LocationManualBriefInputType {
+  locationId: Int!
+  quickProfile: JSON!
+}
+
 type LocationSocialSettingsType {
   locationId: Int!
   tone: String
@@ -194,6 +200,12 @@ type LocationType {
   currency: String
   nodeId: ID
   workspaceId: ID
+  openingHours: [OpeningHourType!]!
+
+  """
+  Owner-provided click-first brief hints. Not AI-generated — see locationSocialSettings for AI output.
+  """
+  manualBriefInput: LocationManualBriefInputType
 }
 
 """Menu engineering fields surfaced for Instagram hero/avoid copy."""
@@ -223,6 +235,7 @@ type MenuCatalogItemType {
   category: String!
   categoryDetail: String
   price: Float!
+  quantity: Int!
   description: String
   isActive: Boolean!
 }
@@ -310,6 +323,14 @@ input MenuItemCogsUpdateInput {
   cogs: Float!
 }
 
+input MenuItemCogsUpsertInput {
+  menuName: String!
+  cogs: Float!
+  menuCategory: String = null
+  menuCategoryDetail: String = null
+  currency: String = null
+}
+
 """
 A milestone node plus its passcriteria, goal, milestonedata, and result children.
 """
@@ -343,12 +364,20 @@ type Mutation {
   startMilestoneAgentRun(runId: String!, milestoneId: ID!, workflowId: ID = null, traceparent: String = null): Boolean!
   completeMilestoneAgentRun(runId: String!, status: String!, summary: JSON = null, externalTraceId: String = null, externalTraceUrl: String = null, timeline: JSON = null, errorMessage: String = null): Boolean!
   removeWorkspaceMember(workspaceId: ID!, clerkUserId: String!): Boolean!
+  upsertMenuItemCogsBulk(analyticsRunId: ID!, items: [MenuItemCogsUpsertInput!]!): [MenuItemCogsType!]!
   updateMenuItemCogsBulk(updates: [MenuItemCogsUpdateInput!]!): [MenuItemCogsType!]!
   createImageAiFlow(slug: String!, displayName: String!, prompt: String!, model: String!, promptEnhance: String = null, imageReferenceStrength: String = null, styleIds: JSON = null, isActive: Boolean! = true, sortOrder: Int! = 0): ImageAiFlowType!
   updateImageAiFlow(slug: String!, newSlug: String, displayName: String, prompt: String, model: String, promptEnhance: String, imageReferenceStrength: String, styleIds: JSON, isActive: Boolean, sortOrder: Int): ImageAiFlowType!
   deleteApiAdapterTool(id: ID!): Boolean!
+  deleteAnalyticsRun(analyticsRunId: ID!): Boolean!
   deleteImageAiFlow(slug: String!): Boolean!
   updateApiAdapterTool(id: ID!, name: String, description: String, url: String, isActive: Boolean): ApiAdapterToolType!
+  updateLocation(id: ID!, name: String, street: String, city: String, country: String, currency: String, openingHours: [OpeningHourInput!]): LocationType!
+
+  """
+  Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings.
+  """
+  updateLocationManualBriefInput(locationId: Int!, quickProfile: JSON!): LocationManualBriefInputType!
 }
 
 """
@@ -374,6 +403,19 @@ type NormalizedLineItem {
   orderTime: DateTime!
   menuCategory: String!
   menuCategoryDetail: String!
+}
+
+input OpeningHourInput {
+  dayOfWeek: String!
+  openTime: String!
+  closeTime: String!
+}
+
+"""Opening hours for one weekday."""
+type OpeningHourType {
+  dayOfWeek: String!
+  openTime: String!
+  closeTime: String!
 }
 
 type OperatingProfileType {
@@ -537,7 +579,7 @@ type Query {
   Schedule plan for a Scheduler milestone. Requires a prior Dates milestone with structured start/end date data in the same workflow.
   """
   campaignSchedulePlan(workflowId: ID!, milestoneId: ID!, locationId: Int!, analyticsRunId: ID = null): CampaignSchedulePlanType
-  workflowExports(locationId: Int!): [WorkflowExportType!]!
+  workflowExports(locationId: Int!, first: Int = null): [WorkflowExportType!]!
 
   """
   Load a workflow node, its milestones (ordered like `nodes`), and each milestone's passcriteria/goal/milestonedata/result children. Returns null if the id is missing, not a workflow, or not owned by the caller.
@@ -547,10 +589,15 @@ type Query {
   """
   All locations the current user can access (direct owner or workspace member).
   """
-  locations: [LocationType!]!
+  locations(first: Int = null): [LocationType!]!
 
   """Fetch one location by id if the caller has access."""
   location(id: ID!): LocationType
+
+  """
+  Owner click-first brief hints for a location. Empty quickProfile when unset. Not AI-generated — see locationSocialSettings for AI output.
+  """
+  locationManualBriefInput(locationId: Int!): LocationManualBriefInputType
 
   """
   List nodes for a location, optionally filtered by nodeType and/or parentId. Results are paginated with `first` (default and max 500). When parentId is omitted, use `afterId` (last-seen node id) for cursor pagination in primary-key-desc order (aligned with creation order for autoincrement ids).
@@ -587,6 +634,11 @@ type Query {
   Distinct menu items from the latest analytics run for a location: aggregated from order lines (category, avg unit price). Returns null when there is no run or no order data.
   """
   menuItemsCatalog(locationId: Int!): MenuCatalogPayloadType
+
+  """
+  Distinct menu items from a specific analytics run: aggregated from order lines (quantity, category, avg unit price). Returns null when run is missing/unauthorized or has no order data.
+  """
+  menuItemsCatalogForRun(analyticsRunId: ID!): MenuCatalogPayloadType
 
   """
   Return per-menu promotion signals for an analytics run: volume and revenue, optional BCG-style menu-engineering metrics when COGS allow, and peak hour/day from demand heatmaps. When locationId is set, the run must belong to that location (otherwise returns null).
@@ -630,7 +682,7 @@ type Query {
   """
   priorMilestonesMilestoneData(workflowId: ID!, milestoneId: ID!, locationId: Int!): String!
   myWorkspace: WorkspaceType
-  workspaceMembers(workspaceId: ID!): [WorkspaceMembershipType!]!
+  workspaceMembers(workspaceId: ID!, first: Int = null): [WorkspaceMembershipType!]!
   imageAiFlows(includeInactive: Boolean! = false): [ImageAiFlowType!]!
   imageAiFlow(slug: String!): ImageAiFlowType
 }

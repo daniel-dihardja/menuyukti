@@ -2,7 +2,7 @@ PYTHON=uv run python
 UV=uv run
 UVICORN=uv run uvicorn
 
-.PHONY: install run dev test lint format typecheck clean
+.PHONY: install run dev test lint format typecheck check-graphql clean
 
 install:
 	uv sync --all-groups
@@ -24,6 +24,9 @@ format:
 
 typecheck:
 	uv run --group dev mypy server.py agents models routers
+
+check-graphql:
+	PYTHONPATH=../.. $(PYTHON) scripts/check_graphql_operations.py
 
 clean:
 	rm -rf __pycache__

@@ -8,11 +8,11 @@ from typing import Any, Literal
 
 import httpx
 from agents_app.agents.core.milestone_eval.graphql_client import (
-    create_result_node,
     delete_node,
     fetch_milestone_children,
     fetch_prior_milestones_data_for_eval,
     update_passcriteria_status,
+    upsert_result_node,
 )
 from agents_app.agents.core.milestone_eval.prompts import (
     EVAL_SYSTEM,
@@ -202,10 +202,13 @@ async def store_result(
         state["user_id"],
         client=client,
     )
+    existing_result_id: str | None = None
     for ch in children:
         if _node_type(ch) == "result":
             rid = str(ch.get("id", ""))
-            if rid:
+            if rid and existing_result_id is None:
+                existing_result_id = rid
+            elif rid:
                 await delete_node(rid, state["user_id"], client=client)
 
     evaluated = state.get("evaluated", [])
@@ -226,11 +229,12 @@ async def store_result(
         "total": total,
         "criteria": criteria_out,
     }
-    node = await create_result_node(
-        state["milestone_id"],
-        state["location_id"],
-        data,
-        state["user_id"],
+    node = await upsert_result_node(
+        result_node_id=existing_result_id,
+        milestone_id=state["milestone_id"],
+        location_id=state["location_id"],
+        data=data,
+        user_id=state["user_id"],
         client=client,
     )
     nid = str(node.get("id", ""))
