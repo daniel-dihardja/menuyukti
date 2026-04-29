@@ -100,13 +100,13 @@ export default async function LandingPage() {
     {
       title: t('featureHighlights.cards.workflowTitle'),
       description: t('featureHighlights.cards.workflowDescription'),
-      image: '/images/landing-workflow.svg',
+      image: '/images/landing-workflow.png',
       alt: t('featureHighlights.cards.workflowAlt'),
     },
     {
       title: t('featureHighlights.cards.promotionTitle'),
       description: t('featureHighlights.cards.promotionDescription'),
-      image: '/images/landing-promotion.svg',
+      image: '/images/landing-promotion.png',
       alt: t('featureHighlights.cards.promotionAlt'),
     },
   ] as const
