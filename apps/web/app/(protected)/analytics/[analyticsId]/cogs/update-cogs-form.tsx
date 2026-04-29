@@ -24,7 +24,15 @@ import {
   TableHeader,
   TableRow,
 } from '@workspace/ui/components/table'
+import { Slider } from '@workspace/ui/components/slider'
 import { formatCurrencyInput, getCurrencyLocale, parseCurrencyInput } from '@/lib/currency'
+
+const WE_STEP = 0.01
+
+function clampWe(value: number): number {
+  if (!Number.isFinite(value)) return 0
+  return Math.min(1, Math.max(0, value))
+}
 
 type MenuItem = {
   id: number
@@ -60,6 +68,13 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
     const initial: Record<number, string> = {}
     for (const item of menuItems) {
       initial[item.id] = item.cogs === null ? '' : String(item.cogs)
+    }
+    return initial
+  })
+  const [weValues, setWeValues] = useState<Record<number, number>>(() => {
+    const initial: Record<number, number> = {}
+    for (const item of menuItems) {
+      initial[item.id] = item.cogs !== null && item.price > 0 ? clampWe(item.cogs / item.price) : 0
     }
     return initial
   })
@@ -231,6 +246,16 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
                     }
                     return next
                   })
+                  setWeValues((prev) => {
+                    const next = { ...prev }
+                    for (const item of menuItems) {
+                      const value = cogsByName.get(item.menuName.toLowerCase())
+                      if (value !== undefined && value !== null && item.price > 0) {
+                        next[item.id] = clampWe(value / item.price)
+                      }
+                    }
+                    return next
+                  })
                 } catch (err) {
                   setError(err instanceof Error ? err.message : t('errors.unknown'))
                 } finally {
@@ -269,33 +294,75 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
                 {formatCurrencyInput(item.price, currencyCode, locale)}
               </TableCell>
               <TableCell>
-                <div className="relative">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                    {currencyCode}
-                  </span>
+                <div className="flex flex-col gap-2">
+                  <div className="relative">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                      {currencyCode}
+                    </span>
 
-                  <Input
-                    id={`cogs-${item.id}`}
-                    name={`cogs-${item.id}`}
-                    type="text"
-                    inputMode="decimal"
-                    value={
-                      activeInputId === item.id
-                        ? (cogsValues[item.id] ?? '')
-                        : formatDisplayValue(cogsValues[item.id] ?? '')
-                    }
-                    onChange={(event) =>
-                      setCogsValues((prev) => ({
-                        ...prev,
-                        [item.id]: event.target.value,
-                      }))
-                    }
-                    onFocus={() => setActiveInputId(item.id)}
-                    onBlur={() => setActiveInputId((prev) => (prev === item.id ? null : prev))}
-                    placeholder="0.00"
-                    disabled={loading}
-                    className="w-full pl-8 text-right tabular-nums"
-                  />
+                    <Input
+                      id={`cogs-${item.id}`}
+                      name={`cogs-${item.id}`}
+                      type="text"
+                      inputMode="decimal"
+                      value={
+                        activeInputId === item.id
+                          ? (cogsValues[item.id] ?? '')
+                          : formatDisplayValue(cogsValues[item.id] ?? '')
+                      }
+                      onChange={(event) => {
+                        const raw = event.target.value
+                        setCogsValues((prev) => ({
+                          ...prev,
+                          [item.id]: raw,
+                        }))
+                        setWeValues((prev) => {
+                          const trimmed = raw.trim()
+                          if (trimmed === '') {
+                            return { ...prev, [item.id]: 0 }
+                          }
+                          const parsed = parseCurrencyInput(raw, currencyCode, locale)
+                          if (parsed === null) {
+                            return prev
+                          }
+                          if (item.price <= 0) {
+                            return { ...prev, [item.id]: 0 }
+                          }
+                          return { ...prev, [item.id]: clampWe(parsed / item.price) }
+                        })
+                      }}
+                      onFocus={() => setActiveInputId(item.id)}
+                      onBlur={() => setActiveInputId((prev) => (prev === item.id ? null : prev))}
+                      placeholder="0.00"
+                      disabled={loading}
+                      className="w-full pl-8 text-right tabular-nums"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Slider
+                      id={`we-${item.id}`}
+                      value={[weValues[item.id] ?? 0]}
+                      min={0}
+                      max={1}
+                      step={WE_STEP}
+                      disabled={loading || item.price <= 0}
+                      onValueChange={(vals) => {
+                        const next = vals[0]
+                        if (next === undefined) return
+                        setWeValues((prev) => ({ ...prev, [item.id]: next }))
+                        const cogsAmount = Math.round(next * item.price)
+                        setCogsValues((prev) => ({
+                          ...prev,
+                          [item.id]: String(cogsAmount),
+                        }))
+                      }}
+                      aria-label={t('table.weAria', { menu: item.menuName })}
+                      className="flex-1"
+                    />
+                    <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+                      {Math.round((weValues[item.id] ?? 0) * 100)}%
+                    </span>
+                  </div>
                 </div>
               </TableCell>
             </TableRow>
@@ -350,7 +417,12 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
                             <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
                           </Button>
                         </TableHead>
-                        <TableHead className="w-[240px] text-right">{t('table.cogs')}</TableHead>
+                        <TableHead className="w-[320px] text-right">
+                          <span className="block">{t('table.cogs')}</span>
+                          <span className="block text-xs font-normal text-muted-foreground">
+                            {t('table.we')}
+                          </span>
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>{group.items.map((item) => renderRow(item))}</TableBody>
@@ -405,7 +477,12 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
                             <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
                           </Button>
                         </TableHead>
-                        <TableHead className="w-[240px] text-right">{t('table.cogs')}</TableHead>
+                        <TableHead className="w-[320px] text-right">
+                          <span className="block">{t('table.cogs')}</span>
+                          <span className="block text-xs font-normal text-muted-foreground">
+                            {t('table.we')}
+                          </span>
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

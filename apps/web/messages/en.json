@@ -1292,6 +1292,8 @@
         "quantity": "Quantity",
         "price": "Price",
         "cogs": "COGS",
+        "we": "COGS ratio (we)",
+        "weAria": "COGS ratio for {menu}",
         "uncategorizedTitle": "Uncategorized Menu Items"
       },
       "actions": {
