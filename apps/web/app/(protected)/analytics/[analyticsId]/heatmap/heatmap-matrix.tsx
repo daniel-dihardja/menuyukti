@@ -116,7 +116,7 @@ export function HeatmapMatrix({
 
                   return (
                     <TableCell
-                      key={i}
+                      key={`${row.key}-${columnLabels[i] ?? i}`}
                       className={clsx(
                         'text-center text-[11px] font-medium',
                         density === 'compact' ? 'h-8' : 'h-10',

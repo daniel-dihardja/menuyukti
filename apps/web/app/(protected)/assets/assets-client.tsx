@@ -1,13 +1,24 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { Download, ImageIcon, Loader2, Maximize2, Sparkles, Trash2, Upload } from 'lucide-react'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
 import { Card } from '@workspace/ui/components/card'
 import { Dialog, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
 import { Field, FieldLabel } from '@workspace/ui/components/field'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import {
   Select,
   SelectContent,
@@ -48,6 +59,8 @@ function assetDownloadHref(name: string): string {
 
 export function AssetsClient() {
   const t = useTranslations('assets')
+  const tImageFlows = useTranslations('imageFlows')
+  const format = useFormatter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [items, setItems] = useState<AssetItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -55,6 +68,7 @@ export function AssetsClient() {
   const [dragActive, setDragActive] = useState(false)
   const [toast, setToast] = useState<ToastState>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [pendingDeleteName, setPendingDeleteName] = useState<string | null>(null)
   const [selectedFlow, setSelectedFlow] = useState<string>('none')
   const [cardFlows, setCardFlows] = useState<Record<string, string>>({})
   const [cardCustomPrompts, setCardCustomPrompts] = useState<Record<string, string>>({})
@@ -212,7 +226,6 @@ export function AssetsClient() {
   }
 
   const onDelete = async (name: string) => {
-    if (!window.confirm(t('grid.deleteConfirm'))) return
     setDeleting(name)
     try {
       const res = await fetch('/api/assets/delete', {
@@ -279,16 +292,41 @@ export function AssetsClient() {
       {toast ? (
         <div
           role="status"
+          aria-live="polite"
           className={cn(
             'fixed top-4 right-4 z-50 max-w-sm rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300',
             toast.kind === 'success'
-              ? 'border-emerald-500/30 bg-emerald-950/90 text-emerald-50'
-              : 'border-red-500/30 bg-red-950/90 text-red-50',
+              ? 'border-border bg-card text-foreground'
+              : 'border-destructive/30 bg-destructive/10 text-destructive',
           )}
         >
           {toast.message}
         </div>
       ) : null}
+
+      <AlertDialog
+        open={pendingDeleteName !== null}
+        onOpenChange={(open) => !open && setPendingDeleteName(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('grid.delete')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('grid.deleteConfirm')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tImageFlows('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!pendingDeleteName) return
+                void onDelete(pendingDeleteName)
+                setPendingDeleteName(null)
+              }}
+            >
+              {t('grid.delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={previewItem !== null} onOpenChange={(open) => !open && setPreviewItem(null)}>
         {previewItem ? (
@@ -309,7 +347,7 @@ export function AssetsClient() {
                   {formatBytes(previewItem.size)}
                   <span className="mx-1.5 text-border">·</span>
                   <time dateTime={previewItem.createdAt}>
-                    {new Date(previewItem.createdAt).toLocaleDateString(undefined, {
+                    {format.dateTime(new Date(previewItem.createdAt), {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric',
@@ -485,10 +523,10 @@ export function AssetsClient() {
                 key={i}
                 className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-muted/40"
               >
-                <div className="aspect-[4/3] animate-pulse bg-muted" />
-                <div className="space-y-2 p-3">
-                  <div className="h-3 w-2/3 animate-pulse rounded bg-muted" />
-                  <div className="h-2 w-1/3 animate-pulse rounded bg-muted" />
+                <Skeleton className="aspect-[4/3]" />
+                <div className="flex flex-col gap-2 p-3">
+                  <Skeleton className="h-3 w-2/3" />
+                  <Skeleton className="h-2 w-1/3" />
                 </div>
               </div>
             ))}
@@ -584,7 +622,7 @@ export function AssetsClient() {
                           aria-label={t('grid.delete')}
                           onClick={(e) => {
                             e.stopPropagation()
-                            void onDelete(item.name)
+                            setPendingDeleteName(item.name)
                           }}
                         >
                           {deleting === item.name ? (
@@ -599,7 +637,7 @@ export function AssetsClient() {
                   <div className="flex items-center justify-between border-t border-border/50 px-3 py-2 text-xs text-muted-foreground">
                     <span className="truncate">{sizeWithDimensions}</span>
                     <time dateTime={item.createdAt}>
-                      {new Date(item.createdAt).toLocaleDateString(undefined, {
+                      {format.dateTime(new Date(item.createdAt), {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',

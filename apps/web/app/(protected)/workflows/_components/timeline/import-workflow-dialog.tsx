@@ -222,11 +222,7 @@ export function ImportWorkflowDialog({
                 <h3 className="font-medium text-foreground text-sm" id="import-presets-heading">
                   {t('importDialogPresetsHeading')}
                 </h3>
-                <ul
-                  aria-labelledby="import-presets-heading"
-                  className="flex flex-col gap-2"
-                  role="listbox"
-                >
+                <ul aria-labelledby="import-presets-heading" className="flex flex-col gap-2">
                   {WORKFLOW_IMPORT_PRESETS.map((preset) => {
                     const key = presetSelectionKey(preset.id)
                     const title = titleFromPayload(preset.payload, t('importDialogFallbackName'))
@@ -236,7 +232,7 @@ export function ImportWorkflowDialog({
                     return (
                       <li key={preset.id}>
                         <button
-                          aria-selected={selected}
+                          aria-pressed={selected}
                           className={cn(
                             'w-full rounded-lg border p-3 text-left transition-colors',
                             'hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -245,7 +241,6 @@ export function ImportWorkflowDialog({
                               : 'border-border bg-card',
                           )}
                           onClick={() => setSelectedImportKey(key)}
-                          role="option"
                           type="button"
                         >
                           <div className="flex flex-wrap items-center gap-2">
@@ -280,11 +275,7 @@ export function ImportWorkflowDialog({
                 ) : exportsList.length === 0 ? (
                   <p className="text-muted-foreground text-sm">{t('importDialogExportsEmpty')}</p>
                 ) : (
-                  <ul
-                    aria-labelledby="import-exports-heading"
-                    className="flex flex-col gap-2"
-                    role="listbox"
-                  >
+                  <ul aria-labelledby="import-exports-heading" className="flex flex-col gap-2">
                     {exportsList.map((row) => {
                       const key = exportSelectionKey(row.id)
                       const title = titleFromPayload(row.payload, t('importDialogFallbackName'))
@@ -294,7 +285,7 @@ export function ImportWorkflowDialog({
                       return (
                         <li key={row.id}>
                           <button
-                            aria-selected={selected}
+                            aria-pressed={selected}
                             className={cn(
                               'w-full rounded-lg border p-3 text-left transition-colors',
                               'hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -303,7 +294,6 @@ export function ImportWorkflowDialog({
                                 : 'border-border bg-card',
                             )}
                             onClick={() => setSelectedImportKey(key)}
-                            role="option"
                             type="button"
                           >
                             <div className="font-medium text-foreground text-sm">{title}</div>
