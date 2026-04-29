@@ -15,6 +15,8 @@ import {
 } from '@/lib/assets/storage'
 import { runRemoveBackground } from '@/lib/leonardo'
 
+export const runtime = 'nodejs'
+
 const bodySchema = z.object({
   name: z.string().min(1),
   flow: z.string().min(1),

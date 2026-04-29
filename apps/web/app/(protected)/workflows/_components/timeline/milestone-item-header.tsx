@@ -1,6 +1,5 @@
 'use client'
 
-import type { RefObject } from 'react'
 import { useTranslations } from 'next-intl'
 import { ArrowDown, ArrowUp, Check, ChevronDown, Pencil, Play, Trash2 } from 'lucide-react'
 
@@ -23,95 +22,53 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
 
-import type { TimelineMilestone } from './types'
+import { useTimelineItemHeader } from './timeline-item-header-context'
 
 export type MilestoneItemHeaderProps = {
-  milestone: TimelineMilestone
-  editingTitle: boolean
-  setEditingTitle: (open: boolean) => void
-  draftTitle: string
-  setDraftTitle: (title: string) => void
-  titleEditInputId: string
-  titleEditInputRef: RefObject<HTMLInputElement | null>
-  titleEditContainerRef: RefObject<HTMLDivElement | null>
-  renaming: boolean
   open: boolean
-  onRenameMilestone?: (id: string, name: string) => Promise<boolean>
-  onRunMilestone?: (id: string) => void | Promise<void>
-  onMoveMilestone?: (id: string, direction: 'up' | 'down') => void | Promise<void>
-  isFirst: boolean
-  isLast: boolean
-  isMoving: boolean
-  isMilestoneRunning: boolean
-  isChatBusy: boolean
-  runningMilestoneId: string | null
-  showDelete: boolean
-  onDeleteMilestone?: (id: string) => void | Promise<void>
-  isDeleting: boolean
-  handleSaveTitle: () => Promise<void>
 }
 
-export function MilestoneItemHeader({
-  milestone,
-  editingTitle,
-  setEditingTitle,
-  draftTitle,
-  setDraftTitle,
-  titleEditInputId,
-  titleEditInputRef,
-  titleEditContainerRef,
-  renaming,
-  open,
-  onRenameMilestone,
-  onRunMilestone,
-  onMoveMilestone,
-  isFirst,
-  isLast,
-  isMoving,
-  isMilestoneRunning,
-  isChatBusy,
-  runningMilestoneId,
-  showDelete,
-  onDeleteMilestone,
-  isDeleting,
-  handleSaveTitle,
-}: MilestoneItemHeaderProps) {
+export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
   const t = useTranslations('analytics.campaigns.chat')
+  const { milestone, position, runState, deleteState, titleEditor, movement, actions } =
+    useTimelineItemHeader()
+  const canRun = Boolean(actions.run) && runState !== 'blocked'
+  const isRunning = runState === 'running'
 
   return (
-    <CardHeader className={cn('gap-1.5', editingTitle && 'gap-x-8')}>
+    <CardHeader className={cn('gap-1.5', titleEditor.editing && 'gap-x-8')}>
       <CardTitle className="flex min-w-0 items-center gap-1 text-base leading-snug">
-        {editingTitle ? (
-          <div className="flex min-w-0 flex-1 items-center gap-1" ref={titleEditContainerRef}>
+        {titleEditor.editing ? (
+          <div className="flex min-w-0 flex-1 items-center gap-1" ref={titleEditor.containerRef}>
             <Input
-              ref={titleEditInputRef}
-              id={titleEditInputId}
+              ref={titleEditor.inputRef}
+              id={titleEditor.inputId}
               aria-label={t('editMilestoneTitleAriaLabel')}
               className="h-8 min-w-0 flex-1 text-base font-semibold"
-              disabled={renaming}
-              onChange={(e) => setDraftTitle(e.target.value)}
+              disabled={titleEditor.renaming}
+              onChange={(e) => titleEditor.setDraft(e.target.value)}
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => {
                 e.stopPropagation()
                 if (e.key === 'Escape') {
-                  setEditingTitle(false)
-                  setDraftTitle(milestone.title)
+                  titleEditor.setEditing(false)
+                  titleEditor.setDraft(milestone.title)
                 }
                 if (e.key === 'Enter') {
                   e.preventDefault()
-                  void handleSaveTitle()
+                  void titleEditor.save()
                 }
               }}
               onPointerDown={(e) => e.stopPropagation()}
-              value={draftTitle}
+              value={titleEditor.draft}
             />
             <Button
               aria-label={t('saveMilestoneTitleAriaLabel')}
               className="size-9 shrink-0"
-              disabled={renaming || !draftTitle.trim()}
+              disabled={titleEditor.renaming || !titleEditor.draft.trim()}
               onClick={(e) => {
                 e.stopPropagation()
-                void handleSaveTitle()
+                void titleEditor.save()
               }}
               onPointerDown={(e) => e.stopPropagation()}
               size="icon"
@@ -125,14 +82,14 @@ export function MilestoneItemHeader({
           <div className="flex min-w-0 flex-1 items-center">
             <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden">
               <span className="min-w-0 truncate">{milestone.title}</span>
-              {onRenameMilestone ? (
+              {titleEditor.canRename ? (
                 <Button
                   aria-label={t('editMilestoneTitleAriaLabel')}
                   className="size-8 shrink-0 text-muted-foreground"
                   onClick={(e) => {
                     e.stopPropagation()
-                    setDraftTitle(milestone.title)
-                    setEditingTitle(true)
+                    titleEditor.setDraft(milestone.title)
+                    titleEditor.setEditing(true)
                   }}
                   onPointerDown={(e) => e.stopPropagation()}
                   size="icon"
@@ -147,40 +104,40 @@ export function MilestoneItemHeader({
         )}
       </CardTitle>
       <CardAction className="flex items-center gap-1">
-        {onRunMilestone ? (
+        {actions.run ? (
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="inline-flex">
                 <Button
-                  aria-busy={isMilestoneRunning ? true : undefined}
+                  aria-busy={isRunning ? true : undefined}
                   aria-label={t('milestonePlayAriaLabel')}
                   className="size-9 shrink-0 rounded-full"
-                  disabled={editingTitle || isChatBusy || runningMilestoneId !== null}
+                  disabled={titleEditor.editing || !canRun}
                   onClick={(e) => {
                     e.stopPropagation()
-                    void onRunMilestone(milestone.id)
+                    void actions.run?.(milestone.id)
                   }}
                   onPointerDown={(e) => e.stopPropagation()}
                   size="icon"
                   type="button"
                   variant="default"
                 >
-                  {isMilestoneRunning ? <Spinner /> : <Play aria-hidden data-icon="inline-start" />}
+                  {isRunning ? <Spinner /> : <Play aria-hidden data-icon="inline-start" />}
                 </Button>
               </span>
             </TooltipTrigger>
             <TooltipContent side="bottom">{t('milestonePlayTooltip')}</TooltipContent>
           </Tooltip>
         ) : null}
-        {onMoveMilestone ? (
+        {movement.move ? (
           <>
             <Button
               aria-label={t('moveMilestoneUp')}
               className="size-9 shrink-0 text-muted-foreground"
-              disabled={isFirst || isMoving || editingTitle}
+              disabled={position === 'first' || movement.moving || titleEditor.editing}
               onClick={(e) => {
                 e.stopPropagation()
-                void onMoveMilestone(milestone.id, 'up')
+                void movement.move?.(milestone.id, 'up')
               }}
               onPointerDown={(e) => e.stopPropagation()}
               size="icon"
@@ -192,10 +149,10 @@ export function MilestoneItemHeader({
             <Button
               aria-label={t('moveMilestoneDown')}
               className="size-9 shrink-0 text-muted-foreground"
-              disabled={isLast || isMoving || editingTitle}
+              disabled={position === 'last' || movement.moving || titleEditor.editing}
               onClick={(e) => {
                 e.stopPropagation()
-                void onMoveMilestone(milestone.id, 'down')
+                void movement.move?.(milestone.id, 'down')
               }}
               onPointerDown={(e) => e.stopPropagation()}
               size="icon"
@@ -206,13 +163,13 @@ export function MilestoneItemHeader({
             </Button>
           </>
         ) : null}
-        {showDelete && onDeleteMilestone ? (
+        {deleteState !== 'hidden' && actions.deleteMilestone ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
                 aria-label={t('deleteMilestoneAriaLabel')}
                 className="size-9 shrink-0 text-muted-foreground hover:text-destructive"
-                disabled={isDeleting || editingTitle}
+                disabled={deleteState === 'deleting' || titleEditor.editing}
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 size="icon"
@@ -240,16 +197,16 @@ export function MilestoneItemHeader({
                 <AlertDialogAction
                   className={cn(
                     buttonVariants({ variant: 'destructive' }),
-                    isDeleting && 'inline-flex items-center gap-2',
+                    deleteState === 'deleting' && 'inline-flex items-center gap-2',
                   )}
-                  disabled={isDeleting}
+                  disabled={deleteState === 'deleting'}
                   onClick={(e) => {
                     e.stopPropagation()
-                    void onDeleteMilestone(milestone.id)
+                    void actions.deleteMilestone?.(milestone.id)
                   }}
                   type="button"
                 >
-                  {isDeleting ? (
+                  {deleteState === 'deleting' ? (
                     <>
                       <Spinner data-icon="inline-start" />
                       {t('deleteMilestoneConfirmAction')}
@@ -267,7 +224,7 @@ export function MilestoneItemHeader({
             aria-expanded={open}
             aria-label={open ? t('milestoneCollapseDetails') : t('milestoneExpandDetails')}
             className="size-9 shrink-0"
-            disabled={editingTitle}
+            disabled={titleEditor.editing}
             onClick={(e) => e.stopPropagation()}
             size="icon"
             type="button"

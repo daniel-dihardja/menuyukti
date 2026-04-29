@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 
 import { routes } from '@/lib/routes'
-import { listShopImagesForSlug } from '@/lib/shop/s3-shop-images'
+import { getCachedShopImagesForSlug } from '@/lib/shop/s3-shop-images'
 import { resolveShopImages } from '@/lib/shop/resolve-shop-images'
 
 import type { ShopProduct } from './shop-catalog'
@@ -17,7 +17,7 @@ export async function ShopProductGrid({ products }: Props) {
 
   const rows = await Promise.all(
     products.map(async (p) => {
-      const s3 = await listShopImagesForSlug(p.slug)
+      const s3 = await getCachedShopImagesForSlug(p.slug)
       const resolved = resolveShopImages(p, s3)
       return { product: p, resolved }
     }),

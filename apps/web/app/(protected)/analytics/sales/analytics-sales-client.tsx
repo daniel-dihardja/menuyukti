@@ -20,9 +20,11 @@ type Branch = {
 
 type Props = {
   branches: Branch[]
+  initialLocationId: number | null
+  initialAnalytics: Array<{ id: number; name: string }>
 }
 
-export function AnalyticsSalesClient({ branches }: Props) {
+export function AnalyticsSalesClient({ branches, initialLocationId, initialAnalytics }: Props) {
   const t = useTranslations('analytics.sales')
   const router = useRouter()
 
@@ -30,13 +32,24 @@ export function AnalyticsSalesClient({ branches }: Props) {
 
   useEffect(() => {
     if (locationId !== null) return
+    if (initialLocationId !== null) {
+      setLocationId(initialLocationId)
+      return
+    }
     if (branches.length !== 1) return
     const [onlyBranch] = branches
     if (!onlyBranch) return
     setLocationId(onlyBranch.id)
-  }, [locationId, branches, setLocationId])
+  }, [locationId, initialLocationId, branches, setLocationId])
 
-  const { analytics: uploads, loading, refetch } = useLocationAnalytics(locationId)
+  const {
+    analytics: uploads,
+    loading,
+    refetch,
+  } = useLocationAnalytics(locationId, {
+    initialLocationId,
+    initialAnalytics,
+  })
   const { uploadFile, uploading, status, message, pos } = useUploadAnalytics(locationId, refetch)
   const { deleteAnalytics } = useDeleteAnalytics({
     locationId,

@@ -9,6 +9,8 @@ import {
 } from '@/lib/graphql/queries'
 import { createCampaignSchema } from './schema'
 
+export const runtime = 'nodejs'
+
 export async function POST(req: Request) {
   try {
     await connection()

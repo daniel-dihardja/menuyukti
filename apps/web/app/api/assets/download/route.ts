@@ -5,6 +5,8 @@ import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 
 import { getS3Bucket, getS3Client, isSafeAssetFilename, userObjectKey } from '@/lib/assets/storage'
 
+export const runtime = 'nodejs'
+
 export async function GET(req: Request) {
   const authz = await requireMenuyuktiAdminApi()
   if (!authz.ok) return authz.response

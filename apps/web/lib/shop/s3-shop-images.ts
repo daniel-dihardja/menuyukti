@@ -1,3 +1,4 @@
+import { cacheLife, cacheTag, revalidateTag } from 'next/cache'
 import { ListObjectsV2Command } from '@aws-sdk/client-s3'
 
 import { getPresignedGetUrl, getS3Bucket, getS3Client } from '@/lib/assets/storage'
@@ -25,6 +26,10 @@ export function isShopSlugAllowed(slug: string): boolean {
 
 export function shopPrefixForSlug(slug: string): string {
   return `${SHOP_IMAGE_PREFIX}/${slug}/`
+}
+
+function shopImagesCacheTag(slug: string): string {
+  return `shop-images:${slug}`
 }
 
 /**
@@ -85,4 +90,19 @@ export async function listShopImagesForSlug(slug: string): Promise<ShopS3Image[]
   }
 
   return out
+}
+
+/**
+ * Cached S3 image listing for shop product pages.
+ * Keep TTL short because URLs are presigned and time-bound.
+ */
+export async function getCachedShopImagesForSlug(slug: string): Promise<ShopS3Image[]> {
+  'use cache'
+  cacheTag(shopImagesCacheTag(slug))
+  cacheLife({ revalidate: 60 })
+  return listShopImagesForSlug(slug)
+}
+
+export function revalidateShopImagesForSlug(slug: string): void {
+  revalidateTag(shopImagesCacheTag(slug), 'max')
 }
