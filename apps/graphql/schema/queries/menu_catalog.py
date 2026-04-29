@@ -5,7 +5,7 @@ from __future__ import annotations
 import strawberry
 
 from graphql.data_sources import AnalyticsRun, SessionLocal
-from graphql.schema.auth import is_location_owner, user_id_from_info
+from graphql.schema.auth import get_analytics_run_if_owner, is_location_owner, user_id_from_info
 from graphql.services.menu_catalog import build_menu_catalog
 
 
@@ -18,6 +18,7 @@ class MenuCatalogItemType:
     category: str
     categoryDetail: str | None
     price: float
+    quantity: int
     description: str | None
     isActive: bool
 
@@ -64,6 +65,47 @@ class MenuCatalogQuery:
                     category=str(r["category"]),
                     categoryDetail=str(r["category_detail"]) if r.get("category_detail") else None,
                     price=float(r["price"]),
+                    quantity=int(r.get("quantity", 0)),
+                    description=None,
+                    isActive=bool(r.get("is_active", True)),
+                )
+                for r in raw_items
+            ]
+            return MenuCatalogPayloadType(
+                analyticsRunId=strawberry.ID(str(run.id)),
+                items=items,
+            )
+
+    @strawberry.field(
+        description=(
+            "Distinct menu items from a specific analytics run: "
+            "aggregated from order lines (quantity, category, avg unit price). "
+            "Returns null when run is missing/unauthorized or has no order data."
+        )
+    )
+    def menu_items_catalog_for_run(
+        self,
+        info: strawberry.Info,
+        analytics_run_id: strawberry.ID,
+    ) -> MenuCatalogPayloadType | None:
+        user_id = user_id_from_info(info)
+        with SessionLocal() as session:
+            run = get_analytics_run_if_owner(session, int(analytics_run_id), user_id)
+            if run is None:
+                return None
+
+            raw_items = build_menu_catalog(session, run)
+            if not raw_items:
+                return None
+
+            items = [
+                MenuCatalogItemType(
+                    id=strawberry.ID(str(r["id"])),
+                    name=str(r["name"]),
+                    category=str(r["category"]),
+                    categoryDetail=str(r["category_detail"]) if r.get("category_detail") else None,
+                    price=float(r["price"]),
+                    quantity=int(r.get("quantity", 0)),
                     description=None,
                     isActive=bool(r.get("is_active", True)),
                 )

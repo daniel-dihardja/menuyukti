@@ -1287,7 +1287,12 @@
         "importing": "Importing..."
       },
       "table": {
-        "title": "Edit COGS per menu item"
+        "title": "Edit COGS per menu item",
+        "menuName": "Menu Item",
+        "quantity": "Quantity",
+        "price": "Price",
+        "cogs": "COGS",
+        "uncategorizedTitle": "Uncategorized Menu Items"
       },
       "actions": {
         "save": "Save COGS",

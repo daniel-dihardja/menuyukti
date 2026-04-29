@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { ArrowUpDown } from 'lucide-react'
 
 import { Button } from '@workspace/ui/components/button'
 import { Input } from '@workspace/ui/components/input'
@@ -15,6 +16,14 @@ import {
   SelectValue,
 } from '@workspace/ui/components/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@workspace/ui/components/table'
 import { formatCurrencyInput, getCurrencyLocale, parseCurrencyInput } from '@/lib/currency'
 
 type MenuItem = {
@@ -23,6 +32,7 @@ type MenuItem = {
   cogs: number | null
   quantity: number
   totalRevenue: number
+  price: number
   menuCategory: string | null
 }
 
@@ -44,6 +54,8 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
     return analyticsOptions[0]?.id ?? null
   })
   const [importing, setImporting] = useState(false)
+  const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'price'>('name')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [cogsValues, setCogsValues] = useState<Record<number, string>>(() => {
     const initial: Record<number, string> = {}
     for (const item of menuItems) {
@@ -54,6 +66,66 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
   const [activeInputId, setActiveInputId] = useState<number | null>(null)
 
   const options = useMemo(() => analyticsOptions, [analyticsOptions])
+  const groupedMenuItems = useMemo(() => {
+    const categorized = new Map<string, MenuItem[]>()
+    const uncategorized: MenuItem[] = []
+
+    for (const item of menuItems) {
+      const category = item.menuCategory?.trim()
+      if (!category) {
+        uncategorized.push(item)
+        continue
+      }
+
+      const existing = categorized.get(category)
+      if (existing) {
+        existing.push(item)
+      } else {
+        categorized.set(category, [item])
+      }
+    }
+
+    return {
+      categorized: Array.from(categorized.entries()).map(([category, items]) => ({
+        category,
+        items,
+      })),
+      uncategorized,
+    }
+  }, [menuItems])
+  const sortedGroupedMenuItems = useMemo(() => {
+    const sortItems = (items: MenuItem[]) =>
+      [...items].sort((a, b) => {
+        if (sortBy === 'quantity') {
+          return sortDirection === 'asc' ? a.quantity - b.quantity : b.quantity - a.quantity
+        }
+
+        if (sortBy === 'price') {
+          return sortDirection === 'asc' ? a.price - b.price : b.price - a.price
+        }
+
+        const nameCompare = a.menuName.localeCompare(b.menuName)
+        return sortDirection === 'asc' ? nameCompare : -nameCompare
+      })
+
+    return {
+      categorized: groupedMenuItems.categorized.map((group) => ({
+        category: group.category,
+        items: sortItems(group.items),
+      })),
+      uncategorized: sortItems(groupedMenuItems.uncategorized),
+    }
+  }, [groupedMenuItems, sortBy, sortDirection])
+
+  function toggleSort(column: 'name' | 'quantity' | 'price') {
+    if (sortBy === column) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+      return
+    }
+
+    setSortBy(column)
+    setSortDirection('asc')
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -172,69 +244,186 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('table.title')}</CardTitle>
-        </CardHeader>
+      {(() => {
+        let rowNumber = 1
 
-        <CardContent className="space-y-4">
-          {menuItems.map((item, index) => (
-            <div
+        const renderRow = (item: MenuItem) => {
+          const currentRowNumber = rowNumber
+          rowNumber += 1
+
+          return (
+            <TableRow
               key={item.id}
-              className="
-                px-2 py-2
-                transition-colors
-                focus-within:bg-muted
-                focus-within:ring-1 focus-within:ring-primary/40
-                sm:grid sm:grid-cols-[minmax(0,1fr)_8rem] sm:items-center sm:gap-2
-              "
+              className="transition-colors focus-within:bg-muted focus-within:ring-1 focus-within:ring-primary/40"
             >
-              <div className="mb-2 flex min-w-0 items-center gap-2 sm:mb-0">
-                <span className="text-sm text-muted-foreground tabular-nums">{index + 1}.</span>
-
+              <TableCell className="text-sm text-muted-foreground tabular-nums">
+                {currentRowNumber}.
+              </TableCell>
+              <TableCell>
                 <Label htmlFor={`cogs-${item.id}`} className="truncate">
                   {item.menuName}
                 </Label>
-              </div>
+              </TableCell>
+              <TableCell className="text-right tabular-nums">{item.quantity}</TableCell>
+              <TableCell className="text-right tabular-nums">
+                {formatCurrencyInput(item.price, currencyCode, locale)}
+              </TableCell>
+              <TableCell>
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    {currencyCode}
+                  </span>
 
-              <div className="relative">
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                  {currencyCode}
-                </span>
+                  <Input
+                    id={`cogs-${item.id}`}
+                    name={`cogs-${item.id}`}
+                    type="text"
+                    inputMode="decimal"
+                    value={
+                      activeInputId === item.id
+                        ? (cogsValues[item.id] ?? '')
+                        : formatDisplayValue(cogsValues[item.id] ?? '')
+                    }
+                    onChange={(event) =>
+                      setCogsValues((prev) => ({
+                        ...prev,
+                        [item.id]: event.target.value,
+                      }))
+                    }
+                    onFocus={() => setActiveInputId(item.id)}
+                    onBlur={() => setActiveInputId((prev) => (prev === item.id ? null : prev))}
+                    placeholder="0.00"
+                    disabled={loading}
+                    className="w-full pl-8 text-right tabular-nums"
+                  />
+                </div>
+              </TableCell>
+            </TableRow>
+          )
+        }
 
-                <Input
-                  id={`cogs-${item.id}`}
-                  name={`cogs-${item.id}`}
-                  type="text"
-                  inputMode="decimal"
-                  value={
-                    activeInputId === item.id
-                      ? (cogsValues[item.id] ?? '')
-                      : formatDisplayValue(cogsValues[item.id] ?? '')
-                  }
-                  onChange={(event) =>
-                    setCogsValues((prev) => ({
-                      ...prev,
-                      [item.id]: event.target.value,
-                    }))
-                  }
-                  onFocus={() => setActiveInputId(item.id)}
-                  onBlur={() => setActiveInputId((prev) => (prev === item.id ? null : prev))}
-                  placeholder="0.00"
-                  disabled={loading}
-                  className="w-full pl-8 text-right tabular-nums"
-                />
-              </div>
-            </div>
-          ))}
+        return (
+          <div className="space-y-6">
+            {sortedGroupedMenuItems.categorized.map((group) => (
+              <Card key={group.category}>
+                <CardHeader>
+                  <CardTitle>{group.category}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[60px]">#</TableHead>
+                        <TableHead>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="-ml-3 h-8"
+                            onClick={() => toggleSort('name')}
+                          >
+                            {t('table.menuName')}
+                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+                          </Button>
+                        </TableHead>
+                        <TableHead className="w-[140px] text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="ml-auto h-8"
+                            onClick={() => toggleSort('quantity')}
+                          >
+                            {t('table.quantity')}
+                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+                          </Button>
+                        </TableHead>
+                        <TableHead className="w-[160px] text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="ml-auto h-8"
+                            onClick={() => toggleSort('price')}
+                          >
+                            {t('table.price')}
+                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+                          </Button>
+                        </TableHead>
+                        <TableHead className="w-[240px] text-right">{t('table.cogs')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>{group.items.map((item) => renderRow(item))}</TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            ))}
 
-          {error && (
-            <p className="text-sm text-destructive" role="alert" aria-live="assertive">
-              {error}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+            {sortedGroupedMenuItems.uncategorized.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('table.uncategorizedTitle')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[60px]">#</TableHead>
+                        <TableHead>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="-ml-3 h-8"
+                            onClick={() => toggleSort('name')}
+                          >
+                            {t('table.menuName')}
+                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+                          </Button>
+                        </TableHead>
+                        <TableHead className="w-[140px] text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="ml-auto h-8"
+                            onClick={() => toggleSort('quantity')}
+                          >
+                            {t('table.quantity')}
+                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+                          </Button>
+                        </TableHead>
+                        <TableHead className="w-[160px] text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="ml-auto h-8"
+                            onClick={() => toggleSort('price')}
+                          >
+                            {t('table.price')}
+                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+                          </Button>
+                        </TableHead>
+                        <TableHead className="w-[240px] text-right">{t('table.cogs')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedGroupedMenuItems.uncategorized.map((item) => renderRow(item))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {error && (
+              <p className="text-sm text-destructive" role="alert" aria-live="assertive">
+                {error}
+              </p>
+            )}
+          </div>
+        )
+      })()}
 
       <div className="flex justify-end">
         <Button type="submit" disabled={loading} className="w-full sm:w-auto">

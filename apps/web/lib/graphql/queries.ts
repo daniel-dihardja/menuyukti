@@ -605,6 +605,7 @@ export const MENU_ITEMS_CATALOG_QUERY = `
         category
         categoryDetail
         price
+        quantity
         isActive
       }
     }
@@ -620,6 +621,39 @@ export type MenuItemsCatalogData = {
       category: string
       categoryDetail: string | null
       price: number
+      quantity: number
+      isActive: boolean
+    }>
+  } | null
+}
+
+export const MENU_ITEMS_CATALOG_FOR_RUN_QUERY = `
+  query MenuItemsCatalogForRun($analyticsRunId: ID!) {
+    menuItemsCatalogForRun(analyticsRunId: $analyticsRunId) {
+      analyticsRunId
+      items {
+        id
+        name
+        category
+        categoryDetail
+        price
+        quantity
+        isActive
+      }
+    }
+  }
+`
+
+export type MenuItemsCatalogForRunData = {
+  menuItemsCatalogForRun: {
+    analyticsRunId: string
+    items: Array<{
+      id: string
+      name: string
+      category: string
+      categoryDetail: string | null
+      price: number
+      quantity: number
       isActive: boolean
     }>
   } | null

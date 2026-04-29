@@ -9,9 +9,9 @@ import { graphqlQuery } from '@/lib/graphql/client'
 import { getCachedMenuEngineeringMatrix } from '@/lib/graphql/cached-queries'
 import {
   ANALYTICS_RUN_QUERY,
-  MENU_ITEMS_CATALOG_QUERY,
+  MENU_ITEMS_CATALOG_FOR_RUN_QUERY,
   type AnalyticsRunData,
-  type MenuItemsCatalogData,
+  type MenuItemsCatalogForRunData,
 } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 
@@ -42,11 +42,11 @@ export default async function Page({ params }: PageProps) {
   if (!run) notFound()
 
   const matrixData = await getCachedMenuEngineeringMatrix(userId, id, String(run.locationId))
-  const menuCatalogData = await graphqlQuery<MenuItemsCatalogData>(
-    MENU_ITEMS_CATALOG_QUERY,
-    { locationId: run.locationId },
+  const menuCatalogData = await graphqlQuery<MenuItemsCatalogForRunData>(
+    MENU_ITEMS_CATALOG_FOR_RUN_QUERY,
+    { analyticsRunId: id },
     userId,
-    'MenuItemsCatalog',
+    'MenuItemsCatalogForRun',
   )
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${analyticsId}`
@@ -60,6 +60,7 @@ export default async function Page({ params }: PageProps) {
         menuName: row.menu,
         quantity: row.quantity,
         totalRevenue: row.totalRevenue,
+        price: row.quantity > 0 ? row.totalRevenue / row.quantity : 0,
         menuCategory: row.menuCategory ?? null,
       },
     ]) ?? [],
@@ -77,6 +78,7 @@ export default async function Page({ params }: PageProps) {
         cogs: existing?.cogs ?? null,
         quantity: row.quantity,
         totalRevenue: row.totalRevenue,
+        price: row.price,
         menuCategory: existing?.menuCategory ?? row.menuCategory,
       }
     })
@@ -89,11 +91,12 @@ export default async function Page({ params }: PageProps) {
           cogs: cog.cogs,
           quantity: 0,
           totalRevenue: 0,
+          price: 0,
           menuCategory: cog.menuCategory ?? null,
         })),
     )
   if (menuItems.length === 0) {
-    const payload = menuCatalogData.menuItemsCatalog
+    const payload = menuCatalogData.menuItemsCatalogForRun
     if (payload && payload.analyticsRunId === id) {
       menuItems = payload.items.map((item, index) => {
         const parsedId = Number(item.id)
@@ -101,8 +104,9 @@ export default async function Page({ params }: PageProps) {
           id: Number.isFinite(parsedId) ? parsedId : -(index + 1),
           menuName: item.name,
           cogs: cogsByMenu.get(item.name)?.cogs ?? null,
-          quantity: 0,
-          totalRevenue: 0,
+          quantity: item.quantity,
+          totalRevenue: item.price * item.quantity,
+          price: item.price,
           menuCategory: item.category || null,
         }
       })
