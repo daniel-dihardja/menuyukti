@@ -532,6 +532,15 @@
         "title": "No images yet",
         "description": "Upload your first restaurant photo, logo, or workflow visual to keep everything in one place."
       },
+      "generate": {
+        "flowLabel": "Generate with",
+        "flowPlaceholder": "Choose AI flow",
+        "customOption": "Custom",
+        "customPromptLabel": "Custom prompt",
+        "customPromptPlaceholder": "Describe how the generated image should look…",
+        "button": "Generate",
+        "generating": "Generating…"
+      },
       "delete": "Remove",
       "deleteConfirm": "Remove this image?",
       "viewLarge": "View larger",
@@ -543,6 +552,9 @@
       "leonardoError": "AI processing failed. Check your Leonardo API key and model, then try again.",
       "leonardoInsufficientTokens": "Leonardo reported insufficient API credits or tokens. Add credits in your Leonardo account or API billing, then try again.",
       "uploadPartial": "Some files couldn’t be uploaded. Check your images and try again.",
+      "generated": "Generated image saved to your library",
+      "customPromptRequired": "Enter a prompt when using Custom flow.",
+      "generateError": "Couldn’t generate a new image. Try again.",
       "loadError": "Couldn’t load your library. Refresh the page.",
       "flowsLoadError": "Couldn’t load AI flows. You can still upload without AI.",
       "deleted": "Image removed",
@@ -865,6 +877,7 @@
         "scheduler": "Scheduler",
         "finance": "Finance",
         "heatmap": "Heatmap",
+        "menuItems": "Menu Items",
         "readiness": {
           "badges": {
             "ready": "Ready",
@@ -1274,7 +1287,19 @@
         "importing": "Importing..."
       },
       "table": {
-        "title": "Edit COGS per menu item"
+        "title": "Edit COGS per menu item",
+        "menuName": "Menu Item",
+        "quantity": "Quantity",
+        "price": "Price",
+        "cogs": "COGS",
+        "we": "COGS ratio (we)",
+        "weAria": "COGS ratio for {menu}",
+        "categoryWe": {
+          "enable": "Enable category WE slider",
+          "aria": "Category WE slider for {category}",
+          "hint": "When enabled, moving this slider updates WE and COGS for all menu items in this category."
+        },
+        "uncategorizedTitle": "Uncategorized Menu Items"
       },
       "actions": {
         "save": "Save COGS",
@@ -1412,6 +1437,40 @@
           "promote": "PROMOTE",
           "keep": "KEEP"
         }
+      }
+    },
+    "menuItems": {
+      "reportTitle": "Menu Items Report",
+      "breadcrumb": "Menu Items",
+      "heading": "Menu Items",
+      "description": "Review menu items grouped by name with quantity and revenue signals from this analytics run.",
+      "backToSales": "Back to Sales Reports",
+      "tabs": {
+        "table": "Table",
+        "bubbleChart": "Bubble Chart"
+      },
+      "qty": "Qty",
+      "empty": "No menu item data for this run.",
+      "emptyFiltered": "No menu items match the selected category. Adjust the filter to continue.",
+      "filters": {
+        "categoryLabel": "Category Filter",
+        "categoryAriaLabel": "Filter menu items by category",
+        "categoryPlaceholder": "Select category…",
+        "allCategories": "All Categories"
+      },
+      "table": {
+        "menuItem": "Menu Item",
+        "category": "Category",
+        "subCategory": "Sub Category",
+        "qty": "Qty",
+        "revenue": "Revenue",
+        "empty": "No menu items found.",
+        "caption": "Menu items table with category, sub category, quantity, and revenue."
+      },
+      "chart": {
+        "ariaLabel": "Bubble chart of menu items sized by quantity sold",
+        "caption": "Bubble size represents quantity sold. Color indicates menu category.",
+        "empty": "No menu items available for the selected category."
       }
     }
   },

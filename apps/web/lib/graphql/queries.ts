@@ -595,6 +595,70 @@ export type MenuEngineeringMatrixData = {
   } | null
 }
 
+export const MENU_ITEMS_CATALOG_QUERY = `
+  query MenuItemsCatalog($locationId: Int!) {
+    menuItemsCatalog(locationId: $locationId) {
+      analyticsRunId
+      items {
+        id
+        name
+        category
+        categoryDetail
+        price
+        quantity
+        isActive
+      }
+    }
+  }
+`
+
+export type MenuItemsCatalogData = {
+  menuItemsCatalog: {
+    analyticsRunId: string
+    items: Array<{
+      id: string
+      name: string
+      category: string
+      categoryDetail: string | null
+      price: number
+      quantity: number
+      isActive: boolean
+    }>
+  } | null
+}
+
+export const MENU_ITEMS_CATALOG_FOR_RUN_QUERY = `
+  query MenuItemsCatalogForRun($analyticsRunId: ID!) {
+    menuItemsCatalogForRun(analyticsRunId: $analyticsRunId) {
+      analyticsRunId
+      items {
+        id
+        name
+        category
+        categoryDetail
+        price
+        quantity
+        isActive
+      }
+    }
+  }
+`
+
+export type MenuItemsCatalogForRunData = {
+  menuItemsCatalogForRun: {
+    analyticsRunId: string
+    items: Array<{
+      id: string
+      name: string
+      category: string
+      categoryDetail: string | null
+      price: number
+      quantity: number
+      isActive: boolean
+    }>
+  } | null
+}
+
 export const MENU_HEATMAPS_QUERY = `
   query MenuHeatmaps($id: ID!, $locationId: ID) {
     menuHeatmaps(analyticsRunId: $id, locationId: $locationId) {
@@ -617,6 +681,34 @@ export type MenuHeatmapsData = {
     dailyHeatmap: Array<{ hour: number; quantity: number }>
     weeklyHeatmap: Array<{ day: string; quantity: number }>
   }>
+}
+
+export const PROMOTION_MENU_ITEMS_QUERY = `
+  query PromotionMenuItems($id: ID!, $locationId: ID) {
+    promotionMenuItems(analyticsRunId: $id, locationId: $locationId) {
+      analyticsRunId
+      items {
+        menu
+        menuCategory
+        menuCategoryDetail
+        quantity
+        totalRevenue
+      }
+    }
+  }
+`
+
+export type PromotionMenuItemsData = {
+  promotionMenuItems: {
+    analyticsRunId: string
+    items: Array<{
+      menu: string
+      menuCategory: string | null
+      menuCategoryDetail: string | null
+      quantity: number
+      totalRevenue: number
+    }>
+  } | null
 }
 
 export const PUBLIC_HOLIDAYS_QUERY = `

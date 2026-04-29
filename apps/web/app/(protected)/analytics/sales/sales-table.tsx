@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@workspace/ui/components/dropdown-menu'
-import { Coins, Flame, MoreHorizontal, Sparkles, Table2, Trash2 } from 'lucide-react'
+import { Coins, Flame, List, MoreHorizontal, Sparkles, Table2, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { routes } from '@/lib/routes'
 
@@ -58,9 +58,12 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
 
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href={routes.workflows.list} className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4" />
-                        {t('askAi')}
+                      <Link
+                        href={routes.analytics.menuItems(row.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <List className="h-4 w-4" />
+                        {t('menuItems')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -86,6 +89,13 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                       >
                         <Flame className="h-4 w-4" />
                         {t('heatmap')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href={routes.workflows.list} className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        {t('askAi')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

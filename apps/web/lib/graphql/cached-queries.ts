@@ -14,12 +14,14 @@ import {
   LOCATIONS_QUERY,
   MENU_ENGINEERING_MATRIX_QUERY,
   MENU_HEATMAPS_QUERY,
+  PROMOTION_MENU_ITEMS_QUERY,
   WORKFLOW_CAMPAIGN_TREE_QUERY,
   type AnalyticsRunMetadataData,
   type ImageAiFlowsData,
   type LocationsData,
   type MenuEngineeringMatrixData,
   type MenuHeatmapsData,
+  type PromotionMenuItemsData,
   type WorkflowCampaignTreeDataRaw,
 } from '@/lib/graphql/queries'
 
@@ -97,6 +99,23 @@ export async function getCachedMenuHeatmaps(
     { id: analyticsRunId, locationId },
     userId,
     'MenuHeatmaps',
+  )
+}
+
+/** Promotion menu items derived from order facts for an analytics run. */
+export async function getCachedPromotionMenuItems(
+  userId: string,
+  analyticsRunId: string,
+  locationId: string,
+): Promise<PromotionMenuItemsData> {
+  'use cache'
+  cacheTag(graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId))
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<PromotionMenuItemsData>(
+    PROMOTION_MENU_ITEMS_QUERY,
+    { id: analyticsRunId, locationId },
+    userId,
+    'PromotionMenuItems',
   )
 }
 

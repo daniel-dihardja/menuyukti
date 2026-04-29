@@ -3,6 +3,7 @@ from .create_image_ai_flow import CreateImageAiFlowMutation
 from .create_location import CreateLocationMutation
 from .create_node import CreateNodeMutation
 from .create_workspace import CreateWorkspaceMutation
+from .delete_analytics_run import DeleteAnalyticsRunMutation
 from .delete_api_adapter_tool import DeleteApiAdapterToolMutation
 from .delete_image_ai_flow import DeleteImageAiFlowMutation
 from .delete_node import DeleteNodeMutation
@@ -19,6 +20,7 @@ from .update_location_manual_brief_input import UpdateLocationManualBriefInputMu
 from .update_menu_item_cogs_bulk import UpdateMenuItemCogsBulkMutation
 from .update_node import UpdateNodeMutation
 from .upload_sales_report import UploadSalesReportMutation
+from .upsert_menu_item_cogs_bulk import UpsertMenuItemCogsBulkMutation
 
 __all__ = [
     "CreateApiAdapterToolMutation",
@@ -27,6 +29,7 @@ __all__ = [
     "CreateNodeMutation",
     "CreateWorkspaceMutation",
     "DeleteApiAdapterToolMutation",
+    "DeleteAnalyticsRunMutation",
     "DeleteImageAiFlowMutation",
     "ExportWorkflowMutation",
     "ImportWorkflowMutation",
@@ -41,5 +44,6 @@ __all__ = [
     "UpdateLocationManualBriefInputMutation",
     "UpdateNodeMutation",
     "UpdateMenuItemCogsBulkMutation",
+    "UpsertMenuItemCogsBulkMutation",
     "UploadSalesReportMutation",
 ]

@@ -24,7 +24,14 @@ export function useDeleteAnalytics({ locationId, onSuccess }: UseDeleteAnalytics
       })
 
       if (!res.ok) {
-        throw new Error('Failed to delete analytics')
+        const text = await res.text().catch(() => '')
+        let errData: { error?: string } | null = null
+        try {
+          errData = text ? (JSON.parse(text) as { error?: string }) : null
+        } catch {
+          errData = null
+        }
+        throw new Error(errData?.error || `Failed to delete analytics (${res.status})`)
       }
 
       onSuccess()

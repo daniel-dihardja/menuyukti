@@ -74,11 +74,14 @@ export function useUploadAnalytics(locationId: number | null, onSuccess?: () => 
       })
 
       if (!res.ok) {
-        const errData = (await res.json().catch(() => null)) as {
-          error?: string
-        } | null
-
-        throw new Error(errData?.error || 'Upload failed')
+        const responseText = await res.text().catch(() => '')
+        let errData: { error?: string } | null = null
+        try {
+          errData = responseText ? (JSON.parse(responseText) as { error?: string }) : null
+        } catch {
+          errData = null
+        }
+        throw new Error(errData?.error || `Upload failed (${res.status})`)
       }
 
       const data = (await res.json()) as UploadResponse

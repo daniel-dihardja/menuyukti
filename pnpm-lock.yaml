@@ -96,6 +96,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      d3:
+        specifier: ^7.9.0
+        version: 7.9.0
       lucide-react:
         specifier: ^0.475.0
         version: 0.475.0(react@19.2.3)
@@ -145,6 +148,9 @@ importers:
       '@next/bundle-analyzer':
         specifier: ^16.2.3
         version: 16.2.3
+      '@types/d3':
+        specifier: ^7.4.3
+        version: 7.4.3
       '@types/node':
         specifier: ^20.19.9
         version: 20.19.25

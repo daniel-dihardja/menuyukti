@@ -28,5 +28,6 @@ class GraphQLWithUserContext(GraphQL):
         return ctx
 
 
-_graphql_app = GraphQLWithUserContext(schema)
+# uploadSalesReport uses GraphQL Upload scalar; enable multipart handling.
+_graphql_app = GraphQLWithUserContext(schema, multipart_uploads_enabled=True)
 app = InternalApiKeyMiddleware(_graphql_app)

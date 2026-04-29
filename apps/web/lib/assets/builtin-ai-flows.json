@@ -1,0 +1,14 @@
+[
+  {
+    "slug": "remove-background",
+    "displayName": "Remove Background",
+    "model": "gemini-2.5-flash-image",
+    "prompt": "Remove the background completely. Keep only the main subject centered on a solid white background (opaque, not transparent). Preserve edges and fine details of the subject."
+  },
+  {
+    "slug": "michelin-editorial-elevation",
+    "displayName": "Michelin Editorial Elevation",
+    "model": "gemini-2.5-flash-image",
+    "prompt": "Ultra-realistic, award-winning food photography of the provided dish (use the attached image as the primary reference for composition, ingredients, and plating). Elevate the presentation to fine-dining, Michelin-star level while preserving the identity of the original dish.\n\nShot in a professional studio with cinematic lighting -- soft diffused key light from the side, subtle rim light for separation, and controlled shadows for depth. Emphasize texture, freshness, and moisture (glistening highlights, steam, or condensation if appropriate).\n\nComposition follows high-end editorial food photography standards: shallow depth of field (macro lens, f/2.8), sharp focus on the hero element, background softly blurred with a refined, minimal aesthetic. Use premium props such as elegant ceramic plates, natural stone or wooden surfaces, and subtle garnish styling.\n\nColor grading is natural yet rich -- true-to-life tones with slight warmth, high dynamic range, and fine detail clarity. Capture micro-details like crispy edges, sauce gloss, seasoning, and plating precision.\n\nStyle inspired by top-tier food photography seen in publications like Michelin Guide and Bon Appetit.\n\n8k resolution, ultra-detailed, no artificial look, no distortion, no oversaturation, clean and elegant composition, professional editorial quality."
+  }
+]

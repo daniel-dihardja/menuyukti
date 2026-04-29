@@ -8,6 +8,8 @@ import { LocationSelect } from './location-select'
 import { SalesTable } from './sales-table'
 import { useLocationAnalytics } from './use-location-analytics'
 import { useDeleteAnalytics } from './use-delete-analytics'
+import UploadExcelClient from './upload-xcel-client'
+import { useUploadAnalytics } from './use-upload-analytics'
 import { routes } from '@/lib/routes'
 import { useAnalytics } from '../use-analytics'
 
@@ -35,6 +37,7 @@ export function AnalyticsSalesClient({ branches }: Props) {
   }, [locationId, branches, setLocationId])
 
   const { analytics: uploads, loading, refetch } = useLocationAnalytics(locationId)
+  const { uploadFile, uploading, status, message, pos } = useUploadAnalytics(locationId, refetch)
   const { deleteAnalytics } = useDeleteAnalytics({
     locationId,
     onSuccess: refetch,
@@ -51,6 +54,14 @@ export function AnalyticsSalesClient({ branches }: Props) {
           label={t('branchLabel')}
           placeholder={branches.length > 1 ? t('branchPlaceholder') : undefined}
           className="w-full max-w-none sm:max-w-xs"
+        />
+        <UploadExcelClient
+          disabled={!locationId}
+          uploading={uploading}
+          status={status}
+          message={message}
+          pos={pos}
+          onFileSelected={uploadFile}
         />
       </section>
 
