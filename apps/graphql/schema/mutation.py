@@ -6,8 +6,8 @@ from graphql.schema.mutations import (
     CreateLocationMutation,
     CreateNodeMutation,
     CreateWorkspaceMutation,
-    DeleteApiAdapterToolMutation,
     DeleteAnalyticsRunMutation,
+    DeleteApiAdapterToolMutation,
     DeleteImageAiFlowMutation,
     DeleteNodeMutation,
     ExportWorkflowMutation,
@@ -20,10 +20,10 @@ from graphql.schema.mutations import (
     UpdateImageAiFlowMutation,
     UpdateLocationManualBriefInputMutation,
     UpdateLocationMutation,
-    UpsertMenuItemCogsBulkMutation,
     UpdateMenuItemCogsBulkMutation,
     UpdateNodeMutation,
     UploadSalesReportMutation,
+    UpsertMenuItemCogsBulkMutation,
 )
 
 

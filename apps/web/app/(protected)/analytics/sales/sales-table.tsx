@@ -66,15 +66,6 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                         {t('menuItems')}
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.heatmap(row.id)}
-                        className="flex items-center gap-2"
-                      >
-                        <Flame className="h-4 w-4" />
-                        {t('heatmap')}
-                      </Link>
-                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => onCogs(row.id)}
                       className="flex items-center gap-2"
@@ -89,6 +80,15 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                       >
                         <Table2 className="h-4 w-4" />
                         {t('matrix')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={routes.analytics.heatmap(row.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <Flame className="h-4 w-4" />
+                        {t('heatmap')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
