@@ -1433,6 +1433,10 @@
       "heading": "Menu Items",
       "description": "Review menu items grouped by name with quantity and revenue signals from this analytics run.",
       "backToSales": "Back to Sales Reports",
+      "tabs": {
+        "table": "Table",
+        "bubbleChart": "Bubble Chart"
+      },
       "qty": "Qty",
       "empty": "No menu item data for this run.",
       "emptyFiltered": "No menu items match the selected category. Adjust the filter to continue.",
@@ -1450,6 +1454,11 @@
         "revenue": "Revenue",
         "empty": "No menu items found.",
         "caption": "Menu items table with category, sub category, quantity, and revenue."
+      },
+      "chart": {
+        "ariaLabel": "Bubble chart of menu items sized by quantity sold",
+        "caption": "Bubble size represents quantity sold. Color indicates menu category.",
+        "empty": "No menu items available for the selected category."
       }
     }
   },
