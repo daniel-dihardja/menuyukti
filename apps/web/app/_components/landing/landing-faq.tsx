@@ -28,7 +28,7 @@ export function LandingFaq({ title, items }: LandingFaqProps) {
               key={item.question}
               className="group rounded-lg border border-border bg-card px-4 py-3 shadow-sm"
             >
-              <summary className="cursor-pointer list-none text-base font-medium leading-snug text-foreground outline-none transition-colors marker:content-none md:text-lg md:leading-snug [&::-webkit-details-marker]:hidden">
+              <summary className="cursor-pointer list-none rounded-sm text-base font-medium leading-snug text-foreground transition-colors marker:content-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-lg md:leading-snug [&::-webkit-details-marker]:hidden">
                 <span className="flex items-center justify-between gap-2">
                   {item.question}
                   <span

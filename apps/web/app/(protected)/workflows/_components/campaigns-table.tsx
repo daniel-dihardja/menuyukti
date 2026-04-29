@@ -217,7 +217,8 @@ export function CampaignsTable({
                         <div className="flex min-w-0 flex-wrap items-center gap-2">
                           <Input
                             aria-invalid={renameError ? true : undefined}
-                            autoFocus
+                            aria-label={tTable('name')}
+                            name="campaignName"
                             className="min-w-0 flex-1"
                             disabled={saving}
                             onChange={(e) => setDraftName(e.target.value)}

@@ -342,6 +342,8 @@ export function AssetsClient() {
               <img
                 src={previewItem.url}
                 alt=""
+                width={1200}
+                height={900}
                 className={cn(
                   'max-h-[calc(90vh-5.5rem)] w-auto max-w-full object-contain shadow-[0_24px_64px_-12px_rgba(0,0,0,0.35)] transition-opacity duration-300',
                   previewImgLoaded ? 'opacity-100' : 'opacity-0',
@@ -359,12 +361,13 @@ export function AssetsClient() {
           type="file"
           accept="image/*"
           multiple
+          aria-label={t('upload.browse')}
           className="sr-only"
           onChange={onInputChange}
         />
         <Card
           className={cn(
-            'group relative overflow-hidden border-2 border-dashed transition-all duration-300',
+            'group relative overflow-hidden border-2 border-dashed transition-[border-color,background-color,box-shadow,opacity] duration-300',
             dragActive
               ? 'border-primary bg-primary/5 shadow-[0_0_0_1px_hsl(var(--primary)/0.2)]'
               : 'border-muted-foreground/25 bg-gradient-to-br from-muted/40 via-background to-muted/20 hover:border-primary/40 hover:shadow-md',
@@ -513,23 +516,18 @@ export function AssetsClient() {
                   key={item.name}
                   className="group/tile min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md"
                 >
-                  <div
-                    className="relative aspect-[4/3] cursor-zoom-in overflow-hidden bg-muted/30 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    role="button"
-                    tabIndex={0}
+                  <button
+                    className="relative aspect-[4/3] w-full cursor-zoom-in overflow-hidden bg-muted/30 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    type="button"
                     aria-label={t('grid.viewLarge')}
                     onClick={() => setPreviewItem(item)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        setPreviewItem(item)
-                      }
-                    }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element -- dynamic user uploads; dimensions vary */}
                     <img
                       src={item.url}
                       alt=""
+                      width={400}
+                      height={300}
                       loading="lazy"
                       className="size-full object-cover transition duration-300 group-hover/tile:scale-[1.02]"
                       onLoad={(e) => {
@@ -597,7 +595,7 @@ export function AssetsClient() {
                         </Button>
                       </div>
                     </div>
-                  </div>
+                  </button>
                   <div className="flex items-center justify-between border-t border-border/50 px-3 py-2 text-xs text-muted-foreground">
                     <span className="truncate">{sizeWithDimensions}</span>
                     <time dateTime={item.createdAt}>

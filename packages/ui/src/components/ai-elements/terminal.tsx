@@ -172,6 +172,7 @@ export const TerminalCopyButton = ({
       onClick={copyToClipboard}
       size="icon"
       variant="ghost"
+      aria-label={isCopied ? 'Copied terminal output' : 'Copy terminal output'}
       {...props}
     >
       {children ?? <Icon size={14} />}
@@ -201,6 +202,7 @@ export const TerminalClearButton = ({
       onClick={onClear}
       size="icon"
       variant="ghost"
+      aria-label="Clear terminal output"
       {...props}
     >
       {children ?? <Trash2Icon size={14} />}

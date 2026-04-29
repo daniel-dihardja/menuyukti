@@ -10,7 +10,9 @@ export function useDeleteAnalytics({ locationId, onSuccess }: UseDeleteAnalytics
   async function deleteAnalytics(analyticsId: number) {
     if (!locationId) return
 
-    const confirmed = confirm('Are you sure you want to delete this analytics?')
+    const confirmed = confirm(
+      'Delete this analytics report? This action cannot be undone and will remove related generated insights.',
+    )
     if (!confirmed) return
 
     try {
@@ -37,7 +39,9 @@ export function useDeleteAnalytics({ locationId, onSuccess }: UseDeleteAnalytics
       onSuccess()
     } catch (err) {
       console.error('Delete analytics failed:', err)
-      alert('Failed to delete analytics.')
+      alert(
+        'Could not delete the analytics report. Please retry, and refresh the page if the problem persists.',
+      )
     }
   }
 

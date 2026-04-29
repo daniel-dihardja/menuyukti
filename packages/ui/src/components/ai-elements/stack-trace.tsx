@@ -211,14 +211,15 @@ export const StackTraceHeader = memo(({ className, children, ...props }: StackTr
   return (
     <Collapsible onOpenChange={setIsOpen} open={isOpen}>
       <CollapsibleTrigger asChild {...props}>
-        <div
+        <button
           className={cn(
-            'flex w-full cursor-pointer items-center gap-3 p-3 text-left transition-colors hover:bg-muted/50',
+            'flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-muted/50',
             className,
           )}
+          type="button"
         >
           {children}
-        </div>
+        </button>
       </CollapsibleTrigger>
     </Collapsible>
   )
@@ -336,6 +337,7 @@ export const StackTraceCopyButton = memo(
         onClick={copyToClipboard}
         size="icon"
         variant="ghost"
+        aria-label={isCopied ? 'Copied stack trace' : 'Copy stack trace'}
         {...props}
       >
         {children ?? <Icon size={14} />}
