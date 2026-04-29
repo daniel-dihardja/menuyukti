@@ -4,8 +4,6 @@ import type { UIMessage } from 'ai'
 import { getPythonAgentsUrl } from '@/lib/config'
 import { chatRequestBodySchema } from './schema'
 
-export const runtime = 'nodejs'
-
 // Streaming can run for a while (LLM + network).
 export const maxDuration = 180
 

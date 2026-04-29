@@ -5,8 +5,6 @@ import { z } from 'zod'
 
 import { getS3Bucket, getS3Client, isSafeAssetFilename, userObjectKey } from '@/lib/assets/storage'
 
-export const runtime = 'nodejs'
-
 const bodySchema = z.object({
   name: z.string().min(1),
 })

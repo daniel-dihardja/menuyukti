@@ -4,8 +4,6 @@ import { graphqlQuery } from '@/lib/graphql/client'
 import type { AnalyticsRunsByLocationData } from '@/lib/graphql/queries'
 import { ANALYTICS_RUNS_BY_LOCATION_QUERY } from '@/lib/graphql/queries'
 
-export const runtime = 'nodejs'
-
 /**
  * GET /api/analytics/list?locationId=...
  * Returns analytics runs for the location from GraphQL (no Prisma).
