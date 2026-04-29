@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { AlertCircle } from 'lucide-react'
@@ -35,9 +35,17 @@ type AnalyticsRunItem = {
 
 type Props = {
   branches: Branch[]
+  initialLocationId: number | null
+  initialCampaigns: CampaignNode[]
+  initialAnalyticsRuns: AnalyticsRunItem[]
 }
 
-export function CampaignsClient({ branches }: Props) {
+export function CampaignsClient({
+  branches,
+  initialLocationId,
+  initialCampaigns,
+  initialAnalyticsRuns,
+}: Props) {
   const t = useTranslations('analytics.campaigns')
   const tNew = useTranslations('analytics.campaigns.newWorkflowDialog')
   const tChat = useTranslations('analytics.campaigns.chat')
@@ -47,28 +55,46 @@ export function CampaignsClient({ branches }: Props) {
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
-  const [campaigns, setCampaigns] = useState<CampaignNode[]>([])
+  const [campaigns, setCampaigns] = useState<CampaignNode[]>(initialCampaigns)
   const [loadingCampaigns, setLoadingCampaigns] = useState(false)
   const [listError, setListError] = useState<string | null>(null)
 
-  const [analyticsRuns, setAnalyticsRuns] = useState<AnalyticsRunItem[]>([])
+  const [analyticsRuns, setAnalyticsRuns] = useState<AnalyticsRunItem[]>(initialAnalyticsRuns)
   const [loadingRuns, setLoadingRuns] = useState(false)
   const [runsError, setRunsError] = useState<string | null>(null)
-  const [analyticsRunId, setAnalyticsRunId] = useState<number | null>(null)
+  const [analyticsRunId, setAnalyticsRunId] = useState<number | null>(() => {
+    const first = initialAnalyticsRuns[0]
+    return first ? first.id : null
+  })
+  const hydratedRunsRef = useRef(false)
+  const hydratedCampaignsRef = useRef(false)
 
   useEffect(() => {
     if (locationId !== null) return
+    if (initialLocationId !== null) {
+      setLocationId(initialLocationId)
+      return
+    }
     if (branches.length !== 1) return
     const [onlyBranch] = branches
     if (!onlyBranch) return
     setLocationId(onlyBranch.id)
-  }, [locationId, branches, setLocationId])
+  }, [locationId, initialLocationId, branches, setLocationId])
 
   useEffect(() => {
     if (locationId === null) {
       setAnalyticsRuns([])
       setAnalyticsRunId(null)
       setRunsError(null)
+      return
+    }
+
+    if (
+      !hydratedRunsRef.current &&
+      locationId === initialLocationId &&
+      initialAnalyticsRuns.length > 0
+    ) {
+      hydratedRunsRef.current = true
       return
     }
 
@@ -120,12 +146,21 @@ export function CampaignsClient({ branches }: Props) {
       })
 
     return () => controller.abort()
-  }, [locationId, t])
+  }, [locationId, t, initialAnalyticsRuns.length, initialLocationId])
 
   useEffect(() => {
     if (locationId === null) {
       setCampaigns([])
       setListError(null)
+      return
+    }
+
+    if (
+      !hydratedCampaignsRef.current &&
+      locationId === initialLocationId &&
+      initialCampaigns.length > 0
+    ) {
+      hydratedCampaignsRef.current = true
       return
     }
 
@@ -161,7 +196,7 @@ export function CampaignsClient({ branches }: Props) {
       })
 
     return () => controller.abort()
-  }, [locationId, t])
+  }, [locationId, t, initialCampaigns.length, initialLocationId])
 
   const hasCampaigns = campaigns.length > 0
 

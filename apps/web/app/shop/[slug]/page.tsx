@@ -1,29 +1,33 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { cache } from 'react'
 
 import { ShopProductDetail } from '@/components/shop/shop-product-detail'
-import { getShopProductBySlug, getShopProductSlugs } from '@/components/shop/shop-catalog'
+import { getShopProductBySlug } from '@/components/shop/shop-catalog'
 import { resolveShopImages } from '@/lib/shop/resolve-shop-images'
 import { listShopImagesForSlug } from '@/lib/shop/s3-shop-images'
+
+const getResolvedImagesForSlug = cache(async (slug: string) => {
+  const product = getShopProductBySlug(slug)
+  if (!product) {
+    return { product: null, resolvedImages: [] as ReturnType<typeof resolveShopImages> }
+  }
+
+  const s3Images = await listShopImagesForSlug(slug)
+  return { product, resolvedImages: resolveShopImages(product, s3Images) }
+})
 
 type PageProps = {
   params: Promise<{ slug: string }>
 }
 
-export function generateStaticParams() {
-  return getShopProductSlugs().map((slug) => ({ slug }))
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const product = getShopProductBySlug(slug)
+  const { product, resolvedImages } = await getResolvedImagesForSlug(slug)
   if (!product) {
     return { title: 'Product | The Digital Curator' }
   }
-
-  const s3Images = await listShopImagesForSlug(slug)
-  const resolved = resolveShopImages(product, s3Images)
-  const hero = resolved[0]
+  const hero = resolvedImages[0]
 
   if (!hero) {
     return {
@@ -52,13 +56,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ShopProductPage({ params }: PageProps) {
   const { slug } = await params
-  const product = getShopProductBySlug(slug)
+  const { product, resolvedImages } = await getResolvedImagesForSlug(slug)
   if (!product) {
     notFound()
   }
-
-  const s3Images = await listShopImagesForSlug(slug)
-  const resolvedImages = resolveShopImages(product, s3Images)
 
   return (
     <div className="flex flex-1 flex-col">

@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { createContext, useEffect, useState } from 'react'
+import { createContext, useEffect, useMemo, useState } from 'react'
 
 type AnalyticsContextValue = {
   locationId: number | null
@@ -30,9 +30,10 @@ export function AnalyticsProvider({
     setAnalyticsId(null)
   }, [locationId])
 
-  return (
-    <AnalyticsContext.Provider value={{ locationId, setLocationId, analyticsId, setAnalyticsId }}>
-      {children}
-    </AnalyticsContext.Provider>
+  const value = useMemo(
+    () => ({ locationId, setLocationId, analyticsId, setAnalyticsId }),
+    [locationId, analyticsId],
   )
+
+  return <AnalyticsContext.Provider value={value}>{children}</AnalyticsContext.Provider>
 }

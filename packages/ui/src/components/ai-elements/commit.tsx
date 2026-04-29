@@ -25,14 +25,15 @@ export type CommitHeaderProps = ComponentProps<typeof CollapsibleTrigger>
 
 export const CommitHeader = ({ className, children, ...props }: CommitHeaderProps) => (
   <CollapsibleTrigger asChild {...props}>
-    <div
+    <button
       className={cn(
-        'group flex cursor-pointer items-center justify-between gap-4 p-3 text-left transition-colors hover:opacity-80',
+        'group flex w-full items-center justify-between gap-4 p-3 text-left transition-colors hover:opacity-80',
         className,
       )}
+      type="button"
     >
       {children}
-    </div>
+    </button>
   </CollapsibleTrigger>
 )
 
@@ -107,10 +108,21 @@ const relativeTimeFormat = new Intl.RelativeTimeFormat('en', {
 })
 
 export const CommitTimestamp = ({ date, className, children, ...props }: CommitTimestampProps) => {
-  const formatted = relativeTimeFormat.format(
-    Math.round((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
-    'day',
+  const [formatted, setFormatted] = useState(() =>
+    relativeTimeFormat.format(
+      Math.round((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+      'day',
+    ),
   )
+
+  useEffect(() => {
+    setFormatted(
+      relativeTimeFormat.format(
+        Math.round((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+        'day',
+      ),
+    )
+  }, [date])
 
   return (
     <time className={cn('text-xs', className)} dateTime={date.toISOString()} {...props}>
@@ -190,6 +202,7 @@ export const CommitCopyButton = ({
       onClick={copyToClipboard}
       size="icon"
       variant="ghost"
+      aria-label={isCopied ? 'Copied commit hash' : 'Copy commit hash'}
       {...props}
     >
       {children ?? <Icon size={14} />}

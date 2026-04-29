@@ -11,6 +11,8 @@ import {
   userPrefix,
 } from '@/lib/assets/storage'
 
+export const runtime = 'nodejs'
+
 export async function GET() {
   const authz = await requireMenuyuktiAdminApi()
   if (!authz.ok) return authz.response

@@ -3,6 +3,8 @@ import { auth } from '@clerk/nextjs/server'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { NODES_QUERY, parseNodesData, type NodesDataRaw } from '@/lib/graphql/queries'
 
+export const runtime = 'nodejs'
+
 export async function GET(req: Request) {
   try {
     await connection()

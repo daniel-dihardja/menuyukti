@@ -1,6 +1,9 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { revalidateAnalyticsRunComputationsCache } from '@/lib/graphql/revalidate-analytics-cache'
+
+export const runtime = 'nodejs'
 
 const ANALYTICS_RUN_COGS_QUERY = `
   query AnalyticsRunCogs($id: ID!) {
@@ -141,6 +144,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ analyti
       userId,
       'UpsertMenuItemCogsBulk',
     )
+    revalidateAnalyticsRunComputationsCache(userId, String(runId))
 
     return NextResponse.json({ ok: true, updated: data.upsertMenuItemCogsBulk.length })
   } catch (err) {

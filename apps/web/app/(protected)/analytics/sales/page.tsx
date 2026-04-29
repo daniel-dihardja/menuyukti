@@ -2,14 +2,67 @@ import { Suspense } from 'react'
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
 import { routes } from '@/lib/routes'
+import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
-import { Card } from '@workspace/ui/components/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { auth } from '@clerk/nextjs/server'
 import { getCachedLocationsData } from '@/lib/graphql/cached-queries'
+import { graphqlQuery } from '@/lib/graphql/client'
+import {
+  ANALYTICS_RUNS_BY_LOCATION_QUERY,
+  type AnalyticsRunsByLocationData,
+} from '@/lib/graphql/queries'
 import { AnalyticsSalesClient } from './analytics-sales-client'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
+
+function PosUploadInfoSection({ t }: { t: Awaited<ReturnType<typeof getTranslations>> }) {
+  const reportRequirements = [
+    {
+      key: 'esb',
+      pos: t('uploadInfo.reports.esb.pos'),
+      report: t('uploadInfo.reports.esb.report'),
+    },
+    {
+      key: 'quino',
+      pos: t('uploadInfo.reports.quino.pos'),
+      report: t('uploadInfo.reports.quino.report'),
+    },
+  ]
+
+  return (
+    <section aria-labelledby="upload-info-heading">
+      <Card>
+        <CardHeader className="flex flex-col gap-1 pb-3">
+          <CardTitle id="upload-info-heading" className="text-sm">
+            {t('uploadInfo.title')}
+          </CardTitle>
+          <CardDescription className="text-xs">{t('uploadInfo.description')}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2 pt-0">
+          {reportRequirements.map((item) => (
+            <div
+              key={item.key}
+              className="bg-muted/40 flex flex-wrap items-center justify-between gap-2 rounded-md px-3 py-2"
+            >
+              <span className="text-xs font-medium">{item.pos}</span>
+              <Badge variant="secondary" className="font-mono text-xs">
+                {item.report}
+              </Badge>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </section>
+  )
+}
 
 function SalesPageSkeleton() {
   return (
@@ -54,9 +107,28 @@ async function SalesPageData() {
     )
   }
 
+  const initialLocationId = branches.length === 1 ? (branches[0]?.id ?? null) : null
+  const initialAnalytics =
+    initialLocationId === null
+      ? []
+      : await graphqlQuery<AnalyticsRunsByLocationData>(
+          ANALYTICS_RUNS_BY_LOCATION_QUERY,
+          { locationId: initialLocationId, first: 300 },
+          userId,
+        ).then((data) =>
+          (data.analyticsRuns ?? []).map((run) => ({
+            id: Number(run.id),
+            name: run.name || run.filename || `Run #${run.id}`,
+          })),
+        )
+
   return (
     <section className="space-y-3">
-      <AnalyticsSalesClient branches={branches} />
+      <AnalyticsSalesClient
+        branches={branches}
+        initialLocationId={initialLocationId}
+        initialAnalytics={initialAnalytics}
+      />
     </section>
   )
 }
@@ -67,6 +139,7 @@ export default async function Page() {
   return (
     <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
       <PageHeading title={t('title')} description={t('description')} />
+      <PosUploadInfoSection t={t} />
       <Suspense fallback={<SalesPageSkeleton />}>
         <SalesPageData />
       </Suspense>

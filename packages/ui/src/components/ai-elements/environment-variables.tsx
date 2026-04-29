@@ -275,6 +275,7 @@ export const EnvironmentVariableCopyButton = ({
       onClick={copyToClipboard}
       size="icon"
       variant="ghost"
+      aria-label={isCopied ? 'Copied environment variable' : 'Copy environment variable'}
       {...props}
     >
       {children ?? <Icon size={12} />}

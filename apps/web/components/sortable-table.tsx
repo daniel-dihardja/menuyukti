@@ -1,6 +1,6 @@
 'use client'
 
-import { type KeyboardEvent, type ReactNode, useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@workspace/ui/components/table'
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -52,29 +52,30 @@ export function SortableTableHead({
   align = 'right',
   className,
 }: SortableTableHeadProps) {
-  const handleKeyDown = (event: KeyboardEvent<HTMLTableCellElement>) => {
-    if (event.key !== 'Enter' && event.key !== ' ') return
-    event.preventDefault()
-    onToggle()
-  }
-
   return (
     <TableHead
-      role="button"
-      tabIndex={0}
       aria-sort={active ? (direction === 'asc' ? 'ascending' : 'descending') : 'none'}
-      onClick={onToggle}
-      onKeyDown={handleKeyDown}
       className={cn(
-        'cursor-pointer select-none whitespace-nowrap px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground',
+        'select-none whitespace-nowrap px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground',
         align === 'left' && 'text-left',
         align === 'right' && 'text-right',
         align === 'center' && 'text-center',
         className,
       )}
     >
-      {children}
-      {sortIndicator(active, direction)}
+      <button
+        type="button"
+        onClick={onToggle}
+        className={cn(
+          'inline-flex w-full cursor-pointer items-center rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+          align === 'left' && 'justify-start',
+          align === 'right' && 'justify-end',
+          align === 'center' && 'justify-center',
+        )}
+      >
+        {children}
+        {sortIndicator(active, direction)}
+      </button>
     </TableHead>
   )
 }

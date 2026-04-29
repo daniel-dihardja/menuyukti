@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, type ComponentType } from 'react'
+import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
 import { Field, FieldLabel } from '@workspace/ui/components/field'
@@ -17,7 +18,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/componen
 import { SortableTable, useSortableColumns } from '@/components/sortable-table'
 import { formatCurrencyWithCode } from '@/lib/currency'
 import type { MenuItemsDisplayRow } from '@/lib/analytics/menu-items-page-adapter'
-import { MenuItemsBubbleChart } from './menu-items-bubble-chart'
+
+const MenuItemsBubbleChart = dynamic(
+  async () =>
+    (await import('@/app/(protected)/analytics/[analyticsId]/menu-items/menu-items-bubble-chart'))
+      .MenuItemsBubbleChart as ComponentType<{
+      rows: MenuItemsDisplayRow[]
+      locale: string
+      currency: string
+    }>,
+  { ssr: false },
+)
 
 type SortKey = 'menuItem' | 'category' | 'subCategory' | 'quantity' | 'totalRevenue'
 
@@ -124,9 +135,9 @@ export function MenuItemsTable({ rows, locale, currency }: Props) {
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedRows.map((item, index) => (
+                sortedRows.map((item) => (
                   <TableRow
-                    key={`${item.menuItem}-${item.subCategory}-${index}`}
+                    key={`${item.category}::${item.subCategory}::${item.menuItem}::${item.quantity}::${item.totalRevenue}`}
                     className="hover:bg-muted/20"
                   >
                     <TableCell className="px-3 py-2 font-medium">{item.menuItem}</TableCell>

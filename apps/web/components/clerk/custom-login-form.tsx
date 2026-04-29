@@ -233,6 +233,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
                   id="use-backup"
                   name="useBackup"
                   type="checkbox"
+                  aria-label={t('useBackupCode')}
                   className="size-4 rounded border"
                 />
                 <label htmlFor="use-backup" className="text-sm text-foreground">
@@ -248,6 +249,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
+                spellCheck={false}
                 placeholder={t('verificationCodePlaceholder')}
                 required
                 disabled={!signIn || isSigningIn}
@@ -320,6 +322,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
+                spellCheck={false}
                 placeholder={t('verificationCodePlaceholder')}
                 required
                 disabled={!signIn || isSigningIn}
@@ -377,6 +380,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
               name="email"
               type="email"
               autoComplete="email"
+              spellCheck={false}
               placeholder={t('emailPlaceholder')}
               required
               disabled={isSigningIn}

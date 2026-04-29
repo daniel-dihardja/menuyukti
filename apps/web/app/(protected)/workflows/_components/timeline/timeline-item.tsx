@@ -8,6 +8,7 @@ import { cn } from '@workspace/ui/lib/utils'
 
 import { useTimelineActions, useTimelineChat, useTimelineWorkspaceState } from '../timeline-context'
 import { MilestoneItemHeader } from './milestone-item-header'
+import { TimelineItemHeaderProvider } from './timeline-item-header-context'
 import { MilestoneItemTabs } from './milestone-item-tabs'
 import { MilestoneRunProgressStrip } from './milestone-run-progress'
 import { isKeyboardEventFromNestedInteractive, TimelineRailMarker } from './timeline-rail'
@@ -221,6 +222,17 @@ function TimelineItemInner({
 
   const isDeleting = deletingMilestoneId === milestone.id
   const isMoving = movingMilestoneId === milestone.id
+  const position = isFirst ? 'first' : isLast ? 'last' : 'middle'
+  const runState = isMilestoneRunning
+    ? ('running' as const)
+    : runningMilestoneId !== null
+      ? ('blocked' as const)
+      : ('idle' as const)
+  const deleteState = !showDelete
+    ? ('hidden' as const)
+    : isDeleting
+      ? ('deleting' as const)
+      : ('idle' as const)
 
   return (
     <div
@@ -282,31 +294,36 @@ function TimelineItemInner({
               isSelected ? 'border-primary bg-accent/50 ring-2 ring-ring/50' : 'hover:bg-accent/30',
             )}
           >
-            <MilestoneItemHeader
-              draftTitle={draftTitle}
-              editingTitle={editingTitle}
-              handleSaveTitle={handleSaveTitle}
-              isChatBusy={isChatBusy}
-              isDeleting={isDeleting}
-              isFirst={isFirst}
-              isLast={isLast}
-              isMilestoneRunning={isMilestoneRunning}
-              isMoving={isMoving}
-              milestone={milestone}
-              onDeleteMilestone={onDeleteMilestone}
-              onMoveMilestone={onMoveMilestone}
-              onRenameMilestone={onRenameMilestone}
-              onRunMilestone={onRunMilestone}
-              open={open}
-              renaming={renaming}
-              runningMilestoneId={runningMilestoneId}
-              setDraftTitle={setDraftTitle}
-              setEditingTitle={setEditingTitle}
-              showDelete={showDelete}
-              titleEditContainerRef={titleEditContainerRef}
-              titleEditInputId={titleEditInputId}
-              titleEditInputRef={titleEditInputRef}
-            />
+            <TimelineItemHeaderProvider
+              value={{
+                milestone,
+                position,
+                runState,
+                deleteState,
+                titleEditor: {
+                  editing: editingTitle,
+                  draft: draftTitle,
+                  setEditing: setEditingTitle,
+                  setDraft: setDraftTitle,
+                  inputId: titleEditInputId,
+                  inputRef: titleEditInputRef,
+                  containerRef: titleEditContainerRef,
+                  renaming,
+                  save: handleSaveTitle,
+                  canRename: Boolean(onRenameMilestone),
+                },
+                movement: {
+                  moving: isMoving,
+                  move: onMoveMilestone,
+                },
+                actions: {
+                  run: isChatBusy ? undefined : onRunMilestone,
+                  deleteMilestone: onDeleteMilestone,
+                },
+              }}
+            >
+              <MilestoneItemHeader open={open} />
+            </TimelineItemHeaderProvider>
             {isMilestoneRunning ? <MilestoneRunProgressStrip runningStep={runningStep} /> : null}
             <CollapsibleContent
               onClick={(e) => e.stopPropagation()}
