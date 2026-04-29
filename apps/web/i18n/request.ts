@@ -1,31 +1,9 @@
-import { headers } from 'next/headers'
 import { getRequestConfig } from 'next-intl/server'
 
-const supportedLocales = ['en'] as const
 const defaultLocale = 'en'
 
-function resolveLocale(acceptLanguage: string | null) {
-  if (!acceptLanguage) return defaultLocale
-
-  const preferredTags = acceptLanguage
-    .split(',')
-    .map((part) => part.split(';')[0]?.trim().toLowerCase())
-    .filter((tag): tag is string => Boolean(tag))
-
-  for (const tag of preferredTags) {
-    const base = tag.split('-')[0]
-    if (!base) continue
-    if ((supportedLocales as readonly string[]).includes(base)) {
-      return base as (typeof supportedLocales)[number]
-    }
-  }
-
-  return defaultLocale
-}
-
 export default getRequestConfig(async () => {
-  const acceptLanguage = (await headers()).get('accept-language')
-  const locale = resolveLocale(acceptLanguage)
+  const locale = defaultLocale
 
   try {
     return {

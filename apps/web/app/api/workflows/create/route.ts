@@ -7,6 +7,7 @@ import {
   parseCreateNodeData,
   type CreateNodeDataRaw,
 } from '@/lib/graphql/queries'
+import { revalidateLocationScopedLists } from '@/lib/graphql/revalidate-location-lists'
 import { createCampaignSchema } from './schema'
 
 export async function POST(req: Request) {
@@ -37,6 +38,8 @@ export async function POST(req: Request) {
     if (!node) {
       return NextResponse.json({ message: 'Failed to create workflow' }, { status: 500 })
     }
+
+    revalidateLocationScopedLists(userId, locationId)
 
     return NextResponse.json(node, { status: 201 })
   } catch (error) {

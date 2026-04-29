@@ -1,5 +1,6 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { revalidateLocationScopedLists } from '@/lib/graphql/revalidate-location-lists'
 
 const UPLOAD_SALES_REPORT_MUTATION = `
   mutation UploadSalesReport($file: Upload!, $locationId: ID!, $includeLineItems: Boolean!) {
@@ -108,6 +109,8 @@ export async function POST(req: Request) {
         .join('; ')
       return NextResponse.json({ error: message || 'Upload failed' }, { status: 500 })
     }
+
+    revalidateLocationScopedLists(userId, locationId)
 
     return NextResponse.json({ status: 'ok', pos: null })
   } catch (err) {

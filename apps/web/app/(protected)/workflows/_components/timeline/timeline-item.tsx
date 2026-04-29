@@ -6,7 +6,7 @@ import { Card } from '@workspace/ui/components/card'
 import { Collapsible, CollapsibleContent } from '@workspace/ui/components/collapsible'
 import { cn } from '@workspace/ui/lib/utils'
 
-import { useTimelineActions, useTimelineChat, useTimelineWorkspaceState } from '../timeline-context'
+import type { TimelineActions, TimelineMilestoneState } from '../timeline-context'
 import { MilestoneItemHeader } from './milestone-item-header'
 import { TimelineItemHeaderProvider } from './timeline-item-header-context'
 import { MilestoneItemTabs } from './milestone-item-tabs'
@@ -27,6 +27,16 @@ export type TimelineItemProps = {
   isSelected: boolean
   onSelect: (id: string) => void
   showDelete: boolean
+  actions: TimelineActions
+  deletingMilestoneId: TimelineMilestoneState['deletingMilestoneId']
+  movingMilestoneId: TimelineMilestoneState['movingMilestoneId']
+  renamingMilestoneId: TimelineMilestoneState['renamingMilestoneId']
+  savingPassCriteriaMilestoneId: TimelineMilestoneState['savingPassCriteriaMilestoneId']
+  savingGoalMilestoneId: TimelineMilestoneState['savingGoalMilestoneId']
+  savingDataMilestoneId: TimelineMilestoneState['savingDataMilestoneId']
+  runningMilestoneId: TimelineMilestoneState['runningMilestoneId']
+  runningStep: TimelineMilestoneState['runningStep']
+  isChatBusy: boolean
 }
 
 function TimelineItemInner({
@@ -37,6 +47,16 @@ function TimelineItemInner({
   isSelected,
   onSelect,
   showDelete,
+  actions,
+  deletingMilestoneId,
+  movingMilestoneId,
+  renamingMilestoneId,
+  savingPassCriteriaMilestoneId,
+  savingGoalMilestoneId,
+  savingDataMilestoneId,
+  runningMilestoneId,
+  runningStep,
+  isChatBusy,
 }: TimelineItemProps) {
   const datesInputFromMilestone = (
     raw: TimelineMilestone['milestoneInput'],
@@ -59,20 +79,7 @@ function TimelineItemInner({
     onUpdateMilestoneInput,
     onMoveMilestone,
     onRunMilestone,
-  } = useTimelineActions()
-  const {
-    milestoneState: {
-      deletingMilestoneId,
-      movingMilestoneId,
-      renamingMilestoneId,
-      savingPassCriteriaMilestoneId,
-      savingGoalMilestoneId,
-      savingDataMilestoneId,
-      runningMilestoneId,
-      runningStep,
-    },
-  } = useTimelineWorkspaceState()
-  const { isBusy: isChatBusy } = useTimelineChat()
+  } = actions
 
   const [userOpen, setUserOpen] = useState(true)
   const [editingTitle, setEditingTitle] = useState(false)

@@ -4,11 +4,9 @@ import Link from 'next/link'
 import { auth } from '@clerk/nextjs/server'
 
 import { routes } from '@/lib/routes'
-import { graphqlQuery } from '@/lib/graphql/client'
 import { isMenuyuktiAdmin } from '@/lib/menuyukti-role'
 import { resolveMenuyuktiRole } from '@/lib/menuyukti-role-server'
-import { getCachedLocationsData } from '@/lib/graphql/cached-queries'
-import { NODES_QUERY, parseNodesData, type NodesDataRaw } from '@/lib/graphql/queries'
+import { getCachedLocationsData, getCachedWorkflowsByLocation } from '@/lib/graphql/cached-queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { Button } from '@workspace/ui/components/button'
@@ -110,12 +108,7 @@ async function DashboardPageData() {
 
   await Promise.all(
     locationsData.locations.map(async (loc) => {
-      const raw = await graphqlQuery<NodesDataRaw>(
-        NODES_QUERY,
-        { locationId: Number(loc.id), nodeType: 'workflow' },
-        userId,
-      )
-      const { nodes } = parseNodesData(raw)
+      const nodes = await getCachedWorkflowsByLocation(userId, Number(loc.id))
       for (const n of nodes) {
         campaignRows.push({
           id: n.id,

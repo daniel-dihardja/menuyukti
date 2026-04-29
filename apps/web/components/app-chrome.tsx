@@ -20,16 +20,18 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {showChromeHeader && !profileInSidebarHeader && (
-        <header className="flex items-center justify-end gap-2 border-b px-4 py-2">
-          <Show when="signed-out">
-            <SignInButton />
-          </Show>
-          <Show when="signed-in">
-            <UserButton userProfileMode="navigation" userProfileUrl={routes.profileAccount} />
-          </Show>
-        </header>
-      )}
+      <div className={showChromeHeader && !profileInSidebarHeader ? 'min-h-12' : undefined}>
+        {showChromeHeader && !profileInSidebarHeader && (
+          <header className="flex min-h-12 items-center justify-end gap-2 border-b px-4 py-2">
+            <Show when="signed-out">
+              <SignInButton />
+            </Show>
+            <Show when="signed-in">
+              <UserButton userProfileMode="navigation" userProfileUrl={routes.profileAccount} />
+            </Show>
+          </header>
+        )}
+      </div>
       {children}
     </>
   )

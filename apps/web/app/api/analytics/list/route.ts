@@ -1,8 +1,6 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { graphqlQuery } from '@/lib/graphql/client'
-import type { AnalyticsRunsByLocationData } from '@/lib/graphql/queries'
-import { ANALYTICS_RUNS_BY_LOCATION_QUERY } from '@/lib/graphql/queries'
+import { getCachedAnalyticsRunsByLocation } from '@/lib/graphql/cached-queries'
 
 /**
  * GET /api/analytics/list?locationId=...
@@ -27,19 +25,12 @@ export async function GET(req: Request) {
       )
     }
 
-    const data = await graphqlQuery<AnalyticsRunsByLocationData>(
-      ANALYTICS_RUNS_BY_LOCATION_QUERY,
-      { locationId, first: 300 },
-      userId,
-    )
-
-    const runs = data.analyticsRuns ?? []
-    const list = runs.map((run) => ({
-      id: Number(run.id),
-      name: run.name || run.filename || `Run #${run.id}`,
-    }))
-
-    return NextResponse.json(list)
+    const list = await getCachedAnalyticsRunsByLocation(userId, locationId)
+    return NextResponse.json(list, {
+      headers: {
+        'Cache-Control': 'private, max-age=30, stale-while-revalidate=120',
+      },
+    })
   } catch (err) {
     console.error('Analytics list failed:', err)
     const message = err instanceof Error ? err.message : 'Failed to load analytics'

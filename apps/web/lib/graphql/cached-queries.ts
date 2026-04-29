@@ -3,25 +3,35 @@ import { cacheLife, cacheTag } from 'next/cache'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { DEFAULT_LIST_FIRST } from '@/lib/graphql/pagination'
 import {
+  graphqlAnalyticsRunsByLocationCacheTag,
   graphqlAnalyticsRunCacheTag,
   graphqlAnalyticsRunComputationsCacheTag,
   graphqlImageAiFlowsCacheTag,
   graphqlLocationsDataCacheTag,
+  graphqlWorkflowsByLocationCacheTag,
   graphqlWorkflowCampaignTreeCacheTag,
 } from '@/lib/graphql/cache-tags'
 import {
   ANALYTICS_RUN_METADATA_QUERY,
+  ANALYTICS_RUNS_BY_LOCATION_QUERY,
   IMAGE_AI_FLOWS_QUERY,
+  LOCATION_QUERY,
   LOCATIONS_QUERY,
   MENU_ENGINEERING_MATRIX_QUERY,
   MENU_HEATMAPS_QUERY,
+  NODES_QUERY,
   PROMOTION_MENU_ITEMS_QUERY,
   WORKFLOW_CAMPAIGN_TREE_QUERY,
+  parseNodesData,
+  type AnalyticsRunsByLocationData,
+  type AnyNode,
   type AnalyticsRunMetadataData,
   type ImageAiFlowsData,
   type LocationsData,
   type MenuEngineeringMatrixData,
   type MenuHeatmapsData,
+  type NodesDataRaw,
+  type LocationData,
   type PromotionMenuItemsData,
   type WorkflowCampaignTreeDataRaw,
 } from '@/lib/graphql/queries'
@@ -39,6 +49,41 @@ export async function getCachedLocationsData(userId: string): Promise<LocationsD
   )
 }
 
+/** Cached per user/location for workflow listings in dashboard and workflows pages. */
+export async function getCachedWorkflowsByLocation(
+  userId: string,
+  locationId: number,
+): Promise<AnyNode[]> {
+  'use cache'
+  cacheTag(graphqlWorkflowsByLocationCacheTag(userId, locationId))
+  cacheLife({ revalidate: 60 })
+  const raw = await graphqlQuery<NodesDataRaw>(
+    NODES_QUERY,
+    { locationId, nodeType: 'workflow' },
+    userId,
+  )
+  return parseNodesData(raw).nodes
+}
+
+/** Cached per user/location for analytics run selectors in sales and workflows pages. */
+export async function getCachedAnalyticsRunsByLocation(
+  userId: string,
+  locationId: number,
+): Promise<Array<{ id: number; name: string }>> {
+  'use cache'
+  cacheTag(graphqlAnalyticsRunsByLocationCacheTag(userId, locationId))
+  cacheLife({ revalidate: 60 })
+  const data = await graphqlQuery<AnalyticsRunsByLocationData>(
+    ANALYTICS_RUNS_BY_LOCATION_QUERY,
+    { locationId, first: 300 },
+    userId,
+  )
+  return (data.analyticsRuns ?? []).map((run) => ({
+    id: Number(run.id),
+    name: run.name || run.filename || `Run #${run.id}`,
+  }))
+}
+
 /** Cached per user and analytics run; metadata only (no `menuItemCogs`) for matrix/heatmap shells. */
 export async function getCachedAnalyticsRun(
   userId: string,
@@ -53,6 +98,14 @@ export async function getCachedAnalyticsRun(
     userId,
     'AnalyticsRunMetadata',
   )
+}
+
+/** Cached single location details for location settings and route helpers. */
+export async function getCachedLocation(userId: string, locationId: string): Promise<LocationData> {
+  'use cache'
+  cacheTag(graphqlLocationsDataCacheTag(userId))
+  cacheLife({ revalidate: 60 })
+  return graphqlQuery<LocationData>(LOCATION_QUERY, { id: locationId }, userId, 'Location')
 }
 
 /** Cached per user; Studio list of image AI flows. */

@@ -4,8 +4,7 @@ import { getTranslations } from 'next-intl/server'
 
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
-import { graphqlQuery } from '@/lib/graphql/client'
-import { LOCATION_QUERY, type LocationData } from '@/lib/graphql/queries'
+import { getCachedLocation } from '@/lib/graphql/cached-queries'
 import { routes } from '@/lib/routes'
 import { LocationForm, type Weekday } from '../location-form'
 
@@ -20,7 +19,7 @@ export default async function Page({ params }: PageProps) {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const data = await graphqlQuery<LocationData>(LOCATION_QUERY, { id }, userId, 'Location')
+  const data = await getCachedLocation(userId, id)
   const location = data.location
   if (!location) {
     notFound()

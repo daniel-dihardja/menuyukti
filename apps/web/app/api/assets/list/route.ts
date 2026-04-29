@@ -63,5 +63,12 @@ export async function GET() {
 
   rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
-  return NextResponse.json({ items: rows })
+  return NextResponse.json(
+    { items: rows },
+    {
+      headers: {
+        'Cache-Control': 'private, max-age=30, stale-while-revalidate=120',
+      },
+    },
+  )
 }

@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "private": true,
+  "sideEffects": false,
   "scripts": {
     "format-check": "prettier --check \"src/**/*.{ts,tsx,md,css}\" components.json",
     "lint": "eslint . --max-warnings 0",
