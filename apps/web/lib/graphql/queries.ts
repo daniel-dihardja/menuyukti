@@ -37,8 +37,8 @@ export function parseUpdateNodeData(data: UpdateNodeDataRaw): { updateNode: AnyN
 }
 
 export const LOCATIONS_QUERY = `
-  query Locations {
-    locations {
+  query Locations($first: Int) {
+    locations(first: $first) {
       id
       name
       nodeId
@@ -305,8 +305,8 @@ export type ExportWorkflowDataRaw = {
 }
 
 export const WORKFLOW_EXPORTS_QUERY = `
-  query WorkflowExports($locationId: Int!) {
-    workflowExports(locationId: $locationId) {
+  query WorkflowExports($locationId: Int!, $first: Int) {
+    workflowExports(locationId: $locationId, first: $first) {
       id
       workflowId
       locationId

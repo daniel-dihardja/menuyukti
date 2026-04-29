@@ -21,7 +21,7 @@ async def fetch_milestone_children(
     location_id: int,
     user_id: str,
     *,
-    client: httpx.AsyncClient | None = None,
+    client: httpx.AsyncClient,
 ) -> list[dict[str, Any]]:
     """Return all child nodes under the milestone (goal, milestonedata, passcriteria, result)."""
 
@@ -46,10 +46,7 @@ async def fetch_milestone_children(
                 out.append(item)
         return out
 
-    if client is not None:
-        return await _run(client)
-    async with httpx.AsyncClient() as c:
-        return await _run(c)
+    return await _run(client)
 
 
 async def update_passcriteria_status(
@@ -57,7 +54,7 @@ async def update_passcriteria_status(
     status: str,
     user_id: str,
     *,
-    client: httpx.AsyncClient | None = None,
+    client: httpx.AsyncClient,
 ) -> dict[str, Any]:
     """Set passcriteria `status` to pass or fail."""
 
@@ -74,26 +71,20 @@ async def update_passcriteria_status(
             raise RuntimeError(msg)
         return node
 
-    if client is not None:
-        return await _run(client)
-    async with httpx.AsyncClient() as c:
-        return await _run(c)
+    return await _run(client)
 
 
 async def delete_node(
     node_id: str,
     user_id: str,
     *,
-    client: httpx.AsyncClient | None = None,
+    client: httpx.AsyncClient,
 ) -> bool:
     async def _run(c: httpx.AsyncClient) -> bool:
         data = await graphql_post(c, DELETE_NODE_MUTATION, {"id": node_id}, user_id)
         return bool(data.get("deleteNode"))
 
-    if client is not None:
-        return await _run(client)
-    async with httpx.AsyncClient() as c:
-        return await _run(c)
+    return await _run(client)
 
 
 async def create_result_node(
@@ -102,7 +93,7 @@ async def create_result_node(
     data: dict[str, Any],
     user_id: str,
     *,
-    client: httpx.AsyncClient | None = None,
+    client: httpx.AsyncClient,
 ) -> dict[str, Any]:
     async def _run(c: httpx.AsyncClient) -> dict[str, Any]:
         gql = await graphql_post(
@@ -123,10 +114,38 @@ async def create_result_node(
             raise RuntimeError(msg)
         return node
 
-    if client is not None:
-        return await _run(client)
-    async with httpx.AsyncClient() as c:
-        return await _run(c)
+    return await _run(client)
+
+
+async def upsert_result_node(
+    *,
+    result_node_id: str | None,
+    milestone_id: str,
+    location_id: int,
+    data: dict[str, Any],
+    user_id: str,
+    client: httpx.AsyncClient,
+) -> dict[str, Any]:
+    """Update the existing result node when present, else create one."""
+    if result_node_id:
+        gql = await graphql_post(
+            client,
+            UPDATE_NODE_MUTATION,
+            {"id": result_node_id, "data": data},
+            user_id,
+        )
+        node = gql.get("updateNode")
+        if not isinstance(node, dict):
+            msg = "updateNode returned invalid payload"
+            raise RuntimeError(msg)
+        return node
+    return await create_result_node(
+        milestone_id,
+        location_id,
+        data,
+        user_id,
+        client=client,
+    )
 
 
 async def fetch_prior_milestones_data_for_eval(
@@ -135,7 +154,7 @@ async def fetch_prior_milestones_data_for_eval(
     location_id: int,
     user_id: str,
     *,
-    client: httpx.AsyncClient | None = None,
+    client: httpx.AsyncClient,
 ) -> str:
     """Return markdown Data-tab snapshots for prior milestones (empty when unavailable)."""
 
@@ -155,7 +174,4 @@ async def fetch_prior_milestones_data_for_eval(
             return ""
         return raw.strip()
 
-    if client is not None:
-        return await _run(client)
-    async with httpx.AsyncClient() as c:
-        return await _run(c)
+    return await _run(client)

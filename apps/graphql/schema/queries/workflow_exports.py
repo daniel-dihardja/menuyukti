@@ -1,6 +1,7 @@
 import strawberry
 
 from graphql.data_sources import SessionLocal, WorkflowExport
+from graphql.limits import DEFAULT_LIST_FIRST, MAX_LIST_FIRST, clamp_page_size
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types import WorkflowExportType
 
@@ -24,10 +25,16 @@ class WorkflowExportsQuery:
         self,
         info: strawberry.Info,
         location_id: int,
+        first: int | None = None,
     ) -> list[WorkflowExportType]:
         user_id = user_id_from_info(info)
         if not user_id:
             return []
+        limit = clamp_page_size(
+            first,
+            default=DEFAULT_LIST_FIRST,
+            maximum=MAX_LIST_FIRST,
+        )
 
         with SessionLocal() as session:
             if not is_location_owner(session, location_id, user_id):
@@ -36,6 +43,7 @@ class WorkflowExportsQuery:
                 session.query(WorkflowExport)
                 .filter(WorkflowExport.location_id == location_id)
                 .order_by(WorkflowExport.updated_at.desc())
+                .limit(limit)
                 .all()
             )
             return [_export_row_to_gql(r) for r in rows]

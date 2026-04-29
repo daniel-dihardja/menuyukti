@@ -39,7 +39,17 @@ function formatGraphqlFetchError(endpoint: string, err: unknown): string {
 
 export type GraphQLResponse<T> = {
   data?: T
-  errors?: Array<{ message: string }>
+  errors?: Array<{ message: string; extensions?: { code?: string } }>
+}
+
+export class GraphQLRequestError extends Error {
+  readonly codes: string[]
+
+  constructor(message: string, codes: string[] = []) {
+    super(message)
+    this.name = 'GraphQLRequestError'
+    this.codes = codes
+  }
 }
 
 function buildHeaders(userId?: string): Record<string, string> {
@@ -86,7 +96,10 @@ export async function graphqlQuery<T>(
   const json = (await res.json()) as GraphQLResponse<T>
   if (json.errors?.length) {
     const msg = json.errors.map((e) => e.message).join('; ')
-    throw new Error(msg || 'GraphQL error')
+    const codes = json.errors
+      .map((e) => e.extensions?.code)
+      .filter((code): code is string => Boolean(code))
+    throw new GraphQLRequestError(msg || 'GraphQL error', codes)
   }
 
   if (json.data == null) {

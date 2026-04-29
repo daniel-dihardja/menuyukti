@@ -7,7 +7,7 @@ import os
 from typing import Any
 
 import httpx
-from agents_app.agents.graphql_base import graphql_post
+from agents_app.agents.graphql_base import classify_graphql_failure, graphql_post
 from agents_app.agents.graphql_operations import (
     COMPLETE_MILESTONE_AGENT_RUN_MUTATION,
     START_MILESTONE_AGENT_RUN_MUTATION,
@@ -55,10 +55,13 @@ async def start_milestone_agent_run_record(
                 raw,
             )
             return False
-    except Exception:
+    except Exception as exc:
+        failure = classify_graphql_failure(exc)
         _logger.exception(
-            "milestone_run.persist: startMilestoneAgentRun failed run_id=%s",
+            "milestone_run.persist: startMilestoneAgentRun failed run_id=%s code=%s retryable=%s",
             run_id,
+            failure.code,
+            failure.retryable,
         )
         return False
     return True
@@ -96,8 +99,11 @@ async def complete_milestone_agent_run_record(
                 "milestone_run.persist: unexpected completeMilestoneAgentRun response %s",
                 raw,
             )
-    except Exception:
+    except Exception as exc:
+        failure = classify_graphql_failure(exc)
         _logger.exception(
-            "milestone_run.persist: completeMilestoneAgentRun failed run_id=%s",
+            "milestone_run.persist: completeMilestoneAgentRun failed run_id=%s code=%s retryable=%s",
             run_id,
+            failure.code,
+            failure.retryable,
         )

@@ -2,6 +2,7 @@ import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { ZodError, z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { apiError, apiErrorFromUnknown } from '@/lib/api/error-response'
 import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
   DELETE_NODE_MUTATION,
@@ -26,13 +27,13 @@ export async function PATCH(req: Request, context: RouteContext) {
     await connection()
     const { isAuthenticated, userId } = await auth()
     if (!isAuthenticated || !userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return apiError('UNAUTHORIZED', 'Unauthorized', 401)
     }
 
     const { id: rawId } = await context.params
     const idParsed = idParamSchema.safeParse(rawId)
     if (!idParsed.success) {
-      return NextResponse.json({ message: 'Invalid workflow id' }, { status: 400 })
+      return apiError('BAD_REQUEST', 'Invalid workflow id', 400)
     }
     const workflowId = idParsed.data
 
@@ -41,10 +42,10 @@ export async function PATCH(req: Request, context: RouteContext) {
     )
     const node = rootData.node
     if (!node) {
-      return NextResponse.json({ message: 'Workflow not found' }, { status: 404 })
+      return apiError('NOT_FOUND', 'Workflow not found', 404)
     }
     if (node.nodeType !== 'workflow') {
-      return NextResponse.json({ message: 'Not a workflow root' }, { status: 400 })
+      return apiError('BAD_REQUEST', 'Not a workflow root', 400)
     }
 
     const json = await req.json()
@@ -66,19 +67,8 @@ export async function PATCH(req: Request, context: RouteContext) {
 
     return NextResponse.json(updated.updateNode)
   } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          message: 'Invalid input',
-          issues: error.issues,
-        },
-        { status: 400 },
-      )
-    }
-
     console.error(error)
-    const message = error instanceof Error ? error.message : 'Failed to update workflow'
-    return NextResponse.json({ message }, { status: 500 })
+    return apiErrorFromUnknown(error, 'Failed to update workflow')
   }
 }
 
@@ -87,13 +77,13 @@ export async function DELETE(_req: Request, context: RouteContext) {
     await connection()
     const { isAuthenticated, userId } = await auth()
     if (!isAuthenticated || !userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return apiError('UNAUTHORIZED', 'Unauthorized', 401)
     }
 
     const { id: rawId } = await context.params
     const idParsed = idParamSchema.safeParse(rawId)
     if (!idParsed.success) {
-      return NextResponse.json({ message: 'Invalid workflow id' }, { status: 400 })
+      return apiError('BAD_REQUEST', 'Invalid workflow id', 400)
     }
     const workflowId = idParsed.data
 
@@ -102,10 +92,10 @@ export async function DELETE(_req: Request, context: RouteContext) {
     )
     const node = rootData.node
     if (!node) {
-      return NextResponse.json({ message: 'Workflow not found' }, { status: 404 })
+      return apiError('NOT_FOUND', 'Workflow not found', 404)
     }
     if (node.nodeType !== 'workflow') {
-      return NextResponse.json({ message: 'Not a workflow root' }, { status: 400 })
+      return apiError('BAD_REQUEST', 'Not a workflow root', 400)
     }
 
     try {
@@ -115,12 +105,12 @@ export async function DELETE(_req: Request, context: RouteContext) {
         userId,
       )
       if (!data.deleteNode) {
-        return NextResponse.json({ message: 'Failed to delete workflow' }, { status: 500 })
+        return apiError('INTERNAL_ERROR', 'Failed to delete workflow', 500)
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
       if (msg.includes('Unexpected child node type')) {
-        return NextResponse.json({ message: msg }, { status: 400 })
+        return apiError('BAD_REQUEST', msg, 400)
       }
       throw err
     }
@@ -130,7 +120,6 @@ export async function DELETE(_req: Request, context: RouteContext) {
     return new NextResponse(null, { status: 204 })
   } catch (error) {
     console.error(error)
-    const message = error instanceof Error ? error.message : 'Failed to delete workflow'
-    return NextResponse.json({ message }, { status: 500 })
+    return apiErrorFromUnknown(error, 'Failed to delete workflow')
   }
 }

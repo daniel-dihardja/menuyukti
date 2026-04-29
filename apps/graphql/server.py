@@ -1,9 +1,11 @@
 import os
 
+from graphql import GraphQLError
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 from strawberry.asgi import GraphQL
+from strawberry.http import GraphQLHTTPResponse
 
 from .schema import schema
 
@@ -26,6 +28,36 @@ class GraphQLWithUserContext(GraphQL):
             hdr = request.headers.get("X-User-Id", "")
             ctx["user_id"] = hdr
         return ctx
+
+    async def process_result(self, request, result) -> GraphQLHTTPResponse:
+        response = await super().process_result(request, result)
+        errors = response.get("errors")
+        if not isinstance(errors, list):
+            return response
+
+        for item in errors:
+            if not isinstance(item, dict):
+                continue
+            extensions = item.get("extensions")
+            if not isinstance(extensions, dict):
+                extensions = {}
+                item["extensions"] = extensions
+            if extensions.get("code"):
+                continue
+
+            original_error = None
+            if isinstance(getattr(result, "errors", None), list):
+                for err in result.errors:
+                    if isinstance(err, GraphQLError) and err.message == item.get("message"):
+                        original_error = err.original_error
+                        break
+            if isinstance(original_error, PermissionError):
+                extensions["code"] = "FORBIDDEN"
+            elif isinstance(original_error, ValueError):
+                extensions["code"] = "BAD_USER_INPUT"
+            else:
+                extensions["code"] = "INTERNAL_SERVER_ERROR"
+        return response
 
 
 # uploadSalesReport uses GraphQL Upload scalar; enable multipart handling.

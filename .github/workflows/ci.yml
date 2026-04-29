@@ -76,6 +76,8 @@ jobs:
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha }}
           TURBO_SCM_HEAD: ${{ github.event.pull_request.head.sha }}
         run: pnpm exec turbo run format-check lint check-types test --affected
+      - name: Validate web GraphQL operations
+        run: pnpm --filter web graphql:check
       - name: Turbo (full)
         if: github.event_name == 'push'
         run: pnpm exec turbo run format-check lint check-types test
@@ -138,6 +140,8 @@ jobs:
       - run: make lint
         working-directory: apps/agents
       - run: make typecheck
+        working-directory: apps/agents
+      - run: PYTHONPATH=../.. uv run python scripts/check_graphql_operations.py
         working-directory: apps/agents
       - run: make test
         working-directory: apps/agents

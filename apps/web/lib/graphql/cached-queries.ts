@@ -1,6 +1,7 @@
 import { cacheLife, cacheTag } from 'next/cache'
 
 import { graphqlQuery } from '@/lib/graphql/client'
+import { DEFAULT_LIST_FIRST } from '@/lib/graphql/pagination'
 import {
   graphqlAnalyticsRunCacheTag,
   graphqlAnalyticsRunComputationsCacheTag,
@@ -30,7 +31,12 @@ export async function getCachedLocationsData(userId: string): Promise<LocationsD
   'use cache'
   cacheTag(graphqlLocationsDataCacheTag(userId))
   cacheLife({ revalidate: 60 })
-  return graphqlQuery<LocationsData>(LOCATIONS_QUERY, undefined, userId, 'Locations')
+  return graphqlQuery<LocationsData>(
+    LOCATIONS_QUERY,
+    { first: DEFAULT_LIST_FIRST },
+    userId,
+    'Locations',
+  )
 }
 
 /** Cached per user and analytics run; metadata only (no `menuItemCogs`) for matrix/heatmap shells. */

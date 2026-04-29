@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit",
     "check-types": "tsc --noEmit",
     "test": "vitest",
-    "graphql:codegen": "graphql-codegen --config codegen.yml"
+    "graphql:codegen": "graphql-codegen --config codegen.yml",
+    "graphql:check": "node scripts/check-graphql-operations.mjs"
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.99",

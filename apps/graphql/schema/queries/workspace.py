@@ -1,6 +1,7 @@
 import strawberry
 
 from graphql.data_sources import SessionLocal, Workspace, WorkspaceMembership
+from graphql.limits import DEFAULT_LIST_FIRST, MAX_LIST_FIRST, clamp_page_size
 from graphql.schema.auth import is_workspace_member, user_id_from_info
 from graphql.schema.types import WorkspaceMembershipType, WorkspaceType
 
@@ -49,11 +50,19 @@ class WorkspaceQuery:
 
     @strawberry.field
     def workspace_members(
-        self, info: strawberry.Info, workspace_id: strawberry.ID
+        self,
+        info: strawberry.Info,
+        workspace_id: strawberry.ID,
+        first: int | None = None,
     ) -> list[WorkspaceMembershipType]:
         user_id = user_id_from_info(info)
         if not user_id:
             return []
+        limit = clamp_page_size(
+            first,
+            default=DEFAULT_LIST_FIRST,
+            maximum=MAX_LIST_FIRST,
+        )
         wid = int(workspace_id)
         with SessionLocal() as session:
             if not is_workspace_member(session, wid, user_id):
@@ -62,6 +71,7 @@ class WorkspaceQuery:
                 session.query(WorkspaceMembership)
                 .filter(WorkspaceMembership.workspace_id == wid)
                 .order_by(WorkspaceMembership.id)
+                .limit(limit)
                 .all()
             )
             return [_membership_to_gql(r) for r in rows]
