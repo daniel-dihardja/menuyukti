@@ -1468,8 +1468,13 @@
         "caption": "Menu items table with category, sub category, quantity, and revenue."
       },
       "chart": {
-        "ariaLabel": "Bubble chart of menu items sized by quantity sold",
-        "caption": "Bubble size represents quantity sold. Color indicates menu category.",
+        "sizeMetricLabel": "Bubble size by",
+        "sizeMetricQuantity": "Quantity",
+        "sizeMetricRevenue": "Revenue",
+        "ariaLabelQuantity": "Bubble chart of menu items sized by quantity sold",
+        "ariaLabelRevenue": "Bubble chart of menu items sized by total revenue",
+        "captionQuantity": "Bubble size represents quantity sold. Color indicates menu category.",
+        "captionRevenue": "Bubble size represents total revenue. Color indicates menu category.",
         "empty": "No menu items available for the selected category."
       }
     }
