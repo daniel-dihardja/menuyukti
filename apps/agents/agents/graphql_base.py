@@ -24,7 +24,6 @@ class GraphQLHttpError(RuntimeError):
         message: str,
         *,
         errors: list[dict[str, Any]] | None = None,
-        *,
         code: str = "INTERNAL_SERVER_ERROR",
         retryable: bool = False,
     ) -> None:

@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SCHEMA_PATH = REPO_ROOT / "apps" / "graphql" / "schema.graphql"
 OPERATIONS_PATH = REPO_ROOT / "apps" / "agents" / "agents" / "graphql_operations.py"
