@@ -2,8 +2,8 @@ import strawberry
 from sqlalchemy import or_
 from sqlalchemy.orm import selectinload
 
-from graphql.limits import DEFAULT_LIST_FIRST, MAX_LIST_FIRST, clamp_page_size
 from graphql.data_sources import Location, SessionLocal, WorkspaceMembership
+from graphql.limits import DEFAULT_LIST_FIRST, MAX_LIST_FIRST, clamp_page_size
 from graphql.schema.auth import is_location_owner, user_id_from_info
 from graphql.schema.types import LocationType, OpeningHourType
 

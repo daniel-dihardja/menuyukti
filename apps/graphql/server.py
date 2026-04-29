@@ -1,11 +1,12 @@
 import os
 
-from graphql import GraphQLError
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 from strawberry.asgi import GraphQL
 from strawberry.http import GraphQLHTTPResponse
+
+from graphql import GraphQLError
 
 from .schema import schema
 
