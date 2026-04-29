@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from 'next-intl'
 
 import { AppChrome } from '@/components/app-chrome'
 import { Providers } from '@/components/providers'
+import { WebVitalsReporter } from '@/components/web-vitals-reporter'
 import { routes } from '@/lib/routes'
 import enMessages from '@/messages/en.json'
 
@@ -31,6 +32,7 @@ export function RootShellFallback({
       >
         <NextIntlClientProvider locale="en" messages={enMessages}>
           <Providers>
+            <WebVitalsReporter />
             <AppChrome>{children}</AppChrome>
           </Providers>
         </NextIntlClientProvider>
@@ -51,6 +53,7 @@ export async function RootShell({ children, fontSansVariable, fontMonoVariable }
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>
+            <WebVitalsReporter />
             <AppChrome>{children}</AppChrome>
           </Providers>
         </NextIntlClientProvider>

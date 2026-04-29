@@ -6,15 +6,12 @@ import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import { Card, CardContent, CardHeader } from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
-import { getCachedLocationsData } from '@/lib/graphql/cached-queries'
-import { graphqlQuery } from '@/lib/graphql/client'
 import {
-  ANALYTICS_RUNS_BY_LOCATION_QUERY,
-  NODES_QUERY,
-  parseNodesData,
-  type AnalyticsRunsByLocationData,
-  type NodesDataRaw,
-} from '@/lib/graphql/queries'
+  getCachedAnalyticsRunsByLocation,
+  getCachedLocationsData,
+  getCachedWorkflowsByLocation,
+} from '@/lib/graphql/cached-queries'
+import { type AnyNode } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { CampaignsClient } from './_components/campaigns-client'
 
@@ -93,27 +90,16 @@ async function CampaignsData() {
   }
 
   const initialLocationId = branches.length === 1 ? (branches[0]?.id ?? null) : null
-  const initialAnalyticsRuns =
-    initialLocationId === null
-      ? []
-      : await graphqlQuery<AnalyticsRunsByLocationData>(
-          ANALYTICS_RUNS_BY_LOCATION_QUERY,
-          { locationId: initialLocationId, first: 300 },
-          userId,
-        ).then((data) =>
-          (data.analyticsRuns ?? []).map((run) => ({
-            id: Number(run.id),
-            name: run.name || run.filename || `Run #${run.id}`,
-          })),
-        )
-  const initialCampaigns =
-    initialLocationId === null
-      ? []
-      : await graphqlQuery<NodesDataRaw>(
-          NODES_QUERY,
-          { locationId: initialLocationId, nodeType: 'workflow' },
-          userId,
-        ).then((raw) => parseNodesData(raw).nodes)
+  const initialAnalyticsRuns: Array<{ id: number; name: string }> = []
+  const initialCampaigns: AnyNode[] = []
+  if (initialLocationId !== null) {
+    const [runs, campaigns] = await Promise.all([
+      getCachedAnalyticsRunsByLocation(userId, initialLocationId),
+      getCachedWorkflowsByLocation(userId, initialLocationId),
+    ])
+    initialAnalyticsRuns.push(...runs)
+    initialCampaigns.push(...campaigns)
+  }
 
   return (
     <section className="flex flex-col gap-6">

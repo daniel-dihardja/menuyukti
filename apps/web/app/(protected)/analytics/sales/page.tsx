@@ -13,12 +13,10 @@ import {
 } from '@workspace/ui/components/card'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { auth } from '@clerk/nextjs/server'
-import { getCachedLocationsData } from '@/lib/graphql/cached-queries'
-import { graphqlQuery } from '@/lib/graphql/client'
 import {
-  ANALYTICS_RUNS_BY_LOCATION_QUERY,
-  type AnalyticsRunsByLocationData,
-} from '@/lib/graphql/queries'
+  getCachedAnalyticsRunsByLocation,
+  getCachedLocationsData,
+} from '@/lib/graphql/cached-queries'
 import { AnalyticsSalesClient } from './analytics-sales-client'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
@@ -111,16 +109,7 @@ async function SalesPageData() {
   const initialAnalytics =
     initialLocationId === null
       ? []
-      : await graphqlQuery<AnalyticsRunsByLocationData>(
-          ANALYTICS_RUNS_BY_LOCATION_QUERY,
-          { locationId: initialLocationId, first: 300 },
-          userId,
-        ).then((data) =>
-          (data.analyticsRuns ?? []).map((run) => ({
-            id: Number(run.id),
-            name: run.name || run.filename || `Run #${run.id}`,
-          })),
-        )
+      : await getCachedAnalyticsRunsByLocation(userId, initialLocationId)
 
   return (
     <section className="space-y-3">

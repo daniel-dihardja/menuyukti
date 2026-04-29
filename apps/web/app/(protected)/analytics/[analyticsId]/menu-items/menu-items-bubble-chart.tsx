@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import * as d3 from 'd3'
+import { format } from 'd3-format'
+import { hierarchy, pack } from 'd3-hierarchy'
+import { scaleOrdinal } from 'd3-scale'
 import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 
 import { formatCurrencyWithCode } from '@/lib/currency'
@@ -81,7 +83,7 @@ function buildBubbleData(rows: MenuItemsDisplayRow[]): BubbleData[] {
 
 export function MenuItemsBubbleChart({ rows, locale, currency }: Props) {
   const t = useTranslations('analytics.menuItems')
-  const formatNumber = useMemo(() => d3.format(',d'), [])
+  const formatNumber = useMemo(() => format(',d'), [])
   const [sizeMetric, setSizeMetric] = useState<BubbleSizeMetric>('quantity')
 
   const chart = useMemo(() => {
@@ -93,14 +95,13 @@ export function MenuItemsBubbleChart({ rows, locale, currency }: Props) {
     const categoryDomain = Array.from(new Set(data.map((item) => item.group))).sort((a, b) =>
       a.localeCompare(b),
     )
-    const color = d3.scaleOrdinal<string, string>(categoryDomain, CATEGORY_BUBBLE_COLORS)
-    const pack = d3
-      .pack<BubbleHierarchyDatum>()
+    const color = scaleOrdinal<string, string>(categoryDomain, CATEGORY_BUBBLE_COLORS)
+    const packedLayout = pack<BubbleHierarchyDatum>()
       .size([CHART_SIZE - CHART_MARGIN * 2, CHART_SIZE - CHART_MARGIN * 2])
       .padding(3)
 
-    const root = pack(
-      d3.hierarchy<BubbleHierarchyDatum>({ children: data }).sum((d) => {
+    const root = packedLayout(
+      hierarchy<BubbleHierarchyDatum>({ children: data }).sum((d) => {
         if (!('quantity' in d)) {
           return 0
         }

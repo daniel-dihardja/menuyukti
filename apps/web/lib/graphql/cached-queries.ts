@@ -11,17 +11,23 @@ import {
 } from '@/lib/graphql/cache-tags'
 import {
   ANALYTICS_RUN_METADATA_QUERY,
+  ANALYTICS_RUNS_BY_LOCATION_QUERY,
   IMAGE_AI_FLOWS_QUERY,
   LOCATIONS_QUERY,
   MENU_ENGINEERING_MATRIX_QUERY,
   MENU_HEATMAPS_QUERY,
+  NODES_QUERY,
   PROMOTION_MENU_ITEMS_QUERY,
   WORKFLOW_CAMPAIGN_TREE_QUERY,
+  parseNodesData,
+  type AnalyticsRunsByLocationData,
+  type AnyNode,
   type AnalyticsRunMetadataData,
   type ImageAiFlowsData,
   type LocationsData,
   type MenuEngineeringMatrixData,
   type MenuHeatmapsData,
+  type NodesDataRaw,
   type PromotionMenuItemsData,
   type WorkflowCampaignTreeDataRaw,
 } from '@/lib/graphql/queries'
@@ -37,6 +43,41 @@ export async function getCachedLocationsData(userId: string): Promise<LocationsD
     userId,
     'Locations',
   )
+}
+
+/** Cached per user/location for workflow listings in dashboard and workflows pages. */
+export async function getCachedWorkflowsByLocation(
+  userId: string,
+  locationId: number,
+): Promise<AnyNode[]> {
+  'use cache'
+  cacheTag(graphqlLocationsDataCacheTag(userId))
+  cacheLife({ revalidate: 60 })
+  const raw = await graphqlQuery<NodesDataRaw>(
+    NODES_QUERY,
+    { locationId, nodeType: 'workflow' },
+    userId,
+  )
+  return parseNodesData(raw).nodes
+}
+
+/** Cached per user/location for analytics run selectors in sales and workflows pages. */
+export async function getCachedAnalyticsRunsByLocation(
+  userId: string,
+  locationId: number,
+): Promise<Array<{ id: number; name: string }>> {
+  'use cache'
+  cacheTag(graphqlLocationsDataCacheTag(userId))
+  cacheLife({ revalidate: 60 })
+  const data = await graphqlQuery<AnalyticsRunsByLocationData>(
+    ANALYTICS_RUNS_BY_LOCATION_QUERY,
+    { locationId, first: 300 },
+    userId,
+  )
+  return (data.analyticsRuns ?? []).map((run) => ({
+    id: Number(run.id),
+    name: run.name || run.filename || `Run #${run.id}`,
+  }))
 }
 
 /** Cached per user and analytics run; metadata only (no `menuItemCogs`) for matrix/heatmap shells. */

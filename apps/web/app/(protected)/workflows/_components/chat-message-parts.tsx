@@ -16,8 +16,14 @@ import {
 } from '@workspace/ui/components/ai-elements/tool'
 import { MessageResponse } from '@workspace/ui/components/ai-elements/message'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 
-import { MarkdownMessage } from '@/components/markdown-message'
+const MarkdownMessage = dynamic(
+  () => import('@/components/markdown-message').then((mod) => mod.MarkdownMessage),
+  {
+    loading: () => <MessageResponse className="text-muted-foreground">...</MessageResponse>,
+  },
+)
 
 function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart }) {
   const header =

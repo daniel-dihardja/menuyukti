@@ -1,7 +1,6 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { graphqlQuery } from '@/lib/graphql/client'
-import { NODES_QUERY, parseNodesData, type NodesDataRaw } from '@/lib/graphql/queries'
+import { getCachedWorkflowsByLocation } from '@/lib/graphql/cached-queries'
 
 export async function GET(req: Request) {
   try {
@@ -22,11 +21,15 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: 'Invalid locationId' }, { status: 400 })
     }
 
-    const data = parseNodesData(
-      await graphqlQuery<NodesDataRaw>(NODES_QUERY, { locationId, nodeType: 'workflow' }, userId),
+    const nodes = await getCachedWorkflowsByLocation(userId, locationId)
+    return NextResponse.json(
+      { nodes },
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=30, stale-while-revalidate=120',
+        },
+      },
     )
-
-    return NextResponse.json({ nodes: data.nodes })
   } catch (error) {
     console.error(error)
     const message = error instanceof Error ? error.message : 'Failed to list workflows'

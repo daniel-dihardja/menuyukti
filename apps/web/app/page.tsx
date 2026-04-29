@@ -1,6 +1,4 @@
 import Link from 'next/link'
-import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
@@ -36,11 +34,6 @@ import {
 } from 'lucide-react'
 
 export default async function LandingPage() {
-  const { isAuthenticated } = await auth()
-  if (isAuthenticated) {
-    redirect(routes.dashboard)
-  }
-
   const t = await getTranslations('landing')
 
   const trustStats = [
@@ -107,13 +100,13 @@ export default async function LandingPage() {
     {
       title: t('featureHighlights.cards.workflowTitle'),
       description: t('featureHighlights.cards.workflowDescription'),
-      image: '/images/landing-workflow.png',
+      image: '/images/landing-workflow.svg',
       alt: t('featureHighlights.cards.workflowAlt'),
     },
     {
       title: t('featureHighlights.cards.promotionTitle'),
       description: t('featureHighlights.cards.promotionDescription'),
-      image: '/images/landing-promotion.png',
+      image: '/images/landing-promotion.svg',
       alt: t('featureHighlights.cards.promotionAlt'),
     },
   ] as const
