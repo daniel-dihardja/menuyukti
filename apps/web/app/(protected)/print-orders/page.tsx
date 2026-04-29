@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import Link from 'next/link'
+import { connection } from 'next/server'
 
 import { routes } from '@/lib/routes'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
@@ -17,6 +18,7 @@ import { Package } from 'lucide-react'
 import { ShopPrintOrdersPreview } from '@/components/shop'
 
 export default async function Page() {
+  await connection()
   const t = await getTranslations('platform.printOrders')
 
   return (

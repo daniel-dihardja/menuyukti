@@ -1,6 +1,12 @@
-import { NextResponse, connection } from 'next/server'
+import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { getCachedAnalyticsRunsByLocation } from '@/lib/graphql/cached-queries'
+
+function isPrerenderInterrupt(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  const digest = (error as Error & { digest?: string }).digest
+  return digest === 'NEXT_PRERENDER_INTERRUPTED' || digest === 'HANGING_PROMISE_REJECTION'
+}
 
 /**
  * GET /api/analytics/list?locationId=...
@@ -8,9 +14,19 @@ import { getCachedAnalyticsRunsByLocation } from '@/lib/graphql/cached-queries'
  */
 export async function GET(req: Request) {
   try {
-    await connection()
-    const { isAuthenticated, userId } = await auth()
-    if (!isAuthenticated) {
+    let isAuthenticated = false
+    let userId: string | null = null
+    try {
+      const authResult = await auth()
+      isAuthenticated = authResult.isAuthenticated
+      userId = authResult.userId
+    } catch (error) {
+      if (isPrerenderInterrupt(error)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      throw error
+    }
+    if (!isAuthenticated || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

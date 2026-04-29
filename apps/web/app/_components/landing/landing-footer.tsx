@@ -14,6 +14,7 @@ type LandingFooterProps = {
 
 const linkClassName =
   'text-muted-foreground underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+const BUILD_YEAR = new Date().getFullYear()
 
 export function LandingFooter({
   copyright,
@@ -24,8 +25,6 @@ export function LandingFooter({
   privacyPolicyLabel,
   termsLabel,
 }: LandingFooterProps) {
-  const year = new Date().getFullYear()
-
   return (
     <footer className="mt-auto border-t border-border bg-card py-8">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 sm:flex-row sm:justify-between">
@@ -50,7 +49,7 @@ export function LandingFooter({
           </Link>
         </nav>
         <p className="text-center text-base text-muted-foreground">
-          © {year} {copyright}
+          © {BUILD_YEAR} {copyright}
         </p>
       </div>
     </footer>
