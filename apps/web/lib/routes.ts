@@ -46,6 +46,7 @@ export const routes = {
     heatmap: (analyticsId: string | number) => `/analytics/${analyticsId}/heatmap`,
 
     cogs: (analyticsId: string | number) => `/analytics/${analyticsId}/cogs`,
+    menuItems: (analyticsId: string | number) => `/analytics/${analyticsId}/menu-items`,
   },
 
   assets: '/assets',

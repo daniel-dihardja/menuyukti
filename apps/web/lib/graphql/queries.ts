@@ -649,6 +649,34 @@ export type MenuHeatmapsData = {
   }>
 }
 
+export const PROMOTION_MENU_ITEMS_QUERY = `
+  query PromotionMenuItems($id: ID!, $locationId: ID) {
+    promotionMenuItems(analyticsRunId: $id, locationId: $locationId) {
+      analyticsRunId
+      items {
+        menu
+        menuCategory
+        menuCategoryDetail
+        quantity
+        totalRevenue
+      }
+    }
+  }
+`
+
+export type PromotionMenuItemsData = {
+  promotionMenuItems: {
+    analyticsRunId: string
+    items: Array<{
+      menu: string
+      menuCategory: string | null
+      menuCategoryDetail: string | null
+      quantity: number
+      totalRevenue: number
+    }>
+  } | null
+}
+
 export const PUBLIC_HOLIDAYS_QUERY = `
   query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) {
     publicHolidays(country: $country, startDate: $startDate, endDate: $endDate) {
