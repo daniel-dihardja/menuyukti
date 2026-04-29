@@ -1294,6 +1294,11 @@
         "cogs": "COGS",
         "we": "COGS ratio (we)",
         "weAria": "COGS ratio for {menu}",
+        "categoryWe": {
+          "enable": "Enable category WE slider",
+          "aria": "Category WE slider for {category}",
+          "hint": "When enabled, moving this slider updates WE and COGS for all menu items in this category."
+        },
         "uncategorizedTitle": "Uncategorized Menu Items"
       },
       "actions": {

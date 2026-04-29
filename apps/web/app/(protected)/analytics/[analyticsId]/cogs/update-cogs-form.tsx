@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { ArrowUpDown } from 'lucide-react'
 
 import { Button } from '@workspace/ui/components/button'
+import { Checkbox } from '@workspace/ui/components/checkbox'
 import { Input } from '@workspace/ui/components/input'
 import { Label } from '@workspace/ui/components/label'
 import {
@@ -28,6 +29,7 @@ import { Slider } from '@workspace/ui/components/slider'
 import { formatCurrencyInput, getCurrencyLocale, parseCurrencyInput } from '@/lib/currency'
 
 const WE_STEP = 0.01
+const UNCATEGORIZED_KEY = '__uncategorized__'
 
 function clampWe(value: number): number {
   if (!Number.isFinite(value)) return 0
@@ -131,6 +133,48 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
       uncategorized: sortItems(groupedMenuItems.uncategorized),
     }
   }, [groupedMenuItems, sortBy, sortDirection])
+  const categorySections = useMemo(
+    () => [
+      ...groupedMenuItems.categorized.map((group) => ({
+        key: group.category,
+        label: group.category,
+        items: group.items,
+      })),
+      ...(groupedMenuItems.uncategorized.length > 0
+        ? [
+            {
+              key: UNCATEGORIZED_KEY,
+              label: t('table.uncategorizedTitle'),
+              items: groupedMenuItems.uncategorized,
+            },
+          ]
+        : []),
+    ],
+    [groupedMenuItems, t],
+  )
+  const [categoryWeEnabled, setCategoryWeEnabled] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {}
+    for (const section of categorySections) {
+      initial[section.key] = false
+    }
+    return initial
+  })
+  const [categoryWeValues, setCategoryWeValues] = useState<Record<string, number>>(() => {
+    const initial: Record<string, number> = {}
+    for (const section of categorySections) {
+      const pricedItems = section.items.filter((item) => item.price > 0)
+      if (pricedItems.length === 0) {
+        initial[section.key] = 0
+        continue
+      }
+      const totalWe = pricedItems.reduce((sum, item) => {
+        const we = item.cogs !== null && item.price > 0 ? clampWe(item.cogs / item.price) : 0
+        return sum + we
+      }, 0)
+      initial[section.key] = clampWe(totalWe / pricedItems.length)
+    }
+    return initial
+  })
 
   function toggleSort(column: 'name' | 'quantity' | 'price') {
     if (sortBy === column) {
@@ -185,6 +229,25 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
     const parsed = parseCurrencyInput(raw, currencyCode, locale)
     if (parsed === null) return ''
     return formatCurrencyInput(parsed, currencyCode, locale)
+  }
+
+  function applyCategoryWe(items: MenuItem[], nextWe: number) {
+    setWeValues((prev) => {
+      const next = { ...prev }
+      for (const item of items) {
+        next[item.id] = nextWe
+      }
+      return next
+    })
+
+    setCogsValues((prev) => {
+      const next = { ...prev }
+      for (const item of items) {
+        const cogsAmount = Math.round(nextWe * item.price)
+        next[item.id] = String(cogsAmount)
+      }
+      return next
+    })
   }
 
   return (
@@ -377,6 +440,46 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
                   <CardTitle>{group.category}</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <div className="mb-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id={`category-we-enable-${group.category}`}
+                        checked={categoryWeEnabled[group.category] ?? false}
+                        onCheckedChange={(checked) => {
+                          setCategoryWeEnabled((prev) => ({
+                            ...prev,
+                            [group.category]: checked === true,
+                          }))
+                        }}
+                        disabled={loading}
+                      />
+                      <Label htmlFor={`category-we-enable-${group.category}`}>
+                        {t('table.categoryWe.enable')}
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        id={`category-we-${group.category}`}
+                        value={[categoryWeValues[group.category] ?? 0]}
+                        min={0}
+                        max={1}
+                        step={WE_STEP}
+                        disabled={loading || !(categoryWeEnabled[group.category] ?? false)}
+                        onValueChange={(vals) => {
+                          const next = vals[0]
+                          if (next === undefined) return
+                          setCategoryWeValues((prev) => ({ ...prev, [group.category]: next }))
+                          applyCategoryWe(group.items, next)
+                        }}
+                        aria-label={t('table.categoryWe.aria', { category: group.category })}
+                        className="flex-1"
+                      />
+                      <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+                        {Math.round((categoryWeValues[group.category] ?? 0) * 100)}%
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{t('table.categoryWe.hint')}</p>
+                  </div>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -437,6 +540,48 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
                   <CardTitle>{t('table.uncategorizedTitle')}</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  <div className="mb-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id={`category-we-enable-${UNCATEGORIZED_KEY}`}
+                        checked={categoryWeEnabled[UNCATEGORIZED_KEY] ?? false}
+                        onCheckedChange={(checked) => {
+                          setCategoryWeEnabled((prev) => ({
+                            ...prev,
+                            [UNCATEGORIZED_KEY]: checked === true,
+                          }))
+                        }}
+                        disabled={loading}
+                      />
+                      <Label htmlFor={`category-we-enable-${UNCATEGORIZED_KEY}`}>
+                        {t('table.categoryWe.enable')}
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        id={`category-we-${UNCATEGORIZED_KEY}`}
+                        value={[categoryWeValues[UNCATEGORIZED_KEY] ?? 0]}
+                        min={0}
+                        max={1}
+                        step={WE_STEP}
+                        disabled={loading || !(categoryWeEnabled[UNCATEGORIZED_KEY] ?? false)}
+                        onValueChange={(vals) => {
+                          const next = vals[0]
+                          if (next === undefined) return
+                          setCategoryWeValues((prev) => ({ ...prev, [UNCATEGORIZED_KEY]: next }))
+                          applyCategoryWe(sortedGroupedMenuItems.uncategorized, next)
+                        }}
+                        aria-label={t('table.categoryWe.aria', {
+                          category: t('table.uncategorizedTitle'),
+                        })}
+                        className="flex-1"
+                      />
+                      <span className="w-10 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+                        {Math.round((categoryWeValues[UNCATEGORIZED_KEY] ?? 0) * 100)}%
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{t('table.categoryWe.hint')}</p>
+                  </div>
                   <Table>
                     <TableHeader>
                       <TableRow>
