@@ -1435,6 +1435,13 @@
       "backToSales": "Back to Sales Reports",
       "qty": "Qty",
       "empty": "No menu item data for this run.",
+      "emptyFiltered": "No menu items match the selected category. Adjust the filter to continue.",
+      "filters": {
+        "categoryLabel": "Category Filter",
+        "categoryAriaLabel": "Filter menu items by category",
+        "categoryPlaceholder": "Select category…",
+        "allCategories": "All Categories"
+      },
       "table": {
         "menuItem": "Menu Item",
         "category": "Category",

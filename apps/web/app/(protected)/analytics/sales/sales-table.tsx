@@ -58,9 +58,21 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
 
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href={routes.workflows.list} className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4" />
-                        {t('askAi')}
+                      <Link
+                        href={routes.analytics.menuItems(row.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <List className="h-4 w-4" />
+                        {t('menuItems')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={routes.analytics.heatmap(row.id)}
+                        className="flex items-center gap-2"
+                      >
+                        <Flame className="h-4 w-4" />
+                        {t('heatmap')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -79,22 +91,11 @@ export function SalesTable({ uploads, onDelete, onCogs }: SalesTableProps) {
                         {t('matrix')}
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.heatmap(row.id)}
-                        className="flex items-center gap-2"
-                      >
-                        <Flame className="h-4 w-4" />
-                        {t('heatmap')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={routes.analytics.menuItems(row.id)}
-                        className="flex items-center gap-2"
-                      >
-                        <List className="h-4 w-4" />
-                        {t('menuItems')}
+                      <Link href={routes.workflows.list} className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        {t('askAi')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
