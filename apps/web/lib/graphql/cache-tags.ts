@@ -7,6 +7,14 @@ export function graphqlLocationsDataCacheTag(userId: string): string {
   return `graphql-locations-data-${userId}`
 }
 
+export function graphqlWorkflowsByLocationCacheTag(userId: string, locationId: number): string {
+  return `graphql-workflows-by-location-${userId}-${locationId}`
+}
+
+export function graphqlAnalyticsRunsByLocationCacheTag(userId: string, locationId: number): string {
+  return `graphql-analytics-runs-by-location-${userId}-${locationId}`
+}
+
 export function graphqlAnalyticsRunCacheTag(userId: string, analyticsRunId: string): string {
   return `graphql-analytics-run-${userId}-${analyticsRunId}`
 }

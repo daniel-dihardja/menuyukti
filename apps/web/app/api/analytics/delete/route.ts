@@ -1,6 +1,7 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { revalidateLocationScopedLists } from '@/lib/graphql/revalidate-location-lists'
 
 const DELETE_ANALYTICS_RUN_MUTATION = `
   mutation DeleteAnalyticsRun($id: ID!) {
@@ -38,6 +39,11 @@ export async function DELETE(req: Request) {
 
     if (!data.deleteAnalyticsRun) {
       return NextResponse.json({ error: 'Failed to delete analytics' }, { status: 500 })
+    }
+
+    const locationId = Number(body?.locationId)
+    if (Number.isInteger(locationId) && locationId > 0) {
+      revalidateLocationScopedLists(userId, locationId)
     }
 
     return NextResponse.json({ ok: true })

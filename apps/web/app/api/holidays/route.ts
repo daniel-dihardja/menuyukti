@@ -1,10 +1,9 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { getCachedLocation } from '@/lib/graphql/cached-queries'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
-  LOCATION_QUERY,
   PUBLIC_HOLIDAYS_QUERY,
-  type LocationData,
   type PublicHolidaysData,
   type PublicHolidayItem,
 } from '@/lib/graphql/queries'
@@ -42,13 +41,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'locationId must be an integer' }, { status: 400 })
     }
 
-    const locationData = await graphqlQuery<LocationData>(
-      LOCATION_QUERY,
-      {
-        id: String(locationId),
-      },
-      userId,
-    )
+    const locationData = await getCachedLocation(userId, String(locationId))
 
     const country = locationData.location?.country
     if (!country) {
