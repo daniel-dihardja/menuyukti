@@ -1,6 +1,6 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { ZodError, z } from 'zod'
+import { z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { apiError, apiErrorFromUnknown } from '@/lib/api/error-response'
 import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
