@@ -3,8 +3,6 @@ import { auth } from '@clerk/nextjs/server'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { revalidateAnalyticsRunComputationsCache } from '@/lib/graphql/revalidate-analytics-cache'
 
-export const runtime = 'nodejs'
-
 const ANALYTICS_RUN_COGS_QUERY = `
   query AnalyticsRunCogs($id: ID!) {
     analyticsRun(id: $id) {

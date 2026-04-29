@@ -8,8 +8,6 @@ import { getBuiltinAiFlowConfig } from '@/lib/assets/builtin-ai-flows'
 import { getPresignedGetUrl, getS3Bucket, getS3Client, userObjectKey } from '@/lib/assets/storage'
 import { runRemoveBackground } from '@/lib/leonardo'
 
-export const runtime = 'nodejs'
-
 const ALLOWED_TYPES = new Set([
   'image/jpeg',
   'image/png',
