@@ -282,10 +282,9 @@ export const resultNodeSchema = baseNode.extend({
   data: resultDataSchema.nullable(),
 })
 
-/** Workflow root node `data` JSON — e.g. `{ "goal": "..." }`. */
+/** Workflow root node `data` JSON. */
 export const workflowDataSchema = z
   .object({
-    goal: z.string().optional(),
     analyticsRunId: z.number().optional(),
   })
   .passthrough()

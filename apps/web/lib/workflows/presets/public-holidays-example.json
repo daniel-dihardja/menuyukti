@@ -1,6 +1,5 @@
 {
   "workflowName": "Public Holidays Research",
-  "goal": "Research and document public holidays for a given campaign window.",
   "milestones": [
     {
       "order": 0,

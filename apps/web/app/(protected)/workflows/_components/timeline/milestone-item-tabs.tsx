@@ -4,6 +4,7 @@ import { type RefObject, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { CalendarDays, Check, Circle, Trash2, X } from 'lucide-react'
 
+import { FieldSaveStatus, type FieldSaveStatusVariant } from '@/components/field-save-status'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
 import { Calendar } from '@workspace/ui/components/calendar'
@@ -53,8 +54,7 @@ export type MilestoneItemTabsModel = {
   handleBrandBriefNotesBlur: () => void
   inputDraft: DatesMilestoneInput
   setInputDraft: (next: DatesMilestoneInput) => void
-  inputDirty: boolean
-  handleInputSave: () => Promise<void>
+  inputSaveStatus: FieldSaveStatusVariant
   savingInput: boolean
 }
 
@@ -105,8 +105,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     handleBrandBriefNotesBlur,
     inputDraft,
     setInputDraft,
-    inputDirty,
-    handleInputSave,
+    inputSaveStatus,
     savingInput,
   } = model
   const t = useTranslations('analytics.campaigns.chat')
@@ -121,13 +120,13 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
 
   return (
     <CardContent className="border-border/60 border-t px-6 pt-4 pb-0">
-      <Tabs className="gap-4" defaultValue="goal">
+      <Tabs className="gap-4" defaultValue="input">
         <TabsList className="w-full" variant="line">
-          <TabsTrigger className="flex-1" value="goal">
-            {t('milestoneTabGoal')}
-          </TabsTrigger>
           <TabsTrigger className="flex-1" value="input">
             {t('milestoneTabInput')}
+          </TabsTrigger>
+          <TabsTrigger className="flex-1" value="goal">
+            {t('milestoneTabGoal')}
           </TabsTrigger>
           <TabsTrigger className="flex-1" value="pass">
             {t('milestoneTabPassCriteria')}
@@ -170,7 +169,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                 <FieldDescription>{t('milestoneBrandBriefInputDescription')}</FieldDescription>
                 <Textarea
                   className="min-h-[120px] resize-y whitespace-pre-wrap"
-                  disabled={savingInput || isMilestoneRunning}
+                  disabled={isMilestoneRunning}
                   onBlur={() => handleBrandBriefNotesBlur()}
                   onChange={(e) => setBrandBriefNotesDraft(e.target.value)}
                   onClick={(e) => e.stopPropagation()}
@@ -179,6 +178,15 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                   value={brandBriefNotesDraft}
                 />
               </Field>
+              <FieldSaveStatus
+                className="text-muted-foreground"
+                messages={{
+                  saving: t('fieldSaveStatusSaving'),
+                  saved: t('fieldSaveStatusSaved'),
+                  unsaved: t('fieldSaveStatusUnsaved'),
+                }}
+                status={inputSaveStatus}
+              />
             </FieldGroup>
           ) : isDatesPreset ? (
             <FieldGroup className="gap-4">
@@ -244,23 +252,15 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                   </PopoverContent>
                 </Popover>
               </Field>
-              <div className="flex items-center justify-between">
-                <p className="text-muted-foreground text-xs">
-                  {savingInput
-                    ? t('fieldSaveStatusSaving')
-                    : inputDirty
-                      ? t('fieldSaveStatusUnsaved')
-                      : t('fieldSaveStatusSaved')}
-                </p>
-                <Button
-                  disabled={savingInput || isMilestoneRunning || !inputDirty}
-                  onClick={() => void handleInputSave()}
-                  type="button"
-                  variant="secondary"
-                >
-                  {t('milestoneInputSaveButton')}
-                </Button>
-              </div>
+              <FieldSaveStatus
+                className="text-muted-foreground"
+                messages={{
+                  saving: t('fieldSaveStatusSaving'),
+                  saved: t('fieldSaveStatusSaved'),
+                  unsaved: t('fieldSaveStatusUnsaved'),
+                }}
+                status={inputSaveStatus}
+              />
             </FieldGroup>
           ) : (
             <p className="text-muted-foreground text-sm">{t('milestoneInputUnsupported')}</p>

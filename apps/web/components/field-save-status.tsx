@@ -40,7 +40,13 @@ export function FieldSaveStatus({ status, messages, className }: FieldSaveStatus
   return (
     <div
       aria-live="polite"
-      className={cn('inline-flex items-center gap-1.5', toneClass, className)}
+      className={cn(
+        'inline-flex items-center gap-1.5',
+        toneClass,
+        status === 'saving' &&
+          'motion-safe:rounded-md motion-safe:px-1 motion-safe:py-0.5 motion-safe:ring-1 motion-safe:ring-primary/25 motion-safe:animate-pulse',
+        className,
+      )}
       role="status"
     >
       {inner}

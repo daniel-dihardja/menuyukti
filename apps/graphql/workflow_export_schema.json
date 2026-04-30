@@ -3,7 +3,7 @@
   "$id": "https://menuyukti.dev/schemas/workflow-export/2.0",
   "title": "Workflow export snapshot or import payload",
   "$comment": "Two shapes: workflowExportSnapshot matches persisted exportWorkflow output; workflowImportPayload is the minimal JSON importWorkflow accepts for new workflow roots (e.g. LLM-generated). Milestone fields marked export-only are ignored on import.",
-  "description": "Menuyukti workflow (milestone tree) as JSON. (1) Export snapshot: written by exportWorkflow with DB ids and timestamps; use for backup and round-trip after re-import (ids are reassigned). (2) Import payload: only workflowName and milestones are required; goal is optional. importWorkflow ignores schemaVersion, workflowId, exportedAt, milestone id, milestone status, and passCriteria id. Omit result when creating a fresh workflow unless you need a prefilled evaluation summary.",
+  "description": "Menuyukti workflow (milestone tree) as JSON. (1) Export snapshot: written by exportWorkflow with DB ids and timestamps; use for backup and round-trip after re-import (ids are reassigned). (2) Import payload: only workflowName and milestones are required. importWorkflow ignores schemaVersion, workflowId, exportedAt, milestone id, milestone status, and passCriteria id. Omit result when creating a fresh workflow unless you need a prefilled evaluation summary.",
   "oneOf": [
     { "$ref": "#/$defs/workflowExportSnapshot" },
     { "$ref": "#/$defs/workflowImportPayload" }
@@ -11,7 +11,6 @@
   "examples": [
     {
       "workflowName": "Spring lunch push",
-      "goal": "Increase weekday lunch covers using Instagram promos tied to top sellers.",
       "milestones": [
         {
           "order": 0,
@@ -33,7 +32,6 @@
       "schemaVersion": "2.0",
       "workflowId": "42",
       "workflowName": "Exported workflow",
-      "goal": "Grow dinner revenue",
       "exportedAt": "2026-04-09T12:00:00Z",
       "milestones": [
         {
@@ -59,7 +57,6 @@
         "workflowId",
         "workflowName",
         "exportedAt",
-        "goal",
         "milestones"
       ],
       "properties": {
@@ -78,10 +75,6 @@
           "minLength": 1,
           "description": "Root node name (display title)."
         },
-        "goal": {
-          "type": ["string", "null"],
-          "description": "Workflow-level objective from root node data.goal. On import, stored on the new root when string; null means no goal field."
-        },
         "exportedAt": {
           "type": "string",
           "format": "date-time",
@@ -97,17 +90,13 @@
     "workflowImportPayload": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Minimal payload accepted by importWorkflow: non-empty workflowName and a milestones array. Optional root goal; milestone ids and export-only fields may be omitted.",
+      "description": "Minimal payload accepted by importWorkflow: non-empty workflowName and a milestones array. Milestone ids and export-only fields may be omitted.",
       "required": ["workflowName", "milestones"],
       "properties": {
         "workflowName": {
           "type": "string",
           "minLength": 1,
           "description": "Name for the new root node (whitespace-stripped; empty after trim is rejected by the API)."
-        },
-        "goal": {
-          "type": ["string", "null"],
-          "description": "Optional high-level workflow objective. Omit or null for no goal on the root node."
         },
         "milestones": {
           "type": "array",
