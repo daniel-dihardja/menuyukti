@@ -121,13 +121,13 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
 
   return (
     <CardContent className="border-border/60 border-t px-6 pt-4 pb-0">
-      <Tabs className="gap-4" defaultValue="goal">
+      <Tabs className="gap-4" defaultValue="input">
         <TabsList className="w-full" variant="line">
-          <TabsTrigger className="flex-1" value="goal">
-            {t('milestoneTabGoal')}
-          </TabsTrigger>
           <TabsTrigger className="flex-1" value="input">
             {t('milestoneTabInput')}
+          </TabsTrigger>
+          <TabsTrigger className="flex-1" value="goal">
+            {t('milestoneTabGoal')}
           </TabsTrigger>
           <TabsTrigger className="flex-1" value="pass">
             {t('milestoneTabPassCriteria')}
