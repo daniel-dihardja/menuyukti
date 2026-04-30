@@ -1,6 +1,5 @@
 {
   "workflowName": "LangGraph tracing demo (May 2026)",
-  "goal": "Use milestone Run to exercise LangGraph streaming and optional LangSmith tracing (LANGCHAIN_TRACING_V2, LANGCHAIN_API_KEY on agents).",
   "milestones": [
     {
       "order": 0,

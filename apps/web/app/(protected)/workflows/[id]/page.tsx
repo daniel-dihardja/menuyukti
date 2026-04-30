@@ -85,7 +85,6 @@ export default async function Page({ params }: PageProps) {
       mainClassName="max-w-none flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
       <CampaignWorkspace
-        initialGoal={campaignNode.data?.goal ?? null}
         initialMilestones={initialMilestones}
         locationId={locationId}
         workflowId={workflowId}

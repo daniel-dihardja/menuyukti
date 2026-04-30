@@ -29,7 +29,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 
 import { CampaignAssetsTab } from './campaign-assets-tab'
-import { CampaignGoalEditor } from './campaign-goal-editor'
 import type { TimelineMilestone } from './timeline-workspace'
 
 const CampaignChatPanel = dynamic(
@@ -66,14 +65,12 @@ function normalizeTab(value: string | null): 'brief' | 'assets' {
 export type CampaignWorkspaceProps = {
   workflowId: string
   locationId: number
-  initialGoal: string | null
   initialMilestones: TimelineMilestone[]
 }
 
 export function CampaignWorkspace({
   workflowId,
   locationId,
-  initialGoal,
   initialMilestones,
 }: CampaignWorkspaceProps) {
   const t = useTranslations('analytics.campaigns.workspace')
@@ -132,7 +129,6 @@ export function CampaignWorkspace({
           value="brief"
         >
           <div className="flex min-h-0 flex-1 flex-col gap-4">
-            <CampaignGoalEditor initialGoal={initialGoal} workflowId={workflowId} />
             <div className="min-h-0 flex-1">
               <CampaignChatPanel
                 initialMilestones={initialMilestones}

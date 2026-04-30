@@ -62,16 +62,6 @@ function milestoneCountFromPayload(payload: unknown): number {
   return 0
 }
 
-function goalLineFromPayload(payload: unknown): string | null {
-  if (payload && typeof payload === 'object' && 'goal' in payload) {
-    const g = (payload as { goal?: unknown }).goal
-    if (typeof g === 'string' && g.trim()) {
-      return g.trim()
-    }
-  }
-  return null
-}
-
 export type ImportWorkflowDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -226,7 +216,6 @@ export function ImportWorkflowDialog({
                   {WORKFLOW_IMPORT_PRESETS.map((preset) => {
                     const key = presetSelectionKey(preset.id)
                     const title = titleFromPayload(preset.payload, t('importDialogFallbackName'))
-                    const goal = goalLineFromPayload(preset.payload)
                     const count = milestoneCountFromPayload(preset.payload)
                     const selected = selectedImportKey === key
                     return (
@@ -248,7 +237,7 @@ export function ImportWorkflowDialog({
                             <Badge variant="secondary">{t('importDialogPresetBadge')}</Badge>
                           </div>
                           <div className="mt-1 text-muted-foreground text-xs">
-                            {goal ?? t('importDialogMilestoneCount', { count })}
+                            {t('importDialogMilestoneCount', { count })}
                           </div>
                         </button>
                       </li>

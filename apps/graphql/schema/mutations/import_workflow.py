@@ -186,17 +186,8 @@ def _import_from_payload(session: Session, location_id: int, payload: object) ->
     if not isinstance(raw_milestones, list):
         raise ValueError("payload must include a milestones array")
 
-    goal_top = payload.get("goal")
-    root_data: dict[str, Any] | None
-    if goal_top is None:
-        root_data = None
-    elif isinstance(goal_top, str):
-        root_data = {"goal": goal_top}
-    else:
-        raise ValueError("payload goal must be a string or null")
-
     handler = get_handler("workflow")
-    resolved_root = handler.validate_create(None, root_data, session)
+    resolved_root = handler.validate_create(None, None, session)
 
     root_node = Node(
         parent_id=None,

@@ -51,13 +51,7 @@ export async function PATCH(req: Request, context: RouteContext) {
     const json = await req.json()
     const patch = patchWorkflowRootSchema.parse(json)
 
-    const variables: Record<string, unknown> = { id: workflowId }
-    if (patch.name !== undefined) {
-      variables.name = patch.name
-    }
-    if (patch.goal !== undefined) {
-      variables.data = { goal: patch.goal }
-    }
+    const variables: Record<string, unknown> = { id: workflowId, name: patch.name }
 
     const updated = parseUpdateNodeData(
       await graphqlQuery<UpdateNodeDataRaw>(UPDATE_NODE_MUTATION, variables, userId),
