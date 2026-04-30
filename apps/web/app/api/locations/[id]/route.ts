@@ -3,7 +3,7 @@ import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { ZodError } from 'zod'
 
-import { openingHoursWeekToMutationInput, updateLocationSchema } from '../schema'
+import { openingHoursWeekToMutationInput, updateLocationParsedSchema } from '../schema'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { graphqlLocationsDataCacheTag } from '@/lib/graphql/cache-tags'
 import {
@@ -27,7 +27,7 @@ export async function PATCH(req: Request, context: RouteContext) {
 
     const { id } = await context.params
     const json = await req.json()
-    const payload = updateLocationSchema.parse(json)
+    const payload = updateLocationParsedSchema.parse(json)
 
     const openingHours = openingHoursWeekToMutationInput(payload.openingHours)
 

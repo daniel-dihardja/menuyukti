@@ -7,6 +7,10 @@ import {
   type PublicHolidaysData,
   type PublicHolidayItem,
 } from '@/lib/graphql/queries'
+import {
+  countryIdToPublicHolidayId,
+  resolveCountryIdFromName,
+} from '@/lib/locations/country-config'
 
 function isPrerenderInterrupt(error: unknown): boolean {
   if (!(error instanceof Error)) return false
@@ -60,16 +64,18 @@ export async function GET(req: Request) {
     const locationData = await getCachedLocation(userId, String(locationId))
 
     const country = locationData.location?.country
-    if (!country) {
+    const countryId = resolveCountryIdFromName(country)
+    if (!countryId) {
       return NextResponse.json(
-        { error: 'Could not determine country for this location' },
+        { error: 'Could not determine supported country for this location' },
         { status: 422 },
       )
     }
+    const publicHolidayId = countryIdToPublicHolidayId[countryId]
 
     const holidaysData = await graphqlQuery<PublicHolidaysData>(
       PUBLIC_HOLIDAYS_QUERY,
-      { country, startDate: dateStart, endDate: dateEnd },
+      { country: publicHolidayId, startDate: dateStart, endDate: dateEnd },
       userId,
     )
 

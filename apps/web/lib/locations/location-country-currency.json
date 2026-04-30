@@ -1,0 +1,16 @@
+{
+  "countries": [
+    {
+      "countryId": "id",
+      "country": "Indonesia",
+      "currency": "IDR",
+      "publicHolidayId": "id"
+    },
+    {
+      "countryId": "de",
+      "country": "Germany",
+      "currency": "EUR",
+      "publicHolidayId": "de"
+    }
+  ]
+}

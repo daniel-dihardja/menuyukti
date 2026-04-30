@@ -13,6 +13,13 @@ import {
 } from '@workspace/ui/components/collapsible'
 import { Input } from '@workspace/ui/components/input'
 import { Label } from '@workspace/ui/components/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select'
 import { Switch } from '@workspace/ui/components/switch'
 import { Textarea } from '@workspace/ui/components/textarea'
 import { cn } from '@workspace/ui/lib/utils'
@@ -30,6 +37,14 @@ import {
   toggleIdInList,
   type BriefHintsState,
 } from '@/lib/location-quick-profile'
+import {
+  COUNTRY_OPTIONS,
+  SUPPORTED_CURRENCIES,
+  countryIdToCountry,
+  countryIdToCurrency,
+  normalizeCountryId,
+  resolveCountrySelection,
+} from '@/lib/locations/country-config'
 
 export type Weekday =
   | 'monday'
@@ -52,6 +67,7 @@ type LocationFormValues = {
   name: string
   street: string
   city: string
+  countryId?: string
   country: string
   currency: string
   openingHours: OpeningHourRow[]
@@ -77,6 +93,7 @@ const WEEKDAYS: Weekday[] = [
 
 const DEFAULT_OPEN = '09:00'
 const DEFAULT_CLOSE = '22:00'
+const EMPTY_SELECT_VALUE = '__none__'
 
 function defaultOpeningHours(): OpeningHourRow[] {
   return WEEKDAYS.map((day) => ({
@@ -101,8 +118,29 @@ export function LocationForm({
   const [name, setName] = useState(initialValues?.name ?? '')
   const [street, setStreet] = useState(initialValues?.street ?? '')
   const [city, setCity] = useState(initialValues?.city ?? '')
-  const [country, setCountry] = useState(initialValues?.country ?? '')
-  const [currency, setCurrency] = useState(initialValues?.currency ?? '')
+  const [countryId, setCountryId] = useState(() => {
+    const initialCountryId = normalizeCountryId(initialValues?.countryId)
+    if (initialCountryId) return initialCountryId
+    return resolveCountrySelection(initialValues?.country, initialValues?.currency)?.countryId ?? ''
+  })
+  const initialResolvedSelection = resolveCountrySelection(
+    initialValues?.country,
+    initialValues?.currency,
+  )
+  const initialDefaultCurrency = initialResolvedSelection?.countryId
+    ? (countryIdToCurrency[initialResolvedSelection.countryId] ?? '')
+    : ''
+  const [currency, setCurrency] = useState(() => {
+    return initialResolvedSelection?.currency ?? initialValues?.currency ?? ''
+  })
+  const [hasManualCurrencyOverride, setHasManualCurrencyOverride] = useState(() => {
+    const current = (initialResolvedSelection?.currency ?? initialValues?.currency ?? '')
+      .trim()
+      .toUpperCase()
+    if (!current) return false
+    return current !== initialDefaultCurrency
+  })
+  const country = countryId ? (countryIdToCountry[countryId] ?? '') : ''
   const [openingHours, setOpeningHours] = useState<OpeningHourRow[]>(
     initialValues?.openingHours ?? defaultOpeningHours(),
   )
@@ -197,6 +235,7 @@ export function LocationForm({
         name,
         street,
         city,
+        countryId,
         country,
         currency,
         openingHours,
@@ -277,26 +316,57 @@ export function LocationForm({
 
             <div className="space-y-2">
               <Label htmlFor="country">{t('countryLabel')}</Label>
-              <Input
-                id="country"
-                name="country"
-                placeholder={t('countryPlaceholder')}
+              <Select
+                value={countryId || EMPTY_SELECT_VALUE}
+                onValueChange={(value) => {
+                  const nextCountryId = value === EMPTY_SELECT_VALUE ? '' : value
+                  setCountryId(nextCountryId)
+                  if (!hasManualCurrencyOverride && nextCountryId) {
+                    setCurrency(countryIdToCurrency[nextCountryId] ?? '')
+                  }
+                }}
                 disabled={loading}
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-              />
+              >
+                <SelectTrigger id="country" name="country">
+                  <SelectValue placeholder={t('countrySelectPlaceholder')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={EMPTY_SELECT_VALUE}>{t('noneOption')}</SelectItem>
+                  {COUNTRY_OPTIONS.map((option) => (
+                    <SelectItem key={option.countryId} value={option.countryId}>
+                      {t(`countryOptions.${option.countryId}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="currency">{t('currencyLabel')}</Label>
-              <Input
-                id="currency"
-                name="currency"
-                placeholder={t('currencyPlaceholder')}
+              <Select
+                value={currency || EMPTY_SELECT_VALUE}
+                onValueChange={(value) => {
+                  const nextCurrency = value === EMPTY_SELECT_VALUE ? '' : value
+                  setCurrency(nextCurrency)
+                  const defaultCurrency = countryId ? (countryIdToCurrency[countryId] ?? '') : ''
+                  setHasManualCurrencyOverride(
+                    Boolean(nextCurrency) && nextCurrency !== defaultCurrency,
+                  )
+                }}
                 disabled={loading}
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-              />
+              >
+                <SelectTrigger id="currency" name="currency">
+                  <SelectValue placeholder={t('currencySelectPlaceholder')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={EMPTY_SELECT_VALUE}>{t('noneOption')}</SelectItem>
+                  {SUPPORTED_CURRENCIES.map((currencyCode) => (
+                    <SelectItem key={currencyCode} value={currencyCode}>
+                      {t(`currencyOptions.${currencyCode}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

@@ -770,9 +770,18 @@
         "cityLabel": "City",
         "cityPlaceholder": "Berlin",
         "countryLabel": "Country",
-        "countryPlaceholder": "Germany",
+        "countrySelectPlaceholder": "Select country",
         "currencyLabel": "Currency",
-        "currencyPlaceholder": "EUR",
+        "currencySelectPlaceholder": "Select currency",
+        "noneOption": "Not set",
+        "countryOptions": {
+          "id": "Indonesia",
+          "de": "Germany"
+        },
+        "currencyOptions": {
+          "IDR": "IDR",
+          "EUR": "Euro (EUR)"
+        },
         "openingHoursTitle": "Opening hours",
         "openingHoursDescription": "Mark days as closed, or set open and close times only on days you serve guests. You can use a preset for common patterns.",
         "openingHoursPresetsAria": "Quick presets for opening hours",
