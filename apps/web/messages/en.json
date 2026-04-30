@@ -1133,6 +1133,7 @@
         "milestoneGoalPlaceholder": "Describe the outcome you want…",
         "milestoneInputSaveButton": "Save input",
         "milestoneInputUnsupported": "No custom input is configured for this milestone preset.",
+        "milestoneDatesInputPickDate": "Pick a date",
         "milestoneDatesInputStartDateLabel": "Start date",
         "milestoneDatesInputStartDateDescription": "Campaign start date used for holiday lookup.",
         "milestoneDatesInputEndDateLabel": "End date",

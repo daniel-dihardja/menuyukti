@@ -2,7 +2,7 @@
 
 import { type RefObject, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
-import { Check, Circle, Trash2, X } from 'lucide-react'
+import { CalendarDays, Check, Circle, Trash2, X } from 'lucide-react'
 
 import {
   MarkdownEditField,
@@ -10,16 +10,17 @@ import {
 } from '@/components/markdown-edit-field'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
+import { Calendar } from '@workspace/ui/components/calendar'
 import { cn } from '@workspace/ui/lib/utils'
 import { CardContent } from '@workspace/ui/components/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
-import { Input } from '@workspace/ui/components/input'
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
 } from '@workspace/ui/components/input-group'
+import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/components/popover'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 
@@ -58,6 +59,23 @@ export type MilestoneItemTabsModel = {
 
 export type MilestoneItemTabsProps = {
   model: MilestoneItemTabsModel
+}
+
+function parseDateInputValue(value: string): Date | undefined {
+  if (!value) {
+    return undefined
+  }
+  const parsed = new Date(`${value}T00:00:00`)
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed
+}
+
+function formatDateForInput(date: Date): string {
+  return date.toISOString().slice(0, 10)
+}
+
+function formatDateButtonLabel(value: string): string {
+  const parsed = parseDateInputValue(value)
+  return parsed ? parsed.toLocaleDateString() : value
 }
 
 export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
@@ -168,40 +186,66 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           {isDatesPreset ? (
             <FieldGroup className="gap-4">
               <Field>
-                <FieldLabel htmlFor={`milestone-dates-start-${milestone.id}`}>
-                  {t('milestoneDatesInputStartDateLabel')}
-                </FieldLabel>
+                <FieldLabel>{t('milestoneDatesInputStartDateLabel')}</FieldLabel>
                 <FieldDescription>{t('milestoneDatesInputStartDateDescription')}</FieldDescription>
-                <Input
-                  disabled={savingInput || isMilestoneRunning}
-                  id={`milestone-dates-start-${milestone.id}`}
-                  onChange={(e) =>
-                    setInputDraft({
-                      ...inputDraft,
-                      startDate: e.target.value,
-                    })
-                  }
-                  type="date"
-                  value={inputDraft.startDate}
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      className={cn('w-full justify-start text-left font-normal')}
+                      disabled={savingInput || isMilestoneRunning}
+                      type="button"
+                      variant="outline"
+                    >
+                      <CalendarDays aria-hidden data-icon="inline-start" />
+                      {inputDraft.startDate
+                        ? formatDateButtonLabel(inputDraft.startDate)
+                        : t('milestoneDatesInputPickDate')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      onSelect={(date) => {
+                        setInputDraft({
+                          ...inputDraft,
+                          startDate: date ? formatDateForInput(date) : '',
+                        })
+                      }}
+                      selected={parseDateInputValue(inputDraft.startDate)}
+                    />
+                  </PopoverContent>
+                </Popover>
               </Field>
               <Field>
-                <FieldLabel htmlFor={`milestone-dates-end-${milestone.id}`}>
-                  {t('milestoneDatesInputEndDateLabel')}
-                </FieldLabel>
+                <FieldLabel>{t('milestoneDatesInputEndDateLabel')}</FieldLabel>
                 <FieldDescription>{t('milestoneDatesInputEndDateDescription')}</FieldDescription>
-                <Input
-                  disabled={savingInput || isMilestoneRunning}
-                  id={`milestone-dates-end-${milestone.id}`}
-                  onChange={(e) =>
-                    setInputDraft({
-                      ...inputDraft,
-                      endDate: e.target.value,
-                    })
-                  }
-                  type="date"
-                  value={inputDraft.endDate}
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      className={cn('w-full justify-start text-left font-normal')}
+                      disabled={savingInput || isMilestoneRunning}
+                      type="button"
+                      variant="outline"
+                    >
+                      <CalendarDays aria-hidden data-icon="inline-start" />
+                      {inputDraft.endDate
+                        ? formatDateButtonLabel(inputDraft.endDate)
+                        : t('milestoneDatesInputPickDate')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      onSelect={(date) => {
+                        setInputDraft({
+                          ...inputDraft,
+                          endDate: date ? formatDateForInput(date) : '',
+                        })
+                      }}
+                      selected={parseDateInputValue(inputDraft.endDate)}
+                    />
+                  </PopoverContent>
+                </Popover>
               </Field>
               <div className="flex items-center justify-between">
                 <p className="text-muted-foreground text-xs">
