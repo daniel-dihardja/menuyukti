@@ -36,7 +36,7 @@ export function CampaignChatLayout({
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
           <ResizablePanelGroup className="h-full min-h-0 flex-1 overflow-hidden">
             <ResizablePanel defaultSize={isDesktop ? 40 : 40} minSize={isDesktop ? 28 : 22}>
-              <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+              <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-2">
                 {timelinePane}
               </div>
             </ResizablePanel>
