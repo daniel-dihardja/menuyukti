@@ -37,7 +37,7 @@ def make_milestone_run_tools(
     **Extra tools** (from skill YAML ``extra_tools``): optional capabilities registered in \
     ``tools.registry.EXTRA_TOOL_FACTORIES`` (e.g. ``get_public_holidays``).
 
-    **Write** (always): ``write_result_data`` persists the Data tab (``result_data``, ``milestonedata_written``). \
+    **Write** (always): ``write_result_data`` persists milestone data (``result_data``, ``milestonedata_written``). \
     Criterion verdicts, summary, and the result node come from the graph ``finalize_eval`` step.
 
     When ``context`` includes ``api_adapter_tools`` (from GraphQL), one parameterless GET tool per active row is \

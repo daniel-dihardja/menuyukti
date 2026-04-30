@@ -120,11 +120,8 @@ async def fetch_context(
             if isinstance(g, str):
                 goal = g
         elif nt == "milestonedata":
-            d = data.get("data")
-            if isinstance(d, str):
-                raw_data = d
-            elif isinstance(d, (dict, list)):
-                raw_data = json.dumps(d, ensure_ascii=False, indent=2)
+            if isinstance(data, dict) and data:
+                raw_data = json.dumps(data, ensure_ascii=False, indent=2)
         elif nt == "passcriteria":
             req = data.get("requirement", "")
             cid = str(ch.get("id", ""))

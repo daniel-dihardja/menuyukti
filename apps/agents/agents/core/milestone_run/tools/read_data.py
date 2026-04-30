@@ -1,4 +1,4 @@
-"""LangChain tool: read milestone Data tab from run context."""
+"""LangChain tool: read milestone data from run context."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from langchain_core.tools import BaseTool, tool
 def make_read_data_tool(context: dict[str, Any]) -> BaseTool:
     @tool
     def read_data() -> str:
-        """Return the current milestone Data tab content."""
+        """Return the current milestone data as JSON text (from context)."""
         structured = context.get("milestone_data")
         if isinstance(structured, (dict, list)):
             return json.dumps(structured, ensure_ascii=False, indent=2)

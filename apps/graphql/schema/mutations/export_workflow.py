@@ -59,12 +59,11 @@ def _serialize_milestone(children: list[Node], milestone: Node) -> dict[str, obj
             goal_text = gval
             break
 
-    milestone_data: str | None = None
+    milestone_data: str | dict | list | None = None
     for mn in md_nodes:
         md = mn.data if isinstance(mn.data, dict) else {}
-        dval = md.get("data")
-        if isinstance(dval, str):
-            milestone_data = dval
+        if isinstance(md, dict) and md:
+            milestone_data = md
             break
 
     pass_criteria: list[dict[str, object]] = []

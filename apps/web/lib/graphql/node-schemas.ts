@@ -98,7 +98,7 @@ export const schedulerScheduleItemSchema = z.object({
 
 export type SchedulerScheduleItem = z.infer<typeof schedulerScheduleItemSchema>
 
-/** Structured Data tab for the Scheduler milestone preset. */
+/** Structured milestone data for the Scheduler preset. */
 export const schedulerMilestoneDataSchema = z.object({
   schedules: z.array(schedulerScheduleItemSchema),
   campaignStart: z.string().optional(),
@@ -159,7 +159,7 @@ export const promotionRankedCandidateSchema = z
 
 export type PromotionRankedCandidate = z.infer<typeof promotionRankedCandidateSchema>
 
-/** Structured Data tab for the Promotion Candidates milestone preset. */
+/** Structured milestone data for the Promotion Candidates preset. */
 export const promotionCandidatesMilestoneDataSchema = z.object({
   placement: z.string(),
   puzzleOpportunityPool: promotionPuzzleOpportunityPoolSchema,
@@ -231,12 +231,6 @@ export const milestonedataValueSchema = z.union([
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>
 
-export const milestonedataDataSchema = z.object({
-  data: milestonedataValueSchema,
-})
-
-export type MilestonedataData = z.infer<typeof milestonedataDataSchema>
-
 const baseNode = z.object({
   id: z.string(),
   name: z.string(),
@@ -263,7 +257,7 @@ export const goalNodeSchema = baseNode.extend({
 
 export const milestonedataNodeSchema = baseNode.extend({
   nodeType: z.literal('milestonedata'),
-  data: milestonedataDataSchema.nullable(),
+  data: milestonedataValueSchema.nullable(),
 })
 
 const resultCriterionSchema = z.object({

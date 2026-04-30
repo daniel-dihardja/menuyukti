@@ -1,4 +1,13 @@
 import { z } from 'zod'
+import {
+  SUPPORTED_COUNTRY_ENUM_VALUES,
+  SUPPORTED_COUNTRY_ID_ENUM_VALUES,
+  SUPPORTED_CURRENCY_ENUM_VALUES,
+  countryIdToCountry,
+  countryIdToCurrency,
+  normalizeCountryId,
+  resolveCountrySelection,
+} from '@/lib/locations/country-config'
 
 const WEEKDAYS = [
   'monday',
@@ -84,26 +93,88 @@ export function openingHoursWeekToMutationInput(
     }))
 }
 
+const countryIdSchema = z.enum(SUPPORTED_COUNTRY_ID_ENUM_VALUES)
+const countrySchema = z.enum(SUPPORTED_COUNTRY_ENUM_VALUES)
+const currencySchema = z.enum(SUPPORTED_CURRENCY_ENUM_VALUES)
+const optionalEmptyCountryIdSchema = z.union([z.literal(''), countryIdSchema]).default('')
+const optionalEmptyCountrySchema = z.union([z.literal(''), countrySchema]).default('')
+const optionalEmptyCurrencySchema = z.union([z.literal(''), currencySchema]).default('')
+
+function trimString(value: string | undefined): string {
+  return value?.trim() ?? ''
+}
+
+function normalizeLocationGeo(value: { countryId?: string; country?: string; currency?: string }): {
+  countryId: string
+  country: string
+  currency: string
+} {
+  const countryId = normalizeCountryId(value.countryId)
+  if (countryId) {
+    const normalizedCurrency = value.currency?.trim().toUpperCase()
+    return {
+      countryId,
+      country: countryIdToCountry[countryId] ?? '',
+      currency: normalizedCurrency || countryIdToCurrency[countryId] || '',
+    }
+  }
+
+  const resolved = resolveCountrySelection(value.country, value.currency)
+  if (resolved) {
+    return resolved
+  }
+
+  return {
+    countryId: '',
+    country: '',
+    currency: '',
+  }
+}
+
 export const createLocationSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   street: z.string().optional().default(''),
   city: z.string().optional().default(''),
-  country: z.string().optional().default(''),
-  currency: z.string().optional().default(''),
+  countryId: optionalEmptyCountryIdSchema.optional().default(''),
+  country: optionalEmptyCountrySchema.optional().default(''),
+  currency: optionalEmptyCurrencySchema.optional().default(''),
   openingHours: openingHoursWeekSchema.optional(),
 })
+export const createLocationParsedSchema = createLocationSchema.transform((value) => {
+  const normalized = normalizeLocationGeo(value)
+  return {
+    ...value,
+    street: trimString(value.street),
+    city: trimString(value.city),
+    countryId: normalized.countryId,
+    country: normalized.country,
+    currency: normalized.currency,
+  }
+})
 
-export type CreateLocationInput = z.infer<typeof createLocationSchema>
+export type CreateLocationInput = z.infer<typeof createLocationParsedSchema>
 
 export const updateLocationSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   street: z.string().optional().default(''),
   city: z.string().optional().default(''),
-  country: z.string().optional().default(''),
-  currency: z.string().optional().default(''),
+  countryId: optionalEmptyCountryIdSchema.optional().default(''),
+  country: optionalEmptyCountrySchema.optional().default(''),
+  currency: optionalEmptyCurrencySchema.optional().default(''),
   openingHours: openingHoursWeekSchema,
   /** Owner brief hints; omit to leave unchanged, `{}` clears stored profile. */
   quickProfile: z.record(z.string(), z.unknown()).optional(),
 })
+export const updateLocationParsedSchema = updateLocationSchema.transform((value) => {
+  const normalized = normalizeLocationGeo(value)
+  return {
+    ...value,
+    street: trimString(value.street),
+    city: trimString(value.city),
+    countryId: normalized.countryId,
+    country: normalized.country,
+    currency: normalized.currency,
+  }
+})
 
-export type UpdateLocationInput = z.infer<typeof updateLocationSchema>
+export type UpdateLocationInput = z.infer<typeof updateLocationParsedSchema>

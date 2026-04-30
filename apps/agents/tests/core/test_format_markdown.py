@@ -28,7 +28,7 @@ async def test_format_markdown_invokes_llm(mock_get_llm: MagicMock) -> None:
     mock_llm.ainvoke = AsyncMock(return_value=AIMessage(content="## Formatted\n"))
     mock_get_llm.return_value = mock_llm
 
-    out = await format_markdown(content="raw", preset="milestone-goal")
+    out = await format_markdown(content="raw", preset="milestone-data")
     assert out == "## Formatted"
     mock_llm.ainvoke.assert_awaited_once()
 

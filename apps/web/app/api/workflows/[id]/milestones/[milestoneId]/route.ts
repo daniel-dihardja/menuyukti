@@ -10,7 +10,7 @@ import {
   emptySchedulerMilestoneData,
   milestoneDataSchema,
   milestoneInputSchema,
-  milestonedataDataSchema,
+  milestonedataValueSchema,
   passCriteriaDataSchema,
   promotionCandidatesMilestoneDataSchema,
   schedulerMilestoneDataSchema,
@@ -131,11 +131,11 @@ async function assertPassCriteriaBelongsToMilestone(
   }
 }
 
-/** Persist Data tab payload on a child `milestonedata` node; `null` removes milestonedata child node(s). */
+/** Persist milestone data on a child `milestonedata` node; `null` removes milestonedata child node(s). */
 async function syncMilestonedataChild(
   locationId: number,
   milestoneId: string,
-  dataValue: z.infer<typeof milestonedataDataSchema>['data'] | null,
+  dataValue: z.infer<typeof milestonedataValueSchema> | null,
   userId: string,
 ) {
   const existing = parseNodesData(
@@ -165,7 +165,7 @@ async function syncMilestonedataChild(
           nodeType: 'milestonedata',
           parentId: milestoneId,
           name: 'Data',
-          data: { data: dataValue },
+          data: dataValue,
         },
         userId,
       ),
@@ -180,7 +180,7 @@ async function syncMilestonedataChild(
     parseUpdateNodeData(
       await graphqlQuery<UpdateNodeDataRaw>(
         UPDATE_NODE_MUTATION,
-        { id: primary.id, data: { data: dataValue } },
+        { id: primary.id, data: dataValue },
         userId,
       ),
     )
@@ -305,7 +305,7 @@ export async function GET(_req: Request, context: RouteContext) {
     ])
 
     const milestonedataParsed = parseNodesData(milestonedataRes)
-    let milestoneData: z.infer<typeof milestonedataDataSchema>['data'] | null = null
+    let milestoneData: z.infer<typeof milestonedataValueSchema> | null = null
     for (const n of milestonedataParsed.nodes) {
       if (n.nodeType !== 'milestonedata') {
         continue
@@ -314,9 +314,9 @@ export async function GET(_req: Request, context: RouteContext) {
       if (d == null || typeof d !== 'object') {
         continue
       }
-      const parsed = milestonedataDataSchema.safeParse(d)
+      const parsed = milestonedataValueSchema.safeParse(d)
       if (parsed.success) {
-        milestoneData = parsed.data.data
+        milestoneData = parsed.data
         break
       }
     }

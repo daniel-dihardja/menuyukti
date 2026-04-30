@@ -21,7 +21,7 @@ class MilestoneRunBody(BaseModel):
     location_id: int = Field(..., ge=1)
     workflow_id: str | None = Field(
         default=None,
-        description="Parent workflow node id — enables reading earlier milestones' Data tabs.",
+        description="Parent workflow node id — enables reading earlier milestones' data (JSON).",
     )
     goal: str | None = Field(
         default=None,

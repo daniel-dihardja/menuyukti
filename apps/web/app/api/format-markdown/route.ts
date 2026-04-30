@@ -7,7 +7,7 @@ export const maxDuration = 120
 
 const bodySchema = z.object({
   content: z.string().max(200_000),
-  preset: z.enum(['milestone-goal', 'milestone-data']),
+  preset: z.enum(['milestone-data']),
 })
 
 function jsonError(message: string, status: number) {

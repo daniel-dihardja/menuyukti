@@ -1,4 +1,4 @@
-"""Milestone data nodes: single child under milestone; payload `{data: str | object}`."""
+"""Milestone data nodes: single child under milestone; payload is flat preset JSON (object)."""
 
 from __future__ import annotations
 
@@ -9,12 +9,9 @@ from graphql.schema.node_handlers.base import NodeHandler
 
 
 def _validate_milestonedata_payload(data: dict) -> None:
-    raw = data.get("data")
-    if isinstance(raw, str):
-        return
-    if isinstance(raw, dict):
-        return
-    raise ValueError("milestonedata must include a string or object field data")
+    if not isinstance(data, dict):
+        msg = "milestonedata data must be a JSON object"
+        raise ValueError(msg)
 
 
 class MilestoneDataHandler(NodeHandler):
@@ -46,13 +43,11 @@ class MilestoneDataHandler(NodeHandler):
             raise ValueError("Milestone already has a milestonedata node")
 
         if data is None:
-            return {"data": ""}
+            return {}
         if not isinstance(data, dict):
             raise ValueError("milestonedata must be a JSON object")
-        base = {"data": ""}
-        base.update(data)
-        _validate_milestonedata_payload(base)
-        return base
+        _validate_milestonedata_payload(data)
+        return dict(data)
 
     def validate_update(self, node: Node, parent: Node | None, data: dict | None) -> None:
         if data is not None and not isinstance(data, dict):

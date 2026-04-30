@@ -1,7 +1,7 @@
 import { revalidateTag } from 'next/cache'
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { createLocationSchema } from './schema'
+import { createLocationParsedSchema } from './schema'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { apiError, apiErrorFromUnknown } from '@/lib/api/error-response'
 import { graphqlLocationsDataCacheTag } from '@/lib/graphql/cache-tags'
@@ -26,7 +26,8 @@ export async function POST(req: Request) {
     }
 
     const json = await req.json()
-    const { name, street, city, country, currency, openingHours } = createLocationSchema.parse(json)
+    const { name, street, city, country, currency, openingHours } =
+      createLocationParsedSchema.parse(json)
 
     let workspaceId: string | undefined
     const wsData = await graphqlQuery<MyWorkspaceData>(MY_WORKSPACE_QUERY, {}, userId)

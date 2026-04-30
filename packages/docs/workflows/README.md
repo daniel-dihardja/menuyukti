@@ -104,7 +104,7 @@ Everything below should be **traceable** to that sentence: each milestone advanc
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Step goal**     | Turn the profile into **themes and guardrails** that favor weekday lunch discovery and star items—aligned with the root goal.                                             |
 | **Pass criteria** | e.g. “Lists 3–5 themes aligned with the profile”; “Explicitly references at least two high-level business goals (e.g. margin, discovery)”; “No contradictory tone rules.” |
-| **Data**          | Often **manual** or pasted from a workshop—could also be drafted elsewhere and pasted into the Data tab.                                                                  |
+| **Data**          | Often **manual** or from a workshop—stored as structured milestone data (JSON) in the product UI.                                                                         |
 | **Result**        | Confirms the theme brief is internally consistent before post-level work.                                                                                                 |
 
 ### Milestone 3 — Post or slot plan (calendar-level)
@@ -113,7 +113,7 @@ Everything below should be **traceable** to that sentence: each milestone advanc
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Step goal**     | Produce a **schedule of posts** that allocates capacity to weekday lunch and star-menu storytelling within the campaign window.               |
 | **Pass criteria** | e.g. “Covers the planned window”; “Each slot ties to a theme from milestone 2”; “Mix respects content mix rules if you encoded them in data.” |
-| **Data**          | Structured or semi-structured text (table, list)—whatever your process uses, stored as the milestone **data** string.                         |
+| **Data**          | Structured JSON (flat preset shape) stored as the milestone **data** payload on the milestonedata child.                                      |
 | **Result**        | Validates that the plan is complete and traceable to the earlier milestones.                                                                  |
 
 ### Milestone 4 — Creative pack or final QA

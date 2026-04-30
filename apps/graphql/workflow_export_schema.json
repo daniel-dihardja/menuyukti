@@ -41,7 +41,7 @@
           "title": "Kickoff",
           "order": 0,
           "goal": "Align on KPIs",
-          "data": "## Notes\nPrefilled markdown from milestonedata.",
+          "data": { "startDate": "2026-05-01", "endDate": "2026-05-31", "publicHolidays": [] },
           "status": "pending",
           "passCriteria": [{ "id": "201", "requirement": "KPIs documented", "status": "open" }],
           "result": null
@@ -119,7 +119,7 @@
     "milestoneNode": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Milestone: title and order define the node; pass criteria, goal child, markdown data, and optional result are created from these fields on import.",
+      "description": "Milestone: title and order define the node; pass criteria, goal child, milestonedata (string or structured JSON), and optional result are created from these fields on import.",
       "required": ["order"],
       "properties": {
         "id": {
@@ -141,8 +141,10 @@
           "description": "Milestone-level goal text; creates a goal child node when non-empty after trim."
         },
         "data": {
-          "type": "string",
-          "description": "Markdown body stored on the milestonedata child when non-empty; prefilled context for the milestone."
+          "description": "Milestonedata child payload when non-empty: flat structured JSON object (preset-specific fields at the root).",
+          "oneOf": [
+            { "type": "object" }
+          ]
         },
         "status": {
           "type": "string",

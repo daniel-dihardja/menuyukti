@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import httpx
@@ -156,7 +157,7 @@ async def fetch_prior_milestones_data_for_eval(
     *,
     client: httpx.AsyncClient,
 ) -> str:
-    """Return markdown Data-tab snapshots for prior milestones (empty when unavailable)."""
+    """Return JSON text of prior milestones' milestonedata (empty when unavailable)."""
 
     async def _run(c: httpx.AsyncClient) -> str:
         data = await graphql_post(
@@ -170,8 +171,10 @@ async def fetch_prior_milestones_data_for_eval(
             user_id,
         )
         raw = data.get("priorMilestonesMilestoneData")
-        if not isinstance(raw, str):
-            return ""
-        return raw.strip()
+        if isinstance(raw, (list, dict)):
+            return json.dumps(raw, ensure_ascii=False, indent=2).strip()
+        if isinstance(raw, str):
+            return raw.strip()
+        return ""
 
     return await _run(client)

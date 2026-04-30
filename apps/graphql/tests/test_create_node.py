@@ -444,7 +444,7 @@ def test_create_milestonedata_under_milestone():
                 "nodeType": "milestonedata",
                 "name": "Data",
                 "parentId": milestone_id,
-                "data": {"data": "context blob"},
+                "data": {"context": "context blob"},
             },
             context_value=graphql_auth_context(),
         )
@@ -453,7 +453,7 @@ def test_create_milestonedata_under_milestone():
     data = md.data["createNode"]
     assert data["parentId"] == milestone_id
     assert data["nodeType"] == "milestonedata"
-    assert data["data"] == {"data": "context blob"}
+    assert data["data"] == {"context": "context blob"}
 
 
 def test_create_second_milestonedata_rejected():
@@ -508,7 +508,7 @@ def test_create_second_milestonedata_rejected():
                 "nodeType": "milestonedata",
                 "name": "Data",
                 "parentId": milestone_id,
-                "data": {"data": "A"},
+                "data": {"tag": "A"},
             },
             context_value=graphql_auth_context(),
         )
@@ -523,7 +523,7 @@ def test_create_second_milestonedata_rejected():
                 "nodeType": "milestonedata",
                 "name": "Data2",
                 "parentId": milestone_id,
-                "data": {"data": "B"},
+                "data": {"tag": "B"},
             },
             context_value=graphql_auth_context(),
         )

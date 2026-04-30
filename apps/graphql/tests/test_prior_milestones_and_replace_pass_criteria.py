@@ -60,6 +60,14 @@ mutation Replace($milestoneId: ID!, $locationId: Int!, $requirements: [String!]!
 }
 """
 
+EXPORT_WORKFLOW = """
+mutation ExportWorkflow($workflowId: ID!, $locationId: Int!) {
+  exportWorkflow(workflowId: $workflowId, locationId: $locationId) {
+    payload
+  }
+}
+"""
+
 
 def test_prior_milestones_milestone_data_includes_earlier_milestonedata():
     session = SessionLocal()
@@ -114,7 +122,7 @@ def test_prior_milestones_milestone_data_includes_earlier_milestonedata():
                 "nodeType": "milestonedata",
                 "name": "Data",
                 "parentId": m1_id,
-                "data": {"data": "# Body from earlier"},
+                "data": {"body": "# Body from earlier"},
             },
             context_value=graphql_auth_context(),
         )
@@ -147,9 +155,71 @@ def test_prior_milestones_milestone_data_includes_earlier_milestonedata():
         )
     )
     assert not out.errors, out.errors
-    text = out.data["priorMilestonesMilestoneData"]
-    assert "## Earlier" in text
-    assert "# Body from earlier" in text
+    rows = out.data["priorMilestonesMilestoneData"]
+    assert isinstance(rows, list) and len(rows) == 1
+    assert rows[0]["title"] == "Earlier"
+    assert rows[0]["data"] == {"body": "# Body from earlier"}
+
+
+def test_prior_milestones_milestone_data_empty_when_first_milestone():
+    """First milestone in order has no prior rows — resolver returns []."""
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(name="Prior MD First Only", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    wf = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "workflow",
+                "name": "WF",
+                "parentId": None,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not wf.errors, wf.errors
+    workflow_id = wf.data["createNode"]["id"]
+
+    m1 = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "name": "Only",
+                "parentId": workflow_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not m1.errors, m1.errors
+    m1_id = m1.data["createNode"]["id"]
+
+    out = asyncio.run(
+        schema.execute(
+            PRIOR_DATA,
+            variable_values={
+                "workflowId": workflow_id,
+                "milestoneId": m1_id,
+                "locationId": location_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not out.errors, out.errors
+    assert out.data["priorMilestonesMilestoneData"] == []
 
 
 def test_replace_pass_criteria_replaces_children():
@@ -242,3 +312,83 @@ def test_replace_pass_criteria_replaces_children():
     assert len(pcs) == 1
     assert pcs[0]["data"]["requirement"] == "only one"
     assert pcs[0]["data"]["status"] == "open"
+
+
+def test_export_workflow_includes_structured_milestonedata_dict():
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(name="Export MD Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    wf = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "workflow",
+                "name": "Export WF",
+                "parentId": None,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not wf.errors, wf.errors
+    workflow_id = wf.data["createNode"]["id"]
+
+    ms = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "name": "With data",
+                "parentId": workflow_id,
+                "data": {"order": 0},
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not ms.errors, ms.errors
+    milestone_id = ms.data["createNode"]["id"]
+
+    dates_payload = {
+        "startDate": "2026-07-01",
+        "endDate": "2026-07-31",
+        "publicHolidays": [],
+    }
+    asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestonedata",
+                "name": "Data",
+                "parentId": milestone_id,
+                "data": dates_payload,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    out = asyncio.run(
+        schema.execute(
+            EXPORT_WORKFLOW,
+            variable_values={"workflowId": workflow_id, "locationId": location_id},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not out.errors, out.errors
+    payload = out.data["exportWorkflow"]["payload"]
+    assert isinstance(payload, dict)
+    milestones = payload.get("milestones")
+    assert isinstance(milestones, list) and len(milestones) == 1
+    assert milestones[0].get("data") == dates_payload

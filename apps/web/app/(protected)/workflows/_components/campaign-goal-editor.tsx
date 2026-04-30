@@ -5,12 +5,14 @@ import { useTranslations } from 'next-intl'
 import { Pencil } from 'lucide-react'
 
 import {
-  MarkdownEditField,
-  type MarkdownEditFieldManualSave,
-} from '@/components/markdown-edit-field'
+  FieldSaveStatus,
+  type FieldSaveStatusProps,
+  type FieldSaveStatusVariant,
+} from '@/components/field-save-status'
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
+import { Textarea } from '@workspace/ui/components/textarea'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import {
   Sheet,
@@ -30,18 +32,65 @@ type ToastState = { kind: 'error'; message: string } | null
 
 const GOAL_PREVIEW_MAX_LEN = 160
 
-/** Plain-ish one-line preview for the compact bar (not full markdown rendering). */
-function workflowGoalPreview(markdown: string, maxLength: number): string {
-  const trimmed = markdown.trim()
+/** One-line preview for the compact bar (strips common markdown from legacy saves). */
+function workflowGoalPreview(text: string, maxLength: number): string {
+  const trimmed = text.trim()
   if (!trimmed) return ''
   const firstLine = trimmed.split(/\r?\n/).find((line) => line.trim().length > 0) ?? trimmed
   const rough = firstLine
     .replace(/^#{1,6}\s+/, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/`+/g, '')
     .replace(/\[(.*?)\]\([^)]*\)/g, '$1')
     .trim()
   if (rough.length <= maxLength) return rough
   return `${rough.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`
+}
+
+function PlainTextGoalSaveFooter({
+  disabled,
+  messages,
+  onSave,
+  saveButtonLabel,
+  status,
+}: {
+  disabled: boolean
+  messages: FieldSaveStatusProps['messages']
+  onSave: () => void
+  saveButtonLabel: string
+  status: FieldSaveStatusVariant
+}) {
+  const isSaved = status === 'saved'
+  const isSaving = status === 'saving'
+  const saveDisabled = disabled || isSaving
+
+  if (isSaved) {
+    return (
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+        <FieldSaveStatus className="inline-flex" messages={messages} status={status} />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+      <Button
+        disabled={saveDisabled}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSave()
+        }}
+        onPointerDown={(e) => e.stopPropagation()}
+        size="sm"
+        type="button"
+      >
+        {saveButtonLabel}
+      </Button>
+      {isSaving ? (
+        <FieldSaveStatus className="inline-flex" messages={messages} status={status} />
+      ) : null}
+    </div>
+  )
 }
 
 export function CampaignGoalEditor({ workflowId, initialGoal }: CampaignGoalEditorProps) {
@@ -120,18 +169,11 @@ export function CampaignGoalEditor({ workflowId, initialGoal }: CampaignGoalEdit
     }),
     [tChat],
   )
-  const goalSaveStatus = saving ? 'saving' : draft !== lastSaved ? 'unsaved' : 'saved'
-
-  const goalManualSave = useMemo(
-    (): MarkdownEditFieldManualSave => ({
-      messages: saveStatusMessages,
-      onSave: () => {
-        void persistGoal()
-      },
-      status: goalSaveStatus,
-    }),
-    [goalSaveStatus, persistGoal, saveStatusMessages],
-  )
+  const goalSaveStatus: FieldSaveStatusVariant = saving
+    ? 'saving'
+    : draft !== lastSaved
+      ? 'unsaved'
+      : 'saved'
 
   const hasSavedGoal = lastSaved.trim().length > 0
   const previewText = hasSavedGoal
@@ -186,19 +228,23 @@ export function CampaignGoalEditor({ workflowId, initialGoal }: CampaignGoalEdit
             <SheetDescription>{t('goalSheetDescription')}</SheetDescription>
           </SheetHeader>
           <ScrollArea className="min-h-0 flex-1 px-4 py-4">
-            <div className="flex flex-col gap-2 pr-2 pb-2">
-              <MarkdownEditField
+            <div className="flex flex-col gap-3 pr-2 pb-2">
+              <Textarea
+                className="min-h-[min(280px,40vh)] resize-y whitespace-pre-wrap"
                 disabled={saving}
-                editTabLabel={tChat('milestoneDataEditTab')}
-                formatPreset="milestone-goal"
                 id={goalFieldId}
-                manualSave={goalManualSave}
-                onChange={setDraft}
+                onChange={(e) => setDraft(e.target.value)}
                 placeholder={tChat('milestoneGoalPlaceholder')}
-                previewEmptyLabel={tChat('milestoneGoalPreviewEmpty')}
-                previewTabLabel={tChat('milestoneDataPreviewTab')}
-                textareaClassName="min-h-[min(280px,40vh)] resize-y whitespace-pre-wrap"
                 value={draft}
+              />
+              <PlainTextGoalSaveFooter
+                disabled={saving}
+                messages={saveStatusMessages}
+                onSave={() => {
+                  void persistGoal()
+                }}
+                saveButtonLabel={tChat('fieldSaveButton')}
+                status={goalSaveStatus}
               />
             </div>
           </ScrollArea>
