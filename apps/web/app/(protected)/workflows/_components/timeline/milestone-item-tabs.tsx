@@ -4,10 +4,6 @@ import { type RefObject, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { CalendarDays, Check, Circle, Trash2, X } from 'lucide-react'
 
-import {
-  MarkdownEditField,
-  type MarkdownEditFieldManualSave,
-} from '@/components/markdown-edit-field'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
 import { Calendar } from '@workspace/ui/components/calendar'
@@ -23,6 +19,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/components/popover'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
+import { Textarea } from '@workspace/ui/components/textarea'
 
 import type { DatesMilestoneInput, PassCriteriaRow, TimelineMilestone } from './types'
 
@@ -102,28 +99,6 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     savingInput,
   } = model
   const t = useTranslations('analytics.campaigns.chat')
-  const saveStatusMessages = useMemo(
-    () => ({
-      saving: t('fieldSaveStatusSaving'),
-      saved: t('fieldSaveStatusSaved'),
-      unsaved: t('fieldSaveStatusUnsaved'),
-    }),
-    [t],
-  )
-  const goalSaveStatus = savingGoal
-    ? 'saving'
-    : goalDraft !== (milestone.goal ?? '')
-      ? 'unsaved'
-      : 'saved'
-
-  const goalManualSave = useMemo(
-    (): MarkdownEditFieldManualSave => ({
-      messages: saveStatusMessages,
-      onSave: handleGoalSave,
-      status: goalSaveStatus,
-    }),
-    [goalSaveStatus, handleGoalSave, saveStatusMessages],
-  )
   const helpDescription = useMemo(() => {
     const presetGoalKey = milestone.presetId
       ? presetGoalTranslationKeyById[milestone.presetId]
@@ -162,23 +137,17 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
         <TabsContent value="goal">
           <FieldGroup className="gap-4">
             <Field>
-              <FieldLabel htmlFor={goalFieldId}>{t('milestoneGoalLabel')}</FieldLabel>
-              <FieldDescription>{t('milestoneGoalDescription')}</FieldDescription>
-              <div className="flex flex-col gap-1.5">
-                <MarkdownEditField
-                  disabled={savingGoal}
-                  editTabLabel={t('milestoneDataEditTab')}
-                  formatPreset="milestone-goal"
-                  id={goalFieldId}
-                  manualSave={goalManualSave}
-                  onChange={setGoalDraft}
-                  placeholder={t('milestoneGoalPlaceholder')}
-                  previewEmptyLabel={t('milestoneGoalPreviewEmpty')}
-                  previewTabLabel={t('milestoneDataPreviewTab')}
-                  textareaClassName="min-h-[120px] resize-y whitespace-pre-wrap"
-                  value={goalDraft}
-                />
-              </div>
+              <Textarea
+                className="min-h-[120px] resize-y whitespace-pre-wrap"
+                disabled={savingGoal}
+                id={goalFieldId}
+                onBlur={() => handleGoalSave()}
+                onChange={(e) => setGoalDraft(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                placeholder={t('milestoneGoalPlaceholder')}
+                value={goalDraft}
+              />
             </Field>
           </FieldGroup>
         </TabsContent>
