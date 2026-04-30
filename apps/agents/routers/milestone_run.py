@@ -33,7 +33,7 @@ class MilestoneRunBody(BaseModel):
     )
     milestone_data: dict[str, Any] | list[Any] | None = Field(
         default=None,
-        description="Optional current milestone structured data from preview state (object only).",
+        description="Ignored by the run graph (milestone JSON is output-only; not fed to generation LLMs).",
     )
 
 

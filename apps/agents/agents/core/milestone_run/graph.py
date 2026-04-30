@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import re
 from functools import partial
@@ -169,16 +168,10 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
     )
     request_goal = state.get("request_goal")
     goal = str(request_goal).strip() if isinstance(request_goal, str) and request_goal.strip() else str(out.get("goal", ""))
-    request_data = state.get("milestone_data")
-    if request_data is None:
-        milestone_data_payload: dict[str, Any] | list[Any] | None = None
-        raw_data = str(out.get("raw_data", ""))
-    elif isinstance(request_data, (dict, list)):
-        milestone_data_payload = request_data
-        raw_data = json.dumps(milestone_data_payload, ensure_ascii=False, indent=2)
-    else:
-        milestone_data_payload = None
-        raw_data = str(request_data)
+    # Do not seed milestone_data or raw_data from GraphQL milestonedata, fetch_context raw_data,
+    # or request milestone_data (web preview). Milestone JSON is output-only for generation LLMs.
+    milestone_data_payload: dict[str, Any] | list[Any] | None = None
+    raw_data = ""
     base: dict[str, Any] = {
         **out,
         "goal": goal,
@@ -212,11 +205,11 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
         )
 
     _logger.info(
-        "milestone_run.fetch_children: done milestone_id=%s criteria_count=%s goal_len=%s raw_data_len=%s prior_len=%s adapters=%s",
+        "milestone_run.fetch_children: done milestone_id=%s criteria_count=%s goal_len=%s session_raw_data_len=%s prior_len=%s adapters=%s",
         mid,
         len(out.get("criteria") or []),
         len(str(out.get("goal") or "")),
-        len(str(out.get("raw_data") or "")),
+        len(raw_data),
         len(prior),
         len(adapters),
     )
@@ -232,7 +225,6 @@ async def _select_skills(state: MilestoneRunState, *, client: httpx.AsyncClient)
     human = skill_selector_human_message(
         str(state.get("goal", "")),
         state.get("criteria") or [],
-        str(state.get("raw_data", "")),
         skills_md,
     )
     llm = get_llm_structured().with_structured_output(SkillSelections)
@@ -311,8 +303,6 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         skill.name,
         str(state.get("goal") or ""),
         milestone_input=state.get("milestone_input"),
-        milestone_data=state.get("milestone_data"),
-        raw_data=str(state.get("raw_data") or ""),
     )
     agent_input = {
         "messages": [

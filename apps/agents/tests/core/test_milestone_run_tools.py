@@ -89,7 +89,22 @@ def test_read_data_returns_raw_data() -> None:
     assert out.startswith("# Notes")
 
 
-def test_read_data_returns_json_when_structured_data_present() -> None:
+def test_read_data_returns_json_from_result_data() -> None:
+    payload = json.dumps(
+        {"startDate": "2026-06-01", "endDate": "2026-06-30", "publicHolidays": []},
+        ensure_ascii=False,
+        indent=2,
+    )
+    ctx = {"result_data": payload}
+    tools = _tools_for_context(ctx)
+    read_data = _tool_by_name(tools, "read_data")
+    out = read_data.invoke({})
+    assert '"startDate": "2026-06-01"' in out
+
+
+def test_read_data_placeholder_when_only_milestone_data_in_context() -> None:
+    from agents_app.agents.core.milestone_run.tools.read_data import READ_DATA_EMPTY_MESSAGE
+
     ctx = {
         "milestone_data": {
             "startDate": "2026-06-01",
@@ -100,7 +115,7 @@ def test_read_data_returns_json_when_structured_data_present() -> None:
     tools = _tools_for_context(ctx)
     read_data = _tool_by_name(tools, "read_data")
     out = read_data.invoke({})
-    assert '"startDate": "2026-06-01"' in out
+    assert out == READ_DATA_EMPTY_MESSAGE
 
 
 def test_read_prior_milestones_returns_context() -> None:
