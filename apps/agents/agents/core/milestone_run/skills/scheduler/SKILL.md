@@ -26,7 +26,7 @@ This milestone's deliverable is **one structured JSON object** stored as milesto
 
 Workflow:
 
-1. Call `read_goal`, `read_criteria`, and `read_data`.
+1. Call `read_goal`, `read_criteria`, and `read_data` (read_data returns output written in this run after `write_result_data`, or a short notice if none yet—still call it once for multi-skill consistency).
 2. Call `get_scheduler_plan`. Parse its return value as **JSON**.
 3. Build the full Data payload:
    - Keep only rows that include all required fields.

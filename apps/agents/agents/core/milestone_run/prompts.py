@@ -7,10 +7,9 @@ from typing import Any
 
 SKILL_SELECTOR_SYSTEM = """You are a routing assistant for a restaurant campaign milestone run.
 
-Given the milestone goal, pass/fail criteria, and the current milestone data (structured JSON or legacy text snapshot), choose an **ordered list** \
-of one or two skill ids from the provided list. The run executes them in order: skills may only update the \
-milestone data state. After all skills finish, the system **automatically** evaluates pass criteria against the \
-milestone data state, writes the milestone summary, and persists the result — skills do not do that.
+Given the milestone goal and pass/fail criteria, choose an **ordered list** of one or two skill ids from the provided list. \
+The run executes them in order: skills produce structured milestone output via tools. After all skills finish, the system \
+**automatically** evaluates pass criteria against that output, writes the milestone summary, and persists the result — skills do not do that.
 
 Rules:
 - Prefer `["public_holidays", "generic"]` (in that order) when the goal or criteria require **both** (a) listing \
@@ -20,7 +19,7 @@ summary) beyond holidays alone.
 - Prefer `["generic"]` for standard milestone data preparation when holidays are not a distinct requirement.
 - Prefer `["promotion_candidates"]` when the goal or criteria require **promotion candidate dishes** or **social post** \
 ideas grounded in **POS/analytics** (menu performance, Instagram signals), producing **structured JSON** milestone data.
-- Prefer `["brand_brief"]` when the goal or milestone data clearly describe a **brand brief** \
+- Prefer `["brand_brief"]` when the goal or criteria clearly describe a **brand brief** \
 (venue snapshot, content pillars, audience hypotheses, proof angles, tone guardrails) as the main deliverable.
 - Use at most **two** ids. Do not duplicate the same id.
 - Each id must be one of the listed keys exactly (underscores, lowercase)."""
@@ -29,7 +28,6 @@ ideas grounded in **POS/analytics** (menu performance, Instagram signals), produ
 def skill_selector_human_message(
     goal: str,
     criteria: list[dict[str, str]],
-    raw_data: str,
     skills_markdown: str,
 ) -> str:
     """Build the user message for structured skill selection."""
@@ -45,10 +43,6 @@ def skill_selector_human_message(
 ## Pass criteria (JSON)
 
 {crit_json}
-
-## Milestone data state
-
-{raw_data}
 """
 
 
@@ -100,8 +94,6 @@ def execute_skill_task_message(
     goal: str = "",
     *,
     milestone_input: Any | None = None,
-    milestone_data: Any | None = None,
-    raw_data: str = "",
 ) -> str:
     """Human message that starts the execute-skill ReAct agent."""
     base = (
@@ -117,11 +109,4 @@ def execute_skill_task_message(
             "## Milestone input (JSON)\n\n"
             + json.dumps(milestone_input, ensure_ascii=False, indent=2)
         )
-    if milestone_data is not None:
-        sections.append(
-            "## Current milestone data state (JSON)\n\n"
-            + json.dumps(milestone_data, ensure_ascii=False, indent=2)
-        )
-    elif raw_data.strip():
-        sections.append(f"## Current milestone data state\n\n{raw_data.strip()}")
     return "\n\n".join(sections)
