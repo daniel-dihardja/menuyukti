@@ -126,11 +126,10 @@ def test_optional_input_usage_line_marks_used_when_notes_present() -> None:
     line = nodes._optional_input_usage_line(
         "The topic of the campaign is the soccer world cup.",
     )
-    assert line.startswith("Optional input usage: used —")
-    assert "single instruction string" in line
+    assert line == "Optional input usage: given."
 
 
-def test_enforce_optional_input_line_always_marks_used_when_notes_present() -> None:
+def test_enforce_optional_input_line_marks_given_when_notes_present() -> None:
     summary = (
         "Milestone achieved with clear brief data.\n\n"
         "Optional input usage: not used — Optional input conflicts with available signals."
@@ -140,7 +139,7 @@ def test_enforce_optional_input_line_always_marks_used_when_notes_present() -> N
         "The topic of the campaign is the soccer world cup.",
     )
     assert fixed.count("Optional input usage:") == 1
-    assert "Optional input usage: used —" in fixed
+    assert "Optional input usage: given." in fixed
 
 
 def test_enforce_optional_input_line_removes_inline_existing_fragment() -> None:
@@ -153,4 +152,23 @@ def test_enforce_optional_input_line_removes_inline_existing_fragment() -> None:
         "The topic of the campaign is the soccer world cup.",
     )
     assert fixed.count("Optional input usage:") == 1
-    assert "Optional input usage: used —" in fixed
+    assert "Optional input usage: given." in fixed
+
+
+def test_enforce_optional_input_line_removes_period_terminated_inline_fragment() -> None:
+    summary = (
+        "The milestone goal has been successfully achieved. "
+        "Optional input usage: not given."
+    )
+    fixed = nodes._enforce_optional_input_line(
+        summary,
+        "use the soccer world cup as campaign topic",
+    )
+    assert fixed.count("Optional input usage:") == 1
+    assert "Optional input usage: not given." not in fixed
+    assert fixed.endswith("Optional input usage: given.")
+
+
+def test_optional_input_usage_line_marks_not_given_when_notes_absent() -> None:
+    line = nodes._optional_input_usage_line("")
+    assert line == "Optional input usage: not given."

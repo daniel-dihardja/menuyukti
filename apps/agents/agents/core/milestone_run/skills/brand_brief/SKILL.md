@@ -29,12 +29,14 @@ Workflow:
    ```
 3. Call `get_location_profile`. It returns:
    - **Location profile**: venue name, city, country, currency.
-   - **Milestone brand brief input (owner)**: optional free-text from this milestone’s **Input** tab in the app. When that section appears in the Markdown, treat it as user-declared positioning or constraints (like manual brief hints) and align pillars, angles, and tone guardrails with it when it does not contradict analytics.
-   - **Owner-provided brief hints (manual)**: optional owner-declared venue types, social goals, guest context, meal-period focus (breakfast/brunch/lunch/dinner), tone presets, video comfort, notes — **prioritize these** for tone and audience framing when present (declared positioning, not inferred demographics).
-   - **Signal capabilities**: explicit analytics availability flags (`hasOrderId`, `hasDatetime`, `enabledBlocks`).
-   - **Fundamental signals** (always available): baseline sales + category/trending context from minimum POS data.
-   - **Additional signals** (only when available): order-level metrics (avg order, order counts), datetime timing signals (posting window, period headline), and matrix hero/avoid signals.
-   - **AI-generated location social settings** (when present): secondary context from automation — **not** direct owner input; do not treat it as ground truth over manual hints or POS signals.
+
+- **Milestone brand brief input (owner)**: optional free-text from this milestone’s **Input** tab in the app. This value is always a single string. If present, always include it as additional instruction context for this brand brief.
+- **Owner-provided brief hints (manual)**: optional owner-declared venue types, social goals, guest context, meal-period focus (breakfast/brunch/lunch/dinner), tone presets, video comfort, notes — **prioritize these** for tone and audience framing when present (declared positioning, not inferred demographics).
+- **Signal capabilities**: explicit analytics availability flags (`hasOrderId`, `hasDatetime`, `enabledBlocks`).
+- **Fundamental signals** (always available): baseline sales + category/trending context from minimum POS data.
+- **Additional signals** (only when available): order-level metrics (avg order, order counts), datetime timing signals (posting window, period headline), and matrix hero/avoid signals.
+- **AI-generated location social settings** (when present): secondary context from automation — **not** direct owner input; do not treat it as ground truth over manual hints or POS signals.
+
 4. Build a short signal map before writing output (do not skip this internal step):
    - Location identity signals -> `venueSnapshot`.
    - **Manual brief hints** (when present) -> reinforce `toneGuardrails` and help shape `audienceHypotheses` without inventing census-style demographics.
@@ -50,10 +52,10 @@ Workflow:
    - `audienceHypotheses` (3-5 unique non-empty strings): evidence-based only (meal periods, weekday/weekend, top categories); no invented demographics.
    - `proofOrientedAngles` (3-5 unique non-empty strings): grounded in top items/category mix/peak timing; no invented proof points.
    - `toneGuardrails` (3-5 unique non-empty strings): inferred from operating pattern, dining focus, and menu profile.
-   - When **Milestone brand brief input (owner)** is present, integrate it explicitly into the output:
-     - Reflect the owner input in at least one of `contentPillars`, `proofOrientedAngles`, or `toneGuardrails` when it does not conflict with analytics/manual hints.
-     - If the owner input cannot be used (for example it conflicts with available signals), include one concise guardrail explaining the exclusion reason (for example: `"Do not center the brief on unsupported campaign themes from optional owner notes."`).
-   - Do not output duplicate items within the same array.
+
+- When **Milestone brand brief input (owner)** is present, integrate it explicitly into the output by reflecting it in at least one of `contentPillars`, `proofOrientedAngles`, or `toneGuardrails`.
+- Do not output duplicate items within the same array.
+
 6. Apply fallback tiers when analytics are incomplete:
    - Fundamental-only: produce 3-5 items using only fundamental signals and manual hints.
    - Fundamental + order-level: include avg order/order-size style hypotheses when order signals are present.

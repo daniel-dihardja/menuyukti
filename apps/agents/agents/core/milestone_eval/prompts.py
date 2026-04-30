@@ -14,7 +14,7 @@ Treat optional milestone input notes as one opaque instruction string that augme
 Do not parse keywords from optional input and do not infer usage from keyword overlap.
 
 Always include one explicit sentence about optional milestone input usage in this exact format:
-"Optional input usage: used — <brief reason>" or "Optional input usage: not used — <brief reason>"."""
+"Optional input usage: given." or "Optional input usage: not given."."""
 
 
 def eval_human_message(goal: str, raw_data: str, requirement: str) -> str:

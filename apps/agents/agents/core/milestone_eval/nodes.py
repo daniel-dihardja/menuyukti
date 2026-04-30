@@ -57,22 +57,22 @@ def _extract_milestone_input_notes(state: MilestoneEvalState) -> str:
 
 
 _OPTIONAL_INPUT_FRAGMENT_RE = re.compile(
-    r"(?is)\bOptional input usage:\s*(?:used|not used)\s*[—-]\s*.*?(?=(?:\n\s*\n)|$)"
+    r"(?is)\bOptional input usage:\s*(?:used|not used|given|not given)\b(?:\s*[—-]\s*[^\n]*)?\.?"
 )
 
 
 def _optional_input_usage_line(notes: str) -> str:
     cleaned_notes = notes.strip()
     if not cleaned_notes:
-        return "Optional input usage: not used — No optional milestone input was provided."
-    return (
-        "Optional input usage: used — Optional input was provided as a single instruction string "
-        "and treated as additional goal context."
-    )
+        return "Optional input usage: not given."
+    return "Optional input usage: given."
 
 
 def _enforce_optional_input_line(summary: str, notes: str) -> str:
-    without_existing = _OPTIONAL_INPUT_FRAGMENT_RE.sub("", summary).strip()
+    without_existing = _OPTIONAL_INPUT_FRAGMENT_RE.sub("", summary)
+    without_existing = re.sub(r"[ \t]{2,}", " ", without_existing)
+    without_existing = re.sub(r"\n{3,}", "\n\n", without_existing)
+    without_existing = without_existing.strip()
     usage_line = _optional_input_usage_line(notes)
     if not without_existing:
         return usage_line
