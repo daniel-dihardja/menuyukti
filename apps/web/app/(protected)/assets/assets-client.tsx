@@ -554,11 +554,18 @@ export function AssetsClient() {
                   key={item.name}
                   className="group/tile min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md"
                 >
-                  <button
+                  <div
                     className="relative aspect-[4/3] w-full cursor-zoom-in overflow-hidden bg-muted/30 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     aria-label={t('grid.viewLarge')}
                     onClick={() => setPreviewItem(item)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setPreviewItem(item)
+                      }
+                    }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element -- dynamic user uploads; dimensions vary */}
                     <img
@@ -633,7 +640,7 @@ export function AssetsClient() {
                         </Button>
                       </div>
                     </div>
-                  </button>
+                  </div>
                   <div className="flex items-center justify-between border-t border-border/50 px-3 py-2 text-xs text-muted-foreground">
                     <span className="truncate">{sizeWithDimensions}</span>
                     <time dateTime={item.createdAt}>
