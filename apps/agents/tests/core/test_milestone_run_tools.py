@@ -825,6 +825,40 @@ async def test_write_result_data_unknown_skill_passthrough() -> None:
     assert "md-unknown" in out
 
 
+def test_fmt_milestone_brand_brief_owner_notes_empty() -> None:
+    from agents_app.agents.core.milestone_run.tools.get_location_profile import (
+        _fmt_milestone_brand_brief_owner_notes,
+    )
+
+    assert _fmt_milestone_brand_brief_owner_notes({}) == ""
+    assert _fmt_milestone_brand_brief_owner_notes({"milestone_input": None}) == ""
+    assert _fmt_milestone_brand_brief_owner_notes({"milestone_input": {"type": "dates"}}) == ""
+    assert (
+        _fmt_milestone_brand_brief_owner_notes(
+            {"milestone_input": {"type": "restaurant_brand_brief", "value": {"notes": "   "}}}
+        )
+        == ""
+    )
+
+
+def test_fmt_milestone_brand_brief_owner_notes_includes_trimmed_text() -> None:
+    from agents_app.agents.core.milestone_run.tools.get_location_profile import (
+        _fmt_milestone_brand_brief_owner_notes,
+    )
+
+    md = _fmt_milestone_brand_brief_owner_notes(
+        {
+            "milestone_input": {
+                "type": "restaurant_brand_brief",
+                "value": {"notes": "  Family-friendly trattoria  "},
+            },
+        }
+    )
+    assert "Milestone brand brief input (owner)" in md
+    assert "Family-friendly trattoria" in md
+    assert "  Family-friendly" not in md
+
+
 def test_validate_extra_tool_ids_rejects_unknown() -> None:
     from agents_app.agents.core.milestone_run.tools.registry import validate_extra_tool_ids
 

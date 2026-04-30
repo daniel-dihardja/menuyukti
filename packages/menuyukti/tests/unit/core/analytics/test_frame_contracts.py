@@ -50,7 +50,7 @@ def _minimal_sales_row() -> dict[str, object]:
 
 def test_calculate_sales_analytics_missing_column_raises():
     row = _minimal_sales_row()
-    del row["bill_number"]
+    del row["menu"]
     df = pd.DataFrame([row])
     with pytest.raises(ValueError, match="calculate_sales_analytics: Missing required columns"):
         calculate_sales_analytics(df)
@@ -86,3 +86,28 @@ def test_line_item_columns_full_matches_pos_model():
     cols = POSTransactionLineItem.get_required_columns()
     df = pd.DataFrame([_minimal_sales_row()])
     require_columns(df, cols)
+
+
+def test_calculate_sales_analytics_returns_fundamental_only_when_capabilities_disabled():
+    df = pd.DataFrame([_minimal_sales_row()])
+    out = calculate_sales_analytics(df, has_order_id=False, has_datetime=False)
+    assert out["capabilities"]["has_order_id"] is False
+    assert out["capabilities"]["has_datetime"] is False
+    assert out["additional_signals"]["order_signals"] is None
+    assert out["additional_signals"]["datetime_signals"] is None
+    assert out["fundamental_signals"]["total_revenue"] == 10.0
+
+
+def test_calculate_sales_analytics_enables_order_signals_when_order_id_available():
+    rows = [_minimal_sales_row(), {**_minimal_sales_row(), "bill_number": "B2", "qty": 2, "price": 5.0}]
+    out = calculate_sales_analytics(pd.DataFrame(rows), has_datetime=False)
+    assert out["capabilities"]["has_order_id"] is True
+    assert out["additional_signals"]["order_signals"] is not None
+    assert out["additional_signals"]["order_signals"]["total_orders"] == 2
+
+
+def test_calculate_sales_analytics_enables_datetime_signals_with_real_datetime():
+    df = pd.DataFrame([_minimal_sales_row()])
+    out = calculate_sales_analytics(df, has_order_id=False, has_datetime=True)
+    assert out["additional_signals"]["datetime_signals"] is not None
+    assert out["additional_signals"]["datetime_signals"]["period_start"] == "2026-01-15"

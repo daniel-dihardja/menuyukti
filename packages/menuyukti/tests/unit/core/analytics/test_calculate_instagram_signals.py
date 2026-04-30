@@ -8,27 +8,44 @@ from menuyukti.core.analytics.calculate_menu_engineering_matrix import compute_m
 
 def _sales_analytics_stub() -> dict[str, object]:
     return {
-        "total_revenue": 200.0,
-        "period_start": "2026-01-01",
-        "period_end": "2026-01-31",
-        "menu_heatmaps": [
-            {
-                "menu": "A",
-                "menu_category": None,
-                "menu_category_detail": None,
-                "daily_heatmap": [{"hour": 12, "quantity": 5}, {"hour": 18, "quantity": 10}],
-                "weekly_heatmap": [],
-                "reporting_period": "2026-01",
+        "capabilities": {
+            "has_order_id": True,
+            "has_datetime": True,
+            "enabled_blocks": ["fundamental_signals", "order_signals", "datetime_signals"],
+        },
+        "fundamental_signals": {
+            "total_revenue": 200.0,
+            "total_items_sold": 20,
+            "unique_menu_items": 4,
+            "avg_item_price": 10.0,
+            "avg_popularity_threshold": 0.25,
+            "popularity_index": [],
+        },
+        "additional_signals": {
+            "order_signals": {"total_orders": 5},
+            "datetime_signals": {
+                "period_start": "2026-01-01",
+                "period_end": "2026-01-31",
+                "menu_heatmaps": [
+                    {
+                        "menu": "A",
+                        "menu_category": None,
+                        "menu_category_detail": None,
+                        "daily_heatmap": [{"hour": 12, "quantity": 5}, {"hour": 18, "quantity": 10}],
+                        "weekly_heatmap": [],
+                        "reporting_period": "2026-01",
+                    },
+                    {
+                        "menu": "B",
+                        "menu_category": None,
+                        "menu_category_detail": None,
+                        "daily_heatmap": [{"hour": 18, "quantity": 3}],
+                        "weekly_heatmap": [],
+                        "reporting_period": "2026-01",
+                    },
+                ],
             },
-            {
-                "menu": "B",
-                "menu_category": None,
-                "menu_category_detail": None,
-                "daily_heatmap": [{"hour": 18, "quantity": 3}],
-                "weekly_heatmap": [],
-                "reporting_period": "2026-01",
-            },
-        ],
+        },
     }
 
 
@@ -112,14 +129,16 @@ def test_instagram_signals_without_menu_engineering():
         operating_profile=_operating_profile_stub(),
         menu_engineering=None,
     )
-    assert sig["content_heroes"] == []
-    assert sig["avoid_items"] == []
-    assert sig["category_focus"]["category"] == "Mains"
-    assert len(sig["trending_items"]) == 1
-    assert sig["trending_items"][0]["menu"] == "Rising"
-    assert sig["best_posting_window"]["peak_day"] == "fri"
-    assert sig["best_posting_window"]["peak_hour"] == 18
-    assert sig["period_headline"]["revenue_vs_previous_pct"] is not None
+    assert sig["additional_signals"]["matrix_signals"]["content_heroes"] == []
+    assert sig["additional_signals"]["matrix_signals"]["avoid_items"] == []
+    assert sig["fundamental_signals"]["category_focus"]["category"] == "Mains"
+    assert len(sig["fundamental_signals"]["trending_items"]) == 1
+    assert sig["fundamental_signals"]["trending_items"][0]["menu"] == "Rising"
+    posting = sig["additional_signals"]["datetime_signals"]["best_posting_window"]
+    assert posting["peak_day"] == "fri"
+    assert posting["peak_hour"] == 18
+    headline = sig["additional_signals"]["datetime_signals"]["period_headline"]
+    assert headline["revenue_vs_previous_pct"] is not None
 
 
 def test_instagram_signals_with_matrix_filters_heroes_and_avoid():
@@ -145,8 +164,9 @@ def test_instagram_signals_with_matrix_filters_heroes_and_avoid():
         menu_engineering=matrix,
     )
 
-    hero_menus = {h["menu"] for h in sig["content_heroes"]}
-    avoid_menus = {a["menu"] for a in sig["avoid_items"]}
+    matrix = sig["additional_signals"]["matrix_signals"]
+    hero_menus = {h["menu"] for h in matrix["content_heroes"]}
+    avoid_menus = {a["menu"] for a in matrix["avoid_items"]}
     assert "StarItem" in hero_menus
     assert "LowEndItem" in avoid_menus
 
@@ -206,10 +226,11 @@ def test_instagram_signals_caps_heroes_avoid_and_trending():
         operating_profile=_operating_profile_stub(),
         menu_engineering=matrix,
     )
-    assert len(sig["content_heroes"]) == 20
-    assert len(sig["avoid_items"]) == 20
-    assert len(sig["trending_items"]) == 24
-    assert sig["trending_items"][0]["pct_change"] >= sig["trending_items"][-1]["pct_change"]
+    assert len(sig["additional_signals"]["matrix_signals"]["content_heroes"]) == 20
+    assert len(sig["additional_signals"]["matrix_signals"]["avoid_items"]) == 20
+    assert len(sig["fundamental_signals"]["trending_items"]) == 24
+    trending = sig["fundamental_signals"]["trending_items"]
+    assert trending[0]["pct_change"] >= trending[-1]["pct_change"]
 
 
 def test_instagram_signals_trending_cap_respects_lower_constant():
@@ -244,4 +265,4 @@ def test_instagram_signals_trending_cap_respects_lower_constant():
             operating_profile=None,
             menu_engineering=matrix,
         )
-    assert len(sig["trending_items"]) == 3
+    assert len(sig["fundamental_signals"]["trending_items"]) == 3

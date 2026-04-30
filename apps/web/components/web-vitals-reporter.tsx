@@ -11,10 +11,15 @@ type WebVitalPayload = {
   path: string
 }
 
+const WEB_VITALS_ENABLED = process.env.NEXT_PUBLIC_ENABLE_WEB_VITALS === 'true'
+
 export function WebVitalsReporter() {
   const pathname = usePathname()
 
   useReportWebVitals((metric) => {
+    if (!WEB_VITALS_ENABLED) {
+      return
+    }
     const payload: WebVitalPayload = {
       id: metric.id,
       name: metric.name,

@@ -34,6 +34,13 @@ export const datesMilestoneInputSchema = z.object({
 
 export type DatesMilestoneInput = z.infer<typeof datesMilestoneInputSchema>
 
+/** Brand brief milestone Input tab: optional owner notes sent with location context on run. */
+export const brandBriefMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type BrandBriefMilestoneInputValue = z.infer<typeof brandBriefMilestoneInputValueSchema>
+
 export const milestoneInputSchema = z.object({
   type: z.string().trim().min(1),
   value: z.unknown().optional(),

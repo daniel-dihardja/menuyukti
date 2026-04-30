@@ -22,6 +22,22 @@ def build_promotion_candidates_signals(
 
     instagram = build_instagram_signals(session, run)
     instagram_payload = instagram or {}
+    additional = (
+        instagram_payload.get("additional_signals", {})
+        if isinstance(instagram_payload, dict)
+        else {}
+    )
+    fundamental = (
+        instagram_payload.get("fundamental_signals", {})
+        if isinstance(instagram_payload, dict)
+        else {}
+    )
+    matrix_signals = additional.get("matrix_signals", {}) if isinstance(additional, dict) else {}
+    datetime_signals = (
+        additional.get("datetime_signals", {})
+        if isinstance(additional, dict)
+        else {}
+    )
 
     computed = calculate_promotion_candidates(
         promotion_menu_items=[
@@ -53,28 +69,28 @@ def build_promotion_candidates_signals(
         ],
         content_heroes=[
             {"menu": str(row["menu"])}
-            for row in (instagram_payload.get("content_heroes") or [])
+            for row in (matrix_signals.get("content_heroes") or [])
             if isinstance(row, dict) and isinstance(row.get("menu"), str)
         ],
         trending_items=[
             {"menu": str(row["menu"])}
-            for row in (instagram_payload.get("trending_items") or [])
+            for row in (fundamental.get("trending_items") or [])
             if isinstance(row, dict) and isinstance(row.get("menu"), str)
         ],
         avoid_items=[
             {"menu": str(row["menu"])}
-            for row in (instagram_payload.get("avoid_items") or [])
+            for row in (matrix_signals.get("avoid_items") or [])
             if isinstance(row, dict) and isinstance(row.get("menu"), str)
         ],
         best_posting_window=(
             {
-                "peak_day": instagram_payload.get("best_posting_window", {}).get("peak_day"),
-                "peak_hour": instagram_payload.get("best_posting_window", {}).get("peak_hour"),
-                "primary_meal_period": instagram_payload.get("best_posting_window", {}).get(
+                "peak_day": datetime_signals.get("best_posting_window", {}).get("peak_day"),
+                "peak_hour": datetime_signals.get("best_posting_window", {}).get("peak_hour"),
+                "primary_meal_period": datetime_signals.get("best_posting_window", {}).get(
                     "primary_meal_period"
                 ),
             }
-            if isinstance(instagram_payload.get("best_posting_window"), dict)
+            if isinstance(datetime_signals.get("best_posting_window"), dict)
             else None
         ),
     )

@@ -102,7 +102,13 @@ from menuyukti.core.analytics.calculate_revenue_trends import (
     compute_revenue_trends_from_orders,
 )
 from menuyukti.core.analytics.calculate_sales_analytics import (
+    AdditionalSignals,
+    AnalyticsCapabilities,
+    DatetimeSignals,
+    FundamentalSignals,
     OrderRowForSalesAnalytics,
+    OrderSignals,
+    TieredSalesAnalyticsResult,
     calculate_sales_analytics,
     compute_sales_analytics_from_orders,
 )
@@ -145,6 +151,7 @@ __all__ = [
     "MenuEngineeringThresholds",
     "MenuHeatmapPayload",
     "OperatingProfileResult",
+    "OrderSignals",
     "OrderRowForCategoryMix",
     "OrderRowForMatrix",
     "OrderRowForHeatmap",
@@ -152,6 +159,7 @@ __all__ = [
     "OrderRowForRevenueTrends",
     "OrderRowForSalesAnalytics",
     "PeriodHeadline",
+    "TieredSalesAnalyticsResult",
     "RevenueTrendRow",
     "RevenueTrendsResult",
     "WeeklyHeatmapRow",
@@ -190,4 +198,8 @@ __all__ = [
     "require_columns",
     "revenue_trends_columns",
     "detect_pos_from_excel_bytes",
+    "AnalyticsCapabilities",
+    "FundamentalSignals",
+    "AdditionalSignals",
+    "DatetimeSignals",
 ]

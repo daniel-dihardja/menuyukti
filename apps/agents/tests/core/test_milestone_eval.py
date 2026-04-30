@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_eval import nodes
+from agents_app.agents.core.milestone_eval.prompts import synthesis_human_message
 from agents_app.agents.core.milestone_eval.state import MilestoneEvalState
 from langgraph.types import Send
 
@@ -109,3 +110,65 @@ async def test_fetch_context_appends_prior_milestone_context_when_workflow_prese
         )
     assert "Prior milestone context" in out["raw_data"]
     assert "2026-06-01" in out["raw_data"]
+
+
+def test_synthesis_human_message_includes_optional_input_notes_block() -> None:
+    msg = synthesis_human_message(
+        "Build a brand brief",
+        [{"id": "pc-1", "status": "pass", "requirement": "Has pillars", "reasoning": "present"}],
+        "The topic of the campaign is the soccer world cup.",
+    )
+    assert "Optional milestone input notes:" in msg
+    assert "soccer world cup" in msg
+
+
+def test_optional_input_usage_line_marks_used_when_notes_present() -> None:
+    line = nodes._optional_input_usage_line(
+        "The topic of the campaign is the soccer world cup.",
+    )
+    assert line == "Optional input usage: given."
+
+
+def test_enforce_optional_input_line_marks_given_when_notes_present() -> None:
+    summary = (
+        "Milestone achieved with clear brief data.\n\n"
+        "Optional input usage: not used — Optional input conflicts with available signals."
+    )
+    fixed = nodes._enforce_optional_input_line(
+        summary,
+        "The topic of the campaign is the soccer world cup.",
+    )
+    assert fixed.count("Optional input usage:") == 1
+    assert "Optional input usage: given." in fixed
+
+
+def test_enforce_optional_input_line_removes_inline_existing_fragment() -> None:
+    summary = (
+        "Milestone achieved with clear brief data. Optional input usage: not used — "
+        "the focus remained strictly on factual elements."
+    )
+    fixed = nodes._enforce_optional_input_line(
+        summary,
+        "The topic of the campaign is the soccer world cup.",
+    )
+    assert fixed.count("Optional input usage:") == 1
+    assert "Optional input usage: given." in fixed
+
+
+def test_enforce_optional_input_line_removes_period_terminated_inline_fragment() -> None:
+    summary = (
+        "The milestone goal has been successfully achieved. "
+        "Optional input usage: not given."
+    )
+    fixed = nodes._enforce_optional_input_line(
+        summary,
+        "use the soccer world cup as campaign topic",
+    )
+    assert fixed.count("Optional input usage:") == 1
+    assert "Optional input usage: not given." not in fixed
+    assert fixed.endswith("Optional input usage: given.")
+
+
+def test_optional_input_usage_line_marks_not_given_when_notes_absent() -> None:
+    line = nodes._optional_input_usage_line("")
+    assert line == "Optional input usage: not given."

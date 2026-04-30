@@ -170,14 +170,7 @@ async def fetch_location_operating_signals(
     *,
     client: httpx.AsyncClient,
 ) -> dict[str, Any]:
-    """Fetch the latest analytics run's operating signals for a location.
-
-    Returns a dict with keys ``analytics_run`` (id/name from list; period is on
-    ``promotion_menu_items`` when present),
-    ``operating_profile``, ``category_mix``, ``promotion_menu_items``,
-    ``promotion_candidates_signals``, and ``instagram_signals``.
-    Any key is ``None`` when no analytics run exists or when the query returns nothing.
-    """
+    """Fetch the latest analytics run's tiered signals for a location."""
     runs_data = await graphql_post(
         client,
         ANALYTICS_RUNS_QUERY,
@@ -188,10 +181,6 @@ async def fetch_location_operating_signals(
     if not isinstance(runs, list) or not runs:
         return {
             "analytics_run": None,
-            "operating_profile": None,
-            "category_mix": None,
-            "promotion_menu_items": None,
-            "promotion_candidates_signals": None,
             "instagram_signals": None,
         }
 
@@ -207,10 +196,6 @@ async def fetch_location_operating_signals(
 
     return {
         "analytics_run": run,
-        "operating_profile": signals_data.get("operatingProfile"),
-        "category_mix": signals_data.get("categoryMix"),
-        "promotion_menu_items": signals_data.get("promotionMenuItems"),
-        "promotion_candidates_signals": signals_data.get("promotionCandidatesSignals"),
         "instagram_signals": signals_data.get("instagramSignals"),
     }
 

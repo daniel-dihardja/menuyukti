@@ -40,7 +40,9 @@ def _fmt_operating_profile(op: dict[str, Any], currency: str) -> str:
     weekday = op.get("weekdayShare")
     weekend = op.get("weekendShare")
     if weekday is not None and weekend is not None:
-        lines.append(f"- **Weekday / Weekend split**: {_pct(weekday)} weekday, {_pct(weekend)} weekend")
+        lines.append(
+            f"- **Weekday / Weekend split**: {_pct(weekday)} weekday, {_pct(weekend)} weekend"
+        )
 
     avg_order = op.get("avgOrderSize")
     if avg_order is not None:
@@ -75,20 +77,26 @@ def _fmt_operating_profile(op: dict[str, Any], currency: str) -> str:
     return "\n".join(lines)
 
 
-def _fmt_category_mix(cm: dict[str, Any]) -> str:
+def _fmt_fundamental_signals(instagram: dict[str, Any], currency: str) -> str:
     lines: list[str] = []
-    top_cat = cm.get("topRevenueCategory")
-    if top_cat:
-        lines.append(f"- **Top revenue category**: {top_cat}")
-    rows = cm.get("rows") or []
-    if rows:
-        sorted_rows = sorted(rows, key=lambda r: r.get("revenueShare", 0), reverse=True)
-        for r in sorted_rows[:5]:
-            cat = r.get("category") or "Uncategorised"
-            rev_share = r.get("revenueShare", 0)
-            top_item = r.get("topItem") or ""
-            top_note = f" — top item: {top_item}" if top_item else ""
-            lines.append(f"  - {cat}: {_pct(rev_share)} of revenue{top_note}")
+    fundamental = instagram.get("fundamentalSignals")
+    if not isinstance(fundamental, dict):
+        return ""
+    sales = fundamental.get("sales")
+    if isinstance(sales, dict):
+        cur = f" {currency}" if currency else ""
+        lines.append(f"- **Total revenue**: {float(sales.get('totalRevenue') or 0.0):,.2f}{cur}")
+        lines.append(f"- **Total items sold**: {int(sales.get('totalItemsSold') or 0):,}")
+        lines.append(f"- **Unique menu items sold**: {int(sales.get('uniqueMenuItems') or 0):,}")
+        lines.append(f"- **Avg item price**: {float(sales.get('avgItemPrice') or 0.0):.2f}{cur}")
+    category_focus = fundamental.get("categoryFocus")
+    if isinstance(category_focus, dict) and category_focus.get("category"):
+        lines.append(f"- **Top revenue category**: {category_focus.get('category')}")
+    trending = fundamental.get("trendingItems")
+    if isinstance(trending, list) and trending:
+        top = [x.get("menu") for x in trending[:5] if isinstance(x, dict) and x.get("menu")]
+        if top:
+            lines.append(f"- **Trending items**: {', '.join(str(x) for x in top)}")
     return "\n".join(lines)
 
 
@@ -188,30 +196,65 @@ def _fmt_ai_social_settings(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _fmt_top_items(pmi: dict[str, Any]) -> str:
-    items = pmi.get("items") or []
-    if not items:
+def _fmt_matrix_signals(instagram: dict[str, Any]) -> str:
+    additional = instagram.get("additionalSignals")
+    if not isinstance(additional, dict):
         return ""
-    sorted_items = sorted(items, key=lambda r: r.get("quantity", 0), reverse=True)[:8]
+    matrix = additional.get("matrixSignals")
+    if not isinstance(matrix, dict):
+        return ""
+    heroes = matrix.get("contentHeroes")
+    avoid = matrix.get("avoidItems")
     lines: list[str] = []
-    for r in sorted_items:
-        name = r.get("menu") or ""
-        qty = r.get("quantity") or 0
-        cat = r.get("menuCategory") or ""
-        peak_day = r.get("peakDay") or ""
-        peak_hour = r.get("peakHour")
-        cat_note = f" [{cat}]" if cat else ""
-        peak_parts: list[str] = []
-        if peak_day:
-            peak_parts.append(peak_day)
-        if peak_hour is not None:
-            peak_parts.append(f"{peak_hour:02d}:00")
-        peak_note = f" — peak: {', '.join(peak_parts)}" if peak_parts else ""
-        lines.append(f"  - {name}{cat_note}: {qty:,} orders{peak_note}")
+    if isinstance(heroes, list) and heroes:
+        hero_names: list[str] = []
+        for hero in heroes[:6]:
+            if not isinstance(hero, dict):
+                continue
+            menu = hero.get("menu")
+            if isinstance(menu, str) and menu.strip():
+                hero_names.append(menu.strip())
+        if hero_names:
+            lines.append(f"- **Content heroes**: {', '.join(hero_names)}")
+    if isinstance(avoid, list) and avoid:
+        avoid_names: list[str] = []
+        for avoided in avoid[:6]:
+            if not isinstance(avoided, dict):
+                continue
+            menu = avoided.get("menu")
+            if isinstance(menu, str) and menu.strip():
+                avoid_names.append(menu.strip())
+        if avoid_names:
+            lines.append(f"- **Use cautiously**: {', '.join(avoid_names)}")
     return "\n".join(lines)
 
 
+def _fmt_milestone_brand_brief_owner_notes(context: dict[str, Any]) -> str:
+    """Markdown for optional owner notes from the brand-brief milestone Input tab."""
+    raw = context.get("milestone_input")
+    if not isinstance(raw, dict):
+        return ""
+    if raw.get("type") != "restaurant_brand_brief":
+        return ""
+    value = raw.get("value")
+    if not isinstance(value, dict):
+        return ""
+    notes = value.get("notes")
+    if not isinstance(notes, str):
+        return ""
+    text = notes.strip()
+    if not text:
+        return ""
+    return (
+        "## Milestone brand brief input (owner)\n\n"
+        "_User-supplied notes from the milestone Input tab — incorporate when shaping pillars, "
+        "angles, and tone guardrails; do not treat as verified sales facts._\n\n"
+        f"{text}"
+    )
+
+
 def make_get_location_profile_tool(
+    context: dict[str, Any],
     location_id: int,
     user_id: str,
     *,
@@ -237,6 +280,8 @@ def make_get_location_profile_tool(
         raw_loc = loc_data.get("location")
         if not isinstance(raw_loc, dict):
             return "Location not found."
+
+        owner_notes_md = _fmt_milestone_brand_brief_owner_notes(context)
 
         name = raw_loc.get("name") or ""
         city = raw_loc.get("city") or ""
@@ -274,14 +319,21 @@ def make_get_location_profile_tool(
             ai_social = _fmt_ai_social_settings(loc_data)
             if ai_social:
                 sections.append(ai_social)
+            if owner_notes_md:
+                sections.append(owner_notes_md)
             return "\n\n".join(sections)
 
-        pmi = signals.get("promotion_menu_items")
+        instagram = signals.get("instagram_signals")
+        capabilities = instagram.get("capabilities") if isinstance(instagram, dict) else None
         period_start = ""
         period_end = ""
-        if isinstance(pmi, dict):
-            period_start = pmi.get("periodStart") or ""
-            period_end = pmi.get("periodEnd") or ""
+        if isinstance(instagram, dict):
+            dt = instagram.get("additionalSignals", {}).get("datetimeSignals", {})
+            if isinstance(dt, dict):
+                headline = dt.get("periodHeadline")
+                if isinstance(headline, dict):
+                    period_start = str(headline.get("periodStart") or "")
+                    period_end = str(headline.get("periodEnd") or "")
         run_name = run.get("name") or ""
         period_label = ""
         if period_start and period_end:
@@ -289,25 +341,44 @@ def make_get_location_profile_tool(
         elif run_name:
             period_label = f" ({run_name})"
 
-        op = signals.get("operating_profile")
-        if op:
+        if isinstance(capabilities, dict):
+            sections.append("## Signal capabilities")
+            enabled = capabilities.get("enabledBlocks") or []
+            sections.append(
+                "\n".join(
+                    [
+                        f"- **Has order-level data**: {'yes' if capabilities.get('hasOrderId') else 'no'}",
+                        f"- **Has datetime data**: {'yes' if capabilities.get('hasDatetime') else 'no'}",
+                        f"- **Enabled blocks**: {', '.join(str(x) for x in enabled) if isinstance(enabled, list) and enabled else 'fundamental_signals'}",
+                    ]
+                )
+            )
+
+        if isinstance(instagram, dict):
+            sections.append("## Fundamental signals")
+            sections.append(_fmt_fundamental_signals(instagram, currency))
+
+        dt = (
+            instagram.get("additionalSignals", {}).get("datetimeSignals")
+            if isinstance(instagram, dict)
+            else None
+        )
+        if isinstance(dt, dict):
+            op = dt.get("bestPostingWindow")
             sections.append(f"## Operating profile{period_label}")
-            sections.append(_fmt_operating_profile(op, currency))
+            sections.append(_fmt_operating_profile(op if isinstance(op, dict) else {}, currency))
 
-        cm = signals.get("category_mix")
-        if cm:
-            sections.append("## Category mix")
-            sections.append(_fmt_category_mix(cm))
-
-        if pmi:
-            top_items_md = _fmt_top_items(pmi)
-            if top_items_md:
-                sections.append("## Top menu items by volume")
-                sections.append(top_items_md)
+        matrix_md = _fmt_matrix_signals(instagram if isinstance(instagram, dict) else {})
+        if matrix_md:
+            sections.append("## Additional matrix signals")
+            sections.append(matrix_md)
 
         ai_social = _fmt_ai_social_settings(loc_data)
         if ai_social:
             sections.append(ai_social)
+
+        if owner_notes_md:
+            sections.append(owner_notes_md)
 
         return "\n\n".join(sections)
 

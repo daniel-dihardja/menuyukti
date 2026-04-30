@@ -10,21 +10,26 @@ _INSTAGRAM_SIGNALS_QUERY = """
 query InstagramSignals($locationId: ID!, $analyticsRunId: ID!) {
   instagramSignals(locationId: $locationId, analyticsRunId: $analyticsRunId) {
     analyticsRunId
-    periodHeadline {
-      periodStart
-      periodEnd
-      totalRevenue
-      previousPeriodTotalRevenue
-      revenueVsPreviousPct
+    capabilities {
+      hasOrderId
+      hasDatetime
+      enabledBlocks
     }
-    bestPostingWindow {
-      peakDay
-      peakHour
-      primaryMealPeriod
+    fundamentalSignals {
+      sales {
+        totalRevenue
+        totalItemsSold
+      }
+      trendingItems {
+        menu
+      }
     }
-    contentHeroes {
-      menu
-      matrixCategory
+    additionalSignals {
+      datetimeSignals {
+        periodHeadline {
+          totalRevenue
+        }
+      }
     }
   }
 }
@@ -116,8 +121,9 @@ def test_instagram_signals_category_mix_revenue_trends(analytics_run_with_qa_dat
     sig = r1.data["instagramSignals"]
     assert sig is not None
     assert sig["analyticsRunId"] == str(run_id)
-    assert sig["periodHeadline"]["totalRevenue"] is not None
-    assert sig["bestPostingWindow"]["peakDay"] is not None
+    assert sig["capabilities"]["enabledBlocks"]
+    assert sig["fundamentalSignals"]["sales"]["totalRevenue"] is not None
+    assert sig["fundamentalSignals"]["sales"]["totalItemsSold"] > 0
 
     r2 = asyncio.run(
         schema.execute(

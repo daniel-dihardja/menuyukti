@@ -2,28 +2,33 @@
 
 import { type RefObject, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
-import { Check, Circle, Trash2, X } from 'lucide-react'
+import { CalendarDays, Check, Circle, Trash2, X } from 'lucide-react'
 
-import {
-  MarkdownEditField,
-  type MarkdownEditFieldManualSave,
-} from '@/components/markdown-edit-field'
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
+import { Calendar } from '@workspace/ui/components/calendar'
 import { cn } from '@workspace/ui/lib/utils'
 import { CardContent } from '@workspace/ui/components/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
-import { Input } from '@workspace/ui/components/input'
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
 } from '@workspace/ui/components/input-group'
+import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/components/popover'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
+import { Textarea } from '@workspace/ui/components/textarea'
 
 import type { DatesMilestoneInput, PassCriteriaRow, TimelineMilestone } from './types'
+
+const presetGoalTranslationKeyById = {
+  dates: 'milestonePreset.dates.goal',
+  restaurant_brand_brief: 'milestonePreset.restaurant_brand_brief.goal',
+  promotion_candidates: 'milestonePreset.promotion_candidates.goal',
+  scheduler: 'milestonePreset.scheduler.goal',
+} as const
 
 /** Tab panel state and handlers for one milestone (built in `timeline-item`). */
 export type MilestoneItemTabsModel = {
@@ -42,6 +47,10 @@ export type MilestoneItemTabsModel = {
   handleAddPassCriterion: () => Promise<void>
   handleRemovePassCriterion: (index: number) => Promise<void>
   isDatesPreset: boolean
+  isBrandBriefPreset: boolean
+  brandBriefNotesDraft: string
+  setBrandBriefNotesDraft: (v: string) => void
+  handleBrandBriefNotesBlur: () => void
   inputDraft: DatesMilestoneInput
   setInputDraft: (next: DatesMilestoneInput) => void
   inputDirty: boolean
@@ -51,6 +60,23 @@ export type MilestoneItemTabsModel = {
 
 export type MilestoneItemTabsProps = {
   model: MilestoneItemTabsModel
+}
+
+function parseDateInputValue(value: string): Date | undefined {
+  if (!value) {
+    return undefined
+  }
+  const parsed = new Date(`${value}T00:00:00`)
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed
+}
+
+function formatDateForInput(date: Date): string {
+  return date.toISOString().slice(0, 10)
+}
+
+function formatDateButtonLabel(value: string): string {
+  const parsed = parseDateInputValue(value)
+  return parsed ? parsed.toLocaleDateString() : value
 }
 
 export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
@@ -70,6 +96,10 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     handleAddPassCriterion,
     handleRemovePassCriterion,
     isDatesPreset,
+    isBrandBriefPreset,
+    brandBriefNotesDraft,
+    setBrandBriefNotesDraft,
+    handleBrandBriefNotesBlur,
     inputDraft,
     setInputDraft,
     inputDirty,
@@ -77,28 +107,14 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     savingInput,
   } = model
   const t = useTranslations('analytics.campaigns.chat')
-  const saveStatusMessages = useMemo(
-    () => ({
-      saving: t('fieldSaveStatusSaving'),
-      saved: t('fieldSaveStatusSaved'),
-      unsaved: t('fieldSaveStatusUnsaved'),
-    }),
-    [t],
-  )
-  const goalSaveStatus = savingGoal
-    ? 'saving'
-    : goalDraft !== (milestone.goal ?? '')
-      ? 'unsaved'
-      : 'saved'
-
-  const goalManualSave = useMemo(
-    (): MarkdownEditFieldManualSave => ({
-      messages: saveStatusMessages,
-      onSave: handleGoalSave,
-      status: goalSaveStatus,
-    }),
-    [goalSaveStatus, handleGoalSave, saveStatusMessages],
-  )
+  const helpDescription = useMemo(() => {
+    const presetGoalKey = milestone.presetId
+      ? presetGoalTranslationKeyById[milestone.presetId]
+      : undefined
+    const presetDescription = presetGoalKey ? t(presetGoalKey) : ''
+    const customDescription = milestone.goal?.trim() ?? ''
+    return presetDescription || customDescription || t('milestoneHelpWhatItDoesFallback')
+  }, [milestone.goal, milestone.presetId, t])
 
   return (
     <CardContent className="border-border/60 border-t px-6 pt-4 pb-0">
@@ -116,68 +132,114 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           <TabsTrigger className="flex-1" value="result">
             {t('milestoneTabResult')}
           </TabsTrigger>
+          <TabsTrigger className="flex flex-1 items-center justify-center gap-1.5" value="help">
+            <span
+              aria-hidden
+              className="inline-flex size-4 items-center justify-center rounded-full border text-[10px] font-semibold leading-none"
+            >
+              ?
+            </span>
+            {t('milestoneTabHelp')}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="goal">
           <FieldGroup className="gap-4">
             <Field>
-              <FieldLabel htmlFor={goalFieldId}>{t('milestoneGoalLabel')}</FieldLabel>
-              <FieldDescription>{t('milestoneGoalDescription')}</FieldDescription>
-              <div className="flex flex-col gap-1.5">
-                <MarkdownEditField
-                  disabled={savingGoal}
-                  editTabLabel={t('milestoneDataEditTab')}
-                  formatPreset="milestone-goal"
-                  id={goalFieldId}
-                  manualSave={goalManualSave}
-                  onChange={setGoalDraft}
-                  placeholder={t('milestoneGoalPlaceholder')}
-                  previewEmptyLabel={t('milestoneGoalPreviewEmpty')}
-                  previewTabLabel={t('milestoneDataPreviewTab')}
-                  textareaClassName="min-h-[120px] resize-y whitespace-pre-wrap"
-                  value={goalDraft}
-                />
-              </div>
+              <Textarea
+                className="min-h-[120px] resize-y whitespace-pre-wrap"
+                disabled={savingGoal}
+                id={goalFieldId}
+                onBlur={() => handleGoalSave()}
+                onChange={(e) => setGoalDraft(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                placeholder={t('milestoneGoalPlaceholder')}
+                value={goalDraft}
+              />
             </Field>
           </FieldGroup>
         </TabsContent>
         <TabsContent value="input">
-          {isDatesPreset ? (
+          {isBrandBriefPreset ? (
             <FieldGroup className="gap-4">
               <Field>
-                <FieldLabel htmlFor={`milestone-dates-start-${milestone.id}`}>
-                  {t('milestoneDatesInputStartDateLabel')}
-                </FieldLabel>
-                <FieldDescription>{t('milestoneDatesInputStartDateDescription')}</FieldDescription>
-                <Input
+                <FieldLabel>{t('milestoneBrandBriefInputLabel')}</FieldLabel>
+                <FieldDescription>{t('milestoneBrandBriefInputDescription')}</FieldDescription>
+                <Textarea
+                  className="min-h-[120px] resize-y whitespace-pre-wrap"
                   disabled={savingInput || isMilestoneRunning}
-                  id={`milestone-dates-start-${milestone.id}`}
-                  onChange={(e) =>
-                    setInputDraft({
-                      ...inputDraft,
-                      startDate: e.target.value,
-                    })
-                  }
-                  type="date"
-                  value={inputDraft.startDate}
+                  onBlur={() => handleBrandBriefNotesBlur()}
+                  onChange={(e) => setBrandBriefNotesDraft(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  placeholder={t('milestoneBrandBriefInputPlaceholder')}
+                  value={brandBriefNotesDraft}
                 />
               </Field>
+            </FieldGroup>
+          ) : isDatesPreset ? (
+            <FieldGroup className="gap-4">
               <Field>
-                <FieldLabel htmlFor={`milestone-dates-end-${milestone.id}`}>
-                  {t('milestoneDatesInputEndDateLabel')}
-                </FieldLabel>
+                <FieldLabel>{t('milestoneDatesInputStartDateLabel')}</FieldLabel>
+                <FieldDescription>{t('milestoneDatesInputStartDateDescription')}</FieldDescription>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      className={cn('w-full justify-start text-left font-normal')}
+                      disabled={savingInput || isMilestoneRunning}
+                      type="button"
+                      variant="outline"
+                    >
+                      <CalendarDays aria-hidden data-icon="inline-start" />
+                      {inputDraft.startDate
+                        ? formatDateButtonLabel(inputDraft.startDate)
+                        : t('milestoneDatesInputPickDate')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      onSelect={(date) => {
+                        setInputDraft({
+                          ...inputDraft,
+                          startDate: date ? formatDateForInput(date) : '',
+                        })
+                      }}
+                      selected={parseDateInputValue(inputDraft.startDate)}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </Field>
+              <Field>
+                <FieldLabel>{t('milestoneDatesInputEndDateLabel')}</FieldLabel>
                 <FieldDescription>{t('milestoneDatesInputEndDateDescription')}</FieldDescription>
-                <Input
-                  disabled={savingInput || isMilestoneRunning}
-                  id={`milestone-dates-end-${milestone.id}`}
-                  onChange={(e) =>
-                    setInputDraft({
-                      ...inputDraft,
-                      endDate: e.target.value,
-                    })
-                  }
-                  type="date"
-                  value={inputDraft.endDate}
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      className={cn('w-full justify-start text-left font-normal')}
+                      disabled={savingInput || isMilestoneRunning}
+                      type="button"
+                      variant="outline"
+                    >
+                      <CalendarDays aria-hidden data-icon="inline-start" />
+                      {inputDraft.endDate
+                        ? formatDateButtonLabel(inputDraft.endDate)
+                        : t('milestoneDatesInputPickDate')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      onSelect={(date) => {
+                        setInputDraft({
+                          ...inputDraft,
+                          endDate: date ? formatDateForInput(date) : '',
+                        })
+                      }}
+                      selected={parseDateInputValue(inputDraft.endDate)}
+                    />
+                  </PopoverContent>
+                </Popover>
               </Field>
               <div className="flex items-center justify-between">
                 <p className="text-muted-foreground text-xs">
@@ -305,6 +367,21 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           ) : (
             <p className="text-muted-foreground text-sm">{t('milestoneResultEmpty')}</p>
           )}
+        </TabsContent>
+        <TabsContent value="help">
+          <FieldGroup className="gap-4">
+            <p className="font-semibold text-lg leading-tight">{milestone.title}</p>
+            <MarkdownMessage content={helpDescription} />
+            {isBrandBriefPreset ? (
+              <div className="space-y-2 text-muted-foreground text-sm">
+                <p className="font-medium text-foreground">
+                  {t('milestoneHelpBrandBriefOptionalInputTitle')}
+                </p>
+                <p>{t('milestoneHelpBrandBriefOptionalInputHowUsed')}</p>
+                <p>{t('milestoneHelpBrandBriefOptionalInputWhenToUse')}</p>
+              </div>
+            ) : null}
+          </FieldGroup>
         </TabsContent>
       </Tabs>
     </CardContent>

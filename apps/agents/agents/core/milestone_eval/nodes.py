@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import Any, Literal
 
 import httpx
@@ -38,6 +39,44 @@ class CriterionVerdict(BaseModel):
 
 def _node_type(ch: dict[str, Any]) -> str:
     return str(ch.get("nodeType") or ch.get("node_type") or "")
+
+
+def _extract_milestone_input_notes(state: MilestoneEvalState) -> str:
+    raw = state.get("milestone_input")
+    if not isinstance(raw, dict):
+        return ""
+    if raw.get("type") != "restaurant_brand_brief":
+        return ""
+    value = raw.get("value")
+    if not isinstance(value, dict):
+        return ""
+    notes = value.get("notes")
+    if not isinstance(notes, str):
+        return ""
+    return notes.strip()
+
+
+_OPTIONAL_INPUT_FRAGMENT_RE = re.compile(
+    r"(?is)\bOptional input usage:\s*(?:used|not used|given|not given)\b(?:\s*[—-]\s*[^\n]*)?\.?"
+)
+
+
+def _optional_input_usage_line(notes: str) -> str:
+    cleaned_notes = notes.strip()
+    if not cleaned_notes:
+        return "Optional input usage: not given."
+    return "Optional input usage: given."
+
+
+def _enforce_optional_input_line(summary: str, notes: str) -> str:
+    without_existing = _OPTIONAL_INPUT_FRAGMENT_RE.sub("", summary)
+    without_existing = re.sub(r"[ \t]{2,}", " ", without_existing)
+    without_existing = re.sub(r"\n{3,}", "\n\n", without_existing)
+    without_existing = without_existing.strip()
+    usage_line = _optional_input_usage_line(notes)
+    if not without_existing:
+        return usage_line
+    return f"{without_existing}\n\n{usage_line}"
 
 
 async def fetch_context(
@@ -176,7 +215,8 @@ async def synthesize(
         }
         for e in evaluated
     ]
-    msg = synthesis_human_message(state.get("goal", ""), payload)
+    notes = _extract_milestone_input_notes(state)
+    msg = synthesis_human_message(state.get("goal", ""), payload, notes)
     full = ""
     async for chunk in llm.astream(
         [SystemMessage(content=SYNTHESIS_SYSTEM), HumanMessage(content=msg)]
@@ -186,7 +226,11 @@ async def synthesize(
             full += c
         elif isinstance(c, list):
             full += "".join(str(x) for x in c)
-    return {"result_summary": full.strip()}
+    summary = _enforce_optional_input_line(
+        full.strip(),
+        notes,
+    )
+    return {"result_summary": summary}
 
 
 async def store_result(

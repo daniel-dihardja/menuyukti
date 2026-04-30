@@ -8,7 +8,13 @@ Do not infer or invent rows/dates/times that are not explicitly present in Data;
 Be concise."""
 
 SYNTHESIS_SYSTEM = """You reflect on the milestone goal and each pass/fail outcome, then write a short result \
-summary for stakeholders. Be clear, professional, and grounded in the criterion results."""
+summary for stakeholders. Be clear, professional, and grounded in the criterion results.
+
+Treat optional milestone input notes as one opaque instruction string that augments the goal.
+Do not parse keywords from optional input and do not infer usage from keyword overlap.
+
+Always include one explicit sentence about optional milestone input usage in this exact format:
+"Optional input usage: given." or "Optional input usage: not given."."""
 
 
 def eval_human_message(goal: str, raw_data: str, requirement: str) -> str:
@@ -20,7 +26,11 @@ def eval_human_message(goal: str, raw_data: str, requirement: str) -> str:
     )
 
 
-def synthesis_human_message(goal: str, evaluated: list[dict[str, str]]) -> str:
+def synthesis_human_message(
+    goal: str,
+    evaluated: list[dict[str, str]],
+    milestone_input_notes: str = "",
+) -> str:
     lines = []
     for row in evaluated:
         sid = row.get("id", "")
@@ -29,4 +39,15 @@ def synthesis_human_message(goal: str, evaluated: list[dict[str, str]]) -> str:
         reason = row.get("reasoning", "")
         lines.append(f"- [{status.upper()}] {req} (id={sid}): {reason}")
     body = "\n".join(lines) if lines else "(no criteria)"
-    return f"Goal:\n{goal}\n\nCriterion results:\n{body}\n\nWrite a 2–4 sentence summary of whether this milestone is achieved."
+    notes = milestone_input_notes.strip()
+    optional_input_block = (
+        f"Optional milestone input notes:\n{notes}"
+        if notes
+        else "Optional milestone input notes:\n(none provided)"
+    )
+    return (
+        f"Goal:\n{goal}\n\n"
+        f"{optional_input_block}\n\n"
+        f"Criterion results:\n{body}\n\n"
+        "Write a 2–4 sentence summary of whether this milestone is achieved."
+    )

@@ -29,16 +29,19 @@ Workflow:
    ```
 3. Call `get_location_profile`. It returns:
    - **Location profile**: venue name, city, country, currency.
-   - **Owner-provided brief hints (manual)**: optional owner-declared venue types, social goals, guest context, meal-period focus (breakfast/brunch/lunch/dinner), tone presets, video comfort, notes — **prioritize these** for tone and audience framing when present (declared positioning, not inferred demographics).
-   - **Operating profile**: operating pattern, dining focus, peak day, primary meal period, meal period breakdown (share per period), weekday/weekend split, avg order size (from the latest analytics run when available).
-   - **Category mix**: top revenue category and per-category revenue and volume shares with top item per category.
-   - **Top menu items by volume**: name, category, order count, peak hour and peak day.
-   - **AI-generated location social settings** (when present): secondary context from automation — **not** direct owner input; do not treat it as ground truth over manual hints or POS signals.
+
+- **Milestone brand brief input (owner)**: optional free-text from this milestone’s **Input** tab in the app. This value is always a single string. If present, always include it as additional instruction context for this brand brief.
+- **Owner-provided brief hints (manual)**: optional owner-declared venue types, social goals, guest context, meal-period focus (breakfast/brunch/lunch/dinner), tone presets, video comfort, notes — **prioritize these** for tone and audience framing when present (declared positioning, not inferred demographics).
+- **Signal capabilities**: explicit analytics availability flags (`hasOrderId`, `hasDatetime`, `enabledBlocks`).
+- **Fundamental signals** (always available): baseline sales + category/trending context from minimum POS data.
+- **Additional signals** (only when available): order-level metrics (avg order, order counts), datetime timing signals (posting window, period headline), and matrix hero/avoid signals.
+- **AI-generated location social settings** (when present): secondary context from automation — **not** direct owner input; do not treat it as ground truth over manual hints or POS signals.
+
 4. Build a short signal map before writing output (do not skip this internal step):
    - Location identity signals -> `venueSnapshot`.
    - **Manual brief hints** (when present) -> reinforce `toneGuardrails` and help shape `audienceHypotheses` without inventing census-style demographics.
-   - Operating profile signals (operating pattern, dining focus, meal periods, weekday/weekend split, peak day) -> `audienceHypotheses` and `toneGuardrails`.
-   - Category mix + top menu item signals -> `contentPillars` and `proofOrientedAngles`.
+   - Fundamental signals -> baseline `contentPillars`, `audienceHypotheses`, `proofOrientedAngles`, and `toneGuardrails`.
+   - Additional order/datetime signals -> enrich hypotheses/angles only when capability flags confirm availability.
    - AI social settings block -> optional nuance only; never replace missing manual or analytics signals with invented claims.
    - If a signal is missing, do not invent it. Use only available fields and note the gap in the generated statements.
 5. Build the output deterministically:
@@ -49,10 +52,14 @@ Workflow:
    - `audienceHypotheses` (3-5 unique non-empty strings): evidence-based only (meal periods, weekday/weekend, top categories); no invented demographics.
    - `proofOrientedAngles` (3-5 unique non-empty strings): grounded in top items/category mix/peak timing; no invented proof points.
    - `toneGuardrails` (3-5 unique non-empty strings): inferred from operating pattern, dining focus, and menu profile.
-   - Do not output duplicate items within the same array.
+
+- When **Milestone brand brief input (owner)** is present, integrate it explicitly into the output by reflecting it in at least one of `contentPillars`, `proofOrientedAngles`, or `toneGuardrails`.
+- Do not output duplicate items within the same array.
+
 6. Apply fallback tiers when analytics are incomplete:
-   - Full analytics available: produce 3-5 items for each array with concrete signal references.
-   - Partial analytics available: still produce 3-5 items, each explicitly grounded in whichever signals are present.
+   - Fundamental-only: produce 3-5 items using only fundamental signals and manual hints.
+   - Fundamental + order-level: include avg order/order-size style hypotheses when order signals are present.
+   - Fundamental + order + datetime: include timing-oriented hypotheses/proof angles when datetime signals are present.
    - No analytics run available: still produce a complete JSON object with conservative placeholders such as `"Operating signals unavailable from analytics."` and avoid fabricated precision.
 7. If `get_location_profile` returns no analytics run, still return a complete JSON object:
    - Fill `venueSnapshot` from available location identity.

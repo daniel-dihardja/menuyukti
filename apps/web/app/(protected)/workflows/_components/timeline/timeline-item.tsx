@@ -19,6 +19,18 @@ import type {
   TimelineMilestoneStatus,
 } from './types'
 
+function brandBriefNotesFromMilestone(raw: TimelineMilestone['milestoneInput']): string {
+  if (
+    raw?.type === 'restaurant_brand_brief' &&
+    raw.value != null &&
+    typeof raw.value === 'object'
+  ) {
+    const n = (raw.value as { notes?: unknown }).notes
+    return typeof n === 'string' ? n : ''
+  }
+  return ''
+}
+
 export type TimelineItemProps = {
   milestone: TimelineMilestone
   positionIndex: number
@@ -104,14 +116,23 @@ function TimelineItemInner({
   const savingGoal = savingGoalMilestoneId === milestone.id
   const savingInput = savingDataMilestoneId === milestone.id
   const isDatesPreset = milestone.presetId === 'dates'
+  const isBrandBriefPreset = milestone.presetId === 'restaurant_brand_brief'
 
   const [inputDraft, setInputDraft] = useState<DatesMilestoneInput>(() =>
     datesInputFromMilestone(milestone.milestoneInput),
   )
 
+  const [brandBriefNotesDraft, setBrandBriefNotesDraft] = useState(() =>
+    brandBriefNotesFromMilestone(milestone.milestoneInput),
+  )
+
   useEffect(() => {
     setInputDraft(datesInputFromMilestone(milestone.milestoneInput))
   }, [milestone.milestoneInput])
+
+  useEffect(() => {
+    setBrandBriefNotesDraft(brandBriefNotesFromMilestone(milestone.milestoneInput))
+  }, [milestone.id, milestone.milestoneInput])
   useEffect(() => {
     setGoalDraft(milestone.goal ?? '')
   }, [milestone.id, milestone.goal])
@@ -227,6 +248,32 @@ function TimelineItemInner({
     }
   }
 
+  const handleBrandBriefNotesBlur = () => {
+    if (!isBrandBriefPreset || savingInput || !onUpdateMilestoneInput) {
+      return
+    }
+    const server = brandBriefNotesFromMilestone(milestone.milestoneInput)
+    const trimmedDraft = brandBriefNotesDraft.trim()
+    const trimmedServer = server.trim()
+    if (trimmedDraft === trimmedServer) {
+      if (brandBriefNotesDraft !== trimmedDraft) {
+        setBrandBriefNotesDraft(trimmedDraft)
+      }
+      return
+    }
+    void (async () => {
+      const ok = await onUpdateMilestoneInput(milestone.id, {
+        type: 'restaurant_brand_brief',
+        value: { notes: trimmedDraft },
+      })
+      if (!ok) {
+        setBrandBriefNotesDraft(server)
+      } else {
+        setBrandBriefNotesDraft(trimmedDraft)
+      }
+    })()
+  }
+
   const isDeleting = deletingMilestoneId === milestone.id
   const isMoving = movingMilestoneId === milestone.id
   const position = isFirst ? 'first' : isLast ? 'last' : 'middle'
@@ -340,22 +387,26 @@ function TimelineItemInner({
                 model={{
                   addCriteriaInputId,
                   addCriteriaInputRef,
+                  brandBriefNotesDraft,
                   criteriaRows,
                   goalDraft,
                   goalFieldId,
                   handleAddPassCriterion,
+                  handleBrandBriefNotesBlur,
                   handleGoalSave,
                   handleInputSave,
                   handleRemovePassCriterion,
                   hasResult,
                   inputDirty,
                   inputDraft,
+                  isBrandBriefPreset,
                   isMilestoneRunning,
                   isDatesPreset,
                   milestone,
                   savingGoal,
                   savingInput,
                   savingPassCriteria,
+                  setBrandBriefNotesDraft,
                   setGoalDraft,
                   setInputDraft,
                 }}
