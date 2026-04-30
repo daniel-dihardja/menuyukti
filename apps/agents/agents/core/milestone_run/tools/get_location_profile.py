@@ -40,7 +40,9 @@ def _fmt_operating_profile(op: dict[str, Any], currency: str) -> str:
     weekday = op.get("weekdayShare")
     weekend = op.get("weekendShare")
     if weekday is not None and weekend is not None:
-        lines.append(f"- **Weekday / Weekend split**: {_pct(weekday)} weekday, {_pct(weekend)} weekend")
+        lines.append(
+            f"- **Weekday / Weekend split**: {_pct(weekday)} weekday, {_pct(weekend)} weekend"
+        )
 
     avg_order = op.get("avgOrderSize")
     if avg_order is not None:
@@ -217,7 +219,32 @@ def _fmt_matrix_signals(instagram: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _fmt_milestone_brand_brief_owner_notes(context: dict[str, Any]) -> str:
+    """Markdown for optional owner notes from the brand-brief milestone Input tab."""
+    raw = context.get("milestone_input")
+    if not isinstance(raw, dict):
+        return ""
+    if raw.get("type") != "restaurant_brand_brief":
+        return ""
+    value = raw.get("value")
+    if not isinstance(value, dict):
+        return ""
+    notes = value.get("notes")
+    if not isinstance(notes, str):
+        return ""
+    text = notes.strip()
+    if not text:
+        return ""
+    return (
+        "## Milestone brand brief input (owner)\n\n"
+        "_User-supplied notes from the milestone Input tab — incorporate when shaping pillars, "
+        "angles, and tone guardrails; do not treat as verified sales facts._\n\n"
+        f"{text}"
+    )
+
+
 def make_get_location_profile_tool(
+    context: dict[str, Any],
     location_id: int,
     user_id: str,
     *,
@@ -243,6 +270,8 @@ def make_get_location_profile_tool(
         raw_loc = loc_data.get("location")
         if not isinstance(raw_loc, dict):
             return "Location not found."
+
+        owner_notes_md = _fmt_milestone_brand_brief_owner_notes(context)
 
         name = raw_loc.get("name") or ""
         city = raw_loc.get("city") or ""
@@ -280,14 +309,12 @@ def make_get_location_profile_tool(
             ai_social = _fmt_ai_social_settings(loc_data)
             if ai_social:
                 sections.append(ai_social)
+            if owner_notes_md:
+                sections.append(owner_notes_md)
             return "\n\n".join(sections)
 
         instagram = signals.get("instagram_signals")
-        capabilities = (
-            instagram.get("capabilities")
-            if isinstance(instagram, dict)
-            else None
-        )
+        capabilities = instagram.get("capabilities") if isinstance(instagram, dict) else None
         period_start = ""
         period_end = ""
         if isinstance(instagram, dict):
@@ -339,6 +366,9 @@ def make_get_location_profile_tool(
         ai_social = _fmt_ai_social_settings(loc_data)
         if ai_social:
             sections.append(ai_social)
+
+        if owner_notes_md:
+            sections.append(owner_notes_md)
 
         return "\n\n".join(sections)
 

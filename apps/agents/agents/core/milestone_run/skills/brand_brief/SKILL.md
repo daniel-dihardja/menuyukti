@@ -29,6 +29,7 @@ Workflow:
    ```
 3. Call `get_location_profile`. It returns:
    - **Location profile**: venue name, city, country, currency.
+   - **Milestone brand brief input (owner)**: optional free-text from this milestone’s **Input** tab in the app. When that section appears in the Markdown, treat it as user-declared positioning or constraints (like manual brief hints) and align pillars, angles, and tone guardrails with it when it does not contradict analytics.
    - **Owner-provided brief hints (manual)**: optional owner-declared venue types, social goals, guest context, meal-period focus (breakfast/brunch/lunch/dinner), tone presets, video comfort, notes — **prioritize these** for tone and audience framing when present (declared positioning, not inferred demographics).
    - **Signal capabilities**: explicit analytics availability flags (`hasOrderId`, `hasDatetime`, `enabledBlocks`).
    - **Fundamental signals** (always available): baseline sales + category/trending context from minimum POS data.

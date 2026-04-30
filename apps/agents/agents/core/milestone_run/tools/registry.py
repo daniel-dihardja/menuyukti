@@ -41,12 +41,17 @@ EXTRA_TOOL_FACTORIES: dict[str, ExtraToolFactory] = {
         lid, uid, client=client
     ),
     "get_location_profile": lambda context, lid, uid, client: make_get_location_profile_tool(
-        lid, uid, client=client
+        context,
+        lid,
+        uid,
+        client=client,
     ),
-    "get_promotion_candidates": lambda context, lid, uid, client: make_get_promotion_candidates_tool(
-        lid, uid, client=client
+    "get_promotion_candidates": lambda context, lid, uid, client: (
+        make_get_promotion_candidates_tool(lid, uid, client=client)
     ),
-    "get_prior_campaign_context": lambda context, lid, uid, client: make_get_prior_campaign_context_tool(),
+    "get_prior_campaign_context": lambda context, lid, uid, client: (
+        make_get_prior_campaign_context_tool()
+    ),
     "get_scheduler_plan": lambda context, lid, uid, client: make_get_scheduler_plan_tool(
         context,
         lid,

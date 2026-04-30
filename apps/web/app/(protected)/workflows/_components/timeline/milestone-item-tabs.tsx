@@ -47,6 +47,10 @@ export type MilestoneItemTabsModel = {
   handleAddPassCriterion: () => Promise<void>
   handleRemovePassCriterion: (index: number) => Promise<void>
   isDatesPreset: boolean
+  isBrandBriefPreset: boolean
+  brandBriefNotesDraft: string
+  setBrandBriefNotesDraft: (v: string) => void
+  handleBrandBriefNotesBlur: () => void
   inputDraft: DatesMilestoneInput
   setInputDraft: (next: DatesMilestoneInput) => void
   inputDirty: boolean
@@ -92,6 +96,10 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     handleAddPassCriterion,
     handleRemovePassCriterion,
     isDatesPreset,
+    isBrandBriefPreset,
+    brandBriefNotesDraft,
+    setBrandBriefNotesDraft,
+    handleBrandBriefNotesBlur,
     inputDraft,
     setInputDraft,
     inputDirty,
@@ -152,7 +160,24 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           </FieldGroup>
         </TabsContent>
         <TabsContent value="input">
-          {isDatesPreset ? (
+          {isBrandBriefPreset ? (
+            <FieldGroup className="gap-4">
+              <Field>
+                <FieldLabel>{t('milestoneBrandBriefInputLabel')}</FieldLabel>
+                <FieldDescription>{t('milestoneBrandBriefInputDescription')}</FieldDescription>
+                <Textarea
+                  className="min-h-[120px] resize-y whitespace-pre-wrap"
+                  disabled={savingInput || isMilestoneRunning}
+                  onBlur={() => handleBrandBriefNotesBlur()}
+                  onChange={(e) => setBrandBriefNotesDraft(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  placeholder={t('milestoneBrandBriefInputPlaceholder')}
+                  value={brandBriefNotesDraft}
+                />
+              </Field>
+            </FieldGroup>
+          ) : isDatesPreset ? (
             <FieldGroup className="gap-4">
               <Field>
                 <FieldLabel>{t('milestoneDatesInputStartDateLabel')}</FieldLabel>
@@ -347,6 +372,15 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           <FieldGroup className="gap-4">
             <p className="font-semibold text-lg leading-tight">{milestone.title}</p>
             <MarkdownMessage content={helpDescription} />
+            {isBrandBriefPreset ? (
+              <div className="space-y-2 text-muted-foreground text-sm">
+                <p className="font-medium text-foreground">
+                  {t('milestoneHelpBrandBriefOptionalInputTitle')}
+                </p>
+                <p>{t('milestoneHelpBrandBriefOptionalInputHowUsed')}</p>
+                <p>{t('milestoneHelpBrandBriefOptionalInputWhenToUse')}</p>
+              </div>
+            ) : null}
           </FieldGroup>
         </TabsContent>
       </Tabs>
