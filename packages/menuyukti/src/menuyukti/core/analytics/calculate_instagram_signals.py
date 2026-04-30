@@ -5,19 +5,13 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import TypedDict
 
-from menuyukti.core.analytics.calculate_category_mix import (
-    CategoryMixRow,
-    CategoryMixResult,
-)
+from menuyukti.core.analytics.calculate_category_mix import CategoryMixResult
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
     MenuEngineeringMatrixItem,
     MenuEngineeringMatrixResult,
 )
 from menuyukti.core.analytics.calculate_operating_profile import OperatingProfileResult
-from menuyukti.core.analytics.calculate_revenue_trends import (
-    RevenueTrendRow,
-    RevenueTrendsResult,
-)
+from menuyukti.core.analytics.calculate_revenue_trends import RevenueTrendRow, RevenueTrendsResult
 
 # Cap list sizes returned to API / LLM consumers (full matrix still used upstream).
 _MAX_INSTAGRAM_CONTENT_HEROES = 20
@@ -56,14 +50,11 @@ class PeriodHeadline(TypedDict):
 
 
 class InstagramSignalsResult(TypedDict):
-    """Structured signals for Instagram agent prompts."""
+    """Structured tiered signals for agent prompts."""
 
-    content_heroes: list[MatrixBackedItem]
-    trending_items: list[RevenueTrendRow]
-    avoid_items: list[MatrixBackedItem]
-    category_focus: CategoryMixRow | None
-    best_posting_window: BestPostingWindow
-    period_headline: PeriodHeadline
+    capabilities: dict[str, object]
+    fundamental_signals: dict[str, object]
+    additional_signals: dict[str, object]
 
 
 def _aggregate_peak_hour_from_heatmaps(menu_heatmaps: object) -> int | None:
@@ -158,12 +149,33 @@ def calculate_instagram_signals(
     trending_items = trending_items[:_MAX_INSTAGRAM_TRENDING_RISING]
 
     rows = category_mix.get("rows") or []
-    category_focus: CategoryMixRow | None = rows[0] if rows else None
+    category_focus = rows[0] if rows else None
 
-    menu_heatmaps = sales_analytics.get("menu_heatmaps", [])
+    capabilities = sales_analytics.get("capabilities")
+    fundamental = sales_analytics.get("fundamental_signals")
+    additional = sales_analytics.get("additional_signals")
+    if not isinstance(capabilities, dict):
+        msg = "sales_analytics must include capabilities"
+        raise TypeError(msg)
+    if not isinstance(fundamental, dict):
+        msg = "sales_analytics must include fundamental_signals"
+        raise TypeError(msg)
+    if not isinstance(additional, dict):
+        msg = "sales_analytics must include additional_signals"
+        raise TypeError(msg)
+
+    datetime_signals = additional.get("datetime_signals")
+    menu_heatmaps = (
+        datetime_signals.get("menu_heatmaps", [])
+        if isinstance(datetime_signals, dict)
+        else []
+    )
     peak_hour = _aggregate_peak_hour_from_heatmaps(menu_heatmaps)
 
-    if operating_profile is not None:
+    has_datetime = bool(capabilities.get("has_datetime"))
+    has_order_id = bool(capabilities.get("has_order_id"))
+
+    if operating_profile is not None and has_datetime:
         best = BestPostingWindow(
             peak_day=operating_profile.get("peak_day"),
             peak_revenue_day=operating_profile.get("peak_revenue_day"),
@@ -180,7 +192,10 @@ def calculate_instagram_signals(
             peak_hour=peak_hour,
         )
 
-    total_rev = _coerce_float(sales_analytics["total_revenue"], "sales_analytics['total_revenue']")
+    total_rev = _coerce_float(
+        fundamental["total_revenue"],
+        "sales_analytics['fundamental_signals']['total_revenue']",
+    )
     prev_total = _coerce_float(
         revenue_trends["previous_period_total_revenue"],
         "revenue_trends['previous_period_total_revenue']",
@@ -192,18 +207,52 @@ def calculate_instagram_signals(
         rev_vs_prev = None
 
     period_headline = PeriodHeadline(
-        period_start=str(sales_analytics["period_start"]),
-        period_end=str(sales_analytics["period_end"]),
+        period_start=str(
+            datetime_signals.get("period_start")
+            if isinstance(datetime_signals, dict)
+            else ""
+        ),
+        period_end=str(
+            datetime_signals.get("period_end")
+            if isinstance(datetime_signals, dict)
+            else ""
+        ),
         total_revenue=round(total_rev, 4),
         previous_period_total_revenue=round(prev_total, 4),
         revenue_vs_previous_pct=rev_vs_prev,
     )
 
     return InstagramSignalsResult(
-        content_heroes=content_heroes,
-        trending_items=trending_items,
-        avoid_items=avoid_items,
-        category_focus=category_focus,
-        best_posting_window=best,
-        period_headline=period_headline,
+        capabilities={
+            "has_order_id": has_order_id,
+            "has_datetime": has_datetime,
+            "enabled_blocks": list(capabilities.get("enabled_blocks") or []),
+        },
+        fundamental_signals={
+            "sales": {
+                "total_items_sold": int(fundamental.get("total_items_sold") or 0),
+                "total_revenue": round(total_rev, 4),
+                "unique_menu_items": int(fundamental.get("unique_menu_items") or 0),
+                "avg_item_price": float(fundamental.get("avg_item_price") or 0.0),
+                "avg_popularity_threshold": float(
+                    fundamental.get("avg_popularity_threshold") or 0.0
+                ),
+            },
+            "category_focus": category_focus,
+            "trending_items": trending_items,
+        },
+        additional_signals={
+            "order_signals": additional.get("order_signals") if has_order_id else None,
+            "datetime_signals": {
+                "best_posting_window": best,
+                "period_headline": period_headline,
+                "menu_heatmaps": menu_heatmaps if has_datetime else [],
+            }
+            if has_datetime
+            else None,
+            "matrix_signals": {
+                "content_heroes": content_heroes,
+                "avoid_items": avoid_items,
+            },
+        },
     )
