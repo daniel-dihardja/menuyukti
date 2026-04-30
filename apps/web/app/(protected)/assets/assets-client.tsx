@@ -554,18 +554,7 @@ export function AssetsClient() {
                   key={item.name}
                   className="group/tile min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md"
                 >
-                  <div
-                    className="relative aspect-[4/3] w-full cursor-zoom-in overflow-hidden bg-muted/30 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    tabIndex={0}
-                    aria-label={t('grid.viewLarge')}
-                    onClick={() => setPreviewItem(item)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        setPreviewItem(item)
-                      }
-                    }}
-                  >
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted/30 text-left">
                     {/* eslint-disable-next-line @next/next/no-img-element -- dynamic user uploads; dimensions vary */}
                     <img
                       src={item.url}
@@ -596,10 +585,7 @@ export function AssetsClient() {
                           variant="secondary"
                           className="h-9 w-9 rounded-full bg-white/95 text-foreground shadow-md hover:bg-white"
                           aria-label={t('grid.viewLarge')}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setPreviewItem(item)
-                          }}
+                          onClick={() => setPreviewItem(item)}
                         >
                           <Maximize2 className="h-4 w-4" />
                         </Button>
