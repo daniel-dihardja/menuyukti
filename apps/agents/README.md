@@ -21,7 +21,7 @@ make dev
 - API: `http://127.0.0.1:8001`
 - Health: `GET /health`
 - Streaming chat: `POST /chat` — `text/event-stream` (SSE), JSON body `{"messages":[{"role":"user","content":"..."}]}`
-- **Core:** `POST /format-markdown` — JSON body `{"content":"...","preset":"milestone-goal"|"milestone-data"|...}` returns `{"formatted":"..."}`. Preset-driven Markdown cleanup (platform helper in `agents/core/format_markdown/`, not a domain graph).
+- **Core:** `POST /format-markdown` — JSON body `{"content":"...","preset":"milestone-data"}` returns `{"formatted":"..."}`. Preset-driven Markdown cleanup for milestone Data (platform helper in `agents/core/format_markdown/`, not a domain graph).
 
 ## Milestone run
 

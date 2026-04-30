@@ -1016,7 +1016,7 @@
           "dates": {
             "label": "Dates",
             "title": "Dates",
-            "goal": "Use **Start date** and **End date** in the Input tab to define the campaign window. These inputs are used to fetch **Public holidays** that fall between those dates, and all three are then documented in the Data tab.",
+            "goal": "Use Start date and End date in the Input tab to define the campaign window. Those inputs are used to fetch public holidays between those dates; start date, end date, and holidays are all documented in the Data tab.",
             "criterionStartDate": "Start date is filled in under **Start date** in the Data tab.",
             "criterionEndDate": "End date is filled in under **End date** in the Data tab.",
             "criterionPublicHolidays": "Public holidays are listed under **Public holidays** in the Data tab.",
@@ -1209,7 +1209,6 @@
         "milestoneRegenerateButton": "Regenerate from analytics",
         "milestonePrepareRunning": "Generating…",
         "milestonePrepareError": "Could not generate milestone data. Please try again.",
-        "milestoneGoalPreviewEmpty": "Nothing to preview yet. Add Markdown in Edit.",
         "formatMarkdownButton": "Format Markdown",
         "formatMarkdownFormatting": "Formatting…",
         "formatMarkdownError": "Could not format text. Please try again.",
@@ -1248,7 +1247,7 @@
         "goalEditButton": "Edit",
         "goalEditAriaLabel": "Edit workflow goal",
         "goalSheetTitle": "Workflow goal",
-        "goalSheetDescription": "Describe what this campaign should achieve. Changes save when you leave the editor or close this panel.",
+        "goalSheetDescription": "Describe what this campaign should achieve in plain text. Changes save when you close this panel or choose Save.",
         "goalSaveError": "Could not save goal. Please try again."
       },
       "milestoneRun": {

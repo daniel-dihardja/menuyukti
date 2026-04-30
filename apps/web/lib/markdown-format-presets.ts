@@ -1,6 +1,6 @@
 /** Preset ids for POST /api/format-markdown (must match agents `agents/core/format_markdown/presets.py`). */
 
-export const MARKDOWN_FORMAT_PRESETS = ['milestone-goal', 'milestone-data'] as const
+export const MARKDOWN_FORMAT_PRESETS = ['milestone-data'] as const
 
 export type MarkdownFormatPreset = (typeof MARKDOWN_FORMAT_PRESETS)[number]
 
