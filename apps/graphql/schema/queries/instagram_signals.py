@@ -1,5 +1,7 @@
 """GraphQL types and resolver for capability-aware instagramSignals."""
 
+from typing import Any
+
 import strawberry
 
 from graphql.data_sources import SessionLocal
@@ -182,7 +184,8 @@ class InstagramSignalsQuery:
 
             caps = raw.get("capabilities") or {}
             fundamental = raw.get("fundamental_signals") or {}
-            sales = fundamental.get("sales") if isinstance(fundamental, dict) else {}
+            sales_raw = fundamental.get("sales") if isinstance(fundamental, dict) else None
+            sales: dict[str, Any] = sales_raw if isinstance(sales_raw, dict) else {}
             trending = (
                 fundamental.get("trending_items", [])
                 if isinstance(fundamental, dict)
