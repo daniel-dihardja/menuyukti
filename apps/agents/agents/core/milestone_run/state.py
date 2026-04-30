@@ -11,7 +11,7 @@ class MilestoneRunState(TypedDict):
     milestone_id: str
     location_id: int
     user_id: str
-    # Parent workflow node id — when set, prior milestone Data tabs are prefetched for tools.
+    # Parent workflow node id — when set, prior milestones' data is prefetched for tools.
     workflow_id: str | None
     # Filled before the agent step (e.g. fetch_context node)
     goal: str
@@ -23,7 +23,7 @@ class MilestoneRunState(TypedDict):
     # Goal override from request, if provided.
     request_goal: NotRequired[str | None]
     criteria: list[dict[str, str]]
-    # Markdown: prior milestones' Data tabs (empty if no workflow_id or no earlier milestones).
+    # JSON text: prior milestones' milestonedata rows (empty if no workflow_id or no earlier milestones).
     prior_milestones_data: str
     # Workspace API adapter tools (tool_key, url, description); filled in fetch_children.
     api_adapter_tools: list[dict[str, Any]]

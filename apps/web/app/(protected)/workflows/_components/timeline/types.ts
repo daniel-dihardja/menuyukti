@@ -78,7 +78,7 @@ export type TimelineMilestone = {
   passCriteria: PassCriteriaRow[]
   /** Free-form goal text for the Goal tab (stored on the goal child node). */
   goal?: string
-  /** Data tab content; stored on a child `milestonedata` node as `{ data: object }`. */
+  /** Milestone data (structured JSON); stored on a child `milestonedata` node as `{ data: object }`. */
   data?: MilestoneDataValue
   /** Preset marker for milestone-specific UI behavior. */
   presetId?: MilestonePresetId

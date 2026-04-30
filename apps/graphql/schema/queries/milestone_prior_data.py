@@ -1,8 +1,9 @@
-"""Prior-milestone markdown aggregation for workflow campaign trees."""
+"""Prior-milestone data aggregation for workflow campaign trees (JSON text)."""
 
 from __future__ import annotations
 
 import json
+from typing import Any
 
 import strawberry
 
@@ -15,9 +16,11 @@ from graphql.schema.node_handlers.milestone import _milestone_sort_key
 class MilestonePriorDataQuery:
     @strawberry.field(
         description=(
-            "Markdown sections (## title + body) for each milestone strictly before the given "
-            "milestone in workflow display order, using each prior milestone's first milestonedata "
-            "child body. Empty string when there are no prior milestones or no content."
+            "JSON array (pretty-printed string) of prior milestones' milestonedata payloads: each "
+            "element is `{\"title\": string, \"data\": object|string|null}` for milestones strictly "
+            "before the given milestone in workflow display order. `data` is the raw `milestonedata` "
+            "child `data` field (structured object, legacy string, or null). Empty string when there "
+            "are no prior milestones."
         )
     )
     def prior_milestones_milestone_data(
@@ -71,10 +74,10 @@ class MilestonePriorDataQuery:
             if idx <= 0:
                 return ""
 
-            sections: list[str] = []
+            payload: list[dict[str, Any]] = []
             for m in milestones[:idx]:
                 title = m.name or "Milestone"
-                md_body = ""
+                data_val: object | str | None = None
                 md_row = (
                     session.query(Node)
                     .filter(
@@ -86,95 +89,8 @@ class MilestonePriorDataQuery:
                 )
                 if md_row is not None and isinstance(md_row.data, dict):
                     raw = md_row.data.get("data")
-                    if isinstance(raw, str):
-                        md_body = raw
-                    elif isinstance(raw, dict):
-                        start_date = raw.get("startDate")
-                        end_date = raw.get("endDate")
-                        public_holidays = raw.get("publicHolidays")
-                        venue_snapshot = raw.get("venueSnapshot")
-                        content_pillars = raw.get("contentPillars")
-                        audience_hypotheses = raw.get("audienceHypotheses")
-                        proof_oriented_angles = raw.get("proofOrientedAngles")
-                        tone_guardrails = raw.get("toneGuardrails")
+                    if isinstance(raw, (str, dict, list)):
+                        data_val = raw
+                payload.append({"title": title, "data": data_val})
 
-                        if (
-                            isinstance(start_date, str)
-                            and isinstance(end_date, str)
-                            and isinstance(public_holidays, list)
-                        ):
-                            holiday_lines: list[str] = []
-                            for holiday in public_holidays:
-                                if not isinstance(holiday, dict):
-                                    continue
-                                name = holiday.get("name", "")
-                                date = holiday.get("date", "")
-                                description = holiday.get("description", "")
-                                parts = [
-                                    str(part).strip()
-                                    for part in (name, date, description)
-                                    if isinstance(part, str) and part.strip()
-                                ]
-                                if parts:
-                                    holiday_lines.append(f"- {' - '.join(parts)}")
-                            if not holiday_lines:
-                                holiday_lines.append("- (none)")
-                            md_body = (
-                                "## Start date\n\n"
-                                f"{start_date}\n\n"
-                                "## End date\n\n"
-                                f"{end_date}\n\n"
-                                "## Public holidays\n\n"
-                                f"{chr(10).join(holiday_lines)}"
-                            )
-                        elif (
-                            isinstance(venue_snapshot, dict)
-                            and isinstance(content_pillars, list)
-                            and isinstance(audience_hypotheses, list)
-                            and isinstance(proof_oriented_angles, list)
-                            and isinstance(tone_guardrails, list)
-                        ):
-                            venue_name = venue_snapshot.get("venueName", "")
-                            city = venue_snapshot.get("city", "")
-                            country = venue_snapshot.get("country", "")
-                            currency = venue_snapshot.get("currency", "")
-
-                            def _render_lines(items: object) -> str:
-                                if not isinstance(items, list):
-                                    return "- (none)"
-                                values = [
-                                    f"- {str(item).strip()}"
-                                    for item in items
-                                    if str(item).strip()
-                                ]
-                                return "\n".join(values) if values else "- (none)"
-
-                            md_body = (
-                                "## Venue snapshot\n\n"
-                                f"- Venue name: {venue_name or '(not set)'}\n"
-                                f"- City: {city or '(not set)'}\n"
-                                f"- Country: {country or '(not set)'}\n"
-                                f"- Currency: {currency or '(not set)'}\n\n"
-                                "## Content pillars\n\n"
-                                f"{_render_lines(content_pillars)}\n\n"
-                                "## Audience hypotheses\n\n"
-                                f"{_render_lines(audience_hypotheses)}\n\n"
-                                "## Proof-oriented angles\n\n"
-                                f"{_render_lines(proof_oriented_angles)}\n\n"
-                                "## Tone guardrails\n\n"
-                                f"{_render_lines(tone_guardrails)}"
-                            )
-                        else:
-                            md_body = (
-                                "```json\n"
-                                + json.dumps(raw, ensure_ascii=True, indent=2)
-                                + "\n```"
-                            )
-                    elif isinstance(raw, list):
-                        md_body = (
-                            "```json\n"
-                            + json.dumps(raw, ensure_ascii=True, indent=2)
-                            + "\n```"
-                        )
-                sections.append(f"## {title}\n\n{md_body}\n")
-            return "\n".join(sections).strip()
+            return json.dumps(payload, ensure_ascii=False, indent=2)

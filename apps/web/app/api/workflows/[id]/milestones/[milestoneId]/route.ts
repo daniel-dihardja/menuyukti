@@ -131,7 +131,7 @@ async function assertPassCriteriaBelongsToMilestone(
   }
 }
 
-/** Persist Data tab payload on a child `milestonedata` node; `null` removes milestonedata child node(s). */
+/** Persist milestone data on a child `milestonedata` node; `null` removes milestonedata child node(s). */
 async function syncMilestonedataChild(
   locationId: number,
   milestoneId: string,

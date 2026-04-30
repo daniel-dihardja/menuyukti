@@ -21,11 +21,11 @@ make dev
 - API: `http://127.0.0.1:8001`
 - Health: `GET /health`
 - Streaming chat: `POST /chat` — `text/event-stream` (SSE), JSON body `{"messages":[{"role":"user","content":"..."}]}`
-- **Core:** `POST /format-markdown` — JSON body `{"content":"...","preset":"milestone-data"}` returns `{"formatted":"..."}`. Preset-driven Markdown cleanup for milestone Data (platform helper in `agents/core/format_markdown/`, not a domain graph).
+- **Core:** `POST /format-markdown` — JSON body `{"content":"...","preset":"milestone-data"}` returns `{"formatted":"..."}`. Preset-driven Markdown cleanup for free-form notes (platform helper in `agents/core/format_markdown/`, not structured milestonedata).
 
 ## Milestone run
 
-- **`POST /milestones/{id}/run`** — LangGraph flow: fetch milestone context → structured LLM skill selection → ReAct execute with tools → shared evaluation graph. Runtime skills and prompts live under **`agents/core/milestone_run/skills/<skill_id>/SKILL.md`** (see `skill_paths.get_milestone_run_skill_path`). **`milestone_data`** persists Data tab Markdown via GraphQL upsert.
+- **`POST /milestones/{id}/run`** — LangGraph flow: fetch milestone context → structured LLM skill selection → ReAct execute with tools → shared evaluation graph. Runtime skills and prompts live under **`agents/core/milestone_run/skills/<skill_id>/SKILL.md`** (see `skill_paths.get_milestone_run_skill_path`). **`milestone_data`** persists structured JSON (and legacy text) on the milestonedata child via GraphQL upsert.
 - **Core** (`agents/core/`): chat, milestone run/eval, format-markdown presets, milestone data persistence.
 
 ## Quality

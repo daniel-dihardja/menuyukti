@@ -30,7 +30,7 @@ export const patchMilestoneSchema = z
     name: z.string().trim().min(1).max(500).optional(),
     /** Free-form text; not trimmed so spaces inside and at edges are preserved. */
     goal: z.string().optional(),
-    /** Milestone Data tab; persisted on a child `milestonedata` node. */
+    /** Milestone data (structured JSON); persisted on a child `milestonedata` node. */
     milestoneData: z
       .union([
         datesMilestoneDataSchema,

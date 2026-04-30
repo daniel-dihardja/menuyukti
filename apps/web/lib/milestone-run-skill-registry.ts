@@ -39,6 +39,6 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
     id: 'generic',
     name: 'Generic milestone data prep',
     description:
-      'Use for standard milestone runs: read goal, criteria, and Data tab; improve or complete the Data tab (Markdown). Evaluation and summary run automatically after skills.',
+      'Use for standard milestone runs: read goal, criteria, and milestone data; improve or complete structured JSON for the preset. Evaluation and summary run automatically after skills.',
   },
 ] as const

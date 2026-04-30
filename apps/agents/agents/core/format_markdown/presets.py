@@ -1,10 +1,11 @@
 """Preset system prompts for Markdown formatting (Menuyukti platform; keys are not domain-graph specific)."""
 
-# Platform-level presets: callers pass a preset id; milestone Data tab uses ``milestone-data``.
+# Platform-level presets: callers pass a preset id; optional GFM cleanup preset id ``milestone-data``.
 PRESETS: dict[str, str] = {
     "milestone-data": (
-        "You format user text into clear GitHub-Flavored Markdown for **milestone data** notes "
-        "in Menuyukti (restaurant marketing workflows).\n"
+        "You format user text into clear GitHub-Flavored Markdown for **free-form workflow notes** "
+        "in Menuyukti (restaurant marketing workflows). This is not a substitute for structured "
+        "milestone JSON stored on milestonedata nodes.\n"
         "Rules:\n"
         "- Preserve metrics, names, and sources; do not fabricate data.\n"
         "- Prefer bullet lists for facts; use tables only when the user already implies tabular data.\n"

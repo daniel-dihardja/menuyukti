@@ -7,20 +7,20 @@ from typing import Any
 
 SKILL_SELECTOR_SYSTEM = """You are a routing assistant for a restaurant campaign milestone run.
 
-Given the milestone goal, pass/fail criteria, and the current Data tab (structured JSON or text snapshot), choose an **ordered list** \
+Given the milestone goal, pass/fail criteria, and the current milestone data (structured JSON or legacy text snapshot), choose an **ordered list** \
 of one or two skill ids from the provided list. The run executes them in order: skills may only update the \
-Data tab state. After all skills finish, the system **automatically** evaluates pass criteria against the \
-Data tab state, writes the milestone summary, and persists the result — skills do not do that.
+milestone data state. After all skills finish, the system **automatically** evaluates pass criteria against the \
+milestone data state, writes the milestone summary, and persists the result — skills do not do that.
 
 Rules:
 - Prefer `["public_holidays", "generic"]` (in that order) when the goal or criteria require **both** (a) listing \
 or confirming public holidays for a date range **and** (b) broader work on the brief (e.g. objectives, budget, \
 summary) beyond holidays alone.
 - Prefer `["public_holidays"]` when only holidays listing/confirmation is needed.
-- Prefer `["generic"]` for standard Data preparation when holidays are not a distinct requirement.
+- Prefer `["generic"]` for standard milestone data preparation when holidays are not a distinct requirement.
 - Prefer `["promotion_candidates"]` when the goal or criteria require **promotion candidate dishes** or **social post** \
-ideas grounded in **POS/analytics** (menu performance, Instagram signals), producing a **structured JSON** Data tab.
-- Prefer `["brand_brief"]` when the goal or Data tab clearly describe a **brand brief** \
+ideas grounded in **POS/analytics** (menu performance, Instagram signals), producing **structured JSON** milestone data.
+- Prefer `["brand_brief"]` when the goal or milestone data clearly describe a **brand brief** \
 (venue snapshot, content pillars, audience hypotheses, proof angles, tone guardrails) as the main deliverable.
 - Use at most **two** ids. Do not duplicate the same id.
 - Each id must be one of the listed keys exactly (underscores, lowercase)."""
@@ -46,7 +46,7 @@ def skill_selector_human_message(
 
 {crit_json}
 
-## Data tab state
+## Milestone data state
 
 {raw_data}
 """
@@ -54,7 +54,7 @@ def skill_selector_human_message(
 
 INTERMEDIATE_SKILL_PROMPT_SUFFIX = """
 
-**Multi-skill run (intermediate step):** Complete your Data-tab work (read context, fetch holidays if needed, \
+**Multi-skill run (intermediate step):** Complete your milestone-data work (read context, fetch holidays if needed, \
 save via write_result_data), then output a one-sentence confirmation and stop. Do not call further tools after \
 write_result_data."""
 
@@ -90,8 +90,8 @@ def workspace_adapter_tools_prompt_suffix(adapters: list[dict[str, Any]]) -> str
 
 **Mandatory when applicable:** If the milestone goal names one of these tools (including in backticks) or asks to \
 fetch JSON from the workspace feed, you **must** invoke that tool by **exact name** at least once **before** \
-write_result_data. Merge the response into the Data tab (Markdown or structured JSON, matching the milestone). Never invent feed data without calling the tool. \
-If the tool returns an error message, write a short note in the Data tab."""
+write_result_data. Merge the response into milestone data as **structured JSON** matching the milestone preset. Never invent feed data without calling the tool. \
+If the tool returns an error message, include a short note in the JSON you persist. Legacy milestones may still use a plain-text snapshot until migrated."""
 
 
 def execute_skill_task_message(
@@ -106,7 +106,7 @@ def execute_skill_task_message(
     """Human message that starts the execute-skill ReAct agent."""
     base = (
         f"Run this milestone using the selected skill `{skill_id}` ({skill_name}). "
-        "Follow the system instructions and persist the Data tab with the tools."
+        "Follow the system instructions and persist milestone data with the tools."
     )
     g = goal.strip()
     sections: list[str] = [base]

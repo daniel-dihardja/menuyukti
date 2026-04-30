@@ -104,7 +104,12 @@ def test_read_data_returns_json_when_structured_data_present() -> None:
 
 
 def test_read_prior_milestones_returns_context() -> None:
-    ctx = {"prior_milestones_data": "## Campaign Brief\n\n**Start:** 2026-05-01"}
+    ctx = {
+        "prior_milestones_data": json.dumps(
+            [{"title": "Campaign Brief", "data": "**Start:** 2026-05-01"}],
+            ensure_ascii=False,
+        )
+    }
     tools = _tools_for_context(ctx)
     read_prior = _tool_by_name(tools, "read_prior_milestones_data")
     out = read_prior.invoke({})
@@ -434,10 +439,32 @@ def test_get_prior_campaign_context_extracts_dates_and_brand_brief() -> None:
         "## Dates\n\n## Start date\n\n2026-05-01\n\n## End date\n\n2026-05-31\n\n"
         "## Brand brief\n\nTone: warm and premium.\n"
     )
-    out = get_prior_campaign_context.invoke({"prior_milestones_markdown": sample})
+    out = get_prior_campaign_context.invoke({"prior_milestones_json": sample})
     assert "Start date: 2026-05-01" in out
     assert "End date: 2026-05-31" in out
     assert "Brand brief found: yes" in out
+
+
+def test_get_prior_campaign_context_parses_json_prior_rows() -> None:
+    tools = _tools_for_context({}, extra_tool_ids=["get_prior_campaign_context"])
+    get_prior_campaign_context = _tool_by_name(tools, "get_prior_campaign_context")
+    sample = json.dumps(
+        [
+            {
+                "title": "Dates",
+                "data": {
+                    "startDate": "2026-06-01",
+                    "endDate": "2026-06-15",
+                    "publicHolidays": [],
+                },
+            }
+        ],
+        ensure_ascii=False,
+    )
+    out = get_prior_campaign_context.invoke({"prior_milestones_json": sample})
+    assert "Start date: 2026-06-01" in out
+    assert "End date: 2026-06-15" in out
+    assert '"campaign_window_found": true' in out
 
 
 @pytest.mark.asyncio

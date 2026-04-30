@@ -89,9 +89,10 @@ async def fetch_prior_milestones_data(
     *,
     client: httpx.AsyncClient,
 ) -> str:
-    """Build Markdown of each earlier milestone's Data tab (by ``order``), for the current milestone.
+    """Fetch JSON text listing each earlier milestone's milestonedata (title + raw data payload).
 
-    Resolved in a single GraphQL round-trip via ``priorMilestonesMilestoneData``.
+    Resolved in a single GraphQL round-trip via ``priorMilestonesMilestoneData`` (pretty-printed
+    JSON array).
     """
     data = await graphql_post(
         client,

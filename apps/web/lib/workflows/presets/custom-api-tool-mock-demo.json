@@ -5,19 +5,19 @@
     {
       "order": 0,
       "title": "Promotions snapshot (API proxy)",
-      "goal": "Call the workspace API proxy `menu_promotions_mock_api` (HTTP GET) to fetch the JSON promotions feed. Summarize every promotion in the Data tab: for each item include title, discount percent, valid-from and valid-to dates, and channels. If the tool fails, write a short explanation in the Data tab.",
+      "goal": "Call the workspace API proxy `menu_promotions_mock_api` (HTTP GET) to fetch the JSON promotions feed. Summarize every promotion in milestone data: for each item include title, discount percent, valid-from and valid-to dates, and channels. If the tool fails, write a short explanation in the data.",
       "data": "## Promotions snapshot\n\n_This section will be filled when you click Run — the agent should call `menu_promotions_mock_api` then save Markdown here._\n",
       "passCriteria": [
         {
-          "requirement": "Data tab mentions at least one promotion title that appears in the JSON feed (e.g. Ramadan evening tea set, Weekday lunch pairing, or Happy hour).",
+          "requirement": "Data mentions at least one promotion title that appears in the JSON feed (e.g. Ramadan evening tea set, Weekday lunch pairing, or Happy hour).",
           "status": "open"
         },
         {
-          "requirement": "Data tab includes a validity window (from–to dates) for at least one promotion.",
+          "requirement": "Data includes a validity window (from–to dates) for at least one promotion.",
           "status": "open"
         },
         {
-          "requirement": "Data tab states the discount or offer terms for at least one promotion (e.g. percent off).",
+          "requirement": "Data states the discount or offer terms for at least one promotion (e.g. percent off).",
           "status": "open"
         }
       ]

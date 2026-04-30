@@ -110,14 +110,17 @@ def _create_child_nodes(
         )
 
     data_raw = m.get("data")
-    if isinstance(data_raw, str) and data_raw.strip():
+    milestonedata_payload: Any = None
+    if (isinstance(data_raw, str) and data_raw.strip()) or isinstance(data_raw, (dict, list)):
+        milestonedata_payload = data_raw
+    if milestonedata_payload is not None:
         _create_child_with_handler(
             session,
             location_id,
             "milestonedata",
             milestone_node,
             "Milestone data",
-            {"data": data_raw},
+            {"data": milestonedata_payload},
         )
 
     result_raw = m.get("result")

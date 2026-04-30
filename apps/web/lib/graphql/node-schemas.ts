@@ -98,7 +98,7 @@ export const schedulerScheduleItemSchema = z.object({
 
 export type SchedulerScheduleItem = z.infer<typeof schedulerScheduleItemSchema>
 
-/** Structured Data tab for the Scheduler milestone preset. */
+/** Structured milestone data for the Scheduler preset. */
 export const schedulerMilestoneDataSchema = z.object({
   schedules: z.array(schedulerScheduleItemSchema),
   campaignStart: z.string().optional(),
@@ -159,7 +159,7 @@ export const promotionRankedCandidateSchema = z
 
 export type PromotionRankedCandidate = z.infer<typeof promotionRankedCandidateSchema>
 
-/** Structured Data tab for the Promotion Candidates milestone preset. */
+/** Structured milestone data for the Promotion Candidates preset. */
 export const promotionCandidatesMilestoneDataSchema = z.object({
   placement: z.string(),
   puzzleOpportunityPool: promotionPuzzleOpportunityPoolSchema,

@@ -732,7 +732,7 @@ export type Query = {
   operatingProfile?: Maybe<OperatingProfileType>
   /** Compute average order size and revenue for an analytics run. Returns None if the run has no order data. */
   orderMetrics?: Maybe<AnalyticsRunOrderMetricsType>
-  /** Markdown sections (## title + body) for each milestone strictly before the given milestone in workflow display order, using each prior milestone's first milestonedata child body. Empty string when there are no prior milestones or no content. */
+  /** JSON array (pretty-printed string) of prior milestones' milestonedata: each element is `{"title": string, "data": object|string|null}` in workflow order before the given milestone. Empty string when there are no prior milestones. */
   priorMilestonesMilestoneData: Scalars['String']['output']
   /** Promotion-candidate signals composed from promotion menu items and Instagram signals. Returns ranked recommendations plus puzzle opportunity pool for campaign drafting. */
   promotionCandidatesSignals?: Maybe<PromotionCandidatesSignalsType>

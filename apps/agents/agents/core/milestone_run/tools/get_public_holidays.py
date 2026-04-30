@@ -21,7 +21,7 @@ def make_get_public_holidays_tool(
 
         Reusable across milestone skills. Returns a Markdown bullet list (date, name, local name) or a short \
         message if none apply, the country is unknown, or the range is invalid. Use with ``write_result_data`` \
-        when holidays must be filled in the Data tab.
+        when holidays must be filled in milestone data.
         """
         holidays, err = await fetch_public_holidays_for_milestone(
             location_id,

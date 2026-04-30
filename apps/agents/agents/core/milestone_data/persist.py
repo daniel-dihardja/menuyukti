@@ -1,28 +1,32 @@
-"""Save generated Markdown into the milestone `milestonedata` node."""
+"""Save payload into the milestone `milestonedata` node (structured JSON or legacy string)."""
 
 from __future__ import annotations
+
+from typing import Any
 
 import httpx
 from agents_app.agents.core.milestone_data.graphql_client import upsert_milestonedata
 
 
-async def persist_milestonedata_markdown(
+async def persist_milestonedata(
     milestone_id: str,
     location_id: int,
     user_id: str,
-    markdown: str,
+    payload: Any,
     *,
     client: httpx.AsyncClient,
 ) -> str:
     """
-    Persist text to the single `milestonedata` child under ``milestone_id``.
+    Persist content to the single `milestonedata` child under ``milestone_id``.
+
+    ``payload`` is stored as ``milestonedata`` node's ``data`` field (typically a dict/list).
 
     Returns the node id as a string (empty if missing from the payload).
     """
     node = await upsert_milestonedata(
         milestone_id,
         location_id,
-        markdown,
+        payload,
         user_id,
         client=client,
     )

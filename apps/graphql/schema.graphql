@@ -678,7 +678,7 @@ type Query {
   locationSocialSettings(locationId: Int!): LocationSocialSettingsType
 
   """
-  Markdown sections (## title + body) for each milestone strictly before the given milestone in workflow display order, using each prior milestone's first milestonedata child body. Empty string when there are no prior milestones or no content.
+  JSON array (pretty-printed string) of prior milestones' milestonedata: each element is `{"title": string, "data": object|string|null}` in workflow order before the given milestone. Empty string when there are no prior milestones.
   """
   priorMilestonesMilestoneData(workflowId: ID!, milestoneId: ID!, locationId: Int!): String!
   myWorkspace: WorkspaceType

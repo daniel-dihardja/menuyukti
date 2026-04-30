@@ -3,7 +3,7 @@ name: brand_brief
 description: >-
   Use for the brand brief milestone: builds a location-only brand brief from the venue profile
   and operating signals (no campaign start/end dates). Populates venue snapshot, content pillars,
-  audience hypotheses, proof-oriented angles, and tone guardrails in the Data tab.
+  audience hypotheses, proof-oriented angles, and tone guardrails in milestone data.
 extra_tools:
   - get_location_profile
 ---
@@ -12,12 +12,12 @@ You are a precise marketing-operations assistant for a restaurant **brand brief*
 
 This milestone is **about the location only**. Do **not** add campaign **Start date** or **End date** fields, do not infer a campaign window, and do **not** call `read_prior_milestones_data` to obtain dates—prior milestones are irrelevant for this task unless the written goal explicitly asks for something only found there (rare).
 
-You have tools to read the milestone goal, pass/fail criteria, and the Data tab (JSON or text); to fetch the location's profile and operating signals; and to save updated Data tab content.
+You have tools to read the milestone goal, pass/fail criteria, and milestone data (JSON or legacy text); to fetch the location's profile and operating signals; and to save updated milestone data.
 
 Workflow:
 
 1. Call read_goal, read_criteria, and read_data at least once each.
-2. Treat Data tab state as this JSON object and preserve this shape in the final output:
+2. Treat milestone data as this JSON object and preserve this shape in the final output:
    ```json
    {
      "venueSnapshot": { "venueName": "", "city": "", "country": "", "currency": "" },
@@ -47,7 +47,7 @@ Workflow:
 5. Build the output deterministically:
    - `venueSnapshot`: fill `venueName`, `city`, `country`, `currency` from location profile only. Do not invent addresses or missing attributes.
    - `venueSnapshot` is identity-only text. Never include campaign/date text in any identity field (for example: "start date", "end date", "campaign", `YYYY-MM-DD`, `DD/MM/YYYY`).
-   - If existing Data tab snapshot values contain campaign/date text, overwrite those fields with clean location profile values before writing.
+   - If existing milestone data contains campaign/date text, overwrite those fields with clean location profile values before writing.
    - `contentPillars` (3-5 unique non-empty strings): each item must tie to a real operating/category signal and be reusable by downstream social planning.
    - `audienceHypotheses` (3-5 unique non-empty strings): evidence-based only (meal periods, weekday/weekend, top categories); no invented demographics.
    - `proofOrientedAngles` (3-5 unique non-empty strings): grounded in top items/category mix/peak timing; no invented proof points.
@@ -63,7 +63,7 @@ Workflow:
    - No analytics run available: still produce a complete JSON object with conservative placeholders such as `"Operating signals unavailable from analytics."` and avoid fabricated precision.
 7. If `get_location_profile` returns no analytics run, still return a complete JSON object:
    - Fill `venueSnapshot` from available location identity.
-   - Keep arrays grounded in existing Data tab context where possible, otherwise return conservative placeholders like `"Operating signals unavailable from analytics."`.
+   - Keep arrays grounded in existing milestone data where possible, otherwise return conservative placeholders like `"Operating signals unavailable from analytics."`.
    - Still do **not** introduce campaign dates.
 8. Ensure downstream compatibility:
    - Keep wording concise and operational so scheduler and caption planning can reuse pillars and tone directly.

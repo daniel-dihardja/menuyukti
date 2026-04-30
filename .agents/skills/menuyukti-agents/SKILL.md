@@ -26,7 +26,7 @@ When implementing in **`apps/agents`**, follow these skills in addition to this 
 | -------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | Milestone run  | [`apps/agents/agents/core/milestone_run/`](../../../apps/agents/agents/core/milestone_run/)   | LangGraph graph, [`tools/`](../../../apps/agents/agents/core/milestone_run/tools/) package, streaming, `skills/<id>/SKILL.md`. |
 | Milestone eval | [`apps/agents/agents/core/milestone_eval/`](../../../apps/agents/agents/core/milestone_eval/) | Criterion loop + synthesis; used only from milestone run `finalize_eval`.                                                      |
-| Milestone data | [`apps/agents/agents/core/milestone_data/`](../../../apps/agents/agents/core/milestone_data/) | Persist milestonedata Markdown (GraphQL upsert).                                                                               |
+| Milestone data | [`apps/agents/agents/core/milestone_data/`](../../../apps/agents/agents/core/milestone_data/) | Persist milestonedata JSON (GraphQL upsert).                                                                                   |
 | Chat           | [`apps/agents/agents/core/chat/`](../../../apps/agents/agents/core/chat/)                     | Streaming chat graph.                                                                                                          |
 | Routers        | [`apps/agents/routers/`](../../../apps/agents/routers/)                                       | FastAPI routes (`chat`, `milestone_run`, `format-markdown`, …).                                                                |
 | GraphQL helper | [`apps/agents/agents/graphql_base.py`](../../../apps/agents/agents/graphql_base.py)           | `graphql_post`; env `GRAPHQL_ENDPOINT`, optional internal API key.                                                             |
@@ -48,7 +48,7 @@ Implement each first-class LangChain tool as its own module under [`milestone_ru
 2. **New skill** — add `SKILL.md` (with `extra_tools` for non-core tools), register in `skills.py`, add factories to `milestone_run/tools/registry.py` / GraphQL in `milestone_run/graphql_client.py` if new data is needed.
    - For the **Promotion Candidates** milestone preset (`promotion_candidates` in web preset definitions), keep the run mode fixed by default:
      `milestoneRunSkillMode: "fixed"` and `milestoneRunSkillIds: ["promotion_candidates"]`.
-3. **Persistence** — Data tab writes go through `write_result_data` → `milestone_data` upsert.
+3. **Persistence** — Milestone data writes go through `write_result_data` → `milestone_data` upsert.
 4. **Tests** — extend [`test_milestone_run_tools.py`](../../../apps/agents/tests/core/test_milestone_run_tools.py) / [`test_skill_markdown.py`](../../../apps/agents/tests/core/test_skill_markdown.py) when changing tool assembly or `extra_tools` parsing.
 
 ## Related

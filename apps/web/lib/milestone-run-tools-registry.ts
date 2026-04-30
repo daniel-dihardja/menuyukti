@@ -28,26 +28,25 @@ export const MILESTONE_RUN_TOOLS_REGISTRY: readonly MilestoneRunToolMeta[] = [
   {
     id: 'read_data',
     name: 'Read data',
-    description:
-      'Return the current milestone Data tab content (Markdown in the milestonedata node).',
+    description: 'Return the current milestone data as JSON text (from the milestonedata child).',
   },
   {
     id: 'read_prior_milestones_data',
     name: 'Read prior milestones data',
     description:
-      'Return Markdown from earlier milestones in this workflow (their Data tabs). Call when the current Data tab is missing context (e.g. campaign dates) that a previous milestone should have set. Empty or unavailable if the run was not scoped to a workflow.',
+      "Return JSON text listing earlier milestones' milestonedata (title + data per row). Call when the current milestone is missing context (e.g. campaign dates) that a previous milestone should have set. Empty or unavailable if the run was not scoped to a workflow.",
   },
   {
     id: 'get_public_holidays',
     name: 'Get public holidays',
     description:
-      "Optional extra tool (listed in a skill's SKILL.md `extra_tools` when needed): fetch public holidays for this location's country (YYYY-MM-DD range). Returns a Markdown bullet list (date, name, local name) or a short message if none apply, the country is unknown, or the range is invalid. Use with write_result_data when holidays must be filled in the Data tab.",
+      "Optional extra tool (listed in a skill's SKILL.md `extra_tools` when needed): fetch public holidays for this location's country (YYYY-MM-DD range). Returns a Markdown bullet list (date, name, local name) or a short message if none apply, the country is unknown, or the range is invalid. Use with write_result_data when holidays must be filled in milestone data.",
   },
   {
     id: 'write_result_data',
     name: 'Write result data',
     description:
-      'Upsert the milestonedata child under this milestone with the given Markdown body. Updates context result_data and returns a short confirmation including the node id.',
+      'Upsert the milestonedata child under this milestone with structured JSON (preset-specific shape). Updates context result_data and returns a short confirmation including the node id.',
   },
   {
     id: 'workspace_api_adapter_tools',

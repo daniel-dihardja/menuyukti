@@ -21,7 +21,7 @@ agents/
   core/
     chat/
     milestone_eval/   # Criterion loop + synthesis; invoked from milestone_run only
-    milestone_data/   # GraphQL upsert for milestonedata (Markdown)
+    milestone_data/   # GraphQL upsert for milestonedata (structured JSON / legacy text)
     milestone_run/      # LangGraph run: fetch → skill select → ReAct + tools → eval
       skills/<skill_id>/SKILL.md
       skill_markdown.py

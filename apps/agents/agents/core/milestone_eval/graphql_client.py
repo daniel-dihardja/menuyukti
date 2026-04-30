@@ -156,7 +156,7 @@ async def fetch_prior_milestones_data_for_eval(
     *,
     client: httpx.AsyncClient,
 ) -> str:
-    """Return markdown Data-tab snapshots for prior milestones (empty when unavailable)."""
+    """Return JSON text of prior milestones' milestonedata (empty when unavailable)."""
 
     async def _run(c: httpx.AsyncClient) -> str:
         data = await graphql_post(
