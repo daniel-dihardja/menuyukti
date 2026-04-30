@@ -62,7 +62,6 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
           <MilestoneBrandBriefDataPreview
             data={parsedBrandBrief.data}
             labels={{
-              venueSnapshot: t('milestoneBrandBriefPreviewVenueSnapshot'),
               venueName: t('milestoneBrandBriefPreviewVenueName'),
               city: t('milestoneBrandBriefPreviewCity'),
               country: t('milestoneBrandBriefPreviewCountry'),

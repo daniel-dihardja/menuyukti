@@ -3,7 +3,6 @@ import type { BrandBriefMilestoneData } from '@/lib/graphql/node-schemas'
 export type MilestoneBrandBriefDataPreviewProps = {
   data: BrandBriefMilestoneData
   labels: {
-    venueSnapshot: string
     venueName: string
     city: string
     country: string
@@ -37,8 +36,7 @@ export function MilestoneBrandBriefDataPreview({
   return (
     <div className="space-y-4 text-sm">
       <section>
-        <h4 className="font-medium text-foreground">{labels.venueSnapshot}</h4>
-        <dl className="mt-2 grid grid-cols-[140px_1fr] gap-y-2">
+        <dl className="grid grid-cols-[140px_1fr] gap-y-2">
           <dt className="font-medium text-foreground">{labels.venueName}</dt>
           <dd className="text-muted-foreground">
             {data.venueSnapshot.venueName || labels.emptyValue}
