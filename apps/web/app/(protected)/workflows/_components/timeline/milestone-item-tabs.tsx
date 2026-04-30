@@ -25,6 +25,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/componen
 
 import type { DatesMilestoneInput, PassCriteriaRow, TimelineMilestone } from './types'
 
+const presetGoalTranslationKeyById = {
+  dates: 'milestonePreset.dates.goal',
+  restaurant_brand_brief: 'milestonePreset.restaurant_brand_brief.goal',
+  promotion_candidates: 'milestonePreset.promotion_candidates.goal',
+  scheduler: 'milestonePreset.scheduler.goal',
+} as const
+
 /** Tab panel state and handlers for one milestone (built in `timeline-item`). */
 export type MilestoneItemTabsModel = {
   milestone: TimelineMilestone
@@ -99,6 +106,14 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     }),
     [goalSaveStatus, handleGoalSave, saveStatusMessages],
   )
+  const helpDescription = useMemo(() => {
+    const presetGoalKey = milestone.presetId
+      ? presetGoalTranslationKeyById[milestone.presetId]
+      : undefined
+    const presetDescription = presetGoalKey ? t(presetGoalKey) : ''
+    const customDescription = milestone.goal?.trim() ?? ''
+    return presetDescription || customDescription || t('milestoneHelpWhatItDoesFallback')
+  }, [milestone.goal, milestone.presetId, t])
 
   return (
     <CardContent className="border-border/60 border-t px-6 pt-4 pb-0">
@@ -115,6 +130,15 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           </TabsTrigger>
           <TabsTrigger className="flex-1" value="result">
             {t('milestoneTabResult')}
+          </TabsTrigger>
+          <TabsTrigger className="flex flex-1 items-center justify-center gap-1.5" value="help">
+            <span
+              aria-hidden
+              className="inline-flex size-4 items-center justify-center rounded-full border text-[10px] font-semibold leading-none"
+            >
+              ?
+            </span>
+            {t('milestoneTabHelp')}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="goal">
@@ -305,6 +329,12 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           ) : (
             <p className="text-muted-foreground text-sm">{t('milestoneResultEmpty')}</p>
           )}
+        </TabsContent>
+        <TabsContent value="help">
+          <FieldGroup className="gap-4">
+            <p className="font-semibold text-lg leading-tight">{milestone.title}</p>
+            <MarkdownMessage content={helpDescription} />
+          </FieldGroup>
         </TabsContent>
       </Tabs>
     </CardContent>
