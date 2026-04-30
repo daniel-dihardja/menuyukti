@@ -25,7 +25,7 @@ make dev
 
 ## Milestone run
 
-- **`POST /milestones/{id}/run`** — LangGraph flow: fetch milestone context → structured LLM skill selection → ReAct execute with tools → shared evaluation graph. Runtime skills and prompts live under **`agents/core/milestone_run/skills/<skill_id>/SKILL.md`** (see `skill_paths.get_milestone_run_skill_path`). **`milestone_data`** persists structured JSON (and legacy text) on the milestonedata child via GraphQL upsert.
+- **`POST /milestones/{id}/run`** — LangGraph flow: fetch milestone context → structured LLM skill selection → ReAct execute with tools → shared evaluation graph. Runtime skills and prompts live under **`agents/core/milestone_run/skills/<skill_id>/SKILL.md`** (see `skill_paths.get_milestone_run_skill_path`). **`milestone_data`** persists flat structured JSON on the milestonedata child via GraphQL upsert.
 - **Core** (`agents/core/`): chat, milestone run/eval, format-markdown presets, milestone data persistence.
 
 ## Quality

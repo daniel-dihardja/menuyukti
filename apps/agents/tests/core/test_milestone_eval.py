@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -51,8 +52,8 @@ async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
             "data": {"goal": "Increase covers"},
         },
         {
-            "node_type": "milestonedata",
-            "data": {"data": "Sales up 10%"},
+            "nodeType": "milestonedata",
+            "data": {"summary": "Sales up 10%"},
         },
         {
             "nodeType": "passcriteria",
@@ -75,7 +76,11 @@ async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
             client=MagicMock(spec=AsyncMock),
         )
     assert out["goal"] == "Increase covers"
-    assert out["raw_data"] == "Sales up 10%"
+    assert out["raw_data"] == json.dumps(
+        {"summary": "Sales up 10%"},
+        ensure_ascii=False,
+        indent=2,
+    )
     assert out["criteria"] == [{"id": "pc-1", "requirement": "Has baseline"}]
 
 
@@ -83,7 +88,7 @@ async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
 async def test_fetch_context_appends_prior_milestone_context_when_workflow_present() -> None:
     fake_children = [
         {"nodeType": "goal", "data": {"goal": "Schedule posts"}},
-        {"nodeType": "milestonedata", "data": {"data": '{"schedules":[]}' }},
+        {"nodeType": "milestonedata", "data": {"schedules": []}},
         {
             "nodeType": "passcriteria",
             "id": "pc-2",

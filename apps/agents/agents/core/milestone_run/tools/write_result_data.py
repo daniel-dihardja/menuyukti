@@ -58,6 +58,9 @@ def make_write_result_data_tool(
     async def write_result_data(new_data: Any) -> str:
         """Upsert the milestonedata child under this milestone with the given payload.
 
+        Persisted ``node.data`` is the **flat** preset JSON (e.g. dates: startDate, endDate,
+        publicHolidays), not wrapped in an extra ``{"data": ...}`` object.
+
         Updates context ``result_data`` and returns a short confirmation including the node id.
         """
         payload: Any = new_data

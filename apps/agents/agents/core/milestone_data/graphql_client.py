@@ -52,7 +52,7 @@ async def upsert_milestonedata(
                 "nodeType": "milestonedata",
                 "parentId": milestone_id,
                 "name": "Data",
-                "data": {"data": payload},
+                "data": payload,
             },
             user_id,
         )
@@ -75,7 +75,7 @@ async def upsert_milestonedata(
     upd = await graphql_post(
         client,
         UPDATE_NODE_MUTATION,
-        {"id": str(pid), "data": {"data": payload}},
+        {"id": str(pid), "data": payload},
         user_id,
     )
     node = upd.get("updateNode")

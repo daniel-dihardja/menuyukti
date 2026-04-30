@@ -122,7 +122,7 @@ def test_prior_milestones_milestone_data_includes_earlier_milestonedata():
                 "nodeType": "milestonedata",
                 "name": "Data",
                 "parentId": m1_id,
-                "data": {"data": "# Body from earlier"},
+                "data": {"body": "# Body from earlier"},
             },
             context_value=graphql_auth_context(),
         )
@@ -158,7 +158,7 @@ def test_prior_milestones_milestone_data_includes_earlier_milestonedata():
     rows = out.data["priorMilestonesMilestoneData"]
     assert isinstance(rows, list) and len(rows) == 1
     assert rows[0]["title"] == "Earlier"
-    assert rows[0]["data"] == "# Body from earlier"
+    assert rows[0]["data"] == {"body": "# Body from earlier"}
 
 
 def test_prior_milestones_milestone_data_empty_when_first_milestone():
@@ -373,7 +373,7 @@ def test_export_workflow_includes_structured_milestonedata_dict():
                 "nodeType": "milestonedata",
                 "name": "Data",
                 "parentId": milestone_id,
-                "data": {"data": dates_payload},
+                "data": dates_payload,
             },
             context_value=graphql_auth_context(),
         )

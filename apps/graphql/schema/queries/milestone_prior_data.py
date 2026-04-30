@@ -17,9 +17,9 @@ class MilestonePriorDataQuery:
     @strawberry.field(
         description=(
             "JSON array of prior milestones' milestonedata payloads: each element is "
-            "`{\"title\": string, \"data\": object|string|array|null}` for milestones strictly "
+            "`{\"title\": string, \"data\": object|null}` for milestones strictly "
             "before the given milestone in workflow display order. `data` is the raw `milestonedata` "
-            "child `data` field (structured object, legacy string, or null). Empty array when there "
+            "child JSON object (flat preset payload). Empty array when there "
             "are no prior milestones or the request is not authorized."
         )
     )
@@ -88,9 +88,7 @@ class MilestonePriorDataQuery:
                     .first()
                 )
                 if md_row is not None and isinstance(md_row.data, dict):
-                    raw = md_row.data.get("data")
-                    if isinstance(raw, (str, dict, list)):
-                        data_val = raw
+                    data_val = md_row.data
                 payload.append({"title": title, "data": data_val})
 
             return cast(JSON, payload)

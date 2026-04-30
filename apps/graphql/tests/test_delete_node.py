@@ -389,7 +389,7 @@ def test_delete_milestone_removes_milestonedata_child():
                 "nodeType": "milestonedata",
                 "name": "Data",
                 "parentId": milestone_id,
-                "data": {"data": "Keep me"},
+                "data": {"note": "Keep me"},
             },
             context_value=graphql_auth_context(),
         )

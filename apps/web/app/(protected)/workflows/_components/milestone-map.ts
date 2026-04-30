@@ -6,7 +6,7 @@ import {
   goalDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
-  milestonedataDataSchema,
+  milestonedataValueSchema,
   passCriteriaDataSchema,
   promotionCandidatesMilestoneDataSchema,
   schedulerMilestoneDataSchema,
@@ -110,9 +110,9 @@ export function milestoneDataFromChildNodes(
     if (d == null || typeof d !== 'object') {
       continue
     }
-    const parsed = milestonedataDataSchema.safeParse(d)
+    const parsed = milestonedataValueSchema.safeParse(d)
     if (parsed.success) {
-      return parsed.data.data
+      return parsed.data
     }
   }
   return undefined

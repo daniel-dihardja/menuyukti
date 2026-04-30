@@ -231,12 +231,6 @@ export const milestonedataValueSchema = z.union([
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>
 
-export const milestonedataDataSchema = z.object({
-  data: milestonedataValueSchema,
-})
-
-export type MilestonedataData = z.infer<typeof milestonedataDataSchema>
-
 const baseNode = z.object({
   id: z.string(),
   name: z.string(),
@@ -263,7 +257,7 @@ export const goalNodeSchema = baseNode.extend({
 
 export const milestonedataNodeSchema = baseNode.extend({
   nodeType: z.literal('milestonedata'),
-  data: milestonedataDataSchema.nullable(),
+  data: milestonedataValueSchema.nullable(),
 })
 
 const resultCriterionSchema = z.object({

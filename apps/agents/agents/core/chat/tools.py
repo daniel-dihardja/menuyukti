@@ -58,12 +58,7 @@ def _format_milestone_snapshot(
             g = data.get("goal")
             lines.append(f"- goal: {g!s}" if isinstance(g, str) else f"- goal: {g!r}")
         elif nt == "milestonedata":
-            md = data.get("data")
-            if isinstance(md, str):
-                lines.append("- data (legacy text):")
-                lines.append(md)
-            else:
-                lines.append(f"- data: {_format_json(md)}")
+            lines.append(f"- data: {_format_json(data)}")
         elif nt == "passcriteria":
             req = data.get("requirement", "")
             st = data.get("status", "")

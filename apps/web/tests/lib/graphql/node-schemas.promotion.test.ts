@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   emptyPromotionCandidatesMilestoneData,
-  milestonedataDataSchema,
+  milestonedataValueSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
@@ -13,15 +13,15 @@ describe('promotionCandidatesMilestoneDataSchema', () => {
     expect(parsed.success).toBe(true)
   })
 
-  it('rejects markdown string milestonedata', () => {
-    const parsed = milestonedataDataSchema.safeParse({ data: '## hello' })
+  it('rejects markdown string as milestonedata root', () => {
+    const parsed = milestonedataValueSchema.safeParse('## hello')
     expect(parsed.success).toBe(false)
   })
 
-  it('wraps promotion object in milestonedataDataSchema', () => {
+  it('accepts flat promotion object as milestonedataValueSchema', () => {
     const inner = emptyPromotionCandidatesMilestoneData()
-    const parsed = milestonedataDataSchema.safeParse({ data: inner })
+    const parsed = milestonedataValueSchema.safeParse(inner)
     expect(parsed.success).toBe(true)
-    expect(parsed.data?.data).toEqual(inner)
+    expect(parsed.data).toEqual(inner)
   })
 })

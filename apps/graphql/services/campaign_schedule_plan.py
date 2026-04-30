@@ -119,9 +119,7 @@ def _resolve_campaign_window(
     )
     if data_node is None or not isinstance(data_node.data, dict):
         return None
-    raw_data = data_node.data.get("data")
-    if not isinstance(raw_data, dict):
-        return None
+    raw_data = data_node.data
     start = raw_data.get("startDate")
     end = raw_data.get("endDate")
     if not isinstance(start, str) or not isinstance(end, str):

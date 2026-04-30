@@ -109,11 +109,9 @@ def test_campaign_schedule_plan_returns_slots(analytics_run_with_qa_data):
                 "name": "Data",
                 "parentId": dates_milestone_id,
                 "data": {
-                    "data": {
-                        "startDate": "2026-06-01",
-                        "endDate": "2026-06-30",
-                        "publicHolidays": [],
-                    }
+                    "startDate": "2026-06-01",
+                    "endDate": "2026-06-30",
+                    "publicHolidays": [],
                 },
             },
             context_value=graphql_auth_context(),

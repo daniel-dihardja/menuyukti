@@ -113,7 +113,7 @@ Everything below should be **traceable** to that sentence: each milestone advanc
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Step goal**     | Produce a **schedule of posts** that allocates capacity to weekday lunch and star-menu storytelling within the campaign window.               |
 | **Pass criteria** | e.g. “Covers the planned window”; “Each slot ties to a theme from milestone 2”; “Mix respects content mix rules if you encoded them in data.” |
-| **Data**          | Structured JSON (or legacy string) stored as the milestone **data** payload on the milestonedata child.                                       |
+| **Data**          | Structured JSON (flat preset shape) stored as the milestone **data** payload on the milestonedata child.                                      |
 | **Result**        | Validates that the plan is complete and traceable to the earlier milestones.                                                                  |
 
 ### Milestone 4 — Creative pack or final QA

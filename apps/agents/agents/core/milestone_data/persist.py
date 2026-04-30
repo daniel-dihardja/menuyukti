@@ -1,4 +1,4 @@
-"""Save payload into the milestone `milestonedata` node (structured JSON or legacy string)."""
+"""Save payload into the milestone `milestonedata` node (flat preset JSON object)."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ async def persist_milestonedata(
     """
     Persist content to the single `milestonedata` child under ``milestone_id``.
 
-    ``payload`` is stored as ``milestonedata`` node's ``data`` field (typically a dict/list).
+    ``payload`` is stored as the ``milestonedata`` node's ``data`` JSON object (preset shape).
 
     Returns the node id as a string (empty if missing from the payload).
     """

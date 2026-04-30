@@ -141,11 +141,9 @@
           "description": "Milestone-level goal text; creates a goal child node when non-empty after trim."
         },
         "data": {
-          "description": "Milestonedata child payload when non-empty: structured JSON object (preset-specific) or legacy string body.",
+          "description": "Milestonedata child payload when non-empty: flat structured JSON object (preset-specific fields at the root).",
           "oneOf": [
-            { "type": "string" },
-            { "type": "object" },
-            { "type": "array" }
+            { "type": "object" }
           ]
         },
         "status": {

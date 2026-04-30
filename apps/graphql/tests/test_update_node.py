@@ -344,7 +344,7 @@ def test_update_milestonedata_node_data():
                 "nodeType": "milestonedata",
                 "name": "Data",
                 "parentId": milestone_id,
-                "data": {"data": "First"},
+                "data": {"phase": "First"},
             },
             context_value=graphql_auth_context(),
         )
@@ -355,13 +355,13 @@ def test_update_milestonedata_node_data():
     updated = asyncio.run(
         schema.execute(
             UPDATE_NODE,
-            variable_values={"id": node_id, "data": {"data": "Second draft"}},
+            variable_values={"id": node_id, "data": {"phase": "Second draft"}},
             context_value=graphql_auth_context(),
         )
     )
     assert not updated.errors, updated.errors
     out = updated.data["updateNode"]
-    assert out["data"]["data"] == "Second draft"
+    assert out["data"]["phase"] == "Second draft"
 
 
 def test_update_workflow_node_goal_data():
