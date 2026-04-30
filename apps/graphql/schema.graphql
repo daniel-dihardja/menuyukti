@@ -1,3 +1,9 @@
+type AdditionalSignalsType {
+  orderSignals: OrderSignalsType
+  datetimeSignals: DatetimeSignalsType
+  matrixSignals: MatrixSignalsType!
+}
+
 """Minimal fields for listing analytics runs by location."""
 type AnalyticsRunListItemType {
   id: ID!
@@ -45,13 +51,18 @@ type ApiAdapterToolType {
   updatedAt: DateTime!
 }
 
-"""Venue-level demand timing for post scheduling."""
 type BestPostingWindowType {
   peakDay: String
   peakRevenueDay: String
   primaryMealPeriod: String
   peakRevenueMealPeriod: String
   peakHour: Int
+}
+
+type BrandBriefSignalCapabilitiesType {
+  hasOrderId: Boolean!
+  hasDatetime: Boolean!
+  enabledBlocks: [String!]!
 }
 
 type CampaignSchedulePlanType {
@@ -108,6 +119,11 @@ scalar Date
 """Date with time (isoformat)"""
 scalar DateTime
 
+type DatetimeSignalsType {
+  bestPostingWindow: BestPostingWindowType!
+  periodHeadline: PeriodHeadlineType!
+}
+
 type DayOfWeekBreakdownType {
   day: String!
   isWeekend: Boolean!
@@ -138,6 +154,20 @@ type ExcelUploadResult {
   salesAnalytics: JSON!
 }
 
+type FundamentalSalesSignalsType {
+  totalItemsSold: Int!
+  totalRevenue: Float!
+  uniqueMenuItems: Int!
+  avgItemPrice: Float!
+  avgPopularityThreshold: Float!
+}
+
+type FundamentalSignalsType {
+  sales: FundamentalSalesSignalsType!
+  categoryFocus: CategoryFocusType
+  trendingItems: [TrendingItemType!]!
+}
+
 type ImageAiFlowType {
   id: Int!
   slug: String!
@@ -151,19 +181,12 @@ type ImageAiFlowType {
   sortOrder: Int!
 }
 
-"""
-Composite Instagram-oriented signals: heroes, trends, posting window, and period headline derived from sales analytics.
-"""
+"""Tiered analytics payload for brand brief and growth agents."""
 type InstagramSignalsType {
   analyticsRunId: ID!
-  periodStart: Date
-  periodEnd: Date
-  contentHeroes: [MatrixBackedItemType!]!
-  trendingItems: [TrendingItemType!]!
-  avoidItems: [MatrixBackedItemType!]!
-  categoryFocus: CategoryFocusType
-  bestPostingWindow: BestPostingWindowType!
-  periodHeadline: PeriodHeadlineType!
+  capabilities: BrandBriefSignalCapabilitiesType!
+  fundamentalSignals: FundamentalSignalsType!
+  additionalSignals: AdditionalSignalsType!
 }
 
 """
@@ -208,13 +231,17 @@ type LocationType {
   manualBriefInput: LocationManualBriefInputType
 }
 
-"""Menu engineering fields surfaced for Instagram hero/avoid copy."""
-type MatrixBackedItemType {
+type MatrixSignalItemType {
   menu: String!
   matrixCategory: String!
   totalRevenue: Float!
   menuCategory: String
   menuCategoryDetail: String
+}
+
+type MatrixSignalsType {
+  contentHeroes: [MatrixSignalItemType!]!
+  avoidItems: [MatrixSignalItemType!]!
 }
 
 type MealPeriodBreakdownType {
@@ -445,13 +472,22 @@ type OrderItemType {
   menuCategoryDetail: String!
 }
 
+type OrderSignalsType {
+  totalOrders: Int!
+  avgOrderRevenue: Float!
+  maxOrderRevenue: Float!
+  minOrderRevenue: Float!
+  avgOrderItems: Float!
+  maxOrderItems: Int!
+  minOrderItems: Int!
+}
+
 type OrderType {
   billNumber: String!
   orderTime: DateTime!
   items: [OrderItemType!]!
 }
 
-"""Reporting period and revenue comparison for captions."""
 type PeriodHeadlineType {
   periodStart: String!
   periodEnd: String!
@@ -678,9 +714,9 @@ type Query {
   locationSocialSettings(locationId: Int!): LocationSocialSettingsType
 
   """
-  JSON array (pretty-printed string) of prior milestones' milestonedata: each element is `{"title": string, "data": object|string|null}` in workflow order before the given milestone. Empty string when there are no prior milestones.
+  JSON array of prior milestones' milestonedata payloads: each element is `{"title": string, "data": object|string|array|null}` for milestones strictly before the given milestone in workflow display order. `data` is the raw `milestonedata` child `data` field (structured object, legacy string, or null). Empty array when there are no prior milestones or the request is not authorized.
   """
-  priorMilestonesMilestoneData(workflowId: ID!, milestoneId: ID!, locationId: Int!): String!
+  priorMilestonesMilestoneData(workflowId: ID!, milestoneId: ID!, locationId: Int!): JSON!
   myWorkspace: WorkspaceType
   workspaceMembers(workspaceId: ID!, first: Int = null): [WorkspaceMembershipType!]!
   imageAiFlows(includeInactive: Boolean! = false): [ImageAiFlowType!]!

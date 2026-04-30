@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import httpx
@@ -170,8 +171,10 @@ async def fetch_prior_milestones_data_for_eval(
             user_id,
         )
         raw = data.get("priorMilestonesMilestoneData")
-        if not isinstance(raw, str):
-            return ""
-        return raw.strip()
+        if isinstance(raw, (list, dict)):
+            return json.dumps(raw, ensure_ascii=False, indent=2).strip()
+        if isinstance(raw, str):
+            return raw.strip()
+        return ""
 
     return await _run(client)

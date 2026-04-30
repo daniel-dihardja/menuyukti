@@ -26,6 +26,13 @@ export type Scalars = {
   Upload: { input: unknown; output: unknown }
 }
 
+export type AdditionalSignalsType = {
+  __typename?: 'AdditionalSignalsType'
+  datetimeSignals?: Maybe<DatetimeSignalsType>
+  matrixSignals: MatrixSignalsType
+  orderSignals?: Maybe<OrderSignalsType>
+}
+
 /** Minimal fields for listing analytics runs by location. */
 export type AnalyticsRunListItemType = {
   __typename?: 'AnalyticsRunListItemType'
@@ -70,7 +77,6 @@ export type ApiAdapterToolType = {
   workspaceId: Scalars['ID']['output']
 }
 
-/** Venue-level demand timing for post scheduling. */
 export type BestPostingWindowType = {
   __typename?: 'BestPostingWindowType'
   peakDay?: Maybe<Scalars['String']['output']>
@@ -78,6 +84,13 @@ export type BestPostingWindowType = {
   peakRevenueDay?: Maybe<Scalars['String']['output']>
   peakRevenueMealPeriod?: Maybe<Scalars['String']['output']>
   primaryMealPeriod?: Maybe<Scalars['String']['output']>
+}
+
+export type BrandBriefSignalCapabilitiesType = {
+  __typename?: 'BrandBriefSignalCapabilitiesType'
+  enabledBlocks: Array<Scalars['String']['output']>
+  hasDatetime: Scalars['Boolean']['output']
+  hasOrderId: Scalars['Boolean']['output']
 }
 
 export type CampaignSchedulePlanType = {
@@ -134,6 +147,12 @@ export type DailyHeatmapType = {
   quantity: Scalars['Int']['output']
 }
 
+export type DatetimeSignalsType = {
+  __typename?: 'DatetimeSignalsType'
+  bestPostingWindow: BestPostingWindowType
+  periodHeadline: PeriodHeadlineType
+}
+
 export type DayOfWeekBreakdownType = {
   __typename?: 'DayOfWeekBreakdownType'
   day: Scalars['String']['output']
@@ -165,6 +184,22 @@ export type ExcelUploadResult = {
   sizeBytes: Scalars['Int']['output']
 }
 
+export type FundamentalSalesSignalsType = {
+  __typename?: 'FundamentalSalesSignalsType'
+  avgItemPrice: Scalars['Float']['output']
+  avgPopularityThreshold: Scalars['Float']['output']
+  totalItemsSold: Scalars['Int']['output']
+  totalRevenue: Scalars['Float']['output']
+  uniqueMenuItems: Scalars['Int']['output']
+}
+
+export type FundamentalSignalsType = {
+  __typename?: 'FundamentalSignalsType'
+  categoryFocus?: Maybe<CategoryFocusType>
+  sales: FundamentalSalesSignalsType
+  trendingItems: Array<TrendingItemType>
+}
+
 export type ImageAiFlowType = {
   __typename?: 'ImageAiFlowType'
   displayName: Scalars['String']['output']
@@ -179,18 +214,20 @@ export type ImageAiFlowType = {
   styleIds?: Maybe<Scalars['JSON']['output']>
 }
 
-/** Composite Instagram-oriented signals: heroes, trends, posting window, and period headline derived from sales analytics. */
+/** Tiered analytics payload for brand brief and growth agents. */
 export type InstagramSignalsType = {
   __typename?: 'InstagramSignalsType'
+  additionalSignals: AdditionalSignalsType
   analyticsRunId: Scalars['ID']['output']
-  avoidItems: Array<MatrixBackedItemType>
-  bestPostingWindow: BestPostingWindowType
-  categoryFocus?: Maybe<CategoryFocusType>
-  contentHeroes: Array<MatrixBackedItemType>
-  periodEnd?: Maybe<Scalars['Date']['output']>
-  periodHeadline: PeriodHeadlineType
-  periodStart?: Maybe<Scalars['Date']['output']>
-  trendingItems: Array<TrendingItemType>
+  capabilities: BrandBriefSignalCapabilitiesType
+  fundamentalSignals: FundamentalSignalsType
+}
+
+/** Owner-provided click-first brief hints; not AI-generated. */
+export type LocationManualBriefInputType = {
+  __typename?: 'LocationManualBriefInputType'
+  locationId: Scalars['Int']['output']
+  quickProfile: Scalars['JSON']['output']
 }
 
 export type LocationSocialSettingsType = {
@@ -212,20 +249,28 @@ export type LocationType = {
   country?: Maybe<Scalars['String']['output']>
   currency?: Maybe<Scalars['String']['output']>
   id: Scalars['ID']['output']
+  /** Owner-provided click-first brief hints. Not AI-generated — see locationSocialSettings for AI output. */
+  manualBriefInput?: Maybe<LocationManualBriefInputType>
   name: Scalars['String']['output']
   nodeId?: Maybe<Scalars['ID']['output']>
+  openingHours: Array<OpeningHourType>
   street?: Maybe<Scalars['String']['output']>
   workspaceId?: Maybe<Scalars['ID']['output']>
 }
 
-/** Menu engineering fields surfaced for Instagram hero/avoid copy. */
-export type MatrixBackedItemType = {
-  __typename?: 'MatrixBackedItemType'
+export type MatrixSignalItemType = {
+  __typename?: 'MatrixSignalItemType'
   matrixCategory: Scalars['String']['output']
   menu: Scalars['String']['output']
   menuCategory?: Maybe<Scalars['String']['output']>
   menuCategoryDetail?: Maybe<Scalars['String']['output']>
   totalRevenue: Scalars['Float']['output']
+}
+
+export type MatrixSignalsType = {
+  __typename?: 'MatrixSignalsType'
+  avoidItems: Array<MatrixSignalItemType>
+  contentHeroes: Array<MatrixSignalItemType>
 }
 
 export type MealPeriodBreakdownType = {
@@ -248,6 +293,7 @@ export type MenuCatalogItemType = {
   isActive: Scalars['Boolean']['output']
   name: Scalars['String']['output']
   price: Scalars['Float']['output']
+  quantity: Scalars['Int']['output']
 }
 
 export type MenuCatalogPayloadType = {
@@ -330,6 +376,14 @@ export type MenuItemCogsUpdateInput = {
   id: Scalars['ID']['input']
 }
 
+export type MenuItemCogsUpsertInput = {
+  cogs: Scalars['Float']['input']
+  currency?: InputMaybe<Scalars['String']['input']>
+  menuCategory?: InputMaybe<Scalars['String']['input']>
+  menuCategoryDetail?: InputMaybe<Scalars['String']['input']>
+  menuName: Scalars['String']['input']
+}
+
 /** A milestone node plus its passcriteria, goal, milestonedata, and result children. */
 export type MilestoneCampaignBundleType = {
   __typename?: 'MilestoneCampaignBundleType'
@@ -349,6 +403,7 @@ export type Mutation = {
   createLocation: LocationType
   createNode: NodeType
   createWorkspace: WorkspaceType
+  deleteAnalyticsRun: Scalars['Boolean']['output']
   deleteApiAdapterTool: Scalars['Boolean']['output']
   deleteImageAiFlow: Scalars['Boolean']['output']
   deleteNode: Scalars['Boolean']['output']
@@ -360,10 +415,14 @@ export type Mutation = {
   startMilestoneAgentRun: Scalars['Boolean']['output']
   updateApiAdapterTool: ApiAdapterToolType
   updateImageAiFlow: ImageAiFlowType
+  updateLocation: LocationType
+  /** Replace owner manual brief hints for a location. Pass quickProfile {} to clear. Does not modify AI-generated location_social_settings. */
+  updateLocationManualBriefInput: LocationManualBriefInputType
   updateMenuItemCogsBulk: Array<MenuItemCogsType>
   updateNode: NodeType
   /** Upload and normalize a POS sales Excel file, persist order facts, and return metadata and sales analytics. Set includeLineItems to receive normalizedRows and orders (large payloads). Upload size is capped by MAX_SALES_REPORT_UPLOAD_BYTES (default 30 MiB). */
   uploadSalesReport: ExcelUploadResult
+  upsertMenuItemCogsBulk: Array<MenuItemCogsType>
 }
 
 /** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
@@ -422,6 +481,11 @@ export type MutationCreateNodeArgs = {
 /** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationCreateWorkspaceArgs = {
   name: Scalars['String']['input']
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
+export type MutationDeleteAnalyticsRunArgs = {
+  analyticsRunId: Scalars['ID']['input']
 }
 
 /** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
@@ -502,6 +566,23 @@ export type MutationUpdateImageAiFlowArgs = {
 }
 
 /** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
+export type MutationUpdateLocationArgs = {
+  city?: InputMaybe<Scalars['String']['input']>
+  country?: InputMaybe<Scalars['String']['input']>
+  currency?: InputMaybe<Scalars['String']['input']>
+  id: Scalars['ID']['input']
+  name?: InputMaybe<Scalars['String']['input']>
+  openingHours?: InputMaybe<Array<OpeningHourInput>>
+  street?: InputMaybe<Scalars['String']['input']>
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
+export type MutationUpdateLocationManualBriefInputArgs = {
+  locationId: Scalars['Int']['input']
+  quickProfile: Scalars['JSON']['input']
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationUpdateMenuItemCogsBulkArgs = {
   updates: Array<MenuItemCogsUpdateInput>
 }
@@ -518,6 +599,12 @@ export type MutationUploadSalesReportArgs = {
   file: Scalars['Upload']['input']
   includeLineItems?: Scalars['Boolean']['input']
   locationId: Scalars['ID']['input']
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
+export type MutationUpsertMenuItemCogsBulkArgs = {
+  analyticsRunId: Scalars['ID']['input']
+  items: Array<MenuItemCogsUpsertInput>
 }
 
 /** A workflow tree node (workflow, milestone, goal, passcriteria, result, milestonedata, etc.) stored in the polymorphic `node` table. */
@@ -543,6 +630,20 @@ export type NormalizedLineItem = {
   price: Scalars['Float']['output']
   qty: Scalars['Int']['output']
   totalAfterBillDiscount: Scalars['Float']['output']
+}
+
+export type OpeningHourInput = {
+  closeTime: Scalars['String']['input']
+  dayOfWeek: Scalars['String']['input']
+  openTime: Scalars['String']['input']
+}
+
+/** Opening hours for one weekday. */
+export type OpeningHourType = {
+  __typename?: 'OpeningHourType'
+  closeTime: Scalars['String']['output']
+  dayOfWeek: Scalars['String']['output']
+  openTime: Scalars['String']['output']
 }
 
 export type OperatingProfileType = {
@@ -574,6 +675,17 @@ export type OrderItemType = {
   totalAfterBillDiscount: Scalars['Float']['output']
 }
 
+export type OrderSignalsType = {
+  __typename?: 'OrderSignalsType'
+  avgOrderItems: Scalars['Float']['output']
+  avgOrderRevenue: Scalars['Float']['output']
+  maxOrderItems: Scalars['Int']['output']
+  maxOrderRevenue: Scalars['Float']['output']
+  minOrderItems: Scalars['Int']['output']
+  minOrderRevenue: Scalars['Float']['output']
+  totalOrders: Scalars['Int']['output']
+}
+
 export type OrderType = {
   __typename?: 'OrderType'
   billNumber: Scalars['String']['output']
@@ -581,7 +693,6 @@ export type OrderType = {
   orderTime: Scalars['DateTime']['output']
 }
 
-/** Reporting period and revenue comparison for captions. */
 export type PeriodHeadlineType = {
   __typename?: 'PeriodHeadlineType'
   periodEnd: Scalars['String']['output']
@@ -714,6 +825,8 @@ export type Query = {
   instagramSignals?: Maybe<InstagramSignalsType>
   /** Fetch one location by id if the caller has access. */
   location?: Maybe<LocationType>
+  /** Owner click-first brief hints for a location. Empty quickProfile when unset. Not AI-generated — see locationSocialSettings for AI output. */
+  locationManualBriefInput?: Maybe<LocationManualBriefInputType>
   /** Social and brand-voice settings for a location. Returns empty lists and null strings when no row exists. */
   locationSocialSettings?: Maybe<LocationSocialSettingsType>
   /** All locations the current user can access (direct owner or workspace member). */
@@ -724,6 +837,8 @@ export type Query = {
   menuHeatmaps: Array<MenuHeatmapType>
   /** Distinct menu items from the latest analytics run for a location: aggregated from order lines (category, avg unit price). Returns null when there is no run or no order data. */
   menuItemsCatalog?: Maybe<MenuCatalogPayloadType>
+  /** Distinct menu items from a specific analytics run: aggregated from order lines (quantity, category, avg unit price). Returns null when run is missing/unauthorized or has no order data. */
+  menuItemsCatalogForRun?: Maybe<MenuCatalogPayloadType>
   myWorkspace?: Maybe<WorkspaceType>
   /** Fetch a single node by id if the caller owns its location. */
   node?: Maybe<NodeType>
@@ -732,8 +847,8 @@ export type Query = {
   operatingProfile?: Maybe<OperatingProfileType>
   /** Compute average order size and revenue for an analytics run. Returns None if the run has no order data. */
   orderMetrics?: Maybe<AnalyticsRunOrderMetricsType>
-  /** JSON array (pretty-printed string) of prior milestones' milestonedata: each element is `{"title": string, "data": object|string|null}` in workflow order before the given milestone. Empty string when there are no prior milestones. */
-  priorMilestonesMilestoneData: Scalars['String']['output']
+  /** JSON array of prior milestones' milestonedata payloads: each element is `{"title": string, "data": object|string|array|null}` for milestones strictly before the given milestone in workflow display order. `data` is the raw `milestonedata` child `data` field (structured object, legacy string, or null). Empty array when there are no prior milestones or the request is not authorized. */
+  priorMilestonesMilestoneData: Scalars['JSON']['output']
   /** Promotion-candidate signals composed from promotion menu items and Instagram signals. Returns ranked recommendations plus puzzle opportunity pool for campaign drafting. */
   promotionCandidatesSignals?: Maybe<PromotionCandidatesSignalsType>
   /** Return per-menu promotion signals for an analytics run: volume and revenue, optional BCG-style menu-engineering metrics when COGS allow, and peak hour/day from demand heatmaps. When locationId is set, the run must belong to that location (otherwise returns null). */
@@ -801,8 +916,18 @@ export type QueryLocationArgs = {
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
+export type QueryLocationManualBriefInputArgs = {
+  locationId: Scalars['Int']['input']
+}
+
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryLocationSocialSettingsArgs = {
   locationId: Scalars['Int']['input']
+}
+
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
+export type QueryLocationsArgs = {
+  first?: InputMaybe<Scalars['Int']['input']>
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
@@ -821,6 +946,11 @@ export type QueryMenuHeatmapsArgs = {
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryMenuItemsCatalogArgs = {
   locationId: Scalars['Int']['input']
+}
+
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
+export type QueryMenuItemsCatalogForRunArgs = {
+  analyticsRunId: Scalars['ID']['input']
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
@@ -893,11 +1023,13 @@ export type QueryWorkflowCampaignTreeArgs = {
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryWorkflowExportsArgs = {
+  first?: InputMaybe<Scalars['Int']['input']>
   locationId: Scalars['Int']['input']
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryWorkspaceMembersArgs = {
+  first?: InputMaybe<Scalars['Int']['input']>
   workspaceId: Scalars['ID']['input']
 }
 
