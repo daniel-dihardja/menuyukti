@@ -1141,7 +1141,6 @@
         "milestoneSettingsSaveError": "Could not save milestone settings. Please try again.",
         "milestoneRunFixedSkillsFailHint": "Some criteria did not pass. Open Settings and switch to Auto-select skills, or edit the data, then run again.",
         "milestoneGoalPlaceholder": "Describe desired outcome…",
-        "milestoneInputSaveButton": "Save input",
         "milestoneInputUnsupported": "No custom input is configured for this milestone preset.",
         "milestoneDatesInputPickDate": "Pick a date",
         "milestoneDatesInputStartDateLabel": "Start date",
