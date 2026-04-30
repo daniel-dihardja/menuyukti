@@ -207,13 +207,23 @@ def _fmt_matrix_signals(instagram: dict[str, Any]) -> str:
     avoid = matrix.get("avoidItems")
     lines: list[str] = []
     if isinstance(heroes, list) and heroes:
-        hero_names = [h.get("menu") for h in heroes[:6] if isinstance(h, dict)]
-        hero_names = [str(x) for x in hero_names if x]
+        hero_names: list[str] = []
+        for hero in heroes[:6]:
+            if not isinstance(hero, dict):
+                continue
+            menu = hero.get("menu")
+            if isinstance(menu, str) and menu.strip():
+                hero_names.append(menu.strip())
         if hero_names:
             lines.append(f"- **Content heroes**: {', '.join(hero_names)}")
     if isinstance(avoid, list) and avoid:
-        avoid_names = [h.get("menu") for h in avoid[:6] if isinstance(h, dict)]
-        avoid_names = [str(x) for x in avoid_names if x]
+        avoid_names: list[str] = []
+        for avoided in avoid[:6]:
+            if not isinstance(avoided, dict):
+                continue
+            menu = avoided.get("menu")
+            if isinstance(menu, str) and menu.strip():
+                avoid_names.append(menu.strip())
         if avoid_names:
             lines.append(f"- **Use cautiously**: {', '.join(avoid_names)}")
     return "\n".join(lines)
