@@ -556,7 +556,6 @@ export function AssetsClient() {
                 >
                   <div
                     className="relative aspect-[4/3] w-full cursor-zoom-in overflow-hidden bg-muted/30 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    role="button"
                     tabIndex={0}
                     aria-label={t('grid.viewLarge')}
                     onClick={() => setPreviewItem(item)}
