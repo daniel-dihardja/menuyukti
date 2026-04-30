@@ -50,6 +50,9 @@ Workflow:
    - `audienceHypotheses` (3-5 unique non-empty strings): evidence-based only (meal periods, weekday/weekend, top categories); no invented demographics.
    - `proofOrientedAngles` (3-5 unique non-empty strings): grounded in top items/category mix/peak timing; no invented proof points.
    - `toneGuardrails` (3-5 unique non-empty strings): inferred from operating pattern, dining focus, and menu profile.
+   - When **Milestone brand brief input (owner)** is present, integrate it explicitly into the output:
+     - Reflect the owner input in at least one of `contentPillars`, `proofOrientedAngles`, or `toneGuardrails` when it does not conflict with analytics/manual hints.
+     - If the owner input cannot be used (for example it conflicts with available signals), include one concise guardrail explaining the exclusion reason (for example: `"Do not center the brief on unsupported campaign themes from optional owner notes."`).
    - Do not output duplicate items within the same array.
 6. Apply fallback tiers when analytics are incomplete:
    - Fundamental-only: produce 3-5 items using only fundamental signals and manual hints.
