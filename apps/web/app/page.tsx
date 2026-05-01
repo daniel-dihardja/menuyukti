@@ -26,6 +26,9 @@ import {
   UtensilsCrossed,
   CalendarRange,
   ScrollText,
+  Tags,
+  CalendarClock,
+  PenLine,
   Activity,
   ChartNoAxesCombined,
   CircleCheckBig,
@@ -63,6 +66,21 @@ export default async function LandingPage() {
       Icon: ScrollText,
       title: t('pipeline.nodes.brandBriefTitle'),
       description: t('pipeline.nodes.brandBriefDescription'),
+    },
+    {
+      Icon: Tags,
+      title: t('pipeline.nodes.promotionCandidatesTitle'),
+      description: t('pipeline.nodes.promotionCandidatesDescription'),
+    },
+    {
+      Icon: CalendarClock,
+      title: t('pipeline.nodes.postSchedulerTitle'),
+      description: t('pipeline.nodes.postSchedulerDescription'),
+    },
+    {
+      Icon: PenLine,
+      title: t('pipeline.nodes.contentCreatorTitle'),
+      description: t('pipeline.nodes.contentCreatorDescription'),
     },
   ] as const
 
@@ -251,7 +269,7 @@ export default async function LandingPage() {
               {t('pipeline.subtitle')}
             </p>
 
-            <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {pipelineItems.map(({ Icon, title, description }) => (
                 <Card key={title} className="shadow-md">
                   <CardHeader>
