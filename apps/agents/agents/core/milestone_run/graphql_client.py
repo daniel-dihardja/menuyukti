@@ -212,7 +212,7 @@ async def fetch_campaign_schedule_plan(
     *,
     client: httpx.AsyncClient,
 ) -> dict[str, Any] | None:
-    """Return campaignSchedulePlan payload for scheduler milestone tools."""
+    """Return campaignSchedulePlan payload for milestone tools."""
     data = await graphql_post(
         client,
         CAMPAIGN_SCHEDULE_PLAN_QUERY,

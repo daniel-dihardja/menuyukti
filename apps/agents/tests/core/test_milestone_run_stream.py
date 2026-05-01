@@ -106,8 +106,8 @@ async def test_iter_milestone_run_sse_done_includes_data_preview_when_milestoned
             {
                 "result_node_id": "node-99",
                 "result_summary": "Done",
-                "result_data": '{"placement":"x"}',
-                "milestone_data": {"placement": "x", "puzzleOpportunityPool": {"puzzleItemsFound": 0, "threshold": 0.0, "selectedCount": 0}, "promotionCandidates": [], "rankedCandidates": []},
+                "result_data": '{"summary":"x"}',
+                "milestone_data": {"summary": "x", "details": ["a", "b"]},
                 "milestonedata_written": True,
                 "last_criteria_verdicts": [],
             },
@@ -143,10 +143,8 @@ async def test_iter_milestone_run_sse_done_includes_data_preview_when_milestoned
     assert len(payloads) == 2
     done = payloads[1]
     assert done.get("dataPreview") == {
-        "placement": "x",
-        "puzzleOpportunityPool": {"puzzleItemsFound": 0, "threshold": 0.0, "selectedCount": 0},
-        "promotionCandidates": [],
-        "rankedCandidates": [],
+        "summary": "x",
+        "details": ["a", "b"],
     }
 
 

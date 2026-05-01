@@ -31,17 +31,12 @@ from pydantic import BaseModel, Field
 _logger = logging.getLogger(__name__)
 
 
-def _milestonedata_eval_score(data: dict[str, Any]) -> tuple[int, int, int]:
-    """Prefer milestonedata payloads with more promotion picks (eval tie-breaking)."""
-    pc = data.get("promotionCandidates")
-    rc = data.get("rankedCandidates")
-    p = len(pc) if isinstance(pc, list) else 0
-    r = len(rc) if isinstance(rc, list) else 0
+def _milestonedata_eval_score(data: dict[str, Any]) -> int:
+    """Prefer larger milestonedata payloads (eval tie-breaking)."""
     try:
-        blob = len(json.dumps(data, ensure_ascii=False))
+        return len(json.dumps(data, ensure_ascii=False))
     except (TypeError, ValueError):
-        blob = 0
-    return (p, r, blob)
+        return 0
 
 
 def _select_best_milestonedata_payload(payloads: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -64,7 +59,7 @@ def _node_type(ch: dict[str, Any]) -> str:
 
 
 _OWNER_NOTES_INPUT_TYPES = frozenset(
-    {"restaurant_brand_brief", "promotion_candidates", "scheduler"},
+    {"restaurant_brand_brief"},
 )
 
 

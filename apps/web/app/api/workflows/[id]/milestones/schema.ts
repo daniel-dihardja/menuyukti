@@ -9,8 +9,6 @@ import {
   milestoneInputSchema,
   milestoneRunSkillModeSchema,
   passCriteriaDataSchema,
-  promotionCandidatesMilestoneDataSchema,
-  schedulerMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
 export const workflowIdParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow id')
@@ -32,12 +30,7 @@ export const patchMilestoneSchema = z
     goal: z.string().optional(),
     /** Milestone data (structured JSON); persisted on a child `milestonedata` node. */
     milestoneData: z
-      .union([
-        datesMilestoneDataSchema,
-        brandBriefMilestoneDataSchema,
-        promotionCandidatesMilestoneDataSchema,
-        schedulerMilestoneDataSchema,
-      ])
+      .union([datesMilestoneDataSchema, brandBriefMilestoneDataSchema])
       .nullable()
       .optional(),
     /** Typed milestone input; stored on milestone node `data` JSON. */
@@ -46,14 +39,6 @@ export const patchMilestoneSchema = z
         z.object({ type: z.literal('dates'), value: datesMilestoneInputSchema }),
         z.object({
           type: z.literal('restaurant_brand_brief'),
-          value: brandBriefMilestoneInputValueSchema,
-        }),
-        z.object({
-          type: z.literal('promotion_candidates'),
-          value: brandBriefMilestoneInputValueSchema,
-        }),
-        z.object({
-          type: z.literal('scheduler'),
           value: brandBriefMilestoneInputValueSchema,
         }),
         milestoneInputSchema,

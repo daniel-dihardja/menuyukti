@@ -11,10 +11,6 @@ This runtime standard aligns milestone skills with the legacy strategic/tactical
    - Dates are validated and holiday rows are normalized for downstream use.
 2. `brand_brief`
    - Pillars and tone are operational, reusable, and evidence-based.
-3. `promotion_candidates`
-   - Candidate menus are POS-exact, evidence-grounded, and include scheduler-ready Instagram guidance.
-4. `scheduler`
-   - Schedule rows are campaign-window valid, use analytics-backed timing, and maintain post/item variety.
 
 ## Quality Gates
 

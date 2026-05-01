@@ -119,28 +119,28 @@ def test_campaign_schedule_plan_returns_slots(analytics_run_with_qa_data):
     )
     assert not dates_data.errors, dates_data.errors
 
-    scheduler_milestone = asyncio.run(
+    schedule_milestone = asyncio.run(
         schema.execute(
             CREATE_NODE_WITH_DATA,
             variable_values={
                 "locationId": location_id,
                 "nodeType": "milestone",
-                "name": "Scheduler",
+                "name": "Schedule",
                 "parentId": workflow_id,
-                "data": {"order": 2, "presetId": "scheduler"},
+                "data": {"order": 2},
             },
             context_value=graphql_auth_context(),
         )
     )
-    assert not scheduler_milestone.errors, scheduler_milestone.errors
-    scheduler_milestone_id = scheduler_milestone.data["createNode"]["id"]
+    assert not schedule_milestone.errors, schedule_milestone.errors
+    schedule_milestone_id = schedule_milestone.data["createNode"]["id"]
 
     result = asyncio.run(
         schema.execute(
             CAMPAIGN_SCHEDULE_PLAN_QUERY,
             variable_values={
                 "workflowId": workflow_id,
-                "milestoneId": scheduler_milestone_id,
+                "milestoneId": schedule_milestone_id,
                 "locationId": location_id,
                 "runId": str(run_id),
             },

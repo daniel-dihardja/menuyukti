@@ -30,8 +30,6 @@ import type { DatesMilestoneInput, PassCriteriaRow, TimelineMilestone } from './
 const presetGoalTranslationKeyById = {
   dates: 'milestonePreset.dates.goal',
   restaurant_brand_brief: 'milestonePreset.restaurant_brand_brief.goal',
-  promotion_candidates: 'milestonePreset.promotion_candidates.goal',
-  scheduler: 'milestonePreset.scheduler.goal',
 } as const
 
 /** Tab panel state and handlers for one milestone (built in `timeline-item`). */
@@ -94,18 +92,6 @@ function optionalNotesFieldCopy(
         label: t('milestonePreset.restaurant_brand_brief.inputLabel'),
         description: t('milestonePreset.restaurant_brand_brief.inputDescription'),
         placeholder: t('milestonePreset.restaurant_brand_brief.inputPlaceholder'),
-      }
-    case 'promotion_candidates':
-      return {
-        label: t('milestonePreset.promotion_candidates.inputLabel'),
-        description: t('milestonePreset.promotion_candidates.inputDescription'),
-        placeholder: t('milestonePreset.promotion_candidates.inputPlaceholder'),
-      }
-    case 'scheduler':
-      return {
-        label: t('milestonePreset.scheduler.inputLabel'),
-        description: t('milestonePreset.scheduler.inputDescription'),
-        placeholder: t('milestonePreset.scheduler.inputPlaceholder'),
       }
   }
 }

@@ -17,8 +17,6 @@ or confirming public holidays for a date range **and** (b) broader work on the b
 summary) beyond holidays alone.
 - Prefer `["public_holidays"]` when only holidays listing/confirmation is needed.
 - Prefer `["generic"]` for standard milestone data preparation when holidays are not a distinct requirement.
-- Prefer `["promotion_candidates"]` when the goal or criteria require **promotion candidate dishes** or **social post** \
-ideas grounded in **POS/analytics** (menu performance, Instagram signals), producing **structured JSON** milestone data.
 - Prefer `["brand_brief"]` when the goal or criteria clearly describe a **brand brief** \
 (venue snapshot, content pillars, audience hypotheses, proof angles, tone guardrails) as the main deliverable.
 - Use at most **two** ids. Do not duplicate the same id.

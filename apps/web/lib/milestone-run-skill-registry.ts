@@ -24,18 +24,6 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
       'Use for the brand brief milestone: location-only brief from profile and operating signals—venue snapshot, pillars, audience hypotheses, tone guardrails. No campaign start/end dates.',
   },
   {
-    id: 'promotion_candidates',
-    name: 'Promotion candidates',
-    description:
-      'Use for Promotion Candidates milestones: build prioritized Instagram-ready menu picks with analytics evidence, campaign-window notes, and brand-brief alignment when available.',
-  },
-  {
-    id: 'scheduler',
-    name: 'Scheduler',
-    description:
-      'Use for Scheduler milestones: produce campaign-window post schedules from analytics-backed signals with required structured schedule rows.',
-  },
-  {
     id: 'generic',
     name: 'Generic milestone data prep',
     description:

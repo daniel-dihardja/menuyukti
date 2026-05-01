@@ -535,68 +535,6 @@ async def test_write_result_data_parses_structured_json_when_context_is_structur
 
 
 @pytest.mark.asyncio
-async def test_write_result_data_validates_scheduler_payload() -> None:
-    ctx: dict[str, Any] = {"selected_skill_id": "scheduler"}
-    client = MagicMock(spec=AsyncMock)
-    valid = {
-        "schedules": [
-            {
-                "dateTime": "2026-06-03T19:00:00",
-                "type": "carousel",
-                "promotedMenuItems": ["Nasi Goreng"],
-                "visualIdea": "Kitchen prep and plated close-up",
-                "captionIdea": "Dinner spotlight",
-            }
-        ],
-        "campaignStart": "2026-06-01",
-        "campaignEnd": "2026-06-30",
-        "sourceSignalsSummary": "peak day hint: fri; high-demand weeks: 2",
-    }
-
-    with patch(
-        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
-        new=AsyncMock(return_value={"id": "md-11"}),
-    ) as mock_upsert:
-        tools = _tools_for_context(ctx, client=client)
-        write_result_data = _tool_by_name(tools, "write_result_data")
-        out = await write_result_data.ainvoke({"new_data": valid})
-
-    mock_upsert.assert_awaited_once()
-    assert "md-11" in out
-    assert isinstance(ctx.get("milestone_data"), dict)
-    assert ctx["milestone_data"]["schedules"][0]["type"] == "carousel"
-    assert ctx["milestone_data"]["campaignStart"] == "2026-06-01"
-
-
-@pytest.mark.asyncio
-async def test_write_result_data_rejects_invalid_scheduler_payload() -> None:
-    ctx: dict[str, Any] = {"selected_skill_id": "scheduler"}
-    client = MagicMock(spec=AsyncMock)
-    invalid = {
-        "schedules": [
-            {
-                "dateTime": "2026-06-03T19:00:00",
-                "type": "video",
-                "promotedMenuItems": ["Nasi Goreng"],
-                "visualIdea": "Kitchen prep and plated close-up",
-                "captionIdea": "Dinner spotlight",
-            }
-        ]
-    }
-
-    with patch(
-        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
-        new=AsyncMock(return_value={"id": "md-12"}),
-    ) as mock_upsert:
-        tools = _tools_for_context(ctx, client=client)
-        write_result_data = _tool_by_name(tools, "write_result_data")
-        out = await write_result_data.ainvoke({"new_data": invalid})
-
-    mock_upsert.assert_not_awaited()
-    assert "Output validation failed for skill 'scheduler'" in out
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("selected_skill_id", "payload"),
     [
@@ -649,58 +587,6 @@ async def test_write_result_data_rejects_invalid_scheduler_payload() -> None:
                 "toneGuardrails": ["Warm", "Helpful", "Clear"],
             },
         ),
-        (
-            "promotion_candidates",
-            {
-                "placement": "grid",
-                "puzzleOpportunityPool": {
-                    "puzzleItemsFound": 2,
-                    "threshold": 72.0,
-                    "selectedCount": 1,
-                },
-                "promotionCandidates": [
-                    {
-                        "menu": "Nasi Goreng",
-                        "rationale": ["High repeat orders"],
-                        "instagramPromotion": {
-                            "angle": "Chef spotlight",
-                            "format": "carousel",
-                            "cta": "Book now",
-                            "timing": "Dinner",
-                        },
-                    }
-                ],
-                "rankedCandidates": [
-                    {
-                        "menu": "Nasi Goreng",
-                        "recommendation": "promote",
-                        "score": 94.2,
-                        "quantity": 100,
-                        "totalRevenue": 5000.0,
-                        "signalReasons": ["Content hero"],
-                        "extraSignal": "allowed",
-                    }
-                ],
-                "context": {
-                    "campaignWindowNotes": "Align with holiday week",
-                    "brandBriefAlignmentNotes": "Fits warm tone",
-                },
-            },
-        ),
-        (
-            "scheduler",
-            {
-                "schedules": [
-                    {
-                        "dateTime": "2026-06-03T19:00:00",
-                        "type": "carousel",
-                        "promotedMenuItems": ["Nasi Goreng"],
-                        "visualIdea": "Kitchen prep and plated close-up",
-                        "captionIdea": "Dinner spotlight",
-                    }
-                ]
-            },
-        ),
     ],
 )
 async def test_write_result_data_accepts_registered_skill_payloads(
@@ -723,86 +609,6 @@ async def test_write_result_data_accepts_registered_skill_payloads(
     assert ctx.get("milestone_data") == awaited_payload
     assert isinstance(ctx.get("milestone_data"), dict)
     assert ctx.get("milestonedata_written") is True
-
-
-@pytest.mark.asyncio
-async def test_write_result_data_rejects_promotion_empty_when_ranked_nonempty() -> None:
-    ctx: dict[str, Any] = {"selected_skill_id": "promotion_candidates"}
-    payload: dict[str, Any] = {
-        "placement": "x",
-        "puzzleOpportunityPool": {
-            "puzzleItemsFound": 0,
-            "threshold": 0.0,
-            "selectedCount": 0,
-        },
-        "promotionCandidates": [],
-        "rankedCandidates": [
-            {
-                "menu": "Nasi Goreng",
-                "recommendation": "promote",
-                "score": 90.0,
-                "quantity": 10,
-                "totalRevenue": 100.0,
-                "signalReasons": ["hero"],
-            }
-        ],
-    }
-    client = MagicMock(spec=AsyncMock)
-    with patch(
-        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
-        new=AsyncMock(return_value={"id": "md-should-not-run"}),
-    ) as mock_upsert:
-        tools = _tools_for_context(ctx, client=client)
-        write_result_data = _tool_by_name(tools, "write_result_data")
-        out = await write_result_data.ainvoke({"new_data": payload})
-    mock_upsert.assert_not_awaited()
-    assert "Output validation failed for skill 'promotion_candidates'" in out
-
-
-@pytest.mark.asyncio
-async def test_write_result_data_promotion_candidates_omits_optional_null_fields() -> None:
-    ctx: dict[str, Any] = {"selected_skill_id": "promotion_candidates"}
-    payload: dict[str, Any] = {
-        "placement": "grid",
-        "puzzleOpportunityPool": {
-            "puzzleItemsFound": 2,
-            "threshold": 72.0,
-            "selectedCount": 1,
-        },
-        "promotionCandidates": [
-            {
-                "menu": "Nasi Goreng",
-                "rationale": ["High repeat orders"],
-            }
-        ],
-        "rankedCandidates": [
-            {
-                "menu": "Nasi Goreng",
-                "recommendation": "promote",
-                "score": 94.2,
-                "quantity": 100,
-                "totalRevenue": 5000.0,
-                "signalReasons": ["Content hero"],
-            }
-        ],
-    }
-    client = MagicMock(spec=AsyncMock)
-
-    with patch(
-        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
-        new=AsyncMock(return_value={"id": "md-promo-no-nulls"}),
-    ) as mock_upsert:
-        tools = _tools_for_context(ctx, client=client)
-        write_result_data = _tool_by_name(tools, "write_result_data")
-        out = await write_result_data.ainvoke({"new_data": payload})
-
-    mock_upsert.assert_awaited_once()
-    awaited_payload = mock_upsert.await_args.args[2]
-    assert "md-promo-no-nulls" in out
-    assert "context" not in awaited_payload
-    promoted = awaited_payload["promotionCandidates"][0]
-    assert "puzzleAnalysis" not in promoted
-    assert "instagramPromotion" not in promoted
 
 
 @pytest.mark.asyncio
@@ -831,34 +637,6 @@ async def test_write_result_data_promotion_candidates_omits_optional_null_fields
                 "audienceHypotheses": ["Office workers"],
                 "proofOrientedAngles": ["Best seller"],
                 "toneGuardrails": ["Warm", "Helpful"],
-            },
-        ),
-        (
-            "promotion_candidates",
-            {
-                "placement": "grid",
-                "puzzleOpportunityPool": {
-                    "puzzleItemsFound": 2,
-                    "threshold": 72.0,
-                    # invalid: selectedCount missing
-                },
-                "promotionCandidates": [],
-                "rankedCandidates": [],
-            },
-        ),
-        (
-            "scheduler",
-            {
-                "schedules": [
-                    {
-                        "dateTime": "2026-06-03T19:00:00",
-                        # invalid literal
-                        "type": "video",
-                        "promotedMenuItems": ["Nasi Goreng"],
-                        "visualIdea": "Kitchen prep and plated close-up",
-                        "captionIdea": "Dinner spotlight",
-                    }
-                ]
             },
         ),
     ],

@@ -8,8 +8,6 @@ import {
   brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   milestoneInputSchema,
-  promotionCandidatesMilestoneDataSchema,
-  schedulerMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
 import { milestoneIdParamSchema, workflowIdParamSchema } from '../../schema'
@@ -20,14 +18,7 @@ const runBodySchema = z.object({
   locationId: z.number().int().positive(),
   goal: z.string().optional(),
   milestoneInput: milestoneInputSchema.optional(),
-  milestoneData: z
-    .union([
-      datesMilestoneDataSchema,
-      brandBriefMilestoneDataSchema,
-      promotionCandidatesMilestoneDataSchema,
-      schedulerMilestoneDataSchema,
-    ])
-    .optional(),
+  milestoneData: z.union([datesMilestoneDataSchema, brandBriefMilestoneDataSchema]).optional(),
 })
 
 type RouteContext = {

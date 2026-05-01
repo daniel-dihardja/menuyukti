@@ -102,7 +102,7 @@
     },
     "problem": "Most restaurant social media marketing still relies on disconnected dashboards, spreadsheets, and tools bolted onto legacy stacks—not coordinated agentic systems. Strategy gets lost between data review and campaign execution, so you miss timing windows and promote the wrong menu stories.",
     "problemImageAlt": "Abstract analytics dashboard showing sales performance bars and insight summary.",
-    "solution": "Menuyukti is an agentic AI system for restaurant social media marketing: a node-based workflow canvas where agents connect milestones like Dates, Brand brief, Promotion candidates, and Scheduler into a flexible social strategy pipeline. Every node is grounded in sales-report analytics, and each output is stored as structured, reusable campaign data.",
+    "solution": "Menuyukti is an agentic AI system for restaurant social media marketing: a node-based workflow canvas where agents connect milestones like Dates and Brand brief into a flexible social strategy pipeline. Every node is grounded in sales-report analytics, and each output is stored as structured, reusable campaign data.",
     "solutionImageAlt": "Workflow diagram from POS data through AI milestones to stored workflow outputs and artifacts.",
     "trust": {
       "title": "Agentic AI, built for restaurant social media marketing",
@@ -130,11 +130,7 @@
         "datesTitle": "Dates node",
         "datesDescription": "Defines campaign start/end windows and public-holiday context to keep posting plans realistic.",
         "brandBriefTitle": "Brand Brief node",
-        "brandBriefDescription": "Builds audience hypotheses, content pillars, and tone guardrails from operating and menu signals.",
-        "promotionTitle": "Promotion Candidates node",
-        "promotionDescription": "Ranks menu items with evidence-first rationale and Instagram promotion angles for each candidate.",
-        "schedulerTitle": "Scheduler node",
-        "schedulerDescription": "Turns approved candidates into balanced post schedules with timing, visual ideas, and caption direction."
+        "brandBriefDescription": "Builds audience hypotheses, content pillars, and tone guardrails from operating and menu signals."
       }
     },
     "signals": {
@@ -156,9 +152,6 @@
         "assetsTitle": "Workflow assets and AI image flows",
         "assetsDescription": "Upload raw smartphone photos and chain AI image flows from background removal through preset-based product photography.",
         "assetsAlt": "Workflow assets with AI image flows for background removal and AI presets for high-quality product shots.",
-        "promotionTitle": "Promotion candidate results",
-        "promotionDescription": "Review prioritized menu items with rationale and Instagram guidance before scheduling.",
-        "promotionAlt": "Promotion candidates panel with prioritized menu items and rationale.",
         "heatmapsTitle": "Hourly demand heatmaps",
         "heatmapsDescription": "On each location’s sales report, heatmaps show how menu items concentrate across hours of the day so you can spot dayparts, prep load, and when to time social content to real purchase rhythm.",
         "heatmapsAlt": "Location sales report heatmap grid showing menu items versus hours of the day with color intensity for sales volume.",
@@ -190,7 +183,7 @@
         },
         "analyze": {
           "title": "2. Compose node sequence",
-          "description": "Arrange workflow nodes (Dates, Brand brief, Promotion candidates, Scheduler) around your campaign objective."
+          "description": "Arrange workflow nodes (Dates, Brand brief) around your campaign objective."
         },
         "act": {
           "title": "3. Execute and refine",
@@ -1051,31 +1044,6 @@
             "criterionProofAngles": "**Proof-oriented angles** include 3-5 unique non-empty items and reference real menu/category signals already present in the data (for example top items or category mix).",
             "criterionToneGuardrails": "**Tone guardrails** include 3-5 unique non-empty items and stay consistent with operating context in the data.",
             "dataMarkdown": "## Venue snapshot\n\n\n## Content pillars\n\n\n## Audience hypotheses\n\n\n## Proof-oriented angles\n\n\n## Tone guardrails\n\n"
-          },
-          "promotion_candidates": {
-            "label": "Promotion Candidates",
-            "title": "Promotion Candidates",
-            "inputLabel": "Promotion notes",
-            "inputDescription": "Optional context for candidate selection (themes, exclusions, priorities). Included when you run or generate promotion candidates alongside analytics and prior milestone data.",
-            "inputPlaceholder": "e.g. Push brunch and patio; avoid heavy reds this month; tie-ins with local events…",
-            "goal": "The data holds one prioritized set of promotion candidate menu items for social posts—grounded in sales and Instagram signals, aligned with the campaign window when prior milestones document dates, and consistent with the location brand brief when available.",
-            "criterionPromotionCandidates": "**Promotion candidates** in the data list prioritized menu items (menu names exactly as in POS) with concise rationale and practical Instagram guidance (angle/format/CTA/timing).",
-            "criterionEvidenceGrounding": "Each recommended item cites concrete analytics evidence (for example demand timing, revenue or margin signal, trend signal, or matrix action/category), and avoids unsupported claims.",
-            "criterionCampaignWindow": "When **Start date** and **End date** appear in earlier milestones' data (e.g. a **Dates** milestone), candidate choices and rationale respect that window; otherwise the data states that no window was provided.",
-            "criterionBrandBrief": "When a **Brand brief** milestone exists in the workflow, angles and tone do not contradict it; if none exists, the data stays neutral and operational.",
-            "placementHint": "Add **Dates** and **Brand brief** milestones before this one in the timeline so **Generate** can pull their data. Edit **placement** below if you have implementation notes."
-          },
-          "scheduler": {
-            "label": "Post Scheduler",
-            "title": "Post Scheduler",
-            "inputLabel": "Schedule notes",
-            "inputDescription": "Optional context for the posting plan (cadence, tone, campaigns to avoid). Included when you run or generate the schedule alongside analytics and upstream milestone data.",
-            "inputPlaceholder": "e.g. Two posts per week max; emphasize Reels on weekends; soft-sell only…",
-            "goal": "The data contains a complete Instagram posting schedule for the campaign window with each post's date/time, type, promoted menu items, visual idea, and caption idea.",
-            "criterionHasScheduleRows": "The data includes scheduled posts with all required fields: date/time, post type, promoted menu items, visual idea, and caption idea, with usable execution detail in visual/caption ideas.",
-            "criterionWithinCampaignWindow": "All scheduled posts fall within the **Start date** and **End date** defined in the **Dates** milestone data.",
-            "criterionAnalyticsGrounding": "Post timing and promoted menu choices are grounded in available analytics signals (posting windows, demand, and promotion candidate evidence) without inventing unsupported claims, while maintaining reasonable variety across posts.",
-            "criterionOperatingDays": "All scheduled posts land only on operating days supported by upstream operating-profile context; do not schedule posts on inferred closed days."
           }
         },
         "exportMilestones": "Export",
@@ -1184,30 +1152,6 @@
         "milestoneBrandBriefPreviewToneGuardrails": "Tone guardrails",
         "milestoneBrandBriefPreviewEmptyList": "No entries yet.",
         "milestoneBrandBriefPreviewEmptyValue": "Not set",
-        "milestonePromotionPreviewPlacement": "Placement",
-        "milestonePromotionPreviewPuzzlePool": "Puzzle opportunity pool",
-        "milestonePromotionPreviewPuzzleItemsFound": "Puzzle items found",
-        "milestonePromotionPreviewThreshold": "Threshold score",
-        "milestonePromotionPreviewSelectedCount": "Selected puzzle items",
-        "milestonePromotionPreviewPromotionCandidates": "Promotion candidates",
-        "milestonePromotionPreviewRankedCandidates": "Ranked candidates",
-        "milestonePromotionPreviewRankedCandidatesCount": "{count, plural, =0 {No ranked rows yet.} one {# menu item scored.} other {# menu items scored.}}",
-        "milestonePromotionPreviewContext": "Context",
-        "milestonePromotionPreviewCampaignWindow": "Campaign window",
-        "milestonePromotionPreviewBrandBrief": "Brand brief alignment",
-        "milestonePromotionPreviewMenu": "Menu",
-        "milestonePromotionPreviewRationale": "Rationale",
-        "milestonePromotionPreviewInstagram": "Instagram promotion",
-        "milestoneSchedulerPreviewSchedules": "Schedules",
-        "milestoneSchedulerPreviewMetadata": "Schedule summary",
-        "milestoneSchedulerPreviewScheduledPosts": "Scheduled posts",
-        "milestoneSchedulerPreviewSinglePosts": "Singles",
-        "milestoneSchedulerPreviewCarouselPosts": "Carousels",
-        "milestoneSchedulerPreviewDateTime": "Date and time",
-        "milestoneSchedulerPreviewType": "Type",
-        "milestoneSchedulerPreviewPromotedMenuItems": "Promoted menu items",
-        "milestoneSchedulerPreviewVisualIdea": "Visual idea",
-        "milestoneSchedulerPreviewCaptionIdea": "Caption idea",
         "milestonePreviewUnsupported": "This milestone data format is not supported in the preview yet.",
         "milestonePreviewDataEmpty": "No data has been added for this milestone yet.",
         "milestonePreviewDataInvalid": "This milestone contains invalid structured data and cannot be previewed.",

@@ -39,7 +39,6 @@ export const routes = {
 
     matrix: (analyticsId: string | number) => `/analytics/${analyticsId}/matrix`,
     attribution: (analyticsId: string | number) => `/analytics/${analyticsId}/attribution`,
-    scheduler: (analyticsId: string | number) => `/analytics/${analyticsId}/scheduler`,
 
     finance: (analyticsId: string | number) => `/analytics/${analyticsId}/finance`,
 

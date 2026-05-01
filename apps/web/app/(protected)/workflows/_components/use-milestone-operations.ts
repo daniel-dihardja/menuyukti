@@ -7,8 +7,6 @@ import {
   brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   milestoneDataSchema,
-  promotionCandidatesMilestoneDataSchema,
-  schedulerMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import {
   getMilestonePresetCreateFields,
@@ -36,14 +34,6 @@ function parseDataPreviewForPreset(
   }
   if (presetId === 'restaurant_brand_brief') {
     const parsed = brandBriefMilestoneDataSchema.safeParse(dataPreview)
-    return parsed.success ? parsed.data : undefined
-  }
-  if (presetId === 'promotion_candidates') {
-    const parsed = promotionCandidatesMilestoneDataSchema.safeParse(dataPreview)
-    return parsed.success ? parsed.data : undefined
-  }
-  if (presetId === 'scheduler') {
-    const parsed = schedulerMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   return undefined

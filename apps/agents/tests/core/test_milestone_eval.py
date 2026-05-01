@@ -191,30 +191,6 @@ def test_extract_milestone_input_notes_brand_brief_trims() -> None:
     assert out == "owner context"
 
 
-def test_extract_milestone_input_notes_promotion_candidates() -> None:
-    out = nodes._extract_milestone_input_notes(
-        _base_state(
-            milestone_input={
-                "type": "promotion_candidates",
-                "value": {"notes": "prioritize brunch"},
-            },
-        ),
-    )
-    assert out == "prioritize brunch"
-
-
-def test_extract_milestone_input_notes_scheduler() -> None:
-    out = nodes._extract_milestone_input_notes(
-        _base_state(
-            milestone_input={
-                "type": "scheduler",
-                "value": {"notes": "two posts per week"},
-            },
-        ),
-    )
-    assert out == "two posts per week"
-
-
 def test_extract_milestone_input_notes_ignores_dates_type() -> None:
     assert (
         nodes._extract_milestone_input_notes(
@@ -229,19 +205,12 @@ def test_extract_milestone_input_notes_ignores_dates_type() -> None:
     )
 
 
-def test_select_best_milestonedata_payload_prefers_populated_promotion_list() -> None:
-    sparse = {
-        "placement": "",
-        "puzzleOpportunityPool": {"puzzleItemsFound": 0, "threshold": 0.0, "selectedCount": 0},
-        "promotionCandidates": [],
-        "rankedCandidates": [],
-    }
+def test_select_best_milestonedata_payload_prefers_larger_payload() -> None:
+    sparse = {"summary": "ok"}
     rich = {
-        "placement": "ok",
-        "puzzleOpportunityPool": {"puzzleItemsFound": 0, "threshold": 0.0, "selectedCount": 0},
-        "promotionCandidates": [{"menu": "A", "rationale": ["x"]}],
-        "rankedCandidates": [{"menu": "A", "recommendation": "x", "score": 1.0, "quantity": 1, "totalRevenue": 1.0, "signalReasons": []}],
+        "summary": "ok",
+        "details": ["a", "b", "c"],
+        "extras": {"foo": "bar", "baz": "qux"},
     }
     chosen = nodes._select_best_milestonedata_payload([sparse, rich])
-    assert chosen is not None
-    assert len(chosen["promotionCandidates"]) == 1
+    assert chosen is rich
