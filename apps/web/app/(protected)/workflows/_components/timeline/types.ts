@@ -1,10 +1,5 @@
 import type { ReactNode } from 'react'
 
-import type {
-  PromotionCandidatesMilestoneData,
-  SchedulerMilestoneData,
-} from '@/lib/graphql/node-schemas'
-
 export type TimelineMilestoneStatus = 'complete' | 'failed' | 'pending' | 'empty'
 
 export type PassCriteriaStatus = 'pass' | 'fail' | 'open'
@@ -18,11 +13,7 @@ export type PassCriteriaRow = {
 /** Milestone agent run skill selection; stored on milestone `data` JSON. */
 export type MilestoneRunSkillMode = 'auto' | 'fixed'
 
-export type MilestonePresetId =
-  | 'dates'
-  | 'restaurant_brand_brief'
-  | 'promotion_candidates'
-  | 'scheduler'
+export type MilestonePresetId = 'dates' | 'restaurant_brand_brief' | 'promotion_candidates'
 
 export type DatesMilestoneInput = {
   startDate: string
@@ -66,11 +57,24 @@ export type BrandBriefMilestoneData = {
   toneGuardrails: string[]
 }
 
+export type PromotionCandidatesCategoryBlock = {
+  menuCategory: string
+  starHighlights: string[]
+  puzzleHighlights: string[]
+  notes?: string
+}
+
+export type PromotionCandidatesMilestoneData = {
+  grouping: 'by_menu_category' | 'flat'
+  categories: Record<string, PromotionCandidatesCategoryBlock>
+  flatSummary: string
+  promotionIdeas: string[]
+}
+
 export type MilestoneDataValue =
   | DatesMilestoneData
   | BrandBriefMilestoneData
   | PromotionCandidatesMilestoneData
-  | SchedulerMilestoneData
 
 export type TimelineMilestone = {
   id: string

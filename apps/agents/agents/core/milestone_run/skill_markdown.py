@@ -17,6 +17,7 @@ class SkillMarkdownConfig(BaseModel):
     description: str
     body: str
     extra_tools: list[str] = Field(default_factory=list)
+    inject_prior_presets: list[str] = Field(default_factory=list)
 
 
 _FRONTMATTER_SPLIT = re.compile(r"^---\s*$", re.MULTILINE)
@@ -60,6 +61,26 @@ def _normalize_extra_tools_raw(raw: Any) -> list[str]:
     return out
 
 
+def _normalize_inject_prior_presets_raw(raw: Any) -> list[str]:
+    """Parse ``inject_prior_presets`` from YAML: list of non-empty strings, or absent/None → []."""
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        msg = "SKILL frontmatter inject_prior_presets must be a list of strings or omitted"
+        raise ValueError(msg)
+    out: list[str] = []
+    for i, item in enumerate(raw):
+        if not isinstance(item, str):
+            msg = f"SKILL frontmatter inject_prior_presets[{i}] must be a string"
+            raise ValueError(msg)
+        s = item.strip()
+        if not s:
+            msg = f"SKILL frontmatter inject_prior_presets[{i}] must be non-empty"
+            raise ValueError(msg)
+        out.append(s)
+    return out
+
+
 def load_skill_markdown(path: Path | str) -> SkillMarkdownConfig:
     """Load SKILL.md frontmatter + markdown body."""
     p = Path(path)
@@ -70,4 +91,5 @@ def load_skill_markdown(path: Path | str) -> SkillMarkdownConfig:
         description=str(fm.get("description", "")),
         body=body,
         extra_tools=_normalize_extra_tools_raw(fm.get("extra_tools")),
+        inject_prior_presets=_normalize_inject_prior_presets_raw(fm.get("inject_prior_presets")),
     )

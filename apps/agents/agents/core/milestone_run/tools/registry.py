@@ -47,7 +47,7 @@ EXTRA_TOOL_FACTORIES: dict[str, ExtraToolFactory] = {
         client=client,
     ),
     "get_promotion_candidates": lambda context, lid, uid, client: (
-        make_get_promotion_candidates_tool(lid, uid, client=client)
+        make_get_promotion_candidates_tool(context, lid, uid, client=client)
     ),
     "get_prior_campaign_context": lambda context, lid, uid, client: (
         make_get_prior_campaign_context_tool()

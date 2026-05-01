@@ -66,7 +66,7 @@ Workflow:
    - Keep arrays grounded in location profile and signals where possible, otherwise return conservative placeholders like `"Operating signals unavailable from analytics."`.
    - Still do **not** introduce campaign dates.
 8. Ensure downstream compatibility:
-   - Keep wording concise and operational so scheduler and caption planning can reuse pillars and tone directly.
+   - Keep wording concise and operational so caption planning can reuse pillars and tone directly.
    - Make `contentPillars` reusable for content planning (for example: hero signatures, category variety, behind-the-scenes craft, engagement/community, promotional pushes when demand is low).
    - Ensure `toneGuardrails` are execution-ready (short, imperative guidance suitable for captions/creative prompts).
    - Where signals exist, include at least one explicit timing-oriented hypothesis or proof angle (meal period, peak day, weekday/weekend split) that can guide posting windows.

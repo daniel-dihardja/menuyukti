@@ -59,6 +59,12 @@ const NAV_WORKSPACE: NavItem[] = [
     icon: <Megaphone className="w-4 h-4" />,
   },
   {
+    key: 'studio',
+    labelKey: 'studio',
+    href: routes.studio,
+    icon: <Sparkles className="w-4 h-4" />,
+  },
+  {
     key: 'reports',
     labelKey: 'reports',
     icon: <FileUp className="w-4 h-4" />,
@@ -83,12 +89,6 @@ const NAV_ACCOUNT: NavItem[] = [
 
 /** Platform tools; visibility keys listed in `config/admin-only-features.json`. */
 const NAV_ADMIN: NavItem[] = [
-  {
-    key: 'studio',
-    labelKey: 'studio',
-    href: routes.studio,
-    icon: <Sparkles className="w-4 h-4" />,
-  },
   {
     key: 'printOrders',
     labelKey: 'printOrders',

@@ -1,15 +1,12 @@
 import {
   brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
-  emptyPromotionCandidatesMilestoneData,
-  emptySchedulerMilestoneData,
   goalDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataValueSchema,
   passCriteriaDataSchema,
   promotionCandidatesMilestoneDataSchema,
-  schedulerMilestoneDataSchema,
   resultDataSchema,
 } from '@/lib/graphql/node-schemas'
 import type { AnyNode } from '@/lib/graphql/queries'
@@ -210,22 +207,18 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
     }
   }
   if (presetId === 'promotion_candidates') {
-    const parsedPromotionData = promotionCandidatesMilestoneDataSchema.safeParse(data)
-    if (parsedPromotionData.success) {
-      normalizedData = parsedPromotionData.data
+    const parsedPc = promotionCandidatesMilestoneDataSchema.safeParse(data)
+    if (parsedPc.success) {
+      normalizedData = parsedPc.data
     } else {
-      normalizedData = emptyPromotionCandidatesMilestoneData()
+      normalizedData = {
+        grouping: 'by_menu_category',
+        categories: {},
+        flatSummary: '',
+        promotionIdeas: [],
+      }
     }
   }
-  if (presetId === 'scheduler') {
-    const parsedSchedulerData = schedulerMilestoneDataSchema.safeParse(data)
-    if (parsedSchedulerData.success) {
-      normalizedData = parsedSchedulerData.data
-    } else {
-      normalizedData = emptySchedulerMilestoneData()
-    }
-  }
-
   return {
     id: node.id,
     title: node.name,

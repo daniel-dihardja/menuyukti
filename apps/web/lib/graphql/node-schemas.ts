@@ -22,7 +22,6 @@ export const milestonePresetIdSchema = z.enum([
   'dates',
   'restaurant_brand_brief',
   'promotion_candidates',
-  'scheduler',
 ])
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
@@ -34,12 +33,27 @@ export const datesMilestoneInputSchema = z.object({
 
 export type DatesMilestoneInput = z.infer<typeof datesMilestoneInputSchema>
 
-/** Brand brief milestone Input tab: optional owner notes sent with location context on run. */
+/**
+ * Optional owner notes on the milestone Input tab (`value.notes`).
+ * Used by the brand brief preset.
+ */
 export const brandBriefMilestoneInputValueSchema = z.object({
   notes: z.string(),
 })
 
 export type BrandBriefMilestoneInputValue = z.infer<typeof brandBriefMilestoneInputValueSchema>
+
+/**
+ * Optional owner notes on the milestone Input tab (`value.notes`).
+ * Used by the promotion candidates preset.
+ */
+export const promotionCandidatesMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type PromotionCandidatesMilestoneInputValue = z.infer<
+  typeof promotionCandidatesMilestoneInputValueSchema
+>
 
 export const milestoneInputSchema = z.object({
   type: z.string().trim().min(1),
@@ -83,116 +97,23 @@ export const brandBriefMilestoneDataSchema = z.object({
 
 export type BrandBriefMilestoneData = z.infer<typeof brandBriefMilestoneDataSchema>
 
-export const schedulerPostTypeSchema = z.enum(['single', 'carousel'])
-
-export type SchedulerPostType = z.infer<typeof schedulerPostTypeSchema>
-
-/** One scheduled Instagram post row. */
-export const schedulerScheduleItemSchema = z.object({
-  dateTime: z.string(),
-  type: schedulerPostTypeSchema,
-  promotedMenuItems: z.array(z.string()),
-  visualIdea: z.string(),
-  captionIdea: z.string(),
+export const promotionCandidatesCategoryBlockSchema = z.object({
+  menuCategory: z.string(),
+  starHighlights: z.array(z.string()),
+  puzzleHighlights: z.array(z.string()),
+  notes: z.string().optional(),
 })
 
-export type SchedulerScheduleItem = z.infer<typeof schedulerScheduleItemSchema>
-
-/** Structured milestone data for the Scheduler preset. */
-export const schedulerMilestoneDataSchema = z.object({
-  schedules: z.array(schedulerScheduleItemSchema),
-  campaignStart: z.string().optional(),
-  campaignEnd: z.string().optional(),
-  sourceSignalsSummary: z.string().optional(),
-})
-
-export type SchedulerMilestoneData = z.infer<typeof schedulerMilestoneDataSchema>
-
-/** Instagram promotion guidance for one candidate menu item. */
-export const promotionInstagramPromotionSchema = z.object({
-  angle: z.string(),
-  format: z.string(),
-  cta: z.string(),
-  timing: z.string(),
-})
-
-export type PromotionInstagramPromotion = z.infer<typeof promotionInstagramPromotionSchema>
-
-/** One curated promotion candidate (POS-exact menu name + rationale + optional puzzle analysis). */
-export const promotionCandidateItemSchema = z.object({
-  menu: z.string(),
-  rationale: z.array(z.string()),
-  puzzleAnalysis: z.string().optional(),
-  instagramPromotion: promotionInstagramPromotionSchema.optional(),
-})
-
-export type PromotionCandidateItem = z.infer<typeof promotionCandidateItemSchema>
-
-/** Summary counts for the puzzle opportunity pool (from analytics + menu engineering). */
-export const promotionPuzzleOpportunityPoolSchema = z.object({
-  puzzleItemsFound: z.number().int().nonnegative(),
-  threshold: z.number(),
-  selectedCount: z.number().int().nonnegative(),
-})
-
-export type PromotionPuzzleOpportunityPool = z.infer<typeof promotionPuzzleOpportunityPoolSchema>
-
-/** Prior milestone alignment notes (filled by the milestone agent). */
-export const promotionCandidatesContextSchema = z.object({
-  campaignWindowNotes: z.string().optional(),
-  brandBriefAlignmentNotes: z.string().optional(),
-})
-
-export type PromotionCandidatesContext = z.infer<typeof promotionCandidatesContextSchema>
-
-/** One ranked row from promotion signals (extra fields allowed from analytics). */
-export const promotionRankedCandidateSchema = z
-  .object({
-    menu: z.string(),
-    recommendation: z.string(),
-    score: z.number(),
-    quantity: z.number().int(),
-    totalRevenue: z.number(),
-    signalReasons: z.array(z.string()),
-  })
-  .passthrough()
-
-export type PromotionRankedCandidate = z.infer<typeof promotionRankedCandidateSchema>
-
-/** Structured milestone data for the Promotion Candidates preset. */
 export const promotionCandidatesMilestoneDataSchema = z.object({
-  placement: z.string(),
-  puzzleOpportunityPool: promotionPuzzleOpportunityPoolSchema,
-  promotionCandidates: z.array(promotionCandidateItemSchema),
-  rankedCandidates: z.array(promotionRankedCandidateSchema),
-  context: promotionCandidatesContextSchema.optional(),
+  grouping: z.enum(['by_menu_category', 'flat']),
+  categories: z.record(z.string(), promotionCandidatesCategoryBlockSchema),
+  flatSummary: z.string(),
+  promotionIdeas: z.array(z.string()),
 })
 
 export type PromotionCandidatesMilestoneData = z.infer<
   typeof promotionCandidatesMilestoneDataSchema
 >
-
-export function emptyPromotionCandidatesMilestoneData(
-  placement = '',
-): PromotionCandidatesMilestoneData {
-  return {
-    placement,
-    puzzleOpportunityPool: {
-      puzzleItemsFound: 0,
-      threshold: 0,
-      selectedCount: 0,
-    },
-    promotionCandidates: [],
-    rankedCandidates: [],
-    context: {},
-  }
-}
-
-export function emptySchedulerMilestoneData(): SchedulerMilestoneData {
-  return {
-    schedules: [],
-  }
-}
 
 export const milestoneDataSchema = z
   .object({
@@ -226,7 +147,6 @@ export const milestonedataValueSchema = z.union([
   datesMilestoneDataSchema,
   brandBriefMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
-  schedulerMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>

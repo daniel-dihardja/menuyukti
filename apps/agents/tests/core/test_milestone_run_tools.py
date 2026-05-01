@@ -154,6 +154,14 @@ def test_extra_tool_ids_includes_get_promotion_candidates() -> None:
     assert names.index("get_promotion_candidates") < names.index("write_result_data")
 
 
+def test_promotion_candidates_skill_extra_tool_ids() -> None:
+    from agents_app.agents.core.milestone_run.skills import SKILL_REGISTRY
+
+    pc = SKILL_REGISTRY["promotion_candidates"]
+    assert pc.extra_tool_ids == ("get_promotion_candidates", "get_prior_campaign_context")
+    assert pc.inject_prior_presets == ("restaurant_brand_brief",)
+
+
 def test_extra_tool_ids_includes_get_prior_campaign_context() -> None:
     tools = _tools_for_context({}, extra_tool_ids=["get_prior_campaign_context"])
     names = [getattr(t, "name", "") for t in tools]
@@ -198,213 +206,108 @@ async def test_get_public_holidays_formats_list() -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_promotion_candidates_formats_ranked_output() -> None:
+async def test_get_promotion_candidates_formats_engineering_payload() -> None:
     ctx: dict[str, Any] = {}
     client = MagicMock(spec=AsyncMock)
+    grouped: dict[str, Any] = {
+        "grouping": "by_menu_category",
+        "rowsSkippedMissingCategory": 0,
+        "categories": {
+            "Mains": {
+                "matrix": {"thresholds": {"avg_popularity": 1.0}, "distribution": [], "items": []},
+                "topStars": [{"menu": "Sate", "quantity": 10}],
+                "topPuzzles": [],
+            }
+        },
+    }
+    call_n = {"n": 0}
+
+    async def fake_post(
+        _client: Any,
+        _query: str,
+        _variables: dict[str, Any],
+        _user_id: str,
+    ) -> dict[str, Any]:
+        call_n["n"] += 1
+        if call_n["n"] == 1:
+            return {"analyticsRuns": [{"id": "99", "name": "Latest"}]}
+        return {"promotionEngineeringCandidates": grouped}
 
     with patch(
-        "agents_app.agents.core.milestone_run.tools.get_promotion_candidates.fetch_location_operating_signals",
-        new=AsyncMock(
-            return_value={
-                "analytics_run": {"id": "1", "name": "Run 1"},
-                "operating_profile": None,
-                "category_mix": None,
-                "promotion_menu_items": {
-                    "periodStart": "2026-01-01",
-                    "periodEnd": "2026-01-31",
-                    "items": [],
-                },
-                "promotion_candidates_signals": {
-                    "itemsTotalCount": 4,
-                    "itemsTruncated": False,
-                    "topPromote": [
-                        {
-                            "menu": "Nasi Goreng",
-                            "recommendation": "promote",
-                            "score": 100.0,
-                            "quantity": 100,
-                            "totalRevenue": 5000.0,
-                            "signalReasons": ["Tagged as content hero in Instagram signals"],
-                        }
-                    ],
-                    "topAvoid": [
-                        {
-                            "menu": "Iced Tea",
-                            "recommendation": "avoid",
-                            "score": 12.0,
-                            "quantity": 50,
-                            "totalRevenue": 1000.0,
-                            "signalReasons": ["Flagged as avoid or low_end"],
-                        }
-                    ],
-                    "puzzleOpportunityPool": {
-                        "puzzleItemsFound": 2,
-                        "threshold": 72.0,
-                        "selectedCount": 1,
-                        "selected": [
-                            {
-                                "menu": "Truffle Pasta",
-                                "recommendation": "promote",
-                                "score": 78.0,
-                                "quantity": 40,
-                                "totalRevenue": 3200.0,
-                                "signalReasons": ["Tagged as rising trend in Instagram signals"],
-                                "whySelected": ["Balanced potential: qty 40, revenue 3200.00."],
-                                "howToPromoteOnInstagram": [
-                                    "Angle",
-                                    "Format",
-                                    "Timing & CTA",
-                                ],
-                            }
-                        ],
-                    },
-                    "rankedCandidates": [
-                        {
-                            "menu": "Nasi Goreng",
-                            "recommendation": "promote",
-                            "score": 100.0,
-                            "quantity": 100,
-                            "totalRevenue": 5000.0,
-                            "signalReasons": ["Tagged as content hero in Instagram signals"],
-                        },
-                        {
-                            "menu": "Truffle Pasta",
-                            "recommendation": "promote",
-                            "score": 78.0,
-                            "quantity": 40,
-                            "totalRevenue": 3200.0,
-                            "signalReasons": ["Tagged as rising trend in Instagram signals"],
-                        },
-                        {
-                            "menu": "Lava Cake",
-                            "recommendation": "test",
-                            "score": 52.0,
-                            "quantity": 30,
-                            "totalRevenue": 1800.0,
-                            "signalReasons": ["Menu engineering category is puzzle"],
-                        },
-                        {
-                            "menu": "Iced Tea",
-                            "recommendation": "avoid",
-                            "score": 12.0,
-                            "quantity": 50,
-                            "totalRevenue": 1000.0,
-                            "signalReasons": ["Flagged as avoid or low_end"],
-                        },
-                    ],
-                    "rankedCandidatesTotalCount": 4,
-                    "bestPostingWindow": {"peakDay": "fri", "peakHour": 19},
-                    "bestPostingWindowSummary": "peak day: fri, peak hour: 19:00",
-                },
-                "instagram_signals": {},
-            }
-        ),
+        "agents_app.agents.core.milestone_run.tools.get_promotion_candidates.graphql_post",
+        new=AsyncMock(side_effect=fake_post),
     ):
         tools = _tools_for_context(ctx, client=client, extra_tool_ids=["get_promotion_candidates"])
         get_promotion_candidates = _tool_by_name(tools, "get_promotion_candidates")
         out = await get_promotion_candidates.ainvoke({})
 
     payload = json.loads(out)
-    assert payload["analyticsRun"]["name"] == "Run 1"
-    assert payload["totals"]["menuItemsEvaluated"] == 4
-    assert len(payload["topPromote"]) >= 1
-    assert any(r["menu"] == "Nasi Goreng" for r in payload["rankedCandidates"])
-    assert any(r["menu"] == "Truffle Pasta" for r in payload["rankedCandidates"])
-    assert any(r["menu"] == "Iced Tea" for r in payload["rankedCandidates"])
-    assert payload.get("rankedCandidatesTotalCount") == 4
-    assert payload.get("rankedCandidatesTruncated") is False
-    assert len(payload["rankedCandidates"]) == 4
-    rc0 = payload["rankedCandidates"][0]
-    assert set(rc0.keys()) == {
-        "menu",
-        "recommendation",
-        "score",
-        "quantity",
-        "totalRevenue",
-        "signalReasons",
-    }
-    pool = payload["puzzleOpportunityPool"]
-    assert pool["puzzleItemsFound"] == 2
-    assert pool["selectedCount"] >= 1
-    selected = pool["selected"]
-    assert isinstance(selected, list)
-    assert any(s.get("menu") == "Truffle Pasta" for s in selected)
-    for row in selected:
-        assert "whySelected" in row
-        assert "howToPromoteOnInstagram" in row
+    assert payload["analyticsRun"]["name"] == "Latest"
+    pec = payload["promotionEngineeringCandidates"]
+    assert pec["grouping"] == "by_menu_category"
+    assert "Mains" in pec["categories"]
+    assert pec["categories"]["Mains"]["topStars"][0]["menu"] == "Sate"
+    assert "milestonePromotionCandidatesOwnerNotesMarkdown" not in payload
 
 
 @pytest.mark.asyncio
-async def test_get_promotion_candidates_truncates_large_menu() -> None:
-    """Large menus cap rankedCandidates so the ReAct LLM turn stays bounded."""
-    ctx: dict[str, Any] = {}
+async def test_get_promotion_candidates_includes_owner_notes_when_milestone_input_set() -> None:
+    ctx: dict[str, Any] = {
+        "milestone_input": {
+            "type": "promotion_candidates",
+            "value": {"notes": "  Highlight brunch  "},
+        },
+    }
     client = MagicMock(spec=AsyncMock)
-    items: list[dict[str, Any]] = []
-    for i in range(40):
-        items.append(
-            {
-                "menu": f"Dish {i:02d}",
-                "quantity": 10 + i,
-                "totalRevenue": float(100 + i * 10),
-                "menuCategory": "Main",
-                "menuCategoryDetail": "X",
-                "category": "plow_horse",
-                "action": "promote",
-                "peakDay": "mon",
-                "peakHour": 12,
-                "contributionMarginPercentage": 0.2,
-            }
-        )
+    grouped: dict[str, Any] = {
+        "grouping": "flat",
+        "categories": {},
+        "matrix": None,
+        "topStars": [],
+        "topPuzzles": [],
+    }
+    call_n = {"n": 0}
+
+    async def fake_post(
+        _client: Any,
+        _query: str,
+        _variables: dict[str, Any],
+        _user_id: str,
+    ) -> dict[str, Any]:
+        call_n["n"] += 1
+        if call_n["n"] == 1:
+            return {"analyticsRuns": [{"id": "1", "name": "R"}]}
+        return {"promotionEngineeringCandidates": grouped}
 
     with patch(
-        "agents_app.agents.core.milestone_run.tools.get_promotion_candidates.fetch_location_operating_signals",
-        new=AsyncMock(
-            return_value={
-                "analytics_run": {"id": "1", "name": "Run 1"},
-                "operating_profile": None,
-                "category_mix": None,
-                "promotion_menu_items": {
-                    "periodStart": "2026-01-01",
-                    "periodEnd": "2026-01-31",
-                    "items": items,
-                },
-                "promotion_candidates_signals": {
-                    "itemsTotalCount": 40,
-                    "itemsTruncated": False,
-                    "topPromote": items[:8],
-                    "topAvoid": [],
-                    "puzzleOpportunityPool": {
-                        "puzzleItemsFound": 0,
-                        "threshold": 0.0,
-                        "selectedCount": 0,
-                        "selected": [],
-                    },
-                    "rankedCandidates": items,
-                    "rankedCandidatesTotalCount": 40,
-                    "bestPostingWindow": None,
-                    "bestPostingWindowSummary": "not available",
-                },
-                "instagram_signals": {},
-            }
-        ),
+        "agents_app.agents.core.milestone_run.tools.get_promotion_candidates.graphql_post",
+        new=AsyncMock(side_effect=fake_post),
     ):
         tools = _tools_for_context(ctx, client=client, extra_tool_ids=["get_promotion_candidates"])
         get_promotion_candidates = _tool_by_name(tools, "get_promotion_candidates")
         out = await get_promotion_candidates.ainvoke({})
 
     payload = json.loads(out)
-    assert payload["totals"]["menuItemsEvaluated"] == 40
-    assert payload["rankedCandidatesTotalCount"] == 40
-    assert payload["rankedCandidatesTruncated"] is True
-    assert len(payload["rankedCandidates"]) == 30
-    assert set(payload["rankedCandidates"][0].keys()) == {
-        "menu",
-        "recommendation",
-        "score",
-        "quantity",
-        "totalRevenue",
-        "signalReasons",
-    }
+    md = payload.get("milestonePromotionCandidatesOwnerNotesMarkdown")
+    assert isinstance(md, str)
+    assert "Highlight brunch" in md
+    assert "Milestone promotion candidates input (owner)" in md
+
+
+@pytest.mark.asyncio
+async def test_get_promotion_candidates_no_analytics_run_message() -> None:
+    ctx: dict[str, Any] = {}
+    client = MagicMock(spec=AsyncMock)
+
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.get_promotion_candidates.graphql_post",
+        new=AsyncMock(return_value={"analyticsRuns": []}),
+    ):
+        tools = _tools_for_context(ctx, client=client, extra_tool_ids=["get_promotion_candidates"])
+        get_promotion_candidates = _tool_by_name(tools, "get_promotion_candidates")
+        out = await get_promotion_candidates.ainvoke({})
+
+    assert "No analytics run" in out
 
 
 @pytest.mark.asyncio
@@ -535,68 +438,6 @@ async def test_write_result_data_parses_structured_json_when_context_is_structur
 
 
 @pytest.mark.asyncio
-async def test_write_result_data_validates_scheduler_payload() -> None:
-    ctx: dict[str, Any] = {"selected_skill_id": "scheduler"}
-    client = MagicMock(spec=AsyncMock)
-    valid = {
-        "schedules": [
-            {
-                "dateTime": "2026-06-03T19:00:00",
-                "type": "carousel",
-                "promotedMenuItems": ["Nasi Goreng"],
-                "visualIdea": "Kitchen prep and plated close-up",
-                "captionIdea": "Dinner spotlight",
-            }
-        ],
-        "campaignStart": "2026-06-01",
-        "campaignEnd": "2026-06-30",
-        "sourceSignalsSummary": "peak day hint: fri; high-demand weeks: 2",
-    }
-
-    with patch(
-        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
-        new=AsyncMock(return_value={"id": "md-11"}),
-    ) as mock_upsert:
-        tools = _tools_for_context(ctx, client=client)
-        write_result_data = _tool_by_name(tools, "write_result_data")
-        out = await write_result_data.ainvoke({"new_data": valid})
-
-    mock_upsert.assert_awaited_once()
-    assert "md-11" in out
-    assert isinstance(ctx.get("milestone_data"), dict)
-    assert ctx["milestone_data"]["schedules"][0]["type"] == "carousel"
-    assert ctx["milestone_data"]["campaignStart"] == "2026-06-01"
-
-
-@pytest.mark.asyncio
-async def test_write_result_data_rejects_invalid_scheduler_payload() -> None:
-    ctx: dict[str, Any] = {"selected_skill_id": "scheduler"}
-    client = MagicMock(spec=AsyncMock)
-    invalid = {
-        "schedules": [
-            {
-                "dateTime": "2026-06-03T19:00:00",
-                "type": "video",
-                "promotedMenuItems": ["Nasi Goreng"],
-                "visualIdea": "Kitchen prep and plated close-up",
-                "captionIdea": "Dinner spotlight",
-            }
-        ]
-    }
-
-    with patch(
-        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
-        new=AsyncMock(return_value={"id": "md-12"}),
-    ) as mock_upsert:
-        tools = _tools_for_context(ctx, client=client)
-        write_result_data = _tool_by_name(tools, "write_result_data")
-        out = await write_result_data.ainvoke({"new_data": invalid})
-
-    mock_upsert.assert_not_awaited()
-    assert "Output validation failed for skill 'scheduler'" in out
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("selected_skill_id", "payload"),
     [
@@ -649,58 +490,6 @@ async def test_write_result_data_rejects_invalid_scheduler_payload() -> None:
                 "toneGuardrails": ["Warm", "Helpful", "Clear"],
             },
         ),
-        (
-            "promotion_candidates",
-            {
-                "placement": "grid",
-                "puzzleOpportunityPool": {
-                    "puzzleItemsFound": 2,
-                    "threshold": 72.0,
-                    "selectedCount": 1,
-                },
-                "promotionCandidates": [
-                    {
-                        "menu": "Nasi Goreng",
-                        "rationale": ["High repeat orders"],
-                        "instagramPromotion": {
-                            "angle": "Chef spotlight",
-                            "format": "carousel",
-                            "cta": "Book now",
-                            "timing": "Dinner",
-                        },
-                    }
-                ],
-                "rankedCandidates": [
-                    {
-                        "menu": "Nasi Goreng",
-                        "recommendation": "promote",
-                        "score": 94.2,
-                        "quantity": 100,
-                        "totalRevenue": 5000.0,
-                        "signalReasons": ["Content hero"],
-                        "extraSignal": "allowed",
-                    }
-                ],
-                "context": {
-                    "campaignWindowNotes": "Align with holiday week",
-                    "brandBriefAlignmentNotes": "Fits warm tone",
-                },
-            },
-        ),
-        (
-            "scheduler",
-            {
-                "schedules": [
-                    {
-                        "dateTime": "2026-06-03T19:00:00",
-                        "type": "carousel",
-                        "promotedMenuItems": ["Nasi Goreng"],
-                        "visualIdea": "Kitchen prep and plated close-up",
-                        "captionIdea": "Dinner spotlight",
-                    }
-                ]
-            },
-        ),
     ],
 )
 async def test_write_result_data_accepts_registered_skill_payloads(
@@ -723,52 +512,6 @@ async def test_write_result_data_accepts_registered_skill_payloads(
     assert ctx.get("milestone_data") == awaited_payload
     assert isinstance(ctx.get("milestone_data"), dict)
     assert ctx.get("milestonedata_written") is True
-
-
-@pytest.mark.asyncio
-async def test_write_result_data_promotion_candidates_omits_optional_null_fields() -> None:
-    ctx: dict[str, Any] = {"selected_skill_id": "promotion_candidates"}
-    payload: dict[str, Any] = {
-        "placement": "grid",
-        "puzzleOpportunityPool": {
-            "puzzleItemsFound": 2,
-            "threshold": 72.0,
-            "selectedCount": 1,
-        },
-        "promotionCandidates": [
-            {
-                "menu": "Nasi Goreng",
-                "rationale": ["High repeat orders"],
-            }
-        ],
-        "rankedCandidates": [
-            {
-                "menu": "Nasi Goreng",
-                "recommendation": "promote",
-                "score": 94.2,
-                "quantity": 100,
-                "totalRevenue": 5000.0,
-                "signalReasons": ["Content hero"],
-            }
-        ],
-    }
-    client = MagicMock(spec=AsyncMock)
-
-    with patch(
-        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
-        new=AsyncMock(return_value={"id": "md-promo-no-nulls"}),
-    ) as mock_upsert:
-        tools = _tools_for_context(ctx, client=client)
-        write_result_data = _tool_by_name(tools, "write_result_data")
-        out = await write_result_data.ainvoke({"new_data": payload})
-
-    mock_upsert.assert_awaited_once()
-    awaited_payload = mock_upsert.await_args.args[2]
-    assert "md-promo-no-nulls" in out
-    assert "context" not in awaited_payload
-    promoted = awaited_payload["promotionCandidates"][0]
-    assert "puzzleAnalysis" not in promoted
-    assert "instagramPromotion" not in promoted
 
 
 @pytest.mark.asyncio
@@ -797,34 +540,6 @@ async def test_write_result_data_promotion_candidates_omits_optional_null_fields
                 "audienceHypotheses": ["Office workers"],
                 "proofOrientedAngles": ["Best seller"],
                 "toneGuardrails": ["Warm", "Helpful"],
-            },
-        ),
-        (
-            "promotion_candidates",
-            {
-                "placement": "grid",
-                "puzzleOpportunityPool": {
-                    "puzzleItemsFound": 2,
-                    "threshold": 72.0,
-                    # invalid: selectedCount missing
-                },
-                "promotionCandidates": [],
-                "rankedCandidates": [],
-            },
-        ),
-        (
-            "scheduler",
-            {
-                "schedules": [
-                    {
-                        "dateTime": "2026-06-03T19:00:00",
-                        # invalid literal
-                        "type": "video",
-                        "promotedMenuItems": ["Nasi Goreng"],
-                        "visualIdea": "Kitchen prep and plated close-up",
-                        "captionIdea": "Dinner spotlight",
-                    }
-                ]
             },
         ),
     ],

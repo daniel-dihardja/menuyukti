@@ -15,6 +15,9 @@ from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_api_adapter_tools_for_location,
     fetch_prior_milestones_data,
 )
+from agents_app.agents.core.milestone_run.prior_context_inject import (
+    build_injected_prior_context_markdown,
+)
 from agents_app.agents.core.milestone_run.prompts import (
     INTERMEDIATE_SKILL_PROMPT_SUFFIX,
     SKILL_SELECTOR_SYSTEM,
@@ -292,9 +295,21 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
     raw_adapters = state.get("api_adapter_tools", [])
     adapters_list = raw_adapters if isinstance(raw_adapters, list) else []
     adapter_suffix = workspace_adapter_tools_prompt_suffix(adapters_list)
-    system_prompt = skill.prompt + adapter_suffix
-    if not is_last:
-        system_prompt = skill.prompt + adapter_suffix + INTERMEDIATE_SKILL_PROMPT_SUFFIX
+    core_prompt = skill.prompt + adapter_suffix
+    injection_md, injection_matched = build_injected_prior_context_markdown(
+        str(state.get("prior_milestones_data") or ""),
+        skill.inject_prior_presets,
+    )
+    if injection_md:
+        core_prompt = core_prompt + "\n\n" + injection_md
+    if skill.inject_prior_presets:
+        _logger.info(
+            "milestone_run.execute_skill: inject_prior_presets_config=%s matched=%s milestone_id=%s",
+            list(skill.inject_prior_presets),
+            injection_matched if injection_matched else "none_matched",
+            mid,
+        )
+    system_prompt = core_prompt + ("" if is_last else INTERMEDIATE_SKILL_PROMPT_SUFFIX)
     # Non-streaming model avoids long stalls after large tool results (e.g. promotion JSON).
     llm = get_llm_structured()
     agent = create_react_agent(llm, tools, prompt=system_prompt)

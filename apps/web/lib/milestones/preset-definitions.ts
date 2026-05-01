@@ -2,18 +2,12 @@ import type {
   MilestoneRunSkillMode,
   PassCriteriaRow,
 } from '@/app/(protected)/workflows/_components/timeline/types'
-import {
-  emptyPromotionCandidatesMilestoneData,
-  emptySchedulerMilestoneData,
-  type MilestoneInput,
-  type MilestonedataValue,
-} from '@/lib/graphql/node-schemas'
+import { type MilestoneInput, type MilestonedataValue } from '@/lib/graphql/node-schemas'
 
 export const MILESTONE_PRESET_IDS = [
   'dates',
   'restaurant_brand_brief',
   'promotion_candidates',
-  'scheduler',
 ] as const
 
 export type MilestonePresetId = (typeof MILESTONE_PRESET_IDS)[number]
@@ -84,6 +78,10 @@ export function getMilestonePresetCreateFields(
       return {
         presetId: 'restaurant_brand_brief',
         name: t('milestonePreset.restaurant_brand_brief.title'),
+        milestoneInput: {
+          type: 'restaurant_brand_brief',
+          value: { notes: '' },
+        },
         milestoneData: {
           venueSnapshot: {
             venueName: '',
@@ -126,50 +124,30 @@ export function getMilestonePresetCreateFields(
       return {
         presetId: 'promotion_candidates',
         name: t('milestonePreset.promotion_candidates.title'),
-        milestoneData: emptyPromotionCandidatesMilestoneData(
-          t('milestonePreset.promotion_candidates.placementHint'),
-        ) satisfies MilestonedataValue,
+        milestoneInput: {
+          type: 'promotion_candidates',
+          value: { notes: '' },
+        },
+        milestoneData: {
+          grouping: 'by_menu_category',
+          categories: {},
+          flatSummary: '',
+          promotionIdeas: [],
+        },
         goal: t('milestonePreset.promotion_candidates.goal'),
         milestoneRunSkillMode: 'fixed',
         milestoneRunSkillIds: ['promotion_candidates'],
         passCriteria: [
           {
-            requirement: t('milestonePreset.promotion_candidates.criterionPromotionCandidates'),
+            requirement: t('milestonePreset.promotion_candidates.criterionGrouping'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.promotion_candidates.criterionEvidenceGrounding'),
+            requirement: t('milestonePreset.promotion_candidates.criterionCategoriesOrFlat'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.promotion_candidates.criterionCampaignWindow'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.promotion_candidates.criterionBrandBrief'),
-            status: 'open',
-          },
-        ],
-      }
-    case 'scheduler':
-      return {
-        presetId: 'scheduler',
-        name: t('milestonePreset.scheduler.title'),
-        milestoneData: emptySchedulerMilestoneData() satisfies MilestonedataValue,
-        goal: t('milestonePreset.scheduler.goal'),
-        milestoneRunSkillMode: 'fixed',
-        milestoneRunSkillIds: ['scheduler'],
-        passCriteria: [
-          {
-            requirement: t('milestonePreset.scheduler.criterionHasScheduleRows'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.scheduler.criterionWithinCampaignWindow'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.scheduler.criterionAnalyticsGrounding'),
+            requirement: t('milestonePreset.promotion_candidates.criterionPromotionIdeas'),
             status: 'open',
           },
         ],

@@ -158,7 +158,104 @@ def test_prior_milestones_milestone_data_includes_earlier_milestonedata():
     rows = out.data["priorMilestonesMilestoneData"]
     assert isinstance(rows, list) and len(rows) == 1
     assert rows[0]["title"] == "Earlier"
+    assert rows[0].get("presetId") is None
     assert rows[0]["data"] == {"body": "# Body from earlier"}
+
+
+def test_prior_milestones_milestone_data_includes_preset_id_from_milestone_node():
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(name="Prior MD PresetId", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+    finally:
+        session.close()
+
+    wf = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "workflow",
+                "name": "WF",
+                "parentId": None,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not wf.errors, wf.errors
+    workflow_id = wf.data["createNode"]["id"]
+
+    m1 = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "name": "Brand brief step",
+                "parentId": workflow_id,
+                "data": {"presetId": "restaurant_brand_brief"},
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not m1.errors, m1.errors
+    m1_id = m1.data["createNode"]["id"]
+
+    asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestonedata",
+                "name": "Data",
+                "parentId": m1_id,
+                "data": {"venueSnapshot": {"venueName": "X", "city": "Y", "country": "Z", "currency": "EUR"}},
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+
+    m2 = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "milestone",
+                "name": "Later",
+                "parentId": workflow_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not m2.errors, m2.errors
+    m2_id = m2.data["createNode"]["id"]
+
+    out = asyncio.run(
+        schema.execute(
+            PRIOR_DATA,
+            variable_values={
+                "workflowId": workflow_id,
+                "milestoneId": m2_id,
+                "locationId": location_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not out.errors, out.errors
+    rows = out.data["priorMilestonesMilestoneData"]
+    assert isinstance(rows, list) and len(rows) == 1
+    assert rows[0]["title"] == "Brand brief step"
+    assert rows[0]["presetId"] == "restaurant_brand_brief"
+    assert rows[0]["data"] == {
+        "venueSnapshot": {"venueName": "X", "city": "Y", "country": "Z", "currency": "EUR"}
+    }
 
 
 def test_prior_milestones_milestone_data_empty_when_first_milestone():

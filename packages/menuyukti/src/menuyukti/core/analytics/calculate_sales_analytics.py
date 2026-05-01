@@ -180,10 +180,17 @@ def calculate_sales_analytics(
                 menu_heatmaps=heatmap_results,
             )
 
+    # Capability flags must match what we actually emit: callers may force ``has_datetime`` True
+    # while every ``order_time`` is missing/invalid—then no datetime tier is produced.
+    effective_has_datetime = datetime_signals is not None
+
     capabilities = AnalyticsCapabilities(
         has_order_id=has_order,
-        has_datetime=has_dt,
-        enabled_blocks=_build_enabled_blocks(has_order_id=has_order, has_datetime=has_dt),
+        has_datetime=effective_has_datetime,
+        enabled_blocks=_build_enabled_blocks(
+            has_order_id=has_order,
+            has_datetime=effective_has_datetime,
+        ),
     )
 
     return TieredSalesAnalyticsResult(

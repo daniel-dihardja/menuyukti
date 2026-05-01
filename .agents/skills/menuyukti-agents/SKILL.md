@@ -46,8 +46,6 @@ Implement each first-class LangChain tool as its own module under [`milestone_ru
 
 1. **`graphql_post`** — correct env and headers in [`graphql_base.py`](../../../apps/agents/agents/graphql_base.py).
 2. **New skill** — add `SKILL.md` (with `extra_tools` for non-core tools), register in `skills.py`, add factories to `milestone_run/tools/registry.py` / GraphQL in `milestone_run/graphql_client.py` if new data is needed.
-   - For the **Promotion Candidates** milestone preset (`promotion_candidates` in web preset definitions), keep the run mode fixed by default:
-     `milestoneRunSkillMode: "fixed"` and `milestoneRunSkillIds: ["promotion_candidates"]`.
 3. **Persistence** — Milestone data writes go through `write_result_data` → `milestone_data` upsert.
 4. **Tests** — extend [`test_milestone_run_tools.py`](../../../apps/agents/tests/core/test_milestone_run_tools.py) / [`test_skill_markdown.py`](../../../apps/agents/tests/core/test_skill_markdown.py) when changing tool assembly or `extra_tools` parsing.
 

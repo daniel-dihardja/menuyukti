@@ -30,6 +30,23 @@ from pydantic import BaseModel, Field
 
 _logger = logging.getLogger(__name__)
 
+
+def _milestonedata_eval_score(data: dict[str, Any]) -> int:
+    """Prefer larger milestonedata payloads (eval tie-breaking)."""
+    try:
+        return len(json.dumps(data, ensure_ascii=False))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _select_best_milestonedata_payload(payloads: list[dict[str, Any]]) -> dict[str, Any] | None:
+    if not payloads:
+        return None
+    if len(payloads) == 1:
+        return payloads[0]
+    return max(payloads, key=_milestonedata_eval_score)
+
+
 class CriterionVerdict(BaseModel):
     """Structured LLM output for a single pass/fail decision."""
 
@@ -41,11 +58,16 @@ def _node_type(ch: dict[str, Any]) -> str:
     return str(ch.get("nodeType") or ch.get("node_type") or "")
 
 
+_OWNER_NOTES_INPUT_TYPES = frozenset(
+    {"restaurant_brand_brief", "promotion_candidates"},
+)
+
+
 def _extract_milestone_input_notes(state: MilestoneEvalState) -> str:
     raw = state.get("milestone_input")
     if not isinstance(raw, dict):
         return ""
-    if raw.get("type") != "restaurant_brand_brief":
+    if raw.get("type") not in _OWNER_NOTES_INPUT_TYPES:
         return ""
     value = raw.get("value")
     if not isinstance(value, dict):
@@ -109,7 +131,7 @@ async def fetch_context(
         loc,
     )
     goal = ""
-    raw_data = ""
+    milestonedata_payloads: list[dict[str, Any]] = []
     criteria: list[dict[str, str]] = []
     for ch in children:
         nt = _node_type(ch)
@@ -121,12 +143,18 @@ async def fetch_context(
                 goal = g
         elif nt == "milestonedata":
             if isinstance(data, dict) and data:
-                raw_data = json.dumps(data, ensure_ascii=False, indent=2)
+                milestonedata_payloads.append(data)
         elif nt == "passcriteria":
             req = data.get("requirement", "")
             cid = str(ch.get("id", ""))
             if isinstance(req, str) and cid:
                 criteria.append({"id": cid, "requirement": req})
+    best_md = _select_best_milestonedata_payload(milestonedata_payloads)
+    raw_data = (
+        json.dumps(best_md, ensure_ascii=False, indent=2)
+        if best_md is not None
+        else ""
+    )
     prior_context = ""
     workflow_id = state.get("workflow_id")
     if isinstance(workflow_id, str) and workflow_id.strip():

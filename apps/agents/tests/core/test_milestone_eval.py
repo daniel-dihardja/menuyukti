@@ -177,3 +177,52 @@ def test_enforce_optional_input_line_removes_period_terminated_inline_fragment()
 def test_optional_input_usage_line_marks_not_given_when_notes_absent() -> None:
     line = nodes._optional_input_usage_line("")
     assert line == "Optional input usage: not given."
+
+
+def test_extract_milestone_input_notes_brand_brief_trims() -> None:
+    out = nodes._extract_milestone_input_notes(
+        _base_state(
+            milestone_input={
+                "type": "restaurant_brand_brief",
+                "value": {"notes": "  owner context  "},
+            },
+        ),
+    )
+    assert out == "owner context"
+
+
+def test_extract_milestone_input_notes_ignores_dates_type() -> None:
+    assert (
+        nodes._extract_milestone_input_notes(
+            _base_state(
+                milestone_input={
+                    "type": "dates",
+                    "value": {"startDate": "2026-01-01", "endDate": "2026-01-31"},
+                },
+            ),
+        )
+        == ""
+    )
+
+
+def test_extract_milestone_input_notes_promotion_candidates_trims() -> None:
+    out = nodes._extract_milestone_input_notes(
+        _base_state(
+            milestone_input={
+                "type": "promotion_candidates",
+                "value": {"notes": "  brunch focus  "},
+            },
+        ),
+    )
+    assert out == "brunch focus"
+
+
+def test_select_best_milestonedata_payload_prefers_larger_payload() -> None:
+    sparse = {"summary": "ok"}
+    rich = {
+        "summary": "ok",
+        "details": ["a", "b", "c"],
+        "extras": {"foo": "bar", "baz": "qux"},
+    }
+    chosen = nodes._select_best_milestonedata_payload([sparse, rich])
+    assert chosen is rich

@@ -111,3 +111,12 @@ def test_calculate_sales_analytics_enables_datetime_signals_with_real_datetime()
     out = calculate_sales_analytics(df, has_order_id=False, has_datetime=True)
     assert out["additional_signals"]["datetime_signals"] is not None
     assert out["additional_signals"]["datetime_signals"]["period_start"] == "2026-01-15"
+
+
+def test_calculate_sales_analytics_no_datetime_capability_when_times_missing_even_if_forced():
+    """POS-agnostic callers may pass has_datetime=True; flags must match emitted signals."""
+    row = {**_minimal_sales_row(), "order_time": None}
+    out = calculate_sales_analytics(pd.DataFrame([row]), has_order_id=False, has_datetime=True)
+    assert out["capabilities"]["has_datetime"] is False
+    assert "datetime_signals" not in out["capabilities"]["enabled_blocks"]
+    assert out["additional_signals"]["datetime_signals"] is None

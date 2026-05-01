@@ -6,14 +6,11 @@ import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-wo
 import {
   brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
-  emptyPromotionCandidatesMilestoneData,
-  emptySchedulerMilestoneData,
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataValueSchema,
   passCriteriaDataSchema,
   promotionCandidatesMilestoneDataSchema,
-  schedulerMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import {
   CREATE_NODE_MUTATION,
@@ -46,7 +43,7 @@ function mergeMilestoneNodeDataJson(
   patch: {
     milestoneRunSkillMode?: 'auto' | 'fixed'
     milestoneRunSkillIds?: string[]
-    presetId?: 'dates' | 'restaurant_brand_brief' | 'promotion_candidates' | 'scheduler'
+    presetId?: 'dates' | 'restaurant_brand_brief' | 'promotion_candidates'
     milestoneInput?: { type: string; value?: unknown }
   },
 ): Record<string, unknown> {
@@ -368,15 +365,14 @@ export async function GET(_req: Request, context: RouteContext) {
       parsedMilestoneNodeData?.success &&
       parsedMilestoneNodeData.data.presetId === 'promotion_candidates'
     ) {
-      const promotionParsed = promotionCandidatesMilestoneDataSchema.safeParse(milestoneData)
-      if (!promotionParsed.success) {
-        milestoneData = emptyPromotionCandidatesMilestoneData()
-      }
-    }
-    if (parsedMilestoneNodeData?.success && parsedMilestoneNodeData.data.presetId === 'scheduler') {
-      const schedulerParsed = schedulerMilestoneDataSchema.safeParse(milestoneData)
-      if (!schedulerParsed.success) {
-        milestoneData = emptySchedulerMilestoneData()
+      const pcParsed = promotionCandidatesMilestoneDataSchema.safeParse(milestoneData)
+      if (!pcParsed.success) {
+        milestoneData = {
+          grouping: 'by_menu_category',
+          categories: {},
+          flatSummary: '',
+          promotionIdeas: [],
+        }
       }
     }
 

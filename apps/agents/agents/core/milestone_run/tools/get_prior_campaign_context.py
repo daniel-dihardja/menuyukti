@@ -52,6 +52,11 @@ def _is_brand_brief_dict(data: dict[str, Any]) -> bool:
     )
 
 
+def is_brand_brief_milestone_data(data: dict[str, Any]) -> bool:
+    """True if ``data`` matches saved ``restaurant_brand_brief`` milestonedata shape."""
+    return _is_brand_brief_dict(data)
+
+
 def _brand_brief_excerpt_from_dict(data: dict[str, Any]) -> str:
     try:
         return json.dumps(data, ensure_ascii=False, indent=2)

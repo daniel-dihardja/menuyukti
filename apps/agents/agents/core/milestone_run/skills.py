@@ -18,6 +18,7 @@ class SkillDef:
     description: str
     prompt: str
     extra_tool_ids: tuple[str, ...]
+    inject_prior_presets: tuple[str, ...] = ()
 
 
 def _load_disk_skill(skill_id: str) -> SkillDef:
@@ -32,6 +33,7 @@ def _load_disk_skill(skill_id: str) -> SkillDef:
         description=desc,
         prompt=md.body,
         extra_tool_ids=tuple(md.extra_tools),
+        inject_prior_presets=tuple(md.inject_prior_presets),
     )
 
 
@@ -40,7 +42,6 @@ def _build_registry() -> dict[str, SkillDef]:
         "public_holidays": _load_disk_skill("public_holidays"),
         "brand_brief": _load_disk_skill("brand_brief"),
         "promotion_candidates": _load_disk_skill("promotion_candidates"),
-        "scheduler": _load_disk_skill("scheduler"),
         "generic": _load_disk_skill("generic"),
     }
 

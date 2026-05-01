@@ -26,8 +26,6 @@ import {
   UtensilsCrossed,
   CalendarRange,
   ScrollText,
-  Megaphone,
-  Clock3,
   Activity,
   ChartNoAxesCombined,
   CircleCheckBig,
@@ -66,16 +64,6 @@ export default async function LandingPage() {
       title: t('pipeline.nodes.brandBriefTitle'),
       description: t('pipeline.nodes.brandBriefDescription'),
     },
-    {
-      Icon: Megaphone,
-      title: t('pipeline.nodes.promotionTitle'),
-      description: t('pipeline.nodes.promotionDescription'),
-    },
-    {
-      Icon: Clock3,
-      title: t('pipeline.nodes.schedulerTitle'),
-      description: t('pipeline.nodes.schedulerDescription'),
-    },
   ] as const
 
   const signalItems = [
@@ -102,12 +90,6 @@ export default async function LandingPage() {
       description: t('featureHighlights.cards.assetsDescription'),
       image: '/images/workflow-assets.webp',
       alt: t('featureHighlights.cards.assetsAlt'),
-    },
-    {
-      title: t('featureHighlights.cards.promotionTitle'),
-      description: t('featureHighlights.cards.promotionDescription'),
-      image: '/images/landing-promotion.webp',
-      alt: t('featureHighlights.cards.promotionAlt'),
     },
     {
       title: t('featureHighlights.cards.heatmapsTitle'),

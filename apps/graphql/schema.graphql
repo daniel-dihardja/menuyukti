@@ -685,6 +685,11 @@ type Query {
   Promotion-candidate signals composed from promotion menu items and Instagram signals. Returns ranked recommendations plus puzzle opportunity pool for campaign drafting.
   """
   promotionCandidatesSignals(analyticsRunId: ID!, locationId: ID = null): PromotionCandidatesSignalsType
+
+  """
+  Menu engineering matrix and top star/puzzle slices per distinct `order_fact.menu_category` when present; otherwise one flat matrix on all rows. JSON includes `grouping`, optional `categories`, `rowsSkippedMissingCategory`, and per-slice `matrix` / `topStars` / `topPuzzles`. Returns null when unauthorized, wrong location, or the run has no order facts.
+  """
+  promotionEngineeringCandidates(analyticsRunId: ID!, locationId: ID = null): JSON
   publicHolidays(country: String!, startDate: String!, endDate: String!): [PublicHolidayType!]!
   operatingProfile(locationId: ID!, analyticsRunId: ID!): OperatingProfileType
 
@@ -714,7 +719,7 @@ type Query {
   locationSocialSettings(locationId: Int!): LocationSocialSettingsType
 
   """
-  JSON array of prior milestones' milestonedata payloads: each element is `{"title": string, "data": object|string|array|null}` for milestones strictly before the given milestone in workflow display order. `data` is the raw `milestonedata` child `data` field (structured object, legacy string, or null). Empty array when there are no prior milestones or the request is not authorized.
+  JSON array of prior milestones' milestonedata payloads: each element is `{"title": string, "presetId": string|null, "data": object|string|array|null}` for milestones strictly before the given milestone in workflow display order. `presetId` is the milestone node's preset when set. `data` is the raw `milestonedata` child `data` field (structured object, legacy string, or null). Empty array when there are no prior milestones or the request is not authorized.
   """
   priorMilestonesMilestoneData(workflowId: ID!, milestoneId: ID!, locationId: Int!): JSON!
   myWorkspace: WorkspaceType

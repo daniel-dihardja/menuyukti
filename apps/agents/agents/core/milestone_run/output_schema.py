@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Literal
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, ValidationError, field_validator, model_validator
+from pydantic import BaseModel, ValidationError, field_validator, model_validator
 
 
 class DatesPublicHoliday(BaseModel):
@@ -111,71 +111,10 @@ class BrandBriefMilestoneOutput(BaseModel):
         return values
 
 
-class PromotionInstagramPromotion(BaseModel):
-    angle: str
-    format: str
-    cta: str
-    timing: str
-
-
-class PromotionCandidateItem(BaseModel):
-    menu: str
-    rationale: list[str]
-    puzzleAnalysis: str | None = None
-    instagramPromotion: PromotionInstagramPromotion | None = None
-
-
-class PromotionPuzzleOpportunityPool(BaseModel):
-    puzzleItemsFound: int
-    threshold: float
-    selectedCount: int
-
-
-class PromotionCandidatesContext(BaseModel):
-    campaignWindowNotes: str | None = None
-    brandBriefAlignmentNotes: str | None = None
-
-
-class PromotionRankedCandidate(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-    menu: str
-    recommendation: str
-    score: float
-    quantity: int
-    totalRevenue: float
-    signalReasons: list[str]
-
-
-class PromotionCandidatesMilestoneOutput(BaseModel):
-    placement: str
-    puzzleOpportunityPool: PromotionPuzzleOpportunityPool
-    promotionCandidates: list[PromotionCandidateItem]
-    rankedCandidates: list[PromotionRankedCandidate]
-    context: PromotionCandidatesContext | None = None
-
-
-class SchedulerScheduleRow(BaseModel):
-    dateTime: str
-    type: Literal["single", "carousel"]
-    promotedMenuItems: list[str]
-    visualIdea: str
-    captionIdea: str
-
-
-class SchedulerMilestoneOutput(BaseModel):
-    schedules: list[SchedulerScheduleRow]
-    campaignStart: str | None = None
-    campaignEnd: str | None = None
-    sourceSignalsSummary: str | None = None
-
-
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
     "brand_brief": BrandBriefMilestoneOutput,
-    "promotion_candidates": PromotionCandidatesMilestoneOutput,
-    "scheduler": SchedulerMilestoneOutput,
 }
 
 
@@ -197,8 +136,3 @@ def validate_skill_output(
         return None, f"[{skill_id}] {first_error}"
 
     return validated.model_dump(exclude_none=True), None
-
-
-def validate_scheduler_output(payload: Any) -> tuple[Any | None, str | None]:
-    """Backward-compatible scheduler validator wrapper."""
-    return validate_skill_output("scheduler", payload)
