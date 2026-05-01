@@ -24,6 +24,12 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
       'Use for the brand brief milestone: location-only brief from profile and operating signals—venue snapshot, pillars, audience hypotheses, tone guardrails. No campaign start/end dates.',
   },
   {
+    id: 'promotion_candidates',
+    name: 'Promotion candidates',
+    description:
+      'Use for the promotion candidates milestone: menu engineering top stars and puzzles per POS menu_category (or flat when categories are missing) from the latest analytics run.',
+  },
+  {
     id: 'generic',
     name: 'Generic milestone data prep',
     description:

@@ -18,7 +18,11 @@ export const milestoneRunSkillModeSchema = z.enum(['auto', 'fixed'])
 
 export type MilestoneRunSkillMode = z.infer<typeof milestoneRunSkillModeSchema>
 
-export const milestonePresetIdSchema = z.enum(['dates', 'restaurant_brand_brief'])
+export const milestonePresetIdSchema = z.enum([
+  'dates',
+  'restaurant_brand_brief',
+  'promotion_candidates',
+])
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
 
@@ -81,6 +85,24 @@ export const brandBriefMilestoneDataSchema = z.object({
 
 export type BrandBriefMilestoneData = z.infer<typeof brandBriefMilestoneDataSchema>
 
+export const promotionCandidatesCategoryBlockSchema = z.object({
+  menuCategory: z.string(),
+  starHighlights: z.array(z.string()),
+  puzzleHighlights: z.array(z.string()),
+  notes: z.string().optional(),
+})
+
+export const promotionCandidatesMilestoneDataSchema = z.object({
+  grouping: z.enum(['by_menu_category', 'flat']),
+  categories: z.record(z.string(), promotionCandidatesCategoryBlockSchema),
+  flatSummary: z.string(),
+  promotionIdeas: z.array(z.string()),
+})
+
+export type PromotionCandidatesMilestoneData = z.infer<
+  typeof promotionCandidatesMilestoneDataSchema
+>
+
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
@@ -112,6 +134,7 @@ export type GoalData = z.infer<typeof goalDataSchema>
 export const milestonedataValueSchema = z.union([
   datesMilestoneDataSchema,
   brandBriefMilestoneDataSchema,
+  promotionCandidatesMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>

@@ -10,6 +10,7 @@ import {
   milestoneInputSchema,
   milestonedataValueSchema,
   passCriteriaDataSchema,
+  promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import {
   CREATE_NODE_MUTATION,
@@ -42,7 +43,7 @@ function mergeMilestoneNodeDataJson(
   patch: {
     milestoneRunSkillMode?: 'auto' | 'fixed'
     milestoneRunSkillIds?: string[]
-    presetId?: 'dates' | 'restaurant_brand_brief'
+    presetId?: 'dates' | 'restaurant_brand_brief' | 'promotion_candidates'
     milestoneInput?: { type: string; value?: unknown }
   },
 ): Record<string, unknown> {
@@ -357,6 +358,20 @@ export async function GET(_req: Request, context: RouteContext) {
           audienceHypotheses: [],
           proofOrientedAngles: [],
           toneGuardrails: [],
+        }
+      }
+    }
+    if (
+      parsedMilestoneNodeData?.success &&
+      parsedMilestoneNodeData.data.presetId === 'promotion_candidates'
+    ) {
+      const pcParsed = promotionCandidatesMilestoneDataSchema.safeParse(milestoneData)
+      if (!pcParsed.success) {
+        milestoneData = {
+          grouping: 'by_menu_category',
+          categories: {},
+          flatSummary: '',
+          promotionIdeas: [],
         }
       }
     }

@@ -12,6 +12,8 @@ export type {
   MilestoneRunSkillMode,
   PassCriteriaRow,
   PassCriteriaStatus,
+  PromotionCandidatesCategoryBlock,
+  PromotionCandidatesMilestoneData,
   TimelineMilestone,
   TimelineMilestoneStatus,
   TimelineWorkspaceProps,

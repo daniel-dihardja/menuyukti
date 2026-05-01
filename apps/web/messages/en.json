@@ -1031,6 +1031,14 @@
             "criterionPublicHolidays": "Public holidays are listed under **Public holidays** in the data.",
             "dataMarkdown": "## Start date\n\n\n## End date\n\n\n## Public holidays\n\n"
           },
+          "promotion_candidates": {
+            "label": "Promotion candidates",
+            "title": "Promotion candidates",
+            "goal": "The data documents promotion-ready menus from menu engineering: when POS categories exist, one block per `menu_category` with star and puzzle highlights; when categories are missing, a flat summary instead. Include 3–8 grounded `promotionIdeas` tied to real menu names from analytics.",
+            "criterionGrouping": "**Grouping** in the data matches the tool (`by_menu_category` or `flat`).",
+            "criterionCategoriesOrFlat": "When grouped, **categories** keys match POS `menu_category` strings; each block lists `starHighlights` and `puzzleHighlights` from the tool. When flat, **flatSummary** explains the candidate set and **categories** stays empty.",
+            "criterionPromotionIdeas": "**Promotion ideas** include 3–8 unique non-empty items, each referencing a real menu from `topStars` or `topPuzzles` in the tool output."
+          },
           "restaurant_brand_brief": {
             "label": "Brand brief",
             "title": "Brand brief",
@@ -1152,6 +1160,13 @@
         "milestoneBrandBriefPreviewToneGuardrails": "Tone guardrails",
         "milestoneBrandBriefPreviewEmptyList": "No entries yet.",
         "milestoneBrandBriefPreviewEmptyValue": "Not set",
+        "milestonePromotionCandidatesPreviewGrouping": "Grouping",
+        "milestonePromotionCandidatesPreviewFlatSummary": "Flat summary",
+        "milestonePromotionCandidatesPreviewPromotionIdeas": "Promotion ideas",
+        "milestonePromotionCandidatesPreviewCategoryMenu": "Menu category",
+        "milestonePromotionCandidatesPreviewStarHighlights": "Star highlights",
+        "milestonePromotionCandidatesPreviewPuzzleHighlights": "Puzzle highlights",
+        "milestonePromotionCandidatesPreviewNotes": "Notes",
         "milestonePreviewUnsupported": "This milestone data format is not supported in the preview yet.",
         "milestonePreviewDataEmpty": "No data has been added for this milestone yet.",
         "milestonePreviewDataInvalid": "This milestone contains invalid structured data and cannot be previewed.",

@@ -22,7 +22,6 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { Textarea } from '@workspace/ui/components/textarea'
 
-import type { MilestonePresetId } from '@/lib/graphql/node-schemas'
 import { milestonePresetHasDefaultOptionalNotesInput } from '@/lib/milestones/milestone-input-tab'
 
 import type { DatesMilestoneInput, PassCriteriaRow, TimelineMilestone } from './types'
@@ -30,6 +29,7 @@ import type { DatesMilestoneInput, PassCriteriaRow, TimelineMilestone } from './
 const presetGoalTranslationKeyById = {
   dates: 'milestonePreset.dates.goal',
   restaurant_brand_brief: 'milestonePreset.restaurant_brand_brief.goal',
+  promotion_candidates: 'milestonePreset.promotion_candidates.goal',
 } as const
 
 /** Tab panel state and handlers for one milestone (built in `timeline-item`). */
@@ -82,17 +82,15 @@ function formatDateButtonLabel(value: string): string {
   return parsed ? parsed.toLocaleDateString() : value
 }
 
-function optionalNotesFieldCopy(
-  presetId: Exclude<MilestonePresetId, 'dates'>,
-  t: (key: string) => string,
-): { label: string; description: string; placeholder: string } {
-  switch (presetId) {
-    case 'restaurant_brand_brief':
-      return {
-        label: t('milestonePreset.restaurant_brand_brief.inputLabel'),
-        description: t('milestonePreset.restaurant_brand_brief.inputDescription'),
-        placeholder: t('milestonePreset.restaurant_brand_brief.inputPlaceholder'),
-      }
+function optionalNotesFieldCopy(t: (key: string) => string): {
+  label: string
+  description: string
+  placeholder: string
+} {
+  return {
+    label: t('milestonePreset.restaurant_brand_brief.inputLabel'),
+    description: t('milestonePreset.restaurant_brand_brief.inputDescription'),
+    placeholder: t('milestonePreset.restaurant_brand_brief.inputPlaceholder'),
   }
 }
 
@@ -136,7 +134,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     if (!milestonePresetHasDefaultOptionalNotesInput(pid)) {
       return null
     }
-    return optionalNotesFieldCopy(pid, t)
+    return optionalNotesFieldCopy(t)
   }, [milestone.presetId, t])
 
   return (

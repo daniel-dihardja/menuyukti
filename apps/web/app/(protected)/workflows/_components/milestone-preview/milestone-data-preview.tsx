@@ -2,12 +2,17 @@
 
 import { useTranslations } from 'next-intl'
 
-import { brandBriefMilestoneDataSchema, datesMilestoneDataSchema } from '@/lib/graphql/node-schemas'
+import {
+  brandBriefMilestoneDataSchema,
+  datesMilestoneDataSchema,
+  promotionCandidatesMilestoneDataSchema,
+} from '@/lib/graphql/node-schemas'
 
 import type { TimelineMilestone } from '../timeline/types'
 
 import { MilestoneBrandBriefDataPreview } from './milestone-brand-brief-data-preview'
 import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
+import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
 
 export type MilestoneDataPreviewProps = {
   milestone: TimelineMilestone
@@ -63,6 +68,32 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
               audienceHypotheses: t('milestoneBrandBriefPreviewAudienceHypotheses'),
               proofOrientedAngles: t('milestoneBrandBriefPreviewProofOrientedAngles'),
               toneGuardrails: t('milestoneBrandBriefPreviewToneGuardrails'),
+              emptyList: t('milestoneBrandBriefPreviewEmptyList'),
+              emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
+            }}
+          />
+        </div>
+      )
+    }
+
+    if (milestone.presetId === 'promotion_candidates') {
+      const parsedPc = promotionCandidatesMilestoneDataSchema.safeParse(data)
+      if (!parsedPc.success) {
+        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+      }
+
+      return (
+        <div className="min-h-0 overflow-auto rounded-md border p-4">
+          <MilestonePromotionCandidatesDataPreview
+            data={parsedPc.data}
+            labels={{
+              grouping: t('milestonePromotionCandidatesPreviewGrouping'),
+              flatSummary: t('milestonePromotionCandidatesPreviewFlatSummary'),
+              promotionIdeas: t('milestonePromotionCandidatesPreviewPromotionIdeas'),
+              categoryMenu: t('milestonePromotionCandidatesPreviewCategoryMenu'),
+              starHighlights: t('milestonePromotionCandidatesPreviewStarHighlights'),
+              puzzleHighlights: t('milestonePromotionCandidatesPreviewPuzzleHighlights'),
+              notes: t('milestonePromotionCandidatesPreviewNotes'),
               emptyList: t('milestoneBrandBriefPreviewEmptyList'),
               emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
             }}

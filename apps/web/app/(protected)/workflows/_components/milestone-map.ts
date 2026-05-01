@@ -6,6 +6,7 @@ import {
   milestoneInputSchema,
   milestonedataValueSchema,
   passCriteriaDataSchema,
+  promotionCandidatesMilestoneDataSchema,
   resultDataSchema,
 } from '@/lib/graphql/node-schemas'
 import type { AnyNode } from '@/lib/graphql/queries'
@@ -202,6 +203,19 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
         audienceHypotheses: [],
         proofOrientedAngles: [],
         toneGuardrails: [],
+      }
+    }
+  }
+  if (presetId === 'promotion_candidates') {
+    const parsedPc = promotionCandidatesMilestoneDataSchema.safeParse(data)
+    if (parsedPc.success) {
+      normalizedData = parsedPc.data
+    } else {
+      normalizedData = {
+        grouping: 'by_menu_category',
+        categories: {},
+        flatSummary: '',
+        promotionIdeas: [],
       }
     }
   }

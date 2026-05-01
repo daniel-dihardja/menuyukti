@@ -13,7 +13,7 @@ export type PassCriteriaRow = {
 /** Milestone agent run skill selection; stored on milestone `data` JSON. */
 export type MilestoneRunSkillMode = 'auto' | 'fixed'
 
-export type MilestonePresetId = 'dates' | 'restaurant_brand_brief'
+export type MilestonePresetId = 'dates' | 'restaurant_brand_brief' | 'promotion_candidates'
 
 export type DatesMilestoneInput = {
   startDate: string
@@ -57,7 +57,24 @@ export type BrandBriefMilestoneData = {
   toneGuardrails: string[]
 }
 
-export type MilestoneDataValue = DatesMilestoneData | BrandBriefMilestoneData
+export type PromotionCandidatesCategoryBlock = {
+  menuCategory: string
+  starHighlights: string[]
+  puzzleHighlights: string[]
+  notes?: string
+}
+
+export type PromotionCandidatesMilestoneData = {
+  grouping: 'by_menu_category' | 'flat'
+  categories: Record<string, PromotionCandidatesCategoryBlock>
+  flatSummary: string
+  promotionIdeas: string[]
+}
+
+export type MilestoneDataValue =
+  | DatesMilestoneData
+  | BrandBriefMilestoneData
+  | PromotionCandidatesMilestoneData
 
 export type TimelineMilestone = {
   id: string

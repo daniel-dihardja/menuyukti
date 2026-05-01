@@ -4,7 +4,11 @@ import type {
 } from '@/app/(protected)/workflows/_components/timeline/types'
 import { type MilestoneInput, type MilestonedataValue } from '@/lib/graphql/node-schemas'
 
-export const MILESTONE_PRESET_IDS = ['dates', 'restaurant_brand_brief'] as const
+export const MILESTONE_PRESET_IDS = [
+  'dates',
+  'restaurant_brand_brief',
+  'promotion_candidates',
+] as const
 
 export type MilestonePresetId = (typeof MILESTONE_PRESET_IDS)[number]
 
@@ -112,6 +116,34 @@ export function getMilestonePresetCreateFields(
           },
           {
             requirement: t('milestonePreset.restaurant_brand_brief.criterionToneGuardrails'),
+            status: 'open',
+          },
+        ],
+      }
+    case 'promotion_candidates':
+      return {
+        presetId: 'promotion_candidates',
+        name: t('milestonePreset.promotion_candidates.title'),
+        milestoneData: {
+          grouping: 'by_menu_category',
+          categories: {},
+          flatSummary: '',
+          promotionIdeas: [],
+        },
+        goal: t('milestonePreset.promotion_candidates.goal'),
+        milestoneRunSkillMode: 'fixed',
+        milestoneRunSkillIds: ['promotion_candidates'],
+        passCriteria: [
+          {
+            requirement: t('milestonePreset.promotion_candidates.criterionGrouping'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.promotion_candidates.criterionCategoriesOrFlat'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.promotion_candidates.criterionPromotionIdeas'),
             status: 'open',
           },
         ],
