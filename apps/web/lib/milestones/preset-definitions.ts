@@ -124,6 +124,10 @@ export function getMilestonePresetCreateFields(
       return {
         presetId: 'promotion_candidates',
         name: t('milestonePreset.promotion_candidates.title'),
+        milestoneInput: {
+          type: 'promotion_candidates',
+          value: { notes: '' },
+        },
         milestoneData: {
           grouping: 'by_menu_category',
           categories: {},

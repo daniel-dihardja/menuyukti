@@ -43,6 +43,18 @@ export const brandBriefMilestoneInputValueSchema = z.object({
 
 export type BrandBriefMilestoneInputValue = z.infer<typeof brandBriefMilestoneInputValueSchema>
 
+/**
+ * Optional owner notes on the milestone Input tab (`value.notes`).
+ * Used by the promotion candidates preset.
+ */
+export const promotionCandidatesMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type PromotionCandidatesMilestoneInputValue = z.infer<
+  typeof promotionCandidatesMilestoneInputValueSchema
+>
+
 export const milestoneInputSchema = z.object({
   type: z.string().trim().min(1),
   value: z.unknown().optional(),

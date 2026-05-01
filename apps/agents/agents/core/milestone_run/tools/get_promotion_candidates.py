@@ -16,7 +16,33 @@ from langchain_core.tools import BaseTool, tool
 _JSON_SEPARATORS = (",", ":")
 
 
+def _fmt_milestone_promotion_candidates_owner_notes(context: dict[str, Any]) -> str:
+    """Markdown for optional owner notes from the promotion-candidates milestone Input tab."""
+    raw = context.get("milestone_input")
+    if not isinstance(raw, dict):
+        return ""
+    if raw.get("type") != "promotion_candidates":
+        return ""
+    value = raw.get("value")
+    if not isinstance(value, dict):
+        return ""
+    notes = value.get("notes")
+    if not isinstance(notes, str):
+        return ""
+    text = notes.strip()
+    if not text:
+        return ""
+    return (
+        "## Milestone promotion candidates input (owner)\n\n"
+        "_User-supplied notes from the milestone Input tab — incorporate when "
+        "shaping promotion ideas, category emphasis, and tone; do not treat as "
+        "verified sales facts._\n\n"
+        f"{text}"
+    )
+
+
 def make_get_promotion_candidates_tool(
+    context: dict[str, Any],
     location_id: int,
     user_id: str,
     *,
@@ -59,6 +85,9 @@ def make_get_promotion_candidates_tool(
             "analyticsRun": {"id": run.get("id"), "name": run.get("name")},
             "promotionEngineeringCandidates": pec,
         }
+        owner_notes_md = _fmt_milestone_promotion_candidates_owner_notes(context)
+        if owner_notes_md:
+            payload["milestonePromotionCandidatesOwnerNotesMarkdown"] = owner_notes_md
         return json.dumps(payload, ensure_ascii=False, separators=_JSON_SEPARATORS)
 
     return get_promotion_candidates

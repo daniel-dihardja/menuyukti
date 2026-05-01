@@ -239,6 +239,51 @@ async def test_get_promotion_candidates_formats_engineering_payload() -> None:
     assert pec["grouping"] == "by_menu_category"
     assert "Mains" in pec["categories"]
     assert pec["categories"]["Mains"]["topStars"][0]["menu"] == "Sate"
+    assert "milestonePromotionCandidatesOwnerNotesMarkdown" not in payload
+
+
+@pytest.mark.asyncio
+async def test_get_promotion_candidates_includes_owner_notes_when_milestone_input_set() -> None:
+    ctx: dict[str, Any] = {
+        "milestone_input": {
+            "type": "promotion_candidates",
+            "value": {"notes": "  Highlight brunch  "},
+        },
+    }
+    client = MagicMock(spec=AsyncMock)
+    grouped: dict[str, Any] = {
+        "grouping": "flat",
+        "categories": {},
+        "matrix": None,
+        "topStars": [],
+        "topPuzzles": [],
+    }
+    call_n = {"n": 0}
+
+    async def fake_post(
+        _client: Any,
+        _query: str,
+        _variables: dict[str, Any],
+        _user_id: str,
+    ) -> dict[str, Any]:
+        call_n["n"] += 1
+        if call_n["n"] == 1:
+            return {"analyticsRuns": [{"id": "1", "name": "R"}]}
+        return {"promotionEngineeringCandidates": grouped}
+
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.get_promotion_candidates.graphql_post",
+        new=AsyncMock(side_effect=fake_post),
+    ):
+        tools = _tools_for_context(ctx, client=client, extra_tool_ids=["get_promotion_candidates"])
+        get_promotion_candidates = _tool_by_name(tools, "get_promotion_candidates")
+        out = await get_promotion_candidates.ainvoke({})
+
+    payload = json.loads(out)
+    md = payload.get("milestonePromotionCandidatesOwnerNotesMarkdown")
+    assert isinstance(md, str)
+    assert "Highlight brunch" in md
+    assert "Milestone promotion candidates input (owner)" in md
 
 
 @pytest.mark.asyncio

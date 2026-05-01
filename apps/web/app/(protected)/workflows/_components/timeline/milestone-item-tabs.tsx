@@ -82,15 +82,21 @@ function formatDateButtonLabel(value: string): string {
   return parsed ? parsed.toLocaleDateString() : value
 }
 
-function optionalNotesFieldCopy(t: (key: string) => string): {
+type OptionalNotesPresetId = 'restaurant_brand_brief' | 'promotion_candidates'
+
+function optionalNotesFieldCopy(
+  t: (key: string) => string,
+  presetId: OptionalNotesPresetId,
+): {
   label: string
   description: string
   placeholder: string
 } {
+  const base = `milestonePreset.${presetId}` as const
   return {
-    label: t('milestonePreset.restaurant_brand_brief.inputLabel'),
-    description: t('milestonePreset.restaurant_brand_brief.inputDescription'),
-    placeholder: t('milestonePreset.restaurant_brand_brief.inputPlaceholder'),
+    label: t(`${base}.inputLabel`),
+    description: t(`${base}.inputDescription`),
+    placeholder: t(`${base}.inputPlaceholder`),
   }
 }
 
@@ -134,7 +140,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     if (!milestonePresetHasDefaultOptionalNotesInput(pid)) {
       return null
     }
-    return optionalNotesFieldCopy(t)
+    return optionalNotesFieldCopy(t, pid)
   }, [milestone.presetId, t])
 
   return (
@@ -401,6 +407,14 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                 </p>
                 <p>{t('milestoneHelpBrandBriefOptionalInputHowUsed')}</p>
                 <p>{t('milestoneHelpBrandBriefOptionalInputWhenToUse')}</p>
+              </div>
+            ) : milestone.presetId === 'promotion_candidates' ? (
+              <div className="space-y-2 text-muted-foreground text-sm">
+                <p className="font-medium text-foreground">
+                  {t('milestoneHelpPromotionCandidatesOptionalInputTitle')}
+                </p>
+                <p>{t('milestoneHelpPromotionCandidatesOptionalInputHowUsed')}</p>
+                <p>{t('milestoneHelpPromotionCandidatesOptionalInputWhenToUse')}</p>
               </div>
             ) : optionalNotesCopy ? (
               <div className="space-y-2 text-muted-foreground text-sm">

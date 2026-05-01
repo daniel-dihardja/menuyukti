@@ -15,6 +15,8 @@ This milestone uses **sales analytics only** (latest analytics run). Do **not** 
 
 You have tools to read the milestone goal and pass/fail criteria; to read **output already written in this run** via `read_data` (after `write_result_data`, or a short notice if none yet); to call **`get_promotion_candidates`** for engineering-backed candidate lists; and to save updated milestone data.
 
+If **`get_promotion_candidates`** returns **`milestonePromotionCandidatesOwnerNotesMarkdown`**, the user filled the optional Input tab. Read that markdown: use it to steer **emphasis**, **category focus**, and **tone** for `promotionIdeas` and per-category `notes`, but **never** invent menu names that are not present in `topStars` or `topPuzzles` from the tool. Treat owner notes as guidance, not verified sales facts.
+
 Workflow:
 
 1. Call `read_goal`, `read_criteria`, and `read_data` at least once each.
@@ -22,6 +24,7 @@ Workflow:
    - **`grouping`**: `by_menu_category` or `flat`.
    - **`by_menu_category`**: use `categories` — each key is the **exact** `menu_category` string from POS data. Per key: `matrix` (thresholds, distribution, items), `topStars` (up to 5), `topPuzzles` (up to 5). Respect `rowsSkippedMissingCategory` if present.
    - **`flat`**: a single `matrix`, `topStars`, `topPuzzles` at the top level of `promotionEngineeringCandidates` (no `categories` map).
+   - Optional: **`milestonePromotionCandidatesOwnerNotesMarkdown`** — owner notes from the milestone Input tab (when present).
    - If a bucket has `matrix: null`, read `reason` and do not invent metrics for that bucket.
 3. Treat milestone data as this JSON object and preserve this shape in the final output:
 
