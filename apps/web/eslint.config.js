@@ -8,6 +8,8 @@ export default [
     files: [
       "app/(protected)/analytics/sales/sales-table.tsx",
       "app/(protected)/assets/assets-client.tsx",
+      "app/(protected)/assets/_components/assets-upload-zone.tsx",
+      "app/(protected)/assets/_components/assets-image-grid.tsx",
       "app/(protected)/workflows/_components/campaigns-table.tsx",
       "components/sortable-table.tsx",
       "components/clerk/custom-login-form.tsx",

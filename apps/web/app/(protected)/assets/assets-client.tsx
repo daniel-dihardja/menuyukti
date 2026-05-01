@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFormatter, useTranslations } from 'next-intl'
-import { Download, ImageIcon, Loader2, Maximize2, Sparkles, Trash2, Upload } from 'lucide-react'
+import { Download, Loader2 } from 'lucide-react'
 
 import {
   AlertDialog,
@@ -15,47 +15,14 @@ import {
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
-import { Card } from '@workspace/ui/components/card'
 import { Dialog, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
-import { Field, FieldLabel } from '@workspace/ui/components/field'
-import { Skeleton } from '@workspace/ui/components/skeleton'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@workspace/ui/components/select'
-import { Textarea } from '@workspace/ui/components/textarea'
 import { cn } from '@workspace/ui/lib/utils'
 
-type AssetItem = {
-  name: string
-  url: string
-  size: number
-  createdAt: string
-}
+import { assetDownloadHref, formatBytes, type AssetItem } from './_components/asset-item-types'
+import { AssetsImageGrid } from './_components/assets-image-grid'
+import { AssetsUploadZone } from './_components/assets-upload-zone'
 
 type ToastState = { kind: 'success' | 'error'; message: string } | null
-
-/** Post-upload processing flow slug; sent with FormData as `flow` (`none` = no AI). */
-
-const SKELETON_COUNT = 8
-
-function formatBytes(n: number): string {
-  if (n < 1024) return `${n} B`
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
-  return `${(n / (1024 * 1024)).toFixed(1)} MB`
-}
-
-function formatDimensions(width?: number, height?: number): string | null {
-  if (!width || !height) return null
-  return `${width} X ${height}`
-}
-
-function assetDownloadHref(name: string): string {
-  return `/api/assets/download?name=${encodeURIComponent(name)}`
-}
 
 export function AssetsClient() {
   const t = useTranslations('assets')
@@ -147,6 +114,14 @@ export function AssetsClient() {
   useEffect(() => {
     setPreviewImgLoaded(false)
   }, [previewItem?.name])
+
+  const handleImageNaturalSize = useCallback((name: string, width: number, height: number) => {
+    setImageDimensionsByName((prev) => {
+      const current = prev[name]
+      if (current?.width === width && current?.height === height) return prev
+      return { ...prev, [name]: { width, height } }
+    })
+  }, [])
 
   const uploadFiles = async (files: FileList | File[]) => {
     const list = Array.from(files).filter((f) => f.type.startsWith('image/'))
@@ -393,337 +368,41 @@ export function AssetsClient() {
         ) : null}
       </Dialog>
 
-      <section>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          aria-label={t('upload.browse')}
-          className="sr-only"
-          onChange={onInputChange}
-        />
-        <Card
-          className={cn(
-            'group relative overflow-hidden border-2 border-dashed transition-[border-color,background-color,box-shadow,opacity] duration-300',
-            dragActive
-              ? 'border-primary bg-primary/5 shadow-[0_0_0_1px_hsl(var(--primary)/0.2)]'
-              : 'border-muted-foreground/25 bg-gradient-to-br from-muted/40 via-background to-muted/20 hover:border-primary/40 hover:shadow-md',
-            uploading && 'pointer-events-none opacity-80',
-          )}
-          onDragEnter={(e) => {
-            e.preventDefault()
-            setDragActive(true)
-          }}
-          onDragLeave={(e) => {
-            e.preventDefault()
-            if (e.currentTarget === e.target) setDragActive(false)
-          }}
-          onDragOver={(e) => {
-            e.preventDefault()
-            setDragActive(true)
-          }}
-          onDrop={onDrop}
-        >
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(var(--primary)/0.06),_transparent_55%)] pointer-events-none" />
-          <div className="relative flex flex-col gap-3 px-4 py-7 sm:gap-3 sm:px-5 sm:py-8">
-            <div className="flex items-start gap-3 sm:items-center sm:gap-4">
-              <div
-                className={cn(
-                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background/80 shadow-sm transition-transform duration-300',
-                  dragActive ? 'scale-105 border-primary/50 text-primary' : 'text-muted-foreground',
-                )}
-              >
-                {uploading ? (
-                  <Loader2 className="size-5 animate-spin text-primary" aria-hidden />
-                ) : (
-                  <Upload className="size-5" aria-hidden />
-                )}
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-left">
-                <h2 className="text-base font-semibold tracking-tight">{t('upload.title')}</h2>
-                <p className="text-pretty text-xs text-muted-foreground sm:text-sm">
-                  {t('upload.hint')}
-                </p>
-              </div>
-            </div>
+      <AssetsUploadZone
+        inputRef={inputRef}
+        selectedFlow={selectedFlow}
+        onSelectedFlowChange={setSelectedFlow}
+        aiFlows={aiFlows}
+        uploading={uploading}
+        flowsLoading={flowsLoading}
+        dragActive={dragActive}
+        onSetDragActive={setDragActive}
+        onInputChange={onInputChange}
+        onDrop={onDrop}
+        onBrowse={() => inputRef.current?.click()}
+      />
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-3">
-              <Field className="min-w-0 flex-1 gap-1.5">
-                <FieldLabel
-                  htmlFor="asset-upload-flow"
-                  className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
-                >
-                  {t('upload.flow.label')}
-                </FieldLabel>
-                <Select
-                  value={selectedFlow}
-                  onValueChange={setSelectedFlow}
-                  disabled={uploading || flowsLoading}
-                >
-                  <SelectTrigger
-                    id="asset-upload-flow"
-                    size="default"
-                    className={cn(
-                      'h-10 w-full justify-between rounded-lg border-border/80 bg-background/90 px-3 shadow-sm transition-[box-shadow,border-color] duration-200',
-                      'hover:border-primary/30 hover:bg-background',
-                      'data-[state=open]:border-primary/40 data-[state=open]:shadow-[0_0_0_3px_hsl(var(--ring)/0.25)]',
-                    )}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent
-                    align="start"
-                    position="popper"
-                    className="min-w-[var(--radix-select-trigger-width)]"
-                  >
-                    <SelectItem value="none">{t('upload.flow.none')}</SelectItem>
-                    {aiFlows.map((flow) => (
-                      <SelectItem key={flow.slug} value={flow.slug} className="cursor-pointer">
-                        <span className="flex w-full items-center gap-2">
-                          <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
-                          <span className="flex-1">{flow.displayName}</span>
-                          <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-primary">
-                            AI
-                          </span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Button
-                type="button"
-                className="h-10 shrink-0 rounded-full px-6 shadow-sm sm:min-w-[9rem]"
-                disabled={uploading}
-                onClick={() => inputRef.current?.click()}
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('upload.uploading')}
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon className="mr-2 h-4 w-4" />
-                    {t('upload.browse')}
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </section>
-
-      <section className="w-full">
-        {loading ? (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-              <div
-                key={i}
-                className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-muted/40"
-              >
-                <Skeleton className="aspect-[4/3]" />
-                <div className="flex flex-col gap-2 p-3">
-                  <Skeleton className="h-3 w-2/3" />
-                  <Skeleton className="h-2 w-1/3" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : items.length === 0 ? (
-          <Card className="border-dashed bg-muted/20 py-16 text-center">
-            <div className="mx-auto flex max-w-md flex-col items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                <ImageIcon className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-medium">{t('grid.empty.title')}</h3>
-              <p className="text-sm text-muted-foreground">{t('grid.empty.description')}</p>
-            </div>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {items.map((item) => {
-              const dimensions = formatDimensions(
-                imageDimensionsByName[item.name]?.width,
-                imageDimensionsByName[item.name]?.height,
-              )
-              const sizeWithDimensions = `${formatBytes(item.size)}${dimensions ? ` - ${dimensions}` : ''}`
-              return (
-                <figure
-                  key={item.name}
-                  className="group/tile min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md"
-                >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted/30 text-left">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- dynamic user uploads; dimensions vary */}
-                    <img
-                      src={item.url}
-                      alt=""
-                      width={400}
-                      height={300}
-                      loading="lazy"
-                      className="size-full object-cover transition duration-300 group-hover/tile:scale-[1.02]"
-                      onLoad={(e) => {
-                        const width = e.currentTarget.naturalWidth
-                        const height = e.currentTarget.naturalHeight
-                        setImageDimensionsByName((prev) => {
-                          const current = prev[item.name]
-                          if (current?.width === width && current?.height === height) return prev
-                          return { ...prev, [item.name]: { width, height } }
-                        })
-                      }}
-                    />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100" />
-                    <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex items-end justify-between gap-2 p-3 opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100">
-                      <figcaption className="min-w-0 flex-1 truncate text-left text-xs font-medium text-white drop-shadow">
-                        {item.name}
-                      </figcaption>
-                      <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="secondary"
-                          className="h-9 w-9 rounded-full bg-white/95 text-foreground shadow-md hover:bg-white"
-                          aria-label={t('grid.viewLarge')}
-                          onClick={() => setPreviewItem(item)}
-                        >
-                          <Maximize2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="secondary"
-                          className="h-9 w-9 rounded-full bg-white/95 text-foreground shadow-md hover:bg-white"
-                          aria-label={t('grid.download')}
-                          asChild
-                        >
-                          <a
-                            href={assetDownloadHref(item.name)}
-                            download={item.name}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Download className="h-4 w-4" />
-                          </a>
-                        </Button>
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="secondary"
-                          className="h-9 w-9 shrink-0 rounded-full bg-white/95 text-destructive shadow-md hover:bg-white"
-                          disabled={deleting === item.name}
-                          aria-label={t('grid.delete')}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setPendingDeleteName(item.name)
-                          }}
-                        >
-                          {deleting === item.name ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-border/50 px-3 py-2 text-xs text-muted-foreground">
-                    <span className="truncate">{sizeWithDimensions}</span>
-                    <time dateTime={item.createdAt}>
-                      {format.dateTime(new Date(item.createdAt), {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </time>
-                  </div>
-                  <div className="flex flex-col gap-2 border-t border-border/50 px-3 py-3">
-                    <Field className="gap-1.5">
-                      <FieldLabel
-                        htmlFor={`asset-flow-${item.name}`}
-                        className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
-                      >
-                        {t('grid.generate.flowLabel')}
-                      </FieldLabel>
-                      <Select
-                        value={cardFlows[item.name] ?? 'none'}
-                        onValueChange={(value) => {
-                          setCardFlows((prev) => ({ ...prev, [item.name]: value }))
-                        }}
-                        disabled={flowsLoading || generatingByName[item.name]}
-                      >
-                        <SelectTrigger id={`asset-flow-${item.name}`} size="sm" className="w-full">
-                          <SelectValue placeholder={t('grid.generate.flowPlaceholder')} />
-                        </SelectTrigger>
-                        <SelectContent
-                          align="start"
-                          position="popper"
-                          className="min-w-[var(--radix-select-trigger-width)]"
-                        >
-                          <SelectItem value="none">{t('upload.flow.none')}</SelectItem>
-                          <SelectItem value="custom">{t('grid.generate.customOption')}</SelectItem>
-                          {aiFlows.map((flow) => (
-                            <SelectItem key={`${item.name}-${flow.slug}`} value={flow.slug}>
-                              {flow.displayName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                    {(cardFlows[item.name] ?? 'none') === 'custom' ? (
-                      <Field className="gap-1.5">
-                        <FieldLabel
-                          htmlFor={`asset-custom-prompt-${item.name}`}
-                          className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
-                        >
-                          {t('grid.generate.customPromptLabel')}
-                        </FieldLabel>
-                        <Textarea
-                          id={`asset-custom-prompt-${item.name}`}
-                          value={cardCustomPrompts[item.name] ?? ''}
-                          onChange={(e) => {
-                            setCardCustomPrompts((prev) => ({
-                              ...prev,
-                              [item.name]: e.target.value,
-                            }))
-                          }}
-                          placeholder={t('grid.generate.customPromptPlaceholder')}
-                          rows={3}
-                          disabled={generatingByName[item.name]}
-                        />
-                      </Field>
-                    ) : null}
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="w-full"
-                      disabled={
-                        flowsLoading ||
-                        generatingByName[item.name] ||
-                        (cardFlows[item.name] ?? 'none') === 'none' ||
-                        ((cardFlows[item.name] ?? 'none') === 'custom' &&
-                          (cardCustomPrompts[item.name]?.trim() ?? '').length === 0)
-                      }
-                      onClick={() => void onGenerate(item)}
-                    >
-                      {generatingByName[item.name] ? (
-                        <>
-                          <Loader2 className="animate-spin" data-icon="inline-start" />
-                          {t('grid.generate.generating')}
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles data-icon="inline-start" />
-                          {t('grid.generate.button')}
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </figure>
-              )
-            })}
-          </div>
-        )}
-      </section>
+      <AssetsImageGrid
+        loading={loading}
+        items={items}
+        imageDimensionsByName={imageDimensionsByName}
+        onImageNaturalSize={handleImageNaturalSize}
+        cardFlows={cardFlows}
+        onCardFlowChange={(name, value) => {
+          setCardFlows((prev) => ({ ...prev, [name]: value }))
+        }}
+        cardCustomPrompts={cardCustomPrompts}
+        onCardCustomPromptChange={(name, value) => {
+          setCardCustomPrompts((prev) => ({ ...prev, [name]: value }))
+        }}
+        aiFlows={aiFlows}
+        flowsLoading={flowsLoading}
+        generatingByName={generatingByName}
+        deleting={deleting}
+        onPreview={setPreviewItem}
+        onDeleteRequest={setPendingDeleteName}
+        onGenerate={onGenerate}
+      />
     </div>
   )
 }
