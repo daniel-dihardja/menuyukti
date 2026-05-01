@@ -98,10 +98,10 @@ export default async function LandingPage() {
 
   const featureCards = [
     {
-      title: t('featureHighlights.cards.workflowTitle'),
-      description: t('featureHighlights.cards.workflowDescription'),
-      image: '/images/landing-workflow.webp',
-      alt: t('featureHighlights.cards.workflowAlt'),
+      title: t('featureHighlights.cards.assetsTitle'),
+      description: t('featureHighlights.cards.assetsDescription'),
+      image: '/images/workflow-assets.webp',
+      alt: t('featureHighlights.cards.assetsAlt'),
     },
     {
       title: t('featureHighlights.cards.promotionTitle'),
