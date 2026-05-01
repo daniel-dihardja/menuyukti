@@ -130,7 +130,13 @@
         "datesTitle": "Dates node",
         "datesDescription": "Defines campaign start/end windows and public-holiday context to keep posting plans realistic.",
         "brandBriefTitle": "Brand Brief node",
-        "brandBriefDescription": "Builds audience hypotheses, content pillars, and tone guardrails from operating and menu signals."
+        "brandBriefDescription": "Builds audience hypotheses, content pillars, and tone guardrails from operating and menu signals.",
+        "promotionCandidatesTitle": "Promotion candidates node",
+        "promotionCandidatesDescription": "Turns menu-engineering signals into ranked promotion ideas—stars, puzzles, and angles—aligned with your brand brief and only naming dishes your analytics actually support.",
+        "postSchedulerTitle": "Post scheduler node",
+        "postSchedulerDescription": "Allocates Instagram slots across the campaign window so timing matches demand patterns, holidays, and the stories you want to tell.",
+        "contentCreatorTitle": "Content creator node",
+        "contentCreatorDescription": "Drafts captions, hooks, and post copy grounded in your schedule, brief, and promotion choices so you get review-ready social text, not generic filler."
       }
     },
     "signals": {
@@ -167,8 +173,8 @@
       "title": "Common questions",
       "q1": "What data do I need to upload?",
       "a1": "Start by uploading your POS sales report to unlock data-driven insights. Your POS system must be supported before you can upload, because each POS uses different column names that need to be normalized first. The list of supported POS systems will be shown on this page soon.",
-      "q3": "Is Menuyukti only a chatbot?",
-      "a3": "No. Menuyukti is built as an agentic workflow platform, not just a chat window. AI agents run milestone pipelines to produce structured outputs like schedules, profiles, and evaluations you can reuse and improve over time. Chat helps you refine results and explore alternatives while your strategy stays grounded in workspace data.",
+      "q3": "What is an agentic AI system?",
+      "a3": "An agentic AI system goes beyond a single chat reply: it can plan steps, call tools, and run workflows toward a goal—much like a teammate following a brief, not just answering one question at a time. For restaurant marketers, that means turning sales signals into concrete artifacts—schedules, promotion angles, location profiles—with less copy-paste and fewer disconnected tools. You stay in control with transparent data from your workspace, while the system does the repetitive orchestration so campaigns stay aligned with what actually sells.",
       "q4": "Who is it for?",
       "a4": "Menuyukti is for restaurant marketers, whether you are an owner, staff member, freelancer, or agency supporting restaurant brands. It is especially useful for multi-location teams that want analytics and AI-powered execution in one connected workspace.",
       "q5": "Can we collaborate across locations?",
