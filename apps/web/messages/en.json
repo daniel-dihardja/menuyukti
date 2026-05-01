@@ -153,9 +153,9 @@
       "title": "Product proof across the workflow",
       "subtitle": "See how your workspace goes from milestone planning to agentic runs, evidence-backed promotion, and transparent execution.",
       "cards": {
-        "workflowTitle": "Workflow milestone board",
-        "workflowDescription": "Plan and run milestone nodes in sequence, with criteria and structured outputs visible in one workspace.",
-        "workflowAlt": "Workflow board with milestones and brand brief preview.",
+        "assetsTitle": "Workflow assets and AI image flows",
+        "assetsDescription": "Upload raw photos straight from a smartphone, run an AI flow to remove the background, then use image workflow presets to produce high-quality product shots.",
+        "assetsAlt": "Workflow assets view with brand files and AI image flow presets for generating on-brand imagery.",
         "promotionTitle": "Promotion candidate results",
         "promotionDescription": "Review prioritized menu items with rationale and Instagram guidance before scheduling.",
         "promotionAlt": "Promotion candidates panel with prioritized menu items and rationale.",
