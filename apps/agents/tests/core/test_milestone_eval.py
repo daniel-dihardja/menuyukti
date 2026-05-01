@@ -177,3 +177,71 @@ def test_enforce_optional_input_line_removes_period_terminated_inline_fragment()
 def test_optional_input_usage_line_marks_not_given_when_notes_absent() -> None:
     line = nodes._optional_input_usage_line("")
     assert line == "Optional input usage: not given."
+
+
+def test_extract_milestone_input_notes_brand_brief_trims() -> None:
+    out = nodes._extract_milestone_input_notes(
+        _base_state(
+            milestone_input={
+                "type": "restaurant_brand_brief",
+                "value": {"notes": "  owner context  "},
+            },
+        ),
+    )
+    assert out == "owner context"
+
+
+def test_extract_milestone_input_notes_promotion_candidates() -> None:
+    out = nodes._extract_milestone_input_notes(
+        _base_state(
+            milestone_input={
+                "type": "promotion_candidates",
+                "value": {"notes": "prioritize brunch"},
+            },
+        ),
+    )
+    assert out == "prioritize brunch"
+
+
+def test_extract_milestone_input_notes_scheduler() -> None:
+    out = nodes._extract_milestone_input_notes(
+        _base_state(
+            milestone_input={
+                "type": "scheduler",
+                "value": {"notes": "two posts per week"},
+            },
+        ),
+    )
+    assert out == "two posts per week"
+
+
+def test_extract_milestone_input_notes_ignores_dates_type() -> None:
+    assert (
+        nodes._extract_milestone_input_notes(
+            _base_state(
+                milestone_input={
+                    "type": "dates",
+                    "value": {"startDate": "2026-01-01", "endDate": "2026-01-31"},
+                },
+            ),
+        )
+        == ""
+    )
+
+
+def test_select_best_milestonedata_payload_prefers_populated_promotion_list() -> None:
+    sparse = {
+        "placement": "",
+        "puzzleOpportunityPool": {"puzzleItemsFound": 0, "threshold": 0.0, "selectedCount": 0},
+        "promotionCandidates": [],
+        "rankedCandidates": [],
+    }
+    rich = {
+        "placement": "ok",
+        "puzzleOpportunityPool": {"puzzleItemsFound": 0, "threshold": 0.0, "selectedCount": 0},
+        "promotionCandidates": [{"menu": "A", "rationale": ["x"]}],
+        "rankedCandidates": [{"menu": "A", "recommendation": "x", "score": 1.0, "quantity": 1, "totalRevenue": 1.0, "signalReasons": []}],
+    }
+    chosen = nodes._select_best_milestonedata_payload([sparse, rich])
+    assert chosen is not None
+    assert len(chosen["promotionCandidates"]) == 1

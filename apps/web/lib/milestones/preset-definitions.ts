@@ -84,6 +84,10 @@ export function getMilestonePresetCreateFields(
       return {
         presetId: 'restaurant_brand_brief',
         name: t('milestonePreset.restaurant_brand_brief.title'),
+        milestoneInput: {
+          type: 'restaurant_brand_brief',
+          value: { notes: '' },
+        },
         milestoneData: {
           venueSnapshot: {
             venueName: '',
@@ -126,6 +130,10 @@ export function getMilestonePresetCreateFields(
       return {
         presetId: 'promotion_candidates',
         name: t('milestonePreset.promotion_candidates.title'),
+        milestoneInput: {
+          type: 'promotion_candidates',
+          value: { notes: '' },
+        },
         milestoneData: emptyPromotionCandidatesMilestoneData(
           t('milestonePreset.promotion_candidates.placementHint'),
         ) satisfies MilestonedataValue,
@@ -155,6 +163,10 @@ export function getMilestonePresetCreateFields(
       return {
         presetId: 'scheduler',
         name: t('milestonePreset.scheduler.title'),
+        milestoneInput: {
+          type: 'scheduler',
+          value: { notes: '' },
+        },
         milestoneData: emptySchedulerMilestoneData() satisfies MilestonedataValue,
         goal: t('milestonePreset.scheduler.goal'),
         milestoneRunSkillMode: 'fixed',

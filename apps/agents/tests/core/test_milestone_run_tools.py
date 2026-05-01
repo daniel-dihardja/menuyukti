@@ -726,6 +726,40 @@ async def test_write_result_data_accepts_registered_skill_payloads(
 
 
 @pytest.mark.asyncio
+async def test_write_result_data_rejects_promotion_empty_when_ranked_nonempty() -> None:
+    ctx: dict[str, Any] = {"selected_skill_id": "promotion_candidates"}
+    payload: dict[str, Any] = {
+        "placement": "x",
+        "puzzleOpportunityPool": {
+            "puzzleItemsFound": 0,
+            "threshold": 0.0,
+            "selectedCount": 0,
+        },
+        "promotionCandidates": [],
+        "rankedCandidates": [
+            {
+                "menu": "Nasi Goreng",
+                "recommendation": "promote",
+                "score": 90.0,
+                "quantity": 10,
+                "totalRevenue": 100.0,
+                "signalReasons": ["hero"],
+            }
+        ],
+    }
+    client = MagicMock(spec=AsyncMock)
+    with patch(
+        "agents_app.agents.core.milestone_run.tools.write_result_data.upsert_milestonedata_node",
+        new=AsyncMock(return_value={"id": "md-should-not-run"}),
+    ) as mock_upsert:
+        tools = _tools_for_context(ctx, client=client)
+        write_result_data = _tool_by_name(tools, "write_result_data")
+        out = await write_result_data.ainvoke({"new_data": payload})
+    mock_upsert.assert_not_awaited()
+    assert "Output validation failed for skill 'promotion_candidates'" in out
+
+
+@pytest.mark.asyncio
 async def test_write_result_data_promotion_candidates_omits_optional_null_fields() -> None:
     ctx: dict[str, Any] = {"selected_skill_id": "promotion_candidates"}
     payload: dict[str, Any] = {

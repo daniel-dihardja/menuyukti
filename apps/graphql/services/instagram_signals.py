@@ -43,12 +43,14 @@ def build_instagram_signals(session: Session, run: AnalyticsRun) -> dict[str, An
 
     sales_rows = facts_to_sales_analytics_rows(facts)
     pos_system = (run.pos_system or "").strip().lower()
-    has_order_id = pos_system != "quino"
-    has_datetime = pos_system != "quino"
+    # Quino exports omit bill linkage and real timestamps; treat as explicitly minimal.
+    # For other POS systems, derive order_id / datetime tiers from actual OrderFact rows so
+    # reports without usable order_time do not advertise heatmaps or posting windows.
+    is_quino = pos_system == "quino"
     sales_analytics = compute_sales_analytics_from_orders(
         sales_rows,
-        has_order_id=has_order_id,
-        has_datetime=has_datetime,
+        has_order_id=False if is_quino else None,
+        has_datetime=False if is_quino else None,
     )
 
     cat_rows = facts_to_category_mix_rows(facts)
@@ -59,8 +61,9 @@ def build_instagram_signals(session: Session, run: AnalyticsRun) -> dict[str, An
     revenue_trends = compute_revenue_trends_from_orders(curr_rev, prev_rev)
 
     op_rows = facts_to_operating_profile_rows(facts)
+    has_datetime_effective = bool(sales_analytics["capabilities"]["has_datetime"])
     operating_profile: OperatingProfileResult | None = (
-        compute_operating_profile_from_orders(op_rows) if has_datetime else None
+        compute_operating_profile_from_orders(op_rows) if has_datetime_effective else None
     )
 
     matrix_data = compute_menu_engineering_matrix(session, run, order_facts=facts)

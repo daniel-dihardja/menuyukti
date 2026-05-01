@@ -107,8 +107,13 @@ def build_promotion_menu_items(session: Session, run: AnalyticsRun) -> Promotion
         }
         for r in facts
     ]
-    heatmap_payloads = compute_menu_heatmaps_from_orders(heatmap_rows)
-    peaks = _heatmap_peaks_by_menu(heatmap_payloads)
+    parsed_times = pd.to_datetime([r.order_time for r in facts], errors="coerce")
+    if parsed_times.isna().all():
+        heatmap_payloads: list[dict[str, Any]] = []
+        peaks: dict[str, tuple[int | None, str | None]] = {}
+    else:
+        heatmap_payloads = compute_menu_heatmaps_from_orders(heatmap_rows)
+        peaks = _heatmap_peaks_by_menu(heatmap_payloads)
 
     rows: list[dict[str, Any]] = []
     for row in extracted:

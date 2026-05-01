@@ -34,7 +34,10 @@ export const datesMilestoneInputSchema = z.object({
 
 export type DatesMilestoneInput = z.infer<typeof datesMilestoneInputSchema>
 
-/** Brand brief milestone Input tab: optional owner notes sent with location context on run. */
+/**
+ * Optional owner notes on the milestone Input tab (`value.notes`).
+ * Same shape for brand brief, promotion candidates, and scheduler presets.
+ */
 export const brandBriefMilestoneInputValueSchema = z.object({
   notes: z.string(),
 })

@@ -22,6 +22,9 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { Textarea } from '@workspace/ui/components/textarea'
 
+import type { MilestonePresetId } from '@/lib/graphql/node-schemas'
+import { milestonePresetHasDefaultOptionalNotesInput } from '@/lib/milestones/milestone-input-tab'
+
 import type { DatesMilestoneInput, PassCriteriaRow, TimelineMilestone } from './types'
 
 const presetGoalTranslationKeyById = {
@@ -48,10 +51,9 @@ export type MilestoneItemTabsModel = {
   handleAddPassCriterion: () => Promise<void>
   handleRemovePassCriterion: (index: number) => Promise<void>
   isDatesPreset: boolean
-  isBrandBriefPreset: boolean
-  brandBriefNotesDraft: string
-  setBrandBriefNotesDraft: (v: string) => void
-  handleBrandBriefNotesBlur: () => void
+  optionalNotesDraft: string
+  setOptionalNotesDraft: (v: string) => void
+  handleOptionalNotesBlur: () => void
   inputDraft: DatesMilestoneInput
   setInputDraft: (next: DatesMilestoneInput) => void
   inputSaveStatus: FieldSaveStatusVariant
@@ -82,6 +84,32 @@ function formatDateButtonLabel(value: string): string {
   return parsed ? parsed.toLocaleDateString() : value
 }
 
+function optionalNotesFieldCopy(
+  presetId: Exclude<MilestonePresetId, 'dates'>,
+  t: (key: string) => string,
+): { label: string; description: string; placeholder: string } {
+  switch (presetId) {
+    case 'restaurant_brand_brief':
+      return {
+        label: t('milestonePreset.restaurant_brand_brief.inputLabel'),
+        description: t('milestonePreset.restaurant_brand_brief.inputDescription'),
+        placeholder: t('milestonePreset.restaurant_brand_brief.inputPlaceholder'),
+      }
+    case 'promotion_candidates':
+      return {
+        label: t('milestonePreset.promotion_candidates.inputLabel'),
+        description: t('milestonePreset.promotion_candidates.inputDescription'),
+        placeholder: t('milestonePreset.promotion_candidates.inputPlaceholder'),
+      }
+    case 'scheduler':
+      return {
+        label: t('milestonePreset.scheduler.inputLabel'),
+        description: t('milestonePreset.scheduler.inputDescription'),
+        placeholder: t('milestonePreset.scheduler.inputPlaceholder'),
+      }
+  }
+}
+
 export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
   const {
     milestone,
@@ -99,10 +127,9 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     handleAddPassCriterion,
     handleRemovePassCriterion,
     isDatesPreset,
-    isBrandBriefPreset,
-    brandBriefNotesDraft,
-    setBrandBriefNotesDraft,
-    handleBrandBriefNotesBlur,
+    optionalNotesDraft,
+    setOptionalNotesDraft,
+    handleOptionalNotesBlur,
     inputDraft,
     setInputDraft,
     inputSaveStatus,
@@ -117,6 +144,14 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     const customDescription = milestone.goal?.trim() ?? ''
     return presetDescription || customDescription || t('milestoneHelpWhatItDoesFallback')
   }, [milestone.goal, milestone.presetId, t])
+
+  const optionalNotesCopy = useMemo(() => {
+    const pid = milestone.presetId
+    if (!milestonePresetHasDefaultOptionalNotesInput(pid)) {
+      return null
+    }
+    return optionalNotesFieldCopy(pid, t)
+  }, [milestone.presetId, t])
 
   return (
     <CardContent className="border-border/60 border-t px-6 pt-4 pb-0">
@@ -162,20 +197,20 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           </FieldGroup>
         </TabsContent>
         <TabsContent value="input">
-          {isBrandBriefPreset ? (
+          {optionalNotesCopy ? (
             <FieldGroup className="gap-4">
               <Field>
-                <FieldLabel>{t('milestoneBrandBriefInputLabel')}</FieldLabel>
-                <FieldDescription>{t('milestoneBrandBriefInputDescription')}</FieldDescription>
+                <FieldLabel>{optionalNotesCopy.label}</FieldLabel>
+                <FieldDescription>{optionalNotesCopy.description}</FieldDescription>
                 <Textarea
                   className="min-h-[120px] resize-y whitespace-pre-wrap"
                   disabled={isMilestoneRunning}
-                  onBlur={() => handleBrandBriefNotesBlur()}
-                  onChange={(e) => setBrandBriefNotesDraft(e.target.value)}
+                  onBlur={() => handleOptionalNotesBlur()}
+                  onChange={(e) => setOptionalNotesDraft(e.target.value)}
                   onClick={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}
-                  placeholder={t('milestoneBrandBriefInputPlaceholder')}
-                  value={brandBriefNotesDraft}
+                  placeholder={optionalNotesCopy.placeholder}
+                  value={optionalNotesDraft}
                 />
               </Field>
               <FieldSaveStatus
@@ -375,13 +410,20 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           <FieldGroup className="gap-4">
             <p className="font-semibold text-lg leading-tight">{milestone.title}</p>
             <MarkdownMessage content={helpDescription} />
-            {isBrandBriefPreset ? (
+            {milestone.presetId === 'restaurant_brand_brief' ? (
               <div className="space-y-2 text-muted-foreground text-sm">
                 <p className="font-medium text-foreground">
                   {t('milestoneHelpBrandBriefOptionalInputTitle')}
                 </p>
                 <p>{t('milestoneHelpBrandBriefOptionalInputHowUsed')}</p>
                 <p>{t('milestoneHelpBrandBriefOptionalInputWhenToUse')}</p>
+              </div>
+            ) : optionalNotesCopy ? (
+              <div className="space-y-2 text-muted-foreground text-sm">
+                <p className="font-medium text-foreground">
+                  {t('milestoneHelpOptionalInputTitle')}
+                </p>
+                <p>{t('milestoneHelpOptionalInputSummary')}</p>
               </div>
             ) : null}
           </FieldGroup>

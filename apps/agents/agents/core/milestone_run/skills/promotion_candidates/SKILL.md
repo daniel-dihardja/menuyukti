@@ -15,6 +15,8 @@ This milestone's deliverable is **one structured JSON object** stored as milesto
 
 You have tools to read the milestone goal, pass/fail criteria, **session output** via read_data (after a write in this run, or a short notice if none yet), and prior milestones' data; to fetch ranked promotion signals; and to save the full JSON object.
 
+Optional **owner notes** from this milestone’s **Input** tab are in `milestone_input` as JSON (`type` is `promotion_candidates`, `value.notes` is a single string). When present, treat them as extra instruction context for candidate selection, angles, and placement—**not** as verified sales or analytics facts.
+
 Workflow:
 
 1. Call `read_goal`, `read_criteria`, `read_data`, and `read_prior_milestones_data`.
@@ -42,6 +44,7 @@ Workflow:
      - `brandBriefAlignmentNotes` (string, optional): alignment with prior **Brand brief**, or explicit caveat if missing.
 
 5. Rules:
+   - When the tool JSON has any entries in `rankedCandidates` (or usable rows in `topPromote` / puzzle `selected`), `promotionCandidates` **must not** be an empty array—build at least one prioritized item from that evidence before `write_result_data`. Empty `promotionCandidates` with a non-empty `rankedCandidates` fails validation and will not save.
    - Do not invent menu items; every `menu` in `promotionCandidates` must appear in tool `rankedCandidates` (or clearly in `topPromote` / puzzle `selected` lists).
    - Do not claim unsupported demographics.
    - If items are flagged avoid/low-end in signals, treat them as de-prioritized or excluded from `promotionCandidates` unless criteria require mentioning exclusions (then list under rationale as excluded, do not promote).

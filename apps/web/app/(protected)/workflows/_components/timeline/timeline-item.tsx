@@ -20,21 +20,13 @@ import type {
 } from './types'
 
 import type { FieldSaveStatusVariant } from '@/components/field-save-status'
+import {
+  milestonePresetHasDefaultOptionalNotesInput,
+  optionalNotesFromMilestoneInput,
+} from '@/lib/milestones/milestone-input-tab'
 
-/** Input autosave debounce; brand brief updates avoid draft rewrites to preserve caret. */
+/** Input autosave debounce; optional notes updates avoid draft rewrites to preserve caret. */
 const MILESTONE_INPUT_AUTOSAVE_DEBOUNCE_MS = 1200
-
-function brandBriefNotesFromMilestone(raw: TimelineMilestone['milestoneInput']): string {
-  if (
-    raw?.type === 'restaurant_brand_brief' &&
-    raw.value != null &&
-    typeof raw.value === 'object'
-  ) {
-    const n = (raw.value as { notes?: unknown }).notes
-    return typeof n === 'string' ? n : ''
-  }
-  return ''
-}
 
 export type TimelineItemProps = {
   milestone: TimelineMilestone
@@ -121,14 +113,16 @@ function TimelineItemInner({
   const savingGoal = savingGoalMilestoneId === milestone.id
   const savingInput = savingDataMilestoneId === milestone.id
   const isDatesPreset = milestone.presetId === 'dates'
-  const isBrandBriefPreset = milestone.presetId === 'restaurant_brand_brief'
+  const usesOptionalNotesInput = milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)
 
   const [inputDraft, setInputDraft] = useState<DatesMilestoneInput>(() =>
     datesInputFromMilestone(milestone.milestoneInput),
   )
 
-  const [brandBriefNotesDraft, setBrandBriefNotesDraft] = useState(() =>
-    brandBriefNotesFromMilestone(milestone.milestoneInput),
+  const [optionalNotesDraft, setOptionalNotesDraft] = useState(() =>
+    milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)
+      ? optionalNotesFromMilestoneInput(milestone.milestoneInput, milestone.presetId)
+      : '',
   )
 
   useEffect(() => {
@@ -138,12 +132,12 @@ function TimelineItemInner({
   const previousMilestoneIdRef = useRef(milestone.id)
 
   useEffect(() => {
-    if (!isBrandBriefPreset) {
+    if (!milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
       previousMilestoneIdRef.current = milestone.id
       return
     }
-    const server = brandBriefNotesFromMilestone(milestone.milestoneInput)
-    setBrandBriefNotesDraft((prev) => {
+    const server = optionalNotesFromMilestoneInput(milestone.milestoneInput, milestone.presetId)
+    setOptionalNotesDraft((prev) => {
       if (previousMilestoneIdRef.current !== milestone.id) {
         previousMilestoneIdRef.current = milestone.id
         return server
@@ -153,7 +147,7 @@ function TimelineItemInner({
       }
       return prev === server ? prev : server
     })
-  }, [isBrandBriefPreset, milestone.id, milestone.milestoneInput])
+  }, [milestone.presetId, milestone.id, milestone.milestoneInput])
 
   const milestoneRef = useRef(milestone)
   milestoneRef.current = milestone
@@ -161,8 +155,8 @@ function TimelineItemInner({
   const inputDraftRef = useRef(inputDraft)
   inputDraftRef.current = inputDraft
 
-  const brandBriefNotesDraftRef = useRef(brandBriefNotesDraft)
-  brandBriefNotesDraftRef.current = brandBriefNotesDraft
+  const optionalNotesDraftRef = useRef(optionalNotesDraft)
+  optionalNotesDraftRef.current = optionalNotesDraft
 
   const onUpdateMilestoneInputRef = useRef(onUpdateMilestoneInput)
   onUpdateMilestoneInputRef.current = onUpdateMilestoneInput
@@ -254,16 +248,22 @@ function TimelineItemInner({
     inputDraft.startDate !== serverDatesInput.startDate ||
     inputDraft.endDate !== serverDatesInput.endDate
 
-  const brandBriefNotesDirty = useMemo(() => {
-    const server = brandBriefNotesFromMilestone(milestone.milestoneInput).trim()
-    return brandBriefNotesDraft.trim() !== server
-  }, [milestone.milestoneInput, brandBriefNotesDraft])
+  const optionalNotesDirty = useMemo(() => {
+    if (!milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
+      return false
+    }
+    const server = optionalNotesFromMilestoneInput(
+      milestone.milestoneInput,
+      milestone.presetId,
+    ).trim()
+    return optionalNotesDraft.trim() !== server
+  }, [milestone.milestoneInput, milestone.presetId, optionalNotesDraft])
 
   const performMilestoneInputFlush = useCallback(
     async ({
-      normalizeBrandBriefDraft,
+      normalizeOptionalNotesDraft,
     }: {
-      normalizeBrandBriefDraft: boolean
+      normalizeOptionalNotesDraft: boolean
     }): Promise<boolean> => {
       const onUpdate = onUpdateMilestoneInputRef.current
       if (!onUpdate) {
@@ -282,41 +282,41 @@ function TimelineItemInner({
         }
         return ok
       }
-      if (m.presetId === 'restaurant_brand_brief') {
-        const server = brandBriefNotesFromMilestone(m.milestoneInput)
-        const trimmedDraft = brandBriefNotesDraftRef.current.trim()
+      if (milestonePresetHasDefaultOptionalNotesInput(m.presetId)) {
+        const server = optionalNotesFromMilestoneInput(m.milestoneInput, m.presetId)
+        const trimmedDraft = optionalNotesDraftRef.current.trim()
         const trimmedServer = server.trim()
         if (trimmedDraft === trimmedServer) {
-          if (normalizeBrandBriefDraft && brandBriefNotesDraftRef.current !== trimmedDraft) {
-            setBrandBriefNotesDraft(trimmedDraft)
+          if (normalizeOptionalNotesDraft && optionalNotesDraftRef.current !== trimmedDraft) {
+            setOptionalNotesDraft(trimmedDraft)
           }
           return true
         }
         const ok = await onUpdate(m.id, {
-          type: 'restaurant_brand_brief',
+          type: m.presetId,
           value: { notes: trimmedDraft },
         })
         if (!ok) {
-          setBrandBriefNotesDraft(server)
-        } else if (normalizeBrandBriefDraft) {
-          setBrandBriefNotesDraft(trimmedDraft)
+          setOptionalNotesDraft(server)
+        } else if (normalizeOptionalNotesDraft) {
+          setOptionalNotesDraft(trimmedDraft)
         }
         return ok
       }
       return true
     },
-    [setInputDraft, setBrandBriefNotesDraft],
+    [setInputDraft, setOptionalNotesDraft],
   )
 
   const flushMilestoneInputSave = useCallback(
-    async (options?: { normalizeBrandBriefDraft?: boolean }): Promise<boolean> => {
+    async (options?: { normalizeOptionalNotesDraft?: boolean }): Promise<boolean> => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current)
         debounceTimerRef.current = null
       }
-      const normalizeBrandBriefDraft = options?.normalizeBrandBriefDraft ?? false
+      const normalizeOptionalNotesDraft = options?.normalizeOptionalNotesDraft ?? false
       const run = flushChainRef.current.then(() =>
-        performMilestoneInputFlush({ normalizeBrandBriefDraft }),
+        performMilestoneInputFlush({ normalizeOptionalNotesDraft }),
       )
       flushChainRef.current = run.catch(() => false)
       return run
@@ -331,7 +331,7 @@ function TimelineItemInner({
     if (isMilestoneRunning) {
       return
     }
-    const dirty = (isDatesPreset && inputDirty) || (isBrandBriefPreset && brandBriefNotesDirty)
+    const dirty = (isDatesPreset && inputDirty) || (usesOptionalNotesInput && optionalNotesDirty)
     if (!dirty) {
       return
     }
@@ -347,12 +347,12 @@ function TimelineItemInner({
       }
     }
   }, [
-    brandBriefNotesDirty,
-    brandBriefNotesDraft,
+    optionalNotesDirty,
+    optionalNotesDraft,
     flushMilestoneInputSave,
     inputDirty,
     inputDraft,
-    isBrandBriefPreset,
+    usesOptionalNotesInput,
     isDatesPreset,
     isMilestoneRunning,
     onUpdateMilestoneInput,
@@ -373,7 +373,7 @@ function TimelineItemInner({
 
   const inputSaveStatus: FieldSaveStatusVariant = savingInput
     ? 'saving'
-    : (isDatesPreset && inputDirty) || (isBrandBriefPreset && brandBriefNotesDirty)
+    : (isDatesPreset && inputDirty) || (usesOptionalNotesInput && optionalNotesDirty)
       ? 'unsaved'
       : 'saved'
 
@@ -393,8 +393,8 @@ function TimelineItemInner({
     })()
   }
 
-  const handleBrandBriefNotesBlur = () => {
-    void flushMilestoneInputSave({ normalizeBrandBriefDraft: true })
+  const handleOptionalNotesBlur = () => {
+    void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
   }
 
   const isDeleting = deletingMilestoneId === milestone.id
@@ -510,27 +510,26 @@ function TimelineItemInner({
                 model={{
                   addCriteriaInputId,
                   addCriteriaInputRef,
-                  brandBriefNotesDraft,
                   criteriaRows,
                   goalDraft,
                   goalFieldId,
                   handleAddPassCriterion,
-                  handleBrandBriefNotesBlur,
                   handleGoalSave,
+                  handleOptionalNotesBlur,
                   handleRemovePassCriterion,
                   hasResult,
                   inputDraft,
                   inputSaveStatus,
-                  isBrandBriefPreset,
-                  isMilestoneRunning,
                   isDatesPreset,
+                  isMilestoneRunning,
                   milestone,
+                  optionalNotesDraft,
                   savingGoal,
                   savingInput,
                   savingPassCriteria,
-                  setBrandBriefNotesDraft,
                   setGoalDraft,
                   setInputDraft,
+                  setOptionalNotesDraft,
                 }}
               />
             </CollapsibleContent>

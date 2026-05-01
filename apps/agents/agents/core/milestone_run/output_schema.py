@@ -154,6 +154,17 @@ class PromotionCandidatesMilestoneOutput(BaseModel):
     rankedCandidates: list[PromotionRankedCandidate]
     context: PromotionCandidatesContext | None = None
 
+    @model_validator(mode="after")
+    def _promotion_candidates_nonempty_when_ranked_has_rows(self) -> PromotionCandidatesMilestoneOutput:
+        if len(self.rankedCandidates) > 0 and len(self.promotionCandidates) == 0:
+            msg = (
+                "promotionCandidates must include at least one item when rankedCandidates is non-empty; "
+                "build prioritized picks from rankedCandidates (or topPromote / puzzle selected) "
+                "before calling write_result_data."
+            )
+            raise ValueError(msg)
+        return self
+
 
 class SchedulerScheduleRow(BaseModel):
     dateTime: str

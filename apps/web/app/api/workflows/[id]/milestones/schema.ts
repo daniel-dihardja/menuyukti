@@ -48,6 +48,14 @@ export const patchMilestoneSchema = z
           type: z.literal('restaurant_brand_brief'),
           value: brandBriefMilestoneInputValueSchema,
         }),
+        z.object({
+          type: z.literal('promotion_candidates'),
+          value: brandBriefMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('scheduler'),
+          value: brandBriefMilestoneInputValueSchema,
+        }),
         milestoneInputSchema,
       ])
       .optional(),
