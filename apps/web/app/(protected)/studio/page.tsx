@@ -2,29 +2,24 @@ import { getTranslations } from 'next-intl/server'
 import { auth } from '@clerk/nextjs/server'
 
 import { routes } from '@/lib/routes'
-import { getCachedImageAiFlows } from '@/lib/graphql/cached-queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { PageHeading } from '@/components/page-heading'
 
-import { ImageFlowsManager } from './_components/image-flows-manager'
+import { StudioAssetsDynamic } from './studio-assets-dynamic'
 
 export default async function Page() {
-  const tImageFlows = await getTranslations('imageFlows')
   const tStudio = await getTranslations('sidebar')
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const flowsData = await getCachedImageAiFlows(userId)
-
   return (
     <AnalyticsPageShell
       title={tStudio('studio')}
       breadcrumbs={[{ label: tStudio('studio'), href: routes.studio }]}
+      mainClassName="max-w-none flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
-      <PageHeading title={tStudio('studio')} description={tImageFlows('pageDescription')} />
-      <ImageFlowsManager initialFlows={flowsData.imageAiFlows} />
+      <StudioAssetsDynamic />
     </AnalyticsPageShell>
   )
 }
