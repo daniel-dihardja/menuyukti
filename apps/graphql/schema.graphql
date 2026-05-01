@@ -719,7 +719,7 @@ type Query {
   locationSocialSettings(locationId: Int!): LocationSocialSettingsType
 
   """
-  JSON array of prior milestones' milestonedata payloads: each element is `{"title": string, "data": object|string|array|null}` for milestones strictly before the given milestone in workflow display order. `data` is the raw `milestonedata` child `data` field (structured object, legacy string, or null). Empty array when there are no prior milestones or the request is not authorized.
+  JSON array of prior milestones' milestonedata payloads: each element is `{"title": string, "presetId": string|null, "data": object|string|array|null}` for milestones strictly before the given milestone in workflow display order. `presetId` is the milestone node's preset when set. `data` is the raw `milestonedata` child `data` field (structured object, legacy string, or null). Empty array when there are no prior milestones or the request is not authorized.
   """
   priorMilestonesMilestoneData(workflowId: ID!, milestoneId: ID!, locationId: Int!): JSON!
   myWorkspace: WorkspaceType

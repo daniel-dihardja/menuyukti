@@ -154,6 +154,14 @@ def test_extra_tool_ids_includes_get_promotion_candidates() -> None:
     assert names.index("get_promotion_candidates") < names.index("write_result_data")
 
 
+def test_promotion_candidates_skill_extra_tool_ids() -> None:
+    from agents_app.agents.core.milestone_run.skills import SKILL_REGISTRY
+
+    pc = SKILL_REGISTRY["promotion_candidates"]
+    assert pc.extra_tool_ids == ("get_promotion_candidates", "get_prior_campaign_context")
+    assert pc.inject_prior_presets == ("restaurant_brand_brief",)
+
+
 def test_extra_tool_ids_includes_get_prior_campaign_context() -> None:
     tools = _tools_for_context({}, extra_tool_ids=["get_prior_campaign_context"])
     names = [getattr(t, "name", "") for t in tools]

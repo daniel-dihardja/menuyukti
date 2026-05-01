@@ -27,7 +27,7 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
     id: 'promotion_candidates',
     name: 'Promotion candidates',
     description:
-      'Use for the promotion candidates milestone: menu engineering top stars and puzzles per POS menu_category (or flat when categories are missing) from the latest analytics run.',
+      'Use for the promotion candidates milestone: menu engineering top stars and puzzles per POS menu_category (or flat when categories are missing) from the latest analytics run. When a prior brand brief milestone exists, align promotion ideas with its pillars, audience, proof angles, and tone; menu names stay grounded in analytics.',
   },
   {
     id: 'generic',
