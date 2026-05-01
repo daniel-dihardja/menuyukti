@@ -100,13 +100,13 @@ export default async function LandingPage() {
     {
       title: t('featureHighlights.cards.workflowTitle'),
       description: t('featureHighlights.cards.workflowDescription'),
-      image: '/images/landing-workflow.png',
+      image: '/images/landing-workflow.webp',
       alt: t('featureHighlights.cards.workflowAlt'),
     },
     {
       title: t('featureHighlights.cards.promotionTitle'),
       description: t('featureHighlights.cards.promotionDescription'),
-      image: '/images/landing-promotion.png',
+      image: '/images/landing-promotion.webp',
       alt: t('featureHighlights.cards.promotionAlt'),
     },
   ] as const
@@ -150,13 +150,13 @@ export default async function LandingPage() {
               {t('hero.subtitle')}
             </p>
 
+            <HeroProductPreview alt={t('hero.previewAlt')} caption={t('hero.previewCaption')} />
+
             <div className="mt-8 hidden justify-center md:flex">
               <Button size="lg" variant="default" asChild>
                 <Link href={routes.login}>{t('hero.ctaSecondary')}</Link>
               </Button>
             </div>
-
-            <HeroProductPreview workflowCardTitle={t('hero.previewWorkflowCardTitle')} />
           </div>
         </section>
 

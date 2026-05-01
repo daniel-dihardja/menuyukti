@@ -97,7 +97,8 @@
       "subtitle": "Menuyukti is an agentic AI system for restaurant social media marketing: node-based workflows turn sales data into signals, run milestone pipelines, and produce Instagram-ready schedules and copy you can trust and refine. Within each step you can add input and influence the run—so you get automated AI execution balanced with your briefs, edits, and judgment.",
       "badge": "Agentic AI · Data-grounded agents · Sales-to-social workflows",
       "ctaSecondary": "Sign in",
-      "previewWorkflowCardTitle": "Workflow"
+      "previewAlt": "Screenshot of the Menuyukti workflow UI focused on the Brand Brief milestone, showing a generated brand brief informed by restaurant sales data.",
+      "previewCaption": "Example: the Brand Brief milestone—a brief generated from your sales data. Later milestones use it to propose promotion candidates."
     },
     "problem": "Most restaurant social media marketing still relies on disconnected dashboards, spreadsheets, and tools bolted onto legacy stacks—not coordinated agentic systems. Strategy gets lost between data review and campaign execution, so you miss timing windows and promote the wrong menu stories.",
     "problemImageAlt": "Abstract analytics dashboard showing sales performance bars and insight summary.",
