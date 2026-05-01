@@ -51,10 +51,11 @@ export function LandingFeatureHighlights({
                   <Image
                     src={card.image}
                     alt={card.alt}
-                    width={1200}
-                    height={720}
+                    width={1920}
+                    height={1080}
                     className="h-auto w-full object-cover"
-                    sizes="(max-width: 768px) 100vw, 50vw"
+                    sizes="(max-width: 768px) 100vw, 1080px"
+                    loading="lazy"
                   />
                 </div>
               </div>
