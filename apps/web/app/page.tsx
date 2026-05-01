@@ -109,6 +109,18 @@ export default async function LandingPage() {
       image: '/images/landing-promotion.webp',
       alt: t('featureHighlights.cards.promotionAlt'),
     },
+    {
+      title: t('featureHighlights.cards.heatmapsTitle'),
+      description: t('featureHighlights.cards.heatmapsDescription'),
+      image: '/images/data-visuals-heatmaps.webp',
+      alt: t('featureHighlights.cards.heatmapsAlt'),
+    },
+    {
+      title: t('featureHighlights.cards.bubbleChartTitle'),
+      description: t('featureHighlights.cards.bubbleChartDescription'),
+      image: '/images/data-visuals-bubblechart.webp',
+      alt: t('featureHighlights.cards.bubbleChartAlt'),
+    },
   ] as const
 
   return (

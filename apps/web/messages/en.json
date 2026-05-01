@@ -151,7 +151,7 @@
     },
     "featureHighlights": {
       "title": "Product proof across the workflow",
-      "subtitle": "See how your workspace goes from milestone planning to agentic runs, evidence-backed promotion, and transparent execution.",
+      "subtitle": "See how your workspace goes from milestone planning to agentic runs, evidence-backed promotion, and transparent execution, with built-in charts on the location sales report for timing and menu mix.",
       "cards": {
         "assetsTitle": "Workflow assets and AI image flows",
         "assetsDescription": "Upload raw smartphone photos and chain AI image flows from background removal through preset-based product photography.",
@@ -159,6 +159,12 @@
         "promotionTitle": "Promotion candidate results",
         "promotionDescription": "Review prioritized menu items with rationale and Instagram guidance before scheduling.",
         "promotionAlt": "Promotion candidates panel with prioritized menu items and rationale.",
+        "heatmapsTitle": "Hourly demand heatmaps",
+        "heatmapsDescription": "On each location’s sales report, heatmaps show how menu items concentrate across hours of the day so you can spot dayparts, prep load, and when to time social content to real purchase rhythm.",
+        "heatmapsAlt": "Location sales report heatmap grid showing menu items versus hours of the day with color intensity for sales volume.",
+        "bubbleChartTitle": "Menu bubble chart",
+        "bubbleChartDescription": "Compare items at a glance: bubble position and size encode quantity sold versus revenue so you can separate high-turn staples from high-ticket stars and decide what to promote or reposition.",
+        "bubbleChartAlt": "Bubble chart of menu items on a location sales report with bubbles sized and positioned by quantity and revenue.",
         "skillsTitle": "Skill and tool transparency",
         "skillsDescription": "Inspect which marketing skills and tools power each milestone run, so you keep control of strategy logic.",
         "skillsAlt": "Skills and tools page listing milestone skills and available tools."
