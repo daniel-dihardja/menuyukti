@@ -77,6 +77,126 @@ const FINISHES_DIGITAL: ShopFinishVariant[] = [
 
 export const SHOP_PRODUCTS: ShopProduct[] = [
   {
+    slug: 'p-14',
+    title: 'Illustration — digital download',
+    subtitle: 'High-resolution JPG · Complimentary',
+    displayPrice: 'Free',
+    description:
+      'A high-resolution illustration you download as a JPEG and send to your print shop or lab—ideal for a large wall poster (for example 18×24 inches vertical at well over 300 DPI). The file is 6656×9984 pixels (portrait), so detail stays sharp at poster sizes and you still have room to crop or scale slightly. You can also use the same asset on in-venue screens, menus, or your website. The shop preview is a lighter web-friendly image, not the print file.',
+    imageHints: [
+      {
+        alt: 'Illustration — preview',
+        label: 'Preview',
+      },
+    ],
+    s3PreviewObjectKeys: [shopDeliverableObjectKey('p-14', 'lowres_832x1284.jpg')],
+    sizes: [],
+    finishes: [],
+    digitalDeliverable: {
+      objectKey: shopDeliverableObjectKey('p-14', 'hires_6656x9984.jpg'),
+      downloadFilename: 'menuyukti-p-14-hires.jpg',
+    },
+    collectionId: 'digital-downloads',
+    newestOrder: -2,
+    popularityOrder: 3,
+    grid: {
+      colClass: 'col-span-12 md:col-span-4 mt-12',
+      imageAspect: 'aspect-[832/1284]',
+      titleClass: 'text-lg leading-tight',
+      addToCartClass: 'text-xs',
+    },
+  },
+  {
+    slug: 'p-13',
+    title: 'Illustration — digital download',
+    subtitle: 'High-resolution JPG · Complimentary',
+    displayPrice: 'Free',
+    description:
+      'A high-resolution illustration you download as a JPEG and send to your print shop or lab—ideal for a large wall poster (for example 18×24 inches vertical at well over 300 DPI). The file is 6656×9984 pixels (portrait), so detail stays sharp at poster sizes and you still have room to crop or scale slightly. You can also use the same asset on in-venue screens, menus, or your website. The shop preview is a lighter web-friendly image, not the print file.',
+    imageHints: [
+      {
+        alt: 'Illustration — preview',
+        label: 'Preview',
+      },
+    ],
+    s3PreviewObjectKeys: [shopDeliverableObjectKey('p-13', 'lowres_832x1248.jpg')],
+    sizes: [],
+    finishes: [],
+    digitalDeliverable: {
+      objectKey: shopDeliverableObjectKey('p-13', 'hires_6656x9984.jpg'),
+      downloadFilename: 'menuyukti-p-13-hires.jpg',
+    },
+    collectionId: 'digital-downloads',
+    newestOrder: -1,
+    popularityOrder: 3,
+    grid: {
+      colClass: 'col-span-12 md:col-span-4 mt-12',
+      imageAspect: 'aspect-[832/1248]',
+      titleClass: 'text-lg leading-tight',
+      addToCartClass: 'text-xs',
+    },
+  },
+  {
+    slug: 'p-12',
+    title: 'Illustration — digital download',
+    subtitle: 'High-resolution JPG · Complimentary',
+    displayPrice: 'Free',
+    description:
+      'A high-resolution illustration you download as a JPEG and send to your print shop or lab—ideal for a large wall poster (for example 18×24 inches vertical at well over 300 DPI). The file is 6696×9984 pixels (portrait), so detail stays sharp at poster sizes and you still have room to crop or scale slightly. You can also use the same asset on in-venue screens, menus, or your website. The shop preview is a lighter web-friendly image, not the print file.',
+    imageHints: [
+      {
+        alt: 'Illustration — preview',
+        label: 'Preview',
+      },
+    ],
+    s3PreviewObjectKeys: [shopDeliverableObjectKey('p-12', 'lores_832x1284.jpg')],
+    sizes: [],
+    finishes: [],
+    digitalDeliverable: {
+      objectKey: shopDeliverableObjectKey('p-12', 'hires_6696-9984.jpg'),
+      downloadFilename: 'menuyukti-p-12-hires.jpg',
+    },
+    collectionId: 'digital-downloads',
+    newestOrder: 0,
+    popularityOrder: 3,
+    grid: {
+      colClass: 'col-span-12 md:col-span-4 mt-12',
+      imageAspect: 'aspect-[832/1284]',
+      titleClass: 'text-lg leading-tight',
+      addToCartClass: 'text-xs',
+    },
+  },
+  {
+    slug: 'p-11',
+    title: 'Illustration — digital download',
+    subtitle: 'High-resolution JPG · Complimentary',
+    displayPrice: 'Free',
+    description:
+      'A high-resolution illustration you download as a JPEG and send to your print shop or lab—ideal for a large wall poster (for example 18×24 inches vertical at well over 300 DPI). The file is 6656×9984 pixels (portrait), so detail stays sharp at poster sizes and you still have room to crop or scale slightly. You can also use the same asset on in-venue screens, menus, or your website. The shop preview is a lighter web-friendly image, not the print file.',
+    imageHints: [
+      {
+        alt: 'Illustration — preview',
+        label: 'Preview',
+      },
+    ],
+    s3PreviewObjectKeys: [shopDeliverableObjectKey('p-11', 'lowres_832x1284.jpg')],
+    sizes: [],
+    finishes: [],
+    digitalDeliverable: {
+      objectKey: shopDeliverableObjectKey('p-11', 'hires_6656x9984.jpg'),
+      downloadFilename: 'menuyukti-p-11-hires.jpg',
+    },
+    collectionId: 'digital-downloads',
+    newestOrder: 1,
+    popularityOrder: 3,
+    grid: {
+      colClass: 'col-span-12 md:col-span-4 mt-12',
+      imageAspect: 'aspect-[832/1284]',
+      titleClass: 'text-lg leading-tight',
+      addToCartClass: 'text-xs',
+    },
+  },
+  {
     slug: 'p-07',
     title: 'Kitchen scene illustration — digital download',
     subtitle: 'High-resolution JPG · Complimentary',
@@ -97,7 +217,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       downloadFilename: 'menuyukti-p-07-hires.jpg',
     },
     collectionId: 'digital-downloads',
-    newestOrder: 0,
+    newestOrder: 2,
     popularityOrder: 3,
     grid: {
       colClass: 'col-span-12 md:col-span-4 mt-12',
@@ -127,7 +247,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       downloadFilename: 'menuyukti-p-03-hires.jpg',
     },
     collectionId: 'digital-downloads',
-    newestOrder: 1,
+    newestOrder: 3,
     popularityOrder: 3,
     grid: {
       colClass: 'col-span-12 md:col-span-4 mt-12',
@@ -157,7 +277,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       downloadFilename: 'menuyukti-p-08-hires.jpg',
     },
     collectionId: 'digital-downloads',
-    newestOrder: 2,
+    newestOrder: 4,
     popularityOrder: 3,
     grid: {
       colClass: 'col-span-12 md:col-span-4 mt-12',
@@ -187,7 +307,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       downloadFilename: 'menuyukti-p-09-highres.jpg',
     },
     collectionId: 'digital-downloads',
-    newestOrder: 3,
+    newestOrder: 5,
     popularityOrder: 3,
     grid: {
       colClass: 'col-span-12 md:col-span-4 mt-12',
@@ -225,7 +345,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     finishes: FINISHES_PRINT,
     collectionId: 'posters',
-    newestOrder: 4,
+    newestOrder: 6,
     popularityOrder: 5,
     grid: {
       colClass: 'col-span-12 md:col-span-8',
@@ -262,7 +382,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     finishes: FINISHES_DIGITAL,
     collectionId: 'menu-backgrounds',
-    newestOrder: 5,
+    newestOrder: 7,
     popularityOrder: 4,
     grid: {
       colClass: 'col-span-12 md:col-span-4 mt-12',
@@ -299,7 +419,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     finishes: FINISHES_PRINT,
     collectionId: 'limited-edition',
-    newestOrder: 6,
+    newestOrder: 8,
     popularityOrder: 5,
     grid: {
       colClass: 'col-span-12 md:col-span-4 -mt-8',
@@ -336,7 +456,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     finishes: FINISHES_PRINT,
     collectionId: 'posters',
-    newestOrder: 7,
+    newestOrder: 9,
     popularityOrder: 3,
     grid: {
       colClass: 'col-span-12 md:col-span-4 mt-16',
@@ -377,7 +497,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       { id: 'framed-float', label: 'Float frame add-on' },
     ],
     collectionId: 'custom-prints',
-    newestOrder: 8,
+    newestOrder: 10,
     popularityOrder: 4,
     grid: {
       colClass: 'col-span-12 md:col-span-4',

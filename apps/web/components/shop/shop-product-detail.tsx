@@ -79,8 +79,11 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
 
   if (resolvedImages.length === 0) {
     return (
-      <div className="mb-24">
-        <nav className="mb-10 text-sm text-muted-foreground" aria-label="Breadcrumb">
+      <div className="mb-24 min-w-0">
+        <nav
+          className="mb-10 text-sm text-muted-foreground"
+          aria-label={t('pdp.breadcrumbNavAria')}
+        >
           <ol className="flex flex-wrap items-center gap-2">
             <li>
               <Link href={routes.shop} className="font-medium text-primary">
@@ -107,13 +110,13 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
   }
 
   return (
-    <div className="mb-24">
+    <div className="mb-24 min-w-0">
       {shareStatus === 'copied' ? (
         <p className="sr-only" aria-live="polite">
           {t('pdp.shareCopied')}
         </p>
       ) : null}
-      <nav className="mb-10 text-sm text-muted-foreground" aria-label="Breadcrumb">
+      <nav className="mb-10 text-sm text-muted-foreground" aria-label={t('pdp.breadcrumbNavAria')}>
         <ol className="flex flex-wrap items-center gap-2">
           <li>
             <Link href={routes.shop} className="font-medium text-primary">
@@ -127,16 +130,16 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
         </ol>
       </nav>
 
-      <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
-        <div className="lg:col-span-7">
-          <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-muted sm:aspect-[3/4]">
+      <div className="grid min-w-0 gap-12 lg:grid-cols-12 lg:gap-16">
+        <div className="min-w-0 lg:col-span-7">
+          <div className="relative aspect-[4/5] touch-manipulation overflow-hidden rounded-xl bg-muted sm:aspect-[3/4]">
             {hasGallery && active ? (
               <>
                 <Image
                   src={active.src}
                   alt={active.alt}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   sizes="(max-width: 1024px) 100vw, 58vw"
                   priority
                 />
@@ -152,16 +155,16 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
                 <button
                   type="button"
                   onClick={goPrev}
-                  className="absolute left-3 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm transition hover:bg-muted"
-                  aria-label="Previous image"
+                  className="absolute left-3 top-1/2 flex size-10 -translate-y-1/2 touch-manipulation items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  aria-label={t('pdp.ariaPrevImage')}
                 >
                   <ChevronLeft className="size-5" />
                 </button>
                 <button
                   type="button"
                   onClick={goNext}
-                  className="absolute right-3 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm transition hover:bg-muted"
-                  aria-label="Next image"
+                  className="absolute right-3 top-1/2 flex size-10 -translate-y-1/2 touch-manipulation items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  aria-label={t('pdp.ariaNextImage')}
                 >
                   <ChevronRight className="size-5" />
                 </button>
@@ -175,16 +178,16 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
           ) : null}
 
           {hasGallery ? (
-            <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+            <div className="mt-4 flex min-w-0 touch-manipulation gap-3 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
               {images.map((img, i) => (
                 <button
                   key={`${product.slug}-thumb-${i}`}
                   type="button"
                   onClick={() => setImageIndex(i)}
-                  className={`relative size-20 shrink-0 overflow-hidden rounded-lg ring-2 ring-offset-2 ring-offset-background transition ${
+                  className={`relative size-20 shrink-0 overflow-hidden rounded-lg ring-2 ring-offset-2 ring-offset-background transition focus-visible:outline-none focus-visible:ring-ring ${
                     i === imageIndex ? 'ring-ring' : 'ring-transparent opacity-80 hover:opacity-100'
                   }`}
-                  aria-label={`Show ${img.label}`}
+                  aria-label={t('pdp.ariaShowImage', { label: img.label })}
                   aria-pressed={i === imageIndex}
                 >
                   <Image src={img.src} alt="" fill className="object-cover" sizes="80px" />
@@ -194,7 +197,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
           ) : null}
         </div>
 
-        <div className="lg:col-span-5">
+        <div className="min-w-0 lg:col-span-5">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
             {isDigital ? t('pdp.digitalProduct') : t('pdp.printOnDemand')}
           </p>
@@ -204,7 +207,13 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
           <p className="mt-2 text-lg text-muted-foreground">{product.subtitle}</p>
 
           <div className="mt-8 flex flex-wrap items-center justify-end gap-4 border-b border-border pb-8">
-            <Button type="button" variant="outline" size="sm" onClick={handleShare}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="touch-manipulation"
+              onClick={handleShare}
+            >
               <Share2 data-icon="inline-start" />
               {t('pdp.share')}
             </Button>
@@ -251,12 +260,12 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
               <Field orientation="horizontal">
                 <FieldLabel className="shrink-0">{t('pdp.quantity')}</FieldLabel>
                 <FieldContent>
-                  <div className="flex items-center rounded-lg border border-border bg-background">
+                  <div className="flex touch-manipulation items-center rounded-lg border border-border bg-background">
                     <button
                       type="button"
-                      className="flex size-10 items-center justify-center text-foreground transition hover:bg-muted"
+                      className="flex size-10 items-center justify-center text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                       onClick={() => bumpQty(-1)}
-                      aria-label="Decrease quantity"
+                      aria-label={t('pdp.ariaDecreaseQty')}
                     >
                       <Minus className="size-4" />
                     </button>
@@ -265,9 +274,9 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
                     </span>
                     <button
                       type="button"
-                      className="flex size-10 items-center justify-center text-foreground transition hover:bg-muted"
+                      className="flex size-10 items-center justify-center text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                       onClick={() => bumpQty(1)}
-                      aria-label="Increase quantity"
+                      aria-label={t('pdp.ariaIncreaseQty')}
                     >
                       <Plus className="size-4" />
                     </button>

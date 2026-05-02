@@ -1,5 +1,41 @@
+/**
+ * Symmetric horizontal padding + safe-area insets (needs viewport-fit=cover on /shop).
+ * Logical inline padding keeps LTR edges balanced.
+ */
+.shop-horizontal-padding-x {
+  padding-inline-start: calc(1rem + env(safe-area-inset-left, 0px));
+  padding-inline-end: calc(1rem + env(safe-area-inset-right, 0px));
+}
+
+@media (min-width: 640px) {
+  .shop-horizontal-padding-x {
+    padding-inline-start: calc(1.5rem + env(safe-area-inset-left, 0px));
+    padding-inline-end: calc(1.5rem + env(safe-area-inset-right, 0px));
+  }
+}
+
+@media (min-width: 768px) {
+  .shop-horizontal-padding-x {
+    padding-inline-start: calc(3rem + env(safe-area-inset-left, 0px));
+    padding-inline-end: calc(3rem + env(safe-area-inset-right, 0px));
+  }
+}
+
 .shop-editorial-grid {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 2rem;
+  min-width: 0;
+}
+
+/* Single column on narrow screens: avoids 12-col + span quirks and balances track width. */
+@media (max-width: 767px) {
+  .shop-editorial-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .shop-editorial-grid > * {
+    grid-column: auto;
+    min-width: 0;
+  }
 }
