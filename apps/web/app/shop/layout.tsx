@@ -1,3 +1,4 @@
+import type { Viewport } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { connection } from 'next/server'
 
@@ -7,6 +8,11 @@ import { ShopNav } from '@/components/shop/shop-nav'
 import '@/components/shop/shop.css'
 
 import { cn } from '@workspace/ui/lib/utils'
+
+/** Lets `env(safe-area-inset-*)` apply so horizontal padding stays symmetric on notched devices. */
+export const viewport: Viewport = {
+  viewportFit: 'cover',
+}
 
 export default async function ShopLayout({
   children,
@@ -20,7 +26,7 @@ export default async function ShopLayout({
   return (
     <div
       className={cn(
-        'flex min-h-screen flex-col bg-background font-sans text-foreground antialiased',
+        'flex min-h-screen min-w-0 flex-col overflow-x-clip bg-background font-sans text-foreground antialiased',
       )}
     >
       <a
@@ -32,7 +38,7 @@ export default async function ShopLayout({
         {t('skipToContent')}
       </a>
       <ShopNav />
-      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
       <CopyrightFooter />
     </div>
   )

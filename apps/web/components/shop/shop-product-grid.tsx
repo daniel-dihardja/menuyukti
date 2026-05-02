@@ -28,7 +28,7 @@ export async function ShopProductGrid({ products }: Props) {
   if (withImages.length === 0) {
     return (
       <section
-        className="mb-32 flex min-h-[280px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 px-6 py-16 text-center"
+        className="mb-32 flex min-h-[280px] min-w-0 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 px-6 py-16 text-center"
         aria-live="polite"
       >
         <p className="max-w-md text-muted-foreground">{t('noImagesAvailable')}</p>
@@ -37,14 +37,14 @@ export async function ShopProductGrid({ products }: Props) {
   }
 
   return (
-    <section className="shop-editorial-grid mb-32">
+    <section className="shop-editorial-grid mb-32 min-w-0">
       {withImages.map(({ product: p, resolved }) => {
         const hero = resolved[0]!
         return (
           <Link
             key={p.slug}
             href={routes.shopProduct(p.slug)}
-            className={`group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${p.grid.colClass}`}
+            className={`group block min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${p.grid.colClass}`}
           >
             <div
               className={`relative mb-6 overflow-hidden rounded-md bg-muted motion-safe:transition-transform motion-safe:duration-700 motion-safe:group-hover:scale-[1.02] ${p.grid.imageAspect}`}

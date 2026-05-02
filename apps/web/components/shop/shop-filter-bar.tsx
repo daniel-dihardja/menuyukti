@@ -58,8 +58,8 @@ export function ShopFilterBar() {
   const [sort, setSort] = useQueryState('sort', sortParser)
 
   return (
-    <section className="mb-16">
-      <div className="flex flex-col gap-6 rounded-xl border border-border bg-card/40 px-4 py-6 md:flex-row md:items-center md:justify-between md:gap-8 md:px-6">
+    <section className="mb-16 min-w-0">
+      <div className="flex min-w-0 flex-col gap-6 rounded-xl border border-border bg-card/40 px-4 py-6 md:flex-row md:items-center md:justify-between md:gap-8 md:px-6">
         <ToggleGroup
           type="single"
           value={collection ?? 'all'}
@@ -67,9 +67,14 @@ export function ShopFilterBar() {
             void setCollection((v || 'all') as ShopCollectionParam)
           }}
           aria-label={t('filterAria')}
+          className="min-w-0 flex-1"
         >
           {SHOP_COLLECTION_VALUES.map((id) => (
-            <ToggleGroupItem key={id} value={id}>
+            <ToggleGroupItem
+              key={id}
+              value={id}
+              className="min-h-10 px-3.5 py-2.5 sm:min-h-9 sm:px-3 sm:py-2"
+            >
               {collectionLabel(t, id)}
             </ToggleGroupItem>
           ))}

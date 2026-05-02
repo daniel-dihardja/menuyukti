@@ -29,9 +29,9 @@ export default async function ShopPage({ searchParams }: PageProps) {
   const products = filterAndSortShopProducts(collection, sort)
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex min-w-0 flex-1 flex-col">
       <main
-        className="mx-auto w-full max-w-[1440px] flex-1 px-6 md:px-12"
+        className="shop-horizontal-padding-x mx-auto w-full min-w-0 max-w-[1440px] flex-1"
         id="shop-main"
         tabIndex={-1}
       >
