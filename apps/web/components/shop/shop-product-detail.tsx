@@ -139,7 +139,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
                   src={active.src}
                   alt={active.alt}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                   sizes="(max-width: 1024px) 100vw, 58vw"
                   priority
                 />
