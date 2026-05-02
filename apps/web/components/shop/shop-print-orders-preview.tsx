@@ -22,6 +22,7 @@ const PREVIEW_COUNT = 4
 
 export async function ShopPrintOrdersPreview() {
   const t = await getTranslations('platform.printOrders')
+  const shopT = await getTranslations('shop')
   const products = filterAndSortShopProducts('all', 'popularity').slice(0, PREVIEW_COUNT)
 
   const rows = await Promise.all(
@@ -64,6 +65,11 @@ export async function ShopPrintOrdersPreview() {
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                   </div>
+                  {p.digitalDeliverable ? (
+                    <p className="mb-2 text-[11px] leading-snug text-muted-foreground">
+                      {shopT('digitalPrintQualityCaption')}
+                    </p>
+                  ) : null}
                   <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
                     {p.title}
                   </p>

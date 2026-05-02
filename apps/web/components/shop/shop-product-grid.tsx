@@ -57,6 +57,11 @@ export async function ShopProductGrid({ products }: Props) {
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
             </div>
+            {p.digitalDeliverable ? (
+              <p className="mb-3 text-xs leading-snug text-muted-foreground">
+                {t('digitalPrintQualityCaption')}
+              </p>
+            ) : null}
             <div className="min-w-0">
               <h3
                 className={`font-sans font-bold tracking-tight text-foreground ${p.grid.titleClass}`}
