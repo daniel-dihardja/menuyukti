@@ -170,7 +170,11 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
         SKILL_REGISTRY,
     )
     request_goal = state.get("request_goal")
-    goal = str(request_goal).strip() if isinstance(request_goal, str) and request_goal.strip() else str(out.get("goal", ""))
+    goal = (
+        str(request_goal).strip()
+        if isinstance(request_goal, str) and request_goal.strip()
+        else str(out.get("goal", ""))
+    )
     # Do not seed milestone_data or raw_data from GraphQL milestonedata, fetch_context raw_data,
     # or request milestone_data (web preview). Milestone JSON is output-only for generation LLMs.
     milestone_data_payload: dict[str, Any] | list[Any] | None = None
@@ -387,7 +391,9 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
     }
 
 
-def _route_after_fetch_children(state: MilestoneRunState) -> Literal["select_skills", "execute_skill"]:
+def _route_after_fetch_children(
+    state: MilestoneRunState,
+) -> Literal["select_skills", "execute_skill"]:
     if state.get("use_llm_skill_selector", True):
         return "select_skills"
     return "execute_skill"

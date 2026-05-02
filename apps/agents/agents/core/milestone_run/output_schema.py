@@ -56,7 +56,9 @@ class BrandBriefVenueSnapshot(BaseModel):
         if not cleaned:
             return cleaned
         if cls._contains_date_or_campaign_text(cleaned):
-            raise ValueError("must contain location identity only; campaign/date text is not allowed")
+            raise ValueError(
+                "must contain location identity only; campaign/date text is not allowed"
+            )
         return cleaned
 
 
@@ -118,9 +120,7 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
 }
 
 
-def validate_skill_output(
-    skill_id: str | None, payload: Any
-) -> tuple[Any | None, str | None]:
+def validate_skill_output(skill_id: str | None, payload: Any) -> tuple[Any | None, str | None]:
     """Validate output for registered skills; pass through for unknown skills."""
     if skill_id is None:
         return payload, None

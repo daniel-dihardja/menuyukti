@@ -9,9 +9,6 @@ import httpx
 from agents_app.agents.core.milestone_run.tools.get_location_profile import (
     make_get_location_profile_tool,
 )
-from agents_app.agents.core.milestone_run.tools.get_prior_campaign_context import (
-    make_get_prior_campaign_context_tool,
-)
 from agents_app.agents.core.milestone_run.tools.get_promotion_candidates import (
     make_get_promotion_candidates_tool,
 )
@@ -48,9 +45,6 @@ EXTRA_TOOL_FACTORIES: dict[str, ExtraToolFactory] = {
     ),
     "get_promotion_candidates": lambda context, lid, uid, client: (
         make_get_promotion_candidates_tool(context, lid, uid, client=client)
-    ),
-    "get_prior_campaign_context": lambda context, lid, uid, client: (
-        make_get_prior_campaign_context_tool()
     ),
     "get_scheduler_plan": lambda context, lid, uid, client: make_get_scheduler_plan_tool(
         context,

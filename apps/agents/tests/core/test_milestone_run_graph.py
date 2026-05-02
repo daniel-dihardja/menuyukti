@@ -126,7 +126,9 @@ async def test_graph_runs_fetch_then_mock_agent() -> None:
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.get_llm_structured",
-            side_effect=_get_llm_structured_side_effect(structured_invoke=mock_structured, react_llm=react_llm),
+            side_effect=_get_llm_structured_side_effect(
+                structured_invoke=mock_structured, react_llm=react_llm
+            ),
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.create_react_agent",
@@ -194,7 +196,9 @@ async def test_graph_runs_two_select_skills_sequentially() -> None:
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.get_llm_structured",
-            side_effect=_get_llm_structured_side_effect(structured_invoke=mock_structured, react_llm=react_llm),
+            side_effect=_get_llm_structured_side_effect(
+                structured_invoke=mock_structured, react_llm=react_llm
+            ),
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.create_react_agent",

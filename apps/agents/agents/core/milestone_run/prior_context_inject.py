@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from agents_app.agents.core.milestone_run.tools.get_prior_campaign_context import (
+from agents_app.agents.core.milestone_run.prior_context_pack import (
     is_brand_brief_milestone_data,
 )
 

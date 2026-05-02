@@ -191,7 +191,10 @@ async def test_iter_milestone_run_sse_done_includes_object_data_preview() -> Non
             location_id=2,
             user_id="u1",
             goal="Generate holiday ranges",
-            milestone_input={"type": "dates", "value": {"startDate": "2026-06-01", "endDate": "2026-06-30"}},
+            milestone_input={
+                "type": "dates",
+                "value": {"startDate": "2026-06-01", "endDate": "2026-06-30"},
+            },
             milestone_data={
                 "startDate": "2026-06-01",
                 "endDate": "2026-06-30",
