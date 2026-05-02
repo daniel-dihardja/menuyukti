@@ -1,6 +1,6 @@
 'use client'
 
-import { Show, SignInButton, UserButton } from '@clerk/nextjs'
+import { Show, UserButton } from '@clerk/nextjs'
 import { ChevronLeft, UtensilsCrossed } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -65,11 +65,9 @@ export function ShopNav() {
             </nav>
           </Show>
           <Show when="signed-out">
-            <SignInButton mode="modal" appearance={menuyuktiClerkAppearance}>
-              <Button variant="outline" size="sm" type="button">
-                {t('signIn')}
-              </Button>
-            </SignInButton>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={routes.login}>{t('signIn')}</Link>
+            </Button>
           </Show>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { MenuyuktiSignIn } from '@/components/clerk/menuyukti-sign-in'
+import { getLoginBackHref } from '@/lib/get-login-back-href'
 import { routes } from '@/lib/routes'
 import { Button } from '@workspace/ui/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
@@ -15,14 +16,15 @@ export default async function LoginPage() {
   }
 
   const t = await getTranslations('login')
+  const backHref = await getLoginBackHref()
 
   return (
     <div className="flex min-h-svh w-full flex-col items-center justify-center bg-background p-6">
       <div className="w-full max-w-[min(100%,28rem)]">
         <Button variant="ghost" className="mb-6 -ml-2 gap-2 text-muted-foreground" asChild>
-          <Link href="/">
+          <Link href={backHref}>
             <ArrowLeft className="size-4" aria-hidden />
-            {t('backToHome')}
+            {t('back')}
           </Link>
         </Button>
 
