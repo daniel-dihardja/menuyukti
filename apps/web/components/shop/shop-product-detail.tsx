@@ -168,6 +168,11 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
               </>
             ) : null}
           </div>
+          {isDigital ? (
+            <p className="mt-3 text-xs leading-snug text-muted-foreground">
+              {t('digitalPrintQualityCaption')}
+            </p>
+          ) : null}
 
           {hasGallery ? (
             <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
