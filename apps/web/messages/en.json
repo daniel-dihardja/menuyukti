@@ -217,12 +217,14 @@
       "about": "How it works",
       "contact": "Get started",
       "faq": "FAQ",
+      "printShop": "Print shop",
       "privacyPolicy": "Privacy Policy",
       "terms": "Terms of Service",
       "copyrightName": "Menuyukti"
     },
     "header": {
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "printShop": "Print shop"
     },
     "mobileCta": {
       "primary": "Sign in",
@@ -250,7 +252,8 @@
       "posters": "Posters",
       "menuBackgrounds": "Menu Backgrounds",
       "customPrints": "Custom Prints",
-      "limitedEdition": "Limited Edition"
+      "limitedEdition": "Limited Edition",
+      "digitalDownloads": "Digital Downloads"
     },
     "sort": {
       "label": "Sort by",
@@ -262,6 +265,9 @@
     },
     "pdp": {
       "pageLoadingTitle": "Loading product…",
+      "digitalProduct": "Digital download",
+      "downloadFullResolution": "Download full resolution",
+      "downloadHint": "Opens a secure link to save the high-resolution file. Use the preview above for web and quick sharing.",
       "printOnDemand": "Print on demand",
       "sizeOrLicense": "Size or license",
       "finishOrProfile": "Finish / color profile",
@@ -277,6 +283,10 @@
       "accordionReturnsBody": "Because pieces are made to order, returns are limited to damage in transit or print defects—contact us within 14 days with photos of the packaging and item. Color variation up to 10% versus your screen is normal for giclée and canvas.",
       "accordionCareTitle": "Care",
       "accordionCareBody": "Handle framed and canvas works with clean, dry hands. Dust lightly with a soft microfiber cloth; avoid household cleaners on the print surface. Keep out of direct sunlight to preserve color for years in hospitality environments.",
+      "accordionDigitalLicenseTitle": "License and usage",
+      "accordionDigitalLicenseBody": "This complimentary file is for your restaurant’s own marketing and in-venue use. Redistribution, resale, or use as a standalone commercial stock asset outside your brand is not permitted unless we grant written permission.",
+      "accordionDigitalFileTitle": "File details",
+      "accordionDigitalFileBody": "The download is a JPEG at 6656×9984 px (portrait). For an 18×24 inch vertical poster print, that is above 300 DPI—sharp enough for a professional lab or print shop. Colors may vary slightly between screens, labs, and papers—request a proof from your printer when matching brand-critical hues.",
       "backToShop": "Back to shop",
       "addToCartDisabled": "Coming soon",
       "checkoutHint": "Online checkout is not available yet—we will notify you when ordering opens."

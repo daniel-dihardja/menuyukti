@@ -8,6 +8,7 @@ type LandingFooterProps = {
   aboutLabel: string
   contactLabel: string
   faqLabel: string
+  printShopLabel: string
   privacyPolicyLabel: string
   termsLabel: string
 }
@@ -22,6 +23,7 @@ export function LandingFooter({
   aboutLabel,
   contactLabel,
   faqLabel,
+  printShopLabel,
   privacyPolicyLabel,
   termsLabel,
 }: LandingFooterProps) {
@@ -40,6 +42,9 @@ export function LandingFooter({
           </Link>
           <Link href="#faq" className={linkClassName}>
             {faqLabel}
+          </Link>
+          <Link href={routes.shop} className={linkClassName}>
+            {printShopLabel}
           </Link>
           <Link href={routes.privacy} className={linkClassName}>
             {privacyPolicyLabel}

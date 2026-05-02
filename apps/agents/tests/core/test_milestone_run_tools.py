@@ -39,6 +39,7 @@ def test_make_milestone_run_tools_core_only_has_five_builtins() -> None:
     tools = _tools_for_context({})
     names = [getattr(t, "name", "") for t in tools]
     assert len(tools) == 5
+    assert "read_prior_context_pack" not in names
     assert "get_public_holidays" not in names
     assert "write_result" not in names
     assert "write_result_data" in names
@@ -158,15 +159,8 @@ def test_promotion_candidates_skill_extra_tool_ids() -> None:
     from agents_app.agents.core.milestone_run.skills import SKILL_REGISTRY
 
     pc = SKILL_REGISTRY["promotion_candidates"]
-    assert pc.extra_tool_ids == ("get_promotion_candidates", "get_prior_campaign_context")
+    assert pc.extra_tool_ids == ("get_promotion_candidates",)
     assert pc.inject_prior_presets == ("restaurant_brand_brief",)
-
-
-def test_extra_tool_ids_includes_get_prior_campaign_context() -> None:
-    tools = _tools_for_context({}, extra_tool_ids=["get_prior_campaign_context"])
-    names = [getattr(t, "name", "") for t in tools]
-    assert "get_prior_campaign_context" in names
-    assert names.index("get_prior_campaign_context") < names.index("write_result_data")
 
 
 def test_extra_tool_ids_includes_get_scheduler_plan() -> None:
@@ -350,41 +344,6 @@ async def test_get_scheduler_plan_formats_schedule_payload() -> None:
     assert payload["slots"][0]["promotedMenuItems"] == ["Nasi Goreng", "Truffle Pasta"]
 
 
-def test_get_prior_campaign_context_extracts_dates_and_brand_brief() -> None:
-    tools = _tools_for_context({}, extra_tool_ids=["get_prior_campaign_context"])
-    get_prior_campaign_context = _tool_by_name(tools, "get_prior_campaign_context")
-    sample = (
-        "## Dates\n\n## Start date\n\n2026-05-01\n\n## End date\n\n2026-05-31\n\n"
-        "## Brand brief\n\nTone: warm and premium.\n"
-    )
-    out = get_prior_campaign_context.invoke({"prior_milestones_json": sample})
-    assert "Start date: 2026-05-01" in out
-    assert "End date: 2026-05-31" in out
-    assert "Brand brief found: yes" in out
-
-
-def test_get_prior_campaign_context_parses_json_prior_rows() -> None:
-    tools = _tools_for_context({}, extra_tool_ids=["get_prior_campaign_context"])
-    get_prior_campaign_context = _tool_by_name(tools, "get_prior_campaign_context")
-    sample = json.dumps(
-        [
-            {
-                "title": "Dates",
-                "data": {
-                    "startDate": "2026-06-01",
-                    "endDate": "2026-06-15",
-                    "publicHolidays": [],
-                },
-            }
-        ],
-        ensure_ascii=False,
-    )
-    out = get_prior_campaign_context.invoke({"prior_milestones_json": sample})
-    assert "Start date: 2026-06-01" in out
-    assert "End date: 2026-06-15" in out
-    assert '"campaign_window_found": true' in out
-
-
 @pytest.mark.asyncio
 async def test_write_result_data_upserts_and_updates_context() -> None:
     ctx: dict[str, Any] = {}
@@ -421,9 +380,7 @@ async def test_write_result_data_parses_structured_json_when_context_is_structur
         tools = _tools_for_context(ctx, client=client)
         write_result_data = _tool_by_name(tools, "write_result_data")
         out = await write_result_data.ainvoke(
-            {
-                "new_data": '{"startDate":"2026-06-01","endDate":"2026-06-30","publicHolidays":[]}'
-            }
+            {"new_data": '{"startDate":"2026-06-01","endDate":"2026-06-30","publicHolidays":[]}'}
         )
 
     mock_upsert.assert_awaited_once()

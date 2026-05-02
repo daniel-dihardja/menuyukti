@@ -68,6 +68,7 @@ export async function ShopProductGrid({ products }: Props) {
               >
                 {p.subtitle}
               </p>
+              <p className="mt-2 text-sm font-semibold text-foreground">{p.displayPrice}</p>
               <p
                 className={`mt-3 font-bold uppercase tracking-widest text-muted-foreground transition-opacity group-hover:opacity-80 ${p.grid.addToCartClass}`}
               >

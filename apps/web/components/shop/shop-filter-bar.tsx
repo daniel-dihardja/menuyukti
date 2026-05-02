@@ -34,6 +34,8 @@ function collectionLabel(t: (key: string) => string, id: ShopCollectionParam): s
       return t('collections.customPrints')
     case 'limited-edition':
       return t('collections.limitedEdition')
+    case 'digital-downloads':
+      return t('collections.digitalDownloads')
     default:
       return t('collections.all')
   }

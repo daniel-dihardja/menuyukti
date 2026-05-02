@@ -161,10 +161,7 @@ def test_enforce_optional_input_line_removes_inline_existing_fragment() -> None:
 
 
 def test_enforce_optional_input_line_removes_period_terminated_inline_fragment() -> None:
-    summary = (
-        "The milestone goal has been successfully achieved. "
-        "Optional input usage: not given."
-    )
+    summary = "The milestone goal has been successfully achieved. Optional input usage: not given."
     fixed = nodes._enforce_optional_input_line(
         summary,
         "use the soccer world cup as campaign topic",

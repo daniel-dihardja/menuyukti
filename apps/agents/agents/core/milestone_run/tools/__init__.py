@@ -31,8 +31,8 @@ def make_milestone_run_tools(
 ) -> list[BaseTool]:
     """Build bound tools that read/write :class:`~agents_app.agents.core.milestone_run.state.MilestoneRunState` fields.
 
-    **Core reads** (always): ``read_goal``, ``read_criteria``, ``read_data``, ``read_prior_milestones_data`` — use \
-    ``context`` for ``goal``, ``criteria``, ``prior_milestones_data``. ``read_data`` returns only output written in \
+    **Core reads** (always): ``read_goal``, ``read_criteria``, ``read_data``, ``read_prior_milestones_data`` \
+    — use ``context`` for ``goal``, ``criteria``, ``prior_milestones_data``. ``read_data`` returns only output written in \
     this run (``result_data`` / session ``raw_data`` after ``write_result_data``), not pre-loaded stored milestone JSON.
 
     **Extra tools** (from skill YAML ``extra_tools``): optional capabilities registered in \

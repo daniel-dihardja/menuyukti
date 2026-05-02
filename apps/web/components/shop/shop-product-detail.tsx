@@ -44,6 +44,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
   const active = images[imageIndex] ?? images[0]
   const hasGallery = images.length > 0
   const showCarouselNav = images.length > 1
+  const isDigital = product.digitalDeliverable != null
 
   const goPrev = useCallback(() => {
     setImageIndex((i) => (i === 0 ? images.length - 1 : i - 1))
@@ -190,7 +191,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
 
         <div className="lg:col-span-5">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-            {t('pdp.printOnDemand')}
+            {isDigital ? t('pdp.digitalProduct') : t('pdp.printOnDemand')}
           </p>
           <h1 className="text-balance mt-2 font-sans text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
             {product.title}
@@ -204,107 +205,145 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
             </Button>
           </div>
 
-          <FieldGroup className="mt-8">
-            <Field>
-              <FieldLabel htmlFor="shop-size">{t('pdp.sizeOrLicense')}</FieldLabel>
-              <FieldContent>
-                <Select value={sizeId} onValueChange={setSizeId}>
-                  <SelectTrigger id="shop-size" className="w-full">
-                    <SelectValue placeholder={t('pdp.choosePlaceholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {product.sizes.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FieldContent>
-            </Field>
+          {!isDigital ? (
+            <FieldGroup className="mt-8">
+              <Field>
+                <FieldLabel htmlFor="shop-size">{t('pdp.sizeOrLicense')}</FieldLabel>
+                <FieldContent>
+                  <Select value={sizeId} onValueChange={setSizeId}>
+                    <SelectTrigger id="shop-size" className="w-full">
+                      <SelectValue placeholder={t('pdp.choosePlaceholder')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {product.sizes.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FieldContent>
+              </Field>
 
-            <Field>
-              <FieldLabel htmlFor="shop-finish">{t('pdp.finishOrProfile')}</FieldLabel>
-              <FieldContent>
-                <Select value={finishId} onValueChange={setFinishId}>
-                  <SelectTrigger id="shop-finish" className="w-full">
-                    <SelectValue placeholder={t('pdp.choosePlaceholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {product.finishes.map((f) => (
-                      <SelectItem key={f.id} value={f.id}>
-                        {f.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FieldContent>
-            </Field>
+              <Field>
+                <FieldLabel htmlFor="shop-finish">{t('pdp.finishOrProfile')}</FieldLabel>
+                <FieldContent>
+                  <Select value={finishId} onValueChange={setFinishId}>
+                    <SelectTrigger id="shop-finish" className="w-full">
+                      <SelectValue placeholder={t('pdp.choosePlaceholder')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {product.finishes.map((f) => (
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FieldContent>
+              </Field>
 
-            <Field orientation="horizontal">
-              <FieldLabel className="shrink-0">{t('pdp.quantity')}</FieldLabel>
-              <FieldContent>
-                <div className="flex items-center rounded-lg border border-border bg-background">
-                  <button
-                    type="button"
-                    className="flex size-10 items-center justify-center text-foreground transition hover:bg-muted"
-                    onClick={() => bumpQty(-1)}
-                    aria-label="Decrease quantity"
-                  >
-                    <Minus className="size-4" />
-                  </button>
-                  <span className="min-w-[2.5rem] text-center text-sm font-semibold tabular-nums">
-                    {quantity}
-                  </span>
-                  <button
-                    type="button"
-                    className="flex size-10 items-center justify-center text-foreground transition hover:bg-muted"
-                    onClick={() => bumpQty(1)}
-                    aria-label="Increase quantity"
-                  >
-                    <Plus className="size-4" />
-                  </button>
-                </div>
-              </FieldContent>
-            </Field>
-          </FieldGroup>
+              <Field orientation="horizontal">
+                <FieldLabel className="shrink-0">{t('pdp.quantity')}</FieldLabel>
+                <FieldContent>
+                  <div className="flex items-center rounded-lg border border-border bg-background">
+                    <button
+                      type="button"
+                      className="flex size-10 items-center justify-center text-foreground transition hover:bg-muted"
+                      onClick={() => bumpQty(-1)}
+                      aria-label="Decrease quantity"
+                    >
+                      <Minus className="size-4" />
+                    </button>
+                    <span className="min-w-[2.5rem] text-center text-sm font-semibold tabular-nums">
+                      {quantity}
+                    </span>
+                    <button
+                      type="button"
+                      className="flex size-10 items-center justify-center text-foreground transition hover:bg-muted"
+                      onClick={() => bumpQty(1)}
+                      aria-label="Increase quantity"
+                    >
+                      <Plus className="size-4" />
+                    </button>
+                  </div>
+                </FieldContent>
+              </Field>
+            </FieldGroup>
+          ) : null}
 
-          <Button type="button" className="mt-8 h-12 w-full" disabled>
-            {t('pdp.addToCartDisabled')}
-          </Button>
-          <p className="mt-3 text-center text-sm text-muted-foreground">{t('pdp.checkoutHint')}</p>
+          {isDigital ? (
+            <>
+              <Button asChild className="mt-8 h-12 w-full">
+                <a href={routes.shopDownload(product.slug)}>{t('pdp.downloadFullResolution')}</a>
+              </Button>
+              <p className="mt-3 text-center text-sm text-muted-foreground">
+                {t('pdp.downloadHint')}
+              </p>
+            </>
+          ) : (
+            <>
+              <Button type="button" className="mt-8 h-12 w-full" disabled>
+                {t('pdp.addToCartDisabled')}
+              </Button>
+              <p className="mt-3 text-center text-sm text-muted-foreground">
+                {t('pdp.checkoutHint')}
+              </p>
+            </>
+          )}
 
           <div className="mt-10 text-muted-foreground">
             <h2 className="font-sans text-lg font-bold text-foreground">{t('pdp.aboutPiece')}</h2>
             <p className="mt-2 leading-relaxed">{product.description}</p>
           </div>
 
-          <Accordion type="single" collapsible className="mt-10 w-full border-t border-border">
-            <AccordionItem value="shipping">
-              <AccordionTrigger className="font-sans font-semibold hover:no-underline">
-                {t('pdp.accordionShippingTitle')}
-              </AccordionTrigger>
-              <AccordionContent className="leading-relaxed text-muted-foreground">
-                {t('pdp.accordionShippingBody')}
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="returns">
-              <AccordionTrigger className="font-sans font-semibold hover:no-underline">
-                {t('pdp.accordionReturnsTitle')}
-              </AccordionTrigger>
-              <AccordionContent className="leading-relaxed text-muted-foreground">
-                {t('pdp.accordionReturnsBody')}
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="care">
-              <AccordionTrigger className="font-sans font-semibold hover:no-underline">
-                {t('pdp.accordionCareTitle')}
-              </AccordionTrigger>
-              <AccordionContent className="leading-relaxed text-muted-foreground">
-                {t('pdp.accordionCareBody')}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          {isDigital ? (
+            <Accordion type="single" collapsible className="mt-10 w-full border-t border-border">
+              <AccordionItem value="license">
+                <AccordionTrigger className="font-sans font-semibold hover:no-underline">
+                  {t('pdp.accordionDigitalLicenseTitle')}
+                </AccordionTrigger>
+                <AccordionContent className="leading-relaxed text-muted-foreground">
+                  {t('pdp.accordionDigitalLicenseBody')}
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="file">
+                <AccordionTrigger className="font-sans font-semibold hover:no-underline">
+                  {t('pdp.accordionDigitalFileTitle')}
+                </AccordionTrigger>
+                <AccordionContent className="leading-relaxed text-muted-foreground">
+                  {t('pdp.accordionDigitalFileBody')}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          ) : (
+            <Accordion type="single" collapsible className="mt-10 w-full border-t border-border">
+              <AccordionItem value="shipping">
+                <AccordionTrigger className="font-sans font-semibold hover:no-underline">
+                  {t('pdp.accordionShippingTitle')}
+                </AccordionTrigger>
+                <AccordionContent className="leading-relaxed text-muted-foreground">
+                  {t('pdp.accordionShippingBody')}
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="returns">
+                <AccordionTrigger className="font-sans font-semibold hover:no-underline">
+                  {t('pdp.accordionReturnsTitle')}
+                </AccordionTrigger>
+                <AccordionContent className="leading-relaxed text-muted-foreground">
+                  {t('pdp.accordionReturnsBody')}
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="care">
+                <AccordionTrigger className="font-sans font-semibold hover:no-underline">
+                  {t('pdp.accordionCareTitle')}
+                </AccordionTrigger>
+                <AccordionContent className="leading-relaxed text-muted-foreground">
+                  {t('pdp.accordionCareBody')}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
 
           <Link
             href={routes.shop}

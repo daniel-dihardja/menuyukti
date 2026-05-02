@@ -7,6 +7,7 @@ export const SHOP_COLLECTION_VALUES = [
   'menu-backgrounds',
   'custom-prints',
   'limited-edition',
+  'digital-downloads',
 ] as const
 
 export type ShopCollectionParam = (typeof SHOP_COLLECTION_VALUES)[number]

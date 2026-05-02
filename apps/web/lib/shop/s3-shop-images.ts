@@ -2,7 +2,7 @@ import { cacheLife, cacheTag, revalidateTag } from 'next/cache'
 import { ListObjectsV2Command } from '@aws-sdk/client-s3'
 
 import { getPresignedGetUrl, getS3Bucket, getS3Client } from '@/lib/assets/storage'
-import { getShopProductSlugs } from '@/components/shop/shop-catalog'
+import { getShopProductBySlug, getShopProductSlugs } from '@/components/shop/shop-catalog'
 
 /** S3 key prefix for print shop assets (bucket is `AWS_S3_BUCKET`, default `menuyukti`). */
 export const SHOP_IMAGE_PREFIX = 'menuyukti/shop'
@@ -33,15 +33,40 @@ function shopImagesCacheTag(slug: string): string {
 }
 
 /**
- * Lists image objects under `menuyukti/shop/{slug}/`, presigned GET URLs.
- * Returns [] if slug is not a known product or on S3 errors.
+ * Resolves gallery image URLs for a product: explicit `s3PreviewObjectKeys` (presigned), else objects listed under `menuyukti/shop/{slug}/`.
+ * Returns [] if slug is unknown, AWS is unconfigured, or S3 errors.
  */
 export async function listShopImagesForSlug(slug: string): Promise<ShopS3Image[]> {
   if (!isShopSlugAllowed(slug)) {
     return []
   }
 
-  // Docker/CI builds often omit AWS env; static generation still uses catalog + placeholders (resolveShopImages).
+  const product = getShopProductBySlug(slug)
+  const explicitKeys = product?.s3PreviewObjectKeys?.map((k) => k.trim()).filter(Boolean) ?? []
+
+  if (explicitKeys.length > 0) {
+    // Docker/CI builds often omit AWS env.
+    if (!process.env.AWS_REGION?.trim()) {
+      return []
+    }
+
+    const out: ShopS3Image[] = []
+    for (const key of explicitKeys) {
+      try {
+        const url = await getPresignedGetUrl(key)
+        const filename = key.includes('/') ? key.slice(key.lastIndexOf('/') + 1) : key
+        out.push({ key, url, filename })
+      } catch (err) {
+        console.error('[shop/s3] presign preview key failed', {
+          slug,
+          key,
+          message: err instanceof Error ? err.message : String(err),
+        })
+      }
+    }
+    return out
+  }
+
   if (!process.env.AWS_REGION?.trim()) {
     return []
   }
