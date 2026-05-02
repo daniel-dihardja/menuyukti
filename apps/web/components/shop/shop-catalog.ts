@@ -82,7 +82,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     subtitle: 'High-resolution JPG · Complimentary',
     displayPrice: 'Free',
     description:
-      'Download a full-resolution hires JPEG (6656×9984 px, portrait) for your print shop or lab. That resolution supports a sharp landscape poster up to about 24×18 inches at 300 DPI—ideal for dining rooms, open kitchens, or pass-through walls—with detail to spare for slight crops. Use the lightweight preview on the shop for web and screens only; the hires file is the one to send for inkjet or giclée output.',
+      'Download a full-resolution hires JPEG (6656×9984 px, portrait) for your print shop or lab. That resolution supports a sharp vertical poster up to about 18×24 inches at 300 DPI—ideal for dining rooms, open kitchens, or pass-through walls—with detail to spare for slight crops. Use the lightweight preview on the shop for web and screens only; the hires file is the one to send for inkjet or giclée output.',
     imageHints: [
       {
         alt: 'Kitchen scene illustration — preview',
