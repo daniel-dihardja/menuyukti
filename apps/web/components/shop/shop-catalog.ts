@@ -1,4 +1,11 @@
 import type { ShopCollectionParam, ShopSortParam } from '@/lib/shop/shop-list-params'
+import { shopDeliverableObjectKey } from '@/lib/shop/shop-deliverables'
+
+export type ShopDigitalDeliverable = {
+  /** Full S3 object key for the file users download (not under `menuyukti/shop/{slug}/`). */
+  objectKey: string
+  downloadFilename: string
+}
 
 export type ShopProductImageHint = {
   alt: string
@@ -29,6 +36,7 @@ export type ShopProductCollectionId =
   | 'menu-backgrounds'
   | 'custom-prints'
   | 'limited-edition'
+  | 'digital-downloads'
 
 export type ShopProduct = {
   slug: string
@@ -38,9 +46,16 @@ export type ShopProduct = {
   displayPrice: string
   /** Alt/label hints merged with S3 images by index (see `resolveShopImages`). */
   imageHints: ShopProductImageHint[]
+  /**
+   * Full S3 object keys for gallery/preview images (presigned GET). When set, used instead of listing `menuyukti/shop/{slug}/`.
+   * Use for previews stored under `shop-deliverables/{slug}/` or other explicit keys.
+   */
+  s3PreviewObjectKeys?: string[]
   description: string
   sizes: ShopSizeVariant[]
   finishes: ShopFinishVariant[]
+  /** When set, PDP shows a free digital download flow instead of print-on-demand selectors. */
+  digitalDeliverable?: ShopDigitalDeliverable
   grid: ShopProductGridLayout
   collectionId: ShopProductCollectionId
   /** Lower = newer for default catalog order. */
@@ -61,6 +76,36 @@ const FINISHES_DIGITAL: ShopFinishVariant[] = [
 ]
 
 export const SHOP_PRODUCTS: ShopProduct[] = [
+  {
+    slug: 'p-09',
+    title: 'Heritage kitchen illustration — digital download',
+    subtitle: 'High-resolution JPG · Complimentary',
+    displayPrice: 'Free',
+    description:
+      'A high-resolution illustration you download as a JPEG and send to your print shop or lab—ideal for a large wall poster (for example 18×24 inches vertical at well over 300 DPI). The file is 6656×9984 pixels (portrait), so detail stays sharp at poster sizes and you still have room to crop or scale slightly. You can also use the same asset on in-venue screens, menus, or your website. The shop preview is a lighter web-friendly image, not the print file.',
+    imageHints: [
+      {
+        alt: 'Heritage kitchen illustration — preview',
+        label: 'Preview',
+      },
+    ],
+    s3PreviewObjectKeys: [shopDeliverableObjectKey('p-09', 'lowres_832x1248.jpg')],
+    sizes: [],
+    finishes: [],
+    digitalDeliverable: {
+      objectKey: shopDeliverableObjectKey('p-09', 'highres_6656x9984.jpg'),
+      downloadFilename: 'menuyukti-p-09-highres.jpg',
+    },
+    collectionId: 'digital-downloads',
+    newestOrder: 0,
+    popularityOrder: 3,
+    grid: {
+      colClass: 'col-span-12 md:col-span-4 mt-12',
+      imageAspect: 'aspect-[2/3]',
+      titleClass: 'text-lg leading-tight',
+      addToCartClass: 'text-xs',
+    },
+  },
   {
     slug: 'rustic-farm-to-table-poster',
     title: 'Rustic Farm-to-Table Poster',
@@ -90,7 +135,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     finishes: FINISHES_PRINT,
     collectionId: 'posters',
-    newestOrder: 0,
+    newestOrder: 1,
     popularityOrder: 5,
     grid: {
       colClass: 'col-span-12 md:col-span-8',
@@ -127,7 +172,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     finishes: FINISHES_DIGITAL,
     collectionId: 'menu-backgrounds',
-    newestOrder: 1,
+    newestOrder: 2,
     popularityOrder: 4,
     grid: {
       colClass: 'col-span-12 md:col-span-4 mt-12',
@@ -164,7 +209,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     finishes: FINISHES_PRINT,
     collectionId: 'limited-edition',
-    newestOrder: 2,
+    newestOrder: 3,
     popularityOrder: 5,
     grid: {
       colClass: 'col-span-12 md:col-span-4 -mt-8',
@@ -201,7 +246,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     ],
     finishes: FINISHES_PRINT,
     collectionId: 'posters',
-    newestOrder: 3,
+    newestOrder: 4,
     popularityOrder: 3,
     grid: {
       colClass: 'col-span-12 md:col-span-4 mt-16',
@@ -242,7 +287,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
       { id: 'framed-float', label: 'Float frame add-on' },
     ],
     collectionId: 'custom-prints',
-    newestOrder: 4,
+    newestOrder: 5,
     popularityOrder: 4,
     grid: {
       colClass: 'col-span-12 md:col-span-4',

@@ -141,6 +141,9 @@ export default async function LandingPage() {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <Button size="sm" variant="outline" asChild>
+              <Link href={routes.shop}>{t('header.printShop')}</Link>
+            </Button>
             <Button size="sm" asChild>
               <Link href={routes.login}>{t('header.signIn')}</Link>
             </Button>
@@ -385,6 +388,7 @@ export default async function LandingPage() {
         aboutLabel={t('footer.about')}
         contactLabel={t('footer.contact')}
         faqLabel={t('footer.faq')}
+        printShopLabel={t('footer.printShop')}
         privacyPolicyLabel={t('footer.privacyPolicy')}
         termsLabel={t('footer.terms')}
       />

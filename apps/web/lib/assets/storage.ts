@@ -64,3 +64,18 @@ export async function getPresignedGetUrl(objectKey: string): Promise<string> {
   })
   return getSignedUrl(client, command, { expiresIn: PRESIGNED_GET_EXPIRES_SECONDS })
 }
+
+/** Presigned GET that suggests a download filename (Content-Disposition: attachment). */
+export async function getPresignedAttachmentUrl(
+  objectKey: string,
+  downloadFilename: string,
+): Promise<string> {
+  const client = getS3Client()
+  const safeName = downloadFilename.replace(/[^\w.-]+/g, '_') || 'download'
+  const command = new GetObjectCommand({
+    Bucket: getS3Bucket(),
+    Key: objectKey,
+    ResponseContentDisposition: `attachment; filename="${safeName}"`,
+  })
+  return getSignedUrl(client, command, { expiresIn: PRESIGNED_GET_EXPIRES_SECONDS })
+}

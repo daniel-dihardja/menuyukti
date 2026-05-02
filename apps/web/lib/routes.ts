@@ -73,4 +73,5 @@ export const routes = {
 
   shop: '/shop',
   shopProduct: (slug: string) => `/shop/${slug}`,
+  shopDownload: (slug: string) => `/api/shop/download?slug=${encodeURIComponent(slug)}`,
 }

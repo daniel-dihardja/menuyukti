@@ -34,6 +34,9 @@ dist
 # Local CV snippets (not versioned)
 packages/cv-snippet/
 
+# POD product assets (local / generated; not versioned)
+packages/pod/
+
 # Debug
 npm-debug.log*
 
