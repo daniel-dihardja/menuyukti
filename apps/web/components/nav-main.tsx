@@ -7,11 +7,8 @@ import {
   LayoutDashboard,
   MapPin,
   Megaphone,
-  Package,
-  Shield,
   Sparkles,
   Store,
-  User,
 } from 'lucide-react'
 import {
   Collapsible,
@@ -85,29 +82,8 @@ const NAV_WORKSPACE: NavItem[] = [
   },
 ]
 
-const NAV_ACCOUNT: NavItem[] = [
-  {
-    key: 'profil',
-    labelKey: 'profil',
-    href: routes.profile,
-    icon: <User className="w-4 h-4" />,
-  },
-]
-
 /** Platform tools; visibility keys listed in `config/admin-only-features.json`. */
 const NAV_ADMIN: NavItem[] = [
-  {
-    key: 'printOrders',
-    labelKey: 'printOrders',
-    href: routes.printOrders,
-    icon: <Package className="w-4 h-4" />,
-  },
-  {
-    key: 'staff',
-    labelKey: 'staffTools',
-    href: routes.staff,
-    icon: <Shield className="w-4 h-4" />,
-  },
   {
     key: 'usage',
     labelKey: 'usage',
@@ -229,14 +205,6 @@ export function NavMain() {
       <SidebarGroup>
         <SidebarMenu>
           <NavMenuItems items={visibleWorkspaceItems} t={t} isActive={isActive} />
-        </SidebarMenu>
-      </SidebarGroup>
-
-      <SidebarSeparator />
-
-      <SidebarGroup>
-        <SidebarMenu>
-          <NavMenuItems items={NAV_ACCOUNT} t={t} isActive={isActive} />
         </SidebarMenu>
       </SidebarGroup>
 

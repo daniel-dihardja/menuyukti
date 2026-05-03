@@ -475,7 +475,6 @@
   "sidebar": {
     "groupLabel": "Menuyukti",
     "dashboard": "Dashboard",
-    "profil": "Profil",
     "news": "News",
     "analysis": "Analysis",
     "branches": "Locations",
@@ -485,13 +484,11 @@
     "customTools": "API Proxies",
     "studio": "Studio",
     "printShop": "Print shop",
-    "printOrders": "Fulfillment",
     "agents": "Agents",
     "cogs": "COGS",
     "fixedCosts": "Fixed Costs",
     "docs": "Docs",
     "assets": "Assets",
-    "staffTools": "Staff",
     "usage": "AI usage",
     "theme": {
       "label": "Theme",

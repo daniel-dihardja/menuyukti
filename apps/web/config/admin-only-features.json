@@ -16,13 +16,13 @@
       "id": "printOrders",
       "description": "Internal print-on-demand fulfillment queue (admin)—distinct from the public /shop catalog.",
       "routePrefixes": ["/print-orders"],
-      "navKeys": ["printOrders"]
+      "navKeys": []
     },
     {
       "id": "staff",
       "description": "Menuyukti staff console.",
       "routePrefixes": ["/staff"],
-      "navKeys": ["staff"]
+      "navKeys": []
     },
     {
       "id": "aiGatewayUsage",
