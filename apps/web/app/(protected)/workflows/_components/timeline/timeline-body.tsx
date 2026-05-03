@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 
+import { useMediaQuery } from '@/hooks/use-media-query'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
@@ -11,6 +12,7 @@ import type { TimelineBodyProps } from './types'
 
 export function TimelineBody({ selectedId, onSelectMilestone }: TimelineBodyProps) {
   const t = useTranslations('analytics.campaigns.chat')
+  const isDesktop = useMediaQuery('(min-width: 768px)')
   const { milestoneState } = useTimelineWorkspaceState()
   const actions = useTimelineActions()
   const { isBusy: isChatBusy } = useTimelineChat()
@@ -33,6 +35,7 @@ export function TimelineBody({ selectedId, onSelectMilestone }: TimelineBodyProp
                   key={milestone.id}
                   isFirst={index === 0}
                   isLast={isLast}
+                  isMobile={!isDesktop}
                   isSelected={milestone.id === selectedId}
                   milestone={milestone}
                   onSelect={onSelectMilestone}

@@ -4,7 +4,11 @@
     "brandAria": "Menuyukti home",
     "navAria": "Main navigation",
     "navWorkflows": "AI Workflows",
-    "navShop": "Print Shop"
+    "navShop": "Print Shop",
+    "mobileMenuTriggerAria": "Open main navigation menu",
+    "mobileMenuTitle": "Navigation",
+    "mobileMenuDescription": "AI workflows and the print shop catalog.",
+    "mobileMenuSignIn": "Sign in"
   },
   "accountMenu": {
     "triggerAria": "Open account menu",
@@ -1245,6 +1249,7 @@
         "milestonePromotionCandidatesPreviewPuzzleHighlights": "Puzzle highlights",
         "milestonePromotionCandidatesPreviewNotes": "Notes",
         "milestonePreviewUnsupported": "This milestone data format is not supported in the preview yet.",
+        "milestonePreviewToggle": "Data preview",
         "milestonePreviewDataEmpty": "No data has been added for this milestone yet.",
         "milestonePreviewDataInvalid": "This milestone contains invalid structured data and cannot be previewed.",
         "milestoneDataLabel": "Data for this milestone",
