@@ -44,7 +44,9 @@ async function main() {
     .png()
     .toFile(path.join(iconsDir, 'apple-touch-icon.png'))
 
-  console.log('Wrote public/icons/*.png — keep public/favicon.ico in sync manually if you change branding.')
+  console.log(
+    'Wrote public/icons/*.png — keep public/favicon.ico in sync manually if you change branding.',
+  )
 }
 
 main().catch((err) => {
