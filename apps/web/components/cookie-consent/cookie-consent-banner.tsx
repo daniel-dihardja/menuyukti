@@ -55,16 +55,20 @@ export function CookieConsentBanner() {
           aria-labelledby={titleId}
           aria-describedby={descId}
           className={cn(
-            'fixed inset-x-0 bottom-0 z-50 px-4 pt-4 sm:px-6',
+            'fixed inset-x-0 bottom-0 z-[60] touch-manipulation px-4 pt-4 sm:px-6',
             'pb-[max(1rem,env(safe-area-inset-bottom,0px))]',
+            'overscroll-behavior-contain',
           )}
         >
           <div className="mx-auto flex max-w-3xl flex-col gap-4 rounded-xl border border-border bg-card p-4 text-card-foreground shadow-lg sm:p-5">
-            <div className="flex flex-col gap-1.5">
+            <div className="flex min-w-0 flex-col gap-1.5">
               <h2 id={titleId} className="text-base font-semibold">
                 {t('title')}
               </h2>
-              <p id={descId} className="text-sm leading-relaxed text-muted-foreground">
+              <p
+                id={descId}
+                className="text-pretty text-sm leading-relaxed text-muted-foreground break-words"
+              >
                 {t('description')}{' '}
                 <Link
                   href={routes.privacy}
@@ -75,16 +79,36 @@ export function CookieConsentBanner() {
                 .
               </p>
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <Button type="button" variant="ghost" size="sm" onClick={openPreferences}>
+            {/*
+              Mobile: full-width stacked actions (≥44px touch targets, `touch-manipulation` per Web Interface Guidelines).
+              sm+: Customize on its own row; Reject | Accept in a two-column grid so both stay equally prominent.
+            */}
+            <div className="flex flex-col gap-2 sm:items-end">
+              <Button
+                type="button"
+                variant="ghost"
+                className="min-h-11 w-full touch-manipulation sm:min-h-9 sm:w-auto sm:self-end"
+                onClick={openPreferences}
+              >
                 {t('customize')}
               </Button>
-              <Button type="button" variant="outline" size="sm" onClick={rejectAnalytics}>
-                {t('reject')}
-              </Button>
-              <Button type="button" size="sm" onClick={acceptAnalytics}>
-                {t('accept')}
-              </Button>
+              <div className="grid w-full grid-cols-1 gap-2 sm:max-w-md sm:grid-cols-2 sm:gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11 w-full touch-manipulation sm:min-h-9"
+                  onClick={rejectAnalytics}
+                >
+                  {t('reject')}
+                </Button>
+                <Button
+                  type="button"
+                  className="min-h-11 w-full touch-manipulation sm:min-h-9"
+                  onClick={acceptAnalytics}
+                >
+                  {t('accept')}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -96,7 +120,10 @@ export function CookieConsentBanner() {
           if (!open) closePreferences()
         }}
       >
-        <SheetContent side="right" className="flex flex-col gap-0">
+        <SheetContent
+          side="right"
+          className="flex touch-manipulation flex-col gap-0 overscroll-behavior-contain"
+        >
           <SheetHeader>
             <SheetTitle>{t('preferences.title')}</SheetTitle>
             <SheetDescription>{t('preferences.description')}</SheetDescription>
@@ -133,11 +160,20 @@ export function CookieConsentBanner() {
               </div>
             </div>
           </div>
-          <SheetFooter className="flex-row justify-end">
-            <Button type="button" variant="ghost" onClick={closePreferences}>
+          <SheetFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-11 w-full touch-manipulation sm:min-h-9 sm:w-auto"
+              onClick={closePreferences}
+            >
               {t('preferences.cancel')}
             </Button>
-            <Button type="button" onClick={onSavePreferences}>
+            <Button
+              type="button"
+              className="min-h-11 w-full touch-manipulation sm:min-h-9 sm:w-auto"
+              onClick={onSavePreferences}
+            >
               {t('preferences.save')}
             </Button>
           </SheetFooter>
