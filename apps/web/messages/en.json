@@ -503,10 +503,6 @@
       "backToWorkflow": "Back to that workflow"
     },
     "shopPdp": {
-      "title": "Use this art in Menuyukti",
-      "description": "Drop downloads into Studio or run them through AI workflows for campaigns.",
-      "openStudio": "Open Studio",
-      "openWorkflows": "View workflows",
       "signInToContinue": "Sign in to open the app"
     }
   },
