@@ -55,6 +55,10 @@
           "title": "Security",
           "body": "We apply reasonable technical and organizational measures designed to protect your information. No method of transmission or storage is completely secure; we encourage strong passwords and safe sharing of workspace access."
         },
+        "cookies": {
+          "title": "Cookies and analytics",
+          "body": "Menuyukti loads Google Analytics 4 only on our print shop pages (/shop), and only after you accept analytics in the cookie banner. If you choose Essentials only, no analytics scripts are loaded and no analytics cookies are set. You can change your choice anytime via the Cookie settings link in the footer."
+        },
         "contact": {
           "title": "Contact",
           "body": "For privacy-related questions or requests, contact us through the same channel you use for Menuyukti product support."
@@ -232,6 +236,27 @@
       "secondary": "How it works"
     }
   },
+  "cookieConsent": {
+    "title": "Cookies and analytics",
+    "description": "Menuyukti loads Google Analytics on our print shop pages (/shop) so we can understand how the store is used. Choose what you allow.",
+    "privacyLink": "Read the Privacy Policy",
+    "accept": "Accept analytics",
+    "reject": "Essentials only",
+    "customize": "Customize",
+    "settingsLink": "Cookie settings",
+    "preferences": {
+      "title": "Cookie preferences",
+      "description": "These choices apply to this browser. You can change them anytime from the Cookie settings link in the footer.",
+      "essentialTitle": "Essential",
+      "essentialDescription": "Required for sign-in, security, and core platform functionality. Always on.",
+      "essentialAria": "Essential cookies (always on)",
+      "analyticsTitle": "Analytics — Google Analytics on the print shop",
+      "analyticsDescription": "Loads Google Analytics 4 on /shop pages so we can see anonymized usage trends and improve the store. Off by default.",
+      "analyticsAria": "Toggle Google Analytics on the print shop",
+      "save": "Save preferences",
+      "cancel": "Cancel"
+    }
+  },
   "shop": {
     "listPageLoadingTitle": "Loading shop…",
     "listMetaTitle": "The Digital Curator | Gastronomy-inspired art & downloads",
@@ -248,6 +273,9 @@
     "skipToContent": "Skip to products",
     "filterAria": "Filter by collection",
     "noImagesAvailable": "No images are currently available.",
+    "footer": {
+      "privacy": "Privacy"
+    },
     "collections": {
       "all": "All Collections",
       "posters": "Posters",

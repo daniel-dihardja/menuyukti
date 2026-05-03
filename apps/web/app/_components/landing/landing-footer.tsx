@@ -1,5 +1,6 @@
 import Link from 'next/link'
 
+import { CookiePreferencesButton } from '@/components/cookie-consent/cookie-preferences-button'
 import { routes } from '@/lib/routes'
 
 type LandingFooterProps = {
@@ -52,6 +53,7 @@ export function LandingFooter({
           <Link href={routes.terms} className={linkClassName}>
             {termsLabel}
           </Link>
+          <CookiePreferencesButton className={linkClassName} />
         </nav>
         <p className="text-center text-base text-muted-foreground">
           © {BUILD_YEAR} {copyright}

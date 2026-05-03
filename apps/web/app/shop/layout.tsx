@@ -1,8 +1,8 @@
 import type { Viewport } from 'next'
-import { GoogleAnalytics } from '@next/third-parties/google'
 import { getTranslations } from 'next-intl/server'
 import { connection } from 'next/server'
 
+import { ConsentGatedGoogleAnalytics } from '@/components/cookie-consent/consent-gated-google-analytics'
 import { CopyrightFooter } from '@/components/copyright-footer'
 import { ShopNav } from '@/components/shop/shop-nav'
 
@@ -42,7 +42,7 @@ export default async function ShopLayout({
       <ShopNav />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
       <CopyrightFooter />
-      {gaMeasurementId ? <GoogleAnalytics gaId={gaMeasurementId} /> : null}
+      {gaMeasurementId ? <ConsentGatedGoogleAnalytics gaId={gaMeasurementId} /> : null}
     </div>
   )
 }

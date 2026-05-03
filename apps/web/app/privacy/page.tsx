@@ -63,6 +63,13 @@ export default async function PrivacyPage() {
           </section>
 
           <section className="space-y-3">
+            <h2 className="text-xl font-semibold">{t('sections.cookies.title')}</h2>
+            <p className="text-pretty leading-relaxed text-foreground/90">
+              {t('sections.cookies.body')}
+            </p>
+          </section>
+
+          <section className="space-y-3">
             <h2 className="text-xl font-semibold">{t('sections.contact.title')}</h2>
             <p className="text-pretty leading-relaxed text-foreground/90">
               {t('sections.contact.body')}
