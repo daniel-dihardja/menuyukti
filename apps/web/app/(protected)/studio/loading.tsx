@@ -11,7 +11,8 @@ export default async function StudioLoading() {
     <AnalyticsPageShell
       title={tStudio('studio')}
       breadcrumbs={[{ label: tStudio('studio'), href: routes.studio }]}
-      mainClassName="max-w-none flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
+      contentWidth="full"
+      mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
       <div className="flex w-full flex-col gap-6">
         <div className="rounded-xl border-2 border-dashed border-muted-foreground/25 bg-muted/20 px-4 py-8 sm:px-5">

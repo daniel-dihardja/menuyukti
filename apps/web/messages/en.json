@@ -1,4 +1,17 @@
 {
+  "mainHeader": {
+    "brand": "Menuyukti",
+    "brandAria": "Menuyukti home",
+    "navAria": "Main navigation",
+    "navWorkflows": "AI Workflows",
+    "navShop": "Print Shop"
+  },
+  "accountMenu": {
+    "triggerAria": "Open account menu",
+    "profile": "Profile",
+    "accountSettings": "Account settings",
+    "signOut": "Sign out"
+  },
   "metadata": {
     "title": "Menuyukti — Agentic AI for restaurant social media marketing",
     "description": "Agentic AI for restaurant social media marketing: composable workflows, sales analytics, LangGraph-style agents, milestone data, and Instagram-ready artifacts in one GraphQL-backed workspace.",
@@ -8,7 +21,6 @@
     "title": "Menuyukti",
     "slogan": "Agentic AI for restaurant marketing",
     "backToHome": "Back to home",
-    "back": "Back",
     "signUpTitle": "Join Menuyukti",
     "signUpDescription": "Create an account to connect your locations and workflows.",
     "emailLabel": "Email",
@@ -95,7 +107,6 @@
     }
   },
   "landing": {
-    "brand": "Menuyukti",
     "skipToContent": "Skip to content",
     "hero": {
       "headline": "Agentic AI system for restaurant social media marketing",
@@ -227,10 +238,6 @@
       "terms": "Terms of Service",
       "copyrightName": "Menuyukti"
     },
-    "header": {
-      "signIn": "Sign in",
-      "printShop": "Print shop"
-    },
     "mobileCta": {
       "primary": "Sign in",
       "secondary": "How it works"
@@ -265,10 +272,10 @@
       "brand": "Menuyukti",
       "brandAria": "Menuyukti print shop home",
       "tagline": "Print-on-demand with a kitchen-and-bar soul — part of your Menuyukti workspace.",
-      "signedInNavAria": "Platform navigation",
+      "signedInNavAria": "Workspace navigation",
       "backDashboard": "Dashboard",
-      "backPrintOrders": "Print orders",
-      "signIn": "Sign in"
+      "backWorkflows": "Workflows",
+      "backStudio": "Studio"
     },
     "skipToContent": "Skip to products",
     "filterAria": "Filter by collection",
@@ -468,7 +475,6 @@
   "sidebar": {
     "groupLabel": "Menuyukti",
     "dashboard": "Dashboard",
-    "profil": "Profil",
     "news": "News",
     "analysis": "Analysis",
     "branches": "Locations",
@@ -477,19 +483,31 @@
     "skills": "Skills & tools",
     "customTools": "API Proxies",
     "studio": "Studio",
-    "printOrders": "Print orders",
+    "printShop": "Print shop",
     "agents": "Agents",
     "cogs": "COGS",
     "fixedCosts": "Fixed Costs",
     "docs": "Docs",
     "assets": "Assets",
-    "staffTools": "Staff",
     "usage": "AI usage",
     "theme": {
       "label": "Theme",
       "light": "Light",
       "dark": "Dark",
       "system": "System"
+    }
+  },
+  "wayfinding": {
+    "shopFromWorkflow": {
+      "title": "You opened the shop from a workflow.",
+      "backToWorkflow": "Back to that workflow"
+    },
+    "shopPdp": {
+      "title": "Use this art in Menuyukti",
+      "description": "Drop downloads into Studio or run them through AI workflows for campaigns.",
+      "openStudio": "Open Studio",
+      "openWorkflows": "View workflows",
+      "signInToContinue": "Sign in to open the app"
     }
   },
   "staff": {
@@ -541,18 +559,18 @@
       "assetsDescription": "Recent images from your brand library.",
       "assetsOpenStudio": "Open Studio",
       "assetsEmpty": "No images in your library yet.",
-      "printHeading": "Print orders",
-      "printDescription": "Track print-on-demand orders when fulfillment is connected.",
-      "printViewOrders": "Print orders",
+      "printHeading": "Fulfillment",
+      "printDescription": "Admin queue for print-on-demand status—not the public print shop catalog.",
+      "printViewOrders": "Open fulfillment",
       "insightsHeading": "Insights",
       "insightsDescription": "Upload sales data and open analytics to see what to promote next.",
       "insightsCta": "Go to reports",
       "branchLabel": "Location"
     },
     "printOrders": {
-      "title": "Print orders",
-      "pageLoadingTitle": "Loading print orders…",
-      "description": "Fulfillment history and status for print-on-demand orders.",
+      "title": "Print fulfillment",
+      "pageLoadingTitle": "Loading fulfillment…",
+      "description": "Internal pipeline and status for print-on-demand orders placed via the shop or integrations. Browse products in the print shop instead.",
       "emptyTitle": "No orders yet",
       "emptyDescription": "When you place orders from the print shop, they will appear here.",
       "browseShop": "Browse print shop",
@@ -1278,7 +1296,7 @@
         "printDialogTitle": "Print on demand",
         "printDialogDescription": "Browse the print shop to order branded wall art, packaging, and more. Use your library images where product customization allows.",
         "openPrintShop": "Open print shop",
-        "viewPrintOrders": "View print orders",
+        "viewPrintOrders": "Open fulfillment (admin)",
         "assetsTabDescription": "Your brand library images. Add more from the Brief tab with Generate visuals.",
         "loadingAssets": "Loading assets…",
         "assetsEmpty": "No images yet",

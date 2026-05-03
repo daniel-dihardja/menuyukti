@@ -1,5 +1,7 @@
 /**
- * URL prefixes for the signed-in app shell (sidebar + header row). User profile lives in that header, not the global AppChrome bar.
+ * URL prefixes for the signed-in app shell (sidebar + inset + `AnalyticsPageShell`).
+ * Primary nav and account live in `AppSidebar` / inset; `MainHeader` is hidden on these paths
+ * (`AppChrome` uses `isProtectedAppShellPath`). Keep in sync with `middleware.ts` protected routes.
  * Admin-only paths: also declare in `config/admin-only-features.json` (nav + route guards).
  */
 export const PROTECTED_APP_SHELL_PREFIXES = [
@@ -60,7 +62,7 @@ export const routes = {
   usage: '/usage',
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',
-  /** Clerk `<UserProfile />` (manage account); optional catch-all under `/profile/account/...`. */
+  /** Clerk `<UserProfile />` host path (security, sessions, etc.); catch-all under `/profile/account/...`. */
   profileAccount: '/profile/account',
 
   workflows: {

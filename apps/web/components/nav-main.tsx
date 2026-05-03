@@ -7,10 +7,8 @@ import {
   LayoutDashboard,
   MapPin,
   Megaphone,
-  Package,
-  Shield,
   Sparkles,
-  User,
+  Store,
 } from 'lucide-react'
 import {
   Collapsible,
@@ -65,6 +63,12 @@ const NAV_WORKSPACE: NavItem[] = [
     icon: <Sparkles className="w-4 h-4" />,
   },
   {
+    key: 'printShop',
+    labelKey: 'printShop',
+    href: routes.shop,
+    icon: <Store className="w-4 h-4" />,
+  },
+  {
     key: 'reports',
     labelKey: 'reports',
     icon: <FileUp className="w-4 h-4" />,
@@ -78,29 +82,8 @@ const NAV_WORKSPACE: NavItem[] = [
   },
 ]
 
-const NAV_ACCOUNT: NavItem[] = [
-  {
-    key: 'profil',
-    labelKey: 'profil',
-    href: routes.profile,
-    icon: <User className="w-4 h-4" />,
-  },
-]
-
 /** Platform tools; visibility keys listed in `config/admin-only-features.json`. */
 const NAV_ADMIN: NavItem[] = [
-  {
-    key: 'printOrders',
-    labelKey: 'printOrders',
-    href: routes.printOrders,
-    icon: <Package className="w-4 h-4" />,
-  },
-  {
-    key: 'staff',
-    labelKey: 'staffTools',
-    href: routes.staff,
-    icon: <Shield className="w-4 h-4" />,
-  },
   {
     key: 'usage',
     labelKey: 'usage',
@@ -206,7 +189,13 @@ export function NavMain() {
   const { role, isLoaded } = useMenuyuktiRole()
   const showAdminNav = isLoaded && isMenuyuktiAdmin(role)
 
-  const isActive = (url?: string) => (url ? pathname.startsWith(url) : false)
+  const isActive = (url?: string) => {
+    if (!url) return false
+    if (url === routes.shop) {
+      return pathname === routes.shop || pathname.startsWith(`${routes.shop}/`)
+    }
+    return pathname.startsWith(url)
+  }
 
   const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav)
   const visibleAdminItems = visibleNavItemsForRole(NAV_ADMIN, showAdminNav)
@@ -216,14 +205,6 @@ export function NavMain() {
       <SidebarGroup>
         <SidebarMenu>
           <NavMenuItems items={visibleWorkspaceItems} t={t} isActive={isActive} />
-        </SidebarMenu>
-      </SidebarGroup>
-
-      <SidebarSeparator />
-
-      <SidebarGroup>
-        <SidebarMenu>
-          <NavMenuItems items={NAV_ACCOUNT} t={t} isActive={isActive} />
         </SidebarMenu>
       </SidebarGroup>
 

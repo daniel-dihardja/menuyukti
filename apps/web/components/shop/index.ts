@@ -1,5 +1,6 @@
 export { ShopHero } from './shop-hero'
+export { ShopPortalHeader } from './shop-portal-header'
 export { ShopProductGrid } from './shop-product-grid'
 export { ShopProductDetail } from './shop-product-detail'
-export { ShopNav } from './shop-nav'
 export { ShopPrintOrdersPreview } from './shop-print-orders-preview'
+export { ShopWorkflowContextBanner } from './shop-workflow-context-banner'

@@ -48,6 +48,7 @@ export default async function Page({ params }: PageProps) {
   return (
     <AnalyticsPageShell
       title={tMenuItems('reportTitle')}
+      contentWidth="full"
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: analyticsName },

@@ -16,6 +16,7 @@ import { Leaf } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
+
 import { NavMain } from './nav-main'
 import { SidebarThemeToggle } from './sidebar-theme-toggle'
 
