@@ -18,13 +18,24 @@ export function isKeyboardEventFromNestedInteractive(eventTarget: EventTarget | 
   )
 }
 
-/** Shared layout box for every timeline status marker. */
+/** Shared layout box for every timeline status marker (default rail size). */
 const TIMELINE_RAIL_MARKER_BOX = 'flex size-7 shrink-0 items-center justify-center'
 /** Same nominal size; Check is scaled down — its SVG reads larger than Clock/Circle at identical `size-*`. */
 const TIMELINE_RAIL_ICON = 'size-7 origin-center stroke-[2]'
 const TIMELINE_RAIL_ICON_CHECK = cn(TIMELINE_RAIL_ICON, 'scale-[0.7]')
 
-export function TimelineRailMarker({ status }: { status: TimelineMilestoneStatus }) {
+/** Compact marker for inline use inside card headers on mobile. */
+const TIMELINE_RAIL_MARKER_BOX_COMPACT = 'flex size-5 shrink-0 items-center justify-center'
+const TIMELINE_RAIL_ICON_COMPACT = 'size-5 origin-center stroke-[2]'
+const TIMELINE_RAIL_ICON_CHECK_COMPACT = cn(TIMELINE_RAIL_ICON_COMPACT, 'scale-[0.75]')
+
+export function TimelineRailMarker({
+  status,
+  compact = false,
+}: {
+  status: TimelineMilestoneStatus
+  compact?: boolean
+}) {
   const t = useTranslations('analytics.campaigns.chat')
   const labels = {
     complete: t('milestoneStatusComplete'),
@@ -33,17 +44,18 @@ export function TimelineRailMarker({ status }: { status: TimelineMilestoneStatus
     empty: t('milestoneStatusEmpty'),
   }
 
+  const box = compact ? TIMELINE_RAIL_MARKER_BOX_COMPACT : TIMELINE_RAIL_MARKER_BOX
+  const icon = compact ? TIMELINE_RAIL_ICON_COMPACT : TIMELINE_RAIL_ICON
+  const iconCheck = compact ? TIMELINE_RAIL_ICON_CHECK_COMPACT : TIMELINE_RAIL_ICON_CHECK
+
   if (status === 'complete') {
     return (
       <span
         aria-label={labels.complete}
-        className={cn(
-          TIMELINE_RAIL_MARKER_BOX,
-          'rounded-full bg-green-600 text-white dark:bg-green-600',
-        )}
+        className={cn(box, 'rounded-full bg-green-600 text-white dark:bg-green-600')}
         role="img"
       >
-        <Check aria-hidden className={TIMELINE_RAIL_ICON_CHECK} />
+        <Check aria-hidden className={iconCheck} />
       </span>
     )
   }
@@ -52,36 +64,25 @@ export function TimelineRailMarker({ status }: { status: TimelineMilestoneStatus
     return (
       <span
         aria-label={labels.failed}
-        className={cn(
-          TIMELINE_RAIL_MARKER_BOX,
-          'rounded-full bg-amber-600 text-white dark:bg-amber-600',
-        )}
+        className={cn(box, 'rounded-full bg-amber-600 text-white dark:bg-amber-600')}
         role="img"
       >
-        <X aria-hidden className={TIMELINE_RAIL_ICON_CHECK} />
+        <X aria-hidden className={iconCheck} />
       </span>
     )
   }
 
   if (status === 'pending') {
     return (
-      <span
-        aria-label={labels.pending}
-        className={cn(TIMELINE_RAIL_MARKER_BOX, 'text-muted-foreground')}
-        role="img"
-      >
-        <Clock aria-hidden className={TIMELINE_RAIL_ICON} />
+      <span aria-label={labels.pending} className={cn(box, 'text-muted-foreground')} role="img">
+        <Clock aria-hidden className={icon} />
       </span>
     )
   }
 
   return (
-    <span
-      aria-label={labels.empty}
-      className={cn(TIMELINE_RAIL_MARKER_BOX, 'text-muted-foreground/80')}
-      role="img"
-    >
-      <Circle aria-hidden className={TIMELINE_RAIL_ICON} />
+    <span aria-label={labels.empty} className={cn(box, 'text-muted-foreground/80')} role="img">
+      <Circle aria-hidden className={icon} />
     </span>
   )
 }
