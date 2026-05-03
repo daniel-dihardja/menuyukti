@@ -45,7 +45,7 @@ export function AnalyticsPageShell({
 
         <div
           className={cn(
-            'mx-auto flex w-full min-h-0 flex-1 flex-col gap-6 px-4 py-4 sm:px-6 md:px-12',
+            'mx-auto flex w-full min-h-0 min-w-0 max-w-full flex-1 flex-col gap-6 px-4 py-4 sm:px-6 md:px-12',
             contentWidth === 'container' && APP_INSET_CONTENT_MAX_WIDTH_CLASS,
             mainClassName,
           )}
