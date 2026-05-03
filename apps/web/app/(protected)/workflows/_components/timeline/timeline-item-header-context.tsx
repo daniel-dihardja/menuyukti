@@ -10,6 +10,8 @@ export type TimelineItemDeleteState = 'hidden' | 'idle' | 'deleting'
 
 type TimelineItemHeaderContextValue = {
   milestone: TimelineMilestone
+  /** When true, the left timeline rail is hidden; status is shown inside the card header. */
+  isMobile?: boolean
   position: TimelineItemPosition
   runState: TimelineItemRunState
   deleteState: TimelineItemDeleteState

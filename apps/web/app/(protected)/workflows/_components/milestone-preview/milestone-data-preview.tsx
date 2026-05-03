@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
 import {
   brandBriefMilestoneDataSchema,
@@ -20,6 +20,7 @@ export type MilestoneDataPreviewProps = {
 
 export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
   const t = useTranslations('analytics.campaigns.chat')
+  const locale = useLocale()
   const data = milestone.data
 
   if (data == null) {
@@ -34,18 +35,17 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
       }
 
       return (
-        <div className="min-h-0 overflow-auto rounded-md border p-4">
-          <MilestoneDatesDataPreview
-            data={parsedDates.data}
-            labels={{
-              startDate: t('milestoneDatesPreviewStartDate'),
-              endDate: t('milestoneDatesPreviewEndDate'),
-              publicHolidays: t('milestoneDatesPreviewPublicHolidays'),
-              noHolidays: t('milestoneDatesPreviewNoHolidays'),
-              emptyValue: t('milestoneDatesPreviewValueEmpty'),
-            }}
-          />
-        </div>
+        <MilestoneDatesDataPreview
+          data={parsedDates.data}
+          locale={locale}
+          labels={{
+            startDate: t('milestoneDatesPreviewStartDate'),
+            endDate: t('milestoneDatesPreviewEndDate'),
+            publicHolidays: t('milestoneDatesPreviewPublicHolidays'),
+            noHolidays: t('milestoneDatesPreviewNoHolidays'),
+            emptyValue: t('milestoneDatesPreviewValueEmpty'),
+          }}
+        />
       )
     }
 
@@ -56,23 +56,21 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
       }
 
       return (
-        <div className="min-h-0 overflow-auto rounded-md border p-4">
-          <MilestoneBrandBriefDataPreview
-            data={parsedBrandBrief.data}
-            labels={{
-              venueName: t('milestoneBrandBriefPreviewVenueName'),
-              city: t('milestoneBrandBriefPreviewCity'),
-              country: t('milestoneBrandBriefPreviewCountry'),
-              currency: t('milestoneBrandBriefPreviewCurrency'),
-              contentPillars: t('milestoneBrandBriefPreviewContentPillars'),
-              audienceHypotheses: t('milestoneBrandBriefPreviewAudienceHypotheses'),
-              proofOrientedAngles: t('milestoneBrandBriefPreviewProofOrientedAngles'),
-              toneGuardrails: t('milestoneBrandBriefPreviewToneGuardrails'),
-              emptyList: t('milestoneBrandBriefPreviewEmptyList'),
-              emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
-            }}
-          />
-        </div>
+        <MilestoneBrandBriefDataPreview
+          data={parsedBrandBrief.data}
+          labels={{
+            venueName: t('milestoneBrandBriefPreviewVenueName'),
+            city: t('milestoneBrandBriefPreviewCity'),
+            country: t('milestoneBrandBriefPreviewCountry'),
+            currency: t('milestoneBrandBriefPreviewCurrency'),
+            contentPillars: t('milestoneBrandBriefPreviewContentPillars'),
+            audienceHypotheses: t('milestoneBrandBriefPreviewAudienceHypotheses'),
+            proofOrientedAngles: t('milestoneBrandBriefPreviewProofOrientedAngles'),
+            toneGuardrails: t('milestoneBrandBriefPreviewToneGuardrails'),
+            emptyList: t('milestoneBrandBriefPreviewEmptyList'),
+            emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
+          }}
+        />
       )
     }
 
@@ -83,22 +81,20 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
       }
 
       return (
-        <div className="min-h-0 overflow-auto rounded-md border p-4">
-          <MilestonePromotionCandidatesDataPreview
-            data={parsedPc.data}
-            labels={{
-              grouping: t('milestonePromotionCandidatesPreviewGrouping'),
-              flatSummary: t('milestonePromotionCandidatesPreviewFlatSummary'),
-              promotionIdeas: t('milestonePromotionCandidatesPreviewPromotionIdeas'),
-              categoryMenu: t('milestonePromotionCandidatesPreviewCategoryMenu'),
-              starHighlights: t('milestonePromotionCandidatesPreviewStarHighlights'),
-              puzzleHighlights: t('milestonePromotionCandidatesPreviewPuzzleHighlights'),
-              notes: t('milestonePromotionCandidatesPreviewNotes'),
-              emptyList: t('milestoneBrandBriefPreviewEmptyList'),
-              emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
-            }}
-          />
-        </div>
+        <MilestonePromotionCandidatesDataPreview
+          data={parsedPc.data}
+          labels={{
+            grouping: t('milestonePromotionCandidatesPreviewGrouping'),
+            flatSummary: t('milestonePromotionCandidatesPreviewFlatSummary'),
+            promotionIdeas: t('milestonePromotionCandidatesPreviewPromotionIdeas'),
+            categoryMenu: t('milestonePromotionCandidatesPreviewCategoryMenu'),
+            starHighlights: t('milestonePromotionCandidatesPreviewStarHighlights'),
+            puzzleHighlights: t('milestonePromotionCandidatesPreviewPuzzleHighlights'),
+            notes: t('milestonePromotionCandidatesPreviewNotes'),
+            emptyList: t('milestoneBrandBriefPreviewEmptyList'),
+            emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
+          }}
+        />
       )
     }
   }

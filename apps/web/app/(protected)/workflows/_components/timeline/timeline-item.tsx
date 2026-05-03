@@ -4,7 +4,6 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { ChevronDown } from 'lucide-react'
 
-import { Button } from '@workspace/ui/components/button'
 import { Card } from '@workspace/ui/components/card'
 import {
   Collapsible,
@@ -447,7 +446,10 @@ function TimelineItemInner({
   return (
     <div
       aria-selected={isSelected}
-      className="flex cursor-pointer gap-4 rounded-md outline-none [contain-intrinsic-size:0_200px] [content-visibility:auto] focus-visible:ring-2 focus-visible:ring-ring/60"
+      className={cn(
+        'flex cursor-pointer rounded-md outline-none [contain-intrinsic-size:0_200px] [content-visibility:auto] focus-visible:ring-2 focus-visible:ring-ring/60',
+        isMobile ? 'gap-2' : 'gap-4',
+      )}
       data-timeline-card=""
       onClick={() => {
         onSelect(milestone.id)
@@ -465,37 +467,39 @@ function TimelineItemInner({
       role="option"
       tabIndex={0}
     >
-      <div className="flex w-12 shrink-0 flex-col items-center">
-        {isFirst ? (
-          <div className="flex w-full shrink-0 flex-col items-center pt-4">
-            <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
-              <TimelineRailMarker status={status} />
+      {!isMobile ? (
+        <div className="flex w-12 shrink-0 flex-col items-center">
+          {isFirst ? (
+            <div className="flex w-full shrink-0 flex-col items-center pt-4">
+              <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
+                <TimelineRailMarker status={status} />
+              </div>
+              <span className="mt-0.5 text-center text-muted-foreground text-xs tabular-nums">
+                {positionIndex}
+              </span>
             </div>
-            <span className="mt-0.5 text-center text-muted-foreground text-xs tabular-nums">
-              {positionIndex}
-            </span>
-          </div>
-        ) : (
-          <div className="flex w-full shrink-0 flex-col items-center">
+          ) : (
+            <div className="flex w-full shrink-0 flex-col items-center">
+              <div
+                aria-hidden
+                className="h-4 w-px shrink-0 border-l border-dashed border-border dark:border-muted-foreground/45"
+              />
+              <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
+                <TimelineRailMarker status={status} />
+              </div>
+              <span className="mt-0.5 text-center text-muted-foreground text-xs tabular-nums">
+                {positionIndex}
+              </span>
+            </div>
+          )}
+          {isLast ? null : (
             <div
               aria-hidden
-              className="h-4 w-px shrink-0 border-l border-dashed border-border dark:border-muted-foreground/45"
+              className="min-h-0 w-px flex-1 border-l border-dashed border-border dark:border-muted-foreground/45"
             />
-            <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
-              <TimelineRailMarker status={status} />
-            </div>
-            <span className="mt-0.5 text-center text-muted-foreground text-xs tabular-nums">
-              {positionIndex}
-            </span>
-          </div>
-        )}
-        {isLast ? null : (
-          <div
-            aria-hidden
-            className="min-h-0 w-px flex-1 border-l border-dashed border-border dark:border-muted-foreground/45"
-          />
-        )}
-      </div>
+          )}
+        </div>
+      ) : null}
       <div className={cn('min-w-0 flex-1', !isLast && 'pb-8')}>
         <Collapsible onOpenChange={setUserOpen} open={open}>
           <Card
@@ -507,6 +511,7 @@ function TimelineItemInner({
             <TimelineItemHeaderProvider
               value={{
                 milestone,
+                isMobile,
                 position,
                 runState,
                 deleteState,
@@ -569,19 +574,21 @@ function TimelineItemInner({
           </Card>
         </Collapsible>
         {isMobile ? (
-          <div
-            className="mt-2"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <Collapsible onOpenChange={setMobilePreviewOpen} open={mobilePreviewOpen}>
+          <div onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+            <Collapsible
+              className="mt-2 overflow-hidden rounded-lg border bg-muted/20 shadow-sm"
+              onOpenChange={setMobilePreviewOpen}
+              open={mobilePreviewOpen}
+            >
               <CollapsibleTrigger asChild>
-                <Button
-                  className="w-full justify-between gap-2 font-normal"
+                <button
+                  className={cn(
+                    'flex w-full min-h-10 items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium text-foreground',
+                    'hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
+                  )}
                   type="button"
-                  variant="outline"
                 >
-                  <span>{t('milestonePreviewToggle')}</span>
+                  <span className="min-w-0 truncate">{t('milestonePreviewToggle')}</span>
                   <ChevronDown
                     aria-hidden
                     className={cn(
@@ -589,10 +596,12 @@ function TimelineItemInner({
                       mobilePreviewOpen && 'rotate-180',
                     )}
                   />
-                </Button>
+                </button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2 rounded-md border bg-muted/20 p-3">
-                <MilestoneDataPreview milestone={milestone} />
+              <CollapsibleContent>
+                <div className="border-border border-t px-3 py-3">
+                  <MilestoneDataPreview milestone={milestone} />
+                </div>
               </CollapsibleContent>
             </Collapsible>
           </div>

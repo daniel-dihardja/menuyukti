@@ -25,7 +25,7 @@ export function TimelineBody({ selectedId, onSelectMilestone }: TimelineBodyProp
         <ScrollArea className="h-full">
           <div
             aria-label={t('timelineListLabel')}
-            className="flex flex-col p-4 pr-3"
+            className="flex flex-col px-0 py-2 md:p-4 md:pr-3"
             role="listbox"
           >
             {milestones.map((milestone, index) => {

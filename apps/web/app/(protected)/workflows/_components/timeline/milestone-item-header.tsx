@@ -23,6 +23,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/component
 import { cn } from '@workspace/ui/lib/utils'
 
 import { useTimelineItemHeader } from './timeline-item-header-context'
+import { TimelineRailMarker } from './timeline-rail'
 
 export type MilestoneItemHeaderProps = {
   open: boolean
@@ -30,13 +31,14 @@ export type MilestoneItemHeaderProps = {
 
 export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
   const t = useTranslations('analytics.campaigns.chat')
-  const { milestone, position, runState, deleteState, titleEditor, movement, actions } =
+  const { milestone, isMobile, position, runState, deleteState, titleEditor, movement, actions } =
     useTimelineItemHeader()
+  const railStatus = milestone.status ?? 'empty'
   const canRun = Boolean(actions.run) && runState !== 'blocked'
   const isRunning = runState === 'running'
 
   return (
-    <CardHeader className={cn('gap-1.5', titleEditor.editing && 'gap-x-8')}>
+    <CardHeader className={cn('gap-1.5', titleEditor.editing && 'gap-x-8', isMobile && 'px-3')}>
       <CardTitle className="flex min-w-0 items-center gap-1 text-base leading-snug">
         {titleEditor.editing ? (
           <div className="flex min-w-0 flex-1 items-center gap-1" ref={titleEditor.containerRef}>
@@ -81,6 +83,11 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
         ) : (
           <div className="flex min-w-0 flex-1 items-center">
             <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden">
+              {isMobile && railStatus !== 'empty' ? (
+                <span className="shrink-0">
+                  <TimelineRailMarker compact status={railStatus} />
+                </span>
+              ) : null}
               <span className="min-w-0 truncate">{milestone.title}</span>
               {titleEditor.canRename ? (
                 <Button

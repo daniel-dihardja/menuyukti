@@ -2,6 +2,7 @@ import type { DatesMilestoneData } from '@/lib/graphql/node-schemas'
 
 export type MilestoneDatesDataPreviewProps = {
   data: DatesMilestoneData
+  locale: string
   labels: {
     startDate: string
     endDate: string
@@ -11,21 +12,42 @@ export type MilestoneDatesDataPreviewProps = {
   }
 }
 
-export function MilestoneDatesDataPreview({ data, labels }: MilestoneDatesDataPreviewProps) {
+function formatDateWithDay(dateStr: string, locale: string): string {
+  // Expects ISO date string YYYY-MM-DD; parse as local date to avoid UTC offset shift
+  const [year, month, day] = dateStr.split('-').map(Number)
+  if (!year || !month || !day) return dateStr
+  const date = new Date(year, month - 1, day)
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date)
+  const dd = String(day).padStart(2, '0')
+  const mm = String(month).padStart(2, '0')
+  return `${weekday} ${dd}.${mm}.${year}`
+}
+
+export function MilestoneDatesDataPreview({
+  data,
+  locale,
+  labels,
+}: MilestoneDatesDataPreviewProps) {
   return (
-    <dl className="grid grid-cols-[140px_1fr] gap-y-2 text-sm">
-      <dt className="font-medium text-foreground">{labels.startDate}</dt>
-      <dd className="text-muted-foreground">{data.startDate || labels.emptyValue}</dd>
+    <div className="flex flex-col gap-y-3 text-sm">
+      <dl className="grid grid-cols-[140px_1fr] gap-y-2">
+        <dt className="font-medium text-foreground">{labels.startDate}</dt>
+        <dd className="text-muted-foreground">
+          {data.startDate ? formatDateWithDay(data.startDate, locale) : labels.emptyValue}
+        </dd>
 
-      <dt className="font-medium text-foreground">{labels.endDate}</dt>
-      <dd className="text-muted-foreground">{data.endDate || labels.emptyValue}</dd>
+        <dt className="font-medium text-foreground">{labels.endDate}</dt>
+        <dd className="text-muted-foreground">
+          {data.endDate ? formatDateWithDay(data.endDate, locale) : labels.emptyValue}
+        </dd>
+      </dl>
 
-      <dt className="font-medium text-foreground">{labels.publicHolidays}</dt>
-      <dd className="text-muted-foreground">
+      <div className="flex flex-col gap-y-1">
+        <p className="font-medium text-foreground">{labels.publicHolidays}</p>
         {data.publicHolidays.length === 0 ? (
-          labels.noHolidays
+          <p className="text-muted-foreground">{labels.noHolidays}</p>
         ) : (
-          <ul className="list-disc space-y-1 pl-5">
+          <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
             {data.publicHolidays.map((holiday, index) => (
               <li key={`${holiday.name}-${holiday.date}-${index}`}>
                 {[holiday.name, holiday.date, holiday.description]
@@ -35,7 +57,7 @@ export function MilestoneDatesDataPreview({ data, labels }: MilestoneDatesDataPr
             ))}
           </ul>
         )}
-      </dd>
-    </dl>
+      </div>
+    </div>
   )
 }
