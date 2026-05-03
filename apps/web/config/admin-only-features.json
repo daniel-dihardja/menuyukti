@@ -2,7 +2,7 @@
   "features": [
     {
       "id": "assets",
-      "description": "Brand asset library, uploads, and campaign Assets tab / in-flow generation.",
+      "description": "Brand asset library and uploads (/assets, related APIs).",
       "routePrefixes": ["/assets", "/studio"],
       "navKeys": []
     },
