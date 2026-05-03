@@ -25,6 +25,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1023.0",
     "@clerk/backend": "^2.29.0",
     "@clerk/nextjs": "^7.0.7",
+    "@next/third-parties": "^16.2.4",
     "@types/d3-format": "^3.0.4",
     "@types/d3-hierarchy": "^3.1.7",
     "@types/d3-scale": "^4.0.9",

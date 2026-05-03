@@ -4,7 +4,7 @@
 # Server: run "Docker — remote compose pull" after images exist on Docker Hub.
 #
 # Secrets: DOCKERHUB_USERNAME, DOCKERHUB_PASSWORD, DATABASE_URL, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-#   CLERK_SECRET_KEY (see docker-build-push.reusable.yml)
+#   CLERK_SECRET_KEY, optional NEXT_PUBLIC_GA_MEASUREMENT_ID (see docker-build-push.reusable.yml)
 # Optional variable: DOCKER_IMAGE_PREFIX (default johngoyason)
 
 name: Docker — web

@@ -5,6 +5,7 @@
 #   DOCKERHUB_PASSWORD — Docker Hub password or access token
 #   DATABASE_URL       — required when service=web (Next/Prisma build)
 #   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY — required when service=web (baked into Next.js at build)
+#   NEXT_PUBLIC_GA_MEASUREMENT_ID — optional; GA4 Measurement ID G-xxx for print shop (baked at build)
 #   CLERK_SECRET_KEY   — required when service=web (Dockerfile build arg for Clerk)
 #
 # Optional repository variable:
@@ -149,6 +150,7 @@ jobs:
             DATABASE_URL=${{ secrets.DATABASE_URL }}
             ANALYTICS_API_URL=http://127.0.0.1:8000
             NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+            NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
             CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}
 
       - name: Build and push
