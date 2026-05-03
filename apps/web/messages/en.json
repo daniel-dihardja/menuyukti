@@ -275,7 +275,12 @@
       "signedInNavAria": "Workspace navigation",
       "backDashboard": "Dashboard",
       "backWorkflows": "Workflows",
-      "backStudio": "Studio"
+      "backStudio": "Studio",
+      "navigationMenuTriggerAria": "Open navigation menu",
+      "shopMenuTitle": "Navigation",
+      "shopMenuDescription": "Site areas and workspace shortcuts from the print shop.",
+      "workspaceSectionHeading": "Workspace",
+      "workspaceMenuDescription": "Go to your dashboard, workflows, or studio."
     },
     "skipToContent": "Skip to products",
     "filterAria": "Filter by collection",
