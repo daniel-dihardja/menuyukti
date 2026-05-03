@@ -17,7 +17,8 @@ export default async function Page() {
     <AnalyticsPageShell
       title={tStudio('studio')}
       breadcrumbs={[{ label: tStudio('studio'), href: routes.studio }]}
-      mainClassName="max-w-none flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
+      contentWidth="full"
+      mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
       <StudioAssetsDynamic />
     </AnalyticsPageShell>

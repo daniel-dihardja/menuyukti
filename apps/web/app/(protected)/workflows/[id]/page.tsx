@@ -8,6 +8,7 @@ import { parseNode, parseNodes } from '@/lib/graphql/node-schemas'
 import { getCachedWorkflowCampaignTree } from '@/lib/graphql/cached-queries'
 import type { WorkflowNode } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
+
 import { CampaignWorkspace } from '../_components/campaign-workspace'
 import { milestoneNodeToTimelineMilestone } from '../_components/milestone-map'
 import type { MilestoneNodeDto } from '../_components/milestone-map'
@@ -82,6 +83,7 @@ export default async function Page({ params }: PageProps) {
     <AnalyticsPageShell
       title={title}
       breadcrumbs={[{ label: tCampaigns('title'), href: routes.workflows.list }, { label: title }]}
+      contentWidth="full"
       mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
       <CampaignWorkspace

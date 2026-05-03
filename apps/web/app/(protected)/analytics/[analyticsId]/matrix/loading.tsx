@@ -12,6 +12,7 @@ export default async function MatrixLoading() {
   return (
     <AnalyticsPageShell
       title={tMatrix('pageLoadingTitle')}
+      contentWidth="full"
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: tShared('breadcrumbRunLoading') },

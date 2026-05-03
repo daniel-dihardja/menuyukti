@@ -10,6 +10,7 @@ import {
   Package,
   Shield,
   Sparkles,
+  Store,
   User,
 } from 'lucide-react'
 import {
@@ -63,6 +64,12 @@ const NAV_WORKSPACE: NavItem[] = [
     labelKey: 'studio',
     href: routes.studio,
     icon: <Sparkles className="w-4 h-4" />,
+  },
+  {
+    key: 'printShop',
+    labelKey: 'printShop',
+    href: routes.shop,
+    icon: <Store className="w-4 h-4" />,
   },
   {
     key: 'reports',
@@ -206,7 +213,13 @@ export function NavMain() {
   const { role, isLoaded } = useMenuyuktiRole()
   const showAdminNav = isLoaded && isMenuyuktiAdmin(role)
 
-  const isActive = (url?: string) => (url ? pathname.startsWith(url) : false)
+  const isActive = (url?: string) => {
+    if (!url) return false
+    if (url === routes.shop) {
+      return pathname === routes.shop || pathname.startsWith(`${routes.shop}/`)
+    }
+    return pathname.startsWith(url)
+  }
 
   const visibleWorkspaceItems = visibleNavItemsForRole(NAV_WORKSPACE, showAdminNav)
   const visibleAdminItems = visibleNavItemsForRole(NAV_ADMIN, showAdminNav)

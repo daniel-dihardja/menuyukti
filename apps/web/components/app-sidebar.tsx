@@ -1,5 +1,6 @@
 'use client'
 
+import { Show, UserButton } from '@clerk/nextjs'
 import {
   Sidebar,
   SidebarContent,
@@ -16,6 +17,9 @@ import { Leaf } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
+
+import { menuyuktiClerkAppearance } from '@/components/clerk/menuyukti-appearance'
+import { routes } from '@/lib/routes'
 import { NavMain } from './nav-main'
 import { SidebarThemeToggle } from './sidebar-theme-toggle'
 
@@ -65,6 +69,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarThemeToggle />
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <Show when="signed-in">
+              <div
+                className={cn(
+                  'flex w-full min-w-0 items-center gap-2 px-2 py-1.5',
+                  'group-data-[collapsible=icon]:justify-center',
+                )}
+                role="group"
+                aria-label={t('accountMenuAria')}
+              >
+                <UserButton
+                  appearance={menuyuktiClerkAppearance}
+                  userProfileMode="navigation"
+                  userProfileUrl={routes.profileAccount}
+                />
+              </div>
+            </Show>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

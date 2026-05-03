@@ -28,6 +28,7 @@ import { routes } from '@/lib/routes'
 import { useCookieConsent } from '@/components/cookie-consent/cookie-consent-context'
 
 import type { ShopProduct } from './shop-catalog'
+import { ShopProductAppBridge } from './shop-product-app-bridge'
 
 type Props = {
   product: ShopProduct
@@ -122,6 +123,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
             {t('pdp.backToShop')}
           </Link>
         </div>
+        <ShopProductAppBridge />
       </div>
     )
   }
@@ -377,6 +379,8 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
               </AccordionItem>
             </Accordion>
           )}
+
+          <ShopProductAppBridge />
 
           <Link
             href={routes.shop}

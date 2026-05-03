@@ -14,7 +14,7 @@
     },
     {
       "id": "printOrders",
-      "description": "Print orders listing and shop flow entry points tied to print.",
+      "description": "Internal print-on-demand fulfillment queue (admin)—distinct from the public /shop catalog.",
       "routePrefixes": ["/print-orders"],
       "navKeys": ["printOrders"]
     },
