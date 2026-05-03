@@ -1,6 +1,6 @@
 'use client'
 
-import { Show, SignInButton } from '@clerk/nextjs'
+import { Show, SignInButton, useAuth } from '@clerk/nextjs'
 import { Leaf } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -12,11 +12,13 @@ import { cn } from '@workspace/ui/lib/utils'
 
 export function MainHeader() {
   const pathname = usePathname()
+  const { isSignedIn } = useAuth()
   const t = useTranslations('mainHeader')
 
   const workflowsActive =
     pathname === routes.workflows.list || pathname?.startsWith(`${routes.workflows.list}/`)
   const shopActive = pathname === routes.shop || pathname?.startsWith(`${routes.shop}/`)
+  const hideProductNavOnMobileShop = Boolean(isSignedIn && shopActive)
 
   const navLinkClass = (active: boolean) =>
     cn(
@@ -46,7 +48,10 @@ export function MainHeader() {
         </Link>
 
         <nav
-          className="flex min-w-0 flex-1 items-center justify-start gap-1 sm:gap-2"
+          className={cn(
+            'flex min-w-0 flex-1 items-center justify-start gap-1 sm:gap-2',
+            hideProductNavOnMobileShop && 'hidden sm:flex',
+          )}
           aria-label={t('navAria')}
         >
           <Link href={routes.workflows.list} className={navLinkClass(!!workflowsActive)}>
@@ -57,7 +62,12 @@ export function MainHeader() {
           </Link>
         </nav>
 
-        <div className="flex shrink-0 items-center justify-end gap-2 pe-3 sm:pe-4">
+        <div
+          className={cn(
+            'flex shrink-0 items-center justify-end gap-2 pe-3 sm:pe-4',
+            hideProductNavOnMobileShop && 'ms-auto sm:ms-0',
+          )}
+        >
           <Show when="signed-out">
             <SignInButton />
           </Show>

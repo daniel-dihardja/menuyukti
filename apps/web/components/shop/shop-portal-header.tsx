@@ -1,16 +1,45 @@
 'use client'
 
 import { Show } from '@clerk/nextjs'
+import { MenuIcon } from 'lucide-react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
 import { Button } from '@workspace/ui/components/button'
+import { Separator } from '@workspace/ui/components/separator'
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@workspace/ui/components/sheet'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { routes } from '@/lib/routes'
 
 export function ShopPortalHeader() {
+  const pathname = usePathname()
   const t = useTranslations('shop.nav')
+  const tMain = useTranslations('mainHeader')
+
+  const workflowsActive =
+    pathname === routes.workflows.list || pathname?.startsWith(`${routes.workflows.list}/`)
+  const shopActive = pathname === routes.shop || pathname?.startsWith(`${routes.shop}/`)
+
+  const workspaceLinks = [
+    { href: routes.dashboard, label: t('backDashboard') },
+    { href: routes.workflows.list, label: t('backWorkflows') },
+    { href: routes.studio, label: t('backStudio') },
+  ] as const
+
+  const productLinks = [
+    { href: routes.workflows.list, label: tMain('navWorkflows'), active: workflowsActive },
+    { href: routes.shop, label: tMain('navShop'), active: shopActive },
+  ] as const
 
   return (
     <Show when="signed-in">
@@ -19,35 +48,97 @@ export function ShopPortalHeader() {
           'border-b border-border bg-background/95 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/80',
         )}
       >
-        <div className="shop-horizontal-padding-x mx-auto flex min-h-12 max-w-[1440px] flex-wrap items-center justify-end gap-3 py-2">
+        <div className="shop-horizontal-padding-x mx-auto flex min-h-12 max-w-[1440px] items-center justify-end gap-3 py-2">
+          <div className="sm:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="size-11 shrink-0"
+                  aria-label={t('navigationMenuTriggerAria')}
+                >
+                  <MenuIcon data-icon="inline-start" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="bottom"
+                className="flex flex-col gap-0 rounded-t-xl border-t px-0 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]"
+              >
+                <SheetHeader className="flex flex-col gap-1 px-4 text-left">
+                  <SheetTitle>{t('shopMenuTitle')}</SheetTitle>
+                  <SheetDescription>{t('shopMenuDescription')}</SheetDescription>
+                </SheetHeader>
+                <div className="flex flex-col gap-2 px-4 pt-4">
+                  <nav aria-label={tMain('navAria')} className="flex flex-col gap-2">
+                    {productLinks.map(({ href, label, active }) => (
+                      <SheetClose key={href} asChild>
+                        <Button
+                          asChild
+                          variant="ghost"
+                          className={cn(
+                            'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
+                            active
+                              ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
+                              : 'text-muted-foreground hover:text-foreground',
+                          )}
+                        >
+                          <Link href={href} aria-current={active ? 'page' : undefined}>
+                            {label}
+                          </Link>
+                        </Button>
+                      </SheetClose>
+                    ))}
+                  </nav>
+                  <Separator />
+                  <div className="flex flex-col gap-1">
+                    <p
+                      className="text-muted-foreground text-sm font-medium"
+                      id="shop-portal-workspace-heading"
+                    >
+                      {t('workspaceSectionHeading')}
+                    </p>
+                    <p className="text-muted-foreground text-xs leading-snug">
+                      {t('workspaceMenuDescription')}
+                    </p>
+                  </div>
+                  <nav
+                    aria-labelledby="shop-portal-workspace-heading"
+                    className="flex flex-col gap-2"
+                  >
+                    {workspaceLinks.map(({ href, label }) => (
+                      <SheetClose key={href} asChild>
+                        <Button
+                          asChild
+                          variant="ghost"
+                          className="h-auto min-h-11 w-full justify-start px-3 py-3 text-muted-foreground hover:text-foreground"
+                        >
+                          <Link href={href}>{label}</Link>
+                        </Button>
+                      </SheetClose>
+                    ))}
+                  </nav>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
           <nav
             aria-label={t('signedInNavAria')}
-            className="flex max-w-full flex-wrap items-center justify-end gap-x-1 gap-y-2 sm:gap-x-2"
+            className="hidden max-w-full items-center justify-end gap-x-1 sm:flex sm:gap-x-2"
           >
-            <Button
-              asChild
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-muted-foreground hover:text-foreground"
-            >
-              <Link href={routes.dashboard}>{t('backDashboard')}</Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-muted-foreground hover:text-foreground"
-            >
-              <Link href={routes.workflows.list}>{t('backWorkflows')}</Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-muted-foreground hover:text-foreground"
-            >
-              <Link href={routes.studio}>{t('backStudio')}</Link>
-            </Button>
+            {workspaceLinks.map(({ href, label }) => (
+              <Button
+                key={href}
+                asChild
+                size="sm"
+                variant="ghost"
+                className="h-8 px-2 text-muted-foreground hover:text-foreground"
+              >
+                <Link href={href}>{label}</Link>
+              </Button>
+            ))}
           </nav>
         </div>
       </header>
