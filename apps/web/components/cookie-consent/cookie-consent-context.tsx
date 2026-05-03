@@ -22,7 +22,7 @@ type CookieConsentValue = {
   analyticsGranted: boolean
   /** Whether the bottom banner should be visible right now. */
   isBannerOpen: boolean
-  /** Whether the customize sheet is open. */
+  /** Whether inline cookie preferences are expanded in the banner. */
   isPreferencesOpen: boolean
   /** Whether GA is configured at build time (gates banner + footer link visibility). */
   hasAnalyticsTooling: boolean
