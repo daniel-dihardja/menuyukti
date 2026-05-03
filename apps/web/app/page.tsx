@@ -3,6 +3,7 @@ import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { Separator } from '@workspace/ui/components/separator'
+import { cn } from '@workspace/ui/lib/utils'
 import { LandingBento } from '@/app/_components/landing/landing-bento'
 import { LandingFeatureHighlights } from '@/app/_components/landing/landing-feature-highlights'
 import { LandingFaq } from '@/app/_components/landing/landing-faq'
@@ -123,7 +124,7 @@ export default async function LandingPage() {
   ] as const
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-background pb-[max(6rem,env(safe-area-inset-bottom,0px))] text-foreground md:pb-0">
+    <div className="relative flex min-h-screen min-w-0 flex-col overflow-x-clip bg-background pb-[max(6rem,env(safe-area-inset-bottom,0px))] text-foreground md:pb-0">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow focus:outline-none focus:ring-2 focus:ring-ring"
@@ -131,17 +132,28 @@ export default async function LandingPage() {
         {t('skipToContent')}
       </a>
 
-      <main id="main-content">
-        <section className="relative w-full bg-gradient-to-b from-muted/30 to-background">
-          <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-8 text-center md:pb-24 md:pt-12">
-            <Badge variant="secondary" className="mb-4">
+      <main id="main-content" className="min-w-0 w-full overflow-x-clip">
+        <section className="relative w-full min-w-0 overflow-x-clip bg-gradient-to-b from-muted/30 to-background">
+          <div
+            className={cn(
+              'relative mx-auto flex w-full min-w-0 max-w-6xl flex-col items-center',
+              'pb-16 pt-8 text-center md:pb-24 md:pt-12',
+              'pl-[max(1.5rem,env(safe-area-inset-left,0px))] pr-[max(1.5rem,env(safe-area-inset-right,0px))]',
+            )}
+          >
+            <Badge
+              variant="secondary"
+              className={cn(
+                'mb-4 min-w-0 max-w-full whitespace-normal px-3 py-1.5 text-center text-balance leading-snug',
+              )}
+            >
               {t('hero.badge')}
             </Badge>
-            <h1 className="text-balance text-4xl font-bold leading-[1.1] sm:text-5xl md:text-6xl md:leading-[1.08]">
+            <h1 className="w-full min-w-0 text-balance text-4xl font-bold leading-[1.1] sm:text-5xl md:text-6xl md:leading-[1.08]">
               {t('hero.headline')}
             </h1>
 
-            <p className="mx-auto mt-5 max-w-2xl text-pretty text-lg leading-relaxed text-foreground/80 md:mt-6 md:text-xl md:leading-relaxed">
+            <p className="mx-auto mt-5 max-w-2xl text-pretty text-center text-lg leading-relaxed text-foreground/80 md:mt-6 md:text-xl md:leading-relaxed">
               {t('hero.subtitle')}
             </p>
 
