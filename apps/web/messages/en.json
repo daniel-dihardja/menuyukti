@@ -1245,6 +1245,7 @@
         "milestonePromotionCandidatesPreviewPuzzleHighlights": "Puzzle highlights",
         "milestonePromotionCandidatesPreviewNotes": "Notes",
         "milestonePreviewUnsupported": "This milestone data format is not supported in the preview yet.",
+        "milestonePreviewToggle": "Data preview",
         "milestonePreviewDataEmpty": "No data has been added for this milestone yet.",
         "milestonePreviewDataInvalid": "This milestone contains invalid structured data and cannot be previewed.",
         "milestoneDataLabel": "Data for this milestone",

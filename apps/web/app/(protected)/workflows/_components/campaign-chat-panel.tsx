@@ -118,7 +118,6 @@ export function CampaignChatPanel({
   locationId,
 }: CampaignChatPanelProps) {
   const t = useTranslations('analytics.campaigns.chat')
-  const tWorkspace = useTranslations('analytics.campaigns.workspace')
   const [text, setText] = useState('')
   const [, startPreviewTransition] = useTransition()
 
@@ -280,6 +279,9 @@ export function CampaignChatPanel({
   }, [previewOpen, isDesktop, previewPanelRef])
 
   useEffect(() => {
+    if (!isDesktop) {
+      return
+    }
     const onKeyDown = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.key !== '\\') {
         return
@@ -299,16 +301,7 @@ export function CampaignChatPanel({
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [setPreviewOpen])
-
-  const handleMobileSheetOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open) {
-        setPreviewOpen(false)
-      }
-    },
-    [setPreviewOpen],
-  )
+  }, [isDesktop, setPreviewOpen])
 
   const chatPane = (
     <>
@@ -400,12 +393,13 @@ export function CampaignChatPanel({
       <CampaignChatLayout
         chatPane={chatPane}
         isDesktop={isDesktop}
-        mobilePreviewTitle={tWorkspace('previewTitle')}
-        onMobileSheetOpenChange={handleMobileSheetOpenChange}
-        previewOpen={previewOpen}
         previewPane={<CampaignPreviewPanelBodyLazy />}
         previewPanelRef={previewPanelRef}
-        timelinePane={<TimelineWorkspace timelineTrailing={<CampaignPreviewToggleButton />} />}
+        timelinePane={
+          <TimelineWorkspace
+            timelineTrailing={isDesktop ? <CampaignPreviewToggleButton /> : null}
+          />
+        }
       />
     </TimelineProvider>
   )

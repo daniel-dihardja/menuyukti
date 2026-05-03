@@ -1,11 +1,19 @@
 'use client'
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
+import { ChevronDown } from 'lucide-react'
 
+import { Button } from '@workspace/ui/components/button'
 import { Card } from '@workspace/ui/components/card'
-import { Collapsible, CollapsibleContent } from '@workspace/ui/components/collapsible'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@workspace/ui/components/collapsible'
 import { cn } from '@workspace/ui/lib/utils'
 
+import { MilestoneDataPreview } from '../milestone-preview/milestone-data-preview'
 import type { TimelineActions, TimelineMilestoneState } from '../timeline-context'
 import { MilestoneItemHeader } from './milestone-item-header'
 import { TimelineItemHeaderProvider } from './timeline-item-header-context'
@@ -46,6 +54,8 @@ export type TimelineItemProps = {
   runningMilestoneId: TimelineMilestoneState['runningMilestoneId']
   runningStep: TimelineMilestoneState['runningStep']
   isChatBusy: boolean
+  /** Inline data preview below the card (narrow viewports only). */
+  isMobile?: boolean
 }
 
 function TimelineItemInner({
@@ -66,7 +76,9 @@ function TimelineItemInner({
   runningMilestoneId,
   runningStep,
   isChatBusy,
+  isMobile = false,
 }: TimelineItemProps) {
+  const t = useTranslations('analytics.campaigns.chat')
   const datesInputFromMilestone = (
     raw: TimelineMilestone['milestoneInput'],
   ): DatesMilestoneInput => {
@@ -91,6 +103,9 @@ function TimelineItemInner({
   } = actions
 
   const [userOpen, setUserOpen] = useState(true)
+  const lastMilestoneIdRef = useRef(milestone.id)
+  const hadMilestoneDataRef = useRef(milestone.data != null)
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(() => milestone.data != null)
   const [editingTitle, setEditingTitle] = useState(false)
   const [draftTitle, setDraftTitle] = useState(milestone.title)
   const [goalDraft, setGoalDraft] = useState(() => milestone.goal ?? '')
@@ -108,6 +123,24 @@ function TimelineItemInner({
   useEffect(() => {
     setCriteriaRows(milestone.passCriteria)
   }, [milestone.id, milestone.passCriteria])
+
+  useEffect(() => {
+    if (!isMobile) {
+      return
+    }
+    const idChanged = lastMilestoneIdRef.current !== milestone.id
+    if (idChanged) {
+      lastMilestoneIdRef.current = milestone.id
+      hadMilestoneDataRef.current = milestone.data != null
+      setMobilePreviewOpen(milestone.data != null)
+      return
+    }
+    const nowHasData = milestone.data != null
+    if (!hadMilestoneDataRef.current && nowHasData) {
+      setMobilePreviewOpen(true)
+    }
+    hadMilestoneDataRef.current = nowHasData
+  }, [isMobile, milestone.id, milestone.data])
 
   const savingPassCriteria = savingPassCriteriaMilestoneId === milestone.id
   const savingGoal = savingGoalMilestoneId === milestone.id
@@ -535,6 +568,35 @@ function TimelineItemInner({
             </CollapsibleContent>
           </Card>
         </Collapsible>
+        {isMobile ? (
+          <div
+            className="mt-2"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <Collapsible onOpenChange={setMobilePreviewOpen} open={mobilePreviewOpen}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  className="w-full justify-between gap-2 font-normal"
+                  type="button"
+                  variant="outline"
+                >
+                  <span>{t('milestonePreviewToggle')}</span>
+                  <ChevronDown
+                    aria-hidden
+                    className={cn(
+                      'size-4 shrink-0 text-muted-foreground transition-transform',
+                      mobilePreviewOpen && 'rotate-180',
+                    )}
+                  />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2 rounded-md border bg-muted/20 p-3">
+                <MilestoneDataPreview milestone={milestone} />
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        ) : null}
       </div>
     </div>
   )
