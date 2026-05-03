@@ -144,28 +144,25 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
   }, [milestone.presetId, t])
 
   return (
-    <CardContent className="border-border/60 border-t px-3 pt-4 pb-0 md:px-6">
-      <Tabs className="gap-4" defaultValue="input">
-        <TabsList className="w-full" variant="line">
-          <TabsTrigger className="flex-1" value="input">
+    <CardContent className="min-w-0 border-border/60 border-t px-3 pt-4 pb-0 md:px-6">
+      <Tabs className="min-w-0 gap-4" defaultValue="input">
+        <TabsList
+          className="w-full min-w-0 max-w-full justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
+          variant="line"
+        >
+          <TabsTrigger className="shrink-0" value="input">
             {t('milestoneTabInput')}
           </TabsTrigger>
-          <TabsTrigger className="flex-1" value="goal">
+          <TabsTrigger className="shrink-0" value="goal">
             {t('milestoneTabGoal')}
           </TabsTrigger>
-          <TabsTrigger className="flex-1" value="pass">
+          <TabsTrigger className="shrink-0" value="pass">
             {t('milestoneTabPassCriteria')}
           </TabsTrigger>
-          <TabsTrigger className="flex-1" value="result">
+          <TabsTrigger className="shrink-0" value="result">
             {t('milestoneTabResult')}
           </TabsTrigger>
-          <TabsTrigger className="flex flex-1 items-center justify-center gap-1.5" value="help">
-            <span
-              aria-hidden
-              className="inline-flex size-4 items-center justify-center rounded-full border text-[10px] font-semibold leading-none"
-            >
-              ?
-            </span>
+          <TabsTrigger className="shrink-0" value="help">
             {t('milestoneTabHelp')}
           </TabsTrigger>
         </TabsList>
