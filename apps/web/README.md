@@ -1,5 +1,15 @@
 # Web
 
+## PWA (Serwist)
+
+Production builds use **`pnpm build`** → `next build --webpack` so `@serwist/next` can emit `public/sw.js` (Turbopack does not run the Serwist webpack plugin). The generated service worker is gitignored; CI/Docker must run a full web build to produce it.
+
+Regenerate static launcher icons from the placeholder SVG script:
+
+```bash
+node scripts/generate-pwa-icons.mjs
+```
+
 ## Web Vitals
 
 Web Vitals reporting is opt-in and disabled by default unless the flags below are set to `true`.

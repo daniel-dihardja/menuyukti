@@ -1,5 +1,5 @@
 import { Geist, Geist_Mono } from 'next/font/google'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Suspense } from 'react'
 
 import '@workspace/ui/globals.css'
@@ -20,6 +20,15 @@ const fontMono = Geist_Mono({
 
 const ogImageUrl = 'https://menuyukti.com/images/og-image.webp'
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#09090b' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('metadata')
 
@@ -28,8 +37,23 @@ export async function generateMetadata(): Promise<Metadata> {
   const ogLocale = t('ogLocale')
 
   return {
+    applicationName: 'Menuyukti',
     title,
     description,
+    manifest: '/manifest.webmanifest',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'default',
+      title: 'Menuyukti',
+    },
+    icons: {
+      icon: [
+        { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
+        { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+        { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+      ],
+      apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    },
     openGraph: {
       title,
       description,

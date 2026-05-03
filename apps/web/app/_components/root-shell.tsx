@@ -3,6 +3,7 @@ import { getLocale, getMessages } from 'next-intl/server'
 import { NextIntlClientProvider } from 'next-intl'
 
 import { AppChrome } from '@/components/app-chrome'
+import { PwaRegister } from '@/components/pwa-register'
 import { Providers } from '@/components/providers'
 import { WebVitalsReporter } from '@/components/web-vitals-reporter'
 import { routes } from '@/lib/routes'
@@ -32,6 +33,7 @@ export function RootShellFallback({
       >
         <NextIntlClientProvider locale="en" messages={enMessages}>
           <Providers>
+            <PwaRegister />
             <WebVitalsReporter />
             <AppChrome>{children}</AppChrome>
           </Providers>
@@ -53,6 +55,7 @@ export async function RootShell({ children, fontSansVariable, fontMonoVariable }
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>
+            <PwaRegister />
             <WebVitalsReporter />
             <AppChrome>{children}</AppChrome>
           </Providers>

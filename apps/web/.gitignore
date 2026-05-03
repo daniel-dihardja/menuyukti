@@ -1,4 +1,9 @@
 node_modules
+
+# Serwist (generated at build)
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js
 # Keep environment variables out of version control
 .env
 .env.e2e
