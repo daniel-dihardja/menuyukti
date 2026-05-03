@@ -1,5 +1,6 @@
 'use client'
 
+import { Show } from '@clerk/nextjs'
 import Link from 'next/link'
 import { Fragment, useEffect, useState } from 'react'
 import { SidebarTrigger } from '@workspace/ui/components/sidebar'
@@ -21,6 +22,8 @@ import {
 } from '@workspace/ui/components/dropdown-menu'
 import { Button, buttonVariants } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
+
+import { AccountMenu } from '@/components/account/account-menu'
 
 interface SidebarTriggerClientProps {
   title: string
@@ -46,14 +49,14 @@ export function SidebarTriggerClient({
   const middleItems = items.slice(1, -1)
 
   return (
-    <div className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-      <SidebarTrigger aria-label="Toggle sidebar" className="-ml-1" />
+    <div className="flex h-16 w-full min-w-0 shrink-0 items-center gap-2 border-b px-4">
+      <SidebarTrigger aria-label="Toggle sidebar" className="-ml-1 shrink-0" />
 
-      <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+      <Separator orientation="vertical" className="mr-2 shrink-0 data-[orientation=vertical]:h-4" />
 
       {shouldShowBreadcrumb && items.length > 0 ? (
-        <>
-          <Breadcrumb className="hidden md:block">
+        <div className="flex min-w-0 flex-1 items-center">
+          <Breadcrumb className="hidden min-w-0 md:block">
             <BreadcrumbList>
               {items.map((item, index) => (
                 <Fragment key={`${item.label}-${index}`}>
@@ -144,8 +147,16 @@ export function SidebarTriggerClient({
               ) : null}
             </BreadcrumbList>
           </Breadcrumb>
-        </>
-      ) : null}
+        </div>
+      ) : (
+        <div className="min-w-0 flex-1" />
+      )}
+
+      <div className="ms-auto flex shrink-0 items-center ps-2">
+        <Show when="signed-in">
+          <AccountMenu />
+        </Show>
+      </div>
     </div>
   )
 }

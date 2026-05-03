@@ -62,7 +62,7 @@ export const routes = {
   usage: '/usage',
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',
-  /** Clerk `<UserProfile />` (manage account); optional catch-all under `/profile/account/...`. */
+  /** Clerk `<UserProfile />` host path (security, sessions, etc.); catch-all under `/profile/account/...`. */
   profileAccount: '/profile/account',
 
   workflows: {

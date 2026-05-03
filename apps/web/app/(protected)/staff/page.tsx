@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 
+import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { requireMenuyuktiAdmin } from '@/lib/menuyukti-role-server'
 
 export default async function StaffPage() {
@@ -8,9 +9,11 @@ export default async function StaffPage() {
   const t = await getTranslations('staff')
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-      <p className="text-muted-foreground text-sm">{t('description')}</p>
-    </div>
+    <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
+      <div className="mx-auto max-w-2xl space-y-4">
+        <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
+        <p className="text-muted-foreground text-sm">{t('description')}</p>
+      </div>
+    </AnalyticsPageShell>
   )
 }

@@ -1,12 +1,12 @@
 'use client'
 
-import { Show, SignInButton, UserButton } from '@clerk/nextjs'
+import { Show, SignInButton } from '@clerk/nextjs'
 import { Leaf } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
-import { menuyuktiClerkAppearance } from '@/components/clerk/menuyukti-appearance'
+import { AccountMenu } from '@/components/account/account-menu'
 import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -62,11 +62,7 @@ export function MainHeader() {
             <SignInButton />
           </Show>
           <Show when="signed-in">
-            <UserButton
-              appearance={menuyuktiClerkAppearance}
-              userProfileMode="navigation"
-              userProfileUrl={routes.profileAccount}
-            />
+            <AccountMenu />
           </Show>
         </div>
       </div>

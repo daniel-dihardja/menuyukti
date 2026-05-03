@@ -6,6 +6,12 @@
     "navWorkflows": "AI Workflows",
     "navShop": "Print Shop"
   },
+  "accountMenu": {
+    "triggerAria": "Open account menu",
+    "profile": "Profile",
+    "accountSettings": "Account settings",
+    "signOut": "Sign out"
+  },
   "metadata": {
     "title": "Menuyukti — Agentic AI for restaurant social media marketing",
     "description": "Agentic AI for restaurant social media marketing: composable workflows, sales analytics, LangGraph-style agents, milestone data, and Instagram-ready artifacts in one GraphQL-backed workspace.",
@@ -492,8 +498,7 @@
       "light": "Light",
       "dark": "Dark",
       "system": "System"
-    },
-    "accountMenuAria": "Account menu"
+    }
   },
   "wayfinding": {
     "shopFromWorkflow": {
