@@ -1,7 +1,8 @@
 # Build from repository root:
 #   docker build -f apps/web/Dockerfile -t web \
 #     --build-arg DATABASE_URL="postgresql://user:pass@localhost:5432/db" \
-#     --build-arg ANALYTICS_API_URL="http://localhost:9999" .
+#     --build-arg ANALYTICS_API_URL="http://localhost:9999" \
+#     --build-arg NEXT_PUBLIC_GA_MEASUREMENT_ID="G-xxxx" .
 #
 # Runtime: pass DATABASE_URL, ANALYTICS_API_URL, CLERK_SECRET_KEY, and Clerk publishable key
 # (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` at build; docker-compose may also map `CLERK_PUBLISHABLE_KEY` for the shell).
@@ -23,11 +24,13 @@ RUN pnpm install --frozen-lockfile
 ARG DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
 ARG ANALYTICS_API_URL=http://127.0.0.1:1
 ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_GA_MEASUREMENT_ID
 ARG CLERK_SECRET_KEY
 ENV NODE_ENV=production \
     DATABASE_URL=${DATABASE_URL} \
     ANALYTICS_API_URL=${ANALYTICS_API_URL} \
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY} \
+    NEXT_PUBLIC_GA_MEASUREMENT_ID=${NEXT_PUBLIC_GA_MEASUREMENT_ID} \
     CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
 
 RUN pnpm --filter web build

@@ -1,4 +1,5 @@
 import type { Viewport } from 'next'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import { getTranslations } from 'next-intl/server'
 import { connection } from 'next/server'
 
@@ -22,6 +23,7 @@ export default async function ShopLayout({
   /** Presigned S3 URLs must not be frozen at build time (Cache Components). */
   await connection()
   const t = await getTranslations('shop')
+  const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
   return (
     <div
@@ -40,6 +42,7 @@ export default async function ShopLayout({
       <ShopNav />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
       <CopyrightFooter />
+      {gaMeasurementId ? <GoogleAnalytics gaId={gaMeasurementId} /> : null}
     </div>
   )
 }

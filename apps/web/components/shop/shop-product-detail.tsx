@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { sendGAEvent } from '@next/third-parties/google'
 import { ChevronLeft, ChevronRight, Minus, Plus, Share2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useCallback, useState } from 'react'
@@ -53,6 +54,19 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
   const goNext = useCallback(() => {
     setImageIndex((i) => (i === images.length - 1 ? 0 : i + 1))
   }, [images.length])
+
+  const trackDigitalDownloadClick = useCallback(() => {
+    const d = product.digitalDeliverable
+    if (!d) return
+    const href = routes.shopDownload(product.slug)
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const linkUrl = origin ? `${origin}${href.startsWith('/') ? href : `/${href}`}` : href
+    sendGAEvent('event', 'shop_digital_download', {
+      file_name: d.downloadFilename,
+      product_slug: product.slug,
+      link_url: linkUrl,
+    })
+  }, [product.digitalDeliverable, product.slug])
 
   const handleShare = useCallback(async () => {
     const url = typeof window !== 'undefined' ? window.location.href : ''
@@ -289,7 +303,9 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
           {isDigital ? (
             <>
               <Button asChild className="mt-8 h-12 w-full">
-                <a href={routes.shopDownload(product.slug)}>{t('pdp.downloadFullResolution')}</a>
+                <a href={routes.shopDownload(product.slug)} onClick={trackDigitalDownloadClick}>
+                  {t('pdp.downloadFullResolution')}
+                </a>
               </Button>
               <p className="mt-3 text-center text-sm text-muted-foreground">
                 {t('pdp.downloadHint')}
