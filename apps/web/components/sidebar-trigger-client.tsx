@@ -1,6 +1,5 @@
 'use client'
 
-import { Show, UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
 import { Fragment, useEffect, useState } from 'react'
 import { SidebarTrigger } from '@workspace/ui/components/sidebar'
@@ -22,7 +21,6 @@ import {
 } from '@workspace/ui/components/dropdown-menu'
 import { Button, buttonVariants } from '@workspace/ui/components/button'
 import { cn } from '@workspace/ui/lib/utils'
-import { routes } from '@/lib/routes'
 
 interface SidebarTriggerClientProps {
   title: string
@@ -148,12 +146,6 @@ export function SidebarTriggerClient({
           </Breadcrumb>
         </>
       ) : null}
-
-      <div className="ml-auto flex shrink-0 items-center">
-        <Show when="signed-in">
-          <UserButton userProfileMode="navigation" userProfileUrl={routes.profileAccount} />
-        </Show>
-      </div>
     </div>
   )
 }

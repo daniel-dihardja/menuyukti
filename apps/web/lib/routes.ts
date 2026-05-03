@@ -1,5 +1,6 @@
 /**
- * URL prefixes for the signed-in app shell (sidebar + header row). User profile lives in that header, not the global AppChrome bar.
+ * URL prefixes for the signed-in app shell (sidebar + secondary header row with sidebar toggle).
+ * Primary nav and profile live in `MainHeader` (`AppChrome`), not in the sidebar trigger bar.
  * Admin-only paths: also declare in `config/admin-only-features.json` (nav + route guards).
  */
 export const PROTECTED_APP_SHELL_PREFIXES = [

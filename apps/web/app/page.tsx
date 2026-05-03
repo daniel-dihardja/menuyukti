@@ -23,7 +23,6 @@ import {
   Leaf,
   Sparkles,
   PieChart,
-  UtensilsCrossed,
   CalendarRange,
   ScrollText,
   Tags,
@@ -132,28 +131,9 @@ export default async function LandingPage() {
         {t('skipToContent')}
       </a>
 
-      <header className="sticky top-0 z-50 w-full border-b border-border backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
-          <div className="flex min-w-0 items-center gap-2">
-            <UtensilsCrossed className="size-5 shrink-0 text-primary" aria-hidden />
-            <p className="truncate text-xl font-semibold tracking-tight md:text-2xl">
-              {t('brand')}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Button size="sm" variant="outline" asChild>
-              <Link href={routes.shop}>{t('header.printShop')}</Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link href={routes.login}>{t('header.signIn')}</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
-
       <main id="main-content">
         <section className="relative w-full bg-gradient-to-b from-muted/30 to-background">
-          <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-12 text-center md:pb-24 md:pt-16">
+          <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-8 text-center md:pb-24 md:pt-12">
             <Badge variant="secondary" className="mb-4">
               {t('hero.badge')}
             </Badge>

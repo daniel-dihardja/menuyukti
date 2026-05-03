@@ -12,7 +12,7 @@ export default async function CampaignDetailLoading() {
     <AnalyticsPageShell
       title={title}
       breadcrumbs={[{ label: tCampaigns('title'), href: routes.workflows.list }, { label: title }]}
-      mainClassName="max-w-none flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
+      mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
         <Skeleton className="h-8 w-48 max-w-full" />

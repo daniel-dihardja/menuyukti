@@ -1,4 +1,11 @@
 {
+  "mainHeader": {
+    "brand": "Menuyukti",
+    "brandAria": "Menuyukti home",
+    "navAria": "Main navigation",
+    "navWorkflows": "AI Workflows",
+    "navShop": "Print Shop"
+  },
   "metadata": {
     "title": "Menuyukti — Agentic AI for restaurant social media marketing",
     "description": "Agentic AI for restaurant social media marketing: composable workflows, sales analytics, LangGraph-style agents, milestone data, and Instagram-ready artifacts in one GraphQL-backed workspace.",
@@ -8,7 +15,6 @@
     "title": "Menuyukti",
     "slogan": "Agentic AI for restaurant marketing",
     "backToHome": "Back to home",
-    "back": "Back",
     "signUpTitle": "Join Menuyukti",
     "signUpDescription": "Create an account to connect your locations and workflows.",
     "emailLabel": "Email",
@@ -95,7 +101,6 @@
     }
   },
   "landing": {
-    "brand": "Menuyukti",
     "skipToContent": "Skip to content",
     "hero": {
       "headline": "Agentic AI system for restaurant social media marketing",
@@ -226,10 +231,6 @@
       "privacyPolicy": "Privacy Policy",
       "terms": "Terms of Service",
       "copyrightName": "Menuyukti"
-    },
-    "header": {
-      "signIn": "Sign in",
-      "printShop": "Print shop"
     },
     "mobileCta": {
       "primary": "Sign in",

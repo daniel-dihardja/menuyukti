@@ -4,7 +4,6 @@ import { connection } from 'next/server'
 
 import { ConsentGatedGoogleAnalytics } from '@/components/cookie-consent/consent-gated-google-analytics'
 import { CopyrightFooter } from '@/components/copyright-footer'
-import { ShopNav } from '@/components/shop/shop-nav'
 
 import '@/components/shop/shop.css'
 
@@ -39,7 +38,6 @@ export default async function ShopLayout({
       >
         {t('skipToContent')}
       </a>
-      <ShopNav />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
       <CopyrightFooter />
       {gaMeasurementId ? <ConsentGatedGoogleAnalytics gaId={gaMeasurementId} /> : null}
