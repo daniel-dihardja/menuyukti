@@ -597,7 +597,7 @@ function TimelineItemInner({
                   />
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2 rounded-md border bg-muted/20 px-2 py-3">
+              <CollapsibleContent className="mt-2 rounded-md border bg-muted/20 px-4 py-3">
                 <MilestoneDataPreview milestone={milestone} />
               </CollapsibleContent>
             </Collapsible>
