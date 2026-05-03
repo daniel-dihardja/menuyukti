@@ -447,7 +447,7 @@ function TimelineItemInner({
     <div
       aria-selected={isSelected}
       className={cn(
-        'flex cursor-pointer rounded-md outline-none [contain-intrinsic-size:0_200px] [content-visibility:auto] focus-visible:ring-2 focus-visible:ring-ring/60',
+        'flex min-w-0 w-full cursor-pointer rounded-md outline-none [contain-intrinsic-size:0_200px] [content-visibility:auto] focus-visible:ring-2 focus-visible:ring-ring/60',
         isMobile ? 'gap-2' : 'gap-4',
       )}
       data-timeline-card=""
@@ -501,10 +501,10 @@ function TimelineItemInner({
         </div>
       ) : null}
       <div className={cn('min-w-0 flex-1', !isLast && 'pb-8')}>
-        <Collapsible onOpenChange={setUserOpen} open={open}>
+        <Collapsible className="min-w-0 w-full" onOpenChange={setUserOpen} open={open}>
           <Card
             className={cn(
-              'gap-0 border py-4 shadow-none transition-[background-color,box-shadow,border-color]',
+              'min-w-0 w-full gap-0 border py-4 shadow-none transition-[background-color,box-shadow,border-color]',
               isSelected ? 'border-primary bg-accent/50 ring-2 ring-ring/50' : 'hover:bg-accent/30',
             )}
           >
@@ -574,9 +574,13 @@ function TimelineItemInner({
           </Card>
         </Collapsible>
         {isMobile ? (
-          <div onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+          <div
+            className="min-w-0"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
             <Collapsible
-              className="mt-2 overflow-hidden rounded-lg border bg-muted/20 shadow-sm"
+              className="mt-2 min-w-0 overflow-hidden rounded-lg border bg-muted/20 shadow-sm"
               onOpenChange={setMobilePreviewOpen}
               open={mobilePreviewOpen}
             >
