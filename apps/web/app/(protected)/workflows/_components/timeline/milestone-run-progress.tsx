@@ -37,7 +37,7 @@ export function MilestoneRunProgressStrip({ runningStep }: { runningStep: string
   return (
     <div
       aria-live="polite"
-      className="border-border/60 border-b bg-muted/30 px-6 py-3"
+      className="border-border/60 border-b bg-muted/30 px-3 py-3 md:px-6"
       role="status"
     >
       <p className="mb-2 font-medium text-foreground text-xs">{t('runningLabel')}</p>

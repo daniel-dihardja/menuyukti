@@ -26,10 +26,8 @@ export function CampaignChatLayout({
   if (!isDesktop) {
     return (
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden">
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
-          <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-2">
-            {timelinePane}
-          </div>
+        <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          {timelinePane}
         </div>
       </div>
     )

@@ -38,7 +38,7 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
   const isRunning = runState === 'running'
 
   return (
-    <CardHeader className={cn('gap-1.5', titleEditor.editing && 'gap-x-8')}>
+    <CardHeader className={cn('gap-1.5', titleEditor.editing && 'gap-x-8', isMobile && 'px-3')}>
       <CardTitle className="flex min-w-0 items-center gap-1 text-base leading-snug">
         {titleEditor.editing ? (
           <div className="flex min-w-0 flex-1 items-center gap-1" ref={titleEditor.containerRef}>

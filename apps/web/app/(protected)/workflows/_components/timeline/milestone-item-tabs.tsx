@@ -144,7 +144,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
   }, [milestone.presetId, t])
 
   return (
-    <CardContent className="border-border/60 border-t px-6 pt-4 pb-0">
+    <CardContent className="border-border/60 border-t px-3 pt-4 pb-0 md:px-6">
       <Tabs className="gap-4" defaultValue="input">
         <TabsList className="w-full" variant="line">
           <TabsTrigger className="flex-1" value="input">
