@@ -18,19 +18,17 @@ const HAS_ANALYTICS_TOOLING = Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID)
 type CookieConsentValue = {
   /** True only after we've read localStorage on the client. */
   hydrated: boolean
-  /** True when the user has explicitly accepted analytics. SSR snapshot is `false`. */
+  /** Legacy: was true when optional analytics were accepted. Kept for API stability; shop GA is always on. */
   analyticsGranted: boolean
   /** Whether the bottom banner should be visible right now. */
   isBannerOpen: boolean
-  /** Whether inline cookie preferences are expanded in the banner. */
-  isPreferencesOpen: boolean
   /** Whether GA is configured at build time (gates banner + footer link visibility). */
   hasAnalyticsTooling: boolean
   decision: ConsentDecision
-  acceptAnalytics: () => void
+  /** Persists “seen” state and closes the informational cookie notice. */
   rejectAnalytics: () => void
+  /** Reopens the cookie notice (e.g. from footer “Cookie settings”). */
   openPreferences: () => void
-  closePreferences: () => void
 }
 
 const Context = React.createContext<CookieConsentValue | null>(null)
@@ -38,8 +36,7 @@ const Context = React.createContext<CookieConsentValue | null>(null)
 export function CookieConsentProvider({ children }: { children: React.ReactNode }) {
   const [decision, setDecision] = React.useState<ConsentDecision>('unknown')
   const [hydrated, setHydrated] = React.useState(false)
-  const [isPreferencesOpen, setIsPreferencesOpen] = React.useState(false)
-  /** True when the user reopened settings from the footer after already deciding. */
+  /** True when the user reopened the notice from the footer after already dismissing it. */
   const [forceBannerOpen, setForceBannerOpen] = React.useState(false)
 
   React.useEffect(() => {
@@ -52,25 +49,13 @@ export function CookieConsentProvider({ children }: { children: React.ReactNode 
     setDecision(next)
   }, [])
 
-  const acceptAnalytics = React.useCallback(() => {
-    persist('accepted')
-    setIsPreferencesOpen(false)
-    setForceBannerOpen(false)
-  }, [persist])
-
   const rejectAnalytics = React.useCallback(() => {
     persist('rejected')
-    setIsPreferencesOpen(false)
     setForceBannerOpen(false)
   }, [persist])
 
   const openPreferences = React.useCallback(() => {
-    setIsPreferencesOpen(true)
     setForceBannerOpen(true)
-  }, [])
-
-  const closePreferences = React.useCallback(() => {
-    setIsPreferencesOpen(false)
   }, [])
 
   const isBannerOpen =
@@ -81,24 +66,12 @@ export function CookieConsentProvider({ children }: { children: React.ReactNode 
       hydrated,
       analyticsGranted: decision === 'accepted',
       isBannerOpen,
-      isPreferencesOpen,
       hasAnalyticsTooling: HAS_ANALYTICS_TOOLING,
       decision,
-      acceptAnalytics,
       rejectAnalytics,
       openPreferences,
-      closePreferences,
     }),
-    [
-      acceptAnalytics,
-      closePreferences,
-      decision,
-      hydrated,
-      isBannerOpen,
-      isPreferencesOpen,
-      openPreferences,
-      rejectAnalytics,
-    ],
+    [decision, hydrated, isBannerOpen, openPreferences, rejectAnalytics],
   )
 
   return <Context.Provider value={value}>{children}</Context.Provider>

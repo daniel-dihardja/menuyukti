@@ -2,7 +2,7 @@ import type { Viewport } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { connection } from 'next/server'
 
-import { ConsentGatedGoogleAnalytics } from '@/components/cookie-consent/consent-gated-google-analytics'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import { CopyrightFooter } from '@/components/copyright-footer'
 import { ShopPortalHeader } from '@/components/shop/shop-portal-header'
 
@@ -44,7 +44,7 @@ export default async function ShopLayout({
         {children}
       </div>
       <CopyrightFooter />
-      {gaMeasurementId ? <ConsentGatedGoogleAnalytics gaId={gaMeasurementId} /> : null}
+      {gaMeasurementId ? <GoogleAnalytics gaId={gaMeasurementId} /> : null}
     </div>
   )
 }
