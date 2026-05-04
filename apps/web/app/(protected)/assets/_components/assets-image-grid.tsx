@@ -25,6 +25,13 @@ import {
   formatDimensions,
 } from './asset-item-types'
 
+/** Visible on touch; fade-in on hover only when the device supports real hover (not mobile tap). */
+const assetTileOverlayReveal =
+  'opacity-100 transition-opacity duration-300 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover/tile:opacity-100'
+
+const overlayIconButtonBase =
+  'h-11 w-11 shrink-0 touch-manipulation rounded-full shadow-md transition-transform duration-150 active:scale-[0.97] sm:h-9 sm:w-9 sm:active:scale-100'
+
 export type AssetsImageGridProps = {
   loading: boolean
   items: AssetItem[]
@@ -113,34 +120,38 @@ export function AssetsImageGrid({
                     width={400}
                     height={300}
                     loading="lazy"
-                    className="size-full object-cover transition duration-300 group-hover/tile:scale-[1.02]"
+                    className="size-full object-cover transition duration-300 [@media(hover:hover)_and_(pointer:fine)]:group-hover/tile:scale-[1.02]"
                     onLoad={(e) => {
                       const width = e.currentTarget.naturalWidth
                       const height = e.currentTarget.naturalHeight
                       onImageNaturalSize(item.name, width, height)
                     }}
                   />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100" />
-                  <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex items-end justify-between gap-2 p-3 opacity-0 transition-opacity duration-300 group-hover/tile:opacity-100">
+                  <div
+                    className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent ${assetTileOverlayReveal}`}
+                  />
+                  <div
+                    className={`pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex items-end justify-between gap-2 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] ${assetTileOverlayReveal}`}
+                  >
                     <figcaption className="min-w-0 flex-1 truncate text-left text-xs font-medium text-white drop-shadow">
                       {item.name}
                     </figcaption>
-                    <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
+                    <div className="pointer-events-auto flex shrink-0 items-center gap-2 sm:gap-1.5">
                       <Button
                         type="button"
                         size="icon"
                         variant="secondary"
-                        className="h-9 w-9 rounded-full bg-white/95 text-neutral-950 shadow-md hover:bg-white hover:text-neutral-950"
+                        className={`${overlayIconButtonBase} bg-white/95 text-neutral-950 hover:bg-white hover:text-neutral-950`}
                         aria-label={t('grid.viewLarge')}
                         onClick={() => onPreview(item)}
                       >
-                        <Maximize2 className="h-4 w-4" />
+                        <Maximize2 className="h-5 w-5 sm:h-4 sm:w-4" />
                       </Button>
                       <Button
                         type="button"
                         size="icon"
                         variant="secondary"
-                        className="h-9 w-9 rounded-full bg-white/95 text-neutral-950 shadow-md hover:bg-white hover:text-neutral-950"
+                        className={`${overlayIconButtonBase} bg-white/95 text-neutral-950 hover:bg-white hover:text-neutral-950`}
                         aria-label={t('grid.download')}
                         asChild
                       >
@@ -149,14 +160,14 @@ export function AssetsImageGrid({
                           download={item.name}
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <Download className="h-4 w-4" />
+                          <Download className="h-5 w-5 sm:h-4 sm:w-4" />
                         </a>
                       </Button>
                       <Button
                         type="button"
                         size="icon"
                         variant="secondary"
-                        className="h-9 w-9 shrink-0 rounded-full bg-white/95 text-destructive shadow-md hover:bg-white"
+                        className={`${overlayIconButtonBase} bg-white/95 text-destructive hover:bg-white`}
                         disabled={deleting === item.name}
                         aria-label={t('grid.delete')}
                         onClick={(e) => {
@@ -165,9 +176,9 @@ export function AssetsImageGrid({
                         }}
                       >
                         {deleting === item.name ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-5 w-5 animate-spin sm:h-4 sm:w-4" />
                         ) : (
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-5 w-5 sm:h-4 sm:w-4" />
                         )}
                       </Button>
                     </div>
