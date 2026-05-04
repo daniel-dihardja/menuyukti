@@ -12,6 +12,14 @@ function pickWorkflowId(raw: string | string[] | undefined): string | null {
   return WORKFLOW_ID_RE.test(v) ? v : null
 }
 
+const SHOP_URL = 'https://menuyukti.com/shop'
+const shopOgImage = {
+  url: 'https://menuyukti.com/images/pod-hero-02.webp',
+  width: 2880,
+  height: 1234,
+  alt: 'Gastronomy-inspired wall art for restaurants, bars and cafés — The Digital Curator by Menuyukti',
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('shop')
   const title = t('listMetaTitle')
@@ -19,9 +27,23 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: {
+      canonical: SHOP_URL,
+    },
     openGraph: {
       title,
       description,
+      url: SHOP_URL,
+      siteName: 'Menuyukti',
+      images: [shopOgImage],
+      type: 'website',
+      locale: 'en_US',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [shopOgImage.url],
     },
   }
 }
