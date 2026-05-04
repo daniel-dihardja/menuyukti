@@ -127,7 +127,7 @@
       "items": {
         "studio": {
           "title": "Studio: preset AI image generation",
-          "description": "Chain high-quality product shots and social-ready creatives from preset AI workflows—fast iteration for Instagram, promos, and on-brand visuals without a full photo studio."
+          "description": "Chain high-quality product shots and social-ready creatives from preset AI workflows—fast iteration for Instagram, promos, and on-brand visuals from the photos and briefs you already have."
         },
         "strategyChat": {
           "title": "AI strategy chat in campaigns",
@@ -139,7 +139,7 @@
         },
         "printShop": {
           "title": "Print shop (add-on artwork)",
-          "description": "A bonus catalog of restaurant-ready visuals with many complimentary images for menus, screens, and in-venue use—handy when you want finished artwork without generating it in Studio first."
+          "description": "A bonus catalog of restaurant-ready visuals with many complimentary images for menus, screens, and in-venue use—pick polished pieces straight from the catalog when that fits your workflow."
         }
       }
     },
@@ -217,7 +217,7 @@
       "q1": "What data do I need to upload?",
       "a1": "For Pro workflows and sales-grounded AI analytics, upload your POS sales report (where your POS format is supported) so we can normalize columns and build demand, mix, and timing signals. Studio AI generation and strategy chat do not require sales data to be useful; the print shop never requires uploads.",
       "q2": "Do I need sales data to use Studio or the print shop?",
-      "a2": "No. Studio and strategy chat work without sales uploads. Connecting reports unlocks smarter, evidence-backed Pro automation. The print shop is standalone artwork you can browse anytime as an add-on.",
+      "a2": "No. Studio and strategy chat do not require sales uploads. Connecting reports unlocks smarter, evidence-backed Pro automation. The print shop is standalone artwork you can browse anytime as an add-on.",
       "q3": "What is an agentic AI system?",
       "a3": "An agentic AI system goes beyond a single chat reply: it can plan steps, call tools, and run multi-milestone workflows toward a goal—like a teammate following a brief. In Menuyukti, that shows up strongest in Pro campaign pipelines that turn sales signals into schedules, promotion ideas, and copy. You stay in control with inspectable runs and workspace data, while the system handles repetitive orchestration.",
       "q4": "Who is it for?",
@@ -242,7 +242,7 @@
         },
         "printShop": {
           "title": "4. Print shop (optional add-on)",
-          "description": "Browse ready-made restaurant artwork with many complimentary images when you want menus, posters, or in-venue visuals without generating them in Studio."
+          "description": "Browse ready-made restaurant artwork with many complimentary images for menus, posters, or in-venue visuals—straight from the catalog when you want a finished look in one step."
         }
       }
     },
