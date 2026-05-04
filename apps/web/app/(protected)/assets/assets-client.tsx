@@ -57,7 +57,12 @@ export function AssetsClient() {
     async (silent = false, signal?: AbortSignal) => {
       if (!silent) setLoading(true)
       try {
-        const res = await fetch('/api/assets/list', { signal })
+        const res = await fetch('/api/assets/list', {
+          signal,
+          // List GET is Cache-Control max-age=30; without this, post-upload refetches
+          // can return a stale list (especially on mobile) while generate uses POST JSON.
+          cache: 'no-store',
+        })
         if (!res.ok) throw new Error('list failed')
         const data = (await res.json()) as { items: AssetItem[] }
         setItems(data.items ?? [])
