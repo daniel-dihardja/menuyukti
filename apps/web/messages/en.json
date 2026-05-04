@@ -248,24 +248,15 @@
     }
   },
   "cookieConsent": {
-    "title": "Cookies and analytics",
-    "description": "Menuyukti loads Google Analytics on our print shop pages (/shop) so we can understand how the store is used. Choose what you allow.",
+    "title": "Essential tracking",
+    "description": "On our print shop (/shop) we use Google Analytics 4 only to count visits and digital image downloads so we can see how the store is used. There is no optional analytics category for this site area.",
     "privacyLink": "Read the Privacy Policy",
-    "accept": "Accept analytics",
-    "reject": "Essentials only",
-    "customize": "Customize",
+    "dismiss": "Got it",
     "settingsLink": "Cookie settings",
     "preferences": {
-      "title": "Cookie preferences",
-      "description": "These choices apply to this browser. You can change them anytime from the Cookie settings link in the footer.",
       "essentialTitle": "Essential",
-      "essentialDescription": "Required for sign-in, security, and core platform functionality. Always on.",
-      "essentialAria": "Essential cookies (always on)",
-      "analyticsTitle": "Analytics — Google Analytics on the print shop",
-      "analyticsDescription": "Loads Google Analytics 4 on /shop pages so we can see anonymized usage trends and improve the store. Off by default.",
-      "analyticsAria": "Toggle Google Analytics on the print shop",
-      "save": "Save preferences",
-      "cancel": "Cancel"
+      "essentialDescription": "Includes sign-in, security, core platform functionality, and shop usage measurement (page views on /shop and download events). Always on.",
+      "essentialAria": "Essential cookies (always on)"
     }
   },
   "shop": {

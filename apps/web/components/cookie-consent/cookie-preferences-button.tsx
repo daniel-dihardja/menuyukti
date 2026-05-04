@@ -8,8 +8,8 @@ const DEFAULT_LINK_CLASSNAME =
   'text-muted-foreground underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 
 /**
- * Footer trigger that reopens the cookie preferences sheet. Renders nothing when GA is not
- * configured for this build, so users only see it on environments where the choice matters.
+ * Footer trigger that reopens the informational cookie notice. Renders nothing when GA is not
+ * configured for this build.
  */
 export function CookiePreferencesButton({ className }: { className?: string }) {
   const t = useTranslations('cookieConsent')

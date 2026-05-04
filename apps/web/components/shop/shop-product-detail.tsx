@@ -25,8 +25,6 @@ import {
 
 import type { ResolvedShopImage } from '@/lib/shop/resolve-shop-images'
 import { routes } from '@/lib/routes'
-import { useCookieConsent } from '@/components/cookie-consent/cookie-consent-context'
-
 import type { ShopProduct } from './shop-catalog'
 import { ShopProductAppBridge } from './shop-product-app-bridge'
 
@@ -37,7 +35,6 @@ type Props = {
 
 export function ShopProductDetail({ product, resolvedImages }: Props) {
   const t = useTranslations('shop')
-  const { analyticsGranted } = useCookieConsent()
   const [imageIndex, setImageIndex] = useState(0)
   const [sizeId, setSizeId] = useState(product.sizes[0]?.id ?? '')
   const [finishId, setFinishId] = useState(product.finishes[0]?.id ?? '')
@@ -59,7 +56,6 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
   }, [images.length])
 
   const trackDigitalDownloadClick = useCallback(() => {
-    if (!analyticsGranted) return
     const d = product.digitalDeliverable
     if (!d) return
     const href = routes.shopDownload(product.slug)
@@ -70,7 +66,7 @@ export function ShopProductDetail({ product, resolvedImages }: Props) {
       product_slug: product.slug,
       link_url: linkUrl,
     })
-  }, [analyticsGranted, product.digitalDeliverable, product.slug])
+  }, [product.digitalDeliverable, product.slug])
 
   const handleShare = useCallback(async () => {
     const url = typeof window !== 'undefined' ? window.location.href : ''
