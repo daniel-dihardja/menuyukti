@@ -8,6 +8,7 @@ import { LandingBento } from '@/app/_components/landing/landing-bento'
 import { LandingFeatureHighlights } from '@/app/_components/landing/landing-feature-highlights'
 import { LandingFaq } from '@/app/_components/landing/landing-faq'
 import { LandingFooter } from '@/app/_components/landing/landing-footer'
+import { LandingProductPillars } from '@/app/_components/landing/landing-product-pillars'
 import { LandingTrustStrip } from '@/app/_components/landing/landing-trust-strip'
 import { HeroProductPreview } from '@/app/_components/landing/hero-product-preview'
 import {
@@ -17,12 +18,12 @@ import {
 import { routes } from '@/lib/routes'
 import { getTranslations } from 'next-intl/server'
 import {
-  Upload,
-  BarChart3,
-  Lightbulb,
+  GitBranch,
+  MessageSquare,
+  Sparkles,
+  Store,
   TrendingUp,
   Leaf,
-  Sparkles,
   PieChart,
   CalendarRange,
   ScrollText,
@@ -51,10 +52,35 @@ export default async function LandingPage() {
 
   const faqItems = [
     { question: t('faq.q1'), answer: t('faq.a1') },
+    { question: t('faq.q2'), answer: t('faq.a2') },
     { question: t('faq.q3'), answer: t('faq.a3') },
     { question: t('faq.q4'), answer: t('faq.a4') },
     { question: t('faq.q5'), answer: t('faq.a5') },
   ]
+
+  const pillarItems = [
+    {
+      id: 'studio' as const,
+      title: t('pillars.items.studio.title'),
+      description: t('pillars.items.studio.description'),
+    },
+    {
+      id: 'strategyChat' as const,
+      title: t('pillars.items.strategyChat.title'),
+      description: t('pillars.items.strategyChat.description'),
+    },
+    {
+      id: 'workflowsPro' as const,
+      title: t('pillars.items.workflowsPro.title'),
+      description: t('pillars.items.workflowsPro.description'),
+      badge: 'pro' as const,
+    },
+    {
+      id: 'printShop' as const,
+      title: t('pillars.items.printShop.title'),
+      description: t('pillars.items.printShop.description'),
+    },
+  ] as const
 
   const pipelineItems = [
     {
@@ -167,6 +193,13 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        <LandingProductPillars
+          title={t('pillars.title')}
+          subtitle={t('pillars.subtitle')}
+          proBadgeLabel={t('pillars.proBadge')}
+          items={pillarItems}
+        />
+
         <div className="mx-auto max-w-6xl px-6">
           <Separator />
         </div>
@@ -217,23 +250,28 @@ export default async function LandingPage() {
               {t('how.title')}
             </h2>
 
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
               {(
                 [
                   {
-                    Icon: Upload,
-                    titleKey: 'how.steps.upload.title',
-                    descKey: 'how.steps.upload.description',
+                    Icon: Sparkles,
+                    titleKey: 'how.steps.studio.title',
+                    descKey: 'how.steps.studio.description',
                   },
                   {
-                    Icon: BarChart3,
-                    titleKey: 'how.steps.analyze.title',
-                    descKey: 'how.steps.analyze.description',
+                    Icon: MessageSquare,
+                    titleKey: 'how.steps.strategyChat.title',
+                    descKey: 'how.steps.strategyChat.description',
                   },
                   {
-                    Icon: Lightbulb,
-                    titleKey: 'how.steps.act.title',
-                    descKey: 'how.steps.act.description',
+                    Icon: GitBranch,
+                    titleKey: 'how.steps.workflowsPro.title',
+                    descKey: 'how.steps.workflowsPro.description',
+                  },
+                  {
+                    Icon: Store,
+                    titleKey: 'how.steps.printShop.title',
+                    descKey: 'how.steps.printShop.description',
                   },
                 ] as const
               ).map(({ Icon, titleKey, descKey }) => (

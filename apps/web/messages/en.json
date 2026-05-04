@@ -7,7 +7,7 @@
     "navShop": "Print Shop",
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
-    "mobileMenuDescription": "AI workflows and the print shop catalog.",
+    "mobileMenuDescription": "AI Studio, workflows, strategy chat, and the print shop catalog.",
     "mobileMenuSignIn": "Sign in"
   },
   "accountMenu": {
@@ -17,16 +17,16 @@
     "signOut": "Sign out"
   },
   "metadata": {
-    "title": "Menuyukti — Agentic AI for restaurant social media marketing",
-    "description": "Agentic AI for restaurant social media marketing: composable workflows, sales analytics, LangGraph-style agents, milestone data, and Instagram-ready artifacts in one GraphQL-backed workspace.",
+    "title": "Menuyukti — AI-first restaurant marketing platform",
+    "description": "AI-first restaurant marketing: Studio for preset AI image generation, in-campaign strategy chat, Pro agentic workflows with sales-grounded analytics—plus an optional print shop with ready-made artwork.",
     "ogLocale": "en_US"
   },
   "login": {
     "title": "Menuyukti",
-    "slogan": "Agentic AI for restaurant marketing",
+    "slogan": "AI-first restaurant marketing",
     "backToHome": "Back to home",
     "signUpTitle": "Join Menuyukti",
-    "signUpDescription": "Create an account to connect your locations and workflows.",
+    "signUpDescription": "Create an account for AI Studio, strategy chat, Pro workflows, and campaigns—plus the print shop when you want ready-made artwork.",
     "emailLabel": "Email",
     "emailPlaceholder": "m@example.com",
     "passwordLabel": "Password",
@@ -113,39 +113,62 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "Agentic AI system for restaurant social media marketing",
-      "subtitle": "Menuyukti is an agentic AI system for restaurant social media marketing: node-based workflows turn sales data into signals, run milestone pipelines, and produce Instagram-ready schedules and copy you can trust and refine. Within each step you can add input and influence the run—so you get automated AI execution balanced with your briefs, edits, and judgment.",
-      "badge": "Agentic AI · Data-grounded agents · Sales-to-social workflows",
+      "headline": "AI-first restaurant marketing platform",
+      "subtitle": "Lead with AI: Menuyukti’s Studio generates high-quality product and social images from preset workflows; a dedicated strategy chat refines your social plan inside campaigns; Pro runs agentic milestone pipelines over time, grounded in sales data when you connect it. When you also want ready-made venue artwork, the print shop is there as a convenient add-on.",
+      "badge": "AI Studio · Strategy chat · Pro agentic workflows · Print shop",
       "ctaSecondary": "Sign in",
-      "previewAlt": "Screenshot of the Menuyukti workflow UI focused on the Brand Brief milestone, showing a generated brand brief informed by restaurant sales data.",
-      "previewCaption": "Example: the Brand Brief milestone—a brief generated from your sales data. Later milestones use it to propose promotion candidates."
+      "previewAlt": "Screenshot of the Menuyukti Pro workflow UI focused on the Brand Brief milestone, showing a generated brand brief informed by restaurant sales data.",
+      "previewCaption": "Pro example: the Brand Brief milestone in a time-based campaign pipeline—grounded in your sales data, then used by later milestones for promotion ideas and schedules."
     },
-    "problem": "Most restaurant social media marketing still relies on disconnected dashboards, spreadsheets, and tools bolted onto legacy stacks—not coordinated agentic systems. Strategy gets lost between data review and campaign execution, so you miss timing windows and promote the wrong menu stories.",
+    "pillars": {
+      "title": "AI at the center of your restaurant marketing",
+      "subtitle": "Preset AI image generation, strategy-aware chat, and Pro agentic automation do the heavy lifting. The print shop sits alongside as optional ready-made artwork when you want it.",
+      "proBadge": "Pro",
+      "items": {
+        "studio": {
+          "title": "Studio: preset AI image generation",
+          "description": "Chain high-quality product shots and social-ready creatives from preset AI workflows—fast iteration for Instagram, promos, and on-brand visuals without a full photo studio."
+        },
+        "strategyChat": {
+          "title": "AI strategy chat in campaigns",
+          "description": "A dedicated in-app chat next to your campaign workspace helps you stress-test angles, timing, and messaging with an AI tuned for social strategy—not a disconnected generic assistant."
+        },
+        "workflowsPro": {
+          "title": "Pro: agentic AI campaign pipelines",
+          "description": "Multi-step agentic workflows run milestones over weeks or months—dates, brand brief, promotion candidates, scheduling, and copy—with tools and memory grounded in your workspace and sales analytics when you connect reports."
+        },
+        "printShop": {
+          "title": "Print shop (add-on artwork)",
+          "description": "A bonus catalog of restaurant-ready visuals with many complimentary images for menus, screens, and in-venue use—handy when you want finished artwork without generating it in Studio first."
+        }
+      }
+    },
+    "problem": "Restaurant teams still juggle generic AI chats, one-off image tools, and spreadsheets that never talk to what sells. You get pretty outputs, but weak ties between AI-generated creatives, social strategy, and repeatable campaign execution.",
     "problemImageAlt": "Abstract analytics dashboard showing sales performance bars and insight summary.",
-    "solution": "Menuyukti is an agentic AI system for restaurant social media marketing: a node-based workflow canvas where agents connect milestones like Dates and Brand brief into a flexible social strategy pipeline. Every node is grounded in sales-report analytics, and each output is stored as structured, reusable campaign data.",
+    "solution": "Menuyukti puts AI first: Studio for controlled, preset image generation; campaign chat for strategy; Pro workflows for agentic pipelines over time—with sales-grounded signals when you upload data. Add the print shop when you want ready-made artwork on top.",
     "solutionImageAlt": "Workflow diagram from POS data through AI milestones to stored workflow outputs and artifacts.",
     "trust": {
-      "title": "Agentic AI, built for restaurant social media marketing",
-      "stat1Value": "Composable nodes",
-      "stat1Label": "Mix and match milestone nodes per campaign objective, from brand positioning to scheduling.",
-      "stat2Value": "Signals-first",
-      "stat2Label": "Recommendations are grounded in demand timing, category mix, and menu performance from your sales data.",
-      "stat3Value": "Execution-ready",
-      "stat3Label": "Convert strategy into scheduled posts, angles, and captions you can review and publish."
+      "title": "AI built for how restaurants market",
+      "stat1Value": "Preset AI Studio",
+      "stat1Label": "Guided image workflows produce consistent, high-quality social and product shots instead of one-off prompts scattered across apps.",
+      "stat2Value": "Strategy-aware chat",
+      "stat2Label": "Campaign-scoped AI chat keeps recommendations tied to your brief, milestones, and timing—not a blank-slate chatbot.",
+      "stat3Value": "Agentic Pro runs",
+      "stat3Label": "Composable AI pipelines plan, call tools, and emit structured artifacts—schedules, promotion ideas, copy—so execution scales with your brand."
     },
     "bento": {
-      "title": "Analytics, agents, and deliverables together",
-      "subtitle": "Agentic workflows sit on your data: analytical signals in, agent-run milestones in the middle, and campaign outputs out—with reusable structured data at every step.",
+      "title": "When you layer Pro AI on your data",
+      "subtitle": "Agentic workflows and analytics sit on your sales signals: AI milestones in the middle, structured campaign outputs out—so automation stays explainable.",
       "item1Title": "Sales-report signal intelligence",
-      "item1Description": "Upload POS exports and spreadsheet sales reports to surface menu demand, daypart peaks, and category opportunities before creative planning.",
-      "item2Title": "Flexible strategy pipelines",
-      "item2Description": "Compose node-based milestones per objective: keep the same core flow or swap nodes as briefs, promotions, and campaign windows change.",
-      "item3Title": "Reusable social deliverables",
-      "item3Description": "Store post schedules, promotion rationales, and messaging guidance as structured artifacts you can refine and reuse across locations."
+      "item1Description": "Upload POS exports and spreadsheet sales reports to surface menu demand, daypart peaks, and category opportunities that inform what to promote and when.",
+      "item2Title": "Transparent agent runs",
+      "item2Description": "See how milestones and tools combine in each run so strategy logic stays inspectable—not a black box.",
+      "item3Title": "Reusable campaign artifacts",
+      "item3Description": "Store post schedules, promotion rationales, and messaging guidance as structured data you can refine across locations and campaign windows."
     },
     "pipeline": {
-      "title": "Compose your agentic social strategy pipeline",
-      "subtitle": "Use milestone nodes like building blocks for your agents. Keep the sequence that matches your campaign, then rerun with new sales reports for continuous optimization.",
+      "title": "Pro: compose your agentic AI social pipeline",
+      "subtitle": "Each milestone is an AI step with tools and memory: compose the sequence for your campaign, plug in sales analytics when you have them, and rerun as new reports arrive.",
       "nodes": {
         "datesTitle": "Dates node",
         "datesDescription": "Defines campaign start/end windows and public-holiday context to keep posting plans realistic.",
@@ -160,8 +183,8 @@
       }
     },
     "signals": {
-      "title": "Signals grounded in sales reports",
-      "subtitle": "Each recommendation is traceable to operational and menu performance data, so you can justify strategy decisions.",
+      "title": "Pro: signals grounded in sales reports",
+      "subtitle": "When you run Pro workflows with uploaded sales data, each recommendation stays traceable to what your locations actually sell—so you can justify strategy decisions.",
       "items": {
         "demandTitle": "Demand timing signals",
         "demandDescription": "Identify dayparts and weekday patterns where audience attention and purchase intent are strongest.",
@@ -172,8 +195,8 @@
       }
     },
     "featureHighlights": {
-      "title": "Product proof across the workflow",
-      "subtitle": "See how your workspace goes from milestone planning to agentic runs, evidence-backed promotion, and transparent execution, with built-in charts on the location sales report for timing and menu mix.",
+      "title": "See the AI stack in action",
+      "subtitle": "Preset AI chains in Studio and workflow assets, strategy runs in the campaign workspace, and Pro analytics—heatmaps and bubble charts—so data-informed agents know when and what to promote.",
       "cards": {
         "assetsTitle": "Workflow assets and AI image flows",
         "assetsDescription": "Upload raw smartphone photos and chain AI image flows from background removal through preset-based product photography.",
@@ -192,44 +215,50 @@
     "faq": {
       "title": "Common questions",
       "q1": "What data do I need to upload?",
-      "a1": "Start by uploading your POS sales report to unlock data-driven insights. Your POS system must be supported before you can upload, because each POS uses different column names that need to be normalized first. The list of supported POS systems will be shown on this page soon.",
+      "a1": "For Pro workflows and sales-grounded AI analytics, upload your POS sales report (where your POS format is supported) so we can normalize columns and build demand, mix, and timing signals. Studio AI generation and strategy chat do not require sales data to be useful; the print shop never requires uploads.",
+      "q2": "Do I need sales data to use Studio or the print shop?",
+      "a2": "No. Studio and strategy chat work without sales uploads. Connecting reports unlocks smarter, evidence-backed Pro automation. The print shop is standalone artwork you can browse anytime as an add-on.",
       "q3": "What is an agentic AI system?",
-      "a3": "An agentic AI system goes beyond a single chat reply: it can plan steps, call tools, and run workflows toward a goal—much like a teammate following a brief, not just answering one question at a time. For restaurant marketers, that means turning sales signals into concrete artifacts—schedules, promotion angles, location profiles—with less copy-paste and fewer disconnected tools. You stay in control with transparent data from your workspace, while the system does the repetitive orchestration so campaigns stay aligned with what actually sells.",
+      "a3": "An agentic AI system goes beyond a single chat reply: it can plan steps, call tools, and run multi-milestone workflows toward a goal—like a teammate following a brief. In Menuyukti, that shows up strongest in Pro campaign pipelines that turn sales signals into schedules, promotion ideas, and copy. You stay in control with inspectable runs and workspace data, while the system handles repetitive orchestration.",
       "q4": "Who is it for?",
-      "a4": "Menuyukti is for restaurant marketers, whether you are an owner, staff member, freelancer, or agency supporting restaurant brands. It is especially useful for multi-location teams that want analytics and AI-powered execution in one connected workspace.",
+      "a4": "Restaurant owners, operators, marketers, freelancers, and agencies who want AI-generated creatives and strategy help first—and optional Pro automation or print-shop artwork when those layers matter.",
       "q5": "Can we collaborate across locations?",
-      "a5": "Yes. Collaborate across locations by sharing workflows, milestones, and brand assets as your team grows."
+      "a5": "Yes. Share workflows, milestones, and brand assets as your team grows."
     },
     "how": {
       "title": "How it works",
       "steps": {
-        "upload": {
-          "title": "1. Ingest sales reports",
-          "description": "Upload POS exports or spreadsheets and convert them into structured analytics signals in your workspace."
+        "studio": {
+          "title": "1. Studio: preset AI images",
+          "description": "Run guided AI image workflows to generate high-quality product shots and social-ready graphics—fast iteration with prompts and steps tuned for restaurants."
         },
-        "analyze": {
-          "title": "2. Compose node sequence",
-          "description": "Arrange workflow nodes (Dates, Brand brief) around your campaign objective."
+        "strategyChat": {
+          "title": "2. AI strategy chat in campaigns",
+          "description": "Open a campaign workspace and use dedicated chat to refine angles, timing, and hooks with an AI assistant focused on social strategy alongside your milestones."
         },
-        "act": {
-          "title": "3. Execute and refine",
-          "description": "Agents run the pipeline to produce schedules, promotion angles, and copy; use chat to refine those results and tune the pipeline, then publish when you are ready."
+        "workflowsPro": {
+          "title": "3. Pro: agentic AI pipelines",
+          "description": "Turn on Pro workflows so agents plan, call tools, and run milestone sequences over time—optionally grounded in sales analytics when you connect POS reports."
+        },
+        "printShop": {
+          "title": "4. Print shop (optional add-on)",
+          "description": "Browse ready-made restaurant artwork with many complimentary images when you want menus, posters, or in-venue visuals without generating them in Studio."
         }
       }
     },
     "why": {
       "title": "Why restaurants use Menuyukti",
-      "subtitle": "A workflow product built around agentic AI: milestones and milestone data, artifacts, and chat to refine pipeline outputs—purpose-built for restaurant social media marketing, not a generic assistant pasted onto a dashboard.",
+      "subtitle": "One roof for AI-generated creatives, strategy-aware chat, and optional agentic automation—with inspectable runs and workspace data instead of a generic chatbot bolted onto unrelated tools.",
       "cards": {
-        "insights": "Real sales data, not generic benchmarks",
-        "waste": "From signals to publish-ready artifacts",
-        "ops": "Agent pipelines wired to your workspace data",
-        "margin": "Locations, workflows, and assets together"
+        "insights": "Preset AI Studio plus data when you scale",
+        "waste": "From AI images to publish-ready campaign artifacts",
+        "ops": "Agentic Pro pipelines wired to your workspace",
+        "margin": "Locations, AI assets, chat, and workflows together"
       }
     },
     "cta": {
       "title": "Explore your workspace",
-      "description": "If you've been invited, sign in to connect locations, upload sales data, and run this agentic stack—analytics, agent-driven milestones, and editable outputs in one place.",
+      "description": "Sign in for AI Studio, campaign strategy chat, and Pro agentic workflows—then browse the print shop whenever you want ready-made artwork on top.",
       "secondary": "Sign in"
     },
     "footer": {
