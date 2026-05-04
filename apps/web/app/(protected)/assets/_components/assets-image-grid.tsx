@@ -130,7 +130,7 @@ export function AssetsImageGrid({
                         type="button"
                         size="icon"
                         variant="secondary"
-                        className="h-9 w-9 rounded-full bg-white/95 text-foreground shadow-md hover:bg-white"
+                        className="h-9 w-9 rounded-full bg-white/95 text-neutral-950 shadow-md hover:bg-white hover:text-neutral-950"
                         aria-label={t('grid.viewLarge')}
                         onClick={() => onPreview(item)}
                       >
@@ -140,7 +140,7 @@ export function AssetsImageGrid({
                         type="button"
                         size="icon"
                         variant="secondary"
-                        className="h-9 w-9 rounded-full bg-white/95 text-foreground shadow-md hover:bg-white"
+                        className="h-9 w-9 rounded-full bg-white/95 text-neutral-950 shadow-md hover:bg-white hover:text-neutral-950"
                         aria-label={t('grid.download')}
                         asChild
                       >
