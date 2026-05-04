@@ -7,6 +7,7 @@ type BuiltinAiFlowRecord = {
   displayName: string
   model: string
   prompt: string
+  styleIds?: string[]
 }
 
 export type BuiltinAiFlowOption = Pick<BuiltinAiFlowRecord, 'slug' | 'displayName'>
@@ -25,5 +26,6 @@ export function getBuiltinAiFlowConfig(slug: string): NanoBananaFlowConfig | nul
   return {
     model: flow.model,
     prompt: flow.prompt,
+    ...(flow.styleIds && flow.styleIds.length > 0 ? { styleIds: flow.styleIds } : {}),
   }
 }
