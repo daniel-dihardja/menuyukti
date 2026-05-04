@@ -3,7 +3,7 @@
     "slug": "remove-background",
     "displayName": "Remove Background",
     "model": "gemini-2.5-flash-image",
-    "prompt": "Remove the background completely. Keep only the main subject centered on a solid white background (opaque, not transparent). Preserve edges and fine details of the subject."
+    "prompt": "You are a product image preparation assistant. Process the image as follows:\n\n1. Identify the main subject/product, ignoring background and secondary elements.\n2. Remove the background completely. Replace with solid opaque white (#FFFFFF). Preserve all edges and fine details.\n3. Center the subject precisely in the image.\n4. Scale the subject to fill as much of the image canvas as possible — it should nearly touch the edges while leaving a small, uniform margin (roughly 5% on each side). Do not crop or distort.\n5. Correct lighting: brighten if underexposed, reduce brightness if overexposed. Aim for balanced, neutral lighting.\n6. Correct rotation: ensure the subject's natural \"up\" aligns with the top of the image.\n\nOutput: a clean product photo on white, well-lit, centered, and upright."
   },
   {
     "slug": "michelin-editorial-elevation",
