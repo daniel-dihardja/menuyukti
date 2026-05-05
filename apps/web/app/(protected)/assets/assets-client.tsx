@@ -32,6 +32,7 @@ import {
 import { AssetsImageGrid } from './_components/assets-image-grid'
 import { AssetsUploadZone } from './_components/assets-upload-zone'
 import { BackgroundsImageGrid } from './_components/backgrounds-image-grid'
+import { ContentImageCreateDialog } from '../workflows/_components/milestone-preview/content-image-create-dialog'
 
 type ToastState = { kind: 'success' | 'error'; message: string } | null
 
@@ -67,6 +68,7 @@ export function AssetsClient() {
   const [previewImgLoaded, setPreviewImgLoaded] = useState(false)
   const [backgroundItems, setBackgroundItems] = useState<BackgroundItem[]>([])
   const [backgroundsLoading, setBackgroundsLoading] = useState(false)
+  const [contentImageDialogOpen, setContentImageDialogOpen] = useState(false)
   const backgroundsLoadedRef = useRef(false)
 
   const activeTab = canvasTab ?? 'products'
@@ -437,6 +439,17 @@ export function AssetsClient() {
           </DialogContent>
         ) : null}
       </Dialog>
+
+      <ContentImageCreateDialog
+        open={contentImageDialogOpen}
+        onOpenChange={setContentImageDialogOpen}
+      />
+
+      <div className="flex items-center justify-end">
+        <Button type="button" onClick={() => setContentImageDialogOpen(true)}>
+          {t('contentImage.newButton')}
+        </Button>
+      </div>
 
       <Tabs
         className="flex w-full flex-col gap-6"

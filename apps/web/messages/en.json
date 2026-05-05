@@ -615,6 +615,9 @@
   "assets": {
     "title": "Brand assets",
     "description": "Upload and organize images for workflows and creative. Files are normalized to 1024px on the shortest side and saved as WebP.",
+    "contentImage": {
+      "newButton": "New content image"
+    },
     "tabs": {
       "products": "Products",
       "backgrounds": "Backgrounds"
@@ -1341,7 +1344,27 @@
         "fieldSaveStatusSaving": "Saving…",
         "fieldSaveStatusSaved": "Saved",
         "fieldSaveStatusUnsaved": "Changed",
-        "fieldSaveButton": "Save"
+        "fieldSaveButton": "Save",
+        "contentImageDialog": {
+          "title": "New content image",
+          "descriptionSelect": "Choose a product image and a background, then continue.",
+          "descriptionReview": "Review your selections before generating.",
+          "loadError": "Couldn't load images. Try again.",
+          "productsLabel": "Product image",
+          "productsSelectedCount": "{count, plural, =0 {None selected} one {# selected} other {# selected}}",
+          "productsEmpty": "No product images yet. Upload one in Canvas.",
+          "backgroundLabel": "Background",
+          "backgroundSelected": "Selected",
+          "backgroundNotSelected": "None",
+          "backgroundsEmpty": "No backgrounds available.",
+          "reviewHeading": "Your selections",
+          "cancel": "Cancel",
+          "continue": "Continue",
+          "back": "Back",
+          "generating": "Generating...",
+          "generate": "Generate",
+          "generateError": "Couldn't generate the image. Try again."
+        }
       },
       "workspace": {
         "previewTitle": "Preview",
