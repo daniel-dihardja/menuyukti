@@ -6,6 +6,9 @@ from collections.abc import Callable, Sequence
 from typing import Any
 
 import httpx
+from agents_app.agents.core.milestone_run.tools.get_available_dates import (
+    make_get_available_dates_tool,
+)
 from agents_app.agents.core.milestone_run.tools.get_location_profile import (
     make_get_location_profile_tool,
 )
@@ -34,6 +37,12 @@ _RESERVED_TOOL_IDS: frozenset[str] = frozenset((*CORE_READ_TOOL_IDS, WRITE_TOOL_
 ExtraToolFactory = Callable[[dict[str, Any], int, str, httpx.AsyncClient], BaseTool]
 
 EXTRA_TOOL_FACTORIES: dict[str, ExtraToolFactory] = {
+    "get_available_dates": lambda context, lid, uid, client: make_get_available_dates_tool(
+        context,
+        lid,
+        uid,
+        client,
+    ),
     "get_public_holidays": lambda context, lid, uid, client: make_get_public_holidays_tool(
         lid, uid, client=client
     ),

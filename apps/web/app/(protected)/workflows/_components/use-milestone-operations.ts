@@ -7,6 +7,7 @@ import {
   brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   milestoneDataSchema,
+  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import {
@@ -39,6 +40,10 @@ function parseDataPreviewForPreset(
   }
   if (presetId === 'promotion_candidates') {
     const parsed = promotionCandidatesMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'post_scheduler') {
+    const parsed = postSchedulerMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   return undefined

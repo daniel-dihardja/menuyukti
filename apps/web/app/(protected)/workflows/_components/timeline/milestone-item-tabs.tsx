@@ -30,6 +30,7 @@ const presetGoalTranslationKeyById = {
   dates: 'milestonePreset.dates.goal',
   restaurant_brand_brief: 'milestonePreset.restaurant_brand_brief.goal',
   promotion_candidates: 'milestonePreset.promotion_candidates.goal',
+  post_scheduler: 'milestonePreset.post_scheduler.goal',
 } as const
 
 /** Tab panel state and handlers for one milestone (built in `timeline-item`). */
@@ -82,7 +83,7 @@ function formatDateButtonLabel(value: string): string {
   return parsed ? parsed.toLocaleDateString() : value
 }
 
-type OptionalNotesPresetId = 'restaurant_brand_brief' | 'promotion_candidates'
+type OptionalNotesPresetId = 'restaurant_brand_brief' | 'promotion_candidates' | 'post_scheduler'
 
 function optionalNotesFieldCopy(
   t: (key: string) => string,
@@ -412,6 +413,14 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                 </p>
                 <p>{t('milestoneHelpPromotionCandidatesOptionalInputHowUsed')}</p>
                 <p>{t('milestoneHelpPromotionCandidatesOptionalInputWhenToUse')}</p>
+              </div>
+            ) : milestone.presetId === 'post_scheduler' ? (
+              <div className="space-y-2 text-muted-foreground text-sm">
+                <p className="font-medium text-foreground">
+                  {t('milestoneHelpPostSchedulerOptionalInputTitle')}
+                </p>
+                <p>{t('milestoneHelpPostSchedulerOptionalInputHowUsed')}</p>
+                <p>{t('milestoneHelpPostSchedulerOptionalInputWhenToUse')}</p>
               </div>
             ) : optionalNotesCopy ? (
               <div className="space-y-2 text-muted-foreground text-sm">

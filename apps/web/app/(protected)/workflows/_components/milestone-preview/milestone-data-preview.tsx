@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import {
   brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
+  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
@@ -12,6 +13,7 @@ import type { TimelineMilestone } from '../timeline/types'
 
 import { MilestoneBrandBriefDataPreview } from './milestone-brand-brief-data-preview'
 import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
+import { MilestonePostSchedulerDataPreview } from './milestone-post-scheduler-data-preview'
 import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
 
 export type MilestoneDataPreviewProps = {
@@ -93,6 +95,28 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             notes: t('milestonePromotionCandidatesPreviewNotes'),
             emptyList: t('milestoneBrandBriefPreviewEmptyList'),
             emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
+          }}
+        />
+      )
+    }
+
+    if (milestone.presetId === 'post_scheduler') {
+      const parsedPs = postSchedulerMilestoneDataSchema.safeParse(data)
+      if (!parsedPs.success) {
+        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+      }
+
+      return (
+        <MilestonePostSchedulerDataPreview
+          data={parsedPs.data}
+          labels={{
+            postsHeading: t('milestonePostSchedulerPreviewPostsHeading'),
+            emptyPosts: t('milestonePostSchedulerPreviewEmptyPosts'),
+            dayDateTime: t('milestonePostSchedulerPreviewDayDateTime'),
+            postType: t('milestonePostSchedulerPreviewPostType'),
+            contentType: t('milestonePostSchedulerPreviewContentType'),
+            promotedItems: t('milestonePostSchedulerPreviewPromotedItems'),
+            captionIdea: t('milestonePostSchedulerPreviewCaptionIdea'),
           }}
         />
       )

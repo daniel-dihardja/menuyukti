@@ -40,7 +40,7 @@ export function CampaignPreviewPanelBody() {
           <p className="truncate font-medium text-foreground text-sm">{selectedMilestone.title}</p>
         ) : null}
       </CardHeader>
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden pt-0">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden pt-0">
         {showMilestonePreview ? (
           <MilestoneDataPreview milestone={selectedMilestone} />
         ) : (

@@ -30,6 +30,12 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
       'Use for the promotion candidates milestone: menu engineering top stars and puzzles per POS menu_category (or flat when categories are missing) from the latest analytics run. When a prior brand brief milestone exists, align promotion ideas with its pillars, audience, proof angles, and tone; menu names stay grounded in analytics.',
   },
   {
+    id: 'post_scheduler',
+    name: 'Post scheduler',
+    description:
+      'Use for the post scheduler milestone: builds an Instagram posting plan from prior Dates (campaign window and public holidays), Brand Brief, and Promotion Candidates; uses get_available_dates to filter posting days by weekends and holidays when needed.',
+  },
+  {
     id: 'generic',
     name: 'Generic milestone data prep',
     description:

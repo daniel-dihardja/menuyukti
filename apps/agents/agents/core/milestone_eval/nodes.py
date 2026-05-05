@@ -59,7 +59,7 @@ def _node_type(ch: dict[str, Any]) -> str:
 
 
 _OWNER_NOTES_INPUT_TYPES = frozenset(
-    {"restaurant_brand_brief", "promotion_candidates"},
+    {"restaurant_brand_brief", "promotion_candidates", "post_scheduler"},
 )
 
 

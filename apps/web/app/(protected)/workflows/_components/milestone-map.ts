@@ -6,6 +6,7 @@ import {
   milestoneInputSchema,
   milestonedataValueSchema,
   passCriteriaDataSchema,
+  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   resultDataSchema,
 } from '@/lib/graphql/node-schemas'
@@ -217,6 +218,14 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
         flatSummary: '',
         promotionIdeas: [],
       }
+    }
+  }
+  if (presetId === 'post_scheduler') {
+    const parsedPs = postSchedulerMilestoneDataSchema.safeParse(data)
+    if (parsedPs.success) {
+      normalizedData = parsedPs.data
+    } else {
+      normalizedData = { posts: [] }
     }
   }
   return {
