@@ -203,7 +203,7 @@ export function ContentImageCreateDialog({ open, onOpenChange }: ContentImageCre
           </div>
         </ScrollArea>
 
-        <DialogFooter className="sticky bottom-0 shrink-0 border-t bg-background px-4 py-3 sm:px-6">
+        <DialogFooter className="mt-auto shrink-0 border-t bg-background px-4 py-3 sm:px-6">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t('cancel')}
           </Button>
