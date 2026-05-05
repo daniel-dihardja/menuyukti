@@ -377,15 +377,22 @@ export function AssetsClient() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={preview !== null} onOpenChange={(open) => !open && setPreview(null)}>
+      <Dialog
+        open={preview !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPreview(null)
+          }
+        }}
+      >
         {preview ? (
           <DialogContent
             key={preview.item.name}
             overlayClassName="bg-black/80 backdrop-blur-sm"
             showCloseButton
             className={cn(
-              'flex max-h-[90vh] w-full max-w-[min(96vw,1400px)] flex-col gap-0 overflow-hidden border border-border/50 bg-background p-0 shadow-2xl',
-              'sm:max-w-[min(96vw,1400px)]',
+              'inset-0 top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-screen max-w-screen translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border border-border/50 bg-background p-0 shadow-2xl',
+              'sm:inset-auto sm:top-[50%] sm:left-[50%] sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-[min(96vw,1400px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg',
             )}
           >
             <DialogTitle className="sr-only">{preview.item.name}</DialogTitle>
@@ -419,7 +426,12 @@ export function AssetsClient() {
                 </Button>
               </div>
             </div>
-            <div className="relative flex min-h-[min(60vh,720px)] max-h-[calc(90vh-5rem)] items-center justify-center bg-gradient-to-b from-muted/25 via-muted/10 to-black/[0.06] px-4 py-8 dark:to-black/30">
+            <div
+              className={cn(
+                'relative flex items-center justify-center bg-gradient-to-b from-muted/25 via-muted/10 to-black/[0.06] px-4 py-8 dark:to-black/30',
+                'min-h-[calc(100dvh-5rem)] max-h-[calc(100dvh-5rem)] sm:min-h-[min(60vh,720px)] sm:max-h-[calc(90vh-5rem)]',
+              )}
+            >
               {!previewImgLoaded ? (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" aria-hidden />
@@ -432,7 +444,8 @@ export function AssetsClient() {
                 width={1200}
                 height={900}
                 className={cn(
-                  'max-h-[calc(90vh-5.5rem)] w-auto max-w-full object-contain shadow-[0_24px_64px_-12px_rgba(0,0,0,0.35)] transition-opacity duration-300',
+                  'w-auto max-w-full object-contain shadow-[0_24px_64px_-12px_rgba(0,0,0,0.35)] transition-opacity duration-300',
+                  'max-h-[calc(100dvh-5.5rem)] sm:max-h-[calc(90vh-5.5rem)]',
                   previewImgLoaded ? 'opacity-100' : 'opacity-0',
                 )}
                 onLoad={() => setPreviewImgLoaded(true)}
