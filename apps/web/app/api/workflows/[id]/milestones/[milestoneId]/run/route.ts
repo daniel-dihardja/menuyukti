@@ -8,6 +8,7 @@ import {
   brandBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   milestoneInputSchema,
+  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
@@ -24,6 +25,7 @@ const runBodySchema = z.object({
       datesMilestoneDataSchema,
       brandBriefMilestoneDataSchema,
       promotionCandidatesMilestoneDataSchema,
+      postSchedulerMilestoneDataSchema,
     ])
     .optional(),
 })

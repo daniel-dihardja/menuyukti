@@ -10,6 +10,7 @@ import {
   milestoneInputSchema,
   milestonedataValueSchema,
   passCriteriaDataSchema,
+  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import {
@@ -43,7 +44,7 @@ function mergeMilestoneNodeDataJson(
   patch: {
     milestoneRunSkillMode?: 'auto' | 'fixed'
     milestoneRunSkillIds?: string[]
-    presetId?: 'dates' | 'restaurant_brand_brief' | 'promotion_candidates'
+    presetId?: 'dates' | 'restaurant_brand_brief' | 'promotion_candidates' | 'post_scheduler'
     milestoneInput?: { type: string; value?: unknown }
   },
 ): Record<string, unknown> {
@@ -373,6 +374,15 @@ export async function GET(_req: Request, context: RouteContext) {
           flatSummary: '',
           promotionIdeas: [],
         }
+      }
+    }
+    if (
+      parsedMilestoneNodeData?.success &&
+      parsedMilestoneNodeData.data.presetId === 'post_scheduler'
+    ) {
+      const psParsed = postSchedulerMilestoneDataSchema.safeParse(milestoneData)
+      if (!psParsed.success) {
+        milestoneData = { posts: [] }
       }
     }
 

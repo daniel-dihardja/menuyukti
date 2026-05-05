@@ -9,6 +9,8 @@ import {
   milestoneInputSchema,
   milestoneRunSkillModeSchema,
   passCriteriaDataSchema,
+  postSchedulerMilestoneDataSchema,
+  postSchedulerMilestoneInputValueSchema,
   promotionCandidatesMilestoneDataSchema,
   promotionCandidatesMilestoneInputValueSchema,
 } from '@/lib/graphql/node-schemas'
@@ -36,6 +38,7 @@ export const patchMilestoneSchema = z
         datesMilestoneDataSchema,
         brandBriefMilestoneDataSchema,
         promotionCandidatesMilestoneDataSchema,
+        postSchedulerMilestoneDataSchema,
       ])
       .nullable()
       .optional(),
@@ -50,6 +53,10 @@ export const patchMilestoneSchema = z
         z.object({
           type: z.literal('promotion_candidates'),
           value: promotionCandidatesMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('post_scheduler'),
+          value: postSchedulerMilestoneInputValueSchema,
         }),
         milestoneInputSchema,
       ])

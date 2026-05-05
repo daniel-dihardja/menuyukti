@@ -22,6 +22,7 @@ export const milestonePresetIdSchema = z.enum([
   'dates',
   'restaurant_brand_brief',
   'promotion_candidates',
+  'post_scheduler',
 ])
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
@@ -53,6 +54,18 @@ export const promotionCandidatesMilestoneInputValueSchema = z.object({
 
 export type PromotionCandidatesMilestoneInputValue = z.infer<
   typeof promotionCandidatesMilestoneInputValueSchema
+>
+
+/**
+ * Optional owner notes on the milestone Input tab (`value.notes`).
+ * Used by the post scheduler preset.
+ */
+export const postSchedulerMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type PostSchedulerMilestoneInputValue = z.infer<
+  typeof postSchedulerMilestoneInputValueSchema
 >
 
 export const milestoneInputSchema = z.object({
@@ -115,6 +128,24 @@ export type PromotionCandidatesMilestoneData = z.infer<
   typeof promotionCandidatesMilestoneDataSchema
 >
 
+export const postSchedulerPostItemSchema = z.object({
+  dayOfWeek: z.string(),
+  date: z.string(),
+  time: z.string(),
+  postType: z.enum(['Reel', 'Post']),
+  contentType: z.enum(['Carousel', 'Single']),
+  promotedMenuItems: z.array(z.string()),
+  captionIdea: z.string(),
+})
+
+export type PostSchedulerPostItem = z.infer<typeof postSchedulerPostItemSchema>
+
+export const postSchedulerMilestoneDataSchema = z.object({
+  posts: z.array(postSchedulerPostItemSchema),
+})
+
+export type PostSchedulerMilestoneData = z.infer<typeof postSchedulerMilestoneDataSchema>
+
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
@@ -147,6 +178,7 @@ export const milestonedataValueSchema = z.union([
   datesMilestoneDataSchema,
   brandBriefMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
+  postSchedulerMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>

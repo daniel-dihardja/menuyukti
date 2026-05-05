@@ -163,6 +163,69 @@ def test_promotion_candidates_skill_extra_tool_ids() -> None:
     assert pc.inject_prior_presets == ("restaurant_brand_brief",)
 
 
+def test_post_scheduler_skill_tools_and_inject() -> None:
+    from agents_app.agents.core.milestone_run.skills import SKILL_REGISTRY
+
+    ps = SKILL_REGISTRY["post_scheduler"]
+    assert ps.extra_tool_ids == ("get_available_dates",)
+    assert ps.inject_prior_presets == (
+        "dates",
+        "restaurant_brand_brief",
+        "promotion_candidates",
+    )
+
+
+def test_extra_tool_ids_includes_get_available_dates() -> None:
+    tools = _tools_for_context({}, extra_tool_ids=["get_available_dates"])
+    names = [getattr(t, "name", "") for t in tools]
+    assert "get_available_dates" in names
+    assert names.index("get_available_dates") < names.index("write_result_data")
+
+
+def test_get_available_dates_lists_range_and_respects_filters() -> None:
+    tools = _tools_for_context({}, extra_tool_ids=["get_available_dates"])
+    fn = _tool_by_name(tools, "get_available_dates")
+    out = fn.invoke(
+        {
+            "start_date": "2026-05-04",
+            "end_date": "2026-05-06",
+            "exclude_weekends": False,
+            "exclude_holidays": False,
+            "public_holiday_dates": None,
+        }
+    )
+    assert "2026-05-04" in out
+    assert "2026-05-05" in out
+    assert "2026-05-06" in out
+
+    out2 = fn.invoke(
+        {
+            "start_date": "2026-05-07",
+            "end_date": "2026-05-10",
+            "exclude_weekends": True,
+            "exclude_holidays": False,
+            "public_holiday_dates": None,
+        }
+    )
+    assert "2026-05-07" in out2
+    assert "2026-05-08" in out2
+    assert "2026-05-09" not in out2
+    assert "2026-05-10" not in out2
+
+    out3 = fn.invoke(
+        {
+            "start_date": "2026-01-01",
+            "end_date": "2026-01-03",
+            "exclude_weekends": False,
+            "exclude_holidays": True,
+            "public_holiday_dates": ["2026-01-02"],
+        }
+    )
+    assert "2026-01-01" in out3
+    assert "2026-01-02" not in out3
+    assert "2026-01-03" in out3
+
+
 def test_extra_tool_ids_includes_get_scheduler_plan() -> None:
     tools = _tools_for_context(
         {"workflow_id": "wf-1", "milestone_id": "ms-1"},

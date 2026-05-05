@@ -10,6 +10,7 @@ const isProtectedRoute = createRouteMatcher([
   '/workflows(.*)',
   '/assets(.*)',
   '/studio(.*)',
+  '/agent(.*)',
   '/print-orders(.*)',
   '/dashboard(.*)',
   '/skills(.*)',

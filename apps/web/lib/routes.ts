@@ -9,6 +9,7 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/workflows',
   '/assets',
   '/studio',
+  '/agent',
   '/print-orders',
   '/dashboard',
   '/skills',
@@ -54,6 +55,8 @@ export const routes = {
   /** AI asset studio (brand library + generation); `/assets` redirects here. */
   studio: '/studio',
   studioSession: (id: string | number) => `/studio/${id}`,
+  /** Standalone assistant chat (same `/api/chat` stack as workflows). */
+  agent: '/agent',
   printOrders: '/print-orders',
   dashboard: '/dashboard',
   /** Menuyukti staff-only console (platform role `admin`). */

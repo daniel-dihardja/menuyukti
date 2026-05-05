@@ -3,11 +3,11 @@
     "brand": "Menuyukti",
     "brandAria": "Menuyukti home",
     "navAria": "Main navigation",
-    "navWorkflows": "AI Workflows",
+    "navWorkflows": "Campaigns",
     "navShop": "Print Shop",
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
-    "mobileMenuDescription": "AI Studio, workflows, strategy chat, and the print shop catalog.",
+    "mobileMenuDescription": "Canvas, Campaigns, Advisor chat, and the print shop catalog.",
     "mobileMenuSignIn": "Sign in"
   },
   "accountMenu": {
@@ -16,9 +16,19 @@
     "accountSettings": "Account settings",
     "signOut": "Sign out"
   },
+  "agentChat": {
+    "metaTitle": "Advisor",
+    "metaDescription": "Chat with your Menuyukti marketing advisor.",
+    "emptyTitle": "Ask anything",
+    "emptyDescription": "Get campaign and content ideas backed by your restaurant context, same advisor as in campaigns, without selecting one first.",
+    "placeholder": "What would you like help with?",
+    "thinking": "Thinking…",
+    "errorTitle": "Something went wrong",
+    "retry": "Retry"
+  },
   "metadata": {
-    "title": "Menuyukti — AI-first restaurant marketing platform",
-    "description": "AI-first restaurant marketing: Studio for preset AI image generation, in-campaign strategy chat, Pro agentic workflows with sales-grounded analytics—plus an optional print shop with ready-made artwork.",
+    "title": "Menuyukti - AI-first restaurant social media marketing platform",
+    "description": "AI-first platform for restaurant social media marketing: Canvas for creatives, Advisor for strategy, and Pro Campaigns agentic automation that turns sales data into Instagram schedules, promotion ideas, and publish-ready captions.",
     "ogLocale": "en_US"
   },
   "login": {
@@ -26,7 +36,7 @@
     "slogan": "AI-first restaurant marketing",
     "backToHome": "Back to home",
     "signUpTitle": "Join Menuyukti",
-    "signUpDescription": "Create an account for AI Studio, strategy chat, Pro workflows, and campaigns—plus the print shop when you want ready-made artwork.",
+    "signUpDescription": "Create an account for Canvas, Advisor chat, Pro Campaigns, and analytics-driven workflows, plus the print shop when you want ready-made artwork.",
     "emailLabel": "Email",
     "emailPlaceholder": "m@example.com",
     "passwordLabel": "Password",
@@ -113,48 +123,48 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "AI-first restaurant marketing platform",
-      "subtitle": "Lead with AI: Menuyukti’s Studio generates high-quality product and social images from preset workflows; a dedicated strategy chat refines your social plan inside campaigns; Pro runs agentic milestone pipelines over time, grounded in sales data when you connect it. When you also want ready-made venue artwork, the print shop is there as a convenient add-on.",
-      "badge": "AI Studio · Strategy chat · Pro agentic workflows · Print shop",
+      "headline": "AI-first restaurant social media marketing platform",
+      "subtitle": "Menuyukti is built for restaurant marketers: Canvas creates scroll-stopping visuals, Advisor sharpens campaign strategy, and Pro Campaigns automates planning from sales data to posting schedule-so you always know what to post and why.",
+      "badge": "AI-first · Canvas · Advisor · Pro Campaigns",
       "ctaSecondary": "Sign in",
       "previewAlt": "Screenshot of the Menuyukti Pro workflow UI focused on the Brand Brief milestone, showing a generated brand brief informed by restaurant sales data.",
-      "previewCaption": "Pro example: the Brand Brief milestone in a time-based campaign pipeline—grounded in your sales data, then used by later milestones for promotion ideas and schedules."
+      "previewCaption": "Pro Campaigns in action: from sales signals to brand brief, promotion strategy, posting schedule, and ready-to-review social copy."
     },
     "pillars": {
-      "title": "AI at the center of your restaurant marketing",
-      "subtitle": "Preset AI image generation, strategy-aware chat, and Pro agentic automation do the heavy lifting. The print shop sits alongside as optional ready-made artwork when you want it.",
+      "title": "AI-first tools for your restaurant's social media growth",
+      "subtitle": "Use purpose-built intelligence for each marketing job-creative generation, strategic guidance, and campaign automation-grounded in what your restaurant actually sells.",
       "proBadge": "Pro",
       "items": {
         "studio": {
-          "title": "Studio: preset AI image generation",
-          "description": "Chain high-quality product shots and social-ready creatives from preset AI workflows—fast iteration for Instagram, promos, and on-brand visuals from the photos and briefs you already have."
+          "title": "Canvas: create social content that stops the scroll",
+          "description": "Turn menu photos and briefs into on-brand Reels covers, carousel visuals, and promo creatives without starting from scratch or juggling multiple design tools."
         },
         "strategyChat": {
-          "title": "AI strategy chat in campaigns",
-          "description": "A dedicated in-app chat next to your campaign workspace helps you stress-test angles, timing, and messaging with an AI tuned for social strategy—not a disconnected generic assistant."
+          "title": "Advisor: your restaurant marketing strategist",
+          "description": "Ask for hooks, caption angles, campaign themes, and posting timing while you work; your advisor keeps recommendations grounded in your restaurant context."
         },
         "workflowsPro": {
-          "title": "Pro: agentic AI campaign pipelines",
-          "description": "Multi-step agentic workflows run milestones over weeks or months—dates, brand brief, promotion candidates, scheduling, and copy—with tools and memory grounded in your workspace and sales analytics when you connect reports."
+          "title": "Pro Campaigns: agentic planning, end to end",
+          "description": "Run a multi-step flow that builds the brief, surfaces promotion ideas, maps posting dates, and drafts captions, so you can review and publish faster."
         },
         "printShop": {
-          "title": "Print shop (add-on artwork)",
-          "description": "A bonus catalog of restaurant-ready visuals with many complimentary images for menus, screens, and in-venue use—pick polished pieces straight from the catalog when that fits your workflow."
+          "title": "Print shop: ready-made artwork when you need it",
+          "description": "Add polished restaurant visuals for menus and in-venue screens as a quick complement to your digital campaign workflow."
         }
       }
     },
-    "problem": "Restaurant teams still juggle generic AI chats, one-off image tools, and spreadsheets that never talk to what sells. You get pretty outputs, but weak ties between AI-generated creatives, social strategy, and repeatable campaign execution.",
+    "problem": "If you are running social for a restaurant on your own, you are often juggling generic chat tools and disconnected apps. Even when content looks good, it is hard to connect social posts to what sells-and easy to miss the strategy layer that drives results.",
     "problemImageAlt": "Abstract analytics dashboard showing sales performance bars and insight summary.",
-    "solution": "Menuyukti puts AI first: Studio for controlled, preset image generation; campaign chat for strategy; Pro workflows for agentic pipelines over time—with sales-grounded signals when you upload data. Add the print shop when you want ready-made artwork on top.",
+    "solution": "Menuyukti fixes that with an AI-first stack: Canvas for visuals, Advisor for strategy, and Pro Campaigns for orchestrated execution from sales signals to scheduled posts and captions.",
     "solutionImageAlt": "Workflow diagram from POS data through AI milestones to stored workflow outputs and artifacts.",
     "trust": {
-      "title": "AI built for how restaurants market",
-      "stat1Value": "Preset AI Studio",
-      "stat1Label": "Guided image workflows produce consistent, high-quality social and product shots instead of one-off prompts scattered across apps.",
-      "stat2Value": "Strategy-aware chat",
-      "stat2Label": "Campaign-scoped AI chat keeps recommendations tied to your brief, milestones, and timing—not a blank-slate chatbot.",
-      "stat3Value": "Agentic Pro runs",
-      "stat3Label": "Composable AI pipelines plan, call tools, and emit structured artifacts—schedules, promotion ideas, copy—so execution scales with your brand."
+      "title": "AI-first by design, not as an add-on",
+      "stat1Value": "Canvas",
+      "stat1Label": "Create on-brand visuals for Reels, carousels, and promos in minutes.",
+      "stat2Value": "Advisor",
+      "stat2Label": "Get campaign guidance for hooks, timing, and offers while staying aligned to your brand and goals.",
+      "stat3Value": "Pro Campaigns",
+      "stat3Label": "Automate planning from sales data to posting calendar, with transparent logic you can trust."
     },
     "bento": {
       "title": "When you layer Pro AI on your data",
@@ -167,8 +177,8 @@
       "item3Description": "Store post schedules, promotion rationales, and messaging guidance as structured data you can refine across locations and campaign windows."
     },
     "pipeline": {
-      "title": "Pro: compose your agentic AI social pipeline",
-      "subtitle": "Each milestone is an AI step with tools and memory: compose the sequence for your campaign, plug in sales analytics when you have them, and rerun as new reports arrive.",
+      "title": "Pro Campaigns: compose your agentic social pipeline",
+      "subtitle": "Each milestone runs with tools and memory: orchestrate strategy, timing, and copy across your campaign, then rerun as fresh sales data arrives.",
       "nodes": {
         "datesTitle": "Dates node",
         "datesDescription": "Defines campaign start/end windows and public-holiday context to keep posting plans realistic.",
@@ -183,7 +193,7 @@
       }
     },
     "signals": {
-      "title": "Pro: signals grounded in sales reports",
+      "title": "Recommendations grounded in restaurant sales signals",
       "subtitle": "When you run Pro workflows with uploaded sales data, each recommendation stays traceable to what your locations actually sell—so you can justify strategy decisions.",
       "items": {
         "demandTitle": "Demand timing signals",
@@ -195,8 +205,8 @@
       }
     },
     "featureHighlights": {
-      "title": "See the AI stack in action",
-      "subtitle": "Preset AI chains in Studio and workflow assets, strategy runs in the campaign workspace, and Pro analytics—heatmaps and bubble charts—so data-informed agents know when and what to promote.",
+      "title": "See the platform in action",
+      "subtitle": "From creative workflows in Canvas to strategy guidance in Advisor and orchestration in Pro Campaigns, each layer is built for restaurant social media marketing.",
       "cards": {
         "assetsTitle": "Workflow assets and AI image flows",
         "assetsDescription": "Upload raw smartphone photos and chain AI image flows from background removal through preset-based product photography.",
@@ -220,45 +230,45 @@
       "a2": "No. Studio and strategy chat do not require sales uploads. Connecting reports unlocks smarter, evidence-backed Pro automation. The print shop is standalone artwork you can browse anytime as an add-on.",
       "q3": "What is an agentic AI system?",
       "a3": "An agentic AI system goes beyond a single chat reply: it can plan steps, call tools, and run multi-milestone workflows toward a goal—like a teammate following a brief. In Menuyukti, that shows up strongest in Pro campaign pipelines that turn sales signals into schedules, promotion ideas, and copy. You stay in control with inspectable runs and workspace data, while the system handles repetitive orchestration.",
-      "q4": "Who is it for?",
-      "a4": "Restaurant owners, operators, marketers, freelancers, and agencies who want AI-generated creatives and strategy help first—and optional Pro automation or print-shop artwork when those layers matter.",
+      "q4": "Who is Menuyukti built for?",
+      "a4": "Restaurant owners, operators, and solo marketers who run social media for small to mid-sized restaurants and want faster Instagram execution with stronger data-backed decisions.",
       "q5": "Can we collaborate across locations?",
-      "a5": "Yes. Share workflows, milestones, and brand assets as your team grows."
+      "a5": "Yes. You can share workflows, milestones, and brand assets when you bring in collaborators."
     },
     "how": {
       "title": "How it works",
       "steps": {
         "studio": {
-          "title": "1. Studio: preset AI images",
-          "description": "Run guided AI image workflows to generate high-quality product shots and social-ready graphics—fast iteration with prompts and steps tuned for restaurants."
+          "title": "1. Canvas: build your visual content",
+          "description": "Generate social-ready creatives from your existing photos and briefs, then prepare assets for Reels and feed posts."
         },
         "strategyChat": {
-          "title": "2. AI strategy chat in campaigns",
-          "description": "Open a campaign workspace and use dedicated chat to refine angles, timing, and hooks with an AI assistant focused on social strategy alongside your milestones."
+          "title": "2. Advisor: shape your campaign strategy",
+          "description": "Refine themes, hooks, and timing with AI guidance tuned to restaurant marketing and your campaign context."
         },
         "workflowsPro": {
-          "title": "3. Pro: agentic AI pipelines",
-          "description": "Turn on Pro workflows so agents plan, call tools, and run milestone sequences over time—optionally grounded in sales analytics when you connect POS reports."
+          "title": "3. Pro Campaigns: automate the execution plan",
+          "description": "Run milestones that produce promotion candidates, content schedules, and draft captions from your sales signals."
         },
         "printShop": {
-          "title": "4. Print shop (optional add-on)",
-          "description": "Browse ready-made restaurant artwork with many complimentary images for menus, posters, or in-venue visuals—straight from the catalog when you want a finished look in one step."
+          "title": "4. Print shop: add offline brand support",
+          "description": "Grab ready-made visuals for in-store touchpoints whenever you want to extend campaign consistency beyond Instagram."
         }
       }
     },
     "why": {
-      "title": "Why restaurants use Menuyukti",
-      "subtitle": "One roof for AI-generated creatives, strategy-aware chat, and optional agentic automation—with inspectable runs and workspace data instead of a generic chatbot bolted onto unrelated tools.",
+      "title": "Why AI-first restaurant marketers choose Menuyukti",
+      "subtitle": "Unlike generic tools, Menuyukti combines creative generation, strategy guidance, and agentic automation in one platform for restaurant social media marketing.",
       "cards": {
-        "insights": "Preset AI Studio plus data when you scale",
-        "waste": "From AI images to publish-ready campaign artifacts",
-        "ops": "Agentic Pro pipelines wired to your workspace",
-        "margin": "Locations, AI assets, chat, and workflows together"
+        "insights": "Translate sales patterns into campaign decisions",
+        "waste": "Ship more content with less manual back-and-forth",
+        "ops": "Keep strategy and execution aligned in one workflow",
+        "margin": "Prioritize promotions that support revenue goals"
       }
     },
     "cta": {
-      "title": "Explore your workspace",
-      "description": "Sign in for AI Studio, campaign strategy chat, and Pro agentic workflows—then browse the print shop whenever you want ready-made artwork on top.",
+      "title": "Ready to run AI-first restaurant social media campaigns?",
+      "description": "Start with Canvas for creatives, use Advisor for strategy, and launch Pro Campaigns to execute data-backed plans at scale.",
       "secondary": "Sign in"
     },
     "footer": {
@@ -298,19 +308,22 @@
       "tagline": "Print-on-demand with a kitchen-and-bar soul — part of your Menuyukti workspace.",
       "signedInNavAria": "Workspace navigation",
       "backDashboard": "Dashboard",
-      "backWorkflows": "Workflows",
-      "backStudio": "Studio",
+      "backWorkflows": "Campaigns",
+      "backStudio": "Canvas",
       "navigationMenuTriggerAria": "Open navigation menu",
       "shopMenuTitle": "Navigation",
       "shopMenuDescription": "Site areas and workspace shortcuts from the print shop.",
       "workspaceSectionHeading": "Workspace",
-      "workspaceMenuDescription": "Go to your dashboard, workflows, or studio."
+      "workspaceMenuDescription": "Go to your dashboard, campaigns, or canvas."
     },
     "skipToContent": "Skip to products",
     "filterAria": "Filter by collection",
     "noImagesAvailable": "No images are currently available.",
     "footer": {
-      "privacy": "Privacy"
+      "about": "About",
+      "contact": "Contact",
+      "privacy": "Privacy Policy",
+      "copyright": "© 2025 Menuyukti Print"
     },
     "collections": {
       "all": "All Collections",
@@ -423,12 +436,6 @@
       "description": "No minimum orders. Restaurant-grade print quality. Delivered fast.",
       "primary": "Get Started"
     },
-    "footer": {
-      "about": "About",
-      "contact": "Contact",
-      "privacy": "Privacy Policy",
-      "copyright": "© 2025 Menuyukti Print"
-    },
     "mobileCta": {
       "primary": "Browse Products",
       "secondary": "Learn More"
@@ -508,12 +515,12 @@
     "analysis": "Analysis",
     "branches": "Locations",
     "reports": "Reports",
-    "workflows": "Workflows",
+    "workflows": "Campaigns",
     "skills": "Skills & tools",
     "customTools": "API Proxies",
-    "studio": "Studio",
+    "studio": "Canvas",
     "printShop": "Print shop",
-    "agents": "Agents",
+    "agents": "Advisor",
     "cogs": "COGS",
     "fixedCosts": "Fixed Costs",
     "docs": "Docs",
@@ -575,14 +582,14 @@
     "dashboard": {
       "title": "Dashboard",
       "description": "Workflows, brand assets, and quick links across your workspace.",
-      "campaignsHeading": "Workflows",
-      "campaignsViewAll": "View all workflows",
-      "viewCampaign": "Open workflow",
-      "noCampaigns": "No workflows yet",
-      "createCampaign": "Create workflow",
-      "assetsHeading": "Studio",
+      "campaignsHeading": "Campaigns",
+      "campaignsViewAll": "View all campaigns",
+      "viewCampaign": "Open campaign",
+      "noCampaigns": "No campaigns yet",
+      "createCampaign": "Create campaign",
+      "assetsHeading": "Canvas",
       "assetsDescription": "Recent images from your brand library.",
-      "assetsOpenStudio": "Open Studio",
+      "assetsOpenStudio": "Open Canvas",
       "assetsEmpty": "No images in your library yet.",
       "printHeading": "Fulfillment",
       "printDescription": "Admin queue for print-on-demand status—not the public print shop catalog.",
@@ -1137,6 +1144,17 @@
             "criterionCategoriesOrFlat": "When grouped, **categories** keys match POS `menu_category` strings; each block lists `starHighlights` and `puzzleHighlights` from the tool. When flat, **flatSummary** explains the candidate set and **categories** stays empty.",
             "criterionPromotionIdeas": "**Promotion ideas** include 3–8 unique non-empty items, each referencing a real menu from `topStars` or `topPuzzles` in the tool output."
           },
+          "post_scheduler": {
+            "label": "Post scheduler",
+            "title": "Post scheduler",
+            "inputLabel": "Scheduler notes",
+            "inputDescription": "Optional guidance for cadence, Reels vs feed posts, dayparts, or weekend/holiday preferences. The run still uses prior Dates, Brand Brief, and Promotion Candidates from this workflow.",
+            "inputPlaceholder": "e.g. 3 posts per week; avoid weekends; prefer Reels for hero dishes…",
+            "goal": "Generate a list of Instagram posts for the campaign window: each entry has weekday, date, time, post type (Reel or Post), content type (Carousel or Single), promoted menu items from prior promotion data, and a caption idea aligned with the brand brief.",
+            "criterionPostsGenerated": "**Posts** in the data is a non-empty array when the campaign dates and promotion context support a schedule; otherwise document why the list is empty.",
+            "criterionPostFields": "Each post includes **dayOfWeek**, **date** (YYYY-MM-DD), **time**, **postType** (`Reel` or `Post`), **contentType** (`Carousel` or `Single`), **promotedMenuItems**, and **captionIdea**. For multi-post schedules, include a format mix: at least one `Reel` and one `Post`, plus at least one `Carousel` and one `Single`.",
+            "criterionMenuItems": "**Promoted menu items** only name dishes that appear in the prior Promotion Candidates milestone (ideas or highlights), not invented items."
+          },
           "restaurant_brand_brief": {
             "label": "Brand brief",
             "title": "Brand brief",
@@ -1223,6 +1241,9 @@
         "milestoneHelpPromotionCandidatesOptionalInputTitle": "Optional input (Promotion notes)",
         "milestoneHelpPromotionCandidatesOptionalInputHowUsed": "If you fill the optional Input field, it is sent with promotion-engineering analytics when generating candidates and ideas. The model uses it for emphasis and tone; it must still only reference real menu names from the analytics output.",
         "milestoneHelpPromotionCandidatesOptionalInputWhenToUse": "Use it when you want a seasonal theme, channel focus, or categories to highlight. Leave it empty when the default menu-engineering picks are enough.",
+        "milestoneHelpPostSchedulerOptionalInputTitle": "Optional input (Scheduler notes)",
+        "milestoneHelpPostSchedulerOptionalInputHowUsed": "If you fill the optional Input field, it guides posting cadence, format mix (Reels vs feed), timing, and whether to skip weekends or holidays via the available-dates tool. Prior workflow milestones still supply dates, holidays, brand tone, and promotion items.",
+        "milestoneHelpPostSchedulerOptionalInputWhenToUse": "Use it when you have scheduling constraints (e.g. weekdays only, more Reels, lunch-focused times). Leave it empty when the default spread across the campaign window is fine.",
         "milestoneHelpOptionalInputTitle": "Optional input",
         "milestoneHelpOptionalInputSummary": "Notes from the Input tab are free-form guidance for the run; they are not verified as analytics facts.",
         "milestoneSettingsTitle": "Milestone run skills",
@@ -1268,6 +1289,13 @@
         "milestonePromotionCandidatesPreviewStarHighlights": "Star highlights",
         "milestonePromotionCandidatesPreviewPuzzleHighlights": "Puzzle highlights",
         "milestonePromotionCandidatesPreviewNotes": "Notes",
+        "milestonePostSchedulerPreviewPostsHeading": "Scheduled posts",
+        "milestonePostSchedulerPreviewEmptyPosts": "No posts scheduled yet.",
+        "milestonePostSchedulerPreviewDayDateTime": "When",
+        "milestonePostSchedulerPreviewPostType": "Post type",
+        "milestonePostSchedulerPreviewContentType": "Content type",
+        "milestonePostSchedulerPreviewPromotedItems": "Promoted items",
+        "milestonePostSchedulerPreviewCaptionIdea": "Caption idea",
         "milestonePreviewUnsupported": "This milestone data format is not supported in the preview yet.",
         "milestonePreviewToggle": "Data preview",
         "milestonePreviewDataEmpty": "No data has been added for this milestone yet.",

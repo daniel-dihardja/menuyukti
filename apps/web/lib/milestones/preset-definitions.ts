@@ -8,6 +8,7 @@ export const MILESTONE_PRESET_IDS = [
   'dates',
   'restaurant_brand_brief',
   'promotion_candidates',
+  'post_scheduler',
 ] as const
 
 export type MilestonePresetId = (typeof MILESTONE_PRESET_IDS)[number]
@@ -148,6 +149,35 @@ export function getMilestonePresetCreateFields(
           },
           {
             requirement: t('milestonePreset.promotion_candidates.criterionPromotionIdeas'),
+            status: 'open',
+          },
+        ],
+      }
+    case 'post_scheduler':
+      return {
+        presetId: 'post_scheduler',
+        name: t('milestonePreset.post_scheduler.title'),
+        milestoneInput: {
+          type: 'post_scheduler',
+          value: { notes: '' },
+        },
+        milestoneData: {
+          posts: [],
+        },
+        goal: t('milestonePreset.post_scheduler.goal'),
+        milestoneRunSkillMode: 'fixed',
+        milestoneRunSkillIds: ['post_scheduler'],
+        passCriteria: [
+          {
+            requirement: t('milestonePreset.post_scheduler.criterionPostsGenerated'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.post_scheduler.criterionPostFields'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.post_scheduler.criterionMenuItems'),
             status: 'open',
           },
         ],

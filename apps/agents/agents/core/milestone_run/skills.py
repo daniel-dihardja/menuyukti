@@ -42,6 +42,7 @@ def _build_registry() -> dict[str, SkillDef]:
         "public_holidays": _load_disk_skill("public_holidays"),
         "brand_brief": _load_disk_skill("brand_brief"),
         "promotion_candidates": _load_disk_skill("promotion_candidates"),
+        "post_scheduler": _load_disk_skill("post_scheduler"),
         "generic": _load_disk_skill("generic"),
     }
 

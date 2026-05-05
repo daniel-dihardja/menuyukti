@@ -49,7 +49,7 @@ import { parseAsString, useQueryState } from 'nuqs'
 import type { TimelineMilestone } from './timeline-workspace'
 import { TimelineWorkspace } from './timeline-workspace'
 import { CampaignChatLayout } from './campaign-chat-layout'
-import { ChatMessageParts } from './chat-message-parts'
+import { ChatMessageParts } from '@/components/chat-message-parts'
 
 import {
   campaignMilestoneReducer,

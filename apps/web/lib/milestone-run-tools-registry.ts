@@ -43,6 +43,12 @@ export const MILESTONE_RUN_TOOLS_REGISTRY: readonly MilestoneRunToolMeta[] = [
       "Optional extra tool (listed in a skill's SKILL.md `extra_tools` when needed): fetch public holidays for this location's country (YYYY-MM-DD range). Returns a Markdown bullet list (date, name, local name) or a short message if none apply, the country is unknown, or the range is invalid. Use with write_result_data when holidays must be filled in milestone data.",
   },
   {
+    id: 'get_available_dates',
+    name: 'Get available dates',
+    description:
+      'Optional extra tool for the post scheduler skill: list each calendar day from start_date through end_date (YYYY-MM-DD). Set exclude_weekends and/or exclude_holidays to omit weekend days or dates in public_holiday_dates (from the Dates milestone). Returns a markdown table or a message if the range is invalid or no dates remain after filters.',
+  },
+  {
     id: 'write_result_data',
     name: 'Write result data',
     description:

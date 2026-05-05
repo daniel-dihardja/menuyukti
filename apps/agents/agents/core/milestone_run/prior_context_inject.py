@@ -76,8 +76,9 @@ def build_injected_prior_context_markdown(
 
     md = (
         "## Prior milestone context (injected)\n\n"
-        "Use together with **`get_promotion_candidates`**: align tone and ideas to this prior "
-        "data; **only name dishes** that appear in `topStars` or `topPuzzles` from that tool.\n\n"
+        "Use this prior milestone data to inform your work. Ground facts (dates, holidays, "
+        "menu names, promotion ideas) in these objects; do not contradict them without noting "
+        "assumptions.\n\n"
         f"```json\n{body}\n```"
     )
     return md, matched_ids

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ValidationError, field_validator, model_validator
 
@@ -113,10 +113,33 @@ class BrandBriefMilestoneOutput(BaseModel):
         return values
 
 
+class PostSchedulerPostItem(BaseModel):
+    dayOfWeek: str
+    date: str
+    time: str
+    postType: Literal["Reel", "Post"]
+    contentType: Literal["Carousel", "Single"]
+    promotedMenuItems: list[str]
+    captionIdea: str
+
+    @field_validator("promotedMenuItems")
+    @classmethod
+    def _non_empty_menu_items(cls, values: list[str]) -> list[str]:
+        cleaned = [str(x).strip() for x in values if str(x).strip()]
+        if not cleaned:
+            raise ValueError("must contain at least one promoted menu item")
+        return cleaned
+
+
+class PostSchedulerMilestoneOutput(BaseModel):
+    posts: list[PostSchedulerPostItem]
+
+
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
     "brand_brief": BrandBriefMilestoneOutput,
+    "post_scheduler": PostSchedulerMilestoneOutput,
 }
 
 
