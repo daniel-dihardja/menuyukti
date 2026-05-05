@@ -3,7 +3,7 @@ import { ListObjectsV2Command } from '@aws-sdk/client-s3'
 import { getPresignedGetUrl, getS3Bucket, getS3Client } from '@/lib/assets/storage'
 
 /** S3 key prefix for built-in canvas backgrounds (bucket from `AWS_S3_BUCKET`, default `menuyukti`). */
-export const BACKGROUND_PREFIX = 'menuyukti/backgrounds/'
+export const BACKGROUND_PREFIX = 'backgrounds/'
 
 const IMAGE_EXT = /\.(jpe?g|png|webp|avif)$/i
 
@@ -19,7 +19,7 @@ export type BackgroundItem = {
 }
 
 /**
- * Validates a flat filename under `menuyukti/backgrounds/` (no traversal, allowed image extensions).
+ * Validates a flat filename under `backgrounds/` (no traversal, allowed image extensions).
  */
 export function isSafeBackgroundFilename(name: string): boolean {
   if (!name || name.length > BACKGROUND_FILENAME_MAX_LENGTH) return false
@@ -40,7 +40,7 @@ export function backgroundObjectKey(filename: string): string {
 }
 
 /**
- * Lists image objects directly under `menuyukti/backgrounds/`, presigns GET URLs.
+ * Lists image objects directly under `backgrounds/`, presigns GET URLs.
  * Returns [] if AWS is unconfigured or S3 errors.
  */
 export async function listBuiltinBackgrounds(): Promise<BackgroundItem[]> {
