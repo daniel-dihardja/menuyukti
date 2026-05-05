@@ -48,14 +48,13 @@ export default async function Page({ params }: PageProps) {
   return (
     <AnalyticsPageShell
       title={tMenuItems('reportTitle')}
-      contentWidth="full"
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: analyticsName },
         { label: tMenuItems('breadcrumb') },
       ]}
     >
-      <section className="border rounded-md p-6 space-y-4">
+      <section className="border rounded-md p-3 sm:p-6 space-y-4">
         <PageHeading title={tMenuItems('heading')} description={tMenuItems('description')} />
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
