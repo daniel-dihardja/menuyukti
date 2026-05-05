@@ -16,6 +16,16 @@
     "accountSettings": "Account settings",
     "signOut": "Sign out"
   },
+  "agentChat": {
+    "metaTitle": "Agent",
+    "metaDescription": "Chat with the Menuyukti assistant.",
+    "emptyTitle": "Ask anything",
+    "emptyDescription": "Get ideas for campaigns, workflows, and restaurant marketing—same assistant as in workflows, without picking a campaign.",
+    "placeholder": "What would you like help with?",
+    "thinking": "Thinking…",
+    "errorTitle": "Something went wrong",
+    "retry": "Retry"
+  },
   "metadata": {
     "title": "Menuyukti — AI-first restaurant marketing platform",
     "description": "AI-first restaurant marketing: Studio for preset AI image generation, in-campaign strategy chat, Pro agentic workflows with sales-grounded analytics—plus an optional print shop with ready-made artwork.",
