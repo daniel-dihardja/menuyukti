@@ -615,6 +615,17 @@
   "assets": {
     "title": "Brand assets",
     "description": "Upload and organize images for workflows and creative. Files are normalized to 1024px on the shortest side and saved as WebP.",
+    "tabs": {
+      "products": "Products",
+      "backgrounds": "Backgrounds"
+    },
+    "backgrounds": {
+      "empty": {
+        "title": "No backgrounds available",
+        "description": "Built-in backgrounds will appear here."
+      },
+      "loadError": "Couldn’t load backgrounds. Try again."
+    },
     "upload": {
       "title": "Upload images",
       "hint": "Drag and drop or browse — PNG, JPEG, WebP, GIF, AVIF",

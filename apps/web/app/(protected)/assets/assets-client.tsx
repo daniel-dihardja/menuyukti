@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { Download, Loader2 } from 'lucide-react'
+import { parseAsStringLiteral, useQueryState } from 'nuqs'
 
 import {
   AlertDialog,
@@ -16,19 +17,36 @@ import {
 } from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
 import { Dialog, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { cn } from '@workspace/ui/lib/utils'
 
-import { assetDownloadHref, formatBytes, type AssetItem } from './_components/asset-item-types'
+import type { BackgroundItem } from '@/lib/assets/backgrounds'
+
+import {
+  assetBackgroundDownloadHref,
+  assetDownloadHref,
+  formatBytes,
+  type AssetItem,
+  type AssetPreviewItem,
+} from './_components/asset-item-types'
 import { AssetsImageGrid } from './_components/assets-image-grid'
 import { AssetsUploadZone } from './_components/assets-upload-zone'
+import { BackgroundsImageGrid } from './_components/backgrounds-image-grid'
 
 type ToastState = { kind: 'success' | 'error'; message: string } | null
+
+type PreviewState = { item: AssetPreviewItem; kind: 'product' | 'background' } | null
+
+const canvasTabParser = parseAsStringLiteral(['products', 'backgrounds'] as const).withDefault(
+  'products',
+)
 
 export function AssetsClient() {
   const t = useTranslations('assets')
   const tImageFlows = useTranslations('imageFlows')
   const format = useFormatter()
   const inputRef = useRef<HTMLInputElement>(null)
+  const [canvasTab, setCanvasTab] = useQueryState('tab', canvasTabParser)
   const [items, setItems] = useState<AssetItem[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
@@ -45,8 +63,13 @@ export function AssetsClient() {
   >({})
   const [aiFlows, setAiFlows] = useState<Array<{ slug: string; displayName: string }>>([])
   const [flowsLoading, setFlowsLoading] = useState(true)
-  const [previewItem, setPreviewItem] = useState<AssetItem | null>(null)
+  const [preview, setPreview] = useState<PreviewState>(null)
   const [previewImgLoaded, setPreviewImgLoaded] = useState(false)
+  const [backgroundItems, setBackgroundItems] = useState<BackgroundItem[]>([])
+  const [backgroundsLoading, setBackgroundsLoading] = useState(false)
+  const backgroundsLoadedRef = useRef(false)
+
+  const activeTab = canvasTab ?? 'products'
 
   const showToast = useCallback((kind: 'success' | 'error', message: string) => {
     setToast({ kind, message })
@@ -86,6 +109,41 @@ export function AssetsClient() {
   }, [load])
 
   useEffect(() => {
+    if (activeTab !== 'backgrounds') return
+    if (backgroundsLoadedRef.current) return
+
+    let cancelled = false
+    void (async () => {
+      setBackgroundsLoading(true)
+      try {
+        const res = await fetch('/api/assets/backgrounds/list', {
+          cache: 'no-store',
+        })
+        if (!res.ok) throw new Error('list failed')
+        const data = (await res.json()) as { items: BackgroundItem[] }
+        if (!cancelled) {
+          setBackgroundItems(data.items ?? [])
+          backgroundsLoadedRef.current = true
+        }
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AbortError') {
+          return
+        }
+        if (!cancelled) {
+          setBackgroundItems([])
+          showToast('error', t('backgrounds.loadError'))
+        }
+      } finally {
+        setBackgroundsLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeTab, showToast, t])
+
+  useEffect(() => {
     const controller = new AbortController()
     void (async () => {
       setFlowsLoading(true)
@@ -118,7 +176,7 @@ export function AssetsClient() {
 
   useEffect(() => {
     setPreviewImgLoaded(false)
-  }, [previewItem?.name])
+  }, [preview?.item.name])
 
   const handleImageNaturalSize = useCallback((name: string, width: number, height: number) => {
     setImageDimensionsByName((prev) => {
@@ -216,7 +274,7 @@ export function AssetsClient() {
       if (!res.ok) throw new Error('delete')
       showToast('success', t('toast.deleted'))
       setItems((prev) => prev.filter((i) => i.name !== name))
-      setPreviewItem((p) => (p?.name === name ? null : p))
+      setPreview((p) => (p?.item.name === name ? null : p))
     } catch {
       showToast('error', t('toast.deleteError'))
     } finally {
@@ -267,6 +325,13 @@ export function AssetsClient() {
     }
   }
 
+  const previewDownloadHref =
+    preview?.kind === 'background'
+      ? assetBackgroundDownloadHref(preview.item.name)
+      : preview
+        ? assetDownloadHref(preview.item.name)
+        : '#'
+
   return (
     <div className="flex w-full flex-col gap-6">
       {toast ? (
@@ -308,10 +373,10 @@ export function AssetsClient() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={previewItem !== null} onOpenChange={(open) => !open && setPreviewItem(null)}>
-        {previewItem ? (
+      <Dialog open={preview !== null} onOpenChange={(open) => !open && setPreview(null)}>
+        {preview ? (
           <DialogContent
-            key={previewItem.name}
+            key={preview.item.name}
             overlayClassName="bg-black/80 backdrop-blur-sm"
             showCloseButton
             className={cn(
@@ -319,15 +384,15 @@ export function AssetsClient() {
               'sm:max-w-[min(96vw,1400px)]',
             )}
           >
-            <DialogTitle className="sr-only">{previewItem.name}</DialogTitle>
+            <DialogTitle className="sr-only">{preview.item.name}</DialogTitle>
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border/60 bg-background/90 px-4 py-3 pr-14 backdrop-blur-md">
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium tracking-tight">{previewItem.name}</p>
+                <p className="truncate font-medium tracking-tight">{preview.item.name}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {formatBytes(previewItem.size)}
+                  {formatBytes(preview.item.size)}
                   <span className="mx-1.5 text-border">·</span>
-                  <time dateTime={previewItem.createdAt}>
-                    {format.dateTime(new Date(previewItem.createdAt), {
+                  <time dateTime={preview.item.createdAt}>
+                    {format.dateTime(new Date(preview.item.createdAt), {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric',
@@ -343,7 +408,7 @@ export function AssetsClient() {
                   className="rounded-full shadow-sm"
                   asChild
                 >
-                  <a href={assetDownloadHref(previewItem.name)} download={previewItem.name}>
+                  <a href={previewDownloadHref} download={preview.item.name}>
                     <Download className="mr-1.5 h-4 w-4" aria-hidden />
                     {t('grid.download')}
                   </a>
@@ -358,7 +423,7 @@ export function AssetsClient() {
               ) : null}
               {/* eslint-disable-next-line @next/next/no-img-element -- dynamic user uploads; dimensions vary */}
               <img
-                src={previewItem.url}
+                src={preview.item.url}
                 alt=""
                 width={1200}
                 height={900}
@@ -373,41 +438,83 @@ export function AssetsClient() {
         ) : null}
       </Dialog>
 
-      <AssetsUploadZone
-        inputRef={inputRef}
-        selectedFlow={selectedFlow}
-        onSelectedFlowChange={setSelectedFlow}
-        aiFlows={aiFlows}
-        uploading={uploading}
-        flowsLoading={flowsLoading}
-        dragActive={dragActive}
-        onSetDragActive={setDragActive}
-        onInputChange={onInputChange}
-        onDrop={onDrop}
-        onBrowse={() => inputRef.current?.click()}
-      />
+      <Tabs
+        className="flex w-full flex-col gap-6"
+        value={activeTab}
+        onValueChange={(v) => {
+          void setCanvasTab(v as 'products' | 'backgrounds')
+        }}
+      >
+        <TabsList
+          className="w-full min-w-0 max-w-full justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
+          variant="line"
+        >
+          <TabsTrigger className="shrink-0" value="products">
+            {t('tabs.products')}
+          </TabsTrigger>
+          <TabsTrigger className="shrink-0" value="backgrounds">
+            {t('tabs.backgrounds')}
+          </TabsTrigger>
+        </TabsList>
 
-      <AssetsImageGrid
-        loading={loading}
-        items={items}
-        imageDimensionsByName={imageDimensionsByName}
-        onImageNaturalSize={handleImageNaturalSize}
-        cardFlows={cardFlows}
-        onCardFlowChange={(name, value) => {
-          setCardFlows((prev) => ({ ...prev, [name]: value }))
-        }}
-        cardCustomPrompts={cardCustomPrompts}
-        onCardCustomPromptChange={(name, value) => {
-          setCardCustomPrompts((prev) => ({ ...prev, [name]: value }))
-        }}
-        aiFlows={aiFlows}
-        flowsLoading={flowsLoading}
-        generatingByName={generatingByName}
-        deleting={deleting}
-        onPreview={setPreviewItem}
-        onDeleteRequest={setPendingDeleteName}
-        onGenerate={onGenerate}
-      />
+        <TabsContent value="products" className="mt-0 flex flex-col gap-6 outline-none">
+          <AssetsUploadZone
+            inputRef={inputRef}
+            selectedFlow={selectedFlow}
+            onSelectedFlowChange={setSelectedFlow}
+            aiFlows={aiFlows}
+            uploading={uploading}
+            flowsLoading={flowsLoading}
+            dragActive={dragActive}
+            onSetDragActive={setDragActive}
+            onInputChange={onInputChange}
+            onDrop={onDrop}
+            onBrowse={() => inputRef.current?.click()}
+          />
+
+          <AssetsImageGrid
+            loading={loading}
+            items={items}
+            imageDimensionsByName={imageDimensionsByName}
+            onImageNaturalSize={handleImageNaturalSize}
+            cardFlows={cardFlows}
+            onCardFlowChange={(name, value) => {
+              setCardFlows((prev) => ({ ...prev, [name]: value }))
+            }}
+            cardCustomPrompts={cardCustomPrompts}
+            onCardCustomPromptChange={(name, value) => {
+              setCardCustomPrompts((prev) => ({ ...prev, [name]: value }))
+            }}
+            aiFlows={aiFlows}
+            flowsLoading={flowsLoading}
+            generatingByName={generatingByName}
+            deleting={deleting}
+            onPreview={(item) => setPreview({ item, kind: 'product' })}
+            onDeleteRequest={setPendingDeleteName}
+            onGenerate={onGenerate}
+          />
+        </TabsContent>
+
+        <TabsContent value="backgrounds" className="mt-0 outline-none">
+          <BackgroundsImageGrid
+            loading={backgroundsLoading}
+            items={backgroundItems}
+            imageDimensionsByName={imageDimensionsByName}
+            onImageNaturalSize={handleImageNaturalSize}
+            onPreview={(item) =>
+              setPreview({
+                item: {
+                  name: item.name,
+                  url: item.url,
+                  size: item.size,
+                  createdAt: item.createdAt,
+                },
+                kind: 'background',
+              })
+            }
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
