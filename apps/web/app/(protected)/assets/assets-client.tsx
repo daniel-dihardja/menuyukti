@@ -447,8 +447,12 @@ export function AssetsClient() {
         onOpenChange={setContentImageDialogOpen}
       />
 
-      <div className="flex items-center justify-end">
-        <Button type="button" onClick={() => setContentImageDialogOpen(true)}>
+      <div className="flex w-full items-center justify-end">
+        <Button
+          type="button"
+          className="w-full sm:w-auto"
+          onClick={() => setContentImageDialogOpen(true)}
+        >
           {t('contentImage.newButton')}
         </Button>
       </div>
