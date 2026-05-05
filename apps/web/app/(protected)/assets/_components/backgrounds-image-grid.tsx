@@ -1,11 +1,20 @@
 'use client'
 
 import { useFormatter, useTranslations } from 'next-intl'
-import { Download, ImageIcon, Maximize2 } from 'lucide-react'
+import { Download, ImageIcon, Maximize2, Sparkles } from 'lucide-react'
 
 import { Button } from '@workspace/ui/components/button'
 import { Card } from '@workspace/ui/components/card'
+import { Field, FieldLabel } from '@workspace/ui/components/field'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import { Textarea } from '@workspace/ui/components/textarea'
 
 import type { BackgroundItem } from '@/lib/assets/backgrounds'
 import {
@@ -27,6 +36,11 @@ export type BackgroundsImageGridProps = {
   imageDimensionsByName: Record<string, { width: number; height: number }>
   onImageNaturalSize: (name: string, width: number, height: number) => void
   onPreview: (item: BackgroundItem) => void
+  bgCardFlows: Record<string, string>
+  onBgCardFlowChange: (name: string, value: string) => void
+  bgCardCustomPrompts: Record<string, string>
+  onBgCardCustomPromptChange: (name: string, value: string) => void
+  onGenerate: (item: BackgroundItem) => void
   skeletonCount?: number
 }
 
@@ -36,6 +50,11 @@ export function BackgroundsImageGrid({
   imageDimensionsByName,
   onImageNaturalSize,
   onPreview,
+  bgCardFlows,
+  onBgCardFlowChange,
+  bgCardCustomPrompts,
+  onBgCardCustomPromptChange,
+  onGenerate,
   skeletonCount = ASSETS_GRID_SKELETON_COUNT,
 }: BackgroundsImageGridProps) {
   const t = useTranslations('assets')
@@ -144,6 +163,71 @@ export function BackgroundsImageGrid({
                       year: 'numeric',
                     })}
                   </time>
+                </div>
+                <div className="flex flex-col gap-2 border-t border-border/50 px-3 py-3">
+                  <Field className="gap-1.5">
+                    <FieldLabel
+                      htmlFor={`background-flow-${item.name}`}
+                      className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
+                    >
+                      {t('grid.generate.flowLabel')}
+                    </FieldLabel>
+                    <Select
+                      value={bgCardFlows[item.name] ?? 'none'}
+                      onValueChange={(value) => {
+                        onBgCardFlowChange(item.name, value)
+                      }}
+                    >
+                      <SelectTrigger
+                        id={`background-flow-${item.name}`}
+                        size="sm"
+                        className="w-full"
+                      >
+                        <SelectValue placeholder={t('grid.generate.flowPlaceholder')} />
+                      </SelectTrigger>
+                      <SelectContent
+                        align="start"
+                        position="popper"
+                        className="min-w-[var(--radix-select-trigger-width)]"
+                      >
+                        <SelectItem value="none">{t('upload.flow.none')}</SelectItem>
+                        <SelectItem value="custom">{t('grid.generate.customOption')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  {(bgCardFlows[item.name] ?? 'none') === 'custom' ? (
+                    <Field className="gap-1.5">
+                      <FieldLabel
+                        htmlFor={`background-custom-prompt-${item.name}`}
+                        className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
+                      >
+                        {t('grid.generate.customPromptLabel')}
+                      </FieldLabel>
+                      <Textarea
+                        id={`background-custom-prompt-${item.name}`}
+                        value={bgCardCustomPrompts[item.name] ?? ''}
+                        onChange={(e) => {
+                          onBgCardCustomPromptChange(item.name, e.target.value)
+                        }}
+                        placeholder={t('grid.generate.customPromptPlaceholder')}
+                        rows={3}
+                      />
+                    </Field>
+                  ) : null}
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="w-full"
+                    disabled={
+                      (bgCardFlows[item.name] ?? 'none') === 'none' ||
+                      ((bgCardFlows[item.name] ?? 'none') === 'custom' &&
+                        (bgCardCustomPrompts[item.name]?.trim() ?? '').length === 0)
+                    }
+                    onClick={() => void onGenerate(item)}
+                  >
+                    <Sparkles data-icon="inline-start" />
+                    {t('grid.generate.button')}
+                  </Button>
                 </div>
               </figure>
             )

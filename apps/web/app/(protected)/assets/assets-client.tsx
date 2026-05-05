@@ -58,6 +58,8 @@ export function AssetsClient() {
   const [selectedFlow, setSelectedFlow] = useState<string>('none')
   const [cardFlows, setCardFlows] = useState<Record<string, string>>({})
   const [cardCustomPrompts, setCardCustomPrompts] = useState<Record<string, string>>({})
+  const [bgCardFlows, setBgCardFlows] = useState<Record<string, string>>({})
+  const [bgCardCustomPrompts, setBgCardCustomPrompts] = useState<Record<string, string>>({})
   const [generatingByName, setGeneratingByName] = useState<Record<string, boolean>>({})
   const [imageDimensionsByName, setImageDimensionsByName] = useState<
     Record<string, { width: number; height: number }>
@@ -514,6 +516,15 @@ export function AssetsClient() {
             items={backgroundItems}
             imageDimensionsByName={imageDimensionsByName}
             onImageNaturalSize={handleImageNaturalSize}
+            bgCardFlows={bgCardFlows}
+            onBgCardFlowChange={(name, value) => {
+              setBgCardFlows((prev) => ({ ...prev, [name]: value }))
+            }}
+            bgCardCustomPrompts={bgCardCustomPrompts}
+            onBgCardCustomPromptChange={(name, value) => {
+              setBgCardCustomPrompts((prev) => ({ ...prev, [name]: value }))
+            }}
+            onGenerate={() => undefined}
             onPreview={(item) =>
               setPreview({
                 item: {
