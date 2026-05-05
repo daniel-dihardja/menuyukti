@@ -1,6 +1,6 @@
 'use client'
 
-import { Show, useAuth } from '@clerk/nextjs'
+import { Show } from '@clerk/nextjs'
 import { Leaf, MenuIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -23,17 +23,12 @@ import { cn } from '@workspace/ui/lib/utils'
 
 export function MainHeader() {
   const pathname = usePathname()
-  const { isSignedIn, isLoaded } = useAuth()
   const t = useTranslations('mainHeader')
 
-  const workflowsActive =
-    pathname === routes.workflows.list || pathname?.startsWith(`${routes.workflows.list}/`)
   const shopActive = pathname === routes.shop || pathname?.startsWith(`${routes.shop}/`)
-  const hideProductNavOnMobileShop = Boolean(isSignedIn && shopActive)
-  /** Print shop uses `ShopPortalHeader` when signed in; guests should not see app workspace links here. */
-  const hideGuestShopProductNav = Boolean(isLoaded && !isSignedIn && shopActive)
-  /** Signed-in print shop uses `ShopPortalHeader` drawer; avoid duplicate mobile menus. */
-  const showMobileMainMenu = !hideGuestShopProductNav && !hideProductNavOnMobileShop
+  /** Keep product nav visible for guests on shop pages. */
+  const hideGuestShopProductNav = false
+  const showMobileMainMenu = !hideGuestShopProductNav
 
   const navLinkClass = (active: boolean) =>
     cn(
@@ -68,7 +63,7 @@ export function MainHeader() {
               className="hidden min-w-0 flex-1 items-center justify-start gap-1 sm:flex sm:gap-2"
               aria-label={t('navAria')}
             >
-              <Link href={routes.workflows.list} className={navLinkClass(!!workflowsActive)}>
+              <Link href={routes.studio} className={navLinkClass(false)}>
                 {t('navWorkflows')}
               </Link>
               <Link href={routes.shop} className={navLinkClass(!!shopActive)}>
@@ -108,17 +103,10 @@ export function MainHeader() {
                         variant="ghost"
                         className={cn(
                           'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
-                          workflowsActive
-                            ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
-                            : 'text-muted-foreground hover:text-foreground',
+                          'text-muted-foreground hover:text-foreground',
                         )}
                       >
-                        <Link
-                          href={routes.workflows.list}
-                          aria-current={workflowsActive ? 'page' : undefined}
-                        >
-                          {t('navWorkflows')}
-                        </Link>
+                        <Link href={routes.studio}>{t('navWorkflows')}</Link>
                       </Button>
                     </SheetClose>
                     <SheetClose asChild>

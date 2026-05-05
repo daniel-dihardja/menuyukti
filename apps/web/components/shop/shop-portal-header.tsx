@@ -26,8 +26,6 @@ export function ShopPortalHeader() {
   const t = useTranslations('shop.nav')
   const tMain = useTranslations('mainHeader')
 
-  const workflowsActive =
-    pathname === routes.workflows.list || pathname?.startsWith(`${routes.workflows.list}/`)
   const shopActive = pathname === routes.shop || pathname?.startsWith(`${routes.shop}/`)
 
   const workspaceLinks = [
@@ -37,7 +35,7 @@ export function ShopPortalHeader() {
   ] as const
 
   const productLinks = [
-    { href: routes.workflows.list, label: tMain('navWorkflows'), active: workflowsActive },
+    { href: routes.studio, label: tMain('navWorkflows'), active: false },
     { href: routes.shop, label: tMain('navShop'), active: shopActive },
   ] as const
 
