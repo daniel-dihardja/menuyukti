@@ -1145,7 +1145,7 @@
             "inputPlaceholder": "e.g. 3 posts per week; avoid weekends; prefer Reels for hero dishes…",
             "goal": "Generate a list of Instagram posts for the campaign window: each entry has weekday, date, time, post type (Reel or Post), content type (Carousel or Single), promoted menu items from prior promotion data, and a caption idea aligned with the brand brief.",
             "criterionPostsGenerated": "**Posts** in the data is a non-empty array when the campaign dates and promotion context support a schedule; otherwise document why the list is empty.",
-            "criterionPostFields": "Each post includes **dayOfWeek**, **date** (YYYY-MM-DD), **time**, **postType** (`Reel` or `Post`), **contentType** (`Carousel` or `Single`), **promotedMenuItems**, and **captionIdea**.",
+            "criterionPostFields": "Each post includes **dayOfWeek**, **date** (YYYY-MM-DD), **time**, **postType** (`Reel` or `Post`), **contentType** (`Carousel` or `Single`), **promotedMenuItems**, and **captionIdea**. For multi-post schedules, include a format mix: at least one `Reel` and one `Post`, plus at least one `Carousel` and one `Single`.",
             "criterionMenuItems": "**Promoted menu items** only name dishes that appear in the prior Promotion Candidates milestone (ideas or highlights), not invented items."
           },
           "restaurant_brand_brief": {

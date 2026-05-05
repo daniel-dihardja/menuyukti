@@ -38,6 +38,12 @@ Workflow:
    - **`promotedMenuItems`** — non-empty array of strings; each name must appear in prior promotion-candidates data (ideas or highlights), not invented dishes.
    - **`captionIdea`** — short angle/hook aligned with brand brief tone and the promoted items.
 
+Diversity requirement (for pass criteria):
+
+- When `posts.length >= 2`, include both `Reel` and `Post` at least once.
+- When `posts.length >= 2`, include both `Carousel` and `Single` at least once.
+- Do not emit all rows with the same `postType` and `contentType` unless only one post is possible.
+
 6. Call **`write_result_data`** with JSON (not markdown) of this shape:
 
 ```json
