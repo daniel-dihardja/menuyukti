@@ -4,7 +4,6 @@ import { connection } from 'next/server'
 
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { CopyrightFooter } from '@/components/copyright-footer'
-import { ShopPortalHeader } from '@/components/shop/shop-portal-header'
 
 import '@/components/shop/shop.css'
 
@@ -39,10 +38,7 @@ export default async function ShopLayout({
       >
         {t('skipToContent')}
       </a>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <ShopPortalHeader />
-        {children}
-      </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">{children}</div>
       <CopyrightFooter />
       {gaMeasurementId ? <GoogleAnalytics gaId={gaMeasurementId} /> : null}
     </div>
