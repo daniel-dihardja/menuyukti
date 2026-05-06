@@ -4,7 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { ZodError } from 'zod'
 
 import { openingHoursWeekToMutationInput, updateLocationParsedSchema } from '../schema'
-import { graphqlQuery } from '@/lib/graphql/client'
+import { GraphQLRequestError, graphqlQuery } from '@/lib/graphql/client'
 import { graphqlLocationsDataCacheTag } from '@/lib/graphql/cache-tags'
 import {
   UPDATE_LOCATION_MANUAL_BRIEF_MUTATION,
@@ -67,6 +67,11 @@ export async function PATCH(req: Request, context: RouteContext) {
         },
         { status: 400 },
       )
+    }
+
+    if (error instanceof GraphQLRequestError) {
+      // Surface owner-facing validator messages (e.g. "instagramHandle may only…").
+      return NextResponse.json({ message: error.message }, { status: 400 })
     }
 
     console.error(error)
