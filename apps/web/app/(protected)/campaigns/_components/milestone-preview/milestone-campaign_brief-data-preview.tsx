@@ -15,6 +15,14 @@ export type MilestoneCampaignBriefDataPreviewProps = {
     audienceHypotheses: string
     proofOrientedAngles: string
     toneGuardrails: string
+    campaignObjective: string
+    targetSegments: string
+    messageHierarchy: string
+    offerAndCtaPlan: string
+    contentPillarPlan: string
+    measurementPlan: string
+    testingPlan: string
+    riskGuardrails: string
     emptyList: string
     emptyValue: string
   }
@@ -83,6 +91,11 @@ export function MilestoneCampaignBriefDataPreview({
       </section>
 
       <section>
+        <h4 className="font-medium text-foreground">{labels.campaignObjective}</h4>
+        <p className="mt-2 text-muted-foreground">{data.campaignObjective || labels.emptyValue}</p>
+      </section>
+
+      <section>
         <h4 className="font-medium text-foreground">{labels.contentPillars}</h4>
         <div className="mt-2">{renderList(data.contentPillars, labels.emptyList)}</div>
       </section>
@@ -100,6 +113,41 @@ export function MilestoneCampaignBriefDataPreview({
       <section>
         <h4 className="font-medium text-foreground">{labels.toneGuardrails}</h4>
         <div className="mt-2">{renderList(data.toneGuardrails, labels.emptyList)}</div>
+      </section>
+
+      <section>
+        <h4 className="font-medium text-foreground">{labels.targetSegments}</h4>
+        <div className="mt-2">{renderList(data.targetSegments, labels.emptyList)}</div>
+      </section>
+
+      <section>
+        <h4 className="font-medium text-foreground">{labels.messageHierarchy}</h4>
+        <div className="mt-2">{renderList(data.messageHierarchy, labels.emptyList)}</div>
+      </section>
+
+      <section>
+        <h4 className="font-medium text-foreground">{labels.offerAndCtaPlan}</h4>
+        <div className="mt-2">{renderList(data.offerAndCtaPlan, labels.emptyList)}</div>
+      </section>
+
+      <section>
+        <h4 className="font-medium text-foreground">{labels.contentPillarPlan}</h4>
+        <div className="mt-2">{renderList(data.contentPillarPlan, labels.emptyList)}</div>
+      </section>
+
+      <section>
+        <h4 className="font-medium text-foreground">{labels.measurementPlan}</h4>
+        <div className="mt-2">{renderList(data.measurementPlan, labels.emptyList)}</div>
+      </section>
+
+      <section>
+        <h4 className="font-medium text-foreground">{labels.testingPlan}</h4>
+        <div className="mt-2">{renderList(data.testingPlan, labels.emptyList)}</div>
+      </section>
+
+      <section>
+        <h4 className="font-medium text-foreground">{labels.riskGuardrails}</h4>
+        <div className="mt-2">{renderList(data.riskGuardrails, labels.emptyList)}</div>
       </section>
     </div>
   )

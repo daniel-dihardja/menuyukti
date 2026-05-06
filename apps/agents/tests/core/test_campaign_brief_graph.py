@@ -65,6 +65,38 @@ def _valid_campaign_brief_payload() -> dict:
             "Meal-period demand shapes timing",
         ],
         "toneGuardrails": ["Be specific", "Keep copy concise", "Use operational language"],
+        "campaignObjective": "Increase reservations in conversion stage this month",
+        "targetSegments": ["Weekday lunch workers", "Weekend family groups", "Evening social diners"],
+        "messageHierarchy": [
+            "Hero promise tied to signature dishes",
+            "Proof from top menu and category signals",
+            "CTA to reserve or DM for booking",
+        ],
+        "offerAndCtaPlan": [
+            "Keep offers margin-safe and time-bounded",
+            "Primary CTA uses reservation link",
+            "DM fallback for high-intent booking questions",
+        ],
+        "contentPillarPlan": [
+            "Signature dishes via Reels for discovery",
+            "Social proof carousel for consideration",
+            "Story reminders for conversion windows",
+        ],
+        "measurementPlan": [
+            "Track saves and shares weekly",
+            "Track profile visits and DM starts weekly",
+            "If DM starts under target for 2 weeks then update CTA framing",
+        ],
+        "testingPlan": [
+            "Test lunch vs dinner daypart windows",
+            "Test Tue vs Thu posting days",
+            "Replace weak hooks after 2 weeks of flat save rate",
+        ],
+        "riskGuardrails": [
+            "Avoid unverified claims",
+            "Respect allergen and local promotion regulations",
+            "Avoid discount-heavy messaging below margin floor",
+        ],
     }
 
 
@@ -78,7 +110,7 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
         yield (
             "values",
             {
-                "result_data": '{"venueSnapshot":{"venueName":"Cafe Alto","city":"Berlin","country":"Germany","currency":"EUR"},"contentPillars":["A","B","C"],"audienceHypotheses":["A","B","C"],"proofOrientedAngles":["A","B","C"],"toneGuardrails":["A","B","C"]}',
+                "result_data": '{"venueSnapshot":{"venueName":"Cafe Alto","city":"Berlin","country":"Germany","currency":"EUR"},"contentPillars":["A","B","C"],"audienceHypotheses":["A","B","C"],"proofOrientedAngles":["A","B","C"],"toneGuardrails":["A","B","C"],"campaignObjective":"Increase reservations in conversion stage this month","targetSegments":["weekday lunch workers","weekend families","evening social groups"],"messageHierarchy":["hero promise","proof point","cta"],"offerAndCtaPlan":["margin-safe weekday menu","reserve via link","dm fallback"],"contentPillarPlan":["signature dishes -> Reel -> reserve CTA","social proof -> Carousel -> DM CTA","BTS prep -> Story -> walk-in CTA"],"measurementPlan":["track saves and shares weekly","track profile visits and DM starts weekly","if DM starts below threshold for 2 weeks then adjust CTA"],"testingPlan":["test lunch vs dinner windows","test Tue vs Thu posting","refresh hooks after weak 2-week performance"],"riskGuardrails":["avoid unverified claims","respect allergen and local promo rules","avoid discount-first copy"]}',
                 "milestone_data": {
                     "venueSnapshot": {
                         "venueName": "Cafe Alto",
@@ -90,6 +122,34 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
                     "audienceHypotheses": ["A", "B", "C"],
                     "proofOrientedAngles": ["A", "B", "C"],
                     "toneGuardrails": ["A", "B", "C"],
+                    "campaignObjective": "Increase reservations in conversion stage this month",
+                    "targetSegments": [
+                        "weekday lunch workers",
+                        "weekend families",
+                        "evening social groups",
+                    ],
+                    "messageHierarchy": ["hero promise", "proof point", "cta"],
+                    "offerAndCtaPlan": ["margin-safe weekday menu", "reserve via link", "dm fallback"],
+                    "contentPillarPlan": [
+                        "signature dishes -> Reel -> reserve CTA",
+                        "social proof -> Carousel -> DM CTA",
+                        "BTS prep -> Story -> walk-in CTA",
+                    ],
+                    "measurementPlan": [
+                        "track saves and shares weekly",
+                        "track profile visits and DM starts weekly",
+                        "if DM starts below threshold for 2 weeks then adjust CTA",
+                    ],
+                    "testingPlan": [
+                        "test lunch vs dinner windows",
+                        "test Tue vs Thu posting",
+                        "refresh hooks after weak 2-week performance",
+                    ],
+                    "riskGuardrails": [
+                        "avoid unverified claims",
+                        "respect allergen and local promo rules",
+                        "avoid discount-first copy",
+                    ],
                 },
                 "milestonedata_written": True,
             },
@@ -129,6 +189,8 @@ def test_output_schema_required_keys_and_types() -> None:
     assert isinstance(normalized["audienceHypotheses"], list)
     assert isinstance(normalized["proofOrientedAngles"], list)
     assert isinstance(normalized["toneGuardrails"], list)
+    assert isinstance(normalized["targetSegments"], list)
+    assert isinstance(normalized["measurementPlan"], list)
 
 
 def test_guardrails_block_campaign_date_text_in_venue_identity() -> None:

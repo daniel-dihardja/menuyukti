@@ -30,6 +30,16 @@ query InstagramSignals($locationId: ID!, $analyticsRunId: ID!) {
           totalRevenue
         }
       }
+      campaignPlanningSignals {
+        objectiveRecommendation
+        primaryCtaChannel
+        recommendedPostingDays
+        recommendedDayparts
+      }
+      signalConfidence {
+        tier
+        coverageNotes
+      }
     }
   }
 }
@@ -124,6 +134,11 @@ def test_instagram_signals_category_mix_revenue_trends(analytics_run_with_qa_dat
     assert sig["capabilities"]["enabledBlocks"]
     assert sig["fundamentalSignals"]["sales"]["totalRevenue"] is not None
     assert sig["fundamentalSignals"]["sales"]["totalItemsSold"] > 0
+    planning = sig["additionalSignals"]["campaignPlanningSignals"]
+    assert planning["objectiveRecommendation"] in {"awareness", "consideration", "conversion"}
+    assert isinstance(planning["recommendedPostingDays"], list)
+    confidence = sig["additionalSignals"]["signalConfidence"]
+    assert confidence["tier"] in {"low", "medium", "high"}
 
     r2 = asyncio.run(
         schema.execute(

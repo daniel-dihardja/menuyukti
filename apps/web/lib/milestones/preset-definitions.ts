@@ -57,6 +57,14 @@ export function getMilestonePresetCreateFields(
           audienceHypotheses: [],
           proofOrientedAngles: [],
           toneGuardrails: [],
+          campaignObjective: '',
+          targetSegments: [],
+          messageHierarchy: [],
+          offerAndCtaPlan: [],
+          contentPillarPlan: [],
+          measurementPlan: [],
+          testingPlan: [],
+          riskGuardrails: [],
         },
         goal: t('milestonePreset.restaurant_campaign_brief.goal'),
         passCriteria: [
@@ -78,6 +86,38 @@ export function getMilestonePresetCreateFields(
           },
           {
             requirement: t('milestonePreset.restaurant_campaign_brief.criterionToneGuardrails'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionCampaignObjective'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionTargetSegments'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionMessageHierarchy'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionOfferAndCtaPlan'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionContentPillarPlan'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionMeasurementPlan'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionTestingPlan'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionRiskGuardrails'),
             status: 'open',
           },
           {

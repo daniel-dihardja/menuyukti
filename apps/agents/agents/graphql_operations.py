@@ -240,6 +240,16 @@ query LocationOperatingSignals($locationId: ID!, $analyticsRunId: ID!) {
           totalRevenue
         }
       }
+      campaignPlanningSignals {
+        recommendedPostingDays
+        recommendedDayparts
+        objectiveRecommendation
+        primaryCtaChannel
+      }
+      signalConfidence {
+        tier
+        coverageNotes
+      }
     }
   }
 }

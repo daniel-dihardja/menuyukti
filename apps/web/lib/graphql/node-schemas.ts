@@ -92,6 +92,14 @@ export const campaignBriefMilestoneDataSchema = z.object({
   audienceHypotheses: z.array(z.string()),
   proofOrientedAngles: z.array(z.string()),
   toneGuardrails: z.array(z.string()),
+  campaignObjective: z.string(),
+  targetSegments: z.array(z.string()),
+  messageHierarchy: z.array(z.string()),
+  offerAndCtaPlan: z.array(z.string()),
+  contentPillarPlan: z.array(z.string()),
+  measurementPlan: z.array(z.string()),
+  testingPlan: z.array(z.string()),
+  riskGuardrails: z.array(z.string()),
 })
 
 export type CampaignBriefMilestoneData = z.infer<typeof campaignBriefMilestoneDataSchema>

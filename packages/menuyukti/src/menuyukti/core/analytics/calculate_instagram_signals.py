@@ -57,6 +57,22 @@ class InstagramSignalsResult(TypedDict):
     additional_signals: dict[str, object]
 
 
+class CampaignPlanningSignals(TypedDict):
+    """Operational planning helpers for campaign briefs."""
+
+    recommended_posting_days: list[str]
+    recommended_dayparts: list[str]
+    objective_recommendation: str
+    primary_cta_channel: str
+
+
+class SignalConfidence(TypedDict):
+    """Signal confidence and caveats for conservative planning."""
+
+    tier: str
+    coverage_notes: list[str]
+
+
 def _aggregate_peak_hour_from_heatmaps(menu_heatmaps: object) -> int | None:
     """Sum quantities across all menus by clock hour; return hour with max demand (tie: lowest hour)."""
     if not isinstance(menu_heatmaps, list) or not menu_heatmaps:
@@ -106,6 +122,51 @@ def _trending_rising_sort_key(row: RevenueTrendRow) -> tuple[float, float, str]:
     raw_pct = row.get("pct_change")
     pct = float("-inf") if raw_pct is None else float(raw_pct)
     return (-pct, -float(row["current_revenue"]), str(row["menu"]))
+
+
+def _infer_objective_recommendation(
+    *,
+    has_order_id: bool,
+    has_datetime: bool,
+    trending_items: list[RevenueTrendRow],
+) -> str:
+    if has_order_id and has_datetime and trending_items:
+        return "conversion"
+    if has_datetime and trending_items:
+        return "consideration"
+    return "awareness"
+
+
+def _infer_primary_cta_channel(*, has_order_id: bool, objective: str) -> str:
+    if objective == "conversion" and has_order_id:
+        return "order_or_reservation"
+    if objective == "consideration":
+        return "dm"
+    return "profile_visit"
+
+
+def _signal_confidence(
+    *,
+    has_order_id: bool,
+    has_datetime: bool,
+    has_menu_engineering: bool,
+) -> SignalConfidence:
+    notes: list[str] = []
+    score = 0
+    if has_order_id:
+        score += 1
+    else:
+        notes.append("Order-level linkage unavailable; avoid order-level conversion precision.")
+    if has_datetime:
+        score += 1
+    else:
+        notes.append("Datetime signals unavailable; avoid strict posting-time claims.")
+    if has_menu_engineering:
+        score += 1
+    else:
+        notes.append("Menu engineering matrix unavailable; hero/avoid menu confidence reduced.")
+    tier = "high" if score == 3 else "medium" if score == 2 else "low"
+    return SignalConfidence(tier=tier, coverage_notes=notes)
 
 
 def calculate_instagram_signals(
@@ -222,6 +283,53 @@ def calculate_instagram_signals(
         revenue_vs_previous_pct=rev_vs_prev,
     )
 
+    recommended_posting_days: list[str] = []
+    recommended_dayparts: list[str] = []
+    if operating_profile is not None and has_datetime:
+        dow_rows = operating_profile.get("day_of_week_breakdown") or []
+        if isinstance(dow_rows, list):
+            ranked_days = sorted(
+                [row for row in dow_rows if isinstance(row, dict)],
+                key=lambda row: float(row.get("share") or 0.0),
+                reverse=True,
+            )
+            recommended_posting_days = [
+                str(row.get("day") or "") for row in ranked_days[:3] if str(row.get("day") or "")
+            ]
+        period_rows = operating_profile.get("meal_period_breakdown") or []
+        if isinstance(period_rows, list):
+            ranked_periods = sorted(
+                [row for row in period_rows if isinstance(row, dict)],
+                key=lambda row: float(row.get("share") or 0.0),
+                reverse=True,
+            )
+            recommended_dayparts = [
+                str(row.get("period") or "")
+                for row in ranked_periods[:3]
+                if str(row.get("period") or "")
+            ]
+
+    objective_recommendation = _infer_objective_recommendation(
+        has_order_id=has_order_id,
+        has_datetime=has_datetime,
+        trending_items=trending_items,
+    )
+    primary_cta_channel = _infer_primary_cta_channel(
+        has_order_id=has_order_id,
+        objective=objective_recommendation,
+    )
+    planning_signals = CampaignPlanningSignals(
+        recommended_posting_days=recommended_posting_days,
+        recommended_dayparts=recommended_dayparts,
+        objective_recommendation=objective_recommendation,
+        primary_cta_channel=primary_cta_channel,
+    )
+    confidence = _signal_confidence(
+        has_order_id=has_order_id,
+        has_datetime=has_datetime,
+        has_menu_engineering=menu_engineering is not None,
+    )
+
     return InstagramSignalsResult(
         capabilities={
             "has_order_id": has_order_id,
@@ -254,5 +362,7 @@ def calculate_instagram_signals(
                 "content_heroes": content_heroes,
                 "avoid_items": avoid_items,
             },
+            "campaign_planning_signals": planning_signals,
+            "signal_confidence": confidence,
         },
     )

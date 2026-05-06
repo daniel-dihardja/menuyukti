@@ -34,6 +34,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
 from pydantic import BaseModel
 
+
 class CampaignBriefDraftOutput(BaseModel):
     """LLM-generated campaign brief body before deterministic campaign-window merge."""
 
@@ -42,6 +43,113 @@ class CampaignBriefDraftOutput(BaseModel):
     audienceHypotheses: list[str]
     proofOrientedAngles: list[str]
     toneGuardrails: list[str]
+    campaignObjective: str
+    targetSegments: list[str]
+    messageHierarchy: list[str]
+    offerAndCtaPlan: list[str]
+    contentPillarPlan: list[str]
+    measurementPlan: list[str]
+    testingPlan: list[str]
+    riskGuardrails: list[str]
+
+
+_CAMPAIGN_BRIEF_LIST_FIELDS: tuple[str, ...] = (
+    "contentPillars",
+    "audienceHypotheses",
+    "proofOrientedAngles",
+    "toneGuardrails",
+    "targetSegments",
+    "messageHierarchy",
+    "offerAndCtaPlan",
+    "contentPillarPlan",
+    "measurementPlan",
+    "testingPlan",
+    "riskGuardrails",
+)
+
+_CAMPAIGN_BRIEF_FALLBACK_ITEMS: dict[str, tuple[str, str, str]] = {
+    "contentPillars": (
+        "Signature dishes and hero items",
+        "Social proof and guest moments",
+        "Operational moments by key dayparts",
+    ),
+    "audienceHypotheses": (
+        "Weekday lunch demand from nearby workers",
+        "Weekend demand from social and family occasions",
+        "Evening demand from dine-in intent",
+    ),
+    "proofOrientedAngles": (
+        "Use top-selling menu items as proof points",
+        "Ground claims in category and demand patterns",
+        "Connect proof to a clear action CTA",
+    ),
+    "toneGuardrails": (
+        "Keep claims specific and data-grounded",
+        "Use concise and operational language",
+        "Avoid exaggerated or unverified statements",
+    ),
+    "targetSegments": (
+        "Weekday lunch nearby workers",
+        "Weekend family and social groups",
+        "Evening dine-in seekers",
+    ),
+    "messageHierarchy": (
+        "Lead with the hero promise for the venue",
+        "Support with concrete proof from menu signals",
+        "Close with one clear CTA path",
+    ),
+    "offerAndCtaPlan": (
+        "Keep offers margin-safe and time-bounded",
+        "Use reservation or order link as primary CTA",
+        "Use DM as fallback for high-intent questions",
+    ),
+    "contentPillarPlan": (
+        "Map each pillar to one business objective",
+        "Pair each pillar with a preferred format",
+        "Attach one CTA role per pillar",
+    ),
+    "measurementPlan": (
+        "Track saves, shares, and profile visits weekly",
+        "Track reservations or orders monthly",
+        "If weekly leading signals stay below threshold for 2 weeks, revise creative and CTA",
+    ),
+    "testingPlan": (
+        "Test two dayparts before changing cadence",
+        "Test two weekday windows for posting",
+        "If tests underperform for 2 weeks, replace hook and format mix",
+    ),
+    "riskGuardrails": (
+        "Respect local promotion and allergen rules",
+        "Avoid prohibited topics and visuals",
+        "Protect margin by avoiding discount-first messaging",
+    ),
+}
+
+
+def _normalize_campaign_list(payload: dict[str, Any], key: str) -> None:
+    raw = payload.get(key)
+    source = raw if isinstance(raw, list) else []
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for item in source:
+        text = str(item).strip()
+        if not text:
+            continue
+        folded = text.casefold()
+        if folded in seen:
+            continue
+        seen.add(folded)
+        deduped.append(text)
+    if len(deduped) < 3:
+        for fallback in _CAMPAIGN_BRIEF_FALLBACK_ITEMS[key]:
+            folded = fallback.casefold()
+            if folded in seen:
+                continue
+            deduped.append(fallback)
+            seen.add(folded)
+            if len(deduped) >= 3:
+                break
+    payload[key] = deduped[:5]
 
 
 def _trace(state: CampaignBriefState, step: str, **extra: Any) -> None:
@@ -153,6 +261,45 @@ def _build_signal_markdown(
         sections.append("## Additional matrix signals")
         sections.append(matrix_md)
 
+    if isinstance(instagram, dict):
+        additional = instagram.get("additionalSignals")
+        if isinstance(additional, dict):
+            planning = additional.get("campaignPlanningSignals")
+            if isinstance(planning, dict):
+                planning_lines: list[str] = []
+                objective = str(planning.get("objectiveRecommendation") or "").strip()
+                cta = str(planning.get("primaryCtaChannel") or "").strip()
+                posting_days = planning.get("recommendedPostingDays")
+                dayparts = planning.get("recommendedDayparts")
+                if objective:
+                    planning_lines.append(f"- **Recommended objective**: {objective}")
+                if cta:
+                    planning_lines.append(f"- **Primary CTA channel**: {cta}")
+                if isinstance(posting_days, list) and posting_days:
+                    planning_lines.append(
+                        f"- **Recommended posting days**: {', '.join(str(x) for x in posting_days)}"
+                    )
+                if isinstance(dayparts, list) and dayparts:
+                    planning_lines.append(
+                        f"- **Recommended dayparts**: {', '.join(str(x) for x in dayparts)}"
+                    )
+                if planning_lines:
+                    sections.append("## Campaign planning signals")
+                    sections.append("\n".join(planning_lines))
+
+            confidence = additional.get("signalConfidence")
+            if isinstance(confidence, dict):
+                confidence_lines: list[str] = []
+                tier = str(confidence.get("tier") or "").strip()
+                notes = confidence.get("coverageNotes")
+                if tier:
+                    confidence_lines.append(f"- **Signal confidence**: {tier}")
+                if isinstance(notes, list) and notes:
+                    confidence_lines.extend(f"- {str(note)}" for note in notes if str(note).strip())
+                if confidence_lines:
+                    sections.append("## Data coverage notes")
+                    sections.append("\n".join(confidence_lines))
+
     ai_md = _fmt_ai_social_settings(location_data)
     if ai_md:
         sections.append(ai_md)
@@ -256,6 +403,21 @@ async def persist_result(state: CampaignBriefState, *, client: httpx.AsyncClient
         payload.setdefault("audienceHypotheses", [])
         payload.setdefault("proofOrientedAngles", [])
         payload.setdefault("toneGuardrails", [])
+        payload.setdefault("campaignObjective", "")
+        payload.setdefault("targetSegments", [])
+        payload.setdefault("messageHierarchy", [])
+        payload.setdefault("offerAndCtaPlan", [])
+        payload.setdefault("contentPillarPlan", [])
+        payload.setdefault("measurementPlan", [])
+        payload.setdefault("testingPlan", [])
+        payload.setdefault("riskGuardrails", [])
+        objective = str(payload.get("campaignObjective") or "").strip()
+        if not objective:
+            payload["campaignObjective"] = (
+                "Increase reservations with a conversion-focused campaign objective."
+            )
+        for list_key in _CAMPAIGN_BRIEF_LIST_FIELDS:
+            _normalize_campaign_list(payload, list_key)
 
     if isinstance(payload, dict) and isinstance(payload.get("venueSnapshot"), dict):
         venue_snapshot = payload["venueSnapshot"]

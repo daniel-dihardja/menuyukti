@@ -71,6 +71,14 @@ class CampaignBriefMilestoneOutput(BaseModel):
     audienceHypotheses: list[str]
     proofOrientedAngles: list[str]
     toneGuardrails: list[str]
+    campaignObjective: str
+    targetSegments: list[str]
+    messageHierarchy: list[str]
+    offerAndCtaPlan: list[str]
+    contentPillarPlan: list[str]
+    measurementPlan: list[str]
+    testingPlan: list[str]
+    riskGuardrails: list[str]
 
     @staticmethod
     def _normalize_unique(values: Any) -> list[str]:
@@ -99,6 +107,13 @@ class CampaignBriefMilestoneOutput(BaseModel):
             "audienceHypotheses",
             "proofOrientedAngles",
             "toneGuardrails",
+            "targetSegments",
+            "messageHierarchy",
+            "offerAndCtaPlan",
+            "contentPillarPlan",
+            "measurementPlan",
+            "testingPlan",
+            "riskGuardrails",
         ):
             data[key] = cls._normalize_unique(data.get(key, []))
         return data
@@ -108,12 +123,27 @@ class CampaignBriefMilestoneOutput(BaseModel):
         "audienceHypotheses",
         "proofOrientedAngles",
         "toneGuardrails",
+        "targetSegments",
+        "messageHierarchy",
+        "offerAndCtaPlan",
+        "contentPillarPlan",
+        "measurementPlan",
+        "testingPlan",
+        "riskGuardrails",
     )
     @classmethod
     def _validate_list_quality(cls, values: list[str]) -> list[str]:
         if not (3 <= len(values) <= 5):
             raise ValueError("must contain between 3 and 5 unique non-empty items")
         return values
+
+    @field_validator("campaignObjective")
+    @classmethod
+    def _validate_campaign_objective(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("campaignObjective must be non-empty")
+        return text
 
 
 class PostSchedulerPostItem(BaseModel):
@@ -215,7 +245,11 @@ def validate_skill_output(skill_id: str | None, payload: Any) -> tuple[Any | Non
     try:
         validated = schema.model_validate(payload)
     except ValidationError as exc:
-        first_error = exc.errors(include_url=False)[0]["msg"]
-        return None, f"[{skill_id}] {first_error}"
+        first = exc.errors(include_url=False)[0]
+        loc = ".".join(str(part) for part in first.get("loc", ()))
+        msg = str(first.get("msg", "validation failed"))
+        if loc:
+            return None, f"[{skill_id}] {loc}: {msg}"
+        return None, f"[{skill_id}] {msg}"
 
     return validated.model_dump(exclude_none=True), None
