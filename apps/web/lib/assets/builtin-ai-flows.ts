@@ -12,7 +12,7 @@ type BuiltinAiFlowRecord = {
 }
 
 export type BuiltinAiFlowOption = Pick<BuiltinAiFlowRecord, 'slug' | 'displayName'>
-export type BuiltinAiFlowContext = 'upload' | 'product-card'
+export type BuiltinAiFlowContext = 'upload' | 'product-card' | 'design-create'
 
 const builtinFlows = builtinFlowsJson as BuiltinAiFlowRecord[]
 

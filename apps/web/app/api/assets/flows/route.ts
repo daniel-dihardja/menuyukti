@@ -6,7 +6,7 @@ import {
   type BuiltinAiFlowContext,
 } from '@/lib/assets/builtin-ai-flows'
 
-const VALID_CONTEXTS: BuiltinAiFlowContext[] = ['upload', 'product-card']
+const VALID_CONTEXTS: BuiltinAiFlowContext[] = ['upload', 'product-card', 'design-create']
 
 export async function GET(request: Request) {
   const authz = await requireMenuyuktiAdminApi()

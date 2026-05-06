@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Check } from 'lucide-react'
+import { Check, Sparkles } from 'lucide-react'
 
 import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Badge } from '@workspace/ui/components/badge'
@@ -15,7 +15,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@workspace/ui/components/dialog'
+import { Field, FieldLabel } from '@workspace/ui/components/field'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select'
 import { Separator } from '@workspace/ui/components/separator'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { cn } from '@workspace/ui/lib/utils'
@@ -27,6 +35,11 @@ type AssetItem = {
   url: string
   size: number
   createdAt: string
+}
+
+type FlowOption = {
+  slug: string
+  displayName: string
 }
 
 type ContentImageCreateDialogProps = {
@@ -49,16 +62,20 @@ export function ContentImageCreateDialog({ open, onOpenChange }: ContentImageCre
 
   const [products, setProducts] = useState<AssetItem[]>([])
   const [backgrounds, setBackgrounds] = useState<BackgroundItem[]>([])
+  const [flows, setFlows] = useState<FlowOption[]>([])
   const [selectedProductNames, setSelectedProductNames] = useState<string[]>([])
   const [selectedBackgroundName, setSelectedBackgroundName] = useState<string | null>(null)
+  const [selectedFlowSlug, setSelectedFlowSlug] = useState<string>('')
   const [loadingProducts, setLoadingProducts] = useState(false)
   const [loadingBackgrounds, setLoadingBackgrounds] = useState(false)
+  const [loadingFlows, setLoadingFlows] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) {
       setSelectedProductNames([])
       setSelectedBackgroundName(null)
+      setSelectedFlowSlug('')
       setError(null)
       return
     }
@@ -66,32 +83,41 @@ export function ContentImageCreateDialog({ open, onOpenChange }: ContentImageCre
     let cancelled = false
     setLoadingProducts(true)
     setLoadingBackgrounds(true)
+    setLoadingFlows(true)
     setError(null)
 
     void Promise.all([
       fetch('/api/assets/list', { cache: 'no-store' }),
       fetch('/api/assets/backgrounds/list', { cache: 'no-store' }),
+      fetch('/api/assets/flows?context=design-create', { cache: 'no-store' }),
     ])
-      .then(async ([productsRes, backgroundsRes]) => {
-        if (!productsRes.ok || !backgroundsRes.ok) {
+      .then(async ([productsRes, backgroundsRes, flowsRes]) => {
+        if (!productsRes.ok || !backgroundsRes.ok || !flowsRes.ok) {
           throw new Error('load_error')
         }
         const productsBody = (await productsRes.json()) as { items?: AssetItem[] }
         const backgroundsBody = (await backgroundsRes.json()) as { items?: BackgroundItem[] }
+        const flowsBody = (await flowsRes.json()) as { flows?: FlowOption[] }
         if (cancelled) return
+        const nextFlows = flowsBody.flows ?? []
         setProducts(productsBody.items ?? [])
         setBackgrounds(backgroundsBody.items ?? [])
+        setFlows(nextFlows)
+        setSelectedFlowSlug(nextFlows[0]?.slug ?? '')
       })
       .catch(() => {
         if (cancelled) return
         setProducts([])
         setBackgrounds([])
+        setFlows([])
+        setSelectedFlowSlug('')
         setError(t('loadError'))
       })
       .finally(() => {
         if (cancelled) return
         setLoadingProducts(false)
         setLoadingBackgrounds(false)
+        setLoadingFlows(false)
       })
 
     return () => {
@@ -199,6 +225,48 @@ export function ContentImageCreateDialog({ open, onOpenChange }: ContentImageCre
                   })}
                 </div>
               )}
+            </section>
+
+            <Separator />
+
+            <section className="flex flex-col gap-2">
+              <Field className="gap-1.5">
+                <FieldLabel htmlFor="content-image-flow" className="text-sm font-medium">
+                  {t('flowLabel')}
+                </FieldLabel>
+                {loadingFlows ? (
+                  <Skeleton className="h-10 w-full rounded-md" />
+                ) : flows.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">{t('flowsEmpty')}</p>
+                ) : (
+                  <Select
+                    value={selectedFlowSlug}
+                    onValueChange={setSelectedFlowSlug}
+                    disabled={loadingFlows}
+                  >
+                    <SelectTrigger id="content-image-flow" size="default" className="w-full">
+                      <SelectValue placeholder={t('flowPlaceholder')} />
+                    </SelectTrigger>
+                    <SelectContent
+                      align="start"
+                      position="popper"
+                      className="min-w-[var(--radix-select-trigger-width)]"
+                    >
+                      {flows.map((flow) => (
+                        <SelectItem key={flow.slug} value={flow.slug} className="cursor-pointer">
+                          <span className="flex w-full items-center gap-2">
+                            <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
+                            <span className="flex-1">{flow.displayName}</span>
+                            <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-primary">
+                              AI
+                            </span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </Field>
             </section>
           </div>
         </ScrollArea>
