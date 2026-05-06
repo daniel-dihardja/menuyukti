@@ -4,13 +4,13 @@ import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { routes } from '@/lib/routes'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 
-export default async function StudioLoading() {
+export default async function CanvasLoading() {
   const tStudio = await getTranslations('sidebar')
 
   return (
     <AnalyticsPageShell
       title={tStudio('studio')}
-      breadcrumbs={[{ label: tStudio('studio'), href: routes.studio }]}
+      breadcrumbs={[{ label: tStudio('studio'), href: routes.canvas }]}
       contentWidth="full"
       mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >

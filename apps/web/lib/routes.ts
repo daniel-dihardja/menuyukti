@@ -52,9 +52,9 @@ export const routes = {
   },
 
   assets: '/assets',
-  /** AI asset studio (brand library + generation); `/assets` redirects here. */
-  studio: '/canvas',
-  studioSession: (id: string | number) => `/canvas/${id}`,
+  /** AI canvas (brand library + generation); `/assets` redirects here. */
+  canvas: '/canvas',
+  canvasSession: (id: string | number) => `/canvas/${id}`,
   /** Standalone assistant chat (same `/api/chat` stack as workflows). */
   agent: '/advisor',
   printOrders: '/print-orders',

@@ -13,6 +13,6 @@ const AssetsClient = dynamic(() => import('../assets/assets-client').then((m) =>
   ),
 })
 
-export function StudioAssetsDynamic() {
+export function CanvasAssetsDynamic() {
   return <AssetsClient />
 }

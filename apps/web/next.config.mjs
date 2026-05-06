@@ -22,8 +22,6 @@ const nextConfig = {
   transpilePackages: ['@workspace/ui'],
   async redirects() {
     return [
-      { source: '/studio', destination: '/canvas', permanent: true },
-      { source: '/studio/:path*', destination: '/canvas/:path*', permanent: true },
       { source: '/agent', destination: '/advisor', permanent: true },
       { source: '/agent/:path*', destination: '/advisor/:path*', permanent: true },
       { source: '/workflows', destination: '/campaigns', permanent: true },
@@ -32,8 +30,6 @@ const nextConfig = {
   },
   async rewrites() {
     return [
-      { source: '/canvas', destination: '/studio' },
-      { source: '/canvas/:path*', destination: '/studio/:path*' },
       { source: '/advisor', destination: '/agent' },
       { source: '/advisor/:path*', destination: '/agent/:path*' },
       { source: '/campaigns', destination: '/workflows' },

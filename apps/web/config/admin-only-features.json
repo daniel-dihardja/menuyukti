@@ -3,13 +3,13 @@
     {
       "id": "assets",
       "description": "Brand asset library and uploads (/assets, related APIs).",
-      "routePrefixes": ["/assets", "/studio"],
+      "routePrefixes": ["/assets", "/canvas"],
       "navKeys": []
     },
     {
       "id": "studio",
       "description": "AI asset studio (brand library + generation).",
-      "routePrefixes": ["/studio"],
+      "routePrefixes": ["/canvas"],
       "navKeys": ["studio"]
     },
     {

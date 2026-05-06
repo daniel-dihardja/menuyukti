@@ -4,7 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { routes } from '@/lib/routes'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 
-import { StudioAssetsDynamic } from './studio-assets-dynamic'
+import { CanvasAssetsDynamic } from './canvas-assets-dynamic'
 
 export default async function Page() {
   const tStudio = await getTranslations('sidebar')
@@ -16,11 +16,11 @@ export default async function Page() {
   return (
     <AnalyticsPageShell
       title={tStudio('studio')}
-      breadcrumbs={[{ label: tStudio('studio'), href: routes.studio }]}
+      breadcrumbs={[{ label: tStudio('studio'), href: routes.canvas }]}
       contentWidth="full"
       mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
-      <StudioAssetsDynamic />
+      <CanvasAssetsDynamic />
     </AnalyticsPageShell>
   )
 }

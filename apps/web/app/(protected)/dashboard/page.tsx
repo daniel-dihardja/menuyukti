@@ -170,7 +170,7 @@ async function DashboardPageData() {
               <p className="text-muted-foreground text-sm">{t('assetsDescription')}</p>
             </div>
             <Button asChild size="sm" variant="outline">
-              <Link href={routes.studio}>{t('assetsOpenStudio')}</Link>
+              <Link href={routes.canvas}>{t('assetsOpenStudio')}</Link>
             </Button>
           </div>
           <DashboardRecentAssets />
