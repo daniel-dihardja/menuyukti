@@ -1,4 +1,4 @@
-# Brand Brief Runtime Validation Checklist
+# Campaign Brief Runtime Validation Checklist
 
 Use this checklist when verifying `brand_brief` milestone generation quality.
 

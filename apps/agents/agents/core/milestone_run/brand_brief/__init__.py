@@ -1,4 +1,4 @@
-"""Brand-brief dedicated flow exports."""
+"""Campaign-brief dedicated flow exports."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Tests for dedicated brand-brief graph path and guardrails."""
+"""Tests for dedicated campaign-brief graph path and guardrails."""
 
 from __future__ import annotations
 
@@ -213,7 +213,7 @@ async def test_fallback_when_analytics_missing_still_builds_context() -> None:
         "milestone_id": "m1",
         "location_id": 1,
         "user_id": "u1",
-        "goal": "Build brand brief",
+        "goal": "Build campaign brief",
         "criteria": [],
         "milestone_input": {"type": "restaurant_brand_brief", "value": {"notes": "brunch focus"}},
     }

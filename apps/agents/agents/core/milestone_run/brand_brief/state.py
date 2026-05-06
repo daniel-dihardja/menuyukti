@@ -1,4 +1,4 @@
-"""State schema for dedicated brand-brief milestone execution."""
+"""State schema for dedicated campaign-brief milestone execution."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from typing import Any, NotRequired, TypedDict
 
 
 class BrandBriefState(TypedDict):
-    """State carried through dedicated brand-brief generation and persistence."""
+    """State carried through dedicated campaign-brief generation and persistence."""
 
     milestone_id: str
     location_id: int

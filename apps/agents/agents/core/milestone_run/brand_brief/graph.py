@@ -1,4 +1,4 @@
-"""Dedicated LangGraph for deterministic brand-brief execution."""
+"""Dedicated LangGraph for deterministic campaign-brief execution."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from langgraph.graph import END, START, StateGraph
 
 
 def build_brand_brief_graph(client: httpx.AsyncClient):
-    """Compile dedicated brand-brief graph with deterministic prep + structured generation."""
+    """Compile dedicated campaign-brief graph with deterministic prep + structured generation."""
     builder = StateGraph(BrandBriefState)
     builder.add_node("fetch_and_prepare", partial(fetch_and_prepare, client=client))
     builder.add_node("generate_draft", generate_draft)

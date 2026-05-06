@@ -304,7 +304,7 @@ def _fmt_matrix_signals(instagram: dict[str, Any]) -> str:
 
 
 def _fmt_milestone_brand_brief_owner_notes(context: dict[str, Any]) -> str:
-    """Markdown for optional owner notes from the brand-brief milestone Input tab."""
+    """Markdown for optional owner notes from the campaign-brief milestone Input tab."""
     raw = context.get("milestone_input")
     if not isinstance(raw, dict):
         return ""
@@ -320,7 +320,7 @@ def _fmt_milestone_brand_brief_owner_notes(context: dict[str, Any]) -> str:
     if not text:
         return ""
     return (
-        "## Milestone brand brief input (owner)\n\n"
+        "## Milestone campaign brief input (owner)\n\n"
         "_User-supplied notes from the milestone Input tab — incorporate when shaping pillars, "
         "angles, and tone guardrails; do not treat as verified sales facts._\n\n"
         f"{text}"
@@ -341,7 +341,7 @@ def make_get_location_profile_tool(
         Includes: venue name/city/country/currency, operating pattern, peak day, meal period
         breakdown, weekday vs weekend split, category revenue mix, and top menu items by volume.
         Use this to anchor the Venue snapshot and inform Content pillars, Audience hypotheses,
-        and Tone guardrails in the brand brief.
+        and Tone guardrails in the campaign brief.
         Returns a Markdown document or an error message when the location is not found.
         """
         # 1. Basic location identity

@@ -1,4 +1,4 @@
-"""Nodes for dedicated brand-brief generation and persistence."""
+"""Nodes for dedicated campaign-brief generation and persistence."""
 
 from __future__ import annotations
 
@@ -164,7 +164,7 @@ async def fetch_and_prepare(state: BrandBriefState, *, client: httpx.AsyncClient
 
 
 async def generate_draft(state: BrandBriefState) -> dict[str, Any]:
-    """Generate strictly structured brand-brief JSON from deterministic signal context."""
+    """Generate strictly structured campaign-brief JSON from deterministic signal context."""
     _trace_agent_event(state, "chat_model_start")
     llm = get_llm_structured().with_structured_output(BrandBriefMilestoneOutput)
     generated = await llm.ainvoke(

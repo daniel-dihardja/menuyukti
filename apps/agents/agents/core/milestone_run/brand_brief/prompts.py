@@ -1,8 +1,8 @@
-"""Prompts for dedicated brand-brief generation."""
+"""Prompts for dedicated campaign-brief generation."""
 
 from __future__ import annotations
 
-BRAND_BRIEF_SYSTEM = """You are a precise marketing-operations assistant for restaurant brand brief generation.
+BRAND_BRIEF_SYSTEM = """You are a precise marketing-operations assistant for restaurant campaign brief generation.
 
 Generate exactly one JSON object with this shape:
 {
