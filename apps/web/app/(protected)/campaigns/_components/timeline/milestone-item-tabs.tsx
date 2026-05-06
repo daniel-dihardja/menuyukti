@@ -401,10 +401,10 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
             {milestone.presetId === 'restaurant_campaign_brief' ? (
               <div className="space-y-2 text-muted-foreground text-sm">
                 <p className="font-medium text-foreground">
-                  {t('milestoneHelpBrandBriefOptionalInputTitle')}
+                  {t('milestoneHelpCampaignBriefOptionalInputTitle')}
                 </p>
-                <p>{t('milestoneHelpBrandBriefOptionalInputHowUsed')}</p>
-                <p>{t('milestoneHelpBrandBriefOptionalInputWhenToUse')}</p>
+                <p>{t('milestoneHelpCampaignBriefOptionalInputHowUsed')}</p>
+                <p>{t('milestoneHelpCampaignBriefOptionalInputWhenToUse')}</p>
               </div>
             ) : milestone.presetId === 'promotion_candidates' ? (
               <div className="space-y-2 text-muted-foreground text-sm">

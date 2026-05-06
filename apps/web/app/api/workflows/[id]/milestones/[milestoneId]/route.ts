@@ -4,7 +4,7 @@ import type { z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
-  brandBriefMilestoneDataSchema,
+  campaignBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
@@ -346,8 +346,8 @@ export async function GET(_req: Request, context: RouteContext) {
       parsedMilestoneNodeData?.success &&
       parsedMilestoneNodeData.data.presetId === 'restaurant_campaign_brief'
     ) {
-      const brandBriefDataParsed = brandBriefMilestoneDataSchema.safeParse(milestoneData)
-      if (!brandBriefDataParsed.success) {
+      const campaignBriefDataParsed = campaignBriefMilestoneDataSchema.safeParse(milestoneData)
+      if (!campaignBriefDataParsed.success) {
         milestoneData = {
           venueSnapshot: {
             venueName: '',

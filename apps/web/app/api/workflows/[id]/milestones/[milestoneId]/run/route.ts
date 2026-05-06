@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { getPythonAgentsUrl } from '@/lib/config'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
-  brandBriefMilestoneDataSchema,
+  campaignBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   milestoneInputSchema,
   postSchedulerMilestoneDataSchema,
@@ -23,7 +23,7 @@ const runBodySchema = z.object({
   milestoneData: z
     .union([
       datesMilestoneDataSchema,
-      brandBriefMilestoneDataSchema,
+      campaignBriefMilestoneDataSchema,
       promotionCandidatesMilestoneDataSchema,
       postSchedulerMilestoneDataSchema,
     ])

@@ -4,7 +4,7 @@ import type { Dispatch } from 'react'
 import { useCallback, useMemo } from 'react'
 
 import {
-  brandBriefMilestoneDataSchema,
+  campaignBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   milestoneDataSchema,
   postSchedulerMilestoneDataSchema,
@@ -35,7 +35,7 @@ function parseDataPreviewForPreset(
     return parsed.success ? parsed.data : undefined
   }
   if (presetId === 'restaurant_campaign_brief') {
-    const parsed = brandBriefMilestoneDataSchema.safeParse(dataPreview)
+    const parsed = campaignBriefMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   if (presetId === 'promotion_candidates') {

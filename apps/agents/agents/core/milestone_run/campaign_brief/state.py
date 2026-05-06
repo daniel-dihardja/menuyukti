@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, NotRequired, TypedDict
 
 
-class BrandBriefState(TypedDict):
+class CampaignBriefState(TypedDict):
     """State carried through dedicated campaign-brief generation and persistence."""
 
     milestone_id: str

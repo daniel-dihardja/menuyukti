@@ -1,5 +1,5 @@
 import {
-  brandBriefMilestoneDataSchema,
+  campaignBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   goalDataSchema,
   milestoneDataSchema,
@@ -189,9 +189,9 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
     }
   }
   if (presetId === 'restaurant_campaign_brief') {
-    const parsedBrandBriefData = brandBriefMilestoneDataSchema.safeParse(data)
-    if (parsedBrandBriefData.success) {
-      normalizedData = parsedBrandBriefData.data
+    const parsedCampaignBriefData = campaignBriefMilestoneDataSchema.safeParse(data)
+    if (parsedCampaignBriefData.success) {
+      normalizedData = parsedCampaignBriefData.data
     } else {
       normalizedData = {
         venueSnapshot: {

@@ -20,7 +20,7 @@ class DatesMilestoneOutput(BaseModel):
     publicHolidays: list[DatesPublicHoliday]
 
 
-class BrandBriefVenueSnapshot(BaseModel):
+class CampaignBriefVenueSnapshot(BaseModel):
     venueName: str
     city: str
     country: str
@@ -62,8 +62,8 @@ class BrandBriefVenueSnapshot(BaseModel):
         return cleaned
 
 
-class BrandBriefMilestoneOutput(BaseModel):
-    venueSnapshot: BrandBriefVenueSnapshot
+class CampaignBriefMilestoneOutput(BaseModel):
+    venueSnapshot: CampaignBriefVenueSnapshot
     contentPillars: list[str]
     audienceHypotheses: list[str]
     proofOrientedAngles: list[str]
@@ -138,7 +138,7 @@ class PostSchedulerMilestoneOutput(BaseModel):
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
-    "campaign_brief": BrandBriefMilestoneOutput,
+    "campaign_brief": CampaignBriefMilestoneOutput,
     "post_scheduler": PostSchedulerMilestoneOutput,
 }
 

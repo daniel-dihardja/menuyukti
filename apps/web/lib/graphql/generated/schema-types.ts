@@ -86,8 +86,8 @@ export type BestPostingWindowType = {
   primaryMealPeriod?: Maybe<Scalars['String']['output']>
 }
 
-export type BrandBriefSignalCapabilitiesType = {
-  __typename?: 'BrandBriefSignalCapabilitiesType'
+export type CampaignBriefSignalCapabilitiesType = {
+  __typename?: 'CampaignBriefSignalCapabilitiesType'
   enabledBlocks: Array<Scalars['String']['output']>
   hasDatetime: Scalars['Boolean']['output']
   hasOrderId: Scalars['Boolean']['output']
@@ -219,7 +219,7 @@ export type InstagramSignalsType = {
   __typename?: 'InstagramSignalsType'
   additionalSignals: AdditionalSignalsType
   analyticsRunId: Scalars['ID']['output']
-  capabilities: BrandBriefSignalCapabilitiesType
+  capabilities: CampaignBriefSignalCapabilitiesType
   fundamentalSignals: FundamentalSignalsType
 }
 

@@ -77,7 +77,7 @@ def _category_focus(raw: dict | None) -> CategoryFocusType | None:
 
 
 @strawberry.type
-class BrandBriefSignalCapabilitiesType:
+class CampaignBriefSignalCapabilitiesType:
     has_order_id: bool
     has_datetime: bool
     enabled_blocks: list[str]
@@ -150,7 +150,7 @@ class AdditionalSignalsType:
 @strawberry.type(description="Tiered analytics payload for campaign_brief and growth agents.")
 class InstagramSignalsType:
     analytics_run_id: strawberry.ID
-    capabilities: BrandBriefSignalCapabilitiesType
+    capabilities: CampaignBriefSignalCapabilitiesType
     fundamental_signals: FundamentalSignalsType
     additional_signals: AdditionalSignalsType
 
@@ -203,7 +203,7 @@ class InstagramSignalsQuery:
 
             return InstagramSignalsType(
                 analytics_run_id=strawberry.ID(str(run.id)),
-                capabilities=BrandBriefSignalCapabilitiesType(
+                capabilities=CampaignBriefSignalCapabilitiesType(
                     has_order_id=bool(caps.get("has_order_id")),
                     has_datetime=bool(caps.get("has_datetime")),
                     enabled_blocks=[str(x) for x in caps.get("enabled_blocks", [])],

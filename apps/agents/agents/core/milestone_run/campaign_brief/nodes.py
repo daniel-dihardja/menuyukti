@@ -6,14 +6,14 @@ import json
 from typing import Any
 
 import httpx
-from agents_app.agents.core.milestone_run.campaign_brief.prompts import BRAND_BRIEF_SYSTEM
-from agents_app.agents.core.milestone_run.campaign_brief.state import BrandBriefState
+from agents_app.agents.core.milestone_run.campaign_brief.prompts import CAMPAIGN_BRIEF_SYSTEM
+from agents_app.agents.core.milestone_run.campaign_brief.state import CampaignBriefState
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_location_operating_signals,
     upsert_milestonedata_node,
 )
 from agents_app.agents.core.milestone_run.output_schema import (
-    BrandBriefMilestoneOutput,
+    CampaignBriefMilestoneOutput,
     validate_skill_output,
 )
 from agents_app.agents.core.milestone_run.tools.get_location_profile import (
@@ -32,7 +32,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
 
 
-def _trace(state: BrandBriefState, step: str, **extra: Any) -> None:
+def _trace(state: CampaignBriefState, step: str, **extra: Any) -> None:
     payload: dict[str, Any] = {"step": step, **extra}
     run_id = state.get("run_id")
     if isinstance(run_id, str) and run_id:
@@ -40,7 +40,7 @@ def _trace(state: BrandBriefState, step: str, **extra: Any) -> None:
     get_stream_writer()(payload)
 
 
-def _trace_agent_event(state: BrandBriefState, kind: str, **extra: Any) -> None:
+def _trace_agent_event(state: CampaignBriefState, kind: str, **extra: Any) -> None:
     payload: dict[str, Any] = {"agent_event": {"kind": kind, **extra}}
     run_id = state.get("run_id")
     if isinstance(run_id, str) and run_id:
@@ -134,7 +134,7 @@ def _build_signal_markdown(
     return "\n\n".join(sections)
 
 
-async def fetch_and_prepare(state: BrandBriefState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+async def fetch_and_prepare(state: CampaignBriefState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     """Fetch location + signals and normalize them into deterministic markdown context."""
     _trace(state, "execute_skill", skill_id="campaign_brief")
     location_data = await graphql_post(
@@ -163,13 +163,13 @@ async def fetch_and_prepare(state: BrandBriefState, *, client: httpx.AsyncClient
     }
 
 
-async def generate_draft(state: BrandBriefState) -> dict[str, Any]:
+async def generate_draft(state: CampaignBriefState) -> dict[str, Any]:
     """Generate strictly structured campaign-brief JSON from deterministic signal context."""
     _trace_agent_event(state, "chat_model_start")
-    llm = get_llm_structured().with_structured_output(BrandBriefMilestoneOutput)
+    llm = get_llm_structured().with_structured_output(CampaignBriefMilestoneOutput)
     generated = await llm.ainvoke(
         [
-            SystemMessage(content=BRAND_BRIEF_SYSTEM),
+            SystemMessage(content=CAMPAIGN_BRIEF_SYSTEM),
             HumanMessage(content=str(state.get("signal_markdown", ""))),
         ]
     )
@@ -177,7 +177,7 @@ async def generate_draft(state: BrandBriefState) -> dict[str, Any]:
     return {"generated_output": generated.model_dump(exclude_none=True)}
 
 
-async def persist_result(state: BrandBriefState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+async def persist_result(state: CampaignBriefState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     """Validate/coerce and persist with milestone_run's existing write path helper."""
     payload = state.get("generated_output") or {}
     if isinstance(payload, dict) and isinstance(payload.get("venueSnapshot"), dict):

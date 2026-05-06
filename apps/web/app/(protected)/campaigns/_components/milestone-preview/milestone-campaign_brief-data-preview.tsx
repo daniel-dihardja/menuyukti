@@ -1,7 +1,7 @@
-import type { BrandBriefMilestoneData } from '@/lib/graphql/node-schemas'
+import type { CampaignBriefMilestoneData } from '@/lib/graphql/node-schemas'
 
-export type MilestoneBrandBriefDataPreviewProps = {
-  data: BrandBriefMilestoneData
+export type MilestoneCampaignBriefDataPreviewProps = {
+  data: CampaignBriefMilestoneData
   labels: {
     venueName: string
     city: string
@@ -29,10 +29,10 @@ function renderList(items: string[], emptyLabel: string) {
   )
 }
 
-export function MilestoneBrandBriefDataPreview({
+export function MilestoneCampaignBriefDataPreview({
   data,
   labels,
-}: MilestoneBrandBriefDataPreviewProps) {
+}: MilestoneCampaignBriefDataPreviewProps) {
   return (
     <div className="space-y-4 text-sm">
       <section>

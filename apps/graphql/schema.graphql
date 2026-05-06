@@ -59,7 +59,7 @@ type BestPostingWindowType {
   peakHour: Int
 }
 
-type BrandBriefSignalCapabilitiesType {
+type CampaignBriefSignalCapabilitiesType {
   hasOrderId: Boolean!
   hasDatetime: Boolean!
   enabledBlocks: [String!]!
@@ -184,7 +184,7 @@ type ImageAiFlowType {
 """Tiered analytics payload for campaign_brief and growth agents."""
 type InstagramSignalsType {
   analyticsRunId: ID!
-  capabilities: BrandBriefSignalCapabilitiesType!
+  capabilities: CampaignBriefSignalCapabilitiesType!
   fundamentalSignals: FundamentalSignalsType!
   additionalSignals: AdditionalSignalsType!
 }

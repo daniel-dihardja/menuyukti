@@ -10,13 +10,13 @@ from agents_app.agents.core.milestone_run.campaign_brief.nodes import (
     generate_draft,
     persist_result,
 )
-from agents_app.agents.core.milestone_run.campaign_brief.state import BrandBriefState
+from agents_app.agents.core.milestone_run.campaign_brief.state import CampaignBriefState
 from langgraph.graph import END, START, StateGraph
 
 
 def build_campaign_brief_graph(client: httpx.AsyncClient):
     """Compile dedicated campaign-brief graph with deterministic prep + structured generation."""
-    builder = StateGraph(BrandBriefState)
+    builder = StateGraph(CampaignBriefState)
     builder.add_node("fetch_and_prepare", partial(fetch_and_prepare, client=client))
     builder.add_node("generate_draft", generate_draft)
     builder.add_node("persist_result", partial(persist_result, client=client))

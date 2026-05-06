@@ -90,8 +90,8 @@ export default async function LandingPage() {
     },
     {
       Icon: ScrollText,
-      title: t('pipeline.nodes.brandBriefTitle'),
-      description: t('pipeline.nodes.brandBriefDescription'),
+      title: t('pipeline.nodes.campaignBriefTitle'),
+      description: t('pipeline.nodes.campaignBriefDescription'),
     },
     {
       Icon: Tags,

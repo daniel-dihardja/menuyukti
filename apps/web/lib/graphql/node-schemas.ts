@@ -38,11 +38,13 @@ export type DatesMilestoneInput = z.infer<typeof datesMilestoneInputSchema>
  * Optional owner notes on the milestone Input tab (`value.notes`).
  * Used by the campaign_brief preset.
  */
-export const brandBriefMilestoneInputValueSchema = z.object({
+export const campaignBriefMilestoneInputValueSchema = z.object({
   notes: z.string(),
 })
 
-export type BrandBriefMilestoneInputValue = z.infer<typeof brandBriefMilestoneInputValueSchema>
+export type CampaignBriefMilestoneInputValue = z.infer<
+  typeof campaignBriefMilestoneInputValueSchema
+>
 
 /**
  * Optional owner notes on the milestone Input tab (`value.notes`).
@@ -91,24 +93,24 @@ export const datesMilestoneDataSchema = z.object({
 
 export type DatesMilestoneData = z.infer<typeof datesMilestoneDataSchema>
 
-export const brandBriefVenueSnapshotSchema = z.object({
+export const campaignBriefVenueSnapshotSchema = z.object({
   venueName: z.string(),
   city: z.string(),
   country: z.string(),
   currency: z.string(),
 })
 
-export type BrandBriefVenueSnapshot = z.infer<typeof brandBriefVenueSnapshotSchema>
+export type CampaignBriefVenueSnapshot = z.infer<typeof campaignBriefVenueSnapshotSchema>
 
-export const brandBriefMilestoneDataSchema = z.object({
-  venueSnapshot: brandBriefVenueSnapshotSchema,
+export const campaignBriefMilestoneDataSchema = z.object({
+  venueSnapshot: campaignBriefVenueSnapshotSchema,
   contentPillars: z.array(z.string()),
   audienceHypotheses: z.array(z.string()),
   proofOrientedAngles: z.array(z.string()),
   toneGuardrails: z.array(z.string()),
 })
 
-export type BrandBriefMilestoneData = z.infer<typeof brandBriefMilestoneDataSchema>
+export type CampaignBriefMilestoneData = z.infer<typeof campaignBriefMilestoneDataSchema>
 
 export const promotionCandidatesCategoryBlockSchema = z.object({
   menuCategory: z.string(),
@@ -176,7 +178,7 @@ export type GoalData = z.infer<typeof goalDataSchema>
 /** Child `milestonedata` node JSON — structured preset data only (breaking change: no markdown string). */
 export const milestonedataValueSchema = z.union([
   datesMilestoneDataSchema,
-  brandBriefMilestoneDataSchema,
+  campaignBriefMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
 ])

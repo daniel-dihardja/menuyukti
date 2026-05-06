@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-BRAND_BRIEF_SYSTEM = """You are a precise marketing-operations assistant for restaurant campaign brief generation.
+CAMPAIGN_BRIEF_SYSTEM = """You are a precise marketing-operations assistant for restaurant campaign brief generation.
 
 Generate exactly one JSON object with this shape:
 {

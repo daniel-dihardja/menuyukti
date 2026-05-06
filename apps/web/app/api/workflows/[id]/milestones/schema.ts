@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
 import {
-  brandBriefMilestoneDataSchema,
-  brandBriefMilestoneInputValueSchema,
+  campaignBriefMilestoneDataSchema,
+  campaignBriefMilestoneInputValueSchema,
   datesMilestoneDataSchema,
   datesMilestoneInputSchema,
   milestonePresetIdSchema,
@@ -36,7 +36,7 @@ export const patchMilestoneSchema = z
     milestoneData: z
       .union([
         datesMilestoneDataSchema,
-        brandBriefMilestoneDataSchema,
+        campaignBriefMilestoneDataSchema,
         promotionCandidatesMilestoneDataSchema,
         postSchedulerMilestoneDataSchema,
       ])
@@ -48,7 +48,7 @@ export const patchMilestoneSchema = z
         z.object({ type: z.literal('dates'), value: datesMilestoneInputSchema }),
         z.object({
           type: z.literal('restaurant_campaign_brief'),
-          value: brandBriefMilestoneInputValueSchema,
+          value: campaignBriefMilestoneInputValueSchema,
         }),
         z.object({
           type: z.literal('promotion_candidates'),

@@ -46,15 +46,15 @@ export type DatesMilestoneData = {
   publicHolidays: DatesPublicHoliday[]
 }
 
-export type BrandBriefVenueSnapshot = {
+export type CampaignBriefVenueSnapshot = {
   venueName: string
   city: string
   country: string
   currency: string
 }
 
-export type BrandBriefMilestoneData = {
-  venueSnapshot: BrandBriefVenueSnapshot
+export type CampaignBriefMilestoneData = {
+  venueSnapshot: CampaignBriefVenueSnapshot
   contentPillars: string[]
   audienceHypotheses: string[]
   proofOrientedAngles: string[]
@@ -91,7 +91,7 @@ export type PostSchedulerMilestoneData = {
 
 export type MilestoneDataValue =
   | DatesMilestoneData
-  | BrandBriefMilestoneData
+  | CampaignBriefMilestoneData
   | PromotionCandidatesMilestoneData
   | PostSchedulerMilestoneData
 

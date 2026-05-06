@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl'
 
 import {
-  brandBriefMilestoneDataSchema,
+  campaignBriefMilestoneDataSchema,
   datesMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
@@ -11,7 +11,7 @@ import {
 
 import type { TimelineMilestone } from '../timeline/types'
 
-import { MilestoneBrandBriefDataPreview } from './milestone-campaign_brief-data-preview'
+import { MilestoneCampaignBriefDataPreview } from './milestone-campaign_brief-data-preview'
 import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
 import { MilestonePostSchedulerDataPreview } from './milestone-post-scheduler-data-preview'
 import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
@@ -52,25 +52,25 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
     }
 
     if (milestone.presetId === 'restaurant_campaign_brief') {
-      const parsedBrandBrief = brandBriefMilestoneDataSchema.safeParse(data)
-      if (!parsedBrandBrief.success) {
+      const parsedCampaignBrief = campaignBriefMilestoneDataSchema.safeParse(data)
+      if (!parsedCampaignBrief.success) {
         return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
       }
 
       return (
-        <MilestoneBrandBriefDataPreview
-          data={parsedBrandBrief.data}
+        <MilestoneCampaignBriefDataPreview
+          data={parsedCampaignBrief.data}
           labels={{
-            venueName: t('milestoneBrandBriefPreviewVenueName'),
-            city: t('milestoneBrandBriefPreviewCity'),
-            country: t('milestoneBrandBriefPreviewCountry'),
-            currency: t('milestoneBrandBriefPreviewCurrency'),
-            contentPillars: t('milestoneBrandBriefPreviewContentPillars'),
-            audienceHypotheses: t('milestoneBrandBriefPreviewAudienceHypotheses'),
-            proofOrientedAngles: t('milestoneBrandBriefPreviewProofOrientedAngles'),
-            toneGuardrails: t('milestoneBrandBriefPreviewToneGuardrails'),
-            emptyList: t('milestoneBrandBriefPreviewEmptyList'),
-            emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
+            venueName: t('milestoneCampaignBriefPreviewVenueName'),
+            city: t('milestoneCampaignBriefPreviewCity'),
+            country: t('milestoneCampaignBriefPreviewCountry'),
+            currency: t('milestoneCampaignBriefPreviewCurrency'),
+            contentPillars: t('milestoneCampaignBriefPreviewContentPillars'),
+            audienceHypotheses: t('milestoneCampaignBriefPreviewAudienceHypotheses'),
+            proofOrientedAngles: t('milestoneCampaignBriefPreviewProofOrientedAngles'),
+            toneGuardrails: t('milestoneCampaignBriefPreviewToneGuardrails'),
+            emptyList: t('milestoneCampaignBriefPreviewEmptyList'),
+            emptyValue: t('milestoneCampaignBriefPreviewEmptyValue'),
           }}
         />
       )
@@ -93,8 +93,8 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             starHighlights: t('milestonePromotionCandidatesPreviewStarHighlights'),
             puzzleHighlights: t('milestonePromotionCandidatesPreviewPuzzleHighlights'),
             notes: t('milestonePromotionCandidatesPreviewNotes'),
-            emptyList: t('milestoneBrandBriefPreviewEmptyList'),
-            emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
+            emptyList: t('milestoneCampaignBriefPreviewEmptyList'),
+            emptyValue: t('milestoneCampaignBriefPreviewEmptyValue'),
           }}
         />
       )
