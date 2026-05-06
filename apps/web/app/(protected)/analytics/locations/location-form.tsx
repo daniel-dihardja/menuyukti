@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
@@ -25,8 +25,15 @@ import { Textarea } from '@workspace/ui/components/textarea'
 import { cn } from '@workspace/ui/lib/utils'
 
 import {
+  AMBIENCE_TAG_IDS,
+  BRIEF_TEXT_MAX_LENGTHS,
+  CUISINE_TYPE_IDS,
+  DIETARY_OPTION_IDS,
   GUEST_TAG_IDS,
   LOCATION_FOCUS_IDS,
+  POST_LANGUAGE_IDS,
+  PRICE_TIER_IDS,
+  SERVICE_MODE_IDS,
   SOCIAL_GOAL_IDS,
   TONE_PRESET_IDS,
   VENUE_CONCEPT_IDS,
@@ -102,6 +109,69 @@ function defaultOpeningHours(): OpeningHourRow[] {
     openTime: '',
     closeTime: '',
   }))
+}
+
+/** Section divider used inside the Brief Hints collapsible to keep the long form scannable. */
+function BriefSection({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description?: string
+  children: ReactNode
+}) {
+  return (
+    <section className="space-y-3 border-t border-border/40 pt-4 first:border-t-0 first:pt-0">
+      <div className="space-y-0.5">
+        <h4 className="text-sm font-semibold leading-none">{title}</h4>
+        {description ? <p className="text-xs text-muted-foreground">{description}</p> : null}
+      </div>
+      <div className="space-y-4">{children}</div>
+    </section>
+  )
+}
+
+/** Multi-select chip group bound to a `string[]` field on `BriefHintsState`. */
+function ChipGroup({
+  label,
+  description,
+  ids,
+  selected,
+  disabled,
+  onToggle,
+  translateOption,
+}: {
+  label: string
+  description?: string
+  ids: readonly string[]
+  selected: string[]
+  disabled?: boolean
+  onToggle: (id: string) => void
+  translateOption: (id: string) => string
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="space-y-0.5">
+        <p className="text-sm font-medium">{label}</p>
+        {description ? <p className="text-xs text-muted-foreground">{description}</p> : null}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {ids.map((id) => (
+          <Button
+            key={id}
+            type="button"
+            size="sm"
+            variant={selected.includes(id) ? 'default' : 'outline'}
+            disabled={disabled}
+            onClick={() => onToggle(id)}
+          >
+            {translateOption(id)}
+          </Button>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export function LocationForm({
@@ -205,6 +275,29 @@ export function LocationForm({
 
   function presetAllClosed() {
     setOpeningHours(defaultOpeningHours())
+  }
+
+  function setHintField<K extends keyof BriefHintsState>(key: K, value: BriefHintsState[K]) {
+    setHints((h) => ({ ...h, [key]: value }))
+  }
+
+  function toggleHintList(
+    key: keyof Pick<
+      BriefHintsState,
+      | 'venueConcepts'
+      | 'socialGoals'
+      | 'guestTags'
+      | 'locationFocus'
+      | 'tonePresets'
+      | 'cuisineTypes'
+      | 'serviceModes'
+      | 'ambienceTags'
+      | 'postLanguages'
+      | 'dietaryOptions'
+    >,
+    id: string,
+  ) {
+    setHints((h) => ({ ...h, [key]: toggleIdInList(h[key], id) }))
   }
 
   function validateOpeningHoursClient(): string | null {
@@ -391,150 +484,390 @@ export function LocationForm({
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <div className="space-y-5 border-t border-border/60 px-4 pb-4 pt-3">
+                  <div className="space-y-6 border-t border-border/60 px-4 pb-4 pt-3">
                     <p className="text-sm text-muted-foreground">{tm('intro')}</p>
 
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">{tm('venueLabel')}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {VENUE_CONCEPT_IDS.map((id) => (
-                          <Button
-                            key={id}
-                            type="button"
-                            size="sm"
-                            variant={hints.venueConcepts.includes(id) ? 'default' : 'outline'}
-                            disabled={loading}
-                            onClick={() =>
-                              setHints((h) => ({
-                                ...h,
-                                venueConcepts: toggleIdInList(h.venueConcepts, id),
-                              }))
-                            }
-                          >
-                            {tm(`venues.${id}`)}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">{tm('goalLabel')}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {SOCIAL_GOAL_IDS.map((id) => (
-                          <Button
-                            key={id}
-                            type="button"
-                            size="sm"
-                            variant={hints.socialGoals.includes(id) ? 'default' : 'outline'}
-                            disabled={loading}
-                            onClick={() =>
-                              setHints((h) => ({
-                                ...h,
-                                socialGoals: toggleIdInList(h.socialGoals, id),
-                              }))
-                            }
-                          >
-                            {tm(`goals.${id}`)}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">{tm('guestLabel')}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {GUEST_TAG_IDS.map((id) => (
-                          <Button
-                            key={id}
-                            type="button"
-                            size="sm"
-                            variant={hints.guestTags.includes(id) ? 'default' : 'outline'}
-                            disabled={loading}
-                            onClick={() =>
-                              setHints((h) => ({
-                                ...h,
-                                guestTags: toggleIdInList(h.guestTags, id),
-                              }))
-                            }
-                          >
-                            {tm(`guests.${id}`)}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">{tm('focusLabel')}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {LOCATION_FOCUS_IDS.map((id) => (
-                          <Button
-                            key={id}
-                            type="button"
-                            size="sm"
-                            variant={hints.locationFocus.includes(id) ? 'default' : 'outline'}
-                            disabled={loading}
-                            onClick={() =>
-                              setHints((h) => ({
-                                ...h,
-                                locationFocus: toggleIdInList(h.locationFocus, id),
-                              }))
-                            }
-                          >
-                            {tm(`focus.${id}`)}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">{tm('toneLabel')}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {TONE_PRESET_IDS.map((id) => (
-                          <Button
-                            key={id}
-                            type="button"
-                            size="sm"
-                            variant={hints.tonePresets.includes(id) ? 'default' : 'outline'}
-                            disabled={loading}
-                            onClick={() =>
-                              setHints((h) => ({
-                                ...h,
-                                tonePresets: toggleIdInList(h.tonePresets, id),
-                              }))
-                            }
-                          >
-                            {tm(`tones.${id}`)}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/80 px-3 py-2">
-                      <Label htmlFor="video-comfort" className="cursor-pointer text-sm font-normal">
-                        {tm('videoLabel')}
-                      </Label>
-                      <Switch
-                        id="video-comfort"
-                        checked={hints.videoComfort}
+                    <BriefSection
+                      title={tm('sections.positioning.title')}
+                      description={tm('sections.positioning.description')}
+                    >
+                      <ChipGroup
+                        label={tm('cuisineLabel')}
+                        ids={CUISINE_TYPE_IDS}
+                        selected={hints.cuisineTypes}
                         disabled={loading}
-                        onCheckedChange={(checked) =>
-                          setHints((h) => ({ ...h, videoComfort: Boolean(checked) }))
-                        }
+                        onToggle={(id) => toggleHintList('cuisineTypes', id)}
+                        translateOption={(id) => tm(`cuisines.${id}`)}
                       />
-                    </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="brief-notes">{tm('notesLabel')}</Label>
-                      <Textarea
-                        id="brief-notes"
-                        rows={2}
-                        maxLength={280}
+                      <div className="space-y-2">
+                        <Label htmlFor="price-tier" className="text-sm font-medium">
+                          {tm('priceTierLabel')}
+                        </Label>
+                        <Select
+                          value={hints.priceTier || EMPTY_SELECT_VALUE}
+                          onValueChange={(value) =>
+                            setHintField('priceTier', value === EMPTY_SELECT_VALUE ? '' : value)
+                          }
+                          disabled={loading}
+                        >
+                          <SelectTrigger id="price-tier" className="sm:w-72">
+                            <SelectValue placeholder={tm('priceTierPlaceholder')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={EMPTY_SELECT_VALUE}>{t('noneOption')}</SelectItem>
+                            {PRICE_TIER_IDS.map((id) => (
+                              <SelectItem key={id} value={id}>
+                                {tm(`priceTiers.${id}`)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <ChipGroup
+                        label={tm('serviceModesLabel')}
+                        ids={SERVICE_MODE_IDS}
+                        selected={hints.serviceModes}
                         disabled={loading}
-                        placeholder={tm('notesPlaceholder')}
-                        value={hints.notes}
-                        onChange={(e) => setHints((h) => ({ ...h, notes: e.target.value }))}
+                        onToggle={(id) => toggleHintList('serviceModes', id)}
+                        translateOption={(id) => tm(`serviceModes.${id}`)}
                       />
-                    </div>
+
+                      <ChipGroup
+                        label={tm('ambienceLabel')}
+                        ids={AMBIENCE_TAG_IDS}
+                        selected={hints.ambienceTags}
+                        disabled={loading}
+                        onToggle={(id) => toggleHintList('ambienceTags', id)}
+                        translateOption={(id) => tm(`ambience.${id}`)}
+                      />
+
+                      <div className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/80 px-3 py-2">
+                        <Label
+                          htmlFor="serves-alcohol"
+                          className="cursor-pointer text-sm font-normal"
+                        >
+                          {tm('servesAlcoholLabel')}
+                        </Label>
+                        <Switch
+                          id="serves-alcohol"
+                          checked={hints.servesAlcohol}
+                          disabled={loading}
+                          onCheckedChange={(checked) =>
+                            setHintField('servesAlcohol', Boolean(checked))
+                          }
+                        />
+                      </div>
+
+                      <ChipGroup
+                        label={tm('dietaryLabel')}
+                        description={tm('dietaryDescription')}
+                        ids={DIETARY_OPTION_IDS}
+                        selected={hints.dietaryOptions}
+                        disabled={loading}
+                        onToggle={(id) => toggleHintList('dietaryOptions', id)}
+                        translateOption={(id) => tm(`dietary.${id}`)}
+                      />
+                    </BriefSection>
+
+                    <BriefSection
+                      title={tm('sections.audience.title')}
+                      description={tm('sections.audience.description')}
+                    >
+                      <ChipGroup
+                        label={tm('venueLabel')}
+                        ids={VENUE_CONCEPT_IDS}
+                        selected={hints.venueConcepts}
+                        disabled={loading}
+                        onToggle={(id) => toggleHintList('venueConcepts', id)}
+                        translateOption={(id) => tm(`venues.${id}`)}
+                      />
+
+                      <ChipGroup
+                        label={tm('guestLabel')}
+                        ids={GUEST_TAG_IDS}
+                        selected={hints.guestTags}
+                        disabled={loading}
+                        onToggle={(id) => toggleHintList('guestTags', id)}
+                        translateOption={(id) => tm(`guests.${id}`)}
+                      />
+
+                      <ChipGroup
+                        label={tm('focusLabel')}
+                        ids={LOCATION_FOCUS_IDS}
+                        selected={hints.locationFocus}
+                        disabled={loading}
+                        onToggle={(id) => toggleHintList('locationFocus', id)}
+                        translateOption={(id) => tm(`focus.${id}`)}
+                      />
+
+                      <ChipGroup
+                        label={tm('postLanguagesLabel')}
+                        description={tm('postLanguagesDescription')}
+                        ids={POST_LANGUAGE_IDS}
+                        selected={hints.postLanguages}
+                        disabled={loading}
+                        onToggle={(id) => toggleHintList('postLanguages', id)}
+                        translateOption={(id) => tm(`postLanguages.${id}`)}
+                      />
+                    </BriefSection>
+
+                    <BriefSection
+                      title={tm('sections.voice.title')}
+                      description={tm('sections.voice.description')}
+                    >
+                      <ChipGroup
+                        label={tm('toneLabel')}
+                        ids={TONE_PRESET_IDS}
+                        selected={hints.tonePresets}
+                        disabled={loading}
+                        onToggle={(id) => toggleHintList('tonePresets', id)}
+                        translateOption={(id) => tm(`tones.${id}`)}
+                      />
+
+                      <ChipGroup
+                        label={tm('goalLabel')}
+                        description={tm('goalDescription')}
+                        ids={SOCIAL_GOAL_IDS}
+                        selected={hints.socialGoals}
+                        disabled={loading}
+                        onToggle={(id) => toggleHintList('socialGoals', id)}
+                        translateOption={(id) => tm(`goals.${id}`)}
+                      />
+
+                      <div className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/80 px-3 py-2">
+                        <Label
+                          htmlFor="video-comfort"
+                          className="cursor-pointer text-sm font-normal"
+                        >
+                          {tm('videoLabel')}
+                        </Label>
+                        <Switch
+                          id="video-comfort"
+                          checked={hints.videoComfort}
+                          disabled={loading}
+                          onCheckedChange={(checked) =>
+                            setHintField('videoComfort', Boolean(checked))
+                          }
+                        />
+                      </div>
+                    </BriefSection>
+
+                    <BriefSection
+                      title={tm('sections.brand.title')}
+                      description={tm('sections.brand.description')}
+                    >
+                      <div className="space-y-2">
+                        <Label htmlFor="value-proposition" className="text-sm font-medium">
+                          {tm('valuePropositionLabel')}
+                        </Label>
+                        <Input
+                          id="value-proposition"
+                          maxLength={BRIEF_TEXT_MAX_LENGTHS.valueProposition}
+                          disabled={loading}
+                          placeholder={tm('valuePropositionPlaceholder')}
+                          value={hints.valueProposition}
+                          onChange={(e) => setHintField('valueProposition', e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {tm('valuePropositionDescription')}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="about-story" className="text-sm font-medium">
+                          {tm('aboutStoryLabel')}
+                        </Label>
+                        <Textarea
+                          id="about-story"
+                          rows={3}
+                          maxLength={BRIEF_TEXT_MAX_LENGTHS.aboutStory}
+                          disabled={loading}
+                          placeholder={tm('aboutStoryPlaceholder')}
+                          value={hints.aboutStory}
+                          onChange={(e) => setHintField('aboutStory', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="topics-to-avoid" className="text-sm font-medium">
+                          {tm('topicsToAvoidLabel')}
+                        </Label>
+                        <Textarea
+                          id="topics-to-avoid"
+                          rows={2}
+                          maxLength={BRIEF_TEXT_MAX_LENGTHS.topicsToAvoid}
+                          disabled={loading}
+                          placeholder={tm('topicsToAvoidPlaceholder')}
+                          value={hints.topicsToAvoid}
+                          onChange={(e) => setHintField('topicsToAvoid', e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="brief-notes" className="text-sm font-medium">
+                          {tm('notesLabel')}
+                        </Label>
+                        <Textarea
+                          id="brief-notes"
+                          rows={2}
+                          maxLength={BRIEF_TEXT_MAX_LENGTHS.notes}
+                          disabled={loading}
+                          placeholder={tm('notesPlaceholder')}
+                          value={hints.notes}
+                          onChange={(e) => setHintField('notes', e.target.value)}
+                        />
+                      </div>
+                    </BriefSection>
+
+                    <BriefSection
+                      title={tm('sections.profile.title')}
+                      description={tm('sections.profile.description')}
+                    >
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="instagram-handle" className="text-sm font-medium">
+                            {tm('instagramHandleLabel')}
+                          </Label>
+                          <Input
+                            id="instagram-handle"
+                            inputMode="text"
+                            maxLength={BRIEF_TEXT_MAX_LENGTHS.instagramHandle + 1}
+                            disabled={loading}
+                            placeholder={tm('instagramHandlePlaceholder')}
+                            value={hints.instagramHandle}
+                            onChange={(e) => setHintField('instagramHandle', e.target.value)}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="neighborhood" className="text-sm font-medium">
+                            {tm('neighborhoodLabel')}
+                          </Label>
+                          <Input
+                            id="neighborhood"
+                            maxLength={BRIEF_TEXT_MAX_LENGTHS.neighborhood}
+                            disabled={loading}
+                            placeholder={tm('neighborhoodPlaceholder')}
+                            value={hints.neighborhood}
+                            onChange={(e) => setHintField('neighborhood', e.target.value)}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="phone" className="text-sm font-medium">
+                            {tm('phoneLabel')}
+                          </Label>
+                          <Input
+                            id="phone"
+                            type="tel"
+                            inputMode="tel"
+                            maxLength={BRIEF_TEXT_MAX_LENGTHS.phone}
+                            disabled={loading}
+                            placeholder={tm('phonePlaceholder')}
+                            value={hints.phone}
+                            onChange={(e) => setHintField('phone', e.target.value)}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="contact-email" className="text-sm font-medium">
+                            {tm('contactEmailLabel')}
+                          </Label>
+                          <Input
+                            id="contact-email"
+                            type="email"
+                            inputMode="email"
+                            maxLength={BRIEF_TEXT_MAX_LENGTHS.contactEmail}
+                            disabled={loading}
+                            placeholder={tm('contactEmailPlaceholder')}
+                            value={hints.contactEmail}
+                            onChange={(e) => setHintField('contactEmail', e.target.value)}
+                          />
+                        </div>
+
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label htmlFor="website-url" className="text-sm font-medium">
+                            {tm('websiteUrlLabel')}
+                          </Label>
+                          <Input
+                            id="website-url"
+                            type="url"
+                            inputMode="url"
+                            maxLength={BRIEF_TEXT_MAX_LENGTHS.websiteUrl}
+                            disabled={loading}
+                            placeholder={tm('websiteUrlPlaceholder')}
+                            value={hints.websiteUrl}
+                            onChange={(e) => setHintField('websiteUrl', e.target.value)}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="reservation-url" className="text-sm font-medium">
+                            {tm('reservationUrlLabel')}
+                          </Label>
+                          <Input
+                            id="reservation-url"
+                            type="url"
+                            inputMode="url"
+                            maxLength={BRIEF_TEXT_MAX_LENGTHS.reservationUrl}
+                            disabled={loading}
+                            placeholder={tm('reservationUrlPlaceholder')}
+                            value={hints.reservationUrl}
+                            onChange={(e) => setHintField('reservationUrl', e.target.value)}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="online-order-url" className="text-sm font-medium">
+                            {tm('onlineOrderUrlLabel')}
+                          </Label>
+                          <Input
+                            id="online-order-url"
+                            type="url"
+                            inputMode="url"
+                            maxLength={BRIEF_TEXT_MAX_LENGTHS.onlineOrderUrl}
+                            disabled={loading}
+                            placeholder={tm('onlineOrderUrlPlaceholder')}
+                            value={hints.onlineOrderUrl}
+                            onChange={(e) => setHintField('onlineOrderUrl', e.target.value)}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="menu-url" className="text-sm font-medium">
+                            {tm('menuUrlLabel')}
+                          </Label>
+                          <Input
+                            id="menu-url"
+                            type="url"
+                            inputMode="url"
+                            maxLength={BRIEF_TEXT_MAX_LENGTHS.menuUrl}
+                            disabled={loading}
+                            placeholder={tm('menuUrlPlaceholder')}
+                            value={hints.menuUrl}
+                            onChange={(e) => setHintField('menuUrl', e.target.value)}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="google-maps-url" className="text-sm font-medium">
+                            {tm('googleMapsUrlLabel')}
+                          </Label>
+                          <Input
+                            id="google-maps-url"
+                            type="url"
+                            inputMode="url"
+                            maxLength={BRIEF_TEXT_MAX_LENGTHS.googleMapsUrl}
+                            disabled={loading}
+                            placeholder={tm('googleMapsUrlPlaceholder')}
+                            value={hints.googleMapsUrl}
+                            onChange={(e) => setHintField('googleMapsUrl', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </BriefSection>
 
                     <Button
                       type="button"

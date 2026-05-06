@@ -1,7 +1,7 @@
 import type {
   MilestoneRunSkillMode,
   PassCriteriaRow,
-} from '@/app/(protected)/workflows/_components/timeline/types'
+} from '@/app/(protected)/campaigns/_components/timeline/types'
 import { type MilestoneInput, type MilestonedataValue } from '@/lib/graphql/node-schemas'
 
 export const MILESTONE_PRESET_IDS = [

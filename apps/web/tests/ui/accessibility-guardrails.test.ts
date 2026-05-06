@@ -15,7 +15,7 @@ describe('UI accessibility guardrails', () => {
   })
 
   it('uses semantic button for asset preview trigger', () => {
-    const source = readSource('app/(protected)/assets/_components/assets-image-grid.tsx')
+    const source = readSource('app/(protected)/canvas/_components/assets-image-grid.tsx')
     expect(source).toContain('type="button"')
     expect(source).not.toContain('role="button"')
   })

@@ -20,6 +20,20 @@ const nextConfig = {
   cacheComponents: true,
   output: 'standalone',
   transpilePackages: ['@workspace/ui'],
+  async redirects() {
+    return [
+      { source: '/agent', destination: '/advisor', permanent: true },
+      { source: '/agent/:path*', destination: '/advisor/:path*', permanent: true },
+      { source: '/workflows', destination: '/campaigns', permanent: true },
+      { source: '/workflows/:path*', destination: '/campaigns/:path*', permanent: true },
+    ]
+  },
+  async rewrites() {
+    return [
+      { source: '/advisor', destination: '/agent' },
+      { source: '/advisor/:path*', destination: '/agent/:path*' },
+    ]
+  },
   experimental: {
     optimizePackageImports: ['lucide-react', '@workspace/ui'],
   },

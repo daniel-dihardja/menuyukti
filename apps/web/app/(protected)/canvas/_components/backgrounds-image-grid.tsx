@@ -1,12 +1,11 @@
 'use client'
 
 import { useFormatter, useTranslations } from 'next-intl'
-import { Download, ImageIcon, Loader2, Maximize2, Sparkles, Trash2 } from 'lucide-react'
+import { Download, ImageIcon, Maximize2, Sparkles } from 'lucide-react'
 
 import { Button } from '@workspace/ui/components/button'
 import { Card } from '@workspace/ui/components/card'
 import { Field, FieldLabel } from '@workspace/ui/components/field'
-import { Skeleton } from '@workspace/ui/components/skeleton'
 import {
   Select,
   SelectContent,
@@ -14,61 +13,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@workspace/ui/components/select'
+import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Textarea } from '@workspace/ui/components/textarea'
 
-import type { AiFlowOption } from './assets-upload-zone'
+import type { BackgroundItem } from '@/lib/assets/backgrounds'
 import {
   ASSETS_GRID_SKELETON_COUNT,
-  type AssetItem,
-  assetDownloadHref,
+  assetBackgroundDownloadHref,
   formatBytes,
   formatDimensions,
 } from './asset-item-types'
 
-/** Visible on touch; fade-in on hover only when the device supports real hover (not mobile tap). */
 const assetTileOverlayReveal =
   'opacity-100 transition-opacity duration-300 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover/tile:opacity-100'
 
 const overlayIconButtonBase =
   'h-11 w-11 shrink-0 touch-manipulation rounded-full shadow-md transition-transform duration-150 active:scale-[0.97] sm:h-9 sm:w-9 sm:active:scale-100'
 
-export type AssetsImageGridProps = {
+export type BackgroundsImageGridProps = {
   loading: boolean
-  items: AssetItem[]
+  items: BackgroundItem[]
   imageDimensionsByName: Record<string, { width: number; height: number }>
   onImageNaturalSize: (name: string, width: number, height: number) => void
-  cardFlows: Record<string, string>
-  onCardFlowChange: (name: string, value: string) => void
-  cardCustomPrompts: Record<string, string>
-  onCardCustomPromptChange: (name: string, value: string) => void
-  aiFlows: AiFlowOption[]
-  flowsLoading: boolean
-  generatingByName: Record<string, boolean>
-  deleting: string | null
-  onPreview: (item: AssetItem) => void
-  onDeleteRequest: (name: string) => void
-  onGenerate: (item: AssetItem) => void
+  onPreview: (item: BackgroundItem) => void
+  bgCardFlows: Record<string, string>
+  onBgCardFlowChange: (name: string, value: string) => void
+  bgCardCustomPrompts: Record<string, string>
+  onBgCardCustomPromptChange: (name: string, value: string) => void
+  onGenerate: (item: BackgroundItem) => void
   skeletonCount?: number
 }
 
-export function AssetsImageGrid({
+export function BackgroundsImageGrid({
   loading,
   items,
   imageDimensionsByName,
   onImageNaturalSize,
-  cardFlows,
-  onCardFlowChange,
-  cardCustomPrompts,
-  onCardCustomPromptChange,
-  aiFlows,
-  flowsLoading,
-  generatingByName,
-  deleting,
   onPreview,
-  onDeleteRequest,
+  bgCardFlows,
+  onBgCardFlowChange,
+  bgCardCustomPrompts,
+  onBgCardCustomPromptChange,
   onGenerate,
   skeletonCount = ASSETS_GRID_SKELETON_COUNT,
-}: AssetsImageGridProps) {
+}: BackgroundsImageGridProps) {
   const t = useTranslations('assets')
   const format = useFormatter()
 
@@ -95,8 +83,8 @@ export function AssetsImageGrid({
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
               <ImageIcon className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium">{t('grid.empty.title')}</h3>
-            <p className="text-sm text-muted-foreground">{t('grid.empty.description')}</p>
+            <h3 className="text-lg font-medium">{t('backgrounds.empty.title')}</h3>
+            <p className="text-sm text-muted-foreground">{t('backgrounds.empty.description')}</p>
           </div>
         </Card>
       ) : (
@@ -109,11 +97,11 @@ export function AssetsImageGrid({
             const sizeWithDimensions = `${formatBytes(item.size)}${dimensions ? ` - ${dimensions}` : ''}`
             return (
               <figure
-                key={item.name}
+                key={item.key}
                 className="group/tile min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md"
               >
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted/30 text-left">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- dynamic user uploads; dimensions vary */}
+                  {/* eslint-disable-next-line @next/next/no-img-element -- dynamic S3 URLs; dimensions vary */}
                   <img
                     src={item.url}
                     alt=""
@@ -156,30 +144,12 @@ export function AssetsImageGrid({
                         asChild
                       >
                         <a
-                          href={assetDownloadHref(item.name)}
+                          href={assetBackgroundDownloadHref(item.name)}
                           download={item.name}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Download className="h-5 w-5 sm:h-4 sm:w-4" />
                         </a>
-                      </Button>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="secondary"
-                        className={`${overlayIconButtonBase} bg-white/95 text-destructive hover:bg-white`}
-                        disabled={deleting === item.name}
-                        aria-label={t('grid.delete')}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onDeleteRequest(item.name)
-                        }}
-                      >
-                        {deleting === item.name ? (
-                          <Loader2 className="h-5 w-5 animate-spin sm:h-4 sm:w-4" />
-                        ) : (
-                          <Trash2 className="h-5 w-5 sm:h-4 sm:w-4" />
-                        )}
                       </Button>
                     </div>
                   </div>
@@ -197,19 +167,22 @@ export function AssetsImageGrid({
                 <div className="flex flex-col gap-2 border-t border-border/50 px-3 py-3">
                   <Field className="gap-1.5">
                     <FieldLabel
-                      htmlFor={`asset-flow-${item.name}`}
+                      htmlFor={`background-flow-${item.name}`}
                       className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
                     >
                       {t('grid.generate.flowLabel')}
                     </FieldLabel>
                     <Select
-                      value={cardFlows[item.name] ?? 'none'}
+                      value={bgCardFlows[item.name] ?? 'none'}
                       onValueChange={(value) => {
-                        onCardFlowChange(item.name, value)
+                        onBgCardFlowChange(item.name, value)
                       }}
-                      disabled={flowsLoading || generatingByName[item.name]}
                     >
-                      <SelectTrigger id={`asset-flow-${item.name}`} size="sm" className="w-full">
+                      <SelectTrigger
+                        id={`background-flow-${item.name}`}
+                        size="sm"
+                        className="w-full"
+                      >
                         <SelectValue placeholder={t('grid.generate.flowPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent
@@ -219,31 +192,25 @@ export function AssetsImageGrid({
                       >
                         <SelectItem value="none">{t('upload.flow.none')}</SelectItem>
                         <SelectItem value="custom">{t('grid.generate.customOption')}</SelectItem>
-                        {aiFlows.map((flow) => (
-                          <SelectItem key={`${item.name}-${flow.slug}`} value={flow.slug}>
-                            {flow.displayName}
-                          </SelectItem>
-                        ))}
                       </SelectContent>
                     </Select>
                   </Field>
-                  {(cardFlows[item.name] ?? 'none') === 'custom' ? (
+                  {(bgCardFlows[item.name] ?? 'none') === 'custom' ? (
                     <Field className="gap-1.5">
                       <FieldLabel
-                        htmlFor={`asset-custom-prompt-${item.name}`}
+                        htmlFor={`background-custom-prompt-${item.name}`}
                         className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-muted-foreground/90"
                       >
                         {t('grid.generate.customPromptLabel')}
                       </FieldLabel>
                       <Textarea
-                        id={`asset-custom-prompt-${item.name}`}
-                        value={cardCustomPrompts[item.name] ?? ''}
+                        id={`background-custom-prompt-${item.name}`}
+                        value={bgCardCustomPrompts[item.name] ?? ''}
                         onChange={(e) => {
-                          onCardCustomPromptChange(item.name, e.target.value)
+                          onBgCardCustomPromptChange(item.name, e.target.value)
                         }}
                         placeholder={t('grid.generate.customPromptPlaceholder')}
                         rows={3}
-                        disabled={generatingByName[item.name]}
                       />
                     </Field>
                   ) : null}
@@ -252,25 +219,14 @@ export function AssetsImageGrid({
                     size="sm"
                     className="w-full"
                     disabled={
-                      flowsLoading ||
-                      generatingByName[item.name] ||
-                      (cardFlows[item.name] ?? 'none') === 'none' ||
-                      ((cardFlows[item.name] ?? 'none') === 'custom' &&
-                        (cardCustomPrompts[item.name]?.trim() ?? '').length === 0)
+                      (bgCardFlows[item.name] ?? 'none') === 'none' ||
+                      ((bgCardFlows[item.name] ?? 'none') === 'custom' &&
+                        (bgCardCustomPrompts[item.name]?.trim() ?? '').length === 0)
                     }
                     onClick={() => void onGenerate(item)}
                   >
-                    {generatingByName[item.name] ? (
-                      <>
-                        <Loader2 className="animate-spin" data-icon="inline-start" />
-                        {t('grid.generate.generating')}
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles data-icon="inline-start" />
-                        {t('grid.generate.button')}
-                      </>
-                    )}
+                    <Sparkles data-icon="inline-start" />
+                    {t('grid.generate.button')}
                   </Button>
                 </div>
               </figure>

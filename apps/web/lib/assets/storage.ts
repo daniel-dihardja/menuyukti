@@ -56,6 +56,29 @@ export function isSafeAssetFilename(name: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$/i.test(name)
 }
 
+const ASSET_DESIGNS_SUBDIR = 'designs'
+
+/** S3 prefix: `users/<userId>/designs/`. */
+export function userDesignsPrefix(userId: string): string {
+  return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_DESIGNS_SUBDIR}/`
+}
+
+export function userDesignsObjectKey(userId: string, filename: string): string {
+  return `${ASSET_USERS_PREFIX}/${userId}/${ASSET_DESIGNS_SUBDIR}/${filename}`
+}
+
+/** Allow common image extensions in designs (not restricted to UUID.webp). */
+export function isSafeDesignFilename(name: string): boolean {
+  return /^[\w\-. ]{1,200}\.(webp|jpg|jpeg|png|gif)$/i.test(name) && !name.includes('/')
+}
+
+export function isObjectKeyForDesign(key: string, userId: string): boolean {
+  const prefix = userDesignsPrefix(userId)
+  if (!key.startsWith(prefix) || key.length <= prefix.length) return false
+  const filename = key.slice(prefix.length)
+  return isSafeDesignFilename(filename)
+}
+
 export async function getPresignedGetUrl(objectKey: string): Promise<string> {
   const client = getS3Client()
   const command = new GetObjectCommand({

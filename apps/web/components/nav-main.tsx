@@ -56,7 +56,7 @@ const NAV_WORKSPACE: NavItem[] = [
   {
     key: 'studio',
     labelKey: 'studio',
-    href: routes.studio,
+    href: routes.canvas,
     icon: <Sparkles className="w-4 h-4" />,
     separatorBefore: true,
   },

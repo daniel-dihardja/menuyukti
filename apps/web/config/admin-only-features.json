@@ -2,14 +2,14 @@
   "features": [
     {
       "id": "assets",
-      "description": "Brand asset library and uploads (/assets, related APIs).",
-      "routePrefixes": ["/assets", "/studio"],
+      "description": "Brand asset library and uploads (/canvas, related APIs).",
+      "routePrefixes": ["/canvas"],
       "navKeys": []
     },
     {
       "id": "studio",
       "description": "AI asset studio (brand library + generation).",
-      "routePrefixes": ["/studio"],
+      "routePrefixes": ["/canvas"],
       "navKeys": ["studio"]
     },
     {

@@ -7,9 +7,10 @@ import { routes } from '@/lib/routes'
 /** Keep route prefixes aligned with `PROTECTED_APP_SHELL_PREFIXES` in `lib/routes.ts` (MainHeader visibility). */
 const isProtectedRoute = createRouteMatcher([
   '/analytics(.*)',
+  '/campaigns(.*)',
   '/workflows(.*)',
-  '/assets(.*)',
-  '/studio(.*)',
+  '/canvas(.*)',
+  '/advisor(.*)',
   '/agent(.*)',
   '/print-orders(.*)',
   '/dashboard(.*)',

@@ -100,8 +100,34 @@ def _fmt_fundamental_signals(instagram: dict[str, Any], currency: str) -> str:
     return "\n".join(lines)
 
 
+def _str_list_line(qp: dict[str, Any], key: str, label: str) -> str | None:
+    value = qp.get(key)
+    if not isinstance(value, list) or not value:
+        return None
+    items = [str(x).strip() for x in value if isinstance(x, str) and str(x).strip()]
+    if not items:
+        return None
+    return f"- **{label}**: {', '.join(items)}"
+
+
+def _str_line(qp: dict[str, Any], key: str, label: str) -> str | None:
+    value = qp.get(key)
+    if not isinstance(value, str):
+        return None
+    text = value.strip()
+    if not text:
+        return None
+    return f"- **{label}**: {text}"
+
+
 def _fmt_manual_brief_hints(raw_loc: dict[str, Any]) -> str:
-    """Markdown for owner-provided quick profile (camelCase GraphQL keys)."""
+    """Markdown for owner-provided quick profile (camelCase GraphQL keys).
+
+    Renders the full Instagram-readiness profile so downstream graphs can use the
+    venue's stable facts (cuisine, positioning, service modes, links, guardrails)
+    without re-asking the owner for them per-campaign. Keys mirror the validator
+    in ``graphql.services.manual_quick_profile``.
+    """
     mb = raw_loc.get("manualBriefInput")
     if not isinstance(mb, dict):
         return ""
@@ -110,32 +136,49 @@ def _fmt_manual_brief_hints(raw_loc: dict[str, Any]) -> str:
         return ""
     lines: list[str] = [
         "## Owner-provided brief hints (manual)",
-        "_Declared by the venue owner in settings — not inferred from sales data._",
+        "_Declared by the venue owner in settings — stable across campaigns._",
     ]
-    vcs = qp.get("venueConcepts")
-    if isinstance(vcs, list) and vcs:
-        lines.append(f"- **Venue types**: {', '.join(str(x) for x in vcs)}")
-    else:
-        legacy_v = qp.get("venueConcept")
-        if isinstance(legacy_v, str) and legacy_v.strip():
-            lines.append(f"- **Venue type**: {legacy_v.strip()}")
 
-    sg = qp.get("socialGoals")
-    if isinstance(sg, list) and sg:
-        lines.append(f"- **Social goals**: {', '.join(str(x) for x in sg)}")
+    # Positioning & cuisine.
+    line = _str_list_line(qp, "venueConcepts", "Venue types")
+    if line:
+        lines.append(line)
+    elif isinstance(qp.get("venueConcept"), str) and qp["venueConcept"].strip():
+        lines.append(f"- **Venue type**: {qp['venueConcept'].strip()}")
 
-    gt = qp.get("guestTags")
-    if isinstance(gt, list) and gt:
-        lines.append(f"- **Guest context**: {', '.join(str(x) for x in gt)}")
+    for spec in (
+        ("cuisineTypes", "Cuisine types"),
+        ("serviceModes", "Service modes"),
+        ("ambienceTags", "Ambience"),
+        ("dietaryOptions", "Dietary options"),
+        ("postLanguages", "Post languages"),
+    ):
+        line = _str_list_line(qp, spec[0], spec[1])
+        if line:
+            lines.append(line)
 
-    lf = qp.get("locationFocus")
-    if isinstance(lf, list) and lf:
-        lines.append(f"- **Location focus (meal periods)**: {', '.join(str(x) for x in lf)}")
+    line = _str_line(qp, "priceTier", "Price tier")
+    if line:
+        lines.append(line)
 
-    tps = qp.get("tonePresets")
-    if isinstance(tps, list) and tps:
-        lines.append(f"- **Tone presets**: {', '.join(str(x) for x in tps)}")
-    else:
+    serves_alcohol = qp.get("servesAlcohol")
+    if isinstance(serves_alcohol, bool):
+        lines.append(
+            f"- **Serves alcohol**: {'yes' if serves_alcohol else 'no'} "
+            "(respect responsible-drinking and local alcohol-advertising rules when true)"
+        )
+
+    # Audience & defaults.
+    for spec in (
+        ("guestTags", "Guest context"),
+        ("locationFocus", "Location focus (meal periods)"),
+        ("socialGoals", "Default social goals (overridable per campaign)"),
+        ("tonePresets", "Tone presets"),
+    ):
+        line = _str_list_line(qp, spec[0], spec[1])
+        if line:
+            lines.append(line)
+    if not _str_list_line(qp, "tonePresets", "Tone presets"):
         legacy_t = qp.get("tonePreset")
         if isinstance(legacy_t, str) and legacy_t.strip():
             lines.append(f"- **Tone preset**: {legacy_t.strip()}")
@@ -144,9 +187,40 @@ def _fmt_manual_brief_hints(raw_loc: dict[str, Any]) -> str:
     if isinstance(vc_video, bool):
         lines.append(f"- **Comfortable with Reels / short video**: {'yes' if vc_video else 'no'}")
 
-    notes = qp.get("notes")
-    if isinstance(notes, str) and notes.strip():
-        lines.append(f"- **Notes**: {notes.strip()}")
+    # Brand & guardrails.
+    for spec in (
+        ("valueProposition", "Hero promise"),
+        ("aboutStory", "About / story"),
+        ("topicsToAvoid", "Topics or visuals to avoid"),
+        ("notes", "Notes"),
+    ):
+        line = _str_line(qp, spec[0], spec[1])
+        if line:
+            lines.append(line)
+
+    # Profile, contact & link-in-bio destinations.
+    profile_lines: list[str] = []
+    handle = qp.get("instagramHandle")
+    if isinstance(handle, str) and handle.strip():
+        profile_lines.append(f"- **Instagram handle**: @{handle.strip().lstrip('@')}")
+    for spec in (
+        ("neighborhood", "Neighborhood"),
+        ("phone", "Phone"),
+        ("contactEmail", "Contact email"),
+        ("websiteUrl", "Website"),
+        ("reservationUrl", "Reservation link"),
+        ("onlineOrderUrl", "Online order link"),
+        ("menuUrl", "Menu link"),
+        ("googleMapsUrl", "Google Maps / directions"),
+    ):
+        line = _str_line(qp, spec[0], spec[1])
+        if line:
+            profile_lines.append(line)
+    if profile_lines:
+        lines.append("")
+        lines.append("**Profile, contact & link-in-bio:**")
+        lines.extend(profile_lines)
+
     if len(lines) <= 2:
         return ""
     return "\n".join(lines)

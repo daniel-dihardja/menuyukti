@@ -63,7 +63,7 @@ export function MainHeader() {
               className="hidden min-w-0 flex-1 items-center justify-start gap-1 sm:flex sm:gap-2"
               aria-label={t('navAria')}
             >
-              <Link href={routes.studio} className={navLinkClass(false)}>
+              <Link href={routes.canvas} className={navLinkClass(false)}>
                 {t('navWorkflows')}
               </Link>
               <Link href={routes.shop} className={navLinkClass(!!shopActive)}>
@@ -106,7 +106,7 @@ export function MainHeader() {
                           'text-muted-foreground hover:text-foreground',
                         )}
                       >
-                        <Link href={routes.studio}>{t('navWorkflows')}</Link>
+                        <Link href={routes.canvas}>{t('navWorkflows')}</Link>
                       </Button>
                     </SheetClose>
                     <SheetClose asChild>

@@ -72,7 +72,7 @@ export function DashboardRecentAssets() {
         <li className="min-w-0" key={item.name}>
           <Link
             className="relative block aspect-square overflow-hidden rounded-md border transition-opacity hover:opacity-90"
-            href={routes.studio}
+            href={routes.canvas}
           >
             <Image alt={item.name} className="object-cover" fill sizes="120px" src={item.url} />
           </Link>

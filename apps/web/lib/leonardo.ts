@@ -86,6 +86,14 @@ export type CreateNanoBananaParams = NanoBananaFlowConfig & {
   height: number
 }
 
+export type CreateNanoBananaCompositionParams = NanoBananaFlowConfig & {
+  /** Ordered init-image IDs (e.g. product first, background second). */
+  uploadedImageIds: string[]
+  /** Output size — snapped to Nano Banana allowed dimensions */
+  width: number
+  height: number
+}
+
 function parseJsonBody(rawText: string): unknown {
   if (!rawText) return null
   try {
@@ -302,6 +310,116 @@ export async function createNanoBananaGeneration(params: CreateNanoBananaParams)
   return genId
 }
 
+export async function createNanoBananaCompositionGeneration(
+  params: CreateNanoBananaCompositionParams,
+): Promise<string> {
+  const {
+    model,
+    prompt,
+    uploadedImageIds,
+    width,
+    height,
+    styleIds,
+    imageReferenceStrength = 'MID',
+    promptEnhance = 'OFF',
+  } = params
+
+  const sanitizedUploadedIds = uploadedImageIds.filter((id) => id.trim().length > 0)
+  if (sanitizedUploadedIds.length === 0) {
+    throw new Error('At least one uploaded image id is required')
+  }
+
+  const w = snapNanoBananaDimension(width)
+  const h = snapNanoBananaDimension(height)
+
+  const parameters: Record<string, unknown> = {
+    prompt,
+    quantity: 1,
+    prompt_enhance: promptEnhance,
+    width: w,
+    height: h,
+    guidances: {
+      image_reference: sanitizedUploadedIds.map((imageId) => ({
+        image: {
+          id: imageId,
+          type: 'UPLOADED',
+        },
+        strength: imageReferenceStrength,
+      })),
+    },
+  }
+
+  if (styleIds && styleIds.length > 0) {
+    parameters.style_ids = styleIds
+  }
+
+  const body = {
+    model,
+    parameters,
+    public: false,
+  }
+
+  logInfo('generations v2: creating composition job (Nano Banana)', {
+    model,
+    uploadedImageIds: sanitizedUploadedIds,
+    width: w,
+    height: h,
+    promptPreview: truncateBody(prompt, 120),
+    hasStyleIds: Boolean(styleIds?.length),
+  })
+
+  const res = await fetch(`${BASE_V2}/generations`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  })
+
+  const rawText = await res.text()
+  const data = parseJsonBody(rawText)
+
+  if (data === null && rawText) {
+    logError('generations v2 composition: response is not JSON', {
+      status: res.status,
+      body: truncateBody(rawText),
+    })
+    throw new Error(`Leonardo v2 composition failed: ${res.status} (invalid JSON)`)
+  }
+
+  if (!res.ok) {
+    logError('generations v2 composition: API error', {
+      status: res.status,
+      body: truncateBody(rawText),
+    })
+    throw new Error(`Leonardo v2 composition failed: ${res.status} ${truncateBody(rawText, 500)}`)
+  }
+
+  let genId = generationIdFromCreateResponse(data)
+
+  if (!genId) {
+    const loc = res.headers.get('location') ?? res.headers.get('Location')
+    if (loc) {
+      const m = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i.exec(loc)
+      if (m?.[1]) {
+        genId = m[1]
+        logInfo('generations v2 composition: using generation id from Location header', {
+          generationId: genId,
+        })
+      }
+    }
+  }
+
+  if (!genId) {
+    const snippet = truncateBody(JSON.stringify(data), 800)
+    logError('generations v2 composition: missing generationId in response', { raw: snippet })
+    throw new Error(
+      `Leonardo v2 composition response missing generationId.${process.env.NODE_ENV === 'development' ? ` Response: ${snippet}` : ''}`,
+    )
+  }
+
+  logInfo('generations v2 composition: job created', { generationId: genId })
+  return genId
+}
+
 /**
  * Poll until COMPLETE — GET /api/rest/v1/generations/{id} (only status endpoint Leonardo documents).
  */
@@ -433,5 +551,53 @@ export async function runRemoveBackground(
   const raw = Buffer.from(arrayBuffer)
   const out = await sharp(raw).webp({ quality: 85 }).toBuffer()
   logInfo('runRemoveBackground: done', { outputBytes: out.length })
+  return out
+}
+
+export async function runImageComposition(
+  productWebpBuffer: Buffer,
+  backgroundWebpBuffer: Buffer,
+  flow: NanoBananaFlowConfig,
+  width: number,
+  height: number,
+): Promise<Buffer> {
+  logInfo('runImageComposition: start', {
+    model: flow.model,
+    width,
+    height,
+    productInputBytes: productWebpBuffer.length,
+    backgroundInputBytes: backgroundWebpBuffer.length,
+    promptPreview: truncateBody(flow.prompt, 120),
+  })
+
+  const productImageId = await uploadInitImage(productWebpBuffer, 'webp')
+  const backgroundImageId = await uploadInitImage(backgroundWebpBuffer, 'webp')
+  const generationId = await createNanoBananaCompositionGeneration({
+    ...flow,
+    uploadedImageIds: [productImageId, backgroundImageId],
+    width,
+    height,
+  })
+  const imageUrl = await pollGeneration(generationId)
+
+  const imgRes = await fetch(imageUrl)
+  if (!imgRes.ok) {
+    logError('runImageComposition: download result failed', {
+      status: imgRes.status,
+      urlHost: (() => {
+        try {
+          return new URL(imageUrl).host
+        } catch {
+          return 'invalid-url'
+        }
+      })(),
+    })
+    throw new Error(`Failed to download Leonardo result: ${imgRes.status}`)
+  }
+
+  const arrayBuffer = await imgRes.arrayBuffer()
+  const raw = Buffer.from(arrayBuffer)
+  const out = await sharp(raw).webp({ quality: 85 }).toBuffer()
+  logInfo('runImageComposition: done', { outputBytes: out.length })
   return out
 }

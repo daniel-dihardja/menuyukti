@@ -6,10 +6,9 @@
  */
 export const PROTECTED_APP_SHELL_PREFIXES = [
   '/analytics',
-  '/workflows',
-  '/assets',
-  '/studio',
-  '/agent',
+  '/campaigns',
+  '/canvas',
+  '/advisor',
   '/print-orders',
   '/dashboard',
   '/skills',
@@ -51,12 +50,11 @@ export const routes = {
     menuItems: (analyticsId: string | number) => `/analytics/${analyticsId}/menu-items`,
   },
 
-  assets: '/assets',
-  /** AI asset studio (brand library + generation); `/assets` redirects here. */
-  studio: '/studio',
-  studioSession: (id: string | number) => `/studio/${id}`,
+  /** AI canvas (brand library + generation). */
+  canvas: '/canvas',
+  canvasSession: (id: string | number) => `/canvas/${id}`,
   /** Standalone assistant chat (same `/api/chat` stack as workflows). */
-  agent: '/agent',
+  agent: '/advisor',
   printOrders: '/print-orders',
   dashboard: '/dashboard',
   /** Menuyukti staff-only console (platform role `admin`). */
@@ -69,8 +67,8 @@ export const routes = {
   profileAccount: '/profile/account',
 
   workflows: {
-    list: '/workflows',
-    detail: (id: string | number) => `/workflows/${id}`,
+    list: '/campaigns',
+    detail: (id: string | number) => `/campaigns/${id}`,
   },
 
   skills: '/skills',

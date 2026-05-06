@@ -636,6 +636,96 @@ def test_fmt_milestone_brand_brief_owner_notes_includes_trimmed_text() -> None:
     assert "  Family-friendly" not in md
 
 
+def test_fmt_manual_brief_hints_empty_when_no_quick_profile() -> None:
+    from agents_app.agents.core.milestone_run.tools.get_location_profile import (
+        _fmt_manual_brief_hints,
+    )
+
+    assert _fmt_manual_brief_hints({}) == ""
+    assert _fmt_manual_brief_hints({"manualBriefInput": None}) == ""
+    assert _fmt_manual_brief_hints({"manualBriefInput": {"quickProfile": {}}}) == ""
+    # Empty bucket-only fields should still produce no output.
+    assert (
+        _fmt_manual_brief_hints({"manualBriefInput": {"quickProfile": {"venueConcepts": []}}}) == ""
+    )
+
+
+def test_fmt_manual_brief_hints_renders_extended_profile_keys() -> None:
+    from agents_app.agents.core.milestone_run.tools.get_location_profile import (
+        _fmt_manual_brief_hints,
+    )
+
+    md = _fmt_manual_brief_hints(
+        {
+            "manualBriefInput": {
+                "quickProfile": {
+                    "venueConcepts": ["bistro"],
+                    "cuisineTypes": ["italian", "indonesian"],
+                    "serviceModes": ["dine_in", "delivery"],
+                    "ambienceTags": ["cozy"],
+                    "dietaryOptions": ["vegan", "halal"],
+                    "postLanguages": ["de", "en"],
+                    "priceTier": "mid",
+                    "servesAlcohol": True,
+                    "guestTags": ["office_lunch"],
+                    "locationFocus": ["lunch"],
+                    "socialGoals": ["walk_ins"],
+                    "tonePresets": ["warm"],
+                    "videoComfort": False,
+                    "valueProposition": "Friendly Indonesian bistro for office lunches.",
+                    "aboutStory": "Family-run since 2014.",
+                    "topicsToAvoid": "No discount-led messaging on dinner posts.",
+                    "instagramHandle": "menuyukti",
+                    "websiteUrl": "https://menuyukti.example",
+                    "reservationUrl": "https://book.example",
+                    "phone": "+49 30 123",
+                    "neighborhood": "Mitte",
+                }
+            }
+        }
+    )
+    assert "Owner-provided brief hints" in md
+    assert "Cuisine types**: italian, indonesian" in md
+    assert "Service modes**: dine_in, delivery" in md
+    assert "Ambience**: cozy" in md
+    assert "Dietary options**: vegan, halal" in md
+    assert "Post languages**: de, en" in md
+    assert "Price tier**: mid" in md
+    assert "Serves alcohol**: yes" in md
+    assert "responsible-drinking" in md
+    assert "Default social goals (overridable per campaign)**: walk_ins" in md
+    assert "Hero promise**: Friendly Indonesian bistro for office lunches." in md
+    assert "About / story**: Family-run since 2014." in md
+    assert "Topics or visuals to avoid**: No discount-led" in md
+    assert "Profile, contact & link-in-bio:" in md
+    assert "Instagram handle**: @menuyukti" in md
+    assert "Website**: https://menuyukti.example" in md
+    assert "Reservation link**: https://book.example" in md
+    assert "Phone**: +49 30 123" in md
+    assert "Neighborhood**: Mitte" in md
+
+
+def test_fmt_manual_brief_hints_handles_missing_optional_fields_gracefully() -> None:
+    from agents_app.agents.core.milestone_run.tools.get_location_profile import (
+        _fmt_manual_brief_hints,
+    )
+
+    md = _fmt_manual_brief_hints(
+        {
+            "manualBriefInput": {
+                "quickProfile": {
+                    "valueProposition": "Hero promise text",
+                    "instagramHandle": "@example",
+                }
+            }
+        }
+    )
+    assert "Hero promise**: Hero promise text" in md
+    assert "Instagram handle**: @example" in md
+    # No empty profile section header when only the IG handle is present.
+    assert md.count("Profile, contact & link-in-bio:") == 1
+
+
 def test_validate_extra_tool_ids_rejects_unknown() -> None:
     from agents_app.agents.core.milestone_run.tools.registry import validate_extra_tool_ids
 
