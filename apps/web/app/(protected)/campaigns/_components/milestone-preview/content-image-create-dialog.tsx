@@ -66,6 +66,7 @@ export function ContentImageCreateDialog({ open, onOpenChange }: ContentImageCre
   const [selectedProductNames, setSelectedProductNames] = useState<string[]>([])
   const [selectedBackgroundName, setSelectedBackgroundName] = useState<string | null>(null)
   const [selectedFlowSlug, setSelectedFlowSlug] = useState<string>('')
+  const [selectedFormat, setSelectedFormat] = useState<string>('1:1')
   const [loadingProducts, setLoadingProducts] = useState(false)
   const [loadingBackgrounds, setLoadingBackgrounds] = useState(false)
   const [loadingFlows, setLoadingFlows] = useState(false)
@@ -76,6 +77,7 @@ export function ContentImageCreateDialog({ open, onOpenChange }: ContentImageCre
       setSelectedProductNames([])
       setSelectedBackgroundName(null)
       setSelectedFlowSlug('')
+      setSelectedFormat('1:1')
       setError(null)
       return
     }
@@ -268,6 +270,28 @@ export function ContentImageCreateDialog({ open, onOpenChange }: ContentImageCre
                 )}
               </Field>
             </section>
+
+            <section className="flex flex-col gap-2">
+              <Field className="gap-1.5">
+                <FieldLabel htmlFor="content-image-format" className="text-sm font-medium">
+                  {t('formatLabel')}
+                </FieldLabel>
+                <Select value={selectedFormat} onValueChange={setSelectedFormat}>
+                  <SelectTrigger id="content-image-format" size="default" className="w-full">
+                    <SelectValue placeholder={t('formatPlaceholder')} />
+                  </SelectTrigger>
+                  <SelectContent
+                    align="start"
+                    position="popper"
+                    className="min-w-[var(--radix-select-trigger-width)]"
+                  >
+                    <SelectItem value="1:1">1:1 - Square</SelectItem>
+                    <SelectItem value="2:3">2:3 - Portrait</SelectItem>
+                    <SelectItem value="3:2">3:2 - Landscape</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </section>
           </div>
         </ScrollArea>
 
@@ -275,6 +299,7 @@ export function ContentImageCreateDialog({ open, onOpenChange }: ContentImageCre
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t('cancel')}
           </Button>
+          <Button type="button">{t('generate')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

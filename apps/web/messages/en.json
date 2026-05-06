@@ -1501,6 +1501,8 @@
           "flowLabel": "AI flow",
           "flowPlaceholder": "Choose AI flow",
           "flowsEmpty": "No design AI flows available.",
+          "formatLabel": "Format",
+          "formatPlaceholder": "Choose format",
           "reviewHeading": "Your selections",
           "cancel": "Cancel",
           "continue": "Continue",
