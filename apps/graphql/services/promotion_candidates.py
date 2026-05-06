@@ -12,6 +12,10 @@ from graphql.services.instagram_signals import build_instagram_signals
 from graphql.services.promotion_menu_items import build_promotion_menu_items
 
 
+def _as_dict(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
 def build_promotion_candidates_signals(
     session: Session, run: AnalyticsRun
 ) -> dict[str, Any] | None:
@@ -32,11 +36,9 @@ def build_promotion_candidates_signals(
         if isinstance(instagram_payload, dict)
         else {}
     )
-    matrix_signals = additional.get("matrix_signals", {}) if isinstance(additional, dict) else {}
+    matrix_signals = _as_dict(additional.get("matrix_signals")) if isinstance(additional, dict) else {}
     datetime_signals = (
-        additional.get("datetime_signals", {})
-        if isinstance(additional, dict)
-        else {}
+        _as_dict(additional.get("datetime_signals")) if isinstance(additional, dict) else {}
     )
 
     computed = calculate_promotion_candidates(
