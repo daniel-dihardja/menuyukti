@@ -67,7 +67,12 @@ export function AssetsClient() {
   const [imageDimensionsByName, setImageDimensionsByName] = useState<
     Record<string, { width: number; height: number }>
   >({})
-  const [aiFlows, setAiFlows] = useState<Array<{ slug: string; displayName: string }>>([])
+  const [uploadAiFlows, setUploadAiFlows] = useState<Array<{ slug: string; displayName: string }>>(
+    [],
+  )
+  const [productCardAiFlows, setProductCardAiFlows] = useState<
+    Array<{ slug: string; displayName: string }>
+  >([])
   const [flowsLoading, setFlowsLoading] = useState(true)
   const [preview, setPreview] = useState<PreviewState>(null)
   const [previewImgLoaded, setPreviewImgLoaded] = useState(false)
@@ -196,17 +201,25 @@ export function AssetsClient() {
     void (async () => {
       setFlowsLoading(true)
       try {
-        const res = await fetch('/api/assets/flows', { signal: controller.signal })
-        if (!res.ok) throw new Error('flows')
-        const data = (await res.json()) as {
+        const [uploadRes, productCardRes] = await Promise.all([
+          fetch('/api/assets/flows?context=upload', { signal: controller.signal }),
+          fetch('/api/assets/flows?context=product-card', { signal: controller.signal }),
+        ])
+        if (!uploadRes.ok || !productCardRes.ok) throw new Error('flows')
+        const uploadData = (await uploadRes.json()) as {
           flows?: Array<{ slug: string; displayName: string }>
         }
-        setAiFlows(data.flows ?? [])
+        const productCardData = (await productCardRes.json()) as {
+          flows?: Array<{ slug: string; displayName: string }>
+        }
+        setUploadAiFlows(uploadData.flows ?? [])
+        setProductCardAiFlows(productCardData.flows ?? [])
       } catch (e) {
         if (e instanceof Error && e.name === 'AbortError') {
           return
         }
-        setAiFlows([])
+        setUploadAiFlows([])
+        setProductCardAiFlows([])
         showToast('error', t('toast.flowsLoadError'))
       } finally {
         if (!controller.signal.aborted) setFlowsLoading(false)
@@ -217,10 +230,39 @@ export function AssetsClient() {
 
   useEffect(() => {
     if (selectedFlow === 'none') return
-    if (!aiFlows.some((f) => f.slug === selectedFlow)) {
+    if (!uploadAiFlows.some((f) => f.slug === selectedFlow)) {
       setSelectedFlow('none')
     }
-  }, [aiFlows, selectedFlow])
+  }, [selectedFlow, uploadAiFlows])
+
+  useEffect(() => {
+    if (productCardAiFlows.length === 0) return
+    const allowedSlugs = new Set(productCardAiFlows.map((flow) => flow.slug))
+
+    setCardFlows((prev) => {
+      let changed = false
+      const next: Record<string, string> = {}
+      for (const [name, flow] of Object.entries(prev)) {
+        const normalizedFlow =
+          flow === 'none' || flow === 'custom' || allowedSlugs.has(flow) ? flow : 'none'
+        if (normalizedFlow !== flow) changed = true
+        next[name] = normalizedFlow
+      }
+      return changed ? next : prev
+    })
+
+    setDesignCardFlows((prev) => {
+      let changed = false
+      const next: Record<string, string> = {}
+      for (const [name, flow] of Object.entries(prev)) {
+        const normalizedFlow =
+          flow === 'none' || flow === 'custom' || allowedSlugs.has(flow) ? flow : 'none'
+        if (normalizedFlow !== flow) changed = true
+        next[name] = normalizedFlow
+      }
+      return changed ? next : prev
+    })
+  }, [productCardAiFlows])
 
   useEffect(() => {
     setPreviewImgLoaded(false)
@@ -586,7 +628,7 @@ export function AssetsClient() {
             inputRef={inputRef}
             selectedFlow={selectedFlow}
             onSelectedFlowChange={setSelectedFlow}
-            aiFlows={aiFlows}
+            aiFlows={uploadAiFlows}
             uploading={uploading}
             flowsLoading={flowsLoading}
             dragActive={dragActive}
@@ -609,7 +651,7 @@ export function AssetsClient() {
             onCardCustomPromptChange={(name, value) => {
               setCardCustomPrompts((prev) => ({ ...prev, [name]: value }))
             }}
-            aiFlows={aiFlows}
+            aiFlows={productCardAiFlows}
             flowsLoading={flowsLoading}
             generatingByName={generatingByName}
             deleting={deleting}
@@ -662,7 +704,7 @@ export function AssetsClient() {
             onCardCustomPromptChange={(name, value) => {
               setDesignCardCustomPrompts((prev) => ({ ...prev, [name]: value }))
             }}
-            aiFlows={aiFlows}
+            aiFlows={productCardAiFlows}
             flowsLoading={flowsLoading}
             generatingByName={designGeneratingByName}
             deleting={null}
