@@ -9,6 +9,7 @@ from typing import Any, Literal, cast
 
 import httpx
 from agents_app.agents.core.chat.graphql_client import fetch_milestone_node
+from agents_app.agents.core.milestone_run.brand_brief.graph import build_brand_brief_graph
 from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_graph
 from agents_app.agents.core.milestone_eval.nodes import fetch_context
 from agents_app.agents.core.milestone_run.graphql_client import (
@@ -118,6 +119,67 @@ def _normalize_skill_id_list(raw: list[str]) -> list[str]:
     if not out:
         return [DEFAULT_SKILL_ID]
     return out
+
+
+async def _run_brand_brief(
+    state: MilestoneRunState,
+    *,
+    client: httpx.AsyncClient,
+    sid: str,
+    idx: int,
+    ids: list[str],
+) -> dict[str, Any]:
+    graph = build_brand_brief_graph(client)
+    try:
+        run_cfg = get_config()
+    except Exception:  # pragma: no cover - outside runnable context
+        run_cfg = None
+    writer = get_stream_writer()
+    final_sub: dict[str, Any] | None = None
+    initial: dict[str, Any] = {
+        "milestone_id": state["milestone_id"],
+        "location_id": int(state["location_id"]),
+        "user_id": str(state["user_id"]),
+        "goal": str(state.get("goal", "")),
+        "criteria": state.get("criteria") or [],
+        "milestone_input": state.get("milestone_input"),
+    }
+    rid = state.get("run_id")
+    if isinstance(rid, str) and rid:
+        initial["run_id"] = rid
+    tp = state.get("traceparent")
+    if isinstance(tp, str) and tp.strip():
+        initial["traceparent"] = tp.strip()
+
+    async for mode, chunk in graph.astream(
+        initial,
+        stream_mode=["custom", "values"],
+        config=run_cfg,
+    ):
+        if mode == "custom" and isinstance(chunk, dict):
+            payload = dict(chunk)
+            if isinstance(rid, str) and rid and "run_id" not in payload:
+                payload["run_id"] = rid
+            writer(payload)
+        elif mode == "values" and isinstance(chunk, dict):
+            final_sub = chunk
+
+    if not isinstance(final_sub, dict):
+        raise RuntimeError("brand_brief graph did not produce a final state")
+
+    next_idx = idx + 1
+    updated_data = str(final_sub.get("result_data", "") or state.get("raw_data", ""))
+    return {
+        "current_skill_index": next_idx,
+        "result_data": str(final_sub.get("result_data", "")),
+        "raw_data": updated_data,
+        "milestone_data": final_sub.get("milestone_data"),
+        "milestonedata_written": bool(final_sub.get("milestonedata_written")),
+        "result_summary": str(state.get("result_summary", "")),
+        "result_node_id": state.get("result_node_id"),
+        "last_criteria_verdicts": list(state.get("last_criteria_verdicts") or []),
+        "selected_skill_id": ids[next_idx] if next_idx < len(ids) else sid,
+    }
 
 
 async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
@@ -287,6 +349,14 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         is_last,
     )
     _trace_step(state, "execute_skill", skill_id=sid, skill_index=idx, skill_count=len(ids))
+    if sid == "brand_brief":
+        return await _run_brand_brief(
+            state,
+            client=client,
+            sid=sid,
+            idx=idx,
+            ids=ids,
+        )
     skill = SKILL_REGISTRY.get(sid) or SKILL_REGISTRY[DEFAULT_SKILL_ID]
     tools = make_milestone_run_tools(
         state,
