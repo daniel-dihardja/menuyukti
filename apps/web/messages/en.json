@@ -616,7 +616,9 @@
     "title": "Brand assets",
     "description": "Upload and organize images for workflows and creative. Files are normalized to 1024px on the shortest side and saved as WebP.",
     "contentImage": {
-      "newButton": "New design"
+      "newButton": "New design",
+      "newButtonGenerating": "Generating design…",
+      "generatingHint": "Design generation is still running."
     },
     "tabs": {
       "products": "Products",

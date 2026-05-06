@@ -17,6 +17,7 @@ import {
 } from '@workspace/ui/components/alert-dialog'
 import { Button } from '@workspace/ui/components/button'
 import { Dialog, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
+import { Spinner } from '@workspace/ui/components/spinner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs'
 import { cn } from '@workspace/ui/lib/utils'
 
@@ -84,6 +85,7 @@ export function AssetsClient() {
   const [designCardCustomPrompts, setDesignCardCustomPrompts] = useState<Record<string, string>>({})
   const [designGeneratingByName, setDesignGeneratingByName] = useState<Record<string, boolean>>({})
   const [contentImageDialogOpen, setContentImageDialogOpen] = useState(false)
+  const [contentImageGenerating, setContentImageGenerating] = useState(false)
   const backgroundsLoadedRef = useRef(false)
   const designsLoadedRef = useRef(false)
 
@@ -589,6 +591,7 @@ export function AssetsClient() {
       <ContentImageCreateDialog
         open={contentImageDialogOpen}
         onOpenChange={setContentImageDialogOpen}
+        onGeneratingChange={setContentImageGenerating}
         onDesignCreated={(item) => {
           setDesignItems((prev) => [item, ...prev])
           designsLoadedRef.current = true
@@ -596,13 +599,26 @@ export function AssetsClient() {
         }}
       />
 
-      <div className="flex w-full items-center justify-end">
+      <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+        {contentImageGenerating ? (
+          <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
+            {t('contentImage.generatingHint')}
+          </p>
+        ) : null}
         <Button
           type="button"
           className="w-full sm:w-auto"
           onClick={() => setContentImageDialogOpen(true)}
+          disabled={contentImageGenerating}
         >
-          {t('contentImage.newButton')}
+          {contentImageGenerating ? (
+            <>
+              <Spinner data-icon="inline-start" />
+              {t('contentImage.newButtonGenerating')}
+            </>
+          ) : (
+            t('contentImage.newButton')
+          )}
         </Button>
       </div>
 

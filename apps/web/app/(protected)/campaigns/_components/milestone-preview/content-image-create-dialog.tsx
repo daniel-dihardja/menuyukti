@@ -26,6 +26,7 @@ import {
 } from '@workspace/ui/components/select'
 import { Separator } from '@workspace/ui/components/separator'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
 
 import type { BackgroundItem } from '@/lib/assets/backgrounds'
@@ -46,6 +47,7 @@ type ContentImageCreateDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   onDesignCreated?: (item: AssetItem) => void
+  onGeneratingChange?: (generating: boolean) => void
 }
 
 function SelectionSkeleton() {
@@ -62,6 +64,7 @@ export function ContentImageCreateDialog({
   open,
   onOpenChange,
   onDesignCreated,
+  onGeneratingChange,
 }: ContentImageCreateDialogProps) {
   const t = useTranslations('analytics.campaigns.chat.contentImageDialog')
 
@@ -91,7 +94,6 @@ export function ContentImageCreateDialog({
       setSelectedFlowSlug('')
       setSelectedFormat('1:1')
       setError(null)
-      setIsGenerating(false)
       return
     }
 
@@ -139,6 +141,10 @@ export function ContentImageCreateDialog({
       cancelled = true
     }
   }, [open, t])
+
+  useEffect(() => {
+    onGeneratingChange?.(isGenerating)
+  }, [isGenerating, onGeneratingChange])
 
   const handleGenerate = async () => {
     const productName = selectedProductNames[0]
@@ -340,11 +346,26 @@ export function ContentImageCreateDialog({
         </ScrollArea>
 
         <DialogFooter className="mt-auto shrink-0 border-t bg-background px-4 py-3 sm:px-6">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isGenerating}
+          >
             {t('cancel')}
           </Button>
           <Button type="button" disabled={!canGenerate} onClick={handleGenerate}>
-            {isGenerating ? t('generating') : t('generate')}
+            {isGenerating ? (
+              <>
+                <Spinner data-icon="inline-start" />
+                {t('generating')}
+              </>
+            ) : (
+              <>
+                <Sparkles data-icon="inline-start" />
+                {t('generate')}
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
