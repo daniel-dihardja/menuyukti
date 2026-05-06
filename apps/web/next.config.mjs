@@ -32,8 +32,6 @@ const nextConfig = {
     return [
       { source: '/advisor', destination: '/agent' },
       { source: '/advisor/:path*', destination: '/agent/:path*' },
-      { source: '/campaigns', destination: '/workflows' },
-      { source: '/campaigns/:path*', destination: '/workflows/:path*' },
     ]
   },
   experimental: {

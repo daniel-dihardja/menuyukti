@@ -32,7 +32,7 @@ import {
 import {
   goalFromChildNodes,
   passCriteriaFromChildNodes,
-} from '@/app/(protected)/workflows/_components/milestone-map'
+} from '@/app/(protected)/campaigns/_components/milestone-map'
 import { milestoneIdParamSchema, patchMilestoneSchema, workflowIdParamSchema } from '../schema'
 
 type RouteContext = {
