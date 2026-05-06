@@ -5,7 +5,6 @@ import { graphqlQuery } from '@/lib/graphql/client'
 import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
   campaignBriefMilestoneDataSchema,
-  datesMilestoneDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataValueSchema,
@@ -44,7 +43,7 @@ function mergeMilestoneNodeDataJson(
   patch: {
     milestoneRunSkillMode?: 'auto' | 'fixed'
     milestoneRunSkillIds?: string[]
-    presetId?: 'dates' | 'restaurant_campaign_brief' | 'promotion_candidates' | 'post_scheduler'
+    presetId?: 'restaurant_campaign_brief' | 'promotion_candidates' | 'post_scheduler'
     milestoneInput?: { type: string; value?: unknown }
   },
 ): Record<string, unknown> {
@@ -332,16 +331,6 @@ export async function GET(_req: Request, context: RouteContext) {
       legacyGoal = parsedMilestoneNodeData.data.goal
     }
 
-    if (parsedMilestoneNodeData?.success && parsedMilestoneNodeData.data.presetId === 'dates') {
-      const datesDataParsed = datesMilestoneDataSchema.safeParse(milestoneData)
-      if (!datesDataParsed.success) {
-        milestoneData = {
-          startDate: '',
-          endDate: '',
-          publicHolidays: [],
-        }
-      }
-    }
     if (
       parsedMilestoneNodeData?.success &&
       parsedMilestoneNodeData.data.presetId === 'restaurant_campaign_brief'
@@ -349,6 +338,9 @@ export async function GET(_req: Request, context: RouteContext) {
       const campaignBriefDataParsed = campaignBriefMilestoneDataSchema.safeParse(milestoneData)
       if (!campaignBriefDataParsed.success) {
         milestoneData = {
+          startDate: '',
+          endDate: '',
+          publicHolidays: [],
           venueSnapshot: {
             venueName: '',
             city: '',

@@ -168,11 +168,7 @@ def test_post_scheduler_skill_tools_and_inject() -> None:
 
     ps = SKILL_REGISTRY["post_scheduler"]
     assert ps.extra_tool_ids == ("get_available_dates",)
-    assert ps.inject_prior_presets == (
-        "dates",
-        "restaurant_campaign_brief",
-        "promotion_candidates",
-    )
+    assert ps.inject_prior_presets == ("restaurant_campaign_brief", "promotion_candidates")
 
 
 def test_extra_tool_ids_includes_get_available_dates() -> None:
@@ -486,6 +482,15 @@ async def test_write_result_data_parses_structured_json_when_context_is_structur
         (
             "campaign_brief",
             {
+                "startDate": "2026-06-01",
+                "endDate": "2026-06-30",
+                "publicHolidays": [
+                    {
+                        "name": "Hari Raya",
+                        "description": "National holiday",
+                        "date": "2026-06-17",
+                    }
+                ],
                 "venueSnapshot": {
                     "venueName": "Warung Maju",
                     "city": "Jakarta",

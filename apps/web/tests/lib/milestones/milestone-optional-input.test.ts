@@ -12,7 +12,6 @@ describe('milestone optional notes (promotion_candidates parity)', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('restaurant_campaign_brief')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('post_scheduler')).toBe(true)
-    expect(milestonePresetHasDefaultOptionalNotesInput('dates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput(undefined)).toBe(false)
   })
 

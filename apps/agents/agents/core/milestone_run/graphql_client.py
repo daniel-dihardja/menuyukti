@@ -165,7 +165,26 @@ async def fetch_public_holidays_for_milestone(
         return [], None
     if not isinstance(holidays, list):
         return [], None
-    return deepcopy(holidays), None
+    normalized: list[dict[str, Any]] = []
+    for raw in holidays:
+        if not isinstance(raw, dict):
+            continue
+        date_text = str(raw.get("date") or "").strip()
+        name_text = str(raw.get("name") or "").strip()
+        local_name_text = str(raw.get("localName") or "").strip()
+        # Campaign brief schema requires a description string for every holiday.
+        description_text = str(raw.get("description") or "").strip()
+        if not description_text:
+            description_text = local_name_text or name_text
+        normalized.append(
+            {
+                **deepcopy(raw),
+                "date": date_text,
+                "name": name_text,
+                "description": description_text,
+            }
+        )
+    return normalized, None
 
 
 async def fetch_location_operating_signals(

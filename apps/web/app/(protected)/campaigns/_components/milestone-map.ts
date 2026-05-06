@@ -1,6 +1,5 @@
 import {
   campaignBriefMilestoneDataSchema,
-  datesMilestoneDataSchema,
   goalDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
@@ -182,18 +181,15 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   const { milestoneRunSkillMode, milestoneRunSkillIds, presetId, milestoneInput } =
     milestoneRunSkillFieldsFromData(node.data)
   let normalizedData = data
-  if (presetId === 'dates') {
-    const parsedDatesData = datesMilestoneDataSchema.safeParse(data)
-    if (parsedDatesData.success) {
-      normalizedData = parsedDatesData.data
-    }
-  }
   if (presetId === 'restaurant_campaign_brief') {
     const parsedCampaignBriefData = campaignBriefMilestoneDataSchema.safeParse(data)
     if (parsedCampaignBriefData.success) {
       normalizedData = parsedCampaignBriefData.data
     } else {
       normalizedData = {
+        startDate: '',
+        endDate: '',
+        publicHolidays: [],
         venueSnapshot: {
           venueName: '',
           city: '',

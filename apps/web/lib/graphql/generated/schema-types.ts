@@ -815,7 +815,7 @@ export type Query = {
   analyticsRuns: Array<AnalyticsRunListItemType>
   /** Custom API adapter tools for a workspace. Empty list if the user is not a member. */
   apiAdapterTools: Array<ApiAdapterToolType>
-  /** Schedule plan for a Scheduler milestone. Requires a prior Dates milestone with structured start/end date data in the same workflow. */
+  /** Schedule plan for a Scheduler milestone. Requires a prior campaign brief milestone with structured campaign window data in the same workflow. */
   campaignSchedulePlan?: Maybe<CampaignSchedulePlanType>
   /** Revenue and quantity share per menu category for an analytics run. Returns null when the run has no order lines. */
   categoryMix?: Maybe<CategoryMixPayloadType>
@@ -847,10 +847,12 @@ export type Query = {
   operatingProfile?: Maybe<OperatingProfileType>
   /** Compute average order size and revenue for an analytics run. Returns None if the run has no order data. */
   orderMetrics?: Maybe<AnalyticsRunOrderMetricsType>
-  /** JSON array of prior milestones' milestonedata payloads: each element is `{"title": string, "data": object|null}` for milestones strictly before the given milestone in workflow display order. `data` is the raw `milestonedata` child JSON (flat preset object). Empty array when there are no prior milestones or the request is not authorized. */
+  /** JSON array of prior milestones' milestonedata payloads: each element is `{"title": string, "presetId": string|null, "data": object|string|array|null}` for milestones strictly before the given milestone in workflow display order. `presetId` is the milestone node's preset when set. `data` is the raw `milestonedata` child `data` field (structured object, legacy string, or null). Empty array when there are no prior milestones or the request is not authorized. */
   priorMilestonesMilestoneData: Scalars['JSON']['output']
   /** Promotion-candidate signals composed from promotion menu items and Instagram signals. Returns ranked recommendations plus puzzle opportunity pool for campaign drafting. */
   promotionCandidatesSignals?: Maybe<PromotionCandidatesSignalsType>
+  /** Menu engineering matrix and top star/puzzle slices per distinct `order_fact.menu_category` when present; otherwise one flat matrix on all rows. JSON includes `grouping`, optional `categories`, `rowsSkippedMissingCategory`, and per-slice `matrix` / `topStars` / `topPuzzles`. Returns null when unauthorized, wrong location, or the run has no order facts. */
+  promotionEngineeringCandidates?: Maybe<Scalars['JSON']['output']>
   /** Return per-menu promotion signals for an analytics run: volume and revenue, optional BCG-style menu-engineering metrics when COGS allow, and peak hour/day from demand heatmaps. When locationId is set, the run must belong to that location (otherwise returns null). */
   promotionMenuItems?: Maybe<PromotionMenuItemsPayloadType>
   publicHolidays: Array<PublicHolidayType>
@@ -987,6 +989,12 @@ export type QueryPriorMilestonesMilestoneDataArgs = {
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryPromotionCandidatesSignalsArgs = {
+  analyticsRunId: Scalars['ID']['input']
+  locationId?: InputMaybe<Scalars['ID']['input']>
+}
+
+/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
+export type QueryPromotionEngineeringCandidatesArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
 }

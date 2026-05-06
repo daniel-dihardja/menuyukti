@@ -14,36 +14,19 @@ export type PassCriteriaRow = {
 export type MilestoneRunSkillMode = 'auto' | 'fixed'
 
 export type MilestonePresetId =
-  | 'dates'
   | 'restaurant_campaign_brief'
   | 'promotion_candidates'
   | 'post_scheduler'
-
-export type DatesMilestoneInput = {
-  startDate: string
-  endDate: string
-}
-
-export type DatesMilestoneInputEnvelope = {
-  type: 'dates'
-  value: DatesMilestoneInput
-}
 
 export type MilestoneInput = {
   type: string
   value?: unknown
 }
 
-export type DatesPublicHoliday = {
+export type CampaignWindowPublicHoliday = {
   name: string
   description: string
   date: string
-}
-
-export type DatesMilestoneData = {
-  startDate: string
-  endDate: string
-  publicHolidays: DatesPublicHoliday[]
 }
 
 export type CampaignBriefVenueSnapshot = {
@@ -54,6 +37,9 @@ export type CampaignBriefVenueSnapshot = {
 }
 
 export type CampaignBriefMilestoneData = {
+  startDate: string
+  endDate: string
+  publicHolidays: CampaignWindowPublicHoliday[]
   venueSnapshot: CampaignBriefVenueSnapshot
   contentPillars: string[]
   audienceHypotheses: string[]
@@ -90,7 +76,6 @@ export type PostSchedulerMilestoneData = {
 }
 
 export type MilestoneDataValue =
-  | DatesMilestoneData
   | CampaignBriefMilestoneData
   | PromotionCandidatesMilestoneData
   | PostSchedulerMilestoneData
@@ -105,7 +90,7 @@ export type TimelineMilestone = {
   data?: MilestoneDataValue
   /** Preset marker for milestone-specific UI behavior. */
   presetId?: MilestonePresetId
-  /** Typed per-milestone input (e.g. Dates fields); stored on milestone `data` JSON. */
+  /** Typed per-milestone input; stored on milestone `data` JSON. */
   milestoneInput?: MilestoneInput
   /** Auto: LLM picks skills. Fixed: use `milestoneRunSkillIds` (max 2). */
   milestoneRunSkillMode?: MilestoneRunSkillMode

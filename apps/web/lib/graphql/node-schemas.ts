@@ -19,7 +19,6 @@ export const milestoneRunSkillModeSchema = z.enum(['auto', 'fixed'])
 export type MilestoneRunSkillMode = z.infer<typeof milestoneRunSkillModeSchema>
 
 export const milestonePresetIdSchema = z.enum([
-  'dates',
   'restaurant_campaign_brief',
   'promotion_candidates',
   'post_scheduler',
@@ -27,19 +26,14 @@ export const milestonePresetIdSchema = z.enum([
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
 
-export const datesMilestoneInputSchema = z.object({
-  startDate: z.string(),
-  endDate: z.string(),
-})
-
-export type DatesMilestoneInput = z.infer<typeof datesMilestoneInputSchema>
-
 /**
  * Optional owner notes on the milestone Input tab (`value.notes`).
  * Used by the campaign_brief preset.
  */
 export const campaignBriefMilestoneInputValueSchema = z.object({
   notes: z.string(),
+  startDate: z.string(),
+  endDate: z.string(),
 })
 
 export type CampaignBriefMilestoneInputValue = z.infer<
@@ -77,21 +71,13 @@ export const milestoneInputSchema = z.object({
 
 export type MilestoneInput = z.infer<typeof milestoneInputSchema>
 
-export const datesPublicHolidaySchema = z.object({
+export const campaignWindowPublicHolidaySchema = z.object({
   name: z.string(),
   description: z.string(),
   date: z.string(),
 })
 
-export type DatesPublicHoliday = z.infer<typeof datesPublicHolidaySchema>
-
-export const datesMilestoneDataSchema = z.object({
-  startDate: z.string(),
-  endDate: z.string(),
-  publicHolidays: z.array(datesPublicHolidaySchema),
-})
-
-export type DatesMilestoneData = z.infer<typeof datesMilestoneDataSchema>
+export type CampaignWindowPublicHoliday = z.infer<typeof campaignWindowPublicHolidaySchema>
 
 export const campaignBriefVenueSnapshotSchema = z.object({
   venueName: z.string(),
@@ -103,6 +89,9 @@ export const campaignBriefVenueSnapshotSchema = z.object({
 export type CampaignBriefVenueSnapshot = z.infer<typeof campaignBriefVenueSnapshotSchema>
 
 export const campaignBriefMilestoneDataSchema = z.object({
+  startDate: z.string(),
+  endDate: z.string(),
+  publicHolidays: z.array(campaignWindowPublicHolidaySchema),
   venueSnapshot: campaignBriefVenueSnapshotSchema,
   contentPillars: z.array(z.string()),
   audienceHypotheses: z.array(z.string()),
@@ -177,7 +166,6 @@ export type GoalData = z.infer<typeof goalDataSchema>
 
 /** Child `milestonedata` node JSON — structured preset data only (breaking change: no markdown string). */
 export const milestonedataValueSchema = z.union([
-  datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,

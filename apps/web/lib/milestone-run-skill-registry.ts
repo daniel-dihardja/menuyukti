@@ -15,13 +15,13 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
     id: 'public_holidays',
     name: 'Public holidays',
     description:
-      "Use when the milestone goal or pass criteria require listing, confirming, or filling in public holidays for a date range for this location's country.",
+      "Use when a milestone explicitly needs holiday lookup/confirmation for a date range for this location's country.",
   },
   {
     id: 'campaign_brief',
     name: 'Campaign brief',
     description:
-      'Use for the campaign brief milestone: location-only brief from profile and operating signals—venue snapshot, pillars, audience hypotheses, tone guardrails. No campaign start/end dates.',
+      'Use for the campaign brief milestone: campaign window and holidays plus profile and operating signals—venue snapshot, pillars, audience hypotheses, proof-oriented angles, and tone guardrails.',
   },
   {
     id: 'promotion_candidates',
@@ -33,7 +33,7 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
     id: 'post_scheduler',
     name: 'Post scheduler',
     description:
-      'Use for the post scheduler milestone: builds an Instagram posting plan from prior Dates (campaign window and public holidays), Campaign Brief, and Promotion Candidates; uses get_available_dates to filter posting days by weekends and holidays when needed.',
+      'Use for the post scheduler milestone: builds an Instagram posting plan from prior Campaign Brief (campaign window and public holidays) and Promotion Candidates; uses get_available_dates to filter posting days by weekends and holidays when needed.',
   },
   {
     id: 'generic',

@@ -10,10 +10,12 @@ from agents_app.agents.core.milestone_run.campaign_brief.prompts import CAMPAIGN
 from agents_app.agents.core.milestone_run.campaign_brief.state import CampaignBriefState
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_location_operating_signals,
+    fetch_public_holidays_for_milestone,
     upsert_milestonedata_node,
 )
 from agents_app.agents.core.milestone_run.output_schema import (
     CampaignBriefMilestoneOutput,
+    CampaignBriefVenueSnapshot,
     validate_skill_output,
 )
 from agents_app.agents.core.milestone_run.tools.get_location_profile import (
@@ -30,6 +32,16 @@ from agents_app.agents.graphql_operations import LOCATION_QUERY
 from agents_app.models.llm_config import get_llm_structured
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
+from pydantic import BaseModel
+
+class CampaignBriefDraftOutput(BaseModel):
+    """LLM-generated campaign brief body before deterministic campaign-window merge."""
+
+    venueSnapshot: CampaignBriefVenueSnapshot
+    contentPillars: list[str]
+    audienceHypotheses: list[str]
+    proofOrientedAngles: list[str]
+    toneGuardrails: list[str]
 
 
 def _trace(state: CampaignBriefState, step: str, **extra: Any) -> None:
@@ -54,6 +66,9 @@ def _build_signal_markdown(
     location_raw: dict[str, Any],
     signals: dict[str, Any],
     milestone_input: dict[str, Any] | None,
+    start_date: str,
+    end_date: str,
+    public_holidays: list[dict[str, Any]],
 ) -> str:
     currency = str(location_raw.get("currency") or "")
     sections: list[str] = ["## Location profile"]
@@ -69,6 +84,22 @@ def _build_signal_markdown(
         if text:
             identity_lines.append(f"- **{label}**: {text}")
     sections.append("\n".join(identity_lines) if identity_lines else "_No profile fields set._")
+    sections.append("## Campaign window")
+    sections.append(f"- **startDate**: {start_date}\n- **endDate**: {end_date}")
+    if public_holidays:
+        lines: list[str] = []
+        for holiday in public_holidays:
+            if not isinstance(holiday, dict):
+                continue
+            lines.append(
+                f"- **{holiday.get('date', '')}** — {holiday.get('name', '')}: {holiday.get('description', '')}"
+            )
+        if lines:
+            sections.append("## Public holidays")
+            sections.append("\n".join(lines))
+    else:
+        sections.append("## Public holidays")
+        sections.append("_No public holidays in this campaign window._")
 
     manual_md = _fmt_manual_brief_hints(location_raw)
     if manual_md:
@@ -134,6 +165,19 @@ def _build_signal_markdown(
     return "\n\n".join(sections)
 
 
+def _extract_campaign_window(milestone_input: dict[str, Any] | None) -> tuple[str, str]:
+    if not isinstance(milestone_input, dict):
+        raise ValueError("campaign_brief milestone_input is required")
+    value = milestone_input.get("value")
+    if not isinstance(value, dict):
+        raise ValueError("campaign_brief milestone_input.value is required")
+    start_date = str(value.get("startDate") or "").strip()
+    end_date = str(value.get("endDate") or "").strip()
+    if not start_date or not end_date:
+        raise ValueError("campaign_brief requires startDate and endDate in milestone_input.value")
+    return start_date, end_date
+
+
 async def fetch_and_prepare(state: CampaignBriefState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     """Fetch location + signals and normalize them into deterministic markdown context."""
     _trace(state, "execute_skill", skill_id="campaign_brief")
@@ -150,23 +194,40 @@ async def fetch_and_prepare(state: CampaignBriefState, *, client: httpx.AsyncCli
         str(state["user_id"]),
         client=client,
     )
+    start_date, end_date = _extract_campaign_window(state.get("milestone_input"))
+    public_holidays, holidays_error = await fetch_public_holidays_for_milestone(
+        int(state["location_id"]),
+        start_date,
+        end_date,
+        str(state["user_id"]),
+        client=client,
+    )
+    if holidays_error:
+        raise ValueError(holidays_error)
     signal_markdown = _build_signal_markdown(
         location_data=location_data,
         location_raw=location_raw,
         signals=signals,
         milestone_input=state.get("milestone_input"),
+        start_date=start_date,
+        end_date=end_date,
+        public_holidays=public_holidays,
     )
     return {
         "location_raw": location_raw,
         "signals_raw": signals,
         "signal_markdown": signal_markdown,
+        "start_date": start_date,
+        "end_date": end_date,
+        "public_holidays": public_holidays,
     }
 
 
 async def generate_draft(state: CampaignBriefState) -> dict[str, Any]:
     """Generate strictly structured campaign-brief JSON from deterministic signal context."""
     _trace_agent_event(state, "chat_model_start")
-    llm = get_llm_structured().with_structured_output(CampaignBriefMilestoneOutput)
+    # Generate only creative brief fields here; campaign window + holidays are merged deterministically later.
+    llm = get_llm_structured().with_structured_output(CampaignBriefDraftOutput)
     generated = await llm.ainvoke(
         [
             SystemMessage(content=CAMPAIGN_BRIEF_SYSTEM),
@@ -180,12 +241,31 @@ async def generate_draft(state: CampaignBriefState) -> dict[str, Any]:
 async def persist_result(state: CampaignBriefState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     """Validate/coerce and persist with milestone_run's existing write path helper."""
     payload = state.get("generated_output") or {}
+    location_raw = state.get("location_raw")
+    location_fallback = location_raw if isinstance(location_raw, dict) else {}
+    if isinstance(payload, dict):
+        venue_snapshot = payload.get("venueSnapshot")
+        if not isinstance(venue_snapshot, dict):
+            venue_snapshot = {}
+            payload["venueSnapshot"] = venue_snapshot
+        venue_snapshot.setdefault("venueName", str(location_fallback.get("name") or "").strip())
+        venue_snapshot.setdefault("city", str(location_fallback.get("city") or "").strip())
+        venue_snapshot.setdefault("country", str(location_fallback.get("country") or "").strip())
+        venue_snapshot.setdefault("currency", str(location_fallback.get("currency") or "").strip())
+        payload.setdefault("contentPillars", [])
+        payload.setdefault("audienceHypotheses", [])
+        payload.setdefault("proofOrientedAngles", [])
+        payload.setdefault("toneGuardrails", [])
+
     if isinstance(payload, dict) and isinstance(payload.get("venueSnapshot"), dict):
         venue_snapshot = payload["venueSnapshot"]
         old_name = str(venue_snapshot.get("venueName", ""))
         new_name = _sanitize_venue_name(old_name)
         if new_name and new_name != old_name:
             venue_snapshot["venueName"] = new_name
+    payload["startDate"] = str(state.get("start_date", "")).strip()
+    payload["endDate"] = str(state.get("end_date", "")).strip()
+    payload["publicHolidays"] = state.get("public_holidays") or []
 
     normalized, error = validate_skill_output("campaign_brief", payload)
     if error is not None or normalized is None:

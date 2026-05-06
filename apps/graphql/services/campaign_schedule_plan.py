@@ -99,19 +99,26 @@ def _resolve_campaign_window(
     if current_idx <= 0:
         return None
 
-    dates_milestone: Node | None = None
+    campaign_window_milestone: Node | None = None
     for row in reversed(ordered[:current_idx]):
         payload = row.data if isinstance(row.data, dict) else {}
-        if payload.get("presetId") == "dates":
-            dates_milestone = row
+        if payload.get("presetId") == "restaurant_campaign_brief":
+            campaign_window_milestone = row
             break
-    if dates_milestone is None:
+    # Backward compatibility for workflows created before campaign_brief owned dates.
+    if campaign_window_milestone is None:
+        for row in reversed(ordered[:current_idx]):
+            payload = row.data if isinstance(row.data, dict) else {}
+            if payload.get("presetId") == "dates":
+                campaign_window_milestone = row
+                break
+    if campaign_window_milestone is None:
         return None
 
     data_node = (
         session.query(Node)
         .filter(
-            Node.parent_id == dates_milestone.id,
+            Node.parent_id == campaign_window_milestone.id,
             Node.node_type == "milestonedata",
         )
         .order_by(Node.id.asc())
@@ -154,7 +161,7 @@ def build_campaign_schedule_plan(
     milestone_id: int,
     location_id: int,
 ) -> dict[str, Any] | None:
-    """Return a schedule plan built from dates milestone + analytics signals."""
+    """Return a schedule plan built from campaign window + analytics signals."""
     campaign_window = _resolve_campaign_window(
         session,
         workflow_id=workflow_id,

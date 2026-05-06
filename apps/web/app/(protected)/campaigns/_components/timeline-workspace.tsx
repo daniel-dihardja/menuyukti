@@ -1,11 +1,8 @@
 export { TimelineWorkspace } from './timeline/timeline-workspace'
 export type {
   CampaignBriefMilestoneData,
+  CampaignWindowPublicHoliday,
   CampaignBriefVenueSnapshot,
-  DatesMilestoneData,
-  DatesMilestoneInput,
-  DatesMilestoneInputEnvelope,
-  DatesPublicHoliday,
   MilestoneDataValue,
   MilestoneInput,
   MilestonePresetId,

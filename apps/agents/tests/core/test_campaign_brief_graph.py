@@ -53,6 +53,15 @@ def _minimal_initial() -> dict:
 
 def _valid_campaign_brief_payload() -> dict:
     return {
+        "startDate": "2026-06-01",
+        "endDate": "2026-06-30",
+        "publicHolidays": [
+            {
+                "name": "Tag der Deutschen Einheit",
+                "description": "National holiday",
+                "date": "2026-06-03",
+            }
+        ],
         "venueSnapshot": {
             "venueName": "Cafe Alto",
             "city": "Berlin",
@@ -215,7 +224,10 @@ async def test_fallback_when_analytics_missing_still_builds_context() -> None:
         "user_id": "u1",
         "goal": "Build campaign brief",
         "criteria": [],
-        "milestone_input": {"type": "restaurant_campaign_brief", "value": {"notes": "brunch focus"}},
+        "milestone_input": {
+            "type": "restaurant_campaign_brief",
+            "value": {"notes": "brunch focus", "startDate": "2026-06-01", "endDate": "2026-06-30"},
+        },
     }
     with (
         patch(
@@ -234,6 +246,10 @@ async def test_fallback_when_analytics_missing_still_builds_context() -> None:
         patch(
             "agents_app.agents.core.milestone_run.campaign_brief.nodes.fetch_location_operating_signals",
             new=AsyncMock(return_value={"analytics_run": None, "instagram_signals": None}),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.campaign_brief.nodes.fetch_public_holidays_for_milestone",
+            new=AsyncMock(return_value=([], None)),
         ),
         patch("agents_app.agents.core.milestone_run.campaign_brief.nodes.get_stream_writer", return_value=lambda _x: None),
     ):

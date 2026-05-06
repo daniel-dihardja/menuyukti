@@ -6,7 +6,6 @@ import { getPythonAgentsUrl } from '@/lib/config'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   campaignBriefMilestoneDataSchema,
-  datesMilestoneDataSchema,
   milestoneInputSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
@@ -22,7 +21,6 @@ const runBodySchema = z.object({
   milestoneInput: milestoneInputSchema.optional(),
   milestoneData: z
     .union([
-      datesMilestoneDataSchema,
       campaignBriefMilestoneDataSchema,
       promotionCandidatesMilestoneDataSchema,
       postSchedulerMilestoneDataSchema,

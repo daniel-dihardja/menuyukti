@@ -4,7 +4,6 @@ import { useLocale, useTranslations } from 'next-intl'
 
 import {
   campaignBriefMilestoneDataSchema,
-  datesMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
@@ -12,7 +11,6 @@ import {
 import type { TimelineMilestone } from '../timeline/types'
 
 import { MilestoneCampaignBriefDataPreview } from './milestone-campaign_brief-data-preview'
-import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
 import { MilestonePostSchedulerDataPreview } from './milestone-post-scheduler-data-preview'
 import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
 
@@ -30,27 +28,6 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
   }
 
   if (typeof data === 'object') {
-    if (milestone.presetId === 'dates') {
-      const parsedDates = datesMilestoneDataSchema.safeParse(data)
-      if (!parsedDates.success) {
-        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
-      }
-
-      return (
-        <MilestoneDatesDataPreview
-          data={parsedDates.data}
-          locale={locale}
-          labels={{
-            startDate: t('milestoneDatesPreviewStartDate'),
-            endDate: t('milestoneDatesPreviewEndDate'),
-            publicHolidays: t('milestoneDatesPreviewPublicHolidays'),
-            noHolidays: t('milestoneDatesPreviewNoHolidays'),
-            emptyValue: t('milestoneDatesPreviewValueEmpty'),
-          }}
-        />
-      )
-    }
-
     if (milestone.presetId === 'restaurant_campaign_brief') {
       const parsedCampaignBrief = campaignBriefMilestoneDataSchema.safeParse(data)
       if (!parsedCampaignBrief.success) {
@@ -61,6 +38,10 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
         <MilestoneCampaignBriefDataPreview
           data={parsedCampaignBrief.data}
           labels={{
+            startDate: t('milestoneCampaignBriefPreviewStartDate'),
+            endDate: t('milestoneCampaignBriefPreviewEndDate'),
+            publicHolidays: t('milestoneCampaignBriefPreviewPublicHolidays'),
+            noHolidays: t('milestoneCampaignBriefPreviewNoHolidays'),
             venueName: t('milestoneCampaignBriefPreviewVenueName'),
             city: t('milestoneCampaignBriefPreviewCity'),
             country: t('milestoneCampaignBriefPreviewCountry'),

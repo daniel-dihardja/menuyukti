@@ -5,7 +5,6 @@ import type {
 import { type MilestoneInput, type MilestonedataValue } from '@/lib/graphql/node-schemas'
 
 export const MILESTONE_PRESET_IDS = [
-  'dates',
   'restaurant_campaign_brief',
   'promotion_candidates',
   'post_scheduler',
@@ -41,49 +40,18 @@ export function getMilestonePresetCreateFields(
   t: (key: string) => string,
 ): MilestonePresetCreateFields {
   switch (presetId) {
-    case 'dates':
-      return {
-        presetId: 'dates',
-        name: t('milestonePreset.dates.title'),
-        milestoneInput: {
-          type: 'dates',
-          value: {
-            startDate: '',
-            endDate: '',
-          },
-        },
-        milestoneData: {
-          startDate: '',
-          endDate: '',
-          publicHolidays: [],
-        },
-        goal: t('milestonePreset.dates.goal'),
-        milestoneRunSkillMode: 'fixed',
-        milestoneRunSkillIds: ['public_holidays'],
-        passCriteria: [
-          {
-            requirement: t('milestonePreset.dates.criterionStartDate'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.dates.criterionEndDate'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.dates.criterionPublicHolidays'),
-            status: 'open',
-          },
-        ],
-      }
     case 'restaurant_campaign_brief':
       return {
         presetId: 'restaurant_campaign_brief',
         name: t('milestonePreset.restaurant_campaign_brief.title'),
         milestoneInput: {
           type: 'restaurant_campaign_brief',
-          value: { notes: '' },
+          value: { notes: '', startDate: '', endDate: '' },
         },
         milestoneData: {
+          startDate: '',
+          endDate: '',
+          publicHolidays: [],
           venueSnapshot: {
             venueName: '',
             city: '',
@@ -117,6 +85,18 @@ export function getMilestonePresetCreateFields(
           },
           {
             requirement: t('milestonePreset.restaurant_campaign_brief.criterionToneGuardrails'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionStartDate'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionEndDate'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionPublicHolidays'),
             status: 'open',
           },
         ],

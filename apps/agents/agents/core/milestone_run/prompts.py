@@ -12,13 +12,10 @@ The run executes them in order: skills produce structured milestone output via t
 **automatically** evaluates pass criteria against that output, writes the milestone summary, and persists the result — skills do not do that.
 
 Rules:
-- Prefer `["public_holidays", "generic"]` (in that order) when the goal or criteria require **both** (a) listing \
-or confirming public holidays for a date range **and** (b) broader work on the brief (e.g. objectives, budget, \
-summary) beyond holidays alone.
-- Prefer `["public_holidays"]` when only holidays listing/confirmation is needed.
 - Prefer `["generic"]` for standard milestone data preparation when holidays are not a distinct requirement.
 - Prefer `["campaign_brief"]` when the goal or criteria clearly describe a **campaign brief** \
-(venue snapshot, content pillars, audience hypotheses, proof angles, tone guardrails) as the main deliverable.
+(campaign window, holidays, venue snapshot, content pillars, audience hypotheses, proof angles, tone guardrails) \
+as the main deliverable.
 - Use at most **two** ids. Do not duplicate the same id.
 - Each id must be one of the listed keys exactly (underscores, lowercase)."""
 

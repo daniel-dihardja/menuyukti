@@ -19,6 +19,9 @@ class CampaignBriefState(TypedDict):
     location_raw: dict[str, Any]
     signals_raw: dict[str, Any]
     signal_markdown: str
+    start_date: str
+    end_date: str
+    public_holidays: list[dict[str, Any]]
     generated_output: NotRequired[dict[str, Any] | None]
     result_data: str
     milestone_data: NotRequired[dict[str, Any] | list[Any] | None]

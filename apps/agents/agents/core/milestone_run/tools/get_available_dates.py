@@ -38,7 +38,7 @@ def make_get_available_dates_tool(
         Optional filters:
         - exclude_weekends: when True, omit Saturday and Sunday.
         - exclude_holidays: when True, omit any date whose YYYY-MM-DD appears in
-          public_holiday_dates (from the Dates milestone publicHolidays[].date).
+          public_holiday_dates (from campaign brief publicHolidays[].date).
 
         Returns a markdown table (Date | Weekday) or an error message if the range is invalid.
         """

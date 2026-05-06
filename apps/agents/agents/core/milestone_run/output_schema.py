@@ -8,7 +8,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ValidationError, field_validator, model_validator
 
 
-class DatesPublicHoliday(BaseModel):
+class CampaignWindowPublicHoliday(BaseModel):
     name: str
     description: str
     date: str
@@ -17,7 +17,7 @@ class DatesPublicHoliday(BaseModel):
 class DatesMilestoneOutput(BaseModel):
     startDate: str
     endDate: str
-    publicHolidays: list[DatesPublicHoliday]
+    publicHolidays: list[CampaignWindowPublicHoliday]
 
 
 class CampaignBriefVenueSnapshot(BaseModel):
@@ -63,6 +63,9 @@ class CampaignBriefVenueSnapshot(BaseModel):
 
 
 class CampaignBriefMilestoneOutput(BaseModel):
+    startDate: str
+    endDate: str
+    publicHolidays: list[CampaignWindowPublicHoliday]
     venueSnapshot: CampaignBriefVenueSnapshot
     contentPillars: list[str]
     audienceHypotheses: list[str]
@@ -141,7 +144,6 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "campaign_brief": CampaignBriefMilestoneOutput,
     "post_scheduler": PostSchedulerMilestoneOutput,
 }
-
 
 def validate_skill_output(skill_id: str | None, payload: Any) -> tuple[Any | None, str | None]:
     """Validate output for registered skills; pass through for unknown skills."""
