@@ -25,6 +25,7 @@ import type { BackgroundItem } from '@/lib/assets/backgrounds'
 import {
   assetBackgroundDownloadHref,
   assetDownloadHref,
+  designDownloadHref,
   formatBytes,
   type AssetItem,
   type AssetPreviewItem,
@@ -36,11 +37,13 @@ import { ContentImageCreateDialog } from '../workflows/_components/milestone-pre
 
 type ToastState = { kind: 'success' | 'error'; message: string } | null
 
-type PreviewState = { item: AssetPreviewItem; kind: 'product' | 'background' } | null
+type PreviewState = { item: AssetPreviewItem; kind: 'product' | 'background' | 'design' } | null
 
-const canvasTabParser = parseAsStringLiteral(['products', 'backgrounds'] as const).withDefault(
+const canvasTabParser = parseAsStringLiteral([
   'products',
-)
+  'backgrounds',
+  'designs',
+] as const).withDefault('products')
 
 export function AssetsClient() {
   const t = useTranslations('assets')
@@ -70,8 +73,14 @@ export function AssetsClient() {
   const [previewImgLoaded, setPreviewImgLoaded] = useState(false)
   const [backgroundItems, setBackgroundItems] = useState<BackgroundItem[]>([])
   const [backgroundsLoading, setBackgroundsLoading] = useState(false)
+  const [designItems, setDesignItems] = useState<AssetItem[]>([])
+  const [designsLoading, setDesignsLoading] = useState(false)
+  const [designCardFlows, setDesignCardFlows] = useState<Record<string, string>>({})
+  const [designCardCustomPrompts, setDesignCardCustomPrompts] = useState<Record<string, string>>({})
+  const [designGeneratingByName, setDesignGeneratingByName] = useState<Record<string, boolean>>({})
   const [contentImageDialogOpen, setContentImageDialogOpen] = useState(false)
   const backgroundsLoadedRef = useRef(false)
+  const designsLoadedRef = useRef(false)
 
   const activeTab = canvasTab ?? 'products'
 
@@ -139,6 +148,41 @@ export function AssetsClient() {
         }
       } finally {
         setBackgroundsLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeTab, showToast, t])
+
+  useEffect(() => {
+    if (activeTab !== 'designs') return
+    if (designsLoadedRef.current) return
+
+    let cancelled = false
+    void (async () => {
+      setDesignsLoading(true)
+      try {
+        const res = await fetch('/api/assets/designs/list', {
+          cache: 'no-store',
+        })
+        if (!res.ok) throw new Error('list failed')
+        const data = (await res.json()) as { items: AssetItem[] }
+        if (!cancelled) {
+          setDesignItems(data.items ?? [])
+          designsLoadedRef.current = true
+        }
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AbortError') {
+          return
+        }
+        if (!cancelled) {
+          setDesignItems([])
+          showToast('error', t('designs.loadError'))
+        }
+      } finally {
+        setDesignsLoading(false)
       }
     })()
 
@@ -329,12 +373,57 @@ export function AssetsClient() {
     }
   }
 
+  const onDesignGenerate = async (item: AssetItem) => {
+    const flow = designCardFlows[item.name] ?? 'none'
+    const customPrompt = designCardCustomPrompts[item.name]?.trim() ?? ''
+    if (flow === 'none') return
+    if (flow === 'custom' && customPrompt.length === 0) {
+      showToast('error', t('toast.customPromptRequired'))
+      return
+    }
+
+    setDesignGeneratingByName((prev) => ({ ...prev, [item.name]: true }))
+    try {
+      const res = await fetch('/api/assets/designs/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: item.name,
+          flow,
+          prompt: flow === 'custom' ? customPrompt : undefined,
+        }),
+      })
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({}))) as { message?: string; code?: string }
+        const e = new Error(err.message ?? 'generate') as Error & { code?: string }
+        if (err.code === 'leonardo' || err.code === 'leonardo_tokens') e.code = err.code
+        throw e
+      }
+      const created = (await res.json()) as AssetItem
+      setDesignItems((prev) => [created, ...prev])
+      showToast('success', t('toast.generated'))
+    } catch (err) {
+      const reason = err as Error & { code?: string }
+      if (reason.code === 'leonardo_tokens') {
+        showToast('error', t('toast.leonardoInsufficientTokens'))
+      } else if (reason.code === 'leonardo') {
+        showToast('error', t('toast.leonardoError'))
+      } else {
+        showToast('error', t('toast.generateError'))
+      }
+    } finally {
+      setDesignGeneratingByName((prev) => ({ ...prev, [item.name]: false }))
+    }
+  }
+
   const previewDownloadHref =
     preview?.kind === 'background'
       ? assetBackgroundDownloadHref(preview.item.name)
-      : preview
-        ? assetDownloadHref(preview.item.name)
-        : '#'
+      : preview?.kind === 'design'
+        ? designDownloadHref(preview.item.name)
+        : preview
+          ? assetDownloadHref(preview.item.name)
+          : '#'
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -474,7 +563,7 @@ export function AssetsClient() {
         className="flex w-full flex-col gap-6"
         value={activeTab}
         onValueChange={(v) => {
-          void setCanvasTab(v as 'products' | 'backgrounds')
+          void setCanvasTab(v as 'products' | 'backgrounds' | 'designs')
         }}
       >
         <TabsList
@@ -486,6 +575,9 @@ export function AssetsClient() {
           </TabsTrigger>
           <TabsTrigger className="shrink-0" value="backgrounds">
             {t('tabs.backgrounds')}
+          </TabsTrigger>
+          <TabsTrigger className="shrink-0" value="designs">
+            {t('tabs.designs')}
           </TabsTrigger>
         </TabsList>
 
@@ -553,6 +645,34 @@ export function AssetsClient() {
                 kind: 'background',
               })
             }
+          />
+        </TabsContent>
+
+        <TabsContent value="designs" className="mt-0 flex flex-col gap-6 outline-none">
+          <AssetsImageGrid
+            loading={designsLoading}
+            items={designItems}
+            imageDimensionsByName={imageDimensionsByName}
+            onImageNaturalSize={handleImageNaturalSize}
+            cardFlows={designCardFlows}
+            onCardFlowChange={(name, value) => {
+              setDesignCardFlows((prev) => ({ ...prev, [name]: value }))
+            }}
+            cardCustomPrompts={designCardCustomPrompts}
+            onCardCustomPromptChange={(name, value) => {
+              setDesignCardCustomPrompts((prev) => ({ ...prev, [name]: value }))
+            }}
+            aiFlows={aiFlows}
+            flowsLoading={flowsLoading}
+            generatingByName={designGeneratingByName}
+            deleting={null}
+            onPreview={(item) => setPreview({ item, kind: 'design' })}
+            onDeleteRequest={() => undefined}
+            onGenerate={onDesignGenerate}
+            downloadHrefForName={designDownloadHref}
+            showDeleteButton={false}
+            emptyTitle={t('designs.empty.title')}
+            emptyDescription={t('designs.empty.description')}
           />
         </TabsContent>
       </Tabs>

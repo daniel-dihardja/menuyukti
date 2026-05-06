@@ -620,7 +620,8 @@
     },
     "tabs": {
       "products": "Products",
-      "backgrounds": "Backgrounds"
+      "backgrounds": "Backgrounds",
+      "designs": "Designs"
     },
     "backgrounds": {
       "empty": {
@@ -628,6 +629,13 @@
         "description": "Built-in backgrounds will appear here."
       },
       "loadError": "Couldn’t load backgrounds. Try again."
+    },
+    "designs": {
+      "empty": {
+        "title": "No designs yet",
+        "description": "Designs created for your campaigns will appear here."
+      },
+      "loadError": "Couldn’t load designs. Try again."
     },
     "upload": {
       "title": "Upload images",

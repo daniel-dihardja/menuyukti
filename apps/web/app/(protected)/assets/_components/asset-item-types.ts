@@ -26,6 +26,10 @@ export function assetBackgroundDownloadHref(name: string): string {
   return `/api/assets/backgrounds/download?name=${encodeURIComponent(name)}`
 }
 
+export function designDownloadHref(name: string): string {
+  return `/api/assets/designs/download?name=${encodeURIComponent(name)}`
+}
+
 /** Shared fields for preview dialog (user assets + built-in backgrounds). */
 export type AssetPreviewItem = {
   name: string

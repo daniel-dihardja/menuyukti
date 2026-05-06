@@ -49,6 +49,11 @@ export type AssetsImageGridProps = {
   onDeleteRequest: (name: string) => void
   onGenerate: (item: AssetItem) => void
   skeletonCount?: number
+  /** Override download URL (e.g. designs use `/api/assets/designs/download`). */
+  downloadHrefForName?: (name: string) => string
+  showDeleteButton?: boolean
+  emptyTitle?: string
+  emptyDescription?: string
 }
 
 export function AssetsImageGrid({
@@ -68,6 +73,10 @@ export function AssetsImageGrid({
   onDeleteRequest,
   onGenerate,
   skeletonCount = ASSETS_GRID_SKELETON_COUNT,
+  downloadHrefForName = assetDownloadHref,
+  showDeleteButton = true,
+  emptyTitle,
+  emptyDescription,
 }: AssetsImageGridProps) {
   const t = useTranslations('assets')
   const format = useFormatter()
@@ -95,8 +104,10 @@ export function AssetsImageGrid({
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
               <ImageIcon className="h-6 w-6 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-medium">{t('grid.empty.title')}</h3>
-            <p className="text-sm text-muted-foreground">{t('grid.empty.description')}</p>
+            <h3 className="text-lg font-medium">{emptyTitle ?? t('grid.empty.title')}</h3>
+            <p className="text-sm text-muted-foreground">
+              {emptyDescription ?? t('grid.empty.description')}
+            </p>
           </div>
         </Card>
       ) : (
@@ -156,31 +167,33 @@ export function AssetsImageGrid({
                         asChild
                       >
                         <a
-                          href={assetDownloadHref(item.name)}
+                          href={downloadHrefForName(item.name)}
                           download={item.name}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <Download className="h-5 w-5 sm:h-4 sm:w-4" />
                         </a>
                       </Button>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="secondary"
-                        className={`${overlayIconButtonBase} bg-white/95 text-destructive hover:bg-white`}
-                        disabled={deleting === item.name}
-                        aria-label={t('grid.delete')}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onDeleteRequest(item.name)
-                        }}
-                      >
-                        {deleting === item.name ? (
-                          <Loader2 className="h-5 w-5 animate-spin sm:h-4 sm:w-4" />
-                        ) : (
-                          <Trash2 className="h-5 w-5 sm:h-4 sm:w-4" />
-                        )}
-                      </Button>
+                      {showDeleteButton ? (
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="secondary"
+                          className={`${overlayIconButtonBase} bg-white/95 text-destructive hover:bg-white`}
+                          disabled={deleting === item.name}
+                          aria-label={t('grid.delete')}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onDeleteRequest(item.name)
+                          }}
+                        >
+                          {deleting === item.name ? (
+                            <Loader2 className="h-5 w-5 animate-spin sm:h-4 sm:w-4" />
+                          ) : (
+                            <Trash2 className="h-5 w-5 sm:h-4 sm:w-4" />
+                          )}
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
                 </div>
