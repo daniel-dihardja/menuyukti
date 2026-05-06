@@ -2,8 +2,8 @@
   "features": [
     {
       "id": "assets",
-      "description": "Brand asset library and uploads (/assets, related APIs).",
-      "routePrefixes": ["/assets", "/canvas"],
+      "description": "Brand asset library and uploads (/canvas, related APIs).",
+      "routePrefixes": ["/canvas"],
       "navKeys": []
     },
     {

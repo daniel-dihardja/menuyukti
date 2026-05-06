@@ -7,7 +7,6 @@
 export const PROTECTED_APP_SHELL_PREFIXES = [
   '/analytics',
   '/campaigns',
-  '/assets',
   '/canvas',
   '/advisor',
   '/print-orders',
@@ -51,8 +50,7 @@ export const routes = {
     menuItems: (analyticsId: string | number) => `/analytics/${analyticsId}/menu-items`,
   },
 
-  assets: '/assets',
-  /** AI canvas (brand library + generation); `/assets` redirects here. */
+  /** AI canvas (brand library + generation). */
   canvas: '/canvas',
   canvasSession: (id: string | number) => `/canvas/${id}`,
   /** Standalone assistant chat (same `/api/chat` stack as workflows). */
