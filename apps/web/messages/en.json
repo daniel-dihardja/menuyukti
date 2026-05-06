@@ -1727,7 +1727,13 @@
       "analysis": {
         "title": "Menu Item Analysis"
       },
-      "emptyFiltered": "No menu items match the current filters. Adjust or reset filters to continue.",
+      "emptyFiltered": "No matrix items match the selected category. Adjust the filter to continue.",
+      "filters": {
+        "categoryLabel": "Category Filter",
+        "categoryAriaLabel": "Filter matrix items by menu category",
+        "categoryPlaceholder": "Select category…",
+        "allCategories": "All Categories"
+      },
       "categories": {
         "star": "Stars",
         "plow_horse": "Plow Horses",
