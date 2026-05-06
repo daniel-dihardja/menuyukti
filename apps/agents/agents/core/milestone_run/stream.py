@@ -92,7 +92,7 @@ def _summary_from_final_state(fs: dict[str, Any] | None) -> dict[str, Any]:
     return {
         "result_node_id": fs.get("result_node_id"),
         "result_summary_preview": summary_text[:500],
-        "selected_skill_ids": fs.get("selected_skill_ids"),
+        "preset_id": fs.get("preset_id"),
         "milestonedata_written": fs.get("milestonedata_written"),
     }
 
@@ -135,16 +135,12 @@ async def iter_milestone_run_sse_lines(
         "request_goal": goal,
         "criteria": [],
         "prior_milestones_data": "",
-        "api_adapter_tools": [],
+        "preset_id": "",
         "result_data": "",
         "milestonedata_written": False,
         "result_summary": "",
         "result_node_id": None,
         "last_criteria_verdicts": [],
-        "use_llm_skill_selector": True,
-        "selected_skill_ids": [],
-        "current_skill_index": 0,
-        "selected_skill_id": None,
     }
     if traceparent:
         initial["traceparent"] = traceparent

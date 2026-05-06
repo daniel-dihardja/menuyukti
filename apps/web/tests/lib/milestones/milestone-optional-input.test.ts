@@ -74,6 +74,5 @@ describe('milestone optional notes (promotion_candidates parity)', () => {
       value: { notes: '' },
     })
     expect(fields.milestoneData).toEqual({ posts: [] })
-    expect(fields.milestoneRunSkillIds).toEqual(['post_scheduler'])
   })
 })

@@ -8,14 +8,6 @@ import pytest
 from agents_app.agents.core.milestone_run.campaign_brief.nodes import fetch_and_prepare
 from agents_app.agents.core.milestone_run.graph import build_milestone_run_graph
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
-from agents_app.agents.core.milestone_run.skills import SKILL_REGISTRY
-from agents_app.agents.core.milestone_run.tools import make_milestone_run_tools
-from langchain_core.tools import BaseTool
-
-
-async def _empty_astream_events(*_a: object, **_k: object):
-    if False:  # pragma: no cover
-        yield None
 
 
 async def _fake_eval_astream(*_a: object, **_k: object):
@@ -39,10 +31,7 @@ def _minimal_initial() -> dict:
         "raw_data": "",
         "criteria": [],
         "prior_milestones_data": "",
-        "api_adapter_tools": [],
-        "selected_skill_id": None,
-        "selected_skill_ids": [],
-        "current_skill_index": 0,
+        "preset_id": "",
         "result_data": "",
         "milestonedata_written": False,
         "result_summary": "",
@@ -112,25 +101,13 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
             new=AsyncMock(return_value=[{"nodeType": "goal", "data": {"goal": "G1"}}]),
         ),
         patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_api_adapter_tools_for_location",
-            new=AsyncMock(return_value=[]),
-        ),
-        patch(
             "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
-            new=AsyncMock(
-                return_value={
-                    "data": {
-                        "milestoneRunSkillMode": "fixed",
-                        "milestoneRunSkillIds": ["campaign_brief"],
-                    }
-                }
-            ),
+            new=AsyncMock(return_value={"data": {"presetId": "restaurant_campaign_brief"}}),
         ),
         patch("agents_app.agents.core.milestone_eval.nodes.get_stream_writer", return_value=lambda _x: None),
         patch("agents_app.agents.core.milestone_run.graph.get_stream_writer", return_value=lambda _x: None),
         patch("agents_app.agents.core.milestone_run.graph.get_config", return_value={}),
         patch("agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph", return_value=mock_eval),
-        patch("agents_app.agents.core.milestone_run.graph.create_react_agent") as mock_react,
         patch("agents_app.agents.core.milestone_run.graph.build_campaign_brief_graph") as mock_build_brand,
     ):
         mock_brand_graph = MagicMock()
@@ -139,53 +116,8 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
         graph = build_milestone_run_graph(client)
         out = await graph.ainvoke(_minimal_initial())
 
-    mock_react.assert_not_called()
     mock_build_brand.assert_called_once()
     assert out.get("milestonedata_written") is True
-
-
-@pytest.mark.asyncio
-async def test_routing_non_campaign_brief_stays_dynamic_react() -> None:
-    client = MagicMock(spec=AsyncMock)
-    mock_eval = MagicMock()
-    mock_eval.astream = _fake_eval_astream
-
-    with (
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(return_value=[{"nodeType": "goal", "data": {"goal": "G1"}}]),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_api_adapter_tools_for_location",
-            new=AsyncMock(return_value=[]),
-        ),
-        patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
-            new=AsyncMock(
-                return_value={
-                    "data": {
-                        "milestoneRunSkillMode": "fixed",
-                        "milestoneRunSkillIds": ["public_holidays"],
-                    }
-                }
-            ),
-        ),
-        patch("agents_app.agents.core.milestone_eval.nodes.get_stream_writer", return_value=lambda _x: None),
-        patch("agents_app.agents.core.milestone_run.graph.get_stream_writer", return_value=lambda _x: None),
-        patch("agents_app.agents.core.milestone_run.graph.get_config", return_value={}),
-        patch("agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph", return_value=mock_eval),
-        patch("agents_app.agents.core.milestone_run.graph.build_campaign_brief_graph") as mock_build_brand,
-        patch("agents_app.agents.core.milestone_run.graph.get_llm_structured", return_value=MagicMock()),
-        patch("agents_app.agents.core.milestone_run.graph.create_react_agent") as mock_react,
-    ):
-        mock_agent = MagicMock()
-        mock_agent.astream_events = MagicMock(side_effect=_empty_astream_events)
-        mock_react.return_value = mock_agent
-        graph = build_milestone_run_graph(client)
-        await graph.ainvoke(_minimal_initial())
-
-    mock_build_brand.assert_not_called()
-    mock_react.assert_called_once()
 
 
 def test_output_schema_required_keys_and_types() -> None:
@@ -258,14 +190,3 @@ async def test_fallback_when_analytics_missing_still_builds_context() -> None:
     assert "operating signals unavailable" in out["signal_markdown"].lower()
 
 
-def test_backward_compat_skill_registry_and_tool_assembly() -> None:
-    assert "campaign_brief" in SKILL_REGISTRY
-    tools = make_milestone_run_tools(
-        context={"goal": "g", "criteria": [], "result_data": "", "prior_milestones_data": ""},
-        milestone_id="m1",
-        location_id=1,
-        user_id="u1",
-        client=MagicMock(spec=AsyncMock),
-    )
-    assert isinstance(tools, list)
-    assert all(isinstance(t, BaseTool) for t in tools)

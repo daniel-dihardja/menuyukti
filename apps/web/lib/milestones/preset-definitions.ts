@@ -1,7 +1,4 @@
-import type {
-  MilestoneRunSkillMode,
-  PassCriteriaRow,
-} from '@/app/(protected)/campaigns/_components/timeline/types'
+import type { PassCriteriaRow } from '@/app/(protected)/campaigns/_components/timeline/types'
 import { type MilestoneInput, type MilestonedataValue } from '@/lib/graphql/node-schemas'
 
 export const MILESTONE_PRESET_IDS = [
@@ -25,8 +22,6 @@ export type MilestonePresetCreateFields = {
   milestoneData: MilestonedataValue
   milestoneInput?: MilestoneInput
   goal?: string
-  milestoneRunSkillMode?: MilestoneRunSkillMode
-  milestoneRunSkillIds?: string[]
   /** Applied in a follow-up PATCH (API handles `passCriteria` separately from goal/Data). */
   passCriteria?: MilestonePresetPassCriterionDraft[]
 }
@@ -64,8 +59,6 @@ export function getMilestonePresetCreateFields(
           toneGuardrails: [],
         },
         goal: t('milestonePreset.restaurant_campaign_brief.goal'),
-        milestoneRunSkillMode: 'fixed',
-        milestoneRunSkillIds: ['campaign_brief'],
         passCriteria: [
           {
             requirement: t('milestonePreset.restaurant_campaign_brief.criterionVenueSnapshot'),
@@ -116,8 +109,6 @@ export function getMilestonePresetCreateFields(
           promotionIdeas: [],
         },
         goal: t('milestonePreset.promotion_candidates.goal'),
-        milestoneRunSkillMode: 'fixed',
-        milestoneRunSkillIds: ['promotion_candidates'],
         passCriteria: [
           {
             requirement: t('milestonePreset.promotion_candidates.criterionGrouping'),
@@ -145,8 +136,6 @@ export function getMilestonePresetCreateFields(
           posts: [],
         },
         goal: t('milestonePreset.post_scheduler.goal'),
-        milestoneRunSkillMode: 'fixed',
-        milestoneRunSkillIds: ['post_scheduler'],
         passCriteria: [
           {
             requirement: t('milestonePreset.post_scheduler.criterionPostsGenerated'),

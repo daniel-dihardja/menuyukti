@@ -1,4 +1,4 @@
-"""Milestone run: fetch children → LLM skill selection → ReAct execute with tools → result."""
+"""Milestone run: fetch children -> dedicated preset graph -> result."""
 
 from __future__ import annotations
 

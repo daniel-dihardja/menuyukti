@@ -6,7 +6,6 @@ export type {
   MilestoneDataValue,
   MilestoneInput,
   MilestonePresetId,
-  MilestoneRunSkillMode,
   PassCriteriaRow,
   PassCriteriaStatus,
   PostSchedulerMilestoneData,

@@ -41,19 +41,11 @@ type RouteContext = {
 function mergeMilestoneNodeDataJson(
   prev: Record<string, unknown>,
   patch: {
-    milestoneRunSkillMode?: 'auto' | 'fixed'
-    milestoneRunSkillIds?: string[]
     presetId?: 'restaurant_campaign_brief' | 'promotion_candidates' | 'post_scheduler'
     milestoneInput?: { type: string; value?: unknown }
   },
 ): Record<string, unknown> {
   const next = { ...prev }
-  if (patch.milestoneRunSkillMode !== undefined) {
-    next.milestoneRunSkillMode = patch.milestoneRunSkillMode
-  }
-  if (patch.milestoneRunSkillIds !== undefined) {
-    next.milestoneRunSkillIds = patch.milestoneRunSkillIds
-  }
   if (patch.presetId !== undefined) {
     next.presetId = patch.presetId
   }
@@ -240,7 +232,7 @@ async function syncGoalChild(
   }
 }
 
-/** Load persisted Data-tab payload and milestone run settings (same sources as the workflow page SSR). */
+/** Load persisted Data-tab payload (same sources as the workflow page SSR). */
 export async function GET(_req: Request, context: RouteContext) {
   try {
     await connection()
@@ -380,18 +372,6 @@ export async function GET(_req: Request, context: RouteContext) {
 
     const goal = goalFromNode ?? legacyGoal ?? ''
 
-    let milestoneRunSkillMode: 'auto' | 'fixed' = 'auto'
-    let milestoneRunSkillIds: string[] = []
-    if (parsedMilestoneNodeData?.success) {
-      if (parsedMilestoneNodeData.data.milestoneRunSkillMode === 'fixed') {
-        milestoneRunSkillMode = 'fixed'
-      }
-      if (Array.isArray(parsedMilestoneNodeData.data.milestoneRunSkillIds)) {
-        milestoneRunSkillIds = parsedMilestoneNodeData.data.milestoneRunSkillIds.filter(
-          (x): x is string => typeof x === 'string' && x.length > 0,
-        )
-      }
-    }
     let milestoneInput: z.infer<typeof milestoneInputSchema> | null = null
     if (
       parsedMilestoneNodeData?.success &&
@@ -410,8 +390,6 @@ export async function GET(_req: Request, context: RouteContext) {
         milestoneData,
         goal,
         passCriteria,
-        milestoneRunSkillMode,
-        milestoneRunSkillIds,
         presetId: parsedMilestoneNodeData?.success
           ? (parsedMilestoneNodeData.data.presetId ?? null)
           : null,
@@ -522,12 +500,7 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
 
     if (body.passCriteria === undefined) {
-      if (
-        body.presetId !== undefined ||
-        body.milestoneRunSkillMode !== undefined ||
-        body.milestoneRunSkillIds !== undefined ||
-        body.milestoneInput !== undefined
-      ) {
+      if (body.presetId !== undefined || body.milestoneInput !== undefined) {
         const mn = validated.milestoneNode
         const prevData =
           mn.data != null && typeof mn.data === 'object'
@@ -535,8 +508,6 @@ export async function PATCH(req: Request, context: RouteContext) {
             : {}
         const merged = mergeMilestoneNodeDataJson(prevData, {
           presetId: body.presetId,
-          milestoneRunSkillMode: body.milestoneRunSkillMode,
-          milestoneRunSkillIds: body.milestoneRunSkillIds,
           milestoneInput: body.milestoneInput,
         })
         parseUpdateNodeData(
@@ -588,12 +559,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       parseUpdateNodeData(u)
     }
 
-    if (
-      body.presetId !== undefined ||
-      body.milestoneRunSkillMode !== undefined ||
-      body.milestoneRunSkillIds !== undefined ||
-      body.milestoneInput !== undefined
-    ) {
+    if (body.presetId !== undefined || body.milestoneInput !== undefined) {
       const mn = validated.milestoneNode
       const prevData =
         mn.data != null && typeof mn.data === 'object'
@@ -601,8 +567,6 @@ export async function PATCH(req: Request, context: RouteContext) {
           : {}
       const merged = mergeMilestoneNodeDataJson(prevData, {
         presetId: body.presetId,
-        milestoneRunSkillMode: body.milestoneRunSkillMode,
-        milestoneRunSkillIds: body.milestoneRunSkillIds,
         milestoneInput: body.milestoneInput,
       })
       parseUpdateNodeData(

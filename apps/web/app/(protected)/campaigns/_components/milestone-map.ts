@@ -13,7 +13,6 @@ import type { AnyNode } from '@/lib/graphql/queries'
 
 import type {
   MilestoneInput,
-  MilestoneRunSkillMode,
   MilestonePresetId,
   MilestoneDataValue,
   PassCriteriaRow,
@@ -139,25 +138,13 @@ export function resultMarkdownFromChildNodes(
 }
 
 function milestoneRunSkillFieldsFromData(data: unknown): {
-  milestoneRunSkillMode: MilestoneRunSkillMode
-  milestoneRunSkillIds: string[]
   presetId?: MilestonePresetId
   milestoneInput?: MilestoneInput
 } {
   const parsed = milestoneDataSchema.safeParse(data)
-  let milestoneRunSkillMode: MilestoneRunSkillMode = 'auto'
-  let milestoneRunSkillIds: string[] = []
   let presetId: MilestonePresetId | undefined
   let milestoneInput: MilestoneInput | undefined
   if (parsed.success) {
-    if (parsed.data.milestoneRunSkillMode === 'fixed') {
-      milestoneRunSkillMode = 'fixed'
-    }
-    if (Array.isArray(parsed.data.milestoneRunSkillIds)) {
-      milestoneRunSkillIds = parsed.data.milestoneRunSkillIds.filter(
-        (x): x is string => typeof x === 'string' && x.trim().length > 0,
-      )
-    }
     if (parsed.data.presetId !== undefined) {
       presetId = parsed.data.presetId
     }
@@ -168,7 +155,7 @@ function milestoneRunSkillFieldsFromData(data: unknown): {
       }
     }
   }
-  return { milestoneRunSkillMode, milestoneRunSkillIds, presetId, milestoneInput }
+  return { presetId, milestoneInput }
 }
 
 export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): TimelineMilestone {
@@ -178,8 +165,7 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   const data = milestoneDataFromChildNodes(node.milestonedataNodes)
   const passCriteria = passCriteriaFromChildNodes(node.passCriteriaNodes)
   const resultMarkdown = resultMarkdownFromChildNodes(node.resultNodes)
-  const { milestoneRunSkillMode, milestoneRunSkillIds, presetId, milestoneInput } =
-    milestoneRunSkillFieldsFromData(node.data)
+  const { presetId, milestoneInput } = milestoneRunSkillFieldsFromData(node.data)
   let normalizedData = data
   if (presetId === 'restaurant_campaign_brief') {
     const parsedCampaignBriefData = campaignBriefMilestoneDataSchema.safeParse(data)
@@ -229,8 +215,6 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
     title: node.name,
     goal,
     data: normalizedData,
-    milestoneRunSkillMode,
-    milestoneRunSkillIds,
     presetId,
     milestoneInput,
     passCriteria,

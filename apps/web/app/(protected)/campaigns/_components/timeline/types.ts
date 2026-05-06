@@ -10,9 +10,6 @@ export type PassCriteriaRow = {
   status: PassCriteriaStatus
 }
 
-/** Milestone agent run skill selection; stored on milestone `data` JSON. */
-export type MilestoneRunSkillMode = 'auto' | 'fixed'
-
 export type MilestonePresetId =
   | 'restaurant_campaign_brief'
   | 'promotion_candidates'
@@ -92,10 +89,6 @@ export type TimelineMilestone = {
   presetId?: MilestonePresetId
   /** Typed per-milestone input; stored on milestone `data` JSON. */
   milestoneInput?: MilestoneInput
-  /** Auto: LLM picks skills. Fixed: use `milestoneRunSkillIds` (max 2). */
-  milestoneRunSkillMode?: MilestoneRunSkillMode
-  /** Registry skill ids when mode is `fixed`. */
-  milestoneRunSkillIds?: string[]
   /** Markdown body for the Result tab. */
   resultMarkdown?: string
   /** Derived rail status from pass criteria + optional run outcome. */

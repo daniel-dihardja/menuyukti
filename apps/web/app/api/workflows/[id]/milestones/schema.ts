@@ -5,7 +5,6 @@ import {
   campaignBriefMilestoneInputValueSchema,
   milestonePresetIdSchema,
   milestoneInputSchema,
-  milestoneRunSkillModeSchema,
   passCriteriaDataSchema,
   postSchedulerMilestoneDataSchema,
   postSchedulerMilestoneInputValueSchema,
@@ -58,9 +57,6 @@ export const patchMilestoneSchema = z
       ])
       .optional(),
     presetId: milestonePresetIdSchema.optional(),
-    /** Stored on milestone node `data` JSON; agents skip LLM skill pick when `fixed` + valid ids. */
-    milestoneRunSkillMode: milestoneRunSkillModeSchema.optional(),
-    milestoneRunSkillIds: z.array(z.string().trim().min(1)).max(2).optional(),
     passCriteria: z.array(passCriteriaRowSchema).optional(),
     move: z.enum(['up', 'down']).optional(),
   })
@@ -71,12 +67,10 @@ export const patchMilestoneSchema = z
       v.milestoneData !== undefined ||
       v.milestoneInput !== undefined ||
       v.presetId !== undefined ||
-      v.milestoneRunSkillMode !== undefined ||
-      v.milestoneRunSkillIds !== undefined ||
       v.passCriteria !== undefined ||
       v.move !== undefined,
     {
       message:
-        'Provide at least one of name, goal, milestoneData, milestoneInput, presetId, milestoneRunSkillMode, milestoneRunSkillIds, passCriteria, or move',
+        'Provide at least one of name, goal, milestoneData, milestoneInput, presetId, passCriteria, or move',
     },
   )

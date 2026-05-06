@@ -35,10 +35,7 @@ def _minimal_initial() -> dict:
         "raw_data": "",
         "criteria": [],
         "prior_milestones_data": "",
-        "api_adapter_tools": [],
-        "selected_skill_id": None,
-        "selected_skill_ids": [],
-        "current_skill_index": 0,
+        "preset_id": "",
         "result_data": "",
         "milestonedata_written": False,
         "result_summary": "",
@@ -106,25 +103,13 @@ async def test_routing_post_scheduler_uses_dedicated_graph_path() -> None:
             new=AsyncMock(return_value=[{"nodeType": "goal", "data": {"goal": "G1"}}]),
         ),
         patch(
-            "agents_app.agents.core.milestone_run.graph.fetch_api_adapter_tools_for_location",
-            new=AsyncMock(return_value=[]),
-        ),
-        patch(
             "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
-            new=AsyncMock(
-                return_value={
-                    "data": {
-                        "milestoneRunSkillMode": "fixed",
-                        "milestoneRunSkillIds": ["post_scheduler"],
-                    }
-                }
-            ),
+            new=AsyncMock(return_value={"data": {"presetId": "post_scheduler"}}),
         ),
         patch("agents_app.agents.core.milestone_eval.nodes.get_stream_writer", return_value=lambda _x: None),
         patch("agents_app.agents.core.milestone_run.graph.get_stream_writer", return_value=lambda _x: None),
         patch("agents_app.agents.core.milestone_run.graph.get_config", return_value={}),
         patch("agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph", return_value=mock_eval),
-        patch("agents_app.agents.core.milestone_run.graph.create_react_agent") as mock_react,
         patch("agents_app.agents.core.milestone_run.graph.build_post_scheduler_graph") as mock_build_post,
     ):
         mock_post_graph = MagicMock()
@@ -133,7 +118,6 @@ async def test_routing_post_scheduler_uses_dedicated_graph_path() -> None:
         graph = build_milestone_run_graph(client)
         out = await graph.ainvoke(_minimal_initial())
 
-    mock_react.assert_not_called()
     mock_build_post.assert_called_once()
     assert out.get("milestonedata_written") is True
 
