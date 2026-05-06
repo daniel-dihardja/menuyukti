@@ -159,7 +159,7 @@ def test_promotion_candidates_skill_extra_tool_ids() -> None:
     from agents_app.agents.core.milestone_run.skills import SKILL_REGISTRY
 
     pc = SKILL_REGISTRY["promotion_candidates"]
-    assert pc.extra_tool_ids == ("get_promotion_candidates",)
+    assert pc.extra_tool_ids == ()
     assert pc.inject_prior_presets == ("restaurant_campaign_brief",)
 
 

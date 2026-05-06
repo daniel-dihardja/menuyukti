@@ -138,10 +138,68 @@ class PostSchedulerMilestoneOutput(BaseModel):
     posts: list[PostSchedulerPostItem]
 
 
+class PromotionCandidatesCategoryOutput(BaseModel):
+    menuCategory: str
+    starHighlights: list[str]
+    puzzleHighlights: list[str]
+    notes: str | None = None
+
+    @field_validator("starHighlights", "puzzleHighlights")
+    @classmethod
+    def _dedupe_non_empty(cls, values: list[str]) -> list[str]:
+        seen: set[str] = set()
+        out: list[str] = []
+        for raw in values:
+            text = str(raw).strip()
+            if not text:
+                continue
+            key = text.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(text)
+        return out
+
+
+class PromotionCandidatesMilestoneOutput(BaseModel):
+    grouping: Literal["by_menu_category", "flat"]
+    categories: dict[str, PromotionCandidatesCategoryOutput]
+    flatSummary: str
+    promotionIdeas: list[str]
+
+    @field_validator("promotionIdeas")
+    @classmethod
+    def _validate_ideas(cls, values: list[str]) -> list[str]:
+        seen: set[str] = set()
+        cleaned: list[str] = []
+        for raw in values:
+            text = str(raw).strip()
+            if not text:
+                continue
+            key = text.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            cleaned.append(text)
+        if len(cleaned) > 8:
+            raise ValueError("must contain at most 8 unique non-empty items")
+        return cleaned
+
+    @model_validator(mode="after")
+    def _check_shape_by_grouping(self) -> "PromotionCandidatesMilestoneOutput":
+        if self.grouping == "flat":
+            if self.categories:
+                raise ValueError("categories must be empty when grouping is flat")
+        elif not self.categories:
+            raise ValueError("categories must be non-empty when grouping is by_menu_category")
+        return self
+
+
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
     "campaign_brief": CampaignBriefMilestoneOutput,
+    "promotion_candidates": PromotionCandidatesMilestoneOutput,
     "post_scheduler": PostSchedulerMilestoneOutput,
 }
 

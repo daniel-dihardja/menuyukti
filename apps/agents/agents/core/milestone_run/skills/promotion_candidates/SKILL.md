@@ -6,8 +6,6 @@ description: >-
   are missing) from the latest analytics run. When a prior campaign brief milestone exists
   in the workflow, align promotion ideas, highlights, and notes with its pillars,
   audience, proof angles, and tone—menu names and matrix facts always come from analytics.
-extra_tools:
-  - get_promotion_candidates
 inject_prior_presets:
   - restaurant_campaign_brief
 ---
