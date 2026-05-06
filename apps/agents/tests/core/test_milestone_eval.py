@@ -119,7 +119,7 @@ async def test_fetch_context_appends_prior_milestone_context_when_workflow_prese
 
 def test_synthesis_human_message_includes_optional_input_notes_block() -> None:
     msg = synthesis_human_message(
-        "Build a brand brief",
+        "Build a campaign_brief",
         [{"id": "pc-1", "status": "pass", "requirement": "Has pillars", "reasoning": "present"}],
         "The topic of the campaign is the soccer world cup.",
     )
@@ -176,11 +176,11 @@ def test_optional_input_usage_line_marks_not_given_when_notes_absent() -> None:
     assert line == "Optional input usage: not given."
 
 
-def test_extract_milestone_input_notes_brand_brief_trims() -> None:
+def test_extract_milestone_input_notes_campaign_brief_trims() -> None:
     out = nodes._extract_milestone_input_notes(
         _base_state(
             milestone_input={
-                "type": "restaurant_brand_brief",
+                "type": "restaurant_campaign_brief",
                 "value": {"notes": "  owner context  "},
             },
         ),

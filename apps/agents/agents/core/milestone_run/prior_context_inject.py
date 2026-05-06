@@ -6,7 +6,7 @@ import json
 from typing import Any
 
 from agents_app.agents.core.milestone_run.prior_context_pack import (
-    is_brand_brief_milestone_data,
+    is_campaign_brief_milestone_data,
 )
 
 
@@ -16,8 +16,8 @@ def build_injected_prior_context_markdown(
 ) -> tuple[str, list[str]]:
     """Select prior rows matching ``inject_prior_presets`` and return markdown + matched ids for logs.
 
-    Prefers ``presetId`` on each prior row (from GraphQL). For ``restaurant_brand_brief``, falls back to
-    the first row whose ``data`` matches saved brand-brief shape when no ``presetId`` match exists.
+    Prefers ``presetId`` on each prior row (from GraphQL). For ``restaurant_campaign_brief``, falls back to
+    the first row whose ``data`` matches saved campaign_brief shape when no ``presetId`` match exists.
     """
     if not inject_prior_presets:
         return "", []
@@ -50,12 +50,12 @@ def build_injected_prior_context_markdown(
             if pid.strip() not in matched_ids:
                 matched_ids.append(pid.strip())
 
-    if "restaurant_brand_brief" in wanted and "restaurant_brand_brief" not in matched_ids:
+    if "restaurant_campaign_brief" in wanted and "restaurant_campaign_brief" not in matched_ids:
         for row in rows:
             if not isinstance(row, dict):
                 continue
             data = row.get("data")
-            if isinstance(data, dict) and is_brand_brief_milestone_data(data):
+            if isinstance(data, dict) and is_campaign_brief_milestone_data(data):
                 matched.append(
                     {
                         "title": row.get("title"),
@@ -63,7 +63,7 @@ def build_injected_prior_context_markdown(
                         "data": data,
                     }
                 )
-                matched_ids.append("restaurant_brand_brief")
+                matched_ids.append("restaurant_campaign_brief")
                 break
 
     if not matched:

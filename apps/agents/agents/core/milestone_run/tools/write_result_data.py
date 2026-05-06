@@ -74,7 +74,7 @@ def make_write_result_data_tool(
 
         selected_skill_id = context.get("selected_skill_id")
         if (
-            selected_skill_id == "brand_brief"
+            selected_skill_id == "campaign_brief"
             and isinstance(payload, dict)
             and isinstance(payload.get("venueSnapshot"), dict)
         ):

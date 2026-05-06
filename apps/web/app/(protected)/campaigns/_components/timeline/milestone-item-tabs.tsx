@@ -28,7 +28,7 @@ import type { DatesMilestoneInput, PassCriteriaRow, TimelineMilestone } from './
 
 const presetGoalTranslationKeyById = {
   dates: 'milestonePreset.dates.goal',
-  restaurant_brand_brief: 'milestonePreset.restaurant_brand_brief.goal',
+  restaurant_campaign_brief: 'milestonePreset.restaurant_campaign_brief.goal',
   promotion_candidates: 'milestonePreset.promotion_candidates.goal',
   post_scheduler: 'milestonePreset.post_scheduler.goal',
 } as const
@@ -83,7 +83,7 @@ function formatDateButtonLabel(value: string): string {
   return parsed ? parsed.toLocaleDateString() : value
 }
 
-type OptionalNotesPresetId = 'restaurant_brand_brief' | 'promotion_candidates' | 'post_scheduler'
+type OptionalNotesPresetId = 'restaurant_campaign_brief' | 'promotion_candidates' | 'post_scheduler'
 
 function optionalNotesFieldCopy(
   t: (key: string) => string,
@@ -398,7 +398,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           <FieldGroup className="gap-4">
             <p className="font-semibold text-lg leading-tight">{milestone.title}</p>
             <MarkdownMessage content={helpDescription} />
-            {milestone.presetId === 'restaurant_brand_brief' ? (
+            {milestone.presetId === 'restaurant_campaign_brief' ? (
               <div className="space-y-2 text-muted-foreground text-sm">
                 <p className="font-medium text-foreground">
                   {t('milestoneHelpBrandBriefOptionalInputTitle')}

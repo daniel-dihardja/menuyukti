@@ -198,9 +198,9 @@ def test_prior_milestones_milestone_data_includes_preset_id_from_milestone_node(
             variable_values={
                 "locationId": location_id,
                 "nodeType": "milestone",
-                "name": "Brand brief step",
+                "name": "campaign_brief step",
                 "parentId": workflow_id,
-                "data": {"presetId": "restaurant_brand_brief"},
+                "data": {"presetId": "restaurant_campaign_brief"},
             },
             context_value=graphql_auth_context(),
         )
@@ -251,8 +251,8 @@ def test_prior_milestones_milestone_data_includes_preset_id_from_milestone_node(
     assert not out.errors, out.errors
     rows = out.data["priorMilestonesMilestoneData"]
     assert isinstance(rows, list) and len(rows) == 1
-    assert rows[0]["title"] == "Brand brief step"
-    assert rows[0]["presetId"] == "restaurant_brand_brief"
+    assert rows[0]["title"] == "campaign_brief step"
+    assert rows[0]["presetId"] == "restaurant_campaign_brief"
     assert rows[0]["data"] == {
         "venueSnapshot": {"venueName": "X", "city": "Y", "country": "Z", "currency": "EUR"}
     }

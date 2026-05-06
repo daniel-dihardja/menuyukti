@@ -5,7 +5,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from agents_app.agents.core.milestone_run.brand_brief.nodes import fetch_and_prepare
+from agents_app.agents.core.milestone_run.campaign_brief.nodes import fetch_and_prepare
 from agents_app.agents.core.milestone_run.graph import build_milestone_run_graph
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.skills import SKILL_REGISTRY
@@ -51,7 +51,7 @@ def _minimal_initial() -> dict:
     }
 
 
-def _valid_brand_brief_payload() -> dict:
+def _valid_campaign_brief_payload() -> dict:
     return {
         "venueSnapshot": {
             "venueName": "Cafe Alto",
@@ -71,12 +71,12 @@ def _valid_brand_brief_payload() -> dict:
 
 
 @pytest.mark.asyncio
-async def test_routing_brand_brief_uses_dedicated_graph_path() -> None:
+async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
     client = MagicMock(spec=AsyncMock)
     mock_eval = MagicMock()
     mock_eval.astream = _fake_eval_astream
 
-    async def _fake_brand_brief_astream(*_a: object, **_k: object):
+    async def _fake_campaign_brief_astream(*_a: object, **_k: object):
         yield (
             "values",
             {
@@ -112,7 +112,7 @@ async def test_routing_brand_brief_uses_dedicated_graph_path() -> None:
                 return_value={
                     "data": {
                         "milestoneRunSkillMode": "fixed",
-                        "milestoneRunSkillIds": ["brand_brief"],
+                        "milestoneRunSkillIds": ["campaign_brief"],
                     }
                 }
             ),
@@ -122,10 +122,10 @@ async def test_routing_brand_brief_uses_dedicated_graph_path() -> None:
         patch("agents_app.agents.core.milestone_run.graph.get_config", return_value={}),
         patch("agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph", return_value=mock_eval),
         patch("agents_app.agents.core.milestone_run.graph.create_react_agent") as mock_react,
-        patch("agents_app.agents.core.milestone_run.graph.build_brand_brief_graph") as mock_build_brand,
+        patch("agents_app.agents.core.milestone_run.graph.build_campaign_brief_graph") as mock_build_brand,
     ):
         mock_brand_graph = MagicMock()
-        mock_brand_graph.astream = _fake_brand_brief_astream
+        mock_brand_graph.astream = _fake_campaign_brief_astream
         mock_build_brand.return_value = mock_brand_graph
         graph = build_milestone_run_graph(client)
         out = await graph.ainvoke(_minimal_initial())
@@ -136,7 +136,7 @@ async def test_routing_brand_brief_uses_dedicated_graph_path() -> None:
 
 
 @pytest.mark.asyncio
-async def test_routing_non_brand_brief_stays_dynamic_react() -> None:
+async def test_routing_non_campaign_brief_stays_dynamic_react() -> None:
     client = MagicMock(spec=AsyncMock)
     mock_eval = MagicMock()
     mock_eval.astream = _fake_eval_astream
@@ -165,7 +165,7 @@ async def test_routing_non_brand_brief_stays_dynamic_react() -> None:
         patch("agents_app.agents.core.milestone_run.graph.get_stream_writer", return_value=lambda _x: None),
         patch("agents_app.agents.core.milestone_run.graph.get_config", return_value={}),
         patch("agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph", return_value=mock_eval),
-        patch("agents_app.agents.core.milestone_run.graph.build_brand_brief_graph") as mock_build_brand,
+        patch("agents_app.agents.core.milestone_run.graph.build_campaign_brief_graph") as mock_build_brand,
         patch("agents_app.agents.core.milestone_run.graph.get_llm_structured", return_value=MagicMock()),
         patch("agents_app.agents.core.milestone_run.graph.create_react_agent") as mock_react,
     ):
@@ -180,7 +180,7 @@ async def test_routing_non_brand_brief_stays_dynamic_react() -> None:
 
 
 def test_output_schema_required_keys_and_types() -> None:
-    normalized, error = validate_skill_output("brand_brief", _valid_brand_brief_payload())
+    normalized, error = validate_skill_output("campaign_brief", _valid_campaign_brief_payload())
     assert error is None
     assert isinstance(normalized, dict)
     assert isinstance(normalized["venueSnapshot"], dict)
@@ -191,17 +191,17 @@ def test_output_schema_required_keys_and_types() -> None:
 
 
 def test_guardrails_block_campaign_date_text_in_venue_identity() -> None:
-    payload = _valid_brand_brief_payload()
+    payload = _valid_campaign_brief_payload()
     payload["venueSnapshot"]["venueName"] = "Cafe Alto campaign start date 2026-06-01"
-    normalized, error = validate_skill_output("brand_brief", payload)
+    normalized, error = validate_skill_output("campaign_brief", payload)
     assert normalized is None
     assert error is not None
 
 
 def test_guardrails_enforce_uniqueness_and_minmax_counts() -> None:
-    payload = _valid_brand_brief_payload()
+    payload = _valid_campaign_brief_payload()
     payload["contentPillars"] = ["Hero signatures", "hero signatures", "Hero signatures"]
-    normalized, error = validate_skill_output("brand_brief", payload)
+    normalized, error = validate_skill_output("campaign_brief", payload)
     assert normalized is None
     assert error is not None
     assert "between 3 and 5 unique non-empty items" in error
@@ -215,11 +215,11 @@ async def test_fallback_when_analytics_missing_still_builds_context() -> None:
         "user_id": "u1",
         "goal": "Build campaign brief",
         "criteria": [],
-        "milestone_input": {"type": "restaurant_brand_brief", "value": {"notes": "brunch focus"}},
+        "milestone_input": {"type": "restaurant_campaign_brief", "value": {"notes": "brunch focus"}},
     }
     with (
         patch(
-            "agents_app.agents.core.milestone_run.brand_brief.nodes.graphql_post",
+            "agents_app.agents.core.milestone_run.campaign_brief.nodes.graphql_post",
             new=AsyncMock(
                 return_value={
                     "location": {
@@ -232,10 +232,10 @@ async def test_fallback_when_analytics_missing_still_builds_context() -> None:
             ),
         ),
         patch(
-            "agents_app.agents.core.milestone_run.brand_brief.nodes.fetch_location_operating_signals",
+            "agents_app.agents.core.milestone_run.campaign_brief.nodes.fetch_location_operating_signals",
             new=AsyncMock(return_value={"analytics_run": None, "instagram_signals": None}),
         ),
-        patch("agents_app.agents.core.milestone_run.brand_brief.nodes.get_stream_writer", return_value=lambda _x: None),
+        patch("agents_app.agents.core.milestone_run.campaign_brief.nodes.get_stream_writer", return_value=lambda _x: None),
     ):
         out = await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
     assert "signal_markdown" in out
@@ -243,7 +243,7 @@ async def test_fallback_when_analytics_missing_still_builds_context() -> None:
 
 
 def test_backward_compat_skill_registry_and_tool_assembly() -> None:
-    assert "brand_brief" in SKILL_REGISTRY
+    assert "campaign_brief" in SKILL_REGISTRY
     tools = make_milestone_run_tools(
         context={"goal": "g", "criteria": [], "result_data": "", "prior_milestones_data": ""},
         milestone_id="m1",

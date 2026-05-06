@@ -138,7 +138,7 @@ class PostSchedulerMilestoneOutput(BaseModel):
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
-    "brand_brief": BrandBriefMilestoneOutput,
+    "campaign_brief": BrandBriefMilestoneOutput,
     "post_scheduler": PostSchedulerMilestoneOutput,
 }
 

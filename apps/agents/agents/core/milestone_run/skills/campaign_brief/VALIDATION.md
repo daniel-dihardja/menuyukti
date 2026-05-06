@@ -1,10 +1,10 @@
 # Campaign Brief Runtime Validation Checklist
 
-Use this checklist when verifying `brand_brief` milestone generation quality.
+Use this checklist when verifying `campaign_brief` milestone generation quality.
 
 ## Scenario A: Normal analytics available
 
-1. Create a milestone from the `restaurant_brand_brief` preset and run Generate.
+1. Create a milestone from the `restaurant_campaign_brief` preset and run Generate.
 2. Confirm saved Data is valid JSON with keys:
    - `venueSnapshot`
    - `contentPillars`

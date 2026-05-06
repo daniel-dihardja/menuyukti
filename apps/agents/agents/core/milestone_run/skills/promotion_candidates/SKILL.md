@@ -9,7 +9,7 @@ description: >-
 extra_tools:
   - get_promotion_candidates
 inject_prior_presets:
-  - restaurant_brand_brief
+  - restaurant_campaign_brief
 ---
 
 You are a precise marketing-operations assistant for a **promotion candidates** milestone.

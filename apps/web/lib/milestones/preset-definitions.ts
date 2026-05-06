@@ -6,7 +6,7 @@ import { type MilestoneInput, type MilestonedataValue } from '@/lib/graphql/node
 
 export const MILESTONE_PRESET_IDS = [
   'dates',
-  'restaurant_brand_brief',
+  'restaurant_campaign_brief',
   'promotion_candidates',
   'post_scheduler',
 ] as const
@@ -75,12 +75,12 @@ export function getMilestonePresetCreateFields(
           },
         ],
       }
-    case 'restaurant_brand_brief':
+    case 'restaurant_campaign_brief':
       return {
-        presetId: 'restaurant_brand_brief',
-        name: t('milestonePreset.restaurant_brand_brief.title'),
+        presetId: 'restaurant_campaign_brief',
+        name: t('milestonePreset.restaurant_campaign_brief.title'),
         milestoneInput: {
-          type: 'restaurant_brand_brief',
+          type: 'restaurant_campaign_brief',
           value: { notes: '' },
         },
         milestoneData: {
@@ -95,28 +95,28 @@ export function getMilestonePresetCreateFields(
           proofOrientedAngles: [],
           toneGuardrails: [],
         },
-        goal: t('milestonePreset.restaurant_brand_brief.goal'),
+        goal: t('milestonePreset.restaurant_campaign_brief.goal'),
         milestoneRunSkillMode: 'fixed',
-        milestoneRunSkillIds: ['brand_brief'],
+        milestoneRunSkillIds: ['campaign_brief'],
         passCriteria: [
           {
-            requirement: t('milestonePreset.restaurant_brand_brief.criterionVenueSnapshot'),
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionVenueSnapshot'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.restaurant_brand_brief.criterionContentPillars'),
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionContentPillars'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.restaurant_brand_brief.criterionAudienceHypotheses'),
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionAudienceHypotheses'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.restaurant_brand_brief.criterionProofAngles'),
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionProofAngles'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.restaurant_brand_brief.criterionToneGuardrails'),
+            requirement: t('milestonePreset.restaurant_campaign_brief.criterionToneGuardrails'),
             status: 'open',
           },
         ],

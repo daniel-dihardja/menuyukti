@@ -303,12 +303,12 @@ def _fmt_matrix_signals(instagram: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _fmt_milestone_brand_brief_owner_notes(context: dict[str, Any]) -> str:
+def _fmt_milestone_campaign_brief_owner_notes(context: dict[str, Any]) -> str:
     """Markdown for optional owner notes from the campaign-brief milestone Input tab."""
     raw = context.get("milestone_input")
     if not isinstance(raw, dict):
         return ""
-    if raw.get("type") != "restaurant_brand_brief":
+    if raw.get("type") != "restaurant_campaign_brief":
         return ""
     value = raw.get("value")
     if not isinstance(value, dict):
@@ -320,7 +320,7 @@ def _fmt_milestone_brand_brief_owner_notes(context: dict[str, Any]) -> str:
     if not text:
         return ""
     return (
-        "## Milestone campaign brief input (owner)\n\n"
+        "## Milestone campaign_brief input (owner)\n\n"
         "_User-supplied notes from the milestone Input tab — incorporate when shaping pillars, "
         "angles, and tone guardrails; do not treat as verified sales facts._\n\n"
         f"{text}"
@@ -355,7 +355,7 @@ def make_get_location_profile_tool(
         if not isinstance(raw_loc, dict):
             return "Location not found."
 
-        owner_notes_md = _fmt_milestone_brand_brief_owner_notes(context)
+        owner_notes_md = _fmt_milestone_campaign_brief_owner_notes(context)
 
         name = raw_loc.get("name") or ""
         city = raw_loc.get("city") or ""

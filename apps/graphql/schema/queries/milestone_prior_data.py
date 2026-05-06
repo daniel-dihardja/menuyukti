@@ -19,7 +19,7 @@ class MilestonePriorDataQuery:
             "JSON array of prior milestones' milestonedata payloads: each element is "
             "`{\"title\": string, \"presetId\": string|null, \"data\": object|null}` for milestones strictly "
             "before the given milestone in workflow display order. `presetId` is copied from the "
-            "milestone node's `data.presetId` when set (e.g. `restaurant_brand_brief`). `data` is the raw "
+            "milestone node's `data.presetId` when set (e.g. `restaurant_campaign_brief`). `data` is the raw "
             "`milestonedata` child JSON object (flat preset payload). Empty array when there "
             "are no prior milestones or the request is not authorized."
         )

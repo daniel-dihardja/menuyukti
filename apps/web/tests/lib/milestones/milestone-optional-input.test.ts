@@ -9,7 +9,7 @@ import { getMilestonePresetCreateFields } from '@/lib/milestones/preset-definiti
 
 describe('milestone optional notes (promotion_candidates parity)', () => {
   it('milestonePresetHasDefaultOptionalNotesInput includes promotion_candidates and post_scheduler', () => {
-    expect(milestonePresetHasDefaultOptionalNotesInput('restaurant_brand_brief')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('restaurant_campaign_brief')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('post_scheduler')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('dates')).toBe(false)

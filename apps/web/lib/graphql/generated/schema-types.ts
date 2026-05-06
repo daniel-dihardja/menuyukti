@@ -214,7 +214,7 @@ export type ImageAiFlowType = {
   styleIds?: Maybe<Scalars['JSON']['output']>
 }
 
-/** Tiered analytics payload for brand brief and growth agents. */
+/** Tiered analytics payload for campaign_brief and growth agents. */
 export type InstagramSignalsType = {
   __typename?: 'InstagramSignalsType'
   additionalSignals: AdditionalSignalsType

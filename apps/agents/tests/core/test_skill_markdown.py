@@ -48,17 +48,17 @@ def test_load_skill_markdown_inject_prior_presets_omitted(tmp_path: Path) -> Non
 def test_load_skill_markdown_inject_prior_presets_list(tmp_path: Path) -> None:
     p = tmp_path / "SKILL.md"
     p.write_text(
-        "---\nname: t\ndescription: d\ninject_prior_presets:\n  - restaurant_brand_brief\n---\n\nbody\n",
+        "---\nname: t\ndescription: d\ninject_prior_presets:\n  - restaurant_campaign_brief\n---\n\nbody\n",
         encoding="utf-8",
     )
     md = load_skill_markdown(p)
-    assert md.inject_prior_presets == ["restaurant_brand_brief"]
+    assert md.inject_prior_presets == ["restaurant_campaign_brief"]
 
 
 def test_load_skill_markdown_inject_prior_presets_not_list_raises(tmp_path: Path) -> None:
     p = tmp_path / "SKILL.md"
     p.write_text(
-        "---\nname: t\ndescription: d\ninject_prior_presets: restaurant_brand_brief\n---\n\nbody\n",
+        "---\nname: t\ndescription: d\ninject_prior_presets: restaurant_campaign_brief\n---\n\nbody\n",
         encoding="utf-8",
     )
     with pytest.raises(ValueError, match="inject_prior_presets must be a list"):

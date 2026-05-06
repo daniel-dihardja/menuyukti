@@ -9,7 +9,7 @@ from typing import Any, Literal, cast
 
 import httpx
 from agents_app.agents.core.chat.graphql_client import fetch_milestone_node
-from agents_app.agents.core.milestone_run.brand_brief.graph import build_brand_brief_graph
+from agents_app.agents.core.milestone_run.campaign_brief.graph import build_campaign_brief_graph
 from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_graph
 from agents_app.agents.core.milestone_eval.nodes import fetch_context
 from agents_app.agents.core.milestone_run.graphql_client import (
@@ -121,7 +121,7 @@ def _normalize_skill_id_list(raw: list[str]) -> list[str]:
     return out
 
 
-async def _run_brand_brief(
+async def _run_campaign_brief(
     state: MilestoneRunState,
     *,
     client: httpx.AsyncClient,
@@ -129,7 +129,7 @@ async def _run_brand_brief(
     idx: int,
     ids: list[str],
 ) -> dict[str, Any]:
-    graph = build_brand_brief_graph(client)
+    graph = build_campaign_brief_graph(client)
     try:
         run_cfg = get_config()
     except Exception:  # pragma: no cover - outside runnable context
@@ -165,7 +165,7 @@ async def _run_brand_brief(
             final_sub = chunk
 
     if not isinstance(final_sub, dict):
-        raise RuntimeError("brand_brief graph did not produce a final state")
+        raise RuntimeError("campaign_brief graph did not produce a final state")
 
     next_idx = idx + 1
     updated_data = str(final_sub.get("result_data", "") or state.get("raw_data", ""))
@@ -349,8 +349,8 @@ async def _execute_skill(state: MilestoneRunState, *, client: httpx.AsyncClient)
         is_last,
     )
     _trace_step(state, "execute_skill", skill_id=sid, skill_index=idx, skill_count=len(ids))
-    if sid == "brand_brief":
-        return await _run_brand_brief(
+    if sid == "campaign_brief":
+        return await _run_campaign_brief(
             state,
             client=client,
             sid=sid,

@@ -44,7 +44,7 @@ function mergeMilestoneNodeDataJson(
   patch: {
     milestoneRunSkillMode?: 'auto' | 'fixed'
     milestoneRunSkillIds?: string[]
-    presetId?: 'dates' | 'restaurant_brand_brief' | 'promotion_candidates' | 'post_scheduler'
+    presetId?: 'dates' | 'restaurant_campaign_brief' | 'promotion_candidates' | 'post_scheduler'
     milestoneInput?: { type: string; value?: unknown }
   },
 ): Record<string, unknown> {
@@ -344,7 +344,7 @@ export async function GET(_req: Request, context: RouteContext) {
     }
     if (
       parsedMilestoneNodeData?.success &&
-      parsedMilestoneNodeData.data.presetId === 'restaurant_brand_brief'
+      parsedMilestoneNodeData.data.presetId === 'restaurant_campaign_brief'
     ) {
       const brandBriefDataParsed = brandBriefMilestoneDataSchema.safeParse(milestoneData)
       if (!brandBriefDataParsed.success) {

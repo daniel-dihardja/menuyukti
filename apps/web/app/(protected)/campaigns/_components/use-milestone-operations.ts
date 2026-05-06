@@ -34,7 +34,7 @@ function parseDataPreviewForPreset(
     const parsed = datesMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
-  if (presetId === 'restaurant_brand_brief') {
+  if (presetId === 'restaurant_campaign_brief') {
     const parsed = brandBriefMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }

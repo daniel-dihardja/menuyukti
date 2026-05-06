@@ -15,7 +15,7 @@ export type MilestoneRunSkillMode = 'auto' | 'fixed'
 
 export type MilestonePresetId =
   | 'dates'
-  | 'restaurant_brand_brief'
+  | 'restaurant_campaign_brief'
   | 'promotion_candidates'
   | 'post_scheduler'
 

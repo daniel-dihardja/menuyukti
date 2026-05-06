@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 
-def _is_brand_brief_dict(data: dict[str, Any]) -> bool:
+def _is_campaign_brief_dict(data: dict[str, Any]) -> bool:
     vs = data.get("venueSnapshot")
     return bool(
         isinstance(vs, dict)
@@ -16,6 +16,6 @@ def _is_brand_brief_dict(data: dict[str, Any]) -> bool:
     )
 
 
-def is_brand_brief_milestone_data(data: dict[str, Any]) -> bool:
-    """True if ``data`` matches saved ``restaurant_brand_brief`` milestonedata shape."""
-    return _is_brand_brief_dict(data)
+def is_campaign_brief_milestone_data(data: dict[str, Any]) -> bool:
+    """True if ``data`` matches saved ``restaurant_campaign_brief`` milestonedata shape."""
+    return _is_campaign_brief_dict(data)

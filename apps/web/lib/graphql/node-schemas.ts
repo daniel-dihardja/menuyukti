@@ -20,7 +20,7 @@ export type MilestoneRunSkillMode = z.infer<typeof milestoneRunSkillModeSchema>
 
 export const milestonePresetIdSchema = z.enum([
   'dates',
-  'restaurant_brand_brief',
+  'restaurant_campaign_brief',
   'promotion_candidates',
   'post_scheduler',
 ])
@@ -36,7 +36,7 @@ export type DatesMilestoneInput = z.infer<typeof datesMilestoneInputSchema>
 
 /**
  * Optional owner notes on the milestone Input tab (`value.notes`).
- * Used by the brand brief preset.
+ * Used by the campaign_brief preset.
  */
 export const brandBriefMilestoneInputValueSchema = z.object({
   notes: z.string(),

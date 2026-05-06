@@ -147,7 +147,7 @@ class AdditionalSignalsType:
     matrix_signals: MatrixSignalsType
 
 
-@strawberry.type(description="Tiered analytics payload for brand brief and growth agents.")
+@strawberry.type(description="Tiered analytics payload for campaign_brief and growth agents.")
 class InstagramSignalsType:
     analytics_run_id: strawberry.ID
     capabilities: BrandBriefSignalCapabilitiesType

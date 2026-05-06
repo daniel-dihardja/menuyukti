@@ -160,7 +160,7 @@ def test_promotion_candidates_skill_extra_tool_ids() -> None:
 
     pc = SKILL_REGISTRY["promotion_candidates"]
     assert pc.extra_tool_ids == ("get_promotion_candidates",)
-    assert pc.inject_prior_presets == ("restaurant_brand_brief",)
+    assert pc.inject_prior_presets == ("restaurant_campaign_brief",)
 
 
 def test_post_scheduler_skill_tools_and_inject() -> None:
@@ -170,7 +170,7 @@ def test_post_scheduler_skill_tools_and_inject() -> None:
     assert ps.extra_tool_ids == ("get_available_dates",)
     assert ps.inject_prior_presets == (
         "dates",
-        "restaurant_brand_brief",
+        "restaurant_campaign_brief",
         "promotion_candidates",
     )
 
@@ -484,7 +484,7 @@ async def test_write_result_data_parses_structured_json_when_context_is_structur
             },
         ),
         (
-            "brand_brief",
+            "campaign_brief",
             {
                 "venueSnapshot": {
                     "venueName": "Warung Maju",
@@ -548,7 +548,7 @@ async def test_write_result_data_accepts_registered_skill_payloads(
             },
         ),
         (
-            "brand_brief",
+            "campaign_brief",
             {
                 "venueSnapshot": {
                     "venueName": "Warung Maju",
@@ -602,36 +602,36 @@ async def test_write_result_data_unknown_skill_passthrough() -> None:
     assert "md-unknown" in out
 
 
-def test_fmt_milestone_brand_brief_owner_notes_empty() -> None:
+def test_fmt_milestone_campaign_brief_owner_notes_empty() -> None:
     from agents_app.agents.core.milestone_run.tools.get_location_profile import (
-        _fmt_milestone_brand_brief_owner_notes,
+        _fmt_milestone_campaign_brief_owner_notes,
     )
 
-    assert _fmt_milestone_brand_brief_owner_notes({}) == ""
-    assert _fmt_milestone_brand_brief_owner_notes({"milestone_input": None}) == ""
-    assert _fmt_milestone_brand_brief_owner_notes({"milestone_input": {"type": "dates"}}) == ""
+    assert _fmt_milestone_campaign_brief_owner_notes({}) == ""
+    assert _fmt_milestone_campaign_brief_owner_notes({"milestone_input": None}) == ""
+    assert _fmt_milestone_campaign_brief_owner_notes({"milestone_input": {"type": "dates"}}) == ""
     assert (
-        _fmt_milestone_brand_brief_owner_notes(
-            {"milestone_input": {"type": "restaurant_brand_brief", "value": {"notes": "   "}}}
+        _fmt_milestone_campaign_brief_owner_notes(
+            {"milestone_input": {"type": "restaurant_campaign_brief", "value": {"notes": "   "}}}
         )
         == ""
     )
 
 
-def test_fmt_milestone_brand_brief_owner_notes_includes_trimmed_text() -> None:
+def test_fmt_milestone_campaign_brief_owner_notes_includes_trimmed_text() -> None:
     from agents_app.agents.core.milestone_run.tools.get_location_profile import (
-        _fmt_milestone_brand_brief_owner_notes,
+        _fmt_milestone_campaign_brief_owner_notes,
     )
 
-    md = _fmt_milestone_brand_brief_owner_notes(
+    md = _fmt_milestone_campaign_brief_owner_notes(
         {
             "milestone_input": {
-                "type": "restaurant_brand_brief",
+                "type": "restaurant_campaign_brief",
                 "value": {"notes": "  Family-friendly trattoria  "},
             },
         }
     )
-    assert "Milestone brand brief input (owner)" in md
+    assert "Milestone campaign_brief input (owner)" in md
     assert "Family-friendly trattoria" in md
     assert "  Family-friendly" not in md
 

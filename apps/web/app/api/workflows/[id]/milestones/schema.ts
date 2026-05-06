@@ -47,7 +47,7 @@ export const patchMilestoneSchema = z
       .union([
         z.object({ type: z.literal('dates'), value: datesMilestoneInputSchema }),
         z.object({
-          type: z.literal('restaurant_brand_brief'),
+          type: z.literal('restaurant_campaign_brief'),
           value: brandBriefMilestoneInputValueSchema,
         }),
         z.object({

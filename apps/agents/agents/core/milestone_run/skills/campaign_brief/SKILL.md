@@ -1,5 +1,5 @@
 ---
-name: brand_brief
+name: campaign_brief
 description: >-
   Use for the campaign brief milestone: builds a location-only campaign brief from the venue profile
   and operating signals (no campaign start/end dates). Populates venue snapshot, content pillars,
@@ -72,6 +72,6 @@ Workflow:
    - Make `contentPillars` reusable for content planning (for example: hero signatures, category variety, behind-the-scenes craft, engagement/community, promotional pushes when demand is low).
    - Ensure `toneGuardrails` are execution-ready (short, imperative guidance suitable for captions/creative prompts).
    - Where signals exist, include at least one explicit timing-oriented hypothesis or proof angle (meal period, peak day, weekday/weekend split) that can guide posting windows.
-   - Keep naming consistent: this runtime skill id is `brand_brief` (legacy id), while the milestone data task is `restaurant_brand_brief`.
+   - Keep naming consistent: this runtime skill id is `campaign_brief` (legacy id), while the milestone data task is `restaurant_campaign_brief`.
 9. Call `write_result_data` with the full updated JSON object (not markdown).
 10. End with a short confirmation. Pass/fail evaluation and the milestone summary run automatically afterward.

@@ -6,8 +6,8 @@ import json
 from typing import Any
 
 import httpx
-from agents_app.agents.core.milestone_run.brand_brief.prompts import BRAND_BRIEF_SYSTEM
-from agents_app.agents.core.milestone_run.brand_brief.state import BrandBriefState
+from agents_app.agents.core.milestone_run.campaign_brief.prompts import BRAND_BRIEF_SYSTEM
+from agents_app.agents.core.milestone_run.campaign_brief.state import BrandBriefState
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_location_operating_signals,
     upsert_milestonedata_node,
@@ -21,7 +21,7 @@ from agents_app.agents.core.milestone_run.tools.get_location_profile import (
     _fmt_fundamental_signals,
     _fmt_manual_brief_hints,
     _fmt_matrix_signals,
-    _fmt_milestone_brand_brief_owner_notes,
+    _fmt_milestone_campaign_brief_owner_notes,
     _fmt_operating_profile,
 )
 from agents_app.agents.core.milestone_run.tools.write_result_data import _sanitize_venue_name
@@ -82,7 +82,7 @@ def _build_signal_markdown(
         if ai_md:
             sections.append(ai_md)
         if milestone_input:
-            notes_md = _fmt_milestone_brand_brief_owner_notes({"milestone_input": milestone_input})
+            notes_md = _fmt_milestone_campaign_brief_owner_notes({"milestone_input": milestone_input})
             if notes_md:
                 sections.append(notes_md)
         return "\n\n".join(sections)
@@ -127,7 +127,7 @@ def _build_signal_markdown(
         sections.append(ai_md)
 
     if milestone_input:
-        notes_md = _fmt_milestone_brand_brief_owner_notes({"milestone_input": milestone_input})
+        notes_md = _fmt_milestone_campaign_brief_owner_notes({"milestone_input": milestone_input})
         if notes_md:
             sections.append(notes_md)
 
@@ -136,7 +136,7 @@ def _build_signal_markdown(
 
 async def fetch_and_prepare(state: BrandBriefState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     """Fetch location + signals and normalize them into deterministic markdown context."""
-    _trace(state, "execute_skill", skill_id="brand_brief")
+    _trace(state, "execute_skill", skill_id="campaign_brief")
     location_data = await graphql_post(
         client,
         LOCATION_QUERY,
@@ -187,9 +187,9 @@ async def persist_result(state: BrandBriefState, *, client: httpx.AsyncClient) -
         if new_name and new_name != old_name:
             venue_snapshot["venueName"] = new_name
 
-    normalized, error = validate_skill_output("brand_brief", payload)
+    normalized, error = validate_skill_output("campaign_brief", payload)
     if error is not None or normalized is None:
-        raise ValueError(error or "brand_brief output validation failed")
+        raise ValueError(error or "campaign_brief output validation failed")
 
     await upsert_milestonedata_node(
         str(state["milestone_id"]),

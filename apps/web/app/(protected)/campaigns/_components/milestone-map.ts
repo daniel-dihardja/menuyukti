@@ -188,7 +188,7 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
       normalizedData = parsedDatesData.data
     }
   }
-  if (presetId === 'restaurant_brand_brief') {
+  if (presetId === 'restaurant_campaign_brief') {
     const parsedBrandBriefData = brandBriefMilestoneDataSchema.safeParse(data)
     if (parsedBrandBriefData.success) {
       normalizedData = parsedBrandBriefData.data

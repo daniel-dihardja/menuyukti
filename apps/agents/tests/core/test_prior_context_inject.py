@@ -16,7 +16,7 @@ def test_build_injected_prior_empty_config() -> None:
 
 
 def test_build_injected_prior_invalid_json() -> None:
-    md, matched = build_injected_prior_context_markdown("not-json", ("restaurant_brand_brief",))
+    md, matched = build_injected_prior_context_markdown("not-json", ("restaurant_campaign_brief",))
     assert md == ""
     assert matched == []
 
@@ -25,20 +25,20 @@ def test_build_injected_prior_matches_preset_id() -> None:
     rows = [
         {
             "title": "Brief",
-            "presetId": "restaurant_brand_brief",
+            "presetId": "restaurant_campaign_brief",
             "data": {"x": 1},
         }
     ]
     md, matched = build_injected_prior_context_markdown(
         json.dumps(rows),
-        ("restaurant_brand_brief",),
+        ("restaurant_campaign_brief",),
     )
     assert "Prior milestone context (injected)" in md
     assert "Brief" in md
-    assert matched == ["restaurant_brand_brief"]
+    assert matched == ["restaurant_campaign_brief"]
 
 
-def test_build_injected_prior_brand_brief_shape_fallback() -> None:
+def test_build_injected_prior_campaign_brief_shape_fallback() -> None:
     rows = [
         {
             "title": "Legacy brief",
@@ -54,17 +54,17 @@ def test_build_injected_prior_brand_brief_shape_fallback() -> None:
     ]
     md, matched = build_injected_prior_context_markdown(
         json.dumps(rows),
-        ("restaurant_brand_brief",),
+        ("restaurant_campaign_brief",),
     )
     assert "Legacy brief" in md
-    assert matched == ["restaurant_brand_brief"]
+    assert matched == ["restaurant_campaign_brief"]
 
 
 def test_build_injected_prior_no_match() -> None:
     rows = [{"title": "Other", "presetId": "dates", "data": {"startDate": "2025-01-01"}}]
     md, matched = build_injected_prior_context_markdown(
         json.dumps(rows),
-        ("restaurant_brand_brief",),
+        ("restaurant_campaign_brief",),
     )
     assert md == ""
     assert matched == []

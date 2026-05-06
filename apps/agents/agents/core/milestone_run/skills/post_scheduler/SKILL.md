@@ -8,7 +8,7 @@ extra_tools:
   - get_available_dates
 inject_prior_presets:
   - dates
-  - restaurant_brand_brief
+  - restaurant_campaign_brief
   - promotion_candidates
 ---
 

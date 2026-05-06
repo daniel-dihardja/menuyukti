@@ -11,7 +11,7 @@ import {
 
 import type { TimelineMilestone } from '../timeline/types'
 
-import { MilestoneBrandBriefDataPreview } from './milestone-brand-brief-data-preview'
+import { MilestoneBrandBriefDataPreview } from './milestone-campaign_brief-data-preview'
 import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
 import { MilestonePostSchedulerDataPreview } from './milestone-post-scheduler-data-preview'
 import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
@@ -51,7 +51,7 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
       )
     }
 
-    if (milestone.presetId === 'restaurant_brand_brief') {
+    if (milestone.presetId === 'restaurant_campaign_brief') {
       const parsedBrandBrief = brandBriefMilestoneDataSchema.safeParse(data)
       if (!parsedBrandBrief.success) {
         return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>

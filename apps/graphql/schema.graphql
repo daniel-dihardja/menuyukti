@@ -181,7 +181,7 @@ type ImageAiFlowType {
   sortOrder: Int!
 }
 
-"""Tiered analytics payload for brand brief and growth agents."""
+"""Tiered analytics payload for campaign_brief and growth agents."""
 type InstagramSignalsType {
   analyticsRunId: ID!
   capabilities: BrandBriefSignalCapabilitiesType!
