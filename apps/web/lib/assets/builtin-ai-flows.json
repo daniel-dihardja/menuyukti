@@ -19,6 +19,6 @@
     "displayName": "Place Products on Background",
     "model": "gemini-2.5-flash-image",
     "contexts": ["design-create"],
-    "prompt": "You are a design composition assistant. You will receive multiple input images. The LAST image in the input is the background. All preceding images are product images.\n\nCreate a single composed design that uses the last image exactly as the background and places each preceding product image on top of that background. Preserve the products' shapes, colors, proportions, and fine details. Arrange them in a clean, balanced layout that fits the background's composition and lighting. Do not alter the background scene; do not invent new objects or text.\n\nOutput: a single composed image with the products naturally integrated on top of the provided background."
+    "prompt": "You are a design composition assistant. You will receive exactly two input images: the FIRST image is the product and the SECOND image is the background.\n\nCreate a single composed design that keeps the second image as the background and places the first image naturally on top of it. Preserve the product's identity, shape, texture, color, proportions, and all key details. Do not replace, redesign, or morph the product. Match the lighting, perspective, and scale so the product looks naturally photographed in the provided background. Do not add text, logos, extra food items, or unrelated objects.\n\nOutput: one realistic composed image using the original product and the provided background."
   }
 ]

@@ -589,6 +589,11 @@ export function AssetsClient() {
       <ContentImageCreateDialog
         open={contentImageDialogOpen}
         onOpenChange={setContentImageDialogOpen}
+        onDesignCreated={(item) => {
+          setDesignItems((prev) => [item, ...prev])
+          designsLoadedRef.current = true
+          showToast('success', t('toast.generated'))
+        }}
       />
 
       <div className="flex w-full items-center justify-end">

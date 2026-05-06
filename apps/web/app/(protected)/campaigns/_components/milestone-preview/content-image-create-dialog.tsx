@@ -45,6 +45,7 @@ type FlowOption = {
 type ContentImageCreateDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onDesignCreated?: (item: AssetItem) => void
 }
 
 function SelectionSkeleton() {
@@ -57,7 +58,11 @@ function SelectionSkeleton() {
   )
 }
 
-export function ContentImageCreateDialog({ open, onOpenChange }: ContentImageCreateDialogProps) {
+export function ContentImageCreateDialog({
+  open,
+  onOpenChange,
+  onDesignCreated,
+}: ContentImageCreateDialogProps) {
   const t = useTranslations('analytics.campaigns.chat.contentImageDialog')
 
   const [products, setProducts] = useState<AssetItem[]>([])
@@ -70,7 +75,14 @@ export function ContentImageCreateDialog({ open, onOpenChange }: ContentImageCre
   const [loadingProducts, setLoadingProducts] = useState(false)
   const [loadingBackgrounds, setLoadingBackgrounds] = useState(false)
   const [loadingFlows, setLoadingFlows] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const canGenerate =
+    selectedProductNames.length > 0 &&
+    selectedBackgroundName !== null &&
+    selectedFlowSlug.trim().length > 0 &&
+    !isGenerating
 
   useEffect(() => {
     if (!open) {
@@ -79,6 +91,7 @@ export function ContentImageCreateDialog({ open, onOpenChange }: ContentImageCre
       setSelectedFlowSlug('')
       setSelectedFormat('1:1')
       setError(null)
+      setIsGenerating(false)
       return
     }
 
@@ -126,6 +139,37 @@ export function ContentImageCreateDialog({ open, onOpenChange }: ContentImageCre
       cancelled = true
     }
   }, [open, t])
+
+  const handleGenerate = async () => {
+    const productName = selectedProductNames[0]
+    const backgroundName = selectedBackgroundName
+    if (!productName || !backgroundName || !selectedFlowSlug || isGenerating) return
+
+    setIsGenerating(true)
+    setError(null)
+
+    try {
+      const res = await fetch('/api/assets/designs/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productName,
+          backgroundName,
+          flow: selectedFlowSlug,
+        }),
+      })
+      if (!res.ok) {
+        throw new Error('generate')
+      }
+      const created = (await res.json()) as AssetItem
+      onDesignCreated?.(created)
+      onOpenChange(false)
+    } catch {
+      setError(t('generateError'))
+    } finally {
+      setIsGenerating(false)
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -299,7 +343,9 @@ export function ContentImageCreateDialog({ open, onOpenChange }: ContentImageCre
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t('cancel')}
           </Button>
-          <Button type="button">{t('generate')}</Button>
+          <Button type="button" disabled={!canGenerate} onClick={handleGenerate}>
+            {isGenerating ? t('generating') : t('generate')}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
