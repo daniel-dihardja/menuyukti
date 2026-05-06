@@ -616,7 +616,7 @@
     "title": "Brand assets",
     "description": "Upload and organize images for workflows and creative. Files are normalized to 1024px on the shortest side and saved as WebP.",
     "contentImage": {
-      "newButton": "New content image"
+      "newButton": "New design"
     },
     "tabs": {
       "products": "Products",
@@ -1346,7 +1346,7 @@
         "fieldSaveStatusUnsaved": "Changed",
         "fieldSaveButton": "Save",
         "contentImageDialog": {
-          "title": "New content image",
+          "title": "New design",
           "descriptionSelect": "Choose a product image and a background, then continue.",
           "descriptionReview": "Review your selections before generating.",
           "loadError": "Couldn't load images. Try again.",
