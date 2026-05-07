@@ -1,5 +1,34 @@
 import type { PostSchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 
+export type PromotionCategoryPreviewRow = {
+  categoryName: string
+  starItems: string[]
+  puzzleItems: string[]
+}
+
+export function toPromotionCategoryPreviewRows(
+  data: PostSchedulerMilestoneData,
+  maxItems = 5,
+): PromotionCategoryPreviewRow[] {
+  const candidates = data.promotionCandidates
+  if (!candidates) {
+    return []
+  }
+  if (candidates.grouping === 'by_menu_category' && candidates.categories) {
+    return Object.entries(candidates.categories).map(([categoryName, bucket]) => ({
+      categoryName,
+      starItems: bucket.starItems.slice(0, maxItems),
+      puzzleItems: bucket.puzzleItems.slice(0, maxItems),
+    }))
+  }
+  const starItems = (candidates.starItems ?? []).slice(0, maxItems)
+  const puzzleItems = (candidates.puzzleItems ?? []).slice(0, maxItems)
+  if (starItems.length === 0 && puzzleItems.length === 0) {
+    return []
+  }
+  return [{ categoryName: '', starItems, puzzleItems }]
+}
+
 export type MilestonePostSchedulerDataPreviewProps = {
   data: PostSchedulerMilestoneData
   formatDate: (isoDate: string) => string
@@ -14,6 +43,11 @@ export type MilestonePostSchedulerDataPreviewProps = {
     contentType: string
     promotedItems: string
     captionIdea: string
+    promotionCandidatesHeading: string
+    emptyPromotionCandidates: string
+    uncategorizedCategory: string
+    starItems: string
+    puzzleItems: string
   }
 }
 
@@ -22,6 +56,8 @@ export function MilestonePostSchedulerDataPreview({
   formatDate,
   labels,
 }: MilestonePostSchedulerDataPreviewProps) {
+  const categoryRows = toPromotionCategoryPreviewRows(data)
+
   return (
     <div className="flex flex-col gap-y-4 text-sm">
       <div className="space-y-1">
@@ -56,6 +92,48 @@ export function MilestonePostSchedulerDataPreview({
           ))}
         </ol>
       )}
+      <div className="space-y-2">
+        <p className="font-medium text-foreground">{labels.promotionCandidatesHeading}</p>
+        {categoryRows.length === 0 ? (
+          <p className="text-muted-foreground text-sm">{labels.emptyPromotionCandidates}</p>
+        ) : (
+          <div className="space-y-3">
+            {categoryRows.map(({ categoryName, starItems, puzzleItems }) => {
+              return (
+                <div key={categoryName} className="space-y-1">
+                  <p className="font-medium text-foreground">
+                    {categoryName.trim() || labels.uncategorizedCategory}
+                  </p>
+                  <div className="space-y-1 text-muted-foreground">
+                    <p>{labels.starItems}:</p>
+                    {starItems.length === 0 ? (
+                      <p>—</p>
+                    ) : (
+                      <ul className="list-disc space-y-1 pl-5">
+                        {starItems.map((item) => (
+                          <li key={`star-${categoryName}-${item}`}>{item}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div className="space-y-1 text-muted-foreground">
+                    <p>{labels.puzzleItems}:</p>
+                    {puzzleItems.length === 0 ? (
+                      <p>—</p>
+                    ) : (
+                      <ul className="list-disc space-y-1 pl-5">
+                        {puzzleItems.map((item) => (
+                          <li key={`puzzle-${categoryName}-${item}`}>{item}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -107,9 +107,30 @@ export const postSchedulerDaySummarySchema = z.object({
 
 export type PostSchedulerDaySummary = z.infer<typeof postSchedulerDaySummarySchema>
 
+export const postSchedulerPromotionCategoryBucketSchema = z.object({
+  starItems: z.array(z.string()),
+  puzzleItems: z.array(z.string()),
+})
+
+export type PostSchedulerPromotionCategoryBucket = z.infer<
+  typeof postSchedulerPromotionCategoryBucketSchema
+>
+
+export const postSchedulerPromotionCandidatesSchema = z.object({
+  grouping: z.string(),
+  categories: z.record(z.string(), postSchedulerPromotionCategoryBucketSchema).optional(),
+  starItems: z.array(z.string()).optional(),
+  puzzleItems: z.array(z.string()).optional(),
+})
+
+export type PostSchedulerPromotionCandidates = z.infer<
+  typeof postSchedulerPromotionCandidatesSchema
+>
+
 export const postSchedulerMilestoneDataSchema = z.object({
   posts: z.array(postSchedulerPostItemSchema),
   daySummary: postSchedulerDaySummarySchema,
+  promotionCandidates: postSchedulerPromotionCandidatesSchema.optional(),
 })
 
 export type PostSchedulerMilestoneData = z.infer<typeof postSchedulerMilestoneDataSchema>

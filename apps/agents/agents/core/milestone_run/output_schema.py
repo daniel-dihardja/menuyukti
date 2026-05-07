@@ -169,9 +169,22 @@ class PostSchedulerDaySummary(BaseModel):
     weekendCount: int
 
 
+class PostSchedulerPromotionCategoryBucket(BaseModel):
+    starItems: list[str]
+    puzzleItems: list[str]
+
+
+class PostSchedulerPromotionCandidates(BaseModel):
+    grouping: str
+    categories: dict[str, PostSchedulerPromotionCategoryBucket] | None = None
+    starItems: list[str] | None = None
+    puzzleItems: list[str] | None = None
+
+
 class PostSchedulerMilestoneOutput(BaseModel):
     posts: list[PostSchedulerPostItem]
     daySummary: PostSchedulerDaySummary
+    promotionCandidates: PostSchedulerPromotionCandidates | None = None
 
 
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {

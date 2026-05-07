@@ -221,7 +221,41 @@ def _enforce_allowed_menu_names(
         next_post = dict(post)
         next_post["promotedMenuItems"] = kept
         normalized_posts.append(next_post)
-    return {"posts": normalized_posts, "daySummary": payload["daySummary"]}
+    out: PostSchedulerOutput = {"posts": normalized_posts, "daySummary": payload["daySummary"]}
+    if "promotionCandidates" in payload:
+        out["promotionCandidates"] = payload.get("promotionCandidates")
+    return out
+
+
+def _normalize_promotion_candidates(payload: Any) -> dict[str, Any] | None:
+    if not isinstance(payload, dict):
+        return None
+    grouping = str(payload.get("grouping") or "").strip()
+    if not grouping:
+        return None
+    out: dict[str, Any] = {"grouping": grouping}
+
+    categories = payload.get("categories")
+    if isinstance(categories, dict):
+        normalized_categories: dict[str, dict[str, list[str]]] = {}
+        for category_name, raw_bucket in categories.items():
+            if not isinstance(raw_bucket, dict):
+                continue
+            star_items = [str(x).strip() for x in raw_bucket.get("starItems", []) if str(x).strip()]
+            puzzle_items = [str(x).strip() for x in raw_bucket.get("puzzleItems", []) if str(x).strip()]
+            normalized_categories[str(category_name)] = {
+                "starItems": star_items,
+                "puzzleItems": puzzle_items,
+            }
+        out["categories"] = normalized_categories
+
+    star_items = [str(x).strip() for x in payload.get("starItems", []) if str(x).strip()]
+    puzzle_items = [str(x).strip() for x in payload.get("puzzleItems", []) if str(x).strip()]
+    if star_items:
+        out["starItems"] = star_items
+    if puzzle_items:
+        out["puzzleItems"] = puzzle_items
+    return out
 
 
 def _is_probable_menu_name(text: str) -> bool:
@@ -350,6 +384,9 @@ def _normalize_generated_output(payload: Any) -> PostSchedulerOutput:
 async def persist_result(state: PostSchedulerState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     """Validate/coerce and persist post-scheduler payload via milestone data upsert."""
     payload = _normalize_generated_output(state.get("generated_output"))
+    normalized_candidates = _normalize_promotion_candidates(state.get("promotion_candidates"))
+    if normalized_candidates is not None:
+        payload["promotionCandidates"] = normalized_candidates
     allowed_menu_names = _extract_allowed_menu_names(state)
     payload = _enforce_allowed_menu_names(payload, allowed_menu_names=allowed_menu_names)
     normalized, error = validate_skill_output("post_scheduler", payload)

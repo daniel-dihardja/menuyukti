@@ -23,6 +23,7 @@ class PostSchedulerDaySummary(TypedDict):
 class PostSchedulerOutput(TypedDict):
     posts: list[PostSchedulerPost]
     daySummary: PostSchedulerDaySummary
+    promotionCandidates: NotRequired[dict[str, Any] | None]
 
 
 class PostSchedulerState(TypedDict):

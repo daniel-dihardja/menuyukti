@@ -77,6 +77,10 @@ export function getMilestonePresetCreateFields(
         milestoneData: {
           posts: [],
           daySummary: { weekdayCount: 0, weekendCount: 0 },
+          promotionCandidates: {
+            grouping: 'by_menu_category',
+            categories: {},
+          },
         },
         goal: t('milestonePreset.post_scheduler.goal'),
         passCriteria: [

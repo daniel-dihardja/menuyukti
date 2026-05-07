@@ -196,6 +196,10 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
       normalizedData = {
         posts: [],
         daySummary: { weekdayCount: 0, weekendCount: 0 },
+        promotionCandidates: {
+          grouping: 'by_menu_category',
+          categories: {},
+        },
       }
     }
   }

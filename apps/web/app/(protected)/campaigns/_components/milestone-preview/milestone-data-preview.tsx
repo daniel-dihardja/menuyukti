@@ -112,6 +112,13 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             contentType: t('milestonePostSchedulerPreviewContentType'),
             promotedItems: t('milestonePostSchedulerPreviewPromotedItems'),
             captionIdea: t('milestonePostSchedulerPreviewCaptionIdea'),
+            promotionCandidatesHeading: t(
+              'milestonePostSchedulerPreviewPromotionCandidatesHeading',
+            ),
+            emptyPromotionCandidates: t('milestonePostSchedulerPreviewEmptyPromotionCandidates'),
+            uncategorizedCategory: t('milestonePostSchedulerPreviewUncategorizedCategory'),
+            starItems: t('milestonePostSchedulerPreviewStarItems'),
+            puzzleItems: t('milestonePostSchedulerPreviewPuzzleItems'),
           }}
         />
       )

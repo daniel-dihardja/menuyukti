@@ -362,6 +362,10 @@ export async function GET(_req: Request, context: RouteContext) {
         milestoneData = {
           posts: [],
           daySummary: { weekdayCount: 0, weekendCount: 0 },
+          promotionCandidates: {
+            grouping: 'by_menu_category',
+            categories: {},
+          },
         }
       }
     }

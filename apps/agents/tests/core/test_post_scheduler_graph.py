@@ -125,11 +125,19 @@ async def test_routing_post_scheduler_uses_dedicated_graph_path() -> None:
 
 
 def test_output_schema_valid_post_scheduler_payload() -> None:
-    normalized, error = validate_skill_output("post_scheduler", _valid_post_scheduler_payload())
+    payload = _valid_post_scheduler_payload()
+    payload["promotionCandidates"] = {
+        "grouping": "by_menu_category",
+        "categories": {
+            "rice": {"starItems": ["Nasi Goreng"], "puzzleItems": ["Sate Ayam"]},
+        },
+    }
+    normalized, error = validate_skill_output("post_scheduler", payload)
     assert error is None
     assert isinstance(normalized, dict)
     assert normalized["daySummary"] == {"weekdayCount": 4, "weekendCount": 0}
     assert len(normalized["posts"]) == 2
+    assert normalized["promotionCandidates"]["grouping"] == "by_menu_category"
 
 
 def test_output_schema_rejects_empty_promoted_menu_items() -> None:
@@ -242,6 +250,7 @@ async def test_persist_result_filters_menu_items_to_prefetched_promotion_candida
     saved_payload = mock_upsert.await_args.args[2]
     assert saved_payload["posts"][0]["promotedMenuItems"] == ["Nasi Goreng"]
     assert saved_payload["posts"][1]["promotedMenuItems"] == ["Nasi Goreng"]
+    assert saved_payload["promotionCandidates"]["grouping"] == "flat"
 
 
 def test_extract_allowed_menu_names_uses_prefetched_menu_lists_only() -> None:

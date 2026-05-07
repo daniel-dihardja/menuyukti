@@ -57,6 +57,18 @@ export type PostSchedulerMilestoneData = {
     weekdayCount: number
     weekendCount: number
   }
+  promotionCandidates?: {
+    grouping: string
+    categories?: Record<
+      string,
+      {
+        starItems: string[]
+        puzzleItems: string[]
+      }
+    >
+    starItems?: string[]
+    puzzleItems?: string[]
+  }
 }
 
 export type MilestoneDataValue = CampaignBriefMilestoneData | PostSchedulerMilestoneData
