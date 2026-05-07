@@ -193,7 +193,10 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
     if (parsedPs.success) {
       normalizedData = parsedPs.data
     } else {
-      normalizedData = { posts: [] }
+      normalizedData = {
+        posts: [],
+        daySummary: { weekdayCount: 0, weekendCount: 0 },
+      }
     }
   }
   return {

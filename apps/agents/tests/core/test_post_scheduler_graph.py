@@ -9,6 +9,7 @@ from agents_app.agents.core.milestone_run.graph import build_milestone_run_graph
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.post_scheduler.nodes import (
     _extract_allowed_menu_names,
+    derive_day_summary,
     fetch_and_prepare,
     persist_result,
 )
@@ -46,6 +47,7 @@ def _minimal_initial() -> dict:
 
 def _valid_post_scheduler_payload() -> dict:
     return {
+        "daySummary": {"weekdayCount": 4, "weekendCount": 0},
         "posts": [
             {
                 "dayOfWeek": "Monday",
@@ -126,11 +128,13 @@ def test_output_schema_valid_post_scheduler_payload() -> None:
     normalized, error = validate_skill_output("post_scheduler", _valid_post_scheduler_payload())
     assert error is None
     assert isinstance(normalized, dict)
+    assert normalized["daySummary"] == {"weekdayCount": 4, "weekendCount": 0}
     assert len(normalized["posts"]) == 2
 
 
 def test_output_schema_rejects_empty_promoted_menu_items() -> None:
     payload = {
+        "daySummary": {"weekdayCount": 1, "weekendCount": 0},
         "posts": [
             {
                 "dayOfWeek": "Monday",
@@ -146,6 +150,17 @@ def test_output_schema_rejects_empty_promoted_menu_items() -> None:
     normalized, error = validate_skill_output("post_scheduler", payload)
     assert normalized is None
     assert error is not None
+
+
+def test_derive_day_summary_counts_inclusive_range() -> None:
+    state = {
+        "scheduler_plan": {
+            "campaignStart": "2026-06-01",
+            "campaignEnd": "2026-06-07",
+        }
+    }
+    out = derive_day_summary(state)  # type: ignore[arg-type]
+    assert out["generated_output"]["daySummary"] == {"weekdayCount": 5, "weekendCount": 2}
 
 
 @pytest.mark.asyncio

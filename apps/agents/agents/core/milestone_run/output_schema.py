@@ -164,8 +164,14 @@ class PostSchedulerPostItem(BaseModel):
         return cleaned
 
 
+class PostSchedulerDaySummary(BaseModel):
+    weekdayCount: int
+    weekendCount: int
+
+
 class PostSchedulerMilestoneOutput(BaseModel):
     posts: list[PostSchedulerPostItem]
+    daySummary: PostSchedulerDaySummary
 
 
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {

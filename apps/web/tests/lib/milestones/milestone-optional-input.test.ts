@@ -42,6 +42,9 @@ describe('milestone optional notes', () => {
       type: 'post_scheduler',
       value: { notes: '' },
     })
-    expect(fields.milestoneData).toEqual({ posts: [] })
+    expect(fields.milestoneData).toEqual({
+      posts: [],
+      daySummary: { weekdayCount: 0, weekendCount: 0 },
+    })
   })
 })

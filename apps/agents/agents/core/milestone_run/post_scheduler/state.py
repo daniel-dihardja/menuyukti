@@ -15,8 +15,14 @@ class PostSchedulerPost(TypedDict):
     captionIdea: str
 
 
+class PostSchedulerDaySummary(TypedDict):
+    weekdayCount: int
+    weekendCount: int
+
+
 class PostSchedulerOutput(TypedDict):
     posts: list[PostSchedulerPost]
+    daySummary: PostSchedulerDaySummary
 
 
 class PostSchedulerState(TypedDict):

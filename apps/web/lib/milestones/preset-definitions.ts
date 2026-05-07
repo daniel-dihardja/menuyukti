@@ -76,6 +76,7 @@ export function getMilestonePresetCreateFields(
         },
         milestoneData: {
           posts: [],
+          daySummary: { weekdayCount: 0, weekendCount: 0 },
         },
         goal: t('milestonePreset.post_scheduler.goal'),
         passCriteria: [

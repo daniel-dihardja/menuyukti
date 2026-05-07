@@ -359,7 +359,10 @@ export async function GET(_req: Request, context: RouteContext) {
     ) {
       const psParsed = postSchedulerMilestoneDataSchema.safeParse(milestoneData)
       if (!psParsed.success) {
-        milestoneData = { posts: [] }
+        milestoneData = {
+          posts: [],
+          daySummary: { weekdayCount: 0, weekendCount: 0 },
+        }
       }
     }
 

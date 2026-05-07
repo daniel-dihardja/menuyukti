@@ -53,6 +53,10 @@ export type PostSchedulerPostItem = {
 
 export type PostSchedulerMilestoneData = {
   posts: PostSchedulerPostItem[]
+  daySummary: {
+    weekdayCount: number
+    weekendCount: number
+  }
 }
 
 export type MilestoneDataValue = CampaignBriefMilestoneData | PostSchedulerMilestoneData

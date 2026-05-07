@@ -100,8 +100,16 @@ export const postSchedulerPostItemSchema = z.object({
 
 export type PostSchedulerPostItem = z.infer<typeof postSchedulerPostItemSchema>
 
+export const postSchedulerDaySummarySchema = z.object({
+  weekdayCount: z.number().int().nonnegative(),
+  weekendCount: z.number().int().nonnegative(),
+})
+
+export type PostSchedulerDaySummary = z.infer<typeof postSchedulerDaySummarySchema>
+
 export const postSchedulerMilestoneDataSchema = z.object({
   posts: z.array(postSchedulerPostItemSchema),
+  daySummary: postSchedulerDaySummarySchema,
 })
 
 export type PostSchedulerMilestoneData = z.infer<typeof postSchedulerMilestoneDataSchema>

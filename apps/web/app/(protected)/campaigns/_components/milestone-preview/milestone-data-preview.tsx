@@ -102,6 +102,9 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
           data={parsedPs.data}
           formatDate={formatPreviewDate}
           labels={{
+            daysHeading: t('milestonePostSchedulerPreviewDaysHeading'),
+            weekdaysCount: t('milestonePostSchedulerPreviewWeekdaysCount'),
+            weekendsCount: t('milestonePostSchedulerPreviewWeekendsCount'),
             postsHeading: t('milestonePostSchedulerPreviewPostsHeading'),
             emptyPosts: t('milestonePostSchedulerPreviewEmptyPosts'),
             dayDateTime: t('milestonePostSchedulerPreviewDayDateTime'),

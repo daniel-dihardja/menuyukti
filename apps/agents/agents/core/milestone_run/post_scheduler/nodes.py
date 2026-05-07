@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import date, timedelta
 import json
 import re
-from typing import Any, Literal
+from typing import Any
 
 import httpx
 from agents_app.agents.core.milestone_run.graphql_client import (
@@ -13,29 +14,13 @@ from agents_app.agents.core.milestone_run.graphql_client import (
     upsert_milestonedata_node,
 )
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
-from agents_app.agents.core.milestone_run.post_scheduler.prompts import POST_SCHEDULER_SYSTEM
 from agents_app.agents.core.milestone_run.post_scheduler.state import (
     PostSchedulerOutput,
     PostSchedulerState,
 )
-from agents_app.models.llm_config import get_llm_structured
-from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
-from pydantic import BaseModel, Field
 
 _JSON_SEPARATORS = (",", ":")
-class PostSchedulerPostDraft(BaseModel):
-    dayOfWeek: str
-    date: str
-    time: str
-    postType: Literal["Reel", "Post"]
-    contentType: Literal["Carousel", "Single"]
-    promotedMenuItems: list[str] = Field(default_factory=list)
-    captionIdea: str
-
-
-class PostSchedulerDraftOutput(BaseModel):
-    posts: list[PostSchedulerPostDraft] = Field(default_factory=list)
 
 
 def _trace(state: PostSchedulerState, step: str, **extra: Any) -> None:
@@ -109,7 +94,44 @@ def _build_generation_context(
 
 
 def _fallback_output() -> PostSchedulerOutput:
-    return {"posts": []}
+    return {"posts": [], "daySummary": {"weekdayCount": 0, "weekendCount": 0}}
+
+
+def _parse_iso_date(raw: Any) -> date | None:
+    if not isinstance(raw, str):
+        return None
+    text = raw.strip()
+    if not text:
+        return None
+    try:
+        return date.fromisoformat(text)
+    except ValueError:
+        return None
+
+
+def _extract_campaign_date_bounds(state: PostSchedulerState) -> tuple[date | None, date | None]:
+    scheduler_plan = state.get("scheduler_plan")
+    if isinstance(scheduler_plan, dict):
+        start = _parse_iso_date(scheduler_plan.get("campaignStart"))
+        end = _parse_iso_date(scheduler_plan.get("campaignEnd"))
+        if start is not None and end is not None:
+            return start, end
+    return None, None
+
+
+def _count_weekday_weekend_days(start_date: date, end_date: date) -> tuple[int, int]:
+    if end_date < start_date:
+        start_date, end_date = end_date, start_date
+    weekday_count = 0
+    weekend_count = 0
+    cursor = start_date
+    while cursor <= end_date:
+        if cursor.weekday() >= 5:
+            weekend_count += 1
+        else:
+            weekday_count += 1
+        cursor += timedelta(days=1)
+    return weekday_count, weekend_count
 
 
 def _extract_allowed_menu_names(state: PostSchedulerState) -> list[str]:
@@ -199,7 +221,7 @@ def _enforce_allowed_menu_names(
         next_post = dict(post)
         next_post["promotedMenuItems"] = kept
         normalized_posts.append(next_post)
-    return {"posts": normalized_posts}
+    return {"posts": normalized_posts, "daySummary": payload["daySummary"]}
 
 
 def _is_probable_menu_name(text: str) -> bool:
@@ -270,18 +292,21 @@ async def fetch_and_prepare(
     }
 
 
-async def generate_draft(state: PostSchedulerState) -> dict[str, Any]:
-    """Generate structured post-scheduler output from prepared context."""
-    _trace_agent_event(state, "chat_model_start")
-    llm = get_llm_structured().with_structured_output(PostSchedulerDraftOutput)
-    generated = await llm.ainvoke(
-        [
-            SystemMessage(content=POST_SCHEDULER_SYSTEM),
-            HumanMessage(content=str(state.get("generation_context_markdown", ""))),
-        ]
-    )
-    _trace_agent_event(state, "chat_model_end")
-    return {"generated_output": generated.model_dump(exclude_none=True)}
+def derive_day_summary(state: PostSchedulerState) -> dict[str, Any]:
+    """Build deterministic day summary from campaign start/end (inclusive)."""
+    start_date, end_date = _extract_campaign_date_bounds(state)
+    if start_date is None or end_date is None:
+        return {"generated_output": _fallback_output()}
+    weekday_count, weekend_count = _count_weekday_weekend_days(start_date, end_date)
+    return {
+        "generated_output": {
+            "posts": [],
+            "daySummary": {
+                "weekdayCount": weekday_count,
+                "weekendCount": weekend_count,
+            },
+        }
+    }
 
 
 def _normalize_generated_output(payload: Any) -> PostSchedulerOutput:
@@ -290,6 +315,13 @@ def _normalize_generated_output(payload: Any) -> PostSchedulerOutput:
     rows = payload.get("posts")
     if not isinstance(rows, list):
         return _fallback_output()
+    summary = payload.get("daySummary")
+    if isinstance(summary, dict):
+        weekday_count = int(summary.get("weekdayCount") or 0)
+        weekend_count = int(summary.get("weekendCount") or 0)
+    else:
+        weekday_count = 0
+        weekend_count = 0
     normalized_rows: list[dict[str, Any]] = []
     for row in rows:
         if not isinstance(row, dict):
@@ -306,7 +338,13 @@ def _normalize_generated_output(payload: Any) -> PostSchedulerOutput:
                 "captionIdea": str(row.get("captionIdea") or "").strip(),
             }
         )
-    return {"posts": normalized_rows}
+    return {
+        "posts": normalized_rows,
+        "daySummary": {
+            "weekdayCount": max(0, weekday_count),
+            "weekendCount": max(0, weekend_count),
+        },
+    }
 
 
 async def persist_result(state: PostSchedulerState, *, client: httpx.AsyncClient) -> dict[str, Any]:
