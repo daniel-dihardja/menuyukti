@@ -2,6 +2,7 @@ import type { PostSchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 
 export type MilestonePostSchedulerDataPreviewProps = {
   data: PostSchedulerMilestoneData
+  formatDate: (isoDate: string) => string
   labels: {
     postsHeading: string
     emptyPosts: string
@@ -15,6 +16,7 @@ export type MilestonePostSchedulerDataPreviewProps = {
 
 export function MilestonePostSchedulerDataPreview({
   data,
+  formatDate,
   labels,
 }: MilestonePostSchedulerDataPreviewProps) {
   if (data.posts.length === 0) {
@@ -28,7 +30,7 @@ export function MilestonePostSchedulerDataPreview({
         {data.posts.map((post, i) => (
           <li key={`${post.date}-${post.time}-${i}`} className="space-y-1">
             <p className="font-medium text-foreground">
-              {labels.dayDateTime}: {post.dayOfWeek} · {post.date} · {post.time}
+              {labels.dayDateTime}: {formatDate(post.date)} · {post.time}
             </p>
             <p className="text-muted-foreground">
               {labels.postType}: {post.postType} · {labels.contentType}: {post.contentType}

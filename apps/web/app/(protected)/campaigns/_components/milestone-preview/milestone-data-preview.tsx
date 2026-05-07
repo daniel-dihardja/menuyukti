@@ -1,6 +1,9 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useMemo } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
+
+import { formatPreviewDateString } from '@/lib/format-preview-date'
 
 import {
   campaignBriefMilestoneDataSchema,
@@ -20,6 +23,11 @@ export type MilestoneDataPreviewProps = {
 
 export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
   const t = useTranslations('analytics.campaigns.chat')
+  const locale = useLocale()
+  const formatPreviewDate = useMemo(
+    () => (value: string) => formatPreviewDateString(value, locale),
+    [locale],
+  )
   const data = milestone.data
 
   if (data == null) {
@@ -36,6 +44,7 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
       return (
         <MilestoneCampaignBriefDataPreview
           data={parsedCampaignBrief.data}
+          formatDate={formatPreviewDate}
           formatHelpAriaLabel={(sectionTitle) =>
             t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle })
           }
@@ -117,6 +126,7 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
       return (
         <MilestonePostSchedulerDataPreview
           data={parsedPs.data}
+          formatDate={formatPreviewDate}
           labels={{
             postsHeading: t('milestonePostSchedulerPreviewPostsHeading'),
             emptyPosts: t('milestonePostSchedulerPreviewEmptyPosts'),
