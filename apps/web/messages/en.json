@@ -186,7 +186,7 @@
         "campaignBriefDescription": "Builds audience hypotheses, content pillars, and tone guardrails from operating and menu signals.",
         "promotionCandidatesTitle": "Promotion candidates node",
         "promotionCandidatesDescription": "Turns menu-engineering signals into ranked promotion ideas—stars, puzzles, and angles—aligned with your campaign brief and only naming dishes your analytics actually support.",
-        "postSchedulerTitle": "Post scheduler node",
+        "postSchedulerTitle": "Scheduler node",
         "postSchedulerDescription": "Allocates Instagram slots across the campaign window so timing matches demand patterns, holidays, and the stories you want to tell.",
         "contentCreatorTitle": "Content creator node",
         "contentCreatorDescription": "Drafts captions, hooks, and post copy grounded in your schedule, brief, and promotion choices so you get review-ready social text, not generic filler."
@@ -1282,12 +1282,12 @@
           "selectPlaceholder": "Template",
           "selectAriaLabel": "Milestone template",
           "post_scheduler": {
-            "label": "Post scheduler",
-            "title": "Post scheduler",
+            "label": "Scheduler",
+            "title": "Scheduler",
             "inputLabel": "Scheduler notes",
-            "inputDescription": "Optional guidance for cadence, Reels vs feed posts, dayparts, or weekend/holiday preferences. The run uses Campaign Brief context plus prefetched promotion candidates (star/puzzle menu items).",
-            "inputPlaceholder": "e.g. 3 posts per week; avoid weekends; prefer Reels for hero dishes…",
-            "goal": "Generate a list of Instagram posts for the campaign window: each entry has weekday, date, time, post type (Reel or Post), content type (Carousel or Single), promoted menu items grounded in prefetched promotion candidates, and a caption idea aligned with the campaign brief.",
+            "inputDescription": "Optional guidance for cadence, content-format mix (Reels/feed), dayparts, or weekend/holiday preferences. The run uses Campaign Brief context plus prefetched promotion candidates (star/puzzle menu items).",
+            "inputPlaceholder": "e.g. 3 content slots per week; avoid weekends; prefer Reels for hero dishes…",
+            "goal": "Generate a schedule of Instagram content for the campaign window: each entry has weekday, date, time, format details (Reel/Post and Carousel/Single), promoted menu items grounded in prefetched promotion candidates, and a caption idea aligned with the campaign brief.",
             "criterionPostsGenerated": "**Posts** in the data is a non-empty array when the campaign dates and promotion context support a schedule; otherwise document why the list is empty.",
             "criterionPostFields": "Each post includes **dayOfWeek**, **date** (YYYY-MM-DD), **time**, **postType** (`Reel` or `Post`), **contentType** (`Carousel` or `Single`), **promotedMenuItems**, and **captionIdea**. For multi-post schedules, include a format mix: at least one `Reel` and one `Post`, plus at least one `Carousel` and one `Single`.",
             "criterionMenuItems": "**Promoted menu items** only name dishes that appear in prefetched promotion candidates (star/puzzle items), not invented items."

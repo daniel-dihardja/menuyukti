@@ -33,7 +33,7 @@ export type CampaignBriefMilestoneInputValue = z.infer<
 
 /**
  * Optional owner notes on the milestone Input tab (`value.notes`).
- * Used by the post scheduler preset.
+ * Used by the scheduler preset.
  */
 export const postSchedulerMilestoneInputValueSchema = z.object({
   notes: z.string(),

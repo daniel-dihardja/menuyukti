@@ -67,7 +67,7 @@ def _fmt_milestone_post_scheduler_owner_notes(state: PostSchedulerState) -> str:
     if not text:
         return ""
     return (
-        "## Milestone post scheduler input (owner)\n\n"
+        "## Milestone scheduler input (owner)\n\n"
         "_User-supplied notes from the milestone Input tab - use as scheduling guidance "
         "for cadence and timing, but keep menu items grounded in prefetched promotion candidates._\n\n"
         f"{text}"

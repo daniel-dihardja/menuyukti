@@ -25,9 +25,9 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
   },
   {
     id: 'post_scheduler',
-    name: 'Post scheduler',
+    name: 'Scheduler',
     description:
-      'Use for the post scheduler milestone: builds an Instagram posting plan from Campaign Brief (campaign window and public holidays), scheduler plan signals, and prefetched promotion candidates (star/puzzle menu items by category).',
+      'Use for the scheduler milestone: builds an Instagram content schedule from Campaign Brief (campaign window and public holidays), scheduler plan signals, and prefetched promotion candidates (star/puzzle menu items by category).',
   },
   {
     id: 'generic',

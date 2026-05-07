@@ -46,7 +46,7 @@ export const MILESTONE_RUN_TOOLS_REGISTRY: readonly MilestoneRunToolMeta[] = [
     id: 'get_available_dates',
     name: 'Get available dates',
     description:
-      'Optional extra tool for the post scheduler skill: list each calendar day from start_date through end_date (YYYY-MM-DD). Set exclude_weekends and/or exclude_holidays to omit weekend days or dates in public_holiday_dates (from Campaign Brief `publicHolidays`). Returns a markdown table or a message if the range is invalid or no dates remain after filters.',
+      'Optional extra tool for the scheduler skill: list each calendar day from start_date through end_date (YYYY-MM-DD). Set exclude_weekends and/or exclude_holidays to omit weekend days or dates in public_holiday_dates (from Campaign Brief `publicHolidays`). Returns a markdown table or a message if the range is invalid or no dates remain after filters.',
   },
   {
     id: 'write_result_data',

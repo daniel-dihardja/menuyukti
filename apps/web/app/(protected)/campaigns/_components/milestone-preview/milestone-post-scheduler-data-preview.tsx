@@ -90,16 +90,16 @@ export function MilestonePostSchedulerDataPreview({
           {data.dateConcepts.map((concept, i) => (
             <li key={`${concept.date}-${i}`} className="space-y-1">
               <p className="font-medium text-foreground">
-                {labels.dayDate}: {formatDate(concept.date)} ({concept.dayOfWeek})
-              </p>
-              <p className="text-muted-foreground">
+                {formatDate(concept.date)}
                 <span
-                  className={`mr-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${formatBadgeClasses(concept.format)}`}
+                  className={`ml-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${formatBadgeClasses(concept.format)}`}
                 >
                   {concept.format}
                 </span>
-                {labels.conceptSummary}: {concept.conceptInstruction || '—'}{' '}
-                {concept.relevanceDescription || ''} {concept.formatReason || ''}
+              </p>
+              <p className="text-muted-foreground">
+                {concept.conceptInstruction || '—'} {concept.relevanceDescription || ''}{' '}
+                {concept.formatReason || ''}
               </p>
               <p className="text-muted-foreground">
                 {labels.promotedItems}: {concept.promotedMenuItems?.join(', ') || '—'}
