@@ -7,7 +7,6 @@ describe('milestone run skill registry', () => {
     const ids = MILESTONE_RUN_SKILL_REGISTRY.map((row) => row.id)
     expect(ids).toContain('public_holidays')
     expect(ids).toContain('campaign_brief')
-    expect(ids).toContain('promotion_candidates')
     expect(ids).toContain('post_scheduler')
     expect(ids).toContain('generic')
   })

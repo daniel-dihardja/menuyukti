@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 import re
-import time
 from typing import Any, Literal
 
 import httpx
@@ -30,35 +29,6 @@ from langgraph.types import Send
 from pydantic import BaseModel, Field
 
 _logger = logging.getLogger(__name__)
-_DEBUG_LOG_PATH = (
-    "/Users/danieldihardja/dev/AI-Products/menuyukti/v3/.cursor/debug-c27d4e.log"
-)
-
-
-def _debug_log(
-    *,
-    run_id: str,
-    hypothesis_id: str,
-    location: str,
-    message: str,
-    data: dict[str, Any],
-) -> None:
-    payload = {
-        "sessionId": "c27d4e",
-        "runId": run_id,
-        "hypothesisId": hypothesis_id,
-        "location": location,
-        "message": message,
-        "data": data,
-        "timestamp": int(time.time() * 1000),
-    }
-    try:
-        with open(_DEBUG_LOG_PATH, "a", encoding="utf-8") as fh:
-            fh.write(json.dumps(payload, ensure_ascii=False) + "\n")
-    except Exception:
-        pass
-
-
 def _milestonedata_eval_score(data: dict[str, Any]) -> int:
     """Prefer larger milestonedata payloads (eval tie-breaking)."""
     try:
@@ -87,7 +57,7 @@ def _node_type(ch: dict[str, Any]) -> str:
 
 
 _OWNER_NOTES_INPUT_TYPES = frozenset(
-    {"restaurant_campaign_brief", "promotion_candidates", "post_scheduler"},
+    {"restaurant_campaign_brief", "post_scheduler"},
 )
 
 
@@ -199,20 +169,6 @@ async def fetch_context(
             if raw_data
             else f"Prior milestone context (for requirement checks):\n{prior_context}"
         )
-    # region agent log
-    _debug_log(
-        run_id=str(state.get("run_id") or "unknown"),
-        hypothesis_id="H8",
-        location="milestone_eval/nodes.py:fetch_context",
-        message="eval context assembled",
-        data={
-            "criteria_count": len(criteria),
-            "prior_len": len(prior_context),
-            "raw_data_len": len(raw_data),
-            "raw_data_has_air_mineral": "AIR MINERAL" in raw_data.upper(),
-        },
-    )
-    # endregion
     return {"goal": goal, "raw_data": raw_data, "criteria": criteria}
 
 
@@ -231,22 +187,6 @@ async def evaluate_criterion(
             HumanMessage(content=eval_human_message(goal, raw_data, requirement)),
         ]
     )
-    # region agent log
-    _debug_log(
-        run_id=str(state.get("run_id") or "unknown"),
-        hypothesis_id="H7",
-        location="milestone_eval/nodes.py:evaluate_criterion",
-        message="criterion verdict generated",
-        data={
-            "criterion_id": criterion_id,
-            "requirement": requirement,
-            "status": verdict.status,
-            "reasoning": verdict.reasoning,
-            "raw_data_has_air_mineral": "AIR MINERAL" in raw_data.upper(),
-            "raw_data_len": len(raw_data),
-        },
-    )
-    # endregion
     writer = get_stream_writer()
     writer(
         {

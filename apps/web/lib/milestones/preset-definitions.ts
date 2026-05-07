@@ -2,11 +2,7 @@ import type { PassCriteriaRow } from '@/app/(protected)/campaigns/_components/ti
 import { buildCampaignBriefPassCriteriaSeed } from '@/lib/milestones/campaign-brief-pass-criteria'
 import { type MilestoneInput, type MilestonedataValue } from '@/lib/graphql/node-schemas'
 
-export const MILESTONE_PRESET_IDS = [
-  'restaurant_campaign_brief',
-  'promotion_candidates',
-  'post_scheduler',
-] as const
+export const MILESTONE_PRESET_IDS = ['restaurant_campaign_brief', 'post_scheduler'] as const
 
 export type MilestonePresetId = (typeof MILESTONE_PRESET_IDS)[number]
 
@@ -69,36 +65,6 @@ export function getMilestonePresetCreateFields(
         },
         goal: t('milestonePreset.restaurant_campaign_brief.goal'),
         passCriteria: buildCampaignBriefPassCriteriaSeed(t),
-      }
-    case 'promotion_candidates':
-      return {
-        presetId: 'promotion_candidates',
-        name: t('milestonePreset.promotion_candidates.title'),
-        milestoneInput: {
-          type: 'promotion_candidates',
-          value: { notes: '' },
-        },
-        milestoneData: {
-          grouping: 'by_menu_category',
-          categories: {},
-          flatSummary: '',
-          promotionIdeas: [],
-        },
-        goal: t('milestonePreset.promotion_candidates.goal'),
-        passCriteria: [
-          {
-            requirement: t('milestonePreset.promotion_candidates.criterionGrouping'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.promotion_candidates.criterionCategoriesOrFlat'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.promotion_candidates.criterionPromotionIdeas'),
-            status: 'open',
-          },
-        ],
       }
     case 'post_scheduler':
       return {

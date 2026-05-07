@@ -77,31 +77,6 @@ query RevenueTrends($locationId: ID!, $analyticsRunId: ID!) {
 }
 """
 
-_PROMOTION_CANDIDATES_SIGNALS_QUERY = """
-query PromotionCandidatesSignals($locationId: ID!, $analyticsRunId: ID!) {
-  promotionCandidatesSignals(locationId: $locationId, analyticsRunId: $analyticsRunId) {
-    analyticsRunId
-    itemsTotalCount
-    itemsTruncated
-    bestPostingWindowSummary
-    puzzleOpportunityPool {
-      puzzleItemsFound
-      selectedCount
-    }
-    rankedCandidatesTotalCount
-    rankedCandidates {
-      menu
-      recommendation
-      score
-      quantity
-      totalRevenue
-      signalReasons
-    }
-  }
-}
-"""
-
-
 def _get_location_id(run_id: int) -> int:
     session = SessionLocal()
     try:
@@ -166,17 +141,3 @@ def test_instagram_signals_category_mix_revenue_trends(analytics_run_with_qa_dat
     assert trends["currentPeriodTotalRevenue"] > 0
     assert len(trends["rows"]) >= 1
 
-    r4 = asyncio.run(
-        schema.execute(
-            _PROMOTION_CANDIDATES_SIGNALS_QUERY,
-            variable_values=vars_common,
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not r4.errors
-    candidates = r4.data["promotionCandidatesSignals"]
-    assert candidates is not None
-    assert candidates["analyticsRunId"] == str(run_id)
-    assert isinstance(candidates["bestPostingWindowSummary"], str)
-    assert candidates["itemsTotalCount"] >= 1
-    assert candidates["rankedCandidatesTotalCount"] == len(candidates["rankedCandidates"])

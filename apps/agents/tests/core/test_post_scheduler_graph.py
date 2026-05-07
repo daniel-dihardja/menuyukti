@@ -170,6 +170,10 @@ async def test_fetch_and_prepare_handles_scheduler_plan_graphql_error() -> None:
             ),
         ),
         patch(
+            "agents_app.agents.core.milestone_run.post_scheduler.nodes.fetch_promotion_engineering_candidates",
+            new=AsyncMock(return_value=None),
+        ),
+        patch(
             "agents_app.agents.core.milestone_run.post_scheduler.nodes.get_stream_writer",
             return_value=lambda _x: None,
         ),
@@ -180,7 +184,7 @@ async def test_fetch_and_prepare_handles_scheduler_plan_graphql_error() -> None:
 
 
 @pytest.mark.asyncio
-async def test_persist_result_filters_menu_items_to_prior_promotion_candidates() -> None:
+async def test_persist_result_filters_menu_items_to_prefetched_promotion_candidates() -> None:
     state = {
         "milestone_id": "m1",
         "location_id": 1,
@@ -207,20 +211,11 @@ async def test_persist_result_filters_menu_items_to_prior_promotion_candidates()
                 },
             ]
         },
-        "prior_milestones_data": """
-[
-  {
-    "title": "Promotion Candidates",
-    "presetId": "promotion_candidates",
-    "data": {
-      "grouping": "flat",
-      "categories": {},
-      "flatSummary": "",
-      "promotionIdeas": ["Nasi Goreng", "Sate Ayam"]
-    }
-  }
-]
-""".strip(),
+        "promotion_candidates": {
+            "grouping": "flat",
+            "starItems": ["Nasi Goreng"],
+            "puzzleItems": ["Sate Ayam"],
+        },
     }
     with patch(
         "agents_app.agents.core.milestone_run.post_scheduler.nodes.upsert_milestonedata_node",
@@ -234,26 +229,13 @@ async def test_persist_result_filters_menu_items_to_prior_promotion_candidates()
     assert saved_payload["posts"][1]["promotedMenuItems"] == ["Nasi Goreng"]
 
 
-def test_extract_allowed_menu_names_excludes_sentence_like_ideas() -> None:
+def test_extract_allowed_menu_names_uses_prefetched_menu_lists_only() -> None:
     state = {
-        "prior_milestones_data": """
-[
-  {
-    "title": "Promotion Candidates",
-    "presetId": "promotion_candidates",
-    "data": {
-      "grouping": "flat",
-      "categories": {},
-      "flatSummary": "",
-      "promotionIdeas": [
-        "Promote AIR MINERAL during lunch hours for office workers.",
-        "Nasi Goreng",
-        "Teh Tarik"
-      ]
-    }
-  }
-]
-""".strip()
+        "promotion_candidates": {
+            "grouping": "flat",
+            "starItems": ["Nasi Goreng", "Teh Tarik"],
+            "puzzleItems": ["Promote AIR MINERAL during lunch hours for office workers."],
+        }
     }
     names = _extract_allowed_menu_names(state)  # type: ignore[arg-type]
     assert "Nasi Goreng" in names

@@ -1281,27 +1281,16 @@
           "noneLabel": "Empty milestone",
           "selectPlaceholder": "Template",
           "selectAriaLabel": "Milestone template",
-          "promotion_candidates": {
-            "label": "Promotion candidates",
-            "title": "Promotion candidates",
-            "inputLabel": "Promotion notes",
-            "inputDescription": "Optional guidance for ideas and emphasis (themes, categories to stress, tone, or constraints). Sent with menu-engineering analytics when you run this milestone.",
-            "inputPlaceholder": "e.g. Push brunch cocktails and vegetarian mains; avoid deep-fried items in copy…",
-            "goal": "The data documents promotion-ready menus from menu engineering: when POS categories exist, one block per `menu_category` with star and puzzle highlights; when categories are missing, a flat summary instead. Include 3–8 grounded `promotionIdeas` tied to real menu names from analytics.",
-            "criterionGrouping": "**Grouping** in the data matches the tool (`by_menu_category` or `flat`).",
-            "criterionCategoriesOrFlat": "When grouped, **categories** keys match POS `menu_category` strings; each block lists `starHighlights` and `puzzleHighlights` from the tool. When flat, **flatSummary** explains the candidate set and **categories** stays empty.",
-            "criterionPromotionIdeas": "**Promotion ideas** include 3–8 unique non-empty items, each referencing a real menu from `topStars` or `topPuzzles` in the tool output."
-          },
           "post_scheduler": {
             "label": "Post scheduler",
             "title": "Post scheduler",
             "inputLabel": "Scheduler notes",
-            "inputDescription": "Optional guidance for cadence, Reels vs feed posts, dayparts, or weekend/holiday preferences. The run still uses prior Campaign Brief and Promotion Candidates from this workflow.",
+            "inputDescription": "Optional guidance for cadence, Reels vs feed posts, dayparts, or weekend/holiday preferences. The run uses Campaign Brief context plus prefetched promotion candidates (star/puzzle menu items).",
             "inputPlaceholder": "e.g. 3 posts per week; avoid weekends; prefer Reels for hero dishes…",
-            "goal": "Generate a list of Instagram posts for the campaign window: each entry has weekday, date, time, post type (Reel or Post), content type (Carousel or Single), promoted menu items from prior promotion data, and a caption idea aligned with the campaign brief.",
+            "goal": "Generate a list of Instagram posts for the campaign window: each entry has weekday, date, time, post type (Reel or Post), content type (Carousel or Single), promoted menu items grounded in prefetched promotion candidates, and a caption idea aligned with the campaign brief.",
             "criterionPostsGenerated": "**Posts** in the data is a non-empty array when the campaign dates and promotion context support a schedule; otherwise document why the list is empty.",
             "criterionPostFields": "Each post includes **dayOfWeek**, **date** (YYYY-MM-DD), **time**, **postType** (`Reel` or `Post`), **contentType** (`Carousel` or `Single`), **promotedMenuItems**, and **captionIdea**. For multi-post schedules, include a format mix: at least one `Reel` and one `Post`, plus at least one `Carousel` and one `Single`.",
-            "criterionMenuItems": "**Promoted menu items** only name dishes that appear in the prior Promotion Candidates milestone (ideas or highlights), not invented items."
+            "criterionMenuItems": "**Promoted menu items** only name dishes that appear in prefetched promotion candidates (star/puzzle items), not invented items."
           },
           "restaurant_campaign_brief": {
             "label": "Campaign brief",

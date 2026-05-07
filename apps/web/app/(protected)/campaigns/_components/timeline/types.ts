@@ -10,10 +10,7 @@ export type PassCriteriaRow = {
   status: PassCriteriaStatus
 }
 
-export type MilestonePresetId =
-  | 'restaurant_campaign_brief'
-  | 'promotion_candidates'
-  | 'post_scheduler'
+export type MilestonePresetId = 'restaurant_campaign_brief' | 'post_scheduler'
 
 export type MilestoneInput = {
   type: string
@@ -44,20 +41,6 @@ export type CampaignBriefMilestoneData = {
   toneGuardrails: string[]
 }
 
-export type PromotionCandidatesCategoryBlock = {
-  menuCategory: string
-  starHighlights: string[]
-  puzzleHighlights: string[]
-  notes?: string
-}
-
-export type PromotionCandidatesMilestoneData = {
-  grouping: 'by_menu_category' | 'flat'
-  categories: Record<string, PromotionCandidatesCategoryBlock>
-  flatSummary: string
-  promotionIdeas: string[]
-}
-
 export type PostSchedulerPostItem = {
   dayOfWeek: string
   date: string
@@ -72,10 +55,7 @@ export type PostSchedulerMilestoneData = {
   posts: PostSchedulerPostItem[]
 }
 
-export type MilestoneDataValue =
-  | CampaignBriefMilestoneData
-  | PromotionCandidatesMilestoneData
-  | PostSchedulerMilestoneData
+export type MilestoneDataValue = CampaignBriefMilestoneData | PostSchedulerMilestoneData
 
 export type TimelineMilestone = {
   id: string

@@ -34,6 +34,7 @@ class PostSchedulerState(TypedDict):
     prior_milestones_data: NotRequired[str]
     injected_prior_context_markdown: NotRequired[str]
     scheduler_plan: NotRequired[dict[str, Any] | None]
+    promotion_candidates: NotRequired[dict[str, Any] | None]
     owner_notes_markdown: NotRequired[str]
     generation_context_markdown: NotRequired[str]
     generated_output: NotRequired[PostSchedulerOutput | None]

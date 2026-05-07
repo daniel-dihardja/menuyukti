@@ -13,11 +13,7 @@ export const passCriteriaDataSchema = z.object({
 
 export type PassCriteriaData = z.infer<typeof passCriteriaDataSchema>
 
-export const milestonePresetIdSchema = z.enum([
-  'restaurant_campaign_brief',
-  'promotion_candidates',
-  'post_scheduler',
-])
+export const milestonePresetIdSchema = z.enum(['restaurant_campaign_brief', 'post_scheduler'])
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
 
@@ -33,18 +29,6 @@ export const campaignBriefMilestoneInputValueSchema = z.object({
 
 export type CampaignBriefMilestoneInputValue = z.infer<
   typeof campaignBriefMilestoneInputValueSchema
->
-
-/**
- * Optional owner notes on the milestone Input tab (`value.notes`).
- * Used by the promotion candidates preset.
- */
-export const promotionCandidatesMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
-
-export type PromotionCandidatesMilestoneInputValue = z.infer<
-  typeof promotionCandidatesMilestoneInputValueSchema
 >
 
 /**
@@ -104,24 +88,6 @@ export const campaignBriefMilestoneDataSchema = z.object({
 
 export type CampaignBriefMilestoneData = z.infer<typeof campaignBriefMilestoneDataSchema>
 
-export const promotionCandidatesCategoryBlockSchema = z.object({
-  menuCategory: z.string(),
-  starHighlights: z.array(z.string()),
-  puzzleHighlights: z.array(z.string()),
-  notes: z.string().optional(),
-})
-
-export const promotionCandidatesMilestoneDataSchema = z.object({
-  grouping: z.enum(['by_menu_category', 'flat']),
-  categories: z.record(z.string(), promotionCandidatesCategoryBlockSchema),
-  flatSummary: z.string(),
-  promotionIdeas: z.array(z.string()),
-})
-
-export type PromotionCandidatesMilestoneData = z.infer<
-  typeof promotionCandidatesMilestoneDataSchema
->
-
 export const postSchedulerPostItemSchema = z.object({
   dayOfWeek: z.string(),
   date: z.string(),
@@ -164,7 +130,6 @@ export type GoalData = z.infer<typeof goalDataSchema>
 /** Child `milestonedata` node JSON — structured preset data only (breaking change: no markdown string). */
 export const milestonedataValueSchema = z.union([
   campaignBriefMilestoneDataSchema,
-  promotionCandidatesMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
 ])
 

@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 import re
-import time
 from typing import Any, Literal
 
 import httpx
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_campaign_schedule_plan,
+    fetch_promotion_engineering_candidates,
     upsert_milestonedata_node,
 )
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
@@ -24,11 +24,6 @@ from langgraph.config import get_stream_writer
 from pydantic import BaseModel, Field
 
 _JSON_SEPARATORS = (",", ":")
-_DEBUG_LOG_PATH = (
-    "/Users/danieldihardja/dev/AI-Products/menuyukti/v3/.cursor/debug-c27d4e.log"
-)
-
-
 class PostSchedulerPostDraft(BaseModel):
     dayOfWeek: str
     date: str
@@ -41,30 +36,6 @@ class PostSchedulerPostDraft(BaseModel):
 
 class PostSchedulerDraftOutput(BaseModel):
     posts: list[PostSchedulerPostDraft] = Field(default_factory=list)
-
-
-def _debug_log(
-    *,
-    run_id: str,
-    hypothesis_id: str,
-    location: str,
-    message: str,
-    data: dict[str, Any],
-) -> None:
-    payload = {
-        "sessionId": "c27d4e",
-        "runId": run_id,
-        "hypothesisId": hypothesis_id,
-        "location": location,
-        "message": message,
-        "data": data,
-        "timestamp": int(time.time() * 1000),
-    }
-    try:
-        with open(_DEBUG_LOG_PATH, "a", encoding="utf-8") as fh:
-            fh.write(json.dumps(payload, ensure_ascii=False) + "\n")
-    except Exception:
-        pass
 
 
 def _trace(state: PostSchedulerState, step: str, **extra: Any) -> None:
@@ -106,7 +77,7 @@ def _fmt_milestone_post_scheduler_owner_notes(state: PostSchedulerState) -> str:
     return (
         "## Milestone post scheduler input (owner)\n\n"
         "_User-supplied notes from the milestone Input tab - use as scheduling guidance "
-        "for cadence and timing, but keep menu items grounded in prior promotion candidates._\n\n"
+        "for cadence and timing, but keep menu items grounded in prefetched promotion candidates._\n\n"
         f"{text}"
     )
 
@@ -115,6 +86,7 @@ def _build_generation_context(
     *,
     state: PostSchedulerState,
     scheduler_plan: dict[str, Any] | None,
+    promotion_candidates: dict[str, Any] | None,
     owner_notes_markdown: str,
 ) -> str:
     sections: list[str] = []
@@ -124,6 +96,10 @@ def _build_generation_context(
         sections.append(_json_block("Scheduler plan signals", scheduler_plan))
     else:
         sections.append("## Scheduler plan signals\n_Scheduler plan unavailable from GraphQL._")
+    if promotion_candidates is not None:
+        sections.append(_json_block("Promotion candidates", promotion_candidates))
+    else:
+        sections.append("## Promotion candidates\n_Promotion candidates unavailable from GraphQL._")
     injected = str(state.get("injected_prior_context_markdown") or "").strip()
     if injected:
         sections.append(injected)
@@ -136,26 +112,10 @@ def _fallback_output() -> PostSchedulerOutput:
     return {"posts": []}
 
 
-def _parse_prior_rows(prior_milestones_data: Any) -> list[dict[str, Any]]:
-    if isinstance(prior_milestones_data, str):
-        raw = prior_milestones_data.strip()
-        if not raw:
-            return []
-        try:
-            decoded = json.loads(raw)
-        except json.JSONDecodeError:
-            return []
-    else:
-        decoded = prior_milestones_data
-    if not isinstance(decoded, list):
-        return []
-    return [row for row in decoded if isinstance(row, dict)]
-
-
 def _extract_allowed_menu_names(state: PostSchedulerState) -> list[str]:
     out: list[str] = []
     seen: set[str] = set()
-    source_counts = {"scheduler_slot": 0, "promotion_idea": 0, "category_highlight": 0, "menu_category": 0}
+    source_counts = {"scheduler_slot": 0, "promotion_category": 0, "promotion_flat": 0}
 
     def _add(value: Any, source: str) -> None:
         if not isinstance(value, str):
@@ -184,43 +144,26 @@ def _extract_allowed_menu_names(state: PostSchedulerState) -> list[str]:
                 for item in row.get("promotedMenuItems") or []:
                     _add(item, "scheduler_slot")
 
-    # Also ingest prior promotion-candidates output.
-    for row in _parse_prior_rows(state.get("prior_milestones_data")):
-        preset_id = row.get("presetId")
-        if isinstance(preset_id, str) and preset_id.strip() != "promotion_candidates":
-            continue
-        data = row.get("data")
-        if not isinstance(data, dict):
-            continue
-        for item in data.get("promotionIdeas") or []:
-            _add(item, "promotion_idea")
-        categories = data.get("categories")
-        if isinstance(categories, dict):
-            for cat in categories.values():
-                if not isinstance(cat, dict):
-                    continue
-                for item in cat.get("starHighlights") or []:
-                    _add(item, "category_highlight")
-                for item in cat.get("puzzleHighlights") or []:
-                    _add(item, "category_highlight")
-                _add(cat.get("menuCategory"), "menu_category")
+    # Ingest prefetched promotion candidates for scheduler-allowed menu items.
+    promotion_candidates = state.get("promotion_candidates")
+    if isinstance(promotion_candidates, dict):
+        grouping = str(promotion_candidates.get("grouping") or "").strip()
+        if grouping == "by_menu_category":
+            categories = promotion_candidates.get("categories")
+            if isinstance(categories, dict):
+                for bucket in categories.values():
+                    if not isinstance(bucket, dict):
+                        continue
+                    for item in bucket.get("starItems") or []:
+                        _add(item, "promotion_category")
+                    for item in bucket.get("puzzleItems") or []:
+                        _add(item, "promotion_category")
+        else:
+            for item in promotion_candidates.get("starItems") or []:
+                _add(item, "promotion_flat")
+            for item in promotion_candidates.get("puzzleItems") or []:
+                _add(item, "promotion_flat")
 
-    # region agent log
-    _debug_log(
-        run_id=str(state.get("run_id") or "unknown"),
-        hypothesis_id="H6",
-        location="post_scheduler/nodes.py:_extract_allowed_menu_names",
-        message="allowed menu names resolved",
-        data={
-            "count": len(out),
-            "sample": out[:5],
-            "has_scheduler_plan": isinstance(state.get("scheduler_plan"), dict),
-            "prior_len": len(str(state.get("prior_milestones_data") or "")),
-            "source_counts": source_counts,
-            "contains_air_mineral": any(x.casefold() == "air mineral" for x in out),
-        },
-    )
-    # endregion
     return out
 
 
@@ -231,21 +174,11 @@ def _enforce_allowed_menu_names(
     if not posts:
         return payload
     if not allowed_menu_names:
-        # region agent log
-        _debug_log(
-            run_id="unknown",
-            hypothesis_id="H2",
-            location="post_scheduler/nodes.py:_enforce_allowed_menu_names",
-            message="allowed menu names empty; payload left unchanged",
-            data={"input_posts": len(posts)},
-        )
-        # endregion
         return payload
 
     allowed_lookup = {name.casefold() for name in allowed_menu_names}
     fallback_menu = allowed_menu_names[0]
     normalized_posts: list[dict[str, Any]] = []
-    first_post_checks: list[dict[str, Any]] = []
     for post in posts:
         menu_items = post.get("promotedMenuItems") or []
         kept: list[str] = []
@@ -257,8 +190,6 @@ def _enforce_allowed_menu_names(
             if not text:
                 continue
             key = text.casefold()
-            if not first_post_checks and len(normalized_posts) == 0:
-                first_post_checks.append({"item": text, "in_allowed_lookup": key in allowed_lookup})
             if key not in allowed_lookup or key in seen:
                 continue
             seen.add(key)
@@ -268,23 +199,6 @@ def _enforce_allowed_menu_names(
         next_post = dict(post)
         next_post["promotedMenuItems"] = kept
         normalized_posts.append(next_post)
-    # region agent log
-    _debug_log(
-        run_id="unknown",
-            hypothesis_id="H3",
-        location="post_scheduler/nodes.py:_enforce_allowed_menu_names",
-        message="menu items filtered against allowed set",
-        data={
-            "allowed_count": len(allowed_menu_names),
-            "input_posts": len(posts),
-            "output_posts": len(normalized_posts),
-            "first_post_items": normalized_posts[0].get("promotedMenuItems", [])
-            if normalized_posts
-            else [],
-                "first_post_checks": first_post_checks,
-        },
-    )
-    # endregion
     return {"posts": normalized_posts}
 
 
@@ -326,14 +240,31 @@ async def fetch_and_prepare(
                 scheduler_plan_error=str(exc),
             )
             scheduler_plan = None
+    promotion_candidates: dict[str, Any] | None = None
+    try:
+        promotion_candidates = await fetch_promotion_engineering_candidates(
+            int(state["location_id"]),
+            str(state["user_id"]),
+            client=client,
+        )
+    except Exception as exc:
+        _trace(
+            state,
+            "execute_skill",
+            skill_id="post_scheduler",
+            promotion_candidates_error=str(exc),
+        )
+        promotion_candidates = None
     owner_notes_markdown = _fmt_milestone_post_scheduler_owner_notes(state)
     generation_context_markdown = _build_generation_context(
         state=state,
         scheduler_plan=scheduler_plan,
+        promotion_candidates=promotion_candidates,
         owner_notes_markdown=owner_notes_markdown,
     )
     return {
         "scheduler_plan": scheduler_plan,
+        "promotion_candidates": promotion_candidates,
         "owner_notes_markdown": owner_notes_markdown,
         "generation_context_markdown": generation_context_markdown,
     }
@@ -381,33 +312,8 @@ def _normalize_generated_output(payload: Any) -> PostSchedulerOutput:
 async def persist_result(state: PostSchedulerState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     """Validate/coerce and persist post-scheduler payload via milestone data upsert."""
     payload = _normalize_generated_output(state.get("generated_output"))
-    # region agent log
-    _debug_log(
-        run_id=str(state.get("run_id") or "unknown"),
-        hypothesis_id="H4",
-        location="post_scheduler/nodes.py:persist_result",
-        message="raw generated output normalized",
-        data={
-            "posts_count": len(payload.get("posts") or []),
-            "first_post_raw_items": (payload.get("posts") or [{}])[0].get("promotedMenuItems", []),
-        },
-    )
-    # endregion
     allowed_menu_names = _extract_allowed_menu_names(state)
     payload = _enforce_allowed_menu_names(payload, allowed_menu_names=allowed_menu_names)
-    # region agent log
-    _debug_log(
-        run_id=str(state.get("run_id") or "unknown"),
-        hypothesis_id="H5",
-        location="post_scheduler/nodes.py:persist_result",
-        message="payload after enforcement before validation",
-        data={
-            "allowed_count": len(allowed_menu_names),
-            "posts_count": len(payload.get("posts") or []),
-            "first_post_items_after": (payload.get("posts") or [{}])[0].get("promotedMenuItems", []),
-        },
-    )
-    # endregion
     normalized, error = validate_skill_output("post_scheduler", payload)
     if error is not None or normalized is None:
         raise ValueError(error or "post_scheduler output validation failed")

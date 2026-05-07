@@ -1,4 +1,4 @@
-"""Build promotion engineering candidate payload (matrix by menu_category or flat)."""
+"""Build simplified promotion candidate payload for post-scheduler prefetch."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ def build_promotion_engineering_candidates(
     session: Session,
     run: AnalyticsRun,
 ) -> dict[str, Any] | None:
-    """Load order facts and COGS, return grouping + matrix slices for agents."""
+    """Load order facts and COGS; return only star/puzzle menu names by category."""
     rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
     if not rows:
         return None
@@ -33,4 +33,47 @@ def build_promotion_engineering_candidates(
     cogs_rows = session.query(MenuItemCogs).where(MenuItemCogs.analytics_run_id == run.id).all()
     cogs_by_menu = {r.menu: float(r.cogs) for r in cogs_rows}
 
-    return compute_menu_engineering_promotion_candidates(order_rows, cogs_by_menu)
+    raw = compute_menu_engineering_promotion_candidates(order_rows, cogs_by_menu)
+    grouping = str(raw.get("grouping") or "flat")
+
+    if grouping == "by_menu_category":
+        categories_raw = raw.get("categories")
+        out_categories: dict[str, dict[str, list[str]]] = {}
+        if isinstance(categories_raw, dict):
+            for key, bucket in categories_raw.items():
+                if not isinstance(bucket, dict):
+                    continue
+                star_items = [
+                    str(item.get("menu")).strip()
+                    for item in (bucket.get("topStars") or [])
+                    if isinstance(item, dict) and str(item.get("menu") or "").strip()
+                ][:5]
+                puzzle_items = [
+                    str(item.get("menu")).strip()
+                    for item in (bucket.get("topPuzzles") or [])
+                    if isinstance(item, dict) and str(item.get("menu") or "").strip()
+                ][:5]
+                out_categories[str(key)] = {
+                    "starItems": star_items,
+                    "puzzleItems": puzzle_items,
+                }
+        return {
+            "grouping": "by_menu_category",
+            "categories": out_categories,
+        }
+
+    star_items = [
+        str(item.get("menu")).strip()
+        for item in (raw.get("topStars") or [])
+        if isinstance(item, dict) and str(item.get("menu") or "").strip()
+    ][:5]
+    puzzle_items = [
+        str(item.get("menu")).strip()
+        for item in (raw.get("topPuzzles") or [])
+        if isinstance(item, dict) and str(item.get("menu") or "").strip()
+    ][:5]
+    return {
+        "grouping": "flat",
+        "starItems": star_items,
+        "puzzleItems": puzzle_items,
+    }

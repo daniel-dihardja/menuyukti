@@ -7,7 +7,6 @@ import {
   campaignBriefMilestoneDataSchema,
   milestoneDataSchema,
   postSchedulerMilestoneDataSchema,
-  promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import {
   getMilestonePresetCreateFields,
@@ -30,10 +29,6 @@ function parseDataPreviewForPreset(
 ): MilestoneDataValue | undefined {
   if (presetId === 'restaurant_campaign_brief') {
     const parsed = campaignBriefMilestoneDataSchema.safeParse(dataPreview)
-    return parsed.success ? parsed.data : undefined
-  }
-  if (presetId === 'promotion_candidates') {
-    const parsed = promotionCandidatesMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   if (presetId === 'post_scheduler') {

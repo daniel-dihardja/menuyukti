@@ -202,18 +202,6 @@ def test_extract_milestone_input_notes_ignores_dates_type() -> None:
     )
 
 
-def test_extract_milestone_input_notes_promotion_candidates_trims() -> None:
-    out = nodes._extract_milestone_input_notes(
-        _base_state(
-            milestone_input={
-                "type": "promotion_candidates",
-                "value": {"notes": "  brunch focus  "},
-            },
-        ),
-    )
-    assert out == "brunch focus"
-
-
 def test_select_best_milestonedata_payload_prefers_larger_payload() -> None:
     sparse = {"summary": "ok"}
     rich = {

@@ -22,6 +22,7 @@ from agents_app.agents.graphql_operations import (
     CAMPAIGN_SCHEDULE_PLAN_QUERY,
     LOCATION_OPERATING_SIGNALS_QUERY,
     LOCATION_QUERY,
+    PROMOTION_ENGINEERING_CANDIDATES_QUERY,
     PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
     PUBLIC_HOLIDAYS_QUERY,
 )
@@ -246,6 +247,36 @@ async def fetch_campaign_schedule_plan(
     return raw if isinstance(raw, dict) else None
 
 
+async def fetch_promotion_engineering_candidates(
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Return simplified promotion candidates for latest analytics run."""
+    runs_data = await graphql_post(
+        client,
+        ANALYTICS_RUNS_QUERY,
+        {"locationId": location_id, "first": 1},
+        user_id,
+    )
+    runs = runs_data.get("analyticsRuns")
+    if not isinstance(runs, list) or not runs:
+        return None
+    run = runs[0]
+    run_id = str(run.get("id") or "").strip()
+    if not run_id:
+        return None
+    data = await graphql_post(
+        client,
+        PROMOTION_ENGINEERING_CANDIDATES_QUERY,
+        {"locationId": str(location_id), "analyticsRunId": run_id},
+        user_id,
+    )
+    raw = data.get("promotionEngineeringCandidates")
+    return raw if isinstance(raw, dict) else None
+
+
 async def upsert_milestonedata_node(
     milestone_id: str,
     location_id: int,
@@ -273,6 +304,7 @@ __all__ = [
     "delete_node",
     "fetch_api_adapter_tools_for_location",
     "fetch_campaign_schedule_plan",
+    "fetch_promotion_engineering_candidates",
     "fetch_location_operating_signals",
     "fetch_milestone_children",
     "fetch_prior_milestones_data",

@@ -8,14 +8,12 @@ import { formatPreviewDateString } from '@/lib/format-preview-date'
 import {
   campaignBriefMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
-  promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
 import type { TimelineMilestone } from '../timeline/types'
 
 import { MilestoneCampaignBriefDataPreview } from './milestone-campaign_brief-data-preview'
 import { MilestonePostSchedulerDataPreview } from './milestone-post-scheduler-data-preview'
-import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
 
 export type MilestoneDataPreviewProps = {
   milestone: TimelineMilestone
@@ -88,30 +86,6 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             helpStartDate: t('milestoneCampaignBriefPreviewHelpStartDate'),
             helpEndDate: t('milestoneCampaignBriefPreviewHelpEndDate'),
             helpPublicHolidays: t('milestoneCampaignBriefPreviewHelpPublicHolidays'),
-          }}
-        />
-      )
-    }
-
-    if (milestone.presetId === 'promotion_candidates') {
-      const parsedPc = promotionCandidatesMilestoneDataSchema.safeParse(data)
-      if (!parsedPc.success) {
-        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
-      }
-
-      return (
-        <MilestonePromotionCandidatesDataPreview
-          data={parsedPc.data}
-          labels={{
-            grouping: t('milestonePromotionCandidatesPreviewGrouping'),
-            flatSummary: t('milestonePromotionCandidatesPreviewFlatSummary'),
-            promotionIdeas: t('milestonePromotionCandidatesPreviewPromotionIdeas'),
-            categoryMenu: t('milestonePromotionCandidatesPreviewCategoryMenu'),
-            starHighlights: t('milestonePromotionCandidatesPreviewStarHighlights'),
-            puzzleHighlights: t('milestonePromotionCandidatesPreviewPuzzleHighlights'),
-            notes: t('milestonePromotionCandidatesPreviewNotes'),
-            emptyList: t('milestoneCampaignBriefPreviewEmptyList'),
-            emptyValue: t('milestoneCampaignBriefPreviewEmptyValue'),
           }}
         />
       )

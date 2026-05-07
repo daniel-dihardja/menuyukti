@@ -1,4 +1,4 @@
-"""GraphQL query: promotion engineering candidates (matrix by menu_category or flat)."""
+"""GraphQL query: simplified promotion candidates for post scheduler."""
 
 from __future__ import annotations
 
@@ -16,11 +16,10 @@ from graphql.services.promotion_engineering_candidates import (
 class PromotionEngineeringCandidatesQuery:
     @strawberry.field(
         description=(
-            "Menu engineering matrix and top star/puzzle items per distinct "
-            "`order_fact.menu_category` when present; otherwise a single flat matrix on all rows. "
-            "Returns JSON: `grouping` (`by_menu_category` | `flat`), optional `categories` map, "
-            "`rowsSkippedMissingCategory`, and matrix slices. When locationId is set, the run "
-            "must belong to that location (otherwise returns null)."
+            "Top star and puzzle menu-item names derived from menu engineering. "
+            "When POS menu categories exist, returns `grouping=by_menu_category` with "
+            "`categories.<menu_category>.starItems` and `puzzleItems` (up to 5 each). "
+            "Otherwise returns `grouping=flat` with root `starItems` and `puzzleItems`."
         )
     )
     def promotion_engineering_candidates(

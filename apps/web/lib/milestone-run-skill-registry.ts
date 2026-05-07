@@ -24,16 +24,10 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
       'Use for the campaign brief milestone: campaign window and holidays plus profile and operating signals—venue snapshot, pillars, audience hypotheses, proof-oriented angles, and tone guardrails.',
   },
   {
-    id: 'promotion_candidates',
-    name: 'Promotion candidates',
-    description:
-      'Use for the promotion candidates milestone: menu engineering top stars and puzzles per POS menu_category (or flat when categories are missing) from the latest analytics run. When a prior campaign brief milestone exists, align promotion ideas with its pillars, audience, proof angles, and tone; menu names stay grounded in analytics.',
-  },
-  {
     id: 'post_scheduler',
     name: 'Post scheduler',
     description:
-      'Use for the post scheduler milestone: builds an Instagram posting plan from prior Campaign Brief (campaign window and public holidays) and Promotion Candidates; uses get_available_dates to filter posting days by weekends and holidays when needed.',
+      'Use for the post scheduler milestone: builds an Instagram posting plan from Campaign Brief (campaign window and public holidays), scheduler plan signals, and prefetched promotion candidates (star/puzzle menu items by category).',
   },
   {
     id: 'generic',

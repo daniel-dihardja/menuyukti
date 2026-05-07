@@ -7,42 +7,11 @@ import {
 } from '@/lib/milestones/milestone-input-tab'
 import { getMilestonePresetCreateFields } from '@/lib/milestones/preset-definitions'
 
-describe('milestone optional notes (promotion_candidates parity)', () => {
-  it('milestonePresetHasDefaultOptionalNotesInput includes promotion_candidates and post_scheduler', () => {
+describe('milestone optional notes', () => {
+  it('milestonePresetHasDefaultOptionalNotesInput includes supported presets', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('restaurant_campaign_brief')).toBe(true)
-    expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('post_scheduler')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput(undefined)).toBe(false)
-  })
-
-  it('optionalNotesFromMilestoneInput reads notes for promotion_candidates', () => {
-    expect(
-      optionalNotesFromMilestoneInput(
-        { type: 'promotion_candidates', value: { notes: '  brunch  ' } },
-        'promotion_candidates',
-      ),
-    ).toBe('  brunch  ')
-  })
-
-  it('patchMilestoneSchema accepts promotion_candidates milestoneInput', () => {
-    const parsed = patchMilestoneSchema.safeParse({
-      milestoneInput: { type: 'promotion_candidates', value: { notes: 'stress desserts' } },
-    })
-    expect(parsed.success).toBe(true)
-    if (parsed.success) {
-      expect(parsed.data.milestoneInput).toEqual({
-        type: 'promotion_candidates',
-        value: { notes: 'stress desserts' },
-      })
-    }
-  })
-
-  it('getMilestonePresetCreateFields seeds promotion_candidates milestoneInput', () => {
-    const fields = getMilestonePresetCreateFields('promotion_candidates', (k) => k)
-    expect(fields.milestoneInput).toEqual({
-      type: 'promotion_candidates',
-      value: { notes: '' },
-    })
   })
 
   it('optionalNotesFromMilestoneInput reads notes for post_scheduler', () => {
