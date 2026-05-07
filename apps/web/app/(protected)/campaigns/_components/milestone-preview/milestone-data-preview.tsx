@@ -1,6 +1,6 @@
 'use client'
 
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 
 import {
   campaignBriefMilestoneDataSchema,
@@ -20,7 +20,6 @@ export type MilestoneDataPreviewProps = {
 
 export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
   const t = useTranslations('analytics.campaigns.chat')
-  const locale = useLocale()
   const data = milestone.data
 
   if (data == null) {
@@ -37,11 +36,15 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
       return (
         <MilestoneCampaignBriefDataPreview
           data={parsedCampaignBrief.data}
+          formatHelpAriaLabel={(sectionTitle) =>
+            t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle })
+          }
           labels={{
             startDate: t('milestoneCampaignBriefPreviewStartDate'),
             endDate: t('milestoneCampaignBriefPreviewEndDate'),
             publicHolidays: t('milestoneCampaignBriefPreviewPublicHolidays'),
             noHolidays: t('milestoneCampaignBriefPreviewNoHolidays'),
+            venueSnapshot: t('milestoneCampaignBriefPreviewVenueSnapshot'),
             venueName: t('milestoneCampaignBriefPreviewVenueName'),
             city: t('milestoneCampaignBriefPreviewCity'),
             country: t('milestoneCampaignBriefPreviewCountry'),
@@ -60,6 +63,22 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             riskGuardrails: t('milestoneCampaignBriefPreviewRiskGuardrails'),
             emptyList: t('milestoneCampaignBriefPreviewEmptyList'),
             emptyValue: t('milestoneCampaignBriefPreviewEmptyValue'),
+            helpVenueSnapshot: t('milestoneCampaignBriefPreviewHelpVenueSnapshot'),
+            helpContentPillars: t('milestoneCampaignBriefPreviewHelpContentPillars'),
+            helpAudienceHypotheses: t('milestoneCampaignBriefPreviewHelpAudienceHypotheses'),
+            helpProofOrientedAngles: t('milestoneCampaignBriefPreviewHelpProofOrientedAngles'),
+            helpToneGuardrails: t('milestoneCampaignBriefPreviewHelpToneGuardrails'),
+            helpCampaignObjective: t('milestoneCampaignBriefPreviewHelpCampaignObjective'),
+            helpTargetSegments: t('milestoneCampaignBriefPreviewHelpTargetSegments'),
+            helpMessageHierarchy: t('milestoneCampaignBriefPreviewHelpMessageHierarchy'),
+            helpOfferAndCtaPlan: t('milestoneCampaignBriefPreviewHelpOfferAndCtaPlan'),
+            helpContentPillarPlan: t('milestoneCampaignBriefPreviewHelpContentPillarPlan'),
+            helpMeasurementPlan: t('milestoneCampaignBriefPreviewHelpMeasurementPlan'),
+            helpTestingPlan: t('milestoneCampaignBriefPreviewHelpTestingPlan'),
+            helpRiskGuardrails: t('milestoneCampaignBriefPreviewHelpRiskGuardrails'),
+            helpStartDate: t('milestoneCampaignBriefPreviewHelpStartDate'),
+            helpEndDate: t('milestoneCampaignBriefPreviewHelpEndDate'),
+            helpPublicHolidays: t('milestoneCampaignBriefPreviewHelpPublicHolidays'),
           }}
         />
       )

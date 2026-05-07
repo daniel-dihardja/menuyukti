@@ -343,6 +343,14 @@ export async function GET(_req: Request, context: RouteContext) {
           audienceHypotheses: [],
           proofOrientedAngles: [],
           toneGuardrails: [],
+          campaignObjective: '',
+          targetSegments: [],
+          messageHierarchy: [],
+          offerAndCtaPlan: [],
+          contentPillarPlan: [],
+          measurementPlan: [],
+          testingPlan: [],
+          riskGuardrails: [],
         }
       }
     }

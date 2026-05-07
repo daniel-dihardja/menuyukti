@@ -1,4 +1,5 @@
 import type { PassCriteriaRow } from '@/app/(protected)/campaigns/_components/timeline/types'
+import { buildCampaignBriefPassCriteriaSeed } from '@/lib/milestones/campaign-brief-pass-criteria'
 import { type MilestoneInput, type MilestonedataValue } from '@/lib/graphql/node-schemas'
 
 export const MILESTONE_PRESET_IDS = [
@@ -67,72 +68,7 @@ export function getMilestonePresetCreateFields(
           riskGuardrails: [],
         },
         goal: t('milestonePreset.restaurant_campaign_brief.goal'),
-        passCriteria: [
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionVenueSnapshot'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionContentPillars'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionAudienceHypotheses'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionProofAngles'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionToneGuardrails'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionCampaignObjective'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionTargetSegments'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionMessageHierarchy'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionOfferAndCtaPlan'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionContentPillarPlan'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionMeasurementPlan'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionTestingPlan'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionRiskGuardrails'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionStartDate'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionEndDate'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_campaign_brief.criterionPublicHolidays'),
-            status: 'open',
-          },
-        ],
+        passCriteria: buildCampaignBriefPassCriteriaSeed(t),
       }
     case 'promotion_candidates':
       return {
