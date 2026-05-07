@@ -5,25 +5,63 @@ from __future__ import annotations
 from typing import Any, Literal, NotRequired, TypedDict
 
 
-class PostSchedulerDateConcept(TypedDict):
-    date: str
-    dayOfWeek: str
-    format: Literal["Reel", "Carousel", "Story", "Single Post"]
-    formatReason: str
-    conceptInstruction: str
-    relevanceDescription: str
-    promotedMenuItems: NotRequired[list[str] | None]
+class PostSchedulerMonthlyArcWeek(TypedDict):
+    week: Literal[1, 2, 3, 4]
+    objective: str
+    rationale: str
 
 
-class PostSchedulerDaySummary(TypedDict):
-    weekdayCount: int
-    weekendCount: int
+class PostSchedulerMonthlyArc(TypedDict):
+    weeks: list[PostSchedulerMonthlyArcWeek]
+
+
+class PostSchedulerContentRatioItem(TypedDict):
+    pillar: str
+    percent: int
+    reason: str
+
+
+class PostSchedulerContentRatio(TypedDict):
+    pillars: list[PostSchedulerContentRatioItem]
+
+
+class PostSchedulerFormatMixItem(TypedDict):
+    format: Literal[
+        "Reels",
+        "Carousels",
+        "Single posts",
+        "Stories",
+        "Highlights updates",
+        "Lives",
+        "Collaborator posts",
+    ]
+    count: int
+    reason: str
+
+
+class PostSchedulerFormatMix(TypedDict):
+    formats: list[PostSchedulerFormatMixItem]
+
+
+class PostSchedulerWeeklySlot(TypedDict):
+    week: Literal[1, 2, 3, 4]
+    day: str
+    format: Literal["Reel", "Carousel", "Single post"]
+    pillar: str
+    hook: str
+    captionStructure: str
+    ctaType: Literal["Reserve", "Order", "DM", "Walk in", "Save"]
+    funnelStage: Literal["Awareness", "Consideration", "Conversion", "Loyalty"]
+    visualDirection: str
+    notes: str
 
 
 class PostSchedulerOutput(TypedDict):
-    dateConcepts: list[PostSchedulerDateConcept]
-    daySummary: PostSchedulerDaySummary
-    promotionCandidates: NotRequired[dict[str, Any] | None]
+    monthlyArc: PostSchedulerMonthlyArc
+    contentRatio: PostSchedulerContentRatio
+    formatMix: PostSchedulerFormatMix
+    weeklySlotPlan: list[PostSchedulerWeeklySlot]
+    guardrailCheck: str
 
 
 class PostSchedulerState(TypedDict):

@@ -41,34 +41,50 @@ export type CampaignBriefMilestoneData = {
   toneGuardrails: string[]
 }
 
-export type PostSchedulerDateConceptItem = {
-  date: string
-  dayOfWeek: string
-  format: 'Reel' | 'Carousel' | 'Story' | 'Single Post'
-  formatReason: string
-  conceptInstruction: string
-  relevanceDescription: string
-  promotedMenuItems?: string[]
+export type PostSchedulerMonthlyArcWeek = {
+  week: 1 | 2 | 3 | 4
+  objective: string
+  rationale: string
 }
 
 export type PostSchedulerMilestoneData = {
-  dateConcepts: PostSchedulerDateConceptItem[]
-  daySummary: {
-    weekdayCount: number
-    weekendCount: number
+  monthlyArc: {
+    weeks: PostSchedulerMonthlyArcWeek[]
   }
-  promotionCandidates?: {
-    grouping: string
-    categories?: Record<
-      string,
-      {
-        starItems: string[]
-        puzzleItems: string[]
-      }
-    >
-    starItems?: string[]
-    puzzleItems?: string[]
+  contentRatio: {
+    pillars: Array<{
+      pillar: string
+      percent: number
+      reason: string
+    }>
   }
+  formatMix: {
+    formats: Array<{
+      format:
+        | 'Reels'
+        | 'Carousels'
+        | 'Single posts'
+        | 'Stories'
+        | 'Highlights updates'
+        | 'Lives'
+        | 'Collaborator posts'
+      count: number
+      reason: string
+    }>
+  }
+  weeklySlotPlan: Array<{
+    week: 1 | 2 | 3 | 4
+    day: string
+    format: 'Reel' | 'Carousel' | 'Single post'
+    pillar: string
+    hook: string
+    captionStructure: string
+    ctaType: 'Reserve' | 'Order' | 'DM' | 'Walk in' | 'Save'
+    funnelStage: 'Awareness' | 'Consideration' | 'Conversion' | 'Loyalty'
+    visualDirection: string
+    notes: string
+  }>
+  guardrailCheck: string
 }
 
 export type MilestoneDataValue = CampaignBriefMilestoneData | PostSchedulerMilestoneData

@@ -2,19 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import date, timedelta
 import json
-import re
 from typing import Any
 
 import httpx
 from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_campaign_schedule_plan,
-    fetch_promotion_engineering_candidates,
     upsert_milestonedata_node,
 )
 from agents_app.agents.core.milestone_run.output_schema import (
-    PostSchedulerDateConceptItem,
     validate_skill_output,
 )
 from agents_app.agents.core.milestone_run.post_scheduler.prompts import POST_SCHEDULER_SYSTEM
@@ -25,7 +21,7 @@ from agents_app.agents.core.milestone_run.post_scheduler.state import (
 from agents_app.models.llm_config import get_llm_structured
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 _JSON_SEPARATORS = (",", ":")
 
@@ -78,11 +74,8 @@ def _build_generation_context(
     *,
     state: PostSchedulerState,
     scheduler_plan: dict[str, Any] | None,
-    promotion_candidates: dict[str, Any] | None,
     owner_notes_markdown: str,
 ) -> str:
-    start_date, end_date = _extract_campaign_date_bounds(state)
-    date_window_markdown = _build_date_window_markdown(start_date=start_date, end_date=end_date)
     sections: list[str] = []
     sections.append(f"## Milestone goal\n{str(state.get('goal') or '').strip() or '_No goal provided._'}")
     sections.append(_json_block("Milestone criteria", state.get("criteria") or []))
@@ -90,11 +83,8 @@ def _build_generation_context(
         sections.append(_json_block("Scheduler plan signals", scheduler_plan))
     else:
         sections.append("## Scheduler plan signals\n_Scheduler plan unavailable from GraphQL._")
-    if promotion_candidates is not None:
-        sections.append(_json_block("Promotion candidates", promotion_candidates))
-    else:
-        sections.append("## Promotion candidates\n_Promotion candidates unavailable from GraphQL._")
-    sections.append(date_window_markdown)
+    if isinstance(state.get("milestone_input"), dict):
+        sections.append(_json_block("Milestone input", state.get("milestone_input")))
     injected = str(state.get("injected_prior_context_markdown") or "").strip()
     if injected:
         sections.append(injected)
@@ -104,221 +94,232 @@ def _build_generation_context(
 
 
 def _fallback_output() -> PostSchedulerOutput:
-    return {"dateConcepts": [], "daySummary": {"weekdayCount": 0, "weekendCount": 0}}
-
-
-def _parse_iso_date(raw: Any) -> date | None:
-    if not isinstance(raw, str):
-        return None
-    text = raw.strip()
-    if not text:
-        return None
-    try:
-        return date.fromisoformat(text)
-    except ValueError:
-        return None
-
-
-def _extract_campaign_date_bounds(state: PostSchedulerState) -> tuple[date | None, date | None]:
-    scheduler_plan = state.get("scheduler_plan")
-    if isinstance(scheduler_plan, dict):
-        start = _parse_iso_date(scheduler_plan.get("campaignStart"))
-        end = _parse_iso_date(scheduler_plan.get("campaignEnd"))
-        if start is not None and end is not None:
-            return start, end
-    return None, None
-
-
-def _count_weekday_weekend_days(start_date: date, end_date: date) -> tuple[int, int]:
-    if end_date < start_date:
-        start_date, end_date = end_date, start_date
-    weekday_count = 0
-    weekend_count = 0
-    cursor = start_date
-    while cursor <= end_date:
-        if cursor.weekday() >= 5:
-            weekend_count += 1
-        else:
-            weekday_count += 1
-        cursor += timedelta(days=1)
-    return weekday_count, weekend_count
-
-
-def _list_campaign_dates(start_date: date, end_date: date) -> list[date]:
-    if end_date < start_date:
-        start_date, end_date = end_date, start_date
-    out: list[date] = []
-    cursor = start_date
-    while cursor <= end_date:
-        out.append(cursor)
-        cursor += timedelta(days=1)
-    return out
-
-
-def _build_date_window_markdown(*, start_date: date | None, end_date: date | None) -> str:
-    if start_date is None or end_date is None:
-        return "## Campaign date window\n_Campaign start/end dates unavailable._"
-    dates = _list_campaign_dates(start_date, end_date)
-    weekdays = [d.isoformat() for d in dates if d.weekday() < 5]
-    weekends = [d.isoformat() for d in dates if d.weekday() >= 5]
-    payload = {
-        "campaignStart": dates[0].isoformat() if dates else start_date.isoformat(),
-        "campaignEnd": dates[-1].isoformat() if dates else end_date.isoformat(),
-        "allDatesInclusive": [
-            {
-                "date": d.isoformat(),
-                "dayOfWeek": d.strftime("%A"),
-                "dayCategory": "weekend" if d.weekday() >= 5 else "weekday",
-            }
-            for d in dates
-        ],
-        "availableDays": {
-            "weekdays": weekdays,
-            "weekends": weekends,
-            "weekdayCount": len(weekdays),
-            "weekendCount": len(weekends),
+    return {
+        "monthlyArc": {
+            "weeks": [
+                {
+                    "week": 1,
+                    "objective": "Build awareness with low-friction signature dish discovery.",
+                    "rationale": "Start the month with high-reach creative that introduces the core offer.",
+                },
+                {
+                    "week": 2,
+                    "objective": "Strengthen consideration through proof and education.",
+                    "rationale": "Use educational and social-proof content to increase saves and intent.",
+                },
+                {
+                    "week": 3,
+                    "objective": "Drive conversion with clear visit and order intent.",
+                    "rationale": "Shift toward direct response with tactical CTAs and timely urgency.",
+                },
+                {
+                    "week": 4,
+                    "objective": "Reinforce loyalty and community momentum.",
+                    "rationale": "Close the month by retaining guests and celebrating community participation.",
+                },
+            ]
         },
+        "contentRatio": {
+            "pillars": [
+                {
+                    "pillar": "Signature dishes",
+                    "percent": 40,
+                    "reason": "Keep appetite-led hero content as the main growth lever.",
+                },
+                {
+                    "pillar": "Social proof",
+                    "percent": 30,
+                    "reason": "Customer proof supports consideration and confidence.",
+                },
+                {
+                    "pillar": "Community",
+                    "percent": 30,
+                    "reason": "Sustain loyalty and repeat visit momentum.",
+                },
+            ]
+        },
+        "formatMix": {
+            "formats": [
+                {"format": "Reels", "count": 8, "reason": "Discovery and reach."},
+                {"format": "Carousels", "count": 4, "reason": "Education and saves."},
+                {"format": "Single posts", "count": 4, "reason": "Promotion touchpoints."},
+                {"format": "Stories", "count": 30, "reason": "Daily engagement cadence."},
+                {"format": "Highlights updates", "count": 2, "reason": "Profile utility refresh."},
+                {"format": "Lives", "count": 1, "reason": "Real-time trust building."},
+                {"format": "Collaborator posts", "count": 2, "reason": "Partner reach expansion."},
+            ]
+        },
+        "weeklySlotPlan": [
+            {
+                "week": 1,
+                "day": "Monday",
+                "format": "Carousel",
+                "pillar": "Signature dishes",
+                "hook": "Open with a hero dish close-up that signals value in the first frame.",
+                "captionStructure": "Hook -> Context -> Proof -> CTA summary",
+                "ctaType": "Save",
+                "funnelStage": "Awareness",
+                "visualDirection": "Natural-light dish sequence from prep to plated result.",
+                "notes": "Save-oriented educational carousel for week 1.",
+            },
+            {
+                "week": 2,
+                "day": "Tuesday",
+                "format": "Carousel",
+                "pillar": "Social proof",
+                "hook": "Start with a guest testimonial card and proof metric.",
+                "captionStructure": "Hook -> Context -> Proof -> CTA summary",
+                "ctaType": "Save",
+                "funnelStage": "Consideration",
+                "visualDirection": "UGC snapshots and review overlays.",
+                "notes": "Keep copy concise and proof-led.",
+            },
+            {
+                "week": 3,
+                "day": "Wednesday",
+                "format": "Single post",
+                "pillar": "Signature dishes",
+                "hook": "Lead with a limited-time value proposition.",
+                "captionStructure": "Hook -> Context -> Proof -> CTA summary",
+                "ctaType": "Order",
+                "funnelStage": "Conversion",
+                "visualDirection": "Counter pickup shot and plated close-up.",
+                "notes": "Single-post promotion slot.",
+            },
+            {
+                "week": 4,
+                "day": "Thursday",
+                "format": "Carousel",
+                "pillar": "Community",
+                "hook": "Open with team/community moment to signal belonging.",
+                "captionStructure": "Hook -> Context -> Proof -> CTA summary",
+                "ctaType": "Save",
+                "funnelStage": "Loyalty",
+                "visualDirection": "Staff + guest interaction moments in natural light.",
+                "notes": "Loyalty/community closeout slot.",
+            },
+        ],
+        "guardrailCheck": "Plan generated in fallback mode; verify guardrails before publishing.",
     }
-    return _json_block("Campaign date window and available days", payload)
 
 
-def _extract_allowed_menu_names(state: PostSchedulerState) -> list[str]:
-    out: list[str] = []
-    seen: set[str] = set()
-    source_counts = {"scheduler_slot": 0, "promotion_category": 0, "promotion_flat": 0}
-
-    def _add(value: Any, source: str) -> None:
-        if not isinstance(value, str):
-            return
-        text = value.strip()
-        if not text:
-            return
-        if not _is_probable_menu_name(text):
-            return
-        key = text.casefold()
-        if key in seen:
-            return
-        seen.add(key)
-        out.append(text)
-        if source in source_counts:
-            source_counts[source] += 1
-
-    # Prefer concrete scheduler slots when available.
-    scheduler_plan = state.get("scheduler_plan")
-    if isinstance(scheduler_plan, dict):
-        slots = scheduler_plan.get("slots")
-        if isinstance(slots, list):
-            for row in slots:
-                if not isinstance(row, dict):
-                    continue
-                for item in row.get("promotedMenuItems") or []:
-                    _add(item, "scheduler_slot")
-
-    # Ingest prefetched promotion candidates for scheduler-allowed menu items.
-    promotion_candidates = state.get("promotion_candidates")
-    if isinstance(promotion_candidates, dict):
-        grouping = str(promotion_candidates.get("grouping") or "").strip()
-        if grouping == "by_menu_category":
-            categories = promotion_candidates.get("categories")
-            if isinstance(categories, dict):
-                for bucket in categories.values():
-                    if not isinstance(bucket, dict):
-                        continue
-                    for item in bucket.get("starItems") or []:
-                        _add(item, "promotion_category")
-                    for item in bucket.get("puzzleItems") or []:
-                        _add(item, "promotion_category")
-        else:
-            for item in promotion_candidates.get("starItems") or []:
-                _add(item, "promotion_flat")
-            for item in promotion_candidates.get("puzzleItems") or []:
-                _add(item, "promotion_flat")
-
-    return out
-
-
-def _enforce_allowed_menu_names(
-    payload: PostSchedulerOutput, *, allowed_menu_names: list[str]
-) -> PostSchedulerOutput:
-    concepts = payload.get("dateConcepts") or []
-    if not concepts:
+def _rebalance_content_ratio(payload: dict[str, Any]) -> dict[str, Any]:
+    content_ratio = payload.get("contentRatio")
+    if not isinstance(content_ratio, dict):
         return payload
-    if not allowed_menu_names:
+    pillars = content_ratio.get("pillars")
+    if not isinstance(pillars, list) or not pillars:
         return payload
 
-    allowed_lookup = {name.casefold() for name in allowed_menu_names}
-    normalized_concepts: list[dict[str, Any]] = []
-    for concept in concepts:
-        menu_items = concept.get("promotedMenuItems") or []
-        kept: list[str] = []
-        seen: set[str] = set()
-        for item in menu_items:
-            if not isinstance(item, str):
-                continue
-            text = item.strip()
-            if not text:
-                continue
-            key = text.casefold()
-            if key not in allowed_lookup or key in seen:
-                continue
-            seen.add(key)
-            kept.append(text)
-        next_concept = dict(concept)
-        if kept:
-            next_concept["promotedMenuItems"] = kept
-        elif "promotedMenuItems" in next_concept:
-            next_concept["promotedMenuItems"] = None
-        normalized_concepts.append(next_concept)
-    out: PostSchedulerOutput = {
-        "dateConcepts": normalized_concepts,
-        "daySummary": payload["daySummary"],
-    }
-    if "promotionCandidates" in payload:
-        out["promotionCandidates"] = payload.get("promotionCandidates")
-    return out
-
-
-def _normalize_promotion_candidates(payload: Any) -> dict[str, Any] | None:
-    if not isinstance(payload, dict):
-        return None
-    grouping = str(payload.get("grouping") or "").strip()
-    if not grouping:
-        return None
-    out: dict[str, Any] = {"grouping": grouping}
-
-    categories = payload.get("categories")
-    if isinstance(categories, dict):
-        normalized_categories: dict[str, dict[str, list[str]]] = {}
-        for category_name, raw_bucket in categories.items():
-            if not isinstance(raw_bucket, dict):
-                continue
-            star_items = [str(x).strip() for x in raw_bucket.get("starItems", []) if str(x).strip()]
-            puzzle_items = [str(x).strip() for x in raw_bucket.get("puzzleItems", []) if str(x).strip()]
-            normalized_categories[str(category_name)] = {
-                "starItems": star_items,
-                "puzzleItems": puzzle_items,
+    normalized: list[dict[str, Any]] = []
+    for item in pillars:
+        if not isinstance(item, dict):
+            continue
+        percent_raw = item.get("percent", 0)
+        try:
+            percent = int(percent_raw)
+        except (TypeError, ValueError):
+            percent = 0
+        normalized.append(
+            {
+                **item,
+                "percent": max(0, percent),
             }
-        out["categories"] = normalized_categories
+        )
+    if not normalized:
+        return payload
 
-    star_items = [str(x).strip() for x in payload.get("starItems", []) if str(x).strip()]
-    puzzle_items = [str(x).strip() for x in payload.get("puzzleItems", []) if str(x).strip()]
-    if star_items:
-        out["starItems"] = star_items
-    if puzzle_items:
-        out["puzzleItems"] = puzzle_items
-    return out
+    total = sum(int(item.get("percent", 0)) for item in normalized)
+    if total == 100:
+        payload["contentRatio"] = {"pillars": normalized}
+        return payload
+
+    if total <= 0:
+        split = 100 // len(normalized)
+        remainder = 100 - (split * len(normalized))
+        for index, item in enumerate(normalized):
+            item["percent"] = split + (1 if index < remainder else 0)
+    else:
+        scaled = [round((int(item["percent"]) / total) * 100) for item in normalized]
+        diff = 100 - sum(scaled)
+        if diff != 0:
+            # Apply remainder to the largest bucket for deterministic correction.
+            largest_idx = max(range(len(scaled)), key=lambda idx: scaled[idx])
+            scaled[largest_idx] += diff
+        for index, item in enumerate(normalized):
+            item["percent"] = max(0, int(scaled[index]))
+
+    payload["contentRatio"] = {"pillars": normalized}
+    return payload
 
 
-def _is_probable_menu_name(text: str) -> bool:
-    # Accept compact dish/beverage names; reject sentence-like guidance lines.
-    if len(text) > 60:
-        return False
-    if re.search(r"[.,:;!?]", text):
-        return False
-    words = text.split()
-    if len(words) > 6:
-        return False
-    return True
+def _ensure_weekly_save_optimized_slot(payload: dict[str, Any]) -> dict[str, Any]:
+    slots = payload.get("weeklySlotPlan")
+    if not isinstance(slots, list):
+        return payload
+
+    def _is_save_optimized(slot: dict[str, Any]) -> bool:
+        slot_format = str(slot.get("format") or "").strip()
+        cta_type = str(slot.get("ctaType") or "").strip()
+        return slot_format == "Carousel" or cta_type == "Save"
+
+    week_to_indexes: dict[int, list[int]] = {1: [], 2: [], 3: [], 4: []}
+    for index, raw_slot in enumerate(slots):
+        if not isinstance(raw_slot, dict):
+            continue
+        week_raw = raw_slot.get("week")
+        try:
+            week = int(week_raw)
+        except (TypeError, ValueError):
+            continue
+        if week in week_to_indexes:
+            week_to_indexes[week].append(index)
+
+    for week in (1, 2, 3, 4):
+        indexes = week_to_indexes[week]
+        if any(_is_save_optimized(slots[idx]) for idx in indexes if isinstance(slots[idx], dict)):
+            continue
+
+        if indexes:
+            # Re-purpose the first slot in that week to become save-optimized.
+            idx = indexes[0]
+            slot = slots[idx]
+            if isinstance(slot, dict):
+                slot["format"] = "Carousel"
+                slot["ctaType"] = "Save"
+                slot["captionStructure"] = (
+                    str(slot.get("captionStructure") or "").strip()
+                    or "Hook -> Context -> Proof -> CTA summary"
+                )
+                slot["notes"] = (
+                    (str(slot.get("notes") or "").strip() + " ").strip()
+                    + "Adjusted to satisfy weekly save-optimized guardrail."
+                ).strip()
+                slots[idx] = slot
+            continue
+
+        # No slot exists for this week; inject minimal valid save-optimized slot.
+        slots.append(
+            {
+                "week": week,
+                "day": "Monday",
+                "format": "Carousel",
+                "pillar": "Education",
+                "hook": "Open with a clear practical takeaway in frame one.",
+                "captionStructure": "Hook -> Context -> Proof -> CTA summary",
+                "ctaType": "Save",
+                "funnelStage": (
+                    "Awareness"
+                    if week == 1
+                    else "Consideration" if week == 2 else "Conversion" if week == 3 else "Loyalty"
+                ),
+                "visualDirection": "Smartphone close-up sequence in natural light.",
+                "notes": "Injected to satisfy weekly save-optimized guardrail.",
+            }
+        )
+
+    payload["weeklySlotPlan"] = slots
+    return payload
 
 
 async def fetch_and_prepare(
@@ -339,7 +340,6 @@ async def fetch_and_prepare(
                 client=client,
             )
         except Exception as exc:
-            # Keep the dedicated graph resilient when scheduler-plan GraphQL is unavailable.
             _trace(
                 state,
                 "execute_skill",
@@ -347,155 +347,84 @@ async def fetch_and_prepare(
                 scheduler_plan_error=str(exc),
             )
             scheduler_plan = None
-    promotion_candidates: dict[str, Any] | None = None
-    try:
-        promotion_candidates = await fetch_promotion_engineering_candidates(
-            int(state["location_id"]),
-            str(state["user_id"]),
-            client=client,
-        )
-    except Exception as exc:
-        _trace(
-            state,
-            "execute_skill",
-            skill_id="post_scheduler",
-            promotion_candidates_error=str(exc),
-        )
-        promotion_candidates = None
     owner_notes_markdown = _fmt_milestone_post_scheduler_owner_notes(state)
     generation_context_markdown = _build_generation_context(
         state=state,
         scheduler_plan=scheduler_plan,
-        promotion_candidates=promotion_candidates,
         owner_notes_markdown=owner_notes_markdown,
     )
     return {
         "scheduler_plan": scheduler_plan,
-        "promotion_candidates": promotion_candidates,
         "owner_notes_markdown": owner_notes_markdown,
         "generation_context_markdown": generation_context_markdown,
     }
 
 
-def _build_base_output(state: PostSchedulerState) -> PostSchedulerOutput:
-    start_date, end_date = _extract_campaign_date_bounds(state)
-    if start_date is None or end_date is None:
-        return _fallback_output()
-    weekday_count, weekend_count = _count_weekday_weekend_days(start_date, end_date)
-    return {
-        "dateConcepts": [],
-        "daySummary": {
-            "weekdayCount": weekday_count,
-            "weekendCount": weekend_count,
-        },
-    }
+class MonthlyArcWeekDraft(BaseModel):
+    week: int
+    objective: str
+    rationale: str
+
+
+class MonthlyArcDraft(BaseModel):
+    weeks: list[MonthlyArcWeekDraft] = Field(default_factory=list)
+
+
+class ContentRatioItemDraft(BaseModel):
+    pillar: str
+    percent: int
+    reason: str
+
+
+class ContentRatioDraft(BaseModel):
+    pillars: list[ContentRatioItemDraft] = Field(default_factory=list)
+
+
+class FormatMixItemDraft(BaseModel):
+    format: str
+    count: int
+    reason: str
+
+
+class FormatMixDraft(BaseModel):
+    formats: list[FormatMixItemDraft] = Field(default_factory=list)
+
+
+class WeeklySlotDraft(BaseModel):
+    week: int
+    day: str
+    format: str
+    pillar: str
+    hook: str
+    caption_structure: str = Field(alias="captionStructure")
+    cta_type: str = Field(alias="ctaType")
+    funnel_stage: str = Field(alias="funnelStage")
+    visual_direction: str = Field(alias="visualDirection")
+    notes: str
 
 
 class PostSchedulerDraftOutput(BaseModel):
-    dateConcepts: list[PostSchedulerDateConceptItem]
+    monthly_arc: MonthlyArcDraft = Field(alias="monthlyArc")
+    content_ratio: ContentRatioDraft = Field(alias="contentRatio")
+    format_mix: FormatMixDraft = Field(alias="formatMix")
+    weekly_slot_plan: list[WeeklySlotDraft] = Field(alias="weeklySlotPlan", default_factory=list)
+    guardrail_check: str = Field(alias="guardrailCheck")
 
 
-def _build_default_concepts(state: PostSchedulerState) -> list[dict[str, Any]]:
-    start_date, end_date = _extract_campaign_date_bounds(state)
-    if start_date is None or end_date is None:
-        return []
-    concepts: list[dict[str, Any]] = []
-    for item in _list_campaign_dates(start_date, end_date):
-        day_type = "weekend" if item.weekday() >= 5 else "weekday"
-        concepts.append(
-            {
-                "date": item.isoformat(),
-                "dayOfWeek": item.strftime("%A"),
-                "format": "Story" if day_type == "weekend" else "Carousel",
-                "formatReason": (
-                    "Weekend stories create timely activation and direct response."
-                    if day_type == "weekend"
-                    else "Weekday carousels support saves and proof-led consideration."
-                ),
-                "conceptInstruction": (
-                    "Publish a concept that combines appetite appeal, social proof, and a clear CTA."
-                ),
-                "relevanceDescription": (
-                    "Maintains daily consistency with conversion-oriented restaurant Instagram messaging."
-                ),
-            }
-        )
-    return concepts
-
-
-def _normalize_generated_output(payload: Any, *, state: PostSchedulerState) -> PostSchedulerOutput:
-    base = _build_base_output(state)
+def _normalize_generated_output(payload: Any) -> PostSchedulerOutput:
+    base = _fallback_output()
     if not isinstance(payload, dict):
         return base
-    concepts = payload.get("dateConcepts")
-    if not isinstance(concepts, list):
+    payload = _rebalance_content_ratio(payload)
+    payload = _ensure_weekly_save_optimized_slot(payload)
+    normalized, error = validate_skill_output("post_scheduler", payload)
+    if error is not None or not isinstance(normalized, dict):
         return base
-    normalized_concepts: list[dict[str, Any]] = []
-    for concept in concepts:
-        if not isinstance(concept, dict):
-            continue
-        menu_items = [str(x).strip() for x in (concept.get("promotedMenuItems") or []) if str(x).strip()]
-        normalized_concept = {
-            "date": str(concept.get("date") or "").strip(),
-            "dayOfWeek": str(concept.get("dayOfWeek") or "").strip(),
-            "format": str(concept.get("format") or "").strip(),
-            "formatReason": str(concept.get("formatReason") or "").strip(),
-            "conceptInstruction": str(concept.get("conceptInstruction") or "").strip(),
-            "relevanceDescription": str(concept.get("relevanceDescription") or "").strip(),
-        }
-        if menu_items:
-            normalized_concept["promotedMenuItems"] = menu_items
-        normalized_concepts.append(normalized_concept)
-    base["dateConcepts"] = normalized_concepts
-    return base
-
-
-def _ensure_full_date_coverage(payload: PostSchedulerOutput, *, state: PostSchedulerState) -> PostSchedulerOutput:
-    expected = _build_default_concepts(state)
-    if not expected:
-        return payload
-    by_date: dict[str, dict[str, Any]] = {}
-    for concept in payload.get("dateConcepts") or []:
-        date_key = str(concept.get("date") or "").strip()
-        if date_key:
-            by_date[date_key] = dict(concept)
-    completed: list[dict[str, Any]] = []
-    for fallback in expected:
-        key = fallback["date"]
-        existing = by_date.get(key)
-        if not existing:
-            completed.append(fallback)
-            continue
-        completed.append(
-            {
-                "date": key,
-                "dayOfWeek": str(existing.get("dayOfWeek") or fallback["dayOfWeek"]),
-                "format": str(existing.get("format") or fallback["format"]),
-                "formatReason": str(existing.get("formatReason") or fallback["formatReason"]),
-                "conceptInstruction": str(
-                    existing.get("conceptInstruction") or fallback["conceptInstruction"]
-                ),
-                "relevanceDescription": str(
-                    existing.get("relevanceDescription") or fallback["relevanceDescription"]
-                ),
-                **(
-                    {"promotedMenuItems": existing.get("promotedMenuItems")}
-                    if existing.get("promotedMenuItems")
-                    else {}
-                ),
-            }
-        )
-    out: PostSchedulerOutput = {"dateConcepts": completed, "daySummary": payload["daySummary"]}
-    if "promotionCandidates" in payload:
-        out["promotionCandidates"] = payload.get("promotionCandidates")
-    return out
+    return normalized
 
 
 async def generate_campaign_concepts(state: PostSchedulerState) -> dict[str, Any]:
-    """Generate date-level campaign concepts from brief context and available days."""
-    base = _build_base_output(state)
-    if base["daySummary"]["weekdayCount"] + base["daySummary"]["weekendCount"] == 0:
-        return {"generated_output": base}
+    """Generate structured monthly scheduler strategy from brief context."""
     llm = get_llm_structured().with_structured_output(PostSchedulerDraftOutput)
     _trace_agent_event(state, "chat_model_start")
     generated = await llm.ainvoke(
@@ -505,20 +434,15 @@ async def generate_campaign_concepts(state: PostSchedulerState) -> dict[str, Any
         ]
     )
     _trace_agent_event(state, "chat_model_end")
-    normalized = _normalize_generated_output(generated.model_dump(exclude_none=True), state=state)
-    normalized = _ensure_full_date_coverage(normalized, state=state)
+    normalized = _normalize_generated_output(
+        generated.model_dump(by_alias=True, exclude_none=True)
+    )
     return {"generated_output": normalized}
 
 
 async def persist_result(state: PostSchedulerState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     """Validate/coerce and persist post-scheduler payload via milestone data upsert."""
-    payload = _normalize_generated_output(state.get("generated_output"), state=state)
-    payload = _ensure_full_date_coverage(payload, state=state)
-    normalized_candidates = _normalize_promotion_candidates(state.get("promotion_candidates"))
-    if normalized_candidates is not None:
-        payload["promotionCandidates"] = normalized_candidates
-    allowed_menu_names = _extract_allowed_menu_names(state)
-    payload = _enforce_allowed_menu_names(payload, allowed_menu_names=allowed_menu_names)
+    payload = _normalize_generated_output(state.get("generated_output"))
     normalized, error = validate_skill_output("post_scheduler", payload)
     if error is not None or normalized is None:
         raise ValueError(error or "post_scheduler output validation failed")

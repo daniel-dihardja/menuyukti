@@ -88,49 +88,63 @@ export const campaignBriefMilestoneDataSchema = z.object({
 
 export type CampaignBriefMilestoneData = z.infer<typeof campaignBriefMilestoneDataSchema>
 
-export const postSchedulerDateConceptItemSchema = z.object({
-  date: z.string(),
-  dayOfWeek: z.string(),
-  format: z.enum(['Reel', 'Carousel', 'Story', 'Single Post']),
-  formatReason: z.string(),
-  conceptInstruction: z.string(),
-  relevanceDescription: z.string(),
-  promotedMenuItems: z.array(z.string()).optional(),
+export const postSchedulerMonthlyArcWeekSchema = z.object({
+  week: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+  objective: z.string(),
+  rationale: z.string(),
 })
 
-export type PostSchedulerDateConceptItem = z.infer<typeof postSchedulerDateConceptItemSchema>
-
-export const postSchedulerDaySummarySchema = z.object({
-  weekdayCount: z.number().int().nonnegative(),
-  weekendCount: z.number().int().nonnegative(),
+export const postSchedulerMonthlyArcSchema = z.object({
+  weeks: z.array(postSchedulerMonthlyArcWeekSchema),
 })
 
-export type PostSchedulerDaySummary = z.infer<typeof postSchedulerDaySummarySchema>
-
-export const postSchedulerPromotionCategoryBucketSchema = z.object({
-  starItems: z.array(z.string()),
-  puzzleItems: z.array(z.string()),
+export const postSchedulerContentRatioItemSchema = z.object({
+  pillar: z.string(),
+  percent: z.number().int().nonnegative(),
+  reason: z.string(),
 })
 
-export type PostSchedulerPromotionCategoryBucket = z.infer<
-  typeof postSchedulerPromotionCategoryBucketSchema
->
-
-export const postSchedulerPromotionCandidatesSchema = z.object({
-  grouping: z.string(),
-  categories: z.record(z.string(), postSchedulerPromotionCategoryBucketSchema).optional(),
-  starItems: z.array(z.string()).optional(),
-  puzzleItems: z.array(z.string()).optional(),
+export const postSchedulerContentRatioSchema = z.object({
+  pillars: z.array(postSchedulerContentRatioItemSchema),
 })
 
-export type PostSchedulerPromotionCandidates = z.infer<
-  typeof postSchedulerPromotionCandidatesSchema
->
+export const postSchedulerFormatMixItemSchema = z.object({
+  format: z.enum([
+    'Reels',
+    'Carousels',
+    'Single posts',
+    'Stories',
+    'Highlights updates',
+    'Lives',
+    'Collaborator posts',
+  ]),
+  count: z.number().int().nonnegative(),
+  reason: z.string(),
+})
+
+export const postSchedulerFormatMixSchema = z.object({
+  formats: z.array(postSchedulerFormatMixItemSchema),
+})
+
+export const postSchedulerWeeklySlotSchema = z.object({
+  week: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+  day: z.string(),
+  format: z.enum(['Reel', 'Carousel', 'Single post']),
+  pillar: z.string(),
+  hook: z.string(),
+  captionStructure: z.string(),
+  ctaType: z.enum(['Reserve', 'Order', 'DM', 'Walk in', 'Save']),
+  funnelStage: z.enum(['Awareness', 'Consideration', 'Conversion', 'Loyalty']),
+  visualDirection: z.string(),
+  notes: z.string(),
+})
 
 export const postSchedulerMilestoneDataSchema = z.object({
-  dateConcepts: z.array(postSchedulerDateConceptItemSchema),
-  daySummary: postSchedulerDaySummarySchema,
-  promotionCandidates: postSchedulerPromotionCandidatesSchema.optional(),
+  monthlyArc: postSchedulerMonthlyArcSchema,
+  contentRatio: postSchedulerContentRatioSchema,
+  formatMix: postSchedulerFormatMixSchema,
+  weeklySlotPlan: z.array(postSchedulerWeeklySlotSchema),
+  guardrailCheck: z.string(),
 })
 
 export type PostSchedulerMilestoneData = z.infer<typeof postSchedulerMilestoneDataSchema>

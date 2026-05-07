@@ -100,23 +100,28 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
       return (
         <MilestonePostSchedulerDataPreview
           data={parsedPs.data}
-          formatDate={formatPreviewDate}
           labels={{
-            daysHeading: t('milestonePostSchedulerPreviewDaysHeading'),
-            weekdaysCount: t('milestonePostSchedulerPreviewWeekdaysCount'),
-            weekendsCount: t('milestonePostSchedulerPreviewWeekendsCount'),
-            conceptsHeading: t('milestonePostSchedulerPreviewConceptsHeading'),
-            emptyConcepts: t('milestonePostSchedulerPreviewEmptyConcepts'),
-            dayDate: t('milestonePostSchedulerPreviewDayDate'),
-            conceptSummary: t('milestonePostSchedulerPreviewConceptSummary'),
-            promotedItems: t('milestonePostSchedulerPreviewPromotedItems'),
-            promotionCandidatesHeading: t(
-              'milestonePostSchedulerPreviewPromotionCandidatesHeading',
-            ),
-            emptyPromotionCandidates: t('milestonePostSchedulerPreviewEmptyPromotionCandidates'),
-            uncategorizedCategory: t('milestonePostSchedulerPreviewUncategorizedCategory'),
-            starItems: t('milestonePostSchedulerPreviewStarItems'),
-            puzzleItems: t('milestonePostSchedulerPreviewPuzzleItems'),
+            monthlyArcHeading: t('milestonePostSchedulerPreviewMonthlyArcHeading'),
+            contentRatioHeading: t('milestonePostSchedulerPreviewContentRatioHeading'),
+            formatMixHeading: t('milestonePostSchedulerPreviewFormatMixHeading'),
+            weeklySlotPlanHeading: t('milestonePostSchedulerPreviewWeeklySlotPlanHeading'),
+            emptyWeeklySlotPlan: t('milestonePostSchedulerPreviewEmptyWeeklySlotPlan'),
+            guardrailCheckHeading: t('milestonePostSchedulerPreviewGuardrailCheckHeading'),
+            weekLabel: t('milestonePostSchedulerPreviewWeekLabel'),
+            objectiveLabel: t('milestonePostSchedulerPreviewObjectiveLabel'),
+            rationaleLabel: t('milestonePostSchedulerPreviewRationaleLabel'),
+            pillarLabel: t('milestonePostSchedulerPreviewPillarLabel'),
+            percentLabel: t('milestonePostSchedulerPreviewPercentLabel'),
+            reasonLabel: t('milestonePostSchedulerPreviewReasonLabel'),
+            countLabel: t('milestonePostSchedulerPreviewCountLabel'),
+            dayLabel: t('milestonePostSchedulerPreviewDayLabel'),
+            formatLabel: t('milestonePostSchedulerPreviewFormatLabel'),
+            hookLabel: t('milestonePostSchedulerPreviewHookLabel'),
+            captionStructureLabel: t('milestonePostSchedulerPreviewCaptionStructureLabel'),
+            ctaTypeLabel: t('milestonePostSchedulerPreviewCtaTypeLabel'),
+            funnelStageLabel: t('milestonePostSchedulerPreviewFunnelStageLabel'),
+            visualDirectionLabel: t('milestonePostSchedulerPreviewVisualDirectionLabel'),
+            notesLabel: t('milestonePostSchedulerPreviewNotesLabel'),
           }}
         />
       )

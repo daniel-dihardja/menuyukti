@@ -75,12 +75,18 @@ export function getMilestonePresetCreateFields(
           value: { notes: '' },
         },
         milestoneData: {
-          dateConcepts: [],
-          daySummary: { weekdayCount: 0, weekendCount: 0 },
-          promotionCandidates: {
-            grouping: 'by_menu_category',
-            categories: {},
+          monthlyArc: {
+            weeks: [
+              { week: 1, objective: '', rationale: '' },
+              { week: 2, objective: '', rationale: '' },
+              { week: 3, objective: '', rationale: '' },
+              { week: 4, objective: '', rationale: '' },
+            ],
           },
+          contentRatio: { pillars: [] },
+          formatMix: { formats: [] },
+          weeklySlotPlan: [],
+          guardrailCheck: '',
         },
         goal: t('milestonePreset.post_scheduler.goal'),
         passCriteria: [
