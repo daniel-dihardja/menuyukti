@@ -9,8 +9,8 @@ from agents_app.agents.core.milestone_run.graph import build_milestone_run_graph
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.post_scheduler.nodes import (
     _extract_allowed_menu_names,
-    derive_day_summary,
     fetch_and_prepare,
+    generate_campaign_concepts,
     persist_result,
 )
 
@@ -48,24 +48,24 @@ def _minimal_initial() -> dict:
 def _valid_post_scheduler_payload() -> dict:
     return {
         "daySummary": {"weekdayCount": 4, "weekendCount": 0},
-        "posts": [
+        "dateConcepts": [
             {
-                "dayOfWeek": "Monday",
                 "date": "2026-06-01",
-                "time": "12:30",
-                "postType": "Reel",
-                "contentType": "Carousel",
+                "dayOfWeek": "Monday",
+                "format": "Carousel",
+                "formatReason": "Carousels improve saves for weekday planning content.",
+                "conceptInstruction": "Feature fast weekday lunch heroes and CTA to reserve.",
+                "relevanceDescription": "Matches weekday office lunch intent and conversion goals.",
                 "promotedMenuItems": ["Nasi Goreng", "Truffle Pasta"],
-                "captionIdea": "Lunch-time hero pairings for office crowd.",
             },
             {
-                "dayOfWeek": "Thursday",
                 "date": "2026-06-04",
-                "time": "18:30",
-                "postType": "Post",
-                "contentType": "Single",
+                "dayOfWeek": "Thursday",
+                "format": "Reel",
+                "formatReason": "Reels can broaden discovery before dinner demand peaks.",
+                "conceptInstruction": "Promote dinner proof-driven concept with clear DM CTA.",
+                "relevanceDescription": "Strengthens consideration and conversion for evening demand.",
                 "promotedMenuItems": ["Sate Ayam"],
-                "captionIdea": "Dinner comfort special with grilled highlights.",
             },
         ]
     }
@@ -81,17 +81,17 @@ async def test_routing_post_scheduler_uses_dedicated_graph_path() -> None:
         yield (
             "values",
             {
-                "result_data": '{"posts":[{"dayOfWeek":"Monday","date":"2026-06-01","time":"12:30","postType":"Reel","contentType":"Carousel","promotedMenuItems":["Nasi Goreng"],"captionIdea":"Lunch hero."}]}',
+                "result_data": '{"dateConcepts":[{"date":"2026-06-01","dayOfWeek":"Monday","format":"Carousel","formatReason":"Supports saves","conceptInstruction":"Lunch hero","relevanceDescription":"Drives weekday conversion","promotedMenuItems":["Nasi Goreng"]}],"daySummary":{"weekdayCount":1,"weekendCount":0}}',
                 "milestone_data": {
-                    "posts": [
+                    "dateConcepts": [
                         {
-                            "dayOfWeek": "Monday",
                             "date": "2026-06-01",
-                            "time": "12:30",
-                            "postType": "Reel",
-                            "contentType": "Carousel",
+                            "dayOfWeek": "Monday",
+                            "format": "Carousel",
+                            "formatReason": "Supports saves",
+                            "conceptInstruction": "Lunch hero",
+                            "relevanceDescription": "Drives weekday conversion",
                             "promotedMenuItems": ["Nasi Goreng"],
-                            "captionIdea": "Lunch hero.",
                         }
                     ]
                 },
@@ -136,22 +136,21 @@ def test_output_schema_valid_post_scheduler_payload() -> None:
     assert error is None
     assert isinstance(normalized, dict)
     assert normalized["daySummary"] == {"weekdayCount": 4, "weekendCount": 0}
-    assert len(normalized["posts"]) == 2
+    assert len(normalized["dateConcepts"]) == 2
     assert normalized["promotionCandidates"]["grouping"] == "by_menu_category"
 
 
-def test_output_schema_rejects_empty_promoted_menu_items() -> None:
+def test_output_schema_rejects_missing_concept_instruction() -> None:
     payload = {
         "daySummary": {"weekdayCount": 1, "weekendCount": 0},
-        "posts": [
+        "dateConcepts": [
             {
-                "dayOfWeek": "Monday",
                 "date": "2026-06-01",
-                "time": "12:30",
-                "postType": "Reel",
-                "contentType": "Carousel",
-                "promotedMenuItems": [],
-                "captionIdea": "Lunch hero.",
+                "dayOfWeek": "Monday",
+                "format": "Story",
+                "formatReason": "Immediate CTA fit",
+                "conceptInstruction": "",
+                "relevanceDescription": "Relevant because weekday demand",
             }
         ]
     }
@@ -160,15 +159,48 @@ def test_output_schema_rejects_empty_promoted_menu_items() -> None:
     assert error is not None
 
 
-def test_derive_day_summary_counts_inclusive_range() -> None:
+@pytest.mark.asyncio
+async def test_generate_campaign_concepts_enforces_full_date_coverage() -> None:
     state = {
+        "goal": "Grow weekday lunches",
+        "criteria": [],
+        "generation_context_markdown": "Context",
         "scheduler_plan": {
             "campaignStart": "2026-06-01",
-            "campaignEnd": "2026-06-07",
+            "campaignEnd": "2026-06-02",
         }
     }
-    out = derive_day_summary(state)  # type: ignore[arg-type]
-    assert out["generated_output"]["daySummary"] == {"weekdayCount": 5, "weekendCount": 2}
+    with patch(
+        "agents_app.agents.core.milestone_run.post_scheduler.nodes.get_llm_structured",
+    ) as mock_get_llm, patch(
+        "agents_app.agents.core.milestone_run.post_scheduler.nodes.get_stream_writer",
+        return_value=lambda _x: None,
+    ):
+        mock_llm = MagicMock()
+        mock_structured = MagicMock()
+        mock_structured.ainvoke = AsyncMock(
+            return_value=MagicMock(
+                model_dump=MagicMock(
+                    return_value={
+                        "dateConcepts": [
+                            {
+                                "date": "2026-06-01",
+                                "dayOfWeek": "Monday",
+                                "format": "Story",
+                                "formatReason": "Fast activation format",
+                                "conceptInstruction": "Lunch concept",
+                                "relevanceDescription": "Drives weekday lunch demand",
+                            }
+                        ]
+                    }
+                )
+            )
+        )
+        mock_llm.with_structured_output.return_value = mock_structured
+        mock_get_llm.return_value = mock_llm
+        out = await generate_campaign_concepts(state)  # type: ignore[arg-type]
+    assert out["generated_output"]["daySummary"] == {"weekdayCount": 2, "weekendCount": 0}
+    assert len(out["generated_output"]["dateConcepts"]) == 2
 
 
 @pytest.mark.asyncio
@@ -213,24 +245,24 @@ async def test_persist_result_filters_menu_items_to_prefetched_promotion_candida
         "location_id": 1,
         "user_id": "u1",
         "generated_output": {
-            "posts": [
+            "dateConcepts": [
                 {
-                    "dayOfWeek": "Monday",
                     "date": "2026-06-01",
-                    "time": "12:30",
-                    "postType": "Reel",
-                    "contentType": "Carousel",
+                    "dayOfWeek": "Monday",
+                    "format": "Story",
+                    "formatReason": "Fast activation format",
+                    "conceptInstruction": "Lunch hero concept",
+                    "relevanceDescription": "Good weekday conversion fit",
                     "promotedMenuItems": ["Invented Dish"],
-                    "captionIdea": "Lunch hero.",
                 },
                 {
-                    "dayOfWeek": "Thursday",
                     "date": "2026-06-04",
-                    "time": "18:30",
-                    "postType": "Post",
-                    "contentType": "Single",
+                    "dayOfWeek": "Thursday",
+                    "format": "Carousel",
+                    "formatReason": "Stronger save behavior for menu stories",
+                    "conceptInstruction": "Dinner comfort concept",
+                    "relevanceDescription": "Builds evening consideration",
                     "promotedMenuItems": ["Nasi Goreng", "Invented Dish"],
-                    "captionIdea": "Dinner comfort.",
                 },
             ]
         },
@@ -248,8 +280,8 @@ async def test_persist_result_filters_menu_items_to_prefetched_promotion_candida
 
     assert "Nasi Goreng" in out["result_data"]
     saved_payload = mock_upsert.await_args.args[2]
-    assert saved_payload["posts"][0]["promotedMenuItems"] == ["Nasi Goreng"]
-    assert saved_payload["posts"][1]["promotedMenuItems"] == ["Nasi Goreng"]
+    assert saved_payload["dateConcepts"][0].get("promotedMenuItems") is None
+    assert saved_payload["dateConcepts"][1]["promotedMenuItems"] == ["Nasi Goreng"]
     assert saved_payload["promotionCandidates"]["grouping"] == "flat"
 
 

@@ -41,18 +41,18 @@ export type CampaignBriefMilestoneData = {
   toneGuardrails: string[]
 }
 
-export type PostSchedulerPostItem = {
-  dayOfWeek: string
+export type PostSchedulerDateConceptItem = {
   date: string
-  time: string
-  postType: 'Reel' | 'Post'
-  contentType: 'Carousel' | 'Single'
-  promotedMenuItems: string[]
-  captionIdea: string
+  dayOfWeek: string
+  format: 'Reel' | 'Carousel' | 'Story' | 'Single Post'
+  formatReason: string
+  conceptInstruction: string
+  relevanceDescription: string
+  promotedMenuItems?: string[]
 }
 
 export type PostSchedulerMilestoneData = {
-  posts: PostSchedulerPostItem[]
+  dateConcepts: PostSchedulerDateConceptItem[]
   daySummary: {
     weekdayCount: number
     weekendCount: number

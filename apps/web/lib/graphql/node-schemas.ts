@@ -88,17 +88,17 @@ export const campaignBriefMilestoneDataSchema = z.object({
 
 export type CampaignBriefMilestoneData = z.infer<typeof campaignBriefMilestoneDataSchema>
 
-export const postSchedulerPostItemSchema = z.object({
-  dayOfWeek: z.string(),
+export const postSchedulerDateConceptItemSchema = z.object({
   date: z.string(),
-  time: z.string(),
-  postType: z.enum(['Reel', 'Post']),
-  contentType: z.enum(['Carousel', 'Single']),
-  promotedMenuItems: z.array(z.string()),
-  captionIdea: z.string(),
+  dayOfWeek: z.string(),
+  format: z.enum(['Reel', 'Carousel', 'Story', 'Single Post']),
+  formatReason: z.string(),
+  conceptInstruction: z.string(),
+  relevanceDescription: z.string(),
+  promotedMenuItems: z.array(z.string()).optional(),
 })
 
-export type PostSchedulerPostItem = z.infer<typeof postSchedulerPostItemSchema>
+export type PostSchedulerDateConceptItem = z.infer<typeof postSchedulerDateConceptItemSchema>
 
 export const postSchedulerDaySummarySchema = z.object({
   weekdayCount: z.number().int().nonnegative(),
@@ -128,7 +128,7 @@ export type PostSchedulerPromotionCandidates = z.infer<
 >
 
 export const postSchedulerMilestoneDataSchema = z.object({
-  posts: z.array(postSchedulerPostItemSchema),
+  dateConcepts: z.array(postSchedulerDateConceptItemSchema),
   daySummary: postSchedulerDaySummarySchema,
   promotionCandidates: postSchedulerPromotionCandidatesSchema.optional(),
 })

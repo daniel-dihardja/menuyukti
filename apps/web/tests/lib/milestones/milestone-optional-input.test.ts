@@ -43,7 +43,7 @@ describe('milestone optional notes', () => {
       value: { notes: '' },
     })
     expect(fields.milestoneData).toEqual({
-      posts: [],
+      dateConcepts: [],
       daySummary: { weekdayCount: 0, weekendCount: 0 },
       promotionCandidates: {
         grouping: 'by_menu_category',

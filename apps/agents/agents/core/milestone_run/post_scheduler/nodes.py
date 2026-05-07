@@ -1,4 +1,4 @@
-"""Nodes for dedicated post-scheduler generation and persistence."""
+"""Nodes for dedicated post-scheduler concept generation and persistence."""
 
 from __future__ import annotations
 
@@ -13,12 +13,19 @@ from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_promotion_engineering_candidates,
     upsert_milestonedata_node,
 )
-from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
+from agents_app.agents.core.milestone_run.output_schema import (
+    PostSchedulerDateConceptItem,
+    validate_skill_output,
+)
+from agents_app.agents.core.milestone_run.post_scheduler.prompts import POST_SCHEDULER_SYSTEM
 from agents_app.agents.core.milestone_run.post_scheduler.state import (
     PostSchedulerOutput,
     PostSchedulerState,
 )
+from agents_app.models.llm_config import get_llm_structured
+from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
+from pydantic import BaseModel
 
 _JSON_SEPARATORS = (",", ":")
 
@@ -74,6 +81,8 @@ def _build_generation_context(
     promotion_candidates: dict[str, Any] | None,
     owner_notes_markdown: str,
 ) -> str:
+    start_date, end_date = _extract_campaign_date_bounds(state)
+    date_window_markdown = _build_date_window_markdown(start_date=start_date, end_date=end_date)
     sections: list[str] = []
     sections.append(f"## Milestone goal\n{str(state.get('goal') or '').strip() or '_No goal provided._'}")
     sections.append(_json_block("Milestone criteria", state.get("criteria") or []))
@@ -85,6 +94,7 @@ def _build_generation_context(
         sections.append(_json_block("Promotion candidates", promotion_candidates))
     else:
         sections.append("## Promotion candidates\n_Promotion candidates unavailable from GraphQL._")
+    sections.append(date_window_markdown)
     injected = str(state.get("injected_prior_context_markdown") or "").strip()
     if injected:
         sections.append(injected)
@@ -94,7 +104,7 @@ def _build_generation_context(
 
 
 def _fallback_output() -> PostSchedulerOutput:
-    return {"posts": [], "daySummary": {"weekdayCount": 0, "weekendCount": 0}}
+    return {"dateConcepts": [], "daySummary": {"weekdayCount": 0, "weekendCount": 0}}
 
 
 def _parse_iso_date(raw: Any) -> date | None:
@@ -132,6 +142,44 @@ def _count_weekday_weekend_days(start_date: date, end_date: date) -> tuple[int, 
             weekday_count += 1
         cursor += timedelta(days=1)
     return weekday_count, weekend_count
+
+
+def _list_campaign_dates(start_date: date, end_date: date) -> list[date]:
+    if end_date < start_date:
+        start_date, end_date = end_date, start_date
+    out: list[date] = []
+    cursor = start_date
+    while cursor <= end_date:
+        out.append(cursor)
+        cursor += timedelta(days=1)
+    return out
+
+
+def _build_date_window_markdown(*, start_date: date | None, end_date: date | None) -> str:
+    if start_date is None or end_date is None:
+        return "## Campaign date window\n_Campaign start/end dates unavailable._"
+    dates = _list_campaign_dates(start_date, end_date)
+    weekdays = [d.isoformat() for d in dates if d.weekday() < 5]
+    weekends = [d.isoformat() for d in dates if d.weekday() >= 5]
+    payload = {
+        "campaignStart": dates[0].isoformat() if dates else start_date.isoformat(),
+        "campaignEnd": dates[-1].isoformat() if dates else end_date.isoformat(),
+        "allDatesInclusive": [
+            {
+                "date": d.isoformat(),
+                "dayOfWeek": d.strftime("%A"),
+                "dayCategory": "weekend" if d.weekday() >= 5 else "weekday",
+            }
+            for d in dates
+        ],
+        "availableDays": {
+            "weekdays": weekdays,
+            "weekends": weekends,
+            "weekdayCount": len(weekdays),
+            "weekendCount": len(weekends),
+        },
+    }
+    return _json_block("Campaign date window and available days", payload)
 
 
 def _extract_allowed_menu_names(state: PostSchedulerState) -> list[str]:
@@ -192,17 +240,16 @@ def _extract_allowed_menu_names(state: PostSchedulerState) -> list[str]:
 def _enforce_allowed_menu_names(
     payload: PostSchedulerOutput, *, allowed_menu_names: list[str]
 ) -> PostSchedulerOutput:
-    posts = payload.get("posts") or []
-    if not posts:
+    concepts = payload.get("dateConcepts") or []
+    if not concepts:
         return payload
     if not allowed_menu_names:
         return payload
 
     allowed_lookup = {name.casefold() for name in allowed_menu_names}
-    fallback_menu = allowed_menu_names[0]
-    normalized_posts: list[dict[str, Any]] = []
-    for post in posts:
-        menu_items = post.get("promotedMenuItems") or []
+    normalized_concepts: list[dict[str, Any]] = []
+    for concept in concepts:
+        menu_items = concept.get("promotedMenuItems") or []
         kept: list[str] = []
         seen: set[str] = set()
         for item in menu_items:
@@ -216,12 +263,16 @@ def _enforce_allowed_menu_names(
                 continue
             seen.add(key)
             kept.append(text)
-        if not kept:
-            kept = [fallback_menu]
-        next_post = dict(post)
-        next_post["promotedMenuItems"] = kept
-        normalized_posts.append(next_post)
-    out: PostSchedulerOutput = {"posts": normalized_posts, "daySummary": payload["daySummary"]}
+        next_concept = dict(concept)
+        if kept:
+            next_concept["promotedMenuItems"] = kept
+        elif "promotedMenuItems" in next_concept:
+            next_concept["promotedMenuItems"] = None
+        normalized_concepts.append(next_concept)
+    out: PostSchedulerOutput = {
+        "dateConcepts": normalized_concepts,
+        "daySummary": payload["daySummary"],
+    }
     if "promotionCandidates" in payload:
         out["promotionCandidates"] = payload.get("promotionCandidates")
     return out
@@ -326,64 +377,143 @@ async def fetch_and_prepare(
     }
 
 
-def derive_day_summary(state: PostSchedulerState) -> dict[str, Any]:
-    """Build deterministic day summary from campaign start/end (inclusive)."""
+def _build_base_output(state: PostSchedulerState) -> PostSchedulerOutput:
     start_date, end_date = _extract_campaign_date_bounds(state)
     if start_date is None or end_date is None:
-        return {"generated_output": _fallback_output()}
+        return _fallback_output()
     weekday_count, weekend_count = _count_weekday_weekend_days(start_date, end_date)
     return {
-        "generated_output": {
-            "posts": [],
-            "daySummary": {
-                "weekdayCount": weekday_count,
-                "weekendCount": weekend_count,
-            },
-        }
-    }
-
-
-def _normalize_generated_output(payload: Any) -> PostSchedulerOutput:
-    if not isinstance(payload, dict):
-        return _fallback_output()
-    rows = payload.get("posts")
-    if not isinstance(rows, list):
-        return _fallback_output()
-    summary = payload.get("daySummary")
-    if isinstance(summary, dict):
-        weekday_count = int(summary.get("weekdayCount") or 0)
-        weekend_count = int(summary.get("weekendCount") or 0)
-    else:
-        weekday_count = 0
-        weekend_count = 0
-    normalized_rows: list[dict[str, Any]] = []
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        menu_items = [str(x).strip() for x in row.get("promotedMenuItems", []) if str(x).strip()]
-        normalized_rows.append(
-            {
-                "dayOfWeek": str(row.get("dayOfWeek") or "").strip(),
-                "date": str(row.get("date") or "").strip(),
-                "time": str(row.get("time") or "").strip(),
-                "postType": str(row.get("postType") or "").strip(),
-                "contentType": str(row.get("contentType") or "").strip(),
-                "promotedMenuItems": menu_items,
-                "captionIdea": str(row.get("captionIdea") or "").strip(),
-            }
-        )
-    return {
-        "posts": normalized_rows,
+        "dateConcepts": [],
         "daySummary": {
-            "weekdayCount": max(0, weekday_count),
-            "weekendCount": max(0, weekend_count),
+            "weekdayCount": weekday_count,
+            "weekendCount": weekend_count,
         },
     }
 
 
+class PostSchedulerDraftOutput(BaseModel):
+    dateConcepts: list[PostSchedulerDateConceptItem]
+
+
+def _build_default_concepts(state: PostSchedulerState) -> list[dict[str, Any]]:
+    start_date, end_date = _extract_campaign_date_bounds(state)
+    if start_date is None or end_date is None:
+        return []
+    concepts: list[dict[str, Any]] = []
+    for item in _list_campaign_dates(start_date, end_date):
+        day_type = "weekend" if item.weekday() >= 5 else "weekday"
+        concepts.append(
+            {
+                "date": item.isoformat(),
+                "dayOfWeek": item.strftime("%A"),
+                "format": "Story" if day_type == "weekend" else "Carousel",
+                "formatReason": (
+                    "Weekend stories create timely activation and direct response."
+                    if day_type == "weekend"
+                    else "Weekday carousels support saves and proof-led consideration."
+                ),
+                "conceptInstruction": (
+                    "Publish a concept that combines appetite appeal, social proof, and a clear CTA."
+                ),
+                "relevanceDescription": (
+                    "Maintains daily consistency with conversion-oriented restaurant Instagram messaging."
+                ),
+            }
+        )
+    return concepts
+
+
+def _normalize_generated_output(payload: Any, *, state: PostSchedulerState) -> PostSchedulerOutput:
+    base = _build_base_output(state)
+    if not isinstance(payload, dict):
+        return base
+    concepts = payload.get("dateConcepts")
+    if not isinstance(concepts, list):
+        return base
+    normalized_concepts: list[dict[str, Any]] = []
+    for concept in concepts:
+        if not isinstance(concept, dict):
+            continue
+        menu_items = [str(x).strip() for x in (concept.get("promotedMenuItems") or []) if str(x).strip()]
+        normalized_concept = {
+            "date": str(concept.get("date") or "").strip(),
+            "dayOfWeek": str(concept.get("dayOfWeek") or "").strip(),
+            "format": str(concept.get("format") or "").strip(),
+            "formatReason": str(concept.get("formatReason") or "").strip(),
+            "conceptInstruction": str(concept.get("conceptInstruction") or "").strip(),
+            "relevanceDescription": str(concept.get("relevanceDescription") or "").strip(),
+        }
+        if menu_items:
+            normalized_concept["promotedMenuItems"] = menu_items
+        normalized_concepts.append(normalized_concept)
+    base["dateConcepts"] = normalized_concepts
+    return base
+
+
+def _ensure_full_date_coverage(payload: PostSchedulerOutput, *, state: PostSchedulerState) -> PostSchedulerOutput:
+    expected = _build_default_concepts(state)
+    if not expected:
+        return payload
+    by_date: dict[str, dict[str, Any]] = {}
+    for concept in payload.get("dateConcepts") or []:
+        date_key = str(concept.get("date") or "").strip()
+        if date_key:
+            by_date[date_key] = dict(concept)
+    completed: list[dict[str, Any]] = []
+    for fallback in expected:
+        key = fallback["date"]
+        existing = by_date.get(key)
+        if not existing:
+            completed.append(fallback)
+            continue
+        completed.append(
+            {
+                "date": key,
+                "dayOfWeek": str(existing.get("dayOfWeek") or fallback["dayOfWeek"]),
+                "format": str(existing.get("format") or fallback["format"]),
+                "formatReason": str(existing.get("formatReason") or fallback["formatReason"]),
+                "conceptInstruction": str(
+                    existing.get("conceptInstruction") or fallback["conceptInstruction"]
+                ),
+                "relevanceDescription": str(
+                    existing.get("relevanceDescription") or fallback["relevanceDescription"]
+                ),
+                **(
+                    {"promotedMenuItems": existing.get("promotedMenuItems")}
+                    if existing.get("promotedMenuItems")
+                    else {}
+                ),
+            }
+        )
+    out: PostSchedulerOutput = {"dateConcepts": completed, "daySummary": payload["daySummary"]}
+    if "promotionCandidates" in payload:
+        out["promotionCandidates"] = payload.get("promotionCandidates")
+    return out
+
+
+async def generate_campaign_concepts(state: PostSchedulerState) -> dict[str, Any]:
+    """Generate date-level campaign concepts from brief context and available days."""
+    base = _build_base_output(state)
+    if base["daySummary"]["weekdayCount"] + base["daySummary"]["weekendCount"] == 0:
+        return {"generated_output": base}
+    llm = get_llm_structured().with_structured_output(PostSchedulerDraftOutput)
+    _trace_agent_event(state, "chat_model_start")
+    generated = await llm.ainvoke(
+        [
+            SystemMessage(content=POST_SCHEDULER_SYSTEM),
+            HumanMessage(content=str(state.get("generation_context_markdown") or "").strip()),
+        ]
+    )
+    _trace_agent_event(state, "chat_model_end")
+    normalized = _normalize_generated_output(generated.model_dump(exclude_none=True), state=state)
+    normalized = _ensure_full_date_coverage(normalized, state=state)
+    return {"generated_output": normalized}
+
+
 async def persist_result(state: PostSchedulerState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     """Validate/coerce and persist post-scheduler payload via milestone data upsert."""
-    payload = _normalize_generated_output(state.get("generated_output"))
+    payload = _normalize_generated_output(state.get("generated_output"), state=state)
+    payload = _ensure_full_date_coverage(payload, state=state)
     normalized_candidates = _normalize_promotion_candidates(state.get("promotion_candidates"))
     if normalized_candidates is not None:
         payload["promotionCandidates"] = normalized_candidates

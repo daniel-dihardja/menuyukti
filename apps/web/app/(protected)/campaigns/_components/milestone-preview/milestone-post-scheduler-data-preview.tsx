@@ -36,18 +36,31 @@ export type MilestonePostSchedulerDataPreviewProps = {
     daysHeading: string
     weekdaysCount: string
     weekendsCount: string
-    postsHeading: string
-    emptyPosts: string
-    dayDateTime: string
-    postType: string
-    contentType: string
+    conceptsHeading: string
+    emptyConcepts: string
+    dayDate: string
+    conceptSummary: string
     promotedItems: string
-    captionIdea: string
     promotionCandidatesHeading: string
     emptyPromotionCandidates: string
     uncategorizedCategory: string
     starItems: string
     puzzleItems: string
+  }
+}
+
+function formatBadgeClasses(format: string): string {
+  switch (format) {
+    case 'Reel':
+      return 'bg-pink-100 text-pink-800'
+    case 'Carousel':
+      return 'bg-blue-100 text-blue-800'
+    case 'Story':
+      return 'bg-amber-100 text-amber-800'
+    case 'Single Post':
+      return 'bg-emerald-100 text-emerald-800'
+    default:
+      return 'bg-muted text-muted-foreground'
   }
 }
 
@@ -69,24 +82,27 @@ export function MilestonePostSchedulerDataPreview({
           {labels.weekendsCount}: {data.daySummary.weekendCount}
         </p>
       </div>
-      <p className="font-medium text-foreground">{labels.postsHeading}</p>
-      {data.posts.length === 0 ? (
-        <p className="text-muted-foreground text-sm">{labels.emptyPosts}</p>
+      <p className="font-medium text-foreground">{labels.conceptsHeading}</p>
+      {data.dateConcepts.length === 0 ? (
+        <p className="text-muted-foreground text-sm">{labels.emptyConcepts}</p>
       ) : (
         <ol className="list-decimal space-y-4 pl-5">
-          {data.posts.map((post, i) => (
-            <li key={`${post.date}-${post.time}-${i}`} className="space-y-1">
+          {data.dateConcepts.map((concept, i) => (
+            <li key={`${concept.date}-${i}`} className="space-y-1">
               <p className="font-medium text-foreground">
-                {labels.dayDateTime}: {formatDate(post.date)} · {post.time}
+                {labels.dayDate}: {formatDate(concept.date)} ({concept.dayOfWeek})
               </p>
               <p className="text-muted-foreground">
-                {labels.postType}: {post.postType} · {labels.contentType}: {post.contentType}
+                <span
+                  className={`mr-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${formatBadgeClasses(concept.format)}`}
+                >
+                  {concept.format}
+                </span>
+                {labels.conceptSummary}: {concept.conceptInstruction || '—'}{' '}
+                {concept.relevanceDescription || ''} {concept.formatReason || ''}
               </p>
               <p className="text-muted-foreground">
-                {labels.promotedItems}: {post.promotedMenuItems.join(', ') || '—'}
-              </p>
-              <p className="text-muted-foreground">
-                {labels.captionIdea}: {post.captionIdea || '—'}
+                {labels.promotedItems}: {concept.promotedMenuItems?.join(', ') || '—'}
               </p>
             </li>
           ))}

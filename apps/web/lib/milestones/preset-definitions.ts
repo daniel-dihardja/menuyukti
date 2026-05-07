@@ -75,7 +75,7 @@ export function getMilestonePresetCreateFields(
           value: { notes: '' },
         },
         milestoneData: {
-          posts: [],
+          dateConcepts: [],
           daySummary: { weekdayCount: 0, weekendCount: 0 },
           promotionCandidates: {
             grouping: 'by_menu_category',

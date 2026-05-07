@@ -5,14 +5,14 @@ from __future__ import annotations
 from typing import Any, Literal, NotRequired, TypedDict
 
 
-class PostSchedulerPost(TypedDict):
-    dayOfWeek: str
+class PostSchedulerDateConcept(TypedDict):
     date: str
-    time: str
-    postType: Literal["Reel", "Post"]
-    contentType: Literal["Carousel", "Single"]
-    promotedMenuItems: list[str]
-    captionIdea: str
+    dayOfWeek: str
+    format: Literal["Reel", "Carousel", "Story", "Single Post"]
+    formatReason: str
+    conceptInstruction: str
+    relevanceDescription: str
+    promotedMenuItems: NotRequired[list[str] | None]
 
 
 class PostSchedulerDaySummary(TypedDict):
@@ -21,7 +21,7 @@ class PostSchedulerDaySummary(TypedDict):
 
 
 class PostSchedulerOutput(TypedDict):
-    posts: list[PostSchedulerPost]
+    dateConcepts: list[PostSchedulerDateConcept]
     daySummary: PostSchedulerDaySummary
     promotionCandidates: NotRequired[dict[str, Any] | None]
 

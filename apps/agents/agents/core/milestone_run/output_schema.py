@@ -146,22 +146,30 @@ class CampaignBriefMilestoneOutput(BaseModel):
         return text
 
 
-class PostSchedulerPostItem(BaseModel):
-    dayOfWeek: str
+class PostSchedulerDateConceptItem(BaseModel):
     date: str
-    time: str
-    postType: Literal["Reel", "Post"]
-    contentType: Literal["Carousel", "Single"]
-    promotedMenuItems: list[str]
-    captionIdea: str
+    dayOfWeek: str
+    format: Literal["Reel", "Carousel", "Story", "Single Post"]
+    formatReason: str
+    conceptInstruction: str
+    relevanceDescription: str
+    promotedMenuItems: list[str] | None = None
+
+    @field_validator("formatReason", "conceptInstruction", "relevanceDescription")
+    @classmethod
+    def _non_empty_text(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("must be non-empty")
+        return text
 
     @field_validator("promotedMenuItems")
     @classmethod
-    def _non_empty_menu_items(cls, values: list[str]) -> list[str]:
+    def _normalize_menu_items(cls, values: list[str] | None) -> list[str] | None:
+        if values is None:
+            return None
         cleaned = [str(x).strip() for x in values if str(x).strip()]
-        if not cleaned:
-            raise ValueError("must contain at least one promoted menu item")
-        return cleaned
+        return cleaned or None
 
 
 class PostSchedulerDaySummary(BaseModel):
@@ -182,7 +190,7 @@ class PostSchedulerPromotionCandidates(BaseModel):
 
 
 class PostSchedulerMilestoneOutput(BaseModel):
-    posts: list[PostSchedulerPostItem]
+    dateConcepts: list[PostSchedulerDateConceptItem]
     daySummary: PostSchedulerDaySummary
     promotionCandidates: PostSchedulerPromotionCandidates | None = None
 
