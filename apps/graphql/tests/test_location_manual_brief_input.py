@@ -159,12 +159,11 @@ def test_manual_quick_profile_rejects_invalid_extended_fields():
         validate_and_normalize_quick_profile({"websiteUrl": "ftp://example.com"})
     with pytest.raises(ValueError, match="valueProposition must be at most"):
         validate_and_normalize_quick_profile({"valueProposition": "x" * 200})
-    with pytest.raises(ValueError, match="notes must be at most 2000 characters"):
-        validate_and_normalize_quick_profile({"notes": "x" * 2001})
+    assert validate_and_normalize_quick_profile({"notes": "x" * 2001})["notes"] == ("x" * 2001)
 
 
 def test_manual_quick_profile_accepts_long_notes():
-    notes = "x" * 2000
+    notes = "x" * 5000
     result = validate_and_normalize_quick_profile({"notes": notes})
     assert result["notes"] == notes
 

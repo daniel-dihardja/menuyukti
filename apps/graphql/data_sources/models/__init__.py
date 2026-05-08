@@ -7,7 +7,6 @@ from graphql.data_sources.models.instagram import InstagramPost
 from graphql.data_sources.models.location import Location
 from graphql.data_sources.models.location_manual_brief_input import LocationManualBriefInput
 from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
-from graphql.data_sources.models.location_social_settings import LocationSocialSettings
 from graphql.data_sources.models.milestone_agent_run import MilestoneAgentRun
 from graphql.data_sources.models.node import Node
 from graphql.data_sources.models.workflow_export import WorkflowExport
@@ -22,7 +21,6 @@ __all__ = [
     "Location",
     "LocationOpeningHour",
     "LocationManualBriefInput",
-    "LocationSocialSettings",
     "MilestoneAgentRun",
     "MenuItemCogs",
     "Node",

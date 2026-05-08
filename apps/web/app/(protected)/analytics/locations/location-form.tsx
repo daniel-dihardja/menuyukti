@@ -369,7 +369,6 @@ export function LocationForm({
                 <Textarea
                   id="brief-notes"
                   rows={4}
-                  maxLength={BRIEF_TEXT_MAX_LENGTHS.notes}
                   disabled={loading}
                   placeholder={tm('notesPlaceholder')}
                   value={hints.notes}

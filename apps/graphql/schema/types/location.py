@@ -27,8 +27,7 @@ class LocationType:
 
     @strawberry.field(
         description=(
-            "Owner-provided click-first brief hints. Not AI-generated — "
-            "see locationSocialSettings for AI output."
+            "Owner-provided click-first brief hints. Not AI-generated."
         )
     )
     def manual_brief_input(self, info: strawberry.Info) -> LocationManualBriefInputType | None:

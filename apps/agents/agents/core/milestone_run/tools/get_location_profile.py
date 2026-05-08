@@ -226,50 +226,6 @@ def _fmt_manual_brief_hints(raw_loc: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _fmt_ai_social_settings(data: dict[str, Any]) -> str:
-    """Markdown for AI-generated location_social_settings (may be empty)."""
-    raw = data.get("locationSocialSettings")
-    if not isinstance(raw, dict):
-        return ""
-    tone = raw.get("tone")
-    personality = raw.get("brandPersonality")
-    pillars = raw.get("contentPillars") or []
-    platforms = raw.get("platformFocus") or []
-    hashtags = raw.get("brandHashtags") or []
-    avoid = raw.get("avoidTopics") or []
-    audience = raw.get("targetAudience")
-    has_any = bool(
-        (isinstance(tone, str) and tone.strip())
-        or (isinstance(personality, str) and personality.strip())
-        or (isinstance(pillars, list) and len(pillars) > 0)
-        or (isinstance(platforms, list) and len(platforms) > 0)
-        or (isinstance(hashtags, list) and len(hashtags) > 0)
-        or (isinstance(avoid, list) and len(avoid) > 0)
-        or (isinstance(audience, str) and audience.strip())
-    )
-    if not has_any:
-        return ""
-    lines: list[str] = [
-        "## AI-generated location social settings",
-        "_Produced by automation — not direct owner input. Use as secondary context._",
-    ]
-    if isinstance(tone, str) and tone.strip():
-        lines.append(f"- **Tone**: {tone.strip()}")
-    if isinstance(personality, str) and personality.strip():
-        lines.append(f"- **Brand personality**: {personality.strip()}")
-    if isinstance(pillars, list) and pillars:
-        lines.append(f"- **Content pillars**: {', '.join(str(x) for x in pillars)}")
-    if isinstance(platforms, list) and platforms:
-        lines.append(f"- **Platform focus**: {', '.join(str(x) for x in platforms)}")
-    if isinstance(hashtags, list) and hashtags:
-        lines.append(f"- **Brand hashtags**: {', '.join(str(x) for x in hashtags)}")
-    if isinstance(avoid, list) and avoid:
-        lines.append(f"- **Avoid topics**: {', '.join(str(x) for x in avoid)}")
-    if isinstance(audience, str) and audience.strip():
-        lines.append(f"- **Target audience (AI)**: {audience.strip()}")
-    return "\n".join(lines)
-
-
 def _fmt_matrix_signals(instagram: dict[str, Any]) -> str:
     additional = instagram.get("additionalSignals")
     if not isinstance(additional, dict):
@@ -348,7 +304,7 @@ def make_get_location_profile_tool(
         loc_data = await graphql_post(
             client,
             LOCATION_QUERY,
-            {"id": str(location_id), "locationId": location_id},
+            {"id": str(location_id)},
             user_id,
         )
         raw_loc = loc_data.get("location")
@@ -390,9 +346,6 @@ def make_get_location_profile_tool(
             sections.append(
                 "\n_No analytics run found for this location — operating signals unavailable._"
             )
-            ai_social = _fmt_ai_social_settings(loc_data)
-            if ai_social:
-                sections.append(ai_social)
             if owner_notes_md:
                 sections.append(owner_notes_md)
             return "\n\n".join(sections)
@@ -446,10 +399,6 @@ def make_get_location_profile_tool(
         if matrix_md:
             sections.append("## Additional matrix signals")
             sections.append(matrix_md)
-
-        ai_social = _fmt_ai_social_settings(loc_data)
-        if ai_social:
-            sections.append(ai_social)
 
         if owner_notes_md:
             sections.append(owner_notes_md)

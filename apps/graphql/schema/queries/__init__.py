@@ -5,7 +5,6 @@ from .category_mix import CategoryMixQuery
 from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_signals import InstagramSignalsQuery
 from .location_manual_brief_input import LocationManualBriefInputQuery
-from .location_social_settings import LocationSocialSettingsQuery
 from .locations import LocationsQuery
 from .menu_catalog import MenuCatalogQuery
 from .menu_engineering_matrix import MenuEngineeringMatrixQuery
@@ -33,7 +32,6 @@ __all__ = [
     "InstagramSignalsQuery",
     "LocationsQuery",
     "LocationManualBriefInputQuery",
-    "LocationSocialSettingsQuery",
     "MenuCatalogQuery",
     "MilestonePriorDataQuery",
     "MenuEngineeringMatrixQuery",

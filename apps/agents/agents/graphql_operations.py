@@ -77,7 +77,7 @@ mutation CreateNode(
 """
 
 LOCATION_QUERY = """
-query GetLocation($id: ID!, $locationId: Int!) {
+query GetLocation($id: ID!) {
   location(id: $id) {
     id
     name
@@ -90,16 +90,6 @@ query GetLocation($id: ID!, $locationId: Int!) {
       locationId
       quickProfile
     }
-  }
-  locationSocialSettings(locationId: $locationId) {
-    locationId
-    tone
-    brandPersonality
-    contentPillars
-    platformFocus
-    brandHashtags
-    avoidTopics
-    targetAudience
   }
 }
 """

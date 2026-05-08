@@ -1,4 +1,4 @@
-"""Query owner-provided manual brief hints (separate from AI location_social_settings)."""
+"""Query owner-provided manual brief hints."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ class LocationManualBriefInputQuery:
     @strawberry.field(
         description=(
             "Owner click-first brief hints for a location. Empty quickProfile when unset. "
-            "Not AI-generated — see locationSocialSettings for AI output."
+            "Not AI-generated."
         )
     )
     def location_manual_brief_input(

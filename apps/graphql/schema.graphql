@@ -200,17 +200,6 @@ type LocationManualBriefInputType {
   quickProfile: JSON!
 }
 
-type LocationSocialSettingsType {
-  locationId: Int!
-  tone: String
-  brandPersonality: String
-  contentPillars: [String!]!
-  platformFocus: [String!]!
-  brandHashtags: [String!]!
-  avoidTopics: [String!]!
-  targetAudience: String
-}
-
 """
 A restaurant location; ties POS data and workflow roots to a workspace or legacy owner.
 """
@@ -225,9 +214,7 @@ type LocationType {
   workspaceId: ID
   openingHours: [OpeningHourType!]!
 
-  """
-  Owner-provided click-first brief hints. Not AI-generated — see locationSocialSettings for AI output.
-  """
+  """Owner-provided click-first brief hints. Not AI-generated."""
   manualBriefInput: LocationManualBriefInputType
 }
 
@@ -630,9 +617,7 @@ type Query {
   """Fetch one location by id if the caller has access."""
   location(id: ID!): LocationType
 
-  """
-  Owner click-first brief hints for a location. Empty quickProfile when unset. Not AI-generated — see locationSocialSettings for AI output.
-  """
+  """Owner click-first brief hints for a location. Empty quickProfile when unset. Not AI-generated."""
   locationManualBriefInput(locationId: Int!): LocationManualBriefInputType
 
   """
@@ -712,11 +697,6 @@ type Query {
   Bill-level revenue and transaction counts rolled up by ISO week for the latest analytics run. Indices are normalized to mean 1.0 within the series.
   """
   weeklyDemandPattern(locationId: Int!): WeeklyDemandPatternPayloadType
-
-  """
-  Social and brand-voice settings for a location. Returns empty lists and null strings when no row exists.
-  """
-  locationSocialSettings(locationId: Int!): LocationSocialSettingsType
 
   """
   JSON array of prior milestones' milestonedata payloads: each element is `{"title": string, "presetId": string|null, "data": object|string|array|null}` for milestones strictly before the given milestone in workflow display order. `presetId` is the milestone node's preset when set. `data` is the raw `milestonedata` child `data` field (structured object, legacy string, or null). Empty array when there are no prior milestones or the request is not authorized.

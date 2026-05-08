@@ -3,7 +3,6 @@ const NEIGHBORHOOD_MAX_LEN = 80
 const PHONE_MAX_LEN = 30
 const EMAIL_MAX_LEN = 254
 const URL_MAX_LEN = 500
-const NOTES_MAX_LEN = 2000
 
 export const BRIEF_TEXT_MAX_LENGTHS = {
   instagramHandle: INSTAGRAM_HANDLE_MAX_LEN,
@@ -15,7 +14,6 @@ export const BRIEF_TEXT_MAX_LENGTHS = {
   onlineOrderUrl: URL_MAX_LEN,
   menuUrl: URL_MAX_LEN,
   googleMapsUrl: URL_MAX_LEN,
-  notes: NOTES_MAX_LEN,
 } as const
 
 export type BriefHintsState = {
