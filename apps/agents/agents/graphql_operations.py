@@ -273,20 +273,6 @@ query CampaignSchedulePlan(
 }
 """
 
-REPLACE_PASS_CRITERIA_MUTATION = """
-mutation ReplacePassCriteria(
-  $milestoneId: ID!
-  $locationId: Int!
-  $requirements: [String!]!
-) {
-  replacePassCriteria(
-    milestoneId: $milestoneId
-    locationId: $locationId
-    requirements: $requirements
-  )
-}
-"""
-
 START_MILESTONE_AGENT_RUN_MUTATION = """
 mutation StartMilestoneAgentRun(
   $runId: String!

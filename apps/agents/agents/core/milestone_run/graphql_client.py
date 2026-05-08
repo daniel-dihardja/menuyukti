@@ -13,7 +13,7 @@ from agents_app.agents.core.milestone_eval.graphql_client import (
     create_result_node,
     delete_node,
     fetch_milestone_children,
-    update_passcriteria_status,
+    update_milestone_passcriteria_status,
 )
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
@@ -309,6 +309,6 @@ __all__ = [
     "fetch_milestone_children",
     "fetch_prior_milestones_data",
     "fetch_public_holidays_for_milestone",
-    "update_passcriteria_status",
+    "update_milestone_passcriteria_status",
     "upsert_milestonedata_node",
 ]

@@ -11,8 +11,9 @@ import httpx
 from agents_app.agents.core.milestone_eval.graphql_client import (
     delete_node,
     fetch_milestone_children,
+    fetch_milestone_node,
     fetch_prior_milestones_data_for_eval,
-    update_passcriteria_status,
+    update_milestone_passcriteria_status,
     upsert_result_node,
 )
 from agents_app.agents.core.milestone_eval.prompts import (
@@ -132,7 +133,6 @@ async def fetch_context(
     )
     goal = ""
     milestonedata_payloads: list[dict[str, Any]] = []
-    criteria: list[dict[str, str]] = []
     for ch in children:
         nt = _node_type(ch)
         raw = ch.get("data")
@@ -144,10 +144,17 @@ async def fetch_context(
         elif nt == "milestonedata":
             if isinstance(data, dict) and data:
                 milestonedata_payloads.append(data)
-        elif nt == "passcriteria":
-            req = data.get("requirement", "")
-            cid = str(ch.get("id", ""))
-            if isinstance(req, str) and cid:
+    criteria: list[dict[str, str]] = []
+    milestone_row = await fetch_milestone_node(mid, state["user_id"], client=client)
+    milestone_data = milestone_row.get("data") if isinstance(milestone_row, dict) else None
+    raw_pass = milestone_data.get("passCriterias") if isinstance(milestone_data, dict) else None
+    if isinstance(raw_pass, list):
+        for item in raw_pass:
+            if not isinstance(item, dict):
+                continue
+            cid = item.get("id")
+            req = item.get("requirement")
+            if isinstance(cid, str) and cid and isinstance(req, str):
                 criteria.append({"id": cid, "requirement": req})
     best_md = _select_best_milestonedata_payload(milestonedata_payloads)
     raw_data = (
@@ -214,7 +221,8 @@ async def update_criteria(
     writer = get_stream_writer()
     writer({"step": "update_criteria"})
     for ev in state.get("evaluated", []):
-        await update_passcriteria_status(
+        await update_milestone_passcriteria_status(
+            state["milestone_id"],
             ev["id"],
             ev["status"],
             state["user_id"],

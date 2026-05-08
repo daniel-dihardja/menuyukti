@@ -78,7 +78,24 @@ async def test_graph_dispatches_to_dedicated_preset_graph(
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
-            new=AsyncMock(return_value={"data": {"presetId": preset_id}}),
+            new=AsyncMock(
+                return_value={
+                    "data": {
+                        "presetId": preset_id,
+                        "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}],
+                    }
+                }
+            ),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_node",
+            new=AsyncMock(
+                return_value={
+                    "data": {
+                        "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}]
+                    }
+                }
+            ),
         ),
         patch("agents_app.agents.core.milestone_eval.nodes.get_stream_writer", return_value=lambda _x: None),
         patch("agents_app.agents.core.milestone_run.graph.get_stream_writer", return_value=lambda _x: None),
@@ -110,7 +127,24 @@ async def test_graph_raises_for_unknown_preset() -> None:
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
-            new=AsyncMock(return_value={"data": {"presetId": "unknown_preset"}}),
+            new=AsyncMock(
+                return_value={
+                    "data": {
+                        "presetId": "unknown_preset",
+                        "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}],
+                    }
+                }
+            ),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_node",
+            new=AsyncMock(
+                return_value={
+                    "data": {
+                        "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}]
+                    }
+                }
+            ),
         ),
         patch("agents_app.agents.core.milestone_run.graph.get_stream_writer", return_value=lambda _x: None),
     ):

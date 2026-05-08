@@ -12,7 +12,6 @@ from agents_app.agents.graphql_operations import (
     DELETE_NODE_MUTATION,
     NODE_BY_ID_QUERY,
     NODES_QUERY,
-    REPLACE_PASS_CRITERIA_MUTATION,
     UPDATE_NODE_MUTATION,
 )
 
@@ -135,24 +134,32 @@ async def upsert_goal_node(
 
 async def replace_pass_criteria(
     milestone_id: str,
-    location_id: int,
+    _location_id: int,
     requirements: list[str],
     user_id: str,
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Delete all passcriteria children and create new rows with status ``open``."""
+    """Replace milestone.data.passCriterias with fresh rows (status ``open``)."""
     reqs = [r for r in requirements if isinstance(r, str) and r.strip()]
+    node_data = await graphql_post(client, NODE_BY_ID_QUERY, {"id": milestone_id}, user_id)
+    raw_node = node_data.get("node")
+    if not isinstance(raw_node, dict):
+        msg = "milestone not found"
+        raise RuntimeError(msg)
+    raw_data = raw_node.get("data")
+    milestone_data = raw_data if isinstance(raw_data, dict) else {}
+    next_data = dict(milestone_data)
+    next_data["passCriterias"] = [
+        {"id": f"pc-{index + 1}", "requirement": requirement, "status": "open"}
+        for index, requirement in enumerate(reqs)
+    ]
     data = await graphql_post(
         client,
-        REPLACE_PASS_CRITERIA_MUTATION,
-        {
-            "milestoneId": milestone_id,
-            "locationId": location_id,
-            "requirements": reqs,
-        },
+        UPDATE_NODE_MUTATION,
+        {"id": milestone_id, "data": next_data},
         user_id,
     )
-    if not data.get("replacePassCriteria"):
-        msg = "replacePassCriteria returned false"
+    if not isinstance(data.get("updateNode"), dict):
+        msg = "updateNode returned invalid payload"
         raise RuntimeError(msg)

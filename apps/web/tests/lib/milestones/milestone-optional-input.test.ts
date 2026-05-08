@@ -51,6 +51,18 @@ describe('milestone optional notes', () => {
     }
   })
 
+  it('patchMilestoneSchema accepts passCriterias with stable ids', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      passCriterias: [{ id: 'pc-1', requirement: 'Has baseline', status: 'open' }],
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.passCriterias).toEqual([
+        { id: 'pc-1', requirement: 'Has baseline', status: 'open' },
+      ])
+    }
+  })
+
   it('getMilestonePresetCreateFields seeds post_scheduler milestoneInput', () => {
     const fields = getMilestonePresetCreateFields('post_scheduler', (k) => k)
     expect(fields.milestoneInput).toEqual({

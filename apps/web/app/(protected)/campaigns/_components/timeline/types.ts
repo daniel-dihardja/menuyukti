@@ -5,7 +5,7 @@ export type TimelineMilestoneStatus = 'complete' | 'failed' | 'pending' | 'empty
 export type PassCriteriaStatus = 'pass' | 'fail' | 'open'
 
 export type PassCriteriaRow = {
-  id?: string
+  id: string
   requirement: string
   status: PassCriteriaStatus
 }

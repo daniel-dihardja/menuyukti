@@ -15,7 +15,7 @@ export function isMilestonePresetId(value: string): value is MilestonePresetId {
   return (MILESTONE_PRESET_IDS as readonly string[]).includes(value)
 }
 
-/** New pass criteria rows (no `id` until persisted). */
+/** New pass criteria rows; `id` is generated client-side before save. */
 export type MilestonePresetPassCriterionDraft = Pick<PassCriteriaRow, 'requirement' | 'status'>
 
 export type MilestonePresetCreateFields = {
@@ -24,7 +24,7 @@ export type MilestonePresetCreateFields = {
   milestoneData: MilestonedataValue
   milestoneInput?: MilestoneInput
   goal?: string
-  /** Applied in a follow-up PATCH (API handles `passCriteria` separately from goal/Data). */
+  /** Stored on milestone data as `passCriterias`. */
   passCriteria?: MilestonePresetPassCriterionDraft[]
 }
 

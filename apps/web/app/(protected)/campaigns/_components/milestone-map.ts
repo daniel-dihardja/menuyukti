@@ -5,7 +5,6 @@ import {
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataValueSchema,
-  passCriteriaDataSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   resultDataSchema,
@@ -43,32 +42,17 @@ export type MilestoneNodeDto = {
   id: string
   name: string
   data?: unknown | null
-  passCriteriaNodes?: AnyNode[]
   goalNodes?: AnyNode[]
   milestonedataNodes?: AnyNode[]
   resultNodes?: AnyNode[]
 }
 
-export function passCriteriaFromChildNodes(nodes: AnyNode[] | undefined | null): PassCriteriaRow[] {
-  if (nodes == null || !Array.isArray(nodes)) {
+export function passCriteriasFromMilestoneData(data: unknown): PassCriteriaRow[] {
+  const parsed = milestoneDataSchema.safeParse(data)
+  if (!parsed.success || parsed.data.passCriterias === undefined) {
     return []
   }
-  const out: PassCriteriaRow[] = []
-  for (const n of nodes) {
-    if (n.nodeType !== 'passcriteria') {
-      continue
-    }
-    const d = n.data
-    if (d == null || typeof d !== 'object') {
-      continue
-    }
-    const parsed = passCriteriaDataSchema.safeParse(d)
-    if (!parsed.success) {
-      continue
-    }
-    out.push({ id: n.id, requirement: parsed.data.requirement, status: parsed.data.status })
-  }
-  return out
+  return parsed.data.passCriterias
 }
 
 /** First valid `goal` child wins (at most one is expected). */
@@ -164,7 +148,7 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   const legacyGoal = parsed.success ? parsed.data.goal : undefined
   const goal = goalFromChildNodes(node.goalNodes) ?? legacyGoal
   const data = milestoneDataFromChildNodes(node.milestonedataNodes)
-  const passCriteria = passCriteriaFromChildNodes(node.passCriteriaNodes)
+  const passCriteria = passCriteriasFromMilestoneData(node.data)
   const resultMarkdown = resultMarkdownFromChildNodes(node.resultNodes)
   const { presetId, milestoneInput } = milestoneRunSkillFieldsFromData(node.data)
   let normalizedData = data

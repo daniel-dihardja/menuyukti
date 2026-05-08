@@ -48,6 +48,13 @@ function parseDataPreviewForPreset(
   return undefined
 }
 
+function ensurePassCriteriaIds(rows: PassCriteriaRow[]): PassCriteriaRow[] {
+  return rows.map((row) => ({
+    ...row,
+    id: row.id ?? crypto.randomUUID(),
+  }))
+}
+
 export function useMilestoneOperations(
   dispatch: Dispatch<CampaignMilestoneAction>,
   {
@@ -128,10 +135,12 @@ export function useMilestoneOperations(
         }
         createdId = id
 
+        const presetPassCriterias = ensurePassCriteriaIds(fields.passCriteria ?? [])
         const patchBody: Record<string, unknown> = {
           name: fields.name,
           presetId: fields.presetId,
           milestoneData: fields.milestoneData,
+          passCriterias: presetPassCriterias,
         }
         if (fields.milestoneInput !== undefined) {
           patchBody.milestoneInput = fields.milestoneInput
@@ -155,24 +164,6 @@ export function useMilestoneOperations(
 
         const title = typeof patchJson?.name === 'string' ? patchJson.name : fields.name
 
-        let passCriteria: PassCriteriaRow[] = []
-        const criteriaDraft = fields.passCriteria
-        if (criteriaDraft !== undefined && criteriaDraft.length > 0) {
-          const criteriaRes = await fetch(`/api/workflows/${workflowId}/milestones/${id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ passCriteria: criteriaDraft }),
-          })
-          const criteriaJson = (await criteriaRes.json().catch(() => null)) as {
-            message?: string
-            passCriteria?: PassCriteriaRow[]
-          } | null
-          if (!criteriaRes.ok) {
-            throw new Error(criteriaJson?.message ?? t('milestonesCreateError'))
-          }
-          passCriteria = criteriaJson?.passCriteria ?? criteriaDraft
-        }
-
         const next: TimelineMilestone = {
           id,
           title,
@@ -180,8 +171,8 @@ export function useMilestoneOperations(
           data: fields.milestoneData,
           presetId: fields.presetId,
           ...(fields.milestoneInput !== undefined ? { milestoneInput: fields.milestoneInput } : {}),
-          passCriteria,
-          status: deriveMilestoneRailStatus(passCriteria, undefined),
+          passCriteria: presetPassCriterias,
+          status: deriveMilestoneRailStatus(presetPassCriterias, undefined),
         }
 
         dispatch({
@@ -294,16 +285,16 @@ export function useMilestoneOperations(
         const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ passCriteria }),
+          body: JSON.stringify({ passCriterias: passCriteria }),
         })
         const body = (await res.json().catch(() => null)) as {
           message?: string
-          passCriteria?: PassCriteriaRow[]
+          passCriterias?: PassCriteriaRow[]
         } | null
         if (!res.ok) {
           throw new Error(body?.message ?? t('milestonesPassCriteriaError'))
         }
-        const nextCriteria = body?.passCriteria ?? passCriteria
+        const nextCriteria = body?.passCriterias ?? passCriteria
         dispatch({
           type: 'UPDATE_MILESTONES',
           updater: (prev) =>
@@ -716,7 +707,7 @@ export function useMilestoneOperations(
           milestoneInput?: MilestoneInput | null
           presetId?: TimelineMilestone['presetId'] | null
           goal?: string
-          passCriteria?: PassCriteriaRow[]
+          passCriterias?: PassCriteriaRow[]
         } | null
         if (!body) {
           return
@@ -730,8 +721,8 @@ export function useMilestoneOperations(
                 return m
               }
               const passCriteria =
-                body.passCriteria !== undefined && Array.isArray(body.passCriteria)
-                  ? body.passCriteria
+                body.passCriterias !== undefined && Array.isArray(body.passCriterias)
+                  ? body.passCriterias
                   : m.passCriteria
               const goalText = typeof body.goal === 'string' ? body.goal : (m.goal ?? '')
               const next: TimelineMilestone = {

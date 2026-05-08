@@ -9,7 +9,6 @@ export type {
   KnownNode,
   MilestoneNode,
   PassCriteriaData,
-  PassCriteriaNode,
   ResultNode,
   WorkflowNode,
 } from './node-schemas'
@@ -393,7 +392,6 @@ export type WorkflowCampaignTreeDataRaw = {
     workflow: unknown
     milestones: Array<{
       milestone: unknown
-      passCriteriaNodes: unknown[]
       goalNodes: unknown[]
       milestonedataNodes: unknown[]
       resultNodes: unknown[]
@@ -419,9 +417,6 @@ export const WORKFLOW_CAMPAIGN_TREE_QUERY = `
       }
       milestones {
         milestone {
-          ${NODE_SELECTION_FIELDS}
-        }
-        passCriteriaNodes {
           ${NODE_SELECTION_FIELDS}
         }
         goalNodes {

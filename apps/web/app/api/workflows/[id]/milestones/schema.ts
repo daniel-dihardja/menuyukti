@@ -7,7 +7,7 @@ import {
   cultureHooksMilestoneInputValueSchema,
   milestonePresetIdSchema,
   milestoneInputSchema,
-  passCriteriaDataSchema,
+  passCriteriaSchema,
   postSchedulerMilestoneDataSchema,
   postSchedulerMilestoneInputValueSchema,
   promotionCandidatesMilestoneDataSchema,
@@ -21,9 +21,7 @@ export const createMilestoneBodySchema = z.object({
   name: z.string().trim().min(1).max(500).optional(),
 })
 
-export const passCriteriaRowSchema = passCriteriaDataSchema.extend({
-  id: z.string().regex(/^\d+$/).optional(),
-})
+export const passCriteriaRowSchema = passCriteriaSchema
 
 export const patchMilestoneSchema = z
   .object({
@@ -59,7 +57,7 @@ export const patchMilestoneSchema = z
       ])
       .optional(),
     presetId: milestonePresetIdSchema.optional(),
-    passCriteria: z.array(passCriteriaRowSchema).optional(),
+    passCriterias: z.array(passCriteriaRowSchema).optional(),
     move: z.enum(['up', 'down']).optional(),
   })
   .refine(
@@ -69,10 +67,10 @@ export const patchMilestoneSchema = z
       v.milestoneData !== undefined ||
       v.milestoneInput !== undefined ||
       v.presetId !== undefined ||
-      v.passCriteria !== undefined ||
+      v.passCriterias !== undefined ||
       v.move !== undefined,
     {
       message:
-        'Provide at least one of name, goal, milestoneData, milestoneInput, presetId, passCriteria, or move',
+        'Provide at least one of name, goal, milestoneData, milestoneInput, presetId, passCriterias, or move',
     },
   )

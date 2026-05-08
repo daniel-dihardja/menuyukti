@@ -94,7 +94,28 @@ async def test_routing_culture_hooks_uses_dedicated_graph_path() -> None:
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
-            new=AsyncMock(return_value={"data": {"presetId": "culture_hooks"}}),
+            new=AsyncMock(
+                return_value={
+                    "data": {
+                        "presetId": "culture_hooks",
+                        "passCriterias": [
+                            {"id": "c1", "requirement": "Must have intersections", "status": "open"}
+                        ],
+                    }
+                }
+            ),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_node",
+            new=AsyncMock(
+                return_value={
+                    "data": {
+                        "passCriterias": [
+                            {"id": "c1", "requirement": "Must have intersections", "status": "open"}
+                        ]
+                    }
+                }
+            ),
         ),
         patch("agents_app.agents.core.milestone_eval.nodes.get_stream_writer", return_value=lambda _x: None),
         patch("agents_app.agents.core.milestone_run.graph.get_stream_writer", return_value=lambda _x: None),

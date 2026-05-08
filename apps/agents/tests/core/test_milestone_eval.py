@@ -55,11 +55,6 @@ async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
             "nodeType": "milestonedata",
             "data": {"summary": "Sales up 10%"},
         },
-        {
-            "nodeType": "passcriteria",
-            "id": "pc-1",
-            "data": {"requirement": "Has baseline"},
-        },
     ]
     with (
         patch(
@@ -69,6 +64,18 @@ async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
         patch(
             "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
             return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_node",
+            new=AsyncMock(
+                return_value={
+                    "data": {
+                        "passCriterias": [
+                            {"id": "pc-1", "requirement": "Has baseline", "status": "open"}
+                        ]
+                    }
+                }
+            ),
         ),
     ):
         out = await nodes.fetch_context(
@@ -89,11 +96,6 @@ async def test_fetch_context_appends_prior_milestone_context_when_workflow_prese
     fake_children = [
         {"nodeType": "goal", "data": {"goal": "Schedule posts"}},
         {"nodeType": "milestonedata", "data": {"schedules": []}},
-        {
-            "nodeType": "passcriteria",
-            "id": "pc-2",
-            "data": {"requirement": "Within campaign window"},
-        },
     ]
     with (
         patch(
@@ -107,6 +109,22 @@ async def test_fetch_context_appends_prior_milestone_context_when_workflow_prese
         patch(
             "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
             return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_node",
+            new=AsyncMock(
+                return_value={
+                    "data": {
+                        "passCriterias": [
+                            {
+                                "id": "pc-2",
+                                "requirement": "Within campaign window",
+                                "status": "open",
+                            }
+                        ]
+                    }
+                }
+            ),
         ),
     ):
         out = await nodes.fetch_context(

@@ -189,6 +189,16 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
     row = await fetch_milestone_node(mid, str(state["user_id"]), client=client)
     raw_md = row.get("data") if isinstance(row, dict) else None
     milestone_node_data = raw_md if isinstance(raw_md, dict) else {}
+    pass_rows = milestone_node_data.get("passCriterias")
+    criteria: list[dict[str, str]] = []
+    if isinstance(pass_rows, list):
+        for item in pass_rows:
+            if not isinstance(item, dict):
+                continue
+            cid = item.get("id")
+            req = item.get("requirement")
+            if isinstance(cid, str) and cid and isinstance(req, str):
+                criteria.append({"id": cid, "requirement": req})
     raw_preset = milestone_node_data.get("presetId")
     preset_id = raw_preset.strip() if isinstance(raw_preset, str) else ""
     if not preset_id:
@@ -204,6 +214,7 @@ async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient
     )
     return {
         **out,
+        "criteria": criteria,
         "goal": goal,
         "raw_data": "",
         "milestone_data": None,

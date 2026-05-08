@@ -11,6 +11,7 @@ from agents_app.agents.graphql_operations import (
     CREATE_NODE_MUTATION,
     DEFAULT_NODES_FIRST,
     DELETE_NODE_MUTATION,
+    NODE_BY_ID_QUERY,
     NODES_QUERY,
     PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
     UPDATE_NODE_MUTATION,
@@ -50,20 +51,68 @@ async def fetch_milestone_children(
     return await _run(client)
 
 
-async def update_passcriteria_status(
-    node_id: str,
+async def fetch_milestone_node(
+    milestone_id: str,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Return milestone node row (including `data.passCriterias`) or None."""
+
+    async def _run(c: httpx.AsyncClient) -> dict[str, Any] | None:
+        data = await graphql_post(c, NODE_BY_ID_QUERY, {"id": milestone_id}, user_id)
+        raw = data.get("node")
+        return raw if isinstance(raw, dict) else None
+
+    return await _run(client)
+
+
+async def update_milestone_passcriteria_status(
+    milestone_id: str,
+    criterion_id: str,
     status: str,
     user_id: str,
     *,
     client: httpx.AsyncClient,
 ) -> dict[str, Any]:
-    """Set passcriteria `status` to pass or fail."""
+    """Set milestone.data.passCriterias[*].status by criterion id."""
 
     async def _run(c: httpx.AsyncClient) -> dict[str, Any]:
+        row = await fetch_milestone_node(milestone_id, user_id, client=c)
+        if not isinstance(row, dict):
+            msg = "milestone not found"
+            raise RuntimeError(msg)
+        raw_data = row.get("data")
+        data = raw_data if isinstance(raw_data, dict) else {}
+        raw_pass = data.get("passCriterias")
+        pass_rows = raw_pass if isinstance(raw_pass, list) else []
+        next_pass: list[dict[str, Any]] = []
+        found = False
+        for item in pass_rows:
+            if not isinstance(item, dict):
+                continue
+            cid = item.get("id")
+            if not isinstance(cid, str) or not cid:
+                continue
+            req = item.get("requirement")
+            current_status = item.get("status")
+            if not isinstance(req, str) or not isinstance(current_status, str):
+                continue
+            next_item = {"id": cid, "requirement": req, "status": current_status}
+            if cid == criterion_id:
+                next_item["status"] = status
+                found = True
+            next_pass.append(next_item)
+        if not found:
+            msg = f"criterion not found: {criterion_id}"
+            raise RuntimeError(msg)
+
+        next_data = dict(data)
+        next_data["passCriterias"] = next_pass
         data = await graphql_post(
             c,
             UPDATE_NODE_MUTATION,
-            {"id": node_id, "data": {"status": status}},
+            {"id": milestone_id, "data": next_data},
             user_id,
         )
         node = data.get("updateNode")

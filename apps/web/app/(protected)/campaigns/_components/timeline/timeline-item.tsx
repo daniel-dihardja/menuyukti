@@ -257,7 +257,10 @@ function TimelineItemInner({
     if (!raw) {
       return
     }
-    const next = [...criteriaRows, { requirement: raw, status: 'open' as const }]
+    const next = [
+      ...criteriaRows,
+      { id: crypto.randomUUID(), requirement: raw, status: 'open' as const },
+    ]
     const ok = await onUpdatePassCriteria(milestone.id, next)
     if (ok && addCriteriaInputRef.current) {
       addCriteriaInputRef.current.value = ''

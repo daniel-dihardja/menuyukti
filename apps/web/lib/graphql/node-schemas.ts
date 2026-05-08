@@ -5,13 +5,14 @@
 
 import { z } from 'zod'
 
-/** Passcriteria `data` JSON — matches backend `PassCriteriaHandler` validation. */
-export const passCriteriaDataSchema = z.object({
+/** Pass criteria item stored inside milestone `data.passCriterias`. */
+export const passCriteriaSchema = z.object({
+  id: z.string().trim().min(1),
   requirement: z.string(),
   status: z.enum(['pass', 'fail', 'open']),
 })
 
-export type PassCriteriaData = z.infer<typeof passCriteriaDataSchema>
+export type PassCriteriaData = z.infer<typeof passCriteriaSchema>
 
 export const milestonePresetIdSchema = z.enum([
   'restaurant_campaign_brief',
@@ -203,6 +204,7 @@ export const milestoneDataSchema = z
     goal: z.string().optional(),
     presetId: milestonePresetIdSchema.optional(),
     milestoneInput: milestoneInputSchema.optional(),
+    passCriterias: z.array(passCriteriaSchema).optional(),
   })
   .passthrough()
 
@@ -241,7 +243,7 @@ export const milestoneNodeSchema = baseNode.extend({
 
 export const passCriteriaNodeSchema = baseNode.extend({
   nodeType: z.literal('passcriteria'),
-  data: passCriteriaDataSchema.nullable(),
+  data: passCriteriaSchema.omit({ id: true }).nullable(),
 })
 
 export const goalNodeSchema = baseNode.extend({
