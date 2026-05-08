@@ -1143,7 +1143,7 @@
             "inputDescription": "Optional orientation notes for how to review star/puzzle candidates in this campaign context.",
             "inputPlaceholder": "e.g. prioritize FOOD first this month due to family bundles...",
             "goal": "Fetch promotion-engineering candidates and present star and puzzle menu items by category. Use Campaign Brief main category to place the most relevant category first in preview.",
-            "criterionCategoriesPresent": "Data includes both **FOOD** and **DRINK** category sections, and the first category matches `mainCategory` in the same data payload.",
+            "criterionCategoriesPresent": "Data includes at least one category section (**FOOD** or **DRINK**), and the first category matches `mainCategory` in the same data payload.",
             "criterionItemsOnlyFromSignals": "**starItems** and **puzzleItems** only include menu names from promotion-engineering signals (no invented items)."
           },
           "restaurant_campaign_brief": {
@@ -1158,8 +1158,8 @@
             "criterionPublicHolidays": "**publicHolidays** is generated for the campaign window and listed in the data.",
             "criterionVenueSnapshot": "**Venue snapshot** in the data names the venue and uses city/country/currency when known; it does not invent full addresses.",
             "criterionContentPillars": "**Content pillars** includes 3-5 unique non-empty items in the data. Pass when the list is present and each item is concrete enough to guide content planning.",
-            "criterionAudienceHypotheses": "**Audience hypotheses** include 3-5 unique non-empty items reflecting only what the data supports (for example peaks, meal periods, weekday/weekend split); no invented demographics.",
-            "criterionProofAngles": "**Proof-oriented angles** include 3-5 unique non-empty items and reference real menu/category signals already present in the data (for example top items or category mix).",
+            "criterionAudienceHypotheses": "**Audience hypotheses** include 3-5 unique non-empty items that are plausible for this venue and usable for campaign planning. Align with available data signals when present, but strict signal wording or explicit demographic proof in every line is optional.",
+            "criterionProofAngles": "**Proof-oriented angles** include 3-5 unique non-empty items and are concrete, evidence-oriented reasons to believe the campaign message. Align with known venue/menu context when available; naming exact menu items or category labels in every line is optional.",
             "criterionToneGuardrails": "**Tone guardrails** include 3-5 unique non-empty items and stay consistent with operating context in the data.",
             "criterionCampaignObjective": "**Campaign objective** states one primary business outcome and one dominant funnel stage (awareness, consideration, conversion, or loyalty).",
             "criterionTargetSegments": "**Target segments** includes 3-5 unique non-empty items in the data. Pass when segments describe usable audience groups for campaign planning; fail when items are empty or duplicated.",

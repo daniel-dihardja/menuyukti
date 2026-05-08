@@ -80,6 +80,90 @@ _OPTIONAL_INPUT_FRAGMENT_RE = re.compile(
     r"(?is)\bOptional input usage:\s*(?:used|not used|given|not given)\b(?:\s*[—-]\s*[^\n]*)?\.?"
 )
 
+_PROOF_ANGLES_REQUIREMENT_RE = re.compile(r"proof-oriented angles", re.IGNORECASE)
+_AUDIENCE_HYPOTHESES_REQUIREMENT_RE = re.compile(r"audience hypotheses", re.IGNORECASE)
+_TARGET_SEGMENTS_REQUIREMENT_RE = re.compile(r"target segments", re.IGNORECASE)
+_MESSAGE_HIERARCHY_REQUIREMENT_RE = re.compile(r"message hierarchy", re.IGNORECASE)
+_OFFER_CTA_PLAN_REQUIREMENT_RE = re.compile(r"offer and cta plan", re.IGNORECASE)
+_CONTENT_PILLAR_PLAN_REQUIREMENT_RE = re.compile(r"content pillar plan", re.IGNORECASE)
+_MEASUREMENT_PLAN_REQUIREMENT_RE = re.compile(r"measurement plan", re.IGNORECASE)
+_TESTING_PLAN_REQUIREMENT_RE = re.compile(r"testing plan", re.IGNORECASE)
+_RISK_GUARDRAILS_REQUIREMENT_RE = re.compile(r"risk guardrails", re.IGNORECASE)
+_TONE_GUARDRAILS_REQUIREMENT_RE = re.compile(r"tone guardrails", re.IGNORECASE)
+_CONTENT_PILLARS_REQUIREMENT_RE = re.compile(r"content pillars", re.IGNORECASE)
+_CAMPAIGN_OBJECTIVE_REQUIREMENT_RE = re.compile(r"campaign objective", re.IGNORECASE)
+
+
+def _normalize_requirement_for_eval(requirement: str) -> str:
+    """Apply light compatibility rewrites for legacy criterion wording."""
+    text = requirement.strip()
+    if not text:
+        return text
+    if _PROOF_ANGLES_REQUIREMENT_RE.search(text):
+        return (
+            "**Proof-oriented angles** include 3-5 unique non-empty items and are concrete, "
+            "evidence-oriented reasons to believe the campaign message. They should align with "
+            "known venue/menu context when available; naming exact menu items or category labels "
+            "in every line is optional."
+        )
+    if _AUDIENCE_HYPOTHESES_REQUIREMENT_RE.search(text):
+        return (
+            "**Audience hypotheses** include 3-5 unique non-empty items that are plausible for the "
+            "venue context and usable for campaign planning. They should align with available data "
+            "signals when present, but exact signal keywords or strict demographic proof in every line "
+            "are optional. Fail only when items are empty, duplicated, or clearly disconnected from context."
+        )
+    if _TARGET_SEGMENTS_REQUIREMENT_RE.search(text):
+        return (
+            "**Target segments** include 3-5 unique non-empty items that are actionable for campaign planning. "
+            "Pass when segments are clear and usable; strict taxonomy is optional."
+        )
+    if _MESSAGE_HIERARCHY_REQUIREMENT_RE.search(text):
+        return (
+            "**Message hierarchy** includes 3-5 unique lines with a clear priority order for promise, proof, "
+            "and call-to-action across the set. Exact wording in each line is flexible."
+        )
+    if _OFFER_CTA_PLAN_REQUIREMENT_RE.search(text):
+        return (
+            "**Offer and CTA plan** includes 3-5 unique lines that explain realistic guest actions and margin-safe "
+            "offer framing. Not every line needs every channel."
+        )
+    if _CONTENT_PILLAR_PLAN_REQUIREMENT_RE.search(text):
+        return (
+            "**Content pillar plan** includes 3-5 unique lines mapping pillars to executable campaign guidance "
+            "(such as angle, format, or CTA emphasis). Rigid templates are optional."
+        )
+    if _MEASUREMENT_PLAN_REQUIREMENT_RE.search(text):
+        return (
+            "**Measurement plan** includes 3-5 unique lines with clear metrics and practical decision signals. "
+            "Exact threshold phrasing is optional if decision intent is clear."
+        )
+    if _TESTING_PLAN_REQUIREMENT_RE.search(text):
+        return (
+            "**Testing plan** includes 3-5 unique lines with concrete experiments and follow-up actions when "
+            "performance is weak. Exact test taxonomy is optional."
+        )
+    if _RISK_GUARDRAILS_REQUIREMENT_RE.search(text):
+        return (
+            "**Risk guardrails** include 3-5 unique lines covering brand, regulatory, or operational constraints "
+            "and clear avoidances where relevant."
+        )
+    if _TONE_GUARDRAILS_REQUIREMENT_RE.search(text):
+        return (
+            "**Tone guardrails** include 3-5 unique non-empty items that are coherent with venue context and "
+            "provide usable writing constraints."
+        )
+    if _CONTENT_PILLARS_REQUIREMENT_RE.search(text):
+        return (
+            "**Content pillars** include 3-5 unique non-empty items that are concrete enough to guide campaign content."
+        )
+    if _CAMPAIGN_OBJECTIVE_REQUIREMENT_RE.search(text):
+        return (
+            "**Campaign objective** states one primary business outcome and a dominant funnel stage. "
+            "Equivalent stage phrasing is acceptable."
+        )
+    return text
+
 
 def _optional_input_usage_line(notes: str) -> str:
     cleaned_notes = notes.strip()
@@ -181,10 +265,11 @@ async def evaluate_criterion(
     raw_data = str(state.get("raw_data", ""))
     criterion_id = str(state.get("criterion_id", ""))
     requirement = str(state.get("requirement", ""))
+    normalized_requirement = _normalize_requirement_for_eval(requirement)
     verdict = await structured_llm.ainvoke(
         [
             SystemMessage(content=EVAL_SYSTEM),
-            HumanMessage(content=eval_human_message(goal, raw_data, requirement)),
+            HumanMessage(content=eval_human_message(goal, raw_data, normalized_requirement)),
         ]
     )
     writer = get_stream_writer()

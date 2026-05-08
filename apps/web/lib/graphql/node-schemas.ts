@@ -162,7 +162,7 @@ export const promotionCandidatesCategorySchema = z.object({
 
 export const promotionCandidatesMilestoneDataSchema = z.object({
   mainCategory: z.enum(['FOOD', 'DRINK']),
-  categories: z.array(promotionCandidatesCategorySchema),
+  categories: z.array(promotionCandidatesCategorySchema).min(1),
   sourceAnalyticsRunId: z.string().nullable().optional(),
   notes: z.string().optional(),
 })

@@ -6,17 +6,22 @@ import {
 } from '@/lib/graphql/node-schemas'
 
 describe('promotion candidates milestone schema', () => {
-  it('accepts ordered FOOD/DRINK categories', () => {
+  it('accepts at least one valid category block', () => {
     const parsed = promotionCandidatesMilestoneDataSchema.safeParse({
       mainCategory: 'FOOD',
-      categories: [
-        { category: 'FOOD', starItems: ['Steak'], puzzleItems: ['Soup'] },
-        { category: 'DRINK', starItems: ['Latte'], puzzleItems: ['Matcha'] },
-      ],
+      categories: [{ category: 'FOOD', starItems: ['Steak'], puzzleItems: ['Soup'] }],
       sourceAnalyticsRunId: null,
       notes: '',
     })
     expect(parsed.success).toBe(true)
+  })
+
+  it('requires at least one category block', () => {
+    const parsed = promotionCandidatesMilestoneDataSchema.safeParse({
+      mainCategory: 'FOOD',
+      categories: [],
+    })
+    expect(parsed.success).toBe(false)
   })
 
   it('rejects unknown category labels', () => {
