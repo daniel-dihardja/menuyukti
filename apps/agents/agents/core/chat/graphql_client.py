@@ -60,7 +60,7 @@ async def upsert_milestone_goal(
     client: httpx.AsyncClient,
 ) -> None:
     """Set ``milestone_goal`` via ``updateNode`` (column-backed)."""
-    patch = (
+    patch: dict[str, str | None] = (
         {"milestoneGoal": goal_text.strip()}
         if goal_text.strip()
         else {"milestoneGoal": None}
