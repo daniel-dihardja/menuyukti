@@ -129,5 +129,5 @@ export async function getCachedShopImagesForSlug(slug: string): Promise<ShopS3Im
 }
 
 export function revalidateShopImagesForSlug(slug: string): void {
-  revalidateTag(shopImagesCacheTag(slug), 'max')
+  revalidateTag(shopImagesCacheTag(slug), { expire: 0 })
 }

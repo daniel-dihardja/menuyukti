@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { ZodError } from 'zod'
 
-import { graphqlImageAiFlowsCacheTag } from '@/lib/graphql/cache-tags'
+import { graphqlImageAiFlowsCacheTag, revalidateTagAfterMutation } from '@/lib/graphql/cache-tags'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   DELETE_IMAGE_AI_FLOW_MUTATION,
@@ -52,7 +52,7 @@ export async function PUT(req: Request, context: RouteContext) {
       userId,
     )
 
-    revalidateTag(graphqlImageAiFlowsCacheTag(userId), 'max')
+    revalidateTag(graphqlImageAiFlowsCacheTag(userId), revalidateTagAfterMutation)
 
     return NextResponse.json({ flow: data.updateImageAiFlow })
   } catch (error) {
@@ -83,7 +83,7 @@ export async function DELETE(_req: Request, context: RouteContext) {
 
     await graphqlQuery<DeleteImageAiFlowData>(DELETE_IMAGE_AI_FLOW_MUTATION, { slug }, userId)
 
-    revalidateTag(graphqlImageAiFlowsCacheTag(userId), 'max')
+    revalidateTag(graphqlImageAiFlowsCacheTag(userId), revalidateTagAfterMutation)
 
     return NextResponse.json({ ok: true })
   } catch (error) {

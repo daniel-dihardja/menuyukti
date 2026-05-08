@@ -4,7 +4,7 @@ import { auth } from '@clerk/nextjs/server'
 import { createLocationParsedSchema } from './schema'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { apiError, apiErrorFromUnknown } from '@/lib/api/error-response'
-import { graphqlLocationsDataCacheTag } from '@/lib/graphql/cache-tags'
+import { graphqlLocationsDataCacheTag, revalidateTagAfterMutation } from '@/lib/graphql/cache-tags'
 import {
   CREATE_LOCATION_MUTATION,
   CREATE_WORKSPACE_MUTATION,
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
       }
     }
 
-    revalidateTag(graphqlLocationsDataCacheTag(userId), 'max')
+    revalidateTag(graphqlLocationsDataCacheTag(userId), revalidateTagAfterMutation)
 
     return NextResponse.json(location, { status: 201 })
   } catch (error) {

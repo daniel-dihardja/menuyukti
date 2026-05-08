@@ -1,11 +1,17 @@
 import { revalidateTag } from 'next/cache'
 
-import { graphqlAnalyticsRunComputationsCacheTag } from '@/lib/graphql/cache-tags'
+import {
+  graphqlAnalyticsRunComputationsCacheTag,
+  revalidateTagAfterMutation,
+} from '@/lib/graphql/cache-tags'
 
 /** Clears cached matrix + heatmap for a run (call from COGS/upload routes when added). */
 export function revalidateAnalyticsRunComputationsCache(
   userId: string,
   analyticsRunId: string,
 ): void {
-  revalidateTag(graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId), 'max')
+  revalidateTag(
+    graphqlAnalyticsRunComputationsCacheTag(userId, analyticsRunId),
+    revalidateTagAfterMutation,
+  )
 }

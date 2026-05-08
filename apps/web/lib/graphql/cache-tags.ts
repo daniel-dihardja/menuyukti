@@ -3,6 +3,14 @@
  * TTL is set via `cacheLife` next to `cacheTag` in cached query functions.
  */
 
+/**
+ * Pass as the second argument to `revalidateTag` from route handlers after a mutation.
+ * Using the string profile `'max'` is stale-while-revalidate under Cache Components: the
+ * next request can still receive the previous cached value (e.g. deleted workflows
+ * appearing until a second reload). `{ expire: 0 }` expires the stale entry immediately.
+ */
+export const revalidateTagAfterMutation = { expire: 0 } as const
+
 export function graphqlLocationsDataCacheTag(userId: string): string {
   return `graphql-locations-data-${userId}`
 }
