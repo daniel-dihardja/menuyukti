@@ -110,7 +110,10 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
       : undefined
   const goal = goalCol ?? (parsed.success ? parsed.data.goal : undefined)
 
-  let { presetId, milestoneInput } = milestoneRunSkillFieldsFromData(node.data)
+  const { presetId, milestoneInput: parsedMilestoneInput } = milestoneRunSkillFieldsFromData(
+    node.data,
+  )
+  let milestoneInput = parsedMilestoneInput
   if (node.milestoneInput != null) {
     const colInput = milestoneInputSchema.safeParse(node.milestoneInput)
     if (colInput.success) {
