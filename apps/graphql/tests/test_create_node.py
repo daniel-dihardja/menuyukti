@@ -253,7 +253,7 @@ def test_create_node_with_json_data():
         session.close()
 
 
-def test_create_goal_under_milestone():
+def test_create_goal_node_type_rejected():
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -310,86 +310,7 @@ def test_create_goal_under_milestone():
             context_value=graphql_auth_context(),
         )
     )
-    assert not goal.errors, goal.errors
-    data = goal.data["createNode"]
-    assert data["parentId"] == milestone_id
-    assert data["nodeType"] == "goal"
-    assert data["data"] == {"goal": "Launch promo"}
-
-
-def test_create_second_goal_rejected():
-    session = SessionLocal()
-    try:
-        session.query(Node).delete()
-        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
-        session.commit()
-
-        location = Location(name="Goal Dup Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
-        session.add(location)
-        session.commit()
-        session.refresh(location)
-        location_id = location.id
-    finally:
-        session.close()
-
-    campaign = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "workflow",
-                "name": "Campaign",
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not campaign.errors, campaign.errors
-    campaign_id = campaign.data["createNode"]["id"]
-
-    milestone = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "milestone",
-                "name": "M1",
-                "parentId": campaign_id,
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not milestone.errors, milestone.errors
-    milestone_id = milestone.data["createNode"]["id"]
-
-    first = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "goal",
-                "name": "Goal",
-                "parentId": milestone_id,
-                "data": {"goal": "A"},
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not first.errors, first.errors
-
-    second = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "goal",
-                "name": "Goal2",
-                "parentId": milestone_id,
-                "data": {"goal": "B"},
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert second.errors
+    assert goal.errors
 
 
 def test_create_milestonedata_under_milestone():

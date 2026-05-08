@@ -11,6 +11,7 @@ from agents_app.agents.core.milestone_run.graphql_client import upsert_milestone
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from langchain_core.tools import BaseTool, tool
 
+
 def _contains_forbidden_snapshot_text(value: str) -> bool:
     text = value.strip().lower()
     if not text:

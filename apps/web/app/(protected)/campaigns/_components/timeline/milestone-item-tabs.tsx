@@ -30,6 +30,7 @@ const presetGoalTranslationKeyById = {
   restaurant_campaign_brief: 'milestonePreset.restaurant_campaign_brief.goal',
   post_scheduler: 'milestonePreset.post_scheduler.goal',
   promotion_candidates: 'milestonePreset.promotion_candidates.goal',
+  culture_hooks: 'milestonePreset.culture_hooks.goal',
 } as const
 
 type CampaignWindowInput = {
@@ -87,7 +88,11 @@ function formatDateButtonLabel(value: string): string {
   return parsed ? parsed.toLocaleDateString() : value
 }
 
-type OptionalNotesPresetId = 'restaurant_campaign_brief' | 'post_scheduler' | 'promotion_candidates'
+type OptionalNotesPresetId =
+  | 'restaurant_campaign_brief'
+  | 'post_scheduler'
+  | 'promotion_candidates'
+  | 'culture_hooks'
 
 function optionalNotesFieldCopy(
   t: (key: string) => string,

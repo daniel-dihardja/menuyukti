@@ -10,7 +10,7 @@ from graphql.data_sources import SessionLocal
 from graphql.schema.auth import user_id_from_info
 from graphql.schema.queries.image_ai_flows import _flow_to_gql
 from graphql.schema.types import ImageAiFlowType
-from graphql.services import image_ai_flow as image_ai_flow_service
+from graphql.services.image_ai_flow import update_image_ai_flow
 
 
 @strawberry.type
@@ -35,7 +35,7 @@ class UpdateImageAiFlowMutation:
             raise ValueError("Missing authenticated user for updateImageAiFlow")
 
         with SessionLocal() as session:
-            row = image_ai_flow_service.update_image_ai_flow(
+            row = update_image_ai_flow(
                 session,
                 slug=slug,
                 new_slug=new_slug,

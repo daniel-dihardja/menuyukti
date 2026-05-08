@@ -14,7 +14,6 @@ from agents_app.agents.core.milestone_run.graphql_client import (
     upsert_milestonedata_node,
 )
 from agents_app.agents.core.milestone_run.output_schema import (
-    CampaignBriefMilestoneOutput,
     CampaignBriefVenueSnapshot,
     validate_skill_output,
 )

@@ -8,9 +8,9 @@ import {
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataValueSchema,
-  passCriteriaSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
+  type PassCriteriaData,
 } from '@/lib/graphql/node-schemas'
 import {
   CREATE_NODE_MUTATION,
@@ -28,10 +28,7 @@ import {
   type NodesDataRaw,
   type UpdateNodeDataRaw,
 } from '@/lib/graphql/queries'
-import {
-  goalFromChildNodes,
-  passCriteriasFromMilestoneData,
-} from '@/app/(protected)/campaigns/_components/milestone-map'
+import { passCriteriasFromMilestoneData } from '@/app/(protected)/campaigns/_components/milestone-map'
 import { milestoneIdParamSchema, patchMilestoneSchema, workflowIdParamSchema } from '../schema'
 
 type RouteContext = {
@@ -41,9 +38,14 @@ type RouteContext = {
 function mergeMilestoneNodeDataJson(
   prev: Record<string, unknown>,
   patch: {
-    presetId?: 'restaurant_campaign_brief' | 'post_scheduler' | 'promotion_candidates'
+    presetId?:
+      | 'restaurant_campaign_brief'
+      | 'post_scheduler'
+      | 'promotion_candidates'
+      | 'culture_hooks'
     milestoneInput?: { type: string; value?: unknown }
-    passCriterias?: z.infer<typeof passCriteriaSchema>[]
+    passCriterias?: PassCriteriaData[]
+    goal?: string
   },
 ): Record<string, unknown> {
   const next = { ...prev }
@@ -55,6 +57,13 @@ function mergeMilestoneNodeDataJson(
   }
   if (patch.passCriterias !== undefined) {
     next.passCriterias = patch.passCriterias
+  }
+  if (patch.goal !== undefined) {
+    if (patch.goal === '') {
+      delete next.goal
+    } else {
+      next.goal = patch.goal
+    }
   }
   return next
 }
@@ -158,62 +167,6 @@ async function syncMilestonedataChild(
   }
 }
 
-/** Persist goal text on a child `goal` node; empty string removes goal node(s). */
-async function syncGoalChild(
-  locationId: number,
-  milestoneId: string,
-  goalText: string,
-  userId: string,
-) {
-  const existing = parseNodesData(
-    await graphqlQuery<NodesDataRaw>(
-      NODES_QUERY,
-      {
-        locationId,
-        nodeType: 'goal',
-        parentId: milestoneId,
-      },
-      userId,
-    ),
-  )
-  const goals = existing.nodes.filter((n) => n.nodeType === 'goal')
-  if (goalText === '') {
-    for (const g of goals) {
-      await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: g.id }, userId)
-    }
-    return
-  }
-  if (goals.length === 0) {
-    parseCreateNodeData(
-      await graphqlQuery<CreateNodeDataRaw>(
-        CREATE_NODE_MUTATION,
-        {
-          locationId,
-          nodeType: 'goal',
-          parentId: milestoneId,
-          name: 'Goal',
-          data: { goal: goalText },
-        },
-        userId,
-      ),
-    )
-    return
-  }
-  const [primary, ...rest] = goals
-  for (const g of rest) {
-    await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: g.id }, userId)
-  }
-  if (primary) {
-    parseUpdateNodeData(
-      await graphqlQuery<UpdateNodeDataRaw>(
-        UPDATE_NODE_MUTATION,
-        { id: primary.id, data: { goal: goalText } },
-        userId,
-      ),
-    )
-  }
-}
-
 /** Load persisted Data-tab payload (same sources as the workflow page SSR). */
 export async function GET(_req: Request, context: RouteContext) {
   try {
@@ -245,26 +198,15 @@ export async function GET(_req: Request, context: RouteContext) {
     }
 
     const locationId = workflowRoot.locationId
-    const [milestonedataRes, goalRes] = await Promise.all([
-      graphqlQuery<NodesDataRaw>(
-        NODES_QUERY,
-        {
-          locationId,
-          nodeType: 'milestonedata',
-          parentId: milestoneId,
-        },
-        userId,
-      ),
-      graphqlQuery<NodesDataRaw>(
-        NODES_QUERY,
-        {
-          locationId,
-          nodeType: 'goal',
-          parentId: milestoneId,
-        },
-        userId,
-      ),
-    ])
+    const milestonedataRes = await graphqlQuery<NodesDataRaw>(
+      NODES_QUERY,
+      {
+        locationId,
+        nodeType: 'milestonedata',
+        parentId: milestoneId,
+      },
+      userId,
+    )
 
     const milestonedataParsed = parseNodesData(milestonedataRes)
     let milestoneData: z.infer<typeof milestonedataValueSchema> | null = null
@@ -283,16 +225,11 @@ export async function GET(_req: Request, context: RouteContext) {
       }
     }
 
-    const goalParsed = parseNodesData(goalRes)
-    const goalFromNode = goalFromChildNodes(goalParsed.nodes)
-
     const mn = validated.milestoneNode
     const parsedMilestoneNodeData =
       mn.data != null && typeof mn.data === 'object' ? milestoneDataSchema.safeParse(mn.data) : null
-    let legacyGoal: string | undefined
-    let passCriterias: z.infer<typeof passCriteriaSchema>[] = []
+    let passCriterias: PassCriteriaData[] = []
     if (parsedMilestoneNodeData?.success) {
-      legacyGoal = parsedMilestoneNodeData.data.goal
       passCriterias = passCriteriasFromMilestoneData(parsedMilestoneNodeData.data)
     }
 
@@ -368,7 +305,10 @@ export async function GET(_req: Request, context: RouteContext) {
       }
     }
 
-    const goal = goalFromNode ?? legacyGoal ?? ''
+    const goal =
+      parsedMilestoneNodeData?.success && typeof parsedMilestoneNodeData.data.goal === 'string'
+        ? parsedMilestoneNodeData.data.goal
+        : ''
 
     let milestoneInput: z.infer<typeof milestoneInputSchema> | null = null
     if (
@@ -509,7 +449,8 @@ export async function PATCH(req: Request, context: RouteContext) {
     if (
       body.presetId !== undefined ||
       body.milestoneInput !== undefined ||
-      body.passCriterias !== undefined
+      body.passCriterias !== undefined ||
+      body.goal !== undefined
     ) {
       const mn = validated.milestoneNode
       const prevData =
@@ -520,6 +461,7 @@ export async function PATCH(req: Request, context: RouteContext) {
         presetId: body.presetId,
         milestoneInput: body.milestoneInput,
         passCriterias: body.passCriterias,
+        goal: body.goal,
       })
       parseUpdateNodeData(
         await graphqlQuery<UpdateNodeDataRaw>(
@@ -530,17 +472,8 @@ export async function PATCH(req: Request, context: RouteContext) {
       )
     }
 
-    const syncPromises: Promise<void>[] = []
-    if (body.goal !== undefined) {
-      syncPromises.push(syncGoalChild(workflowRoot.locationId, milestoneId, body.goal, userId))
-    }
     if (body.milestoneData !== undefined) {
-      syncPromises.push(
-        syncMilestonedataChild(workflowRoot.locationId, milestoneId, body.milestoneData, userId),
-      )
-    }
-    if (syncPromises.length > 0) {
-      await Promise.all(syncPromises)
+      await syncMilestonedataChild(workflowRoot.locationId, milestoneId, body.milestoneData, userId)
     }
 
     const milestoneAfter = parseNodeData(

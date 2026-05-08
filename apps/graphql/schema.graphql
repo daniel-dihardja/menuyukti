@@ -346,12 +346,11 @@ input MenuItemCogsUpsertInput {
 }
 
 """
-A milestone node plus its passcriteria, goal, milestonedata, and result children.
+A milestone node plus its passcriteria, milestonedata, and result children.
 """
 type MilestoneCampaignBundleType {
   milestone: NodeType!
   passCriteriaNodes: [NodeType!]!
-  goalNodes: [NodeType!]!
   milestonedataNodes: [NodeType!]!
   resultNodes: [NodeType!]!
 }
@@ -395,7 +394,7 @@ type Mutation {
 }
 
 """
-A workflow tree node (workflow, milestone, goal, passcriteria, result, milestonedata, etc.) stored in the polymorphic `node` table.
+A workflow tree node (workflow, milestone, passcriteria, result, milestonedata, etc.) stored in the polymorphic `node` table.
 """
 type NodeType {
   id: ID!
@@ -605,7 +604,7 @@ type Query {
   workflowExports(locationId: Int!, first: Int = null): [WorkflowExportType!]!
 
   """
-  Load a workflow node, its milestones (ordered like `nodes`), and each milestone's passcriteria/goal/milestonedata/result children. Returns null if the id is missing, not a workflow, or not owned by the caller.
+  Load a workflow node, its milestones (ordered like `nodes`), and each milestone's passcriteria/milestonedata/result children. Returns null if the id is missing, not a workflow, or not owned by the caller.
   """
   workflowCampaignTree(workflowId: ID!): WorkflowCampaignTreeType
 

@@ -7,9 +7,7 @@ from typing import Any
 import httpx
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
-    CREATE_NODE_MUTATION,
     DEFAULT_NODES_FIRST,
-    DELETE_NODE_MUTATION,
     NODE_BY_ID_QUERY,
     NODES_QUERY,
     UPDATE_NODE_MUTATION,
@@ -39,7 +37,7 @@ async def fetch_milestone_children(
     *,
     client: httpx.AsyncClient,
 ) -> list[dict[str, Any]]:
-    """Child nodes under the milestone (goal, milestonedata, passcriteria, result)."""
+    """Child nodes under the milestone (milestonedata, passcriteria, result)."""
     data = await graphql_post(
         client,
         NODES_QUERY,
@@ -57,77 +55,31 @@ async def fetch_milestone_children(
     return [item for item in raw if isinstance(item, dict)]
 
 
-async def upsert_goal_node(
+async def upsert_milestone_goal(
     milestone_id: str,
-    location_id: int,
     goal_text: str,
     user_id: str,
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Create or update the single `goal` child; empty text deletes goal nodes."""
-    data = await graphql_post(
-        client,
-        NODES_QUERY,
-        {
-            "locationId": location_id,
-            "nodeType": "goal",
-            "parentId": milestone_id,
-            "first": DEFAULT_NODES_FIRST,
-        },
-        user_id,
-    )
-    raw_nodes = data.get("nodes")
-    rows: list[dict[str, Any]] = []
-    if isinstance(raw_nodes, list):
-        for item in raw_nodes:
-            if isinstance(item, dict) and _node_type(item) == "goal":
-                rows.append(item)
-
-    if not goal_text.strip():
-        for g in rows:
-            gid = g.get("id")
-            if gid is not None:
-                await graphql_post(client, DELETE_NODE_MUTATION, {"id": str(gid)}, user_id)
-        return
-
-    if not rows:
-        gql = await graphql_post(
-            client,
-            CREATE_NODE_MUTATION,
-            {
-                "locationId": location_id,
-                "nodeType": "goal",
-                "parentId": milestone_id,
-                "name": "Goal",
-                "data": {"goal": goal_text},
-            },
-            user_id,
-        )
-        node = gql.get("createNode")
-        if not isinstance(node, dict):
-            msg = "createNode returned invalid payload"
-            raise RuntimeError(msg)
-        return
-
-    primary, *rest = rows
-    for extra in rest:
-        eid = extra.get("id")
-        if eid is not None:
-            await graphql_post(client, DELETE_NODE_MUTATION, {"id": str(eid)}, user_id)
-
-    pid = primary.get("id")
-    if pid is None:
-        msg = "goal node missing id"
+    """Merge ``goal`` into the milestone node's ``data`` JSON; empty text removes ``goal``."""
+    node = await fetch_milestone_node(milestone_id, user_id, client=client)
+    if not isinstance(node, dict):
+        msg = "milestone not found"
         raise RuntimeError(msg)
+    raw = node.get("data")
+    base: dict[str, Any] = dict(raw) if isinstance(raw, dict) else {}
+    if not goal_text.strip():
+        base.pop("goal", None)
+    else:
+        base["goal"] = goal_text
     upd = await graphql_post(
         client,
         UPDATE_NODE_MUTATION,
-        {"id": str(pid), "data": {"goal": goal_text}},
+        {"id": milestone_id, "data": base},
         user_id,
     )
-    node = upd.get("updateNode")
-    if not isinstance(node, dict):
+    if not isinstance(upd.get("updateNode"), dict):
         msg = "updateNode returned invalid payload"
         raise RuntimeError(msg)
 

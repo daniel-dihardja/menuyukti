@@ -74,13 +74,14 @@ async def test_graph_dispatches_to_dedicated_preset_graph(
     with (
         patch(
             "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(return_value=[{"nodeType": "goal", "data": {"goal": "G1"}}]),
+            new=AsyncMock(return_value=[]),
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
             new=AsyncMock(
                 return_value={
                     "data": {
+                        "goal": "G1",
                         "presetId": preset_id,
                         "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}],
                     }
@@ -92,7 +93,8 @@ async def test_graph_dispatches_to_dedicated_preset_graph(
             new=AsyncMock(
                 return_value={
                     "data": {
-                        "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}]
+                        "goal": "G1",
+                        "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}],
                     }
                 }
             ),
@@ -123,13 +125,14 @@ async def test_graph_raises_for_unknown_preset() -> None:
     with (
         patch(
             "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(return_value=[{"nodeType": "goal", "data": {"goal": "G1"}}]),
+            new=AsyncMock(return_value=[]),
         ),
         patch(
             "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
             new=AsyncMock(
                 return_value={
                     "data": {
+                        "goal": "G1",
                         "presetId": "unknown_preset",
                         "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}],
                     }
@@ -141,7 +144,8 @@ async def test_graph_raises_for_unknown_preset() -> None:
             new=AsyncMock(
                 return_value={
                     "data": {
-                        "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}]
+                        "goal": "G1",
+                        "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}],
                     }
                 }
             ),

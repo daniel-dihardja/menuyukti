@@ -48,10 +48,6 @@ def test_route_after_fetch_emits_send_workers() -> None:
 async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
     fake_children = [
         {
-            "nodeType": "goal",
-            "data": {"goal": "Increase covers"},
-        },
-        {
             "nodeType": "milestonedata",
             "data": {"summary": "Sales up 10%"},
         },
@@ -70,9 +66,10 @@ async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
             new=AsyncMock(
                 return_value={
                     "data": {
+                        "goal": "Increase covers",
                         "passCriterias": [
                             {"id": "pc-1", "requirement": "Has baseline", "status": "open"}
-                        ]
+                        ],
                     }
                 }
             ),
@@ -94,7 +91,6 @@ async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
 @pytest.mark.asyncio
 async def test_fetch_context_appends_prior_milestone_context_when_workflow_present() -> None:
     fake_children = [
-        {"nodeType": "goal", "data": {"goal": "Schedule posts"}},
         {"nodeType": "milestonedata", "data": {"schedules": []}},
     ]
     with (

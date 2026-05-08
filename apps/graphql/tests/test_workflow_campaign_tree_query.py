@@ -14,9 +14,8 @@ query WorkflowCampaignTree($workflowId: ID!) {
       locationId
     }
     milestones {
-      milestone { id name nodeType }
+      milestone { id name nodeType data }
       passCriteriaNodes { id nodeType }
-      goalNodes { id nodeType }
       milestonedataNodes { id nodeType }
       resultNodes { id nodeType }
     }
@@ -70,9 +69,24 @@ def test_workflow_campaign_tree_returns_milestones_and_children():
     assert not ms.errors, ms.errors
     milestone_id = ms.data["createNode"]["id"]
 
+    upd = asyncio.run(
+        schema.execute(
+            """
+mutation UpdateNode($id: ID!, $data: JSON) {
+  updateNode(id: $id, data: $data) { id data }
+}
+""",
+            variable_values={
+                "id": milestone_id,
+                "data": {"order": 1, "goal": "Win the week"},
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not upd.errors, upd.errors
+
     for node_type, name in (
         ("passcriteria", "pc1"),
-        ("goal", "g1"),
         ("milestonedata", "md1"),
         ("result", "r1"),
     ):
@@ -105,9 +119,9 @@ def test_workflow_campaign_tree_returns_milestones_and_children():
     m0 = data["milestones"][0]
     assert m0["milestone"]["id"] == milestone_id
     assert len(m0["passCriteriaNodes"]) == 1
-    assert len(m0["goalNodes"]) == 1
     assert len(m0["milestonedataNodes"]) == 1
     assert len(m0["resultNodes"]) == 1
+    assert m0["milestone"]["data"]["goal"] == "Win the week"
 
 
 def test_workflow_campaign_tree_returns_null_for_non_workflow():

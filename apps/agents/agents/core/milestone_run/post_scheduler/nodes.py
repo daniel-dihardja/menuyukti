@@ -268,8 +268,10 @@ def _ensure_weekly_save_optimized_slot(payload: dict[str, Any]) -> dict[str, Any
         if not isinstance(raw_slot, dict):
             continue
         week_raw = raw_slot.get("week")
+        if week_raw is None:
+            continue
         try:
-            week = int(week_raw)
+            week = int(str(week_raw))
         except (TypeError, ValueError):
             continue
         if week in week_to_indexes:

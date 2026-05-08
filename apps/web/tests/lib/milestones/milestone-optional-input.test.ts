@@ -51,6 +51,14 @@ describe('milestone optional notes', () => {
     }
   })
 
+  it('patchMilestoneSchema accepts goal-only patch', () => {
+    const parsed = patchMilestoneSchema.safeParse({ goal: 'Increase repeat visits' })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.goal).toBe('Increase repeat visits')
+    }
+  })
+
   it('patchMilestoneSchema accepts passCriterias with stable ids', () => {
     const parsed = patchMilestoneSchema.safeParse({
       passCriterias: [{ id: 'pc-1', requirement: 'Has baseline', status: 'open' }],

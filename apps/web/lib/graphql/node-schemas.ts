@@ -198,9 +198,7 @@ export type CultureHooksMilestoneData = z.infer<typeof cultureHooksMilestoneData
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
-    /**
-     * Legacy: goal text was stored on the milestone. New writes use a child node (`nodeType` `goal`).
-     */
+    /** Free-form milestone goal; persisted on the milestone node `data` JSON. */
     goal: z.string().optional(),
     presetId: milestonePresetIdSchema.optional(),
     milestoneInput: milestoneInputSchema.optional(),
@@ -209,13 +207,6 @@ export const milestoneDataSchema = z
   .passthrough()
 
 export type MilestoneData = z.infer<typeof milestoneDataSchema>
-
-/** Goal child node `data` JSON — matches backend `GoalHandler` validation. */
-export const goalDataSchema = z.object({
-  goal: z.string(),
-})
-
-export type GoalData = z.infer<typeof goalDataSchema>
 
 /** Child `milestonedata` node JSON — structured preset data only (breaking change: no markdown string). */
 export const milestonedataValueSchema = z.union([
@@ -244,11 +235,6 @@ export const milestoneNodeSchema = baseNode.extend({
 export const passCriteriaNodeSchema = baseNode.extend({
   nodeType: z.literal('passcriteria'),
   data: passCriteriaSchema.omit({ id: true }).nullable(),
-})
-
-export const goalNodeSchema = baseNode.extend({
-  nodeType: z.literal('goal'),
-  data: goalDataSchema.nullable(),
 })
 
 export const milestonedataNodeSchema = baseNode.extend({
@@ -300,7 +286,6 @@ export const unknownNodeSchema = baseNode.extend({
 export const knownNodeSchema = z.discriminatedUnion('nodeType', [
   milestoneNodeSchema,
   passCriteriaNodeSchema,
-  goalNodeSchema,
   milestonedataNodeSchema,
   resultNodeSchema,
   workflowNodeSchema,
@@ -308,7 +293,6 @@ export const knownNodeSchema = z.discriminatedUnion('nodeType', [
 
 export type MilestoneNode = z.infer<typeof milestoneNodeSchema>
 export type PassCriteriaNode = z.infer<typeof passCriteriaNodeSchema>
-export type GoalNode = z.infer<typeof goalNodeSchema>
 export type MilestonedataNode = z.infer<typeof milestonedataNodeSchema>
 export type ResultNode = z.infer<typeof resultNodeSchema>
 export type WorkflowNode = z.infer<typeof workflowNodeSchema>
@@ -317,7 +301,7 @@ export type UnknownNode = z.infer<typeof unknownNodeSchema>
 export type AnyNode = KnownNode | UnknownNode
 
 /**
- * Parse a single node from GraphQL JSON. Tries milestone, passcriteria, goal, milestonedata, result, workflow, then
+ * Parse a single node from GraphQL JSON. Tries milestone, passcriteria, milestonedata, result, workflow, then
  * falls back to a generic node so callers can still narrow on `nodeType`.
  */
 export function parseNode(raw: unknown): AnyNode {
@@ -328,10 +312,6 @@ export function parseNode(raw: unknown): AnyNode {
   const p = passCriteriaNodeSchema.safeParse(raw)
   if (p.success) {
     return p.data
-  }
-  const g = goalNodeSchema.safeParse(raw)
-  if (g.success) {
-    return g.data
   }
   const md = milestonedataNodeSchema.safeParse(raw)
   if (md.success) {

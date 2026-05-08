@@ -392,7 +392,6 @@ export type WorkflowCampaignTreeDataRaw = {
     workflow: unknown
     milestones: Array<{
       milestone: unknown
-      goalNodes: unknown[]
       milestonedataNodes: unknown[]
       resultNodes: unknown[]
     }>
@@ -417,9 +416,6 @@ export const WORKFLOW_CAMPAIGN_TREE_QUERY = `
       }
       milestones {
         milestone {
-          ${NODE_SELECTION_FIELDS}
-        }
-        goalNodes {
           ${NODE_SELECTION_FIELDS}
         }
         milestonedataNodes {

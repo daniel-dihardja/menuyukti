@@ -48,7 +48,9 @@ function parseDataPreviewForPreset(
   return undefined
 }
 
-function ensurePassCriteriaIds(rows: PassCriteriaRow[]): PassCriteriaRow[] {
+function ensurePassCriteriaIds(
+  rows: Array<{ id?: string; requirement: string; status: PassCriteriaStatus }>,
+): PassCriteriaRow[] {
   return rows.map((row) => ({
     ...row,
     id: row.id ?? crypto.randomUUID(),

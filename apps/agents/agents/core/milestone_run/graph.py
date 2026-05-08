@@ -16,11 +16,11 @@ from agents_app.agents.core.milestone_run.graphql_client import fetch_prior_mile
 from agents_app.agents.core.milestone_run.post_scheduler.graph import (
     build_post_scheduler_graph,
 )
-from agents_app.agents.core.milestone_run.promotion_candidates.graph import (
-    build_promotion_candidates_graph,
-)
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     build_injected_prior_context_markdown,
+)
+from agents_app.agents.core.milestone_run.promotion_candidates.graph import (
+    build_promotion_candidates_graph,
 )
 from agents_app.agents.core.milestone_run.state import MilestoneRunState
 from langgraph.config import get_config, get_stream_writer

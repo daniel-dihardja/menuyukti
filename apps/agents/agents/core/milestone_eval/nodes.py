@@ -131,22 +131,21 @@ async def fetch_context(
         mid,
         loc,
     )
+    milestone_row = await fetch_milestone_node(mid, state["user_id"], client=client)
+    milestone_data = milestone_row.get("data") if isinstance(milestone_row, dict) else None
     goal = ""
+    if isinstance(milestone_data, dict):
+        gv = milestone_data.get("goal")
+        if isinstance(gv, str):
+            goal = gv
     milestonedata_payloads: list[dict[str, Any]] = []
     for ch in children:
         nt = _node_type(ch)
         raw = ch.get("data")
         data = raw if isinstance(raw, dict) else {}
-        if nt == "goal":
-            g = data.get("goal")
-            if isinstance(g, str):
-                goal = g
-        elif nt == "milestonedata":
-            if isinstance(data, dict) and data:
-                milestonedata_payloads.append(data)
+        if nt == "milestonedata" and isinstance(data, dict) and data:
+            milestonedata_payloads.append(data)
     criteria: list[dict[str, str]] = []
-    milestone_row = await fetch_milestone_node(mid, state["user_id"], client=client)
-    milestone_data = milestone_row.get("data") if isinstance(milestone_row, dict) else None
     raw_pass = milestone_data.get("passCriterias") if isinstance(milestone_data, dict) else None
     if isinstance(raw_pass, list):
         for item in raw_pass:

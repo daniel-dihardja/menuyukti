@@ -248,7 +248,7 @@ class PostSchedulerMilestoneOutput(BaseModel):
     guardrailCheck: str
 
     @model_validator(mode="after")
-    def _validate_guardrails(self) -> "PostSchedulerMilestoneOutput":
+    def _validate_guardrails(self) -> PostSchedulerMilestoneOutput:
         promo_counts: dict[int, int] = {1: 0, 2: 0, 3: 0, 4: 0}
         save_per_week: dict[int, bool] = {1: False, 2: False, 3: False, 4: False}
         cta_set: set[str] = set()

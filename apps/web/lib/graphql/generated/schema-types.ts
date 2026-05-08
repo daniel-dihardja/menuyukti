@@ -384,10 +384,9 @@ export type MenuItemCogsUpsertInput = {
   menuName: Scalars['String']['input']
 }
 
-/** A milestone node plus its passcriteria, goal, milestonedata, and result children. */
+/** A milestone node plus its passcriteria, milestonedata, and result children. */
 export type MilestoneCampaignBundleType = {
   __typename?: 'MilestoneCampaignBundleType'
-  goalNodes: Array<NodeType>
   milestone: NodeType
   milestonedataNodes: Array<NodeType>
   passCriteriaNodes: Array<NodeType>
@@ -607,7 +606,7 @@ export type MutationUpsertMenuItemCogsBulkArgs = {
   items: Array<MenuItemCogsUpsertInput>
 }
 
-/** A workflow tree node (workflow, milestone, goal, passcriteria, result, milestonedata, etc.) stored in the polymorphic `node` table. */
+/** A workflow tree node (workflow, milestone, passcriteria, result, milestonedata, etc.) stored in the polymorphic `node` table. */
 export type NodeType = {
   __typename?: 'NodeType'
   data?: Maybe<Scalars['JSON']['output']>
@@ -860,7 +859,7 @@ export type Query = {
   revenueTrends?: Maybe<RevenueTrendsPayloadType>
   /** Bill-level revenue and transaction counts rolled up by ISO week for the latest analytics run. Indices are normalized to mean 1.0 within the series. */
   weeklyDemandPattern?: Maybe<WeeklyDemandPatternPayloadType>
-  /** Load a workflow node, its milestones (ordered like `nodes`), and each milestone's passcriteria/goal/milestonedata/result children. Returns null if the id is missing, not a workflow, or not owned by the caller. */
+  /** Load a workflow node, its milestones (ordered like `nodes`), and each milestone's passcriteria/milestonedata/result children. Returns null if the id is missing, not a workflow, or not owned by the caller. */
   workflowCampaignTree?: Maybe<WorkflowCampaignTreeType>
   workflowExports: Array<WorkflowExportType>
   workspaceMembers: Array<WorkspaceMembershipType>

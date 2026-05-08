@@ -26,7 +26,7 @@ export const passCriteriaRowSchema = passCriteriaSchema
 export const patchMilestoneSchema = z
   .object({
     name: z.string().trim().min(1).max(500).optional(),
-    /** Free-form text; not trimmed so spaces inside and at edges are preserved. */
+    /** Free-form text; not trimmed so spaces inside and at edges are preserved. Stored on milestone node `data.goal`. */
     goal: z.string().optional(),
     /** Milestone data (structured JSON); persisted on a child `milestonedata` node. */
     milestoneData: z

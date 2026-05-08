@@ -256,7 +256,7 @@ def test_delete_passcriteria_node():
     assert nodes[0]["name"] == "B"
 
 
-def test_delete_milestone_removes_goal_child():
+def test_delete_milestone_removes_milestone_with_goal_in_data():
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -299,28 +299,22 @@ def test_delete_milestone_removes_goal_child():
         )
     )
     assert not milestone.errors, milestone.errors
-    milestone_id = milestone.data["createNode"]["id"]
+    milestone_id = int(milestone.data["createNode"]["id"])
 
-    goal = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "goal",
-                "name": "Goal",
-                "parentId": milestone_id,
-                "data": {"goal": "Keep me"},
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not goal.errors, goal.errors
-    goal_id = int(goal.data["createNode"]["id"])
+    session = SessionLocal()
+    try:
+        row = session.get(Node, milestone_id)
+        assert row is not None
+        prev = row.data if isinstance(row.data, dict) else {}
+        row.data = {**prev, "goal": "Keep me"}
+        session.commit()
+    finally:
+        session.close()
 
     deleted = asyncio.run(
         schema.execute(
             DELETE_NODE,
-            variable_values={"id": milestone_id},
+            variable_values={"id": str(milestone_id)},
             context_value=graphql_auth_context(),
         )
     )
@@ -329,7 +323,7 @@ def test_delete_milestone_removes_goal_child():
 
     session = SessionLocal()
     try:
-        assert session.get(Node, goal_id) is None
+        assert session.get(Node, milestone_id) is None
     finally:
         session.close()
 
@@ -476,22 +470,6 @@ def test_delete_workflow_cascades_milestones_and_children():
     assert not second_ms.errors, second_ms.errors
     second_milestone_id = second_ms.data["createNode"]["id"]
 
-    goal = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "goal",
-                "name": "Goal",
-                "parentId": first_milestone_id,
-                "data": {"goal": "x"},
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not goal.errors, goal.errors
-    goal_id = int(goal.data["createNode"]["id"])
-
     pc = asyncio.run(
         schema.execute(
             CREATE_NODE,
@@ -523,7 +501,6 @@ def test_delete_workflow_cascades_milestones_and_children():
         assert session.get(Node, wf_pk) is None
         assert session.get(Node, int(first_milestone_id)) is None
         assert session.get(Node, int(second_milestone_id)) is None
-        assert session.get(Node, goal_id) is None
         assert session.get(Node, pc_id) is None
         remaining = (
             session.query(Node)

@@ -4,7 +4,7 @@ from strawberry.scalars import JSON
 
 @strawberry.type(
     description=(
-        "A workflow tree node (workflow, milestone, goal, passcriteria, result, milestonedata, etc.) "
+        "A workflow tree node (workflow, milestone, passcriteria, result, milestonedata, etc.) "
         "stored in the polymorphic `node` table."
     )
 )

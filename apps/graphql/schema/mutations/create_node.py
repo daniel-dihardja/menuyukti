@@ -93,6 +93,12 @@ class CreateNodeMutation:
                 _delete_existing_result_children_under_milestone(session, parent)
                 session.flush()
 
+            if node_type.strip().lower() == "goal":
+                raise ValueError(
+                    "node type goal is no longer supported; store goal text on the milestone "
+                    "node data field goal"
+                )
+
             handler = get_handler(node_type)
             resolved_data = handler.validate_create(parent, data, session)
 

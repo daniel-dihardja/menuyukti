@@ -29,7 +29,7 @@
       ]
     },
     {
-      "schemaVersion": "2.0",
+      "schemaVersion": "2.1",
       "workflowId": "42",
       "workflowName": "Exported workflow",
       "exportedAt": "2026-04-09T12:00:00Z",
@@ -62,8 +62,8 @@
       "properties": {
         "schemaVersion": {
           "type": "string",
-          "const": "2.0",
-          "description": "Payload format version. Export-only; importWorkflow does not validate this."
+          "enum": ["2.0", "2.1"],
+          "description": "Payload format version. 2.1: goal text is stored on milestone node data (no goal child). Export-only; importWorkflow does not validate this."
         },
         "workflowId": {
           "type": "string",
@@ -108,7 +108,7 @@
     "milestoneNode": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Milestone: title and order define the node; pass criteria, goal child, milestonedata (string or structured JSON), and optional result are created from these fields on import.",
+      "description": "Milestone: title and order define the node; pass criteria, goal text on milestone data, milestonedata (string or structured JSON), and optional result are created from these fields on import.",
       "required": ["order"],
       "properties": {
         "id": {
@@ -127,7 +127,7 @@
         },
         "goal": {
           "type": "string",
-          "description": "Milestone-level goal text; creates a goal child node when non-empty after trim."
+          "description": "Milestone-level goal text; persisted on milestone node data.goal when non-empty after trim on import."
         },
         "data": {
           "description": "Milestonedata child payload when non-empty: flat structured JSON object (preset-specific fields at the root).",

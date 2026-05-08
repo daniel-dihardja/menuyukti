@@ -67,7 +67,6 @@ export default async function Page({ params }: PageProps) {
       id: m.id,
       name: m.name,
       data: m.data,
-      goalNodes: parseNodes(bundle.goalNodes),
       milestonedataNodes: parseNodes(bundle.milestonedataNodes),
       resultNodes: parseNodes(bundle.resultNodes),
     }

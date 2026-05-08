@@ -12,7 +12,7 @@ from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.node_handlers.milestone import _milestone_sort_key
 from graphql.schema.types import WorkflowExportType
 
-SCHEMA_VERSION = "2.0"
+SCHEMA_VERSION = "2.1"
 
 
 def _milestone_order(data: object | None) -> int:
@@ -36,21 +36,13 @@ def _derive_rail_status(
 
 
 def _serialize_milestone(children: list[Node], milestone: Node) -> dict[str, object]:
-    goal_nodes = [c for c in children if c.node_type == "goal"]
     pass_nodes = [c for c in children if c.node_type == "passcriteria"]
     md_nodes = [c for c in children if c.node_type == "milestonedata"]
     result_nodes = [c for c in children if c.node_type == "result"]
 
     m_data = milestone.data if isinstance(milestone.data, dict) else {}
-    legacy_goal = m_data.get("goal") if isinstance(m_data.get("goal"), str) else None
-
-    goal_text: str | None = legacy_goal
-    for gn in goal_nodes:
-        gd = gn.data if isinstance(gn.data, dict) else {}
-        gval = gd.get("goal")
-        if isinstance(gval, str):
-            goal_text = gval
-            break
+    raw_goal = m_data.get("goal")
+    goal_text: str | None = raw_goal.strip() if isinstance(raw_goal, str) and raw_goal.strip() else None
 
     milestone_data: str | dict | list | None = None
     for mn in md_nodes:

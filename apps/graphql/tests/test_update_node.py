@@ -35,6 +35,28 @@ mutation UpdateNode($id: ID!, $name: String, $data: JSON) {
 }
 """
 
+CREATE_NODE_WITH_DATA = """
+mutation CreateNode(
+  $locationId: Int!
+  $nodeType: String!
+  $name: String
+  $parentId: ID
+  $data: JSON
+) {
+  createNode(
+    locationId: $locationId
+    nodeType: $nodeType
+    name: $name
+    parentId: $parentId
+    data: $data
+  ) {
+    id
+    nodeType
+    data
+  }
+}
+"""
+
 
 def test_update_milestone_name():
     session = SessionLocal()
@@ -193,30 +215,7 @@ def test_update_passcriteria_node_data():
     assert out["data"]["status"] == "pass"
 
 
-CREATE_GOAL = """
-mutation CreateNode(
-  $locationId: Int!
-  $nodeType: String!
-  $name: String
-  $parentId: ID
-  $data: JSON
-) {
-  createNode(
-    locationId: $locationId
-    nodeType: $nodeType
-    name: $name
-    parentId: $parentId
-    data: $data
-  ) {
-    id
-    nodeType
-    data
-  }
-}
-"""
-
-
-def test_update_goal_node_data():
+def test_update_milestone_goal_in_data():
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -261,26 +260,20 @@ def test_update_goal_node_data():
     assert not milestone.errors, milestone.errors
     milestone_id = milestone.data["createNode"]["id"]
 
-    g = asyncio.run(
+    first = asyncio.run(
         schema.execute(
-            CREATE_GOAL,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "goal",
-                "name": "Goal",
-                "parentId": milestone_id,
-                "data": {"goal": "First"},
-            },
+            UPDATE_NODE,
+            variable_values={"id": milestone_id, "data": {"goal": "First"}},
             context_value=graphql_auth_context(),
         )
     )
-    assert not g.errors, g.errors
-    goal_id = g.data["createNode"]["id"]
+    assert not first.errors, first.errors
+    assert first.data["updateNode"]["data"]["goal"] == "First"
 
     updated = asyncio.run(
         schema.execute(
             UPDATE_NODE,
-            variable_values={"id": goal_id, "data": {"goal": "Second draft"}},
+            variable_values={"id": milestone_id, "data": {"goal": "Second draft"}},
             context_value=graphql_auth_context(),
         )
     )
@@ -338,7 +331,7 @@ def test_update_milestonedata_node_data():
 
     g = asyncio.run(
         schema.execute(
-            CREATE_GOAL,
+            CREATE_NODE_WITH_DATA,
             variable_values={
                 "locationId": location_id,
                 "nodeType": "milestonedata",
@@ -366,6 +359,6 @@ def test_update_milestonedata_node_data():
 
 def test_get_handler_strips_node_type_for_lookup():
     from graphql.schema.node_handlers import get_handler
-    from graphql.schema.node_handlers.goal import GoalHandler
+    from graphql.schema.node_handlers.milestone import MilestoneHandler
 
-    assert isinstance(get_handler("  goal  "), GoalHandler)
+    assert isinstance(get_handler("  milestone  "), MilestoneHandler)

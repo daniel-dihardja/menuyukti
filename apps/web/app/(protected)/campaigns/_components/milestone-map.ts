@@ -1,7 +1,6 @@
 import {
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
-  goalDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataValueSchema,
@@ -42,7 +41,6 @@ export type MilestoneNodeDto = {
   id: string
   name: string
   data?: unknown | null
-  goalNodes?: AnyNode[]
   milestonedataNodes?: AnyNode[]
   resultNodes?: AnyNode[]
 }
@@ -53,27 +51,6 @@ export function passCriteriasFromMilestoneData(data: unknown): PassCriteriaRow[]
     return []
   }
   return parsed.data.passCriterias
-}
-
-/** First valid `goal` child wins (at most one is expected). */
-export function goalFromChildNodes(nodes: AnyNode[] | undefined | null): string | undefined {
-  if (nodes == null || !Array.isArray(nodes)) {
-    return undefined
-  }
-  for (const n of nodes) {
-    if (n.nodeType !== 'goal') {
-      continue
-    }
-    const d = n.data
-    if (d == null || typeof d !== 'object') {
-      continue
-    }
-    const parsed = goalDataSchema.safeParse(d)
-    if (parsed.success) {
-      return parsed.data.goal
-    }
-  }
-  return undefined
 }
 
 /** First valid `milestonedata` child wins (at most one is expected). */
@@ -145,8 +122,7 @@ function milestoneRunSkillFieldsFromData(data: unknown): {
 
 export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): TimelineMilestone {
   const parsed = milestoneDataSchema.safeParse(node.data)
-  const legacyGoal = parsed.success ? parsed.data.goal : undefined
-  const goal = goalFromChildNodes(node.goalNodes) ?? legacyGoal
+  const goal = parsed.success ? parsed.data.goal : undefined
   const data = milestoneDataFromChildNodes(node.milestonedataNodes)
   const passCriteria = passCriteriasFromMilestoneData(node.data)
   const resultMarkdown = resultMarkdownFromChildNodes(node.resultNodes)

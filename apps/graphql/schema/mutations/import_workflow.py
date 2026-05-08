@@ -77,17 +77,6 @@ def _create_child_nodes(
     m: dict[str, Any],
     location_id: int,
 ) -> None:
-    goal_raw = m.get("goal")
-    if isinstance(goal_raw, str) and goal_raw.strip():
-        _create_child_with_handler(
-            session,
-            location_id,
-            "goal",
-            milestone_node,
-            "Goal",
-            {"goal": goal_raw},
-        )
-
     pcs_raw = m.get("passCriteria")
     pcs: list[Any] = pcs_raw if isinstance(pcs_raw, list) else []
     for idx, pc in enumerate(pcs):
@@ -160,6 +149,9 @@ def _create_milestone_node(
     order_val = raw_order if isinstance(raw_order, int) else 0
 
     milestone_data: dict[str, Any] = {"order": order_val}
+    goal_raw = m.get("goal")
+    if isinstance(goal_raw, str) and goal_raw.strip():
+        milestone_data["goal"] = goal_raw.strip()
 
     milestone = Node(
         parent_id=root_node.id,

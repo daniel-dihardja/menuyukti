@@ -12,12 +12,11 @@ from graphql.schema.types import NodeType
 
 
 @strawberry.type(
-    description="A milestone node plus its passcriteria, goal, milestonedata, and result children."
+    description="A milestone node plus its passcriteria, milestonedata, and result children."
 )
 class MilestoneCampaignBundleType:
     milestone: NodeType
     pass_criteria_nodes: list[NodeType]
-    goal_nodes: list[NodeType]
     milestonedata_nodes: list[NodeType]
     result_nodes: list[NodeType]
 
@@ -33,7 +32,7 @@ class WorkflowCampaignTreeType:
     milestones: list[MilestoneCampaignBundleType]
 
 
-_CHILD_TYPES = frozenset({"passcriteria", "goal", "milestonedata", "result"})
+_CHILD_TYPES = frozenset({"passcriteria", "milestonedata", "result"})
 
 
 @strawberry.type
@@ -41,7 +40,7 @@ class WorkflowCampaignTreeQuery:
     @strawberry.field(
         description=(
             "Load a workflow node, its milestones (ordered like `nodes`), and each milestone's "
-            "passcriteria/goal/milestonedata/result children. Returns null if the id is missing, "
+            "passcriteria/milestonedata/result children. Returns null if the id is missing, "
             "not a workflow, or not owned by the caller."
         )
     )
@@ -109,7 +108,6 @@ class WorkflowCampaignTreeQuery:
                     MilestoneCampaignBundleType(
                         milestone=_node_to_gql(m),
                         pass_criteria_nodes=[_node_to_gql(r) for r in b["passcriteria"]],
-                        goal_nodes=[_node_to_gql(r) for r in b["goal"]],
                         milestonedata_nodes=[_node_to_gql(r) for r in b["milestonedata"]],
                         result_nodes=[_node_to_gql(r) for r in b["result"]],
                     )
