@@ -11,7 +11,10 @@ from strawberry.scalars import JSON
 
 from graphql.data_sources import Node, SessionLocal
 from graphql.schema.auth import require_location_owner, user_id_from_info
-from graphql.schema.milestone_payload_validation import validate_pass_criteria_list, validate_result_payload
+from graphql.schema.milestone_payload_validation import (
+    validate_pass_criteria_list,
+    validate_result_payload,
+)
 from graphql.schema.node_gql import node_to_gql
 from graphql.schema.node_handlers import get_handler
 from graphql.schema.types import NodeType

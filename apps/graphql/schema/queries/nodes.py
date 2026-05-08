@@ -7,8 +7,8 @@ from graphql.limits import (
     clamp_page_size,
 )
 from graphql.schema.auth import is_location_owner, user_id_from_info
-from graphql.schema.node_handlers.milestone import _milestone_sort_key
 from graphql.schema.node_gql import node_to_gql
+from graphql.schema.node_handlers.milestone import _milestone_sort_key
 from graphql.schema.types import NodeType
 
 

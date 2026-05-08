@@ -60,9 +60,7 @@ def sync_milestone_columns_from_initial_data(node: Node) -> None:
 
     mpd = base.get("milestonePresetData")
     if mpd is not None:
-        if isinstance(mpd, dict):
-            node.milestone_preset_data = mpd
-        elif isinstance(mpd, list):
+        if isinstance(mpd, (dict, list)):
             node.milestone_preset_data = mpd
         else:
             raise ValueError("milestonePresetData must be a JSON object or array when set")
@@ -151,9 +149,7 @@ class MilestoneHandler(NodeHandler):
             mpd = patch.get("milestonePresetData")
             if mpd is None:
                 node.milestone_preset_data = None
-            elif isinstance(mpd, dict):
-                node.milestone_preset_data = mpd
-            elif isinstance(mpd, list):
+            elif isinstance(mpd, (dict, list)):
                 node.milestone_preset_data = mpd
             else:
                 raise ValueError("milestonePresetData must be a JSON object or array when set")

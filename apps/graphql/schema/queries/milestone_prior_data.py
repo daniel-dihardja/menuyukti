@@ -85,9 +85,7 @@ class MilestonePriorDataQuery:
                         preset_id = raw_pid.strip()
                 data_val: object | str | None = None
                 mpd = m.milestone_preset_data
-                if isinstance(mpd, dict) and mpd:
-                    data_val = mpd
-                elif isinstance(mpd, list) and mpd:
+                if isinstance(mpd, (dict, list)) and mpd:
                     data_val = mpd
                 else:
                     md_row = (
