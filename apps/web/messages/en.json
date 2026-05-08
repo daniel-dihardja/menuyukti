@@ -937,57 +937,16 @@
           "sunday": "Sunday"
         },
         "manualBrief": {
-          "trigger": "Optional: help AI tailor your venue",
           "resetHints": "Clear all brief hints",
-          "intro": "Stable facts about this venue. Used as the default brief on every campaign — each campaign can still override its own goals, formats, and offers.",
+          "intro": "Add stable location details for AI and keep your profile/contact links up to date.",
           "sections": {
-            "positioning": {
-              "title": "Cuisine & positioning",
-              "description": "What kind of place this is and how it sits in the local market."
-            },
-            "audience": {
-              "title": "Audience & moments",
-              "description": "Who you welcome, when, and in which languages."
-            },
-            "voice": {
-              "title": "Voice & default goals",
-              "description": "Brand tone and the marketing outcomes this venue typically optimizes for."
-            },
-            "brand": {
-              "title": "Brand story & guardrails",
-              "description": "Promise, story, and topics the AI should respect across every campaign."
-            },
             "profile": {
               "title": "Profile & contact links",
               "description": "Identity, contact methods, and link-in-bio destinations the AI can reference."
             }
           },
-          "venueLabel": "Venue types",
-          "goalLabel": "Default social goals",
-          "goalDescription": "Used as the starting goals for new campaigns. Each campaign can override.",
-          "guestLabel": "Who you mainly welcome",
-          "focusLabel": "Location focus (meal periods)",
-          "toneLabel": "Tone",
-          "videoLabel": "Comfortable posting Reels or short video",
-          "notesLabel": "Short note",
-          "notesPlaceholder": "Optional detail for the AI (max 280 characters)",
-          "cuisineLabel": "Cuisine types",
-          "priceTierLabel": "Price tier",
-          "priceTierPlaceholder": "Select a price level",
-          "serviceModesLabel": "Service modes",
-          "ambienceLabel": "Ambience",
-          "servesAlcoholLabel": "Serves alcohol",
-          "dietaryLabel": "Dietary options",
-          "dietaryDescription": "Pick what your kitchen reliably supports. Helps AI write FAQs and avoid wrong claims.",
-          "postLanguagesLabel": "Languages used in posts",
-          "postLanguagesDescription": "Helps the AI write captions in your preferred languages.",
-          "valuePropositionLabel": "Hero promise",
-          "valuePropositionPlaceholder": "e.g. Friendly Indonesian bistro for office lunches.",
-          "valuePropositionDescription": "One sentence the AI can use as the hero promise in profiles, captions, and bios (max 140 characters).",
-          "aboutStoryLabel": "About / story",
-          "aboutStoryPlaceholder": "Founder, chef story, or anything that builds trust (max 800 characters).",
-          "topicsToAvoidLabel": "Topics or visuals to avoid",
-          "topicsToAvoidPlaceholder": "e.g. No discount-led messaging, no late-night posts, avoid alcohol imagery before 6pm.",
+          "notesLabel": "Additional location information",
+          "notesPlaceholder": "Write any important location details for AI (up to 2000 characters).",
           "instagramHandleLabel": "Instagram handle",
           "instagramHandlePlaceholder": "menuyukti (without @)",
           "neighborhoodLabel": "Neighborhood / district",
@@ -1005,122 +964,7 @@
           "menuUrlLabel": "Menu link",
           "menuUrlPlaceholder": "https://yourvenue.com/menu",
           "googleMapsUrlLabel": "Google Maps / directions",
-          "googleMapsUrlPlaceholder": "https://maps.google.com/?q=Your+Venue",
-          "venues": {
-            "cafe": "Cafe",
-            "bistro": "Bistro",
-            "restaurant": "Restaurant",
-            "fast_casual": "Fast casual",
-            "bar": "Bar / pub",
-            "bakery_cafe": "Bakery & cafe",
-            "fine_dining": "Fine dining",
-            "other": "Other"
-          },
-          "goals": {
-            "awareness": "Brand awareness",
-            "reservations": "Reservations",
-            "walk_ins": "Walk-ins",
-            "delivery": "Delivery / takeaway",
-            "events": "Events & private dining",
-            "community": "Community & regulars"
-          },
-          "guests": {
-            "office_lunch": "Office lunch",
-            "tourists": "Tourists",
-            "families": "Families",
-            "date_night": "Date night",
-            "nightlife": "Nightlife",
-            "neighborhood_locals": "Neighborhood locals",
-            "students": "Students"
-          },
-          "tones": {
-            "warm": "Warm & welcoming",
-            "professional": "Professional",
-            "playful": "Playful",
-            "minimal": "Minimal & calm",
-            "bold": "Bold"
-          },
-          "focus": {
-            "breakfast": "Breakfast",
-            "brunch": "Brunch",
-            "lunch": "Lunch",
-            "dinner": "Dinner"
-          },
-          "cuisines": {
-            "italian": "Italian",
-            "indonesian": "Indonesian",
-            "indian": "Indian",
-            "japanese": "Japanese",
-            "chinese": "Chinese",
-            "thai": "Thai",
-            "korean": "Korean",
-            "vietnamese": "Vietnamese",
-            "mexican": "Mexican",
-            "mediterranean": "Mediterranean",
-            "middle_eastern": "Middle Eastern",
-            "american": "American",
-            "french": "French",
-            "german": "German",
-            "spanish": "Spanish",
-            "greek": "Greek",
-            "turkish": "Turkish",
-            "fusion": "Fusion",
-            "seafood": "Seafood",
-            "steakhouse": "Steakhouse",
-            "pizza": "Pizza",
-            "burger": "Burger",
-            "bakery": "Bakery",
-            "dessert": "Dessert",
-            "healthy": "Healthy / bowls",
-            "vegan_friendly": "Vegan-friendly",
-            "other": "Other"
-          },
-          "priceTiers": {
-            "budget": "$ Budget",
-            "mid": "$$ Mid",
-            "upscale": "$$$ Upscale",
-            "premium": "$$$$ Premium"
-          },
-          "serviceModes": {
-            "dine_in": "Dine-in",
-            "takeaway": "Takeaway",
-            "delivery": "Delivery",
-            "catering": "Catering",
-            "private_events": "Private events"
-          },
-          "ambience": {
-            "cozy": "Cozy",
-            "lively": "Lively",
-            "romantic": "Romantic",
-            "family_friendly": "Family-friendly",
-            "quiet": "Quiet",
-            "outdoor_seating": "Outdoor seating",
-            "dog_friendly": "Dog-friendly",
-            "wheelchair_accessible": "Wheelchair accessible"
-          },
-          "postLanguages": {
-            "en": "English",
-            "de": "German",
-            "id": "Indonesian",
-            "es": "Spanish",
-            "fr": "French",
-            "it": "Italian",
-            "ja": "Japanese",
-            "zh": "Chinese",
-            "pt": "Portuguese",
-            "ar": "Arabic",
-            "tr": "Turkish",
-            "nl": "Dutch"
-          },
-          "dietary": {
-            "vegetarian": "Vegetarian options",
-            "vegan": "Vegan options",
-            "halal": "Halal",
-            "kosher": "Kosher",
-            "gluten_free": "Gluten-free options",
-            "nut_free": "Nut-free options",
-            "lactose_free": "Lactose-free options"
-          }
+          "googleMapsUrlPlaceholder": "https://maps.google.com/?q=Your+Venue"
         }
       }
     },

@@ -135,7 +135,7 @@ _ALLOWED_TOP_KEYS = frozenset(
         "topicsToAvoid",
     }
 )
-_MAX_NOTES_LEN = 280
+_MAX_NOTES_LEN = 2000
 _MAX_URL_LEN = 500
 _MAX_PHONE_LEN = 30
 _MAX_EMAIL_LEN = 254

@@ -192,7 +192,7 @@ def _fmt_manual_brief_hints(raw_loc: dict[str, Any]) -> str:
         ("valueProposition", "Hero promise"),
         ("aboutStory", "About / story"),
         ("topicsToAvoid", "Topics or visuals to avoid"),
-        ("notes", "Notes"),
+        ("notes", "Additional location information"),
     ):
         line = _str_line(qp, spec[0], spec[1])
         if line:
