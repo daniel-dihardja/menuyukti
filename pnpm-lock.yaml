@@ -212,6 +212,8 @@ importers:
         specifier: ^4.0.9
         version: 4.0.14(@opentelemetry/api@1.9.0)(@types/node@20.19.25)(@vitest/ui@4.0.14)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.20.6)(yaml@2.8.3)
 
+  packages/docs: {}
+
   packages/eslint-config:
     devDependencies:
       '@next/eslint-plugin-next':
