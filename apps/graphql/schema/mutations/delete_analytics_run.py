@@ -22,7 +22,8 @@ class DeleteAnalyticsRunMutation:
         with SessionLocal() as session:
             run = session.get(AnalyticsRun, run_pk)
             if run is None:
-                raise ValueError("Analytics run not found")
+                # Make delete idempotent so stale UI/cache entries do not surface a hard error.
+                return True
 
             require_location_owner(session, run.location_id, user_id)
 

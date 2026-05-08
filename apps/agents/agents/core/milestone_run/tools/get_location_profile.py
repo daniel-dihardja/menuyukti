@@ -259,6 +259,18 @@ def _fmt_matrix_signals(instagram: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _fmt_ai_social_settings(location_data: dict[str, Any]) -> str:
+    """Compatibility helper retained for campaign-brief imports.
+
+    AI social settings were removed from location GraphQL payloads in favor of
+    owner-provided manual brief input (`manualBriefInput.quickProfile`).
+    Keep this helper as a stable no-op until all downstream imports are cleaned
+    up.
+    """
+    del location_data
+    return ""
+
+
 def _fmt_milestone_campaign_brief_owner_notes(context: dict[str, Any]) -> str:
     """Markdown for optional owner notes from the campaign-brief milestone Input tab."""
     raw = context.get("milestone_input")
