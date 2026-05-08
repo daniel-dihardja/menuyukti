@@ -77,7 +77,7 @@ export function useMilestoneOperations(
       const res = await fetch(`/api/workflows/${workflowId}/milestones`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ name: t('milestonePreset.noneLabel') }),
       })
       const body = (await res.json().catch(() => null)) as {
         message?: string
@@ -124,7 +124,7 @@ export function useMilestoneOperations(
         const res = await fetch(`/api/workflows/${workflowId}/milestones`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
+          body: JSON.stringify({ name: fields.name }),
         })
         const body = (await res.json().catch(() => null)) as {
           message?: string

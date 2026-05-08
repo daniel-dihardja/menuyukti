@@ -1138,7 +1138,7 @@
           },
           "promotion_candidates": {
             "label": "Promotion candidates",
-            "title": "Promotion Candidates",
+            "title": "Promotion candidates",
             "inputLabel": "Promotion candidate notes",
             "inputDescription": "Optional orientation notes for how to review star/puzzle candidates in this campaign context.",
             "inputPlaceholder": "e.g. prioritize FOOD first this month due to family bundles...",
@@ -1148,7 +1148,7 @@
           },
           "culture_hooks": {
             "label": "Culture hooks",
-            "title": "Culture Hooks",
+            "title": "Culture hooks",
             "inputLabel": "Culture hooks notes",
             "inputDescription": "Optional direction for tone and emphasis. The run uses only prior Campaign Brief data to infer location concept, target audience, and non-food intersection topics.",
             "inputPlaceholder": "e.g. prioritize sustainability and family rituals with retro tone...",

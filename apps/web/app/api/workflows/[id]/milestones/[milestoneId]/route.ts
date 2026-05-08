@@ -390,6 +390,16 @@ export async function PATCH(req: Request, context: RouteContext) {
       )
     }
 
+    if (body.name !== undefined) {
+      parseUpdateNodeData(
+        await graphqlQuery<UpdateNodeDataRaw>(
+          UPDATE_NODE_MUTATION,
+          { id: milestoneId, name: body.name },
+          userId,
+        ),
+      )
+    }
+
     const milestoneAfter = parseNodeData(
       await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: milestoneId }, userId),
     )

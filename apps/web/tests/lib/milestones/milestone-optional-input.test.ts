@@ -59,6 +59,14 @@ describe('milestone optional notes', () => {
     }
   })
 
+  it('patchMilestoneSchema accepts name-only patch', () => {
+    const parsed = patchMilestoneSchema.safeParse({ name: 'Campaign brief' })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.name).toBe('Campaign brief')
+    }
+  })
+
   it('patchMilestoneSchema accepts passCriterias with stable ids', () => {
     const parsed = patchMilestoneSchema.safeParse({
       passCriterias: [{ id: 'pc-1', requirement: 'Has baseline', status: 'open' }],
