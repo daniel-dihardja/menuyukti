@@ -16,7 +16,6 @@ from graphql.data_sources import (
     LocationManualBriefInput,
     LocationOpeningHour,
     MenuItemCogs,
-    Node,
     OrderFact,
     SessionLocal,
     Workspace,
@@ -144,20 +143,6 @@ def main(excel_path: str, cogs_path: str | None, clerk_user_id: str) -> int:
                     close_time=time(hour=18, minute=0),
                 )
             )
-
-        loc_node = Node(
-            parent_id=None,
-            name=location.name,
-            description=None,
-            path="",
-            node_type="location",
-            location_id=location.id,
-            data=None,
-        )
-        session.add(loc_node)
-        session.flush()
-        loc_node.path = f"/{loc_node.id}"
-        location.node_id = loc_node.id
 
         # Sample owner manual brief hints (separate from AI location_social_settings) for local UI / agents.
         session.add(

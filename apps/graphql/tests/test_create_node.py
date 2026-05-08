@@ -79,6 +79,52 @@ def test_create_node_inserts_root_workflow_node():
         session.close()
 
 
+def test_create_workflow_rejects_parent_node():
+    session = SessionLocal()
+    try:
+        session.query(Node).delete()
+        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
+        session.commit()
+
+        location = Location(name="Workflow Parent Guard Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        location_id = location.id
+
+        loc_root = Node(
+            parent_id=None,
+            name="Loc root",
+            description=None,
+            path="",
+            node_type="location",
+            location_id=location_id,
+            data=None,
+        )
+        session.add(loc_root)
+        session.flush()
+        loc_root.path = f"/{loc_root.id}"
+        session.commit()
+        location_node_id = str(loc_root.id)
+    finally:
+        session.close()
+
+    result = asyncio.run(
+        schema.execute(
+            CREATE_NODE,
+            variable_values={
+                "locationId": location_id,
+                "nodeType": "workflow",
+                "name": "Should fail",
+                "parentId": location_node_id,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert result.errors
+    assert result.data is None or result.data.get("createNode") is None
+
+
 def test_create_milestone_sets_order_in_data_json():
     session = SessionLocal()
     try:

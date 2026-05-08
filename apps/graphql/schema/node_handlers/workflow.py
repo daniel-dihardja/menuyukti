@@ -12,6 +12,18 @@ from graphql.schema.node_handlers.milestone import _milestone_sort_key, delete_m
 class WorkflowHandler(GenericHandler):
     node_type = "workflow"
 
+    def validate_create(
+        self,
+        parent: Node | None,
+        data: dict | None,
+        session: Session | None = None,
+    ) -> dict | None:
+        if parent is not None:
+            raise ValueError(
+                "Workflow must be a root node (no parent); use locationId to scope the workflow"
+            )
+        return super().validate_create(parent, data, session)
+
     def pre_delete(self, node: Node, parent: Node | None, session: Session) -> None:
         if node.node_type != "workflow":
             raise ValueError("Expected workflow node")

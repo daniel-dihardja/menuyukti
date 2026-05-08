@@ -208,22 +208,17 @@ export function CampaignsClient({
     setCampaigns((prev) => prev.filter((c) => c.id !== id))
   }, [])
 
-  const branch = locationId !== null ? branches.find((b) => b.id === locationId) : undefined
-  const canCreateWorkflow = locationId !== null && branch?.nodeId != null && !loadingRuns
+  const canCreateWorkflow = locationId !== null && !loadingRuns
 
   const handleCreateWorkflow = useCallback(async () => {
-    if (locationId === null || branch?.nodeId == null) {
+    if (locationId === null) {
       return
     }
     setCreating(true)
     setCreateError(null)
     setImportError(null)
 
-    const body: {
-      locationId: number
-      locationNodeId: string
-      analyticsRunId?: number
-    } = { locationId, locationNodeId: branch.nodeId }
+    const body: { locationId: number; analyticsRunId?: number } = { locationId }
     if (analyticsRunId !== null) {
       body.analyticsRunId = analyticsRunId
     }
@@ -285,7 +280,7 @@ export function CampaignsClient({
     } finally {
       setCreating(false)
     }
-  }, [analyticsRunId, branch, locationId, presetKey, router, tChat, tNew])
+  }, [analyticsRunId, locationId, presetKey, router, tChat, tNew])
 
   return (
     <div className="flex flex-col gap-8">
@@ -305,14 +300,6 @@ export function CampaignsClient({
         presetKey={presetKey}
         runsError={runsError}
       />
-
-      {branch && !branch.nodeId ? (
-        <Alert variant="destructive">
-          <AlertCircle />
-          <AlertTitle>{t('errors.createTitle')}</AlertTitle>
-          <AlertDescription>{t('missingLocationNode')}</AlertDescription>
-        </Alert>
-      ) : null}
 
       {locationId === null ? null : loadingCampaigns ? (
         <CampaignsTableSkeleton />

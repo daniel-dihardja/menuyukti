@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     }
 
     const json = await req.json()
-    const { locationId, locationNodeId, analyticsRunId } = createCampaignSchema.parse(json)
+    const { locationId, analyticsRunId } = createCampaignSchema.parse(json)
 
     const data = parseCreateNodeData(
       await graphqlQuery<CreateNodeDataRaw>(
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
         {
           locationId,
           nodeType: 'workflow',
-          parentId: locationNodeId,
+          parentId: null,
           data: analyticsRunId !== undefined ? { analyticsRunId } : undefined,
         },
         userId,
