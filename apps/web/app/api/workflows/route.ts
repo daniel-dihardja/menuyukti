@@ -42,7 +42,8 @@ export async function GET(req: Request) {
       { nodes },
       {
         headers: {
-          'Cache-Control': 'private, max-age=30, stale-while-revalidate=120',
+          // List mutates via create/delete; avoid browser caching stale rows alongside Data Cache.
+          'Cache-Control': 'private, no-store',
         },
       },
     )

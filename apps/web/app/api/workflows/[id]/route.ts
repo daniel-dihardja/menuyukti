@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { apiError, apiErrorFromUnknown } from '@/lib/api/error-response'
+import { revalidateLocationScopedLists } from '@/lib/graphql/revalidate-location-lists'
 import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
   DELETE_NODE_MUTATION,
@@ -109,6 +110,9 @@ export async function DELETE(_req: Request, context: RouteContext) {
       throw err
     }
 
+    if (node.locationId != null) {
+      revalidateLocationScopedLists(userId, node.locationId)
+    }
     revalidateWorkflowCampaignTreeCache(userId, workflowId)
 
     return new NextResponse(null, { status: 204 })
