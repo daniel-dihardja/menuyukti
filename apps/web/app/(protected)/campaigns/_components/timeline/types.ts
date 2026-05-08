@@ -5,95 +5,135 @@ export type TimelineMilestoneStatus = 'complete' | 'failed' | 'pending' | 'empty
 export type PassCriteriaStatus = 'pass' | 'fail' | 'open'
 
 export type PassCriteriaRow = {
-  id?: string
+  id: string
   requirement: string
   status: PassCriteriaStatus
 }
 
-/** Milestone agent run skill selection; stored on milestone `data` JSON. */
-export type MilestoneRunSkillMode = 'auto' | 'fixed'
-
 export type MilestonePresetId =
-  | 'dates'
-  | 'restaurant_brand_brief'
-  | 'promotion_candidates'
+  | 'restaurant_campaign_brief'
   | 'post_scheduler'
-
-export type DatesMilestoneInput = {
-  startDate: string
-  endDate: string
-}
-
-export type DatesMilestoneInputEnvelope = {
-  type: 'dates'
-  value: DatesMilestoneInput
-}
+  | 'promotion_candidates'
+  | 'culture_hooks'
 
 export type MilestoneInput = {
   type: string
   value?: unknown
 }
 
-export type DatesPublicHoliday = {
+export type CampaignWindowPublicHoliday = {
   name: string
   description: string
   date: string
 }
 
-export type DatesMilestoneData = {
-  startDate: string
-  endDate: string
-  publicHolidays: DatesPublicHoliday[]
-}
-
-export type BrandBriefVenueSnapshot = {
+export type CampaignBriefVenueSnapshot = {
   venueName: string
   city: string
   country: string
   currency: string
 }
 
-export type BrandBriefMilestoneData = {
-  venueSnapshot: BrandBriefVenueSnapshot
+export type CampaignBriefMilestoneData = {
+  startDate: string
+  endDate: string
+  publicHolidays: CampaignWindowPublicHoliday[]
+  venueSnapshot: CampaignBriefVenueSnapshot
   contentPillars: string[]
   audienceHypotheses: string[]
   proofOrientedAngles: string[]
   toneGuardrails: string[]
+  campaignObjective: string
+  mainCategory: 'FOOD' | 'DRINK'
+  targetSegments: string[]
+  messageHierarchy: string[]
+  offerAndCtaPlan: string[]
+  contentPillarPlan: string[]
+  measurementPlan: string[]
+  testingPlan: string[]
+  riskGuardrails: string[]
 }
 
-export type PromotionCandidatesCategoryBlock = {
-  menuCategory: string
-  starHighlights: string[]
-  puzzleHighlights: string[]
-  notes?: string
-}
-
-export type PromotionCandidatesMilestoneData = {
-  grouping: 'by_menu_category' | 'flat'
-  categories: Record<string, PromotionCandidatesCategoryBlock>
-  flatSummary: string
-  promotionIdeas: string[]
-}
-
-export type PostSchedulerPostItem = {
-  dayOfWeek: string
-  date: string
-  time: string
-  postType: 'Reel' | 'Post'
-  contentType: 'Carousel' | 'Single'
-  promotedMenuItems: string[]
-  captionIdea: string
+export type PostSchedulerMonthlyArcWeek = {
+  week: 1 | 2 | 3 | 4
+  objective: string
+  rationale: string
 }
 
 export type PostSchedulerMilestoneData = {
-  posts: PostSchedulerPostItem[]
+  monthlyArc: {
+    weeks: PostSchedulerMonthlyArcWeek[]
+  }
+  contentRatio: {
+    pillars: Array<{
+      pillar: string
+      percent: number
+      reason: string
+    }>
+  }
+  formatMix: {
+    formats: Array<{
+      format:
+        | 'Reels'
+        | 'Carousels'
+        | 'Single posts'
+        | 'Stories'
+        | 'Highlights updates'
+        | 'Lives'
+        | 'Collaborator posts'
+      count: number
+      reason: string
+    }>
+  }
+  weeklySlotPlan: Array<{
+    week: 1 | 2 | 3 | 4
+    day: string
+    format: 'Reel' | 'Carousel' | 'Single post'
+    pillar: string
+    hook: string
+    captionStructure: string
+    ctaType: 'Reserve' | 'Order' | 'DM' | 'Walk in' | 'Save'
+    funnelStage: 'Awareness' | 'Consideration' | 'Conversion' | 'Loyalty'
+    visualDirection: string
+    notes: string
+  }>
+  guardrailCheck: string
+}
+
+export type PostSchedulerPostItem = PostSchedulerMilestoneData['weeklySlotPlan'][number]
+
+export type PromotionCandidatesCategoryBlock = {
+  category: 'FOOD' | 'DRINK'
+  starItems: string[]
+  puzzleItems: string[]
+}
+
+export type PromotionCandidatesMilestoneData = {
+  mainCategory: 'FOOD' | 'DRINK'
+  categories: PromotionCandidatesCategoryBlock[]
+  sourceAnalyticsRunId?: string | null
+  notes?: string
+}
+
+export type CultureHookIntersection = {
+  topic: string
+  conceptLink: string
+  audienceRelevance: string
+  contentExample: string
+}
+
+export type CultureHooksMilestoneData = {
+  locationConcept: string
+  targetAudience: string
+  intersections: CultureHookIntersection[]
+  guardrailCheck: string
 }
 
 export type MilestoneDataValue =
-  | DatesMilestoneData
-  | BrandBriefMilestoneData
-  | PromotionCandidatesMilestoneData
+  | CampaignBriefMilestoneData
   | PostSchedulerMilestoneData
+  | PromotionCandidatesMilestoneData
+  | CultureHooksMilestoneData
 
 export type TimelineMilestone = {
   id: string
@@ -105,12 +145,8 @@ export type TimelineMilestone = {
   data?: MilestoneDataValue
   /** Preset marker for milestone-specific UI behavior. */
   presetId?: MilestonePresetId
-  /** Typed per-milestone input (e.g. Dates fields); stored on milestone `data` JSON. */
+  /** Typed per-milestone input; stored on milestone `data` JSON. */
   milestoneInput?: MilestoneInput
-  /** Auto: LLM picks skills. Fixed: use `milestoneRunSkillIds` (max 2). */
-  milestoneRunSkillMode?: MilestoneRunSkillMode
-  /** Registry skill ids when mode is `fixed`. */
-  milestoneRunSkillIds?: string[]
   /** Markdown body for the Result tab. */
   resultMarkdown?: string
   /** Derived rail status from pass criteria + optional run outcome. */

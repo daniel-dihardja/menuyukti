@@ -8,7 +8,12 @@ from graphql.data_sources import ApiAdapterTool, SessionLocal
 from graphql.schema.auth import is_workspace_member, user_id_from_info
 from graphql.schema.queries.api_adapter_tools import _row_to_gql
 from graphql.schema.types import ApiAdapterToolType
-from graphql.services import api_adapter_tool as api_adapter_tool_service
+from graphql.services.api_adapter_tool import (
+    normalize_description,
+    normalize_name,
+    tool_key_from_name,
+    validate_tool_url,
+)
 
 
 @strawberry.type
@@ -28,10 +33,10 @@ class CreateApiAdapterToolMutation:
             raise ValueError("Missing authenticated user for createApiAdapterTool")
 
         wid = int(workspace_id)
-        name_clean = api_adapter_tool_service.normalize_name(name)
-        desc_clean = api_adapter_tool_service.normalize_description(description)
-        url_clean = api_adapter_tool_service.validate_tool_url(url)
-        tool_key = api_adapter_tool_service.tool_key_from_name(name_clean)
+        name_clean = normalize_name(name)
+        desc_clean = normalize_description(description)
+        url_clean = validate_tool_url(url)
+        tool_key = tool_key_from_name(name_clean)
 
         with SessionLocal() as session:
             if not is_workspace_member(session, wid, user_id):

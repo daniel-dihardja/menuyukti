@@ -30,6 +30,11 @@ query Node($id: ID!) {
     parentId
     locationId
     data
+    milestoneGoal
+    milestoneInput
+    passCriterias
+    milestonePresetData
+    milestoneResult
   }
 }
 """
@@ -40,7 +45,34 @@ mutation UpdateNode($id: ID!, $data: JSON) {
     id
     nodeType
     data
+    milestoneGoal
+    milestoneInput
+    passCriterias
+    milestonePresetData
+    milestoneResult
   }
+}
+"""
+
+SET_PASS_CRITERION_STATUS_MUTATION = """
+mutation SetPassCriterionStatus(
+  $milestoneId: ID!
+  $locationId: Int!
+  $criterionId: String!
+  $status: String!
+) {
+  setPassCriterionStatus(
+    milestoneId: $milestoneId
+    locationId: $locationId
+    criterionId: $criterionId
+    status: $status
+  )
+}
+"""
+
+REPLACE_PASS_CRITERIA_MUTATION = """
+mutation ReplacePassCriteria($milestoneId: ID!, $locationId: Int!, $requirements: [String!]!) {
+  replacePassCriteria(milestoneId: $milestoneId, locationId: $locationId, requirements: $requirements)
 }
 """
 
@@ -77,7 +109,7 @@ mutation CreateNode(
 """
 
 LOCATION_QUERY = """
-query GetLocation($id: ID!, $locationId: Int!) {
+query GetLocation($id: ID!) {
   location(id: $id) {
     id
     name
@@ -90,16 +122,6 @@ query GetLocation($id: ID!, $locationId: Int!) {
       locationId
       quickProfile
     }
-  }
-  locationSocialSettings(locationId: $locationId) {
-    locationId
-    tone
-    brandPersonality
-    contentPillars
-    platformFocus
-    brandHashtags
-    avoidTopics
-    targetAudience
   }
 }
 """
@@ -240,6 +262,16 @@ query LocationOperatingSignals($locationId: ID!, $analyticsRunId: ID!) {
           totalRevenue
         }
       }
+      campaignPlanningSignals {
+        recommendedPostingDays
+        recommendedDayparts
+        objectiveRecommendation
+        primaryCtaChannel
+      }
+      signalConfidence {
+        tier
+        coverageNotes
+      }
     }
   }
 }
@@ -270,20 +302,6 @@ query CampaignSchedulePlan(
       captionIdea
     }
   }
-}
-"""
-
-REPLACE_PASS_CRITERIA_MUTATION = """
-mutation ReplacePassCriteria(
-  $milestoneId: ID!
-  $locationId: Int!
-  $requirements: [String!]!
-) {
-  replacePassCriteria(
-    milestoneId: $milestoneId
-    locationId: $locationId
-    requirements: $requirements
-  )
 }
 """
 

@@ -5,60 +5,41 @@
 
 import { z } from 'zod'
 
-/** Passcriteria `data` JSON — matches backend `PassCriteriaHandler` validation. */
-export const passCriteriaDataSchema = z.object({
+/** Pass criteria item stored inside milestone `data.passCriterias`. */
+export const passCriteriaSchema = z.object({
+  id: z.string().trim().min(1),
   requirement: z.string(),
   status: z.enum(['pass', 'fail', 'open']),
 })
 
-export type PassCriteriaData = z.infer<typeof passCriteriaDataSchema>
-
-/** Milestone `data` JSON — `order` is the display sequence. */
-export const milestoneRunSkillModeSchema = z.enum(['auto', 'fixed'])
-
-export type MilestoneRunSkillMode = z.infer<typeof milestoneRunSkillModeSchema>
+export type PassCriteriaData = z.infer<typeof passCriteriaSchema>
 
 export const milestonePresetIdSchema = z.enum([
-  'dates',
-  'restaurant_brand_brief',
-  'promotion_candidates',
+  'restaurant_campaign_brief',
   'post_scheduler',
+  'promotion_candidates',
+  'culture_hooks',
 ])
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
 
-export const datesMilestoneInputSchema = z.object({
+/**
+ * Optional owner notes on the milestone Input tab (`value.notes`).
+ * Used by the campaign_brief preset.
+ */
+export const campaignBriefMilestoneInputValueSchema = z.object({
+  notes: z.string(),
   startDate: z.string(),
   endDate: z.string(),
 })
 
-export type DatesMilestoneInput = z.infer<typeof datesMilestoneInputSchema>
-
-/**
- * Optional owner notes on the milestone Input tab (`value.notes`).
- * Used by the brand brief preset.
- */
-export const brandBriefMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
-
-export type BrandBriefMilestoneInputValue = z.infer<typeof brandBriefMilestoneInputValueSchema>
-
-/**
- * Optional owner notes on the milestone Input tab (`value.notes`).
- * Used by the promotion candidates preset.
- */
-export const promotionCandidatesMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
-
-export type PromotionCandidatesMilestoneInputValue = z.infer<
-  typeof promotionCandidatesMilestoneInputValueSchema
+export type CampaignBriefMilestoneInputValue = z.infer<
+  typeof campaignBriefMilestoneInputValueSchema
 >
 
 /**
  * Optional owner notes on the milestone Input tab (`value.notes`).
- * Used by the post scheduler preset.
+ * Used by the scheduler preset.
  */
 export const postSchedulerMilestoneInputValueSchema = z.object({
   notes: z.string(),
@@ -68,6 +49,12 @@ export type PostSchedulerMilestoneInputValue = z.infer<
   typeof postSchedulerMilestoneInputValueSchema
 >
 
+export const cultureHooksMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type CultureHooksMilestoneInputValue = z.infer<typeof cultureHooksMilestoneInputValueSchema>
+
 export const milestoneInputSchema = z.object({
   type: z.string().trim().min(1),
   value: z.unknown().optional(),
@@ -75,113 +62,178 @@ export const milestoneInputSchema = z.object({
 
 export type MilestoneInput = z.infer<typeof milestoneInputSchema>
 
-export const datesPublicHolidaySchema = z.object({
+export const campaignWindowPublicHolidaySchema = z.object({
   name: z.string(),
   description: z.string(),
   date: z.string(),
 })
 
-export type DatesPublicHoliday = z.infer<typeof datesPublicHolidaySchema>
+export type CampaignWindowPublicHoliday = z.infer<typeof campaignWindowPublicHolidaySchema>
 
-export const datesMilestoneDataSchema = z.object({
-  startDate: z.string(),
-  endDate: z.string(),
-  publicHolidays: z.array(datesPublicHolidaySchema),
-})
-
-export type DatesMilestoneData = z.infer<typeof datesMilestoneDataSchema>
-
-export const brandBriefVenueSnapshotSchema = z.object({
+export const campaignBriefVenueSnapshotSchema = z.object({
   venueName: z.string(),
   city: z.string(),
   country: z.string(),
   currency: z.string(),
 })
 
-export type BrandBriefVenueSnapshot = z.infer<typeof brandBriefVenueSnapshotSchema>
+export type CampaignBriefVenueSnapshot = z.infer<typeof campaignBriefVenueSnapshotSchema>
 
-export const brandBriefMilestoneDataSchema = z.object({
-  venueSnapshot: brandBriefVenueSnapshotSchema,
+export const campaignBriefMilestoneDataSchema = z.object({
+  startDate: z.string(),
+  endDate: z.string(),
+  publicHolidays: z.array(campaignWindowPublicHolidaySchema),
+  venueSnapshot: campaignBriefVenueSnapshotSchema,
   contentPillars: z.array(z.string()),
   audienceHypotheses: z.array(z.string()),
   proofOrientedAngles: z.array(z.string()),
   toneGuardrails: z.array(z.string()),
+  campaignObjective: z.string(),
+  mainCategory: z.enum(['FOOD', 'DRINK']),
+  targetSegments: z.array(z.string()),
+  messageHierarchy: z.array(z.string()),
+  offerAndCtaPlan: z.array(z.string()),
+  contentPillarPlan: z.array(z.string()),
+  measurementPlan: z.array(z.string()),
+  testingPlan: z.array(z.string()),
+  riskGuardrails: z.array(z.string()),
 })
 
-export type BrandBriefMilestoneData = z.infer<typeof brandBriefMilestoneDataSchema>
+export type CampaignBriefMilestoneData = z.infer<typeof campaignBriefMilestoneDataSchema>
 
-export const promotionCandidatesCategoryBlockSchema = z.object({
-  menuCategory: z.string(),
-  starHighlights: z.array(z.string()),
-  puzzleHighlights: z.array(z.string()),
-  notes: z.string().optional(),
+export const postSchedulerMonthlyArcWeekSchema = z.object({
+  week: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+  objective: z.string(),
+  rationale: z.string(),
+})
+
+export const postSchedulerMonthlyArcSchema = z.object({
+  weeks: z.array(postSchedulerMonthlyArcWeekSchema),
+})
+
+export const postSchedulerContentRatioItemSchema = z.object({
+  pillar: z.string(),
+  percent: z.number().int().nonnegative(),
+  reason: z.string(),
+})
+
+export const postSchedulerContentRatioSchema = z.object({
+  pillars: z.array(postSchedulerContentRatioItemSchema),
+})
+
+export const postSchedulerFormatMixItemSchema = z.object({
+  format: z.enum([
+    'Reels',
+    'Carousels',
+    'Single posts',
+    'Stories',
+    'Highlights updates',
+    'Lives',
+    'Collaborator posts',
+  ]),
+  count: z.number().int().nonnegative(),
+  reason: z.string(),
+})
+
+export const postSchedulerFormatMixSchema = z.object({
+  formats: z.array(postSchedulerFormatMixItemSchema),
+})
+
+export const postSchedulerWeeklySlotSchema = z.object({
+  week: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
+  day: z.string(),
+  format: z.enum(['Reel', 'Carousel', 'Single post']),
+  pillar: z.string(),
+  hook: z.string(),
+  captionStructure: z.string(),
+  ctaType: z.enum(['Reserve', 'Order', 'DM', 'Walk in', 'Save']),
+  funnelStage: z.enum(['Awareness', 'Consideration', 'Conversion', 'Loyalty']),
+  visualDirection: z.string(),
+  notes: z.string(),
+})
+
+export const postSchedulerMilestoneDataSchema = z.object({
+  monthlyArc: postSchedulerMonthlyArcSchema,
+  contentRatio: postSchedulerContentRatioSchema,
+  formatMix: postSchedulerFormatMixSchema,
+  weeklySlotPlan: z.array(postSchedulerWeeklySlotSchema),
+  guardrailCheck: z.string(),
+})
+
+export type PostSchedulerMilestoneData = z.infer<typeof postSchedulerMilestoneDataSchema>
+
+export const promotionCandidatesCategorySchema = z.object({
+  category: z.enum(['FOOD', 'DRINK']),
+  starItems: z.array(z.string()),
+  puzzleItems: z.array(z.string()),
 })
 
 export const promotionCandidatesMilestoneDataSchema = z.object({
-  grouping: z.enum(['by_menu_category', 'flat']),
-  categories: z.record(z.string(), promotionCandidatesCategoryBlockSchema),
-  flatSummary: z.string(),
-  promotionIdeas: z.array(z.string()),
+  mainCategory: z.enum(['FOOD', 'DRINK']),
+  categories: z.array(promotionCandidatesCategorySchema).min(1),
+  sourceAnalyticsRunId: z.string().nullable().optional(),
+  notes: z.string().optional(),
 })
 
 export type PromotionCandidatesMilestoneData = z.infer<
   typeof promotionCandidatesMilestoneDataSchema
 >
 
-export const postSchedulerPostItemSchema = z.object({
-  dayOfWeek: z.string(),
-  date: z.string(),
-  time: z.string(),
-  postType: z.enum(['Reel', 'Post']),
-  contentType: z.enum(['Carousel', 'Single']),
-  promotedMenuItems: z.array(z.string()),
-  captionIdea: z.string(),
+export const cultureHookIntersectionSchema = z.object({
+  topic: z.string(),
+  conceptLink: z.string(),
+  audienceRelevance: z.string(),
+  contentExample: z.string(),
 })
 
-export type PostSchedulerPostItem = z.infer<typeof postSchedulerPostItemSchema>
-
-export const postSchedulerMilestoneDataSchema = z.object({
-  posts: z.array(postSchedulerPostItemSchema),
+export const cultureHooksMilestoneDataSchema = z.object({
+  locationConcept: z.string(),
+  targetAudience: z.string(),
+  intersections: z.array(cultureHookIntersectionSchema),
+  guardrailCheck: z.string(),
 })
 
-export type PostSchedulerMilestoneData = z.infer<typeof postSchedulerMilestoneDataSchema>
+export type CultureHooksMilestoneData = z.infer<typeof cultureHooksMilestoneDataSchema>
 
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
-    /**
-     * Legacy: goal text was stored on the milestone. New writes use a child node (`nodeType` `goal`).
-     */
+    /** Free-form milestone goal; persisted on the milestone node `data` JSON. */
     goal: z.string().optional(),
-    /**
-     * Milestone agent run: `auto` uses LLM skill selection; `fixed` uses `milestoneRunSkillIds` (max 2).
-     * Omitted defaults to auto in agents.
-     */
-    milestoneRunSkillMode: milestoneRunSkillModeSchema.optional(),
-    milestoneRunSkillIds: z.array(z.string()).max(2).optional(),
     presetId: milestonePresetIdSchema.optional(),
     milestoneInput: milestoneInputSchema.optional(),
+    passCriterias: z.array(passCriteriaSchema).optional(),
   })
   .passthrough()
 
 export type MilestoneData = z.infer<typeof milestoneDataSchema>
 
-/** Goal child node `data` JSON — matches backend `GoalHandler` validation. */
-export const goalDataSchema = z.object({
-  goal: z.string(),
-})
-
-export type GoalData = z.infer<typeof goalDataSchema>
-
 /** Child `milestonedata` node JSON — structured preset data only (breaking change: no markdown string). */
 export const milestonedataValueSchema = z.union([
-  datesMilestoneDataSchema,
-  brandBriefMilestoneDataSchema,
-  promotionCandidatesMilestoneDataSchema,
+  campaignBriefMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
+  promotionCandidatesMilestoneDataSchema,
+  cultureHooksMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>
+
+const resultCriterionSchema = z.object({
+  id: z.string(),
+  requirement: z.string(),
+  status: z.string(),
+  reasoning: z.string(),
+})
+
+/** Eval result payload on milestone rows (same shape as legacy result child nodes). */
+export const resultDataSchema = z.object({
+  summary: z.string(),
+  passed: z.number().int(),
+  total: z.number().int(),
+  criteria: z.array(resultCriterionSchema).optional(),
+})
+
+export type ResultData = z.infer<typeof resultDataSchema>
 
 const baseNode = z.object({
   id: z.string(),
@@ -195,16 +247,16 @@ const baseNode = z.object({
 export const milestoneNodeSchema = baseNode.extend({
   nodeType: z.literal('milestone'),
   data: milestoneDataSchema.nullable(),
+  milestoneGoal: z.string().nullable().optional(),
+  milestoneInput: z.unknown().nullable().optional(),
+  passCriterias: z.array(passCriteriaSchema).nullable().optional(),
+  milestonePresetData: z.unknown().nullable().optional(),
+  milestoneResult: resultDataSchema.nullable().optional(),
 })
 
 export const passCriteriaNodeSchema = baseNode.extend({
   nodeType: z.literal('passcriteria'),
-  data: passCriteriaDataSchema.nullable(),
-})
-
-export const goalNodeSchema = baseNode.extend({
-  nodeType: z.literal('goal'),
-  data: goalDataSchema.nullable(),
+  data: passCriteriaSchema.omit({ id: true }).nullable(),
 })
 
 export const milestonedataNodeSchema = baseNode.extend({
@@ -212,23 +264,7 @@ export const milestonedataNodeSchema = baseNode.extend({
   data: milestonedataValueSchema.nullable(),
 })
 
-const resultCriterionSchema = z.object({
-  id: z.string(),
-  requirement: z.string(),
-  status: z.string(),
-  reasoning: z.string(),
-})
-
-/** Child `result` node JSON — matches backend `ResultHandler` validation. */
-export const resultDataSchema = z.object({
-  summary: z.string(),
-  passed: z.number().int(),
-  total: z.number().int(),
-  criteria: z.array(resultCriterionSchema).optional(),
-})
-
-export type ResultData = z.infer<typeof resultDataSchema>
-
+/** Legacy child `result` node JSON — matches backend result validation. */
 export const resultNodeSchema = baseNode.extend({
   nodeType: z.literal('result'),
   data: resultDataSchema.nullable(),
@@ -256,7 +292,6 @@ export const unknownNodeSchema = baseNode.extend({
 export const knownNodeSchema = z.discriminatedUnion('nodeType', [
   milestoneNodeSchema,
   passCriteriaNodeSchema,
-  goalNodeSchema,
   milestonedataNodeSchema,
   resultNodeSchema,
   workflowNodeSchema,
@@ -264,7 +299,6 @@ export const knownNodeSchema = z.discriminatedUnion('nodeType', [
 
 export type MilestoneNode = z.infer<typeof milestoneNodeSchema>
 export type PassCriteriaNode = z.infer<typeof passCriteriaNodeSchema>
-export type GoalNode = z.infer<typeof goalNodeSchema>
 export type MilestonedataNode = z.infer<typeof milestonedataNodeSchema>
 export type ResultNode = z.infer<typeof resultNodeSchema>
 export type WorkflowNode = z.infer<typeof workflowNodeSchema>
@@ -273,7 +307,7 @@ export type UnknownNode = z.infer<typeof unknownNodeSchema>
 export type AnyNode = KnownNode | UnknownNode
 
 /**
- * Parse a single node from GraphQL JSON. Tries milestone, passcriteria, goal, milestonedata, result, workflow, then
+ * Parse a single node from GraphQL JSON. Tries milestone, passcriteria, milestonedata, result, workflow, then
  * falls back to a generic node so callers can still narrow on `nodeType`.
  */
 export function parseNode(raw: unknown): AnyNode {
@@ -284,10 +318,6 @@ export function parseNode(raw: unknown): AnyNode {
   const p = passCriteriaNodeSchema.safeParse(raw)
   if (p.success) {
     return p.data
-  }
-  const g = goalNodeSchema.safeParse(raw)
-  if (g.success) {
-    return g.data
   }
   const md = milestonedataNodeSchema.safeParse(raw)
   if (md.success) {

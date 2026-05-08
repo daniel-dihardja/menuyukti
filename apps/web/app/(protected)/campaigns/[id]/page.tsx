@@ -4,14 +4,14 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { z } from 'zod'
 import { routes } from '@/lib/routes'
-import { parseNode, parseNodes } from '@/lib/graphql/node-schemas'
+import { parseNode } from '@/lib/graphql/node-schemas'
+import type { MilestoneNode } from '@/lib/graphql/node-schemas'
 import { getCachedWorkflowCampaignTree } from '@/lib/graphql/cached-queries'
 import type { WorkflowNode } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 
 import { CampaignWorkspace } from '../_components/campaign-workspace'
 import { milestoneNodeToTimelineMilestone } from '../_components/milestone-map'
-import type { MilestoneNodeDto } from '../_components/milestone-map'
 import type { TimelineMilestone } from '../_components/timeline-workspace'
 
 const workflowIdParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow id')
@@ -63,16 +63,10 @@ export default async function Page({ params }: PageProps) {
 
   const initialMilestones: TimelineMilestone[] = tree.milestones.map((bundle) => {
     const m = parseNode(bundle.milestone)
-    const dto: MilestoneNodeDto = {
-      id: m.id,
-      name: m.name,
-      data: m.data,
-      passCriteriaNodes: parseNodes(bundle.passCriteriaNodes),
-      goalNodes: parseNodes(bundle.goalNodes),
-      milestonedataNodes: parseNodes(bundle.milestonedataNodes),
-      resultNodes: parseNodes(bundle.resultNodes),
+    if (m.nodeType !== 'milestone') {
+      throw new Error('Invariant: expected milestone node in campaign tree')
     }
-    return milestoneNodeToTimelineMilestone(dto)
+    return milestoneNodeToTimelineMilestone(m as MilestoneNode)
   })
 
   const tCampaigns = await getTranslations('analytics.campaigns')

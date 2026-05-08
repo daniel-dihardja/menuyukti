@@ -11,12 +11,7 @@ import {
 } from './timeline-context'
 import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 
-import type {
-  MilestoneDataValue,
-  MilestoneInput,
-  MilestoneRunSkillMode,
-  PassCriteriaRow,
-} from './timeline/types'
+import type { MilestoneDataValue, MilestoneInput, PassCriteriaRow } from './timeline/types'
 
 export type CampaignTimelineOpsHandles = {
   handleCreateMilestone: () => boolean | Promise<boolean>
@@ -28,10 +23,6 @@ export type CampaignTimelineOpsHandles = {
   handleUpdateMilestoneGoal: (id: string, goal: string) => Promise<boolean>
   handleUpdateMilestoneData: (id: string, milestoneData: MilestoneDataValue) => Promise<boolean>
   handleUpdateMilestoneInput: (id: string, milestoneInput: MilestoneInput) => Promise<boolean>
-  handleUpdateMilestoneRunSettings: (
-    id: string,
-    settings: { milestoneRunSkillMode: MilestoneRunSkillMode; milestoneRunSkillIds: string[] },
-  ) => Promise<boolean>
   handleHydrateMilestoneData: (id: string) => Promise<void>
   handleRunMilestone: (id: string) => void | Promise<void>
   handleExportWorkflow: () => void | Promise<void>
@@ -67,7 +58,6 @@ export function useCampaignTimelineProviderSlices(
       onUpdateMilestoneGoal: ops.handleUpdateMilestoneGoal,
       onUpdateMilestoneData: ops.handleUpdateMilestoneData,
       onUpdateMilestoneInput: ops.handleUpdateMilestoneInput,
-      onUpdateMilestoneRunSettings: ops.handleUpdateMilestoneRunSettings,
       onHydrateMilestoneData: ops.handleHydrateMilestoneData,
       onRunMilestone: ops.handleRunMilestone,
       onExport: ops.handleExportWorkflow,

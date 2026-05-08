@@ -15,25 +15,25 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
     id: 'public_holidays',
     name: 'Public holidays',
     description:
-      "Use when the milestone goal or pass criteria require listing, confirming, or filling in public holidays for a date range for this location's country.",
+      "Use when a milestone explicitly needs holiday lookup/confirmation for a date range for this location's country.",
   },
   {
-    id: 'brand_brief',
-    name: 'Brand brief',
+    id: 'campaign_brief',
+    name: 'Campaign brief',
     description:
-      'Use for the brand brief milestone: location-only brief from profile and operating signals—venue snapshot, pillars, audience hypotheses, tone guardrails. No campaign start/end dates.',
-  },
-  {
-    id: 'promotion_candidates',
-    name: 'Promotion candidates',
-    description:
-      'Use for the promotion candidates milestone: menu engineering top stars and puzzles per POS menu_category (or flat when categories are missing) from the latest analytics run. When a prior brand brief milestone exists, align promotion ideas with its pillars, audience, proof angles, and tone; menu names stay grounded in analytics.',
+      'Use for the campaign brief milestone: campaign window and holidays plus profile and operating signals—venue snapshot, pillars, audience hypotheses, proof-oriented angles, and tone guardrails.',
   },
   {
     id: 'post_scheduler',
-    name: 'Post scheduler',
+    name: 'Scheduler',
     description:
-      'Use for the post scheduler milestone: builds an Instagram posting plan from prior Dates (campaign window and public holidays), Brand Brief, and Promotion Candidates; uses get_available_dates to filter posting days by weekends and holidays when needed.',
+      'Use for the scheduler milestone: builds an Instagram content schedule from Campaign Brief (campaign window and public holidays), scheduler plan signals, and prefetched promotion candidates (star/puzzle menu items by category).',
+  },
+  {
+    id: 'culture_hooks',
+    name: 'Culture hooks',
+    description:
+      'Use for the culture hooks milestone: reads Campaign Brief only, infers location concept and target audience, then proposes non-food intersection topics for culturally relevant Instagram content.',
   },
   {
     id: 'generic',

@@ -13,6 +13,7 @@ from .invite_workspace_member import InviteWorkspaceMemberMutation
 from .milestone_agent_run import MilestoneAgentRunMutation
 from .remove_workspace_member import RemoveWorkspaceMemberMutation
 from .replace_pass_criteria import ReplacePassCriteriaMutation
+from .set_pass_criterion_status import SetPassCriterionStatusMutation
 from .update_api_adapter_tool import UpdateApiAdapterToolMutation
 from .update_image_ai_flow import UpdateImageAiFlowMutation
 from .update_location import UpdateLocationMutation
@@ -38,6 +39,7 @@ __all__ = [
     "MilestoneAgentRunMutation",
     "RemoveWorkspaceMemberMutation",
     "ReplacePassCriteriaMutation",
+    "SetPassCriterionStatusMutation",
     "UpdateApiAdapterToolMutation",
     "UpdateImageAiFlowMutation",
     "UpdateLocationMutation",

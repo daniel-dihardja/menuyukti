@@ -1,20 +1,23 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 
+import { formatPreviewDateString } from '@/lib/format-preview-date'
+
 import {
-  brandBriefMilestoneDataSchema,
-  datesMilestoneDataSchema,
+  campaignBriefMilestoneDataSchema,
+  cultureHooksMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
 import type { TimelineMilestone } from '../timeline/types'
 
-import { MilestoneBrandBriefDataPreview } from './milestone-brand-brief-data-preview'
-import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
-import { MilestonePostSchedulerDataPreview } from './milestone-post-scheduler-data-preview'
+import { MilestoneCampaignBriefDataPreview } from './milestone-campaign_brief-data-preview'
+import { MilestoneCultureHooksDataPreview } from './milestone-culture-hooks-data-preview'
 import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
+import { MilestonePostSchedulerDataPreview } from './milestone-post-scheduler-data-preview'
 
 export type MilestoneDataPreviewProps = {
   milestone: TimelineMilestone
@@ -23,6 +26,10 @@ export type MilestoneDataPreviewProps = {
 export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const locale = useLocale()
+  const formatPreviewDate = useMemo(
+    () => (value: string) => formatPreviewDateString(value, locale),
+    [locale],
+  )
   const data = milestone.data
 
   if (data == null) {
@@ -30,71 +37,59 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
   }
 
   if (typeof data === 'object') {
-    if (milestone.presetId === 'dates') {
-      const parsedDates = datesMilestoneDataSchema.safeParse(data)
-      if (!parsedDates.success) {
+    if (milestone.presetId === 'restaurant_campaign_brief') {
+      const parsedCampaignBrief = campaignBriefMilestoneDataSchema.safeParse(data)
+      if (!parsedCampaignBrief.success) {
         return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
       }
 
       return (
-        <MilestoneDatesDataPreview
-          data={parsedDates.data}
-          locale={locale}
+        <MilestoneCampaignBriefDataPreview
+          data={parsedCampaignBrief.data}
+          formatDate={formatPreviewDate}
+          formatHelpAriaLabel={(sectionTitle) =>
+            t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle })
+          }
           labels={{
-            startDate: t('milestoneDatesPreviewStartDate'),
-            endDate: t('milestoneDatesPreviewEndDate'),
-            publicHolidays: t('milestoneDatesPreviewPublicHolidays'),
-            noHolidays: t('milestoneDatesPreviewNoHolidays'),
-            emptyValue: t('milestoneDatesPreviewValueEmpty'),
-          }}
-        />
-      )
-    }
-
-    if (milestone.presetId === 'restaurant_brand_brief') {
-      const parsedBrandBrief = brandBriefMilestoneDataSchema.safeParse(data)
-      if (!parsedBrandBrief.success) {
-        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
-      }
-
-      return (
-        <MilestoneBrandBriefDataPreview
-          data={parsedBrandBrief.data}
-          labels={{
-            venueName: t('milestoneBrandBriefPreviewVenueName'),
-            city: t('milestoneBrandBriefPreviewCity'),
-            country: t('milestoneBrandBriefPreviewCountry'),
-            currency: t('milestoneBrandBriefPreviewCurrency'),
-            contentPillars: t('milestoneBrandBriefPreviewContentPillars'),
-            audienceHypotheses: t('milestoneBrandBriefPreviewAudienceHypotheses'),
-            proofOrientedAngles: t('milestoneBrandBriefPreviewProofOrientedAngles'),
-            toneGuardrails: t('milestoneBrandBriefPreviewToneGuardrails'),
-            emptyList: t('milestoneBrandBriefPreviewEmptyList'),
-            emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
-          }}
-        />
-      )
-    }
-
-    if (milestone.presetId === 'promotion_candidates') {
-      const parsedPc = promotionCandidatesMilestoneDataSchema.safeParse(data)
-      if (!parsedPc.success) {
-        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
-      }
-
-      return (
-        <MilestonePromotionCandidatesDataPreview
-          data={parsedPc.data}
-          labels={{
-            grouping: t('milestonePromotionCandidatesPreviewGrouping'),
-            flatSummary: t('milestonePromotionCandidatesPreviewFlatSummary'),
-            promotionIdeas: t('milestonePromotionCandidatesPreviewPromotionIdeas'),
-            categoryMenu: t('milestonePromotionCandidatesPreviewCategoryMenu'),
-            starHighlights: t('milestonePromotionCandidatesPreviewStarHighlights'),
-            puzzleHighlights: t('milestonePromotionCandidatesPreviewPuzzleHighlights'),
-            notes: t('milestonePromotionCandidatesPreviewNotes'),
-            emptyList: t('milestoneBrandBriefPreviewEmptyList'),
-            emptyValue: t('milestoneBrandBriefPreviewEmptyValue'),
+            startDate: t('milestoneCampaignBriefPreviewStartDate'),
+            endDate: t('milestoneCampaignBriefPreviewEndDate'),
+            publicHolidays: t('milestoneCampaignBriefPreviewPublicHolidays'),
+            noHolidays: t('milestoneCampaignBriefPreviewNoHolidays'),
+            venueSnapshot: t('milestoneCampaignBriefPreviewVenueSnapshot'),
+            venueName: t('milestoneCampaignBriefPreviewVenueName'),
+            city: t('milestoneCampaignBriefPreviewCity'),
+            country: t('milestoneCampaignBriefPreviewCountry'),
+            currency: t('milestoneCampaignBriefPreviewCurrency'),
+            contentPillars: t('milestoneCampaignBriefPreviewContentPillars'),
+            audienceHypotheses: t('milestoneCampaignBriefPreviewAudienceHypotheses'),
+            proofOrientedAngles: t('milestoneCampaignBriefPreviewProofOrientedAngles'),
+            toneGuardrails: t('milestoneCampaignBriefPreviewToneGuardrails'),
+            campaignObjective: t('milestoneCampaignBriefPreviewCampaignObjective'),
+            targetSegments: t('milestoneCampaignBriefPreviewTargetSegments'),
+            messageHierarchy: t('milestoneCampaignBriefPreviewMessageHierarchy'),
+            offerAndCtaPlan: t('milestoneCampaignBriefPreviewOfferAndCtaPlan'),
+            contentPillarPlan: t('milestoneCampaignBriefPreviewContentPillarPlan'),
+            measurementPlan: t('milestoneCampaignBriefPreviewMeasurementPlan'),
+            testingPlan: t('milestoneCampaignBriefPreviewTestingPlan'),
+            riskGuardrails: t('milestoneCampaignBriefPreviewRiskGuardrails'),
+            emptyList: t('milestoneCampaignBriefPreviewEmptyList'),
+            emptyValue: t('milestoneCampaignBriefPreviewEmptyValue'),
+            helpVenueSnapshot: t('milestoneCampaignBriefPreviewHelpVenueSnapshot'),
+            helpContentPillars: t('milestoneCampaignBriefPreviewHelpContentPillars'),
+            helpAudienceHypotheses: t('milestoneCampaignBriefPreviewHelpAudienceHypotheses'),
+            helpProofOrientedAngles: t('milestoneCampaignBriefPreviewHelpProofOrientedAngles'),
+            helpToneGuardrails: t('milestoneCampaignBriefPreviewHelpToneGuardrails'),
+            helpCampaignObjective: t('milestoneCampaignBriefPreviewHelpCampaignObjective'),
+            helpTargetSegments: t('milestoneCampaignBriefPreviewHelpTargetSegments'),
+            helpMessageHierarchy: t('milestoneCampaignBriefPreviewHelpMessageHierarchy'),
+            helpOfferAndCtaPlan: t('milestoneCampaignBriefPreviewHelpOfferAndCtaPlan'),
+            helpContentPillarPlan: t('milestoneCampaignBriefPreviewHelpContentPillarPlan'),
+            helpMeasurementPlan: t('milestoneCampaignBriefPreviewHelpMeasurementPlan'),
+            helpTestingPlan: t('milestoneCampaignBriefPreviewHelpTestingPlan'),
+            helpRiskGuardrails: t('milestoneCampaignBriefPreviewHelpRiskGuardrails'),
+            helpStartDate: t('milestoneCampaignBriefPreviewHelpStartDate'),
+            helpEndDate: t('milestoneCampaignBriefPreviewHelpEndDate'),
+            helpPublicHolidays: t('milestoneCampaignBriefPreviewHelpPublicHolidays'),
           }}
         />
       )
@@ -110,13 +105,72 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
         <MilestonePostSchedulerDataPreview
           data={parsedPs.data}
           labels={{
-            postsHeading: t('milestonePostSchedulerPreviewPostsHeading'),
-            emptyPosts: t('milestonePostSchedulerPreviewEmptyPosts'),
-            dayDateTime: t('milestonePostSchedulerPreviewDayDateTime'),
-            postType: t('milestonePostSchedulerPreviewPostType'),
-            contentType: t('milestonePostSchedulerPreviewContentType'),
-            promotedItems: t('milestonePostSchedulerPreviewPromotedItems'),
-            captionIdea: t('milestonePostSchedulerPreviewCaptionIdea'),
+            monthlyArcHeading: t('milestonePostSchedulerPreviewMonthlyArcHeading'),
+            contentRatioHeading: t('milestonePostSchedulerPreviewContentRatioHeading'),
+            formatMixHeading: t('milestonePostSchedulerPreviewFormatMixHeading'),
+            weeklySlotPlanHeading: t('milestonePostSchedulerPreviewWeeklySlotPlanHeading'),
+            emptyWeeklySlotPlan: t('milestonePostSchedulerPreviewEmptyWeeklySlotPlan'),
+            guardrailCheckHeading: t('milestonePostSchedulerPreviewGuardrailCheckHeading'),
+            weekLabel: t('milestonePostSchedulerPreviewWeekLabel'),
+            objectiveLabel: t('milestonePostSchedulerPreviewObjectiveLabel'),
+            rationaleLabel: t('milestonePostSchedulerPreviewRationaleLabel'),
+            pillarLabel: t('milestonePostSchedulerPreviewPillarLabel'),
+            percentLabel: t('milestonePostSchedulerPreviewPercentLabel'),
+            reasonLabel: t('milestonePostSchedulerPreviewReasonLabel'),
+            countLabel: t('milestonePostSchedulerPreviewCountLabel'),
+            dayLabel: t('milestonePostSchedulerPreviewDayLabel'),
+            formatLabel: t('milestonePostSchedulerPreviewFormatLabel'),
+            hookLabel: t('milestonePostSchedulerPreviewHookLabel'),
+            captionStructureLabel: t('milestonePostSchedulerPreviewCaptionStructureLabel'),
+            ctaTypeLabel: t('milestonePostSchedulerPreviewCtaTypeLabel'),
+            funnelStageLabel: t('milestonePostSchedulerPreviewFunnelStageLabel'),
+            visualDirectionLabel: t('milestonePostSchedulerPreviewVisualDirectionLabel'),
+            notesLabel: t('milestonePostSchedulerPreviewNotesLabel'),
+          }}
+        />
+      )
+    }
+
+    if (milestone.presetId === 'promotion_candidates') {
+      const parsed = promotionCandidatesMilestoneDataSchema.safeParse(data)
+      if (!parsed.success) {
+        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+      }
+      return (
+        <MilestonePromotionCandidatesDataPreview
+          data={parsed.data}
+          labels={{
+            heading: t('milestonePromotionCandidatesPreviewHeading'),
+            mainCategoryLabel: t('milestonePromotionCandidatesPreviewMainCategoryLabel'),
+            emptyCategory: t('milestonePromotionCandidatesPreviewEmptyCategory'),
+            starItemsLabel: t('milestonePromotionCandidatesPreviewStarItemsLabel'),
+            puzzleItemsLabel: t('milestonePromotionCandidatesPreviewPuzzleItemsLabel'),
+            notesLabel: t('milestonePromotionCandidatesPreviewNotesLabel'),
+            noNotes: t('milestonePromotionCandidatesPreviewNoNotes'),
+          }}
+        />
+      )
+    }
+
+    if (milestone.presetId === 'culture_hooks') {
+      const parsed = cultureHooksMilestoneDataSchema.safeParse(data)
+      if (!parsed.success) {
+        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+      }
+
+      return (
+        <MilestoneCultureHooksDataPreview
+          data={parsed.data}
+          labels={{
+            locationConcept: t('milestoneCultureHooksPreviewLocationConcept'),
+            targetAudience: t('milestoneCultureHooksPreviewTargetAudience'),
+            intersections: t('milestoneCultureHooksPreviewIntersections'),
+            emptyIntersections: t('milestoneCultureHooksPreviewEmptyIntersections'),
+            topic: t('milestoneCultureHooksPreviewTopic'),
+            conceptLink: t('milestoneCultureHooksPreviewConceptLink'),
+            audienceRelevance: t('milestoneCultureHooksPreviewAudienceRelevance'),
+            contentExample: t('milestoneCultureHooksPreviewContentExample'),
+            guardrailCheck: t('milestoneCultureHooksPreviewGuardrailCheck'),
           }}
         />
       )

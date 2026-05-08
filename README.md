@@ -29,9 +29,9 @@ Pick a **location**, attach the **sales report** that feeds milestone **Data**, 
 
 ### Inside a workflow — milestones, criteria, and preview
 
-![Workflow detail: milestones, brand brief criteria, and markdown preview](./screenshots/screenshot-workflow-with-milestones.png)
+![Workflow detail: milestones, campaign_brief criteria, and markdown preview](./screenshots/screenshot-workflow-with-milestones.png)
 
-The **Brief & milestones** view shows the ordered timeline. Each milestone can define **goals**, **criteria** (pass checks the run must satisfy), and a **preview** of the saved result—here a data-grounded brand brief (pillars, audience hypotheses). **Chat** sits beside the timeline for refinement without losing structured outputs.
+The **Brief & milestones** view shows the ordered timeline. Each milestone can define **goals**, **criteria** (pass checks the run must satisfy), and a **preview** of the saved result—here a data-grounded campaign_brief (pillars, audience hypotheses). **Chat** sits beside the timeline for refinement without losing structured outputs.
 
 ### Same workflow with assets
 
@@ -62,7 +62,7 @@ The platform surfaces the **skills** and **tools** available to milestone runs�
 
 - **Start from a template or from scratch** — When you **create a campaign**, you attach **sales/analytics** for the location. You can optionally pick a **built-in workflow template** that loads a ready-made multi-step structure with names, goals, and starter content—or start **blank** and design your own sequence.
 
-- **Milestone presets compose the workflow** — Each time you **add a milestone**, you can insert a **blank** step or choose a **milestone preset** from the toolbar. Presets **prefill** the step: title, starter notes, task type, default **goal**, starter **quality criteria**, and (where it applies) how the AI should tackle the step first. That lets you assemble campaigns from meaningful blocks—for example **key dates and public holidays** or a **restaurant brand brief**—without configuring everything by hand.
+- **Milestone presets compose the workflow** — Each time you **add a milestone**, you can insert a **blank** step or choose a **milestone preset** from the toolbar. Presets **prefill** the step: title, starter notes, task type, default **goal**, starter **quality criteria**, and (where it applies) how the AI should tackle the step first. That lets you assemble campaigns from meaningful blocks—for example **key dates and public holidays** or a **restaurant campaign_brief**—without configuring everything by hand.
 
 ## Why restaurant marketers use it
 

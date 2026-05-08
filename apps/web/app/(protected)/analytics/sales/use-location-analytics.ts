@@ -25,7 +25,9 @@ export function useLocationAnalytics(
     }
     setLoading(true)
     try {
-      const res = await fetch(`/api/analytics/list?locationId=${locationId}`)
+      const res = await fetch(`/api/analytics/list?locationId=${locationId}`, {
+        cache: 'no-store',
+      })
       const body = await res.json()
       if (!res.ok) {
         const message = (body?.error as string) || 'Failed to load analytics'

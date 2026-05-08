@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://menuyukti.dev/schemas/workflow-export/2.0",
+  "$id": "https://menuyukti.dev/schemas/workflow-export/3.0",
   "title": "Workflow export snapshot or import payload",
   "$comment": "Two shapes: workflowExportSnapshot matches persisted exportWorkflow output; workflowImportPayload is the minimal JSON importWorkflow accepts for new workflow roots (e.g. LLM-generated). Milestone fields marked export-only are ignored on import.",
   "description": "Menuyukti workflow (milestone tree) as JSON. (1) Export snapshot: written by exportWorkflow with DB ids and timestamps; use for backup and round-trip after re-import (ids are reassigned). (2) Import payload: only workflowName and milestones are required. importWorkflow ignores schemaVersion, workflowId, exportedAt, milestone id, milestone status, and passCriteria id. Omit result when creating a fresh workflow unless you need a prefilled evaluation summary.",
@@ -29,7 +29,7 @@
       ]
     },
     {
-      "schemaVersion": "2.0",
+      "schemaVersion": "3.0",
       "workflowId": "42",
       "workflowName": "Exported workflow",
       "exportedAt": "2026-04-09T12:00:00Z",
@@ -62,8 +62,8 @@
       "properties": {
         "schemaVersion": {
           "type": "string",
-          "const": "2.0",
-          "description": "Payload format version. Export-only; importWorkflow does not validate this."
+          "enum": ["2.0", "2.1", "3.0"],
+          "description": "Payload format version. 3.0: milestone goal, pass criteria, preset data, and eval result are stored on the milestone row (column-backed); legacy child nodes are not exported. Export-only; importWorkflow does not validate this."
         },
         "workflowId": {
           "type": "string",
@@ -108,7 +108,7 @@
     "milestoneNode": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Milestone: title and order define the node; pass criteria, goal child, milestonedata (string or structured JSON), and optional result are created from these fields on import.",
+      "description": "Milestone: title and order define the node; pass criteria, goal text on milestone data, milestonedata (string or structured JSON), and optional result are created from these fields on import.",
       "required": ["order"],
       "properties": {
         "id": {
@@ -127,7 +127,7 @@
         },
         "goal": {
           "type": "string",
-          "description": "Milestone-level goal text; creates a goal child node when non-empty after trim."
+          "description": "Milestone-level goal text; persisted on milestone node data.goal when non-empty after trim on import."
         },
         "data": {
           "description": "Milestonedata child payload when non-empty: flat structured JSON object (preset-specific fields at the root).",

@@ -25,7 +25,7 @@ make dev
 
 ## Milestone run
 
-- **`POST /milestones/{id}/run`** — LangGraph flow: fetch milestone context → structured LLM skill selection → ReAct execute with tools → shared evaluation graph. Runtime skills and prompts live under **`agents/core/milestone_run/skills/<skill_id>/SKILL.md`** (see `skill_paths.get_milestone_run_skill_path`). **`milestone_data`** persists flat structured JSON on the milestonedata child via GraphQL upsert.
+- **`POST /milestones/{id}/run`** — LangGraph flow: fetch milestone context → resolve milestone `presetId` → execute dedicated preset graph module → shared evaluation graph. **`milestone_data`** persists flat structured JSON on the milestonedata child via GraphQL upsert.
 - **Core** (`agents/core/`): chat, milestone run/eval, format-markdown presets, milestone data persistence.
 
 ## Quality
@@ -39,7 +39,7 @@ make test
 
 ## Tracing
 
-- **LangSmith:** set `LANGCHAIN_TRACING_V2=true`, `LANGCHAIN_API_KEY`, and optionally `LANGCHAIN_PROJECT` in `.env` (see `.env.example`). Milestone runs pass `run_id`, `milestone_id`, and `workflow_id` as run metadata on the outer graph and on the inner ReAct agent.
+- **LangSmith:** set `LANGCHAIN_TRACING_V2=true`, `LANGCHAIN_API_KEY`, and optionally `LANGCHAIN_PROJECT` in `.env` (see `.env.example`). Milestone runs pass `run_id`, `milestone_id`, and `workflow_id` as run metadata on the outer graph and dedicated preset subgraphs.
 - **Product DB:** each run registers `startMilestoneAgentRun` / `completeMilestoneAgentRun` on GraphQL (table `milestone_agent_run`) with a compact timeline (no prompts or tool bodies). Optional `LANGSMITH_RUN_URL_TEMPLATE` fills `external_trace_url` on completion (`{run_id}` placeholder).
 - **Distributed traces:** the web BFF forwards the browser `traceparent` header to this service; it is stored in run metadata (LangSmith) and in the persisted row summary when provided.
 

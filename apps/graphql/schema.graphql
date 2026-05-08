@@ -2,6 +2,8 @@ type AdditionalSignalsType {
   orderSignals: OrderSignalsType
   datetimeSignals: DatetimeSignalsType
   matrixSignals: MatrixSignalsType!
+  campaignPlanningSignals: CampaignPlanningSignalsType!
+  signalConfidence: SignalConfidenceType!
 }
 
 """Minimal fields for listing analytics runs by location."""
@@ -59,10 +61,17 @@ type BestPostingWindowType {
   peakHour: Int
 }
 
-type BrandBriefSignalCapabilitiesType {
+type CampaignBriefSignalCapabilitiesType {
   hasOrderId: Boolean!
   hasDatetime: Boolean!
   enabledBlocks: [String!]!
+}
+
+type CampaignPlanningSignalsType {
+  recommendedPostingDays: [String!]!
+  recommendedDayparts: [String!]!
+  objectiveRecommendation: String!
+  primaryCtaChannel: String!
 }
 
 type CampaignSchedulePlanType {
@@ -181,10 +190,10 @@ type ImageAiFlowType {
   sortOrder: Int!
 }
 
-"""Tiered analytics payload for brand brief and growth agents."""
+"""Tiered analytics payload for campaign_brief and growth agents."""
 type InstagramSignalsType {
   analyticsRunId: ID!
-  capabilities: BrandBriefSignalCapabilitiesType!
+  capabilities: CampaignBriefSignalCapabilitiesType!
   fundamentalSignals: FundamentalSignalsType!
   additionalSignals: AdditionalSignalsType!
 }
@@ -198,17 +207,6 @@ scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads
 type LocationManualBriefInputType {
   locationId: Int!
   quickProfile: JSON!
-}
-
-type LocationSocialSettingsType {
-  locationId: Int!
-  tone: String
-  brandPersonality: String
-  contentPillars: [String!]!
-  platformFocus: [String!]!
-  brandHashtags: [String!]!
-  avoidTopics: [String!]!
-  targetAudience: String
 }
 
 """
@@ -225,9 +223,7 @@ type LocationType {
   workspaceId: ID
   openingHours: [OpeningHourType!]!
 
-  """
-  Owner-provided click-first brief hints. Not AI-generated — see locationSocialSettings for AI output.
-  """
+  """Owner-provided click-first brief hints. Not AI-generated."""
   manualBriefInput: LocationManualBriefInputType
 }
 
@@ -359,14 +355,10 @@ input MenuItemCogsUpsertInput {
 }
 
 """
-A milestone node plus its passcriteria, goal, milestonedata, and result children.
+A milestone node with typed milestone fields (goal, preset data, result, pass criteria).
 """
 type MilestoneCampaignBundleType {
   milestone: NodeType!
-  passCriteriaNodes: [NodeType!]!
-  goalNodes: [NodeType!]!
-  milestonedataNodes: [NodeType!]!
-  resultNodes: [NodeType!]!
 }
 
 """
@@ -385,6 +377,7 @@ type Mutation {
   importWorkflow(locationId: Int!, payload: JSON!): NodeType!
   updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
   replacePassCriteria(milestoneId: ID!, locationId: Int!, requirements: [String!]!): Boolean!
+  setPassCriterionStatus(milestoneId: ID!, locationId: Int!, criterionId: String!, status: String!): Boolean!
   createLocation(workspaceId: ID!, name: String!, street: String = null, city: String = null, country: String = null, currency: String): LocationType!
   createWorkspace(name: String!): WorkspaceType!
   inviteWorkspaceMember(workspaceId: ID!, clerkUserId: String!): WorkspaceMembershipType!
@@ -408,7 +401,7 @@ type Mutation {
 }
 
 """
-A workflow tree node (workflow, milestone, goal, passcriteria, result, milestonedata, etc.) stored in the polymorphic `node` table.
+A workflow tree node (workflow, milestone, etc.) stored in the polymorphic `node` table. Milestone-owned payloads also appear as typed fields (milestoneGoal, milestonePresetData, …).
 """
 type NodeType {
   id: ID!
@@ -419,6 +412,11 @@ type NodeType {
   parentId: ID
   locationId: Int
   data: JSON
+  milestoneGoal: String
+  milestoneInput: JSON
+  passCriterias: JSON
+  milestonePresetData: JSON
+  milestoneResult: JSON
 }
 
 type NormalizedLineItem {
@@ -496,27 +494,6 @@ type PeriodHeadlineType {
   revenueVsPreviousPct: Float
 }
 
-type PromotionBestPostingWindowType {
-  peakDay: String
-  peakHour: Int
-  primaryMealPeriod: String
-}
-
-type PromotionCandidatesSignalsType {
-  analyticsRunId: ID!
-  periodStart: Date
-  periodEnd: Date
-  itemsTotalCount: Int!
-  itemsTruncated: Boolean!
-  topPromote: [PromotionRankedCandidateType!]!
-  topAvoid: [PromotionRankedCandidateType!]!
-  puzzleOpportunityPool: PromotionPuzzleOpportunityPoolType!
-  rankedCandidates: [PromotionRankedCandidateType!]!
-  rankedCandidatesTotalCount: Int!
-  bestPostingWindow: PromotionBestPostingWindowType
-  bestPostingWindowSummary: String!
-}
-
 """
 Per-menu signals for choosing promotion content: sales totals, optional menu-engineering classification when COGS exist, and optional peak demand timing.
 """
@@ -558,41 +535,6 @@ type PromotionMenuItemsPayloadType {
   itemsTruncated: Boolean!
 }
 
-type PromotionPuzzleOpportunityPoolType {
-  puzzleItemsFound: Int!
-  threshold: Float!
-  selectedCount: Int!
-  selected: [PromotionPuzzleSelectedType!]!
-}
-
-type PromotionPuzzleSelectedType {
-  menu: String!
-  recommendation: String!
-  score: Float!
-  quantity: Int!
-  totalRevenue: Float!
-  menuCategory: String
-  menuCategoryDetail: String
-  peakDay: String
-  peakHour: Int
-  matrixCategory: String
-  matrixAction: String
-  contributionMarginPct: Float
-  signalReasons: [String!]!
-  puzzleOpportunityScore: Float!
-  whySelected: [String!]!
-  howToPromoteOnInstagram: [String!]!
-}
-
-type PromotionRankedCandidateType {
-  menu: String!
-  recommendation: String!
-  score: Float!
-  quantity: Int!
-  totalRevenue: Float!
-  signalReasons: [String!]!
-}
-
 type PublicHolidayType {
   id: String!
   date: String!
@@ -612,13 +554,13 @@ type Query {
   apiAdapterTools(workspaceId: ID!): [ApiAdapterToolType!]!
 
   """
-  Schedule plan for a Scheduler milestone. Requires a prior Dates milestone with structured start/end date data in the same workflow.
+  Schedule plan for a Scheduler milestone. Requires a prior campaign brief milestone with structured campaign window data in the same workflow.
   """
   campaignSchedulePlan(workflowId: ID!, milestoneId: ID!, locationId: Int!, analyticsRunId: ID = null): CampaignSchedulePlanType
   workflowExports(locationId: Int!, first: Int = null): [WorkflowExportType!]!
 
   """
-  Load a workflow node, its milestones (ordered like `nodes`), and each milestone's passcriteria/goal/milestonedata/result children. Returns null if the id is missing, not a workflow, or not owned by the caller.
+  Load a workflow node, its milestones (ordered like `nodes`). Returns null if the id is missing, not a workflow, or not owned by the caller.
   """
   workflowCampaignTree(workflowId: ID!): WorkflowCampaignTreeType
 
@@ -631,7 +573,7 @@ type Query {
   location(id: ID!): LocationType
 
   """
-  Owner click-first brief hints for a location. Empty quickProfile when unset. Not AI-generated — see locationSocialSettings for AI output.
+  Owner click-first brief hints for a location. Empty quickProfile when unset. Not AI-generated.
   """
   locationManualBriefInput(locationId: Int!): LocationManualBriefInputType
 
@@ -682,12 +624,7 @@ type Query {
   promotionMenuItems(analyticsRunId: ID!, locationId: ID = null): PromotionMenuItemsPayloadType
 
   """
-  Promotion-candidate signals composed from promotion menu items and Instagram signals. Returns ranked recommendations plus puzzle opportunity pool for campaign drafting.
-  """
-  promotionCandidatesSignals(analyticsRunId: ID!, locationId: ID = null): PromotionCandidatesSignalsType
-
-  """
-  Menu engineering matrix and top star/puzzle slices per distinct `order_fact.menu_category` when present; otherwise one flat matrix on all rows. JSON includes `grouping`, optional `categories`, `rowsSkippedMissingCategory`, and per-slice `matrix` / `topStars` / `topPuzzles`. Returns null when unauthorized, wrong location, or the run has no order facts.
+  Top star and puzzle menu-item names derived from menu engineering. When POS menu categories exist, returns `grouping=by_menu_category` with `categories.<menu_category>.starItems` and `puzzleItems` (up to 5 each). Otherwise returns `grouping=flat` with root `starItems` and `puzzleItems`.
   """
   promotionEngineeringCandidates(analyticsRunId: ID!, locationId: ID = null): JSON
   publicHolidays(country: String!, startDate: String!, endDate: String!): [PublicHolidayType!]!
@@ -714,12 +651,7 @@ type Query {
   weeklyDemandPattern(locationId: Int!): WeeklyDemandPatternPayloadType
 
   """
-  Social and brand-voice settings for a location. Returns empty lists and null strings when no row exists.
-  """
-  locationSocialSettings(locationId: Int!): LocationSocialSettingsType
-
-  """
-  JSON array of prior milestones' milestonedata payloads: each element is `{"title": string, "presetId": string|null, "data": object|string|array|null}` for milestones strictly before the given milestone in workflow display order. `presetId` is the milestone node's preset when set. `data` is the raw `milestonedata` child `data` field (structured object, legacy string, or null). Empty array when there are no prior milestones or the request is not authorized.
+  JSON array of prior milestones' preset payloads: each element is `{"title": string, "presetId": string|null, "data": object|null}` for milestones strictly before the given milestone in workflow display order. `presetId` is copied from the milestone node's `data.presetId` when set (e.g. `restaurant_campaign_brief`). `data` is the `milestone_preset_data` column (flat preset JSON). Empty array when there are no prior milestones or the request is not authorized.
   """
   priorMilestonesMilestoneData(workflowId: ID!, milestoneId: ID!, locationId: Int!): JSON!
   myWorkspace: WorkspaceType
@@ -745,6 +677,11 @@ type RevenueTrendsPayloadType {
   currentPeriodTotalRevenue: Float!
   previousPeriodTotalRevenue: Float!
   rows: [RevenueTrendRowGqlType!]!
+}
+
+type SignalConfidenceType {
+  tier: String!
+  coverageNotes: [String!]!
 }
 
 """A menu item with rising revenue vs the prior period."""
@@ -781,7 +718,7 @@ type WeeklyHeatmapType {
 }
 
 """
-Workflow campaign tree for SSR: workflow root, ordered milestones, and grouped child nodes per milestone (single round-trip vs many `nodes` calls).
+Workflow campaign tree for SSR: workflow root, ordered milestones (single round-trip vs many `nodes` calls).
 """
 type WorkflowCampaignTreeType {
   workflow: NodeType!

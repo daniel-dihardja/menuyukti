@@ -1,20 +1,17 @@
 import {
-  brandBriefMilestoneDataSchema,
-  datesMilestoneDataSchema,
-  goalDataSchema,
+  campaignBriefMilestoneDataSchema,
+  cultureHooksMilestoneDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataValueSchema,
-  passCriteriaDataSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   resultDataSchema,
 } from '@/lib/graphql/node-schemas'
-import type { AnyNode } from '@/lib/graphql/queries'
+import type { MilestoneNode } from '@/lib/graphql/node-schemas'
 
 import type {
   MilestoneInput,
-  MilestoneRunSkillMode,
   MilestonePresetId,
   MilestoneDataValue,
   PassCriteriaRow,
@@ -40,75 +37,31 @@ export function deriveMilestoneRailStatus(
   return 'pending'
 }
 
-export type MilestoneNodeDto = {
-  id: string
-  name: string
-  data?: unknown | null
-  passCriteriaNodes?: AnyNode[]
-  goalNodes?: AnyNode[]
-  milestonedataNodes?: AnyNode[]
-  resultNodes?: AnyNode[]
-}
+export type MilestoneNodeDto = Pick<
+  MilestoneNode,
+  | 'id'
+  | 'name'
+  | 'data'
+  | 'milestoneGoal'
+  | 'milestoneInput'
+  | 'passCriterias'
+  | 'milestonePresetData'
+  | 'milestoneResult'
+>
 
-export function passCriteriaFromChildNodes(nodes: AnyNode[] | undefined | null): PassCriteriaRow[] {
-  if (nodes == null || !Array.isArray(nodes)) {
+export function passCriteriasFromMilestoneData(data: unknown): PassCriteriaRow[] {
+  const parsed = milestoneDataSchema.safeParse(data)
+  if (!parsed.success || parsed.data.passCriterias === undefined) {
     return []
   }
-  const out: PassCriteriaRow[] = []
-  for (const n of nodes) {
-    if (n.nodeType !== 'passcriteria') {
-      continue
-    }
-    const d = n.data
-    if (d == null || typeof d !== 'object') {
-      continue
-    }
-    const parsed = passCriteriaDataSchema.safeParse(d)
-    if (!parsed.success) {
-      continue
-    }
-    out.push({ id: n.id, requirement: parsed.data.requirement, status: parsed.data.status })
-  }
-  return out
+  return parsed.data.passCriterias
 }
 
-/** First valid `goal` child wins (at most one is expected). */
-export function goalFromChildNodes(nodes: AnyNode[] | undefined | null): string | undefined {
-  if (nodes == null || !Array.isArray(nodes)) {
-    return undefined
-  }
-  for (const n of nodes) {
-    if (n.nodeType !== 'goal') {
-      continue
-    }
-    const d = n.data
-    if (d == null || typeof d !== 'object') {
-      continue
-    }
-    const parsed = goalDataSchema.safeParse(d)
-    if (parsed.success) {
-      return parsed.data.goal
-    }
-  }
-  return undefined
-}
-
-/** First valid `milestonedata` child wins (at most one is expected). */
-export function milestoneDataFromChildNodes(
-  nodes: AnyNode[] | undefined | null,
-): MilestoneDataValue | undefined {
-  if (nodes == null || !Array.isArray(nodes)) {
-    return undefined
-  }
-  for (const n of nodes) {
-    if (n.nodeType !== 'milestonedata') {
-      continue
-    }
-    const d = n.data
-    if (d == null || typeof d !== 'object') {
-      continue
-    }
-    const parsed = milestonedataValueSchema.safeParse(d)
+/** Parse preset payload from typed column or legacy `data` JSON. */
+export function milestonePresetFrom(dto: MilestoneNodeDto): MilestoneDataValue | undefined {
+  const raw = dto.milestonePresetData
+  if (raw != null && typeof raw === 'object') {
+    const parsed = milestonedataValueSchema.safeParse(raw)
     if (parsed.success) {
       return parsed.data
     }
@@ -116,49 +69,26 @@ export function milestoneDataFromChildNodes(
   return undefined
 }
 
-/** First valid `result` child wins (at most one is expected). */
-export function resultMarkdownFromChildNodes(
-  nodes: AnyNode[] | undefined | null,
-): string | undefined {
-  if (nodes == null || !Array.isArray(nodes)) {
+export function resultMarkdownFromMilestoneResult(dto: MilestoneNodeDto): string | undefined {
+  const raw = dto.milestoneResult
+  if (raw == null || typeof raw !== 'object') {
     return undefined
   }
-  for (const n of nodes) {
-    if (n.nodeType !== 'result') {
-      continue
-    }
-    const d = n.data
-    if (d == null || typeof d !== 'object') {
-      continue
-    }
-    const parsed = resultDataSchema.safeParse(d)
-    if (parsed.success) {
-      return parsed.data.summary
-    }
+  const parsed = resultDataSchema.safeParse(raw)
+  if (parsed.success) {
+    return parsed.data.summary
   }
   return undefined
 }
 
 function milestoneRunSkillFieldsFromData(data: unknown): {
-  milestoneRunSkillMode: MilestoneRunSkillMode
-  milestoneRunSkillIds: string[]
   presetId?: MilestonePresetId
   milestoneInput?: MilestoneInput
 } {
   const parsed = milestoneDataSchema.safeParse(data)
-  let milestoneRunSkillMode: MilestoneRunSkillMode = 'auto'
-  let milestoneRunSkillIds: string[] = []
   let presetId: MilestonePresetId | undefined
   let milestoneInput: MilestoneInput | undefined
   if (parsed.success) {
-    if (parsed.data.milestoneRunSkillMode === 'fixed') {
-      milestoneRunSkillMode = 'fixed'
-    }
-    if (Array.isArray(parsed.data.milestoneRunSkillIds)) {
-      milestoneRunSkillIds = parsed.data.milestoneRunSkillIds.filter(
-        (x): x is string => typeof x === 'string' && x.trim().length > 0,
-      )
-    }
     if (parsed.data.presetId !== undefined) {
       presetId = parsed.data.presetId
     }
@@ -169,31 +99,49 @@ function milestoneRunSkillFieldsFromData(data: unknown): {
       }
     }
   }
-  return { milestoneRunSkillMode, milestoneRunSkillIds, presetId, milestoneInput }
+  return { presetId, milestoneInput }
 }
 
 export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): TimelineMilestone {
   const parsed = milestoneDataSchema.safeParse(node.data)
-  const legacyGoal = parsed.success ? parsed.data.goal : undefined
-  const goal = goalFromChildNodes(node.goalNodes) ?? legacyGoal
-  const data = milestoneDataFromChildNodes(node.milestonedataNodes)
-  const passCriteria = passCriteriaFromChildNodes(node.passCriteriaNodes)
-  const resultMarkdown = resultMarkdownFromChildNodes(node.resultNodes)
-  const { milestoneRunSkillMode, milestoneRunSkillIds, presetId, milestoneInput } =
-    milestoneRunSkillFieldsFromData(node.data)
-  let normalizedData = data
-  if (presetId === 'dates') {
-    const parsedDatesData = datesMilestoneDataSchema.safeParse(data)
-    if (parsedDatesData.success) {
-      normalizedData = parsedDatesData.data
+  const goalCol =
+    typeof node.milestoneGoal === 'string' && node.milestoneGoal.trim()
+      ? node.milestoneGoal.trim()
+      : undefined
+  const goal = goalCol ?? (parsed.success ? parsed.data.goal : undefined)
+
+  const { presetId, milestoneInput: parsedMilestoneInput } = milestoneRunSkillFieldsFromData(
+    node.data,
+  )
+  let milestoneInput = parsedMilestoneInput
+  if (node.milestoneInput != null) {
+    const colInput = milestoneInputSchema.safeParse(node.milestoneInput)
+    if (colInput.success) {
+      milestoneInput = colInput.data
     }
   }
-  if (presetId === 'restaurant_brand_brief') {
-    const parsedBrandBriefData = brandBriefMilestoneDataSchema.safeParse(data)
-    if (parsedBrandBriefData.success) {
-      normalizedData = parsedBrandBriefData.data
+
+  const data = milestonePresetFrom(node)
+
+  let passCriteria: PassCriteriaRow[] = []
+  if (Array.isArray(node.passCriterias) && node.passCriterias.length > 0) {
+    passCriteria = node.passCriterias
+  } else {
+    passCriteria = passCriteriasFromMilestoneData(node.data)
+  }
+
+  const rm = resultMarkdownFromMilestoneResult(node)
+
+  let normalizedData = data
+  if (presetId === 'restaurant_campaign_brief') {
+    const parsedCampaignBriefData = campaignBriefMilestoneDataSchema.safeParse(data)
+    if (parsedCampaignBriefData.success) {
+      normalizedData = parsedCampaignBriefData.data
     } else {
       normalizedData = {
+        startDate: '',
+        endDate: '',
+        publicHolidays: [],
         venueSnapshot: {
           venueName: '',
           city: '',
@@ -204,19 +152,31 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
         audienceHypotheses: [],
         proofOrientedAngles: [],
         toneGuardrails: [],
+        campaignObjective: '',
+        mainCategory: 'FOOD',
+        targetSegments: [],
+        messageHierarchy: [],
+        offerAndCtaPlan: [],
+        contentPillarPlan: [],
+        measurementPlan: [],
+        testingPlan: [],
+        riskGuardrails: [],
       }
     }
   }
   if (presetId === 'promotion_candidates') {
-    const parsedPc = promotionCandidatesMilestoneDataSchema.safeParse(data)
-    if (parsedPc.success) {
-      normalizedData = parsedPc.data
+    const parsedPromotionCandidates = promotionCandidatesMilestoneDataSchema.safeParse(data)
+    if (parsedPromotionCandidates.success) {
+      normalizedData = parsedPromotionCandidates.data
     } else {
       normalizedData = {
-        grouping: 'by_menu_category',
-        categories: {},
-        flatSummary: '',
-        promotionIdeas: [],
+        mainCategory: 'FOOD',
+        categories: [
+          { category: 'FOOD', starItems: [], puzzleItems: [] },
+          { category: 'DRINK', starItems: [], puzzleItems: [] },
+        ],
+        sourceAnalyticsRunId: null,
+        notes: '',
       }
     }
   }
@@ -225,20 +185,45 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
     if (parsedPs.success) {
       normalizedData = parsedPs.data
     } else {
-      normalizedData = { posts: [] }
+      normalizedData = {
+        monthlyArc: {
+          weeks: [
+            { week: 1, objective: '', rationale: '' },
+            { week: 2, objective: '', rationale: '' },
+            { week: 3, objective: '', rationale: '' },
+            { week: 4, objective: '', rationale: '' },
+          ],
+        },
+        contentRatio: { pillars: [] },
+        formatMix: { formats: [] },
+        weeklySlotPlan: [],
+        guardrailCheck: '',
+      }
     }
   }
+  if (presetId === 'culture_hooks') {
+    const parsedCultureHooks = cultureHooksMilestoneDataSchema.safeParse(data)
+    if (parsedCultureHooks.success) {
+      normalizedData = parsedCultureHooks.data
+    } else {
+      normalizedData = {
+        locationConcept: '',
+        targetAudience: '',
+        intersections: [],
+        guardrailCheck: '',
+      }
+    }
+  }
+
   return {
     id: node.id,
     title: node.name,
     goal,
     data: normalizedData,
-    milestoneRunSkillMode,
-    milestoneRunSkillIds,
     presetId,
     milestoneInput,
     passCriteria,
-    resultMarkdown,
-    status: deriveMilestoneRailStatus(passCriteria, resultMarkdown),
+    resultMarkdown: rm,
+    status: deriveMilestoneRailStatus(passCriteria, rm),
   }
 }

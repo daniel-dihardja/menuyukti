@@ -118,6 +118,7 @@ def test_manual_quick_profile_accepts_extended_fields():
         "valueProposition": "Friendly Indonesian bistro for office lunches.",
         "aboutStory": "Family-run since 2014, recipes from Java.",
         "topicsToAvoid": "No discount-led messaging on dinner posts.",
+        "notes": "Great for group dinners and birthdays.",
     }
     result = validate_and_normalize_quick_profile(profile)
     assert result["cuisineTypes"] == ["italian", "indonesian"]
@@ -136,6 +137,7 @@ def test_manual_quick_profile_accepts_extended_fields():
     assert result["valueProposition"] == ("Friendly Indonesian bistro for office lunches.")
     assert result["aboutStory"].startswith("Family-run since 2014")
     assert result["topicsToAvoid"].startswith("No discount-led")
+    assert result["notes"] == "Great for group dinners and birthdays."
 
 
 def test_manual_quick_profile_rejects_invalid_extended_fields():
@@ -157,6 +159,13 @@ def test_manual_quick_profile_rejects_invalid_extended_fields():
         validate_and_normalize_quick_profile({"websiteUrl": "ftp://example.com"})
     with pytest.raises(ValueError, match="valueProposition must be at most"):
         validate_and_normalize_quick_profile({"valueProposition": "x" * 200})
+    assert validate_and_normalize_quick_profile({"notes": "x" * 2001})["notes"] == ("x" * 2001)
+
+
+def test_manual_quick_profile_accepts_long_notes():
+    notes = "x" * 5000
+    result = validate_and_normalize_quick_profile({"notes": notes})
+    assert result["notes"] == notes
 
 
 def test_manual_quick_profile_drops_blank_text_fields():

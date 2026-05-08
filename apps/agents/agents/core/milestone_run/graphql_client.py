@@ -10,10 +10,9 @@ from typing import Any
 import httpx
 from agents_app.agents.core.milestone_data.graphql_client import upsert_milestonedata
 from agents_app.agents.core.milestone_eval.graphql_client import (
-    create_result_node,
     delete_node,
     fetch_milestone_children,
-    update_passcriteria_status,
+    update_milestone_passcriteria_status,
 )
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
@@ -23,6 +22,7 @@ from agents_app.agents.graphql_operations import (
     LOCATION_OPERATING_SIGNALS_QUERY,
     LOCATION_QUERY,
     PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
+    PROMOTION_ENGINEERING_CANDIDATES_QUERY,
     PUBLIC_HOLIDAYS_QUERY,
 )
 
@@ -165,7 +165,26 @@ async def fetch_public_holidays_for_milestone(
         return [], None
     if not isinstance(holidays, list):
         return [], None
-    return deepcopy(holidays), None
+    normalized: list[dict[str, Any]] = []
+    for raw in holidays:
+        if not isinstance(raw, dict):
+            continue
+        date_text = str(raw.get("date") or "").strip()
+        name_text = str(raw.get("name") or "").strip()
+        local_name_text = str(raw.get("localName") or "").strip()
+        # Campaign brief schema requires a description string for every holiday.
+        description_text = str(raw.get("description") or "").strip()
+        if not description_text:
+            description_text = local_name_text or name_text
+        normalized.append(
+            {
+                **deepcopy(raw),
+                "date": date_text,
+                "name": name_text,
+                "description": description_text,
+            }
+        )
+    return normalized, None
 
 
 async def fetch_location_operating_signals(
@@ -227,6 +246,36 @@ async def fetch_campaign_schedule_plan(
     return raw if isinstance(raw, dict) else None
 
 
+async def fetch_promotion_engineering_candidates(
+    location_id: int,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any] | None:
+    """Return simplified promotion candidates for latest analytics run."""
+    runs_data = await graphql_post(
+        client,
+        ANALYTICS_RUNS_QUERY,
+        {"locationId": location_id, "first": 1},
+        user_id,
+    )
+    runs = runs_data.get("analyticsRuns")
+    if not isinstance(runs, list) or not runs:
+        return None
+    run = runs[0]
+    run_id = str(run.get("id") or "").strip()
+    if not run_id:
+        return None
+    data = await graphql_post(
+        client,
+        PROMOTION_ENGINEERING_CANDIDATES_QUERY,
+        {"locationId": str(location_id), "analyticsRunId": run_id},
+        user_id,
+    )
+    raw = data.get("promotionEngineeringCandidates")
+    return raw if isinstance(raw, dict) else None
+
+
 async def upsert_milestonedata_node(
     milestone_id: str,
     location_id: int,
@@ -250,14 +299,14 @@ async def upsert_milestonedata_node(
 
 
 __all__ = [
-    "create_result_node",
     "delete_node",
     "fetch_api_adapter_tools_for_location",
     "fetch_campaign_schedule_plan",
+    "fetch_promotion_engineering_candidates",
     "fetch_location_operating_signals",
     "fetch_milestone_children",
     "fetch_prior_milestones_data",
     "fetch_public_holidays_for_milestone",
-    "update_passcriteria_status",
+    "update_milestone_passcriteria_status",
     "upsert_milestonedata_node",
 ]

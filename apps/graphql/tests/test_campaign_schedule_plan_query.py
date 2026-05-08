@@ -30,6 +30,12 @@ mutation CreateNodeWithData(
 }
 """
 
+UPDATE_NODE = """
+mutation U($id: ID!, $data: JSON!) {
+  updateNode(id: $id, data: $data) { id }
+}
+"""
+
 CAMPAIGN_SCHEDULE_PLAN_QUERY = """
 query CampaignSchedulePlan($workflowId: ID!, $milestoneId: ID!, $locationId: Int!, $runId: ID) {
   campaignSchedulePlan(
@@ -100,24 +106,22 @@ def test_campaign_schedule_plan_returns_slots(analytics_run_with_qa_data):
     assert not dates_milestone.errors, dates_milestone.errors
     dates_milestone_id = dates_milestone.data["createNode"]["id"]
 
-    dates_data = asyncio.run(
+    dates_payload = {
+        "startDate": "2026-06-01",
+        "endDate": "2026-06-30",
+        "publicHolidays": [],
+    }
+    dates_upd = asyncio.run(
         schema.execute(
-            CREATE_NODE_WITH_DATA,
+            UPDATE_NODE,
             variable_values={
-                "locationId": location_id,
-                "nodeType": "milestonedata",
-                "name": "Data",
-                "parentId": dates_milestone_id,
-                "data": {
-                    "startDate": "2026-06-01",
-                    "endDate": "2026-06-30",
-                    "publicHolidays": [],
-                },
+                "id": dates_milestone_id,
+                "data": {"milestonePresetData": dates_payload},
             },
             context_value=graphql_auth_context(),
         )
     )
-    assert not dates_data.errors, dates_data.errors
+    assert not dates_upd.errors, dates_upd.errors
 
     schedule_milestone = asyncio.run(
         schema.execute(

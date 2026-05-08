@@ -54,10 +54,7 @@ def _format_milestone_snapshot(
         raw = ch.get("data")
         data = raw if isinstance(raw, dict) else {}
         lines.append(f"### {nt} (id={cid}, name={cname!s})")
-        if nt == "goal":
-            g = data.get("goal")
-            lines.append(f"- goal: {g!s}" if isinstance(g, str) else f"- goal: {g!r}")
-        elif nt == "milestonedata":
+        if nt == "milestonedata":
             lines.append(f"- data: {_format_json(data)}")
         elif nt == "passcriteria":
             req = data.get("requirement", "")
@@ -88,9 +85,9 @@ def make_get_milestone_data_tool(
 
     @tool
     async def get_milestone_data() -> str:
-        """Load the selected milestone and its child nodes (goal, milestone data, pass criteria, result).
+        """Load the selected milestone and its child nodes (milestone data, pass criteria, result).
 
-        Call when the user asks to see milestone data, goal, pass criteria,
+        Goal text is included under ``milestone.data`` when set. Call when the user asks to see milestone data, goal, pass criteria,
         or similar for the currently selected milestone."""
         node = await fetch_milestone_node(milestone_id, user_id, client=client)
         if not node:

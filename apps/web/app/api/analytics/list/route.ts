@@ -1,6 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { getCachedAnalyticsRunsByLocation } from '@/lib/graphql/cached-queries'
+import { graphqlQuery } from '@/lib/graphql/client'
+import {
+  ANALYTICS_RUNS_BY_LOCATION_QUERY,
+  type AnalyticsRunsByLocationData,
+} from '@/lib/graphql/queries'
 
 function isPrerenderInterrupt(error: unknown): boolean {
   if (!(error instanceof Error)) return false
@@ -14,6 +18,7 @@ function isPrerenderInterrupt(error: unknown): boolean {
  */
 export async function GET(req: Request) {
   try {
+    await connection()
     let isAuthenticated = false
     let userId: string | null = null
     try {
@@ -41,10 +46,18 @@ export async function GET(req: Request) {
       )
     }
 
-    const list = await getCachedAnalyticsRunsByLocation(userId, locationId)
+    const data = await graphqlQuery<AnalyticsRunsByLocationData>(
+      ANALYTICS_RUNS_BY_LOCATION_QUERY,
+      { locationId, first: 300 },
+      userId,
+    )
+    const list = (data.analyticsRuns ?? []).map((run) => ({
+      id: Number(run.id),
+      name: run.name || run.filename || `Run #${run.id}`,
+    }))
     return NextResponse.json(list, {
       headers: {
-        'Cache-Control': 'private, max-age=30, stale-while-revalidate=120',
+        'Cache-Control': 'no-store',
       },
     })
   } catch (err) {

@@ -12,7 +12,7 @@ from graphql.schema.auth import require_location_owner, user_id_from_info
 from graphql.schema.node_handlers.milestone import _milestone_sort_key
 from graphql.schema.types import WorkflowExportType
 
-SCHEMA_VERSION = "2.0"
+SCHEMA_VERSION = "3.0"
 
 
 def _milestone_order(data: object | None) -> int:
@@ -35,64 +35,62 @@ def _derive_rail_status(
     return "pending"
 
 
-def _serialize_milestone(children: list[Node], milestone: Node) -> dict[str, object]:
-    goal_nodes = [c for c in children if c.node_type == "goal"]
-    pass_nodes = [c for c in children if c.node_type == "passcriteria"]
-    md_nodes = [c for c in children if c.node_type == "milestonedata"]
-    result_nodes = [c for c in children if c.node_type == "result"]
-
+def _serialize_milestone(milestone: Node) -> dict[str, object]:
     m_data = milestone.data if isinstance(milestone.data, dict) else {}
-    legacy_goal = m_data.get("goal") if isinstance(m_data.get("goal"), str) else None
 
-    goal_text: str | None = legacy_goal
-    for gn in goal_nodes:
-        gd = gn.data if isinstance(gn.data, dict) else {}
-        gval = gd.get("goal")
-        if isinstance(gval, str):
-            goal_text = gval
-            break
+    goal_text: str | None = None
+    mg = milestone.milestone_goal
+    if isinstance(mg, str) and mg.strip():
+        goal_text = mg.strip()
+    else:
+        raw_goal = m_data.get("goal")
+        goal_text = raw_goal.strip() if isinstance(raw_goal, str) and raw_goal.strip() else None
 
-    milestone_data: str | dict | list | None = None
-    for mn in md_nodes:
-        md = mn.data if isinstance(mn.data, dict) else {}
-        if isinstance(md, dict) and md:
-            milestone_data = md
-            break
+    milestone_data = milestone.milestone_preset_data
+    if milestone_data is None:
+        milestone_data = None
+    elif isinstance(milestone_data, (dict, list)):
+        pass
+    else:
+        milestone_data = None
 
     pass_criteria: list[dict[str, object]] = []
-    for pn in pass_nodes:
-        pd = pn.data if isinstance(pn.data, dict) else {}
-        req = pd.get("requirement")
-        st = pd.get("status")
-        if not isinstance(req, str):
-            continue
-        if st not in ("pass", "fail", "open"):
-            continue
-        row: dict[str, object] = {"requirement": req, "status": st}
-        row["id"] = str(pn.id)
-        pass_criteria.append(row)
+    raw_pc = milestone.pass_criterias
+    if isinstance(raw_pc, list):
+        for item in raw_pc:
+            if not isinstance(item, dict):
+                continue
+            cid = item.get("id")
+            req = item.get("requirement")
+            st = item.get("status")
+            if not isinstance(req, str):
+                continue
+            if st not in ("pass", "fail", "open"):
+                continue
+            row: dict[str, object] = {
+                "requirement": req,
+                "status": st,
+                "id": str(cid) if cid is not None else "",
+            }
+            pass_criteria.append(row)
 
     result_obj: dict[str, object] | None = None
     result_summary: str | None = None
-    for rn in result_nodes:
-        rd = rn.data if isinstance(rn.data, dict) else None
-        if rd is None:
-            continue
-        summary = rd.get("summary")
-        passed = rd.get("passed")
-        total = rd.get("total")
+    mr = milestone.milestone_result
+    if isinstance(mr, dict):
+        summary = mr.get("summary")
+        passed = mr.get("passed")
+        total = mr.get("total")
         if isinstance(summary, str) and isinstance(passed, int) and isinstance(total, int):
-            out: dict[str, object] = {
+            result_obj = {
                 "summary": summary,
                 "passed": passed,
                 "total": total,
             }
-            crit = rd.get("criteria")
+            crit = mr.get("criteria")
             if crit is not None:
-                out["criteria"] = crit
-            result_obj = out
+                result_obj["criteria"] = crit
             result_summary = summary
-            break
 
     status = _derive_rail_status(pass_criteria, result_summary)
 
@@ -103,6 +101,9 @@ def _serialize_milestone(children: list[Node], milestone: Node) -> dict[str, obj
         "passCriteria": pass_criteria,
         "status": status,
     }
+    raw_pid = m_data.get("presetId")
+    if isinstance(raw_pid, str) and raw_pid.strip():
+        out_m["presetId"] = raw_pid.strip()
     if goal_text is not None:
         out_m["goal"] = goal_text
     if milestone_data is not None:
@@ -126,22 +127,8 @@ def _build_payload(session: Session, root: Node) -> dict[str, object]:
         .all()
     )
     milestones_raw.sort(key=_milestone_sort_key)
-    milestone_ids = [m.id for m in milestones_raw]
-    children_by_parent: dict[int, list[Node]] = {mid: [] for mid in milestone_ids}
-    if milestone_ids:
-        all_children = (
-            session.query(Node)
-            .filter(
-                Node.parent_id.in_(milestone_ids),
-                Node.location_id == root.location_id,
-            )
-            .order_by(Node.created_at.asc())
-            .all()
-        )
-        for c in all_children:
-            children_by_parent.setdefault(c.parent_id, []).append(c)
 
-    milestones = [_serialize_milestone(children_by_parent.get(m.id, []), m) for m in milestones_raw]
+    milestones = [_serialize_milestone(m) for m in milestones_raw]
 
     exported_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 

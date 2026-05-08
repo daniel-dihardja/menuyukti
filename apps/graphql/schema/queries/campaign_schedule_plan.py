@@ -33,8 +33,8 @@ class CampaignSchedulePlanType:
 class CampaignSchedulePlanQuery:
     @strawberry.field(
         description=(
-            "Schedule plan for a Scheduler milestone. Requires a prior Dates milestone with "
-            "structured start/end date data in the same workflow."
+            "Schedule plan for a Scheduler milestone. Requires a prior campaign brief "
+            "milestone with structured campaign window data in the same workflow."
         )
     )
     def campaign_schedule_plan(

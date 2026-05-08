@@ -1,14 +1,12 @@
-import type {
-  MilestoneRunSkillMode,
-  PassCriteriaRow,
-} from '@/app/(protected)/campaigns/_components/timeline/types'
+import type { PassCriteriaRow } from '@/app/(protected)/campaigns/_components/timeline/types'
+import { buildCampaignBriefPassCriteriaSeed } from '@/lib/milestones/campaign-brief-pass-criteria'
 import { type MilestoneInput, type MilestonedataValue } from '@/lib/graphql/node-schemas'
 
 export const MILESTONE_PRESET_IDS = [
-  'dates',
-  'restaurant_brand_brief',
-  'promotion_candidates',
+  'restaurant_campaign_brief',
   'post_scheduler',
+  'promotion_candidates',
+  'culture_hooks',
 ] as const
 
 export type MilestonePresetId = (typeof MILESTONE_PRESET_IDS)[number]
@@ -17,7 +15,7 @@ export function isMilestonePresetId(value: string): value is MilestonePresetId {
   return (MILESTONE_PRESET_IDS as readonly string[]).includes(value)
 }
 
-/** New pass criteria rows (no `id` until persisted). */
+/** New pass criteria rows; `id` is generated client-side before save. */
 export type MilestonePresetPassCriterionDraft = Pick<PassCriteriaRow, 'requirement' | 'status'>
 
 export type MilestonePresetCreateFields = {
@@ -26,9 +24,7 @@ export type MilestonePresetCreateFields = {
   milestoneData: MilestonedataValue
   milestoneInput?: MilestoneInput
   goal?: string
-  milestoneRunSkillMode?: MilestoneRunSkillMode
-  milestoneRunSkillIds?: string[]
-  /** Applied in a follow-up PATCH (API handles `passCriteria` separately from goal/Data). */
+  /** Stored on milestone data as `passCriterias`. */
   passCriteria?: MilestonePresetPassCriterionDraft[]
 }
 
@@ -41,49 +37,18 @@ export function getMilestonePresetCreateFields(
   t: (key: string) => string,
 ): MilestonePresetCreateFields {
   switch (presetId) {
-    case 'dates':
+    case 'restaurant_campaign_brief':
       return {
-        presetId: 'dates',
-        name: t('milestonePreset.dates.title'),
+        presetId: 'restaurant_campaign_brief',
+        name: t('milestonePreset.restaurant_campaign_brief.title'),
         milestoneInput: {
-          type: 'dates',
-          value: {
-            startDate: '',
-            endDate: '',
-          },
+          type: 'restaurant_campaign_brief',
+          value: { notes: '', startDate: '', endDate: '' },
         },
         milestoneData: {
           startDate: '',
           endDate: '',
           publicHolidays: [],
-        },
-        goal: t('milestonePreset.dates.goal'),
-        milestoneRunSkillMode: 'fixed',
-        milestoneRunSkillIds: ['public_holidays'],
-        passCriteria: [
-          {
-            requirement: t('milestonePreset.dates.criterionStartDate'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.dates.criterionEndDate'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.dates.criterionPublicHolidays'),
-            status: 'open',
-          },
-        ],
-      }
-    case 'restaurant_brand_brief':
-      return {
-        presetId: 'restaurant_brand_brief',
-        name: t('milestonePreset.restaurant_brand_brief.title'),
-        milestoneInput: {
-          type: 'restaurant_brand_brief',
-          value: { notes: '' },
-        },
-        milestoneData: {
           venueSnapshot: {
             venueName: '',
             city: '',
@@ -94,29 +59,53 @@ export function getMilestonePresetCreateFields(
           audienceHypotheses: [],
           proofOrientedAngles: [],
           toneGuardrails: [],
+          campaignObjective: '',
+          mainCategory: 'FOOD',
+          targetSegments: [],
+          messageHierarchy: [],
+          offerAndCtaPlan: [],
+          contentPillarPlan: [],
+          measurementPlan: [],
+          testingPlan: [],
+          riskGuardrails: [],
         },
-        goal: t('milestonePreset.restaurant_brand_brief.goal'),
-        milestoneRunSkillMode: 'fixed',
-        milestoneRunSkillIds: ['brand_brief'],
+        goal: t('milestonePreset.restaurant_campaign_brief.goal'),
+        passCriteria: buildCampaignBriefPassCriteriaSeed(t),
+      }
+    case 'post_scheduler':
+      return {
+        presetId: 'post_scheduler',
+        name: t('milestonePreset.post_scheduler.title'),
+        milestoneInput: {
+          type: 'post_scheduler',
+          value: { notes: '' },
+        },
+        milestoneData: {
+          monthlyArc: {
+            weeks: [
+              { week: 1, objective: '', rationale: '' },
+              { week: 2, objective: '', rationale: '' },
+              { week: 3, objective: '', rationale: '' },
+              { week: 4, objective: '', rationale: '' },
+            ],
+          },
+          contentRatio: { pillars: [] },
+          formatMix: { formats: [] },
+          weeklySlotPlan: [],
+          guardrailCheck: '',
+        },
+        goal: t('milestonePreset.post_scheduler.goal'),
         passCriteria: [
           {
-            requirement: t('milestonePreset.restaurant_brand_brief.criterionVenueSnapshot'),
+            requirement: t('milestonePreset.post_scheduler.criterionPostsGenerated'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.restaurant_brand_brief.criterionContentPillars'),
+            requirement: t('milestonePreset.post_scheduler.criterionPostFields'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.restaurant_brand_brief.criterionAudienceHypotheses'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_brand_brief.criterionProofAngles'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.restaurant_brand_brief.criterionToneGuardrails'),
+            requirement: t('milestonePreset.post_scheduler.criterionMenuItems'),
             status: 'open',
           },
         ],
@@ -130,54 +119,52 @@ export function getMilestonePresetCreateFields(
           value: { notes: '' },
         },
         milestoneData: {
-          grouping: 'by_menu_category',
-          categories: {},
-          flatSummary: '',
-          promotionIdeas: [],
+          mainCategory: 'FOOD',
+          categories: [
+            { category: 'FOOD', starItems: [], puzzleItems: [] },
+            { category: 'DRINK', starItems: [], puzzleItems: [] },
+          ],
+          sourceAnalyticsRunId: null,
+          notes: '',
         },
         goal: t('milestonePreset.promotion_candidates.goal'),
-        milestoneRunSkillMode: 'fixed',
-        milestoneRunSkillIds: ['promotion_candidates'],
         passCriteria: [
           {
-            requirement: t('milestonePreset.promotion_candidates.criterionGrouping'),
+            requirement: t('milestonePreset.promotion_candidates.criterionCategoriesPresent'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.promotion_candidates.criterionCategoriesOrFlat'),
-            status: 'open',
-          },
-          {
-            requirement: t('milestonePreset.promotion_candidates.criterionPromotionIdeas'),
+            requirement: t('milestonePreset.promotion_candidates.criterionItemsOnlyFromSignals'),
             status: 'open',
           },
         ],
       }
-    case 'post_scheduler':
+    case 'culture_hooks':
       return {
-        presetId: 'post_scheduler',
-        name: t('milestonePreset.post_scheduler.title'),
+        presetId: 'culture_hooks',
+        name: t('milestonePreset.culture_hooks.title'),
         milestoneInput: {
-          type: 'post_scheduler',
+          type: 'culture_hooks',
           value: { notes: '' },
         },
         milestoneData: {
-          posts: [],
+          locationConcept: '',
+          targetAudience: '',
+          intersections: [],
+          guardrailCheck: '',
         },
-        goal: t('milestonePreset.post_scheduler.goal'),
-        milestoneRunSkillMode: 'fixed',
-        milestoneRunSkillIds: ['post_scheduler'],
+        goal: t('milestonePreset.culture_hooks.goal'),
         passCriteria: [
           {
-            requirement: t('milestonePreset.post_scheduler.criterionPostsGenerated'),
+            requirement: t('milestonePreset.culture_hooks.criterionIntersectionsPresent'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.post_scheduler.criterionPostFields'),
+            requirement: t('milestonePreset.culture_hooks.criterionNonFood'),
             status: 'open',
           },
           {
-            requirement: t('milestonePreset.post_scheduler.criterionMenuItems'),
+            requirement: t('milestonePreset.culture_hooks.criterionAudienceConceptInferred'),
             status: 'open',
           },
         ],

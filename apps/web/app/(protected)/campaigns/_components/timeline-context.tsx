@@ -5,12 +5,7 @@ import { createContext, useContext, type ReactNode } from 'react'
 import type { CampaignMilestoneUiState } from './campaign-milestone-reducer'
 import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 
-import type {
-  MilestoneDataValue,
-  MilestoneInput,
-  MilestoneRunSkillMode,
-  PassCriteriaRow,
-} from './timeline/types'
+import type { MilestoneDataValue, MilestoneInput, PassCriteriaRow } from './timeline/types'
 
 /** Milestone list + in-flight ids (no error strings). */
 export type TimelineMilestoneState = Pick<
@@ -54,10 +49,6 @@ export type TimelineActions = {
   onUpdateMilestoneGoal: (id: string, goal: string) => Promise<boolean>
   onUpdateMilestoneData: (id: string, milestoneData: MilestoneDataValue) => Promise<boolean>
   onUpdateMilestoneInput: (id: string, milestoneInput: MilestoneInput) => Promise<boolean>
-  onUpdateMilestoneRunSettings: (
-    id: string,
-    settings: { milestoneRunSkillMode: MilestoneRunSkillMode; milestoneRunSkillIds: string[] },
-  ) => Promise<boolean>
   onHydrateMilestoneData: (id: string) => Promise<void>
   onRunMilestone: (id: string) => void | Promise<void>
   onExport: () => void | Promise<void>

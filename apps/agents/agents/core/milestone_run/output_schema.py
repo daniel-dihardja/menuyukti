@@ -8,7 +8,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ValidationError, field_validator, model_validator
 
 
-class DatesPublicHoliday(BaseModel):
+class CampaignWindowPublicHoliday(BaseModel):
     name: str
     description: str
     date: str
@@ -17,10 +17,10 @@ class DatesPublicHoliday(BaseModel):
 class DatesMilestoneOutput(BaseModel):
     startDate: str
     endDate: str
-    publicHolidays: list[DatesPublicHoliday]
+    publicHolidays: list[CampaignWindowPublicHoliday]
 
 
-class BrandBriefVenueSnapshot(BaseModel):
+class CampaignBriefVenueSnapshot(BaseModel):
     venueName: str
     city: str
     country: str
@@ -62,12 +62,24 @@ class BrandBriefVenueSnapshot(BaseModel):
         return cleaned
 
 
-class BrandBriefMilestoneOutput(BaseModel):
-    venueSnapshot: BrandBriefVenueSnapshot
+class CampaignBriefMilestoneOutput(BaseModel):
+    startDate: str
+    endDate: str
+    publicHolidays: list[CampaignWindowPublicHoliday]
+    venueSnapshot: CampaignBriefVenueSnapshot
     contentPillars: list[str]
     audienceHypotheses: list[str]
     proofOrientedAngles: list[str]
     toneGuardrails: list[str]
+    campaignObjective: str
+    mainCategory: str
+    targetSegments: list[str]
+    messageHierarchy: list[str]
+    offerAndCtaPlan: list[str]
+    contentPillarPlan: list[str]
+    measurementPlan: list[str]
+    testingPlan: list[str]
+    riskGuardrails: list[str]
 
     @staticmethod
     def _normalize_unique(values: Any) -> list[str]:
@@ -96,6 +108,13 @@ class BrandBriefMilestoneOutput(BaseModel):
             "audienceHypotheses",
             "proofOrientedAngles",
             "toneGuardrails",
+            "targetSegments",
+            "messageHierarchy",
+            "offerAndCtaPlan",
+            "contentPillarPlan",
+            "measurementPlan",
+            "testingPlan",
+            "riskGuardrails",
         ):
             data[key] = cls._normalize_unique(data.get(key, []))
         return data
@@ -105,6 +124,13 @@ class BrandBriefMilestoneOutput(BaseModel):
         "audienceHypotheses",
         "proofOrientedAngles",
         "toneGuardrails",
+        "targetSegments",
+        "messageHierarchy",
+        "offerAndCtaPlan",
+        "contentPillarPlan",
+        "measurementPlan",
+        "testingPlan",
+        "riskGuardrails",
     )
     @classmethod
     def _validate_list_quality(cls, values: list[str]) -> list[str]:
@@ -112,36 +138,220 @@ class BrandBriefMilestoneOutput(BaseModel):
             raise ValueError("must contain between 3 and 5 unique non-empty items")
         return values
 
-
-class PostSchedulerPostItem(BaseModel):
-    dayOfWeek: str
-    date: str
-    time: str
-    postType: Literal["Reel", "Post"]
-    contentType: Literal["Carousel", "Single"]
-    promotedMenuItems: list[str]
-    captionIdea: str
-
-    @field_validator("promotedMenuItems")
+    @field_validator("campaignObjective")
     @classmethod
-    def _non_empty_menu_items(cls, values: list[str]) -> list[str]:
-        cleaned = [str(x).strip() for x in values if str(x).strip()]
-        if not cleaned:
-            raise ValueError("must contain at least one promoted menu item")
-        return cleaned
+    def _validate_campaign_objective(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("campaignObjective must be non-empty")
+        return text
+
+    @field_validator("mainCategory")
+    @classmethod
+    def _validate_main_category(cls, value: str) -> str:
+        text = value.strip().upper()
+        if text not in {"FOOD", "DRINK"}:
+            raise ValueError("mainCategory must be FOOD or DRINK")
+        return text
+
+
+class PostSchedulerMonthlyArcWeek(BaseModel):
+    week: Literal[1, 2, 3, 4]
+    objective: str
+    rationale: str
+
+
+class PostSchedulerMonthlyArc(BaseModel):
+    weeks: list[PostSchedulerMonthlyArcWeek]
+
+    @field_validator("weeks")
+    @classmethod
+    def _validate_week_coverage(cls, values: list[PostSchedulerMonthlyArcWeek]) -> list[PostSchedulerMonthlyArcWeek]:
+        if len(values) != 4:
+            raise ValueError("must include exactly 4 week objectives")
+        weeks = sorted(item.week for item in values)
+        if weeks != [1, 2, 3, 4]:
+            raise ValueError("weeks must include 1,2,3,4 exactly once")
+        return values
+
+
+class PostSchedulerContentRatioItem(BaseModel):
+    pillar: str
+    percent: int
+    reason: str
+
+
+class PostSchedulerContentRatio(BaseModel):
+    pillars: list[PostSchedulerContentRatioItem]
+
+    @field_validator("pillars")
+    @classmethod
+    def _validate_ratio_sum(cls, values: list[PostSchedulerContentRatioItem]) -> list[PostSchedulerContentRatioItem]:
+        if sum(item.percent for item in values) != 100:
+            raise ValueError("contentRatio percent total must equal 100")
+        return values
+
+
+class PostSchedulerFormatMixItem(BaseModel):
+    format: Literal[
+        "Reels",
+        "Carousels",
+        "Single posts",
+        "Stories",
+        "Highlights updates",
+        "Lives",
+        "Collaborator posts",
+    ]
+    count: int
+    reason: str
+
+
+class PostSchedulerFormatMix(BaseModel):
+    formats: list[PostSchedulerFormatMixItem]
+
+    @field_validator("formats")
+    @classmethod
+    def _validate_formats(cls, values: list[PostSchedulerFormatMixItem]) -> list[PostSchedulerFormatMixItem]:
+        required = {
+            "Reels",
+            "Carousels",
+            "Single posts",
+            "Stories",
+            "Highlights updates",
+            "Lives",
+            "Collaborator posts",
+        }
+        present = {item.format for item in values}
+        if present != required:
+            raise ValueError("formatMix must include each required format exactly once")
+        return values
+
+
+class PostSchedulerWeeklySlot(BaseModel):
+    week: Literal[1, 2, 3, 4]
+    day: str
+    format: Literal["Reel", "Carousel", "Single post"]
+    pillar: str
+    hook: str
+    captionStructure: str
+    ctaType: Literal["Reserve", "Order", "DM", "Walk in", "Save"]
+    funnelStage: Literal["Awareness", "Consideration", "Conversion", "Loyalty"]
+    visualDirection: str
+    notes: str
 
 
 class PostSchedulerMilestoneOutput(BaseModel):
-    posts: list[PostSchedulerPostItem]
+    monthlyArc: PostSchedulerMonthlyArc
+    contentRatio: PostSchedulerContentRatio
+    formatMix: PostSchedulerFormatMix
+    weeklySlotPlan: list[PostSchedulerWeeklySlot]
+    guardrailCheck: str
+
+    @model_validator(mode="after")
+    def _validate_guardrails(self) -> PostSchedulerMilestoneOutput:
+        promo_counts: dict[int, int] = {1: 0, 2: 0, 3: 0, 4: 0}
+        save_per_week: dict[int, bool] = {1: False, 2: False, 3: False, 4: False}
+        cta_set: set[str] = set()
+        has_week4_loyalty = False
+
+        for slot in self.weeklySlotPlan:
+            if slot.format == "Single post":
+                promo_counts[slot.week] += 1
+            if slot.format == "Carousel" or slot.ctaType == "Save":
+                save_per_week[slot.week] = True
+            cta_set.add(slot.ctaType)
+            if slot.week == 4 and slot.funnelStage == "Loyalty":
+                has_week4_loyalty = True
+
+        if any(count > 2 for count in promo_counts.values()):
+            raise ValueError("no more than 2 promotional posts are allowed per week")
+        if not all(save_per_week.values()):
+            raise ValueError("at least one save-optimized post is required per week")
+        if len(cta_set) < 2:
+            raise ValueError("CTA types must vary across the month")
+        if not has_week4_loyalty:
+            raise ValueError("week 4 must include at least one loyalty/community post")
+
+        return self
+
+
+class PromotionCandidatesCategory(BaseModel):
+    category: str
+    starItems: list[str]
+    puzzleItems: list[str]
+
+    @field_validator("category")
+    @classmethod
+    def _validate_category(cls, value: str) -> str:
+        text = value.strip().upper()
+        if text not in {"FOOD", "DRINK"}:
+            raise ValueError("category must be FOOD or DRINK")
+        return text
+
+
+class PromotionCandidatesMilestoneOutput(BaseModel):
+    mainCategory: Literal["FOOD", "DRINK"]
+    categories: list[PromotionCandidatesCategory]
+    sourceAnalyticsRunId: str | None = None
+    notes: str | None = None
+
+    @field_validator("categories")
+    @classmethod
+    def _validate_categories(cls, values: list[PromotionCandidatesCategory]) -> list[PromotionCandidatesCategory]:
+        if not values:
+            raise ValueError("categories must contain at least one category")
+        seen = {row.category for row in values}
+        if len(seen) != len(values):
+            raise ValueError("categories must not contain duplicates")
+        return values
+
+
+class CultureHookIntersection(BaseModel):
+    topic: str
+    conceptLink: str
+    audienceRelevance: str
+    contentExample: str
+
+
+class CultureHooksMilestoneOutput(BaseModel):
+    locationConcept: str
+    targetAudience: str
+    intersections: list[CultureHookIntersection]
+    guardrailCheck: str
+
+    @field_validator("locationConcept", "targetAudience", "guardrailCheck")
+    @classmethod
+    def _validate_non_empty_summary_fields(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("must be non-empty")
+        return text
+
+    @field_validator("intersections")
+    @classmethod
+    def _validate_intersections(cls, values: list[CultureHookIntersection]) -> list[CultureHookIntersection]:
+        if not (3 <= len(values) <= 5):
+            raise ValueError("must contain between 3 and 5 intersections")
+        seen_topics: set[str] = set()
+        for item in values:
+            topic = item.topic.strip()
+            if not topic:
+                raise ValueError("intersection topic must be non-empty")
+            key = topic.casefold()
+            if key in seen_topics:
+                raise ValueError("intersections must not contain duplicate topics")
+            seen_topics.add(key)
+        return values
 
 
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
-    "brand_brief": BrandBriefMilestoneOutput,
+    "campaign_brief": CampaignBriefMilestoneOutput,
     "post_scheduler": PostSchedulerMilestoneOutput,
+    "promotion_candidates": PromotionCandidatesMilestoneOutput,
+    "culture_hooks": CultureHooksMilestoneOutput,
 }
-
 
 def validate_skill_output(skill_id: str | None, payload: Any) -> tuple[Any | None, str | None]:
     """Validate output for registered skills; pass through for unknown skills."""
@@ -155,7 +365,11 @@ def validate_skill_output(skill_id: str | None, payload: Any) -> tuple[Any | Non
     try:
         validated = schema.model_validate(payload)
     except ValidationError as exc:
-        first_error = exc.errors(include_url=False)[0]["msg"]
-        return None, f"[{skill_id}] {first_error}"
+        first = exc.errors(include_url=False)[0]
+        loc = ".".join(str(part) for part in first.get("loc", ()))
+        msg = str(first.get("msg", "validation failed"))
+        if loc:
+            return None, f"[{skill_id}] {loc}: {msg}"
+        return None, f"[{skill_id}] {msg}"
 
     return validated.model_dump(exclude_none=True), None

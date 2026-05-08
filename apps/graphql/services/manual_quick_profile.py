@@ -135,7 +135,6 @@ _ALLOWED_TOP_KEYS = frozenset(
         "topicsToAvoid",
     }
 )
-_MAX_NOTES_LEN = 280
 _MAX_URL_LEN = 500
 _MAX_PHONE_LEN = 30
 _MAX_EMAIL_LEN = 254
@@ -143,7 +142,6 @@ _MAX_INSTAGRAM_HANDLE_LEN = 32
 _MAX_NEIGHBORHOOD_LEN = 80
 _MAX_VALUE_PROPOSITION_LEN = 140
 _MAX_ABOUT_STORY_LEN = 800
-_MAX_TOPICS_TO_AVOID_LEN = 280
 
 _INSTAGRAM_HANDLE_RE = re.compile(r"^[A-Za-z0-9._]{1,32}$")
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -179,7 +177,7 @@ def _parse_text(
     raw: Any,
     *,
     field_label: str,
-    max_len: int,
+    max_len: int | None = None,
 ) -> str | None:
     """Validate optional free-text; return ``None`` when empty after trimming."""
     if not isinstance(raw, str):
@@ -187,7 +185,7 @@ def _parse_text(
     stripped = raw.strip()
     if not stripped:
         return None
-    if len(stripped) > max_len:
+    if max_len is not None and len(stripped) > max_len:
         raise ValueError(f"{field_label} must be at most {max_len} characters")
     return stripped
 
@@ -321,7 +319,7 @@ def validate_and_normalize_quick_profile(raw: Any) -> dict[str, Any]:
 
     notes = raw.get("notes")
     if notes is not None:
-        text = _parse_text(notes, field_label="notes", max_len=_MAX_NOTES_LEN)
+        text = _parse_text(notes, field_label="notes")
         if text is not None:
             out["notes"] = text
 
@@ -417,11 +415,7 @@ def validate_and_normalize_quick_profile(raw: Any) -> dict[str, Any]:
 
     topics_to_avoid = raw.get("topicsToAvoid")
     if topics_to_avoid is not None:
-        text = _parse_text(
-            topics_to_avoid,
-            field_label="topicsToAvoid",
-            max_len=_MAX_TOPICS_TO_AVOID_LEN,
-        )
+        text = _parse_text(topics_to_avoid, field_label="topicsToAvoid")
         if text is not None:
             out["topicsToAvoid"] = text
 

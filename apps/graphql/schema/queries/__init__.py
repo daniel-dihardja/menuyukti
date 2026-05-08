@@ -5,7 +5,6 @@ from .category_mix import CategoryMixQuery
 from .image_ai_flows import ImageAiFlowsQuery
 from .instagram_signals import InstagramSignalsQuery
 from .location_manual_brief_input import LocationManualBriefInputQuery
-from .location_social_settings import LocationSocialSettingsQuery
 from .locations import LocationsQuery
 from .menu_catalog import MenuCatalogQuery
 from .menu_engineering_matrix import MenuEngineeringMatrixQuery
@@ -13,7 +12,6 @@ from .menu_heatmaps import MenuHeatmapsQuery
 from .milestone_prior_data import MilestonePriorDataQuery
 from .nodes import NodesQuery
 from .operating_profile import OperatingProfileQuery
-from .promotion_candidates_signals import PromotionCandidatesSignalsQuery
 from .promotion_engineering_candidates import PromotionEngineeringCandidatesQuery
 from .promotion_menu_items import PromotionMenuItemsQuery
 from .public_holidays import PublicHolidaysQuery
@@ -34,14 +32,12 @@ __all__ = [
     "InstagramSignalsQuery",
     "LocationsQuery",
     "LocationManualBriefInputQuery",
-    "LocationSocialSettingsQuery",
     "MenuCatalogQuery",
     "MilestonePriorDataQuery",
     "MenuEngineeringMatrixQuery",
     "MenuHeatmapsQuery",
     "PromotionMenuItemsQuery",
     "PromotionEngineeringCandidatesQuery",
-    "PromotionCandidatesSignalsQuery",
     "PublicHolidaysQuery",
     "NodesQuery",
     "OperatingProfileQuery",

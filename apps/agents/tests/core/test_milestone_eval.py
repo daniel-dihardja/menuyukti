@@ -46,29 +46,22 @@ def test_route_after_fetch_emits_send_workers() -> None:
 
 @pytest.mark.asyncio
 async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
-    fake_children = [
-        {
-            "nodeType": "goal",
-            "data": {"goal": "Increase covers"},
-        },
-        {
-            "nodeType": "milestonedata",
-            "data": {"summary": "Sales up 10%"},
-        },
-        {
-            "nodeType": "passcriteria",
-            "id": "pc-1",
-            "data": {"requirement": "Has baseline"},
-        },
-    ]
     with (
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(return_value=fake_children),
-        ),
         patch(
             "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
             return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_node",
+            new=AsyncMock(
+                return_value={
+                    "milestoneGoal": "Increase covers",
+                    "milestonePresetData": {"summary": "Sales up 10%"},
+                    "passCriterias": [
+                        {"id": "pc-1", "requirement": "Has baseline", "status": "open"}
+                    ],
+                }
+            ),
         ),
     ):
         out = await nodes.fetch_context(
@@ -86,20 +79,7 @@ async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
 
 @pytest.mark.asyncio
 async def test_fetch_context_appends_prior_milestone_context_when_workflow_present() -> None:
-    fake_children = [
-        {"nodeType": "goal", "data": {"goal": "Schedule posts"}},
-        {"nodeType": "milestonedata", "data": {"schedules": []}},
-        {
-            "nodeType": "passcriteria",
-            "id": "pc-2",
-            "data": {"requirement": "Within campaign window"},
-        },
-    ]
     with (
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(return_value=fake_children),
-        ),
         patch(
             "agents_app.agents.core.milestone_eval.nodes.fetch_prior_milestones_data_for_eval",
             new=AsyncMock(return_value="## Dates\n\nstartDate: 2026-06-01\nendDate: 2026-06-30"),
@@ -107,6 +87,21 @@ async def test_fetch_context_appends_prior_milestone_context_when_workflow_prese
         patch(
             "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
             return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_node",
+            new=AsyncMock(
+                return_value={
+                    "milestonePresetData": {"schedules": []},
+                    "passCriterias": [
+                        {
+                            "id": "pc-2",
+                            "requirement": "Within campaign window",
+                            "status": "open",
+                        }
+                    ],
+                }
+            ),
         ),
     ):
         out = await nodes.fetch_context(
@@ -119,7 +114,7 @@ async def test_fetch_context_appends_prior_milestone_context_when_workflow_prese
 
 def test_synthesis_human_message_includes_optional_input_notes_block() -> None:
     msg = synthesis_human_message(
-        "Build a brand brief",
+        "Build a campaign_brief",
         [{"id": "pc-1", "status": "pass", "requirement": "Has pillars", "reasoning": "present"}],
         "The topic of the campaign is the soccer world cup.",
     )
@@ -176,11 +171,11 @@ def test_optional_input_usage_line_marks_not_given_when_notes_absent() -> None:
     assert line == "Optional input usage: not given."
 
 
-def test_extract_milestone_input_notes_brand_brief_trims() -> None:
+def test_extract_milestone_input_notes_campaign_brief_trims() -> None:
     out = nodes._extract_milestone_input_notes(
         _base_state(
             milestone_input={
-                "type": "restaurant_brand_brief",
+                "type": "restaurant_campaign_brief",
                 "value": {"notes": "  owner context  "},
             },
         ),
@@ -200,18 +195,6 @@ def test_extract_milestone_input_notes_ignores_dates_type() -> None:
         )
         == ""
     )
-
-
-def test_extract_milestone_input_notes_promotion_candidates_trims() -> None:
-    out = nodes._extract_milestone_input_notes(
-        _base_state(
-            milestone_input={
-                "type": "promotion_candidates",
-                "value": {"notes": "  brunch focus  "},
-            },
-        ),
-    )
-    assert out == "brunch focus"
 
 
 def test_select_best_milestonedata_payload_prefers_larger_payload() -> None:

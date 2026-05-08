@@ -46,11 +46,15 @@ def test_promotion_engineering_candidates_with_qa_data(analytics_run_with_qa_dat
         assert "categories" in payload
         assert "Mains" in payload["categories"]
         mains = payload["categories"]["Mains"]
-        assert mains["matrix"] is not None
-        assert isinstance(mains["topStars"], list)
-        assert isinstance(mains["topPuzzles"], list)
+        assert isinstance(mains["starItems"], list)
+        assert isinstance(mains["puzzleItems"], list)
+        assert len(mains["starItems"]) <= 5
+        assert len(mains["puzzleItems"]) <= 5
     else:
-        assert payload["matrix"] is not None
+        assert isinstance(payload["starItems"], list)
+        assert isinstance(payload["puzzleItems"], list)
+        assert len(payload["starItems"]) <= 5
+        assert len(payload["puzzleItems"]) <= 5
 
 
 def test_promotion_engineering_candidates_wrong_location_returns_none(

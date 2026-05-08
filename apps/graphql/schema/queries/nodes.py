@@ -7,21 +7,9 @@ from graphql.limits import (
     clamp_page_size,
 )
 from graphql.schema.auth import is_location_owner, user_id_from_info
+from graphql.schema.node_gql import node_to_gql
 from graphql.schema.node_handlers.milestone import _milestone_sort_key
 from graphql.schema.types import NodeType
-
-
-def _node_to_gql(row: Node) -> NodeType:
-    return NodeType(
-        id=str(row.id),
-        name=row.name,
-        description=row.description,
-        node_type=row.node_type,
-        path=row.path,
-        parent_id=str(row.parent_id) if row.parent_id is not None else None,
-        location_id=row.location_id,
-        data=row.data,
-    )
 
 
 @strawberry.type
@@ -65,7 +53,7 @@ class NodesQuery:
                 q = q.filter(Node.parent_id == parent_pk)
                 rows = q.order_by(Node.created_at.asc()).all()
                 rows.sort(key=_milestone_sort_key)
-                return [_node_to_gql(r) for r in rows[:limit]]
+                return [node_to_gql(r) for r in rows[:limit]]
             if after_id is not None:
                 try:
                     after_pk = int(str(after_id))
@@ -84,7 +72,7 @@ class NodesQuery:
                 # (fractional seconds) that break composite created_at + id predicates.
                 q = q.filter(Node.id < cursor_row.id)
             rows = q.order_by(Node.id.desc()).limit(limit).all()
-            return [_node_to_gql(r) for r in rows]
+            return [node_to_gql(r) for r in rows]
 
     @strawberry.field(description="Fetch a single node by id if the caller owns its location.")
     def node(self, info: strawberry.Info, id: strawberry.ID) -> NodeType | None:
@@ -103,4 +91,4 @@ class NodesQuery:
                 return None
             if not is_location_owner(session, row.location_id, user_id):
                 return None
-            return _node_to_gql(row)
+            return node_to_gql(row)

@@ -19,12 +19,7 @@ import { TimelineItemHeaderProvider } from './timeline-item-header-context'
 import { MilestoneItemTabs } from './milestone-item-tabs'
 import { MilestoneRunProgressStrip } from './milestone-run-progress'
 import { isKeyboardEventFromNestedInteractive, TimelineRailMarker } from './timeline-rail'
-import type {
-  DatesMilestoneInput,
-  PassCriteriaRow,
-  TimelineMilestone,
-  TimelineMilestoneStatus,
-} from './types'
+import type { PassCriteriaRow, TimelineMilestone, TimelineMilestoneStatus } from './types'
 
 import type { FieldSaveStatusVariant } from '@/components/field-save-status'
 import {
@@ -78,11 +73,15 @@ function TimelineItemInner({
   isMobile = false,
 }: TimelineItemProps) {
   const t = useTranslations('analytics.campaigns.chat')
-  const datesInputFromMilestone = (
+  const campaignBriefInputFromMilestone = (
     raw: TimelineMilestone['milestoneInput'],
-  ): DatesMilestoneInput => {
-    if (raw?.type === 'dates' && raw.value != null && typeof raw.value === 'object') {
-      const value = raw.value as Partial<DatesMilestoneInput>
+  ): { startDate: string; endDate: string } => {
+    if (
+      raw?.type === 'restaurant_campaign_brief' &&
+      raw.value != null &&
+      typeof raw.value === 'object'
+    ) {
+      const value = raw.value as Partial<{ startDate: string; endDate: string }>
       return {
         startDate: typeof value.startDate === 'string' ? value.startDate : '',
         endDate: typeof value.endDate === 'string' ? value.endDate : '',
@@ -144,11 +143,11 @@ function TimelineItemInner({
   const savingPassCriteria = savingPassCriteriaMilestoneId === milestone.id
   const savingGoal = savingGoalMilestoneId === milestone.id
   const savingInput = savingDataMilestoneId === milestone.id
-  const isDatesPreset = milestone.presetId === 'dates'
+  const isCampaignBriefPreset = milestone.presetId === 'restaurant_campaign_brief'
   const usesOptionalNotesInput = milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)
 
-  const [inputDraft, setInputDraft] = useState<DatesMilestoneInput>(() =>
-    datesInputFromMilestone(milestone.milestoneInput),
+  const [inputDraft, setInputDraft] = useState<{ startDate: string; endDate: string }>(() =>
+    campaignBriefInputFromMilestone(milestone.milestoneInput),
   )
 
   const [optionalNotesDraft, setOptionalNotesDraft] = useState(() =>
@@ -158,7 +157,7 @@ function TimelineItemInner({
   )
 
   useEffect(() => {
-    setInputDraft(datesInputFromMilestone(milestone.milestoneInput))
+    setInputDraft(campaignBriefInputFromMilestone(milestone.milestoneInput))
   }, [milestone.id, milestone.milestoneInput])
 
   const previousMilestoneIdRef = useRef(milestone.id)
@@ -258,7 +257,10 @@ function TimelineItemInner({
     if (!raw) {
       return
     }
-    const next = [...criteriaRows, { requirement: raw, status: 'open' as const }]
+    const next = [
+      ...criteriaRows,
+      { id: crypto.randomUUID(), requirement: raw, status: 'open' as const },
+    ]
     const ok = await onUpdatePassCriteria(milestone.id, next)
     if (ok && addCriteriaInputRef.current) {
       addCriteriaInputRef.current.value = ''
@@ -275,10 +277,10 @@ function TimelineItemInner({
 
   const goalFieldId = `milestone-goal-${milestone.id}`
   const hasResult = Boolean(milestone.resultMarkdown?.trim())
-  const serverDatesInput = datesInputFromMilestone(milestone.milestoneInput)
+  const serverCampaignBriefInput = campaignBriefInputFromMilestone(milestone.milestoneInput)
   const inputDirty =
-    inputDraft.startDate !== serverDatesInput.startDate ||
-    inputDraft.endDate !== serverDatesInput.endDate
+    inputDraft.startDate !== serverCampaignBriefInput.startDate ||
+    inputDraft.endDate !== serverCampaignBriefInput.endDate
 
   const optionalNotesDirty = useMemo(() => {
     if (!milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
@@ -302,15 +304,31 @@ function TimelineItemInner({
         return true
       }
       const m = milestoneRef.current
-      if (m.presetId === 'dates') {
-        const server = datesInputFromMilestone(m.milestoneInput)
+      if (m.presetId === 'restaurant_campaign_brief') {
+        const server = campaignBriefInputFromMilestone(m.milestoneInput)
         const draft = inputDraftRef.current
-        if (draft.startDate === server.startDate && draft.endDate === server.endDate) {
+        const draftNotes = optionalNotesDraftRef.current.trim()
+        const serverNotes = optionalNotesFromMilestoneInput(m.milestoneInput, m.presetId).trim()
+        if (
+          draft.startDate === server.startDate &&
+          draft.endDate === server.endDate &&
+          draftNotes === serverNotes
+        ) {
           return true
         }
-        const ok = await onUpdate(m.id, { type: 'dates', value: draft })
+        const ok = await onUpdate(m.id, {
+          type: 'restaurant_campaign_brief',
+          value: {
+            notes: draftNotes,
+            startDate: draft.startDate,
+            endDate: draft.endDate,
+          },
+        })
         if (!ok) {
           setInputDraft(server)
+          setOptionalNotesDraft(serverNotes)
+        } else if (normalizeOptionalNotesDraft) {
+          setOptionalNotesDraft(draftNotes)
         }
         return ok
       }
@@ -363,7 +381,9 @@ function TimelineItemInner({
     if (isMilestoneRunning) {
       return
     }
-    const dirty = (isDatesPreset && inputDirty) || (usesOptionalNotesInput && optionalNotesDirty)
+    const dirty =
+      (isCampaignBriefPreset && inputDirty) ||
+      (!isCampaignBriefPreset && usesOptionalNotesInput && optionalNotesDirty)
     if (!dirty) {
       return
     }
@@ -385,7 +405,7 @@ function TimelineItemInner({
     inputDirty,
     inputDraft,
     usesOptionalNotesInput,
-    isDatesPreset,
+    isCampaignBriefPreset,
     isMilestoneRunning,
     onUpdateMilestoneInput,
   ])
@@ -405,7 +425,8 @@ function TimelineItemInner({
 
   const inputSaveStatus: FieldSaveStatusVariant = savingInput
     ? 'saving'
-    : (isDatesPreset && inputDirty) || (usesOptionalNotesInput && optionalNotesDirty)
+    : (isCampaignBriefPreset && inputDirty) ||
+        (!isCampaignBriefPreset && usesOptionalNotesInput && optionalNotesDirty)
       ? 'unsaved'
       : 'saved'
 
@@ -558,7 +579,7 @@ function TimelineItemInner({
                   hasResult,
                   inputDraft,
                   inputSaveStatus,
-                  isDatesPreset,
+                  isCampaignBriefPreset,
                   isMilestoneRunning,
                   milestone,
                   optionalNotesDraft,

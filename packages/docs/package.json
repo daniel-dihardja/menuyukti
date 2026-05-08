@@ -1,0 +1,8 @@
+{
+  "name": "@workspace/docs",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "export:instagram-for-gastro-pdf": "pandoc instagram/instagram-for-gastro.md -o instagram/instagram-for-gastro.pdf"
+  }
+}

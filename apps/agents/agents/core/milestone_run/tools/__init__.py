@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import Any
 
 import httpx
@@ -12,7 +11,6 @@ from agents_app.agents.core.milestone_run.tools.read_goal import make_read_goal_
 from agents_app.agents.core.milestone_run.tools.read_prior_milestones_data import (
     make_read_prior_milestones_data_tool,
 )
-from agents_app.agents.core.milestone_run.tools.registry import make_extra_tools
 from agents_app.agents.core.milestone_run.tools.workspace_adapter import (
     make_workspace_adapter_tools,
 )
@@ -27,16 +25,12 @@ def make_milestone_run_tools(
     user_id: str,
     *,
     client: httpx.AsyncClient,
-    extra_tool_ids: Sequence[str] = (),
 ) -> list[BaseTool]:
     """Build bound tools that read/write :class:`~agents_app.agents.core.milestone_run.state.MilestoneRunState` fields.
 
     **Core reads** (always): ``read_goal``, ``read_criteria``, ``read_data``, ``read_prior_milestones_data`` \
     — use ``context`` for ``goal``, ``criteria``, ``prior_milestones_data``. ``read_data`` returns only output written in \
     this run (``result_data`` / session ``raw_data`` after ``write_result_data``), not pre-loaded stored milestone JSON.
-
-    **Extra tools** (from skill YAML ``extra_tools``): optional capabilities registered in \
-    ``tools.registry.EXTRA_TOOL_FACTORIES`` (e.g. ``get_public_holidays``).
 
     **Write** (always): ``write_result_data`` persists milestone data (``result_data``, ``milestonedata_written``). \
     Criterion verdicts, summary, and the result node come from the graph ``finalize_eval`` step.
@@ -45,19 +39,11 @@ def make_milestone_run_tools(
     appended after built-ins (LangChain name = ``tool_key``).
     """
     adapter_tools = make_workspace_adapter_tools(context, http_client=client)
-    extra_tools = make_extra_tools(
-        context,
-        extra_tool_ids,
-        location_id,
-        user_id,
-        client=client,
-    )
     return [
         make_read_goal_tool(context),
         make_read_criteria_tool(context),
         make_read_data_tool(context),
         make_read_prior_milestones_data_tool(context),
-        *extra_tools,
         make_write_result_data_tool(
             context,
             milestone_id,

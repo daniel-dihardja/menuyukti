@@ -192,7 +192,7 @@ def _fmt_manual_brief_hints(raw_loc: dict[str, Any]) -> str:
         ("valueProposition", "Hero promise"),
         ("aboutStory", "About / story"),
         ("topicsToAvoid", "Topics or visuals to avoid"),
-        ("notes", "Notes"),
+        ("notes", "Additional location information"),
     ):
         line = _str_line(qp, spec[0], spec[1])
         if line:
@@ -223,50 +223,6 @@ def _fmt_manual_brief_hints(raw_loc: dict[str, Any]) -> str:
 
     if len(lines) <= 2:
         return ""
-    return "\n".join(lines)
-
-
-def _fmt_ai_social_settings(data: dict[str, Any]) -> str:
-    """Markdown for AI-generated location_social_settings (may be empty)."""
-    raw = data.get("locationSocialSettings")
-    if not isinstance(raw, dict):
-        return ""
-    tone = raw.get("tone")
-    personality = raw.get("brandPersonality")
-    pillars = raw.get("contentPillars") or []
-    platforms = raw.get("platformFocus") or []
-    hashtags = raw.get("brandHashtags") or []
-    avoid = raw.get("avoidTopics") or []
-    audience = raw.get("targetAudience")
-    has_any = bool(
-        (isinstance(tone, str) and tone.strip())
-        or (isinstance(personality, str) and personality.strip())
-        or (isinstance(pillars, list) and len(pillars) > 0)
-        or (isinstance(platforms, list) and len(platforms) > 0)
-        or (isinstance(hashtags, list) and len(hashtags) > 0)
-        or (isinstance(avoid, list) and len(avoid) > 0)
-        or (isinstance(audience, str) and audience.strip())
-    )
-    if not has_any:
-        return ""
-    lines: list[str] = [
-        "## AI-generated location social settings",
-        "_Produced by automation — not direct owner input. Use as secondary context._",
-    ]
-    if isinstance(tone, str) and tone.strip():
-        lines.append(f"- **Tone**: {tone.strip()}")
-    if isinstance(personality, str) and personality.strip():
-        lines.append(f"- **Brand personality**: {personality.strip()}")
-    if isinstance(pillars, list) and pillars:
-        lines.append(f"- **Content pillars**: {', '.join(str(x) for x in pillars)}")
-    if isinstance(platforms, list) and platforms:
-        lines.append(f"- **Platform focus**: {', '.join(str(x) for x in platforms)}")
-    if isinstance(hashtags, list) and hashtags:
-        lines.append(f"- **Brand hashtags**: {', '.join(str(x) for x in hashtags)}")
-    if isinstance(avoid, list) and avoid:
-        lines.append(f"- **Avoid topics**: {', '.join(str(x) for x in avoid)}")
-    if isinstance(audience, str) and audience.strip():
-        lines.append(f"- **Target audience (AI)**: {audience.strip()}")
     return "\n".join(lines)
 
 
@@ -303,12 +259,24 @@ def _fmt_matrix_signals(instagram: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _fmt_milestone_brand_brief_owner_notes(context: dict[str, Any]) -> str:
-    """Markdown for optional owner notes from the brand-brief milestone Input tab."""
+def _fmt_ai_social_settings(location_data: dict[str, Any]) -> str:
+    """Compatibility helper retained for campaign-brief imports.
+
+    AI social settings were removed from location GraphQL payloads in favor of
+    owner-provided manual brief input (`manualBriefInput.quickProfile`).
+    Keep this helper as a stable no-op until all downstream imports are cleaned
+    up.
+    """
+    del location_data
+    return ""
+
+
+def _fmt_milestone_campaign_brief_owner_notes(context: dict[str, Any]) -> str:
+    """Markdown for optional owner notes from the campaign-brief milestone Input tab."""
     raw = context.get("milestone_input")
     if not isinstance(raw, dict):
         return ""
-    if raw.get("type") != "restaurant_brand_brief":
+    if raw.get("type") != "restaurant_campaign_brief":
         return ""
     value = raw.get("value")
     if not isinstance(value, dict):
@@ -320,7 +288,7 @@ def _fmt_milestone_brand_brief_owner_notes(context: dict[str, Any]) -> str:
     if not text:
         return ""
     return (
-        "## Milestone brand brief input (owner)\n\n"
+        "## Milestone campaign_brief input (owner)\n\n"
         "_User-supplied notes from the milestone Input tab — incorporate when shaping pillars, "
         "angles, and tone guardrails; do not treat as verified sales facts._\n\n"
         f"{text}"
@@ -341,21 +309,21 @@ def make_get_location_profile_tool(
         Includes: venue name/city/country/currency, operating pattern, peak day, meal period
         breakdown, weekday vs weekend split, category revenue mix, and top menu items by volume.
         Use this to anchor the Venue snapshot and inform Content pillars, Audience hypotheses,
-        and Tone guardrails in the brand brief.
+        and Tone guardrails in the campaign brief.
         Returns a Markdown document or an error message when the location is not found.
         """
         # 1. Basic location identity
         loc_data = await graphql_post(
             client,
             LOCATION_QUERY,
-            {"id": str(location_id), "locationId": location_id},
+            {"id": str(location_id)},
             user_id,
         )
         raw_loc = loc_data.get("location")
         if not isinstance(raw_loc, dict):
             return "Location not found."
 
-        owner_notes_md = _fmt_milestone_brand_brief_owner_notes(context)
+        owner_notes_md = _fmt_milestone_campaign_brief_owner_notes(context)
 
         name = raw_loc.get("name") or ""
         city = raw_loc.get("city") or ""
@@ -390,9 +358,6 @@ def make_get_location_profile_tool(
             sections.append(
                 "\n_No analytics run found for this location — operating signals unavailable._"
             )
-            ai_social = _fmt_ai_social_settings(loc_data)
-            if ai_social:
-                sections.append(ai_social)
             if owner_notes_md:
                 sections.append(owner_notes_md)
             return "\n\n".join(sections)
@@ -446,10 +411,6 @@ def make_get_location_profile_tool(
         if matrix_md:
             sections.append("## Additional matrix signals")
             sections.append(matrix_md)
-
-        ai_social = _fmt_ai_social_settings(loc_data)
-        if ai_social:
-            sections.append(ai_social)
 
         if owner_notes_md:
             sections.append(owner_notes_md)

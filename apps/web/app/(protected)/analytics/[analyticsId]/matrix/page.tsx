@@ -8,9 +8,8 @@ import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { getCachedAnalyticsRun, getCachedMenuEngineeringMatrix } from '@/lib/graphql/cached-queries'
 import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
-import { matrixItemsToGroupedRows } from '@/lib/analytics/matrix-page-adapter'
 import { CreateCampaignFromReportButton } from '@/components/create-campaign-from-report-button'
-import { MatrixCategoryTables } from './matrix-category-tables'
+import { MatrixView } from './matrix-view'
 
 type PageProps = {
   params: Promise<{ analyticsId?: string }>
@@ -41,10 +40,8 @@ export default async function Page({ params }: PageProps) {
 
   const analyticsName = run.name ?? run.filename ?? `Analytics #${run.id}`
 
-  const items = matrixData.menuEngineeringMatrix?.items ?? null
-  const grouped = matrixItemsToGroupedRows(items)
-  const totalItems =
-    grouped.star.length + grouped.plow_horse.length + grouped.puzzle.length + grouped.low_end.length
+  const matrix = matrixData.menuEngineeringMatrix
+  const items = matrix?.items ?? []
 
   const locale = getAppCurrencyLocale()
   const currency = getAppCurrencyCode()
@@ -52,7 +49,6 @@ export default async function Page({ params }: PageProps) {
   return (
     <AnalyticsPageShell
       title={tMatrix('reportTitle')}
-      contentWidth="full"
       breadcrumbs={[
         { label: tSales('title'), href: routes.analytics.sales },
         { label: analyticsName },
@@ -68,12 +64,16 @@ export default async function Page({ params }: PageProps) {
           <CreateCampaignFromReportButton analyticsId={analyticsId} />
         </div>
 
-        {totalItems === 0 ? (
+        {!matrix ? (
+          <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
+            No matrix data for this run.
+          </div>
+        ) : items.length === 0 ? (
           <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
             No matrix data for this run.
           </div>
         ) : (
-          <MatrixCategoryTables grouped={grouped} locale={locale} currency={currency} />
+          <MatrixView items={items} locale={locale} currency={currency} />
         )}
       </section>
     </AnalyticsPageShell>

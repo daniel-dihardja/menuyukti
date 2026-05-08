@@ -99,27 +99,38 @@ def _resolve_campaign_window(
     if current_idx <= 0:
         return None
 
-    dates_milestone: Node | None = None
+    campaign_window_milestone: Node | None = None
     for row in reversed(ordered[:current_idx]):
         payload = row.data if isinstance(row.data, dict) else {}
-        if payload.get("presetId") == "dates":
-            dates_milestone = row
+        if payload.get("presetId") == "restaurant_campaign_brief":
+            campaign_window_milestone = row
             break
-    if dates_milestone is None:
+    # Backward compatibility for workflows created before campaign_brief owned dates.
+    if campaign_window_milestone is None:
+        for row in reversed(ordered[:current_idx]):
+            payload = row.data if isinstance(row.data, dict) else {}
+            if payload.get("presetId") == "dates":
+                campaign_window_milestone = row
+                break
+    if campaign_window_milestone is None:
         return None
 
-    data_node = (
-        session.query(Node)
-        .filter(
-            Node.parent_id == dates_milestone.id,
-            Node.node_type == "milestonedata",
+    data_node = campaign_window_milestone.milestone_preset_data
+    if isinstance(data_node, dict):
+        raw_data = data_node
+    else:
+        legacy = (
+            session.query(Node)
+            .filter(
+                Node.parent_id == campaign_window_milestone.id,
+                Node.node_type == "milestonedata",
+            )
+            .order_by(Node.id.asc())
+            .first()
         )
-        .order_by(Node.id.asc())
-        .first()
-    )
-    if data_node is None or not isinstance(data_node.data, dict):
-        return None
-    raw_data = data_node.data
+        if legacy is None or not isinstance(legacy.data, dict):
+            return None
+        raw_data = legacy.data
     start = raw_data.get("startDate")
     end = raw_data.get("endDate")
     if not isinstance(start, str) or not isinstance(end, str):
@@ -154,7 +165,7 @@ def build_campaign_schedule_plan(
     milestone_id: int,
     location_id: int,
 ) -> dict[str, Any] | None:
-    """Return a schedule plan built from dates milestone + analytics signals."""
+    """Return a schedule plan built from campaign window + analytics signals."""
     campaign_window = _resolve_campaign_window(
         session,
         workflow_id=workflow_id,

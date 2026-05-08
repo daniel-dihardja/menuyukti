@@ -77,7 +77,7 @@ def _category_focus(raw: dict | None) -> CategoryFocusType | None:
 
 
 @strawberry.type
-class BrandBriefSignalCapabilitiesType:
+class CampaignBriefSignalCapabilitiesType:
     has_order_id: bool
     has_datetime: bool
     enabled_blocks: list[str]
@@ -145,12 +145,28 @@ class AdditionalSignalsType:
     order_signals: OrderSignalsType | None
     datetime_signals: DatetimeSignalsType | None
     matrix_signals: MatrixSignalsType
+    campaign_planning_signals: "CampaignPlanningSignalsType"
+    signal_confidence: "SignalConfidenceType"
 
 
-@strawberry.type(description="Tiered analytics payload for brand brief and growth agents.")
+@strawberry.type
+class CampaignPlanningSignalsType:
+    recommended_posting_days: list[str]
+    recommended_dayparts: list[str]
+    objective_recommendation: str
+    primary_cta_channel: str
+
+
+@strawberry.type
+class SignalConfidenceType:
+    tier: str
+    coverage_notes: list[str]
+
+
+@strawberry.type(description="Tiered analytics payload for campaign_brief and growth agents.")
 class InstagramSignalsType:
     analytics_run_id: strawberry.ID
-    capabilities: BrandBriefSignalCapabilitiesType
+    capabilities: CampaignBriefSignalCapabilitiesType
     fundamental_signals: FundamentalSignalsType
     additional_signals: AdditionalSignalsType
 
@@ -195,6 +211,10 @@ class InstagramSignalsQuery:
             order_signals = additional.get("order_signals") if isinstance(additional, dict) else None
             dt_signals = additional.get("datetime_signals") if isinstance(additional, dict) else None
             matrix = additional.get("matrix_signals") if isinstance(additional, dict) else {}
+            planning = (
+                additional.get("campaign_planning_signals") if isinstance(additional, dict) else {}
+            )
+            confidence = additional.get("signal_confidence") if isinstance(additional, dict) else {}
             cat = (
                 fundamental.get("category_focus")
                 if isinstance(fundamental, dict)
@@ -203,7 +223,7 @@ class InstagramSignalsQuery:
 
             return InstagramSignalsType(
                 analytics_run_id=strawberry.ID(str(run.id)),
-                capabilities=BrandBriefSignalCapabilitiesType(
+                capabilities=CampaignBriefSignalCapabilitiesType(
                     has_order_id=bool(caps.get("has_order_id")),
                     has_datetime=bool(caps.get("has_datetime")),
                     enabled_blocks=[str(x) for x in caps.get("enabled_blocks", [])],
@@ -281,6 +301,49 @@ class InstagramSignalsQuery:
                         avoid_items=[
                             _matrix_item(x)
                             for x in (matrix.get("avoid_items", []) if isinstance(matrix, dict) else [])
+                        ],
+                    ),
+                    campaign_planning_signals=CampaignPlanningSignalsType(
+                        recommended_posting_days=[
+                            str(x)
+                            for x in (
+                                planning.get("recommended_posting_days", [])
+                                if isinstance(planning, dict)
+                                else []
+                            )
+                        ],
+                        recommended_dayparts=[
+                            str(x)
+                            for x in (
+                                planning.get("recommended_dayparts", [])
+                                if isinstance(planning, dict)
+                                else []
+                            )
+                        ],
+                        objective_recommendation=(
+                            str(planning.get("objective_recommendation") or "awareness")
+                            if isinstance(planning, dict)
+                            else "awareness"
+                        ),
+                        primary_cta_channel=(
+                            str(planning.get("primary_cta_channel") or "profile_visit")
+                            if isinstance(planning, dict)
+                            else "profile_visit"
+                        ),
+                    ),
+                    signal_confidence=SignalConfidenceType(
+                        tier=(
+                            str(confidence.get("tier") or "low")
+                            if isinstance(confidence, dict)
+                            else "low"
+                        ),
+                        coverage_notes=[
+                            str(x)
+                            for x in (
+                                confidence.get("coverage_notes", [])
+                                if isinstance(confidence, dict)
+                                else []
+                            )
                         ],
                     ),
                 ),

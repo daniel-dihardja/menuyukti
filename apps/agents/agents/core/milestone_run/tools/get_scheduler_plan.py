@@ -23,7 +23,7 @@ def make_get_scheduler_plan_tool(
     async def get_scheduler_plan() -> str:
         """Return adaptive campaign schedule rows from GraphQL as JSON text.
 
-        Uses strict Dates milestone structured data for campaign start/end window.
+        Uses campaign brief structured data for campaign start/end window.
         Requires `workflow_id` and `milestone_id` in the run context.
         """
         workflow_id = context.get("workflow_id")
@@ -48,7 +48,7 @@ def make_get_scheduler_plan_tool(
         )
         if not isinstance(raw, dict):
             return (
-                "Scheduler plan unavailable. Ensure a prior Dates milestone exists with "
+                "Scheduler plan unavailable. Ensure a prior campaign brief milestone exists with "
                 "valid startDate and endDate data before running Scheduler."
             )
 

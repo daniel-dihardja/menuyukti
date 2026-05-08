@@ -1,19 +1,15 @@
-'use client'
-
-import type { PromotionCandidatesMilestoneData } from '../timeline/types'
+import type { PromotionCandidatesMilestoneData } from '@/lib/graphql/node-schemas'
 
 export type MilestonePromotionCandidatesDataPreviewProps = {
   data: PromotionCandidatesMilestoneData
   labels: {
-    grouping: string
-    flatSummary: string
-    promotionIdeas: string
-    categoryMenu: string
-    starHighlights: string
-    puzzleHighlights: string
-    notes: string
-    emptyList: string
-    emptyValue: string
+    heading: string
+    mainCategoryLabel: string
+    emptyCategory: string
+    starItemsLabel: string
+    puzzleItemsLabel: string
+    notesLabel: string
+    noNotes: string
   }
 }
 
@@ -21,69 +17,57 @@ export function MilestonePromotionCandidatesDataPreview({
   data,
   labels,
 }: MilestonePromotionCandidatesDataPreviewProps) {
-  const categoryEntries = Object.entries(data.categories ?? {})
+  const renderItemList = (items: string[]) => {
+    if (items.length === 0) {
+      return <p className="text-muted-foreground">—</p>
+    }
+
+    return (
+      <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    )
+  }
 
   return (
-    <div className="space-y-4 text-sm">
-      <div>
-        <p className="text-muted-foreground font-medium">{labels.grouping}</p>
-        <p>{data.grouping}</p>
+    <div className="flex flex-col gap-y-4 text-sm">
+      <div className="space-y-1">
+        <p className="font-medium text-foreground">{labels.heading}</p>
+        <p className="text-muted-foreground">
+          {labels.mainCategoryLabel}: {data.mainCategory}
+        </p>
       </div>
-      {data.grouping === 'flat' && (
-        <div>
-          <p className="text-muted-foreground font-medium">{labels.flatSummary}</p>
-          <p className="whitespace-pre-wrap">
-            {data.flatSummary.trim() ? data.flatSummary : labels.emptyValue}
-          </p>
-        </div>
-      )}
-      {data.grouping === 'by_menu_category' && categoryEntries.length > 0 && (
-        <div className="space-y-3">
-          {categoryEntries.map(([key, block]) => (
-            <div className="border-border/80 rounded-md border p-3" key={key}>
-              <p className="text-muted-foreground font-medium">{labels.categoryMenu}</p>
-              <p className="mb-2 font-medium">{block.menuCategory || key}</p>
-              <p className="text-muted-foreground mt-2 font-medium">{labels.starHighlights}</p>
-              {block.starHighlights.length ? (
-                <ul className="list-inside list-disc">
-                  {block.starHighlights.map((s) => (
-                    <li key={s}>{s}</li>
-                  ))}
-                </ul>
+
+      <div className="space-y-3">
+        {data.categories.map((bucket) => {
+          const hasItems = bucket.starItems.length > 0 || bucket.puzzleItems.length > 0
+          return (
+            <div key={bucket.category} className="space-y-2">
+              <p className="font-medium text-foreground">{bucket.category}</p>
+              {!hasItems ? (
+                <p className="text-muted-foreground">{labels.emptyCategory}</p>
               ) : (
-                <p>{labels.emptyList}</p>
-              )}
-              <p className="text-muted-foreground mt-2 font-medium">{labels.puzzleHighlights}</p>
-              {block.puzzleHighlights.length ? (
-                <ul className="list-inside list-disc">
-                  {block.puzzleHighlights.map((s) => (
-                    <li key={s}>{s}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p>{labels.emptyList}</p>
-              )}
-              {block.notes?.trim() ? (
-                <div className="mt-2">
-                  <p className="text-muted-foreground font-medium">{labels.notes}</p>
-                  <p className="whitespace-pre-wrap">{block.notes}</p>
+                <div className="space-y-2 text-muted-foreground">
+                  <div className="space-y-1">
+                    <p>{labels.starItemsLabel}:</p>
+                    {renderItemList(bucket.starItems)}
+                  </div>
+                  <div className="space-y-1">
+                    <p>{labels.puzzleItemsLabel}:</p>
+                    {renderItemList(bucket.puzzleItems)}
+                  </div>
                 </div>
-              ) : null}
+              )}
             </div>
-          ))}
-        </div>
-      )}
-      <div>
-        <p className="text-muted-foreground font-medium">{labels.promotionIdeas}</p>
-        {data.promotionIdeas.length ? (
-          <ul className="list-inside list-disc">
-            {data.promotionIdeas.map((s) => (
-              <li key={s}>{s}</li>
-            ))}
-          </ul>
-        ) : (
-          <p>{labels.emptyList}</p>
-        )}
+          )
+        })}
+      </div>
+
+      <div className="space-y-1">
+        <p className="font-medium text-foreground">{labels.notesLabel}</p>
+        <p className="text-muted-foreground">{data.notes?.trim() ? data.notes : labels.noNotes}</p>
       </div>
     </div>
   )

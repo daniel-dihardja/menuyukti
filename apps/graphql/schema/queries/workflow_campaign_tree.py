@@ -1,31 +1,25 @@
-"""Batched read: one workflow, its milestones, and typed children (SSR-friendly)."""
-
-from collections import defaultdict
+"""Batched read: one workflow, its milestones (SSR-friendly)."""
 
 import strawberry
 
 from graphql.data_sources import Node, SessionLocal
 from graphql.schema.auth import is_location_owner, user_id_from_info
+from graphql.schema.node_gql import node_to_gql
 from graphql.schema.node_handlers.milestone import _milestone_sort_key
-from graphql.schema.queries.nodes import _node_to_gql
 from graphql.schema.types import NodeType
 
 
 @strawberry.type(
-    description="A milestone node plus its passcriteria, goal, milestonedata, and result children."
+    description="A milestone node with typed milestone fields (goal, preset data, result, pass criteria)."
 )
 class MilestoneCampaignBundleType:
     milestone: NodeType
-    pass_criteria_nodes: list[NodeType]
-    goal_nodes: list[NodeType]
-    milestonedata_nodes: list[NodeType]
-    result_nodes: list[NodeType]
 
 
 @strawberry.type(
     description=(
-        "Workflow campaign tree for SSR: workflow root, ordered milestones, "
-        "and grouped child nodes per milestone (single round-trip vs many `nodes` calls)."
+        "Workflow campaign tree for SSR: workflow root, ordered milestones "
+        "(single round-trip vs many `nodes` calls)."
     )
 )
 class WorkflowCampaignTreeType:
@@ -33,16 +27,12 @@ class WorkflowCampaignTreeType:
     milestones: list[MilestoneCampaignBundleType]
 
 
-_CHILD_TYPES = frozenset({"passcriteria", "goal", "milestonedata", "result"})
-
-
 @strawberry.type
 class WorkflowCampaignTreeQuery:
     @strawberry.field(
         description=(
-            "Load a workflow node, its milestones (ordered like `nodes`), and each milestone's "
-            "passcriteria/goal/milestonedata/result children. Returns null if the id is missing, "
-            "not a workflow, or not owned by the caller."
+            "Load a workflow node, its milestones (ordered like `nodes`). "
+            "Returns null if the id is missing, not a workflow, or not owned by the caller."
         )
     )
     def workflow_campaign_tree(
@@ -83,39 +73,12 @@ class WorkflowCampaignTreeQuery:
                 .all()
             )
             milestone_rows.sort(key=_milestone_sort_key)
-            milestone_ids = [m.id for m in milestone_rows]
-
-            buckets: dict[int, dict[str, list[Node]]] = defaultdict(lambda: defaultdict(list))
-            if milestone_ids:
-                child_rows = (
-                    session.query(Node)
-                    .filter(
-                        Node.location_id == location_id,
-                        Node.parent_id.in_(milestone_ids),
-                        Node.node_type.in_(_CHILD_TYPES),
-                    )
-                    .all()
-                )
-                for row in child_rows:
-                    buckets[row.parent_id][row.node_type].append(row)
-                for mid in milestone_ids:
-                    for nt in _CHILD_TYPES:
-                        buckets[mid][nt].sort(key=_milestone_sort_key)
 
             bundles: list[MilestoneCampaignBundleType] = []
             for m in milestone_rows:
-                b = buckets[m.id]
-                bundles.append(
-                    MilestoneCampaignBundleType(
-                        milestone=_node_to_gql(m),
-                        pass_criteria_nodes=[_node_to_gql(r) for r in b["passcriteria"]],
-                        goal_nodes=[_node_to_gql(r) for r in b["goal"]],
-                        milestonedata_nodes=[_node_to_gql(r) for r in b["milestonedata"]],
-                        result_nodes=[_node_to_gql(r) for r in b["result"]],
-                    )
-                )
+                bundles.append(MilestoneCampaignBundleType(milestone=node_to_gql(m)))
 
             return WorkflowCampaignTreeType(
-                workflow=_node_to_gql(workflow_row),
+                workflow=node_to_gql(workflow_row),
                 milestones=bundles,
             )
