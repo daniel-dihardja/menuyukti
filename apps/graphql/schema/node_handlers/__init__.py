@@ -5,9 +5,6 @@ from __future__ import annotations
 from graphql.schema.node_handlers._generic import GenericHandler
 from graphql.schema.node_handlers.base import NodeHandler
 from graphql.schema.node_handlers.milestone import MilestoneHandler
-from graphql.schema.node_handlers.milestonedata import MilestoneDataHandler
-from graphql.schema.node_handlers.passcriteria import PassCriteriaHandler
-from graphql.schema.node_handlers.result import ResultHandler
 from graphql.schema.node_handlers.workflow import WorkflowHandler
 
 _GENERIC_HANDLER = GenericHandler()
@@ -15,9 +12,6 @@ _GENERIC_HANDLER = GenericHandler()
 _REGISTRY: dict[str, NodeHandler] = {
     "workflow": WorkflowHandler(),
     "milestone": MilestoneHandler(),
-    "passcriteria": PassCriteriaHandler(),
-    "milestonedata": MilestoneDataHandler(),
-    "result": ResultHandler(),
 }
 
 
@@ -34,10 +28,7 @@ def get_handler(node_type: str | None) -> NodeHandler:
 __all__ = [
     "WorkflowHandler",
     "GenericHandler",
-    "MilestoneDataHandler",
     "MilestoneHandler",
     "NodeHandler",
-    "PassCriteriaHandler",
-    "ResultHandler",
     "get_handler",
 ]

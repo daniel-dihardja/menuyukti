@@ -10,7 +10,6 @@ from typing import Any
 import httpx
 from agents_app.agents.core.milestone_data.graphql_client import upsert_milestonedata
 from agents_app.agents.core.milestone_eval.graphql_client import (
-    create_result_node,
     delete_node,
     fetch_milestone_children,
     update_milestone_passcriteria_status,
@@ -300,7 +299,6 @@ async def upsert_milestonedata_node(
 
 
 __all__ = [
-    "create_result_node",
     "delete_node",
     "fetch_api_adapter_tools_for_location",
     "fetch_campaign_schedule_plan",

@@ -1,4 +1,4 @@
-"""Goal text lives on milestone node ``data.goal`` (import/export round-trip)."""
+"""Goal text is stored on ``milestone_goal`` (import/export round-trip)."""
 
 from __future__ import annotations
 
@@ -13,6 +13,16 @@ mutation ImportWorkflow($locationId: Int!, $payload: JSON!) {
   importWorkflow(locationId: $locationId, payload: $payload) {
     id
     nodeType
+  }
+}
+"""
+
+NODE_BY_ID = """
+query NodeById($id: ID!) {
+  node(id: $id) {
+    id
+    milestoneGoal
+    data
   }
 }
 """
@@ -37,7 +47,7 @@ mutation ExportWorkflow($workflowId: ID!, $locationId: Int!) {
 """
 
 
-def test_import_workflow_stores_goal_on_milestone_data_not_child():
+def test_import_workflow_stores_goal_on_milestone_row_not_child():
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -85,9 +95,17 @@ def test_import_workflow_stores_goal_on_milestone_data_not_child():
     children = listed.data["nodes"]
     milestones = [n for n in children if n.get("nodeType") == "milestone"]
     assert len(milestones) == 1
-    mdata = milestones[0]["data"]
-    assert isinstance(mdata, dict)
-    assert mdata.get("goal") == "Grow brunch bookings"
+    mid = milestones[0]["id"]
+
+    loaded = asyncio.run(
+        schema.execute(
+            NODE_BY_ID,
+            variable_values={"id": mid},
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not loaded.errors, loaded.errors
+    assert loaded.data["node"]["milestoneGoal"] == "Grow brunch bookings"
     goal_children = [n for n in children if n.get("nodeType") == "goal"]
     assert goal_children == []
 
@@ -138,7 +156,7 @@ def test_export_workflow_includes_goal_from_milestone_data():
     )
     assert not out.errors, out.errors
     row = out.data["exportWorkflow"]
-    assert row["schemaVersion"] == "2.1"
+    assert row["schemaVersion"] == "3.0"
     exported = row["payload"]
     assert isinstance(exported, dict)
     ms = exported.get("milestones")

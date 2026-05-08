@@ -39,6 +39,12 @@ mutation DeleteNode($id: ID!) {
 }
 """
 
+UPDATE_NODE = """
+mutation UpdateNode($id: ID!, $data: JSON!) {
+  updateNode(id: $id, data: $data) { id }
+}
+"""
+
 
 def test_delete_node_any_milestone():
     """Any milestone may be deleted, not only the last in display order."""
@@ -153,7 +159,18 @@ def test_delete_node_any_milestone():
     assert listed_empty.data["nodes"] == []
 
 
-def test_delete_passcriteria_node():
+REPLACE_PASS_CRITERIA = """
+mutation Rep($milestoneId: ID!, $locationId: Int!, $requirements: [String!]!) {
+  replacePassCriteria(
+    milestoneId: $milestoneId
+    locationId: $locationId
+    requirements: $requirements
+  )
+}
+"""
+
+
+def test_passcriteria_live_on_milestone_row_not_child_nodes():
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -198,62 +215,43 @@ def test_delete_passcriteria_node():
     assert not milestone.errors, milestone.errors
     milestone_id = milestone.data["createNode"]["id"]
 
-    first_pc = asyncio.run(
+    rep = asyncio.run(
         schema.execute(
-            CREATE_NODE,
+            REPLACE_PASS_CRITERIA,
             variable_values={
+                "milestoneId": milestone_id,
                 "locationId": location_id,
-                "nodeType": "passcriteria",
-                "name": "A",
-                "parentId": milestone_id,
+                "requirements": ["only one"],
             },
             context_value=graphql_auth_context(),
         )
     )
-    assert not first_pc.errors, first_pc.errors
-    first_pc_id = first_pc.data["createNode"]["id"]
-
-    second_pc = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "passcriteria",
-                "name": "B",
-                "parentId": milestone_id,
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not second_pc.errors, second_pc.errors
-    second_pc_id = second_pc.data["createNode"]["id"]
-
-    del_first = asyncio.run(
-        schema.execute(
-            DELETE_NODE,
-            variable_values={"id": first_pc_id},
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not del_first.errors, del_first.errors
-    assert del_first.data["deleteNode"] is True
+    assert not rep.errors, rep.errors
+    assert rep.data["replacePassCriteria"] is True
 
     listed = asyncio.run(
         schema.execute(
             NODES_BY_PARENT,
             variable_values={
                 "locationId": location_id,
-                "nodeType": "passcriteria",
+                "nodeType": None,
                 "parentId": milestone_id,
             },
             context_value=graphql_auth_context(),
         )
     )
     assert not listed.errors, listed.errors
-    nodes = listed.data["nodes"]
-    assert len(nodes) == 1
-    assert nodes[0]["id"] == second_pc_id
-    assert nodes[0]["name"] == "B"
+    assert listed.data["nodes"] == []
+
+    session = SessionLocal()
+    try:
+        row = session.get(Node, int(milestone_id))
+        assert row is not None
+        assert isinstance(row.pass_criterias, list)
+        assert len(row.pass_criterias) == 1
+        assert row.pass_criterias[0]["requirement"] == "only one"
+    finally:
+        session.close()
 
 
 def test_delete_milestone_removes_milestone_with_goal_in_data():
@@ -305,8 +303,7 @@ def test_delete_milestone_removes_milestone_with_goal_in_data():
     try:
         row = session.get(Node, milestone_id)
         assert row is not None
-        prev = row.data if isinstance(row.data, dict) else {}
-        row.data = {**prev, "goal": "Keep me"}
+        row.milestone_goal = "Keep me"
         session.commit()
     finally:
         session.close()
@@ -328,7 +325,7 @@ def test_delete_milestone_removes_milestone_with_goal_in_data():
         session.close()
 
 
-def test_delete_milestone_removes_milestonedata_child():
+def test_delete_milestone_clears_row_and_has_no_legacy_children():
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -377,19 +374,15 @@ def test_delete_milestone_removes_milestonedata_child():
 
     md = asyncio.run(
         schema.execute(
-            CREATE_NODE,
+            UPDATE_NODE,
             variable_values={
-                "locationId": location_id,
-                "nodeType": "milestonedata",
-                "name": "Data",
-                "parentId": milestone_id,
-                "data": {"note": "Keep me"},
+                "id": milestone_id,
+                "data": {"milestonePresetData": {"note": "Keep me"}},
             },
             context_value=graphql_auth_context(),
         )
     )
     assert not md.errors, md.errors
-    md_id = int(md.data["createNode"]["id"])
 
     deleted = asyncio.run(
         schema.execute(
@@ -403,7 +396,7 @@ def test_delete_milestone_removes_milestonedata_child():
 
     session = SessionLocal()
     try:
-        assert session.get(Node, md_id) is None
+        assert session.get(Node, int(milestone_id)) is None
     finally:
         session.close()
 
@@ -470,21 +463,6 @@ def test_delete_workflow_cascades_milestones_and_children():
     assert not second_ms.errors, second_ms.errors
     second_milestone_id = second_ms.data["createNode"]["id"]
 
-    pc = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "passcriteria",
-                "name": "PC",
-                "parentId": second_milestone_id,
-            },
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not pc.errors, pc.errors
-    pc_id = int(pc.data["createNode"]["id"])
-
     deleted = asyncio.run(
         schema.execute(
             DELETE_NODE,
@@ -501,7 +479,6 @@ def test_delete_workflow_cascades_milestones_and_children():
         assert session.get(Node, wf_pk) is None
         assert session.get(Node, int(first_milestone_id)) is None
         assert session.get(Node, int(second_milestone_id)) is None
-        assert session.get(Node, pc_id) is None
         remaining = (
             session.query(Node)
             .filter(Node.location_id == location_id, Node.parent_id == wf_pk)

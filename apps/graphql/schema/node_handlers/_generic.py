@@ -24,3 +24,7 @@ class GenericHandler(NodeHandler):
     def validate_update(self, node: Node, parent: Node | None, data: dict | None) -> None:
         if data is not None and not isinstance(data, dict):
             raise ValueError("data must be a JSON object")
+
+    def pre_delete(self, node: Node, parent: Node | None, session: Session) -> None:
+        """Allow deleting extension node types (location ownership already enforced)."""
+        return

@@ -12,17 +12,15 @@ import {
   promotionCandidatesMilestoneDataSchema,
   type PassCriteriaData,
 } from '@/lib/graphql/node-schemas'
+import type { MilestoneNode } from '@/lib/graphql/node-schemas'
 import {
-  CREATE_NODE_MUTATION,
   DELETE_NODE_MUTATION,
   NODE_QUERY,
   NODES_QUERY,
   UPDATE_NODE_MUTATION,
-  parseCreateNodeData,
   parseNodeData,
   parseNodesData,
   parseUpdateNodeData,
-  type CreateNodeDataRaw,
   type DeleteNodeData,
   type NodeDataRaw,
   type NodesDataRaw,
@@ -33,39 +31,6 @@ import { milestoneIdParamSchema, patchMilestoneSchema, workflowIdParamSchema } f
 
 type RouteContext = {
   params: Promise<{ id: string; milestoneId: string }>
-}
-
-function mergeMilestoneNodeDataJson(
-  prev: Record<string, unknown>,
-  patch: {
-    presetId?:
-      | 'restaurant_campaign_brief'
-      | 'post_scheduler'
-      | 'promotion_candidates'
-      | 'culture_hooks'
-    milestoneInput?: { type: string; value?: unknown }
-    passCriterias?: PassCriteriaData[]
-    goal?: string
-  },
-): Record<string, unknown> {
-  const next = { ...prev }
-  if (patch.presetId !== undefined) {
-    next.presetId = patch.presetId
-  }
-  if (patch.milestoneInput !== undefined) {
-    next.milestoneInput = patch.milestoneInput
-  }
-  if (patch.passCriterias !== undefined) {
-    next.passCriterias = patch.passCriterias
-  }
-  if (patch.goal !== undefined) {
-    if (patch.goal === '') {
-      delete next.goal
-    } else {
-      next.goal = patch.goal
-    }
-  }
-  return next
 }
 
 async function loadWorkflowRootOrThrow(workflowId: string, userId: string) {
@@ -111,62 +76,6 @@ async function validateMilestoneUnderWorkflow(
   return { milestoneNode }
 }
 
-/** Persist milestone data on a child `milestonedata` node; `null` removes milestonedata child node(s). */
-async function syncMilestonedataChild(
-  locationId: number,
-  milestoneId: string,
-  dataValue: z.infer<typeof milestonedataValueSchema> | null,
-  userId: string,
-) {
-  const existing = parseNodesData(
-    await graphqlQuery<NodesDataRaw>(
-      NODES_QUERY,
-      {
-        locationId,
-        nodeType: 'milestonedata',
-        parentId: milestoneId,
-      },
-      userId,
-    ),
-  )
-  const rows = existing.nodes.filter((n) => n.nodeType === 'milestonedata')
-  if (dataValue === null) {
-    for (const g of rows) {
-      await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: g.id }, userId)
-    }
-    return
-  }
-  if (rows.length === 0) {
-    parseCreateNodeData(
-      await graphqlQuery<CreateNodeDataRaw>(
-        CREATE_NODE_MUTATION,
-        {
-          locationId,
-          nodeType: 'milestonedata',
-          parentId: milestoneId,
-          name: 'Data',
-          data: dataValue,
-        },
-        userId,
-      ),
-    )
-    return
-  }
-  const [primary, ...rest] = rows
-  for (const g of rest) {
-    await graphqlQuery<DeleteNodeData>(DELETE_NODE_MUTATION, { id: g.id }, userId)
-  }
-  if (primary) {
-    parseUpdateNodeData(
-      await graphqlQuery<UpdateNodeDataRaw>(
-        UPDATE_NODE_MUTATION,
-        { id: primary.id, data: dataValue },
-        userId,
-      ),
-    )
-  }
-}
-
 /** Load persisted Data-tab payload (same sources as the workflow page SSR). */
 export async function GET(_req: Request, context: RouteContext) {
   try {
@@ -197,39 +106,27 @@ export async function GET(_req: Request, context: RouteContext) {
       return validated.error
     }
 
-    const locationId = workflowRoot.locationId
-    const milestonedataRes = await graphqlQuery<NodesDataRaw>(
-      NODES_QUERY,
-      {
-        locationId,
-        nodeType: 'milestonedata',
-        parentId: milestoneId,
-      },
-      userId,
-    )
+    const mn = validated.milestoneNode
+    if (mn.nodeType !== 'milestone') {
+      return NextResponse.json({ message: 'Not a milestone' }, { status: 400 })
+    }
+    const ms = mn as MilestoneNode
 
-    const milestonedataParsed = parseNodesData(milestonedataRes)
     let milestoneData: z.infer<typeof milestonedataValueSchema> | null = null
-    for (const n of milestonedataParsed.nodes) {
-      if (n.nodeType !== 'milestonedata') {
-        continue
-      }
-      const d = n.data
-      if (d == null || typeof d !== 'object') {
-        continue
-      }
-      const parsed = milestonedataValueSchema.safeParse(d)
-      if (parsed.success) {
-        milestoneData = parsed.data
-        break
+    const mpd = ms.milestonePresetData
+    if (mpd != null && typeof mpd === 'object') {
+      const pp = milestonedataValueSchema.safeParse(mpd)
+      if (pp.success) {
+        milestoneData = pp.data
       }
     }
 
-    const mn = validated.milestoneNode
     const parsedMilestoneNodeData =
-      mn.data != null && typeof mn.data === 'object' ? milestoneDataSchema.safeParse(mn.data) : null
+      ms.data != null && typeof ms.data === 'object' ? milestoneDataSchema.safeParse(ms.data) : null
     let passCriterias: PassCriteriaData[] = []
-    if (parsedMilestoneNodeData?.success) {
+    if (Array.isArray(ms.passCriterias) && ms.passCriterias.length > 0) {
+      passCriterias = ms.passCriterias as PassCriteriaData[]
+    } else if (parsedMilestoneNodeData?.success) {
       passCriterias = passCriteriasFromMilestoneData(parsedMilestoneNodeData.data)
     }
 
@@ -306,12 +203,19 @@ export async function GET(_req: Request, context: RouteContext) {
     }
 
     const goal =
-      parsedMilestoneNodeData?.success && typeof parsedMilestoneNodeData.data.goal === 'string'
-        ? parsedMilestoneNodeData.data.goal
-        : ''
+      typeof ms.milestoneGoal === 'string' && ms.milestoneGoal.trim()
+        ? ms.milestoneGoal
+        : parsedMilestoneNodeData?.success && typeof parsedMilestoneNodeData.data.goal === 'string'
+          ? parsedMilestoneNodeData.data.goal
+          : ''
 
     let milestoneInput: z.infer<typeof milestoneInputSchema> | null = null
-    if (
+    if (ms.milestoneInput != null) {
+      const colParsed = milestoneInputSchema.safeParse(ms.milestoneInput)
+      if (colParsed.success) {
+        milestoneInput = colParsed.data
+      }
+    } else if (
       parsedMilestoneNodeData?.success &&
       parsedMilestoneNodeData.data.milestoneInput !== undefined
     ) {
@@ -453,16 +357,23 @@ export async function PATCH(req: Request, context: RouteContext) {
       body.goal !== undefined
     ) {
       const mn = validated.milestoneNode
-      const prevData =
-        mn.data != null && typeof mn.data === 'object'
+      const merged: Record<string, unknown> = {
+        ...(mn.data != null && typeof mn.data === 'object'
           ? { ...(mn.data as Record<string, unknown>) }
-          : {}
-      const merged = mergeMilestoneNodeDataJson(prevData, {
-        presetId: body.presetId,
-        milestoneInput: body.milestoneInput,
-        passCriterias: body.passCriterias,
-        goal: body.goal,
-      })
+          : {}),
+      }
+      if (body.presetId !== undefined) {
+        merged.presetId = body.presetId
+      }
+      if (body.milestoneInput !== undefined) {
+        merged.milestoneInput = body.milestoneInput
+      }
+      if (body.passCriterias !== undefined) {
+        merged.passCriterias = body.passCriterias
+      }
+      if (body.goal !== undefined) {
+        merged.milestoneGoal = body.goal
+      }
       parseUpdateNodeData(
         await graphqlQuery<UpdateNodeDataRaw>(
           UPDATE_NODE_MUTATION,
@@ -473,7 +384,19 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
 
     if (body.milestoneData !== undefined) {
-      await syncMilestonedataChild(workflowRoot.locationId, milestoneId, body.milestoneData, userId)
+      parseUpdateNodeData(
+        await graphqlQuery<UpdateNodeDataRaw>(
+          UPDATE_NODE_MUTATION,
+          {
+            id: milestoneId,
+            data:
+              body.milestoneData === null
+                ? { milestonePresetData: null }
+                : { milestonePresetData: body.milestoneData },
+          },
+          userId,
+        ),
+      )
     }
 
     const milestoneAfter = parseNodeData(
@@ -481,7 +404,15 @@ export async function PATCH(req: Request, context: RouteContext) {
     )
 
     const m = milestoneAfter.node
-    const passCriterias = m ? passCriteriasFromMilestoneData(m.data) : []
+    let passCriterias: PassCriteriaData[] = []
+    if (m?.nodeType === 'milestone') {
+      const ms = m as MilestoneNode
+      if (Array.isArray(ms.passCriterias) && ms.passCriterias.length > 0) {
+        passCriterias = ms.passCriterias as PassCriteriaData[]
+      } else if (ms.data != null && typeof ms.data === 'object') {
+        passCriterias = passCriteriasFromMilestoneData(ms.data)
+      }
+    }
 
     revalidateWorkflowCampaignTreeCache(userId, workflowId)
 

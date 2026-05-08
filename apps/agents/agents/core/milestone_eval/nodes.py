@@ -9,8 +9,6 @@ from typing import Any, Literal
 
 import httpx
 from agents_app.agents.core.milestone_eval.graphql_client import (
-    delete_node,
-    fetch_milestone_children,
     fetch_milestone_node,
     fetch_prior_milestones_data_for_eval,
     update_milestone_passcriteria_status,
@@ -53,10 +51,6 @@ class CriterionVerdict(BaseModel):
 
     status: Literal["pass", "fail"] = Field(description="pass or fail")
     reasoning: str = Field(description="One short sentence justification")
-
-
-def _node_type(ch: dict[str, Any]) -> str:
-    return str(ch.get("nodeType") or ch.get("node_type") or "")
 
 
 _OWNER_NOTES_INPUT_TYPES = frozenset(
@@ -116,37 +110,39 @@ async def fetch_context(
         fc_payload["run_id"] = rid
     writer(fc_payload)
     _logger.info(
-        "milestone_eval.fetch_context: emitted step fetch_context; calling GraphQL nodes(parentId=%s)",
+        "milestone_eval.fetch_context: emitted step fetch_context; loading milestone %s",
         mid,
-    )
-    children = await fetch_milestone_children(
-        mid,
-        loc,
-        state["user_id"],
-        client=client,
-    )
-    _logger.info(
-        "milestone_eval.fetch_context: GraphQL returned %s child nodes for milestone_id=%s location_id=%s",
-        len(children),
-        mid,
-        loc,
     )
     milestone_row = await fetch_milestone_node(mid, state["user_id"], client=client)
-    milestone_data = milestone_row.get("data") if isinstance(milestone_row, dict) else None
+    _logger.info(
+        "milestone_eval.fetch_context: loaded milestone row for milestone_id=%s location_id=%s",
+        mid,
+        loc,
+    )
+
     goal = ""
-    if isinstance(milestone_data, dict):
-        gv = milestone_data.get("goal")
-        if isinstance(gv, str):
-            goal = gv
-    milestonedata_payloads: list[dict[str, Any]] = []
-    for ch in children:
-        nt = _node_type(ch)
-        raw = ch.get("data")
-        data = raw if isinstance(raw, dict) else {}
-        if nt == "milestonedata" and isinstance(data, dict) and data:
-            milestonedata_payloads.append(data)
+    if isinstance(milestone_row, dict):
+        mg = milestone_row.get("milestoneGoal")
+        if isinstance(mg, str) and mg.strip():
+            goal = mg.strip()
+        else:
+            md = milestone_row.get("data")
+            if isinstance(md, dict):
+                gv = md.get("goal")
+                if isinstance(gv, str):
+                    goal = gv
+
+    best_md: dict[str, Any] | None = None
+    if isinstance(milestone_row, dict):
+        mpd = milestone_row.get("milestonePresetData")
+        if isinstance(mpd, dict):
+            best_md = mpd
+
     criteria: list[dict[str, str]] = []
-    raw_pass = milestone_data.get("passCriterias") if isinstance(milestone_data, dict) else None
+    raw_pass = milestone_row.get("passCriterias") if isinstance(milestone_row, dict) else None
+    if not isinstance(raw_pass, list) and isinstance(milestone_row, dict):
+        md = milestone_row.get("data")
+        raw_pass = md.get("passCriterias") if isinstance(md, dict) else None
     if isinstance(raw_pass, list):
         for item in raw_pass:
             if not isinstance(item, dict):
@@ -155,7 +151,6 @@ async def fetch_context(
             req = item.get("requirement")
             if isinstance(cid, str) and cid and isinstance(req, str):
                 criteria.append({"id": cid, "requirement": req})
-    best_md = _select_best_milestonedata_payload(milestonedata_payloads)
     raw_data = (
         json.dumps(best_md, ensure_ascii=False, indent=2)
         if best_md is not None
@@ -222,6 +217,7 @@ async def update_criteria(
     for ev in state.get("evaluated", []):
         await update_milestone_passcriteria_status(
             state["milestone_id"],
+            state["location_id"],
             ev["id"],
             ev["status"],
             state["user_id"],
@@ -272,21 +268,6 @@ async def store_result(
 ) -> dict[str, Any]:
     writer = get_stream_writer()
     writer({"step": "store_result"})
-    children = await fetch_milestone_children(
-        state["milestone_id"],
-        state["location_id"],
-        state["user_id"],
-        client=client,
-    )
-    existing_result_id: str | None = None
-    for ch in children:
-        if _node_type(ch) == "result":
-            rid = str(ch.get("id", ""))
-            if rid and existing_result_id is None:
-                existing_result_id = rid
-            elif rid:
-                await delete_node(rid, state["user_id"], client=client)
-
     evaluated = state.get("evaluated", [])
     passed = sum(1 for e in evaluated if e.get("status") == "pass")
     total = len(evaluated)
@@ -306,7 +287,7 @@ async def store_result(
         "criteria": criteria_out,
     }
     node = await upsert_result_node(
-        result_node_id=existing_result_id,
+        result_node_id=None,
         milestone_id=state["milestone_id"],
         location_id=state["location_id"],
         data=data,

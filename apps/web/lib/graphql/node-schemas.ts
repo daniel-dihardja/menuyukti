@@ -218,6 +218,23 @@ export const milestonedataValueSchema = z.union([
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>
 
+const resultCriterionSchema = z.object({
+  id: z.string(),
+  requirement: z.string(),
+  status: z.string(),
+  reasoning: z.string(),
+})
+
+/** Eval result payload on milestone rows (same shape as legacy result child nodes). */
+export const resultDataSchema = z.object({
+  summary: z.string(),
+  passed: z.number().int(),
+  total: z.number().int(),
+  criteria: z.array(resultCriterionSchema).optional(),
+})
+
+export type ResultData = z.infer<typeof resultDataSchema>
+
 const baseNode = z.object({
   id: z.string(),
   name: z.string(),
@@ -230,6 +247,11 @@ const baseNode = z.object({
 export const milestoneNodeSchema = baseNode.extend({
   nodeType: z.literal('milestone'),
   data: milestoneDataSchema.nullable(),
+  milestoneGoal: z.string().nullable().optional(),
+  milestoneInput: z.unknown().nullable().optional(),
+  passCriterias: z.array(passCriteriaSchema).nullable().optional(),
+  milestonePresetData: z.unknown().nullable().optional(),
+  milestoneResult: resultDataSchema.nullable().optional(),
 })
 
 export const passCriteriaNodeSchema = baseNode.extend({
@@ -242,23 +264,7 @@ export const milestonedataNodeSchema = baseNode.extend({
   data: milestonedataValueSchema.nullable(),
 })
 
-const resultCriterionSchema = z.object({
-  id: z.string(),
-  requirement: z.string(),
-  status: z.string(),
-  reasoning: z.string(),
-})
-
-/** Child `result` node JSON — matches backend `ResultHandler` validation. */
-export const resultDataSchema = z.object({
-  summary: z.string(),
-  passed: z.number().int(),
-  total: z.number().int(),
-  criteria: z.array(resultCriterionSchema).optional(),
-})
-
-export type ResultData = z.infer<typeof resultDataSchema>
-
+/** Legacy child `result` node JSON — matches backend result validation. */
 export const resultNodeSchema = baseNode.extend({
   nodeType: z.literal('result'),
   data: resultDataSchema.nullable(),

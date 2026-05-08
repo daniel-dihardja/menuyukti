@@ -7,6 +7,7 @@ import {
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   milestoneDataSchema,
+  milestoneNodeSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
@@ -89,11 +90,14 @@ export function useMilestoneOperations(
       }
       const id = body?.id
       const name = body?.name
-      if (typeof id === 'string' && typeof name === 'string') {
-        const created = { id, name, data: body?.data }
+      if (typeof id === 'string' && typeof name === 'string' && body !== null) {
+        const nodeParsed = milestoneNodeSchema.safeParse(body)
+        if (!nodeParsed.success) {
+          throw new Error(t('milestonesCreateError'))
+        }
         dispatch({
           type: 'UPDATE_MILESTONES',
-          updater: (prev) => [...prev, milestoneNodeToTimelineMilestone(created)],
+          updater: (prev) => [...prev, milestoneNodeToTimelineMilestone(nodeParsed.data)],
         })
         return true
       }

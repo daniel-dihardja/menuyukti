@@ -35,6 +35,22 @@ export function parseUpdateNodeData(data: UpdateNodeDataRaw): { updateNode: AnyN
   return { updateNode: parseNode(data.updateNode) }
 }
 
+/** Shared node fields for queries returning `NodeType` (includes milestone column payloads). */
+const NODE_SELECTION_FIELDS = `
+      id
+      name
+      description
+      nodeType
+      path
+      parentId
+      locationId
+      data
+      milestoneGoal
+      milestoneInput
+      passCriterias
+      milestonePresetData
+      milestoneResult`
+
 export const LOCATIONS_QUERY = `
   query Locations($first: Int) {
     locations(first: $first) {
@@ -232,14 +248,7 @@ export type UpdateLocationData = {
 export const CREATE_NODE_MUTATION = `
   mutation CreateNode($locationId: Int!, $nodeType: String!, $name: String, $description: String, $data: JSON, $parentId: ID) {
     createNode(locationId: $locationId, nodeType: $nodeType, name: $name, description: $description, data: $data, parentId: $parentId) {
-      id
-      name
-      description
-      nodeType
-      path
-      parentId
-      locationId
-      data
+${NODE_SELECTION_FIELDS}
     }
   }
 `
@@ -261,14 +270,7 @@ export type DeleteNodeData = {
 export const UPDATE_NODE_MUTATION = `
   mutation UpdateNode($id: ID!, $name: String, $data: JSON) {
     updateNode(id: $id, name: $name, data: $data) {
-      id
-      name
-      description
-      nodeType
-      path
-      parentId
-      locationId
-      data
+${NODE_SELECTION_FIELDS}
     }
   }
 `
@@ -332,14 +334,7 @@ export type WorkflowExportsDataRaw = {
 export const IMPORT_WORKFLOW_MUTATION = `
   mutation ImportWorkflow($locationId: Int!, $payload: JSON!) {
     importWorkflow(locationId: $locationId, payload: $payload) {
-      id
-      name
-      description
-      nodeType
-      path
-      parentId
-      locationId
-      data
+${NODE_SELECTION_FIELDS}
     }
   }
 `
@@ -351,14 +346,7 @@ export type ImportWorkflowDataRaw = {
 export const NODES_QUERY = `
   query Nodes($locationId: Int!, $nodeType: String, $parentId: ID, $first: Int, $afterId: ID) {
     nodes(locationId: $locationId, nodeType: $nodeType, parentId: $parentId, first: $first, afterId: $afterId) {
-      id
-      name
-      description
-      nodeType
-      path
-      parentId
-      locationId
-      data
+${NODE_SELECTION_FIELDS}
     }
   }
 `
@@ -370,14 +358,7 @@ export type NodesData = {
 export const NODE_QUERY = `
   query Node($id: ID!) {
     node(id: $id) {
-      id
-      name
-      description
-      nodeType
-      path
-      parentId
-      locationId
-      data
+${NODE_SELECTION_FIELDS}
     }
   }
 `
@@ -392,21 +373,9 @@ export type WorkflowCampaignTreeDataRaw = {
     workflow: unknown
     milestones: Array<{
       milestone: unknown
-      milestonedataNodes: unknown[]
-      resultNodes: unknown[]
     }>
   } | null
 }
-
-const NODE_SELECTION_FIELDS = `
-      id
-      name
-      description
-      nodeType
-      path
-      parentId
-      locationId
-      data`
 
 export const WORKFLOW_CAMPAIGN_TREE_QUERY = `
   query WorkflowCampaignTree($workflowId: ID!) {
@@ -416,12 +385,6 @@ export const WORKFLOW_CAMPAIGN_TREE_QUERY = `
       }
       milestones {
         milestone {
-          ${NODE_SELECTION_FIELDS}
-        }
-        milestonedataNodes {
-          ${NODE_SELECTION_FIELDS}
-        }
-        resultNodes {
           ${NODE_SELECTION_FIELDS}
         }
       }

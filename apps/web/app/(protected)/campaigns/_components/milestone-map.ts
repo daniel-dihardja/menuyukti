@@ -8,7 +8,7 @@ import {
   promotionCandidatesMilestoneDataSchema,
   resultDataSchema,
 } from '@/lib/graphql/node-schemas'
-import type { AnyNode } from '@/lib/graphql/queries'
+import type { MilestoneNode } from '@/lib/graphql/node-schemas'
 
 import type {
   MilestoneInput,
@@ -37,13 +37,17 @@ export function deriveMilestoneRailStatus(
   return 'pending'
 }
 
-export type MilestoneNodeDto = {
-  id: string
-  name: string
-  data?: unknown | null
-  milestonedataNodes?: AnyNode[]
-  resultNodes?: AnyNode[]
-}
+export type MilestoneNodeDto = Pick<
+  MilestoneNode,
+  | 'id'
+  | 'name'
+  | 'data'
+  | 'milestoneGoal'
+  | 'milestoneInput'
+  | 'passCriterias'
+  | 'milestonePresetData'
+  | 'milestoneResult'
+>
 
 export function passCriteriasFromMilestoneData(data: unknown): PassCriteriaRow[] {
   const parsed = milestoneDataSchema.safeParse(data)
@@ -53,22 +57,11 @@ export function passCriteriasFromMilestoneData(data: unknown): PassCriteriaRow[]
   return parsed.data.passCriterias
 }
 
-/** First valid `milestonedata` child wins (at most one is expected). */
-export function milestoneDataFromChildNodes(
-  nodes: AnyNode[] | undefined | null,
-): MilestoneDataValue | undefined {
-  if (nodes == null || !Array.isArray(nodes)) {
-    return undefined
-  }
-  for (const n of nodes) {
-    if (n.nodeType !== 'milestonedata') {
-      continue
-    }
-    const d = n.data
-    if (d == null || typeof d !== 'object') {
-      continue
-    }
-    const parsed = milestonedataValueSchema.safeParse(d)
+/** Parse preset payload from typed column or legacy `data` JSON. */
+export function milestonePresetFrom(dto: MilestoneNodeDto): MilestoneDataValue | undefined {
+  const raw = dto.milestonePresetData
+  if (raw != null && typeof raw === 'object') {
+    const parsed = milestonedataValueSchema.safeParse(raw)
     if (parsed.success) {
       return parsed.data
     }
@@ -76,25 +69,14 @@ export function milestoneDataFromChildNodes(
   return undefined
 }
 
-/** First valid `result` child wins (at most one is expected). */
-export function resultMarkdownFromChildNodes(
-  nodes: AnyNode[] | undefined | null,
-): string | undefined {
-  if (nodes == null || !Array.isArray(nodes)) {
+export function resultMarkdownFromMilestoneResult(dto: MilestoneNodeDto): string | undefined {
+  const raw = dto.milestoneResult
+  if (raw == null || typeof raw !== 'object') {
     return undefined
   }
-  for (const n of nodes) {
-    if (n.nodeType !== 'result') {
-      continue
-    }
-    const d = n.data
-    if (d == null || typeof d !== 'object') {
-      continue
-    }
-    const parsed = resultDataSchema.safeParse(d)
-    if (parsed.success) {
-      return parsed.data.summary
-    }
+  const parsed = resultDataSchema.safeParse(raw)
+  if (parsed.success) {
+    return parsed.data.summary
   }
   return undefined
 }
@@ -122,11 +104,31 @@ function milestoneRunSkillFieldsFromData(data: unknown): {
 
 export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): TimelineMilestone {
   const parsed = milestoneDataSchema.safeParse(node.data)
-  const goal = parsed.success ? parsed.data.goal : undefined
-  const data = milestoneDataFromChildNodes(node.milestonedataNodes)
-  const passCriteria = passCriteriasFromMilestoneData(node.data)
-  const resultMarkdown = resultMarkdownFromChildNodes(node.resultNodes)
-  const { presetId, milestoneInput } = milestoneRunSkillFieldsFromData(node.data)
+  const goalCol =
+    typeof node.milestoneGoal === 'string' && node.milestoneGoal.trim()
+      ? node.milestoneGoal.trim()
+      : undefined
+  const goal = goalCol ?? (parsed.success ? parsed.data.goal : undefined)
+
+  let { presetId, milestoneInput } = milestoneRunSkillFieldsFromData(node.data)
+  if (node.milestoneInput != null) {
+    const colInput = milestoneInputSchema.safeParse(node.milestoneInput)
+    if (colInput.success) {
+      milestoneInput = colInput.data
+    }
+  }
+
+  const data = milestonePresetFrom(node)
+
+  let passCriteria: PassCriteriaRow[] = []
+  if (Array.isArray(node.passCriterias) && node.passCriterias.length > 0) {
+    passCriteria = node.passCriterias
+  } else {
+    passCriteria = passCriteriasFromMilestoneData(node.data)
+  }
+
+  const rm = resultMarkdownFromMilestoneResult(node)
+
   let normalizedData = data
   if (presetId === 'restaurant_campaign_brief') {
     const parsedCampaignBriefData = campaignBriefMilestoneDataSchema.safeParse(data)
@@ -209,6 +211,7 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
       }
     }
   }
+
   return {
     id: node.id,
     title: node.name,
@@ -217,7 +220,7 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
     presetId,
     milestoneInput,
     passCriteria,
-    resultMarkdown,
-    status: deriveMilestoneRailStatus(passCriteria, resultMarkdown),
+    resultMarkdown: rm,
+    status: deriveMilestoneRailStatus(passCriteria, rm),
   }
 }

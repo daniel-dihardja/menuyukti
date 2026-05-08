@@ -19,6 +19,15 @@ mutation CreateNode($locationId: Int!, $nodeType: String!, $name: String, $descr
 }
 """
 
+UPDATE_NODE = """
+mutation UpdateNode($id: ID!, $data: JSON!) {
+  updateNode(id: $id, data: $data) {
+    id
+    milestoneResult
+  }
+}
+"""
+
 
 def test_create_node_inserts_root_workflow_node():
     session = SessionLocal()
@@ -119,7 +128,8 @@ def test_create_milestone_sets_order_in_data_json():
     assert data["data"] == {"order": 1}
 
 
-def test_create_passcriteria_requires_milestone_parent():
+def test_deprecated_child_node_types_rejected():
+    """milestonedata / result / passcriteria rows are no longer created."""
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -190,23 +200,20 @@ def test_create_passcriteria_requires_milestone_parent():
     assert not milestone.errors, milestone.errors
     milestone_id = milestone.data["createNode"]["id"]
 
-    pc = asyncio.run(
-        schema.execute(
-            CREATE_NODE,
-            variable_values={
-                "locationId": location_id,
-                "nodeType": "passcriteria",
-                "name": "Criterion A",
-                "parentId": milestone_id,
-            },
-            context_value=graphql_auth_context(),
+    for nt in ("passcriteria", "milestonedata", "result"):
+        pc = asyncio.run(
+            schema.execute(
+                CREATE_NODE,
+                variable_values={
+                    "locationId": location_id,
+                    "nodeType": nt,
+                    "name": "X",
+                    "parentId": milestone_id,
+                },
+                context_value=graphql_auth_context(),
+            )
         )
-    )
-    assert not pc.errors, pc.errors
-    data = pc.data["createNode"]
-    assert data["parentId"] == milestone_id
-    assert data["nodeType"] == "passcriteria"
-    assert data["data"] == {"requirement": "", "status": "open"}
+        assert pc.errors
 
 
 def test_create_node_with_json_data():
@@ -313,7 +320,7 @@ def test_create_goal_node_type_rejected():
     assert goal.errors
 
 
-def test_create_milestonedata_under_milestone():
+def test_create_milestonedata_under_milestone_rejected():
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -370,11 +377,7 @@ def test_create_milestonedata_under_milestone():
             context_value=graphql_auth_context(),
         )
     )
-    assert not md.errors, md.errors
-    data = md.data["createNode"]
-    assert data["parentId"] == milestone_id
-    assert data["nodeType"] == "milestonedata"
-    assert data["data"] == {"context": "context blob"}
+    assert md.errors
 
 
 def test_create_second_milestonedata_rejected():
@@ -434,7 +437,7 @@ def test_create_second_milestonedata_rejected():
             context_value=graphql_auth_context(),
         )
     )
-    assert not first.errors, first.errors
+    assert first.errors
 
     second = asyncio.run(
         schema.execute(
@@ -452,8 +455,8 @@ def test_create_second_milestonedata_rejected():
     assert second.errors
 
 
-def test_create_second_result_under_milestone_replaces_first():
-    """Second createNode(result) under the same milestone deletes the prior result (agent re-run)."""
+def test_update_milestone_result_overwrites_prior_eval():
+    """Eval output is stored on ``milestone_result``; repeated writes replace in place."""
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -505,13 +508,10 @@ def test_create_second_result_under_milestone_replaces_first():
     }
     first = asyncio.run(
         schema.execute(
-            CREATE_NODE,
+            UPDATE_NODE,
             variable_values={
-                "locationId": location_id,
-                "nodeType": "result",
-                "name": "Result",
-                "parentId": milestone_id,
-                "data": payload_v1,
+                "id": milestone_id,
+                "data": {"milestoneResult": payload_v1},
             },
             context_value=graphql_auth_context(),
         )
@@ -526,31 +526,28 @@ def test_create_second_result_under_milestone_replaces_first():
     }
     second = asyncio.run(
         schema.execute(
-            CREATE_NODE,
+            UPDATE_NODE,
             variable_values={
-                "locationId": location_id,
-                "nodeType": "result",
-                "name": "Result",
-                "parentId": milestone_id,
-                "data": payload_v2,
+                "id": milestone_id,
+                "data": {"milestoneResult": payload_v2},
             },
             context_value=graphql_auth_context(),
         )
     )
     assert not second.errors, second.errors
-    assert second.data["createNode"]["data"]["summary"] == "Second run"
+    assert second.data["updateNode"]["milestoneResult"]["summary"] == "Second run"
 
     session = SessionLocal()
     try:
+        row = session.get(Node, int(milestone_id))
+        assert row is not None
+        assert isinstance(row.milestone_result, dict)
+        assert row.milestone_result.get("summary") == "Second run"
         count = (
             session.query(Node)
             .filter(Node.parent_id == int(milestone_id), Node.node_type == "result")
             .count()
         )
-        assert count == 1
-        row = session.get(Node, int(first.data["createNode"]["id"]))
-        assert row is not None
-        assert isinstance(row.data, dict)
-        assert row.data.get("summary") == "Second run"
+        assert count == 0
     finally:
         session.close()

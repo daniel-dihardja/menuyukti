@@ -46,17 +46,7 @@ def test_route_after_fetch_emits_send_workers() -> None:
 
 @pytest.mark.asyncio
 async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
-    fake_children = [
-        {
-            "nodeType": "milestonedata",
-            "data": {"summary": "Sales up 10%"},
-        },
-    ]
     with (
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(return_value=fake_children),
-        ),
         patch(
             "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
             return_value=lambda _x: None,
@@ -65,12 +55,11 @@ async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
             "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_node",
             new=AsyncMock(
                 return_value={
-                    "data": {
-                        "goal": "Increase covers",
-                        "passCriterias": [
-                            {"id": "pc-1", "requirement": "Has baseline", "status": "open"}
-                        ],
-                    }
+                    "milestoneGoal": "Increase covers",
+                    "milestonePresetData": {"summary": "Sales up 10%"},
+                    "passCriterias": [
+                        {"id": "pc-1", "requirement": "Has baseline", "status": "open"}
+                    ],
                 }
             ),
         ),
@@ -90,14 +79,7 @@ async def test_fetch_context_parses_goal_milestonedata_passcriteria() -> None:
 
 @pytest.mark.asyncio
 async def test_fetch_context_appends_prior_milestone_context_when_workflow_present() -> None:
-    fake_children = [
-        {"nodeType": "milestonedata", "data": {"schedules": []}},
-    ]
     with (
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(return_value=fake_children),
-        ),
         patch(
             "agents_app.agents.core.milestone_eval.nodes.fetch_prior_milestones_data_for_eval",
             new=AsyncMock(return_value="## Dates\n\nstartDate: 2026-06-01\nendDate: 2026-06-30"),
@@ -110,15 +92,14 @@ async def test_fetch_context_appends_prior_milestone_context_when_workflow_prese
             "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_node",
             new=AsyncMock(
                 return_value={
-                    "data": {
-                        "passCriterias": [
-                            {
-                                "id": "pc-2",
-                                "requirement": "Within campaign window",
-                                "status": "open",
-                            }
-                        ]
-                    }
+                    "milestonePresetData": {"schedules": []},
+                    "passCriterias": [
+                        {
+                            "id": "pc-2",
+                            "requirement": "Within campaign window",
+                            "status": "open",
+                        }
+                    ],
                 }
             ),
         ),

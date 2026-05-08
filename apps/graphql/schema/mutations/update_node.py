@@ -3,21 +3,9 @@ from strawberry.scalars import JSON
 
 from graphql.data_sources import Node, SessionLocal
 from graphql.schema.auth import require_location_owner, user_id_from_info
+from graphql.schema.node_gql import node_to_gql
 from graphql.schema.node_handlers import get_handler
 from graphql.schema.types import NodeType
-
-
-def _node_to_gql(node: Node) -> NodeType:
-    return NodeType(
-        id=str(node.id),
-        name=node.name,
-        description=node.description,
-        node_type=node.node_type,
-        path=node.path,
-        parent_id=str(node.parent_id) if node.parent_id is not None else None,
-        location_id=node.location_id,
-        data=node.data,
-    )
 
 
 @strawberry.type
@@ -75,4 +63,4 @@ class UpdateNodeMutation:
             session.commit()
             session.refresh(node)
 
-            return _node_to_gql(node)
+            return node_to_gql(node)

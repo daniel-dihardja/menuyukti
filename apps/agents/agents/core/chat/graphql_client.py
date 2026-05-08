@@ -10,12 +10,9 @@ from agents_app.agents.graphql_operations import (
     DEFAULT_NODES_FIRST,
     NODE_BY_ID_QUERY,
     NODES_QUERY,
+    REPLACE_PASS_CRITERIA_MUTATION,
     UPDATE_NODE_MUTATION,
 )
-
-
-def _node_type(ch: dict[str, Any]) -> str:
-    return str(ch.get("nodeType") or ch.get("node_type") or "")
 
 
 async def fetch_milestone_node(
@@ -62,21 +59,16 @@ async def upsert_milestone_goal(
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Merge ``goal`` into the milestone node's ``data`` JSON; empty text removes ``goal``."""
-    node = await fetch_milestone_node(milestone_id, user_id, client=client)
-    if not isinstance(node, dict):
-        msg = "milestone not found"
-        raise RuntimeError(msg)
-    raw = node.get("data")
-    base: dict[str, Any] = dict(raw) if isinstance(raw, dict) else {}
-    if not goal_text.strip():
-        base.pop("goal", None)
-    else:
-        base["goal"] = goal_text
+    """Set ``milestone_goal`` via ``updateNode`` (column-backed)."""
+    patch = (
+        {"milestoneGoal": goal_text.strip()}
+        if goal_text.strip()
+        else {"milestoneGoal": None}
+    )
     upd = await graphql_post(
         client,
         UPDATE_NODE_MUTATION,
-        {"id": milestone_id, "data": base},
+        {"id": milestone_id, "data": patch},
         user_id,
     )
     if not isinstance(upd.get("updateNode"), dict):
@@ -86,32 +78,20 @@ async def upsert_milestone_goal(
 
 async def replace_pass_criteria(
     milestone_id: str,
-    _location_id: int,
+    location_id: int,
     requirements: list[str],
     user_id: str,
     *,
     client: httpx.AsyncClient,
 ) -> None:
-    """Replace milestone.data.passCriterias with fresh rows (status ``open``)."""
+    """Replace pass criteria via dedicated mutation (writes ``pass_criterias`` column)."""
     reqs = [r for r in requirements if isinstance(r, str) and r.strip()]
-    node_data = await graphql_post(client, NODE_BY_ID_QUERY, {"id": milestone_id}, user_id)
-    raw_node = node_data.get("node")
-    if not isinstance(raw_node, dict):
-        msg = "milestone not found"
-        raise RuntimeError(msg)
-    raw_data = raw_node.get("data")
-    milestone_data = raw_data if isinstance(raw_data, dict) else {}
-    next_data = dict(milestone_data)
-    next_data["passCriterias"] = [
-        {"id": f"pc-{index + 1}", "requirement": requirement, "status": "open"}
-        for index, requirement in enumerate(reqs)
-    ]
     data = await graphql_post(
         client,
-        UPDATE_NODE_MUTATION,
-        {"id": milestone_id, "data": next_data},
+        REPLACE_PASS_CRITERIA_MUTATION,
+        {"milestoneId": milestone_id, "locationId": location_id, "requirements": reqs},
         user_id,
     )
-    if not isinstance(data.get("updateNode"), dict):
-        msg = "updateNode returned invalid payload"
+    if not data.get("replacePassCriteria"):
+        msg = "replacePassCriteria failed"
         raise RuntimeError(msg)

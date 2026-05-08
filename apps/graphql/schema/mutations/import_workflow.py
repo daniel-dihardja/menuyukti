@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 from typing import Any
 
 import strawberry
@@ -10,23 +11,12 @@ from strawberry.scalars import JSON
 
 from graphql.data_sources import Node, SessionLocal
 from graphql.schema.auth import require_location_owner, user_id_from_info
+from graphql.schema.milestone_payload_validation import validate_pass_criteria_list, validate_result_payload
+from graphql.schema.node_gql import node_to_gql
 from graphql.schema.node_handlers import get_handler
 from graphql.schema.types import NodeType
 
 _PASS_STATUSES = frozenset({"pass", "fail", "open"})
-
-
-def _node_to_gql(node: Node) -> NodeType:
-    return NodeType(
-        id=str(node.id),
-        name=node.name,
-        description=node.description,
-        node_type=node.node_type,
-        path=node.path,
-        parent_id=str(node.parent_id) if node.parent_id is not None else None,
-        location_id=node.location_id,
-        data=node.data,
-    )
 
 
 def _flush_with_path(session: Session, node: Node, parent: Node | None) -> None:
@@ -49,93 +39,6 @@ def _milestone_dict_sort_key(m: dict[str, Any]) -> tuple[int, int]:
     return (ord_v, id_v)
 
 
-def _create_child_with_handler(
-    session: Session,
-    location_id: int,
-    node_type: str,
-    parent: Node,
-    name: str,
-    data: dict[str, Any] | None,
-) -> None:
-    handler = get_handler(node_type)
-    resolved = handler.validate_create(parent, data, session)
-    child = Node(
-        parent_id=parent.id,
-        name=name,
-        description=None,
-        path="",
-        node_type=node_type,
-        location_id=location_id,
-        data=resolved,
-    )
-    _flush_with_path(session, child, parent)
-
-
-def _create_child_nodes(
-    session: Session,
-    milestone_node: Node,
-    m: dict[str, Any],
-    location_id: int,
-) -> None:
-    pcs_raw = m.get("passCriteria")
-    pcs: list[Any] = pcs_raw if isinstance(pcs_raw, list) else []
-    for idx, pc in enumerate(pcs):
-        if not isinstance(pc, dict):
-            continue
-        req = pc.get("requirement")
-        st = pc.get("status")
-        if not isinstance(req, str):
-            continue
-        if st not in _PASS_STATUSES:
-            continue
-        name = f"Criterion {idx + 1}"
-        _create_child_with_handler(
-            session,
-            location_id,
-            "passcriteria",
-            milestone_node,
-            name,
-            {"requirement": req, "status": st},
-        )
-
-    data_raw = m.get("data")
-    milestonedata_payload: dict | None = None
-    if isinstance(data_raw, dict):
-        milestonedata_payload = dict(data_raw)
-    if milestonedata_payload is not None:
-        _create_child_with_handler(
-            session,
-            location_id,
-            "milestonedata",
-            milestone_node,
-            "Milestone data",
-            milestonedata_payload,
-        )
-
-    result_raw = m.get("result")
-    if isinstance(result_raw, dict):
-        summary = result_raw.get("summary")
-        passed = result_raw.get("passed")
-        total = result_raw.get("total")
-        if isinstance(summary, str) and isinstance(passed, int) and isinstance(total, int):
-            result_data: dict[str, Any] = {
-                "summary": summary,
-                "passed": passed,
-                "total": total,
-            }
-            crit = result_raw.get("criteria")
-            if crit is not None:
-                result_data["criteria"] = crit
-            _create_child_with_handler(
-                session,
-                location_id,
-                "result",
-                milestone_node,
-                "Result",
-                result_data,
-            )
-
-
 def _create_milestone_node(
     session: Session,
     root_node: Node,
@@ -149,9 +52,9 @@ def _create_milestone_node(
     order_val = raw_order if isinstance(raw_order, int) else 0
 
     milestone_data: dict[str, Any] = {"order": order_val}
-    goal_raw = m.get("goal")
-    if isinstance(goal_raw, str) and goal_raw.strip():
-        milestone_data["goal"] = goal_raw.strip()
+    preset_raw = m.get("presetId")
+    if isinstance(preset_raw, str) and preset_raw.strip():
+        milestone_data["presetId"] = preset_raw.strip()
 
     milestone = Node(
         parent_id=root_node.id,
@@ -163,7 +66,57 @@ def _create_milestone_node(
         data=milestone_data,
     )
     _flush_with_path(session, milestone, root_node)
-    _create_child_nodes(session, milestone, m, location_id)
+
+    goal_raw = m.get("goal")
+    if isinstance(goal_raw, str) and goal_raw.strip():
+        milestone.milestone_goal = goal_raw.strip()
+
+    pcs_raw = m.get("passCriteria")
+    pcs_list: list[Any] = pcs_raw if isinstance(pcs_raw, list) else []
+    built_pc: list[dict[str, Any]] = []
+    for pc in pcs_list:
+        if not isinstance(pc, dict):
+            continue
+        req = pc.get("requirement")
+        st = pc.get("status")
+        cid = pc.get("id")
+        if not isinstance(req, str):
+            continue
+        if st not in _PASS_STATUSES:
+            continue
+        built_pc.append(
+            {
+                "id": str(cid).strip()
+                if isinstance(cid, str) and cid.strip()
+                else secrets.token_hex(8),
+                "requirement": req,
+                "status": st,
+            }
+        )
+    if built_pc:
+        validate_pass_criteria_list(built_pc)
+        milestone.pass_criterias = built_pc
+
+    data_raw = m.get("data")
+    if isinstance(data_raw, dict):
+        milestone.milestone_preset_data = dict(data_raw)
+
+    result_raw = m.get("result")
+    if isinstance(result_raw, dict):
+        summary = result_raw.get("summary")
+        passed = result_raw.get("passed")
+        total = result_raw.get("total")
+        if isinstance(summary, str) and isinstance(passed, int) and isinstance(total, int):
+            rd: dict[str, Any] = {
+                "summary": summary,
+                "passed": passed,
+                "total": total,
+            }
+            crit = result_raw.get("criteria")
+            if crit is not None:
+                rd["criteria"] = crit
+            validate_result_payload(rd)
+            milestone.milestone_result = rd
 
 
 def _import_from_payload(session: Session, location_id: int, payload: object) -> Node:
@@ -219,4 +172,4 @@ class ImportWorkflowMutation:
         with SessionLocal() as session:
             require_location_owner(session, location_id, user_id)
             root_node = _import_from_payload(session, location_id, payload)
-            return _node_to_gql(root_node)
+            return node_to_gql(root_node)

@@ -73,10 +73,6 @@ async def test_graph_dispatches_to_dedicated_preset_graph(
 
     with (
         patch(
-            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(return_value=[]),
-        ),
-        patch(
             "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
             new=AsyncMock(
                 return_value={
@@ -123,10 +119,6 @@ async def test_graph_dispatches_to_dedicated_preset_graph(
 async def test_graph_raises_for_unknown_preset() -> None:
     client = MagicMock(spec=AsyncMock)
     with (
-        patch(
-            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(return_value=[]),
-        ),
         patch(
             "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
             new=AsyncMock(

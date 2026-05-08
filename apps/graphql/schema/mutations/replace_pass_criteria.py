@@ -1,19 +1,13 @@
-"""Replace all passcriteria children under a milestone in one transaction."""
+"""Replace all pass criteria on a milestone (stored on the milestone row)."""
 
 from __future__ import annotations
+
+import secrets
 
 import strawberry
 
 from graphql.data_sources import Node, SessionLocal
 from graphql.schema.auth import require_location_owner, user_id_from_info
-from graphql.schema.node_handlers import get_handler
-
-
-def _pass_criterion_display_name(requirement: str) -> str:
-    t = requirement.strip()
-    if not t:
-        return "Pass criterion"
-    return t[:497] + "..." if len(t) > 500 else t
 
 
 @strawberry.type
@@ -48,39 +42,23 @@ class ReplacePassCriteriaMutation:
             if milestone.location_id != location_id:
                 raise ValueError("Milestone does not belong to this location")
 
-            existing = (
-                session.query(Node)
-                .filter(Node.parent_id == ms_pk, Node.node_type == "passcriteria")
-                .all()
-            )
-            pc_handler = get_handler("passcriteria")
-            for old in existing:
-                pc_handler.pre_delete(old, milestone, session)
-                session.delete(old)
-            session.flush()
-
+            rows: list[dict[str, str]] = []
             for raw in requirements:
                 r = raw.strip()
                 if not r:
                     continue
-                display = _pass_criterion_display_name(r)
-                data = {"requirement": r, "status": "open"}
-                resolved_data = pc_handler.validate_create(milestone, data, session)
-                node = Node(
-                    parent_id=ms_pk,
-                    name=display,
-                    description=None,
-                    path="",
-                    node_type="passcriteria",
-                    location_id=location_id,
-                    data=resolved_data,
+                rows.append(
+                    {
+                        "id": secrets.token_hex(8),
+                        "requirement": r,
+                        "status": "open",
+                    }
                 )
-                session.add(node)
-                session.flush()
-                if milestone.path:
-                    node.path = f"{milestone.path.rstrip('/')}/{node.id}"
-                else:
-                    node.path = f"/{node.id}"
+
+            milestone.pass_criterias = rows if rows else None
+            base = dict(milestone.data) if isinstance(milestone.data, dict) else {}
+            base.pop("passCriterias", None)
+            milestone.data = base
 
             session.commit()
             return True

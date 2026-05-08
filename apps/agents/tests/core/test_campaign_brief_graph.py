@@ -159,10 +159,6 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
 
     with (
         patch(
-            "agents_app.agents.core.milestone_eval.nodes.fetch_milestone_children",
-            new=AsyncMock(return_value=[]),
-        ),
-        patch(
             "agents_app.agents.core.milestone_run.graph.fetch_milestone_node",
             new=AsyncMock(
                 return_value={"data": {"goal": "G1", "presetId": "restaurant_campaign_brief"}}

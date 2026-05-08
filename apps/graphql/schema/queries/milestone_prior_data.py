@@ -16,11 +16,11 @@ from graphql.schema.node_handlers.milestone import _milestone_sort_key
 class MilestonePriorDataQuery:
     @strawberry.field(
         description=(
-            "JSON array of prior milestones' milestonedata payloads: each element is "
+            "JSON array of prior milestones' preset payloads: each element is "
             "`{\"title\": string, \"presetId\": string|null, \"data\": object|null}` for milestones strictly "
             "before the given milestone in workflow display order. `presetId` is copied from the "
-            "milestone node's `data.presetId` when set (e.g. `restaurant_campaign_brief`). `data` is the raw "
-            "`milestonedata` child JSON object (flat preset payload). Empty array when there "
+            "milestone node's `data.presetId` when set (e.g. `restaurant_campaign_brief`). `data` is the "
+            "`milestone_preset_data` column (flat preset JSON). Empty array when there "
             "are no prior milestones or the request is not authorized."
         )
     )
@@ -84,17 +84,23 @@ class MilestonePriorDataQuery:
                     if isinstance(raw_pid, str) and raw_pid.strip():
                         preset_id = raw_pid.strip()
                 data_val: object | str | None = None
-                md_row = (
-                    session.query(Node)
-                    .filter(
-                        Node.parent_id == m.id,
-                        Node.node_type == "milestonedata",
+                mpd = m.milestone_preset_data
+                if isinstance(mpd, dict) and mpd:
+                    data_val = mpd
+                elif isinstance(mpd, list) and mpd:
+                    data_val = mpd
+                else:
+                    md_row = (
+                        session.query(Node)
+                        .filter(
+                            Node.parent_id == m.id,
+                            Node.node_type == "milestonedata",
+                        )
+                        .order_by(Node.id.asc())
+                        .first()
                     )
-                    .order_by(Node.id.asc())
-                    .first()
-                )
-                if md_row is not None and isinstance(md_row.data, dict):
-                    data_val = md_row.data
+                    if md_row is not None and isinstance(md_row.data, dict):
+                        data_val = md_row.data
                 payload.append({"title": title, "presetId": preset_id, "data": data_val})
 
             return cast(JSON, payload)

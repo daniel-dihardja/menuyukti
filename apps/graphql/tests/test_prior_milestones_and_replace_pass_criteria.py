@@ -30,6 +30,15 @@ mutation CreateNode(
 }
 """
 
+UPDATE_NODE = """
+mutation U($id: ID!, $data: JSON!) {
+  updateNode(id: $id, data: $data) {
+    id
+    milestonePresetData
+  }
+}
+"""
+
 PRIOR_DATA = """
 query Prior($workflowId: ID!, $milestoneId: ID!, $locationId: Int!) {
   priorMilestonesMilestoneData(
@@ -116,13 +125,10 @@ def test_prior_milestones_milestone_data_includes_earlier_milestonedata():
 
     asyncio.run(
         schema.execute(
-            CREATE_NODE,
+            UPDATE_NODE,
             variable_values={
-                "locationId": location_id,
-                "nodeType": "milestonedata",
-                "name": "Data",
-                "parentId": m1_id,
-                "data": {"body": "# Body from earlier"},
+                "id": m1_id,
+                "data": {"milestonePresetData": {"body": "# Body from earlier"}},
             },
             context_value=graphql_auth_context(),
         )
@@ -210,13 +216,19 @@ def test_prior_milestones_milestone_data_includes_preset_id_from_milestone_node(
 
     asyncio.run(
         schema.execute(
-            CREATE_NODE,
+            UPDATE_NODE,
             variable_values={
-                "locationId": location_id,
-                "nodeType": "milestonedata",
-                "name": "Data",
-                "parentId": m1_id,
-                "data": {"venueSnapshot": {"venueName": "X", "city": "Y", "country": "Z", "currency": "EUR"}},
+                "id": m1_id,
+                "data": {
+                    "milestonePresetData": {
+                        "venueSnapshot": {
+                            "venueName": "X",
+                            "city": "Y",
+                            "country": "Z",
+                            "currency": "EUR",
+                        }
+                    }
+                },
             },
             context_value=graphql_auth_context(),
         )
@@ -319,7 +331,7 @@ def test_prior_milestones_milestone_data_empty_when_first_milestone():
     assert out.data["priorMilestonesMilestoneData"] == []
 
 
-def test_replace_pass_criteria_replaces_children():
+def test_replace_pass_criteria_writes_pass_criterias_column():
     session = SessionLocal()
     try:
         session.query(Node).delete()
@@ -364,21 +376,6 @@ def test_replace_pass_criteria_replaces_children():
     assert not ms.errors, ms.errors
     milestone_id = ms.data["createNode"]["id"]
 
-    for label in ("A", "B"):
-        asyncio.run(
-            schema.execute(
-                CREATE_NODE,
-                variable_values={
-                    "locationId": location_id,
-                    "nodeType": "passcriteria",
-                    "name": f"PC {label}",
-                    "parentId": milestone_id,
-                    "data": {"requirement": label, "status": "open"},
-                },
-                context_value=graphql_auth_context(),
-            )
-        )
-
     rep = asyncio.run(
         schema.execute(
             REPLACE_PC,
@@ -401,14 +398,18 @@ def test_replace_pass_criteria_replaces_children():
         )
     )
     assert not nodes.errors, nodes.errors
-    pcs = [
-        n
-        for n in nodes.data["nodes"]
-        if n.get("nodeType") == "passcriteria"
-    ]
-    assert len(pcs) == 1
-    assert pcs[0]["data"]["requirement"] == "only one"
-    assert pcs[0]["data"]["status"] == "open"
+    assert nodes.data["nodes"] == []
+
+    session = SessionLocal()
+    try:
+        row = session.get(Node, int(milestone_id))
+        assert row is not None
+        assert isinstance(row.pass_criterias, list)
+        assert len(row.pass_criterias) == 1
+        assert row.pass_criterias[0]["requirement"] == "only one"
+        assert row.pass_criterias[0]["status"] == "open"
+    finally:
+        session.close()
 
 
 def test_export_workflow_includes_structured_milestonedata_dict():
@@ -464,13 +465,10 @@ def test_export_workflow_includes_structured_milestonedata_dict():
     }
     asyncio.run(
         schema.execute(
-            CREATE_NODE,
+            UPDATE_NODE,
             variable_values={
-                "locationId": location_id,
-                "nodeType": "milestonedata",
-                "name": "Data",
-                "parentId": milestone_id,
-                "data": dates_payload,
+                "id": milestone_id,
+                "data": {"milestonePresetData": dates_payload},
             },
             context_value=graphql_auth_context(),
         )

@@ -28,9 +28,11 @@ export type Scalars = {
 
 export type AdditionalSignalsType = {
   __typename?: 'AdditionalSignalsType'
+  campaignPlanningSignals: CampaignPlanningSignalsType
   datetimeSignals?: Maybe<DatetimeSignalsType>
   matrixSignals: MatrixSignalsType
   orderSignals?: Maybe<OrderSignalsType>
+  signalConfidence: SignalConfidenceType
 }
 
 /** Minimal fields for listing analytics runs by location. */
@@ -91,6 +93,14 @@ export type CampaignBriefSignalCapabilitiesType = {
   enabledBlocks: Array<Scalars['String']['output']>
   hasDatetime: Scalars['Boolean']['output']
   hasOrderId: Scalars['Boolean']['output']
+}
+
+export type CampaignPlanningSignalsType = {
+  __typename?: 'CampaignPlanningSignalsType'
+  objectiveRecommendation: Scalars['String']['output']
+  primaryCtaChannel: Scalars['String']['output']
+  recommendedDayparts: Array<Scalars['String']['output']>
+  recommendedPostingDays: Array<Scalars['String']['output']>
 }
 
 export type CampaignSchedulePlanType = {
@@ -230,18 +240,6 @@ export type LocationManualBriefInputType = {
   quickProfile: Scalars['JSON']['output']
 }
 
-export type LocationSocialSettingsType = {
-  __typename?: 'LocationSocialSettingsType'
-  avoidTopics: Array<Scalars['String']['output']>
-  brandHashtags: Array<Scalars['String']['output']>
-  brandPersonality?: Maybe<Scalars['String']['output']>
-  contentPillars: Array<Scalars['String']['output']>
-  locationId: Scalars['Int']['output']
-  platformFocus: Array<Scalars['String']['output']>
-  targetAudience?: Maybe<Scalars['String']['output']>
-  tone?: Maybe<Scalars['String']['output']>
-}
-
 /** A restaurant location; ties POS data and workflow roots to a workspace or legacy owner. */
 export type LocationType = {
   __typename?: 'LocationType'
@@ -249,7 +247,7 @@ export type LocationType = {
   country?: Maybe<Scalars['String']['output']>
   currency?: Maybe<Scalars['String']['output']>
   id: Scalars['ID']['output']
-  /** Owner-provided click-first brief hints. Not AI-generated — see locationSocialSettings for AI output. */
+  /** Owner-provided click-first brief hints. Not AI-generated. */
   manualBriefInput?: Maybe<LocationManualBriefInputType>
   name: Scalars['String']['output']
   nodeId?: Maybe<Scalars['ID']['output']>
@@ -384,13 +382,10 @@ export type MenuItemCogsUpsertInput = {
   menuName: Scalars['String']['input']
 }
 
-/** A milestone node plus its passcriteria, milestonedata, and result children. */
+/** A milestone node with typed milestone fields (goal, preset data, result, pass criteria). */
 export type MilestoneCampaignBundleType = {
   __typename?: 'MilestoneCampaignBundleType'
   milestone: NodeType
-  milestonedataNodes: Array<NodeType>
-  passCriteriaNodes: Array<NodeType>
-  resultNodes: Array<NodeType>
 }
 
 /** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
@@ -411,6 +406,7 @@ export type Mutation = {
   inviteWorkspaceMember: WorkspaceMembershipType
   removeWorkspaceMember: Scalars['Boolean']['output']
   replacePassCriteria: Scalars['Boolean']['output']
+  setPassCriterionStatus: Scalars['Boolean']['output']
   startMilestoneAgentRun: Scalars['Boolean']['output']
   updateApiAdapterTool: ApiAdapterToolType
   updateImageAiFlow: ImageAiFlowType
@@ -534,6 +530,14 @@ export type MutationReplacePassCriteriaArgs = {
 }
 
 /** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
+export type MutationSetPassCriterionStatusArgs = {
+  criterionId: Scalars['String']['input']
+  locationId: Scalars['Int']['input']
+  milestoneId: Scalars['ID']['input']
+  status: Scalars['String']['input']
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, workspace API adapter tools, and image AI flow configuration. */
 export type MutationStartMilestoneAgentRunArgs = {
   milestoneId: Scalars['ID']['input']
   runId: Scalars['String']['input']
@@ -606,16 +610,21 @@ export type MutationUpsertMenuItemCogsBulkArgs = {
   items: Array<MenuItemCogsUpsertInput>
 }
 
-/** A workflow tree node (workflow, milestone, passcriteria, result, milestonedata, etc.) stored in the polymorphic `node` table. */
+/** A workflow tree node (workflow, milestone, etc.) stored in the polymorphic `node` table. Milestone-owned payloads also appear as typed fields (milestoneGoal, milestonePresetData, …). */
 export type NodeType = {
   __typename?: 'NodeType'
   data?: Maybe<Scalars['JSON']['output']>
   description?: Maybe<Scalars['String']['output']>
   id: Scalars['ID']['output']
   locationId?: Maybe<Scalars['Int']['output']>
+  milestoneGoal?: Maybe<Scalars['String']['output']>
+  milestoneInput?: Maybe<Scalars['JSON']['output']>
+  milestonePresetData?: Maybe<Scalars['JSON']['output']>
+  milestoneResult?: Maybe<Scalars['JSON']['output']>
   name: Scalars['String']['output']
   nodeType: Scalars['String']['output']
   parentId?: Maybe<Scalars['ID']['output']>
+  passCriterias?: Maybe<Scalars['JSON']['output']>
   path: Scalars['String']['output']
 }
 
@@ -701,29 +710,6 @@ export type PeriodHeadlineType = {
   totalRevenue: Scalars['Float']['output']
 }
 
-export type PromotionBestPostingWindowType = {
-  __typename?: 'PromotionBestPostingWindowType'
-  peakDay?: Maybe<Scalars['String']['output']>
-  peakHour?: Maybe<Scalars['Int']['output']>
-  primaryMealPeriod?: Maybe<Scalars['String']['output']>
-}
-
-export type PromotionCandidatesSignalsType = {
-  __typename?: 'PromotionCandidatesSignalsType'
-  analyticsRunId: Scalars['ID']['output']
-  bestPostingWindow?: Maybe<PromotionBestPostingWindowType>
-  bestPostingWindowSummary: Scalars['String']['output']
-  itemsTotalCount: Scalars['Int']['output']
-  itemsTruncated: Scalars['Boolean']['output']
-  periodEnd?: Maybe<Scalars['Date']['output']>
-  periodStart?: Maybe<Scalars['Date']['output']>
-  puzzleOpportunityPool: PromotionPuzzleOpportunityPoolType
-  rankedCandidates: Array<PromotionRankedCandidateType>
-  rankedCandidatesTotalCount: Scalars['Int']['output']
-  topAvoid: Array<PromotionRankedCandidateType>
-  topPromote: Array<PromotionRankedCandidateType>
-}
-
 /** Per-menu signals for choosing promotion content: sales totals, optional menu-engineering classification when COGS exist, and optional peak demand timing. */
 export type PromotionMenuItemType = {
   __typename?: 'PromotionMenuItemType'
@@ -757,44 +743,6 @@ export type PromotionMenuItemsPayloadType = {
   periodStart?: Maybe<Scalars['Date']['output']>
 }
 
-export type PromotionPuzzleOpportunityPoolType = {
-  __typename?: 'PromotionPuzzleOpportunityPoolType'
-  puzzleItemsFound: Scalars['Int']['output']
-  selected: Array<PromotionPuzzleSelectedType>
-  selectedCount: Scalars['Int']['output']
-  threshold: Scalars['Float']['output']
-}
-
-export type PromotionPuzzleSelectedType = {
-  __typename?: 'PromotionPuzzleSelectedType'
-  contributionMarginPct?: Maybe<Scalars['Float']['output']>
-  howToPromoteOnInstagram: Array<Scalars['String']['output']>
-  matrixAction?: Maybe<Scalars['String']['output']>
-  matrixCategory?: Maybe<Scalars['String']['output']>
-  menu: Scalars['String']['output']
-  menuCategory?: Maybe<Scalars['String']['output']>
-  menuCategoryDetail?: Maybe<Scalars['String']['output']>
-  peakDay?: Maybe<Scalars['String']['output']>
-  peakHour?: Maybe<Scalars['Int']['output']>
-  puzzleOpportunityScore: Scalars['Float']['output']
-  quantity: Scalars['Int']['output']
-  recommendation: Scalars['String']['output']
-  score: Scalars['Float']['output']
-  signalReasons: Array<Scalars['String']['output']>
-  totalRevenue: Scalars['Float']['output']
-  whySelected: Array<Scalars['String']['output']>
-}
-
-export type PromotionRankedCandidateType = {
-  __typename?: 'PromotionRankedCandidateType'
-  menu: Scalars['String']['output']
-  quantity: Scalars['Int']['output']
-  recommendation: Scalars['String']['output']
-  score: Scalars['Float']['output']
-  signalReasons: Array<Scalars['String']['output']>
-  totalRevenue: Scalars['Float']['output']
-}
-
 export type PublicHolidayType = {
   __typename?: 'PublicHolidayType'
   date: Scalars['String']['output']
@@ -824,10 +772,8 @@ export type Query = {
   instagramSignals?: Maybe<InstagramSignalsType>
   /** Fetch one location by id if the caller has access. */
   location?: Maybe<LocationType>
-  /** Owner click-first brief hints for a location. Empty quickProfile when unset. Not AI-generated — see locationSocialSettings for AI output. */
+  /** Owner click-first brief hints for a location. Empty quickProfile when unset. Not AI-generated. */
   locationManualBriefInput?: Maybe<LocationManualBriefInputType>
-  /** Social and brand-voice settings for a location. Returns empty lists and null strings when no row exists. */
-  locationSocialSettings?: Maybe<LocationSocialSettingsType>
   /** All locations the current user can access (direct owner or workspace member). */
   locations: Array<LocationType>
   /** Compute the menu engineering BCG matrix for an analytics run. Requires COGS to be set; returns None if no COGS are available. Optionally filter returned items to specific categories (star, puzzle, plow_horse, low_end) — thresholds and distribution always reflect the full dataset. When locationId is set, the run must belong to that location (otherwise returns null). */
@@ -846,11 +792,9 @@ export type Query = {
   operatingProfile?: Maybe<OperatingProfileType>
   /** Compute average order size and revenue for an analytics run. Returns None if the run has no order data. */
   orderMetrics?: Maybe<AnalyticsRunOrderMetricsType>
-  /** JSON array of prior milestones' milestonedata payloads: each element is `{"title": string, "presetId": string|null, "data": object|string|array|null}` for milestones strictly before the given milestone in workflow display order. `presetId` is the milestone node's preset when set. `data` is the raw `milestonedata` child `data` field (structured object, legacy string, or null). Empty array when there are no prior milestones or the request is not authorized. */
+  /** JSON array of prior milestones' preset payloads: each element is `{"title": string, "presetId": string|null, "data": object|null}` for milestones strictly before the given milestone in workflow display order. `presetId` is copied from the milestone node's `data.presetId` when set (e.g. `restaurant_campaign_brief`). `data` is the `milestone_preset_data` column (flat preset JSON). Empty array when there are no prior milestones or the request is not authorized. */
   priorMilestonesMilestoneData: Scalars['JSON']['output']
-  /** Promotion-candidate signals composed from promotion menu items and Instagram signals. Returns ranked recommendations plus puzzle opportunity pool for campaign drafting. */
-  promotionCandidatesSignals?: Maybe<PromotionCandidatesSignalsType>
-  /** Menu engineering matrix and top star/puzzle slices per distinct `order_fact.menu_category` when present; otherwise one flat matrix on all rows. JSON includes `grouping`, optional `categories`, `rowsSkippedMissingCategory`, and per-slice `matrix` / `topStars` / `topPuzzles`. Returns null when unauthorized, wrong location, or the run has no order facts. */
+  /** Top star and puzzle menu-item names derived from menu engineering. When POS menu categories exist, returns `grouping=by_menu_category` with `categories.<menu_category>.starItems` and `puzzleItems` (up to 5 each). Otherwise returns `grouping=flat` with root `starItems` and `puzzleItems`. */
   promotionEngineeringCandidates?: Maybe<Scalars['JSON']['output']>
   /** Return per-menu promotion signals for an analytics run: volume and revenue, optional BCG-style menu-engineering metrics when COGS allow, and peak hour/day from demand heatmaps. When locationId is set, the run must belong to that location (otherwise returns null). */
   promotionMenuItems?: Maybe<PromotionMenuItemsPayloadType>
@@ -859,7 +803,7 @@ export type Query = {
   revenueTrends?: Maybe<RevenueTrendsPayloadType>
   /** Bill-level revenue and transaction counts rolled up by ISO week for the latest analytics run. Indices are normalized to mean 1.0 within the series. */
   weeklyDemandPattern?: Maybe<WeeklyDemandPatternPayloadType>
-  /** Load a workflow node, its milestones (ordered like `nodes`), and each milestone's passcriteria/milestonedata/result children. Returns null if the id is missing, not a workflow, or not owned by the caller. */
+  /** Load a workflow node, its milestones (ordered like `nodes`). Returns null if the id is missing, not a workflow, or not owned by the caller. */
   workflowCampaignTree?: Maybe<WorkflowCampaignTreeType>
   workflowExports: Array<WorkflowExportType>
   workspaceMembers: Array<WorkspaceMembershipType>
@@ -922,11 +866,6 @@ export type QueryLocationManualBriefInputArgs = {
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
-export type QueryLocationSocialSettingsArgs = {
-  locationId: Scalars['Int']['input']
-}
-
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
 export type QueryLocationsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>
 }
@@ -984,12 +923,6 @@ export type QueryPriorMilestonesMilestoneDataArgs = {
   locationId: Scalars['Int']['input']
   milestoneId: Scalars['ID']['input']
   workflowId: Scalars['ID']['input']
-}
-
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
-export type QueryPromotionCandidatesSignalsArgs = {
-  analyticsRunId: Scalars['ID']['input']
-  locationId?: InputMaybe<Scalars['ID']['input']>
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, workspace membership, and custom API adapter tools. */
@@ -1061,6 +994,12 @@ export type RevenueTrendsPayloadType = {
   rows: Array<RevenueTrendRowGqlType>
 }
 
+export type SignalConfidenceType = {
+  __typename?: 'SignalConfidenceType'
+  coverageNotes: Array<Scalars['String']['output']>
+  tier: Scalars['String']['output']
+}
+
 /** A menu item with rising revenue vs the prior period. */
 export type TrendingItemType = {
   __typename?: 'TrendingItemType'
@@ -1095,7 +1034,7 @@ export type WeeklyHeatmapType = {
   quantity: Scalars['Int']['output']
 }
 
-/** Workflow campaign tree for SSR: workflow root, ordered milestones, and grouped child nodes per milestone (single round-trip vs many `nodes` calls). */
+/** Workflow campaign tree for SSR: workflow root, ordered milestones (single round-trip vs many `nodes` calls). */
 export type WorkflowCampaignTreeType = {
   __typename?: 'WorkflowCampaignTreeType'
   milestones: Array<MilestoneCampaignBundleType>

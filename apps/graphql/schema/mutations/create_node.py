@@ -1,28 +1,16 @@
 import secrets
 
 import strawberry
-from sqlalchemy.orm import Session
 from strawberry.scalars import JSON
 
 from graphql.data_sources import Node, SessionLocal
 from graphql.schema.auth import require_location_owner, user_id_from_info
+from graphql.schema.node_gql import node_to_gql
 from graphql.schema.node_handlers import get_handler
+from graphql.schema.node_handlers.milestone import sync_milestone_columns_from_initial_data
 from graphql.schema.types import NodeType
 
-
-def _delete_existing_result_children_under_milestone(session: Session, milestone: Node) -> None:
-    """Remove existing result children so a new result can be created (idempotent replace)."""
-    existing = (
-        session.query(Node)
-        .filter(Node.parent_id == milestone.id, Node.node_type == "result")
-        .all()
-    )
-    if not existing:
-        return
-    result_handler = get_handler("result")
-    for old in existing:
-        result_handler.pre_delete(old, milestone, session)
-        session.delete(old)
+_DEPRECATED_CHILD_TYPES = frozenset({"milestonedata", "result", "passcriteria"})
 
 _ADJECTIVES = ("Swift", "Bright", "Urban", "Golden", "Fresh", "Bold")
 _NOUNS = ("Launch", "Push", "Drive", "Wave", "Spark", "Pulse")
@@ -30,19 +18,6 @@ _NOUNS = ("Launch", "Push", "Drive", "Wave", "Spark", "Pulse")
 
 def _random_default_name() -> str:
     return f"{secrets.choice(_ADJECTIVES)} {secrets.choice(_NOUNS)} {secrets.token_hex(2).upper()}"
-
-
-def _node_to_gql(node: Node) -> NodeType:
-    return NodeType(
-        id=str(node.id),
-        name=node.name,
-        description=node.description,
-        node_type=node.node_type,
-        path=node.path,
-        parent_id=str(node.parent_id) if node.parent_id is not None else None,
-        location_id=node.location_id,
-        data=node.data,
-    )
 
 
 @strawberry.type
@@ -62,6 +37,13 @@ class CreateNodeMutation:
         if not user_id:
             raise ValueError("Missing authenticated user for createNode")
 
+        nt_norm = node_type.strip().lower()
+        if nt_norm in _DEPRECATED_CHILD_TYPES:
+            raise ValueError(
+                f"node type {node_type!r} is no longer supported; store payloads on the milestone row "
+                "(milestonePresetData, milestoneResult, passCriterias, etc.)"
+            )
+
         with SessionLocal() as session:
             require_location_owner(session, location_id, user_id)
 
@@ -74,29 +56,17 @@ class CreateNodeMutation:
                     parent_pk = int(str(parent_id))
                 except ValueError as e:
                     raise ValueError("Invalid parent node id") from e
-                # Lock milestone row when replacing result nodes so concurrent creates serialize.
-                parent_query = session.query(Node).filter(Node.id == parent_pk)
-                if node_type == "result":
-                    parent_query = parent_query.with_for_update()
-                parent = parent_query.one_or_none()
+                parent = session.query(Node).filter(Node.id == parent_pk).one_or_none()
                 if parent is None:
                     raise ValueError("Parent node not found")
                 if parent.location_id != location_id:
                     raise ValueError("Parent node does not belong to this location")
                 resolved_parent_id = parent_pk
 
-            if (
-                node_type == "result"
-                and parent is not None
-                and parent.node_type == "milestone"
-            ):
-                _delete_existing_result_children_under_milestone(session, parent)
-                session.flush()
-
-            if node_type.strip().lower() == "goal":
+            if nt_norm == "goal":
                 raise ValueError(
                     "node type goal is no longer supported; store goal text on the milestone "
-                    "node data field goal"
+                    "node field milestoneGoal"
                 )
 
             handler = get_handler(node_type)
@@ -117,7 +87,10 @@ class CreateNodeMutation:
                 node.path = f"/{node.id}"
             else:
                 node.path = f"{parent.path.rstrip('/')}/{node.id}"
+            if nt_norm == "milestone":
+                sync_milestone_columns_from_initial_data(node)
+                session.flush()
             session.commit()
             session.refresh(node)
 
-            return _node_to_gql(node)
+            return node_to_gql(node)

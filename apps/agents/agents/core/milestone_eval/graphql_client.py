@@ -8,12 +8,12 @@ from typing import Any
 import httpx
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
-    CREATE_NODE_MUTATION,
     DEFAULT_NODES_FIRST,
     DELETE_NODE_MUTATION,
     NODE_BY_ID_QUERY,
     NODES_QUERY,
     PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
+    SET_PASS_CRITERION_STATUS_MUTATION,
     UPDATE_NODE_MUTATION,
 )
 
@@ -25,7 +25,7 @@ async def fetch_milestone_children(
     *,
     client: httpx.AsyncClient,
 ) -> list[dict[str, Any]]:
-    """Return all child nodes under the milestone (goal, milestonedata, passcriteria, result)."""
+    """Return child nodes under the milestone (usually empty after milestone-first migration)."""
 
     async def _run(c: httpx.AsyncClient) -> list[dict[str, Any]]:
         data = await graphql_post(
@@ -57,7 +57,7 @@ async def fetch_milestone_node(
     *,
     client: httpx.AsyncClient,
 ) -> dict[str, Any] | None:
-    """Return milestone node row (including `data.passCriterias`) or None."""
+    """Return milestone node row including typed milestone columns or None."""
 
     async def _run(c: httpx.AsyncClient) -> dict[str, Any] | None:
         data = await graphql_post(c, NODE_BY_ID_QUERY, {"id": milestone_id}, user_id)
@@ -69,59 +69,28 @@ async def fetch_milestone_node(
 
 async def update_milestone_passcriteria_status(
     milestone_id: str,
+    location_id: int,
     criterion_id: str,
     status: str,
     user_id: str,
     *,
     client: httpx.AsyncClient,
-) -> dict[str, Any]:
-    """Set milestone.data.passCriterias[*].status by criterion id."""
-
-    async def _run(c: httpx.AsyncClient) -> dict[str, Any]:
-        row = await fetch_milestone_node(milestone_id, user_id, client=c)
-        if not isinstance(row, dict):
-            msg = "milestone not found"
-            raise RuntimeError(msg)
-        raw_data = row.get("data")
-        data = raw_data if isinstance(raw_data, dict) else {}
-        raw_pass = data.get("passCriterias")
-        pass_rows = raw_pass if isinstance(raw_pass, list) else []
-        next_pass: list[dict[str, Any]] = []
-        found = False
-        for item in pass_rows:
-            if not isinstance(item, dict):
-                continue
-            cid = item.get("id")
-            if not isinstance(cid, str) or not cid:
-                continue
-            req = item.get("requirement")
-            current_status = item.get("status")
-            if not isinstance(req, str) or not isinstance(current_status, str):
-                continue
-            next_item = {"id": cid, "requirement": req, "status": current_status}
-            if cid == criterion_id:
-                next_item["status"] = status
-                found = True
-            next_pass.append(next_item)
-        if not found:
-            msg = f"criterion not found: {criterion_id}"
-            raise RuntimeError(msg)
-
-        next_data = dict(data)
-        next_data["passCriterias"] = next_pass
-        data = await graphql_post(
-            c,
-            UPDATE_NODE_MUTATION,
-            {"id": milestone_id, "data": next_data},
-            user_id,
-        )
-        node = data.get("updateNode")
-        if not isinstance(node, dict):
-            msg = "updateNode returned invalid payload"
-            raise RuntimeError(msg)
-        return node
-
-    return await _run(client)
+) -> None:
+    """Atomically set status for one criterion on ``pass_criterias`` JSON."""
+    data = await graphql_post(
+        client,
+        SET_PASS_CRITERION_STATUS_MUTATION,
+        {
+            "milestoneId": milestone_id,
+            "locationId": location_id,
+            "criterionId": criterion_id,
+            "status": status,
+        },
+        user_id,
+    )
+    if not data.get("setPassCriterionStatus"):
+        msg = "setPassCriterionStatus failed"
+        raise RuntimeError(msg)
 
 
 async def delete_node(
@@ -137,36 +106,6 @@ async def delete_node(
     return await _run(client)
 
 
-async def create_result_node(
-    milestone_id: str,
-    location_id: int,
-    data: dict[str, Any],
-    user_id: str,
-    *,
-    client: httpx.AsyncClient,
-) -> dict[str, Any]:
-    async def _run(c: httpx.AsyncClient) -> dict[str, Any]:
-        gql = await graphql_post(
-            c,
-            CREATE_NODE_MUTATION,
-            {
-                "locationId": location_id,
-                "nodeType": "result",
-                "name": "Result",
-                "parentId": milestone_id,
-                "data": data,
-            },
-            user_id,
-        )
-        node = gql.get("createNode")
-        if not isinstance(node, dict):
-            msg = "createNode returned invalid payload"
-            raise RuntimeError(msg)
-        return node
-
-    return await _run(client)
-
-
 async def upsert_result_node(
     *,
     result_node_id: str | None,
@@ -176,26 +115,20 @@ async def upsert_result_node(
     user_id: str,
     client: httpx.AsyncClient,
 ) -> dict[str, Any]:
-    """Update the existing result node when present, else create one."""
-    if result_node_id:
-        gql = await graphql_post(
-            client,
-            UPDATE_NODE_MUTATION,
-            {"id": result_node_id, "data": data},
-            user_id,
-        )
-        node = gql.get("updateNode")
-        if not isinstance(node, dict):
-            msg = "updateNode returned invalid payload"
-            raise RuntimeError(msg)
-        return node
-    return await create_result_node(
-        milestone_id,
-        location_id,
-        data,
+    """Persist eval output on ``milestone_result`` (``result_node_id`` ignored)."""
+    _ = result_node_id
+    _ = location_id
+    gql = await graphql_post(
+        client,
+        UPDATE_NODE_MUTATION,
+        {"id": milestone_id, "data": {"milestoneResult": data}},
         user_id,
-        client=client,
     )
+    node = gql.get("updateNode")
+    if not isinstance(node, dict):
+        msg = "updateNode returned invalid payload"
+        raise RuntimeError(msg)
+    return node
 
 
 async def fetch_prior_milestones_data_for_eval(
@@ -206,7 +139,7 @@ async def fetch_prior_milestones_data_for_eval(
     *,
     client: httpx.AsyncClient,
 ) -> str:
-    """Return JSON text of prior milestones' milestonedata (empty when unavailable)."""
+    """Return JSON text of prior milestones' preset data (empty when unavailable)."""
 
     async def _run(c: httpx.AsyncClient) -> str:
         data = await graphql_post(
