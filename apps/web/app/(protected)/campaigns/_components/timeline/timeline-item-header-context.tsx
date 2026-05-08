@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, type RefObject } from 'react'
+import { createContext, useContext } from 'react'
 
 import type { TimelineMilestone } from './types'
 
@@ -15,18 +15,6 @@ type TimelineItemHeaderContextValue = {
   position: TimelineItemPosition
   runState: TimelineItemRunState
   deleteState: TimelineItemDeleteState
-  titleEditor: {
-    editing: boolean
-    draft: string
-    setEditing: (open: boolean) => void
-    setDraft: (title: string) => void
-    inputId: string
-    inputRef: RefObject<HTMLInputElement | null>
-    containerRef: RefObject<HTMLDivElement | null>
-    renaming: boolean
-    save: () => Promise<void>
-    canRename: boolean
-  }
   movement: {
     moving: boolean
     move?: (id: string, direction: 'up' | 'down') => void | Promise<void>

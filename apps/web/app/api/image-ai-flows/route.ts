@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { ZodError } from 'zod'
 
-import { graphqlImageAiFlowsCacheTag } from '@/lib/graphql/cache-tags'
+import { graphqlImageAiFlowsCacheTag, revalidateTagAfterMutation } from '@/lib/graphql/cache-tags'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { CREATE_IMAGE_AI_FLOW_MUTATION, type CreateImageAiFlowData } from '@/lib/graphql/queries'
 
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       userId,
     )
 
-    revalidateTag(graphqlImageAiFlowsCacheTag(userId), 'max')
+    revalidateTag(graphqlImageAiFlowsCacheTag(userId), revalidateTagAfterMutation)
 
     return NextResponse.json({ flow: data.createImageAiFlow }, { status: 201 })
   } catch (error) {

@@ -6,8 +6,6 @@ export type CampaignMilestoneUiState = {
   createError: string | null
   deletingMilestoneId: string | null
   deleteError: string | null
-  renamingMilestoneId: string | null
-  renameError: string | null
   savingPassCriteriaMilestoneId: string | null
   passCriteriaError: string | null
   savingGoalMilestoneId: string | null
@@ -36,8 +34,6 @@ export function createInitialCampaignMilestoneUiState(
     createError: null,
     deletingMilestoneId: null,
     deleteError: null,
-    renamingMilestoneId: null,
-    renameError: null,
     savingPassCriteriaMilestoneId: null,
     passCriteriaError: null,
     savingGoalMilestoneId: null,

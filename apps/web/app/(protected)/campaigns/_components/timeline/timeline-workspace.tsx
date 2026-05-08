@@ -30,7 +30,6 @@ function toErrorMap(errors: TimelineErrors): TimelineErrorMap {
   return {
     create: errors.createError,
     delete: errors.deleteError,
-    rename: errors.renameError,
     move: errors.moveError,
     passCriteria: errors.passCriteriaError,
     goal: errors.goalError,

@@ -5,7 +5,7 @@ import { ZodError } from 'zod'
 
 import { openingHoursWeekToMutationInput, updateLocationParsedSchema } from '../schema'
 import { GraphQLRequestError, graphqlQuery } from '@/lib/graphql/client'
-import { graphqlLocationsDataCacheTag } from '@/lib/graphql/cache-tags'
+import { graphqlLocationsDataCacheTag, revalidateTagAfterMutation } from '@/lib/graphql/cache-tags'
 import {
   UPDATE_LOCATION_MANUAL_BRIEF_MUTATION,
   UPDATE_LOCATION_MUTATION,
@@ -56,7 +56,7 @@ export async function PATCH(req: Request, context: RouteContext) {
       )
     }
 
-    revalidateTag(graphqlLocationsDataCacheTag(userId), 'max')
+    revalidateTag(graphqlLocationsDataCacheTag(userId), revalidateTagAfterMutation)
     return NextResponse.json(data.updateLocation, { status: 200 })
   } catch (error) {
     if (error instanceof ZodError) {

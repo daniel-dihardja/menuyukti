@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { AlertCircle } from 'lucide-react'
@@ -66,8 +66,6 @@ export function CampaignsClient({
     const first = initialAnalyticsRuns[0]
     return first ? first.id : null
   })
-  const hydratedRunsRef = useRef(false)
-  const hydratedCampaignsRef = useRef(false)
 
   useEffect(() => {
     if (locationId !== null) return
@@ -89,20 +87,18 @@ export function CampaignsClient({
       return
     }
 
-    if (
-      !hydratedRunsRef.current &&
-      locationId === initialLocationId &&
-      initialAnalyticsRuns.length > 0
-    ) {
-      hydratedRunsRef.current = true
-      return
-    }
+    const seededFromServer = locationId === initialLocationId && initialAnalyticsRuns.length > 0
 
     const controller = new AbortController()
-    setLoadingRuns(true)
+    if (!seededFromServer) {
+      setLoadingRuns(true)
+    }
     setRunsError(null)
 
-    void fetch(`/api/analytics/list?locationId=${locationId}`, { signal: controller.signal })
+    void fetch(`/api/analytics/list?locationId=${locationId}`, {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
       .then(async (res) => {
         const body = (await res.json().catch(() => null)) as
           | AnalyticsRunItem[]
@@ -135,8 +131,10 @@ export function CampaignsClient({
         if (err instanceof Error && err.name === 'AbortError') {
           return
         }
-        setAnalyticsRuns([])
-        setAnalyticsRunId(null)
+        if (!seededFromServer) {
+          setAnalyticsRuns([])
+          setAnalyticsRunId(null)
+        }
         setRunsError(err instanceof Error ? err.message : t('listFailed'))
       })
       .finally(() => {
@@ -155,20 +153,18 @@ export function CampaignsClient({
       return
     }
 
-    if (
-      !hydratedCampaignsRef.current &&
-      locationId === initialLocationId &&
-      initialCampaigns.length > 0
-    ) {
-      hydratedCampaignsRef.current = true
-      return
-    }
+    const seededFromServer = locationId === initialLocationId && initialCampaigns.length > 0
 
     const controller = new AbortController()
-    setLoadingCampaigns(true)
+    if (!seededFromServer) {
+      setLoadingCampaigns(true)
+    }
     setListError(null)
 
-    void fetch(`/api/workflows?locationId=${locationId}`, { signal: controller.signal })
+    void fetch(`/api/workflows?locationId=${locationId}`, {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
       .then(async (res) => {
         const body = (await res.json().catch(() => null)) as {
           nodes?: CampaignNode[]
@@ -186,7 +182,9 @@ export function CampaignsClient({
         if (err instanceof Error && err.name === 'AbortError') {
           return
         }
-        setCampaigns([])
+        if (!seededFromServer) {
+          setCampaigns([])
+        }
         setListError(err instanceof Error ? err.message : t('listFailed'))
       })
       .finally(() => {

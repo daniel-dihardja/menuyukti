@@ -45,7 +45,6 @@ export function TimelineBody({ selectedId, onSelectMilestone }: TimelineBodyProp
                   isChatBusy={isChatBusy}
                   deletingMilestoneId={milestoneState.deletingMilestoneId}
                   movingMilestoneId={milestoneState.movingMilestoneId}
-                  renamingMilestoneId={milestoneState.renamingMilestoneId}
                   savingPassCriteriaMilestoneId={milestoneState.savingPassCriteriaMilestoneId}
                   savingGoalMilestoneId={milestoneState.savingGoalMilestoneId}
                   savingDataMilestoneId={milestoneState.savingDataMilestoneId}

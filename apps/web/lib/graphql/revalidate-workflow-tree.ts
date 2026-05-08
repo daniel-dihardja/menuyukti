@@ -1,8 +1,11 @@
 import { revalidateTag } from 'next/cache'
 
-import { graphqlWorkflowCampaignTreeCacheTag } from '@/lib/graphql/cache-tags'
+import {
+  graphqlWorkflowCampaignTreeCacheTag,
+  revalidateTagAfterMutation,
+} from '@/lib/graphql/cache-tags'
 
 /** Invalidate cached `WORKFLOW_CAMPAIGN_TREE_QUERY` for this workflow (after BFF mutations). */
 export function revalidateWorkflowCampaignTreeCache(userId: string, workflowId: string): void {
-  revalidateTag(graphqlWorkflowCampaignTreeCacheTag(userId, workflowId), 'max')
+  revalidateTag(graphqlWorkflowCampaignTreeCacheTag(userId, workflowId), revalidateTagAfterMutation)
 }
