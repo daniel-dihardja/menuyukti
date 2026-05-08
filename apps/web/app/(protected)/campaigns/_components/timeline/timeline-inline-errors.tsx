@@ -5,7 +5,6 @@ import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 export const TIMELINE_ERROR_KEYS = [
   'create',
   'delete',
-  'rename',
   'move',
   'passCriteria',
   'goal',

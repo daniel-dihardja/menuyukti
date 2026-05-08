@@ -41,7 +41,6 @@ export type TimelineItemProps = {
   actions: TimelineActions
   deletingMilestoneId: TimelineMilestoneState['deletingMilestoneId']
   movingMilestoneId: TimelineMilestoneState['movingMilestoneId']
-  renamingMilestoneId: TimelineMilestoneState['renamingMilestoneId']
   savingPassCriteriaMilestoneId: TimelineMilestoneState['savingPassCriteriaMilestoneId']
   savingGoalMilestoneId: TimelineMilestoneState['savingGoalMilestoneId']
   savingDataMilestoneId: TimelineMilestoneState['savingDataMilestoneId']
@@ -63,7 +62,6 @@ function TimelineItemInner({
   actions,
   deletingMilestoneId,
   movingMilestoneId,
-  renamingMilestoneId,
   savingPassCriteriaMilestoneId,
   savingGoalMilestoneId,
   savingDataMilestoneId,
@@ -92,7 +90,6 @@ function TimelineItemInner({
 
   const {
     onDeleteMilestone,
-    onRenameMilestone,
     onUpdatePassCriteria,
     onUpdateMilestoneGoal,
     onUpdateMilestoneInput,
@@ -104,12 +101,7 @@ function TimelineItemInner({
   const lastMilestoneIdRef = useRef(milestone.id)
   const hadMilestoneDataRef = useRef(milestone.data != null)
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(() => milestone.data != null)
-  const [editingTitle, setEditingTitle] = useState(false)
-  const [draftTitle, setDraftTitle] = useState(milestone.title)
   const [goalDraft, setGoalDraft] = useState(() => milestone.goal ?? '')
-  const titleEditInputId = `milestone-title-edit-${milestone.id}`
-  const titleEditInputRef = useRef<HTMLInputElement>(null)
-  const titleEditContainerRef = useRef<HTMLDivElement>(null)
   const addCriteriaInputRef = useRef<HTMLInputElement>(null)
   const isMilestoneRunning = runningMilestoneId === milestone.id
   /** Keep the card expanded for the whole run; user can collapse again after the run ends. */
@@ -199,55 +191,6 @@ function TimelineItemInner({
   useEffect(() => {
     setGoalDraft(milestone.goal ?? '')
   }, [milestone.id, milestone.goal])
-
-  useEffect(() => {
-    if (!editingTitle) {
-      setDraftTitle(milestone.title)
-    }
-  }, [milestone.id, milestone.title, editingTitle])
-
-  useEffect(() => {
-    if (!editingTitle) {
-      return
-    }
-    titleEditInputRef.current?.focus()
-    titleEditInputRef.current?.select()
-  }, [editingTitle])
-
-  useEffect(() => {
-    if (!editingTitle) {
-      return
-    }
-    const onPointerDownCapture = (e: PointerEvent) => {
-      if (renamingMilestoneId === milestone.id) {
-        return
-      }
-      const target = e.target
-      if (!(target instanceof Node)) {
-        return
-      }
-      if (titleEditContainerRef.current?.contains(target)) {
-        return
-      }
-      setEditingTitle(false)
-      setDraftTitle(milestone.title)
-    }
-    document.addEventListener('pointerdown', onPointerDownCapture, true)
-    return () => document.removeEventListener('pointerdown', onPointerDownCapture, true)
-  }, [editingTitle, milestone.id, milestone.title, renamingMilestoneId])
-
-  const renaming = renamingMilestoneId === milestone.id
-
-  const handleSaveTitle = async () => {
-    const trimmed = draftTitle.trim()
-    if (!trimmed || !onRenameMilestone) {
-      return
-    }
-    const ok = await onRenameMilestone(milestone.id, trimmed)
-    if (ok) {
-      setEditingTitle(false)
-    }
-  }
 
   const handleAddPassCriterion = async () => {
     if (!onUpdatePassCriteria || savingPassCriteria) {
@@ -536,18 +479,6 @@ function TimelineItemInner({
                 position,
                 runState,
                 deleteState,
-                titleEditor: {
-                  editing: editingTitle,
-                  draft: draftTitle,
-                  setEditing: setEditingTitle,
-                  setDraft: setDraftTitle,
-                  inputId: titleEditInputId,
-                  inputRef: titleEditInputRef,
-                  containerRef: titleEditContainerRef,
-                  renaming,
-                  save: handleSaveTitle,
-                  canRename: Boolean(onRenameMilestone),
-                },
                 movement: {
                   moving: isMoving,
                   move: onMoveMilestone,

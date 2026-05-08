@@ -13,7 +13,6 @@ export type TimelineMilestoneState = Pick<
   | 'milestones'
   | 'creating'
   | 'deletingMilestoneId'
-  | 'renamingMilestoneId'
   | 'savingPassCriteriaMilestoneId'
   | 'savingGoalMilestoneId'
   | 'savingDataMilestoneId'
@@ -28,7 +27,6 @@ export type TimelineErrors = Pick<
   CampaignMilestoneUiState,
   | 'createError'
   | 'deleteError'
-  | 'renameError'
   | 'moveError'
   | 'passCriteriaError'
   | 'goalError'
@@ -43,7 +41,6 @@ export type TimelineActions = {
   onCreateMilestone: () => boolean | Promise<boolean>
   onCreateMilestoneFromPreset: (presetId: MilestonePresetId) => boolean | Promise<boolean>
   onDeleteMilestone: (id: string) => void | Promise<void>
-  onRenameMilestone: (id: string, name: string) => Promise<boolean>
   onMoveMilestone: (id: string, direction: 'up' | 'down') => void | Promise<void>
   onUpdatePassCriteria: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
   onUpdateMilestoneGoal: (id: string, goal: string) => Promise<boolean>
@@ -82,7 +79,6 @@ export function splitMilestoneUiState(ui: CampaignMilestoneUiState): {
   const {
     createError,
     deleteError,
-    renameError,
     moveError,
     passCriteriaError,
     goalError,
@@ -98,7 +94,6 @@ export function splitMilestoneUiState(ui: CampaignMilestoneUiState): {
     errors: {
       createError,
       deleteError,
-      renameError,
       moveError,
       passCriteriaError,
       goalError,

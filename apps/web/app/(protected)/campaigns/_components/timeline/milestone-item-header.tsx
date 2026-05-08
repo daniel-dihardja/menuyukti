@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { ArrowDown, ArrowUp, Check, ChevronDown, Pencil, Play, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, Play, Trash2 } from 'lucide-react'
 
 import {
   AlertDialog,
@@ -17,7 +17,6 @@ import {
 import { Button, buttonVariants } from '@workspace/ui/components/button'
 import { CardAction, CardHeader, CardTitle } from '@workspace/ui/components/card'
 import { CollapsibleTrigger } from '@workspace/ui/components/collapsible'
-import { Input } from '@workspace/ui/components/input'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
@@ -31,86 +30,25 @@ export type MilestoneItemHeaderProps = {
 
 export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
   const t = useTranslations('analytics.campaigns.chat')
-  const { milestone, isMobile, position, runState, deleteState, titleEditor, movement, actions } =
+  const { milestone, isMobile, position, runState, deleteState, movement, actions } =
     useTimelineItemHeader()
   const railStatus = milestone.status ?? 'empty'
   const canRun = Boolean(actions.run) && runState !== 'blocked'
   const isRunning = runState === 'running'
 
   return (
-    <CardHeader
-      className={cn('min-w-0 gap-1.5', titleEditor.editing && 'gap-x-8', isMobile && 'px-3')}
-    >
+    <CardHeader className={cn('min-w-0 gap-1.5', isMobile && 'px-3')}>
       <CardTitle className="flex min-w-0 items-center gap-1 text-base leading-snug">
-        {titleEditor.editing ? (
-          <div className="flex min-w-0 flex-1 items-center gap-1" ref={titleEditor.containerRef}>
-            <Input
-              ref={titleEditor.inputRef}
-              id={titleEditor.inputId}
-              aria-label={t('editMilestoneTitleAriaLabel')}
-              className="h-8 min-w-0 flex-1 text-base font-semibold"
-              disabled={titleEditor.renaming}
-              onChange={(e) => titleEditor.setDraft(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => {
-                e.stopPropagation()
-                if (e.key === 'Escape') {
-                  titleEditor.setEditing(false)
-                  titleEditor.setDraft(milestone.title)
-                }
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  void titleEditor.save()
-                }
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              value={titleEditor.draft}
-            />
-            <Button
-              aria-label={t('saveMilestoneTitleAriaLabel')}
-              className="size-9 shrink-0"
-              disabled={titleEditor.renaming || !titleEditor.draft.trim()}
-              onClick={(e) => {
-                e.stopPropagation()
-                void titleEditor.save()
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              size="icon"
-              type="button"
-              variant="default"
-            >
-              <Check aria-hidden data-icon="inline-start" />
-            </Button>
+        <div className="flex min-w-0 flex-1 items-center">
+          <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden">
+            {isMobile && railStatus !== 'empty' ? (
+              <span className="shrink-0">
+                <TimelineRailMarker compact status={railStatus} />
+              </span>
+            ) : null}
+            <span className="min-w-0 truncate">{milestone.title}</span>
           </div>
-        ) : (
-          <div className="flex min-w-0 flex-1 items-center">
-            <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden">
-              {isMobile && railStatus !== 'empty' ? (
-                <span className="shrink-0">
-                  <TimelineRailMarker compact status={railStatus} />
-                </span>
-              ) : null}
-              <span className="min-w-0 truncate">{milestone.title}</span>
-              {titleEditor.canRename ? (
-                <Button
-                  aria-label={t('editMilestoneTitleAriaLabel')}
-                  className="size-8 shrink-0 text-muted-foreground"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    titleEditor.setDraft(milestone.title)
-                    titleEditor.setEditing(true)
-                  }}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                >
-                  <Pencil aria-hidden data-icon="inline-start" />
-                </Button>
-              ) : null}
-            </div>
-          </div>
-        )}
+        </div>
       </CardTitle>
       <CardAction className="flex items-center gap-1">
         {actions.run ? (
@@ -121,7 +59,7 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
                   aria-busy={isRunning ? true : undefined}
                   aria-label={t('milestonePlayAriaLabel')}
                   className="size-9 shrink-0 rounded-full"
-                  disabled={titleEditor.editing || !canRun}
+                  disabled={!canRun}
                   onClick={(e) => {
                     e.stopPropagation()
                     void actions.run?.(milestone.id)
@@ -143,7 +81,7 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
             <Button
               aria-label={t('moveMilestoneUp')}
               className="size-9 shrink-0 text-muted-foreground"
-              disabled={position === 'first' || movement.moving || titleEditor.editing}
+              disabled={position === 'first' || movement.moving}
               onClick={(e) => {
                 e.stopPropagation()
                 void movement.move?.(milestone.id, 'up')
@@ -158,7 +96,7 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
             <Button
               aria-label={t('moveMilestoneDown')}
               className="size-9 shrink-0 text-muted-foreground"
-              disabled={position === 'last' || movement.moving || titleEditor.editing}
+              disabled={position === 'last' || movement.moving}
               onClick={(e) => {
                 e.stopPropagation()
                 void movement.move?.(milestone.id, 'down')
@@ -178,7 +116,7 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
               <Button
                 aria-label={t('deleteMilestoneAriaLabel')}
                 className="size-9 shrink-0 text-muted-foreground hover:text-destructive"
-                disabled={deleteState === 'deleting' || titleEditor.editing}
+                disabled={deleteState === 'deleting'}
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 size="icon"
@@ -233,7 +171,6 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
             aria-expanded={open}
             aria-label={open ? t('milestoneCollapseDetails') : t('milestoneExpandDetails')}
             className="size-9 shrink-0"
-            disabled={titleEditor.editing}
             onClick={(e) => e.stopPropagation()}
             size="icon"
             type="button"

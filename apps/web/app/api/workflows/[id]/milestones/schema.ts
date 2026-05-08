@@ -25,7 +25,6 @@ export const passCriteriaRowSchema = passCriteriaSchema
 
 export const patchMilestoneSchema = z
   .object({
-    name: z.string().trim().min(1).max(500).optional(),
     /** Free-form text; not trimmed so spaces inside and at edges are preserved. Stored on milestone node `data.goal`. */
     goal: z.string().optional(),
     /** Milestone data (structured JSON); persisted on a child `milestonedata` node. */
@@ -62,7 +61,6 @@ export const patchMilestoneSchema = z
   })
   .refine(
     (v) =>
-      v.name !== undefined ||
       v.goal !== undefined ||
       v.milestoneData !== undefined ||
       v.milestoneInput !== undefined ||
@@ -71,6 +69,6 @@ export const patchMilestoneSchema = z
       v.move !== undefined,
     {
       message:
-        'Provide at least one of name, goal, milestoneData, milestoneInput, presetId, passCriterias, or move',
+        'Provide at least one of goal, milestoneData, milestoneInput, presetId, passCriterias, or move',
     },
   )

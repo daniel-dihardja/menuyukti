@@ -240,47 +240,6 @@ export function useMilestoneOperations(
     [workflowId, dispatch, t],
   )
 
-  const handleRenameMilestone = useCallback(
-    async (milestoneId: string, name: string): Promise<boolean> => {
-      dispatch({ type: 'PATCH', patch: { renameError: null, renamingMilestoneId: milestoneId } })
-      try {
-        const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name }),
-        })
-        const body = (await res.json().catch(() => null)) as {
-          message?: string
-          name?: string
-        } | null
-        if (!res.ok) {
-          throw new Error(body?.message ?? t('milestonesRenameError'))
-        }
-        const newName = body?.name
-        if (typeof newName === 'string') {
-          dispatch({
-            type: 'UPDATE_MILESTONES',
-            updater: (prev) =>
-              prev.map((m) => (m.id === milestoneId ? { ...m, title: newName } : m)),
-          })
-          return true
-        }
-        return false
-      } catch (err) {
-        dispatch({
-          type: 'PATCH',
-          patch: {
-            renameError: err instanceof Error ? err.message : t('milestonesRenameError'),
-          },
-        })
-        return false
-      } finally {
-        dispatch({ type: 'PATCH', patch: { renamingMilestoneId: null } })
-      }
-    },
-    [workflowId, dispatch, t],
-  )
-
   const handleUpdatePassCriteria = useCallback(
     async (milestoneId: string, passCriteria: PassCriteriaRow[]): Promise<boolean> => {
       dispatch({
@@ -757,7 +716,6 @@ export function useMilestoneOperations(
       handleCreateMilestone,
       handleCreateMilestoneFromPreset,
       handleDeleteMilestone,
-      handleRenameMilestone,
       handleUpdatePassCriteria,
       handleUpdateMilestoneGoal,
       handleUpdateMilestoneData,
@@ -771,7 +729,6 @@ export function useMilestoneOperations(
       handleCreateMilestone,
       handleCreateMilestoneFromPreset,
       handleDeleteMilestone,
-      handleRenameMilestone,
       handleUpdatePassCriteria,
       handleUpdateMilestoneGoal,
       handleUpdateMilestoneData,

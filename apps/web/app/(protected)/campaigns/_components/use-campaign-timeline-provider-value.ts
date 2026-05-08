@@ -17,7 +17,6 @@ export type CampaignTimelineOpsHandles = {
   handleCreateMilestone: () => boolean | Promise<boolean>
   handleCreateMilestoneFromPreset: (presetId: MilestonePresetId) => boolean | Promise<boolean>
   handleDeleteMilestone: (id: string) => void | Promise<void>
-  handleRenameMilestone: (id: string, name: string) => Promise<boolean>
   handleMoveMilestone: (id: string, direction: 'up' | 'down') => void | Promise<void>
   handleUpdatePassCriteria: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
   handleUpdateMilestoneGoal: (id: string, goal: string) => Promise<boolean>
@@ -52,7 +51,6 @@ export function useCampaignTimelineProviderSlices(
       onCreateMilestone: ops.handleCreateMilestone,
       onCreateMilestoneFromPreset: ops.handleCreateMilestoneFromPreset,
       onDeleteMilestone: ops.handleDeleteMilestone,
-      onRenameMilestone: ops.handleRenameMilestone,
       onMoveMilestone: ops.handleMoveMilestone,
       onUpdatePassCriteria: ops.handleUpdatePassCriteria,
       onUpdateMilestoneGoal: ops.handleUpdateMilestoneGoal,
