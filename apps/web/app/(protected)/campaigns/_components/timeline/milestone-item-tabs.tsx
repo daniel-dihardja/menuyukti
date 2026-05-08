@@ -29,6 +29,7 @@ import type { PassCriteriaRow, TimelineMilestone } from './types'
 const presetGoalTranslationKeyById = {
   restaurant_campaign_brief: 'milestonePreset.restaurant_campaign_brief.goal',
   post_scheduler: 'milestonePreset.post_scheduler.goal',
+  promotion_candidates: 'milestonePreset.promotion_candidates.goal',
 } as const
 
 type CampaignWindowInput = {
@@ -86,7 +87,7 @@ function formatDateButtonLabel(value: string): string {
   return parsed ? parsed.toLocaleDateString() : value
 }
 
-type OptionalNotesPresetId = 'restaurant_campaign_brief' | 'post_scheduler'
+type OptionalNotesPresetId = 'restaurant_campaign_brief' | 'post_scheduler' | 'promotion_candidates'
 
 function optionalNotesFieldCopy(
   t: (key: string) => string,

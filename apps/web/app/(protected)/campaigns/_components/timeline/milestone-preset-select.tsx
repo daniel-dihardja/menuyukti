@@ -98,6 +98,8 @@ function presetOptionLabel(id: MilestonePresetId, t: (key: string) => string): s
       return t('milestonePreset.restaurant_campaign_brief.label')
     case 'post_scheduler':
       return t('milestonePreset.post_scheduler.label')
+    case 'promotion_candidates':
+      return t('milestonePreset.promotion_candidates.label')
     default: {
       const _exhaustive: never = id
       return _exhaustive

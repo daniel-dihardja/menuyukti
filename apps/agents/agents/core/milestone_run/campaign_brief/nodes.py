@@ -44,6 +44,7 @@ class CampaignBriefDraftOutput(BaseModel):
     proofOrientedAngles: list[str]
     toneGuardrails: list[str]
     campaignObjective: str
+    mainCategory: str
     targetSegments: list[str]
     messageHierarchy: list[str]
     offerAndCtaPlan: list[str]
@@ -404,6 +405,7 @@ async def persist_result(state: CampaignBriefState, *, client: httpx.AsyncClient
         payload.setdefault("proofOrientedAngles", [])
         payload.setdefault("toneGuardrails", [])
         payload.setdefault("campaignObjective", "")
+        payload.setdefault("mainCategory", "FOOD")
         payload.setdefault("targetSegments", [])
         payload.setdefault("messageHierarchy", [])
         payload.setdefault("offerAndCtaPlan", [])
@@ -416,6 +418,8 @@ async def persist_result(state: CampaignBriefState, *, client: httpx.AsyncClient
             payload["campaignObjective"] = (
                 "Increase reservations with a conversion-focused campaign objective."
             )
+        main_category = str(payload.get("mainCategory") or "").strip().upper()
+        payload["mainCategory"] = main_category if main_category in {"FOOD", "DRINK"} else "FOOD"
         for list_key in _CAMPAIGN_BRIEF_LIST_FIELDS:
             _normalize_campaign_list(payload, list_key)
 

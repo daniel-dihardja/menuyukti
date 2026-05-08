@@ -13,7 +13,11 @@ export const passCriteriaDataSchema = z.object({
 
 export type PassCriteriaData = z.infer<typeof passCriteriaDataSchema>
 
-export const milestonePresetIdSchema = z.enum(['restaurant_campaign_brief', 'post_scheduler'])
+export const milestonePresetIdSchema = z.enum([
+  'restaurant_campaign_brief',
+  'post_scheduler',
+  'promotion_candidates',
+])
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
 
@@ -77,6 +81,7 @@ export const campaignBriefMilestoneDataSchema = z.object({
   proofOrientedAngles: z.array(z.string()),
   toneGuardrails: z.array(z.string()),
   campaignObjective: z.string(),
+  mainCategory: z.enum(['FOOD', 'DRINK']),
   targetSegments: z.array(z.string()),
   messageHierarchy: z.array(z.string()),
   offerAndCtaPlan: z.array(z.string()),
@@ -149,6 +154,23 @@ export const postSchedulerMilestoneDataSchema = z.object({
 
 export type PostSchedulerMilestoneData = z.infer<typeof postSchedulerMilestoneDataSchema>
 
+export const promotionCandidatesCategorySchema = z.object({
+  category: z.enum(['FOOD', 'DRINK']),
+  starItems: z.array(z.string()),
+  puzzleItems: z.array(z.string()),
+})
+
+export const promotionCandidatesMilestoneDataSchema = z.object({
+  mainCategory: z.enum(['FOOD', 'DRINK']),
+  categories: z.array(promotionCandidatesCategorySchema),
+  sourceAnalyticsRunId: z.string().nullable().optional(),
+  notes: z.string().optional(),
+})
+
+export type PromotionCandidatesMilestoneData = z.infer<
+  typeof promotionCandidatesMilestoneDataSchema
+>
+
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
@@ -174,6 +196,7 @@ export type GoalData = z.infer<typeof goalDataSchema>
 export const milestonedataValueSchema = z.union([
   campaignBriefMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
+  promotionCandidatesMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>

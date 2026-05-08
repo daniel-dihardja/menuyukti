@@ -6,6 +6,7 @@ import {
   milestonedataValueSchema,
   passCriteriaDataSchema,
   postSchedulerMilestoneDataSchema,
+  promotionCandidatesMilestoneDataSchema,
   resultDataSchema,
 } from '@/lib/graphql/node-schemas'
 import type { AnyNode } from '@/lib/graphql/queries'
@@ -185,6 +186,31 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
         audienceHypotheses: [],
         proofOrientedAngles: [],
         toneGuardrails: [],
+        campaignObjective: '',
+        mainCategory: 'FOOD',
+        targetSegments: [],
+        messageHierarchy: [],
+        offerAndCtaPlan: [],
+        contentPillarPlan: [],
+        measurementPlan: [],
+        testingPlan: [],
+        riskGuardrails: [],
+      }
+    }
+  }
+  if (presetId === 'promotion_candidates') {
+    const parsedPromotionCandidates = promotionCandidatesMilestoneDataSchema.safeParse(data)
+    if (parsedPromotionCandidates.success) {
+      normalizedData = parsedPromotionCandidates.data
+    } else {
+      normalizedData = {
+        mainCategory: 'FOOD',
+        categories: [
+          { category: 'FOOD', starItems: [], puzzleItems: [] },
+          { category: 'DRINK', starItems: [], puzzleItems: [] },
+        ],
+        sourceAnalyticsRunId: null,
+        notes: '',
       }
     }
   }

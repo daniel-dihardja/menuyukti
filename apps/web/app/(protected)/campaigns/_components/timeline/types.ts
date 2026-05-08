@@ -10,7 +10,10 @@ export type PassCriteriaRow = {
   status: PassCriteriaStatus
 }
 
-export type MilestonePresetId = 'restaurant_campaign_brief' | 'post_scheduler'
+export type MilestonePresetId =
+  | 'restaurant_campaign_brief'
+  | 'post_scheduler'
+  | 'promotion_candidates'
 
 export type MilestoneInput = {
   type: string
@@ -39,6 +42,15 @@ export type CampaignBriefMilestoneData = {
   audienceHypotheses: string[]
   proofOrientedAngles: string[]
   toneGuardrails: string[]
+  campaignObjective: string
+  mainCategory: 'FOOD' | 'DRINK'
+  targetSegments: string[]
+  messageHierarchy: string[]
+  offerAndCtaPlan: string[]
+  contentPillarPlan: string[]
+  measurementPlan: string[]
+  testingPlan: string[]
+  riskGuardrails: string[]
 }
 
 export type PostSchedulerMonthlyArcWeek = {
@@ -87,7 +99,25 @@ export type PostSchedulerMilestoneData = {
   guardrailCheck: string
 }
 
-export type MilestoneDataValue = CampaignBriefMilestoneData | PostSchedulerMilestoneData
+export type PostSchedulerPostItem = PostSchedulerMilestoneData['weeklySlotPlan'][number]
+
+export type PromotionCandidatesCategoryBlock = {
+  category: 'FOOD' | 'DRINK'
+  starItems: string[]
+  puzzleItems: string[]
+}
+
+export type PromotionCandidatesMilestoneData = {
+  mainCategory: 'FOOD' | 'DRINK'
+  categories: PromotionCandidatesCategoryBlock[]
+  sourceAnalyticsRunId?: string | null
+  notes?: string
+}
+
+export type MilestoneDataValue =
+  | CampaignBriefMilestoneData
+  | PostSchedulerMilestoneData
+  | PromotionCandidatesMilestoneData
 
 export type TimelineMilestone = {
   id: string

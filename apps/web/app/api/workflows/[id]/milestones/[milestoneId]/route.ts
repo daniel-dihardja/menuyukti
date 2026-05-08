@@ -10,6 +10,7 @@ import {
   milestonedataValueSchema,
   passCriteriaDataSchema,
   postSchedulerMilestoneDataSchema,
+  promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import {
   CREATE_NODE_MUTATION,
@@ -40,7 +41,7 @@ type RouteContext = {
 function mergeMilestoneNodeDataJson(
   prev: Record<string, unknown>,
   patch: {
-    presetId?: 'restaurant_campaign_brief' | 'post_scheduler'
+    presetId?: 'restaurant_campaign_brief' | 'post_scheduler' | 'promotion_candidates'
     milestoneInput?: { type: string; value?: unknown }
   },
 ): Record<string, unknown> {
@@ -343,6 +344,7 @@ export async function GET(_req: Request, context: RouteContext) {
           proofOrientedAngles: [],
           toneGuardrails: [],
           campaignObjective: '',
+          mainCategory: 'FOOD',
           targetSegments: [],
           messageHierarchy: [],
           offerAndCtaPlan: [],
@@ -372,6 +374,23 @@ export async function GET(_req: Request, context: RouteContext) {
           formatMix: { formats: [] },
           weeklySlotPlan: [],
           guardrailCheck: '',
+        }
+      }
+    }
+    if (
+      parsedMilestoneNodeData?.success &&
+      parsedMilestoneNodeData.data.presetId === 'promotion_candidates'
+    ) {
+      const pcParsed = promotionCandidatesMilestoneDataSchema.safeParse(milestoneData)
+      if (!pcParsed.success) {
+        milestoneData = {
+          mainCategory: 'FOOD',
+          categories: [
+            { category: 'FOOD', starItems: [], puzzleItems: [] },
+            { category: 'DRINK', starItems: [], puzzleItems: [] },
+          ],
+          sourceAnalyticsRunId: null,
+          notes: '',
         }
       }
     }

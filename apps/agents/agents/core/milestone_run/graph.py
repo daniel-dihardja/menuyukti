@@ -15,6 +15,9 @@ from agents_app.agents.core.milestone_run.graphql_client import fetch_prior_mile
 from agents_app.agents.core.milestone_run.post_scheduler.graph import (
     build_post_scheduler_graph,
 )
+from agents_app.agents.core.milestone_run.promotion_candidates.graph import (
+    build_promotion_candidates_graph,
+)
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     build_injected_prior_context_markdown,
 )
@@ -124,6 +127,27 @@ async def _run_post_scheduler(state: MilestoneRunState, *, client: httpx.AsyncCl
     }
 
 
+async def _run_promotion_candidates(
+    state: MilestoneRunState, *, client: httpx.AsyncClient
+) -> dict[str, Any]:
+    initial = _base_initial(state)
+    initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
+    final_sub = await _stream_subgraph(
+        build_promotion_candidates_graph(client),
+        initial,
+        state=state,
+    )
+    return {
+        "result_data": str(final_sub.get("result_data", "")),
+        "raw_data": str(final_sub.get("result_data", "") or state.get("raw_data", "")),
+        "milestone_data": final_sub.get("milestone_data"),
+        "milestonedata_written": bool(final_sub.get("milestonedata_written")),
+        "result_summary": str(state.get("result_summary", "")),
+        "result_node_id": state.get("result_node_id"),
+        "last_criteria_verdicts": list(state.get("last_criteria_verdicts") or []),
+    }
+
+
 async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     mid = str(state["milestone_id"])
     out = await fetch_context(state, client=client)  # type: ignore[arg-type]
@@ -174,6 +198,8 @@ async def _execute_preset(state: MilestoneRunState, *, client: httpx.AsyncClient
         return await _run_campaign_brief(state, client=client)
     if preset_id == "post_scheduler":
         return await _run_post_scheduler(state, client=client)
+    if preset_id == "promotion_candidates":
+        return await _run_promotion_candidates(state, client=client)
     raise RuntimeError(
         f"Unsupported milestone preset for dedicated dispatch: {preset_id!r} (milestone_id={mid})"
     )

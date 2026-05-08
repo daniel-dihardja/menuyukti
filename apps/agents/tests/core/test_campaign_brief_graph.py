@@ -66,6 +66,7 @@ def _valid_campaign_brief_payload() -> dict:
         ],
         "toneGuardrails": ["Be specific", "Keep copy concise", "Use operational language"],
         "campaignObjective": "Increase reservations in conversion stage this month",
+        "mainCategory": "FOOD",
         "targetSegments": ["Weekday lunch workers", "Weekend family groups", "Evening social diners"],
         "messageHierarchy": [
             "Hero promise tied to signature dishes",
@@ -123,6 +124,7 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
                     "proofOrientedAngles": ["A", "B", "C"],
                     "toneGuardrails": ["A", "B", "C"],
                     "campaignObjective": "Increase reservations in conversion stage this month",
+                    "mainCategory": "FOOD",
                     "targetSegments": [
                         "weekday lunch workers",
                         "weekend families",

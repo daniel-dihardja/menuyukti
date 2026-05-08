@@ -8,6 +8,7 @@ import {
   passCriteriaDataSchema,
   postSchedulerMilestoneDataSchema,
   postSchedulerMilestoneInputValueSchema,
+  promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
 export const workflowIdParamSchema = z.string().regex(/^\d+$/, 'Invalid workflow id')
@@ -29,7 +30,11 @@ export const patchMilestoneSchema = z
     goal: z.string().optional(),
     /** Milestone data (structured JSON); persisted on a child `milestonedata` node. */
     milestoneData: z
-      .union([campaignBriefMilestoneDataSchema, postSchedulerMilestoneDataSchema])
+      .union([
+        campaignBriefMilestoneDataSchema,
+        postSchedulerMilestoneDataSchema,
+        promotionCandidatesMilestoneDataSchema,
+      ])
       .nullable()
       .optional(),
     /** Typed milestone input; stored on milestone node `data` JSON. */

@@ -50,6 +50,7 @@ def test_build_milestone_run_graph_compiles() -> None:
     [
         ("restaurant_campaign_brief", "build_campaign_brief_graph"),
         ("post_scheduler", "build_post_scheduler_graph"),
+        ("promotion_candidates", "build_promotion_candidates_graph"),
     ],
 )
 async def test_graph_dispatches_to_dedicated_preset_graph(

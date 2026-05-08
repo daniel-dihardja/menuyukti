@@ -72,6 +72,7 @@ class CampaignBriefMilestoneOutput(BaseModel):
     proofOrientedAngles: list[str]
     toneGuardrails: list[str]
     campaignObjective: str
+    mainCategory: str
     targetSegments: list[str]
     messageHierarchy: list[str]
     offerAndCtaPlan: list[str]
@@ -143,6 +144,14 @@ class CampaignBriefMilestoneOutput(BaseModel):
         text = value.strip()
         if not text:
             raise ValueError("campaignObjective must be non-empty")
+        return text
+
+    @field_validator("mainCategory")
+    @classmethod
+    def _validate_main_category(cls, value: str) -> str:
+        text = value.strip().upper()
+        if text not in {"FOOD", "DRINK"}:
+            raise ValueError("mainCategory must be FOOD or DRINK")
         return text
 
 
@@ -266,11 +275,43 @@ class PostSchedulerMilestoneOutput(BaseModel):
         return self
 
 
+class PromotionCandidatesCategory(BaseModel):
+    category: str
+    starItems: list[str]
+    puzzleItems: list[str]
+
+    @field_validator("category")
+    @classmethod
+    def _validate_category(cls, value: str) -> str:
+        text = value.strip().upper()
+        if text not in {"FOOD", "DRINK"}:
+            raise ValueError("category must be FOOD or DRINK")
+        return text
+
+
+class PromotionCandidatesMilestoneOutput(BaseModel):
+    mainCategory: Literal["FOOD", "DRINK"]
+    categories: list[PromotionCandidatesCategory]
+    sourceAnalyticsRunId: str | None = None
+    notes: str | None = None
+
+    @field_validator("categories")
+    @classmethod
+    def _validate_categories(cls, values: list[PromotionCandidatesCategory]) -> list[PromotionCandidatesCategory]:
+        if not values:
+            raise ValueError("categories must contain at least one category")
+        seen = {row.category for row in values}
+        if len(seen) != len(values):
+            raise ValueError("categories must not contain duplicates")
+        return values
+
+
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
     "campaign_brief": CampaignBriefMilestoneOutput,
     "post_scheduler": PostSchedulerMilestoneOutput,
+    "promotion_candidates": PromotionCandidatesMilestoneOutput,
 }
 
 def validate_skill_output(skill_id: str | None, payload: Any) -> tuple[Any | None, str | None]:

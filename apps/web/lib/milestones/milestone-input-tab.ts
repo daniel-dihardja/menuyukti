@@ -3,13 +3,17 @@ import type { MilestoneInput, MilestonePresetId } from '@/lib/graphql/node-schem
 /** Presets whose Input tab uses the default optional owner-notes textarea (not custom widgets like dates). */
 export function milestonePresetHasDefaultOptionalNotesInput(
   presetId: MilestonePresetId | undefined,
-): presetId is 'restaurant_campaign_brief' | 'post_scheduler' {
-  return presetId === 'restaurant_campaign_brief' || presetId === 'post_scheduler'
+): presetId is 'restaurant_campaign_brief' | 'post_scheduler' | 'promotion_candidates' {
+  return (
+    presetId === 'restaurant_campaign_brief' ||
+    presetId === 'post_scheduler' ||
+    presetId === 'promotion_candidates'
+  )
 }
 
 export function optionalNotesFromMilestoneInput(
   raw: MilestoneInput | undefined,
-  presetId: 'restaurant_campaign_brief' | 'post_scheduler',
+  presetId: 'restaurant_campaign_brief' | 'post_scheduler' | 'promotion_candidates',
 ): string {
   if (raw?.type !== presetId || raw.value == null || typeof raw.value !== 'object') {
     return ''

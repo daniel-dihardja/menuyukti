@@ -8,11 +8,13 @@ import { formatPreviewDateString } from '@/lib/format-preview-date'
 import {
   campaignBriefMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
+  promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
 import type { TimelineMilestone } from '../timeline/types'
 
 import { MilestoneCampaignBriefDataPreview } from './milestone-campaign_brief-data-preview'
+import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
 import { MilestonePostSchedulerDataPreview } from './milestone-post-scheduler-data-preview'
 
 export type MilestoneDataPreviewProps = {
@@ -122,6 +124,27 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             funnelStageLabel: t('milestonePostSchedulerPreviewFunnelStageLabel'),
             visualDirectionLabel: t('milestonePostSchedulerPreviewVisualDirectionLabel'),
             notesLabel: t('milestonePostSchedulerPreviewNotesLabel'),
+          }}
+        />
+      )
+    }
+
+    if (milestone.presetId === 'promotion_candidates') {
+      const parsed = promotionCandidatesMilestoneDataSchema.safeParse(data)
+      if (!parsed.success) {
+        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+      }
+      return (
+        <MilestonePromotionCandidatesDataPreview
+          data={parsed.data}
+          labels={{
+            heading: t('milestonePromotionCandidatesPreviewHeading'),
+            mainCategoryLabel: t('milestonePromotionCandidatesPreviewMainCategoryLabel'),
+            emptyCategory: t('milestonePromotionCandidatesPreviewEmptyCategory'),
+            starItemsLabel: t('milestonePromotionCandidatesPreviewStarItemsLabel'),
+            puzzleItemsLabel: t('milestonePromotionCandidatesPreviewPuzzleItemsLabel'),
+            notesLabel: t('milestonePromotionCandidatesPreviewNotesLabel'),
+            noNotes: t('milestonePromotionCandidatesPreviewNoNotes'),
           }}
         />
       )

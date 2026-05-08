@@ -2,7 +2,11 @@ import type { PassCriteriaRow } from '@/app/(protected)/campaigns/_components/ti
 import { buildCampaignBriefPassCriteriaSeed } from '@/lib/milestones/campaign-brief-pass-criteria'
 import { type MilestoneInput, type MilestonedataValue } from '@/lib/graphql/node-schemas'
 
-export const MILESTONE_PRESET_IDS = ['restaurant_campaign_brief', 'post_scheduler'] as const
+export const MILESTONE_PRESET_IDS = [
+  'restaurant_campaign_brief',
+  'post_scheduler',
+  'promotion_candidates',
+] as const
 
 export type MilestonePresetId = (typeof MILESTONE_PRESET_IDS)[number]
 
@@ -55,6 +59,7 @@ export function getMilestonePresetCreateFields(
           proofOrientedAngles: [],
           toneGuardrails: [],
           campaignObjective: '',
+          mainCategory: 'FOOD',
           targetSegments: [],
           messageHierarchy: [],
           offerAndCtaPlan: [],
@@ -100,6 +105,35 @@ export function getMilestonePresetCreateFields(
           },
           {
             requirement: t('milestonePreset.post_scheduler.criterionMenuItems'),
+            status: 'open',
+          },
+        ],
+      }
+    case 'promotion_candidates':
+      return {
+        presetId: 'promotion_candidates',
+        name: t('milestonePreset.promotion_candidates.title'),
+        milestoneInput: {
+          type: 'promotion_candidates',
+          value: { notes: '' },
+        },
+        milestoneData: {
+          mainCategory: 'FOOD',
+          categories: [
+            { category: 'FOOD', starItems: [], puzzleItems: [] },
+            { category: 'DRINK', starItems: [], puzzleItems: [] },
+          ],
+          sourceAnalyticsRunId: null,
+          notes: '',
+        },
+        goal: t('milestonePreset.promotion_candidates.goal'),
+        passCriteria: [
+          {
+            requirement: t('milestonePreset.promotion_candidates.criterionCategoriesPresent'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.promotion_candidates.criterionItemsOnlyFromSignals'),
             status: 'open',
           },
         ],
