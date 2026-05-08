@@ -197,10 +197,11 @@ export function CampaignChatPanel({
         api: '/api/chat',
         prepareSendMessagesRequest: ({ messages, body: mergedBody }) => {
           const ctx = chatApiContextRef.current
+          const lastUser = [...messages].reverse().find((m) => m.role === 'user')
           return {
             body: {
               ...mergedBody,
-              messages,
+              messages: lastUser ? [lastUser] : messages,
               workflowId: ctx.workflowId,
               locationId: String(ctx.locationId),
               ...(ctx.milestoneId !== null ? { milestoneId: ctx.milestoneId } : {}),
@@ -212,6 +213,7 @@ export function CampaignChatPanel({
   )
 
   const { messages, sendMessage, status, stop, error, clearError, regenerate } = useChat({
+    id: workflowId,
     transport,
   })
 

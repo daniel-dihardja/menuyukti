@@ -22,7 +22,7 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { useTranslations } from 'next-intl'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { ChatMessageParts } from '@/components/chat-message-parts'
 
@@ -30,9 +30,32 @@ export function AgentChat() {
   const t = useTranslations('agentChat')
   const [text, setText] = useState('')
 
-  const transport = useMemo(() => new DefaultChatTransport({ api: '/api/chat' }), [])
+  const agentThreadIdRef = useRef<string | null>(null)
+  if (agentThreadIdRef.current === null) {
+    agentThreadIdRef.current = crypto.randomUUID()
+  }
+  const agentThreadId = agentThreadIdRef.current
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: '/api/chat',
+        prepareSendMessagesRequest: ({ messages, body: mergedBody }) => {
+          const lastUser = [...messages].reverse().find((m) => m.role === 'user')
+          return {
+            body: {
+              ...mergedBody,
+              messages: lastUser ? [lastUser] : messages,
+              agentThreadId,
+            },
+          }
+        },
+      }),
+    [agentThreadId],
+  )
 
   const { messages, sendMessage, status, stop, error, clearError, regenerate } = useChat({
+    id: agentThreadId,
     transport,
   })
 

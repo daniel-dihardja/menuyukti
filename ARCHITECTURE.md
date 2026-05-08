@@ -85,9 +85,9 @@ Both flows ground the model in **GraphQL-backed product state**, but they use di
 
 #### Chat
 
-1. **Thread context** — The request body supplies **`messages`** (user/assistant turns). The graph uses LangGraph **`MessagesState`**: the model sees a **fixed system prompt** (`apps/agents/agents/core/chat/prompts.py`) plus the **conversation history**.
+1. **Short-term memory** — The streaming chat graph is compiled once with a LangGraph **checkpointer** (`compile_chat_graph` in `apps/agents/agents/core/chat/graph.py`). Each HTTP request sends **only the latest user message**; prior turns live in checkpoint state keyed by **`thread_id`**: `{clerk_user_id}:wf:{workflow_id}` for campaign chat, or `{clerk_user_id}:agent:{client_thread_id}` for the standalone `/agent` page. Production uses **`PostgresSaver`** when `LANGGRAPH_CHECKPOINT_DATABASE_URL` is set; otherwise an in-memory saver (dev only).
 
-2. **Lazy milestone context** — `build_chat_graph` (`apps/agents/agents/core/chat/graph.py`) chooses the implementation by **what the client sends**. If **`milestone_id`**, **`location_id`**, **`user_id`**, and an **`httpx` client** are all present, the graph is a **ReAct agent** with a single tool **`get_milestone_data`**, which **fetches** the milestone node and its children from GraphQL and returns a **formatted Markdown snapshot** (goal, milestone data as JSON, pass criteria, result summary, etc.). If those fields are missing, the graph falls back to a **plain LLM node** with **no** milestone tool — minimal context, no automatic prefetch. The API accepts **`workflow_id`** for forward compatibility; it is **not** wired into the chat prompt today.
+2. **ReAct + milestone tool** — The same **`create_react_agent`** graph always includes **`get_milestone_data`**. The tool reads **`milestone_id`**, **`location_id`**, and **`user_id`** from the per-request **`RunnableConfig["configurable"]`** (not from a recompiled graph). If milestone context is missing, the tool tells the model to answer without a milestone fetch. The shared **`httpx` client** is bound per request via a **context variable** (`agents/core/chat/http_context.py`) so it is never stored in checkpoints. **Page refresh** clears the UI transcript until a hydration endpoint exists; **regenerate** may need explicit checkpoint handling later.
 
 ### Cross-cutting agentic patterns
 

@@ -20,6 +20,8 @@ export const chatRequestBodySchema = z.object({
   workflowId: z.string().regex(/^\d+$/, 'Invalid workflow id').optional(),
   milestoneId: z.string().regex(/^\d+$/, 'Invalid milestone id').optional(),
   locationId: z.string().regex(/^\d+$/, 'Invalid location id').optional(),
+  /** Opaque id for `/agent` chat (no workflow); required by agents when `workflowId` is absent. */
+  agentThreadId: z.string().min(1).optional(),
 })
 
 export type ChatRequestBody = z.infer<typeof chatRequestBodySchema>

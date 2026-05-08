@@ -20,7 +20,7 @@ make dev
 
 - API: `http://127.0.0.1:8001`
 - Health: `GET /health`
-- Streaming chat: `POST /chat` — `text/event-stream` (SSE), JSON body `{"messages":[{"role":"user","content":"..."}]}`
+- Streaming chat: `POST /chat` — `text/event-stream` (SSE). Body: **`messages`** must contain **exactly one** `user` message (the new turn); history is loaded from the LangGraph checkpointer. **`workflow_id`** (campaign) or **`agent_thread_id`** (standalone agent) selects the thread; **`milestone_id`** / **`location_id`** are optional and passed into the tool via run config. Set **`LANGGRAPH_CHECKPOINT_DATABASE_URL`** for durable Postgres checkpoints (see `.env.example`).
 - **Core:** `POST /format-markdown` — JSON body `{"content":"...","preset":"milestone-data"}` returns `{"formatted":"..."}`. Preset-driven Markdown cleanup for free-form notes (platform helper in `agents/core/format_markdown/`, not structured milestonedata).
 
 ## Milestone run

@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Annotated, Any
 
-import httpx
 from agents_app.agents.core.chat.graphql_client import fetch_milestone_node
-from langchain_core.tools import tool
+from agents_app.agents.core.chat.http_context import get_chat_http_client
+from langchain_core.runnables import RunnableConfig
+from langchain_core.tools import InjectedToolArg, tool
 
 # Keys that belong on typed GraphQL columns; strip from ``data`` for the residual section.
 _DATA_KEYS_STRIPPED_FOR_RESIDUAL = frozenset(
@@ -107,30 +108,29 @@ def _format_milestone_snapshot(milestone_id: str, node: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def make_get_milestone_data_tool(
-    milestone_id: str,
-    location_id: int,
-    user_id: str,
-    *,
-    client: httpx.AsyncClient,
-):
-    """Build a bound tool that reads the milestone row from GraphQL (typed fields + residual data)."""
+@tool
+async def get_milestone_data(config: Annotated[RunnableConfig, InjectedToolArg()]) -> str:
+    """Load the selected milestone row: goal, input, pass criteria, eval result, and preset/structured data.
 
-    @tool
-    async def get_milestone_data() -> str:
-        """Load the selected milestone row: goal, input, pass criteria, eval result, and preset/structured data.
+    All fields come from the milestone node (no child nodes). Call when the user asks about the
+    currently selected milestone's inputs, outputs, criteria, or run payload."""
+    c = config.get("configurable") or {}
+    milestone_id = c.get("milestone_id")
+    location_id = c.get("location_id")
+    user_id = c.get("user_id")
+    if not milestone_id or location_id is None or not user_id:
+        return (
+            "Milestone context is not available (no milestone selected or missing location). "
+            "Answer from the conversation only, or ask the user to select a milestone."
+        )
+    client = get_chat_http_client()
+    node = await fetch_milestone_node(str(milestone_id), str(user_id), client=client)
+    if not node:
+        return "Error: milestone not found."
+    if str(node.get("nodeType") or "") != "milestone":
+        return "Error: node is not a milestone."
+    loc = node.get("locationId")
+    if loc is not None and int(loc) != int(location_id):
+        return "Error: milestone location does not match the campaign context."
 
-        All fields come from the milestone node (no child nodes). Call when the user asks about the
-        currently selected milestone's inputs, outputs, criteria, or run payload."""
-        node = await fetch_milestone_node(milestone_id, user_id, client=client)
-        if not node:
-            return "Error: milestone not found."
-        if str(node.get("nodeType") or "") != "milestone":
-            return "Error: node is not a milestone."
-        loc = node.get("locationId")
-        if loc is not None and int(loc) != location_id:
-            return "Error: milestone location does not match the campaign context."
-
-        return _format_milestone_snapshot(milestone_id, node)
-
-    return get_milestone_data
+    return _format_milestone_snapshot(str(milestone_id), node)
