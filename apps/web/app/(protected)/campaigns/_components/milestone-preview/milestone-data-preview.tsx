@@ -7,6 +7,7 @@ import { formatPreviewDateString } from '@/lib/format-preview-date'
 
 import {
   campaignBriefMilestoneDataSchema,
+  cultureHooksMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
@@ -14,6 +15,7 @@ import {
 import type { TimelineMilestone } from '../timeline/types'
 
 import { MilestoneCampaignBriefDataPreview } from './milestone-campaign_brief-data-preview'
+import { MilestoneCultureHooksDataPreview } from './milestone-culture-hooks-data-preview'
 import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
 import { MilestonePostSchedulerDataPreview } from './milestone-post-scheduler-data-preview'
 
@@ -145,6 +147,30 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             puzzleItemsLabel: t('milestonePromotionCandidatesPreviewPuzzleItemsLabel'),
             notesLabel: t('milestonePromotionCandidatesPreviewNotesLabel'),
             noNotes: t('milestonePromotionCandidatesPreviewNoNotes'),
+          }}
+        />
+      )
+    }
+
+    if (milestone.presetId === 'culture_hooks') {
+      const parsed = cultureHooksMilestoneDataSchema.safeParse(data)
+      if (!parsed.success) {
+        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+      }
+
+      return (
+        <MilestoneCultureHooksDataPreview
+          data={parsed.data}
+          labels={{
+            locationConcept: t('milestoneCultureHooksPreviewLocationConcept'),
+            targetAudience: t('milestoneCultureHooksPreviewTargetAudience'),
+            intersections: t('milestoneCultureHooksPreviewIntersections'),
+            emptyIntersections: t('milestoneCultureHooksPreviewEmptyIntersections'),
+            topic: t('milestoneCultureHooksPreviewTopic'),
+            conceptLink: t('milestoneCultureHooksPreviewConceptLink'),
+            audienceRelevance: t('milestoneCultureHooksPreviewAudienceRelevance'),
+            contentExample: t('milestoneCultureHooksPreviewContentExample'),
+            guardrailCheck: t('milestoneCultureHooksPreviewGuardrailCheck'),
           }}
         />
       )

@@ -3,6 +3,8 @@ import { z } from 'zod'
 import {
   campaignBriefMilestoneDataSchema,
   campaignBriefMilestoneInputValueSchema,
+  cultureHooksMilestoneDataSchema,
+  cultureHooksMilestoneInputValueSchema,
   milestonePresetIdSchema,
   milestoneInputSchema,
   passCriteriaDataSchema,
@@ -34,6 +36,7 @@ export const patchMilestoneSchema = z
         campaignBriefMilestoneDataSchema,
         postSchedulerMilestoneDataSchema,
         promotionCandidatesMilestoneDataSchema,
+        cultureHooksMilestoneDataSchema,
       ])
       .nullable()
       .optional(),
@@ -47,6 +50,10 @@ export const patchMilestoneSchema = z
         z.object({
           type: z.literal('post_scheduler'),
           value: postSchedulerMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('culture_hooks'),
+          value: cultureHooksMilestoneInputValueSchema,
         }),
         milestoneInputSchema,
       ])

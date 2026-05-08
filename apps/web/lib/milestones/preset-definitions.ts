@@ -6,6 +6,7 @@ export const MILESTONE_PRESET_IDS = [
   'restaurant_campaign_brief',
   'post_scheduler',
   'promotion_candidates',
+  'culture_hooks',
 ] as const
 
 export type MilestonePresetId = (typeof MILESTONE_PRESET_IDS)[number]
@@ -134,6 +135,36 @@ export function getMilestonePresetCreateFields(
           },
           {
             requirement: t('milestonePreset.promotion_candidates.criterionItemsOnlyFromSignals'),
+            status: 'open',
+          },
+        ],
+      }
+    case 'culture_hooks':
+      return {
+        presetId: 'culture_hooks',
+        name: t('milestonePreset.culture_hooks.title'),
+        milestoneInput: {
+          type: 'culture_hooks',
+          value: { notes: '' },
+        },
+        milestoneData: {
+          locationConcept: '',
+          targetAudience: '',
+          intersections: [],
+          guardrailCheck: '',
+        },
+        goal: t('milestonePreset.culture_hooks.goal'),
+        passCriteria: [
+          {
+            requirement: t('milestonePreset.culture_hooks.criterionIntersectionsPresent'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.culture_hooks.criterionNonFood'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.culture_hooks.criterionAudienceConceptInferred'),
             status: 'open',
           },
         ],

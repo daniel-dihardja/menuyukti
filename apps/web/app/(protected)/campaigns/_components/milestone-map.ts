@@ -1,5 +1,6 @@
 import {
   campaignBriefMilestoneDataSchema,
+  cultureHooksMilestoneDataSchema,
   goalDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
@@ -231,6 +232,19 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
         contentRatio: { pillars: [] },
         formatMix: { formats: [] },
         weeklySlotPlan: [],
+        guardrailCheck: '',
+      }
+    }
+  }
+  if (presetId === 'culture_hooks') {
+    const parsedCultureHooks = cultureHooksMilestoneDataSchema.safeParse(data)
+    if (parsedCultureHooks.success) {
+      normalizedData = parsedCultureHooks.data
+    } else {
+      normalizedData = {
+        locationConcept: '',
+        targetAudience: '',
+        intersections: [],
         guardrailCheck: '',
       }
     }

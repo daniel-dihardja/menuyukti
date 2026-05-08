@@ -11,6 +11,8 @@ describe('milestone optional notes', () => {
   it('milestonePresetHasDefaultOptionalNotesInput includes supported presets', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('restaurant_campaign_brief')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('post_scheduler')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('culture_hooks')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput(undefined)).toBe(false)
   })
 
@@ -36,6 +38,19 @@ describe('milestone optional notes', () => {
     }
   })
 
+  it('patchMilestoneSchema accepts culture_hooks milestoneInput', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      milestoneInput: { type: 'culture_hooks', value: { notes: 'focus on heritage values' } },
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.milestoneInput).toEqual({
+        type: 'culture_hooks',
+        value: { notes: 'focus on heritage values' },
+      })
+    }
+  })
+
   it('getMilestonePresetCreateFields seeds post_scheduler milestoneInput', () => {
     const fields = getMilestonePresetCreateFields('post_scheduler', (k) => k)
     expect(fields.milestoneInput).toEqual({
@@ -43,12 +58,32 @@ describe('milestone optional notes', () => {
       value: { notes: '' },
     })
     expect(fields.milestoneData).toEqual({
-      dateConcepts: [],
-      daySummary: { weekdayCount: 0, weekendCount: 0 },
-      promotionCandidates: {
-        grouping: 'by_menu_category',
-        categories: {},
+      monthlyArc: {
+        weeks: [
+          { week: 1, objective: '', rationale: '' },
+          { week: 2, objective: '', rationale: '' },
+          { week: 3, objective: '', rationale: '' },
+          { week: 4, objective: '', rationale: '' },
+        ],
       },
+      contentRatio: { pillars: [] },
+      formatMix: { formats: [] },
+      weeklySlotPlan: [],
+      guardrailCheck: '',
+    })
+  })
+
+  it('getMilestonePresetCreateFields seeds culture_hooks milestoneInput', () => {
+    const fields = getMilestonePresetCreateFields('culture_hooks', (k) => k)
+    expect(fields.milestoneInput).toEqual({
+      type: 'culture_hooks',
+      value: { notes: '' },
+    })
+    expect(fields.milestoneData).toEqual({
+      locationConcept: '',
+      targetAudience: '',
+      intersections: [],
+      guardrailCheck: '',
     })
   })
 })

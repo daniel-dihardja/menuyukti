@@ -11,6 +11,7 @@ from agents_app.agents.core.chat.graphql_client import fetch_milestone_node
 from agents_app.agents.core.milestone_eval.graph import build_milestone_eval_graph
 from agents_app.agents.core.milestone_eval.nodes import fetch_context
 from agents_app.agents.core.milestone_run.campaign_brief.graph import build_campaign_brief_graph
+from agents_app.agents.core.milestone_run.culture_hooks.graph import build_culture_hooks_graph
 from agents_app.agents.core.milestone_run.graphql_client import fetch_prior_milestones_data
 from agents_app.agents.core.milestone_run.post_scheduler.graph import (
     build_post_scheduler_graph,
@@ -148,6 +149,29 @@ async def _run_promotion_candidates(
     }
 
 
+async def _run_culture_hooks(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+    initial = _base_initial(state)
+    initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
+    initial["injected_prior_context_markdown"] = build_injected_prior_context_markdown(
+        initial["prior_milestones_data"],
+        ("restaurant_campaign_brief",),
+    )[0]
+    final_sub = await _stream_subgraph(
+        build_culture_hooks_graph(client),
+        initial,
+        state=state,
+    )
+    return {
+        "result_data": str(final_sub.get("result_data", "")),
+        "raw_data": str(final_sub.get("result_data", "") or state.get("raw_data", "")),
+        "milestone_data": final_sub.get("milestone_data"),
+        "milestonedata_written": bool(final_sub.get("milestonedata_written")),
+        "result_summary": str(state.get("result_summary", "")),
+        "result_node_id": state.get("result_node_id"),
+        "last_criteria_verdicts": list(state.get("last_criteria_verdicts") or []),
+    }
+
+
 async def _fetch_children(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     mid = str(state["milestone_id"])
     out = await fetch_context(state, client=client)  # type: ignore[arg-type]
@@ -200,6 +224,8 @@ async def _execute_preset(state: MilestoneRunState, *, client: httpx.AsyncClient
         return await _run_post_scheduler(state, client=client)
     if preset_id == "promotion_candidates":
         return await _run_promotion_candidates(state, client=client)
+    if preset_id == "culture_hooks":
+        return await _run_culture_hooks(state, client=client)
     raise RuntimeError(
         f"Unsupported milestone preset for dedicated dispatch: {preset_id!r} (milestone_id={mid})"
     )

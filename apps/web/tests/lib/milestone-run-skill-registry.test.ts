@@ -8,6 +8,7 @@ describe('milestone run skill registry', () => {
     expect(ids).toContain('public_holidays')
     expect(ids).toContain('campaign_brief')
     expect(ids).toContain('post_scheduler')
+    expect(ids).toContain('culture_hooks')
     expect(ids).toContain('generic')
   })
 })

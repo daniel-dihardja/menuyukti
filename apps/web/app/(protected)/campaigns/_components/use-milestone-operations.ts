@@ -5,6 +5,7 @@ import { useCallback, useMemo } from 'react'
 
 import {
   campaignBriefMilestoneDataSchema,
+  cultureHooksMilestoneDataSchema,
   milestoneDataSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
@@ -38,6 +39,10 @@ function parseDataPreviewForPreset(
   }
   if (presetId === 'promotion_candidates') {
     const parsed = promotionCandidatesMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'culture_hooks') {
+    const parsed = cultureHooksMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   return undefined

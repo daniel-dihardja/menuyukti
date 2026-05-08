@@ -306,12 +306,51 @@ class PromotionCandidatesMilestoneOutput(BaseModel):
         return values
 
 
+class CultureHookIntersection(BaseModel):
+    topic: str
+    conceptLink: str
+    audienceRelevance: str
+    contentExample: str
+
+
+class CultureHooksMilestoneOutput(BaseModel):
+    locationConcept: str
+    targetAudience: str
+    intersections: list[CultureHookIntersection]
+    guardrailCheck: str
+
+    @field_validator("locationConcept", "targetAudience", "guardrailCheck")
+    @classmethod
+    def _validate_non_empty_summary_fields(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("must be non-empty")
+        return text
+
+    @field_validator("intersections")
+    @classmethod
+    def _validate_intersections(cls, values: list[CultureHookIntersection]) -> list[CultureHookIntersection]:
+        if not (3 <= len(values) <= 5):
+            raise ValueError("must contain between 3 and 5 intersections")
+        seen_topics: set[str] = set()
+        for item in values:
+            topic = item.topic.strip()
+            if not topic:
+                raise ValueError("intersection topic must be non-empty")
+            key = topic.casefold()
+            if key in seen_topics:
+                raise ValueError("intersections must not contain duplicate topics")
+            seen_topics.add(key)
+        return values
+
+
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
     "campaign_brief": CampaignBriefMilestoneOutput,
     "post_scheduler": PostSchedulerMilestoneOutput,
     "promotion_candidates": PromotionCandidatesMilestoneOutput,
+    "culture_hooks": CultureHooksMilestoneOutput,
 }
 
 def validate_skill_output(skill_id: str | None, payload: Any) -> tuple[Any | None, str | None]:

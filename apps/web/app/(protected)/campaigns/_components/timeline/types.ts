@@ -14,6 +14,7 @@ export type MilestonePresetId =
   | 'restaurant_campaign_brief'
   | 'post_scheduler'
   | 'promotion_candidates'
+  | 'culture_hooks'
 
 export type MilestoneInput = {
   type: string
@@ -114,10 +115,25 @@ export type PromotionCandidatesMilestoneData = {
   notes?: string
 }
 
+export type CultureHookIntersection = {
+  topic: string
+  conceptLink: string
+  audienceRelevance: string
+  contentExample: string
+}
+
+export type CultureHooksMilestoneData = {
+  locationConcept: string
+  targetAudience: string
+  intersections: CultureHookIntersection[]
+  guardrailCheck: string
+}
+
 export type MilestoneDataValue =
   | CampaignBriefMilestoneData
   | PostSchedulerMilestoneData
   | PromotionCandidatesMilestoneData
+  | CultureHooksMilestoneData
 
 export type TimelineMilestone = {
   id: string

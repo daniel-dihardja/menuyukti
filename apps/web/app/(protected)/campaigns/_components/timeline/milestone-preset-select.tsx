@@ -100,6 +100,8 @@ function presetOptionLabel(id: MilestonePresetId, t: (key: string) => string): s
       return t('milestonePreset.post_scheduler.label')
     case 'promotion_candidates':
       return t('milestonePreset.promotion_candidates.label')
+    case 'culture_hooks':
+      return t('milestonePreset.culture_hooks.label')
     default: {
       const _exhaustive: never = id
       return _exhaustive

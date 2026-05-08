@@ -30,6 +30,12 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
       'Use for the scheduler milestone: builds an Instagram content schedule from Campaign Brief (campaign window and public holidays), scheduler plan signals, and prefetched promotion candidates (star/puzzle menu items by category).',
   },
   {
+    id: 'culture_hooks',
+    name: 'Culture hooks',
+    description:
+      'Use for the culture hooks milestone: reads Campaign Brief only, infers location concept and target audience, then proposes non-food intersection topics for culturally relevant Instagram content.',
+  },
+  {
     id: 'generic',
     name: 'Generic milestone data prep',
     description:

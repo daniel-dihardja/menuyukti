@@ -1146,6 +1146,17 @@
             "criterionCategoriesPresent": "Data includes at least one category section (**FOOD** or **DRINK**), and the first category matches `mainCategory` in the same data payload.",
             "criterionItemsOnlyFromSignals": "**starItems** and **puzzleItems** only include menu names from promotion-engineering signals (no invented items)."
           },
+          "culture_hooks": {
+            "label": "Culture hooks",
+            "title": "Culture Hooks",
+            "inputLabel": "Culture hooks notes",
+            "inputDescription": "Optional direction for tone and emphasis. The run uses only prior Campaign Brief data to infer location concept, target audience, and non-food intersection topics.",
+            "inputPlaceholder": "e.g. prioritize sustainability and family rituals with retro tone...",
+            "goal": "Using Campaign Brief data only, identify the location concept and target audience, then generate non-food topic intersections where concept and audience interests overlap.",
+            "criterionIntersectionsPresent": "Data includes **3-5 non-food intersections** with concrete topic, concept link, audience relevance, content example, and format.",
+            "criterionNonFood": "Intersections are **not food-centric** (no dish names, recipes, or flavor-led angles).",
+            "criterionAudienceConceptInferred": "Data clearly states **locationConcept** and **targetAudience**, both inferred from Campaign Brief context."
+          },
           "restaurant_campaign_brief": {
             "label": "Campaign brief",
             "title": "Campaign brief",
@@ -1343,6 +1354,15 @@
         "milestonePostSchedulerPreviewFunnelStageLabel": "Funnel stage",
         "milestonePostSchedulerPreviewVisualDirectionLabel": "Visual direction",
         "milestonePostSchedulerPreviewNotesLabel": "Notes",
+        "milestoneCultureHooksPreviewLocationConcept": "Location concept",
+        "milestoneCultureHooksPreviewTargetAudience": "Target audience",
+        "milestoneCultureHooksPreviewIntersections": "Intersections",
+        "milestoneCultureHooksPreviewEmptyIntersections": "No intersections generated yet.",
+        "milestoneCultureHooksPreviewTopic": "Topic",
+        "milestoneCultureHooksPreviewConceptLink": "Concept link",
+        "milestoneCultureHooksPreviewAudienceRelevance": "Audience relevance",
+        "milestoneCultureHooksPreviewContentExample": "Content example",
+        "milestoneCultureHooksPreviewGuardrailCheck": "Guardrail check",
         "milestonePreviewUnsupported": "This milestone data format is not supported in the preview yet.",
         "milestonePreviewToggle": "Data preview",
         "milestonePreviewDataEmpty": "No data has been added for this milestone yet.",

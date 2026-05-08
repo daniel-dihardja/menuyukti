@@ -17,6 +17,7 @@ export const milestonePresetIdSchema = z.enum([
   'restaurant_campaign_brief',
   'post_scheduler',
   'promotion_candidates',
+  'culture_hooks',
 ])
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
@@ -46,6 +47,12 @@ export const postSchedulerMilestoneInputValueSchema = z.object({
 export type PostSchedulerMilestoneInputValue = z.infer<
   typeof postSchedulerMilestoneInputValueSchema
 >
+
+export const cultureHooksMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type CultureHooksMilestoneInputValue = z.infer<typeof cultureHooksMilestoneInputValueSchema>
 
 export const milestoneInputSchema = z.object({
   type: z.string().trim().min(1),
@@ -171,6 +178,22 @@ export type PromotionCandidatesMilestoneData = z.infer<
   typeof promotionCandidatesMilestoneDataSchema
 >
 
+export const cultureHookIntersectionSchema = z.object({
+  topic: z.string(),
+  conceptLink: z.string(),
+  audienceRelevance: z.string(),
+  contentExample: z.string(),
+})
+
+export const cultureHooksMilestoneDataSchema = z.object({
+  locationConcept: z.string(),
+  targetAudience: z.string(),
+  intersections: z.array(cultureHookIntersectionSchema),
+  guardrailCheck: z.string(),
+})
+
+export type CultureHooksMilestoneData = z.infer<typeof cultureHooksMilestoneDataSchema>
+
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
@@ -197,6 +220,7 @@ export const milestonedataValueSchema = z.union([
   campaignBriefMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
+  cultureHooksMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>
