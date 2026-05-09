@@ -63,9 +63,6 @@ class CampaignBriefVenueSnapshot(BaseModel):
 
 
 class CampaignBriefMilestoneOutput(BaseModel):
-    startDate: str
-    endDate: str
-    publicHolidays: list[CampaignWindowPublicHoliday]
     venueSnapshot: CampaignBriefVenueSnapshot
     contentPillars: list[str]
     audienceHypotheses: list[str]

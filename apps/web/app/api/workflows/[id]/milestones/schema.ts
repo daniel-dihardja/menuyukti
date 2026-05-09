@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
 import {
+  datesMilestoneDataSchema,
+  datesMilestoneInputValueSchema,
   campaignBriefMilestoneDataSchema,
   campaignBriefMilestoneInputValueSchema,
   cultureHooksMilestoneDataSchema,
@@ -32,6 +34,7 @@ export const patchMilestoneSchema = z
     /** Milestone data (structured JSON); persisted on a child `milestonedata` node. */
     milestoneData: z
       .union([
+        datesMilestoneDataSchema,
         campaignBriefMilestoneDataSchema,
         postSchedulerMilestoneDataSchema,
         promotionCandidatesMilestoneDataSchema,
@@ -42,6 +45,10 @@ export const patchMilestoneSchema = z
     /** Typed milestone input; stored on milestone node `data` JSON. */
     milestoneInput: z
       .union([
+        z.object({
+          type: z.literal('dates'),
+          value: datesMilestoneInputValueSchema,
+        }),
         z.object({
           type: z.literal('restaurant_campaign_brief'),
           value: campaignBriefMilestoneInputValueSchema,

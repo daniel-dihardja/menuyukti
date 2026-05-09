@@ -4,6 +4,7 @@ import type { Dispatch } from 'react'
 import { useCallback, useMemo } from 'react'
 
 import {
+  datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   milestoneDataSchema,
@@ -30,6 +31,10 @@ function parseDataPreviewForPreset(
   presetId: TimelineMilestone['presetId'],
   dataPreview: object,
 ): MilestoneDataValue | undefined {
+  if (presetId === 'dates') {
+    const parsed = datesMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
   if (presetId === 'restaurant_campaign_brief') {
     const parsed = campaignBriefMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined

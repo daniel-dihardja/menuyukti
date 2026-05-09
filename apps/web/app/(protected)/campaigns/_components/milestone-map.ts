@@ -1,4 +1,5 @@
 import {
+  datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   milestoneDataSchema,
@@ -139,9 +140,6 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
       normalizedData = parsedCampaignBriefData.data
     } else {
       normalizedData = {
-        startDate: '',
-        endDate: '',
-        publicHolidays: [],
         venueSnapshot: {
           venueName: '',
           city: '',
@@ -161,6 +159,18 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
         measurementPlan: [],
         testingPlan: [],
         riskGuardrails: [],
+      }
+    }
+  }
+  if (presetId === 'dates') {
+    const parsedDatesData = datesMilestoneDataSchema.safeParse(data)
+    if (parsedDatesData.success) {
+      normalizedData = parsedDatesData.data
+    } else {
+      normalizedData = {
+        startDate: '',
+        endDate: '',
+        publicHolidays: [],
       }
     }
   }

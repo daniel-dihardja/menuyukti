@@ -15,6 +15,7 @@ export const passCriteriaSchema = z.object({
 export type PassCriteriaData = z.infer<typeof passCriteriaSchema>
 
 export const milestonePresetIdSchema = z.enum([
+  'dates',
   'restaurant_campaign_brief',
   'post_scheduler',
   'promotion_candidates',
@@ -55,6 +56,13 @@ export const cultureHooksMilestoneInputValueSchema = z.object({
 
 export type CultureHooksMilestoneInputValue = z.infer<typeof cultureHooksMilestoneInputValueSchema>
 
+export const datesMilestoneInputValueSchema = z.object({
+  startDate: z.string(),
+  endDate: z.string(),
+})
+
+export type DatesMilestoneInputValue = z.infer<typeof datesMilestoneInputValueSchema>
+
 export const milestoneInputSchema = z.object({
   type: z.string().trim().min(1),
   value: z.unknown().optional(),
@@ -70,6 +78,14 @@ export const campaignWindowPublicHolidaySchema = z.object({
 
 export type CampaignWindowPublicHoliday = z.infer<typeof campaignWindowPublicHolidaySchema>
 
+export const datesMilestoneDataSchema = z.object({
+  startDate: z.string(),
+  endDate: z.string(),
+  publicHolidays: z.array(campaignWindowPublicHolidaySchema),
+})
+
+export type DatesMilestoneData = z.infer<typeof datesMilestoneDataSchema>
+
 export const campaignBriefVenueSnapshotSchema = z.object({
   venueName: z.string(),
   city: z.string(),
@@ -80,9 +96,6 @@ export const campaignBriefVenueSnapshotSchema = z.object({
 export type CampaignBriefVenueSnapshot = z.infer<typeof campaignBriefVenueSnapshotSchema>
 
 export const campaignBriefMilestoneDataSchema = z.object({
-  startDate: z.string(),
-  endDate: z.string(),
-  publicHolidays: z.array(campaignWindowPublicHolidaySchema),
   venueSnapshot: campaignBriefVenueSnapshotSchema,
   contentPillars: z.array(z.string()),
   audienceHypotheses: z.array(z.string()),
@@ -210,6 +223,7 @@ export type MilestoneData = z.infer<typeof milestoneDataSchema>
 
 /** Child `milestonedata` node JSON — structured preset data only (breaking change: no markdown string). */
 export const milestonedataValueSchema = z.union([
+  datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,

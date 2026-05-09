@@ -1,12 +1,12 @@
-"""State schema for dedicated campaign-brief milestone execution."""
+"""State schema for dedicated dates milestone execution."""
 
 from __future__ import annotations
 
 from typing import Any, NotRequired, TypedDict
 
 
-class CampaignBriefState(TypedDict):
-    """State carried through dedicated campaign-brief generation and persistence."""
+class DatesState(TypedDict):
+    """State carried through dedicated dates fetch and persistence."""
 
     milestone_id: str
     location_id: int
@@ -16,10 +16,9 @@ class CampaignBriefState(TypedDict):
     milestone_input: NotRequired[dict[str, Any] | None]
     run_id: NotRequired[str]
     traceparent: NotRequired[str | None]
-    location_raw: dict[str, Any]
-    signals_raw: dict[str, Any]
-    signal_markdown: str
-    generated_output: NotRequired[dict[str, Any] | None]
+    start_date: str
+    end_date: str
+    public_holidays: list[dict[str, Any]]
     result_data: str
     milestone_data: NotRequired[dict[str, Any] | list[Any] | None]
     milestonedata_written: bool

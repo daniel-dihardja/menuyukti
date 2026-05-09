@@ -94,6 +94,8 @@ export function MilestoneCreateControls({
 
 function presetOptionLabel(id: MilestonePresetId, t: (key: string) => string): string {
   switch (id) {
+    case 'dates':
+      return t('milestonePreset.dates.label')
     case 'restaurant_campaign_brief':
       return t('milestonePreset.restaurant_campaign_brief.label')
     case 'post_scheduler':

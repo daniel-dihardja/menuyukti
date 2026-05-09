@@ -4,6 +4,7 @@ import type { z } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
+  datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
@@ -130,6 +131,17 @@ export async function GET(_req: Request, context: RouteContext) {
       passCriterias = passCriteriasFromMilestoneData(parsedMilestoneNodeData.data)
     }
 
+    if (parsedMilestoneNodeData?.success && parsedMilestoneNodeData.data.presetId === 'dates') {
+      const datesDataParsed = datesMilestoneDataSchema.safeParse(milestoneData)
+      if (!datesDataParsed.success) {
+        milestoneData = {
+          startDate: '',
+          endDate: '',
+          publicHolidays: [],
+        }
+      }
+    }
+
     if (
       parsedMilestoneNodeData?.success &&
       parsedMilestoneNodeData.data.presetId === 'restaurant_campaign_brief'
@@ -137,9 +149,6 @@ export async function GET(_req: Request, context: RouteContext) {
       const campaignBriefDataParsed = campaignBriefMilestoneDataSchema.safeParse(milestoneData)
       if (!campaignBriefDataParsed.success) {
         milestoneData = {
-          startDate: '',
-          endDate: '',
-          publicHolidays: [],
           venueSnapshot: {
             venueName: '',
             city: '',

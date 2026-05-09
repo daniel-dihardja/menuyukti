@@ -48,7 +48,7 @@ export type MilestoneItemTabsModel = {
   handleGoalSave: () => void
   handleAddPassCriterion: () => Promise<void>
   handleRemovePassCriterion: (index: number) => Promise<void>
-  isCampaignBriefPreset: boolean
+  isDatesPreset: boolean
   optionalNotesDraft: string
   setOptionalNotesDraft: (v: string) => void
   handleOptionalNotesBlur: () => void
@@ -121,7 +121,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     handleGoalSave,
     handleAddPassCriterion,
     handleRemovePassCriterion,
-    isCampaignBriefPreset,
+    isDatesPreset,
     optionalNotesDraft,
     setOptionalNotesDraft,
     handleOptionalNotesBlur,
@@ -183,13 +183,11 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           </FieldGroup>
         </TabsContent>
         <TabsContent value="input">
-          {isCampaignBriefPreset ? (
+          {isDatesPreset ? (
             <FieldGroup className="gap-4">
               <Field>
-                <FieldLabel>{t('milestoneCampaignBriefInputStartDateLabel')}</FieldLabel>
-                <FieldDescription>
-                  {t('milestoneCampaignBriefInputStartDateDescription')}
-                </FieldDescription>
+                <FieldLabel>{t('milestoneDatesInputStartDateLabel')}</FieldLabel>
+                <FieldDescription>{t('milestoneDatesInputStartDateDescription')}</FieldDescription>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -201,7 +199,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                       <CalendarDays aria-hidden data-icon="inline-start" />
                       {inputDraft.startDate
                         ? formatDateButtonLabel(inputDraft.startDate)
-                        : t('milestoneCampaignBriefInputPickDate')}
+                        : t('milestoneDatesInputPickDate')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="w-auto p-0">
@@ -219,10 +217,8 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                 </Popover>
               </Field>
               <Field>
-                <FieldLabel>{t('milestoneCampaignBriefInputEndDateLabel')}</FieldLabel>
-                <FieldDescription>
-                  {t('milestoneCampaignBriefInputEndDateDescription')}
-                </FieldDescription>
+                <FieldLabel>{t('milestoneDatesInputEndDateLabel')}</FieldLabel>
+                <FieldDescription>{t('milestoneDatesInputEndDateDescription')}</FieldDescription>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -234,7 +230,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                       <CalendarDays aria-hidden data-icon="inline-start" />
                       {inputDraft.endDate
                         ? formatDateButtonLabel(inputDraft.endDate)
-                        : t('milestoneCampaignBriefInputPickDate')}
+                        : t('milestoneDatesInputPickDate')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="w-auto p-0">
@@ -251,23 +247,6 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                   </PopoverContent>
                 </Popover>
               </Field>
-              {optionalNotesCopy ? (
-                <Field>
-                  <FieldLabel>{optionalNotesCopy.label}</FieldLabel>
-                  <FieldDescription>{optionalNotesCopy.description}</FieldDescription>
-                  <Textarea
-                    className="min-h-[120px] resize-y whitespace-pre-wrap"
-                    disabled={isMilestoneRunning}
-                    onBlur={() => handleOptionalNotesBlur()}
-                    onFocus={() => handleOptionalNotesFocus()}
-                    onChange={(e) => setOptionalNotesDraft(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    placeholder={optionalNotesCopy.placeholder}
-                    value={optionalNotesDraft}
-                  />
-                </Field>
-              ) : null}
               <FieldSaveStatus
                 className="text-muted-foreground"
                 messages={{

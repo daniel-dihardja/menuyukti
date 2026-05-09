@@ -11,6 +11,7 @@ export type PassCriteriaRow = {
 }
 
 export type MilestonePresetId =
+  | 'dates'
   | 'restaurant_campaign_brief'
   | 'post_scheduler'
   | 'promotion_candidates'
@@ -27,6 +28,12 @@ export type CampaignWindowPublicHoliday = {
   date: string
 }
 
+export type DatesMilestoneData = {
+  startDate: string
+  endDate: string
+  publicHolidays: CampaignWindowPublicHoliday[]
+}
+
 export type CampaignBriefVenueSnapshot = {
   venueName: string
   city: string
@@ -35,9 +42,6 @@ export type CampaignBriefVenueSnapshot = {
 }
 
 export type CampaignBriefMilestoneData = {
-  startDate: string
-  endDate: string
-  publicHolidays: CampaignWindowPublicHoliday[]
   venueSnapshot: CampaignBriefVenueSnapshot
   contentPillars: string[]
   audienceHypotheses: string[]
@@ -130,6 +134,7 @@ export type CultureHooksMilestoneData = {
 }
 
 export type MilestoneDataValue =
+  | DatesMilestoneData
   | CampaignBriefMilestoneData
   | PostSchedulerMilestoneData
   | PromotionCandidatesMilestoneData

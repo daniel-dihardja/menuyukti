@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { formatPreviewDateString } from '@/lib/format-preview-date'
 
 import {
+  datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
@@ -16,6 +17,7 @@ import type { TimelineMilestone } from '../timeline/types'
 
 import { MilestoneCampaignBriefDataPreview } from './milestone-campaign_brief-data-preview'
 import { MilestoneCultureHooksDataPreview } from './milestone-culture-hooks-data-preview'
+import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
 import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
 import { MilestonePostSchedulerDataPreview } from './milestone-post-scheduler-data-preview'
 
@@ -37,6 +39,26 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
   }
 
   if (typeof data === 'object') {
+    if (milestone.presetId === 'dates') {
+      const parsedDates = datesMilestoneDataSchema.safeParse(data)
+      if (!parsedDates.success) {
+        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+      }
+
+      return (
+        <MilestoneDatesDataPreview
+          data={parsedDates.data}
+          formatDate={formatPreviewDate}
+          labels={{
+            startDate: t('milestoneDatesPreviewStartDate'),
+            endDate: t('milestoneDatesPreviewEndDate'),
+            publicHolidays: t('milestoneDatesPreviewPublicHolidays'),
+            noHolidays: t('milestoneDatesPreviewNoHolidays'),
+          }}
+        />
+      )
+    }
+
     if (milestone.presetId === 'restaurant_campaign_brief') {
       const parsedCampaignBrief = campaignBriefMilestoneDataSchema.safeParse(data)
       if (!parsedCampaignBrief.success) {
@@ -46,15 +68,10 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
       return (
         <MilestoneCampaignBriefDataPreview
           data={parsedCampaignBrief.data}
-          formatDate={formatPreviewDate}
           formatHelpAriaLabel={(sectionTitle) =>
             t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle })
           }
           labels={{
-            startDate: t('milestoneCampaignBriefPreviewStartDate'),
-            endDate: t('milestoneCampaignBriefPreviewEndDate'),
-            publicHolidays: t('milestoneCampaignBriefPreviewPublicHolidays'),
-            noHolidays: t('milestoneCampaignBriefPreviewNoHolidays'),
             venueSnapshot: t('milestoneCampaignBriefPreviewVenueSnapshot'),
             venueName: t('milestoneCampaignBriefPreviewVenueName'),
             city: t('milestoneCampaignBriefPreviewCity'),
@@ -87,9 +104,6 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             helpMeasurementPlan: t('milestoneCampaignBriefPreviewHelpMeasurementPlan'),
             helpTestingPlan: t('milestoneCampaignBriefPreviewHelpTestingPlan'),
             helpRiskGuardrails: t('milestoneCampaignBriefPreviewHelpRiskGuardrails'),
-            helpStartDate: t('milestoneCampaignBriefPreviewHelpStartDate'),
-            helpEndDate: t('milestoneCampaignBriefPreviewHelpEndDate'),
-            helpPublicHolidays: t('milestoneCampaignBriefPreviewHelpPublicHolidays'),
           }}
         />
       )
