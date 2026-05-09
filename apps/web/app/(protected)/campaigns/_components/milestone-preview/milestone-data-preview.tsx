@@ -1,9 +1,11 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 
 import { formatPreviewDateString } from '@/lib/format-preview-date'
+import { milestonePresetIconFor } from '@/lib/milestones/milestone-icons'
 
 import {
   datesMilestoneDataSchema,
@@ -13,7 +15,7 @@ import {
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
-import type { TimelineMilestone } from '../timeline/types'
+import type { MilestonePresetId, TimelineMilestone } from '../timeline/types'
 
 import { MilestoneCampaignBriefDataPreview } from './milestone-campaign_brief-data-preview'
 import { MilestoneCultureHooksDataPreview } from './milestone-culture-hooks-data-preview'
@@ -25,6 +27,46 @@ export type MilestoneDataPreviewProps = {
   milestone: TimelineMilestone
 }
 
+function MilestonePreviewPresetRow({ presetId }: { presetId: MilestonePresetId }) {
+  const t = useTranslations('analytics.campaigns.chat')
+  const Icon = milestonePresetIconFor(presetId)
+  const label =
+    presetId === 'dates'
+      ? t('milestonePreviewPresetBadge_dates')
+      : presetId === 'restaurant_campaign_brief'
+        ? t('milestonePreviewPresetBadge_restaurant_campaign_brief')
+        : presetId === 'post_scheduler'
+          ? t('milestonePreviewPresetBadge_post_scheduler')
+          : presetId === 'promotion_candidates'
+            ? t('milestonePreviewPresetBadge_promotion_candidates')
+            : t('milestonePreviewPresetBadge_culture_hooks')
+
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2">
+      <Icon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+      <span className="text-sm font-semibold text-foreground">{label}</span>
+    </div>
+  )
+}
+
+function PreviewStateMessage({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="space-y-1.5 rounded-lg border border-dashed border-border/80 bg-muted/20 px-3 py-4">
+      <p className="text-base font-semibold text-foreground">{title}</p>
+      <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
+    </div>
+  )
+}
+
+function withPresetRow(presetId: MilestonePresetId | undefined, inner: ReactNode) {
+  return (
+    <div className="space-y-4">
+      {presetId ? <MilestonePreviewPresetRow presetId={presetId} /> : null}
+      {inner}
+    </div>
+  )
+}
+
 export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const locale = useLocale()
@@ -32,20 +74,37 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
     () => (value: string) => formatPreviewDateString(value, locale),
     [locale],
   )
+  const formatHelpAriaLabel = (sectionTitle: string) =>
+    t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle })
+
   const data = milestone.data
+  const pid = milestone.presetId
 
   if (data == null) {
-    return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataEmpty')}</p>
+    return withPresetRow(
+      pid,
+      <PreviewStateMessage
+        title={t('milestonePreviewDataEmptyTitle')}
+        body={t('milestonePreviewDataEmptyBody')}
+      />,
+    )
   }
 
   if (typeof data === 'object') {
     if (milestone.presetId === 'dates') {
       const parsedDates = datesMilestoneDataSchema.safeParse(data)
       if (!parsedDates.success) {
-        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+        return withPresetRow(
+          pid,
+          <PreviewStateMessage
+            title={t('milestonePreviewDataInvalidTitle')}
+            body={t('milestonePreviewDataInvalidBody')}
+          />,
+        )
       }
 
-      return (
+      return withPresetRow(
+        pid,
         <MilestoneDatesDataPreview
           data={parsedDates.data}
           formatDate={formatPreviewDate}
@@ -55,22 +114,27 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             publicHolidays: t('milestoneDatesPreviewPublicHolidays'),
             noHolidays: t('milestoneDatesPreviewNoHolidays'),
           }}
-        />
+        />,
       )
     }
 
     if (milestone.presetId === 'restaurant_campaign_brief') {
       const parsedCampaignBrief = campaignBriefMilestoneDataSchema.safeParse(data)
       if (!parsedCampaignBrief.success) {
-        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+        return withPresetRow(
+          pid,
+          <PreviewStateMessage
+            title={t('milestonePreviewDataInvalidTitle')}
+            body={t('milestonePreviewDataInvalidBody')}
+          />,
+        )
       }
 
-      return (
+      return withPresetRow(
+        pid,
         <MilestoneCampaignBriefDataPreview
           data={parsedCampaignBrief.data}
-          formatHelpAriaLabel={(sectionTitle) =>
-            t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle })
-          }
+          formatHelpAriaLabel={formatHelpAriaLabel}
           labels={{
             venueSnapshot: t('milestoneCampaignBriefPreviewVenueSnapshot'),
             venueName: t('milestoneCampaignBriefPreviewVenueName'),
@@ -105,17 +169,24 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             helpTestingPlan: t('milestoneCampaignBriefPreviewHelpTestingPlan'),
             helpRiskGuardrails: t('milestoneCampaignBriefPreviewHelpRiskGuardrails'),
           }}
-        />
+        />,
       )
     }
 
     if (milestone.presetId === 'post_scheduler') {
       const parsedPs = postSchedulerMilestoneDataSchema.safeParse(data)
       if (!parsedPs.success) {
-        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+        return withPresetRow(
+          pid,
+          <PreviewStateMessage
+            title={t('milestonePreviewDataInvalidTitle')}
+            body={t('milestonePreviewDataInvalidBody')}
+          />,
+        )
       }
 
-      return (
+      return withPresetRow(
+        pid,
         <MilestonePostSchedulerDataPreview
           data={parsedPs.data}
           labels={{
@@ -126,10 +197,8 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             emptyWeeklySlotPlan: t('milestonePostSchedulerPreviewEmptyWeeklySlotPlan'),
             guardrailCheckHeading: t('milestonePostSchedulerPreviewGuardrailCheckHeading'),
             weekLabel: t('milestonePostSchedulerPreviewWeekLabel'),
-            objectiveLabel: t('milestonePostSchedulerPreviewObjectiveLabel'),
             rationaleLabel: t('milestonePostSchedulerPreviewRationaleLabel'),
             pillarLabel: t('milestonePostSchedulerPreviewPillarLabel'),
-            percentLabel: t('milestonePostSchedulerPreviewPercentLabel'),
             reasonLabel: t('milestonePostSchedulerPreviewReasonLabel'),
             countLabel: t('milestonePostSchedulerPreviewCountLabel'),
             dayLabel: t('milestonePostSchedulerPreviewDayLabel'),
@@ -140,17 +209,32 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             funnelStageLabel: t('milestonePostSchedulerPreviewFunnelStageLabel'),
             visualDirectionLabel: t('milestonePostSchedulerPreviewVisualDirectionLabel'),
             notesLabel: t('milestonePostSchedulerPreviewNotesLabel'),
+            placeholderDash: t('milestonePostSchedulerPreviewPlaceholderDash'),
+            notesPlaceholder: t('milestonePostSchedulerPreviewNotesPlaceholder'),
+            helpMonthlyArc: t('milestonePostSchedulerPreviewHelpMonthlyArc'),
+            helpContentRatio: t('milestonePostSchedulerPreviewHelpContentRatio'),
+            helpFormatMix: t('milestonePostSchedulerPreviewHelpFormatMix'),
+            helpWeeklySlotPlan: t('milestonePostSchedulerPreviewHelpWeeklySlotPlan'),
+            helpGuardrailCheck: t('milestonePostSchedulerPreviewHelpGuardrailCheck'),
+            formatHelpAriaLabel,
           }}
-        />
+        />,
       )
     }
 
     if (milestone.presetId === 'promotion_candidates') {
       const parsed = promotionCandidatesMilestoneDataSchema.safeParse(data)
       if (!parsed.success) {
-        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+        return withPresetRow(
+          pid,
+          <PreviewStateMessage
+            title={t('milestonePreviewDataInvalidTitle')}
+            body={t('milestonePreviewDataInvalidBody')}
+          />,
+        )
       }
-      return (
+      return withPresetRow(
+        pid,
         <MilestonePromotionCandidatesDataPreview
           data={parsed.data}
           labels={{
@@ -164,18 +248,33 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             storytellingStrong: t('milestonePromotionCandidatesPreviewStorytellingStrong'),
             storytellingWeak: t('milestonePromotionCandidatesPreviewStorytellingWeak'),
             storytellingWhy: t('milestonePromotionCandidatesPreviewStorytellingWhy'),
+            storytellingFitSection: t('milestonePromotionCandidatesPreviewStorytellingFitSection'),
+            summary: t('milestonePromotionCandidatesPreviewSummary'),
+            helpHeading: t('milestonePromotionCandidatesPreviewHelpHeading'),
+            helpStarItems: t('milestonePromotionCandidatesPreviewHelpStarItems'),
+            helpPuzzleItems: t('milestonePromotionCandidatesPreviewHelpPuzzleItems'),
+            helpStorytellingFit: t('milestonePromotionCandidatesPreviewHelpStorytellingFit'),
+            placeholderEmDash: t('milestonePreviewPlaceholderEmDash'),
+            formatHelpAriaLabel,
           }}
-        />
+        />,
       )
     }
 
     if (milestone.presetId === 'culture_hooks') {
       const parsed = cultureHooksMilestoneDataSchema.safeParse(data)
       if (!parsed.success) {
-        return <p className="text-muted-foreground text-sm">{t('milestonePreviewDataInvalid')}</p>
+        return withPresetRow(
+          pid,
+          <PreviewStateMessage
+            title={t('milestonePreviewDataInvalidTitle')}
+            body={t('milestonePreviewDataInvalidBody')}
+          />,
+        )
       }
 
-      return (
+      return withPresetRow(
+        pid,
         <MilestoneCultureHooksDataPreview
           data={parsed.data}
           labels={{
@@ -188,11 +287,18 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             audienceRelevance: t('milestoneCultureHooksPreviewAudienceRelevance'),
             contentExample: t('milestoneCultureHooksPreviewContentExample'),
             guardrailCheck: t('milestoneCultureHooksPreviewGuardrailCheck'),
+            emptyValue: t('milestonePreviewEmptyValue'),
           }}
-        />
+        />,
       )
     }
   }
 
-  return <p className="text-muted-foreground text-sm">{t('milestonePreviewUnsupported')}</p>
+  return withPresetRow(
+    pid,
+    <PreviewStateMessage
+      title={t('milestonePreviewUnsupportedTitle')}
+      body={t('milestonePreviewUnsupportedBody')}
+    />,
+  )
 }

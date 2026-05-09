@@ -1,10 +1,17 @@
 'use client'
 
-import { TooltipProvider } from '@workspace/ui/components/tooltip'
+import type { ReactNode } from 'react'
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@workspace/ui/components/accordion'
 import type { CampaignBriefMilestoneData } from '@/lib/graphql/node-schemas'
 
-import { CampaignBriefPreviewHelpIcon } from './campaign-brief-preview-help-icon'
+import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
+import { milestonePreviewTypography as mp } from './milestone-preview-typography'
 
 export type MilestoneCampaignBriefDataPreviewProps = {
   data: CampaignBriefMilestoneData
@@ -50,16 +57,82 @@ export type CampaignBriefPreviewLabels = {
 
 function renderList(items: string[], emptyLabel: string) {
   if (items.length === 0) {
-    return <p className="text-muted-foreground text-sm">{emptyLabel}</p>
+    return <p className={mp.bodySmall}>{emptyLabel}</p>
   }
   return (
-    <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+    <ul className={mp.listDisc}>
       {items.map((item, index) => (
         <li key={`${item}-${index}`}>{item}</li>
       ))}
     </ul>
   )
 }
+
+type BriefAccordionSectionProps = {
+  value: string
+  title: string
+  helpAria: string
+  helpText: string
+  children: ReactNode
+}
+
+function BriefAccordionSection({
+  value,
+  title,
+  helpAria,
+  helpText,
+  children,
+}: BriefAccordionSectionProps) {
+  return (
+    <AccordionItem value={value} className="border-border/80">
+      <AccordionTrigger className="py-3 text-base font-semibold hover:no-underline [&>svg]:size-4">
+        <span className="flex min-w-0 flex-1 items-center gap-0.5 text-left">
+          <span className="min-w-0">{title}</span>
+          <MilestonePreviewHelpTrigger ariaLabel={helpAria} helpText={helpText} />
+        </span>
+      </AccordionTrigger>
+      <AccordionContent
+        className={`${mp.accordionContentInner} text-base leading-relaxed [&_*]:leading-relaxed`}
+      >
+        {children}
+      </AccordionContent>
+    </AccordionItem>
+  )
+}
+
+function VenueFields({
+  data,
+  labels,
+}: {
+  data: CampaignBriefMilestoneData
+  labels: CampaignBriefPreviewLabels
+}) {
+  const rows: [string, string][] = [
+    [labels.venueName, data.venueSnapshot.venueName || labels.emptyValue],
+    [labels.city, data.venueSnapshot.city || labels.emptyValue],
+    [labels.country, data.venueSnapshot.country || labels.emptyValue],
+    [labels.currency, data.venueSnapshot.currency || labels.emptyValue],
+  ]
+  return (
+    <dl className="mt-2 space-y-3">
+      {rows.map(([term, def]) => (
+        <div key={term} className="grid gap-1 sm:grid-cols-[minmax(0,auto)_1fr] sm:gap-x-4">
+          <dt className={mp.fieldLabel}>{term}</dt>
+          <dd className={mp.body}>{def}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+const defaultOpenBriefSections = [
+  'venue',
+  'objective',
+  'pillars',
+  'audience',
+  'proof',
+  'tone',
+] as const
 
 export function MilestoneCampaignBriefDataPreview({
   data,
@@ -69,170 +142,129 @@ export function MilestoneCampaignBriefDataPreview({
   const a = formatHelpAriaLabel
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <div className="space-y-4 text-sm">
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.venueSnapshot}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.venueSnapshot)}
-              helpText={labels.helpVenueSnapshot}
-            />
-          </div>
-          <dl className="mt-2 grid grid-cols-[minmax(0,140px)_1fr] gap-y-2 gap-x-2">
-            <dt className="font-medium text-foreground">{labels.venueName}</dt>
-            <dd className="text-muted-foreground">
-              {data.venueSnapshot.venueName || labels.emptyValue}
-            </dd>
-            <dt className="font-medium text-foreground">{labels.city}</dt>
-            <dd className="text-muted-foreground">
-              {data.venueSnapshot.city || labels.emptyValue}
-            </dd>
-            <dt className="font-medium text-foreground">{labels.country}</dt>
-            <dd className="text-muted-foreground">
-              {data.venueSnapshot.country || labels.emptyValue}
-            </dd>
-            <dt className="font-medium text-foreground">{labels.currency}</dt>
-            <dd className="text-muted-foreground">
-              {data.venueSnapshot.currency || labels.emptyValue}
-            </dd>
-          </dl>
-        </section>
+    <div className={mp.root}>
+      <Accordion
+        type="multiple"
+        defaultValue={[...defaultOpenBriefSections]}
+        className="w-full min-w-0"
+      >
+        <BriefAccordionSection
+          value="venue"
+          title={labels.venueSnapshot}
+          helpAria={a(labels.venueSnapshot)}
+          helpText={labels.helpVenueSnapshot}
+        >
+          <VenueFields data={data} labels={labels} />
+        </BriefAccordionSection>
 
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.campaignObjective}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.campaignObjective)}
-              helpText={labels.helpCampaignObjective}
-            />
-          </div>
-          <p className="mt-2 text-muted-foreground">
-            {data.campaignObjective || labels.emptyValue}
-          </p>
-        </section>
+        <BriefAccordionSection
+          value="objective"
+          title={labels.campaignObjective}
+          helpAria={a(labels.campaignObjective)}
+          helpText={labels.helpCampaignObjective}
+        >
+          <p className={`mt-2 ${mp.body}`}>{data.campaignObjective || labels.emptyValue}</p>
+        </BriefAccordionSection>
 
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.contentPillars}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.contentPillars)}
-              helpText={labels.helpContentPillars}
-            />
-          </div>
+        <BriefAccordionSection
+          value="pillars"
+          title={labels.contentPillars}
+          helpAria={a(labels.contentPillars)}
+          helpText={labels.helpContentPillars}
+        >
           <div className="mt-2">{renderList(data.contentPillars, labels.emptyList)}</div>
-        </section>
+        </BriefAccordionSection>
 
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.audienceHypotheses}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.audienceHypotheses)}
-              helpText={labels.helpAudienceHypotheses}
-            />
-          </div>
+        <BriefAccordionSection
+          value="audience"
+          title={labels.audienceHypotheses}
+          helpAria={a(labels.audienceHypotheses)}
+          helpText={labels.helpAudienceHypotheses}
+        >
           <div className="mt-2">{renderList(data.audienceHypotheses, labels.emptyList)}</div>
-        </section>
+        </BriefAccordionSection>
 
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.proofOrientedAngles}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.proofOrientedAngles)}
-              helpText={labels.helpProofOrientedAngles}
-            />
-          </div>
+        <BriefAccordionSection
+          value="proof"
+          title={labels.proofOrientedAngles}
+          helpAria={a(labels.proofOrientedAngles)}
+          helpText={labels.helpProofOrientedAngles}
+        >
           <div className="mt-2">{renderList(data.proofOrientedAngles, labels.emptyList)}</div>
-        </section>
+        </BriefAccordionSection>
 
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.toneGuardrails}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.toneGuardrails)}
-              helpText={labels.helpToneGuardrails}
-            />
-          </div>
+        <BriefAccordionSection
+          value="tone"
+          title={labels.toneGuardrails}
+          helpAria={a(labels.toneGuardrails)}
+          helpText={labels.helpToneGuardrails}
+        >
           <div className="mt-2">{renderList(data.toneGuardrails, labels.emptyList)}</div>
-        </section>
+        </BriefAccordionSection>
 
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.targetSegments}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.targetSegments)}
-              helpText={labels.helpTargetSegments}
-            />
-          </div>
+        <BriefAccordionSection
+          value="segments"
+          title={labels.targetSegments}
+          helpAria={a(labels.targetSegments)}
+          helpText={labels.helpTargetSegments}
+        >
           <div className="mt-2">{renderList(data.targetSegments, labels.emptyList)}</div>
-        </section>
+        </BriefAccordionSection>
 
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.messageHierarchy}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.messageHierarchy)}
-              helpText={labels.helpMessageHierarchy}
-            />
-          </div>
+        <BriefAccordionSection
+          value="hierarchy"
+          title={labels.messageHierarchy}
+          helpAria={a(labels.messageHierarchy)}
+          helpText={labels.helpMessageHierarchy}
+        >
           <div className="mt-2">{renderList(data.messageHierarchy, labels.emptyList)}</div>
-        </section>
+        </BriefAccordionSection>
 
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.offerAndCtaPlan}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.offerAndCtaPlan)}
-              helpText={labels.helpOfferAndCtaPlan}
-            />
-          </div>
+        <BriefAccordionSection
+          value="offer"
+          title={labels.offerAndCtaPlan}
+          helpAria={a(labels.offerAndCtaPlan)}
+          helpText={labels.helpOfferAndCtaPlan}
+        >
           <div className="mt-2">{renderList(data.offerAndCtaPlan, labels.emptyList)}</div>
-        </section>
+        </BriefAccordionSection>
 
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.contentPillarPlan}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.contentPillarPlan)}
-              helpText={labels.helpContentPillarPlan}
-            />
-          </div>
+        <BriefAccordionSection
+          value="pillar-plan"
+          title={labels.contentPillarPlan}
+          helpAria={a(labels.contentPillarPlan)}
+          helpText={labels.helpContentPillarPlan}
+        >
           <div className="mt-2">{renderList(data.contentPillarPlan, labels.emptyList)}</div>
-        </section>
+        </BriefAccordionSection>
 
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.measurementPlan}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.measurementPlan)}
-              helpText={labels.helpMeasurementPlan}
-            />
-          </div>
+        <BriefAccordionSection
+          value="measurement"
+          title={labels.measurementPlan}
+          helpAria={a(labels.measurementPlan)}
+          helpText={labels.helpMeasurementPlan}
+        >
           <div className="mt-2">{renderList(data.measurementPlan, labels.emptyList)}</div>
-        </section>
+        </BriefAccordionSection>
 
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.testingPlan}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.testingPlan)}
-              helpText={labels.helpTestingPlan}
-            />
-          </div>
+        <BriefAccordionSection
+          value="testing"
+          title={labels.testingPlan}
+          helpAria={a(labels.testingPlan)}
+          helpText={labels.helpTestingPlan}
+        >
           <div className="mt-2">{renderList(data.testingPlan, labels.emptyList)}</div>
-        </section>
+        </BriefAccordionSection>
 
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.riskGuardrails}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.riskGuardrails)}
-              helpText={labels.helpRiskGuardrails}
-            />
-          </div>
+        <BriefAccordionSection
+          value="risk"
+          title={labels.riskGuardrails}
+          helpAria={a(labels.riskGuardrails)}
+          helpText={labels.helpRiskGuardrails}
+        >
           <div className="mt-2">{renderList(data.riskGuardrails, labels.emptyList)}</div>
-        </section>
-      </div>
-    </TooltipProvider>
+        </BriefAccordionSection>
+      </Accordion>
+    </div>
   )
 }
