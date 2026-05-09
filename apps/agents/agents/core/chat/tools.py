@@ -17,6 +17,7 @@ from agents_app.agents.core.chat.graphql_client import (
 )
 from agents_app.agents.core.chat.http_context import get_chat_http_client
 from agents_app.agents.core.chat.milestone_help_copy import format_milestone_help_markdown
+from agents_app.agents.core.chat.readable_payload import format_payload_for_chat
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg, tool
@@ -117,7 +118,7 @@ def _format_milestone_snapshot(milestone_id: str, node: dict[str, Any]) -> str:
     if inp is None:
         lines.append("(not set)")
     else:
-        lines.append(_format_json(inp))
+        lines.append(format_payload_for_chat(inp))
 
     lines.append("")
     lines.append("## Pass criteria")
@@ -152,7 +153,7 @@ def _format_milestone_snapshot(milestone_id: str, node: dict[str, Any]) -> str:
     if mpd is None:
         lines.append("(not set)")
     else:
-        lines.append(_format_json(mpd))
+        lines.append(format_payload_for_chat(mpd))
 
     residual = _residual_milestone_data(node)
     lines.append("")
@@ -206,7 +207,7 @@ def _format_json_shortcut_section(title: str, payload: Any) -> str:
     if payload is None:
         lines.append("(not set)")
     else:
-        lines.append(_format_json(payload))
+        lines.append(format_payload_for_chat(payload))
     return "\n".join(lines)
 
 

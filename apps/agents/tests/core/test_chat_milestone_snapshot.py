@@ -20,10 +20,12 @@ def test_format_milestone_snapshot_full_node() -> None:
     out = _format_milestone_snapshot("m-99", node)
     assert "m-99" in out
     assert "Increase weekend covers" in out
-    assert '"audience": "locals"' in out
+    assert "**Audience:**" in out
+    assert "locals" in out
     assert "c1" in out and "Has 3 variants" in out
     assert "2/3 pass" in out
-    assert '"slots"' in out
+    assert "**Slots:**" in out
+    assert "Mon" in out
     assert "## Other milestone.data" in out
     assert '"order": 1' in out
     assert "legacy-should-not-appear" not in out

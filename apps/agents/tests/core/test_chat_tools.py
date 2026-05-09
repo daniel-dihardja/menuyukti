@@ -3,7 +3,6 @@ from __future__ import annotations
 from unittest.mock import AsyncMock
 
 import pytest
-
 from agents_app.agents.core.chat import tools as chat_tools
 
 
@@ -95,7 +94,9 @@ async def test_get_milestone_input_json_success(monkeypatch: pytest.MonkeyPatch)
         config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
     )
     assert "## Input (milestoneInput)" in out
-    assert '"type": "campaign_brief"' in out
+    assert "**Type:**" in out
+    assert "Campaign Brief" in out
+    assert "**Notes:**" in out
 
 
 @pytest.mark.asyncio
@@ -114,8 +115,9 @@ async def test_get_milestone_input_json_returns_all_fields(
         {},
         config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
     )
-    assert '"customTopLevel": {' in out
-    assert '"customNested": [' in out
+    assert "**Custom Top Level:**" in out
+    assert "**Alpha:**" in out
+    assert "**Custom Nested:**" in out
 
 
 @pytest.mark.asyncio
@@ -130,7 +132,8 @@ async def test_get_milestone_preset_data_json_success(monkeypatch: pytest.Monkey
         config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
     )
     assert "## Preset data (milestonePresetData)" in out
-    assert '"locationConcept": "Modern Indonesian comfort food"' in out
+    assert "**Location Concept:**" in out
+    assert "Modern Indonesian comfort food" in out
 
 
 @pytest.mark.asyncio
