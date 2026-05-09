@@ -409,7 +409,11 @@ export function CampaignChatPanel({
                           <span>{t('thinking')}</span>
                         </div>
                       ) : (
-                        <ChatMessageParts message={msg} role={msg.role} />
+                        <ChatMessageParts
+                          mentionTitles={milestoneUi.milestones.map((m) => m.title)}
+                          message={msg}
+                          role={msg.role}
+                        />
                       )}
                     </MessageContent>
                   </Message>
