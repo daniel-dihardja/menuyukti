@@ -794,7 +794,7 @@ export type Query = {
   orderMetrics?: Maybe<AnalyticsRunOrderMetricsType>
   /** JSON array of prior milestones' preset payloads: each element is `{"title": string, "presetId": string|null, "data": object|null}` for milestones strictly before the given milestone in workflow display order. `presetId` is copied from the milestone node's `data.presetId` when set (e.g. `restaurant_campaign_brief`). `data` is the `milestone_preset_data` column (flat preset JSON). Empty array when there are no prior milestones or the request is not authorized. */
   priorMilestonesMilestoneData: Scalars['JSON']['output']
-  /** Top star and puzzle menu-item names derived from menu engineering. When POS menu categories exist, returns `grouping=by_menu_category` with `categories.<menu_category>.starItems` and `puzzleItems` (up to 5 each). Otherwise returns `grouping=flat` with root `starItems` and `puzzleItems`. */
+  /** Top star and puzzle menu-item names derived from menu engineering. When POS menu categories exist, returns `grouping=by_menu_category` with `categories.<menu_category>.starItems` (up to 5) and `puzzleItems` (up to 10). Otherwise returns `grouping=flat` with root `starItems` and `puzzleItems`. */
   promotionEngineeringCandidates?: Maybe<Scalars['JSON']['output']>
   /** Return per-menu promotion signals for an analytics run: volume and revenue, optional BCG-style menu-engineering metrics when COGS allow, and peak hour/day from demand heatmaps. When locationId is set, the run must belong to that location (otherwise returns null). */
   promotionMenuItems?: Maybe<PromotionMenuItemsPayloadType>

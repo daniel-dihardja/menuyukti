@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any, Literal
 
-from pydantic import BaseModel, ValidationError, field_validator, model_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 
 class CampaignWindowPublicHoliday(BaseModel):
@@ -307,8 +307,8 @@ class PromotionCandidateMenuItem(BaseModel):
 
 class PromotionCandidatesCategory(BaseModel):
     category: str
-    starItems: list[PromotionCandidateMenuItem]
-    puzzleItems: list[PromotionCandidateMenuItem]
+    starItems: list[PromotionCandidateMenuItem] = Field(..., max_length=5)
+    puzzleItems: list[PromotionCandidateMenuItem] = Field(..., max_length=10)
 
     @field_validator("category")
     @classmethod

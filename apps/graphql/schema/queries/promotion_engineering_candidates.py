@@ -18,7 +18,7 @@ class PromotionEngineeringCandidatesQuery:
         description=(
             "Top star and puzzle menu-item names derived from menu engineering. "
             "When POS menu categories exist, returns `grouping=by_menu_category` with "
-            "`categories.<menu_category>.starItems` and `puzzleItems` (up to 5 each). "
+            "`categories.<menu_category>.starItems` (up to 5) and `puzzleItems` (up to 10). "
             "Otherwise returns `grouping=flat` with root `starItems` and `puzzleItems`."
         )
     )

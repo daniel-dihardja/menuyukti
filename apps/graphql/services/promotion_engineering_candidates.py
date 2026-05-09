@@ -52,7 +52,7 @@ def build_promotion_engineering_candidates(
                     str(item.get("menu")).strip()
                     for item in (bucket.get("topPuzzles") or [])
                     if isinstance(item, dict) and str(item.get("menu") or "").strip()
-                ][:5]
+                ][:10]
                 out_categories[str(key)] = {
                     "starItems": star_items,
                     "puzzleItems": puzzle_items,
@@ -71,7 +71,7 @@ def build_promotion_engineering_candidates(
         str(item.get("menu")).strip()
         for item in (raw.get("topPuzzles") or [])
         if isinstance(item, dict) and str(item.get("menu") or "").strip()
-    ][:5]
+    ][:10]
     return {
         "grouping": "flat",
         "starItems": star_items,

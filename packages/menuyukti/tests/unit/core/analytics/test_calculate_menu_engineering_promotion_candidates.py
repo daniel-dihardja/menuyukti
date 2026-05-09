@@ -37,7 +37,7 @@ def test_flat_when_all_menu_category_blank() -> None:
     assert out["rowsSkippedMissingCategory"] == 2
     assert out["matrix"] is not None
     assert len(out["topStars"]) <= 5
-    assert len(out["topPuzzles"]) <= 5
+    assert len(out["topPuzzles"]) <= 10
 
 
 def test_grouped_by_distinct_menu_category() -> None:

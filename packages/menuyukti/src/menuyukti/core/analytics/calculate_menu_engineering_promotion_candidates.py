@@ -40,7 +40,8 @@ def _bucket_payload(
     rows: list[OrderRowForMatrix],
     cogs_by_menu: dict[str, float],
     *,
-    top_per_quadrant: int,
+    max_star_items: int,
+    max_puzzle_items: int,
 ) -> dict[str, Any]:
     if not rows:
         return {
@@ -60,8 +61,8 @@ def _bucket_payload(
         }
     return {
         "matrix": matrix,
-        "topStars": _top_quadrant_items(matrix, "star", top_per_quadrant),
-        "topPuzzles": _top_quadrant_items(matrix, "puzzle", top_per_quadrant),
+        "topStars": _top_quadrant_items(matrix, "star", max_star_items),
+        "topPuzzles": _top_quadrant_items(matrix, "puzzle", max_puzzle_items),
     }
 
 
@@ -69,7 +70,8 @@ def compute_menu_engineering_promotion_candidates(
     order_rows: list[OrderRowForMatrix],
     cogs_by_menu: dict[str, float],
     *,
-    top_per_quadrant: int = 5,
+    max_star_items: int = 5,
+    max_puzzle_items: int = 10,
 ) -> dict[str, Any]:
     """
     Run menu engineering per distinct ``menu_category`` when any row has a non-empty
@@ -82,7 +84,8 @@ def compute_menu_engineering_promotion_candidates(
     Args:
         order_rows: Line-level rows (see :class:`OrderRowForMatrix`).
         cogs_by_menu: Menu name -> unit COGS.
-        top_per_quadrant: Max items per star / puzzle list per bucket.
+        max_star_items: Max star-quadrant items per bucket.
+        max_puzzle_items: Max puzzle-quadrant items per bucket.
 
     Returns:
         JSON-friendly dict: either ``grouping="flat"`` with ``matrix``, ``topStars``,
@@ -103,7 +106,12 @@ def compute_menu_engineering_promotion_candidates(
         by_category.setdefault(key, []).append(row)
 
     if not by_category:
-        flat = _bucket_payload(order_rows, cogs_by_menu, top_per_quadrant=top_per_quadrant)
+        flat = _bucket_payload(
+            order_rows,
+            cogs_by_menu,
+            max_star_items=max_star_items,
+            max_puzzle_items=max_puzzle_items,
+        )
         return {
             "grouping": "flat",
             "rowsSkippedMissingCategory": skipped,
@@ -115,7 +123,8 @@ def compute_menu_engineering_promotion_candidates(
         categories_out[cat] = _bucket_payload(
             by_category[cat],
             cogs_by_menu,
-            top_per_quadrant=top_per_quadrant,
+            max_star_items=max_star_items,
+            max_puzzle_items=max_puzzle_items,
         )
 
     return {

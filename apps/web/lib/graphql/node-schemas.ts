@@ -195,8 +195,8 @@ export const promotionCandidateMenuItemSchema = z.union([
 
 export const promotionCandidatesCategorySchema = z.object({
   category: z.enum(['FOOD', 'DRINK']),
-  starItems: z.array(promotionCandidateMenuItemSchema),
-  puzzleItems: z.array(promotionCandidateMenuItemSchema),
+  starItems: z.array(promotionCandidateMenuItemSchema).max(5),
+  puzzleItems: z.array(promotionCandidateMenuItemSchema).max(10),
 })
 
 export const promotionCandidatesMilestoneDataSchema = z.object({
