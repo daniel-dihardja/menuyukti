@@ -32,7 +32,7 @@ import {
 } from '@workspace/ui/components/tooltip'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { PanelRight, Trash2 } from 'lucide-react'
+import { PanelRight } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import {
@@ -512,14 +512,14 @@ export function CampaignChatPanel({
               />
               <PromptInputButton
                 aria-label={t('clearChatAriaLabel')}
-                className="text-muted-foreground hover:text-foreground"
+                className="h-9 shrink-0 px-3 py-2 font-medium text-muted-foreground"
                 onClick={handleClearChat}
-                size="icon-sm"
+                size="sm"
                 tooltip={t('clearChatTooltip')}
                 type="button"
                 variant="ghost"
               >
-                <Trash2 className="size-4" />
+                {t('clearChatLabel')}
               </PromptInputButton>
             </PromptInputTools>
             <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />

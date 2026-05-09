@@ -24,7 +24,6 @@ import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useCallback, useMemo, useRef, useState } from 'react'
 
@@ -184,14 +183,14 @@ export function AgentChat() {
                 />
                 <PromptInputButton
                   aria-label={t('clearChatAriaLabel')}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="h-9 shrink-0 px-3 py-2 font-medium text-muted-foreground"
                   onClick={handleClearChat}
-                  size="icon-sm"
+                  size="sm"
                   tooltip={t('clearChatTooltip')}
                   type="button"
                   variant="ghost"
                 >
-                  <Trash2 className="size-4" />
+                  {t('clearChatLabel')}
                 </PromptInputButton>
               </PromptInputTools>
               <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />

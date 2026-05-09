@@ -26,6 +26,7 @@
     "errorTitle": "Something went wrong",
     "retry": "Retry",
     "clearChatAriaLabel": "Clear chat",
+    "clearChatLabel": "Clear chat",
     "clearChatTooltip": "Clear messages and start a fresh advisor thread"
   },
   "chatGatewayModels": {
@@ -1128,6 +1129,7 @@
         "errorTitle": "Something went wrong",
         "retry": "Retry",
         "clearChatAriaLabel": "Clear chat",
+        "clearChatLabel": "Clear chat",
         "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
         "slashCommands": {
           "ariaLabel": "Slash commands",
