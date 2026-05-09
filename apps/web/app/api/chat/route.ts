@@ -129,6 +129,7 @@ export async function POST(req: Request) {
     locationId,
     presetReferenceMilestoneId,
     agentThreadId,
+    workflowChatSessionId,
   } = parsed.data
   const messages = rawMessages as UIMessage[]
 
@@ -182,6 +183,9 @@ export async function POST(req: Request) {
         ...(milestoneId !== undefined ? { milestone_id: milestoneId } : {}),
         ...(locationId !== undefined ? { location_id: Number(locationId) } : {}),
         ...(agentThreadId !== undefined ? { agent_thread_id: agentThreadId } : {}),
+        ...(workflowChatSessionId !== undefined
+          ? { workflow_chat_session_id: workflowChatSessionId }
+          : {}),
       }),
       signal: req.signal,
     })

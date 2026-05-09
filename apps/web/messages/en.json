@@ -24,7 +24,9 @@
     "placeholder": "What would you like help with?",
     "thinking": "Thinking…",
     "errorTitle": "Something went wrong",
-    "retry": "Retry"
+    "retry": "Retry",
+    "clearChatAriaLabel": "Clear chat",
+    "clearChatTooltip": "Clear messages and start a fresh advisor thread"
   },
   "metadata": {
     "title": "Menuyukti - AI-first restaurant social media marketing platform",
@@ -1113,6 +1115,8 @@
         "thinking": "Thinking…",
         "errorTitle": "Something went wrong",
         "retry": "Retry",
+        "clearChatAriaLabel": "Clear chat",
+        "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
         "slashCommands": {
           "ariaLabel": "Slash commands",
           "input": {

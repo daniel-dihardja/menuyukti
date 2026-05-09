@@ -24,6 +24,11 @@ export const chatRequestBodySchema = z.object({
   presetReferenceMilestoneId: z.string().regex(/^\d+$/, 'Invalid milestone id').optional(),
   /** Opaque id for `/agent` chat (no workflow); required by agents when `workflowId` is absent. */
   agentThreadId: z.string().min(1).optional(),
+  /**
+   * When set with `workflowId`, agents use a distinct LangGraph thread so "clear chat" can start
+   * a fresh checkpoint without changing the workflow id.
+   */
+  workflowChatSessionId: z.string().uuid().optional(),
 })
 
 export type ChatRequestBody = z.infer<typeof chatRequestBodySchema>

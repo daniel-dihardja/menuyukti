@@ -132,6 +132,36 @@ def test_chat_stream_passes_milestone_in_config(client: TestClient) -> None:
     assert captured["config"]["configurable"]["user_id"] == "user-1"
 
 
+def test_chat_workflow_session_suffixes_thread_id(client: TestClient) -> None:
+    captured: dict = {}
+
+    async def fake_astream_events(_input, config, **_kwargs):
+        captured["config"] = config
+        yield {
+            "event": "on_chat_model_stream",
+            "data": {"chunk": AIMessageChunk(content="x")},
+        }
+
+    mock_graph = MagicMock()
+    mock_graph.astream_events = MagicMock(side_effect=fake_astream_events)
+    client.app.state.chat_graph = mock_graph
+
+    session = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    with client.stream(
+        "POST",
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={
+            "messages": [{"role": "user", "content": "Hi"}],
+            "workflow_id": "10",
+            "workflow_chat_session_id": session,
+        },
+    ) as response:
+        assert response.status_code == 200
+
+    assert captured["config"]["configurable"]["thread_id"] == f"user-1:wf:10:sess:{session}"
+
+
 def test_chat_agent_thread_id(client: TestClient) -> None:
     captured: dict = {}
 

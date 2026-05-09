@@ -12,29 +12,27 @@ import { Message, MessageContent } from '@workspace/ui/components/ai-elements/me
 import {
   PromptInput,
   PromptInputBody,
+  PromptInputButton,
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
+  PromptInputTools,
 } from '@workspace/ui/components/ai-elements/prompt-input'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
+import { Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { ChatMessageParts } from '@/components/chat-message-parts'
 
 export function AgentChat() {
   const t = useTranslations('agentChat')
   const [text, setText] = useState('')
-
-  const agentThreadIdRef = useRef<string | null>(null)
-  if (agentThreadIdRef.current === null) {
-    agentThreadIdRef.current = crypto.randomUUID()
-  }
-  const agentThreadId = agentThreadIdRef.current
+  const [agentThreadId, setAgentThreadId] = useState(() => crypto.randomUUID())
 
   const transport = useMemo(
     () =>
@@ -54,10 +52,11 @@ export function AgentChat() {
     [agentThreadId],
   )
 
-  const { messages, sendMessage, status, stop, error, clearError, regenerate } = useChat({
-    id: agentThreadId,
-    transport,
-  })
+  const { messages, sendMessage, status, stop, error, clearError, regenerate, setMessages } =
+    useChat({
+      id: agentThreadId,
+      transport,
+    })
 
   const handleTextChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setText(event.target.value)
@@ -80,6 +79,14 @@ export function AgentChat() {
     clearError()
     await regenerate()
   }, [clearError, regenerate])
+
+  const handleClearChat = useCallback(() => {
+    stop()
+    clearError()
+    setMessages([])
+    setText('')
+    setAgentThreadId(crypto.randomUUID())
+  }, [stop, clearError, setMessages])
 
   const isSubmitDisabled = !text.trim() || status === 'streaming' || status === 'submitted'
   const visibleMessages = useMemo(() => messages.filter((msg) => msg.role !== 'system'), [messages])
@@ -160,6 +167,19 @@ export function AgentChat() {
               />
             </PromptInputBody>
             <PromptInputFooter>
+              <PromptInputTools>
+                <PromptInputButton
+                  aria-label={t('clearChatAriaLabel')}
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={handleClearChat}
+                  size="icon-sm"
+                  tooltip={t('clearChatTooltip')}
+                  type="button"
+                  variant="ghost"
+                >
+                  <Trash2 className="size-4" />
+                </PromptInputButton>
+              </PromptInputTools>
               <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />
             </PromptInputFooter>
           </PromptInput>

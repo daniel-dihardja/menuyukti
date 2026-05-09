@@ -12,9 +12,11 @@ import { Message, MessageContent } from '@workspace/ui/components/ai-elements/me
 import {
   PromptInput,
   PromptInputBody,
+  PromptInputButton,
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
+  PromptInputTools,
 } from '@workspace/ui/components/ai-elements/prompt-input'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
@@ -29,7 +31,7 @@ import {
 } from '@workspace/ui/components/tooltip'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { PanelRight } from 'lucide-react'
+import { PanelRight, Trash2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import {
@@ -60,6 +62,14 @@ import { useCampaignPreviewVisibility } from './use-campaign-preview-visibility'
 import { useCampaignTimelineProviderSlices } from './use-campaign-timeline-provider-value'
 import { useMilestoneOperations } from './use-milestone-operations'
 import { WorkflowChatComposerMenus } from './workflow-chat-composer-menus'
+
+const WORKFLOW_CHAT_SESSION_STORAGE_PREFIX = 'menuyukti.wfChatSession.v1:'
+
+function workflowChatSessionStorageKey(workflowId: string) {
+  return `${WORKFLOW_CHAT_SESSION_STORAGE_PREFIX}${workflowId}`
+}
+
+const UUID_RE = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i
 
 /** Code-split preview; collapsible panel keeps the subtree mounted when hidden on desktop. */
 const CampaignPreviewPanelBodyLazy = dynamic(
@@ -188,6 +198,8 @@ export function CampaignChatPanel({
     locationId,
     milestoneId: selectedMilestoneId,
   })
+  /** After "clear chat", non-null so agents use a fresh LangGraph thread for this workflow. */
+  const workflowChatSessionIdRef = useRef<string | null>(null)
   /** Pending @-mention: next `/api/chat` body includes presetReferenceMilestoneId until submit clears it. */
   const presetReferenceMilestoneIdRef = useRef<string | null>(null)
   chatApiContextRef.current = {
@@ -195,6 +207,14 @@ export function CampaignChatPanel({
     locationId,
     milestoneId: selectedMilestoneId,
   }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+    const raw = sessionStorage.getItem(workflowChatSessionStorageKey(workflowId))
+    workflowChatSessionIdRef.current = raw !== null && UUID_RE.test(raw) ? raw : null
+  }, [workflowId])
 
   const transport = useMemo(
     () =>
@@ -205,6 +225,7 @@ export function CampaignChatPanel({
           const lastUser = [...messages].reverse().find((m) => m.role === 'user')
           const presetRef = presetReferenceMilestoneIdRef.current
           presetReferenceMilestoneIdRef.current = null
+          const sessionId = workflowChatSessionIdRef.current
           return {
             body: {
               ...mergedBody,
@@ -213,6 +234,7 @@ export function CampaignChatPanel({
               locationId: String(ctx.locationId),
               ...(ctx.milestoneId !== null ? { milestoneId: ctx.milestoneId } : {}),
               ...(presetRef !== null ? { presetReferenceMilestoneId: presetRef } : {}),
+              ...(sessionId !== null ? { workflowChatSessionId: sessionId } : {}),
             },
           }
         },
@@ -220,10 +242,11 @@ export function CampaignChatPanel({
     [],
   )
 
-  const { messages, sendMessage, status, stop, error, clearError, regenerate } = useChat({
-    id: workflowId,
-    transport,
-  })
+  const { messages, sendMessage, status, stop, error, clearError, regenerate, setMessages } =
+    useChat({
+      id: workflowId,
+      transport,
+    })
 
   const slashCommands = useMemo(
     () => [
@@ -316,6 +339,19 @@ export function CampaignChatPanel({
     clearError()
     await regenerate()
   }, [clearError, regenerate])
+
+  const handleClearChat = useCallback(() => {
+    stop()
+    clearError()
+    setMessages([])
+    setText('')
+    presetReferenceMilestoneIdRef.current = null
+    const sid = crypto.randomUUID()
+    workflowChatSessionIdRef.current = sid
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(workflowChatSessionStorageKey(workflowId), sid)
+    }
+  }, [workflowId, stop, clearError, setMessages])
 
   const isSubmitDisabled = !text.trim() || status === 'streaming' || status === 'submitted'
   const isChatBusy = status === 'streaming' || status === 'submitted'
@@ -460,6 +496,19 @@ export function CampaignChatPanel({
             </PromptInputBody>
           </WorkflowChatComposerMenus>
           <PromptInputFooter>
+            <PromptInputTools>
+              <PromptInputButton
+                aria-label={t('clearChatAriaLabel')}
+                className="text-muted-foreground hover:text-foreground"
+                onClick={handleClearChat}
+                size="icon-sm"
+                tooltip={t('clearChatTooltip')}
+                type="button"
+                variant="ghost"
+              >
+                <Trash2 className="size-4" />
+              </PromptInputButton>
+            </PromptInputTools>
             <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />
           </PromptInputFooter>
         </PromptInput>

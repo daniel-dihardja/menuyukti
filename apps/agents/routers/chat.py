@@ -29,6 +29,7 @@ class ChatRequest(BaseModel):
     milestone_id: str | None = None
     location_id: int | None = Field(default=None, ge=1)
     agent_thread_id: str | None = Field(default=None, min_length=1)
+    workflow_chat_session_id: str | None = Field(default=None, min_length=1)
 
 
 def _sse_data_line(payload: dict[str, str]) -> str:
@@ -39,11 +40,15 @@ def _resolve_thread_id(
     user_id: str | None,
     workflow_id: str | None,
     agent_thread_id: str | None,
+    workflow_chat_session_id: str | None,
 ) -> str:
     if not user_id:
         raise HTTPException(status_code=401, detail="Missing X-Menuyukti-User-Id")
     if workflow_id:
-        return f"{user_id}:wf:{workflow_id}"
+        base = f"{user_id}:wf:{workflow_id}"
+        if workflow_chat_session_id:
+            return f"{base}:sess:{workflow_chat_session_id}"
+        return base
     if agent_thread_id:
         return f"{user_id}:agent:{agent_thread_id}"
     raise HTTPException(
@@ -123,6 +128,7 @@ async def chat_stream(
         x_menuyukti_user_id,
         body.workflow_id,
         body.agent_thread_id,
+        body.workflow_chat_session_id,
     )
     cfg = _runnable_config(
         thread_id=thread_id,
