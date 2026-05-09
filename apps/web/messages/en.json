@@ -1113,6 +1113,17 @@
         "thinking": "Thinking…",
         "errorTitle": "Something went wrong",
         "retry": "Retry",
+        "slashCommands": {
+          "ariaLabel": "Slash commands",
+          "input": {
+            "label": "input",
+            "description": "Send the input command."
+          },
+          "data": {
+            "label": "data",
+            "description": "Send the data command."
+          }
+        },
         "artifactTitle": "Artifact",
         "artifactPlaceholder": "Content will appear here as you work with the assistant.",
         "artifactPanelPlaceholder": "Milestone content will appear here.",

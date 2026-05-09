@@ -60,6 +60,7 @@ import { useCampaignPreviewVisibility } from './use-campaign-preview-visibility'
 import { useCampaignTimelineProviderSlices } from './use-campaign-timeline-provider-value'
 import { getMilestoneHelpDescription } from '@/lib/milestones/milestone-help-description'
 import { useMilestoneOperations } from './use-milestone-operations'
+import { SlashCommandMenu } from './slash-command-menu'
 
 /** Code-split preview; collapsible panel keeps the subtree mounted when hidden on desktop. */
 const CampaignPreviewPanelBodyLazy = dynamic(
@@ -119,6 +120,7 @@ export function CampaignChatPanel({
   locationId,
 }: CampaignChatPanelProps) {
   const t = useTranslations('analytics.campaigns.chat')
+  const tSlash = useTranslations('analytics.campaigns.chat.slashCommands')
   const [text, setText] = useState('')
   const [, startPreviewTransition] = useTransition()
 
@@ -236,6 +238,22 @@ export function CampaignChatPanel({
     transport,
   })
 
+  const slashCommands = useMemo(
+    () => [
+      {
+        id: 'input',
+        label: tSlash('input.label'),
+        description: tSlash('input.description'),
+      },
+      {
+        id: 'data',
+        label: tSlash('data.label'),
+        description: tSlash('data.description'),
+      },
+    ],
+    [tSlash],
+  )
+
   const chatWasBusy = useRef(false)
   useEffect(() => {
     const busy = status === 'streaming' || status === 'submitted'
@@ -266,6 +284,17 @@ export function CampaignChatPanel({
       })
     },
     [sendMessage],
+  )
+
+  const handleSelectSlashCommand = useCallback(
+    async (command: string) => {
+      if (status === 'streaming' || status === 'submitted') {
+        return
+      }
+      setText('')
+      await sendMessage({ text: command })
+    },
+    [sendMessage, status],
   )
 
   const handleRetry = useCallback(async () => {
@@ -390,13 +419,21 @@ export function CampaignChatPanel({
       </Conversation>
       <div className="shrink-0 p-4">
         <PromptInput globalDrop multiple onSubmit={handleSubmit}>
-          <PromptInputBody>
-            <PromptInputTextarea
-              placeholder={t('placeholder')}
-              value={text}
-              onChange={handleTextChange}
-            />
-          </PromptInputBody>
+          <SlashCommandMenu
+            ariaLabel={tSlash('ariaLabel')}
+            commands={slashCommands}
+            onSelectCommand={(cmd) => void handleSelectSlashCommand(cmd)}
+            onValueChange={setText}
+            value={text}
+          >
+            <PromptInputBody>
+              <PromptInputTextarea
+                placeholder={t('placeholder')}
+                value={text}
+                onChange={handleTextChange}
+              />
+            </PromptInputBody>
+          </SlashCommandMenu>
           <PromptInputFooter>
             <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />
           </PromptInputFooter>
