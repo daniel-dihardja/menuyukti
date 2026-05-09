@@ -166,6 +166,9 @@ function TimelineItemInner({
         return server
       }
       if (prev.trim() !== server.trim()) {
+        if (!optionalNotesFocusedRef.current) {
+          return server
+        }
         return prev
       }
       return prev === server ? prev : server
@@ -180,6 +183,7 @@ function TimelineItemInner({
 
   const optionalNotesDraftRef = useRef(optionalNotesDraft)
   optionalNotesDraftRef.current = optionalNotesDraft
+  const optionalNotesFocusedRef = useRef(false)
 
   const onUpdateMilestoneInputRef = useRef(onUpdateMilestoneInput)
   onUpdateMilestoneInputRef.current = onUpdateMilestoneInput
@@ -390,7 +394,12 @@ function TimelineItemInner({
   }
 
   const handleOptionalNotesBlur = () => {
+    optionalNotesFocusedRef.current = false
     void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
+  }
+
+  const handleOptionalNotesFocus = () => {
+    optionalNotesFocusedRef.current = true
   }
 
   const isDeleting = deletingMilestoneId === milestone.id
@@ -506,6 +515,7 @@ function TimelineItemInner({
                   handleAddPassCriterion,
                   handleGoalSave,
                   handleOptionalNotesBlur,
+                  handleOptionalNotesFocus,
                   handleRemovePassCriterion,
                   hasResult,
                   inputDraft,

@@ -8,6 +8,7 @@ from typing import Annotated, Any, Literal
 
 from agents_app.agents.core.chat.graphql_client import (
     fetch_milestone_node,
+    update_milestone_input as persist_milestone_input,
     update_milestone_preset_data as persist_milestone_preset_data,
 )
 from agents_app.agents.core.chat.http_context import get_chat_http_client
@@ -50,6 +51,43 @@ def _residual_milestone_data(node: dict[str, Any]) -> dict[str, Any] | None:
         return None
     out = {k: v for k, v in raw.items() if k not in _DATA_KEYS_STRIPPED_FOR_RESIDUAL}
     return out or None
+
+
+def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | None:
+    if not isinstance(payload, (dict, list)):
+        return "milestoneInput must remain a JSON object or array."
+
+    if isinstance(payload, dict):
+        raw_type = payload.get("type")
+        if raw_type is not None and not isinstance(raw_type, str):
+            return "milestoneInput.type must be a string when provided."
+        normalized_type = raw_type.strip() if isinstance(raw_type, str) else ""
+
+        expected_types: dict[str, str] = {
+            "campaign_brief": "campaign_brief",
+            "post_scheduler": "post_scheduler",
+            "culture_hooks": "culture_hooks",
+            "promotion_candidates": "promotion_candidates",
+            "dates": "dates",
+            "public_holidays": "public_holidays",
+        }
+        expected_type = expected_types.get(preset_id)
+        if expected_type and normalized_type and normalized_type != expected_type:
+            return (
+                "milestoneInput.type does not match milestone preset. "
+                f"(expected={expected_type!r}, got={normalized_type!r})"
+            )
+
+        value = payload.get("value")
+        if value is not None and not isinstance(value, dict):
+            return "milestoneInput.value must be an object when provided."
+
+        if isinstance(value, dict):
+            notes = value.get("notes")
+            if notes is not None and not isinstance(notes, str):
+                return "milestoneInput.value.notes must be a string when provided."
+
+    return None
 
 
 def _format_milestone_snapshot(milestone_id: str, node: dict[str, Any]) -> str:
@@ -138,6 +176,41 @@ def _parse_json_pointer(path: str) -> tuple[list[str] | None, str | None]:
     if not tokens:
         return None, "path must target at least one field"
     return tokens, None
+
+
+def _encode_json_pointer_token(token: str) -> str:
+    return token.replace("~", "~0").replace("/", "~1")
+
+
+def _stringify_json_pointer(tokens: list[str]) -> str:
+    if not tokens:
+        return "/"
+    return "/" + "/".join(_encode_json_pointer_token(token) for token in tokens)
+
+
+def _normalize_milestone_input_path(path: str, payload: Any) -> str:
+    """Allow shorthand top-level property paths to target milestoneInput.value fields.
+
+    Examples:
+    - /notes -> /value/notes
+    - /endDate -> /value/endDate
+    - /endDate/year -> /value/endDate/year
+    """
+    tokens, err = _parse_json_pointer(path)
+    if err is not None or tokens is None:
+        return path
+    if tokens == [""]:
+        return path
+    if not isinstance(payload, dict):
+        return path
+    value = payload.get("value")
+    if not isinstance(value, dict):
+        return path
+    if tokens[0] in payload:
+        return path
+    if tokens[0] not in value:
+        return path
+    return _stringify_json_pointer(["value", *tokens])
 
 
 def _list_index_from_token(token: str, *, allow_end: bool, length: int) -> tuple[int | None, str | None]:
@@ -256,6 +329,100 @@ async def get_milestone_data(config: Annotated[RunnableConfig, InjectedToolArg()
         return "Error: milestone location does not match the campaign context."
 
     return _format_milestone_snapshot(str(milestone_id), node)
+
+
+@tool
+async def update_milestone_input(
+    operations: list[dict[str, Any]] | None = None,
+    dry_run: bool = False,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,
+) -> str:
+    """Apply partial updates to selected milestoneInput using JSON-pointer-like patch operations.
+
+    Operation shape:
+    - ``op``: ``add`` | ``replace`` | ``remove``
+    - ``path``: JSON pointer (example: ``/value/notes``)
+    - ``value``: required for ``add`` and ``replace``; ignored for ``remove``.
+    """
+    c = (config or {}).get("configurable") or {}
+    milestone_id = c.get("milestone_id")
+    location_id = c.get("location_id")
+    user_id = c.get("user_id")
+    if not milestone_id or location_id is None or not user_id:
+        return (
+            "Milestone context is not available (no milestone selected or missing location). "
+            "Ask the user to select a milestone first."
+        )
+    if not isinstance(operations, list) or len(operations) == 0:
+        return (
+            "Missing required field 'operations'. Provide at least one patch operation, for example: "
+            "[{'op':'replace','path':'/notes','value':'Test 1234'}]. "
+            "Use '/notes' or '/value/notes' for notes, and '/endDate' or '/value/endDate' for endDate."
+        )
+
+    client = get_chat_http_client()
+    node = await fetch_milestone_node(str(milestone_id), str(user_id), client=client)
+    if not node:
+        return "Error: milestone not found."
+    if str(node.get("nodeType") or "") != "milestone":
+        return "Error: node is not a milestone."
+    loc = node.get("locationId")
+    if loc is not None and int(loc) != int(location_id):
+        return "Error: milestone location does not match the campaign context."
+
+    raw_data = node.get("data")
+    milestone_node_data = raw_data if isinstance(raw_data, dict) else {}
+    raw_preset = milestone_node_data.get("presetId")
+    preset_id = raw_preset.strip() if isinstance(raw_preset, str) else ""
+
+    current_payload = node.get("milestoneInput")
+    if current_payload is None:
+        working_payload: Any = {}
+    elif isinstance(current_payload, (dict, list)):
+        working_payload = deepcopy(current_payload)
+    else:
+        return "Error: current milestoneInput is not a JSON object or array."
+
+    for i, op_row in enumerate(operations, start=1):
+        if not isinstance(op_row, dict):
+            return f"Operation #{i} must be an object."
+        op = str(op_row.get("op") or "").strip().lower()
+        if op not in {"add", "replace", "remove"}:
+            return f"Operation #{i} has unsupported op {op!r}."
+        path = op_row.get("path")
+        if not isinstance(path, str):
+            return f"Operation #{i} requires string field 'path'."
+        normalized_path = _normalize_milestone_input_path(path, working_payload)
+        if op in {"add", "replace"} and "value" not in op_row:
+            return f"Operation #{i} requires 'value' for op={op!r}."
+        value = op_row.get("value")
+        next_payload, err = _apply_patch_operation(
+            working_payload,
+            op=op,  # type: ignore[arg-type]
+            path=normalized_path,
+            value=value,
+        )
+        if err is not None or next_payload is None:
+            return f"Operation #{i} failed: {err or 'invalid operation'}"
+        working_payload = next_payload
+
+    validation_error = _validate_milestone_input_payload(preset_id, working_payload)
+    if validation_error is not None:
+        return f"Patched milestoneInput is invalid. Validation error: {validation_error}"
+
+    if dry_run:
+        return (
+            f"Validated {len(operations)} operation(s) for milestoneInput "
+            f"(presetId={preset_id or 'unknown'}). No data was saved because dry_run=true."
+        )
+
+    await persist_milestone_input(
+        str(milestone_id),
+        working_payload,
+        str(user_id),
+        client=client,
+    )
+    return f"Saved milestoneInput for milestone id={milestone_id} with {len(operations)} operation(s)."
 
 
 @tool

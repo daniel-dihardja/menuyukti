@@ -52,6 +52,7 @@ export type MilestoneItemTabsModel = {
   optionalNotesDraft: string
   setOptionalNotesDraft: (v: string) => void
   handleOptionalNotesBlur: () => void
+  handleOptionalNotesFocus: () => void
   inputDraft: CampaignWindowInput
   setInputDraft: (next: CampaignWindowInput) => void
   inputSaveStatus: FieldSaveStatusVariant
@@ -124,6 +125,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     optionalNotesDraft,
     setOptionalNotesDraft,
     handleOptionalNotesBlur,
+    handleOptionalNotesFocus,
     inputDraft,
     setInputDraft,
     inputSaveStatus,
@@ -257,6 +259,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                     className="min-h-[120px] resize-y whitespace-pre-wrap"
                     disabled={isMilestoneRunning}
                     onBlur={() => handleOptionalNotesBlur()}
+                    onFocus={() => handleOptionalNotesFocus()}
                     onChange={(e) => setOptionalNotesDraft(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => e.stopPropagation()}
@@ -284,6 +287,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                   className="min-h-[120px] resize-y whitespace-pre-wrap"
                   disabled={isMilestoneRunning}
                   onBlur={() => handleOptionalNotesBlur()}
+                  onFocus={() => handleOptionalNotesFocus()}
                   onChange={(e) => setOptionalNotesDraft(e.target.value)}
                   onClick={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}
