@@ -47,7 +47,7 @@ import {
 import { Spinner } from '@workspace/ui/components/spinner'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
-import { CornerDownLeftIcon, ImageIcon, PlusIcon, SquareIcon, XIcon } from 'lucide-react'
+import { ArrowUp, ImageIcon, PlusIcon, SquareIcon, XIcon } from 'lucide-react'
 import { nanoid } from 'nanoid'
 import {
   Children,
@@ -1009,7 +1009,7 @@ export const PromptInputSubmit = ({
 }: PromptInputSubmitProps) => {
   const isGenerating = status === 'submitted' || status === 'streaming'
 
-  let Icon = <CornerDownLeftIcon className="size-4" />
+  let Icon = <ArrowUp className="size-4" />
 
   if (status === 'submitted') {
     Icon = <Spinner />
@@ -1034,7 +1034,7 @@ export const PromptInputSubmit = ({
   return (
     <InputGroupButton
       aria-label={isGenerating ? 'Stop' : 'Submit'}
-      className={cn(className)}
+      className={cn('ml-auto', className)}
       onClick={handleClick}
       size={size}
       type={isGenerating && onStop ? 'button' : 'submit'}
