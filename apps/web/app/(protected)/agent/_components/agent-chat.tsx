@@ -18,6 +18,7 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from '@workspace/ui/components/ai-elements/prompt-input'
+import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
 import { Spinner } from '@workspace/ui/components/spinner'
@@ -25,14 +26,20 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { ChatMessageParts } from '@/components/chat-message-parts'
+import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
 export function AgentChat() {
   const t = useTranslations('agentChat')
   const [text, setText] = useState('')
   const [agentThreadId, setAgentThreadId] = useState(() => crypto.randomUUID())
+  const [selectedChatModel, setSelectedChatModel] = useState<ChatGatewayModelId>(
+    DEFAULT_CHAT_GATEWAY_MODEL,
+  )
+  const selectedChatModelRef = useRef<ChatGatewayModelId>(DEFAULT_CHAT_GATEWAY_MODEL)
+  selectedChatModelRef.current = selectedChatModel
 
   const transport = useMemo(
     () =>
@@ -45,6 +52,7 @@ export function AgentChat() {
               ...mergedBody,
               messages: lastUser ? [lastUser] : messages,
               agentThreadId,
+              model: selectedChatModelRef.current,
             },
           }
         },
@@ -89,6 +97,7 @@ export function AgentChat() {
   }, [stop, clearError, setMessages])
 
   const isSubmitDisabled = !text.trim() || status === 'streaming' || status === 'submitted'
+  const isChatBusy = status === 'streaming' || status === 'submitted'
   const visibleMessages = useMemo(() => messages.filter((msg) => msg.role !== 'system'), [messages])
 
   return (
@@ -168,6 +177,11 @@ export function AgentChat() {
             </PromptInputBody>
             <PromptInputFooter>
               <PromptInputTools>
+                <ChatGatewayModelSelect
+                  disabled={isChatBusy}
+                  onValueChange={setSelectedChatModel}
+                  value={selectedChatModel}
+                />
                 <PromptInputButton
                   aria-label={t('clearChatAriaLabel')}
                   className="text-muted-foreground hover:text-foreground"

@@ -18,6 +18,7 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from '@workspace/ui/components/ai-elements/prompt-input'
+import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
 import { usePanelRef } from '@workspace/ui/components/resizable'
@@ -62,6 +63,7 @@ import { useCampaignPreviewVisibility } from './use-campaign-preview-visibility'
 import { useCampaignTimelineProviderSlices } from './use-campaign-timeline-provider-value'
 import { useMilestoneOperations } from './use-milestone-operations'
 import { WorkflowChatComposerMenus } from './workflow-chat-composer-menus'
+import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
 const WORKFLOW_CHAT_SESSION_STORAGE_PREFIX = 'menuyukti.wfChatSession.v1:'
 
@@ -200,6 +202,11 @@ export function CampaignChatPanel({
   })
   /** After "clear chat", non-null so agents use a fresh LangGraph thread for this workflow. */
   const workflowChatSessionIdRef = useRef<string | null>(null)
+  const [selectedChatModel, setSelectedChatModel] = useState<ChatGatewayModelId>(
+    DEFAULT_CHAT_GATEWAY_MODEL,
+  )
+  const selectedChatModelRef = useRef<ChatGatewayModelId>(DEFAULT_CHAT_GATEWAY_MODEL)
+  selectedChatModelRef.current = selectedChatModel
   /** Pending @-mention: next `/api/chat` body includes presetReferenceMilestoneId until submit clears it. */
   const presetReferenceMilestoneIdRef = useRef<string | null>(null)
   chatApiContextRef.current = {
@@ -235,6 +242,7 @@ export function CampaignChatPanel({
               ...(ctx.milestoneId !== null ? { milestoneId: ctx.milestoneId } : {}),
               ...(presetRef !== null ? { presetReferenceMilestoneId: presetRef } : {}),
               ...(sessionId !== null ? { workflowChatSessionId: sessionId } : {}),
+              model: selectedChatModelRef.current,
             },
           }
         },
@@ -497,6 +505,11 @@ export function CampaignChatPanel({
           </WorkflowChatComposerMenus>
           <PromptInputFooter>
             <PromptInputTools>
+              <ChatGatewayModelSelect
+                disabled={isChatBusy}
+                onValueChange={setSelectedChatModel}
+                value={selectedChatModel}
+              />
               <PromptInputButton
                 aria-label={t('clearChatAriaLabel')}
                 className="text-muted-foreground hover:text-foreground"

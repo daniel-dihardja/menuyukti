@@ -28,6 +28,18 @@
     "clearChatAriaLabel": "Clear chat",
     "clearChatTooltip": "Clear messages and start a fresh advisor thread"
   },
+  "chatGatewayModels": {
+    "ariaLabel": "AI model",
+    "openai_gpt_4o_mini": "GPT-4o mini",
+    "openai_gpt_4o": "GPT-4o",
+    "openai_gpt_5_4": "GPT-5.4",
+    "openai_gpt_4_1_mini": "GPT-4.1 mini",
+    "anthropic_claude_3_7_sonnet": "Claude 3.7 Sonnet",
+    "anthropic_claude_opus_4_6": "Claude Opus 4.6",
+    "google_gemini_2_5_flash": "Gemini 2.5 Flash",
+    "xai_grok_3": "Grok 3",
+    "mistral_mistral_large_3": "Mistral Large 3"
+  },
   "metadata": {
     "title": "Menuyukti - AI-first restaurant social media marketing platform",
     "description": "AI-first platform for restaurant social media marketing: Canvas for creatives, Advisor for strategy, and Pro Campaigns agentic automation that turns sales data into Instagram schedules, promotion ideas, and publish-ready captions.",

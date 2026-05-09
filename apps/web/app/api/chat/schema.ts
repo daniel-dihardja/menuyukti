@@ -29,6 +29,8 @@ export const chatRequestBodySchema = z.object({
    * a fresh checkpoint without changing the workflow id.
    */
   workflowChatSessionId: z.string().uuid().optional(),
+  /** Vercel AI Gateway model id (provider/model); validated by agents allowlist. */
+  model: z.string().min(1).max(120).optional(),
 })
 
 export type ChatRequestBody = z.infer<typeof chatRequestBodySchema>

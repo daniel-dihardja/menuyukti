@@ -1,6 +1,7 @@
 """LangChain chat models via Vercel AI Gateway (OpenAI-compatible Chat Completions)."""
 
 import os
+from functools import lru_cache
 
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
@@ -36,6 +37,29 @@ def _chat_openai(*, streaming: bool) -> ChatOpenAI:
         temperature=0,
         streaming=streaming,
     )
+
+
+@lru_cache(maxsize=32)
+def _cached_chat_openai_for_gateway(*, gateway_model_id: str, streaming: bool) -> ChatOpenAI:
+    return ChatOpenAI(
+        model=gateway_model_id,
+        api_key=SecretStr(_gateway_api_key()),
+        base_url=_AI_GATEWAY_BASE_URL,
+        temperature=0,
+        streaming=streaming,
+    )
+
+
+def chat_llm_for_gateway_model(
+    gateway_model_id: str | None, *, streaming: bool = True
+) -> ChatOpenAI:
+    """Chat LLM for an explicit gateway id, or env default when ``gateway_model_id`` is empty."""
+    resolved = (
+        gateway_model_id.strip()
+        if isinstance(gateway_model_id, str) and gateway_model_id.strip()
+        else _gateway_model_id()
+    )
+    return _cached_chat_openai_for_gateway(gateway_model_id=resolved, streaming=streaming)
 
 
 def get_llm() -> ChatOpenAI:

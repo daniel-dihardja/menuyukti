@@ -14,11 +14,22 @@ from agents_app.agents.core.chat.tools import (
     update_milestone_input,
     update_milestone_preset_data,
 )
-from agents_app.models.llm_config import get_llm
+from agents_app.models.llm_config import chat_llm_for_gateway_model
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langgraph.checkpoint.base import BaseCheckpointSaver
+from langgraph.config import get_config
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import create_react_agent
+
+_CHAT_TOOLS = [
+    get_milestone_data,
+    get_milestone_help,
+    get_milestone_input_json,
+    get_milestone_preset_data_json,
+    get_milestone_preset_data_for_milestone,
+    update_milestone_input,
+    update_milestone_preset_data,
+]
 
 
 def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
@@ -28,20 +39,21 @@ def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
     return [SystemMessage(content=prompt_body), *messages]
 
 
+def _select_chat_model(_state: dict[str, Any], _runtime: Any) -> Any:
+    """Resolve LLM from RunnableConfig (set by HTTP router when client picks a model)."""
+    cfg = get_config() or {}
+    conf = cfg.get("configurable") or {}
+    raw = conf.get("chat_gateway_model")
+    gateway: str | None = raw.strip() if isinstance(raw, str) and raw.strip() else None
+    llm = chat_llm_for_gateway_model(gateway, streaming=True)
+    return llm.bind_tools(_CHAT_TOOLS)
+
+
 def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStateGraph:
     """Compile the shared chat agent (single graph for all requests; milestone context via config)."""
-    llm = get_llm()
-    return create_react_agent(
-        llm,
-        [
-            get_milestone_data,
-            get_milestone_help,
-            get_milestone_input_json,
-            get_milestone_preset_data_json,
-            get_milestone_preset_data_for_milestone,
-            update_milestone_input,
-            update_milestone_preset_data,
-        ],
+    return create_react_agent(  # type: ignore[type-var]
+        _select_chat_model,
+        _CHAT_TOOLS,
         prompt=_chat_prompt,
         checkpointer=checkpointer,
         name="menuyukti_chat",

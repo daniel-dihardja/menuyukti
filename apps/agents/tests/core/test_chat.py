@@ -63,6 +63,76 @@ def test_chat_not_exactly_one_message(client: TestClient) -> None:
     mock_graph.astream_events.assert_not_called()
 
 
+def test_chat_invalid_model_returns_400(client: TestClient) -> None:
+    mock_graph = MagicMock()
+    client.app.state.chat_graph = mock_graph
+    response = client.post(
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "workflow_id": "10",
+            "model": "not-a-real/model-id-for-chat",
+        },
+    )
+    assert response.status_code == 400
+    mock_graph.astream_events.assert_not_called()
+
+
+def test_chat_omits_gateway_model_in_config_when_model_not_sent(client: TestClient) -> None:
+    captured: dict = {}
+
+    async def fake_astream_events(_input, config, **_kwargs):
+        captured["config"] = config
+        yield {
+            "event": "on_chat_model_stream",
+            "data": {"chunk": AIMessageChunk(content="x")},
+        }
+
+    mock_graph = MagicMock()
+    mock_graph.astream_events = MagicMock(side_effect=fake_astream_events)
+    client.app.state.chat_graph = mock_graph
+
+    with client.stream(
+        "POST",
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={"messages": [{"role": "user", "content": "Hi"}], "workflow_id": "10"},
+    ) as response:
+        assert response.status_code == 200
+
+    assert "chat_gateway_model" not in captured["config"]["configurable"]
+
+
+def test_chat_valid_model_passed_in_config(client: TestClient) -> None:
+    captured: dict = {}
+
+    async def fake_astream_events(_input, config, **_kwargs):
+        captured["config"] = config
+        yield {
+            "event": "on_chat_model_stream",
+            "data": {"chunk": AIMessageChunk(content="ok")},
+        }
+
+    mock_graph = MagicMock()
+    mock_graph.astream_events = MagicMock(side_effect=fake_astream_events)
+    client.app.state.chat_graph = mock_graph
+
+    with client.stream(
+        "POST",
+        "/chat",
+        headers={"X-Menuyukti-User-Id": "user-1"},
+        json={
+            "messages": [{"role": "user", "content": "Hello"}],
+            "workflow_id": "10",
+            "model": "openai/gpt-4o",
+        },
+    ) as response:
+        assert response.status_code == 200
+
+    assert captured["config"]["configurable"]["chat_gateway_model"] == "openai/gpt-4o"
+
+
 def test_chat_stream_sse(client: TestClient) -> None:
     """Patch app.state.chat_graph so we exercise SSE formatting without calling OpenAI."""
 
