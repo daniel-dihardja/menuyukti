@@ -13,6 +13,7 @@ describe('milestone optional notes', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('post_scheduler')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('culture_hooks')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('dates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput(undefined)).toBe(false)
   })
 
@@ -51,11 +52,31 @@ describe('milestone optional notes', () => {
     }
   })
 
+  it('patchMilestoneSchema accepts dates milestoneInput and milestoneData', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      milestoneInput: { type: 'dates', value: { startDate: '2026-06-01', endDate: '2026-06-30' } },
+      milestoneData: {
+        startDate: '2026-06-01',
+        endDate: '2026-06-30',
+        publicHolidays: [],
+      },
+    })
+    expect(parsed.success).toBe(true)
+  })
+
   it('patchMilestoneSchema accepts goal-only patch', () => {
     const parsed = patchMilestoneSchema.safeParse({ goal: 'Increase repeat visits' })
     expect(parsed.success).toBe(true)
     if (parsed.success) {
       expect(parsed.data.goal).toBe('Increase repeat visits')
+    }
+  })
+
+  it('patchMilestoneSchema accepts name-only patch', () => {
+    const parsed = patchMilestoneSchema.safeParse({ name: 'Campaign brief' })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.name).toBe('Campaign brief')
     }
   })
 
@@ -90,6 +111,19 @@ describe('milestone optional notes', () => {
       formatMix: { formats: [] },
       weeklySlotPlan: [],
       guardrailCheck: '',
+    })
+  })
+
+  it('getMilestonePresetCreateFields seeds dates milestoneInput', () => {
+    const fields = getMilestonePresetCreateFields('dates', (k) => k)
+    expect(fields.milestoneInput).toEqual({
+      type: 'dates',
+      value: { startDate: '', endDate: '' },
+    })
+    expect(fields.milestoneData).toEqual({
+      startDate: '',
+      endDate: '',
+      publicHolidays: [],
     })
   })
 

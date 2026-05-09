@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
@@ -10,6 +11,40 @@ describe('promotion candidates milestone schema', () => {
     const parsed = promotionCandidatesMilestoneDataSchema.safeParse({
       mainCategory: 'FOOD',
       categories: [{ category: 'FOOD', starItems: ['Steak'], puzzleItems: ['Soup'] }],
+      sourceAnalyticsRunId: null,
+      notes: '',
+    })
+    expect(parsed.success).toBe(true)
+    if (!parsed.success) {
+      return
+    }
+    const firstStar = parsed.data.categories[0]?.starItems[0]
+    expect(firstStar).toBeDefined()
+    expect(firstStar).toMatchObject({
+      name: 'Steak',
+      storytellingFit: 'strong',
+      storytellingRationale: '',
+    })
+  })
+
+  it('accepts star and puzzle items with storytelling fields', () => {
+    const parsed = promotionCandidatesMilestoneDataSchema.safeParse({
+      mainCategory: 'FOOD',
+      categories: [
+        {
+          category: 'FOOD',
+          starItems: [
+            {
+              name: 'Steak',
+              storytellingFit: 'weak',
+              storytellingRationale: 'Too generic for the Ramadan family angle.',
+            },
+          ],
+          puzzleItems: [
+            { name: 'Soup', storytellingFit: 'strong', storytellingRationale: 'Comfort story.' },
+          ],
+        },
+      ],
       sourceAnalyticsRunId: null,
       notes: '',
     })
@@ -36,9 +71,6 @@ describe('promotion candidates milestone schema', () => {
 describe('campaign brief schema', () => {
   it('requires mainCategory for downstream preset ordering', () => {
     const parsed = campaignBriefMilestoneDataSchema.safeParse({
-      startDate: '2026-06-01',
-      endDate: '2026-06-30',
-      publicHolidays: [],
       venueSnapshot: {
         venueName: 'Cafe Alto',
         city: 'Berlin',
@@ -58,6 +90,17 @@ describe('campaign brief schema', () => {
       measurementPlan: ['A', 'B', 'C'],
       testingPlan: ['A', 'B', 'C'],
       riskGuardrails: ['A', 'B', 'C'],
+    })
+    expect(parsed.success).toBe(true)
+  })
+})
+
+describe('dates schema', () => {
+  it('accepts campaign window with holiday list', () => {
+    const parsed = datesMilestoneDataSchema.safeParse({
+      startDate: '2026-06-01',
+      endDate: '2026-06-30',
+      publicHolidays: [{ name: 'Holiday A', description: 'National holiday', date: '2026-06-10' }],
     })
     expect(parsed.success).toBe(true)
   })

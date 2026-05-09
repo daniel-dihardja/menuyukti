@@ -11,15 +11,9 @@ export type MilestoneCampaignBriefDataPreviewProps = {
   labels: CampaignBriefPreviewLabels
   /** Accessible name for each help control, e.g. “Learn more: Start date”. */
   formatHelpAriaLabel: (sectionTitle: string) => string
-  /** ISO `YYYY-MM-DD` → `<Weekday>. DD.MM.YYYY` for preview display. */
-  formatDate: (isoDate: string) => string
 }
 
 export type CampaignBriefPreviewLabels = {
-  startDate: string
-  endDate: string
-  publicHolidays: string
-  noHolidays: string
   venueSnapshot: string
   venueName: string
   city: string
@@ -52,9 +46,6 @@ export type CampaignBriefPreviewLabels = {
   helpMeasurementPlan: string
   helpTestingPlan: string
   helpRiskGuardrails: string
-  helpStartDate: string
-  helpEndDate: string
-  helpPublicHolidays: string
 }
 
 function renderList(items: string[], emptyLabel: string) {
@@ -74,60 +65,12 @@ export function MilestoneCampaignBriefDataPreview({
   data,
   labels,
   formatHelpAriaLabel,
-  formatDate,
 }: MilestoneCampaignBriefDataPreviewProps) {
   const a = formatHelpAriaLabel
 
   return (
     <TooltipProvider delayDuration={300}>
       <div className="space-y-4 text-sm">
-        <section>
-          <dl className="grid grid-cols-[minmax(0,140px)_1fr] gap-y-2 gap-x-2">
-            <dt className="flex items-center gap-0.5 font-medium text-foreground">
-              <span>{labels.startDate}</span>
-              <CampaignBriefPreviewHelpIcon
-                ariaLabel={a(labels.startDate)}
-                helpText={labels.helpStartDate}
-              />
-            </dt>
-            <dd className="text-muted-foreground">
-              {data.startDate ? formatDate(data.startDate) : labels.emptyValue}
-            </dd>
-            <dt className="flex items-center gap-0.5 font-medium text-foreground">
-              <span>{labels.endDate}</span>
-              <CampaignBriefPreviewHelpIcon
-                ariaLabel={a(labels.endDate)}
-                helpText={labels.helpEndDate}
-              />
-            </dt>
-            <dd className="text-muted-foreground">
-              {data.endDate ? formatDate(data.endDate) : labels.emptyValue}
-            </dd>
-          </dl>
-        </section>
-
-        <section>
-          <div className="flex items-center gap-0.5">
-            <h4 className="font-medium text-foreground">{labels.publicHolidays}</h4>
-            <CampaignBriefPreviewHelpIcon
-              ariaLabel={a(labels.publicHolidays)}
-              helpText={labels.helpPublicHolidays}
-            />
-          </div>
-          {data.publicHolidays.length === 0 ? (
-            <p className="mt-2 text-muted-foreground text-sm">{labels.noHolidays}</p>
-          ) : (
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-muted-foreground">
-              {data.publicHolidays.map((holiday, index) => (
-                <li key={`${holiday.date}-${holiday.name}-${index}`}>
-                  <span className="font-medium text-foreground">{formatDate(holiday.date)}</span> -{' '}
-                  {holiday.name}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
         <section>
           <div className="flex items-center gap-0.5">
             <h4 className="font-medium text-foreground">{labels.venueSnapshot}</h4>

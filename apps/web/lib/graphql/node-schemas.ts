@@ -15,6 +15,7 @@ export const passCriteriaSchema = z.object({
 export type PassCriteriaData = z.infer<typeof passCriteriaSchema>
 
 export const milestonePresetIdSchema = z.enum([
+  'dates',
   'restaurant_campaign_brief',
   'post_scheduler',
   'promotion_candidates',
@@ -55,6 +56,13 @@ export const cultureHooksMilestoneInputValueSchema = z.object({
 
 export type CultureHooksMilestoneInputValue = z.infer<typeof cultureHooksMilestoneInputValueSchema>
 
+export const datesMilestoneInputValueSchema = z.object({
+  startDate: z.string(),
+  endDate: z.string(),
+})
+
+export type DatesMilestoneInputValue = z.infer<typeof datesMilestoneInputValueSchema>
+
 export const milestoneInputSchema = z.object({
   type: z.string().trim().min(1),
   value: z.unknown().optional(),
@@ -70,6 +78,14 @@ export const campaignWindowPublicHolidaySchema = z.object({
 
 export type CampaignWindowPublicHoliday = z.infer<typeof campaignWindowPublicHolidaySchema>
 
+export const datesMilestoneDataSchema = z.object({
+  startDate: z.string(),
+  endDate: z.string(),
+  publicHolidays: z.array(campaignWindowPublicHolidaySchema),
+})
+
+export type DatesMilestoneData = z.infer<typeof datesMilestoneDataSchema>
+
 export const campaignBriefVenueSnapshotSchema = z.object({
   venueName: z.string(),
   city: z.string(),
@@ -80,9 +96,6 @@ export const campaignBriefVenueSnapshotSchema = z.object({
 export type CampaignBriefVenueSnapshot = z.infer<typeof campaignBriefVenueSnapshotSchema>
 
 export const campaignBriefMilestoneDataSchema = z.object({
-  startDate: z.string(),
-  endDate: z.string(),
-  publicHolidays: z.array(campaignWindowPublicHolidaySchema),
   venueSnapshot: campaignBriefVenueSnapshotSchema,
   contentPillars: z.array(z.string()),
   audienceHypotheses: z.array(z.string()),
@@ -162,10 +175,28 @@ export const postSchedulerMilestoneDataSchema = z.object({
 
 export type PostSchedulerMilestoneData = z.infer<typeof postSchedulerMilestoneDataSchema>
 
+/** Legacy milestonedata stored star/puzzle lines as plain strings; new runs use objects with storytelling fields. */
+export const promotionCandidateMenuItemSchema = z.union([
+  z
+    .string()
+    .trim()
+    .min(1)
+    .transform((name) => ({
+      name,
+      storytellingFit: 'strong' as const,
+      storytellingRationale: '',
+    })),
+  z.object({
+    name: z.string().trim().min(1),
+    storytellingFit: z.enum(['strong', 'weak']).default('weak'),
+    storytellingRationale: z.string().default(''),
+  }),
+])
+
 export const promotionCandidatesCategorySchema = z.object({
   category: z.enum(['FOOD', 'DRINK']),
-  starItems: z.array(z.string()),
-  puzzleItems: z.array(z.string()),
+  starItems: z.array(promotionCandidateMenuItemSchema),
+  puzzleItems: z.array(promotionCandidateMenuItemSchema),
 })
 
 export const promotionCandidatesMilestoneDataSchema = z.object({
@@ -174,6 +205,8 @@ export const promotionCandidatesMilestoneDataSchema = z.object({
   sourceAnalyticsRunId: z.string().nullable().optional(),
   notes: z.string().optional(),
 })
+
+export type PromotionCandidateMenuItem = z.output<typeof promotionCandidateMenuItemSchema>
 
 export type PromotionCandidatesMilestoneData = z.infer<
   typeof promotionCandidatesMilestoneDataSchema
@@ -210,6 +243,7 @@ export type MilestoneData = z.infer<typeof milestoneDataSchema>
 
 /** Child `milestonedata` node JSON — structured preset data only (breaking change: no markdown string). */
 export const milestonedataValueSchema = z.union([
+  datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,

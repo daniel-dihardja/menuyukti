@@ -1,0 +1,27 @@
+import type { TimelineMilestone } from '@/app/(protected)/campaigns/_components/timeline/types'
+
+/** Translation keys under `analytics.campaigns.chat` for preset default goal / Help-tab body. */
+export const PRESET_GOAL_TRANSLATION_KEYS = {
+  restaurant_campaign_brief: 'milestonePreset.restaurant_campaign_brief.goal',
+  post_scheduler: 'milestonePreset.post_scheduler.goal',
+  promotion_candidates: 'milestonePreset.promotion_candidates.goal',
+  culture_hooks: 'milestonePreset.culture_hooks.goal',
+} as const
+
+/** Matches `useTranslations('analytics.campaigns.chat')`. */
+export type MilestoneHelpTranslateFn = (key: string) => string
+
+/**
+ * Same precedence as the milestone Help tab: preset catalog goal → custom goal → fallback.
+ */
+export function getMilestoneHelpDescription(
+  milestone: Pick<TimelineMilestone, 'goal' | 'presetId'>,
+  t: MilestoneHelpTranslateFn,
+): string {
+  const presetGoalKey = milestone.presetId
+    ? PRESET_GOAL_TRANSLATION_KEYS[milestone.presetId as keyof typeof PRESET_GOAL_TRANSLATION_KEYS]
+    : undefined
+  const presetDescription = presetGoalKey ? t(presetGoalKey) : ''
+  const customDescription = milestone.goal?.trim() ?? ''
+  return presetDescription || customDescription || t('milestoneHelpWhatItDoesFallback')
+}

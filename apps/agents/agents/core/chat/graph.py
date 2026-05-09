@@ -1,82 +1,62 @@
-"""LangGraph chat graph (single LLM node or ReAct agent with get_milestone_data tool)."""
+"""LangGraph chat graph: ReAct agent with get_milestone_data and short-term checkpoint memory."""
 
 from __future__ import annotations
 
-import httpx
+from typing import Any
+
 from agents_app.agents.core.chat.prompts import build_system_prompt
+from agents_app.agents.core.chat.tools import (
+    get_milestone_data,
+    get_milestone_help,
+    get_milestone_input_json,
+    get_milestone_preset_data_for_milestone,
+    get_milestone_preset_data_json,
+    update_milestone_input,
+    update_milestone_preset_data,
+)
 from agents_app.models.llm_config import get_llm
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
-from langgraph.graph import END, START, StateGraph
-from langgraph.graph.message import MessagesState
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langgraph.checkpoint.base import BaseCheckpointSaver
+from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import create_react_agent
 
 
-async def _chat_node(state: MessagesState) -> dict[str, list[BaseMessage]]:
-    """Stream tokens from the model; LangGraph surfaces them via astream_events."""
+def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
+    """Prepend the chat system prompt."""
+    messages = state.get("messages") or []
+    prompt_body = build_system_prompt()
+    return [SystemMessage(content=prompt_body), *messages]
+
+
+def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStateGraph:
+    """Compile the shared chat agent (single graph for all requests; milestone context via config)."""
     llm = get_llm()
-    system = SystemMessage(content=build_system_prompt())
-    messages: list[BaseMessage] = [system, *state["messages"]]
-    full_content = ""
-    async for chunk in llm.astream(messages):
-        text = chunk.content
-        if isinstance(text, str):
-            full_content += text
-        elif isinstance(text, list):
-            # Multimodal / block content: best-effort string concat
-            full_content += "".join(str(part) for part in text)
-    return {"messages": [AIMessage(content=full_content)]}
-
-
-def build_chat_graph(
-    workflow_id: str | None = None,
-    milestone_id: str | None = None,
-    *,
-    location_id: int | None = None,
-    user_id: str | None = None,
-    http_client: httpx.AsyncClient | None = None,
-):
-    """Compile a stateless chat graph (no checkpointer).
-
-    When ``milestone_id``, ``location_id``, ``user_id``, and ``http_client`` are all set,
-    returns a ReAct agent with ``get_milestone_data``; otherwise a single LLM node.
-
-    ``workflow_id`` is accepted for API compatibility but not used in the prompt yet.
-    """
-    _ = workflow_id  # reserved for future steps
-    has_milestone_tool = bool(
-        milestone_id and location_id is not None and user_id and http_client is not None,
+    return create_react_agent(
+        llm,
+        [
+            get_milestone_data,
+            get_milestone_help,
+            get_milestone_input_json,
+            get_milestone_preset_data_json,
+            get_milestone_preset_data_for_milestone,
+            update_milestone_input,
+            update_milestone_preset_data,
+        ],
+        prompt=_chat_prompt,
+        checkpointer=checkpointer,
+        name="menuyukti_chat",
     )
-    if has_milestone_tool and http_client is not None and user_id is not None:
-        from agents_app.agents.core.chat.tools import make_get_milestone_data_tool
-
-        tool = make_get_milestone_data_tool(
-            milestone_id,
-            location_id,
-            user_id,
-            client=http_client,
-        )
-        llm = get_llm()
-        prompt_text = build_system_prompt()
-        return create_react_agent(llm, [tool], prompt=prompt_text)
-
-    builder = StateGraph(MessagesState)
-    builder.add_node("chat", _chat_node)
-    builder.add_edge(START, "chat")
-    builder.add_edge("chat", END)
-    return builder.compile()
 
 
-def messages_from_roles(messages: list[dict[str, str]]) -> list[BaseMessage]:
-    """Map API message dicts to LangChain messages (user / assistant only)."""
-    out: list[BaseMessage] = []
-    for m in messages:
-        role = m["role"]
-        content = m["content"]
-        if role == "user":
-            out.append(HumanMessage(content=content))
-        elif role == "assistant":
-            out.append(AIMessage(content=content))
-        else:
-            msg = f"Invalid message role: {role}"
-            raise ValueError(msg)
-    return out
+def incremental_user_message(messages: list[dict[str, str]]) -> HumanMessage:
+    """Validate the request carries exactly one new user message (checkpoint supplies prior turns)."""
+    if len(messages) != 1:
+        msg = "Expected exactly one user message per request"
+        raise ValueError(msg)
+    m = messages[0]
+    role = m["role"]
+    content = m["content"]
+    if role != "user":
+        msg = f"Message must be user role, got {role}"
+        raise ValueError(msg)
+    return HumanMessage(content=content)

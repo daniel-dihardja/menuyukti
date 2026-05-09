@@ -1,3 +1,4 @@
+import type { PromotionCandidateMenuItem } from '@/lib/graphql/node-schemas'
 import type { ReactNode } from 'react'
 
 export type TimelineMilestoneStatus = 'complete' | 'failed' | 'pending' | 'empty'
@@ -11,6 +12,7 @@ export type PassCriteriaRow = {
 }
 
 export type MilestonePresetId =
+  | 'dates'
   | 'restaurant_campaign_brief'
   | 'post_scheduler'
   | 'promotion_candidates'
@@ -27,6 +29,12 @@ export type CampaignWindowPublicHoliday = {
   date: string
 }
 
+export type DatesMilestoneData = {
+  startDate: string
+  endDate: string
+  publicHolidays: CampaignWindowPublicHoliday[]
+}
+
 export type CampaignBriefVenueSnapshot = {
   venueName: string
   city: string
@@ -35,9 +43,6 @@ export type CampaignBriefVenueSnapshot = {
 }
 
 export type CampaignBriefMilestoneData = {
-  startDate: string
-  endDate: string
-  publicHolidays: CampaignWindowPublicHoliday[]
   venueSnapshot: CampaignBriefVenueSnapshot
   contentPillars: string[]
   audienceHypotheses: string[]
@@ -104,8 +109,8 @@ export type PostSchedulerPostItem = PostSchedulerMilestoneData['weeklySlotPlan']
 
 export type PromotionCandidatesCategoryBlock = {
   category: 'FOOD' | 'DRINK'
-  starItems: string[]
-  puzzleItems: string[]
+  starItems: PromotionCandidateMenuItem[]
+  puzzleItems: PromotionCandidateMenuItem[]
 }
 
 export type PromotionCandidatesMilestoneData = {
@@ -130,6 +135,7 @@ export type CultureHooksMilestoneData = {
 }
 
 export type MilestoneDataValue =
+  | DatesMilestoneData
   | CampaignBriefMilestoneData
   | PostSchedulerMilestoneData
   | PromotionCandidatesMilestoneData

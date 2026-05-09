@@ -31,6 +31,11 @@ export function MilestonePostSchedulerDataPreview({
   data,
   labels,
 }: MilestonePostSchedulerDataPreviewProps) {
+  const formatNotesValue = (notes: string): string => {
+    const trimmed = notes.trim()
+    return trimmed ? notes : '-'
+  }
+
   return (
     <div className="flex flex-col gap-y-4 text-sm">
       <div className="space-y-1">
@@ -102,7 +107,7 @@ export function MilestonePostSchedulerDataPreview({
                   {labels.visualDirectionLabel}: {slot.visualDirection}
                 </p>
                 <p>
-                  {labels.notesLabel}: {slot.notes}
+                  {labels.notesLabel}: {formatNotesValue(slot.notes)}
                 </p>
               </li>
             ))}

@@ -63,9 +63,6 @@ class CampaignBriefVenueSnapshot(BaseModel):
 
 
 class CampaignBriefMilestoneOutput(BaseModel):
-    startDate: str
-    endDate: str
-    publicHolidays: list[CampaignWindowPublicHoliday]
     venueSnapshot: CampaignBriefVenueSnapshot
     contentPillars: list[str]
     audienceHypotheses: list[str]
@@ -275,10 +272,43 @@ class PostSchedulerMilestoneOutput(BaseModel):
         return self
 
 
+class PromotionCandidateMenuItem(BaseModel):
+    """Star or puzzle menu line with optional storytelling judgment vs campaign brief."""
+
+    name: str
+    storytellingFit: Literal["strong", "weak"] = "weak"
+    storytellingRationale: str = ""
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def _normalize_name(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("name")
+    @classmethod
+    def _require_name(cls, value: str) -> str:
+        if not value:
+            raise ValueError("name must be non-empty")
+        return value
+
+    @field_validator("storytellingFit", mode="before")
+    @classmethod
+    def _normalize_fit(cls, value: Any) -> str:
+        text = str(value or "").strip().lower()
+        if text == "strong":
+            return "strong"
+        return "weak"
+
+    @field_validator("storytellingRationale", mode="before")
+    @classmethod
+    def _normalize_rationale(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+
 class PromotionCandidatesCategory(BaseModel):
     category: str
-    starItems: list[str]
-    puzzleItems: list[str]
+    starItems: list[PromotionCandidateMenuItem]
+    puzzleItems: list[PromotionCandidateMenuItem]
 
     @field_validator("category")
     @classmethod
@@ -287,6 +317,28 @@ class PromotionCandidatesCategory(BaseModel):
         if text not in {"FOOD", "DRINK"}:
             raise ValueError("category must be FOOD or DRINK")
         return text
+
+    @field_validator("starItems", "puzzleItems", mode="before")
+    @classmethod
+    def _coerce_legacy_string_items(cls, value: Any) -> Any:
+        if not isinstance(value, list):
+            return []
+        normalized: list[dict[str, Any]] = []
+        for raw in value:
+            if isinstance(raw, str):
+                name = raw.strip()
+                if not name:
+                    continue
+                normalized.append(
+                    {
+                        "name": name,
+                        "storytellingFit": "strong",
+                        "storytellingRationale": "",
+                    }
+                )
+            elif isinstance(raw, dict):
+                normalized.append(dict(raw))
+        return normalized
 
 
 class PromotionCandidatesMilestoneOutput(BaseModel):

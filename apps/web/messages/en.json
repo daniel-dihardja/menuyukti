@@ -24,7 +24,9 @@
     "placeholder": "What would you like help with?",
     "thinking": "Thinking…",
     "errorTitle": "Something went wrong",
-    "retry": "Retry"
+    "retry": "Retry",
+    "clearChatAriaLabel": "Clear chat",
+    "clearChatTooltip": "Clear messages and start a fresh advisor thread"
   },
   "metadata": {
     "title": "Menuyukti - AI-first restaurant social media marketing platform",
@@ -1113,6 +1115,27 @@
         "thinking": "Thinking…",
         "errorTitle": "Something went wrong",
         "retry": "Retry",
+        "clearChatAriaLabel": "Clear chat",
+        "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
+        "slashCommands": {
+          "ariaLabel": "Slash commands",
+          "input": {
+            "label": "input",
+            "description": "Get milestone input."
+          },
+          "data": {
+            "label": "data",
+            "description": "Get milestone data."
+          },
+          "help": {
+            "label": "help",
+            "description": "What this milestone does and how optional input is used."
+          }
+        },
+        "mentionMenu": {
+          "ariaLabel": "Insert milestone preset request",
+          "empty": "No milestones match your filter."
+        },
         "artifactTitle": "Artifact",
         "artifactPlaceholder": "Content will appear here as you work with the assistant.",
         "artifactPanelPlaceholder": "Milestone content will appear here.",
@@ -1125,6 +1148,14 @@
           "noneLabel": "Empty milestone",
           "selectPlaceholder": "Template",
           "selectAriaLabel": "Milestone template",
+          "dates": {
+            "label": "Dates",
+            "title": "Dates",
+            "goal": "Resolve the campaign date window and list public holidays between startDate and endDate for this location.",
+            "criterionStartDate": "**startDate** is present in the data and matches the selected input window.",
+            "criterionEndDate": "**endDate** is present in the data and matches the selected input window.",
+            "criterionPublicHolidays": "**publicHolidays** is generated for the selected date window."
+          },
           "post_scheduler": {
             "label": "Scheduler",
             "title": "Scheduler",
@@ -1138,7 +1169,7 @@
           },
           "promotion_candidates": {
             "label": "Promotion candidates",
-            "title": "Promotion Candidates",
+            "title": "Promotion candidates",
             "inputLabel": "Promotion candidate notes",
             "inputDescription": "Optional orientation notes for how to review star/puzzle candidates in this campaign context.",
             "inputPlaceholder": "e.g. prioritize FOOD first this month due to family bundles...",
@@ -1148,11 +1179,11 @@
           },
           "culture_hooks": {
             "label": "Culture hooks",
-            "title": "Culture Hooks",
+            "title": "Culture hooks",
             "inputLabel": "Culture hooks notes",
             "inputDescription": "Optional direction for tone and emphasis. The run uses only prior Campaign Brief data to infer location concept, target audience, and non-food intersection topics.",
             "inputPlaceholder": "e.g. prioritize sustainability and family rituals with retro tone...",
-            "goal": "Using Campaign Brief data only, identify the location concept and target audience, then generate non-food topic intersections where concept and audience interests overlap.",
+            "goal": "Use Campaign Brief data to identify the location concept and target audience, then generate intersection topics between the concept and the audience's likely interests (not necessarily food). These intersections should be actionable for Instagram Reels ideas that attract potential new customers.",
             "criterionIntersectionsPresent": "Data includes **3-5 non-food intersections** with concrete topic, concept link, audience relevance, content example, and format.",
             "criterionNonFood": "Intersections are **not food-centric** (no dish names, recipes, or flavor-led angles).",
             "criterionAudienceConceptInferred": "Data clearly states **locationConcept** and **targetAudience**, both inferred from Campaign Brief context."
@@ -1229,6 +1260,9 @@
         "milestonePromotionCandidatesPreviewPuzzleItemsLabel": "Puzzle items",
         "milestonePromotionCandidatesPreviewNotesLabel": "Notes",
         "milestonePromotionCandidatesPreviewNoNotes": "No notes",
+        "milestonePromotionCandidatesPreviewStorytellingStrong": "Strong storytelling",
+        "milestonePromotionCandidatesPreviewStorytellingWeak": "Weak storytelling",
+        "milestonePromotionCandidatesPreviewStorytellingWhy": "Why",
         "milestone1Title": "Location Profile",
         "milestone1PassCriteria": "Trade area and peak hours are documented with sources or assumptions called out.\nGuest segments are named with at least one supporting signal (sales, reviews, or staff input).\nSite positioning, hero menu items, and hard constraints (hours, brand, compliance) are explicit.\nProfile is factual enough for downstream audience and offer recommendations.",
         "milestone1Input": "Paste notes from your GM or link to your last menu refresh…",
@@ -1256,7 +1290,7 @@
         "milestoneHelpCampaignBriefOptionalInputHowUsed": "If you fill the optional Input field, it is sent alongside location profile and analytics signals when generating the campaign brief.",
         "milestoneHelpCampaignBriefOptionalInputWhenToUse": "Use it when temporary context or constraints matter, for example during a soccer World Cup period (match-day audience, campaign tone, offers, or no-alcohol messaging). Leave it empty when standard analytics and profile data are enough.",
         "milestoneHelpPromotionCandidatesOptionalInputTitle": "Optional input (Promotion notes)",
-        "milestoneHelpPromotionCandidatesOptionalInputHowUsed": "If you fill the optional Input field, it is sent with promotion-engineering analytics when generating candidates and ideas. The model uses it for emphasis and tone; it must still only reference real menu names from the analytics output.",
+        "milestoneHelpPromotionCandidatesOptionalInputHowUsed": "If you fill the optional Input field, it is sent with promotion-engineering analytics when assembling candidates. Storytelling judgments use the saved Campaign Brief plus these notes for emphasis and tone; menu names still come only from analytics.",
         "milestoneHelpPromotionCandidatesOptionalInputWhenToUse": "Use it when you want a seasonal theme, channel focus, or categories to highlight. Leave it empty when the default menu-engineering picks are enough.",
         "milestoneHelpPostSchedulerOptionalInputTitle": "Optional input (Scheduler notes)",
         "milestoneHelpPostSchedulerOptionalInputHowUsed": "If you fill the optional Input field, it guides posting cadence, format mix (Reels vs feed), timing, and whether to skip weekends or holidays via the available-dates tool. Prior workflow milestones still supply dates, holidays, brand tone, and promotion items.",
@@ -1275,6 +1309,15 @@
         "milestoneRunFixedSkillsFailHint": "Some criteria did not pass. Open Settings and switch to Auto-select skills, or edit the data, then run again.",
         "milestoneGoalPlaceholder": "Describe desired outcome…",
         "milestoneInputUnsupported": "No custom input is configured for this milestone preset.",
+        "milestoneDatesInputPickDate": "Pick a date",
+        "milestoneDatesInputStartDateLabel": "Start date",
+        "milestoneDatesInputStartDateDescription": "Campaign start date used for holiday lookup.",
+        "milestoneDatesInputEndDateLabel": "End date",
+        "milestoneDatesInputEndDateDescription": "Campaign end date used for holiday lookup.",
+        "milestoneDatesPreviewStartDate": "Start date",
+        "milestoneDatesPreviewEndDate": "End date",
+        "milestoneDatesPreviewPublicHolidays": "Public holidays",
+        "milestoneDatesPreviewNoHolidays": "No holidays generated yet.",
         "milestoneCampaignBriefInputPickDate": "Pick a date",
         "milestoneCampaignBriefInputStartDateLabel": "Start date",
         "milestoneCampaignBriefInputStartDateDescription": "Campaign start date used for holiday lookup.",

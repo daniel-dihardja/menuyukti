@@ -1,6 +1,8 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import type { UIMessage } from 'ai'
+import { buildUserContentWithReferencedPreset } from '@/lib/chat/build-user-content-with-referenced-preset'
+import { loadReferencedMilestonePresetForChat } from '@/lib/chat/referenced-milestone-for-chat'
 import { getPythonAgentsUrl } from '@/lib/config'
 import { chatRequestBodySchema } from './schema'
 
@@ -26,22 +28,20 @@ const SSE_EVENT = {
 
 const SSE_DONE = '[DONE]' as const
 
-function uiMessagesToPython(
-  messages: UIMessage[],
-): Array<{ role: 'user' | 'assistant'; content: string }> {
-  const out: Array<{ role: 'user' | 'assistant'; content: string }> = []
-  for (const m of messages) {
-    if (m.role !== 'user' && m.role !== 'assistant') continue
+/** LangGraph checkpoint stores prior turns; each request sends only the latest user message. */
+function lastUserMessageToPython(messages: UIMessage[]): Array<{ role: 'user'; content: string }> {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]!
+    if (m.role !== 'user') continue
     const text =
       m.parts
         ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
         .map((p) => p.text)
         .join('') ?? ''
-    const trimmed = text.trim()
-    if (!trimmed) continue
-    out.push({ role: m.role, content: text })
+    if (!text.trim()) continue
+    return [{ role: 'user', content: text }]
   }
-  return out
+  return []
 }
 
 /** SSE lines from `apps/agents` POST /chat: `data: {"token":"..."}\\n\\n` */
@@ -122,11 +122,51 @@ export async function POST(req: Request) {
     return jsonError(message, 400)
   }
 
-  const { messages: rawMessages, workflowId, milestoneId, locationId } = parsed.data
+  const {
+    messages: rawMessages,
+    workflowId,
+    milestoneId,
+    locationId,
+    presetReferenceMilestoneId,
+    agentThreadId,
+    workflowChatSessionId,
+  } = parsed.data
   const messages = rawMessages as UIMessage[]
-  const pythonMessages = uiMessagesToPython(messages)
+
+  if (workflowId === undefined && agentThreadId === undefined) {
+    return jsonError('workflowId or agentThreadId is required', 400)
+  }
+
+  const pythonMessages = lastUserMessageToPython(messages)
   if (pythonMessages.length === 0) {
-    return jsonError('No messages with text content found in request', 400)
+    return jsonError('No user message with text content found in request', 400)
+  }
+
+  let messagesForPython = pythonMessages
+  if (presetReferenceMilestoneId !== undefined) {
+    if (workflowId === undefined || locationId === undefined) {
+      return jsonError('presetReferenceMilestoneId requires workflowId and locationId', 400)
+    }
+    let loaded: Awaited<ReturnType<typeof loadReferencedMilestonePresetForChat>>
+    try {
+      loaded = await loadReferencedMilestonePresetForChat(userId, {
+        workflowId,
+        locationId: Number(locationId),
+        presetReferenceMilestoneId,
+      })
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err)
+      return jsonError(`Failed to load referenced milestone: ${detail}`, 502)
+    }
+    if (!loaded.ok) {
+      return jsonError(loaded.message, loaded.status)
+    }
+    const merged = buildUserContentWithReferencedPreset({
+      userText: pythonMessages[0]!.content,
+      milestoneTitle: loaded.title,
+      presetPayload: loaded.presetPayload,
+    })
+    messagesForPython = [{ role: 'user' as const, content: merged }]
   }
 
   let agentRes: Response
@@ -138,10 +178,14 @@ export async function POST(req: Request) {
         'X-Menuyukti-User-Id': userId,
       },
       body: JSON.stringify({
-        messages: pythonMessages,
+        messages: messagesForPython,
         ...(workflowId !== undefined ? { workflow_id: workflowId } : {}),
         ...(milestoneId !== undefined ? { milestone_id: milestoneId } : {}),
         ...(locationId !== undefined ? { location_id: Number(locationId) } : {}),
+        ...(agentThreadId !== undefined ? { agent_thread_id: agentThreadId } : {}),
+        ...(workflowChatSessionId !== undefined
+          ? { workflow_chat_session_id: workflowChatSessionId }
+          : {}),
       }),
       signal: req.signal,
     })

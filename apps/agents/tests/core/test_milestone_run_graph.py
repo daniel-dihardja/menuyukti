@@ -49,6 +49,7 @@ def test_build_milestone_run_graph_compiles() -> None:
     ("preset_id", "build_symbol"),
     [
         ("restaurant_campaign_brief", "build_campaign_brief_graph"),
+        ("dates", "build_dates_graph"),
         ("post_scheduler", "build_post_scheduler_graph"),
         ("promotion_candidates", "build_promotion_candidates_graph"),
         ("culture_hooks", "build_culture_hooks_graph"),

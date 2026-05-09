@@ -18,6 +18,8 @@ import { MessageResponse } from '@workspace/ui/components/ai-elements/message'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 
+import { UserMessageWithCommandBadges } from '@/components/user-message-with-command-badges'
+
 const MarkdownMessage = dynamic(
   () => import('@/components/markdown-message').then((mod) => mod.MarkdownMessage),
   {
@@ -50,9 +52,12 @@ function ToolPartBlock({ part }: { part: ToolUIPart<UITools> | DynamicToolUIPart
 export function ChatMessageParts({
   message,
   role,
+  mentionTitles,
 }: {
   message: UIMessage
   role: UIMessage['role']
+  /** When set, multi-word `@Milestone title` spans match these titles (campaign chat). */
+  mentionTitles?: string[]
 }) {
   const parts = message.parts
 
@@ -61,13 +66,18 @@ export function ChatMessageParts({
     if (role === 'assistant') {
       return <MarkdownMessage content={fallback} />
     }
-    return <MessageResponse>{fallback}</MessageResponse>
+    return <UserMessageWithCommandBadges mentionTitles={mentionTitles} text={fallback} />
   }
 
   return (
     <>
       {parts.map((part, index) => (
-        <MessagePartRenderer key={`${message.id}-${index}`} part={part} role={role} />
+        <MessagePartRenderer
+          key={`${message.id}-${index}`}
+          mentionTitles={mentionTitles}
+          part={part}
+          role={role}
+        />
       ))}
     </>
   )
@@ -85,16 +95,18 @@ function getPlainText(message: UIMessage): string {
 function MessagePartRenderer({
   part,
   role,
+  mentionTitles,
 }: {
   part: UIMessage['parts'][number]
   role: UIMessage['role']
+  mentionTitles?: string[]
 }) {
   if (part.type === 'text') {
     const text = part.text
     if (role === 'assistant') {
       return <MarkdownMessage content={text} />
     }
-    return <MessageResponse>{text}</MessageResponse>
+    return <UserMessageWithCommandBadges mentionTitles={mentionTitles} text={text} />
   }
 
   if (isReasoningUIPart(part)) {

@@ -1,4 +1,4 @@
-"""GraphQL helpers for chat milestone features (goal, pass criteria, milestonedata)."""
+"""GraphQL helpers for chat milestone features (milestone row + mutations)."""
 
 from __future__ import annotations
 
@@ -7,9 +7,7 @@ from typing import Any
 import httpx
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
-    DEFAULT_NODES_FIRST,
     NODE_BY_ID_QUERY,
-    NODES_QUERY,
     REPLACE_PASS_CRITERIA_MUTATION,
     UPDATE_NODE_MUTATION,
 )
@@ -21,35 +19,10 @@ async def fetch_milestone_node(
     *,
     client: httpx.AsyncClient,
 ) -> dict[str, Any] | None:
-    """Return the milestone node row (name, locationId, data JSON) or None."""
+    """Return the milestone node (typed milestone fields + ``data``) or None."""
     data = await graphql_post(client, NODE_BY_ID_QUERY, {"id": milestone_id}, user_id)
     raw = data.get("node")
     return raw if isinstance(raw, dict) else None
-
-
-async def fetch_milestone_children(
-    milestone_id: str,
-    location_id: int,
-    user_id: str,
-    *,
-    client: httpx.AsyncClient,
-) -> list[dict[str, Any]]:
-    """Child nodes under the milestone (milestonedata, passcriteria, result)."""
-    data = await graphql_post(
-        client,
-        NODES_QUERY,
-        {
-            "locationId": location_id,
-            "nodeType": None,
-            "parentId": milestone_id,
-            "first": DEFAULT_NODES_FIRST,
-        },
-        user_id,
-    )
-    raw = data.get("nodes")
-    if not isinstance(raw, list):
-        return []
-    return [item for item in raw if isinstance(item, dict)]
 
 
 async def upsert_milestone_goal(
@@ -95,3 +68,45 @@ async def replace_pass_criteria(
     if not data.get("replacePassCriteria"):
         msg = "replacePassCriteria failed"
         raise RuntimeError(msg)
+
+
+async def update_milestone_preset_data(
+    milestone_id: str,
+    payload: Any,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any]:
+    """Update ``milestonePresetData`` on a milestone node via ``updateNode``."""
+    upd = await graphql_post(
+        client,
+        UPDATE_NODE_MUTATION,
+        {"id": milestone_id, "data": {"milestonePresetData": payload}},
+        user_id,
+    )
+    node = upd.get("updateNode")
+    if not isinstance(node, dict):
+        msg = "updateNode returned invalid payload"
+        raise RuntimeError(msg)
+    return node
+
+
+async def update_milestone_input(
+    milestone_id: str,
+    payload: Any,
+    user_id: str,
+    *,
+    client: httpx.AsyncClient,
+) -> dict[str, Any]:
+    """Update ``milestoneInput`` on a milestone node via ``updateNode``."""
+    upd = await graphql_post(
+        client,
+        UPDATE_NODE_MUTATION,
+        {"id": milestone_id, "data": {"milestoneInput": payload}},
+        user_id,
+    )
+    node = upd.get("updateNode")
+    if not isinstance(node, dict):
+        msg = "updateNode returned invalid payload"
+        raise RuntimeError(msg)
+    return node

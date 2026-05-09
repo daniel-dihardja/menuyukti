@@ -17,9 +17,6 @@ export const CAMPAIGN_BRIEF_PASS_CRITERION_SLUGS = [
   'measurementPlan',
   'testingPlan',
   'riskGuardrails',
-  'startDate',
-  'endDate',
-  'publicHolidays',
 ] as const
 
 export type CampaignBriefPassCriterionSlug = (typeof CAMPAIGN_BRIEF_PASS_CRITERION_SLUGS)[number]
@@ -38,9 +35,6 @@ const SLUG_TO_CRITERION_KEY = {
   measurementPlan: 'milestonePreset.restaurant_campaign_brief.criterionMeasurementPlan',
   testingPlan: 'milestonePreset.restaurant_campaign_brief.criterionTestingPlan',
   riskGuardrails: 'milestonePreset.restaurant_campaign_brief.criterionRiskGuardrails',
-  startDate: 'milestonePreset.restaurant_campaign_brief.criterionStartDate',
-  endDate: 'milestonePreset.restaurant_campaign_brief.criterionEndDate',
-  publicHolidays: 'milestonePreset.restaurant_campaign_brief.criterionPublicHolidays',
 } as const satisfies Record<CampaignBriefPassCriterionSlug, string>
 
 /** Pass criteria rows for a newly created Campaign brief milestone (matches prior seed order). */

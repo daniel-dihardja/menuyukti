@@ -7,8 +7,8 @@ from typing import Any, NotRequired, TypedDict
 
 class PromotionCandidatesCategory(TypedDict):
     category: str
-    starItems: list[str]
-    puzzleItems: list[str]
+    starItems: list[dict[str, Any]]
+    puzzleItems: list[dict[str, Any]]
 
 
 class PromotionCandidatesOutput(TypedDict):
@@ -19,7 +19,7 @@ class PromotionCandidatesOutput(TypedDict):
 
 
 class PromotionCandidatesState(TypedDict):
-    """State carried through deterministic promotion-candidates generation and persistence."""
+    """State carried through promotion-candidates fetch, storytelling enrichment, and persistence."""
 
     milestone_id: str
     location_id: int
@@ -30,6 +30,7 @@ class PromotionCandidatesState(TypedDict):
     run_id: NotRequired[str]
     traceparent: NotRequired[str | None]
     prior_milestones_data: NotRequired[str]
+    injected_prior_context_markdown: NotRequired[str]
     promotion_candidates: NotRequired[dict[str, Any] | None]
     campaign_brief_main_category: NotRequired[str]
     formatted_output: NotRequired[PromotionCandidatesOutput | None]

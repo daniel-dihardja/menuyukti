@@ -1,4 +1,9 @@
-import type { PromotionCandidatesMilestoneData } from '@/lib/graphql/node-schemas'
+import { Badge } from '@workspace/ui/components/badge'
+
+import type {
+  PromotionCandidateMenuItem,
+  PromotionCandidatesMilestoneData,
+} from '@/lib/graphql/node-schemas'
 
 export type MilestonePromotionCandidatesDataPreviewProps = {
   data: PromotionCandidatesMilestoneData
@@ -10,27 +15,54 @@ export type MilestonePromotionCandidatesDataPreviewProps = {
     puzzleItemsLabel: string
     notesLabel: string
     noNotes: string
+    storytellingStrong: string
+    storytellingWeak: string
+    storytellingWhy: string
   }
+}
+
+function renderMenuItems(
+  items: PromotionCandidateMenuItem[],
+  labels: MilestonePromotionCandidatesDataPreviewProps['labels'],
+) {
+  if (items.length === 0) {
+    return <p className="text-muted-foreground">—</p>
+  }
+
+  return (
+    <ul className="list-none space-y-3 pl-0">
+      {items.map((item, index) => {
+        const isStrong = item.storytellingFit === 'strong'
+        const fitLabel = isStrong ? labels.storytellingStrong : labels.storytellingWeak
+        const rationale = item.storytellingRationale?.trim()
+        const storytellingBadgeClassName = isStrong
+          ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-100'
+          : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100'
+        return (
+          <li key={`${item.name}-${index}`} className="border-l-2 border-muted pl-3">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="font-medium text-foreground">{item.name}</span>
+              <Badge variant="outline" className={storytellingBadgeClassName}>
+                {fitLabel}
+              </Badge>
+            </div>
+            {rationale ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">{labels.storytellingWhy}:</span>{' '}
+                {rationale}
+              </p>
+            ) : null}
+          </li>
+        )
+      })}
+    </ul>
+  )
 }
 
 export function MilestonePromotionCandidatesDataPreview({
   data,
   labels,
 }: MilestonePromotionCandidatesDataPreviewProps) {
-  const renderItemList = (items: string[]) => {
-    if (items.length === 0) {
-      return <p className="text-muted-foreground">—</p>
-    }
-
-    return (
-      <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    )
-  }
-
   return (
     <div className="flex flex-col gap-y-4 text-sm">
       <div className="space-y-1">
@@ -52,11 +84,11 @@ export function MilestonePromotionCandidatesDataPreview({
                 <div className="space-y-2 text-muted-foreground">
                   <div className="space-y-1">
                     <p>{labels.starItemsLabel}:</p>
-                    {renderItemList(bucket.starItems)}
+                    {renderMenuItems(bucket.starItems, labels)}
                   </div>
                   <div className="space-y-1">
                     <p>{labels.puzzleItemsLabel}:</p>
-                    {renderItemList(bucket.puzzleItems)}
+                    {renderMenuItems(bucket.puzzleItems, labels)}
                   </div>
                 </div>
               )}

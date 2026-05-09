@@ -9,6 +9,7 @@ import {
   isMilestonePresetId,
   type MilestonePresetId,
 } from '@/lib/milestones/preset-definitions'
+import { milestonePresetIconFor } from '@/lib/milestones/milestone-icons'
 import { Button } from '@workspace/ui/components/button'
 import {
   Select,
@@ -63,7 +64,7 @@ export function MilestoneCreateControls({
           <SelectItem value={MILESTONE_PRESET_NONE}>{t('milestonePreset.noneLabel')}</SelectItem>
           {MILESTONE_PRESET_IDS.map((id) => (
             <SelectItem key={id} value={id}>
-              {presetOptionLabel(id, t)}
+              {presetOptionContent(id, t)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -94,6 +95,8 @@ export function MilestoneCreateControls({
 
 function presetOptionLabel(id: MilestonePresetId, t: (key: string) => string): string {
   switch (id) {
+    case 'dates':
+      return t('milestonePreset.dates.label')
     case 'restaurant_campaign_brief':
       return t('milestonePreset.restaurant_campaign_brief.label')
     case 'post_scheduler':
@@ -107,4 +110,15 @@ function presetOptionLabel(id: MilestonePresetId, t: (key: string) => string): s
       return _exhaustive
     }
   }
+}
+
+function presetOptionContent(id: MilestonePresetId, t: (key: string) => string) {
+  const Icon = milestonePresetIconFor(id)
+
+  return (
+    <span className="inline-flex items-center gap-2">
+      <Icon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+      <span>{presetOptionLabel(id, t)}</span>
+    </span>
+  )
 }

@@ -4,6 +4,7 @@ import type { Dispatch } from 'react'
 import { useCallback, useMemo } from 'react'
 
 import {
+  datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   milestoneDataSchema,
@@ -30,6 +31,10 @@ function parseDataPreviewForPreset(
   presetId: TimelineMilestone['presetId'],
   dataPreview: object,
 ): MilestoneDataValue | undefined {
+  if (presetId === 'dates') {
+    const parsed = datesMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
   if (presetId === 'restaurant_campaign_brief') {
     const parsed = campaignBriefMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
@@ -77,7 +82,7 @@ export function useMilestoneOperations(
       const res = await fetch(`/api/workflows/${workflowId}/milestones`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ name: t('milestonePreset.noneLabel') }),
       })
       const body = (await res.json().catch(() => null)) as {
         message?: string
@@ -124,7 +129,7 @@ export function useMilestoneOperations(
         const res = await fetch(`/api/workflows/${workflowId}/milestones`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
+          body: JSON.stringify({ name: fields.name }),
         })
         const body = (await res.json().catch(() => null)) as {
           message?: string

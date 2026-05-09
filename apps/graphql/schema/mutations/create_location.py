@@ -1,7 +1,7 @@
 import strawberry
 from strawberry import UNSET
 
-from graphql.data_sources import Location, Node, SessionLocal
+from graphql.data_sources import Location, SessionLocal
 from graphql.schema.auth import is_workspace_member, user_id_from_info
 from graphql.schema.types import LocationType
 
@@ -38,22 +38,6 @@ class CreateLocationMutation:
                 loc_kwargs["currency"] = currency
             loc = Location(**loc_kwargs)
             session.add(loc)
-            session.flush()
-
-            loc_node = Node(
-                parent_id=None,
-                name=name,
-                description=None,
-                path="",
-                node_type="location",
-                location_id=loc.id,
-                data=None,
-            )
-            session.add(loc_node)
-            session.flush()
-            loc_node.path = f"/{loc_node.id}"
-            loc.node_id = loc_node.id
-
             session.commit()
             session.refresh(loc)
             return LocationType(

@@ -71,14 +71,10 @@ function TimelineItemInner({
   isMobile = false,
 }: TimelineItemProps) {
   const t = useTranslations('analytics.campaigns.chat')
-  const campaignBriefInputFromMilestone = (
+  const datesInputFromMilestone = (
     raw: TimelineMilestone['milestoneInput'],
   ): { startDate: string; endDate: string } => {
-    if (
-      raw?.type === 'restaurant_campaign_brief' &&
-      raw.value != null &&
-      typeof raw.value === 'object'
-    ) {
+    if (raw?.type === 'dates' && raw.value != null && typeof raw.value === 'object') {
       const value = raw.value as Partial<{ startDate: string; endDate: string }>
       return {
         startDate: typeof value.startDate === 'string' ? value.startDate : '',
@@ -135,11 +131,11 @@ function TimelineItemInner({
   const savingPassCriteria = savingPassCriteriaMilestoneId === milestone.id
   const savingGoal = savingGoalMilestoneId === milestone.id
   const savingInput = savingDataMilestoneId === milestone.id
-  const isCampaignBriefPreset = milestone.presetId === 'restaurant_campaign_brief'
+  const isDatesPreset = milestone.presetId === 'dates'
   const usesOptionalNotesInput = milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)
 
   const [inputDraft, setInputDraft] = useState<{ startDate: string; endDate: string }>(() =>
-    campaignBriefInputFromMilestone(milestone.milestoneInput),
+    datesInputFromMilestone(milestone.milestoneInput),
   )
 
   const [optionalNotesDraft, setOptionalNotesDraft] = useState(() =>
@@ -149,7 +145,7 @@ function TimelineItemInner({
   )
 
   useEffect(() => {
-    setInputDraft(campaignBriefInputFromMilestone(milestone.milestoneInput))
+    setInputDraft(datesInputFromMilestone(milestone.milestoneInput))
   }, [milestone.id, milestone.milestoneInput])
 
   const previousMilestoneIdRef = useRef(milestone.id)
@@ -166,6 +162,9 @@ function TimelineItemInner({
         return server
       }
       if (prev.trim() !== server.trim()) {
+        if (!optionalNotesFocusedRef.current) {
+          return server
+        }
         return prev
       }
       return prev === server ? prev : server
@@ -180,6 +179,7 @@ function TimelineItemInner({
 
   const optionalNotesDraftRef = useRef(optionalNotesDraft)
   optionalNotesDraftRef.current = optionalNotesDraft
+  const optionalNotesFocusedRef = useRef(false)
 
   const onUpdateMilestoneInputRef = useRef(onUpdateMilestoneInput)
   onUpdateMilestoneInputRef.current = onUpdateMilestoneInput
@@ -220,10 +220,10 @@ function TimelineItemInner({
 
   const goalFieldId = `milestone-goal-${milestone.id}`
   const hasResult = Boolean(milestone.resultMarkdown?.trim())
-  const serverCampaignBriefInput = campaignBriefInputFromMilestone(milestone.milestoneInput)
+  const serverDatesInput = datesInputFromMilestone(milestone.milestoneInput)
   const inputDirty =
-    inputDraft.startDate !== serverCampaignBriefInput.startDate ||
-    inputDraft.endDate !== serverCampaignBriefInput.endDate
+    inputDraft.startDate !== serverDatesInput.startDate ||
+    inputDraft.endDate !== serverDatesInput.endDate
 
   const optionalNotesDirty = useMemo(() => {
     if (!milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
@@ -247,31 +247,21 @@ function TimelineItemInner({
         return true
       }
       const m = milestoneRef.current
-      if (m.presetId === 'restaurant_campaign_brief') {
-        const server = campaignBriefInputFromMilestone(m.milestoneInput)
+      if (m.presetId === 'dates') {
+        const server = datesInputFromMilestone(m.milestoneInput)
         const draft = inputDraftRef.current
-        const draftNotes = optionalNotesDraftRef.current.trim()
-        const serverNotes = optionalNotesFromMilestoneInput(m.milestoneInput, m.presetId).trim()
-        if (
-          draft.startDate === server.startDate &&
-          draft.endDate === server.endDate &&
-          draftNotes === serverNotes
-        ) {
+        if (draft.startDate === server.startDate && draft.endDate === server.endDate) {
           return true
         }
         const ok = await onUpdate(m.id, {
-          type: 'restaurant_campaign_brief',
+          type: 'dates',
           value: {
-            notes: draftNotes,
             startDate: draft.startDate,
             endDate: draft.endDate,
           },
         })
         if (!ok) {
           setInputDraft(server)
-          setOptionalNotesDraft(serverNotes)
-        } else if (normalizeOptionalNotesDraft) {
-          setOptionalNotesDraft(draftNotes)
         }
         return ok
       }
@@ -325,8 +315,8 @@ function TimelineItemInner({
       return
     }
     const dirty =
-      (isCampaignBriefPreset && inputDirty) ||
-      (!isCampaignBriefPreset && usesOptionalNotesInput && optionalNotesDirty)
+      (isDatesPreset && inputDirty) ||
+      (!isDatesPreset && usesOptionalNotesInput && optionalNotesDirty)
     if (!dirty) {
       return
     }
@@ -348,7 +338,7 @@ function TimelineItemInner({
     inputDirty,
     inputDraft,
     usesOptionalNotesInput,
-    isCampaignBriefPreset,
+    isDatesPreset,
     isMilestoneRunning,
     onUpdateMilestoneInput,
   ])
@@ -368,8 +358,8 @@ function TimelineItemInner({
 
   const inputSaveStatus: FieldSaveStatusVariant = savingInput
     ? 'saving'
-    : (isCampaignBriefPreset && inputDirty) ||
-        (!isCampaignBriefPreset && usesOptionalNotesInput && optionalNotesDirty)
+    : (isDatesPreset && inputDirty) ||
+        (!isDatesPreset && usesOptionalNotesInput && optionalNotesDirty)
       ? 'unsaved'
       : 'saved'
 
@@ -390,7 +380,12 @@ function TimelineItemInner({
   }
 
   const handleOptionalNotesBlur = () => {
+    optionalNotesFocusedRef.current = false
     void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
+  }
+
+  const handleOptionalNotesFocus = () => {
+    optionalNotesFocusedRef.current = true
   }
 
   const isDeleting = deletingMilestoneId === milestone.id
@@ -506,11 +501,12 @@ function TimelineItemInner({
                   handleAddPassCriterion,
                   handleGoalSave,
                   handleOptionalNotesBlur,
+                  handleOptionalNotesFocus,
                   handleRemovePassCriterion,
                   hasResult,
                   inputDraft,
                   inputSaveStatus,
-                  isCampaignBriefPreset,
+                  isDatesPreset,
                   isMilestoneRunning,
                   milestone,
                   optionalNotesDraft,
