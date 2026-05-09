@@ -161,6 +161,9 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             puzzleItemsLabel: t('milestonePromotionCandidatesPreviewPuzzleItemsLabel'),
             notesLabel: t('milestonePromotionCandidatesPreviewNotesLabel'),
             noNotes: t('milestonePromotionCandidatesPreviewNoNotes'),
+            storytellingStrong: t('milestonePromotionCandidatesPreviewStorytellingStrong'),
+            storytellingWeak: t('milestonePromotionCandidatesPreviewStorytellingWeak'),
+            storytellingWhy: t('milestonePromotionCandidatesPreviewStorytellingWhy'),
           }}
         />
       )

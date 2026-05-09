@@ -21,9 +21,9 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "campaign brief."
     ),
     "promotion_candidates": (
-        "Fetch promotion-engineering candidates and present star and puzzle menu items by "
-        "category. Use Campaign Brief main category to place the most relevant category first "
-        "in preview."
+        "Requires a prior Campaign Brief. Fetches promotion-engineering candidates, orders "
+        "categories using the brief's main category, and enriches each star and puzzle menu name "
+        "with storytelling fit (strong vs weak) and a short rationale grounded in the brief."
     ),
     "culture_hooks": (
         "Use Campaign Brief data to identify the location concept and target audience, then "

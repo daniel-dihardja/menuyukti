@@ -1,3 +1,4 @@
+import type { PromotionCandidateMenuItem } from '@/lib/graphql/node-schemas'
 import type { ReactNode } from 'react'
 
 export type TimelineMilestoneStatus = 'complete' | 'failed' | 'pending' | 'empty'
@@ -108,8 +109,8 @@ export type PostSchedulerPostItem = PostSchedulerMilestoneData['weeklySlotPlan']
 
 export type PromotionCandidatesCategoryBlock = {
   category: 'FOOD' | 'DRINK'
-  starItems: string[]
-  puzzleItems: string[]
+  starItems: PromotionCandidateMenuItem[]
+  puzzleItems: PromotionCandidateMenuItem[]
 }
 
 export type PromotionCandidatesMilestoneData = {

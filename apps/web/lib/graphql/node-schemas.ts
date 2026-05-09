@@ -175,10 +175,28 @@ export const postSchedulerMilestoneDataSchema = z.object({
 
 export type PostSchedulerMilestoneData = z.infer<typeof postSchedulerMilestoneDataSchema>
 
+/** Legacy milestonedata stored star/puzzle lines as plain strings; new runs use objects with storytelling fields. */
+export const promotionCandidateMenuItemSchema = z.union([
+  z
+    .string()
+    .trim()
+    .min(1)
+    .transform((name) => ({
+      name,
+      storytellingFit: 'strong' as const,
+      storytellingRationale: '',
+    })),
+  z.object({
+    name: z.string().trim().min(1),
+    storytellingFit: z.enum(['strong', 'weak']).default('weak'),
+    storytellingRationale: z.string().default(''),
+  }),
+])
+
 export const promotionCandidatesCategorySchema = z.object({
   category: z.enum(['FOOD', 'DRINK']),
-  starItems: z.array(z.string()),
-  puzzleItems: z.array(z.string()),
+  starItems: z.array(promotionCandidateMenuItemSchema),
+  puzzleItems: z.array(promotionCandidateMenuItemSchema),
 })
 
 export const promotionCandidatesMilestoneDataSchema = z.object({
@@ -187,6 +205,8 @@ export const promotionCandidatesMilestoneDataSchema = z.object({
   sourceAnalyticsRunId: z.string().nullable().optional(),
   notes: z.string().optional(),
 })
+
+export type PromotionCandidateMenuItem = z.output<typeof promotionCandidateMenuItemSchema>
 
 export type PromotionCandidatesMilestoneData = z.infer<
   typeof promotionCandidatesMilestoneDataSchema

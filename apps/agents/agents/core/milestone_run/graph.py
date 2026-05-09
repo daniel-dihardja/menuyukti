@@ -134,6 +134,10 @@ async def _run_promotion_candidates(
 ) -> dict[str, Any]:
     initial = _base_initial(state)
     initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
+    initial["injected_prior_context_markdown"] = build_injected_prior_context_markdown(
+        initial["prior_milestones_data"],
+        ("restaurant_campaign_brief",),
+    )[0]
     final_sub = await _stream_subgraph(
         build_promotion_candidates_graph(client),
         initial,

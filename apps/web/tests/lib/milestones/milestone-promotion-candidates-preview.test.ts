@@ -15,6 +15,40 @@ describe('promotion candidates milestone schema', () => {
       notes: '',
     })
     expect(parsed.success).toBe(true)
+    if (!parsed.success) {
+      return
+    }
+    const firstStar = parsed.data.categories[0]?.starItems[0]
+    expect(firstStar).toBeDefined()
+    expect(firstStar).toMatchObject({
+      name: 'Steak',
+      storytellingFit: 'strong',
+      storytellingRationale: '',
+    })
+  })
+
+  it('accepts star and puzzle items with storytelling fields', () => {
+    const parsed = promotionCandidatesMilestoneDataSchema.safeParse({
+      mainCategory: 'FOOD',
+      categories: [
+        {
+          category: 'FOOD',
+          starItems: [
+            {
+              name: 'Steak',
+              storytellingFit: 'weak',
+              storytellingRationale: 'Too generic for the Ramadan family angle.',
+            },
+          ],
+          puzzleItems: [
+            { name: 'Soup', storytellingFit: 'strong', storytellingRationale: 'Comfort story.' },
+          ],
+        },
+      ],
+      sourceAnalyticsRunId: null,
+      notes: '',
+    })
+    expect(parsed.success).toBe(true)
   })
 
   it('requires at least one category block', () => {

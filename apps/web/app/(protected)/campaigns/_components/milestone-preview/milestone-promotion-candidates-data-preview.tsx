@@ -1,4 +1,7 @@
-import type { PromotionCandidatesMilestoneData } from '@/lib/graphql/node-schemas'
+import type {
+  PromotionCandidateMenuItem,
+  PromotionCandidatesMilestoneData,
+} from '@/lib/graphql/node-schemas'
 
 export type MilestonePromotionCandidatesDataPreviewProps = {
   data: PromotionCandidatesMilestoneData
@@ -10,27 +13,49 @@ export type MilestonePromotionCandidatesDataPreviewProps = {
     puzzleItemsLabel: string
     notesLabel: string
     noNotes: string
+    storytellingStrong: string
+    storytellingWeak: string
+    storytellingWhy: string
   }
+}
+
+function renderMenuItems(
+  items: PromotionCandidateMenuItem[],
+  labels: MilestonePromotionCandidatesDataPreviewProps['labels'],
+) {
+  if (items.length === 0) {
+    return <p className="text-muted-foreground">—</p>
+  }
+
+  return (
+    <ul className="list-none space-y-3 pl-0">
+      {items.map((item, index) => {
+        const fitLabel =
+          item.storytellingFit === 'strong' ? labels.storytellingStrong : labels.storytellingWeak
+        const rationale = item.storytellingRationale?.trim()
+        return (
+          <li key={`${item.name}-${index}`} className="border-l-2 border-muted pl-3">
+            <p className="font-medium text-foreground">{item.name}</p>
+            <p className="text-xs text-muted-foreground">
+              <span>{fitLabel}</span>
+              {rationale ? (
+                <>
+                  {' · '}
+                  <span className="font-medium">{labels.storytellingWhy}:</span> {rationale}
+                </>
+              ) : null}
+            </p>
+          </li>
+        )
+      })}
+    </ul>
+  )
 }
 
 export function MilestonePromotionCandidatesDataPreview({
   data,
   labels,
 }: MilestonePromotionCandidatesDataPreviewProps) {
-  const renderItemList = (items: string[]) => {
-    if (items.length === 0) {
-      return <p className="text-muted-foreground">—</p>
-    }
-
-    return (
-      <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    )
-  }
-
   return (
     <div className="flex flex-col gap-y-4 text-sm">
       <div className="space-y-1">
@@ -52,11 +77,11 @@ export function MilestonePromotionCandidatesDataPreview({
                 <div className="space-y-2 text-muted-foreground">
                   <div className="space-y-1">
                     <p>{labels.starItemsLabel}:</p>
-                    {renderItemList(bucket.starItems)}
+                    {renderMenuItems(bucket.starItems, labels)}
                   </div>
                   <div className="space-y-1">
                     <p>{labels.puzzleItemsLabel}:</p>
-                    {renderItemList(bucket.puzzleItems)}
+                    {renderMenuItems(bucket.puzzleItems, labels)}
                   </div>
                 </div>
               )}
