@@ -8,6 +8,7 @@ export const MILESTONE_PRESET_IDS = [
   'post_scheduler',
   'promotion_candidates',
   'culture_hooks',
+  'format_mix',
 ] as const
 
 export type MilestonePresetId = (typeof MILESTONE_PRESET_IDS)[number]
@@ -192,6 +193,29 @@ export function getMilestonePresetCreateFields(
           },
           {
             requirement: t('milestonePreset.culture_hooks.criterionAudienceConceptInferred'),
+            status: 'open',
+          },
+        ],
+      }
+    case 'format_mix':
+      return {
+        presetId: 'format_mix',
+        name: t('milestonePreset.format_mix.title'),
+        milestoneInput: {
+          type: 'format_mix',
+          value: { notes: '' },
+        },
+        milestoneData: {
+          formats: [],
+        },
+        goal: t('milestonePreset.format_mix.goal'),
+        passCriteria: [
+          {
+            requirement: t('milestonePreset.format_mix.criterionBriefGrounded'),
+            status: 'open',
+          },
+          {
+            requirement: t('milestonePreset.format_mix.criterionMixDefined'),
             status: 'open',
           },
         ],

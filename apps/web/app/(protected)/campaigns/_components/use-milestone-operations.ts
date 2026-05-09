@@ -7,6 +7,7 @@ import {
   datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
+  formatMixMilestoneDataSchema,
   milestoneDataSchema,
   milestoneNodeSchema,
   postSchedulerMilestoneDataSchema,
@@ -50,6 +51,10 @@ function parseDataPreviewForPreset(
   }
   if (presetId === 'culture_hooks') {
     const parsed = cultureHooksMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'format_mix') {
+    const parsed = formatMixMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   return undefined

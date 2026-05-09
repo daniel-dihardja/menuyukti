@@ -2,6 +2,7 @@ import {
   datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
+  formatMixMilestoneDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataValueSchema,
@@ -221,6 +222,16 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
         targetAudience: '',
         intersections: [],
         guardrailCheck: '',
+      }
+    }
+  }
+  if (presetId === 'format_mix') {
+    const parsedFormatMix = formatMixMilestoneDataSchema.safeParse(data)
+    if (parsedFormatMix.success) {
+      normalizedData = parsedFormatMix.data
+    } else {
+      normalizedData = {
+        formats: [],
       }
     }
   }

@@ -17,6 +17,7 @@ export type MilestonePresetId =
   | 'post_scheduler'
   | 'promotion_candidates'
   | 'culture_hooks'
+  | 'format_mix'
 
 export type MilestoneInput = {
   type: string
@@ -134,12 +135,20 @@ export type CultureHooksMilestoneData = {
   guardrailCheck: string
 }
 
+export type FormatMixMilestoneData = {
+  formats: Array<{
+    format: 'single_post' | 'carousel' | 'single_video_reel' | 'multi_video_reel'
+    percent: number
+  }>
+}
+
 export type MilestoneDataValue =
   | DatesMilestoneData
   | CampaignBriefMilestoneData
   | PostSchedulerMilestoneData
   | PromotionCandidatesMilestoneData
   | CultureHooksMilestoneData
+  | FormatMixMilestoneData
 
 export type TimelineMilestone = {
   id: string

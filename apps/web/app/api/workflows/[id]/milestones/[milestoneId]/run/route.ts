@@ -8,6 +8,7 @@ import {
   datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
+  formatMixMilestoneDataSchema,
   milestoneInputSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
@@ -36,6 +37,7 @@ const runBodySchema = z.object({
       postSchedulerMilestoneDataSchema,
       promotionCandidatesMilestoneDataSchema,
       cultureHooksMilestoneDataSchema,
+      formatMixMilestoneDataSchema,
     ])
     .optional(),
 })

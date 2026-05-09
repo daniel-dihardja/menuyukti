@@ -85,11 +85,11 @@ function BriefAccordionSection({
 }: BriefAccordionSectionProps) {
   return (
     <AccordionItem value={value} className="border-border/80">
-      <AccordionTrigger className="py-3 text-base font-semibold hover:no-underline [&>svg]:size-4">
-        <span className="flex min-w-0 flex-1 items-center gap-0.5 text-left">
-          <span className="min-w-0">{title}</span>
-          <MilestonePreviewHelpTrigger ariaLabel={helpAria} helpText={helpText} />
-        </span>
+      <AccordionTrigger
+        className="py-3 text-base font-semibold hover:no-underline [&>svg]:size-4"
+        trailing={<MilestonePreviewHelpTrigger ariaLabel={helpAria} helpText={helpText} />}
+      >
+        <span className="min-w-0 text-left">{title}</span>
       </AccordionTrigger>
       <AccordionContent
         className={`${mp.accordionContentInner} text-base leading-relaxed [&_*]:leading-relaxed`}

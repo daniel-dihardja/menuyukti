@@ -39,6 +39,7 @@ _PRESET_TO_SKILL_ID: dict[str, str] = {
     "post_scheduler": "post_scheduler",
     "promotion_candidates": "promotion_candidates",
     "culture_hooks": "culture_hooks",
+    "format_mix": "format_mix",
     "dates": "dates",
     "public_holidays": "public_holidays",
 }
@@ -74,6 +75,7 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
             "post_scheduler": "post_scheduler",
             "culture_hooks": "culture_hooks",
             "promotion_candidates": "promotion_candidates",
+            "format_mix": "format_mix",
             "dates": "dates",
             "public_holidays": "public_holidays",
         }

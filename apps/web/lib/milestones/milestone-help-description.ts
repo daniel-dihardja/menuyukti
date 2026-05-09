@@ -6,6 +6,7 @@ export const PRESET_GOAL_TRANSLATION_KEYS = {
   post_scheduler: 'milestonePreset.post_scheduler.goal',
   promotion_candidates: 'milestonePreset.promotion_candidates.goal',
   culture_hooks: 'milestonePreset.culture_hooks.goal',
+  format_mix: 'milestonePreset.format_mix.goal',
 } as const
 
 /** Matches `useTranslations('analytics.campaigns.chat')`. */

@@ -20,6 +20,7 @@ export const milestonePresetIdSchema = z.enum([
   'post_scheduler',
   'promotion_candidates',
   'culture_hooks',
+  'format_mix',
 ])
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
@@ -55,6 +56,12 @@ export const cultureHooksMilestoneInputValueSchema = z.object({
 })
 
 export type CultureHooksMilestoneInputValue = z.infer<typeof cultureHooksMilestoneInputValueSchema>
+
+export const formatMixMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type FormatMixMilestoneInputValue = z.infer<typeof formatMixMilestoneInputValueSchema>
 
 export const datesMilestoneInputValueSchema = z.object({
   startDate: z.string(),
@@ -228,6 +235,24 @@ export const cultureHooksMilestoneDataSchema = z.object({
 
 export type CultureHooksMilestoneData = z.infer<typeof cultureHooksMilestoneDataSchema>
 
+export const formatMixFormatKeySchema = z.enum([
+  'single_post',
+  'carousel',
+  'single_video_reel',
+  'multi_video_reel',
+])
+
+export const formatMixMilestoneDataSchema = z.object({
+  formats: z.array(
+    z.object({
+      format: formatMixFormatKeySchema,
+      percent: z.number().int().min(0).max(100),
+    }),
+  ),
+})
+
+export type FormatMixMilestoneData = z.infer<typeof formatMixMilestoneDataSchema>
+
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
@@ -248,6 +273,7 @@ export const milestonedataValueSchema = z.union([
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
+  formatMixMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>

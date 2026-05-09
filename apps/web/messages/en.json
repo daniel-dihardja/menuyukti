@@ -1202,6 +1202,16 @@
             "criterionNonFood": "Intersections are **not food-centric** (no dish names, recipes, or flavor-led angles).",
             "criterionAudienceConceptInferred": "Data clearly states **locationConcept** and **targetAudience**, both inferred from Campaign Brief context."
           },
+          "format_mix": {
+            "label": "Format mix",
+            "title": "Format mix",
+            "inputLabel": "Format mix notes",
+            "inputDescription": "Optional guidance for how you want to weight Instagram formats (single posts, carousels, Reels). The run reads your prior Campaign Brief for context.",
+            "inputPlaceholder": "e.g. lean on Reels for launches; keep carousels for menus…",
+            "goal": "Define a target share of Instagram formats (single posts, carousels, single-video Reels, multi-video Reels) for the campaign, grounded in the Campaign Brief. The run loads prior brief data first; percentage targets are filled when you generate or edit structured data.",
+            "criterionBriefGrounded": "Work is **consistent with prior Campaign Brief** context (objective, audience, pillars)—no contradictions unless assumptions are stated.",
+            "criterionMixDefined": "Data includes a **formats** array with at least one entry, each with **format** and **percent** (0–100), when the campaign warrants a mix; otherwise document why the list is empty."
+          },
           "restaurant_campaign_brief": {
             "label": "Campaign brief",
             "title": "Campaign brief",
@@ -1434,6 +1444,9 @@
         "milestonePreviewPresetBadge_post_scheduler": "Post scheduler",
         "milestonePreviewPresetBadge_promotion_candidates": "Promotion candidates",
         "milestonePreviewPresetBadge_culture_hooks": "Culture hooks",
+        "milestonePreviewPresetBadge_format_mix": "Format mix",
+        "milestoneFormatMixPreviewTitle": "Format mix",
+        "milestoneFormatMixPreviewBody": "Percentages by Instagram format will appear here after you run or generate this milestone.",
         "milestoneCultureHooksPreviewLocationConcept": "Location concept",
         "milestoneCultureHooksPreviewTargetAudience": "Target audience",
         "milestoneCultureHooksPreviewIntersections": "Intersections",

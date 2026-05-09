@@ -88,6 +88,7 @@ type OptionalNotesPresetId =
   | 'post_scheduler'
   | 'promotion_candidates'
   | 'culture_hooks'
+  | 'format_mix'
 
 function optionalNotesFieldCopy(
   t: (key: string) => string,

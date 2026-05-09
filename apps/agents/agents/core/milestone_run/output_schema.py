@@ -396,6 +396,18 @@ class CultureHooksMilestoneOutput(BaseModel):
         return values
 
 
+FormatMixFormatKey = Literal["single_post", "carousel", "single_video_reel", "multi_video_reel"]
+
+
+class FormatMixFormatItem(BaseModel):
+    format: FormatMixFormatKey
+    percent: int = Field(ge=0, le=100)
+
+
+class FormatMixMilestoneOutput(BaseModel):
+    formats: list[FormatMixFormatItem] = Field(default_factory=list)
+
+
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
@@ -403,6 +415,7 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "post_scheduler": PostSchedulerMilestoneOutput,
     "promotion_candidates": PromotionCandidatesMilestoneOutput,
     "culture_hooks": CultureHooksMilestoneOutput,
+    "format_mix": FormatMixMilestoneOutput,
 }
 
 def validate_skill_output(skill_id: str | None, payload: Any) -> tuple[Any | None, str | None]:

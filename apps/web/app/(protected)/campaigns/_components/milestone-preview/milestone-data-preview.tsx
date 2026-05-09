@@ -11,6 +11,7 @@ import {
   datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
+  formatMixMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
@@ -39,7 +40,9 @@ function MilestonePreviewPresetRow({ presetId }: { presetId: MilestonePresetId }
           ? t('milestonePreviewPresetBadge_post_scheduler')
           : presetId === 'promotion_candidates'
             ? t('milestonePreviewPresetBadge_promotion_candidates')
-            : t('milestonePreviewPresetBadge_culture_hooks')
+            : presetId === 'culture_hooks'
+              ? t('milestonePreviewPresetBadge_culture_hooks')
+              : t('milestonePreviewPresetBadge_format_mix')
 
   return (
     <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2">
@@ -289,6 +292,27 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
             guardrailCheck: t('milestoneCultureHooksPreviewGuardrailCheck'),
             emptyValue: t('milestonePreviewEmptyValue'),
           }}
+        />,
+      )
+    }
+
+    if (milestone.presetId === 'format_mix') {
+      const parsed = formatMixMilestoneDataSchema.safeParse(data)
+      if (!parsed.success) {
+        return withPresetRow(
+          pid,
+          <PreviewStateMessage
+            title={t('milestonePreviewDataInvalidTitle')}
+            body={t('milestonePreviewDataInvalidBody')}
+          />,
+        )
+      }
+
+      return withPresetRow(
+        pid,
+        <PreviewStateMessage
+          title={t('milestoneFormatMixPreviewTitle')}
+          body={t('milestoneFormatMixPreviewBody')}
         />,
       )
     }
