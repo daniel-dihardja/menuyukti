@@ -59,7 +59,7 @@ import { TimelineProvider } from './timeline-context'
 import { useCampaignPreviewVisibility } from './use-campaign-preview-visibility'
 import { useCampaignTimelineProviderSlices } from './use-campaign-timeline-provider-value'
 import { useMilestoneOperations } from './use-milestone-operations'
-import { SlashCommandMenu } from './slash-command-menu'
+import { WorkflowChatComposerMenus } from './workflow-chat-composer-menus'
 
 /** Code-split preview; collapsible panel keeps the subtree mounted when hidden on desktop. */
 const CampaignPreviewPanelBodyLazy = dynamic(
@@ -120,6 +120,7 @@ export function CampaignChatPanel({
 }: CampaignChatPanelProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const tSlash = useTranslations('analytics.campaigns.chat.slashCommands')
+  const tMention = useTranslations('analytics.campaigns.chat.mentionMenu')
   const [text, setText] = useState('')
   const [, startPreviewTransition] = useTransition()
 
@@ -187,6 +188,8 @@ export function CampaignChatPanel({
     locationId,
     milestoneId: selectedMilestoneId,
   })
+  /** Pending @-mention: next `/api/chat` body includes presetReferenceMilestoneId until submit clears it. */
+  const presetReferenceMilestoneIdRef = useRef<string | null>(null)
   chatApiContextRef.current = {
     workflowId,
     locationId,
@@ -200,6 +203,8 @@ export function CampaignChatPanel({
         prepareSendMessagesRequest: ({ messages, body: mergedBody }) => {
           const ctx = chatApiContextRef.current
           const lastUser = [...messages].reverse().find((m) => m.role === 'user')
+          const presetRef = presetReferenceMilestoneIdRef.current
+          presetReferenceMilestoneIdRef.current = null
           return {
             body: {
               ...mergedBody,
@@ -207,6 +212,7 @@ export function CampaignChatPanel({
               workflowId: ctx.workflowId,
               locationId: String(ctx.locationId),
               ...(ctx.milestoneId !== null ? { milestoneId: ctx.milestoneId } : {}),
+              ...(presetRef !== null ? { presetReferenceMilestoneId: presetRef } : {}),
             },
           }
         },
@@ -250,7 +256,11 @@ export function CampaignChatPanel({
   }, [status, error, selectedMilestoneId, ops])
 
   const handleTextChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setText(event.target.value)
+    const next = event.target.value
+    setText(next)
+    if (!next.trimStart().startsWith('@')) {
+      presetReferenceMilestoneIdRef.current = null
+    }
   }, [])
 
   const handleSubmit = useCallback(
@@ -281,6 +291,25 @@ export function CampaignChatPanel({
       await sendMessage({ text: command })
     },
     [sendMessage, status],
+  )
+
+  const milestoneMentionItems = useMemo(
+    () => milestoneUi.milestones.map((m) => ({ id: m.id, title: m.title })),
+    [milestoneUi.milestones],
+  )
+
+  const handleSelectMention = useCallback(
+    (milestoneId: string) => {
+      if (status === 'streaming' || status === 'submitted') {
+        return
+      }
+      const rawTitle = milestoneUi.milestones.find((m) => m.id === milestoneId)?.title?.trim() ?? ''
+      const label = rawTitle.length > 0 ? rawTitle.replace(/\s+/g, ' ') : milestoneId
+      const atMessage = label.startsWith('@') ? label : `@${label}`
+      presetReferenceMilestoneIdRef.current = milestoneId
+      setText(`${atMessage} `)
+    },
+    [milestoneUi.milestones, status],
   )
 
   const handleRetry = useCallback(async () => {
@@ -405,11 +434,17 @@ export function CampaignChatPanel({
       </Conversation>
       <div className="shrink-0 p-4">
         <PromptInput globalDrop multiple onSubmit={handleSubmit}>
-          <SlashCommandMenu
-            ariaLabel={tSlash('ariaLabel')}
+          <WorkflowChatComposerMenus
             commands={slashCommands}
-            onSelectCommand={(cmd) => void handleSelectSlashCommand(cmd)}
+            mentionAriaLabel={tMention('ariaLabel')}
+            mentionEmptyLabel={tMention('empty')}
+            mentionMenusDisabled={isChatBusy}
+            milestones={milestoneMentionItems}
+            onSelectMention={handleSelectMention}
+            onSelectSlashCommand={(cmd) => void handleSelectSlashCommand(cmd)}
             onValueChange={setText}
+            selectedMilestoneId={selectedMilestoneId}
+            slashAriaLabel={tSlash('ariaLabel')}
             value={text}
           >
             <PromptInputBody>
@@ -419,7 +454,7 @@ export function CampaignChatPanel({
                 onChange={handleTextChange}
               />
             </PromptInputBody>
-          </SlashCommandMenu>
+          </WorkflowChatComposerMenus>
           <PromptInputFooter>
             <PromptInputSubmit disabled={isSubmitDisabled} status={status} onStop={stop} />
           </PromptInputFooter>

@@ -1128,6 +1128,10 @@
             "description": "What this milestone does and how optional input is used."
           }
         },
+        "mentionMenu": {
+          "ariaLabel": "Insert milestone preset request",
+          "empty": "No milestones match your filter."
+        },
         "artifactTitle": "Artifact",
         "artifactPlaceholder": "Content will appear here as you work with the assistant.",
         "artifactPanelPlaceholder": "Milestone content will appear here.",

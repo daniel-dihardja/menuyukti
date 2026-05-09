@@ -20,6 +20,8 @@ export const chatRequestBodySchema = z.object({
   workflowId: z.string().regex(/^\d+$/, 'Invalid workflow id').optional(),
   milestoneId: z.string().regex(/^\d+$/, 'Invalid milestone id').optional(),
   locationId: z.string().regex(/^\d+$/, 'Invalid location id').optional(),
+  /** When set, the BFF loads this milestone’s preset from GraphQL and inlines it into the user message (requires workflowId + locationId). */
+  presetReferenceMilestoneId: z.string().regex(/^\d+$/, 'Invalid milestone id').optional(),
   /** Opaque id for `/agent` chat (no workflow); required by agents when `workflowId` is absent. */
   agentThreadId: z.string().min(1).optional(),
 })

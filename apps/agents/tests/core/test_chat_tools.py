@@ -69,10 +69,11 @@ def _milestone_node(
     *,
     node_type: str = "milestone",
     location_id: int = 7,
+    parent_id: str | None = "100",
     milestone_input: dict | None = None,
     milestone_preset_data: dict | None = None,
 ) -> dict:
-    return {
+    out: dict = {
         "id": "42",
         "nodeType": node_type,
         "locationId": location_id,
@@ -80,6 +81,9 @@ def _milestone_node(
         "milestoneInput": milestone_input,
         "milestonePresetData": milestone_preset_data,
     }
+    if parent_id is not None:
+        out["parentId"] = parent_id
+    return out
 
 
 @pytest.mark.asyncio
@@ -174,6 +178,64 @@ async def test_get_milestone_input_json_requires_context() -> None:
 async def test_get_milestone_preset_data_json_requires_context() -> None:
     out = await chat_tools.get_milestone_preset_data_json.ainvoke({}, config={"configurable": {}})
     assert "Milestone context is not available" in out
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_preset_data_for_milestone_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    node = {**_milestone_node(milestone_preset_data=_culture_hooks_payload()), "name": "Culture step"}
+    fetch_mock = AsyncMock(return_value=node)
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+
+    out = await chat_tools.get_milestone_preset_data_for_milestone.ainvoke(
+        {"milestone_id": "42"},
+        config={
+            "configurable": {
+                "workflow_id": "100",
+                "location_id": 7,
+                "user_id": "u1",
+            }
+        },
+    )
+    assert "## Preset data — Culture step (milestonePresetData)" in out
+    assert "**Location Concept:**" in out
+    assert fetch_mock.await_args is not None
+    assert fetch_mock.await_args.args[0] == "42"
+    assert fetch_mock.await_args.args[1] == "u1"
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_preset_data_for_milestone_rejects_parent_mismatch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    node = _milestone_node(milestone_preset_data=_culture_hooks_payload(), parent_id="999")
+    fetch_mock = AsyncMock(return_value=node)
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+
+    out = await chat_tools.get_milestone_preset_data_for_milestone.ainvoke(
+        {"milestone_id": "42"},
+        config={"configurable": {"workflow_id": "100", "location_id": 7, "user_id": "u1"}},
+    )
+    assert out == "Error: milestone does not belong to this workflow."
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_preset_data_for_milestone_rejects_bad_milestone_id() -> None:
+    out = await chat_tools.get_milestone_preset_data_for_milestone.ainvoke(
+        {"milestone_id": "  "},
+        config={"configurable": {"workflow_id": "100", "location_id": 7, "user_id": "u1"}},
+    )
+    assert "numeric id" in out
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_preset_data_for_milestone_requires_workflow_id() -> None:
+    out = await chat_tools.get_milestone_preset_data_for_milestone.ainvoke(
+        {"milestone_id": "42"},
+        config={"configurable": {"location_id": 7, "user_id": "u1"}},
+    )
+    assert "workflow_id" in out
 
 
 @pytest.mark.asyncio

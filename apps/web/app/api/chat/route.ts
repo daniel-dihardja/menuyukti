@@ -1,6 +1,8 @@
 import { NextResponse, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import type { UIMessage } from 'ai'
+import { buildUserContentWithReferencedPreset } from '@/lib/chat/build-user-content-with-referenced-preset'
+import { loadReferencedMilestonePresetForChat } from '@/lib/chat/referenced-milestone-for-chat'
 import { getPythonAgentsUrl } from '@/lib/config'
 import { chatRequestBodySchema } from './schema'
 
@@ -120,7 +122,14 @@ export async function POST(req: Request) {
     return jsonError(message, 400)
   }
 
-  const { messages: rawMessages, workflowId, milestoneId, locationId, agentThreadId } = parsed.data
+  const {
+    messages: rawMessages,
+    workflowId,
+    milestoneId,
+    locationId,
+    presetReferenceMilestoneId,
+    agentThreadId,
+  } = parsed.data
   const messages = rawMessages as UIMessage[]
 
   if (workflowId === undefined && agentThreadId === undefined) {
@@ -132,6 +141,33 @@ export async function POST(req: Request) {
     return jsonError('No user message with text content found in request', 400)
   }
 
+  let messagesForPython = pythonMessages
+  if (presetReferenceMilestoneId !== undefined) {
+    if (workflowId === undefined || locationId === undefined) {
+      return jsonError('presetReferenceMilestoneId requires workflowId and locationId', 400)
+    }
+    let loaded: Awaited<ReturnType<typeof loadReferencedMilestonePresetForChat>>
+    try {
+      loaded = await loadReferencedMilestonePresetForChat(userId, {
+        workflowId,
+        locationId: Number(locationId),
+        presetReferenceMilestoneId,
+      })
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err)
+      return jsonError(`Failed to load referenced milestone: ${detail}`, 502)
+    }
+    if (!loaded.ok) {
+      return jsonError(loaded.message, loaded.status)
+    }
+    const merged = buildUserContentWithReferencedPreset({
+      userText: pythonMessages[0]!.content,
+      milestoneTitle: loaded.title,
+      presetPayload: loaded.presetPayload,
+    })
+    messagesForPython = [{ role: 'user' as const, content: merged }]
+  }
+
   let agentRes: Response
   try {
     agentRes = await fetch(`${baseUrl}/chat`, {
@@ -141,7 +177,7 @@ export async function POST(req: Request) {
         'X-Menuyukti-User-Id': userId,
       },
       body: JSON.stringify({
-        messages: pythonMessages,
+        messages: messagesForPython,
         ...(workflowId !== undefined ? { workflow_id: workflowId } : {}),
         ...(milestoneId !== undefined ? { milestone_id: milestoneId } : {}),
         ...(locationId !== undefined ? { location_id: Number(locationId) } : {}),

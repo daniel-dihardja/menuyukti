@@ -9,6 +9,7 @@ from agents_app.agents.core.chat.tools import (
     get_milestone_data,
     get_milestone_help,
     get_milestone_input_json,
+    get_milestone_preset_data_for_milestone,
     get_milestone_preset_data_json,
     update_milestone_input,
     update_milestone_preset_data,
@@ -23,7 +24,8 @@ from langgraph.prebuilt import create_react_agent
 def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
     """Prepend the chat system prompt."""
     messages = state.get("messages") or []
-    return [SystemMessage(content=build_system_prompt()), *messages]
+    prompt_body = build_system_prompt()
+    return [SystemMessage(content=prompt_body), *messages]
 
 
 def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStateGraph:
@@ -36,6 +38,7 @@ def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStat
             get_milestone_help,
             get_milestone_input_json,
             get_milestone_preset_data_json,
+            get_milestone_preset_data_for_milestone,
             update_milestone_input,
             update_milestone_preset_data,
         ],

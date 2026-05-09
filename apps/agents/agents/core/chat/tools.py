@@ -405,6 +405,53 @@ async def get_milestone_preset_data_json(
     )
 
 
+@tool
+async def get_milestone_preset_data_for_milestone(
+    milestone_id: str,
+    config: Annotated[RunnableConfig, InjectedToolArg()],
+) -> str:
+    """Load milestonePresetData for a milestone in the current workflow by id.
+
+    Use when the user message is exactly ``/preset <id>`` with a numeric milestone id.
+    The milestone must belong to the same workflow and location as the chat context."""
+    target = str(milestone_id or "").strip()
+    if not target or not target.isdigit():
+        return "Error: milestone_id must be a non-empty numeric id."
+
+    c = (config or {}).get("configurable") or {}
+    workflow_id = c.get("workflow_id")
+    location_id = c.get("location_id")
+    user_id = c.get("user_id")
+
+    if not workflow_id:
+        return "Error: workflow context is missing (workflow_id). Cannot load another milestone."
+    if location_id is None or not user_id:
+        return (
+            "Error: location or user context is missing. "
+            "Cannot load milestone preset data outside a campaign chat."
+        )
+
+    client = get_chat_http_client()
+    node = await fetch_milestone_node(target, str(user_id), client=client)
+    if not node:
+        return "Error: milestone not found."
+    if str(node.get("nodeType") or "") != "milestone":
+        return "Error: node is not a milestone."
+    loc = node.get("locationId")
+    if loc is not None and int(loc) != int(location_id):
+        return "Error: milestone location does not match the campaign context."
+    parent = node.get("parentId")
+    if parent is None or str(parent) != str(workflow_id):
+        return "Error: milestone does not belong to this workflow."
+
+    raw_name = node.get("name")
+    display = raw_name.strip() if isinstance(raw_name, str) and raw_name.strip() else target
+    return _format_json_shortcut_section(
+        f"Preset data — {display} (milestonePresetData)",
+        node.get("milestonePresetData"),
+    )
+
+
 def _preset_id_from_milestone_node(node: dict[str, Any]) -> str | None:
     raw_data = node.get("data")
     milestone_node_data = raw_data if isinstance(raw_data, dict) else {}
@@ -438,7 +485,7 @@ async def get_milestone_help(config: Annotated[RunnableConfig, InjectedToolArg()
 async def update_milestone_input(
     operations: list[dict[str, Any]] | None = None,
     dry_run: bool = False,
-    config: Annotated[RunnableConfig, InjectedToolArg()] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
 ) -> str:
     """Apply partial updates to selected milestoneInput using JSON-pointer-like patch operations.
 
@@ -532,7 +579,7 @@ async def update_milestone_input(
 async def update_milestone_preset_data(
     operations: list[dict[str, Any]],
     dry_run: bool = False,
-    config: Annotated[RunnableConfig, InjectedToolArg()] = None,
+    config: Annotated[RunnableConfig, InjectedToolArg()] = None,  # type: ignore[assignment]
 ) -> str:
     """Apply partial updates to selected milestonePresetData using JSON-pointer-like patch operations.
 

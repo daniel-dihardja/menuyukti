@@ -55,12 +55,14 @@ def _resolve_thread_id(
 def _runnable_config(
     *,
     thread_id: str,
+    workflow_id: str | None,
     milestone_id: str | None,
     location_id: int | None,
     user_id: str | None,
 ) -> RunnableConfig:
     configurable: dict[str, Any] = {
         "thread_id": thread_id,
+        "workflow_id": workflow_id,
         "milestone_id": milestone_id,
         "location_id": location_id,
         "user_id": user_id,
@@ -124,6 +126,7 @@ async def chat_stream(
     )
     cfg = _runnable_config(
         thread_id=thread_id,
+        workflow_id=body.workflow_id,
         milestone_id=body.milestone_id,
         location_id=body.location_id,
         user_id=x_menuyukti_user_id,
