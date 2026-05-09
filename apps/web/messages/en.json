@@ -1117,11 +1117,11 @@
           "ariaLabel": "Slash commands",
           "input": {
             "label": "input",
-            "description": "Send the input command."
+            "description": "Get milestone input."
           },
           "data": {
             "label": "data",
-            "description": "Send the data command."
+            "description": "Get milestone data."
           }
         },
         "artifactTitle": "Artifact",
