@@ -231,6 +231,11 @@ export function CampaignChatPanel({
         label: tSlash('data.label'),
         description: tSlash('data.description'),
       },
+      {
+        id: 'help',
+        label: tSlash('help.label'),
+        description: tSlash('help.description'),
+      },
     ],
     [tSlash],
   )

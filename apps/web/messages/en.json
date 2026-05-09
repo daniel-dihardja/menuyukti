@@ -1122,6 +1122,10 @@
           "data": {
             "label": "data",
             "description": "Get milestone data."
+          },
+          "help": {
+            "label": "help",
+            "description": "What this milestone does and how optional input is used."
           }
         },
         "artifactTitle": "Artifact",

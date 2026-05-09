@@ -7,6 +7,7 @@ from typing import Any
 from agents_app.agents.core.chat.prompts import build_system_prompt
 from agents_app.agents.core.chat.tools import (
     get_milestone_data,
+    get_milestone_help,
     get_milestone_input_json,
     get_milestone_preset_data_json,
     update_milestone_input,
@@ -32,6 +33,7 @@ def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStat
         llm,
         [
             get_milestone_data,
+            get_milestone_help,
             get_milestone_input_json,
             get_milestone_preset_data_json,
             update_milestone_input,

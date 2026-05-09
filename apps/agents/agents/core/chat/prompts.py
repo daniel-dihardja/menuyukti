@@ -11,6 +11,8 @@ SYSTEM_PROMPT = (
     "return that tool result directly. "
     "If the user's full trimmed message is exactly '/data', call get_milestone_preset_data_json and "
     "return that tool result directly. "
+    "If the user's full trimmed message is exactly '/help', call get_milestone_help and "
+    "return that tool result directly. "
     "When users request edits to selected milestone input data, use update_milestone_input "
     "with minimal patch operations (add/replace/remove) rather than rewriting the whole payload. "
     "When users request edits to selected milestone preset data, use update_milestone_preset_data "

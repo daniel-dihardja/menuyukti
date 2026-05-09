@@ -2,16 +2,21 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import json
+from copy import deepcopy
 from typing import Annotated, Any, Literal
 
 from agents_app.agents.core.chat.graphql_client import (
     fetch_milestone_node,
+)
+from agents_app.agents.core.chat.graphql_client import (
     update_milestone_input as persist_milestone_input,
+)
+from agents_app.agents.core.chat.graphql_client import (
     update_milestone_preset_data as persist_milestone_preset_data,
 )
 from agents_app.agents.core.chat.http_context import get_chat_http_client
+from agents_app.agents.core.chat.milestone_help_copy import format_milestone_help_markdown
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import InjectedToolArg, tool
@@ -396,6 +401,35 @@ async def get_milestone_preset_data_json(
     return _format_json_shortcut_section(
         "Preset data (milestonePresetData)",
         node.get("milestonePresetData"),
+    )
+
+
+def _preset_id_from_milestone_node(node: dict[str, Any]) -> str | None:
+    raw_data = node.get("data")
+    milestone_node_data = raw_data if isinstance(raw_data, dict) else {}
+    raw_preset = milestone_node_data.get("presetId")
+    preset = raw_preset.strip() if isinstance(raw_preset, str) else ""
+    return preset or None
+
+
+@tool
+async def get_milestone_help(config: Annotated[RunnableConfig, InjectedToolArg()]) -> str:
+    """Return Help-tab style guidance for the selected milestone (what it does + optional input).
+
+    Call when the user asks for milestone help or sends exactly ``/help``."""
+    node, err = await _load_selected_milestone_node(config)
+    if err is not None or node is None:
+        return err or "Error: milestone not found."
+    c = config.get("configurable") or {}
+    milestone_id = c.get("milestone_id")
+    name = node.get("name")
+    title = str(name) if name is not None else str(milestone_id or "")
+    goal = node.get("milestoneGoal")
+    goal_str = goal.strip() if isinstance(goal, str) else None
+    return format_milestone_help_markdown(
+        name=title,
+        preset_id=_preset_id_from_milestone_node(node),
+        milestone_goal=goal_str,
     )
 
 

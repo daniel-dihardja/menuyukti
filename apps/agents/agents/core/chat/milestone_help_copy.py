@@ -1,0 +1,129 @@
+"""English help copy for chat milestone help tool.
+
+Keep in sync with apps/web/messages/en.json (analytics.campaigns.chat milestonePreset.goal,
+milestoneHelp* optional-input strings, milestoneHelpWhatItDoesFallback).
+"""
+
+from __future__ import annotations
+
+# Same keys as apps/web/lib/milestones/milestone-help-description.ts PRESET_GOAL_TRANSLATION_KEYS
+_PRESET_CATALOG_GOAL: dict[str, str] = {
+    "restaurant_campaign_brief": (
+        "The data holds a factual campaign brief foundation: campaign window (`startDate`, "
+        "`endDate`) with public holidays, venue snapshot, objective and funnel stage, target "
+        "segments, message hierarchy, CTA/offer plan, content and proof strategy, plus "
+        "measurement/testing/risk guardrails grounded in available analytics."
+    ),
+    "post_scheduler": (
+        "Generate a schedule of Instagram content for the campaign window: each entry has "
+        "weekday, date, time, format details (Reel/Post and Carousel/Single), promoted menu "
+        "items grounded in prefetched promotion candidates, and a caption idea aligned with the "
+        "campaign brief."
+    ),
+    "promotion_candidates": (
+        "Fetch promotion-engineering candidates and present star and puzzle menu items by "
+        "category. Use Campaign Brief main category to place the most relevant category first "
+        "in preview."
+    ),
+    "culture_hooks": (
+        "Use Campaign Brief data to identify the location concept and target audience, then "
+        "generate intersection topics between the concept and the audience's likely interests "
+        "(not necessarily food). These intersections should be actionable for Instagram Reels "
+        "ideas that attract potential new customers."
+    ),
+}
+
+_WHAT_IT_DOES_FALLBACK = "Add goal text to describe what this milestone does."
+
+_CAMPAIGN_BRIEF_OPTIONAL = (
+    "Optional input (Campaign brief notes)",
+    "If you fill the optional Input field, it is sent alongside location profile and analytics "
+    "signals when generating the campaign brief.",
+    "Use it when temporary context or constraints matter, for example during a soccer World Cup "
+    "period (match-day audience, campaign tone, offers, or no-alcohol messaging). Leave it "
+    "empty when standard analytics and profile data are enough.",
+)
+
+_POST_SCHEDULER_OPTIONAL = (
+    "Optional input (Scheduler notes)",
+    "If you fill the optional Input field, it guides posting cadence, format mix (Reels vs "
+    "feed), timing, and whether to skip weekends or holidays via the available-dates tool. "
+    "Prior workflow milestones still supply dates, holidays, brand tone, and promotion items.",
+    "Use it when you have scheduling constraints (e.g. weekdays only, more Reels, lunch-focused "
+    "times). Leave it empty when the default spread across the campaign window is fine.",
+)
+
+_OPTIONAL_INPUT_GENERIC_TITLE = "Optional input"
+_OPTIONAL_INPUT_GENERIC_SUMMARY = (
+    "Notes from the Input tab are free-form guidance for the run; they are not verified as "
+    "analytics facts."
+)
+
+
+def resolve_what_it_does(preset_id: str | None, milestone_goal: str | None) -> str:
+    """Match getMilestoneHelpDescription: catalog goal → custom goal → fallback."""
+    if preset_id and preset_id in _PRESET_CATALOG_GOAL:
+        return _PRESET_CATALOG_GOAL[preset_id]
+    custom = milestone_goal.strip() if isinstance(milestone_goal, str) else ""
+    if custom:
+        return custom
+    return _WHAT_IT_DOES_FALLBACK
+
+
+def format_optional_input_section(preset_id: str | None) -> str | None:
+    """Match milestone-item-tabs Help tab optional-input blocks."""
+    if preset_id == "restaurant_campaign_brief":
+        title, a, b = _CAMPAIGN_BRIEF_OPTIONAL
+        return "\n".join(
+            [
+                "",
+                f"## {title}",
+                "",
+                a,
+                "",
+                b,
+            ],
+        )
+    if preset_id == "post_scheduler":
+        title, a, b = _POST_SCHEDULER_OPTIONAL
+        return "\n".join(
+            [
+                "",
+                f"## {title}",
+                "",
+                a,
+                "",
+                b,
+            ],
+        )
+    if preset_id in ("promotion_candidates", "culture_hooks"):
+        return "\n".join(
+            [
+                "",
+                f"## {_OPTIONAL_INPUT_GENERIC_TITLE}",
+                "",
+                _OPTIONAL_INPUT_GENERIC_SUMMARY,
+            ],
+        )
+    return None
+
+
+def format_milestone_help_markdown(
+    *,
+    name: str,
+    preset_id: str | None,
+    milestone_goal: str | None,
+) -> str:
+    """Full Help-tab style markdown for the selected milestone."""
+    what = resolve_what_it_does(preset_id, milestone_goal)
+    lines = [
+        f"## {name}",
+        "",
+        "## What this milestone does",
+        "",
+        what,
+    ]
+    optional = format_optional_input_section(preset_id)
+    if optional:
+        lines.append(optional)
+    return "\n".join(lines)
