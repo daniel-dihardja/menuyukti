@@ -1,3 +1,5 @@
+import { Badge } from '@workspace/ui/components/badge'
+
 import type {
   PromotionCandidateMenuItem,
   PromotionCandidatesMilestoneData,
@@ -30,21 +32,26 @@ function renderMenuItems(
   return (
     <ul className="list-none space-y-3 pl-0">
       {items.map((item, index) => {
-        const fitLabel =
-          item.storytellingFit === 'strong' ? labels.storytellingStrong : labels.storytellingWeak
+        const isStrong = item.storytellingFit === 'strong'
+        const fitLabel = isStrong ? labels.storytellingStrong : labels.storytellingWeak
         const rationale = item.storytellingRationale?.trim()
+        const storytellingBadgeClassName = isStrong
+          ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-100'
+          : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100'
         return (
           <li key={`${item.name}-${index}`} className="border-l-2 border-muted pl-3">
-            <p className="font-medium text-foreground">{item.name}</p>
-            <p className="text-xs text-muted-foreground">
-              <span>{fitLabel}</span>
-              {rationale ? (
-                <>
-                  {' · '}
-                  <span className="font-medium">{labels.storytellingWhy}:</span> {rationale}
-                </>
-              ) : null}
-            </p>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="font-medium text-foreground">{item.name}</span>
+              <Badge variant="outline" className={storytellingBadgeClassName}>
+                {fitLabel}
+              </Badge>
+            </div>
+            {rationale ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">{labels.storytellingWhy}:</span>{' '}
+                {rationale}
+              </p>
+            ) : null}
           </li>
         )
       })}
