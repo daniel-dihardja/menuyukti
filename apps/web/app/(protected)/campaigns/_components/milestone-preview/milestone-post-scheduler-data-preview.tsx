@@ -1,3 +1,6 @@
+import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
+import { milestonePreviewTypography as mp } from './milestone-preview-typography'
+
 import type { PostSchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 
 export type MilestonePostSchedulerDataPreviewProps = {
@@ -10,10 +13,8 @@ export type MilestonePostSchedulerDataPreviewProps = {
     emptyWeeklySlotPlan: string
     guardrailCheckHeading: string
     weekLabel: string
-    objectiveLabel: string
     rationaleLabel: string
     pillarLabel: string
-    percentLabel: string
     reasonLabel: string
     countLabel: string
     dayLabel: string
@@ -24,100 +25,183 @@ export type MilestonePostSchedulerDataPreviewProps = {
     funnelStageLabel: string
     visualDirectionLabel: string
     notesLabel: string
+    placeholderDash: string
+    notesPlaceholder: string
+    helpMonthlyArc: string
+    helpContentRatio: string
+    helpFormatMix: string
+    helpWeeklySlotPlan: string
+    helpGuardrailCheck: string
+    formatHelpAriaLabel: (sectionTitle: string) => string
   }
+}
+
+function SectionHeader({
+  title,
+  helpText,
+  formatHelpAriaLabel,
+}: {
+  title: string
+  helpText: string
+  formatHelpAriaLabel: (sectionTitle: string) => string
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-0.5">
+      <p className={`min-w-0 flex-1 ${mp.sectionTitle}`}>{title}</p>
+      <MilestonePreviewHelpTrigger ariaLabel={formatHelpAriaLabel(title)} helpText={helpText} />
+    </div>
+  )
+}
+
+function SlotRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid gap-0.5 sm:grid-cols-[minmax(0,10rem)_1fr] sm:gap-x-3">
+      <span className={mp.rowKey}>{label}</span>
+      <span className={`min-w-0 ${mp.body}`}>{value}</span>
+    </div>
+  )
+}
+
+function RatioBar({ percent }: { percent: number }) {
+  const width = Math.min(100, Math.max(0, percent))
+  return (
+    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+      <div
+        className="h-full rounded-full bg-primary transition-[width] duration-300"
+        style={{ width: `${width}%` }}
+      />
+    </div>
+  )
 }
 
 export function MilestonePostSchedulerDataPreview({
   data,
   labels,
 }: MilestonePostSchedulerDataPreviewProps) {
+  const a = labels.formatHelpAriaLabel
   const formatNotesValue = (notes: string): string => {
     const trimmed = notes.trim()
-    return trimmed ? notes : '-'
+    return trimmed ? notes : labels.notesPlaceholder
   }
 
   return (
-    <div className="flex flex-col gap-y-4 text-sm">
-      <div className="space-y-1">
-        <p className="font-medium text-foreground">{labels.monthlyArcHeading}</p>
-        <ol className="list-decimal space-y-2 pl-5">
+    <div className={mp.root}>
+      <div className="space-y-3">
+        <SectionHeader
+          title={labels.monthlyArcHeading}
+          helpText={labels.helpMonthlyArc}
+          formatHelpAriaLabel={a}
+        />
+        <div className="flex flex-wrap gap-2">
           {data.monthlyArc.weeks.map((item) => (
-            <li key={item.week} className="space-y-1">
-              <p className="font-medium text-foreground">
-                {labels.weekLabel} {item.week}: {item.objective}
+            <div
+              key={item.week}
+              className={`min-w-[min(100%,11rem)] flex-1 basis-[10rem] ${mp.insetCard} space-y-2`}
+            >
+              <p className={`${mp.fieldLabel}`}>
+                {labels.weekLabel} {item.week}
               </p>
-              <p className="text-muted-foreground">
-                {labels.rationaleLabel}: {item.rationale}
+              <p className={mp.bodyStrong}>{item.objective}</p>
+              <p className={mp.bodySmall}>
+                <span className="font-medium text-foreground">{labels.rationaleLabel}:</span>{' '}
+                {item.rationale}
               </p>
-            </li>
+            </div>
           ))}
-        </ol>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <p className="font-medium text-foreground">{labels.contentRatioHeading}</p>
-        <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+      <div className="space-y-3">
+        <SectionHeader
+          title={labels.contentRatioHeading}
+          helpText={labels.helpContentRatio}
+          formatHelpAriaLabel={a}
+        />
+        <ul className="space-y-3">
           {data.contentRatio.pillars.map((item, index) => (
-            <li key={`${item.pillar}-${index}`}>
-              {item.pillar}: {item.percent}% - {item.reason}
+            <li key={`${item.pillar}-${index}`} className={mp.insetCard}>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className={mp.bodyStrong}>{item.pillar}</span>
+                <span className={`shrink-0 tabular-nums ${mp.bodySmall}`}>{item.percent}%</span>
+              </div>
+              <RatioBar percent={item.percent} />
+              <p className={`mt-2 ${mp.bodySmall}`}>
+                <span className="font-medium text-foreground">{labels.reasonLabel}:</span>{' '}
+                {item.reason}
+              </p>
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="space-y-2">
-        <p className="font-medium text-foreground">{labels.formatMixHeading}</p>
-        <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-          {data.formatMix.formats.map((item) => (
-            <li key={item.format}>
-              {item.format}: {item.count} - {item.reason}
-            </li>
-          ))}
+      <div className="space-y-3">
+        <SectionHeader
+          title={labels.formatMixHeading}
+          helpText={labels.helpFormatMix}
+          formatHelpAriaLabel={a}
+        />
+        <ul className="space-y-3">
+          {(() => {
+            const maxCount = Math.max(1, ...data.formatMix.formats.map((f) => f.count))
+            return data.formatMix.formats.map((item) => (
+              <li key={item.format} className={mp.insetCard}>
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className={mp.bodyStrong}>{item.format}</span>
+                  <span className={`shrink-0 ${mp.bodySmall}`}>
+                    {item.count}{' '}
+                    <span className="text-muted-foreground">({labels.countLabel})</span>
+                  </span>
+                </div>
+                <RatioBar percent={(item.count / maxCount) * 100} />
+                <p className={`mt-2 ${mp.bodySmall}`}>
+                  <span className="font-medium text-foreground">{labels.reasonLabel}:</span>{' '}
+                  {item.reason}
+                </p>
+              </li>
+            ))
+          })()}
         </ul>
       </div>
 
-      <div className="space-y-2">
-        <p className="font-medium text-foreground">{labels.weeklySlotPlanHeading}</p>
+      <div className="space-y-3">
+        <SectionHeader
+          title={labels.weeklySlotPlanHeading}
+          helpText={labels.helpWeeklySlotPlan}
+          formatHelpAriaLabel={a}
+        />
         {data.weeklySlotPlan.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{labels.emptyWeeklySlotPlan}</p>
+          <p className={mp.body}>{labels.emptyWeeklySlotPlan}</p>
         ) : (
-          <ol className="list-decimal space-y-4 pl-5">
+          <ol className={`${mp.listDecimal} space-y-4`}>
             {data.weeklySlotPlan.map((slot, index) => (
-              <li
-                key={`${slot.week}-${slot.day}-${index}`}
-                className="space-y-1 text-muted-foreground"
-              >
-                <p>
-                  {labels.weekLabel}: {slot.week} | {labels.dayLabel}: {slot.day}
-                </p>
-                <p>
-                  {labels.formatLabel}: {slot.format} | {labels.pillarLabel}: {slot.pillar}
-                </p>
-                <p>
-                  {labels.hookLabel}: {slot.hook}
-                </p>
-                <p>
-                  {labels.captionStructureLabel}: {slot.captionStructure}
-                </p>
-                <p>
-                  {labels.ctaTypeLabel}: {slot.ctaType} | {labels.funnelStageLabel}:{' '}
-                  {slot.funnelStage}
-                </p>
-                <p>
-                  {labels.visualDirectionLabel}: {slot.visualDirection}
-                </p>
-                <p>
-                  {labels.notesLabel}: {formatNotesValue(slot.notes)}
-                </p>
+              <li key={`${slot.week}-${slot.day}-${index}`} className={mp.insetCard}>
+                <div className="space-y-2">
+                  <SlotRow label={labels.weekLabel} value={String(slot.week)} />
+                  <SlotRow label={labels.dayLabel} value={slot.day} />
+                  <SlotRow label={labels.formatLabel} value={slot.format} />
+                  <SlotRow label={labels.pillarLabel} value={slot.pillar} />
+                  <SlotRow label={labels.hookLabel} value={slot.hook} />
+                  <SlotRow label={labels.captionStructureLabel} value={slot.captionStructure} />
+                  <SlotRow label={labels.ctaTypeLabel} value={slot.ctaType} />
+                  <SlotRow label={labels.funnelStageLabel} value={slot.funnelStage} />
+                  <SlotRow label={labels.visualDirectionLabel} value={slot.visualDirection} />
+                  <SlotRow label={labels.notesLabel} value={formatNotesValue(slot.notes)} />
+                </div>
               </li>
             ))}
           </ol>
         )}
       </div>
 
-      <div className="space-y-1">
-        <p className="font-medium text-foreground">{labels.guardrailCheckHeading}</p>
-        <p className="text-muted-foreground">{data.guardrailCheck || '—'}</p>
+      <div className="space-y-2">
+        <SectionHeader
+          title={labels.guardrailCheckHeading}
+          helpText={labels.helpGuardrailCheck}
+          formatHelpAriaLabel={a}
+        />
+        <p className={mp.body}>
+          {data.guardrailCheck?.trim() ? data.guardrailCheck : labels.placeholderDash}
+        </p>
       </div>
     </div>
   )

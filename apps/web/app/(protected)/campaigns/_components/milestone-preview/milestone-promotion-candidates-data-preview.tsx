@@ -5,6 +5,9 @@ import type {
   PromotionCandidatesMilestoneData,
 } from '@/lib/graphql/node-schemas'
 
+import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
+import { milestonePreviewTypography as mp } from './milestone-preview-typography'
+
 export type MilestonePromotionCandidatesDataPreviewProps = {
   data: PromotionCandidatesMilestoneData
   labels: {
@@ -18,7 +21,32 @@ export type MilestonePromotionCandidatesDataPreviewProps = {
     storytellingStrong: string
     storytellingWeak: string
     storytellingWhy: string
+    storytellingFitSection: string
+    summary: string
+    helpHeading: string
+    helpStarItems: string
+    helpPuzzleItems: string
+    helpStorytellingFit: string
+    placeholderEmDash: string
+    formatHelpAriaLabel: (sectionTitle: string) => string
   }
+}
+
+function SectionHeader({
+  title,
+  helpText,
+  formatHelpAriaLabel,
+}: {
+  title: string
+  helpText: string
+  formatHelpAriaLabel: (sectionTitle: string) => string
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-0.5">
+      <p className={`min-w-0 flex-1 ${mp.sectionTitle}`}>{title}</p>
+      <MilestonePreviewHelpTrigger ariaLabel={formatHelpAriaLabel(title)} helpText={helpText} />
+    </div>
+  )
 }
 
 function renderMenuItems(
@@ -26,7 +54,7 @@ function renderMenuItems(
   labels: MilestonePromotionCandidatesDataPreviewProps['labels'],
 ) {
   if (items.length === 0) {
-    return <p className="text-muted-foreground">—</p>
+    return <p className={mp.body}>{labels.placeholderEmDash}</p>
   }
 
   return (
@@ -41,15 +69,20 @@ function renderMenuItems(
         return (
           <li key={`${item.name}-${index}`} className="border-l-2 border-muted pl-3">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="font-medium text-foreground">{item.name}</span>
-              <Badge variant="outline" className={storytellingBadgeClassName}>
-                {fitLabel}
-              </Badge>
+              <span className={mp.bodyStrong}>{item.name}</span>
+              <div className="flex items-center gap-0.5">
+                <Badge variant="outline" className={storytellingBadgeClassName}>
+                  {fitLabel}
+                </Badge>
+                <MilestonePreviewHelpTrigger
+                  ariaLabel={labels.formatHelpAriaLabel(labels.storytellingFitSection)}
+                  helpText={labels.helpStorytellingFit}
+                />
+              </div>
             </div>
             {rationale ? (
-              <p className="mt-1 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">{labels.storytellingWhy}:</span>{' '}
-                {rationale}
+              <p className={`mt-2 ${mp.bodySmall} leading-relaxed`}>
+                <span className={mp.rowKey}>{labels.storytellingWhy}:</span> {rationale}
               </p>
             ) : null}
           </li>
@@ -63,31 +96,50 @@ export function MilestonePromotionCandidatesDataPreview({
   data,
   labels,
 }: MilestonePromotionCandidatesDataPreviewProps) {
+  const a = labels.formatHelpAriaLabel
+
   return (
-    <div className="flex flex-col gap-y-4 text-sm">
-      <div className="space-y-1">
-        <p className="font-medium text-foreground">{labels.heading}</p>
-        <p className="text-muted-foreground">
-          {labels.mainCategoryLabel}: {data.mainCategory}
+    <div className={mp.root}>
+      <div className="space-y-2">
+        <SectionHeader
+          title={labels.heading}
+          helpText={labels.helpHeading}
+          formatHelpAriaLabel={a}
+        />
+        <p className={`${mp.bodySmall} text-pretty`}>{labels.summary}</p>
+        <p className={mp.body}>
+          <span className={mp.rowKey}>{labels.mainCategoryLabel}:</span> {data.mainCategory}
         </p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {data.categories.map((bucket) => {
           const hasItems = bucket.starItems.length > 0 || bucket.puzzleItems.length > 0
           return (
-            <div key={bucket.category} className="space-y-2">
-              <p className="font-medium text-foreground">{bucket.category}</p>
+            <div key={bucket.category} className="space-y-3">
+              <p className={mp.sectionTitle}>{bucket.category}</p>
               {!hasItems ? (
-                <p className="text-muted-foreground">{labels.emptyCategory}</p>
+                <p className={mp.body}>{labels.emptyCategory}</p>
               ) : (
-                <div className="space-y-2 text-muted-foreground">
-                  <div className="space-y-1">
-                    <p>{labels.starItemsLabel}:</p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex min-w-0 items-center gap-0.5">
+                      <p className={`min-w-0 flex-1 ${mp.rowKey}`}>{labels.starItemsLabel}</p>
+                      <MilestonePreviewHelpTrigger
+                        ariaLabel={a(labels.starItemsLabel)}
+                        helpText={labels.helpStarItems}
+                      />
+                    </div>
                     {renderMenuItems(bucket.starItems, labels)}
                   </div>
-                  <div className="space-y-1">
-                    <p>{labels.puzzleItemsLabel}:</p>
+                  <div className="space-y-2">
+                    <div className="flex min-w-0 items-center gap-0.5">
+                      <p className={`min-w-0 flex-1 ${mp.rowKey}`}>{labels.puzzleItemsLabel}</p>
+                      <MilestonePreviewHelpTrigger
+                        ariaLabel={a(labels.puzzleItemsLabel)}
+                        helpText={labels.helpPuzzleItems}
+                      />
+                    </div>
                     {renderMenuItems(bucket.puzzleItems, labels)}
                   </div>
                 </div>
@@ -97,9 +149,9 @@ export function MilestonePromotionCandidatesDataPreview({
         })}
       </div>
 
-      <div className="space-y-1">
-        <p className="font-medium text-foreground">{labels.notesLabel}</p>
-        <p className="text-muted-foreground">{data.notes?.trim() ? data.notes : labels.noNotes}</p>
+      <div className="space-y-2">
+        <p className={mp.sectionTitle}>{labels.notesLabel}</p>
+        <p className={mp.body}>{data.notes?.trim() ? data.notes : labels.noNotes}</p>
       </div>
     </div>
   )

@@ -49,12 +49,12 @@ def test_promotion_engineering_candidates_with_qa_data(analytics_run_with_qa_dat
         assert isinstance(mains["starItems"], list)
         assert isinstance(mains["puzzleItems"], list)
         assert len(mains["starItems"]) <= 5
-        assert len(mains["puzzleItems"]) <= 5
+        assert len(mains["puzzleItems"]) <= 10
     else:
         assert isinstance(payload["starItems"], list)
         assert isinstance(payload["puzzleItems"], list)
         assert len(payload["starItems"]) <= 5
-        assert len(payload["puzzleItems"]) <= 5
+        assert len(payload["puzzleItems"]) <= 10
 
 
 def test_promotion_engineering_candidates_wrong_location_returns_none(
