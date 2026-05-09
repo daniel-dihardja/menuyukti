@@ -88,11 +88,7 @@ export function WorkflowChatComposerMenus({
     if (!value.startsWith('@')) {
       return []
     }
-    return otherMilestones.filter(
-      (m) =>
-        m.title.toLowerCase().includes(mentionFilterQuery) ||
-        m.id.toLowerCase().includes(mentionFilterQuery),
-    )
+    return otherMilestones.filter((m) => m.title.toLowerCase().includes(mentionFilterQuery))
   }, [mentionFilterQuery, otherMilestones, value])
 
   const slashMenuOpen = value.startsWith('/') && filteredSlash.length > 0
@@ -250,14 +246,13 @@ export function WorkflowChatComposerMenus({
                       <CommandItem
                         key={m.id}
                         className={cn(
-                          'flex flex-col gap-1 items-start',
+                          'items-start',
                           i === mentionActiveIndex && 'bg-accent text-accent-foreground',
                         )}
                         onSelect={() => onSelectMention(m.id)}
-                        value={m.id}
+                        value={m.title}
                       >
                         <span className="font-medium">{m.title}</span>
-                        <span className="truncate text-muted-foreground text-xs">{m.id}</span>
                       </CommandItem>
                     ))}
                   </CommandGroup>
