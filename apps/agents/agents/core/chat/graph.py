@@ -7,6 +7,8 @@ from typing import Any
 from agents_app.agents.core.chat.prompts import build_system_prompt
 from agents_app.agents.core.chat.tools import (
     get_milestone_data,
+    get_milestone_input_json,
+    get_milestone_preset_data_json,
     update_milestone_input,
     update_milestone_preset_data,
 )
@@ -42,7 +44,13 @@ def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStat
     prompt_runnable = RunnableLambda(_chat_prompt_with_milestone_help)
     return create_react_agent(
         llm,
-        [get_milestone_data, update_milestone_input, update_milestone_preset_data],
+        [
+            get_milestone_data,
+            get_milestone_input_json,
+            get_milestone_preset_data_json,
+            update_milestone_input,
+            update_milestone_preset_data,
+        ],
         prompt=prompt_runnable,
         checkpointer=checkpointer,
         name="menuyukti_chat",

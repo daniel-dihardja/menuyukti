@@ -66,6 +66,145 @@ def _restaurant_campaign_brief_input_payload() -> dict:
     }
 
 
+def _milestone_node(
+    *,
+    node_type: str = "milestone",
+    location_id: int = 7,
+    milestone_input: dict | None = None,
+    milestone_preset_data: dict | None = None,
+) -> dict:
+    return {
+        "id": "42",
+        "nodeType": node_type,
+        "locationId": location_id,
+        "data": {"presetId": "campaign_brief"},
+        "milestoneInput": milestone_input,
+        "milestonePresetData": milestone_preset_data,
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_input_json_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    node = _milestone_node(milestone_input=_campaign_brief_input_payload())
+    fetch_mock = AsyncMock(return_value=node)
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+
+    out = await chat_tools.get_milestone_input_json.ainvoke(
+        {},
+        config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
+    )
+    assert "## Input (milestoneInput)" in out
+    assert '"type": "campaign_brief"' in out
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_input_json_returns_all_fields(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = _campaign_brief_input_payload()
+    payload["customTopLevel"] = {"alpha": 1}
+    payload["value"]["customNested"] = ["x", "y"]
+    node = _milestone_node(milestone_input=payload)
+    fetch_mock = AsyncMock(return_value=node)
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+
+    out = await chat_tools.get_milestone_input_json.ainvoke(
+        {},
+        config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
+    )
+    assert '"customTopLevel": {' in out
+    assert '"customNested": [' in out
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_preset_data_json_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    node = _milestone_node(milestone_preset_data=_culture_hooks_payload())
+    fetch_mock = AsyncMock(return_value=node)
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+
+    out = await chat_tools.get_milestone_preset_data_json.ainvoke(
+        {},
+        config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
+    )
+    assert "## Preset data (milestonePresetData)" in out
+    assert '"locationConcept": "Modern Indonesian comfort food"' in out
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_input_json_not_set(monkeypatch: pytest.MonkeyPatch) -> None:
+    node = _milestone_node(milestone_input=None)
+    fetch_mock = AsyncMock(return_value=node)
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+
+    out = await chat_tools.get_milestone_input_json.ainvoke(
+        {},
+        config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
+    )
+    assert "(not set)" in out
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_preset_data_json_not_set(monkeypatch: pytest.MonkeyPatch) -> None:
+    node = _milestone_node(milestone_preset_data=None)
+    fetch_mock = AsyncMock(return_value=node)
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+
+    out = await chat_tools.get_milestone_preset_data_json.ainvoke(
+        {},
+        config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
+    )
+    assert "(not set)" in out
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_input_json_requires_context() -> None:
+    out = await chat_tools.get_milestone_input_json.ainvoke({}, config={"configurable": {}})
+    assert "Milestone context is not available" in out
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_preset_data_json_requires_context() -> None:
+    out = await chat_tools.get_milestone_preset_data_json.ainvoke({}, config={"configurable": {}})
+    assert "Milestone context is not available" in out
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_input_json_rejects_non_milestone_node(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    node = _milestone_node(node_type="workflow", milestone_input=_campaign_brief_input_payload())
+    fetch_mock = AsyncMock(return_value=node)
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+
+    out = await chat_tools.get_milestone_input_json.ainvoke(
+        {},
+        config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
+    )
+    assert out == "Error: node is not a milestone."
+
+
+@pytest.mark.asyncio
+async def test_get_milestone_preset_data_json_rejects_location_mismatch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    node = _milestone_node(location_id=999, milestone_preset_data=_culture_hooks_payload())
+    fetch_mock = AsyncMock(return_value=node)
+    monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
+    monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
+
+    out = await chat_tools.get_milestone_preset_data_json.ainvoke(
+        {},
+        config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
+    )
+    assert out == "Error: milestone location does not match the campaign context."
+
+
 @pytest.mark.asyncio
 async def test_update_milestone_input_replace_success(monkeypatch: pytest.MonkeyPatch) -> None:
     node = {

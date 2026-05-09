@@ -160,6 +160,51 @@ def _format_milestone_snapshot(milestone_id: str, node: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _milestone_context_from_config(
+    config: RunnableConfig | None,
+) -> tuple[str | None, int | None, str | None]:
+    c = (config or {}).get("configurable") or {}
+    milestone_id = c.get("milestone_id")
+    location_id = c.get("location_id")
+    user_id = c.get("user_id")
+    return (
+        str(milestone_id) if milestone_id is not None else None,
+        int(location_id) if location_id is not None else None,
+        str(user_id) if user_id is not None else None,
+    )
+
+
+async def _load_selected_milestone_node(
+    config: RunnableConfig | None,
+) -> tuple[dict[str, Any] | None, str | None]:
+    milestone_id, location_id, user_id = _milestone_context_from_config(config)
+    if not milestone_id or location_id is None or not user_id:
+        return (
+            None,
+            "Milestone context is not available (no milestone selected or missing location). "
+            "Ask the user to select a milestone first.",
+        )
+    client = get_chat_http_client()
+    node = await fetch_milestone_node(milestone_id, user_id, client=client)
+    if not node:
+        return None, "Error: milestone not found."
+    if str(node.get("nodeType") or "") != "milestone":
+        return None, "Error: node is not a milestone."
+    loc = node.get("locationId")
+    if loc is not None and int(loc) != int(location_id):
+        return None, "Error: milestone location does not match the campaign context."
+    return node, None
+
+
+def _format_json_shortcut_section(title: str, payload: Any) -> str:
+    lines = [f"## {title}"]
+    if payload is None:
+        lines.append("(not set)")
+    else:
+        lines.append(_format_json(payload))
+    return "\n".join(lines)
+
+
 def _decode_json_pointer_token(token: str) -> str:
     return token.replace("~1", "/").replace("~0", "~")
 
@@ -329,6 +374,29 @@ async def get_milestone_data(config: Annotated[RunnableConfig, InjectedToolArg()
         return "Error: milestone location does not match the campaign context."
 
     return _format_milestone_snapshot(str(milestone_id), node)
+
+
+@tool
+async def get_milestone_input_json(config: Annotated[RunnableConfig, InjectedToolArg()]) -> str:
+    """Load only milestoneInput JSON for the selected milestone."""
+    node, err = await _load_selected_milestone_node(config)
+    if err is not None or node is None:
+        return err or "Error: milestone not found."
+    return _format_json_shortcut_section("Input (milestoneInput)", node.get("milestoneInput"))
+
+
+@tool
+async def get_milestone_preset_data_json(
+    config: Annotated[RunnableConfig, InjectedToolArg()],
+) -> str:
+    """Load only milestonePresetData JSON for the selected milestone."""
+    node, err = await _load_selected_milestone_node(config)
+    if err is not None or node is None:
+        return err or "Error: milestone not found."
+    return _format_json_shortcut_section(
+        "Preset data (milestonePresetData)",
+        node.get("milestonePresetData"),
+    )
 
 
 @tool
