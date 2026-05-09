@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { ArrowDown, ArrowUp, ChevronDown, Play, Trash2 } from 'lucide-react'
 
+import { milestonePresetIconFor } from '@/lib/milestones/milestone-icons'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +33,7 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
   const t = useTranslations('analytics.campaigns.chat')
   const { milestone, isMobile, position, runState, deleteState, movement, actions } =
     useTimelineItemHeader()
+  const MilestoneIcon = milestonePresetIconFor(milestone.presetId)
   const railStatus = milestone.status ?? 'empty'
   const canRun = Boolean(actions.run) && runState !== 'blocked'
   const isRunning = runState === 'running'
@@ -46,7 +48,10 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
                 <TimelineRailMarker compact status={railStatus} />
               </span>
             ) : null}
-            <span className="min-w-0 truncate">{milestone.title}</span>
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <MilestoneIcon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 truncate">{milestone.title}</span>
+            </span>
           </div>
         </div>
       </CardTitle>
