@@ -122,7 +122,6 @@ def test_chat_stream_passes_milestone_in_config(client: TestClient) -> None:
             "workflow_id": "99",
             "milestone_id": "42",
             "location_id": 7,
-            "milestone_help_text": "  Campaign brief goal from Help tab  ",
         },
     ) as response:
         assert response.status_code == 200
@@ -131,9 +130,6 @@ def test_chat_stream_passes_milestone_in_config(client: TestClient) -> None:
     assert captured["config"]["configurable"]["milestone_id"] == "42"
     assert captured["config"]["configurable"]["location_id"] == 7
     assert captured["config"]["configurable"]["user_id"] == "user-1"
-    assert captured["config"]["configurable"]["milestone_help_text"] == (
-        "Campaign brief goal from Help tab"
-    )
 
 
 def test_chat_agent_thread_id(client: TestClient) -> None:

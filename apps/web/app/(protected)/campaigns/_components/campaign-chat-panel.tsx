@@ -58,7 +58,6 @@ import {
 import { TimelineProvider } from './timeline-context'
 import { useCampaignPreviewVisibility } from './use-campaign-preview-visibility'
 import { useCampaignTimelineProviderSlices } from './use-campaign-timeline-provider-value'
-import { getMilestoneHelpDescription } from '@/lib/milestones/milestone-help-description'
 import { useMilestoneOperations } from './use-milestone-operations'
 import { SlashCommandMenu } from './slash-command-menu'
 
@@ -182,29 +181,16 @@ export function CampaignChatPanel({
     [setSelectedMilestoneId],
   )
 
-  const milestoneHelpForChat = useMemo(() => {
-    if (selectedMilestoneId === null) {
-      return undefined
-    }
-    const m = milestoneUi.milestones.find((x) => x.id === selectedMilestoneId)
-    if (!m) {
-      return undefined
-    }
-    return getMilestoneHelpDescription(m, t)
-  }, [selectedMilestoneId, milestoneUi.milestones, t])
-
   /** `useChat` keeps the first `transport` instance; a ref keeps milestone/workflow ids fresh per request. */
   const chatApiContextRef = useRef({
     workflowId,
     locationId,
     milestoneId: selectedMilestoneId,
-    milestoneHelpText: undefined as string | undefined,
   })
   chatApiContextRef.current = {
     workflowId,
     locationId,
     milestoneId: selectedMilestoneId,
-    milestoneHelpText: milestoneHelpForChat,
   }
 
   const transport = useMemo(
@@ -221,11 +207,6 @@ export function CampaignChatPanel({
               workflowId: ctx.workflowId,
               locationId: String(ctx.locationId),
               ...(ctx.milestoneId !== null ? { milestoneId: ctx.milestoneId } : {}),
-              ...(ctx.milestoneId !== null &&
-              ctx.milestoneHelpText !== undefined &&
-              ctx.milestoneHelpText.trim() !== ''
-                ? { milestoneHelpText: ctx.milestoneHelpText }
-                : {}),
             },
           }
         },

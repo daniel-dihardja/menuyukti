@@ -27,7 +27,6 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage] = Field(min_length=1)
     workflow_id: str | None = None
     milestone_id: str | None = None
-    milestone_help_text: str | None = Field(default=None, max_length=12000)
     location_id: int | None = Field(default=None, ge=1)
     agent_thread_id: str | None = Field(default=None, min_length=1)
 
@@ -59,7 +58,6 @@ def _runnable_config(
     milestone_id: str | None,
     location_id: int | None,
     user_id: str | None,
-    milestone_help_text: str | None,
 ) -> RunnableConfig:
     configurable: dict[str, Any] = {
         "thread_id": thread_id,
@@ -67,8 +65,6 @@ def _runnable_config(
         "location_id": location_id,
         "user_id": user_id,
     }
-    if milestone_help_text and milestone_help_text.strip():
-        configurable["milestone_help_text"] = milestone_help_text.strip()
     return RunnableConfig(configurable=configurable)
 
 
@@ -131,7 +127,6 @@ async def chat_stream(
         milestone_id=body.milestone_id,
         location_id=body.location_id,
         user_id=x_menuyukti_user_id,
-        milestone_help_text=body.milestone_help_text,
     )
 
     return StreamingResponse(

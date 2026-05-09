@@ -19,8 +19,6 @@ export const chatRequestBodySchema = z.object({
   messages: z.array(messageSchema).optional().default([]),
   workflowId: z.string().regex(/^\d+$/, 'Invalid workflow id').optional(),
   milestoneId: z.string().regex(/^\d+$/, 'Invalid milestone id').optional(),
-  /** Translated Help-tab body for the selected milestone (analytics.campaigns.chat). */
-  milestoneHelpText: z.string().max(12000).optional(),
   locationId: z.string().regex(/^\d+$/, 'Invalid location id').optional(),
   /** Opaque id for `/agent` chat (no workflow); required by agents when `workflowId` is absent. */
   agentThreadId: z.string().min(1).optional(),
