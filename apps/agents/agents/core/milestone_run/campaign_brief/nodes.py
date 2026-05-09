@@ -12,6 +12,9 @@ from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_location_operating_signals,
     upsert_milestonedata_node,
 )
+from agents_app.agents.core.milestone_run.llm_from_run_config import (
+    structured_llm_from_milestone_run_config,
+)
 from agents_app.agents.core.milestone_run.output_schema import (
     CampaignBriefVenueSnapshot,
     validate_skill_output,
@@ -27,7 +30,6 @@ from agents_app.agents.core.milestone_run.tools.get_location_profile import (
 from agents_app.agents.core.milestone_run.tools.write_result_data import _sanitize_venue_name
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import LOCATION_QUERY
-from agents_app.models.llm_config import get_llm_structured
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
 from pydantic import BaseModel
@@ -324,7 +326,7 @@ async def generate_draft(state: CampaignBriefState) -> dict[str, Any]:
     """Generate strictly structured campaign-brief JSON from deterministic signal context."""
     _trace_agent_event(state, "chat_model_start")
     # Generate only creative brief fields here; campaign window + holidays are merged deterministically later.
-    llm = get_llm_structured().with_structured_output(CampaignBriefDraftOutput)
+    llm = structured_llm_from_milestone_run_config().with_structured_output(CampaignBriefDraftOutput)
     generated = await llm.ainvoke(
         [
             SystemMessage(content=CAMPAIGN_BRIEF_SYSTEM),

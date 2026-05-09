@@ -108,6 +108,7 @@ async def iter_milestone_run_sse_lines(
     milestone_input: dict[str, Any] | None = None,
     milestone_data: dict[str, Any] | list[Any] | None = None,
     traceparent: str | None = None,
+    chat_gateway_model: str | None = None,
 ) -> AsyncIterator[str]:
     """Stream Server-Sent Event lines: run_id, custom step payloads, then a final ``done`` object."""
     run_id = str(uuid.uuid4())
@@ -144,6 +145,8 @@ async def iter_milestone_run_sse_lines(
     }
     if traceparent:
         initial["traceparent"] = traceparent
+    if chat_gateway_model:
+        initial["chat_gateway_model"] = chat_gateway_model
 
     final_state: dict[str, Any] | None = None
     timeline: list[dict[str, Any]] = []
@@ -166,6 +169,8 @@ async def iter_milestone_run_sse_lines(
     }
     if traceparent:
         run_config["metadata"]["traceparent"] = traceparent
+    if chat_gateway_model:
+        run_config["configurable"] = {"chat_gateway_model": chat_gateway_model}
 
     try:
         async for mode, chunk in graph.astream(

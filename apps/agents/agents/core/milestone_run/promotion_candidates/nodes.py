@@ -11,6 +11,9 @@ from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_promotion_engineering_candidates,
     upsert_milestonedata_node,
 )
+from agents_app.agents.core.milestone_run.llm_from_run_config import (
+    structured_llm_from_milestone_run_config,
+)
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.promotion_candidates.prompts import (
     PROMOTION_STORYTELLING_SYSTEM,
@@ -19,7 +22,6 @@ from agents_app.agents.core.milestone_run.promotion_candidates.state import (
     PromotionCandidatesOutput,
     PromotionCandidatesState,
 )
-from agents_app.models.llm_config import get_llm_structured
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
 from pydantic import BaseModel, Field
@@ -327,7 +329,7 @@ async def enrich_storytelling(state: PromotionCandidatesState) -> dict[str, Any]
     ]
     human_message = "\n\n".join(human_sections)
 
-    llm = get_llm_structured().with_structured_output(StorytellingVerdictsOutput)
+    llm = structured_llm_from_milestone_run_config().with_structured_output(StorytellingVerdictsOutput)
     _trace_agent_event(state, "chat_model_start")
     generated = await llm.ainvoke(
         [

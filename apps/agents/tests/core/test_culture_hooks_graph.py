@@ -154,7 +154,7 @@ async def test_generate_intersections_returns_new_shape() -> None:
         "generation_context_markdown": "Context from campaign brief",
     }
     with patch(
-        "agents_app.agents.core.milestone_run.culture_hooks.nodes.get_llm_structured",
+        "agents_app.agents.core.milestone_run.culture_hooks.nodes.structured_llm_from_milestone_run_config",
     ) as mock_get_llm, patch(
         "agents_app.agents.core.milestone_run.culture_hooks.nodes.get_stream_writer",
         return_value=lambda _x: None,

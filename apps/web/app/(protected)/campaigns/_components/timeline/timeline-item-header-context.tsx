@@ -3,6 +3,7 @@
 import { createContext, useContext } from 'react'
 
 import type { TimelineMilestone } from './types'
+import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
 export type TimelineItemPosition = 'first' | 'middle' | 'last'
 export type TimelineItemRunState = 'idle' | 'running' | 'blocked'
@@ -19,8 +20,10 @@ type TimelineItemHeaderContextValue = {
     moving: boolean
     move?: (id: string, direction: 'up' | 'down') => void | Promise<void>
   }
+  milestoneRunChatModel: ChatGatewayModelId
+  onMilestoneRunChatModelChange: (id: ChatGatewayModelId) => void
   actions: {
-    run?: (id: string) => void | Promise<void>
+    run?: (id: string, chatModel?: ChatGatewayModelId) => void | Promise<void>
     deleteMilestone?: (id: string) => void | Promise<void>
   }
 }

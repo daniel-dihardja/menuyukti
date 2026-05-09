@@ -39,3 +39,5 @@ class MilestoneRunState(TypedDict):
     run_id: NotRequired[str]
     # W3C trace context from BFF (optional distributed tracing).
     traceparent: NotRequired[str | None]
+    # Vercel AI Gateway id (e.g. openai/gpt-4o-mini); optional RunnableConfig + eval subgraph.
+    chat_gateway_model: NotRequired[str | None]

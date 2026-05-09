@@ -12,6 +12,7 @@ import {
 import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 
 import type { MilestoneDataValue, MilestoneInput, PassCriteriaRow } from './timeline/types'
+import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
 export type CampaignTimelineOpsHandles = {
   handleCreateMilestone: () => boolean | Promise<boolean>
@@ -23,7 +24,7 @@ export type CampaignTimelineOpsHandles = {
   handleUpdateMilestoneData: (id: string, milestoneData: MilestoneDataValue) => Promise<boolean>
   handleUpdateMilestoneInput: (id: string, milestoneInput: MilestoneInput) => Promise<boolean>
   handleHydrateMilestoneData: (id: string) => Promise<void>
-  handleRunMilestone: (id: string) => void | Promise<void>
+  handleRunMilestone: (id: string, chatModel?: ChatGatewayModelId) => void | Promise<void>
   handleExportWorkflow: () => void | Promise<void>
 }
 

@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { ArrowDown, ArrowUp, ChevronDown, Play, Trash2 } from 'lucide-react'
 
+import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
 import { milestonePresetIconFor } from '@/lib/milestones/milestone-icons'
 import {
   AlertDialog,
@@ -31,8 +32,17 @@ export type MilestoneItemHeaderProps = {
 
 export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
   const t = useTranslations('analytics.campaigns.chat')
-  const { milestone, isMobile, position, runState, deleteState, movement, actions } =
-    useTimelineItemHeader()
+  const {
+    milestone,
+    isMobile,
+    position,
+    runState,
+    deleteState,
+    movement,
+    milestoneRunChatModel,
+    onMilestoneRunChatModelChange,
+    actions,
+  } = useTimelineItemHeader()
   const MilestoneIcon = milestonePresetIconFor(milestone.presetId)
   const railStatus = milestone.status ?? 'empty'
   const canRun = Boolean(actions.run) && runState !== 'blocked'
@@ -57,29 +67,38 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
       </CardTitle>
       <CardAction className="flex items-center gap-1">
         {actions.run ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex">
-                <Button
-                  aria-busy={isRunning ? true : undefined}
-                  aria-label={t('milestonePlayAriaLabel')}
-                  className="size-9 shrink-0 rounded-full"
-                  disabled={!canRun}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    void actions.run?.(milestone.id)
-                  }}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  size="icon"
-                  type="button"
-                  variant="default"
-                >
-                  {isRunning ? <Spinner /> : <Play aria-hidden data-icon="inline-start" />}
-                </Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">{t('milestonePlayTooltip')}</TooltipContent>
-          </Tooltip>
+          <span className="inline-flex items-center gap-2">
+            <span className="inline-flex shrink-0" onPointerDown={(e) => e.stopPropagation()}>
+              <ChatGatewayModelSelect
+                disabled={isRunning || runState === 'blocked'}
+                onValueChange={onMilestoneRunChatModelChange}
+                value={milestoneRunChatModel}
+              />
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Button
+                    aria-busy={isRunning ? true : undefined}
+                    aria-label={t('milestonePlayAriaLabel')}
+                    className="size-9 shrink-0 rounded-full"
+                    disabled={!canRun}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void actions.run?.(milestone.id, milestoneRunChatModel)
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    size="icon"
+                    type="button"
+                    variant="default"
+                  >
+                    {isRunning ? <Spinner /> : <Play aria-hidden data-icon="inline-start" />}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{t('milestonePlayTooltip')}</TooltipContent>
+            </Tooltip>
+          </span>
         ) : null}
         {movement.move ? (
           <>

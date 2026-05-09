@@ -268,7 +268,9 @@ async def _execute_preset(state: MilestoneRunState, *, client: httpx.AsyncClient
 
 async def _finalize_eval(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     _trace_step(state, "finalize_eval")
-    eval_graph = build_milestone_eval_graph(client)
+    raw_gw = state.get("chat_gateway_model")
+    gateway_id = raw_gw.strip() if isinstance(raw_gw, str) and raw_gw.strip() else None
+    eval_graph = build_milestone_eval_graph(client, gateway_model_id=gateway_id)
     initial: dict[str, Any] = {
         "milestone_id": state["milestone_id"],
         "location_id": int(state["location_id"]),

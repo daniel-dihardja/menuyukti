@@ -14,12 +14,20 @@ import {
 } from '@/lib/graphql/node-schemas'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
 import { milestoneIdParamSchema, workflowIdParamSchema } from '../../schema'
+import { isAllowedChatGatewayModel } from '@/lib/chat/gateway-chat-models'
 
 export const maxDuration = 180
 
 const runBodySchema = z.object({
   locationId: z.number().int().positive(),
   goal: z.string().optional(),
+  model: z
+    .string()
+    .max(120)
+    .optional()
+    .refine((v) => v === undefined || isAllowedChatGatewayModel(v), {
+      message: 'Unsupported chat model',
+    }),
   milestoneInput: milestoneInputSchema.optional(),
   milestoneData: z
     .union([
@@ -65,7 +73,13 @@ export async function POST(req: Request, context: RouteContext) {
       { status: 400 },
     )
   }
-  const { locationId, goal, milestoneData: milestoneDataPayload, milestoneInput } = parsed.data
+  const {
+    locationId,
+    goal,
+    model: chatModel,
+    milestoneData: milestoneDataPayload,
+    milestoneInput,
+  } = parsed.data
 
   const rootData = parseNodeData(
     await graphqlQuery<NodeDataRaw>(NODE_QUERY, { id: workflowId }, userId),
@@ -110,6 +124,7 @@ export async function POST(req: Request, context: RouteContext) {
         goal,
         milestone_input: milestoneInput,
         milestone_data: milestoneDataPayload,
+        ...(chatModel != null ? { model: chatModel } : {}),
       }),
       signal: req.signal,
     })

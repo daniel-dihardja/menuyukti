@@ -6,6 +6,7 @@ import type { CampaignMilestoneUiState } from './campaign-milestone-reducer'
 import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 
 import type { MilestoneDataValue, MilestoneInput, PassCriteriaRow } from './timeline/types'
+import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
 /** Milestone list + in-flight ids (no error strings). */
 export type TimelineMilestoneState = Pick<
@@ -47,7 +48,7 @@ export type TimelineActions = {
   onUpdateMilestoneData: (id: string, milestoneData: MilestoneDataValue) => Promise<boolean>
   onUpdateMilestoneInput: (id: string, milestoneInput: MilestoneInput) => Promise<boolean>
   onHydrateMilestoneData: (id: string) => Promise<void>
-  onRunMilestone: (id: string) => void | Promise<void>
+  onRunMilestone: (id: string, chatModel?: ChatGatewayModelId) => void | Promise<void>
   onExport: () => void | Promise<void>
 }
 

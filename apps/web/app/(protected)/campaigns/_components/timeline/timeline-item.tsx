@@ -26,6 +26,7 @@ import {
   milestonePresetHasDefaultOptionalNotesInput,
   optionalNotesFromMilestoneInput,
 } from '@/lib/milestones/milestone-input-tab'
+import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
 /** Input autosave debounce; optional notes updates avoid draft rewrites to preserve caret. */
 const MILESTONE_INPUT_AUTOSAVE_DEBOUNCE_MS = 1200
@@ -93,6 +94,9 @@ function TimelineItemInner({
     onRunMilestone,
   } = actions
 
+  const [milestoneRunChatModel, setMilestoneRunChatModel] = useState<ChatGatewayModelId>(
+    () => DEFAULT_CHAT_GATEWAY_MODEL,
+  )
   const [userOpen, setUserOpen] = useState(true)
   const lastMilestoneIdRef = useRef(milestone.id)
   const hadMilestoneDataRef = useRef(milestone.data != null)
@@ -344,14 +348,14 @@ function TimelineItemInner({
   ])
 
   const handleRunMilestoneWithInputFlush = useCallback(
-    async (id: string) => {
+    async (id: string, chatModel?: ChatGatewayModelId) => {
       if (id === milestone.id) {
         const ok = await flushMilestoneInputSave()
         if (!ok) {
           return
         }
       }
-      await onRunMilestone(id)
+      await onRunMilestone(id, chatModel)
     },
     [flushMilestoneInputSave, milestone.id, onRunMilestone],
   )
@@ -478,6 +482,8 @@ function TimelineItemInner({
                   moving: isMoving,
                   move: onMoveMilestone,
                 },
+                milestoneRunChatModel,
+                onMilestoneRunChatModelChange: setMilestoneRunChatModel,
                 actions: {
                   run: isChatBusy ? undefined : handleRunMilestoneWithInputFlush,
                   deleteMilestone: onDeleteMilestone,

@@ -26,6 +26,7 @@ import type {
   PassCriteriaStatus,
   TimelineMilestone,
 } from './timeline/types'
+import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
 function parseDataPreviewForPreset(
   presetId: TimelineMilestone['presetId'],
@@ -415,7 +416,7 @@ export function useMilestoneOperations(
   )
 
   const handleRunMilestone = useCallback(
-    async (milestoneId: string) => {
+    async (milestoneId: string, chatModel: ChatGatewayModelId = DEFAULT_CHAT_GATEWAY_MODEL) => {
       dispatch({
         type: 'PATCH',
         patch: {
@@ -447,6 +448,7 @@ export function useMilestoneOperations(
           body: JSON.stringify({
             locationId,
             goal: hydrateBody?.goal ?? '',
+            model: chatModel,
             milestoneInput: hydrateBody?.milestoneInput ?? undefined,
             milestoneData: hydrateBody?.milestoneData,
           }),

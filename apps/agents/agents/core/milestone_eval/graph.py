@@ -7,14 +7,20 @@ from functools import partial
 import httpx
 from agents_app.agents.core.milestone_eval import nodes
 from agents_app.agents.core.milestone_eval.state import MilestoneEvalState
-from agents_app.models.llm_config import get_llm, get_llm_structured
+from agents_app.models.llm_config import chat_llm_for_gateway_model
 from langgraph.graph import END, START, StateGraph
 
 
-def build_milestone_eval_graph(client: httpx.AsyncClient):
+def build_milestone_eval_graph(
+    client: httpx.AsyncClient,
+    *,
+    gateway_model_id: str | None = None,
+):
     """Compile graph; pass a shared async HTTP client for GraphQL calls."""
-    structured_llm = get_llm_structured().with_structured_output(nodes.CriterionVerdict)
-    llm = get_llm()
+    structured_llm = chat_llm_for_gateway_model(gateway_model_id, streaming=False).with_structured_output(
+        nodes.CriterionVerdict
+    )
+    llm = chat_llm_for_gateway_model(gateway_model_id, streaming=True)
 
     builder = StateGraph(MilestoneEvalState)
     builder.add_node("fetch_context", partial(nodes.fetch_context, client=client))
