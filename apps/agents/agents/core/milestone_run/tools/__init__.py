@@ -11,9 +11,6 @@ from agents_app.agents.core.milestone_run.tools.read_goal import make_read_goal_
 from agents_app.agents.core.milestone_run.tools.read_prior_milestones_data import (
     make_read_prior_milestones_data_tool,
 )
-from agents_app.agents.core.milestone_run.tools.workspace_adapter import (
-    make_workspace_adapter_tools,
-)
 from agents_app.agents.core.milestone_run.tools.write_result_data import make_write_result_data_tool
 from agents_app.agents.core.tavily_search_tool import make_search_web_tool
 from langchain_core.tools import BaseTool
@@ -37,11 +34,7 @@ def make_milestone_run_tools(
     Criterion verdicts, summary, and the result node come from the graph ``finalize_eval`` step.
 
     When ``TAVILY_API_KEY`` is set, ``search_web`` (Tavily) is inserted after the read tools and before ``write_result_data``.
-
-    When ``context`` includes ``api_adapter_tools`` (from GraphQL), one parameterless GET tool per active row is \
-    appended after built-ins (LangChain name = ``tool_key``).
     """
-    adapter_tools = make_workspace_adapter_tools(context, http_client=client)
     optional_web = make_search_web_tool()
     reads: list[BaseTool] = [
         make_read_goal_tool(context),
@@ -60,7 +53,6 @@ def make_milestone_run_tools(
             user_id,
             client=client,
         ),
-        *adapter_tools,
     ]
 
 

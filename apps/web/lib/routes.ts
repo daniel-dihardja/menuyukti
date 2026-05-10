@@ -12,7 +12,6 @@ export const PROTECTED_APP_SHELL_PREFIXES = [
   '/print-orders',
   '/dashboard',
   '/skills',
-  '/custom-tools',
   '/staff',
   '/usage',
   '/profile',
@@ -72,7 +71,6 @@ export const routes = {
   },
 
   skills: '/skills',
-  customTools: '/custom-tools',
 
   shop: '/shop',
   shopProduct: (slug: string) => `/shop/${slug}`,

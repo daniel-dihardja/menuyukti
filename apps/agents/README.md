@@ -47,26 +47,8 @@ make test
 
 This app is a **uv workspace member** (see root `pyproject.toml`). Use `uv sync` from the repo root or `make install` here.
 
-## Custom API adapter tools (egress)
+## Optional web search
 
-Workspace **API adapter tools** (API Proxies in the web app) are loaded during **milestone Run**: each active tool becomes a parameterless LangChain tool named with its stored **`tool_key`** (snake_case from the display name). The runtime calls **`adapter_http_get`** in `agents_app.agents.http.safe_egress`, which:
-
-- Uses **`safe_https_get`** for `https://` URLs (SSRF-oriented checks, redirect re-validation, body size cap).
-- For **local development only**, allows **`http://`** to a small host allowlist when `MENUYUKTI_ADAPTER_DEV_HTTP_LOCALHOST=1`: `localhost`, `127.0.0.1`, `::1`, and `host.docker.internal` (plus any from `MENUYUKTI_ADAPTER_DEV_HTTP_EXTRA_HOSTS`). Ports are allowlisted by `MENUYUKTI_ADAPTER_DEV_HTTP_PORTS` (default `3090`). Dev HTTP uses a **dedicated** `httpx` client with **`trust_env=False`** so `HTTP_PROXY` / `HTTPS_PROXY` cannot break loopback calls. No redirects on this path.
-
-Do not call user-configured URLs with a raw `httpx` client outside these helpers.
-
-Environment variables (optional overrides):
-
-| Variable                                 | Default   | Purpose                                                   |
-| ---------------------------------------- | --------- | --------------------------------------------------------- |
-| `MENUYUKTI_ADAPTER_HTTP_TIMEOUT_S`       | `15`      | Total request timeout (seconds), clamped to 1–120         |
-| `MENUYUKTI_ADAPTER_HTTP_MAX_BYTES`       | `524288`  | Max response body bytes (512 KiB), clamped to 1 KiB–8 MiB |
-| `MENUYUKTI_ADAPTER_HTTP_MAX_REDIRECTS`   | `5`       | Max redirect hops (HTTPS path only), clamped to 0–20      |
-| `MENUYUKTI_ADAPTER_DEV_HTTP_LOCALHOST`   | _(off)_   | Set to `1` / `true` / `yes` to allow dev HTTP to loopback |
-| `MENUYUKTI_ADAPTER_DEV_HTTP_PORTS`       | `3090`    | Comma-separated allowlist for dev HTTP ports              |
-| `MENUYUKTI_ADAPTER_DEV_HTTP_EXTRA_HOSTS` | _(empty)_ | Extra allowed hostnames for dev HTTP (comma-separated)    |
-
+| Variable         | Default   | Purpose                                                                                                         |
+| ---------------- | --------- | --------------------------------------------------------------------------------------------------------------- |
 | `TAVILY_API_KEY` | _(unset)_ | Optional. Enables Tavily **`search_web`** in chat ReAct and in `make_milestone_run_tools` (see `.env.example`). |
-
-There is a residual DNS time-of-check vs time-of-use window versus the actual TCP connect; mitigating that fully requires stronger infrastructure (custom transport / pinning).

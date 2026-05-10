@@ -1,7 +1,6 @@
 """Lazy re-export of SQLAlchemy models and helpers for the GraphQL service."""
 
 __all__ = [
-    "ApiAdapterTool",
     "Base",
     "MilestoneAgentRun",
     "WorkflowExport",

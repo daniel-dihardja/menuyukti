@@ -5,7 +5,6 @@ description = "FastAPI LangChain/LangGraph agent service"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "url-safety",
     "fastapi>=0.115.0",
     "httpx>=0.28.0",
     "uvicorn[standard]>=0.40.0",
@@ -19,9 +18,6 @@ dependencies = [
     "langgraph-checkpoint-postgres>=3.0.5",
     "langchain-tavily>=0.2.18",
 ]
-
-[tool.uv.sources]
-url-safety = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -41,7 +37,6 @@ packages = [
     "agents_app",
     "agents_app.agents",
     "agents_app.agents.core",
-    "agents_app.agents.http",
     "agents_app.agents.core.chat",
     "agents_app.agents.core.format_markdown",
     "agents_app.agents.core.milestone_data",

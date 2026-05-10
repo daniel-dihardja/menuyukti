@@ -1,7 +1,6 @@
 """Business logic layer (separate from Strawberry resolvers).
 
-Package ``__init__`` uses lazy exports so importing a submodule (e.g.
-``graphql.services.api_adapter_tool``) does not load every service module and avoids
+Package ``__init__`` uses lazy exports so importing a submodule does not load every service module and avoids
 circular imports with ``graphql.schema``.
 """
 
@@ -13,7 +12,6 @@ from typing import Any
 __all__ = [
     "MenuEngineeringMatrixData",
     "SalesReportIngestResult",
-    "api_adapter_tool",
     "build_promotion_menu_items",
     "compute_menu_engineering_matrix",
     "image_ai_flow",
@@ -34,7 +32,6 @@ _LAZY: dict[str, tuple[str, str | None]] = {
     ),
     "SalesReportIngestResult": ("graphql.services.sales_report", "SalesReportIngestResult"),
     "ingest_sales_report_upload": ("graphql.services.sales_report", "ingest_sales_report_upload"),
-    "api_adapter_tool": ("graphql.services.api_adapter_tool", None),
     "image_ai_flow": ("graphql.services.image_ai_flow", None),
 }
 

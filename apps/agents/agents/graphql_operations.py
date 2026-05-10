@@ -139,18 +139,6 @@ query LocationsForPrefetch {
 }
 """
 
-API_ADAPTER_TOOLS_QUERY = """
-query ApiAdapterToolsForRun($workspaceId: ID!) {
-  apiAdapterTools(workspaceId: $workspaceId) {
-    toolKey
-    name
-    description
-    url
-    isActive
-  }
-}
-"""
-
 PUBLIC_HOLIDAYS_QUERY = """
 query PublicHolidays($country: String!, $startDate: String!, $endDate: String!) {
   publicHolidays(country: $country, startDate: $startDate, endDate: $endDate) {

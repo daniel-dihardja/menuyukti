@@ -17,7 +17,6 @@ from agents_app.agents.core.milestone_eval.graphql_client import (
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
     ANALYTICS_RUNS_QUERY,
-    API_ADAPTER_TOOLS_QUERY,
     CAMPAIGN_SCHEDULE_PLAN_QUERY,
     LOCATION_OPERATING_SIGNALS_QUERY,
     LOCATION_QUERY,
@@ -27,59 +26,6 @@ from agents_app.agents.graphql_operations import (
 )
 
 _logger = logging.getLogger(__name__)
-
-
-async def fetch_api_adapter_tools_for_location(
-    location_id: int,
-    user_id: str,
-    *,
-    client: httpx.AsyncClient,
-) -> list[dict[str, Any]]:
-    """Active workspace API adapter tools for this location (empty if no workspace)."""
-    data = await graphql_post(
-        client,
-        LOCATION_QUERY,
-        {"id": str(location_id), "locationId": location_id},
-        user_id,
-    )
-    raw = data.get("location")
-    if not isinstance(raw, dict):
-        return []
-    wid = raw.get("workspaceId")
-    if wid is None or str(wid).strip() == "":
-        return []
-
-    data2 = await graphql_post(
-        client,
-        API_ADAPTER_TOOLS_QUERY,
-        {"workspaceId": str(wid)},
-        user_id,
-    )
-    tools = data2.get("apiAdapterTools")
-    if not isinstance(tools, list):
-        return []
-
-    out: list[dict[str, Any]] = []
-    for row in tools:
-        if not isinstance(row, dict):
-            continue
-        if not row.get("isActive", True):
-            continue
-        key = row.get("toolKey")
-        url = row.get("url")
-        desc = row.get("description")
-        if not isinstance(key, str) or not key.strip():
-            continue
-        if not isinstance(url, str) or not url.strip():
-            continue
-        out.append(
-            {
-                "tool_key": key.strip(),
-                "url": url.strip(),
-                "description": desc.strip() if isinstance(desc, str) else "",
-            }
-        )
-    return out
 
 
 async def fetch_prior_milestones_data(
@@ -300,7 +246,6 @@ async def upsert_milestonedata_node(
 
 __all__ = [
     "delete_node",
-    "fetch_api_adapter_tools_for_location",
     "fetch_campaign_schedule_plan",
     "fetch_promotion_engineering_candidates",
     "fetch_location_operating_signals",

@@ -35,7 +35,6 @@ dependencies = [
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
-    { name = "url-safety" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -61,7 +60,6 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "url-safety", editable = "packages/url-safety" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.40.0" },
 ]
 

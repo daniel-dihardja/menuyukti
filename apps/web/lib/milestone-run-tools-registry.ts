@@ -1,8 +1,8 @@
 /**
  * Milestone-run LangChain tools for UI. Each execute step gets: core read tools (always), optional extras
  * from each skill's SKILL.md `extra_tools` frontmatter (see `make_milestone_run_tools` in
- * `apps/agents/agents/core/milestone_run/tools/`), then `write_result_data`, then workspace API adapters.
- * Order in this array is illustrative (core + common optional); workspace adapters are described in aggregate.
+ * `apps/agents/agents/core/milestone_run/tools/`), then `write_result_data`.
+ * Order in this array is illustrative (core + common optional).
  */
 import 'server-only'
 
@@ -12,7 +12,7 @@ export type MilestoneRunToolMeta = {
   description: string
 }
 
-/** Typical order: core reads, optional extras (per skill), write, then dynamic workspace tools. */
+/** Typical order: core reads, optional extras (per skill), write. */
 export const MILESTONE_RUN_TOOLS_REGISTRY: readonly MilestoneRunToolMeta[] = [
   {
     id: 'read_goal',
@@ -59,11 +59,5 @@ export const MILESTONE_RUN_TOOLS_REGISTRY: readonly MilestoneRunToolMeta[] = [
     name: 'Write result data',
     description:
       'Upsert the milestonedata child under this milestone with structured JSON (preset-specific shape). Updates context result_data and returns a short confirmation including the node id.',
-  },
-  {
-    id: 'workspace_api_adapter_tools',
-    name: 'Workspace API adapter tools (dynamic)',
-    description:
-      'When the campaign location belongs to a workspace, each active API proxy is appended at runtime as a parameterless HTTP GET tool named with its tool_key (see API Proxies page). Not a fixed id list.',
   },
 ] as const
