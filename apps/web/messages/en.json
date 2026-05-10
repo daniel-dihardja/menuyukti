@@ -1704,6 +1704,14 @@
         "puzzle": "Puzzles",
         "low_end": "Low End"
       },
+      "lowEndHighlight": {
+        "sliderLabel": "Margin share threshold",
+        "sliderAriaLabel": "Highlight bottom margin share up to {value}% of total margin",
+        "sliderHelp": "Highlights low-end items (lowest margin share first) whose cumulative margin share is within this threshold.",
+        "sliderValue": "{value}% of total margin",
+        "rowIncludedInBand": "Within cumulative margin-share threshold.",
+        "shareCellDescription": "{percent}% of total margin, within cumulative margin-share threshold band."
+      },
       "table": {
         "menu": "Menu",
         "category": "Category",
