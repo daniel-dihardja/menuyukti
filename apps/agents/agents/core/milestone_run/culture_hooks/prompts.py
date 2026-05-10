@@ -50,7 +50,7 @@ OUTPUT FORMAT — return exactly one JSON object, no markdown, no prose outside 
       "topic": "Name of the non-food cultural topic — e.g. Lo-fi music aesthetics, Analogue photography revival, Y2K fashion, Brutalist design appreciation",
       "conceptLink": "Why this topic connects to the venue's concept, atmosphere, or origin story",
       "audienceRelevance": "Why this topic resonates with the target audience in their specific city and country context; cite local cultural signals where possible",
-      "contentExample": "Concrete Instagram Reel concept: describe the hook in the first 2 seconds, the visual or audio idea, and why it would reach viewers who are not existing followers and not searching for food"
+      "contentExample": "Concrete Instagram content concept for this topic: describe the hook in the first 2 seconds, the visual or audio idea, and why it would reach viewers who are not existing followers and not searching for food"
     }
   ],
   "guardrailCheck": "Confirm three things: (1) no intersection topic is primarily food-centric, (2) all intersections are grounded in campaign brief data or verifiable cultural facts from web research, (3) each topic could plausibly attract non-food-oriented viewers on Instagram Reels"
