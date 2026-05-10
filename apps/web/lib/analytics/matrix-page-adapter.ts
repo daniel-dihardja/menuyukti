@@ -33,7 +33,7 @@ export type MatrixDisplayRow = {
   category: MatrixCategory
   unitsSold: number
   revenue: number
-  marginPct: number
+  contributionMarginShare: number
   action: 'keep' | 'promote' | 'reprice' | 'remove' | null
   actionReason?: string
 }
@@ -42,15 +42,15 @@ type MatrixItem = NonNullable<MenuEngineeringMatrixData['menuEngineeringMatrix']
 
 function toDisplayRow(item: MatrixItem): MatrixDisplayRow {
   const category = normalizeCategory(item.category)
-  const marginPct = Number(item.contributionMarginPercentage)
-  const marginPctSafe =
-    Number.isFinite(marginPct) && marginPct >= 0 && marginPct <= 1 ? marginPct : 0
+  const rawShare = Number(item.contributionMarginPercentage)
+  const contributionMarginShare =
+    Number.isFinite(rawShare) && rawShare >= 0 && rawShare <= 1 ? rawShare : 0
   return {
     menuItem: item.menu?.trim() || 'Unknown',
     category,
     unitsSold: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0,
     revenue: Number.isFinite(Number(item.totalRevenue)) ? Number(item.totalRevenue) : 0,
-    marginPct: marginPctSafe,
+    contributionMarginShare,
     action: normalizeAction(item.action),
     actionReason: undefined,
   }

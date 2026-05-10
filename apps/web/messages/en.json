@@ -1711,7 +1711,8 @@
         "revenue": "Revenue",
         "cogs": "COGS",
         "margin": "Margin",
-        "percentage": "%",
+        "shareOfTotalMargin": "% of total margin",
+        "caption": "{category} menu items: Menu, Units sold, Revenue, Share of total margin.",
         "action": "Action",
         "actionReasonLabel": "Why this action",
         "actions": {
