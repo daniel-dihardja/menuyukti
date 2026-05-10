@@ -12,7 +12,7 @@ import type {
   MatrixDisplayRow,
 } from '@/lib/analytics/matrix-page-adapter'
 
-type SortKey = 'menuItem' | 'unitsSold' | 'revenue' | 'contributionMarginShare'
+type SortKey = 'menuItem' | 'unitsSold' | 'contributionMargin' | 'contributionMarginShare'
 
 const CATEGORY_BADGE_CLASS: Record<MatrixCategory, string> = {
   star: 'bg-emerald-600 text-white border-transparent',
@@ -90,7 +90,7 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
           columns={[
             { id: 'menuItem', label: tTable('menu'), align: 'left' },
             { id: 'unitsSold', label: tTable('qty') },
-            { id: 'revenue', label: tTable('revenue') },
+            { id: 'contributionMargin', label: tTable('margin') },
             { id: 'contributionMarginShare', label: tTable('shareOfTotalMargin') },
           ]}
           sortKey={sortKey}
@@ -115,7 +115,7 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
                   {item.unitsSold.toLocaleString(locale)}
                 </TableCell>
                 <TableCell className="px-3 py-2 text-right">
-                  {formatCurrencyWithCode(item.revenue, currency, locale)}
+                  {formatCurrencyWithCode(item.contributionMargin, currency, locale)}
                 </TableCell>
                 <TableCell className="px-3 py-2 text-right">
                   {(item.contributionMarginShare * 100).toFixed(1)}%

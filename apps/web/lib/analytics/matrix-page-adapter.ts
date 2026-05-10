@@ -32,7 +32,7 @@ export type MatrixDisplayRow = {
   menuItem: string
   category: MatrixCategory
   unitsSold: number
-  revenue: number
+  contributionMargin: number
   contributionMarginShare: number
   action: 'keep' | 'promote' | 'reprice' | 'remove' | null
   actionReason?: string
@@ -49,7 +49,9 @@ function toDisplayRow(item: MatrixItem): MatrixDisplayRow {
     menuItem: item.menu?.trim() || 'Unknown',
     category,
     unitsSold: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0,
-    revenue: Number.isFinite(Number(item.totalRevenue)) ? Number(item.totalRevenue) : 0,
+    contributionMargin: Number.isFinite(Number(item.contributionMargin))
+      ? Number(item.contributionMargin)
+      : 0,
     contributionMarginShare,
     action: normalizeAction(item.action),
     actionReason: undefined,
