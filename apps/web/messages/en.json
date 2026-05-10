@@ -1559,8 +1559,6 @@
       "table": {
         "title": "Edit COGS per menu item",
         "menuName": "Menu Item",
-        "quantity": "Quantity",
-        "price": "Price",
         "cogs": "COGS",
         "we": "COGS ratio (we)",
         "weAria": "COGS ratio for {menu}",

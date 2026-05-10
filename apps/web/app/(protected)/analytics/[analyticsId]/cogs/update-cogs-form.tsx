@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { ArrowUpDown } from 'lucide-react'
 
 import { Button } from '@workspace/ui/components/button'
 import { Checkbox } from '@workspace/ui/components/checkbox'
@@ -17,16 +16,10 @@ import {
   SelectValue,
 } from '@workspace/ui/components/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@workspace/ui/components/table'
+import { TableCell, TableRow } from '@workspace/ui/components/table'
 import { Slider } from '@workspace/ui/components/slider'
 import { formatCurrencyInput, getCurrencyLocale, parseCurrencyInput } from '@/lib/currency'
+import { SortableTable, useSortableColumns } from '@/components/sortable-table'
 
 const WE_STEP = 0.01
 const UNCATEGORIZED_KEY = '__uncategorized__'
@@ -35,6 +28,8 @@ function clampWe(value: number): number {
   if (!Number.isFinite(value)) return 0
   return Math.min(1, Math.max(0, value))
 }
+
+type CogsColKey = 'menuName' | 'rowNumber' | 'cogsWe'
 
 type MenuItem = {
   id: number
@@ -64,8 +59,7 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
     return analyticsOptions[0]?.id ?? null
   })
   const [importing, setImporting] = useState(false)
-  const [sortBy, setSortBy] = useState<'name' | 'quantity' | 'price'>('name')
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const { sortKey, sortDirection, toggleSort } = useSortableColumns<CogsColKey>('menuName', 'asc')
   const [cogsValues, setCogsValues] = useState<Record<number, string>>(() => {
     const initial: Record<number, string> = {}
     for (const item of menuItems) {
@@ -113,16 +107,8 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
   const sortedGroupedMenuItems = useMemo(() => {
     const sortItems = (items: MenuItem[]) =>
       [...items].sort((a, b) => {
-        if (sortBy === 'quantity') {
-          return sortDirection === 'asc' ? a.quantity - b.quantity : b.quantity - a.quantity
-        }
-
-        if (sortBy === 'price') {
-          return sortDirection === 'asc' ? a.price - b.price : b.price - a.price
-        }
-
-        const nameCompare = a.menuName.localeCompare(b.menuName)
-        return sortDirection === 'asc' ? nameCompare : -nameCompare
+        const cmp = a.menuName.localeCompare(b.menuName)
+        return sortDirection === 'asc' ? cmp : -cmp
       })
 
     return {
@@ -132,7 +118,7 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
       })),
       uncategorized: sortItems(groupedMenuItems.uncategorized),
     }
-  }, [groupedMenuItems, sortBy, sortDirection])
+  }, [groupedMenuItems, sortDirection])
   const categorySections = useMemo(
     () => [
       ...groupedMenuItems.categorized.map((group) => ({
@@ -175,16 +161,6 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
     }
     return initial
   })
-
-  function toggleSort(column: 'name' | 'quantity' | 'price') {
-    if (sortBy === column) {
-      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'))
-      return
-    }
-
-    setSortBy(column)
-    setSortDirection('asc')
-  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -344,19 +320,15 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
               key={item.id}
               className="transition-colors focus-within:bg-muted focus-within:ring-1 focus-within:ring-primary/40"
             >
-              <TableCell className="text-sm text-muted-foreground tabular-nums">
+              <TableCell className="px-3 py-2 text-sm text-muted-foreground tabular-nums">
                 {currentRowNumber}.
               </TableCell>
-              <TableCell>
+              <TableCell className="px-3 py-2">
                 <Label htmlFor={`cogs-${item.id}`} className="truncate">
                   {item.menuName}
                 </Label>
               </TableCell>
-              <TableCell className="text-right tabular-nums">{item.quantity}</TableCell>
-              <TableCell className="text-right tabular-nums">
-                {formatCurrencyInput(item.price, currencyCode, locale)}
-              </TableCell>
-              <TableCell>
+              <TableCell className="px-3 py-2">
                 <div className="flex flex-col gap-2">
                   <div className="relative">
                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -480,56 +452,37 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
                     </div>
                     <p className="text-xs text-muted-foreground">{t('table.categoryWe.hint')}</p>
                   </div>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[60px]">#</TableHead>
-                        <TableHead>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="-ml-3 h-8"
-                            onClick={() => toggleSort('name')}
-                          >
-                            {t('table.menuName')}
-                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
-                          </Button>
-                        </TableHead>
-                        <TableHead className="w-[140px] text-right">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="ml-auto h-8"
-                            onClick={() => toggleSort('quantity')}
-                          >
-                            {t('table.quantity')}
-                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
-                          </Button>
-                        </TableHead>
-                        <TableHead className="w-[160px] text-right">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="ml-auto h-8"
-                            onClick={() => toggleSort('price')}
-                          >
-                            {t('table.price')}
-                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
-                          </Button>
-                        </TableHead>
-                        <TableHead className="w-[320px] text-right">
-                          <span className="block">{t('table.cogs')}</span>
-                          <span className="block text-xs font-normal text-muted-foreground">
-                            {t('table.we')}
-                          </span>
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>{group.items.map((item) => renderRow(item))}</TableBody>
-                  </Table>
+                  <SortableTable<CogsColKey>
+                    columns={[
+                      {
+                        id: 'rowNumber',
+                        label: '#',
+                        sortable: false,
+                        align: 'left',
+                        className: 'w-[60px]',
+                      },
+                      { id: 'menuName', label: t('table.menuName'), sortable: true, align: 'left' },
+                      {
+                        id: 'cogsWe',
+                        label: (
+                          <>
+                            <span className="block">{t('table.cogs')}</span>
+                            <span className="block text-xs font-normal text-muted-foreground">
+                              {t('table.we')}
+                            </span>
+                          </>
+                        ),
+                        sortable: false,
+                        align: 'right',
+                        className: 'w-[320px]',
+                      },
+                    ]}
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={toggleSort}
+                  >
+                    {group.items.map((item) => renderRow(item))}
+                  </SortableTable>
                 </CardContent>
               </Card>
             ))}
@@ -582,58 +535,37 @@ export function UpdateCogsForm({ analyticsId, menuItems, analyticsOptions, curre
                     </div>
                     <p className="text-xs text-muted-foreground">{t('table.categoryWe.hint')}</p>
                   </div>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[60px]">#</TableHead>
-                        <TableHead>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="-ml-3 h-8"
-                            onClick={() => toggleSort('name')}
-                          >
-                            {t('table.menuName')}
-                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
-                          </Button>
-                        </TableHead>
-                        <TableHead className="w-[140px] text-right">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="ml-auto h-8"
-                            onClick={() => toggleSort('quantity')}
-                          >
-                            {t('table.quantity')}
-                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
-                          </Button>
-                        </TableHead>
-                        <TableHead className="w-[160px] text-right">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="ml-auto h-8"
-                            onClick={() => toggleSort('price')}
-                          >
-                            {t('table.price')}
-                            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
-                          </Button>
-                        </TableHead>
-                        <TableHead className="w-[320px] text-right">
-                          <span className="block">{t('table.cogs')}</span>
-                          <span className="block text-xs font-normal text-muted-foreground">
-                            {t('table.we')}
-                          </span>
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sortedGroupedMenuItems.uncategorized.map((item) => renderRow(item))}
-                    </TableBody>
-                  </Table>
+                  <SortableTable<CogsColKey>
+                    columns={[
+                      {
+                        id: 'rowNumber',
+                        label: '#',
+                        sortable: false,
+                        align: 'left',
+                        className: 'w-[60px]',
+                      },
+                      { id: 'menuName', label: t('table.menuName'), sortable: true, align: 'left' },
+                      {
+                        id: 'cogsWe',
+                        label: (
+                          <>
+                            <span className="block">{t('table.cogs')}</span>
+                            <span className="block text-xs font-normal text-muted-foreground">
+                              {t('table.we')}
+                            </span>
+                          </>
+                        ),
+                        sortable: false,
+                        align: 'right',
+                        className: 'w-[320px]',
+                      },
+                    ]}
+                    sortKey={sortKey}
+                    sortDirection={sortDirection}
+                    onSort={toggleSort}
+                  >
+                    {sortedGroupedMenuItems.uncategorized.map((item) => renderRow(item))}
+                  </SortableTable>
                 </CardContent>
               </Card>
             )}
