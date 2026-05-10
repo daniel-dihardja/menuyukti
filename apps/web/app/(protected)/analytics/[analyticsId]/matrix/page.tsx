@@ -42,6 +42,7 @@ export default async function Page({ params }: PageProps) {
 
   const matrix = matrixData.menuEngineeringMatrix
   const items = matrix?.items ?? []
+  const distribution = matrix?.distribution ?? []
 
   const locale = getAppCurrencyLocale()
   const currency = getAppCurrencyCode()
@@ -73,7 +74,12 @@ export default async function Page({ params }: PageProps) {
             No matrix data for this run.
           </div>
         ) : (
-          <MatrixView items={items} locale={locale} currency={currency} />
+          <MatrixView
+            items={items}
+            distribution={distribution}
+            locale={locale}
+            currency={currency}
+          />
         )}
       </section>
     </AnalyticsPageShell>

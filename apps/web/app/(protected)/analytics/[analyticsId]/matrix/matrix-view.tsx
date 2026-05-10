@@ -12,15 +12,22 @@ import {
   SelectValue,
 } from '@workspace/ui/components/select'
 
-import { matrixItemsToGroupedRows } from '@/lib/analytics/matrix-page-adapter'
+import {
+  distributionToCategoryMap,
+  matrixItemsToGroupedRows,
+} from '@/lib/analytics/matrix-page-adapter'
 import type { MenuEngineeringMatrixData } from '@/lib/graphql/queries'
 
 import { MatrixCategoryTables } from './matrix-category-tables'
 
 type MatrixItem = NonNullable<MenuEngineeringMatrixData['menuEngineeringMatrix']>['items'][number]
+type DistributionItem = NonNullable<
+  MenuEngineeringMatrixData['menuEngineeringMatrix']
+>['distribution'][number]
 
 type Props = {
   items: MatrixItem[]
+  distribution: DistributionItem[]
   locale: string
   currency: string
 }
@@ -29,7 +36,7 @@ function menuCategoryLabel(menuCategory: string | null | undefined): string {
   return menuCategory?.trim() || 'Uncategorized'
 }
 
-export function MatrixView({ items, locale, currency }: Props) {
+export function MatrixView({ items, distribution, locale, currency }: Props) {
   const t = useTranslations('analytics.matrix')
   const [categoryFilter, setCategoryFilter] = useQueryState(
     'category',
@@ -56,6 +63,7 @@ export function MatrixView({ items, locale, currency }: Props) {
   }, [items, selectedCategory])
 
   const grouped = useMemo(() => matrixItemsToGroupedRows(filteredItems), [filteredItems])
+  const portfolioStats = useMemo(() => distributionToCategoryMap(distribution), [distribution])
 
   const totalFiltered =
     grouped.star.length + grouped.plow_horse.length + grouped.puzzle.length + grouped.low_end.length
@@ -93,7 +101,12 @@ export function MatrixView({ items, locale, currency }: Props) {
           {t('emptyFiltered')}
         </div>
       ) : (
-        <MatrixCategoryTables grouped={grouped} locale={locale} currency={currency} />
+        <MatrixCategoryTables
+          grouped={grouped}
+          portfolioStats={portfolioStats}
+          locale={locale}
+          currency={currency}
+        />
       )}
     </div>
   )

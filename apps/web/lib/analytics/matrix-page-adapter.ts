@@ -80,4 +80,45 @@ export function matrixItemsToGroupedRows(
   return grouped
 }
 
+export type DistributionStats = {
+  itemCount: number
+  itemShare: number
+  marginShare: number
+}
+
+type DistributionItem = {
+  category: string
+  itemCount: number
+  itemShare: number
+  marginShare: number
+}
+
+const ZERO_STATS: DistributionStats = { itemCount: 0, itemShare: 0, marginShare: 0 }
+
+/**
+ * Converts the flat distribution array from the GraphQL response into a map
+ * keyed by MatrixCategory. Missing quadrants (e.g. when all items fall in one
+ * box) are filled with zero-valued stats so callers never need null checks.
+ */
+export function distributionToCategoryMap(
+  distribution: DistributionItem[] | null | undefined,
+): Record<MatrixCategory, DistributionStats> {
+  const map: Record<MatrixCategory, DistributionStats> = {
+    star: { ...ZERO_STATS },
+    plow_horse: { ...ZERO_STATS },
+    puzzle: { ...ZERO_STATS },
+    low_end: { ...ZERO_STATS },
+  }
+  if (!distribution || !Array.isArray(distribution)) return map
+  for (const item of distribution) {
+    const cat = normalizeCategory(item.category)
+    map[cat] = {
+      itemCount: Number.isFinite(item.itemCount) ? item.itemCount : 0,
+      itemShare: Number.isFinite(item.itemShare) ? item.itemShare : 0,
+      marginShare: Number.isFinite(item.marginShare) ? item.marginShare : 0,
+    }
+  }
+  return map
+}
+
 export { CATEGORY_ORDER }

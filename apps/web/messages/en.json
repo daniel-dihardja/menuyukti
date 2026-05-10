@@ -1684,6 +1684,13 @@
       "analysis": {
         "title": "Menu Item Analysis"
       },
+      "portfolio": {
+        "itemCount": "{count, plural, one {# item} other {# items}}",
+        "itemShare": "{value} of items",
+        "marginShare": "{value} of margin",
+        "filteredShowing": "Showing {visible} of {total}",
+        "noItems": "No items in this category."
+      },
       "emptyFiltered": "No matrix items match the selected category. Adjust the filter to continue.",
       "filters": {
         "categoryLabel": "Category Filter",

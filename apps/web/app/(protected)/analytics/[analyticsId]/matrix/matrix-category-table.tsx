@@ -6,7 +6,11 @@ import { Badge } from '@workspace/ui/components/badge'
 import { formatCurrencyWithCode } from '@/lib/currency'
 import { SortableTable, useSortableColumns } from '@/components/sortable-table'
 import { TableCell, TableRow } from '@workspace/ui/components/table'
-import type { MatrixCategory, MatrixDisplayRow } from '@/lib/analytics/matrix-page-adapter'
+import type {
+  DistributionStats,
+  MatrixCategory,
+  MatrixDisplayRow,
+} from '@/lib/analytics/matrix-page-adapter'
 
 type SortKey = 'menuItem' | 'unitsSold' | 'revenue' | 'marginPct'
 
@@ -20,13 +24,15 @@ const CATEGORY_BADGE_CLASS: Record<MatrixCategory, string> = {
 type Props = {
   category: MatrixCategory
   items: MatrixDisplayRow[]
+  portfolioStats: DistributionStats
   locale: string
   currency: string
 }
 
-export function MatrixCategoryTable({ category, items, locale, currency }: Props) {
+export function MatrixCategoryTable({ category, items, portfolioStats, locale, currency }: Props) {
   const tTable = useTranslations('analytics.matrix.table')
   const tCategories = useTranslations('analytics.matrix.categories')
+  const tPortfolio = useTranslations('analytics.matrix.portfolio')
   const { sortKey, sortDirection, toggleSort } = useSortableColumns<SortKey>('unitsSold', 'desc')
 
   const sortedItems = useMemo(() => {
@@ -42,16 +48,42 @@ export function MatrixCategoryTable({ category, items, locale, currency }: Props
     })
   }, [items, sortKey, sortDirection, locale])
 
+  const hasPortfolioData = portfolioStats.itemCount > 0
+  const isFiltered = hasPortfolioData && items.length !== portfolioStats.itemCount
+  const itemSharePct = `${(portfolioStats.itemShare * 100).toFixed(1)}%`
+  const marginSharePct = `${(portfolioStats.marginShare * 100).toFixed(1)}%`
+
   return (
     <section className="space-y-2">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <h3 className="text-sm font-semibold text-foreground">{tCategories(category)}</h3>
         <Badge variant="outline" className={CATEGORY_BADGE_CLASS[category]}>
           {tCategories(category)}
         </Badge>
         <span className="text-xs text-muted-foreground">
-          ({items.length} {items.length === 1 ? 'item' : 'items'})
+          {isFiltered
+            ? tPortfolio('filteredShowing', {
+                visible: items.length,
+                total: portfolioStats.itemCount,
+              })
+            : tPortfolio('itemCount', { count: portfolioStats.itemCount })}
         </span>
+        {hasPortfolioData && (
+          <>
+            <span className="text-xs text-muted-foreground" aria-hidden="true">
+              ·
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {tPortfolio('itemShare', { value: itemSharePct })}
+            </span>
+            <span className="text-xs text-muted-foreground" aria-hidden="true">
+              ·
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {tPortfolio('marginShare', { value: marginSharePct })}
+            </span>
+          </>
+        )}
       </div>
       <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
         <SortableTable<SortKey>
@@ -69,7 +101,7 @@ export function MatrixCategoryTable({ category, items, locale, currency }: Props
           {items.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} className="py-6 text-center text-sm text-muted-foreground">
-                No items in this category.
+                {tPortfolio('noItems')}
               </TableCell>
             </TableRow>
           ) : (
