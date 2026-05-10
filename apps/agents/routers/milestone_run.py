@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 import httpx
+from agents_app.agents.core.chat.allowed_models import is_allowlisted_chat_gateway_model
 from agents_app.agents.core.milestone_run.stream import (
     format_sse_line,
     iter_milestone_run_sse_lines,
@@ -12,12 +13,28 @@ from agents_app.agents.core.milestone_run.stream import (
 from agents_app.deps import get_http_client
 from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 router = APIRouter()
 
 
+def _resolved_milestone_run_gateway_model(raw: str | None) -> str | None:
+    if raw is None:
+        return None
+    s = raw.strip()
+    if not s:
+        return None
+    if not is_allowlisted_chat_gateway_model(s):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported chat model: {s}. Use a gateway id from the app model list.",
+        )
+    return s
+
+
 class MilestoneRunBody(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     location_id: int = Field(..., ge=1)
     workflow_id: str | None = Field(
         default=None,
@@ -35,6 +52,12 @@ class MilestoneRunBody(BaseModel):
         default=None,
         description="Ignored by the run graph (milestone JSON is output-only; not fed to generation LLMs).",
     )
+    chat_model: str | None = Field(
+        default=None,
+        max_length=120,
+        alias="model",
+        description="Vercel AI Gateway id for generation and eval; must be in the chat allowlist.",
+    )
 
 
 @router.post("/milestones/{milestone_id}/run")
@@ -49,6 +72,7 @@ async def milestone_run(
         raise HTTPException(status_code=401, detail="Missing X-Menuyukti-User-Id")
 
     tp = traceparent.strip() if traceparent and traceparent.strip() else None
+    gateway_model = _resolved_milestone_run_gateway_model(body.chat_model)
 
     async def event_stream():
         try:
@@ -62,6 +86,7 @@ async def milestone_run(
                 milestone_input=body.milestone_input,
                 milestone_data=body.milestone_data,
                 traceparent=tp,
+                chat_gateway_model=gateway_model,
             ):
                 yield line
         except Exception as e:

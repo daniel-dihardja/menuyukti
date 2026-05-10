@@ -117,7 +117,7 @@ async def test_enrich_storytelling_applies_llm_verdicts() -> None:
     base_llm.with_structured_output.return_value = structured
     with (
         patch(
-            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.get_llm_structured",
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.structured_llm_from_milestone_run_config",
             return_value=base_llm,
         ),
         patch(

@@ -13,6 +13,7 @@ describe('milestone optional notes', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('post_scheduler')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('culture_hooks')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('format_mix')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('dates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput(undefined)).toBe(false)
   })
@@ -48,6 +49,19 @@ describe('milestone optional notes', () => {
       expect(parsed.data.milestoneInput).toEqual({
         type: 'culture_hooks',
         value: { notes: 'focus on heritage values' },
+      })
+    }
+  })
+
+  it('patchMilestoneSchema accepts format_mix milestoneInput', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      milestoneInput: { type: 'format_mix', value: { notes: 'prefer Reels' } },
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.milestoneInput).toEqual({
+        type: 'format_mix',
+        value: { notes: 'prefer Reels' },
       })
     }
   })
@@ -138,6 +152,17 @@ describe('milestone optional notes', () => {
       targetAudience: '',
       intersections: [],
       guardrailCheck: '',
+    })
+  })
+
+  it('getMilestonePresetCreateFields seeds format_mix milestoneInput', () => {
+    const fields = getMilestonePresetCreateFields('format_mix', (k) => k)
+    expect(fields.milestoneInput).toEqual({
+      type: 'format_mix',
+      value: { notes: '' },
+    })
+    expect(fields.milestoneData).toEqual({
+      formats: [],
     })
   })
 })

@@ -14,11 +14,30 @@ from agents_app.agents.core.chat.tools import (
     update_milestone_input,
     update_milestone_preset_data,
 )
-from agents_app.models.llm_config import get_llm
+from agents_app.agents.core.tavily_search_tool import make_search_web_tool
+from agents_app.models.llm_config import chat_llm_for_gateway_model
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langgraph.checkpoint.base import BaseCheckpointSaver
+from langgraph.config import get_config
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import create_react_agent
+
+
+def chat_tools_list() -> list:
+    """Build chat ReAct tools (optional ``search_web`` when ``TAVILY_API_KEY`` is set)."""
+    tools: list = [
+        get_milestone_data,
+        get_milestone_help,
+        get_milestone_input_json,
+        get_milestone_preset_data_json,
+        get_milestone_preset_data_for_milestone,
+        update_milestone_input,
+        update_milestone_preset_data,
+    ]
+    web = make_search_web_tool()
+    if web is not None:
+        tools.append(web)
+    return tools
 
 
 def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
@@ -30,18 +49,21 @@ def _chat_prompt(state: dict[str, Any]) -> list[BaseMessage]:
 
 def compile_chat_graph(checkpointer: BaseCheckpointSaver | None) -> CompiledStateGraph:
     """Compile the shared chat agent (single graph for all requests; milestone context via config)."""
-    llm = get_llm()
-    return create_react_agent(
-        llm,
-        [
-            get_milestone_data,
-            get_milestone_help,
-            get_milestone_input_json,
-            get_milestone_preset_data_json,
-            get_milestone_preset_data_for_milestone,
-            update_milestone_input,
-            update_milestone_preset_data,
-        ],
+    # Resolve tools at compile time so ``load_dotenv()`` in ``server.py`` has already run.
+    tools = chat_tools_list()
+
+    def _select_chat_model(_state: dict[str, Any], _runtime: Any) -> Any:
+        """Resolve LLM from RunnableConfig (set by HTTP router when client picks a model)."""
+        cfg = get_config() or {}
+        conf = cfg.get("configurable") or {}
+        raw = conf.get("chat_gateway_model")
+        gateway: str | None = raw.strip() if isinstance(raw, str) and raw.strip() else None
+        llm = chat_llm_for_gateway_model(gateway, streaming=True)
+        return llm.bind_tools(tools)
+
+    return create_react_agent(  # type: ignore[type-var]
+        _select_chat_model,
+        tools,
         prompt=_chat_prompt,
         checkpointer=checkpointer,
         name="menuyukti_chat",

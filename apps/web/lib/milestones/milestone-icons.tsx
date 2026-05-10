@@ -1,4 +1,11 @@
-import { CalendarRange, ClipboardList, Lightbulb, ListChecks, Milestone } from 'lucide-react'
+import {
+  CalendarRange,
+  ClipboardList,
+  Lightbulb,
+  ListChecks,
+  Milestone,
+  PieChart,
+} from 'lucide-react'
 
 import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 
@@ -14,6 +21,8 @@ export function milestonePresetIconFor(presetId?: MilestonePresetId) {
       return ListChecks
     case 'culture_hooks':
       return Lightbulb
+    case 'format_mix':
+      return PieChart
     default:
       return Milestone
   }

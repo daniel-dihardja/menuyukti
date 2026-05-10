@@ -7,12 +7,14 @@ export function milestonePresetHasDefaultOptionalNotesInput(
   | 'restaurant_campaign_brief'
   | 'post_scheduler'
   | 'promotion_candidates'
-  | 'culture_hooks' {
+  | 'culture_hooks'
+  | 'format_mix' {
   return (
     presetId === 'restaurant_campaign_brief' ||
     presetId === 'post_scheduler' ||
     presetId === 'promotion_candidates' ||
-    presetId === 'culture_hooks'
+    presetId === 'culture_hooks' ||
+    presetId === 'format_mix'
   )
 }
 
@@ -22,7 +24,8 @@ export function optionalNotesFromMilestoneInput(
     | 'restaurant_campaign_brief'
     | 'post_scheduler'
     | 'promotion_candidates'
-    | 'culture_hooks',
+    | 'culture_hooks'
+    | 'format_mix',
 ): string {
   if (raw?.type !== presetId || raw.value == null || typeof raw.value !== 'object') {
     return ''

@@ -7,7 +7,7 @@ export type ReferencedPresetLoadResult =
   | { ok: false; status: 400 | 404; message: string }
 
 /**
- * Load a milestone’s preset payload for campaign chat @-references.
+ * Load a milestone’s preset payload for workflow chat @-references.
  * Validates workflow root, request location, and milestone parent/location like milestone GET.
  */
 export async function loadReferencedMilestonePresetForChat(
@@ -45,7 +45,7 @@ export async function loadReferencedMilestonePresetForChat(
     return { ok: false, status: 400, message: 'Milestone does not belong to this workflow' }
   }
   if (ms.locationId != null && ms.locationId !== locationId) {
-    return { ok: false, status: 400, message: 'Milestone location does not match campaign context' }
+    return { ok: false, status: 400, message: 'Milestone location does not match workflow context' }
   }
 
   const rawName = ms.name

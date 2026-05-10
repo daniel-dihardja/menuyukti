@@ -7,6 +7,8 @@ import {
   campaignBriefMilestoneInputValueSchema,
   cultureHooksMilestoneDataSchema,
   cultureHooksMilestoneInputValueSchema,
+  formatMixMilestoneDataSchema,
+  formatMixMilestoneInputValueSchema,
   milestonePresetIdSchema,
   milestoneInputSchema,
   passCriteriaSchema,
@@ -39,6 +41,7 @@ export const patchMilestoneSchema = z
         postSchedulerMilestoneDataSchema,
         promotionCandidatesMilestoneDataSchema,
         cultureHooksMilestoneDataSchema,
+        formatMixMilestoneDataSchema,
       ])
       .nullable()
       .optional(),
@@ -60,6 +63,10 @@ export const patchMilestoneSchema = z
         z.object({
           type: z.literal('culture_hooks'),
           value: cultureHooksMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('format_mix'),
+          value: formatMixMilestoneInputValueSchema,
         }),
         milestoneInputSchema,
       ])

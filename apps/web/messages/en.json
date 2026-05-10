@@ -7,7 +7,7 @@
     "navShop": "Print Shop",
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
-    "mobileMenuDescription": "Canvas, Campaigns, Advisor chat, and the print shop catalog.",
+    "mobileMenuDescription": "Canvas, Workflow, Advisor chat, and the print shop catalog.",
     "mobileMenuSignIn": "Sign in"
   },
   "accountMenu": {
@@ -20,13 +20,26 @@
     "metaTitle": "Advisor",
     "metaDescription": "Chat with your Menuyukti marketing advisor.",
     "emptyTitle": "Ask anything",
-    "emptyDescription": "Get campaign and content ideas backed by your restaurant context, same advisor as in campaigns, without selecting one first.",
+    "emptyDescription": "Get campaign and content ideas backed by your restaurant context—the same advisor as on the Workflow page—without opening a workflow first.",
     "placeholder": "What would you like help with?",
     "thinking": "Thinking…",
     "errorTitle": "Something went wrong",
     "retry": "Retry",
     "clearChatAriaLabel": "Clear chat",
+    "clearChatLabel": "Clear chat",
     "clearChatTooltip": "Clear messages and start a fresh advisor thread"
+  },
+  "chatGatewayModels": {
+    "ariaLabel": "AI model",
+    "openai_gpt_4o_mini": "GPT-4o mini",
+    "openai_gpt_4o": "GPT-4o",
+    "openai_gpt_5_4": "GPT-5.4",
+    "openai_gpt_4_1_mini": "GPT-4.1 mini",
+    "anthropic_claude_3_7_sonnet": "Claude 3.7 Sonnet",
+    "anthropic_claude_opus_4_6": "Claude Opus 4.6",
+    "google_gemini_2_5_flash": "Gemini 2.5 Flash",
+    "xai_grok_3": "Grok 3",
+    "mistral_mistral_large_3": "Mistral Large 3"
   },
   "metadata": {
     "title": "Menuyukti - AI-first restaurant social media marketing platform",
@@ -310,13 +323,13 @@
       "tagline": "Print-on-demand with a kitchen-and-bar soul — part of your Menuyukti workspace.",
       "signedInNavAria": "Workspace navigation",
       "backDashboard": "Dashboard",
-      "backWorkflows": "Campaigns",
+      "backWorkflows": "Workflow",
       "backStudio": "Canvas",
       "navigationMenuTriggerAria": "Open navigation menu",
       "shopMenuTitle": "Navigation",
       "shopMenuDescription": "Site areas and workspace shortcuts from the print shop.",
       "workspaceSectionHeading": "Workspace",
-      "workspaceMenuDescription": "Go to your dashboard, campaigns, or canvas."
+      "workspaceMenuDescription": "Go to your dashboard, workflow, or canvas."
     },
     "skipToContent": "Skip to products",
     "filterAria": "Filter by collection",
@@ -449,42 +462,6 @@
     "skillsHeading": "Skills",
     "toolsHeading": "Tools"
   },
-  "customToolsPage": {
-    "nav": "API Proxies",
-    "title": "API Proxies",
-    "description": "Define HTTP endpoints exposed as API proxies the platform can call when running milestone skills. Keep secrets on your server—never put API keys in descriptions or prompts.",
-    "addTool": "Add proxy",
-    "editTool": "Edit proxy",
-    "save": "Save",
-    "cancel": "Cancel",
-    "saving": "Saving…",
-    "delete": "Delete",
-    "deleteTitle": "Delete this API proxy?",
-    "deleteDescription": "The AI will no longer be able to call this endpoint. You can add it again later.",
-    "deleteCancel": "Cancel",
-    "deleteConfirm": "Delete",
-    "deleting": "Deleting…",
-    "emptyWorkspaceTitle": "Workspace required",
-    "emptyWorkspaceDescription": "Create or join a workspace to add API proxies for your team.",
-    "emptyListTitle": "No API proxies yet",
-    "emptyListDescription": "Add a proxy with a name, description, and endpoint URL. The description helps the AI know when to use it.",
-    "colName": "Name",
-    "colKey": "Tool key",
-    "colUrl": "URL",
-    "colStatus": "Status",
-    "colActions": "Actions",
-    "badgeActive": "Active",
-    "badgeInactive": "Inactive",
-    "fieldName": "Name",
-    "fieldNameHint": "Shown in the UI; also used to derive a stable tool key for the agent.",
-    "fieldDescription": "Description",
-    "fieldDescriptionHint": "What this endpoint returns and when the AI should call it.",
-    "fieldUrl": "Endpoint URL",
-    "fieldUrlHint": "Any endpoint string your integration uses (max 2048 characters).",
-    "fieldActive": "Active",
-    "actions": "Actions",
-    "edit": "Edit"
-  },
   "profile": {
     "title": "Profile",
     "breadcrumb": "Profile",
@@ -517,9 +494,8 @@
     "analysis": "Analysis",
     "branches": "Locations",
     "reports": "Reports",
-    "workflows": "Campaigns",
+    "workflows": "Workflow",
     "skills": "Skills & tools",
-    "customTools": "API Proxies",
     "studio": "Canvas",
     "printShop": "Print shop",
     "agents": "Advisor",
@@ -584,11 +560,11 @@
     "dashboard": {
       "title": "Dashboard",
       "description": "Workflows, brand assets, and quick links across your workspace.",
-      "campaignsHeading": "Campaigns",
-      "campaignsViewAll": "View all campaigns",
-      "viewCampaign": "Open campaign",
-      "noCampaigns": "No campaigns yet",
-      "createCampaign": "Create campaign",
+      "workflowsHeading": "Workflow",
+      "workflowsViewAll": "View all workflows",
+      "viewWorkflow": "Open workflow",
+      "noWorkflows": "No workflows yet",
+      "createWorkflow": "Create workflow",
       "assetsHeading": "Canvas",
       "assetsDescription": "Recent images from your brand library.",
       "assetsOpenStudio": "Open Canvas",
@@ -1033,7 +1009,7 @@
         "cta": "Upload New Sales Report"
       }
     },
-    "campaigns": {
+    "workflows": {
       "title": "Workflows",
       "description": "Choose a location, create a workflow, then plan milestones, chat with the assistant, and run evaluations.",
       "sectionTitle": "Workflows for this location",
@@ -1116,6 +1092,7 @@
         "errorTitle": "Something went wrong",
         "retry": "Retry",
         "clearChatAriaLabel": "Clear chat",
+        "clearChatLabel": "Clear chat",
         "clearChatTooltip": "Clear messages and reset assistant memory for this workflow",
         "slashCommands": {
           "ariaLabel": "Slash commands",
@@ -1184,9 +1161,19 @@
             "inputDescription": "Optional direction for tone and emphasis. The run uses only prior Campaign Brief data to infer location concept, target audience, and non-food intersection topics.",
             "inputPlaceholder": "e.g. prioritize sustainability and family rituals with retro tone...",
             "goal": "Use Campaign Brief data to identify the location concept and target audience, then generate intersection topics between the concept and the audience's likely interests (not necessarily food). These intersections should be actionable for Instagram Reels ideas that attract potential new customers.",
-            "criterionIntersectionsPresent": "Data includes **3-5 non-food intersections** with concrete topic, concept link, audience relevance, content example, and format.",
+            "criterionIntersectionsPresent": "Data includes **3-5 non-food intersections** with concrete topic, concept link, audience relevance, and content example.",
             "criterionNonFood": "Intersections are **not food-centric** (no dish names, recipes, or flavor-led angles).",
             "criterionAudienceConceptInferred": "Data clearly states **locationConcept** and **targetAudience**, both inferred from Campaign Brief context."
+          },
+          "format_mix": {
+            "label": "Format mix",
+            "title": "Format mix",
+            "inputLabel": "Format mix notes",
+            "inputDescription": "Optional guidance for how you want to weight Instagram formats (single posts, carousels, Reels). The run reads your prior Campaign Brief for context.",
+            "inputPlaceholder": "e.g. lean on Reels for launches; keep carousels for menus…",
+            "goal": "Define a target share of Instagram formats (single posts, carousels, single-video Reels, multi-video Reels) for the campaign, grounded in the Campaign Brief. The run loads prior brief data first; percentage targets are filled when you generate or edit structured data.",
+            "criterionBriefGrounded": "Work is **consistent with prior Campaign Brief** context (objective, audience, pillars)—no contradictions unless assumptions are stated.",
+            "criterionMixDefined": "Data includes a **formats** array with at least one entry, each with **format** and **percent** (0–100), when the campaign warrants a mix; otherwise document why the list is empty."
           },
           "restaurant_campaign_brief": {
             "label": "Campaign brief",
@@ -1420,6 +1407,9 @@
         "milestonePreviewPresetBadge_post_scheduler": "Post scheduler",
         "milestonePreviewPresetBadge_promotion_candidates": "Promotion candidates",
         "milestonePreviewPresetBadge_culture_hooks": "Culture hooks",
+        "milestonePreviewPresetBadge_format_mix": "Format mix",
+        "milestoneFormatMixPreviewTitle": "Format mix",
+        "milestoneFormatMixPreviewBody": "Percentages by Instagram format will appear here after you run or generate this milestone.",
         "milestoneCultureHooksPreviewLocationConcept": "Location concept",
         "milestoneCultureHooksPreviewTargetAudience": "Target audience",
         "milestoneCultureHooksPreviewIntersections": "Intersections",
@@ -1515,7 +1505,7 @@
         "stepSynthesize": "Synthesising",
         "stepStoreResult": "Storing result"
       },
-      "noCampaigns": {
+      "noWorkflows": {
         "title": "No workflows yet",
         "description": "Create your first workflow to start planning your marketing schedule.",
         "cta": "Create New Workflow"
@@ -1569,8 +1559,6 @@
       "table": {
         "title": "Edit COGS per menu item",
         "menuName": "Menu Item",
-        "quantity": "Quantity",
-        "price": "Price",
         "cogs": "COGS",
         "we": "COGS ratio (we)",
         "weAria": "COGS ratio for {menu}",
@@ -1579,7 +1567,12 @@
           "aria": "Category WE slider for {category}",
           "hint": "When enabled, moving this slider updates WE and COGS for all menu items in this category."
         },
-        "uncategorizedTitle": "Uncategorized Menu Items"
+        "uncategorizedTitle": "Uncategorized Menu Items",
+        "sortNameAsc": "Name A–Z",
+        "sortNameDesc": "Name Z–A",
+        "sortNameHint": "Sort menu items by name",
+        "sortNameButtonAriaAsc": "Menu items sorted A to Z. Activate to sort Z to A.",
+        "sortNameButtonAriaDesc": "Menu items sorted Z to A. Activate to sort A to Z."
       },
       "actions": {
         "save": "Save COGS",
@@ -1593,8 +1586,8 @@
     },
     "shared": {
       "backToSales": "Back to sales",
-      "createCampaignFromReport": "Create workflow",
-      "createCampaignFromReportHint": "Open workflows with this report context to plan promos from these insights.",
+      "createWorkflowFromReport": "Create workflow",
+      "createWorkflowFromReportHint": "Open workflows with this report context to plan promos from these insights.",
       "breadcrumbRunLoading": "Report"
     },
     "heatmap": {
@@ -1694,6 +1687,13 @@
       "analysis": {
         "title": "Menu Item Analysis"
       },
+      "portfolio": {
+        "itemCount": "{count, plural, one {# item} other {# items}}",
+        "itemShare": "{value} of items",
+        "marginShare": "{value} of margin",
+        "filteredShowing": "Showing {visible} of {total}",
+        "noItems": "No items in this category."
+      },
       "emptyFiltered": "No matrix items match the selected category. Adjust the filter to continue.",
       "filters": {
         "categoryLabel": "Category Filter",
@@ -1707,6 +1707,14 @@
         "puzzle": "Puzzles",
         "low_end": "Low End"
       },
+      "lowEndHighlight": {
+        "sliderLabel": "Margin share threshold",
+        "sliderAriaLabel": "Highlight bottom margin share up to {value}% of total margin",
+        "sliderHelp": "Highlights low-end items (lowest margin share first) whose cumulative margin share is within this threshold.",
+        "sliderValue": "{value}% of total margin",
+        "rowIncludedInBand": "Within cumulative margin-share threshold.",
+        "shareCellDescription": "{percent}% of total margin, within cumulative margin-share threshold band."
+      },
       "table": {
         "menu": "Menu",
         "category": "Category",
@@ -1714,7 +1722,8 @@
         "revenue": "Revenue",
         "cogs": "COGS",
         "margin": "Margin",
-        "percentage": "%",
+        "shareOfTotalMargin": "% of total margin",
+        "caption": "{category} menu items: Menu, Units sold, Margin, Share of total margin.",
         "action": "Action",
         "actionReasonLabel": "Why this action",
         "actions": {

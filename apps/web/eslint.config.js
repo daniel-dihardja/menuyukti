@@ -10,7 +10,7 @@ export default [
       "app/(protected)/canvas/assets-client.tsx",
       "app/(protected)/canvas/_components/assets-upload-zone.tsx",
       "app/(protected)/canvas/_components/assets-image-grid.tsx",
-      "app/(protected)/campaigns/_components/campaigns-table.tsx",
+      "app/(protected)/workflow/_components/workflows-table.tsx",
       "components/sortable-table.tsx",
       "components/clerk/custom-login-form.tsx",
     ],

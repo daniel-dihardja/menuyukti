@@ -9,6 +9,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _clear_tavily_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+
+
 def _tool_by_name(tools: list[Any], name: str) -> Any:
     for t in tools:
         if getattr(t, "name", "") == name:
@@ -33,6 +38,27 @@ def test_make_milestone_run_tools_core_builtins() -> None:
         "read_prior_milestones_data",
         "write_result_data",
     ]
+
+
+@pytest.mark.asyncio
+async def test_make_milestone_run_tools_includes_search_web_when_key_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("TAVILY_API_KEY", "test-key")
+    with patch("agents_app.agents.core.tavily_search_tool.TavilySearch") as mock_cls:
+        mock_cls.return_value.ainvoke = AsyncMock(
+            return_value={
+                "results": [{"title": "Example", "url": "https://example.com", "content": "x"}]
+            }
+        )
+        tools = _tools_for_context({})
+    names = [getattr(t, "name", "") for t in tools]
+    assert names[:4] == ["read_goal", "read_criteria", "read_data", "read_prior_milestones_data"]
+    assert names[4] == "search_web"
+    assert names[5] == "write_result_data"
+    out = await _tool_by_name(tools, "search_web").ainvoke({"query": "test query"})
+    assert "Example" in out
+    assert "https://example.com" in out
 
 
 def test_read_goal_returns_context_goal() -> None:
@@ -64,10 +90,9 @@ def test_read_prior_milestones_returns_context_or_message() -> None:
         }
     )
     assert "Campaign Brief" in _tool_by_name(tools, "read_prior_milestones_data").invoke({})
-    assert (
-        "No prior milestone data available"
-        in _tool_by_name(_tools_for_context({}), "read_prior_milestones_data").invoke({})
-    )
+    assert "No prior milestone data available" in _tool_by_name(
+        _tools_for_context({}), "read_prior_milestones_data"
+    ).invoke({})
 
 
 @pytest.mark.asyncio

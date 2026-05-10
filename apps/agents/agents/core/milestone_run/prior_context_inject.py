@@ -10,34 +10,32 @@ from agents_app.agents.core.milestone_run.prior_context_pack import (
 )
 
 
-def build_injected_prior_context_markdown(
-    prior_milestones_json: str,
-    inject_prior_presets: tuple[str, ...],
-) -> tuple[str, list[str]]:
-    """Select prior rows matching ``inject_prior_presets`` and return markdown + matched ids for logs.
-
-    Prefers ``presetId`` on each prior row (from GraphQL). For ``restaurant_campaign_brief``, falls back to
-    the first row whose ``data`` matches saved campaign_brief shape when no ``presetId`` match exists.
-    """
-    if not inject_prior_presets:
-        return "", []
+def _parse_prior_milestone_rows(prior_milestones_json: str) -> list[dict[str, Any]]:
     raw = prior_milestones_json.strip()
     if not raw:
-        return "", []
+        return []
     try:
         rows = json.loads(raw)
     except json.JSONDecodeError:
-        return "", []
+        return []
     if not isinstance(rows, list):
-        return "", []
+        return []
+    return [row for row in rows if isinstance(row, dict)]
 
-    wanted = frozenset(inject_prior_presets)
+
+def collect_matched_prior_rows(
+    rows: list[dict[str, Any]],
+    wanted: frozenset[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Select prior rows matching ``wanted`` preset ids (same rules as injected markdown).
+
+    For ``restaurant_campaign_brief``, falls back to the first row whose ``data`` matches saved
+    campaign_brief shape when no ``presetId`` match exists.
+    """
     matched: list[dict[str, Any]] = []
     matched_ids: list[str] = []
 
     for row in rows:
-        if not isinstance(row, dict):
-            continue
         pid = row.get("presetId")
         if isinstance(pid, str) and pid.strip() and pid.strip() in wanted:
             matched.append(
@@ -52,8 +50,6 @@ def build_injected_prior_context_markdown(
 
     if "restaurant_campaign_brief" in wanted and "restaurant_campaign_brief" not in matched_ids:
         for row in rows:
-            if not isinstance(row, dict):
-                continue
             data = row.get("data")
             if isinstance(data, dict) and is_campaign_brief_milestone_data(data):
                 matched.append(
@@ -65,6 +61,34 @@ def build_injected_prior_context_markdown(
                 )
                 matched_ids.append("restaurant_campaign_brief")
                 break
+
+    return matched, matched_ids
+
+
+def extract_restaurant_campaign_brief_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return campaign brief ``data`` dict from prior milestones JSON, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"restaurant_campaign_brief"}))
+    for row in matched:
+        data = row.get("data")
+        if isinstance(data, dict) and is_campaign_brief_milestone_data(data):
+            return data
+    return None
+
+
+def build_injected_prior_context_markdown(
+    prior_milestones_json: str,
+    inject_prior_presets: tuple[str, ...],
+) -> tuple[str, list[str]]:
+    """Select prior rows matching ``inject_prior_presets`` and return markdown + matched ids for logs.
+
+    Prefers ``presetId`` on each prior row (from GraphQL). For ``restaurant_campaign_brief``, falls back to
+    the first row whose ``data`` matches saved campaign_brief shape when no ``presetId`` match exists.
+    """
+    if not inject_prior_presets:
+        return "", []
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, matched_ids = collect_matched_prior_rows(rows, frozenset(inject_prior_presets))
 
     if not matched:
         return "", []

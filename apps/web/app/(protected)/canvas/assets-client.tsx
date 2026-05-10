@@ -34,7 +34,7 @@ import {
 import { AssetsImageGrid } from './_components/assets-image-grid'
 import { AssetsUploadZone } from './_components/assets-upload-zone'
 import { BackgroundsImageGrid } from './_components/backgrounds-image-grid'
-import { ContentImageCreateDialog } from '../campaigns/_components/milestone-preview/content-image-create-dialog'
+import { ContentImageCreateDialog } from '../workflow/_components/milestone-preview/content-image-create-dialog'
 
 type ToastState = { kind: 'success' | 'error'; message: string } | null
 

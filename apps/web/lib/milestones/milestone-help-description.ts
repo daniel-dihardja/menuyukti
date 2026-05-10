@@ -1,14 +1,15 @@
-import type { TimelineMilestone } from '@/app/(protected)/campaigns/_components/timeline/types'
+import type { TimelineMilestone } from '@/app/(protected)/workflow/_components/timeline/types'
 
-/** Translation keys under `analytics.campaigns.chat` for preset default goal / Help-tab body. */
+/** Translation keys under `analytics.workflows.chat` for preset default goal / Help-tab body. */
 export const PRESET_GOAL_TRANSLATION_KEYS = {
   restaurant_campaign_brief: 'milestonePreset.restaurant_campaign_brief.goal',
   post_scheduler: 'milestonePreset.post_scheduler.goal',
   promotion_candidates: 'milestonePreset.promotion_candidates.goal',
   culture_hooks: 'milestonePreset.culture_hooks.goal',
+  format_mix: 'milestonePreset.format_mix.goal',
 } as const
 
-/** Matches `useTranslations('analytics.campaigns.chat')`. */
+/** Matches `useTranslations('analytics.workflows.chat')`. */
 export type MilestoneHelpTranslateFn = (key: string) => string
 
 /**

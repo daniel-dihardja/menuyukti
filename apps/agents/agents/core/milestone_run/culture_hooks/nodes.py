@@ -12,8 +12,10 @@ from agents_app.agents.core.milestone_run.culture_hooks.state import (
     CultureHooksState,
 )
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
+from agents_app.agents.core.milestone_run.llm_from_run_config import (
+    structured_llm_from_milestone_run_config,
+)
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
-from agents_app.models.llm_config import get_llm_structured
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
 from pydantic import BaseModel
@@ -110,7 +112,7 @@ def _normalize_generated_output(payload: Any) -> CultureHooksOutput:
 
 async def generate_intersections(state: CultureHooksState) -> dict[str, Any]:
     """Generate structured non-food intersections from campaign brief context."""
-    llm = get_llm_structured().with_structured_output(CultureHooksDraftOutput)
+    llm = structured_llm_from_milestone_run_config().with_structured_output(CultureHooksDraftOutput)
     _trace_agent_event(state, "chat_model_start")
     generated = await llm.ainvoke(
         [

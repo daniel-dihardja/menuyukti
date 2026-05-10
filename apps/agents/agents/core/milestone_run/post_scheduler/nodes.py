@@ -10,6 +10,9 @@ from agents_app.agents.core.milestone_run.graphql_client import (
     fetch_campaign_schedule_plan,
     upsert_milestonedata_node,
 )
+from agents_app.agents.core.milestone_run.llm_from_run_config import (
+    structured_llm_from_milestone_run_config,
+)
 from agents_app.agents.core.milestone_run.output_schema import (
     validate_skill_output,
 )
@@ -18,7 +21,6 @@ from agents_app.agents.core.milestone_run.post_scheduler.state import (
     PostSchedulerOutput,
     PostSchedulerState,
 )
-from agents_app.models.llm_config import get_llm_structured
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
 from pydantic import BaseModel, Field
@@ -427,7 +429,7 @@ def _normalize_generated_output(payload: Any) -> PostSchedulerOutput:
 
 async def generate_campaign_concepts(state: PostSchedulerState) -> dict[str, Any]:
     """Generate structured monthly scheduler strategy from brief context."""
-    llm = get_llm_structured().with_structured_output(PostSchedulerDraftOutput)
+    llm = structured_llm_from_milestone_run_config().with_structured_output(PostSchedulerDraftOutput)
     _trace_agent_event(state, "chat_model_start")
     generated = await llm.ainvoke(
         [

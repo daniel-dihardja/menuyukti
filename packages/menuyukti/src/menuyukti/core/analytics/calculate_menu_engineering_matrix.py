@@ -34,6 +34,20 @@ class MenuEngineeringThresholds(TypedDict):
 
 
 class MenuEngineeringDistributionItem(TypedDict):
+    """Portfolio-level aggregation for one BCG quadrant.
+
+    Attributes:
+        category: Quadrant name — "star", "plow_horse", "puzzle", or "low_end".
+        item_count: Number of distinct menu SKUs in this quadrant (after the
+            cogs > 0 / revenue > 0 filter that gates matrix membership).
+        item_share: ``item_count / total_items_in_portfolio`` — the quadrant's
+            share of the full menu by SKU count (0–1). *Not* a within-category
+            margin split; reads as "X% of the menu sits in this box."
+        margin_share: Sum of the quadrant's contribution margins divided by the
+            total portfolio contribution margin (0–1). Reads as "this quadrant
+            produces X% of the portfolio's profit pool."
+    """
+
     category: str
     item_count: int
     item_share: float

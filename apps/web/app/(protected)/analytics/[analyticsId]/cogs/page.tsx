@@ -112,7 +112,7 @@ export default async function Page({ params }: PageProps) {
       })
     }
   }
-  menuItems = menuItems.sort((a, b) => b.quantity - a.quantity)
+  menuItems = menuItems.sort((a, b) => a.menuName.localeCompare(b.menuName))
 
   const analyticsOptions: Array<{ id: number; name: string }> = []
 

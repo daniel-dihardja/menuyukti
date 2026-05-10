@@ -106,9 +106,6 @@ jobs:
                 gql=true
                 agents=true
                 ;;
-              packages/url-safety/*)
-                agents=true
-                ;;
               pyproject.toml|uv.lock)
                 gql=true
                 agents=true

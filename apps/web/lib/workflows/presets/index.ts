@@ -1,5 +1,4 @@
 import campaignPlanningMultiSkill from './campaign-planning-multi-skill.json'
-import customApiToolMockDemo from './custom-api-tool-mock-demo.json'
 import langgraphTracingDemo from './langgraph-tracing-demo.json'
 import publicHolidaysExample from './public-holidays-example.json'
 
@@ -11,7 +10,6 @@ export type WorkflowImportPresetId =
   | 'public-holidays-example'
   | 'campaign-planning-multi-skill'
   | 'langgraph-tracing-demo'
-  | 'custom-api-tool-mock-demo'
 
 export type WorkflowImportPreset = {
   id: WorkflowImportPresetId
@@ -19,14 +17,12 @@ export type WorkflowImportPreset = {
     | typeof publicHolidaysExample
     | typeof campaignPlanningMultiSkill
     | typeof langgraphTracingDemo
-    | typeof customApiToolMockDemo
 }
 
 export const WORKFLOW_IMPORT_PRESETS: readonly WorkflowImportPreset[] = [
   { id: 'public-holidays-example', payload: publicHolidaysExample },
   { id: 'campaign-planning-multi-skill', payload: campaignPlanningMultiSkill },
   { id: 'langgraph-tracing-demo', payload: langgraphTracingDemo },
-  { id: 'custom-api-tool-mock-demo', payload: customApiToolMockDemo },
 ] as const
 
 export const PRESET_KEY_PREFIX = 'preset:' as const

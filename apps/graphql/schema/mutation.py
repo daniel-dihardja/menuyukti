@@ -1,13 +1,11 @@
 import strawberry
 
 from graphql.schema.mutations import (
-    CreateApiAdapterToolMutation,
     CreateImageAiFlowMutation,
     CreateLocationMutation,
     CreateNodeMutation,
     CreateWorkspaceMutation,
     DeleteAnalyticsRunMutation,
-    DeleteApiAdapterToolMutation,
     DeleteImageAiFlowMutation,
     DeleteNodeMutation,
     ExportWorkflowMutation,
@@ -17,7 +15,6 @@ from graphql.schema.mutations import (
     RemoveWorkspaceMemberMutation,
     ReplacePassCriteriaMutation,
     SetPassCriterionStatusMutation,
-    UpdateApiAdapterToolMutation,
     UpdateImageAiFlowMutation,
     UpdateLocationManualBriefInputMutation,
     UpdateLocationMutation,
@@ -31,11 +28,10 @@ from graphql.schema.mutations import (
 @strawberry.type(
     description=(
         "Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, "
-        "workspace API adapter tools, and image AI flow configuration."
+        "and image AI flow configuration."
     )
 )
 class Mutation(
-    CreateApiAdapterToolMutation,
     UploadSalesReportMutation,
     CreateNodeMutation,
     DeleteNodeMutation,
@@ -53,10 +49,8 @@ class Mutation(
     UpdateMenuItemCogsBulkMutation,
     CreateImageAiFlowMutation,
     UpdateImageAiFlowMutation,
-    DeleteApiAdapterToolMutation,
     DeleteAnalyticsRunMutation,
     DeleteImageAiFlowMutation,
-    UpdateApiAdapterToolMutation,
     UpdateLocationMutation,
     UpdateLocationManualBriefInputMutation,
 ):
