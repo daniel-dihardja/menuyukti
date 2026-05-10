@@ -8,7 +8,7 @@ import {
   ResizablePanelGroup,
 } from '@workspace/ui/components/resizable'
 
-export type CampaignChatLayoutProps = {
+export type WorkflowChatLayoutProps = {
   isDesktop: boolean
   previewPanelRef: NonNullable<ComponentProps<typeof ResizablePanel>['panelRef']>
   timelinePane: ReactNode
@@ -16,13 +16,13 @@ export type CampaignChatLayoutProps = {
   chatPane: ReactNode
 }
 
-export function CampaignChatLayout({
+export function WorkflowChatLayout({
   isDesktop,
   previewPanelRef,
   timelinePane,
   previewPane,
   chatPane,
-}: CampaignChatLayoutProps) {
+}: WorkflowChatLayoutProps) {
   if (!isDesktop) {
     return (
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden">
@@ -50,7 +50,7 @@ export function CampaignChatLayout({
             collapsedSize={0}
             collapsible
             defaultSize={22}
-            id="campaign-preview"
+            id="workflow-preview"
             minSize={16}
             panelRef={previewPanelRef}
           >

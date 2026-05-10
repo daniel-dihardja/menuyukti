@@ -6,7 +6,7 @@
  */
 export const PROTECTED_APP_SHELL_PREFIXES = [
   '/analytics',
-  '/campaigns',
+  '/workflow',
   '/canvas',
   '/advisor',
   '/print-orders',
@@ -67,8 +67,8 @@ export const routes = {
   profileAccount: '/profile/account',
 
   workflows: {
-    list: '/campaigns',
-    detail: (id: string | number) => `/campaigns/${id}`,
+    list: '/workflow',
+    detail: (id: string | number) => `/workflow/${id}`,
   },
 
   skills: '/skills',

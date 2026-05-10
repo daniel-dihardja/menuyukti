@@ -13,9 +13,9 @@ import {
 } from '@/lib/graphql/cached-queries'
 import { type AnyNode } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
-import { CampaignsClient } from './_components/campaigns-client'
+import { WorkflowsClient } from './_components/workflows-client'
 
-function CampaignsListSkeleton() {
+function WorkflowsListSkeleton() {
   return (
     <div className="flex flex-col gap-8">
       <Card className="overflow-hidden border shadow-sm ring-1 ring-border/50">
@@ -47,7 +47,7 @@ function CampaignsListSkeleton() {
             <Skeleton className="h-4 w-10 shrink-0" />
           </div>
           {Array.from({ length: 4 }, (_, i) => (
-            <div className="flex gap-4" key={`campaigns-skel-${i}`}>
+            <div className="flex gap-4" key={`workflows-skel-${i}`}>
               <Skeleton className="h-4 w-8 shrink-0" />
               <Skeleton className="h-4 min-w-0 flex-1" />
               <Skeleton className="h-4 w-10 shrink-0" />
@@ -59,8 +59,8 @@ function CampaignsListSkeleton() {
   )
 }
 
-async function CampaignsData() {
-  const t = await getTranslations('analytics.campaigns')
+async function WorkflowsData() {
+  const t = await getTranslations('analytics.workflows')
   const { isAuthenticated, userId } = await auth()
   if (!isAuthenticated || !userId) {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
@@ -91,22 +91,22 @@ async function CampaignsData() {
 
   const initialLocationId = branches.length === 1 ? (branches[0]?.id ?? null) : null
   const initialAnalyticsRuns: Array<{ id: number; name: string }> = []
-  const initialCampaigns: AnyNode[] = []
+  const initialWorkflows: AnyNode[] = []
   if (initialLocationId !== null) {
-    const [runs, campaigns] = await Promise.all([
+    const [runs, workflowNodes] = await Promise.all([
       getCachedAnalyticsRunsByLocation(userId, initialLocationId),
       getCachedWorkflowsByLocation(userId, initialLocationId),
     ])
     initialAnalyticsRuns.push(...runs)
-    initialCampaigns.push(...campaigns)
+    initialWorkflows.push(...workflowNodes)
   }
 
   return (
     <section className="flex flex-col gap-6">
-      <CampaignsClient
+      <WorkflowsClient
         branches={branches}
         initialLocationId={initialLocationId}
-        initialCampaigns={initialCampaigns}
+        initialWorkflows={initialWorkflows}
         initialAnalyticsRuns={initialAnalyticsRuns}
       />
     </section>
@@ -114,12 +114,12 @@ async function CampaignsData() {
 }
 
 export default async function Page() {
-  const t = await getTranslations('analytics.campaigns')
+  const t = await getTranslations('analytics.workflows')
 
   return (
     <AnalyticsPageShell title={t('title')} breadcrumbs={[{ label: t('title') }]}>
-      <Suspense fallback={<CampaignsListSkeleton />}>
-        <CampaignsData />
+      <Suspense fallback={<WorkflowsListSkeleton />}>
+        <WorkflowsData />
       </Suspense>
     </AnalyticsPageShell>
   )

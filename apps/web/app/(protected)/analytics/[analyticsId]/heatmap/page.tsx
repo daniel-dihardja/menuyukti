@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { getCachedAnalyticsRun, getCachedMenuHeatmaps } from '@/lib/graphql/cached-queries'
 import { DAILY_HEATMAP_END_HOUR, DAILY_HEATMAP_START_HOUR } from '@/lib/heatmap-config'
 import { adaptDailyHeatmapMatrix, adaptWeeklyHeatmapMatrix } from './heatmap.adapters'
-import { CreateCampaignFromReportButton } from '@/components/create-campaign-from-report-button'
+import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { HeatmapView } from './heatmap-view'
 
 type PageProps = {
@@ -65,7 +65,7 @@ export default async function Page({ params }: PageProps) {
           <Button asChild variant="outline">
             <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
           </Button>
-          <CreateCampaignFromReportButton analyticsId={analyticsId} />
+          <CreateWorkflowFromReportButton analyticsId={analyticsId} />
         </div>
         <HeatmapView dailyMatrix={dailyMatrix} weeklyMatrix={weeklyMatrix} />
       </section>

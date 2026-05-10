@@ -14,7 +14,7 @@ import {
 } from '@/lib/workflows/presets'
 import { routes } from '@/lib/routes'
 import { CreateWorkflowPanel } from './create-workflow-panel'
-import { CampaignsTable, CampaignsTableSkeleton } from './campaigns-table'
+import { WorkflowsTable, WorkflowsTableSkeleton } from './workflows-table'
 
 type Branch = {
   id: number
@@ -22,7 +22,7 @@ type Branch = {
   nodeId: string | null
 }
 
-type CampaignNode = {
+type WorkflowListItem = {
   id: string
   name: string
   nodeType: string
@@ -36,27 +36,27 @@ type AnalyticsRunItem = {
 type Props = {
   branches: Branch[]
   initialLocationId: number | null
-  initialCampaigns: CampaignNode[]
+  initialWorkflows: WorkflowListItem[]
   initialAnalyticsRuns: AnalyticsRunItem[]
 }
 
-export function CampaignsClient({
+export function WorkflowsClient({
   branches,
   initialLocationId,
-  initialCampaigns,
+  initialWorkflows,
   initialAnalyticsRuns,
 }: Props) {
-  const t = useTranslations('analytics.campaigns')
-  const tNew = useTranslations('analytics.campaigns.newWorkflowDialog')
-  const tChat = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows')
+  const tNew = useTranslations('analytics.workflows.newWorkflowDialog')
+  const tChat = useTranslations('analytics.workflows.chat')
   const router = useRouter()
   const { locationId, setLocationId } = useAnalytics()
   const [presetKey, setPresetKey] = useState<string>(BLANK_PRESET_SELECTION_KEY)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
-  const [campaigns, setCampaigns] = useState<CampaignNode[]>(initialCampaigns)
-  const [loadingCampaigns, setLoadingCampaigns] = useState(false)
+  const [workflows, setWorkflows] = useState<WorkflowListItem[]>(initialWorkflows)
+  const [loadingWorkflows, setLoadingWorkflows] = useState(false)
   const [listError, setListError] = useState<string | null>(null)
 
   const [analyticsRuns, setAnalyticsRuns] = useState<AnalyticsRunItem[]>(initialAnalyticsRuns)
@@ -148,16 +148,16 @@ export function CampaignsClient({
 
   useEffect(() => {
     if (locationId === null) {
-      setCampaigns([])
+      setWorkflows([])
       setListError(null)
       return
     }
 
-    const seededFromServer = locationId === initialLocationId && initialCampaigns.length > 0
+    const seededFromServer = locationId === initialLocationId && initialWorkflows.length > 0
 
     const controller = new AbortController()
     if (!seededFromServer) {
-      setLoadingCampaigns(true)
+      setLoadingWorkflows(true)
     }
     setListError(null)
 
@@ -167,7 +167,7 @@ export function CampaignsClient({
     })
       .then(async (res) => {
         const body = (await res.json().catch(() => null)) as {
-          nodes?: CampaignNode[]
+          nodes?: WorkflowListItem[]
           message?: string
         } | null
         if (!res.ok) {
@@ -176,34 +176,34 @@ export function CampaignsClient({
         return body?.nodes ?? []
       })
       .then((nodes) => {
-        setCampaigns(nodes)
+        setWorkflows(nodes)
       })
       .catch((err: unknown) => {
         if (err instanceof Error && err.name === 'AbortError') {
           return
         }
         if (!seededFromServer) {
-          setCampaigns([])
+          setWorkflows([])
         }
         setListError(err instanceof Error ? err.message : t('listFailed'))
       })
       .finally(() => {
         if (!controller.signal.aborted) {
-          setLoadingCampaigns(false)
+          setLoadingWorkflows(false)
         }
       })
 
     return () => controller.abort()
-  }, [locationId, t, initialCampaigns.length, initialLocationId])
+  }, [locationId, t, initialWorkflows.length, initialLocationId])
 
-  const hasCampaigns = campaigns.length > 0
+  const hasWorkflows = workflows.length > 0
 
-  const handleCampaignRenamed = useCallback((id: string, name: string) => {
-    setCampaigns((prev) => prev.map((c) => (c.id === id ? { ...c, name } : c)))
+  const handleWorkflowRenamed = useCallback((id: string, name: string) => {
+    setWorkflows((prev) => prev.map((c) => (c.id === id ? { ...c, name } : c)))
   }, [])
 
-  const handleCampaignDeleted = useCallback((id: string) => {
-    setCampaigns((prev) => prev.filter((c) => c.id !== id))
+  const handleWorkflowDeleted = useCallback((id: string) => {
+    setWorkflows((prev) => prev.filter((c) => c.id !== id))
   }, [])
 
   const canCreateWorkflow = locationId !== null && !loadingRuns
@@ -299,26 +299,26 @@ export function CampaignsClient({
         runsError={runsError}
       />
 
-      {locationId === null ? null : loadingCampaigns ? (
-        <CampaignsTableSkeleton />
+      {locationId === null ? null : loadingWorkflows ? (
+        <WorkflowsTableSkeleton />
       ) : listError ? (
         <Alert variant="destructive">
           <AlertCircle />
           <AlertTitle>{t('errors.listTitle')}</AlertTitle>
           <AlertDescription>{listError}</AlertDescription>
         </Alert>
-      ) : hasCampaigns ? (
-        <CampaignsTable
-          campaigns={campaigns}
-          onCampaignDeleted={handleCampaignDeleted}
-          onCampaignRenamed={handleCampaignRenamed}
+      ) : hasWorkflows ? (
+        <WorkflowsTable
+          workflows={workflows}
+          onWorkflowDeleted={handleWorkflowDeleted}
+          onWorkflowRenamed={handleWorkflowRenamed}
         />
       ) : (
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle className="text-balance">{t('noCampaigns.title')}</CardTitle>
+            <CardTitle className="text-balance">{t('noWorkflows.title')}</CardTitle>
             <CardDescription className="text-pretty">
-              {t('noCampaigns.description')}
+              {t('noWorkflows.description')}
             </CardDescription>
           </CardHeader>
         </Card>

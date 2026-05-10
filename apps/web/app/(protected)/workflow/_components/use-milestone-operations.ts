@@ -18,7 +18,7 @@ import {
   type MilestonePresetId,
 } from '@/lib/milestones/preset-definitions'
 
-import type { CampaignMilestoneAction } from './campaign-milestone-reducer'
+import type { WorkflowMilestoneAction } from './workflow-milestone-reducer'
 import { deriveMilestoneRailStatus, milestoneNodeToTimelineMilestone } from './milestone-map'
 import type {
   MilestoneDataValue,
@@ -70,7 +70,7 @@ function ensurePassCriteriaIds(
 }
 
 export function useMilestoneOperations(
-  dispatch: Dispatch<CampaignMilestoneAction>,
+  dispatch: Dispatch<WorkflowMilestoneAction>,
   {
     workflowId,
     locationId,
@@ -78,7 +78,7 @@ export function useMilestoneOperations(
   }: {
     workflowId: string
     locationId: number
-    /** `useTranslations('analytics.campaigns.chat')` */
+    /** `useTranslations('analytics.workflows.chat')` */
     t: (key: string) => string
   },
 ) {

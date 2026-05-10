@@ -46,7 +46,7 @@ export function TimelineWorkspace({
   loadError = null,
   timelineTrailing = null,
 }: TimelineWorkspaceProps) {
-  const t = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows.chat')
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const { workflowId, milestoneState, errors, selectedMilestoneId, onSelectMilestone } =
     useTimelineWorkspaceState()

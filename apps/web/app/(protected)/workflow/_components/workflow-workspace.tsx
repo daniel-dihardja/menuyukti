@@ -6,8 +6,8 @@ import { Skeleton } from '@workspace/ui/components/skeleton'
 
 import type { TimelineMilestone } from './timeline-workspace'
 
-const CampaignChatPanel = dynamic(
-  () => import('./campaign-chat-panel').then((m) => m.CampaignChatPanel),
+const WorkflowChatPanel = dynamic(
+  () => import('./workflow-chat-panel').then((m) => m.WorkflowChatPanel),
   {
     ssr: false,
     loading: () => (
@@ -18,21 +18,21 @@ const CampaignChatPanel = dynamic(
   },
 )
 
-export type CampaignWorkspaceProps = {
+export type WorkflowWorkspaceProps = {
   workflowId: string
   locationId: number
   initialMilestones: TimelineMilestone[]
 }
 
-export function CampaignWorkspace({
+export function WorkflowWorkspace({
   workflowId,
   locationId,
   initialMilestones,
-}: CampaignWorkspaceProps) {
+}: WorkflowWorkspaceProps) {
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <div className="min-h-0 min-w-0 flex-1">
-        <CampaignChatPanel
+        <WorkflowChatPanel
           initialMilestones={initialMilestones}
           locationId={locationId}
           workflowId={workflowId}

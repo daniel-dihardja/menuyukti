@@ -29,7 +29,7 @@ export type MilestoneDataPreviewProps = {
 }
 
 function MilestonePreviewPresetRow({ presetId }: { presetId: MilestonePresetId }) {
-  const t = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows.chat')
   const Icon = milestonePresetIconFor(presetId)
   const label =
     presetId === 'dates'
@@ -71,7 +71,7 @@ function withPresetRow(presetId: MilestonePresetId | undefined, inner: ReactNode
 }
 
 export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
-  const t = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows.chat')
   const locale = useLocale()
   const formatPreviewDate = useMemo(
     () => (value: string) => formatPreviewDateString(value, locale),

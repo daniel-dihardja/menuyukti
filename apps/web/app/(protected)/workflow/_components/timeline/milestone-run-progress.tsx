@@ -24,7 +24,7 @@ export function milestoneRunStepIndex(step: string | null): number {
 }
 
 export function MilestoneRunProgressStrip({ runningStep }: { runningStep: string | null }) {
-  const t = useTranslations('analytics.campaigns.milestoneRun')
+  const t = useTranslations('analytics.workflows.milestoneRun')
   const labels = [
     t('stepFetchContext'),
     t('stepEvaluateCriteria'),

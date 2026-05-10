@@ -20,7 +20,7 @@ import {
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { DashboardRecentAssets } from './_components/dashboard-recent-assets'
 
-type CampaignRow = {
+type WorkflowSummaryRow = {
   id: string
   name: string
   locationName: string
@@ -36,7 +36,7 @@ function DashboardPageSkeleton() {
         </div>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }, (_, i) => (
-            <li key={`dash-campaign-skel-${i}`}>
+            <li key={`dash-workflow-skel-${i}`}>
               <Card className="h-full">
                 <CardHeader className="pb-2">
                   <Skeleton className="h-5 w-4/5" />
@@ -104,13 +104,13 @@ async function DashboardPageData() {
   const isPlatformAdmin = isMenuyuktiAdmin(platformRole)
 
   const locationsData = await getCachedLocationsData(userId)
-  const campaignRows: CampaignRow[] = []
+  const workflowRows: WorkflowSummaryRow[] = []
 
   await Promise.all(
     locationsData.locations.map(async (loc) => {
       const nodes = await getCachedWorkflowsByLocation(userId, Number(loc.id))
       for (const n of nodes) {
-        campaignRows.push({
+        workflowRows.push({
           id: n.id,
           name: n.name,
           locationName: loc.name,
@@ -119,29 +119,29 @@ async function DashboardPageData() {
     }),
   )
 
-  campaignRows.sort((a, b) => a.name.localeCompare(b.name))
+  workflowRows.sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="font-semibold text-lg">{t('campaignsHeading')}</h2>
+          <h2 className="font-semibold text-lg">{t('workflowsHeading')}</h2>
           <Button asChild size="sm" variant="outline">
-            <Link href={routes.workflows.list}>{t('campaignsViewAll')}</Link>
+            <Link href={routes.workflows.list}>{t('workflowsViewAll')}</Link>
           </Button>
         </div>
-        {campaignRows.length === 0 ? (
+        {workflowRows.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex flex-col gap-3 py-8">
-              <p className="text-center text-muted-foreground">{t('noCampaigns')}</p>
+              <p className="text-center text-muted-foreground">{t('noWorkflows')}</p>
               <Button asChild className="self-center">
-                <Link href={routes.workflows.list}>{t('createCampaign')}</Link>
+                <Link href={routes.workflows.list}>{t('createWorkflow')}</Link>
               </Button>
             </CardContent>
           </Card>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {campaignRows.slice(0, 6).map((c) => (
+            {workflowRows.slice(0, 6).map((c) => (
               <li key={c.id}>
                 <Card className="h-full transition-colors hover:bg-muted/40">
                   <CardHeader className="pb-2">
@@ -152,7 +152,7 @@ async function DashboardPageData() {
                   </CardHeader>
                   <CardContent>
                     <Button asChild size="sm" variant="secondary">
-                      <Link href={routes.workflows.detail(c.id)}>{t('viewCampaign')}</Link>
+                      <Link href={routes.workflows.detail(c.id)}>{t('viewWorkflow')}</Link>
                     </Button>
                   </CardContent>
                 </Card>

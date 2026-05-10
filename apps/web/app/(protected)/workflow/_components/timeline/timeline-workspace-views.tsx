@@ -51,7 +51,7 @@ export function TimelineWorkspaceEmpty({
   onCreateMilestoneFromPreset: (presetId: MilestonePresetId) => boolean | Promise<boolean>
   timelineTrailing: ReactNode
 }) {
-  const t = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows.chat')
   return (
     <div
       aria-labelledby="timeline-empty-heading"

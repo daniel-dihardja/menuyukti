@@ -11,7 +11,7 @@ import { TimelineItem } from './timeline-item'
 import type { TimelineBodyProps } from './types'
 
 export function TimelineBody({ selectedId, onSelectMilestone }: TimelineBodyProps) {
-  const t = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows.chat')
   const isDesktop = useMediaQuery('(min-width: 768px)')
   const { milestoneState } = useTimelineWorkspaceState()
   const actions = useTimelineActions()

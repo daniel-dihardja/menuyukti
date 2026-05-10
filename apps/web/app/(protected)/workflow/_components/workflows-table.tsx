@@ -35,18 +35,18 @@ import { Check, Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { routes } from '@/lib/routes'
 
-export type CampaignRow = {
+export type WorkflowTableRow = {
   id: string
   name: string
 }
 
-interface CampaignsTableProps {
-  campaigns: CampaignRow[]
-  onCampaignRenamed?: (id: string, name: string) => void
-  onCampaignDeleted?: (id: string) => void
+interface WorkflowsTableProps {
+  workflows: WorkflowTableRow[]
+  onWorkflowRenamed?: (id: string, name: string) => void
+  onWorkflowDeleted?: (id: string) => void
 }
 
-export function CampaignsTableSkeleton() {
+export function WorkflowsTableSkeleton() {
   return (
     <Card>
       <CardHeader>
@@ -70,13 +70,13 @@ export function CampaignsTableSkeleton() {
   )
 }
 
-export function CampaignsTable({
-  campaigns,
-  onCampaignRenamed,
-  onCampaignDeleted,
-}: CampaignsTableProps) {
-  const t = useTranslations('analytics.campaigns')
-  const tTable = useTranslations('analytics.campaigns.table')
+export function WorkflowsTable({
+  workflows,
+  onWorkflowRenamed,
+  onWorkflowDeleted,
+}: WorkflowsTableProps) {
+  const t = useTranslations('analytics.workflows')
+  const tTable = useTranslations('analytics.workflows.table')
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draftName, setDraftName] = useState('')
@@ -84,7 +84,7 @@ export function CampaignsTable({
   const [renameError, setRenameError] = useState<string | null>(null)
   const editContainerRef = useRef<HTMLDivElement>(null)
 
-  const [pendingDelete, setPendingDelete] = useState<CampaignRow | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<WorkflowTableRow | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
@@ -118,7 +118,7 @@ export function CampaignsTable({
     return () => document.removeEventListener('pointerdown', onPointerDown, true)
   }, [editingId, saving, cancelEdit])
 
-  const startEdit = useCallback((row: CampaignRow) => {
+  const startEdit = useCallback((row: WorkflowTableRow) => {
     setEditingId(row.id)
     setDraftName(row.name)
     setRenameError(null)
@@ -129,7 +129,7 @@ export function CampaignsTable({
     const trimmed = draftName.trim()
     if (!trimmed) return
 
-    const row = campaigns.find((c) => c.id === editingId)
+    const row = workflows.find((c) => c.id === editingId)
     if (row && trimmed === row.name) {
       cancelEdit()
       return
@@ -150,14 +150,14 @@ export function CampaignsTable({
       }
       const updated = (await res.json()) as { name?: string }
       const nextName = updated.name ?? trimmed
-      onCampaignRenamed?.(editingId, nextName)
+      onWorkflowRenamed?.(editingId, nextName)
       cancelEdit()
     } catch {
       setRenameError(tTable('renameError'))
     } finally {
       setSaving(false)
     }
-  }, [campaigns, cancelEdit, draftName, editingId, onCampaignRenamed, saving, tTable])
+  }, [workflows, cancelEdit, draftName, editingId, onWorkflowRenamed, saving, tTable])
 
   const onDraftKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -182,14 +182,14 @@ export function CampaignsTable({
         setDeleteError(body?.message ?? tTable('deleteError'))
         return
       }
-      onCampaignDeleted?.(pendingDelete.id)
+      onWorkflowDeleted?.(pendingDelete.id)
       setPendingDelete(null)
     } catch {
       setDeleteError(tTable('deleteError'))
     } finally {
       setDeleting(false)
     }
-  }, [onCampaignDeleted, pendingDelete, tTable])
+  }, [onWorkflowDeleted, pendingDelete, tTable])
 
   return (
     <Card>
@@ -208,7 +208,7 @@ export function CampaignsTable({
             </TableHeader>
 
             <TableBody>
-              {campaigns.map((row, index) => (
+              {workflows.map((row, index) => (
                 <TableRow key={row.id}>
                   <TableCell className="tabular-nums text-muted-foreground">{index + 1}</TableCell>
                   <TableCell className="min-w-0 max-w-[min(100%,24rem)]">
@@ -218,7 +218,7 @@ export function CampaignsTable({
                           <Input
                             aria-invalid={renameError ? true : undefined}
                             aria-label={tTable('name')}
-                            name="campaignName"
+                            name="workflowName"
                             className="min-w-0 flex-1"
                             disabled={saving}
                             onChange={(e) => setDraftName(e.target.value)}

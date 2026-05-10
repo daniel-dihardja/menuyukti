@@ -7,7 +7,7 @@
     "navShop": "Print Shop",
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
-    "mobileMenuDescription": "Canvas, Campaigns, Advisor chat, and the print shop catalog.",
+    "mobileMenuDescription": "Canvas, Workflow, Advisor chat, and the print shop catalog.",
     "mobileMenuSignIn": "Sign in"
   },
   "accountMenu": {
@@ -20,7 +20,7 @@
     "metaTitle": "Advisor",
     "metaDescription": "Chat with your Menuyukti marketing advisor.",
     "emptyTitle": "Ask anything",
-    "emptyDescription": "Get campaign and content ideas backed by your restaurant context, same advisor as in campaigns, without selecting one first.",
+    "emptyDescription": "Get campaign and content ideas backed by your restaurant context—the same advisor as on the Workflow page—without opening a workflow first.",
     "placeholder": "What would you like help with?",
     "thinking": "Thinking…",
     "errorTitle": "Something went wrong",
@@ -323,13 +323,13 @@
       "tagline": "Print-on-demand with a kitchen-and-bar soul — part of your Menuyukti workspace.",
       "signedInNavAria": "Workspace navigation",
       "backDashboard": "Dashboard",
-      "backWorkflows": "Campaigns",
+      "backWorkflows": "Workflow",
       "backStudio": "Canvas",
       "navigationMenuTriggerAria": "Open navigation menu",
       "shopMenuTitle": "Navigation",
       "shopMenuDescription": "Site areas and workspace shortcuts from the print shop.",
       "workspaceSectionHeading": "Workspace",
-      "workspaceMenuDescription": "Go to your dashboard, campaigns, or canvas."
+      "workspaceMenuDescription": "Go to your dashboard, workflow, or canvas."
     },
     "skipToContent": "Skip to products",
     "filterAria": "Filter by collection",
@@ -530,7 +530,7 @@
     "analysis": "Analysis",
     "branches": "Locations",
     "reports": "Reports",
-    "workflows": "Campaigns",
+    "workflows": "Workflow",
     "skills": "Skills & tools",
     "customTools": "API Proxies",
     "studio": "Canvas",
@@ -597,11 +597,11 @@
     "dashboard": {
       "title": "Dashboard",
       "description": "Workflows, brand assets, and quick links across your workspace.",
-      "campaignsHeading": "Campaigns",
-      "campaignsViewAll": "View all campaigns",
-      "viewCampaign": "Open campaign",
-      "noCampaigns": "No campaigns yet",
-      "createCampaign": "Create campaign",
+      "workflowsHeading": "Workflow",
+      "workflowsViewAll": "View all workflows",
+      "viewWorkflow": "Open workflow",
+      "noWorkflows": "No workflows yet",
+      "createWorkflow": "Create workflow",
       "assetsHeading": "Canvas",
       "assetsDescription": "Recent images from your brand library.",
       "assetsOpenStudio": "Open Canvas",
@@ -1046,7 +1046,7 @@
         "cta": "Upload New Sales Report"
       }
     },
-    "campaigns": {
+    "workflows": {
       "title": "Workflows",
       "description": "Choose a location, create a workflow, then plan milestones, chat with the assistant, and run evaluations.",
       "sectionTitle": "Workflows for this location",
@@ -1542,7 +1542,7 @@
         "stepSynthesize": "Synthesising",
         "stepStoreResult": "Storing result"
       },
-      "noCampaigns": {
+      "noWorkflows": {
         "title": "No workflows yet",
         "description": "Create your first workflow to start planning your marketing schedule.",
         "cta": "Create New Workflow"
@@ -1620,8 +1620,8 @@
     },
     "shared": {
       "backToSales": "Back to sales",
-      "createCampaignFromReport": "Create workflow",
-      "createCampaignFromReportHint": "Open workflows with this report context to plan promos from these insights.",
+      "createWorkflowFromReport": "Create workflow",
+      "createWorkflowFromReportHint": "Open workflows with this report context to plan promos from these insights.",
       "breadcrumbRunLoading": "Report"
     },
     "heatmap": {

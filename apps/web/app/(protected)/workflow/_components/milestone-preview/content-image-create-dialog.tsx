@@ -66,7 +66,7 @@ export function ContentImageCreateDialog({
   onDesignCreated,
   onGeneratingChange,
 }: ContentImageCreateDialogProps) {
-  const t = useTranslations('analytics.campaigns.chat.contentImageDialog')
+  const t = useTranslations('analytics.workflows.chat.contentImageDialog')
 
   const [products, setProducts] = useState<AssetItem[]>([])
   const [backgrounds, setBackgrounds] = useState<BackgroundItem[]>([])

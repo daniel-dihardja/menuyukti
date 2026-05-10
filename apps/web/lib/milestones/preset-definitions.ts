@@ -1,4 +1,4 @@
-import type { PassCriteriaRow } from '@/app/(protected)/campaigns/_components/timeline/types'
+import type { PassCriteriaRow } from '@/app/(protected)/workflow/_components/timeline/types'
 import { buildCampaignBriefPassCriteriaSeed } from '@/lib/milestones/campaign-brief-pass-criteria'
 import { type MilestoneInput, type MilestonedataValue } from '@/lib/graphql/node-schemas'
 
@@ -32,7 +32,7 @@ export type MilestonePresetCreateFields = {
 
 /**
  * Resolved copy and markdown for POST+PATCH after create. `t` must be
- * `useTranslations('analytics.campaigns.chat')`.
+ * `useTranslations('analytics.workflows.chat')`.
  */
 export function getMilestonePresetCreateFields(
   presetId: MilestonePresetId,

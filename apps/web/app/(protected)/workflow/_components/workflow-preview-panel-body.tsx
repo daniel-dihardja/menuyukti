@@ -20,10 +20,10 @@ import {
 import { MilestoneDataPreview } from './milestone-preview/milestone-data-preview'
 import { useTimelineWorkspaceState } from './timeline-context'
 
-const PREVIEW_TITLE_ID = 'campaign-preview-panel-title'
+const PREVIEW_TITLE_ID = 'workflow-preview-panel-title'
 
-export function CampaignPreviewPanelBody() {
-  const tWorkspace = useTranslations('analytics.campaigns.workspace')
+export function WorkflowPreviewPanelBody() {
+  const tWorkspace = useTranslations('analytics.workflows.workspace')
   const {
     milestoneState: { milestones },
   } = useTimelineWorkspaceState()

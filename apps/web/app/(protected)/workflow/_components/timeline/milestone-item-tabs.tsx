@@ -132,7 +132,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     inputSaveStatus,
     savingInput,
   } = model
-  const t = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows.chat')
   const helpDescription = useMemo(() => getMilestoneHelpDescription(milestone, t), [milestone, t])
 
   const optionalNotesCopy = useMemo(() => {

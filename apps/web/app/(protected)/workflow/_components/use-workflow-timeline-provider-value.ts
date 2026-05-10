@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 
-import type { CampaignMilestoneUiState } from './campaign-milestone-reducer'
+import type { WorkflowMilestoneUiState } from './workflow-milestone-reducer'
 import {
   splitMilestoneUiState,
   type TimelineActions,
@@ -14,7 +14,7 @@ import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 import type { MilestoneDataValue, MilestoneInput, PassCriteriaRow } from './timeline/types'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
-export type CampaignTimelineOpsHandles = {
+export type WorkflowTimelineOpsHandles = {
   handleCreateMilestone: () => boolean | Promise<boolean>
   handleCreateMilestoneFromPreset: (presetId: MilestonePresetId) => boolean | Promise<boolean>
   handleDeleteMilestone: (id: string) => void | Promise<void>
@@ -28,20 +28,20 @@ export type CampaignTimelineOpsHandles = {
   handleExportWorkflow: () => void | Promise<void>
 }
 
-export type CampaignTimelineProviderSlices = {
+export type WorkflowTimelineProviderSlices = {
   actions: TimelineActions
   chat: TimelineChatState
   workspace: TimelineWorkspaceStateValue
 }
 
-export function useCampaignTimelineProviderSlices(
-  milestoneUi: CampaignMilestoneUiState,
+export function useWorkflowTimelineProviderSlices(
+  milestoneUi: WorkflowMilestoneUiState,
   workflowId: string,
   isChatBusy: boolean,
   selectedMilestoneId: string | null,
   onSelectMilestone: (id: string | null) => void,
-  ops: CampaignTimelineOpsHandles,
-): CampaignTimelineProviderSlices {
+  ops: WorkflowTimelineOpsHandles,
+): WorkflowTimelineProviderSlices {
   const { milestoneState, errors } = useMemo(
     () => splitMilestoneUiState(milestoneUi),
     [milestoneUi],

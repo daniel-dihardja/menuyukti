@@ -1,6 +1,6 @@
 import type { TimelineMilestone } from './timeline/types'
 
-export type CampaignMilestoneUiState = {
+export type WorkflowMilestoneUiState = {
   milestones: TimelineMilestone[]
   creating: boolean
   createError: string | null
@@ -25,9 +25,9 @@ export type CampaignMilestoneUiState = {
   exportError: string | null
 }
 
-export function createInitialCampaignMilestoneUiState(
+export function createInitialWorkflowMilestoneUiState(
   milestones: TimelineMilestone[],
-): CampaignMilestoneUiState {
+): WorkflowMilestoneUiState {
   return {
     milestones,
     creating: false,
@@ -53,24 +53,24 @@ export function createInitialCampaignMilestoneUiState(
   }
 }
 
-export type CampaignMilestoneAction =
+export type WorkflowMilestoneAction =
   | { type: 'RESET'; milestones: TimelineMilestone[] }
   | {
       type: 'PATCH'
-      patch: Partial<CampaignMilestoneUiState>
+      patch: Partial<WorkflowMilestoneUiState>
     }
   | {
       type: 'UPDATE_MILESTONES'
       updater: (prev: TimelineMilestone[]) => TimelineMilestone[]
     }
 
-export function campaignMilestoneReducer(
-  state: CampaignMilestoneUiState,
-  action: CampaignMilestoneAction,
-): CampaignMilestoneUiState {
+export function workflowMilestoneReducer(
+  state: WorkflowMilestoneUiState,
+  action: WorkflowMilestoneAction,
+): WorkflowMilestoneUiState {
   switch (action.type) {
     case 'RESET':
-      return createInitialCampaignMilestoneUiState(action.milestones)
+      return createInitialWorkflowMilestoneUiState(action.milestones)
     case 'PATCH':
       return { ...state, ...action.patch }
     case 'UPDATE_MILESTONES':

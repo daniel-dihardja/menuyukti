@@ -366,7 +366,7 @@ function MarkdownEditFieldEditor({
   embeddedHeight = 'default',
   manualSave,
 }: MarkdownEditFieldEditProps) {
-  const t = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows.chat')
   const panelCtx = useContext(PanelFullscreenContext)
   const expandButtonRef = useRef<HTMLButtonElement>(null)
   const panelCtxRef = useRef(panelCtx)

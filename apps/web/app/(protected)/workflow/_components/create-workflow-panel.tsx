@@ -57,14 +57,14 @@ function SectionLabel({ children }: { children: ReactNode }) {
 }
 
 function CreateWorkflowLocationSection({ branches }: LocationSectionProps) {
-  const t = useTranslations('analytics.campaigns')
-  const tPanel = useTranslations('analytics.campaigns.createWorkflowPanel')
+  const t = useTranslations('analytics.workflows')
+  const tPanel = useTranslations('analytics.workflows.createWorkflowPanel')
 
   return (
     <LocationSelect
       branches={branches}
       className="w-full max-w-none"
-      id="campaigns-location-select"
+      id="workflow-location-select"
       label={tPanel('sectionLocation')}
       placeholder={branches.length > 1 ? t('branchPlaceholder') : t('branchLabel')}
     />
@@ -90,10 +90,10 @@ function CreateWorkflowDataAndTemplateSection({
   presetKey,
   onPresetKeyChange,
 }: DataAndTemplateSectionProps) {
-  const t = useTranslations('analytics.campaigns')
-  const tPanel = useTranslations('analytics.campaigns.createWorkflowPanel')
-  const tNew = useTranslations('analytics.campaigns.newWorkflowDialog')
-  const tChat = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows')
+  const tPanel = useTranslations('analytics.workflows.createWorkflowPanel')
+  const tNew = useTranslations('analytics.workflows.newWorkflowDialog')
+  const tChat = useTranslations('analytics.workflows.chat')
 
   return (
     <>
@@ -111,7 +111,7 @@ function CreateWorkflowDataAndTemplateSection({
           ) : analyticsRuns.length === 0 ? (
             <p
               className="rounded-md border border-dashed bg-muted/30 px-3 py-2.5 text-muted-foreground text-sm leading-snug"
-              id="campaigns-analytics-run-empty"
+              id="workflow-analytics-run-empty"
             >
               {t('analyticsRunNone')}
             </p>
@@ -123,7 +123,7 @@ function CreateWorkflowDataAndTemplateSection({
               <SelectTrigger
                 aria-label={t('analyticsRunLabel')}
                 className="h-10 w-full min-w-0"
-                id="campaigns-analytics-run-select"
+                id="workflow-analytics-run-select"
               >
                 <SelectValue placeholder={t('analyticsRunPlaceholder')} />
               </SelectTrigger>
@@ -144,7 +144,7 @@ function CreateWorkflowDataAndTemplateSection({
             <SelectTrigger
               aria-label={t('templateLabel')}
               className="h-10 w-full min-w-0"
-              id="campaigns-preset-select"
+              id="workflow-preset-select"
             >
               <SelectValue placeholder={t('templateLabel')} />
             </SelectTrigger>
@@ -179,8 +179,8 @@ function CreateWorkflowFooterSection({
   importError,
   onCreate,
 }: FooterSectionProps) {
-  const tPanel = useTranslations('analytics.campaigns.createWorkflowPanel')
-  const tNew = useTranslations('analytics.campaigns.newWorkflowDialog')
+  const tPanel = useTranslations('analytics.workflows.createWorkflowPanel')
+  const tNew = useTranslations('analytics.workflows.newWorkflowDialog')
 
   return (
     <>
@@ -259,7 +259,7 @@ export function CreateWorkflowPanel({
   importError,
   hasSelectedLocation,
 }: CreateWorkflowPanelProps) {
-  const tPanel = useTranslations('analytics.campaigns.createWorkflowPanel')
+  const tPanel = useTranslations('analytics.workflows.createWorkflowPanel')
 
   return (
     <Card className="overflow-hidden border bg-card shadow-sm ring-1 ring-border/50">

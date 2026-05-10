@@ -36,7 +36,7 @@ export function TimelineRailMarker({
   status: TimelineMilestoneStatus
   compact?: boolean
 }) {
-  const t = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows.chat')
   const labels = {
     complete: t('milestoneStatusComplete'),
     failed: t('milestoneStatusFailed'),

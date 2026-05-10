@@ -27,7 +27,7 @@ import {
   type NodesDataRaw,
   type UpdateNodeDataRaw,
 } from '@/lib/graphql/queries'
-import { passCriteriasFromMilestoneData } from '@/app/(protected)/campaigns/_components/milestone-map'
+import { passCriteriasFromMilestoneData } from '@/app/(protected)/workflow/_components/milestone-map'
 import { milestoneIdParamSchema, patchMilestoneSchema, workflowIdParamSchema } from '../schema'
 
 type RouteContext = {

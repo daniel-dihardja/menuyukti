@@ -10,7 +10,7 @@ import { getCachedWorkflowCampaignTree } from '@/lib/graphql/cached-queries'
 import type { WorkflowNode } from '@/lib/graphql/queries'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 
-import { CampaignWorkspace } from '../_components/campaign-workspace'
+import { WorkflowWorkspace } from '../_components/workflow-workspace'
 import { milestoneNodeToTimelineMilestone } from '../_components/milestone-map'
 import type { TimelineMilestone } from '../_components/timeline-workspace'
 
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!parsed.success) {
     return { title: 'Workflow' }
   }
-  const tChat = await getTranslations('analytics.campaigns.chat')
+  const tChat = await getTranslations('analytics.workflows.chat')
   const shortId = parsed.data.slice(0, 8)
   const title = tChat('pageTitle', { id: shortId })
   return { title }
@@ -51,12 +51,12 @@ export default async function Page({ params }: PageProps) {
     notFound()
   }
 
-  const campaignNodeRaw = parseNode(tree.workflow)
-  if (campaignNodeRaw.nodeType !== 'workflow') {
+  const workflowNodeRaw = parseNode(tree.workflow)
+  if (workflowNodeRaw.nodeType !== 'workflow') {
     notFound()
   }
-  const campaignNode = campaignNodeRaw as WorkflowNode
-  const locationId = campaignNode.locationId
+  const workflowNode = workflowNodeRaw as WorkflowNode
+  const locationId = workflowNode.locationId
   if (locationId == null) {
     notFound()
   }
@@ -64,23 +64,23 @@ export default async function Page({ params }: PageProps) {
   const initialMilestones: TimelineMilestone[] = tree.milestones.map((bundle) => {
     const m = parseNode(bundle.milestone)
     if (m.nodeType !== 'milestone') {
-      throw new Error('Invariant: expected milestone node in campaign tree')
+      throw new Error('Invariant: expected milestone node in workflow tree')
     }
     return milestoneNodeToTimelineMilestone(m as MilestoneNode)
   })
 
-  const tCampaigns = await getTranslations('analytics.campaigns')
-  const tChat = await getTranslations('analytics.campaigns.chat')
+  const tWorkflows = await getTranslations('analytics.workflows')
+  const tChat = await getTranslations('analytics.workflows.chat')
   const title = tChat('pageTitle', { id: workflowId.slice(0, 8) })
 
   return (
     <AnalyticsPageShell
       title={title}
-      breadcrumbs={[{ label: tCampaigns('title'), href: routes.workflows.list }, { label: title }]}
+      breadcrumbs={[{ label: tWorkflows('title'), href: routes.workflows.list }, { label: title }]}
       contentWidth="full"
       mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
-      <CampaignWorkspace
+      <WorkflowWorkspace
         initialMilestones={initialMilestones}
         locationId={locationId}
         workflowId={workflowId}

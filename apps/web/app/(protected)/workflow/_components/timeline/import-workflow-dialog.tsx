@@ -73,7 +73,7 @@ export function ImportWorkflowDialog({
   onOpenChange,
   workflowId,
 }: ImportWorkflowDialogProps) {
-  const t = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows.chat')
   const format = useFormatter()
   const router = useRouter()
 

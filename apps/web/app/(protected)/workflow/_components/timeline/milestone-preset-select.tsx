@@ -36,7 +36,7 @@ export function MilestoneCreateControls({
   onCreateMilestone,
   onCreateMilestoneFromPreset,
 }: MilestoneCreateControlsProps) {
-  const t = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows.chat')
   const [presetChoice, setPresetChoice] = useState<string>(MILESTONE_PRESET_NONE)
 
   const handleCreateClick = async () => {

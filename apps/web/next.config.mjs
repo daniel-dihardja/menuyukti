@@ -24,8 +24,10 @@ const nextConfig = {
     return [
       { source: '/agent', destination: '/advisor', permanent: true },
       { source: '/agent/:path*', destination: '/advisor/:path*', permanent: true },
-      { source: '/workflows', destination: '/campaigns', permanent: true },
-      { source: '/workflows/:path*', destination: '/campaigns/:path*', permanent: true },
+      { source: '/campaigns', destination: '/workflow', permanent: true },
+      { source: '/campaigns/:path*', destination: '/workflow/:path*', permanent: true },
+      { source: '/workflows', destination: '/workflow', permanent: true },
+      { source: '/workflows/:path*', destination: '/workflow/:path*', permanent: true },
     ]
   },
   async rewrites() {

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, type ReactNode } from 'react'
 
-import type { CampaignMilestoneUiState } from './campaign-milestone-reducer'
+import type { WorkflowMilestoneUiState } from './workflow-milestone-reducer'
 import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 
 import type { MilestoneDataValue, MilestoneInput, PassCriteriaRow } from './timeline/types'
@@ -10,7 +10,7 @@ import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
 /** Milestone list + in-flight ids (no error strings). */
 export type TimelineMilestoneState = Pick<
-  CampaignMilestoneUiState,
+  WorkflowMilestoneUiState,
   | 'milestones'
   | 'creating'
   | 'deletingMilestoneId'
@@ -25,7 +25,7 @@ export type TimelineMilestoneState = Pick<
 >
 
 export type TimelineErrors = Pick<
-  CampaignMilestoneUiState,
+  WorkflowMilestoneUiState,
   | 'createError'
   | 'deleteError'
   | 'moveError'
@@ -73,7 +73,7 @@ const TimelineActionsContext = createContext<TimelineActions | null>(null)
 const TimelineChatContext = createContext<TimelineChatState | null>(null)
 const TimelineWorkspaceStateContext = createContext<TimelineWorkspaceStateValue | null>(null)
 
-export function splitMilestoneUiState(ui: CampaignMilestoneUiState): {
+export function splitMilestoneUiState(ui: WorkflowMilestoneUiState): {
   milestoneState: TimelineMilestoneState
   errors: TimelineErrors
 } {

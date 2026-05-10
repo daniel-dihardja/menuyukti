@@ -13,13 +13,13 @@ import {
   TooltipTrigger,
 } from '@workspace/ui/components/tooltip'
 
-export type CreateCampaignFromReportButtonProps = {
+export type CreateWorkflowFromReportButtonProps = {
   analyticsId: number
 }
 
-export function CreateCampaignFromReportButton({
+export function CreateWorkflowFromReportButton({
   analyticsId,
-}: CreateCampaignFromReportButtonProps) {
+}: CreateWorkflowFromReportButtonProps) {
   const t = useTranslations('analytics.shared')
   const href = `${routes.workflows.list}?fromAnalytics=${String(analyticsId)}`
 
@@ -30,12 +30,12 @@ export function CreateCampaignFromReportButton({
           <Button asChild variant="secondary">
             <Link className="inline-flex items-center gap-2" href={href}>
               <Megaphone aria-hidden data-icon="inline-start" />
-              {t('createCampaignFromReport')}
+              {t('createWorkflowFromReport')}
             </Link>
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{t('createCampaignFromReportHint')}</p>
+          <p>{t('createWorkflowFromReportHint')}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

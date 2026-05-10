@@ -8,7 +8,7 @@ import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { PageHeading } from '@/components/page-heading'
 import { getCachedAnalyticsRun, getCachedMenuEngineeringMatrix } from '@/lib/graphql/cached-queries'
 import { getAppCurrencyCode, getAppCurrencyLocale } from '@/lib/app-currency'
-import { CreateCampaignFromReportButton } from '@/components/create-campaign-from-report-button'
+import { CreateWorkflowFromReportButton } from '@/components/create-workflow-from-report-button'
 import { MatrixView } from './matrix-view'
 
 type PageProps = {
@@ -61,7 +61,7 @@ export default async function Page({ params }: PageProps) {
           <Button asChild variant="outline">
             <Link href={routes.analytics.sales}>{tShared('backToSales')}</Link>
           </Button>
-          <CreateCampaignFromReportButton analyticsId={analyticsId} />
+          <CreateWorkflowFromReportButton analyticsId={analyticsId} />
         </div>
 
         {!matrix ? (

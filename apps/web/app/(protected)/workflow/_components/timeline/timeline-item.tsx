@@ -71,7 +71,7 @@ function TimelineItemInner({
   isChatBusy,
   isMobile = false,
 }: TimelineItemProps) {
-  const t = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows.chat')
   const datesInputFromMilestone = (
     raw: TimelineMilestone['milestoneInput'],
   ): { startDate: string; endDate: string } => {

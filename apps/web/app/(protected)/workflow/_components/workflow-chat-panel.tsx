@@ -51,16 +51,16 @@ import { useSearchParams } from 'next/navigation'
 import { parseAsString, useQueryState } from 'nuqs'
 import type { TimelineMilestone } from './timeline-workspace'
 import { TimelineWorkspace } from './timeline-workspace'
-import { CampaignChatLayout } from './campaign-chat-layout'
+import { WorkflowChatLayout } from './workflow-chat-layout'
 import { ChatMessageParts } from '@/components/chat-message-parts'
 
 import {
-  campaignMilestoneReducer,
-  createInitialCampaignMilestoneUiState,
-} from './campaign-milestone-reducer'
+  workflowMilestoneReducer,
+  createInitialWorkflowMilestoneUiState,
+} from './workflow-milestone-reducer'
 import { TimelineProvider } from './timeline-context'
-import { useCampaignPreviewVisibility } from './use-campaign-preview-visibility'
-import { useCampaignTimelineProviderSlices } from './use-campaign-timeline-provider-value'
+import { useWorkflowPreviewVisibility } from './use-workflow-preview-visibility'
+import { useWorkflowTimelineProviderSlices } from './use-workflow-timeline-provider-value'
 import { useMilestoneOperations } from './use-milestone-operations'
 import { WorkflowChatComposerMenus } from './workflow-chat-composer-menus'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
@@ -74,18 +74,18 @@ function workflowChatSessionStorageKey(workflowId: string) {
 const UUID_RE = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i
 
 /** Code-split preview; collapsible panel keeps the subtree mounted when hidden on desktop. */
-const CampaignPreviewPanelBodyLazy = dynamic(
-  () => import('./campaign-preview-panel-body').then((m) => m.CampaignPreviewPanelBody),
+const WorkflowPreviewPanelBodyLazy = dynamic(
+  () => import('./workflow-preview-panel-body').then((m) => m.WorkflowPreviewPanelBody),
   {
     ssr: false,
     loading: () => <Skeleton className="h-28 w-full rounded-lg" />,
   },
 )
 
-function CampaignPreviewToggleButton() {
-  const tWorkspace = useTranslations('analytics.campaigns.workspace')
+function WorkflowPreviewToggleButton() {
+  const tWorkspace = useTranslations('analytics.workflows.workspace')
   const [isPreviewTransitionPending, startPreviewTransition] = useTransition()
-  const { previewOpen, setPreviewOpen } = useCampaignPreviewVisibility()
+  const { previewOpen, setPreviewOpen } = useWorkflowPreviewVisibility()
 
   const handlePreviewToggle = useCallback(() => {
     startPreviewTransition(() => {
@@ -119,31 +119,31 @@ function CampaignPreviewToggleButton() {
   )
 }
 
-export type CampaignChatPanelProps = {
+export type WorkflowChatPanelProps = {
   workflowId: string
   initialMilestones: TimelineMilestone[]
   locationId: number
 }
 
-export function CampaignChatPanel({
+export function WorkflowChatPanel({
   workflowId,
   initialMilestones,
   locationId,
-}: CampaignChatPanelProps) {
-  const t = useTranslations('analytics.campaigns.chat')
-  const tSlash = useTranslations('analytics.campaigns.chat.slashCommands')
-  const tMention = useTranslations('analytics.campaigns.chat.mentionMenu')
+}: WorkflowChatPanelProps) {
+  const t = useTranslations('analytics.workflows.chat')
+  const tSlash = useTranslations('analytics.workflows.chat.slashCommands')
+  const tMention = useTranslations('analytics.workflows.chat.mentionMenu')
   const [text, setText] = useState('')
   const [, startPreviewTransition] = useTransition()
 
-  const { previewOpen, setPreviewOpen } = useCampaignPreviewVisibility()
+  const { previewOpen, setPreviewOpen } = useWorkflowPreviewVisibility()
   const isDesktop = useMediaQuery('(min-width: 768px)')
   const previewPanelRef = usePanelRef()
 
   const [milestoneUi, dispatch] = useReducer(
-    campaignMilestoneReducer,
+    workflowMilestoneReducer,
     initialMilestones,
-    createInitialCampaignMilestoneUiState,
+    createInitialWorkflowMilestoneUiState,
   )
 
   useEffect(() => {
@@ -364,7 +364,7 @@ export function CampaignChatPanel({
   const isSubmitDisabled = !text.trim() || status === 'streaming' || status === 'submitted'
   const isChatBusy = status === 'streaming' || status === 'submitted'
 
-  const timelineSlices = useCampaignTimelineProviderSlices(
+  const timelineSlices = useWorkflowTimelineProviderSlices(
     milestoneUi,
     workflowId,
     isChatBusy,
@@ -535,14 +535,14 @@ export function CampaignChatPanel({
       chat={timelineSlices.chat}
       workspace={timelineSlices.workspace}
     >
-      <CampaignChatLayout
+      <WorkflowChatLayout
         chatPane={chatPane}
         isDesktop={isDesktop}
-        previewPane={<CampaignPreviewPanelBodyLazy />}
+        previewPane={<WorkflowPreviewPanelBodyLazy />}
         previewPanelRef={previewPanelRef}
         timelinePane={
           <TimelineWorkspace
-            timelineTrailing={isDesktop ? <CampaignPreviewToggleButton /> : null}
+            timelineTrailing={isDesktop ? <WorkflowPreviewToggleButton /> : null}
           />
         }
       />

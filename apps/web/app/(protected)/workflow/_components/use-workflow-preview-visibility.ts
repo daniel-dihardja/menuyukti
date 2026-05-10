@@ -3,7 +3,7 @@
 import { parseAsStringLiteral, useQueryState } from 'nuqs'
 import { useCallback, useEffect, useState } from 'react'
 
-const STORAGE_KEY = 'menuyukti:campaignPreview:v1'
+const STORAGE_KEY = 'menuyukti:workflowPreview:v1'
 
 function readLocalStorage(): boolean | null {
   if (typeof window === 'undefined') return null
@@ -17,7 +17,7 @@ function readLocalStorage(): boolean | null {
   return null
 }
 
-export function useCampaignPreviewVisibility() {
+export function useWorkflowPreviewVisibility() {
   const [queryPreview, setQueryPreview] = useQueryState(
     'preview',
     parseAsStringLiteral(['0', '1'] as const),

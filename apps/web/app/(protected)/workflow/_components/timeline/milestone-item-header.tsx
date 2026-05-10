@@ -31,7 +31,7 @@ export type MilestoneItemHeaderProps = {
 }
 
 export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
-  const t = useTranslations('analytics.campaigns.chat')
+  const t = useTranslations('analytics.workflows.chat')
   const {
     milestone,
     isMobile,

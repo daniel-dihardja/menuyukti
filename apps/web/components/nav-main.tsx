@@ -45,7 +45,7 @@ type NavItem = {
   separatorBefore?: boolean
 }
 
-/** Day-to-day marketing work: overview, campaigns, performance, locations. */
+/** Day-to-day marketing work: overview, workflow, performance, locations. */
 const NAV_WORKSPACE: NavItem[] = [
   {
     key: 'dashboard',
