@@ -1567,7 +1567,12 @@
           "aria": "Category WE slider for {category}",
           "hint": "When enabled, moving this slider updates WE and COGS for all menu items in this category."
         },
-        "uncategorizedTitle": "Uncategorized Menu Items"
+        "uncategorizedTitle": "Uncategorized Menu Items",
+        "sortNameAsc": "Name A–Z",
+        "sortNameDesc": "Name Z–A",
+        "sortNameHint": "Sort menu items by name",
+        "sortNameButtonAriaAsc": "Menu items sorted A to Z. Activate to sort Z to A.",
+        "sortNameButtonAriaDesc": "Menu items sorted Z to A. Activate to sort A to Z."
       },
       "actions": {
         "save": "Save COGS",
