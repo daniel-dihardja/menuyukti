@@ -49,6 +49,12 @@ export const MILESTONE_RUN_TOOLS_REGISTRY: readonly MilestoneRunToolMeta[] = [
       'Optional extra tool for the scheduler skill: list each calendar day from start_date through end_date (YYYY-MM-DD). Set exclude_weekends and/or exclude_holidays to omit weekend days or dates in public_holiday_dates (from Campaign Brief `publicHolidays`). Returns a markdown table or a message if the range is invalid or no dates remain after filters.',
   },
   {
+    id: 'search_web',
+    name: 'Search web',
+    description:
+      'When TAVILY_API_KEY is set on the agents service: Tavily-backed web search for current external facts (titles, URLs, snippets as JSON). Prefer prior milestone data and internal tools first; omitted entirely when the key is unset.',
+  },
+  {
     id: 'write_result_data',
     name: 'Write result data',
     description:

@@ -20,7 +20,7 @@ make dev
 
 - API: `http://127.0.0.1:8001`
 - Health: `GET /health`
-- Streaming chat: `POST /chat` — `text/event-stream` (SSE). Body: **`messages`** must contain **exactly one** `user` message (the new turn); history is loaded from the LangGraph checkpointer. **`workflow_id`** (campaign) or **`agent_thread_id`** (standalone agent) selects the thread; **`milestone_id`** / **`location_id`** are optional and passed into the tool via run config. Set **`LANGGRAPH_CHECKPOINT_DATABASE_URL`** for durable Postgres checkpoints (see `.env.example`).
+- Streaming chat: `POST /chat` — `text/event-stream` (SSE). Body: **`messages`** must contain **exactly one** `user` message (the new turn); history is loaded from the LangGraph checkpointer. **`workflow_id`** (campaign) or **`agent_thread_id`** (standalone agent) selects the thread; **`milestone_id`** / **`location_id`** are optional and passed into the tool via run config. Set **`LANGGRAPH_CHECKPOINT_DATABASE_URL`** for durable Postgres checkpoints (see `.env.example`). Optional **`TAVILY_API_KEY`** enables the **`search_web`** tool (Tavily) for bounded web retrieval in chat and in the milestone tool bundle (`make_milestone_run_tools`).
 - **Core:** `POST /format-markdown` — JSON body `{"content":"...","preset":"milestone-data"}` returns `{"formatted":"..."}`. Preset-driven Markdown cleanup for free-form notes (platform helper in `agents/core/format_markdown/`, not structured milestonedata).
 
 ## Milestone run
@@ -66,5 +66,7 @@ Environment variables (optional overrides):
 | `MENUYUKTI_ADAPTER_DEV_HTTP_LOCALHOST`   | _(off)_   | Set to `1` / `true` / `yes` to allow dev HTTP to loopback |
 | `MENUYUKTI_ADAPTER_DEV_HTTP_PORTS`       | `3090`    | Comma-separated allowlist for dev HTTP ports              |
 | `MENUYUKTI_ADAPTER_DEV_HTTP_EXTRA_HOSTS` | _(empty)_ | Extra allowed hostnames for dev HTTP (comma-separated)    |
+
+| `TAVILY_API_KEY` | _(unset)_ | Optional. Enables Tavily **`search_web`** in chat ReAct and in `make_milestone_run_tools` (see `.env.example`). |
 
 There is a residual DNS time-of-check vs time-of-use window versus the actual TCP connect; mitigating that fully requires stronger infrastructure (custom transport / pinning).
