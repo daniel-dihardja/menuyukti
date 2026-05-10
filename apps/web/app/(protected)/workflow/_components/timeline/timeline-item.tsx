@@ -15,6 +15,7 @@ import { cn } from '@workspace/ui/lib/utils'
 import { MilestoneDataPreview } from '../milestone-preview/milestone-data-preview'
 import type { TimelineActions, TimelineMilestoneState } from '../timeline-context'
 import { MilestoneItemHeader } from './milestone-item-header'
+import { MilestoneItemMobileRunModel } from './milestone-item-mobile-run-model'
 import { TimelineItemHeaderProvider } from './timeline-item-header-context'
 import { MilestoneItemTabs } from './milestone-item-tabs'
 import { MilestoneRunProgressStrip } from './milestone-run-progress'
@@ -491,40 +492,41 @@ function TimelineItemInner({
               }}
             >
               <MilestoneItemHeader open={open} />
+              {isMilestoneRunning ? <MilestoneRunProgressStrip runningStep={runningStep} /> : null}
+              <CollapsibleContent
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <MilestoneItemMobileRunModel />
+                <MilestoneItemTabs
+                  model={{
+                    addCriteriaInputId,
+                    addCriteriaInputRef,
+                    criteriaRows,
+                    goalDraft,
+                    goalFieldId,
+                    handleAddPassCriterion,
+                    handleGoalSave,
+                    handleOptionalNotesBlur,
+                    handleOptionalNotesFocus,
+                    handleRemovePassCriterion,
+                    hasResult,
+                    inputDraft,
+                    inputSaveStatus,
+                    isDatesPreset,
+                    isMilestoneRunning,
+                    milestone,
+                    optionalNotesDraft,
+                    savingGoal,
+                    savingInput,
+                    savingPassCriteria,
+                    setGoalDraft,
+                    setInputDraft,
+                    setOptionalNotesDraft,
+                  }}
+                />
+              </CollapsibleContent>
             </TimelineItemHeaderProvider>
-            {isMilestoneRunning ? <MilestoneRunProgressStrip runningStep={runningStep} /> : null}
-            <CollapsibleContent
-              onClick={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
-            >
-              <MilestoneItemTabs
-                model={{
-                  addCriteriaInputId,
-                  addCriteriaInputRef,
-                  criteriaRows,
-                  goalDraft,
-                  goalFieldId,
-                  handleAddPassCriterion,
-                  handleGoalSave,
-                  handleOptionalNotesBlur,
-                  handleOptionalNotesFocus,
-                  handleRemovePassCriterion,
-                  hasResult,
-                  inputDraft,
-                  inputSaveStatus,
-                  isDatesPreset,
-                  isMilestoneRunning,
-                  milestone,
-                  optionalNotesDraft,
-                  savingGoal,
-                  savingInput,
-                  savingPassCriteria,
-                  setGoalDraft,
-                  setInputDraft,
-                  setOptionalNotesDraft,
-                }}
-              />
-            </CollapsibleContent>
           </Card>
         </Collapsible>
         {isMobile ? (

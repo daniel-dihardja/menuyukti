@@ -59,7 +59,9 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
               </span>
             ) : null}
             <span className="inline-flex min-w-0 items-center gap-1.5">
-              <MilestoneIcon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+              {!isMobile || railStatus === 'empty' ? (
+                <MilestoneIcon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+              ) : null}
               <span className="min-w-0 truncate">{milestone.title}</span>
             </span>
           </div>
@@ -68,13 +70,15 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
       <CardAction className="flex items-center gap-1">
         {actions.run ? (
           <span className="inline-flex items-center gap-2">
-            <span className="inline-flex shrink-0" onPointerDown={(e) => e.stopPropagation()}>
-              <ChatGatewayModelSelect
-                disabled={isRunning || runState === 'blocked'}
-                onValueChange={onMilestoneRunChatModelChange}
-                value={milestoneRunChatModel}
-              />
-            </span>
+            {!isMobile ? (
+              <span className="inline-flex shrink-0" onPointerDown={(e) => e.stopPropagation()}>
+                <ChatGatewayModelSelect
+                  disabled={isRunning || runState === 'blocked'}
+                  onValueChange={onMilestoneRunChatModelChange}
+                  value={milestoneRunChatModel}
+                />
+              </span>
+            ) : null}
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="inline-flex">
