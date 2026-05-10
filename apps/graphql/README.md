@@ -63,8 +63,6 @@ To populate the dev database with the Jan–Mar 2025 report and menu COGS for ma
 
 The seeded `Location` row gets `clerk_user_id` from, in order: **`USER_ID` on the make command** (e.g. `make dev-data USER_ID=user_2abc…`), then the **`DEV_CLERK_USER_ID`** environment variable, then the default `dev_local_user`. Use your real Clerk user id (same as the web app’s `X-User-Id`) so ownership checks work when signed in. Examples: `make dev-data USER_ID=user_xxx` or `DEV_CLERK_USER_ID=user_xxx make dev-data`.
 
-The same run seeds one **workspace API adapter tool** (API proxy) on the dev workspace: **Menu Promotions Mock API** (`tool_key` `menu_promotions_mock_api`), URL `http://127.0.0.1:3090/api/mock` by default, aligned with the `custom-api-tool-mock-demo` workflow preset and `apps/mock-server`. Override the URL with **`DEV_MOCK_PROMOTIONS_URL`** if your mock server listens elsewhere.
-
 It also seeds a sample **`location_manual_brief_input`** row (owner click-first brief hints) on the dev location so the location edit UI and `get_location_profile` have realistic manual context without extra clicks.
 
 ## Orders fact schema (next step)
