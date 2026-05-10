@@ -26,10 +26,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!parsed.success) {
     return { title: 'Workflow' }
   }
+  const workflowId = parsed.data
+  const { userId } = await auth()
+  if (userId) {
+    const treeRaw = await getCachedWorkflowCampaignTree(userId, workflowId)
+    const tree = treeRaw.workflowCampaignTree
+    if (tree) {
+      const workflowNodeRaw = parseNode(tree.workflow)
+      if (workflowNodeRaw.nodeType === 'workflow') {
+        const name = (workflowNodeRaw as WorkflowNode).name.trim()
+        if (name.length > 0) {
+          return { title: name }
+        }
+      }
+    }
+  }
   const tChat = await getTranslations('analytics.workflows.chat')
-  const shortId = parsed.data.slice(0, 8)
-  const title = tChat('pageTitle', { id: shortId })
-  return { title }
+  return { title: tChat('pageTitle', { id: workflowId.slice(0, 8) }) }
 }
 
 export default async function Page({ params }: PageProps) {
@@ -71,12 +84,17 @@ export default async function Page({ params }: PageProps) {
 
   const tWorkflows = await getTranslations('analytics.workflows')
   const tChat = await getTranslations('analytics.workflows.chat')
-  const title = tChat('pageTitle', { id: workflowId.slice(0, 8) })
+  const fallbackTitle = tChat('pageTitle', { id: workflowId.slice(0, 8) })
+  const workflowDisplayName =
+    workflowNode.name.trim().length > 0 ? workflowNode.name.trim() : fallbackTitle
 
   return (
     <AnalyticsPageShell
-      title={title}
-      breadcrumbs={[{ label: tWorkflows('title'), href: routes.workflows.list }, { label: title }]}
+      title={workflowDisplayName}
+      breadcrumbs={[
+        { label: tWorkflows('title'), href: routes.workflows.list },
+        { label: workflowDisplayName },
+      ]}
       contentWidth="full"
       mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
