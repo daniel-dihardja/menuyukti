@@ -94,6 +94,16 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
             notes = value.get("notes")
             if notes is not None and not isinstance(notes, str):
                 return "milestoneInput.value.notes must be a string when provided."
+            selected = value.get("selectedMenuCategories")
+            if selected is not None:
+                if not isinstance(selected, list):
+                    return "milestoneInput.value.selectedMenuCategories must be an array when provided."
+                for item in selected:
+                    if not isinstance(item, str):
+                        return (
+                            "milestoneInput.value.selectedMenuCategories must contain "
+                            "only strings when provided."
+                        )
 
     return None
 

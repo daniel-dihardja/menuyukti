@@ -109,7 +109,7 @@ export type PostSchedulerMilestoneData = {
 export type PostSchedulerPostItem = PostSchedulerMilestoneData['weeklySlotPlan'][number]
 
 export type PromotionCandidatesCategoryBlock = {
-  category: 'FOOD' | 'DRINK'
+  category: string
   starItems: PromotionCandidateMenuItem[]
   puzzleItems: PromotionCandidateMenuItem[]
 }

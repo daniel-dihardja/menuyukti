@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest'
 import { patchMilestoneSchema } from '@/app/api/workflows/[id]/milestones/schema'
 import {
   milestonePresetHasDefaultOptionalNotesInput,
+  normalizePromotionCandidatesInput,
   optionalNotesFromMilestoneInput,
+  promotionCandidatesInputFromMilestoneInput,
 } from '@/lib/milestones/milestone-input-tab'
 import { getMilestonePresetCreateFields } from '@/lib/milestones/preset-definitions'
 
@@ -11,7 +13,7 @@ describe('milestone optional notes', () => {
   it('milestonePresetHasDefaultOptionalNotesInput includes supported presets', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('restaurant_campaign_brief')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('post_scheduler')).toBe(true)
-    expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput('culture_hooks')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('format_mix')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('dates')).toBe(false)
@@ -25,6 +27,51 @@ describe('milestone optional notes', () => {
         'post_scheduler',
       ),
     ).toBe('  weekdays only  ')
+  })
+
+  it('promotionCandidatesInputFromMilestoneInput reads notes and categories', () => {
+    expect(
+      promotionCandidatesInputFromMilestoneInput({
+        type: 'promotion_candidates',
+        value: { notes: 'focus lunch', selectedMenuCategories: ['Mains', 'Mains'] },
+      }),
+    ).toEqual({
+      notes: 'focus lunch',
+      selectedMenuCategories: ['Mains', 'Mains'],
+    })
+    expect(
+      normalizePromotionCandidatesInput({
+        notes: '  focus  ',
+        selectedMenuCategories: ['Mains', 'mains', 'Desserts'],
+      }),
+    ).toEqual({
+      notes: 'focus',
+      selectedMenuCategories: ['Mains', 'Desserts'],
+    })
+  })
+
+  it('patchMilestoneSchema accepts promotion_candidates milestoneInput', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      milestoneInput: {
+        type: 'promotion_candidates',
+        value: { notes: 'seasonal', selectedMenuCategories: ['Mains'] },
+      },
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.milestoneInput).toEqual({
+        type: 'promotion_candidates',
+        value: { notes: 'seasonal', selectedMenuCategories: ['Mains'] },
+      })
+    }
+  })
+
+  it('getMilestonePresetCreateFields seeds promotion_candidates milestoneInput', () => {
+    const fields = getMilestonePresetCreateFields('promotion_candidates', (k) => k)
+    expect(fields.milestoneInput).toEqual({
+      type: 'promotion_candidates',
+      value: { notes: '', selectedMenuCategories: [] },
+    })
   })
 
   it('patchMilestoneSchema accepts post_scheduler milestoneInput', () => {

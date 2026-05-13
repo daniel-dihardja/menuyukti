@@ -73,6 +73,11 @@ export default async function Page({ params }: PageProps) {
   if (locationId == null) {
     notFound()
   }
+  const analyticsRunId =
+    typeof workflowNode.data?.analyticsRunId === 'number' &&
+    Number.isInteger(workflowNode.data.analyticsRunId)
+      ? workflowNode.data.analyticsRunId
+      : null
 
   const initialMilestones: TimelineMilestone[] = tree.milestones.map((bundle) => {
     const m = parseNode(bundle.milestone)
@@ -99,6 +104,7 @@ export default async function Page({ params }: PageProps) {
       mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
       <WorkflowWorkspace
+        analyticsRunId={analyticsRunId}
         initialMilestones={initialMilestones}
         locationId={locationId}
         workflowId={workflowId}

@@ -100,51 +100,128 @@ def _extract_main_category(prior_milestones_data: str) -> str:
     return "FOOD"
 
 
+def _read_milestone_input_value(milestone_input: dict[str, Any] | None) -> dict[str, Any]:
+    if not isinstance(milestone_input, dict):
+        return {}
+    value = milestone_input.get("value")
+    return value if isinstance(value, dict) else {}
+
+
+def _read_milestone_input_notes(milestone_input: dict[str, Any] | None) -> str:
+    return str(_read_milestone_input_value(milestone_input).get("notes") or "").strip()
+
+
+def _read_selected_menu_categories(milestone_input: dict[str, Any] | None) -> set[str] | None:
+    """Return None when empty/absent (= include all POS menu categories)."""
+    raw = _read_milestone_input_value(milestone_input).get("selectedMenuCategories")
+    if not isinstance(raw, list) or not raw:
+        return None
+    out: set[str] = set()
+    for item in raw:
+        text = str(item or "").strip()
+        if text:
+            out.add(text)
+    return out if out else None
+
+
+def _category_in_selected(category: str, selected: set[str]) -> bool:
+    key = category.strip()
+    if not key:
+        return False
+    selected_cf = {s.casefold() for s in selected}
+    return key in selected or key.casefold() in selected_cf
+
+
+def _filter_promotion_candidates(
+    promotion_candidates: dict[str, Any] | None,
+    selected: set[str] | None,
+) -> dict[str, Any] | None:
+    if promotion_candidates is None or selected is None:
+        return promotion_candidates
+    grouping = str(promotion_candidates.get("grouping") or "").strip()
+    if grouping != "by_menu_category":
+        return promotion_candidates
+    raw_categories = promotion_candidates.get("categories")
+    if not isinstance(raw_categories, dict):
+        return promotion_candidates
+    filtered = {
+        str(key): bucket
+        for key, bucket in raw_categories.items()
+        if _category_in_selected(str(key), selected)
+    }
+    return {**promotion_candidates, "categories": filtered}
+
+
 def _build_output(
     *,
     main_category: str,
     promotion_candidates: dict[str, Any] | None,
+    owner_notes: str = "",
+    selected_categories: set[str] | None = None,
 ) -> PromotionCandidatesOutput:
-    _VALID_MAIN_CATEGORIES = ("FOOD", "DRINK")
-    categories_map: dict[str, dict[str, list[str]]] = {
-        "FOOD": {"starItems": [], "puzzleItems": []},
-        "DRINK": {"starItems": [], "puzzleItems": []},
-    }
-    notes = ""
+    categories_out: list[dict[str, Any]] = []
+    notes_parts: list[str] = []
+    if owner_notes.strip():
+        notes_parts.append(owner_notes.strip())
 
     if isinstance(promotion_candidates, dict):
         grouping = str(promotion_candidates.get("grouping") or "").strip()
         if grouping == "by_menu_category":
             raw_categories = promotion_candidates.get("categories")
             if isinstance(raw_categories, dict):
-                for raw_key, raw_bucket in raw_categories.items():
-                    key = str(raw_key or "").strip().upper()
-                    if key not in categories_map or not isinstance(raw_bucket, dict):
+                for raw_key in sorted(raw_categories.keys(), key=lambda k: str(k).casefold()):
+                    key = str(raw_key or "").strip()
+                    if not key:
                         continue
-                    categories_map[key]["starItems"] = _norm_items(raw_bucket.get("starItems"))
-                    categories_map[key]["puzzleItems"] = _norm_items(raw_bucket.get("puzzleItems"))
+                    raw_bucket = raw_categories[raw_key]
+                    if not isinstance(raw_bucket, dict):
+                        continue
+                    categories_out.append(
+                        {
+                            "category": key,
+                            "starItems": [
+                                _placeholder_item(n)
+                                for n in _norm_items(raw_bucket.get("starItems"))
+                            ],
+                            "puzzleItems": [
+                                _placeholder_item(n)
+                                for n in _norm_items(raw_bucket.get("puzzleItems"))
+                            ],
+                        }
+                    )
         else:
-            categories_map["FOOD"]["starItems"] = _norm_items(promotion_candidates.get("starItems"))
-            categories_map["FOOD"]["puzzleItems"] = _norm_items(
-                promotion_candidates.get("puzzleItems")
+            categories_out.append(
+                {
+                    "category": "All items",
+                    "starItems": [
+                        _placeholder_item(n)
+                        for n in _norm_items(promotion_candidates.get("starItems"))
+                    ],
+                    "puzzleItems": [
+                        _placeholder_item(n)
+                        for n in _norm_items(promotion_candidates.get("puzzleItems"))
+                    ],
+                }
             )
+            if selected_categories is not None:
+                notes_parts.append(
+                    "Menu category filter was not applied because analytics returned a flat "
+                    "grouping (no POS categories on order lines)."
+                )
 
-    if not any(categories_map[c]["starItems"] or categories_map[c]["puzzleItems"] for c in categories_map):
-        notes = "No promotion candidates were returned from analytics."
+    if not categories_out:
+        categories_out = [{"category": "All items", "starItems": [], "puzzleItems": []}]
 
-    ordered_categories = [main_category] + [c for c in _VALID_MAIN_CATEGORIES if c != main_category]
+    if not any(
+        block.get("starItems") or block.get("puzzleItems") for block in categories_out
+    ):
+        notes_parts.append("No promotion candidates were returned from analytics.")
+
     return {
         "mainCategory": main_category,
-        "categories": [
-            {
-                "category": category,
-                "starItems": [_placeholder_item(n) for n in categories_map[category]["starItems"]],
-                "puzzleItems": [_placeholder_item(n) for n in categories_map[category]["puzzleItems"]],
-            }
-            for category in ordered_categories
-        ],
+        "categories": categories_out,
         "sourceAnalyticsRunId": None,
-        "notes": notes,
+        "notes": "\n\n".join(notes_parts),
     }
 
 
@@ -185,7 +262,7 @@ def _collect_menu_refs(formatted: dict[str, Any]) -> list[dict[str, str]]:
     for block in categories:
         if not isinstance(block, dict):
             continue
-        cat = str(block.get("category") or "").strip().upper()
+        cat = str(block.get("category") or "").strip()
         for role in ("star", "puzzle"):
             key = "starItems" if role == "star" else "puzzleItems"
             raw_items = block.get(key)
@@ -286,13 +363,20 @@ async def fetch_and_prepare(
         str(state["user_id"]),
         client=client,
     )
+    milestone_input = state.get("milestone_input")
+    milestone_input_dict = milestone_input if isinstance(milestone_input, dict) else None
+    selected = _read_selected_menu_categories(milestone_input_dict)
+    filtered = _filter_promotion_candidates(promotion_candidates, selected)
+    owner_notes = _read_milestone_input_notes(milestone_input_dict)
     main_category = _extract_main_category(str(state.get("prior_milestones_data") or ""))
     formatted = _build_output(
         main_category=main_category,
-        promotion_candidates=promotion_candidates,
+        promotion_candidates=filtered,
+        owner_notes=owner_notes,
+        selected_categories=selected,
     )
     return {
-        "promotion_candidates": promotion_candidates,
+        "promotion_candidates": filtered,
         "campaign_brief_main_category": main_category,
         "formatted_output": formatted,
     }
@@ -313,20 +397,39 @@ async def enrich_storytelling(state: PromotionCandidatesState) -> dict[str, Any]
     goal = str(state.get("goal") or "").strip() or "_No goal provided._"
     criteria_json = json.dumps(state.get("criteria") or [], ensure_ascii=False, indent=2)
     injected = str(state.get("injected_prior_context_markdown") or "").strip()
+    milestone_input = state.get("milestone_input")
+    owner_notes = _read_milestone_input_notes(
+        milestone_input if isinstance(milestone_input, dict) else None
+    )
+    selected = _read_selected_menu_categories(
+        milestone_input if isinstance(milestone_input, dict) else None
+    )
 
     human_sections = [
         f"## Milestone goal\n{goal}",
         f"## Milestone criteria\n```json\n{criteria_json}\n```",
         injected,
-        "## Menu candidate names (distinct)\n```json\n"
-        + json.dumps({"menuNames": unique_names}, ensure_ascii=False, indent=2)
-        + "\n```",
-        "## Menu candidate placements (category and star vs puzzle)\n```json\n"
-        + json.dumps({"menuRefs": menu_refs}, ensure_ascii=False, indent=2)
-        + "\n```",
-        "Return exactly one verdict per name in `menuNames` (same spelling). "
-        "Use `storytellingFit` \"strong\" or \"weak\" and a short `storytellingRationale`.",
     ]
+    if owner_notes:
+        human_sections.append(f"## Owner notes (milestone input)\n{owner_notes}")
+    if selected is not None:
+        human_sections.append(
+            "## Selected menu categories (milestone input)\n```json\n"
+            + json.dumps({"selectedMenuCategories": sorted(selected)}, ensure_ascii=False, indent=2)
+            + "\n```"
+        )
+    human_sections.extend(
+        [
+            "## Menu candidate names (distinct)\n```json\n"
+            + json.dumps({"menuNames": unique_names}, ensure_ascii=False, indent=2)
+            + "\n```",
+            "## Menu candidate placements (category and star vs puzzle)\n```json\n"
+            + json.dumps({"menuRefs": menu_refs}, ensure_ascii=False, indent=2)
+            + "\n```",
+            "Return exactly one verdict per name in `menuNames` (same spelling). "
+            'Use `storytellingFit` "strong" or "weak" and a short `storytellingRationale`.',
+        ]
+    )
     human_message = "\n\n".join(human_sections)
 
     llm = structured_llm_from_milestone_run_config().with_structured_output(StorytellingVerdictsOutput)

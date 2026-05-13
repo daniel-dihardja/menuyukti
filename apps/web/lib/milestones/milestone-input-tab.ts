@@ -1,18 +1,13 @@
 import type { MilestoneInput, MilestonePresetId } from '@/lib/graphql/node-schemas'
+import { promotionCandidatesMilestoneInputValueSchema } from '@/lib/graphql/node-schemas'
 
 /** Presets whose Input tab uses the default optional owner-notes textarea (not custom widgets like dates). */
 export function milestonePresetHasDefaultOptionalNotesInput(
   presetId: MilestonePresetId | undefined,
-): presetId is
-  | 'restaurant_campaign_brief'
-  | 'post_scheduler'
-  | 'promotion_candidates'
-  | 'culture_hooks'
-  | 'format_mix' {
+): presetId is 'restaurant_campaign_brief' | 'post_scheduler' | 'culture_hooks' | 'format_mix' {
   return (
     presetId === 'restaurant_campaign_brief' ||
     presetId === 'post_scheduler' ||
-    presetId === 'promotion_candidates' ||
     presetId === 'culture_hooks' ||
     presetId === 'format_mix'
   )
@@ -20,16 +15,54 @@ export function milestonePresetHasDefaultOptionalNotesInput(
 
 export function optionalNotesFromMilestoneInput(
   raw: MilestoneInput | undefined,
-  presetId:
-    | 'restaurant_campaign_brief'
-    | 'post_scheduler'
-    | 'promotion_candidates'
-    | 'culture_hooks'
-    | 'format_mix',
+  presetId: 'restaurant_campaign_brief' | 'post_scheduler' | 'culture_hooks' | 'format_mix',
 ): string {
   if (raw?.type !== presetId || raw.value == null || typeof raw.value !== 'object') {
     return ''
   }
   const n = (raw.value as { notes?: unknown }).notes
   return typeof n === 'string' ? n : ''
+}
+
+const DEFAULT_PROMOTION_CANDIDATES_INPUT = {
+  notes: '',
+  selectedMenuCategories: [] as string[],
+}
+
+export function promotionCandidatesInputFromMilestoneInput(raw: MilestoneInput | undefined): {
+  notes: string
+  selectedMenuCategories: string[]
+} {
+  if (raw?.type !== 'promotion_candidates' || raw.value == null || typeof raw.value !== 'object') {
+    return { ...DEFAULT_PROMOTION_CANDIDATES_INPUT }
+  }
+  const parsed = promotionCandidatesMilestoneInputValueSchema.safeParse(raw.value)
+  if (!parsed.success) {
+    const legacyNotes = (raw.value as { notes?: unknown }).notes
+    return {
+      notes: typeof legacyNotes === 'string' ? legacyNotes : '',
+      selectedMenuCategories: [],
+    }
+  }
+  return parsed.data
+}
+
+export function normalizePromotionCandidatesInput(value: {
+  notes: string
+  selectedMenuCategories: string[]
+}): { notes: string; selectedMenuCategories: string[] } {
+  const seen = new Set<string>()
+  const selectedMenuCategories: string[] = []
+  for (const raw of value.selectedMenuCategories) {
+    const name = raw.trim()
+    if (!name) continue
+    const key = name.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    selectedMenuCategories.push(name)
+  }
+  return {
+    notes: value.notes.trim(),
+    selectedMenuCategories,
+  }
 }

@@ -313,9 +313,9 @@ class PromotionCandidatesCategory(BaseModel):
     @field_validator("category")
     @classmethod
     def _validate_category(cls, value: str) -> str:
-        text = value.strip().upper()
-        if text not in {"FOOD", "DRINK"}:
-            raise ValueError("category must be FOOD or DRINK")
+        text = value.strip()
+        if not text:
+            raise ValueError("category must be non-empty")
         return text
 
     @field_validator("starItems", "puzzleItems", mode="before")

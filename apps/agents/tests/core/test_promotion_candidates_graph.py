@@ -34,7 +34,7 @@ async def test_fetch_and_prepare_requires_injected_campaign_brief() -> None:
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_orders_categories_by_campaign_brief_main_category() -> None:
+async def test_fetch_and_prepare_builds_pos_category_sections() -> None:
     state = {
         "milestone_id": "m1",
         "location_id": 1,
@@ -53,11 +53,11 @@ async def test_fetch_and_prepare_orders_categories_by_campaign_brief_main_catego
                 return_value={
                     "grouping": "by_menu_category",
                     "categories": {
-                        "FOOD": {
+                        "Mains": {
                             "starItems": ["Steak", "Pasta"],
                             "puzzleItems": ["Soup"],
                         },
-                        "DRINK": {
+                        "Drinks": {
                             "starItems": ["Latte"],
                             "puzzleItems": ["Matcha"],
                         },
@@ -73,10 +73,52 @@ async def test_fetch_and_prepare_orders_categories_by_campaign_brief_main_catego
         out = await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
 
     categories = out["formatted_output"]["categories"]
-    assert categories[0]["category"] == "DRINK"
-    assert categories[1]["category"] == "FOOD"
+    assert [row["category"] for row in categories] == ["Drinks", "Mains"]
     assert categories[0]["starItems"][0]["name"] == "Latte"
     assert categories[0]["starItems"][0]["storytellingFit"] == "weak"
+
+
+@pytest.mark.asyncio
+async def test_fetch_and_prepare_filters_selected_menu_categories() -> None:
+    state = {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "goal": "",
+        "criteria": [],
+        "prior_milestones_data": (
+            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"FOOD"}}]'
+        ),
+        "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
+        "milestone_input": {
+            "type": "promotion_candidates",
+            "value": {"notes": "", "selectedMenuCategories": ["Mains"]},
+        },
+    }
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.fetch_promotion_engineering_candidates",
+            new=AsyncMock(
+                return_value={
+                    "grouping": "by_menu_category",
+                    "categories": {
+                        "Mains": {"starItems": ["Steak"], "puzzleItems": []},
+                        "Desserts": {"starItems": ["Cake"], "puzzleItems": []},
+                    },
+                }
+            ),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+    ):
+        out = await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
+
+    categories = out["formatted_output"]["categories"]
+    assert len(categories) == 1
+    assert categories[0]["category"] == "Mains"
+    assert categories[0]["starItems"][0]["name"] == "Steak"
 
 
 @pytest.mark.asyncio

@@ -62,9 +62,19 @@ describe('promotion candidates milestone schema', () => {
   it('rejects unknown category labels', () => {
     const parsed = promotionCandidatesMilestoneDataSchema.safeParse({
       mainCategory: 'FOOD',
-      categories: [{ category: 'DESSERT', starItems: [], puzzleItems: [] }],
+      categories: [{ category: '', starItems: [], puzzleItems: [] }],
     })
     expect(parsed.success).toBe(false)
+  })
+
+  it('accepts POS menu category labels', () => {
+    const parsed = promotionCandidatesMilestoneDataSchema.safeParse({
+      mainCategory: 'FOOD',
+      categories: [{ category: 'Mains', starItems: ['Steak'], puzzleItems: [] }],
+      sourceAnalyticsRunId: null,
+      notes: '',
+    })
+    expect(parsed.success).toBe(true)
   })
 })
 

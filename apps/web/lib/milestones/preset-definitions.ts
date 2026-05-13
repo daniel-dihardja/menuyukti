@@ -144,7 +144,7 @@ export function getMilestonePresetCreateFields(
         name: t('milestonePreset.promotion_candidates.title'),
         milestoneInput: {
           type: 'promotion_candidates',
-          value: { notes: '' },
+          value: { notes: '', selectedMenuCategories: [] },
         },
         milestoneData: {
           mainCategory: 'FOOD',

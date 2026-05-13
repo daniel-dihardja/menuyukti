@@ -37,6 +37,8 @@ export type WorkflowTimelineProviderSlices = {
 export function useWorkflowTimelineProviderSlices(
   milestoneUi: WorkflowMilestoneUiState,
   workflowId: string,
+  locationId: number,
+  analyticsRunId: number | null,
   isChatBusy: boolean,
   selectedMilestoneId: string | null,
   onSelectMilestone: (id: string | null) => void,
@@ -69,12 +71,22 @@ export function useWorkflowTimelineProviderSlices(
   const workspace = useMemo<TimelineWorkspaceStateValue>(
     () => ({
       workflowId,
+      locationId,
+      analyticsRunId,
       selectedMilestoneId,
       onSelectMilestone,
       milestoneState,
       errors,
     }),
-    [workflowId, selectedMilestoneId, onSelectMilestone, milestoneState, errors],
+    [
+      workflowId,
+      locationId,
+      analyticsRunId,
+      selectedMilestoneId,
+      onSelectMilestone,
+      milestoneState,
+      errors,
+    ],
   )
 
   return { actions, chat, workspace }

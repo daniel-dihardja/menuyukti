@@ -25,6 +25,10 @@ import { Textarea } from '@workspace/ui/components/textarea'
 import { getMilestoneHelpDescription } from '@/lib/milestones/milestone-help-description'
 import { milestonePresetHasDefaultOptionalNotesInput } from '@/lib/milestones/milestone-input-tab'
 
+import {
+  MilestonePromotionCandidatesInput,
+  type PromotionCandidatesInputDraft,
+} from './milestone-promotion-candidates-input'
 import type { PassCriteriaRow, TimelineMilestone } from './types'
 
 type CampaignWindowInput = {
@@ -49,10 +53,17 @@ export type MilestoneItemTabsModel = {
   handleAddPassCriterion: () => Promise<void>
   handleRemovePassCriterion: (index: number) => Promise<void>
   isDatesPreset: boolean
+  isPromotionCandidatesPreset: boolean
   optionalNotesDraft: string
   setOptionalNotesDraft: (v: string) => void
   handleOptionalNotesBlur: () => void
   handleOptionalNotesFocus: () => void
+  promotionCandidatesDraft: PromotionCandidatesInputDraft
+  onPromotionCandidatesDraftChange: (next: PromotionCandidatesInputDraft) => void
+  onPromotionCandidatesNotesBlur: () => void
+  onPromotionCandidatesNotesFocus: () => void
+  locationId: number
+  analyticsRunId: number | null
   inputDraft: CampaignWindowInput
   setInputDraft: (next: CampaignWindowInput) => void
   inputSaveStatus: FieldSaveStatusVariant
@@ -86,7 +97,6 @@ function formatDateButtonLabel(value: string): string {
 type OptionalNotesPresetId =
   | 'restaurant_campaign_brief'
   | 'post_scheduler'
-  | 'promotion_candidates'
   | 'culture_hooks'
   | 'format_mix'
 
@@ -123,10 +133,17 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     handleAddPassCriterion,
     handleRemovePassCriterion,
     isDatesPreset,
+    isPromotionCandidatesPreset,
     optionalNotesDraft,
     setOptionalNotesDraft,
     handleOptionalNotesBlur,
     handleOptionalNotesFocus,
+    promotionCandidatesDraft,
+    onPromotionCandidatesDraftChange,
+    onPromotionCandidatesNotesBlur,
+    onPromotionCandidatesNotesFocus,
+    locationId,
+    analyticsRunId,
     inputDraft,
     setInputDraft,
     inputSaveStatus,
@@ -258,6 +275,27 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                 status={inputSaveStatus}
               />
             </FieldGroup>
+          ) : isPromotionCandidatesPreset ? (
+            <>
+              <MilestonePromotionCandidatesInput
+                analyticsRunId={analyticsRunId}
+                disabled={isMilestoneRunning}
+                draft={promotionCandidatesDraft}
+                locationId={locationId}
+                onDraftChange={onPromotionCandidatesDraftChange}
+                onNotesBlur={onPromotionCandidatesNotesBlur}
+                onNotesFocus={onPromotionCandidatesNotesFocus}
+              />
+              <FieldSaveStatus
+                className="text-muted-foreground"
+                messages={{
+                  saving: t('fieldSaveStatusSaving'),
+                  saved: t('fieldSaveStatusSaved'),
+                  unsaved: t('fieldSaveStatusUnsaved'),
+                }}
+                status={inputSaveStatus}
+              />
+            </>
           ) : optionalNotesCopy ? (
             <FieldGroup className="gap-4">
               <Field>
