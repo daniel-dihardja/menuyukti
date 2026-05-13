@@ -111,34 +111,6 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
           </>
         )}
       </div>
-      {category === 'low_end' && items.length > 0 && (
-        <div className="rounded-lg border bg-muted/30 px-4 py-3">
-          <Field className="gap-2">
-            <div className="flex items-center justify-between">
-              <FieldLabel htmlFor="low-end-margin-slider" className="text-xs font-medium">
-                {tHighlight('sliderLabel')}
-              </FieldLabel>
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {tHighlight('sliderValue', { value: sliderValue.toFixed(1) })}
-              </span>
-            </div>
-            <Slider
-              id="low-end-margin-slider"
-              min={0}
-              max={10}
-              step={0.1}
-              value={[sliderValue]}
-              onValueChange={([v]) => setSliderValue(v ?? 0)}
-              aria-label={tHighlight('sliderAriaLabel', { value: sliderValue.toFixed(1) })}
-              aria-valuemin={0}
-              aria-valuemax={10}
-              aria-valuenow={sliderValue}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">{tHighlight('sliderHelp')}</p>
-          </Field>
-        </div>
-      )}
 
       <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
         <SortableTable<SortKey>
@@ -204,6 +176,35 @@ export function MatrixCategoryTable({ category, items, portfolioStats, locale, c
           )}
         </SortableTable>
       </div>
+
+      {category === 'low_end' && items.length > 0 && (
+        <div className="rounded-lg border bg-muted/30 px-4 py-3">
+          <Field className="gap-2">
+            <div className="flex items-center justify-between">
+              <FieldLabel htmlFor="low-end-margin-slider" className="text-xs font-medium">
+                {tHighlight('sliderLabel')}
+              </FieldLabel>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {tHighlight('sliderValue', { value: sliderValue.toFixed(1) })}
+              </span>
+            </div>
+            <Slider
+              id="low-end-margin-slider"
+              min={0}
+              max={10}
+              step={0.1}
+              value={[sliderValue]}
+              onValueChange={([v]) => setSliderValue(v ?? 0)}
+              aria-label={tHighlight('sliderAriaLabel', { value: sliderValue.toFixed(1) })}
+              aria-valuemin={0}
+              aria-valuemax={10}
+              aria-valuenow={sliderValue}
+              className="w-full"
+            />
+            <p className="text-xs text-muted-foreground">{tHighlight('sliderHelp')}</p>
+          </Field>
+        </div>
+      )}
     </section>
   )
 }
