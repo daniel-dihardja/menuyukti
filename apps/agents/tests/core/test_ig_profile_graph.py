@@ -6,7 +6,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.graph import build_milestone_run_graph
-from agents_app.agents.core.milestone_run.ig_profile.nodes import fetch_and_prepare, generate_profile
+from agents_app.agents.core.milestone_run.ig_profile.nodes import (
+    fetch_and_prepare,
+    generate_profile,
+)
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 
 

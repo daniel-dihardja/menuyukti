@@ -14,8 +14,8 @@ from agents_app.agents.core.milestone_run.campaign_brief.graph import build_camp
 from agents_app.agents.core.milestone_run.culture_hooks.graph import build_culture_hooks_graph
 from agents_app.agents.core.milestone_run.dates.graph import build_dates_graph
 from agents_app.agents.core.milestone_run.format_mix.graph import build_format_mix_graph
-from agents_app.agents.core.milestone_run.ig_profile.graph import build_ig_profile_graph
 from agents_app.agents.core.milestone_run.graphql_client import fetch_prior_milestones_data
+from agents_app.agents.core.milestone_run.ig_profile.graph import build_ig_profile_graph
 from agents_app.agents.core.milestone_run.post_scheduler.graph import (
     build_post_scheduler_graph,
 )
