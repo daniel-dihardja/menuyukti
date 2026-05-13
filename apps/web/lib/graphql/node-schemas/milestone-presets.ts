@@ -4,6 +4,17 @@
 
 import { z } from 'zod'
 
+import {
+  MENU_TAGGER_TAXONOMY_VERSION,
+  computeMenuTaggerUsedTags,
+  menuTaggerCourseSchema,
+  menuTaggerIngredientSchema,
+  menuTaggerKindSchema,
+  menuTaggerTagsSchema,
+  menuTaggerTasteSchema,
+  menuTaggerUsedTagsSchema,
+} from '@/lib/milestones/menu-tagger-taxonomy'
+
 export const passCriteriaSchema = z.object({
   id: z.string().trim().min(1),
   requirement: z.string(),
@@ -17,6 +28,7 @@ export const milestonePresetIdSchema = z.enum([
   'restaurant_campaign_brief',
   'post_scheduler',
   'promotion_candidates',
+  'menu_tagger',
   'culture_hooks',
   'format_mix',
   'ig_profile',
@@ -70,6 +82,12 @@ export const igProfileMilestoneInputValueSchema = z.object({
 })
 
 export type IgProfileMilestoneInputValue = z.infer<typeof igProfileMilestoneInputValueSchema>
+
+export const menuTaggerMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type MenuTaggerMilestoneInputValue = z.infer<typeof menuTaggerMilestoneInputValueSchema>
 
 export const promotionCandidatesItemLimitSchema = z.union([
   z.literal(5),
@@ -313,3 +331,35 @@ export const igProfileMilestoneDataSchema = z
   }))
 
 export type IgProfileMilestoneData = z.infer<typeof igProfileMilestoneDataSchema>
+
+export const menuTaggerItemRoleSchema = z.enum(['star', 'puzzle'])
+
+export const menuTaggerItemSchema = z.object({
+  name: z.string().trim().min(1),
+  role: menuTaggerItemRoleSchema,
+  category: z.string().trim().min(1),
+  tags: menuTaggerTagsSchema,
+})
+
+export type MenuTaggerItem = z.infer<typeof menuTaggerItemSchema>
+
+export const menuTaggerMilestoneDataSchema = z.object({
+  taxonomyVersion: z.literal(MENU_TAGGER_TAXONOMY_VERSION),
+  sourcePromotionCandidatesTitle: z.string().optional(),
+  items: z.array(menuTaggerItemSchema),
+  usedTags: menuTaggerUsedTagsSchema,
+  notes: z.string().optional(),
+})
+
+export type MenuTaggerMilestoneData = z.infer<typeof menuTaggerMilestoneDataSchema>
+
+export {
+  MENU_TAGGER_TAXONOMY_VERSION,
+  computeMenuTaggerUsedTags,
+  menuTaggerCourseSchema,
+  menuTaggerIngredientSchema,
+  menuTaggerKindSchema,
+  menuTaggerTagsSchema,
+  menuTaggerTasteSchema,
+  menuTaggerUsedTagsSchema,
+}

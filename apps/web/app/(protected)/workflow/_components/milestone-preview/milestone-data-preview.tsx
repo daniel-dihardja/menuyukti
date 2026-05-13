@@ -15,6 +15,7 @@ import { MilestoneCampaignBriefDataPreview } from './milestone-campaign_brief-da
 import { MilestoneCultureHooksDataPreview } from './milestone-culture-hooks-data-preview'
 import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
 import { MilestoneIgProfileDataPreview } from './milestone-ig-profile-data-preview'
+import { MilestoneMenuTaggerDataPreview } from './milestone-menu-tagger-data-preview'
 import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
 import { MilestonePostSchedulerDataPreview } from './milestone-post-scheduler-data-preview'
 
@@ -83,6 +84,12 @@ function renderParsedPreview(presetId: MilestonePresetId, data: unknown): ReactN
       return (
         <MilestonePromotionCandidatesDataPreview
           data={data as Parameters<typeof MilestonePromotionCandidatesDataPreview>[0]['data']}
+        />
+      )
+    case 'menu_tagger':
+      return (
+        <MilestoneMenuTaggerDataPreview
+          data={data as Parameters<typeof MilestoneMenuTaggerDataPreview>[0]['data']}
         />
       )
     case 'culture_hooks':

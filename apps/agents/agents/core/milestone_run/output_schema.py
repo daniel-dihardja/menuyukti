@@ -532,12 +532,59 @@ class IgProfileMilestoneOutput(BaseModel):
         return values
 
 
+class MenuTaggerTagsOutput(BaseModel):
+    kind: Literal["food", "drink", "other"]
+    ingredient: list[str] = Field(default_factory=list)
+    taste: list[str] = Field(default_factory=list)
+    course: list[str] = Field(default_factory=list)
+
+
+class MenuTaggerItemOutput(BaseModel):
+    name: str
+    role: Literal["star", "puzzle"]
+    category: str
+    tags: MenuTaggerTagsOutput
+
+
+class MenuTaggerUsedTagsOutput(BaseModel):
+    kind: list[str] = Field(default_factory=list)
+    ingredient: list[str] = Field(default_factory=list)
+    taste: list[str] = Field(default_factory=list)
+    course: list[str] = Field(default_factory=list)
+
+
+class MenuTaggerMilestoneOutput(BaseModel):
+    taxonomyVersion: Literal["v1"]
+    sourcePromotionCandidatesTitle: str | None = None
+    items: list[MenuTaggerItemOutput]
+    usedTags: MenuTaggerUsedTagsOutput
+    notes: str | None = None
+
+    @field_validator("items")
+    @classmethod
+    def _validate_items(cls, values: list[MenuTaggerItemOutput]) -> list[MenuTaggerItemOutput]:
+        if not values:
+            raise ValueError("must contain at least one tagged item")
+        seen: set[tuple[str, str, str]] = set()
+        for item in values:
+            name = item.name.strip()
+            if not name:
+                raise ValueError("item name must be non-empty")
+            category = item.category.strip() or "(uncategorized)"
+            key = (name.casefold(), item.role, category.casefold())
+            if key in seen:
+                raise ValueError("items must not contain duplicate name/role/category tuples")
+            seen.add(key)
+        return values
+
+
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
     "campaign_brief": CampaignBriefMilestoneOutput,
     "post_scheduler": PostSchedulerMilestoneOutput,
     "promotion_candidates": PromotionCandidatesMilestoneOutput,
+    "menu_tagger": MenuTaggerMilestoneOutput,
     "culture_hooks": CultureHooksMilestoneOutput,
     "format_mix": FormatMixMilestoneOutput,
     "ig_profile": IgProfileMilestoneOutput,

@@ -6,6 +6,7 @@ import {
   igProfileMilestoneDataSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
+  menuTaggerMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
 import type {
@@ -40,6 +41,10 @@ export function parseDataPreviewForPreset(
   }
   if (presetId === 'promotion_candidates') {
     const parsed = promotionCandidatesMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'menu_tagger') {
+    const parsed = menuTaggerMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   if (presetId === 'culture_hooks') {

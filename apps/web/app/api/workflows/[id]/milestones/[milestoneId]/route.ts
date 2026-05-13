@@ -11,6 +11,7 @@ import {
   milestonedataValueSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
+  menuTaggerMilestoneDataSchema,
   type PassCriteriaData,
 } from '@/lib/graphql/node-schemas'
 import type { MilestoneNode } from '@/lib/graphql/node-schemas'
@@ -27,6 +28,10 @@ import {
   type NodesDataRaw,
   type UpdateNodeDataRaw,
 } from '@/lib/graphql/queries'
+import {
+  MENU_TAGGER_TAXONOMY_VERSION,
+  emptyMenuTaggerUsedTags,
+} from '@/lib/milestones/menu-tagger-taxonomy'
 import { passCriteriasFromMilestoneData } from '@/app/(protected)/workflow/_components/milestone-map'
 import { milestoneIdParamSchema, patchMilestoneSchema, workflowIdParamSchema } from '../schema'
 
@@ -204,6 +209,19 @@ export async function GET(_req: Request, context: RouteContext) {
           categories: [{ category: '(uncategorized)', starItems: [], puzzleItems: [] }],
           sourceAnalyticsRunId: null,
           notes: '',
+        }
+      }
+    }
+    if (
+      parsedMilestoneNodeData?.success &&
+      parsedMilestoneNodeData.data.presetId === 'menu_tagger'
+    ) {
+      const mtParsed = menuTaggerMilestoneDataSchema.safeParse(milestoneData)
+      if (!mtParsed.success) {
+        milestoneData = {
+          taxonomyVersion: MENU_TAGGER_TAXONOMY_VERSION,
+          items: [],
+          usedTags: emptyMenuTaggerUsedTags(),
         }
       }
     }

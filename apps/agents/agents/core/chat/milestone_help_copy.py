@@ -25,6 +25,11 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "categories using the brief's main category, and enriches each star and puzzle menu name "
         "with storytelling fit (strong vs weak) and a short rationale grounded in the brief."
     ),
+    "menu_tagger": (
+        "Requires a prior Promotion Candidates milestone. Reads saved star and puzzle items and "
+        "assigns fixed taxonomy tags (kind, ingredient, taste, course) to each menu item for "
+        "downstream content grouping."
+    ),
     "culture_hooks": (
         "Use Campaign Brief data to identify the location concept and target audience, then "
         "generate intersection topics between the concept and the audience's likely interests "
@@ -100,7 +105,7 @@ def format_optional_input_section(preset_id: str | None) -> str | None:
                 b,
             ],
         )
-    if preset_id in ("promotion_candidates", "culture_hooks", "ig_profile"):
+    if preset_id in ("promotion_candidates", "culture_hooks", "ig_profile", "menu_tagger"):
         return "\n".join(
             [
                 "",

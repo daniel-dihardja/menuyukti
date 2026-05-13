@@ -52,6 +52,7 @@ def test_build_milestone_run_graph_compiles() -> None:
         ("dates", "build_dates_graph"),
         ("post_scheduler", "build_post_scheduler_graph"),
         ("promotion_candidates", "build_promotion_candidates_graph"),
+        ("menu_tagger", "build_menu_tagger_graph"),
         ("culture_hooks", "build_culture_hooks_graph"),
         ("ig_profile", "build_ig_profile_graph"),
     ],
