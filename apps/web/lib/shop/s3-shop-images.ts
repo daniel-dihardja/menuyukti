@@ -103,10 +103,10 @@ export async function listShopImagesForSlug(slug: string): Promise<ShopS3Image[]
     return []
   }
 
-  keys.sort()
+  const sortedKeys = keys.toSorted()
 
   const out: ShopS3Image[] = []
-  for (const key of keys) {
+  for (const key of sortedKeys) {
     const relative = key.slice(prefix.length)
     if (!relative || relative.includes('/')) continue
 

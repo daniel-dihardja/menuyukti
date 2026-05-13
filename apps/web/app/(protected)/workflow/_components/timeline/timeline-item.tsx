@@ -37,6 +37,20 @@ import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/
 /** Input autosave debounce; optional notes updates avoid draft rewrites to preserve caret. */
 const MILESTONE_INPUT_AUTOSAVE_DEBOUNCE_MS = 1200
 
+function datesInputFromMilestone(raw: TimelineMilestone['milestoneInput']): {
+  startDate: string
+  endDate: string
+} {
+  if (raw?.type === 'dates' && raw.value != null && typeof raw.value === 'object') {
+    const value = raw.value as Partial<{ startDate: string; endDate: string }>
+    return {
+      startDate: typeof value.startDate === 'string' ? value.startDate : '',
+      endDate: typeof value.endDate === 'string' ? value.endDate : '',
+    }
+  }
+  return { startDate: '', endDate: '' }
+}
+
 function promotionCandidatesInputEqual(
   a: PromotionCandidatesInputDraft,
   b: PromotionCandidatesInputDraft,
@@ -92,18 +106,6 @@ function TimelineItemInner({
 }: TimelineItemProps) {
   const t = useTranslations('analytics.workflows.chat')
   const { locationId, analyticsRunId } = useTimelineWorkspaceState()
-  const datesInputFromMilestone = (
-    raw: TimelineMilestone['milestoneInput'],
-  ): { startDate: string; endDate: string } => {
-    if (raw?.type === 'dates' && raw.value != null && typeof raw.value === 'object') {
-      const value = raw.value as Partial<{ startDate: string; endDate: string }>
-      return {
-        startDate: typeof value.startDate === 'string' ? value.startDate : '',
-        endDate: typeof value.endDate === 'string' ? value.endDate : '',
-      }
-    }
-    return { startDate: '', endDate: '' }
-  }
 
   const {
     onDeleteMilestone,

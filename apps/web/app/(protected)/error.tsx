@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect } from 'react'
-import { Button } from '@workspace/ui/components/button'
+import { useTranslations } from 'next-intl'
+
+import { ErrorFallback } from '@/components/error-fallback'
 
 export default function ProtectedError({
   error,
@@ -10,17 +11,17 @@ export default function ProtectedError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  useEffect(() => {
-    console.error(error)
-  }, [error])
+  const t = useTranslations('errorBoundary')
 
   return (
-    <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-8">
-      <h2 className="text-lg font-semibold">Something went wrong</h2>
-      <p className="max-w-md text-center text-muted-foreground text-sm">{error.message}</p>
-      <Button onClick={() => reset()} type="button">
-        Try again
-      </Button>
-    </div>
+    <ErrorFallback
+      className="flex min-h-[40vh] flex-col items-center justify-center gap-4 p-8"
+      description={t('description')}
+      digestLabel={t('digestLabel')}
+      error={error}
+      reset={reset}
+      title={t('title')}
+      tryAgainLabel={t('tryAgain')}
+    />
   )
 }

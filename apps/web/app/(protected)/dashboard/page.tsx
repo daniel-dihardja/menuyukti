@@ -94,16 +94,18 @@ function DashboardPageSkeleton() {
 }
 
 async function DashboardPageData() {
-  const t = await getTranslations('platform.dashboard')
-  const { isAuthenticated, userId } = await auth()
+  const [t, authResult] = await Promise.all([getTranslations('platform.dashboard'), auth()])
+  const { isAuthenticated, userId } = authResult
   if (!isAuthenticated || !userId) {
     throw new Error('Invariant: expected authenticated session under (protected) layout')
   }
 
-  const platformRole = await resolveMenuyuktiRole()
+  const [platformRole, locationsData] = await Promise.all([
+    resolveMenuyuktiRole(),
+    getCachedLocationsData(userId),
+  ])
   const isPlatformAdmin = isMenuyuktiAdmin(platformRole)
 
-  const locationsData = await getCachedLocationsData(userId)
   const workflowRows: WorkflowSummaryRow[] = []
 
   await Promise.all(
@@ -119,7 +121,7 @@ async function DashboardPageData() {
     }),
   )
 
-  workflowRows.sort((a, b) => a.name.localeCompare(b.name))
+  const sortedWorkflowRows = workflowRows.toSorted((a, b) => a.name.localeCompare(b.name))
 
   return (
     <div className="flex flex-col gap-8">
@@ -130,7 +132,7 @@ async function DashboardPageData() {
             <Link href={routes.workflows.list}>{t('workflowsViewAll')}</Link>
           </Button>
         </div>
-        {workflowRows.length === 0 ? (
+        {sortedWorkflowRows.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex flex-col gap-3 py-8">
               <p className="text-center text-muted-foreground">{t('noWorkflows')}</p>
@@ -141,7 +143,7 @@ async function DashboardPageData() {
           </Card>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {workflowRows.slice(0, 6).map((c) => (
+            {sortedWorkflowRows.slice(0, 6).map((c) => (
               <li key={c.id}>
                 <Card className="h-full transition-colors hover:bg-muted/40">
                   <CardHeader className="pb-2">

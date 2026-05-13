@@ -1,4 +1,10 @@
 {
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again.",
+    "tryAgain": "Try again",
+    "digestLabel": "Reference: {digest}"
+  },
   "mainHeader": {
     "brand": "Menuyukti",
     "brandAria": "Menuyukti home",
@@ -24,6 +30,7 @@
     "placeholder": "What would you like help with?",
     "thinking": "Thinking…",
     "errorTitle": "Something went wrong",
+    "errorDescription": "The request could not be completed. Please try again.",
     "retry": "Retry",
     "clearChatAriaLabel": "Clear chat",
     "clearChatLabel": "Clear chat",
@@ -1090,6 +1097,7 @@
         "placeholder": "What would you like to know?",
         "thinking": "Thinking…",
         "errorTitle": "Something went wrong",
+        "errorDescription": "The request could not be completed. Please try again.",
         "retry": "Retry",
         "clearChatAriaLabel": "Clear chat",
         "clearChatLabel": "Clear chat",

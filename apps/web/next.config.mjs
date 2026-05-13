@@ -37,7 +37,7 @@ const nextConfig = {
     ]
   },
   experimental: {
-    optimizePackageImports: ['lucide-react', '@workspace/ui'],
+    optimizePackageImports: ['lucide-react', '@workspace/ui', '@ai-sdk/react', 'react-markdown'],
   },
   images: {
     remotePatterns: [
