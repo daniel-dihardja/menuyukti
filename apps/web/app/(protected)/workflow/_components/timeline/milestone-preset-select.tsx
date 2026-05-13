@@ -107,6 +107,8 @@ function presetOptionLabel(id: MilestonePresetId, t: (key: string) => string): s
       return t('milestonePreset.culture_hooks.label')
     case 'format_mix':
       return t('milestonePreset.format_mix.label')
+    case 'ig_profile':
+      return t('milestonePreset.ig_profile.label')
     default: {
       const _exhaustive: never = id
       return _exhaustive

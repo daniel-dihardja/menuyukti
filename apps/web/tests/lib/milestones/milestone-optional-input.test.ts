@@ -16,6 +16,7 @@ describe('milestone optional notes', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput('culture_hooks')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('format_mix')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('ig_profile')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('dates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput(undefined)).toBe(false)
   })
@@ -134,6 +135,30 @@ describe('milestone optional notes', () => {
     }
   })
 
+  it('patchMilestoneSchema accepts ig_profile milestoneInput', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      milestoneInput: { type: 'ig_profile', value: { notes: 'short handles only' } },
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.milestoneInput).toEqual({
+        type: 'ig_profile',
+        value: { notes: 'short handles only' },
+      })
+    }
+  })
+
+  it('patchMilestoneSchema accepts ig_profile empty milestoneData seed', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      presetId: 'ig_profile',
+      milestoneData: {
+        usernames: [],
+        bios: [],
+      },
+    })
+    expect(parsed.success).toBe(true)
+  })
+
   it('patchMilestoneSchema accepts dates milestoneInput and milestoneData', () => {
     const parsed = patchMilestoneSchema.safeParse({
       milestoneInput: { type: 'dates', value: { startDate: '2026-06-01', endDate: '2026-06-30' } },
@@ -231,6 +256,18 @@ describe('milestone optional notes', () => {
     })
     expect(fields.milestoneData).toEqual({
       formats: [],
+    })
+  })
+
+  it('getMilestonePresetCreateFields seeds ig_profile milestoneInput', () => {
+    const fields = getMilestonePresetCreateFields('ig_profile', (k) => k)
+    expect(fields.milestoneInput).toEqual({
+      type: 'ig_profile',
+      value: { notes: '' },
+    })
+    expect(fields.milestoneData).toEqual({
+      usernames: [],
+      bios: [],
     })
   })
 })

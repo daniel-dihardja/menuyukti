@@ -8,6 +8,7 @@ import {
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   formatMixMilestoneDataSchema,
+  igProfileMilestoneDataSchema,
   milestoneDataSchema,
   milestoneNodeSchema,
   postSchedulerMilestoneDataSchema,
@@ -55,6 +56,10 @@ function parseDataPreviewForPreset(
   }
   if (presetId === 'format_mix') {
     const parsed = formatMixMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'ig_profile') {
+    const parsed = igProfileMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   return undefined

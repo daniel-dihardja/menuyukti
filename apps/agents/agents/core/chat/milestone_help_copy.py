@@ -31,6 +31,10 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "(not necessarily food). These intersections should be actionable for Instagram Reels "
         "ideas that attract potential new customers."
     ),
+    "ig_profile": (
+        "Read Campaign Brief data and generate Instagram profile suggestions — username options "
+        "and three bio variations — aligned with brand, audience, and campaign objective."
+    ),
 }
 
 _WHAT_IT_DOES_FALLBACK = "Add goal text to describe what this milestone does."
@@ -96,7 +100,7 @@ def format_optional_input_section(preset_id: str | None) -> str | None:
                 b,
             ],
         )
-    if preset_id in ("promotion_candidates", "culture_hooks"):
+    if preset_id in ("promotion_candidates", "culture_hooks", "ig_profile"):
         return "\n".join(
             [
                 "",

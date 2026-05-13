@@ -21,6 +21,7 @@ export const milestonePresetIdSchema = z.enum([
   'promotion_candidates',
   'culture_hooks',
   'format_mix',
+  'ig_profile',
 ])
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
@@ -65,6 +66,12 @@ export const formatMixMilestoneInputValueSchema = z.object({
 })
 
 export type FormatMixMilestoneInputValue = z.infer<typeof formatMixMilestoneInputValueSchema>
+
+export const igProfileMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type IgProfileMilestoneInputValue = z.infer<typeof igProfileMilestoneInputValueSchema>
 
 export const promotionCandidatesItemLimitSchema = z.union([
   z.literal(5),
@@ -276,6 +283,34 @@ export const formatMixMilestoneDataSchema = z.object({
 
 export type FormatMixMilestoneData = z.infer<typeof formatMixMilestoneDataSchema>
 
+/** Permissive storage schema (empty seed on create). Run output is validated strictly in agents. */
+export const igProfileUsernameSuggestionSchema = z.object({
+  username: z.string(),
+  rationale: z.string(),
+})
+
+export const igProfileBioSchema = z.object({
+  text: z.string(),
+  hook: z.string(),
+  valueProp: z.string(),
+  cta: z.string(),
+  tone: z.string(),
+})
+
+export const igProfileMilestoneDataSchema = z
+  .object({
+    usernames: z.array(igProfileUsernameSuggestionSchema),
+    bios: z.array(igProfileBioSchema).optional(),
+    /** @deprecated Legacy single-bio shape — normalized to `bios` on parse. */
+    bio: igProfileBioSchema.optional(),
+  })
+  .transform(({ usernames, bios, bio }) => ({
+    usernames,
+    bios: bios ?? (bio ? [bio] : []),
+  }))
+
+export type IgProfileMilestoneData = z.infer<typeof igProfileMilestoneDataSchema>
+
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
@@ -297,6 +332,7 @@ export const milestonedataValueSchema = z.union([
   promotionCandidatesMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   formatMixMilestoneDataSchema,
+  igProfileMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>

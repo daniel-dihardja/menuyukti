@@ -8,13 +8,23 @@ import {
 /** Presets whose Input tab uses the default optional owner-notes textarea (not custom widgets like dates). */
 export function milestonePresetHasDefaultOptionalNotesInput(
   presetId: MilestonePresetId | undefined,
-): presetId is 'restaurant_campaign_brief' | 'post_scheduler' | 'culture_hooks' | 'format_mix' {
+): presetId is
+  | 'restaurant_campaign_brief'
+  | 'post_scheduler'
+  | 'culture_hooks'
+  | 'format_mix'
+  | 'ig_profile' {
   return milestonePresetInputType(presetId) === 'optional_notes'
 }
 
 export function optionalNotesFromMilestoneInput(
   raw: MilestoneInput | undefined,
-  presetId: 'restaurant_campaign_brief' | 'post_scheduler' | 'culture_hooks' | 'format_mix',
+  presetId:
+    | 'restaurant_campaign_brief'
+    | 'post_scheduler'
+    | 'culture_hooks'
+    | 'format_mix'
+    | 'ig_profile',
 ): string {
   if (raw?.type !== presetId || raw.value == null || typeof raw.value !== 'object') {
     return ''

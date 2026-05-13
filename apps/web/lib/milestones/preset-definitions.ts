@@ -1,6 +1,7 @@
 import {
   CalendarRange,
   ClipboardList,
+  Instagram,
   Lightbulb,
   ListChecks,
   Milestone,
@@ -16,6 +17,7 @@ import {
   cultureHooksMilestoneDataSchema,
   datesMilestoneDataSchema,
   formatMixMilestoneDataSchema,
+  igProfileMilestoneDataSchema,
   type MilestoneInput,
   type MilestonePresetId,
   MILESTONE_PRESET_IDS,
@@ -119,6 +121,11 @@ const EMPTY_CULTURE_HOOKS_DATA: MilestonedataValue = {
 
 const EMPTY_FORMAT_MIX_DATA: MilestonedataValue = {
   formats: [],
+}
+
+const EMPTY_IG_PROFILE_DATA: MilestonedataValue = {
+  usernames: [],
+  bios: [],
 }
 
 export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePresetDefinition> = {
@@ -281,6 +288,40 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.format_mix.criterionMixDefined'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  ig_profile: {
+    id: 'ig_profile',
+    icon: Instagram,
+    inputType: 'optional_notes',
+    dataSchema: igProfileMilestoneDataSchema,
+    emptyData: EMPTY_IG_PROFILE_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.ig_profile.title'),
+      milestoneInput: {
+        type: 'ig_profile',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_IG_PROFILE_DATA,
+      goal: t('milestonePreset.ig_profile.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.ig_profile.criterionUsernames'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_profile.criterionBioLength'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_profile.criterionBioBreakdown'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.ig_profile.criterionBioVariations'),
           status: 'open',
         },
       ],

@@ -136,6 +136,24 @@ export type FormatMixMilestoneData = {
   }>
 }
 
+export type IgProfileUsernameSuggestion = {
+  username: string
+  rationale: string
+}
+
+export type IgProfileBio = {
+  text: string
+  hook: string
+  valueProp: string
+  cta: string
+  tone: string
+}
+
+export type IgProfileMilestoneData = {
+  usernames: IgProfileUsernameSuggestion[]
+  bios: IgProfileBio[]
+}
+
 export type MilestoneDataValue =
   | DatesMilestoneData
   | CampaignBriefMilestoneData
@@ -143,6 +161,7 @@ export type MilestoneDataValue =
   | PromotionCandidatesMilestoneData
   | CultureHooksMilestoneData
   | FormatMixMilestoneData
+  | IgProfileMilestoneData
 
 export type TimelineMilestone = {
   id: string

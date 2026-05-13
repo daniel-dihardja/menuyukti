@@ -14,6 +14,7 @@ import type { TimelineMilestone } from '../timeline/types'
 import { MilestoneCampaignBriefDataPreview } from './milestone-campaign_brief-data-preview'
 import { MilestoneCultureHooksDataPreview } from './milestone-culture-hooks-data-preview'
 import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
+import { MilestoneIgProfileDataPreview } from './milestone-ig-profile-data-preview'
 import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
 import { MilestonePostSchedulerDataPreview } from './milestone-post-scheduler-data-preview'
 
@@ -92,6 +93,12 @@ function renderParsedPreview(presetId: MilestonePresetId, data: unknown): ReactN
       )
     case 'format_mix':
       return <FormatMixPlaceholderPreview />
+    case 'ig_profile':
+      return (
+        <MilestoneIgProfileDataPreview
+          data={data as Parameters<typeof MilestoneIgProfileDataPreview>[0]['data']}
+        />
+      )
     default: {
       const _exhaustive: never = presetId
       return _exhaustive
