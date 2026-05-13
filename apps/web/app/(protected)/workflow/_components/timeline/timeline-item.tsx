@@ -488,28 +488,31 @@ function TimelineItemInner({
     })()
   }
 
-  const handleOptionalNotesBlur = () => {
+  const handleOptionalNotesBlur = useCallback(() => {
     optionalNotesFocusedRef.current = false
     void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
-  }
+  }, [flushMilestoneInputSave])
 
-  const handleOptionalNotesFocus = () => {
+  const handleOptionalNotesFocus = useCallback(() => {
     optionalNotesFocusedRef.current = true
-  }
+  }, [])
 
-  const handlePromotionCandidatesNotesBlur = () => {
+  const handlePromotionCandidatesNotesBlur = useCallback(() => {
     promotionCandidatesFocusedRef.current = false
     void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
-  }
+  }, [flushMilestoneInputSave])
 
-  const handlePromotionCandidatesNotesFocus = () => {
+  const handlePromotionCandidatesNotesFocus = useCallback(() => {
     promotionCandidatesFocusedRef.current = true
-  }
+  }, [])
 
-  const handlePromotionCandidatesDraftChange = (next: PromotionCandidatesInputDraft) => {
-    promotionCandidatesFocusedRef.current = true
-    setPromotionCandidatesDraft(next)
-  }
+  const handlePromotionCandidatesDraftChange = useCallback(
+    (next: PromotionCandidatesInputDraft) => {
+      promotionCandidatesFocusedRef.current = true
+      setPromotionCandidatesDraft(next)
+    },
+    [setPromotionCandidatesDraft],
+  )
 
   const inputModel = useMemo((): MilestoneInputModel => {
     if (isDatesPreset) {
