@@ -19,15 +19,28 @@ from agents_app.agents.core.milestone_run.menu_tagger.state import (
     MenuTaggerUsedTags,
 )
 from agents_app.agents.core.milestone_run.menu_tagger.taxonomy import (
+    CONTENT_ANGLE_VALUES,
     COURSE_VALUES,
+    DEFAULT_KIND,
+    DEFAULT_REEL_MOMENT,
+    DEFAULT_SERVE_TEMP,
     DIMENSION_VALUES,
     INGREDIENT_VALUES,
     KIND_VALUES,
+    MAX_CONTENT_ANGLE_TAGS,
     MAX_COURSE_TAGS,
     MAX_INGREDIENT_TAGS,
+    MAX_OCCASION_TAGS,
+    MAX_PREP_STYLE_TAGS,
     MAX_TASTE_TAGS,
+    MAX_TEXTURE_TAGS,
+    OCCASION_VALUES,
+    PREP_STYLE_VALUES,
+    REEL_MOMENT_VALUES,
+    SERVE_TEMP_VALUES,
     TASTE_VALUES,
     TAXONOMY_VERSION,
+    TEXTURE_VALUES,
 )
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.prior_context_inject import (
@@ -115,12 +128,7 @@ def flatten_promotion_candidates_items(data: dict[str, Any]) -> list[MenuTaggerI
                         "name": name,
                         "role": role,  # type: ignore[typeddict-item]
                         "category": category,
-                        "tags": {
-                            "kind": "other",
-                            "ingredient": [],
-                            "taste": [],
-                            "course": [],
-                        },
+                        "tags": normalize_menu_tagger_tags(None),
                     }
                 )
     return out
@@ -148,9 +156,15 @@ def _filter_enum_values(
 
 
 def normalize_menu_tagger_tags(raw: dict[str, Any] | None) -> MenuTaggerTags:
-    kind = str((raw or {}).get("kind") or "other").strip()
+    kind = str((raw or {}).get("kind") or DEFAULT_KIND).strip()
     if kind not in KIND_VALUES:
-        kind = "other"
+        kind = DEFAULT_KIND
+    reel_moment = str((raw or {}).get("reel_moment") or DEFAULT_REEL_MOMENT).strip()
+    if reel_moment not in REEL_MOMENT_VALUES:
+        reel_moment = DEFAULT_REEL_MOMENT
+    serve_temp = str((raw or {}).get("serve_temp") or DEFAULT_SERVE_TEMP).strip()
+    if serve_temp not in SERVE_TEMP_VALUES:
+        serve_temp = DEFAULT_SERVE_TEMP
     return {
         "kind": kind,  # type: ignore[typeddict-item]
         "ingredient": _filter_enum_values(
@@ -168,6 +182,30 @@ def normalize_menu_tagger_tags(raw: dict[str, Any] | None) -> MenuTaggerTags:
             COURSE_VALUES,
             max_count=MAX_COURSE_TAGS,
         ),
+        "reel_moment": reel_moment,  # type: ignore[typeddict-item]
+        "texture": _filter_enum_values(
+            (raw or {}).get("texture") if isinstance((raw or {}).get("texture"), list) else [],
+            TEXTURE_VALUES,
+            max_count=MAX_TEXTURE_TAGS,
+        ),
+        "prep_style": _filter_enum_values(
+            (raw or {}).get("prep_style") if isinstance((raw or {}).get("prep_style"), list) else [],
+            PREP_STYLE_VALUES,
+            max_count=MAX_PREP_STYLE_TAGS,
+        ),
+        "occasion": _filter_enum_values(
+            (raw or {}).get("occasion") if isinstance((raw or {}).get("occasion"), list) else [],
+            OCCASION_VALUES,
+            max_count=MAX_OCCASION_TAGS,
+        ),
+        "serve_temp": serve_temp,  # type: ignore[typeddict-item]
+        "content_angle": _filter_enum_values(
+            (raw or {}).get("content_angle")
+            if isinstance((raw or {}).get("content_angle"), list)
+            else [],
+            CONTENT_ANGLE_VALUES,
+            max_count=MAX_CONTENT_ANGLE_TAGS,
+        ),
     }
 
 
@@ -176,12 +214,24 @@ def compute_used_tags(items: list[MenuTaggerItem]) -> MenuTaggerUsedTags:
     ingredient: set[str] = set()
     taste: set[str] = set()
     course: set[str] = set()
+    reel_moment: set[str] = set()
+    texture: set[str] = set()
+    prep_style: set[str] = set()
+    occasion: set[str] = set()
+    serve_temp: set[str] = set()
+    content_angle: set[str] = set()
 
     for item in items:
         tags = item.get("tags") or {}
         kind_val = str(tags.get("kind") or "").strip()
         if kind_val in KIND_VALUES:
             kind.add(kind_val)
+        reel_val = str(tags.get("reel_moment") or "").strip()
+        if reel_val in REEL_MOMENT_VALUES:
+            reel_moment.add(reel_val)
+        temp_val = str(tags.get("serve_temp") or "").strip()
+        if temp_val in SERVE_TEMP_VALUES:
+            serve_temp.add(temp_val)
         for value in tags.get("ingredient") or []:
             text = str(value).strip()
             if text in INGREDIENT_VALUES:
@@ -194,12 +244,34 @@ def compute_used_tags(items: list[MenuTaggerItem]) -> MenuTaggerUsedTags:
             text = str(value).strip()
             if text in COURSE_VALUES:
                 course.add(text)
+        for value in tags.get("texture") or []:
+            text = str(value).strip()
+            if text in TEXTURE_VALUES:
+                texture.add(text)
+        for value in tags.get("prep_style") or []:
+            text = str(value).strip()
+            if text in PREP_STYLE_VALUES:
+                prep_style.add(text)
+        for value in tags.get("occasion") or []:
+            text = str(value).strip()
+            if text in OCCASION_VALUES:
+                occasion.add(text)
+        for value in tags.get("content_angle") or []:
+            text = str(value).strip()
+            if text in CONTENT_ANGLE_VALUES:
+                content_angle.add(text)
 
     return {
         "kind": sorted(kind),
         "ingredient": sorted(ingredient),
         "taste": sorted(taste),
         "course": sorted(course),
+        "reel_moment": sorted(reel_moment),
+        "texture": sorted(texture),
+        "prep_style": sorted(prep_style),
+        "occasion": sorted(occasion),
+        "serve_temp": sorted(serve_temp),
+        "content_angle": sorted(content_angle),
     }
 
 
@@ -263,6 +335,12 @@ class MenuTaggerTagsDraft(BaseModel):
     ingredient: list[str] = Field(default_factory=list, max_length=MAX_INGREDIENT_TAGS)
     taste: list[str] = Field(default_factory=list, max_length=MAX_TASTE_TAGS)
     course: list[str] = Field(default_factory=list, max_length=MAX_COURSE_TAGS)
+    reel_moment: str
+    texture: list[str] = Field(default_factory=list, max_length=MAX_TEXTURE_TAGS)
+    prep_style: list[str] = Field(default_factory=list, max_length=MAX_PREP_STYLE_TAGS)
+    occasion: list[str] = Field(default_factory=list, max_length=MAX_OCCASION_TAGS)
+    serve_temp: str
+    content_angle: list[str] = Field(default_factory=list, max_length=MAX_CONTENT_ANGLE_TAGS)
 
 
 class MenuTaggerItemDraft(BaseModel):
@@ -334,8 +412,45 @@ def _build_output(
     return payload
 
 
+def _sanitize_menu_tagger_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Re-normalize item tags and recompute usedTags so persisted data matches fixed enums."""
+    items_raw = payload.get("items")
+    if not isinstance(items_raw, list):
+        return payload
+
+    sanitized_items: list[MenuTaggerItem] = []
+    for item in items_raw:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip()
+        role = str(item.get("role") or "").strip()
+        category = str(item.get("category") or "").strip() or "(uncategorized)"
+        if not name or role not in ("star", "puzzle"):
+            continue
+        tags_raw = item.get("tags")
+        sanitized_items.append(
+            {
+                "name": name,
+                "role": role,  # type: ignore[typeddict-item]
+                "category": category,
+                "tags": normalize_menu_tagger_tags(tags_raw if isinstance(tags_raw, dict) else None),
+            }
+        )
+
+    sanitized: dict[str, Any] = {
+        **payload,
+        "taxonomyVersion": TAXONOMY_VERSION,
+        "items": sanitized_items,
+        "usedTags": compute_used_tags(sanitized_items),
+    }
+    return sanitized
+
+
 def _normalize_generated_output(payload: Any) -> MenuTaggerOutput:
-    normalized, error = validate_skill_output("menu_tagger", payload)
+    if not isinstance(payload, dict):
+        raise ValueError("menu_tagger output validation failed")
+    sanitized = _sanitize_menu_tagger_payload(payload)
+    normalized, error = validate_skill_output("menu_tagger", sanitized)
     if error is not None or not isinstance(normalized, dict):
         raise ValueError(error or "menu_tagger output validation failed")
     return normalized  # type: ignore[return-value]

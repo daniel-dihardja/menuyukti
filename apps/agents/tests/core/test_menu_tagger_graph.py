@@ -13,6 +13,7 @@ from agents_app.agents.core.milestone_run.menu_tagger.nodes import (
     merge_tagged_items,
     normalize_menu_tagger_tags,
     persist_result,
+    _sanitize_menu_tagger_payload,
 )
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 
@@ -44,7 +45,7 @@ def _prior_json() -> str:
 
 def _valid_menu_tagger_payload() -> dict:
     return {
-        "taxonomyVersion": "v1",
+        "taxonomyVersion": "v2",
         "sourcePromotionCandidatesTitle": "Promotion picks",
         "items": [
             {
@@ -56,6 +57,12 @@ def _valid_menu_tagger_payload() -> dict:
                     "ingredient": ["rice"],
                     "taste": ["savory"],
                     "course": ["main"],
+                    "reel_moment": "toss_stir",
+                    "texture": ["juicy"],
+                    "prep_style": ["fried"],
+                    "occasion": ["dinner"],
+                    "serve_temp": "hot",
+                    "content_angle": ["signature"],
                 },
             },
             {
@@ -67,6 +74,12 @@ def _valid_menu_tagger_payload() -> dict:
                     "ingredient": ["tea"],
                     "taste": ["mild"],
                     "course": ["beverage"],
+                    "reel_moment": "pour",
+                    "texture": ["silky"],
+                    "prep_style": ["blended"],
+                    "occasion": ["lunch"],
+                    "serve_temp": "cold",
+                    "content_angle": [],
                 },
             },
         ],
@@ -75,6 +88,12 @@ def _valid_menu_tagger_payload() -> dict:
             "ingredient": ["rice", "tea"],
             "taste": ["mild", "savory"],
             "course": ["beverage", "main"],
+            "reel_moment": ["pour", "toss_stir"],
+            "texture": ["juicy", "silky"],
+            "prep_style": ["blended", "fried"],
+            "occasion": ["dinner", "lunch"],
+            "serve_temp": ["cold", "hot"],
+            "content_angle": ["signature"],
         },
     }
 
@@ -88,6 +107,36 @@ def test_flatten_promotion_candidates_items() -> None:
     assert items[1]["role"] == "puzzle"
 
 
+def test_sanitize_menu_tagger_payload_filters_invalid_enums() -> None:
+    payload = {
+        "taxonomyVersion": "v2",
+        "items": [
+            {
+                "name": "Nasi Goreng",
+                "role": "star",
+                "category": "Mains",
+                "tags": {
+                    "kind": "food",
+                    "ingredient": ["rice", "invalid"],
+                    "taste": ["savory"],
+                    "course": ["main"],
+                    "reel_moment": "invalid_hook",
+                    "texture": [],
+                    "prep_style": [],
+                    "occasion": [],
+                    "serve_temp": "hot",
+                    "content_angle": [],
+                },
+            }
+        ],
+        "usedTags": {},
+    }
+    sanitized = _sanitize_menu_tagger_payload(payload)
+    tags = sanitized["items"][0]["tags"]
+    assert tags["reel_moment"] == "static_hero"
+    assert tags["ingredient"] == ["rice"]
+
+
 def test_normalize_menu_tagger_tags_filters_unknown_enums() -> None:
     tags = normalize_menu_tagger_tags(
         {
@@ -95,6 +144,12 @@ def test_normalize_menu_tagger_tags_filters_unknown_enums() -> None:
             "ingredient": ["rice", "invalid", "rice"],
             "taste": ["savory"],
             "course": ["main", "main"],
+            "reel_moment": "invalid_hook",
+            "texture": ["crispy", "invalid"],
+            "prep_style": ["grilled"],
+            "occasion": ["dinner", "invalid"],
+            "serve_temp": "not_a_temp",
+            "content_angle": ["signature", "invalid"],
         }
     )
     assert tags == {
@@ -102,7 +157,20 @@ def test_normalize_menu_tagger_tags_filters_unknown_enums() -> None:
         "ingredient": ["rice"],
         "taste": ["savory"],
         "course": ["main"],
+        "reel_moment": "static_hero",
+        "texture": ["crispy"],
+        "prep_style": ["grilled"],
+        "occasion": ["dinner"],
+        "serve_temp": "room_temp",
+        "content_angle": ["signature"],
     }
+
+
+def test_normalize_menu_tagger_tags_applies_defaults_when_missing() -> None:
+    tags = normalize_menu_tagger_tags(None)
+    assert tags["kind"] == "other"
+    assert tags["reel_moment"] == "static_hero"
+    assert tags["serve_temp"] == "room_temp"
 
 
 def test_merge_tagged_items_preserves_input_order() -> None:
@@ -119,6 +187,12 @@ def test_merge_tagged_items_preserves_input_order() -> None:
                     "ingredient": ["tea"],
                     "taste": ["mild"],
                     "course": ["beverage"],
+                    "reel_moment": "pour",
+                    "texture": [],
+                    "prep_style": [],
+                    "occasion": [],
+                    "serve_temp": "cold",
+                    "content_angle": [],
                 },
             },
             {
@@ -130,6 +204,12 @@ def test_merge_tagged_items_preserves_input_order() -> None:
                     "ingredient": ["rice"],
                     "taste": ["savory"],
                     "course": ["main"],
+                    "reel_moment": "toss_stir",
+                    "texture": [],
+                    "prep_style": [],
+                    "occasion": [],
+                    "serve_temp": "hot",
+                    "content_angle": [],
                 },
             },
         ],
@@ -153,7 +233,7 @@ def test_validate_skill_output_menu_tagger() -> None:
     normalized, error = validate_skill_output("menu_tagger", _valid_menu_tagger_payload())
     assert error is None
     assert isinstance(normalized, dict)
-    assert normalized["taxonomyVersion"] == "v1"
+    assert normalized["taxonomyVersion"] == "v2"
 
 
 @pytest.mark.asyncio
@@ -213,6 +293,6 @@ async def test_persist_result_upserts_valid_payload() -> None:
 
     assert out["milestonedata_written"] is True
     assert isinstance(out["milestone_data"], dict)
-    assert out["milestone_data"]["taxonomyVersion"] == "v1"
+    assert out["milestone_data"]["taxonomyVersion"] == "v2"
     saved = mock_upsert.await_args.args[2]
     assert saved["usedTags"]["kind"] == ["drink", "food"]

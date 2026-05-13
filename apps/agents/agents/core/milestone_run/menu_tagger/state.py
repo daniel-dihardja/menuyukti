@@ -10,6 +10,12 @@ class MenuTaggerTags(TypedDict):
     ingredient: list[str]
     taste: list[str]
     course: list[str]
+    reel_moment: str
+    texture: list[str]
+    prep_style: list[str]
+    occasion: list[str]
+    serve_temp: str
+    content_angle: list[str]
 
 
 class MenuTaggerItem(TypedDict):
@@ -24,10 +30,16 @@ class MenuTaggerUsedTags(TypedDict):
     ingredient: list[str]
     taste: list[str]
     course: list[str]
+    reel_moment: list[str]
+    texture: list[str]
+    prep_style: list[str]
+    occasion: list[str]
+    serve_temp: list[str]
+    content_angle: list[str]
 
 
 class MenuTaggerOutput(TypedDict):
-    taxonomyVersion: Literal["v1"]
+    taxonomyVersion: Literal["v2"]
     sourcePromotionCandidatesTitle: NotRequired[str]
     items: list[MenuTaggerItem]
     usedTags: MenuTaggerUsedTags

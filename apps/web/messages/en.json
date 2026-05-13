@@ -1168,10 +1168,10 @@
             "inputLabel": "Menu tagger notes",
             "inputDescription": "Optional guidance for ambiguous dishes. The run reads prior Promotion Candidates milestone data and assigns fixed taxonomy tags to each star and puzzle item.",
             "inputPlaceholder": "e.g. treat bubble tea as drink; map regional dish names to rice vs noodle…",
-            "goal": "Read saved Promotion Candidates from an earlier workflow milestone and attach fixed taxonomy tags (kind, ingredient, taste, course) to every star and puzzle menu item. Place this milestone after Promotion Candidates in the timeline.",
+            "goal": "Read saved Promotion Candidates from an earlier workflow milestone and attach fixed taxonomy v2 tags (culinary dimensions plus reel-oriented dimensions such as reel moment, texture, prep style, occasion, serve temp, and content angle) to every star and puzzle menu item. Place this milestone after Promotion Candidates in the timeline.",
             "criterionPriorPromotionCandidates": "Run used a prior **promotion_candidates** milestone with at least one star or puzzle item.",
-            "criterionAllItemsTagged": "Every promotion candidate item has a **kind** tag and optional dimension arrays (**ingredient**, **taste**, **course**).",
-            "criterionTaxonomyOnly": "All tag values come from the fixed **v1 taxonomy** enums (no free-form tags)."
+            "criterionAllItemsTagged": "Every promotion candidate item has required single-value tags (**kind**, **reel_moment**, **serve_temp**) and optional multi-value dimension arrays.",
+            "criterionTaxonomyOnly": "All tag values come from the fixed **v2 taxonomy** enums (no free-form tags). Empty optional tag arrays are valid."
           },
           "culture_hooks": {
             "label": "Culture hooks",
@@ -1505,6 +1505,12 @@
         "milestoneMenuTaggerPreviewDimension_ingredient": "Ingredient",
         "milestoneMenuTaggerPreviewDimension_taste": "Taste",
         "milestoneMenuTaggerPreviewDimension_course": "Course",
+        "milestoneMenuTaggerPreviewDimension_reel_moment": "Reel moment",
+        "milestoneMenuTaggerPreviewDimension_texture": "Texture",
+        "milestoneMenuTaggerPreviewDimension_prep_style": "Prep style",
+        "milestoneMenuTaggerPreviewDimension_occasion": "Occasion",
+        "milestoneMenuTaggerPreviewDimension_serve_temp": "Serve temp",
+        "milestoneMenuTaggerPreviewDimension_content_angle": "Content angle",
         "milestoneIgProfilePreviewUsernames": "Usernames",
         "milestoneIgProfilePreviewEmptyUsernames": "No username suggestions generated yet.",
         "milestoneIgProfilePreviewBio": "Bio",

@@ -537,6 +537,12 @@ class MenuTaggerTagsOutput(BaseModel):
     ingredient: list[str] = Field(default_factory=list)
     taste: list[str] = Field(default_factory=list)
     course: list[str] = Field(default_factory=list)
+    reel_moment: str
+    texture: list[str] = Field(default_factory=list)
+    prep_style: list[str] = Field(default_factory=list)
+    occasion: list[str] = Field(default_factory=list)
+    serve_temp: str
+    content_angle: list[str] = Field(default_factory=list)
 
 
 class MenuTaggerItemOutput(BaseModel):
@@ -551,10 +557,16 @@ class MenuTaggerUsedTagsOutput(BaseModel):
     ingredient: list[str] = Field(default_factory=list)
     taste: list[str] = Field(default_factory=list)
     course: list[str] = Field(default_factory=list)
+    reel_moment: list[str] = Field(default_factory=list)
+    texture: list[str] = Field(default_factory=list)
+    prep_style: list[str] = Field(default_factory=list)
+    occasion: list[str] = Field(default_factory=list)
+    serve_temp: list[str] = Field(default_factory=list)
+    content_angle: list[str] = Field(default_factory=list)
 
 
 class MenuTaggerMilestoneOutput(BaseModel):
-    taxonomyVersion: Literal["v1"]
+    taxonomyVersion: Literal["v2"]
     sourcePromotionCandidatesTitle: str | None = None
     items: list[MenuTaggerItemOutput]
     usedTags: MenuTaggerUsedTagsOutput

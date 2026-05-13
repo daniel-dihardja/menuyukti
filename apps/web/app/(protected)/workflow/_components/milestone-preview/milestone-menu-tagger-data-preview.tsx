@@ -9,6 +9,7 @@ import type { MenuTaggerItem, MenuTaggerMilestoneData } from '@/lib/graphql/node
 import { groupMenuTaggerItemsByCategory } from '@/lib/milestones/menu-tagger-items'
 import {
   MENU_TAGGER_DIMENSIONS,
+  MENU_TAGGER_SINGLE_VALUE_DIMENSIONS,
   computeMenuTaggerUsedTags,
   type MenuTaggerDimension,
 } from '@/lib/milestones/menu-tagger-taxonomy'
@@ -21,6 +22,18 @@ export type MilestoneMenuTaggerDataPreviewProps = {
 
 function dimensionLabelKey(dimension: MenuTaggerDimension): string {
   return `milestoneMenuTaggerPreviewDimension_${dimension}`
+}
+
+function isSingleValueDimension(dimension: MenuTaggerDimension): boolean {
+  return (MENU_TAGGER_SINGLE_VALUE_DIMENSIONS as readonly string[]).includes(dimension)
+}
+
+function dimensionValues(item: MenuTaggerItem, dimension: MenuTaggerDimension): string[] {
+  if (isSingleValueDimension(dimension)) {
+    const value = item.tags[dimension as keyof typeof item.tags]
+    return typeof value === 'string' && value.length > 0 ? [value] : []
+  }
+  return item.tags[dimension] as string[]
 }
 
 function TagBadgeList({ values }: { values: string[] }) {
@@ -46,8 +59,7 @@ function ItemTagsRow({ item }: { item: MenuTaggerItem }) {
       <p className={`${mp.body} font-medium text-foreground`}>{item.name}</p>
       <div className="mt-2 space-y-1.5">
         {MENU_TAGGER_DIMENSIONS.map((dimension) => {
-          const values =
-            dimension === 'kind' ? [item.tags.kind] : (item.tags[dimension] as string[])
+          const values = dimensionValues(item, dimension)
           if (values.length === 0) {
             return null
           }
