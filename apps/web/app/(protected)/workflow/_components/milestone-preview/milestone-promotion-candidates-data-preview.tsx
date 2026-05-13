@@ -9,7 +9,10 @@ import type {
   PromotionCandidateMenuItem,
   PromotionCandidatesMilestoneData,
 } from '@/lib/graphql/node-schemas'
-import { sortPromotionCandidateCategories } from '@/lib/milestones/promotion-candidates-category-order'
+import {
+  sortPromotionCandidateCategories,
+  sortPromotionCandidateItemsByPopularity,
+} from '@/lib/milestones/promotion-candidates-category-order'
 
 import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
@@ -78,9 +81,11 @@ function renderMenuItems(
     return <p className={mp.body}>{labels.placeholderEmDash}</p>
   }
 
+  const sortedItems = sortPromotionCandidateItemsByPopularity(items)
+
   return (
     <ul className="list-none space-y-3 pl-0">
-      {items.map((item, index) => {
+      {sortedItems.map((item, index) => {
         const isStrong = item.storytellingFit === 'strong'
         const fitLabel = isStrong ? labels.storytellingStrong : labels.storytellingWeak
         const rationale = item.storytellingRationale?.trim()

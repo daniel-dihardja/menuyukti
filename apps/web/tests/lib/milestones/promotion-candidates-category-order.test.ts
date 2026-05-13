@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   sortPromotionCandidateCategories,
   sortMenuCategorySummaries,
+  sortPromotionCandidateItemsByPopularity,
 } from '@/lib/milestones/promotion-candidates-category-order'
 
 describe('sortPromotionCandidateCategories', () => {
@@ -35,5 +36,46 @@ describe('sortMenuCategorySummaries', () => {
     ]
     const sorted = sortMenuCategorySummaries(categories, 'Cocktails')
     expect(sorted.map((row) => row.name)).toEqual(['Cocktails', 'Appetizers', 'Mains'])
+  })
+})
+
+describe('sortPromotionCandidateItemsByPopularity', () => {
+  it('sorts by popularity descending with name tie-break', () => {
+    const items = [
+      {
+        name: 'Soup',
+        popularity: 0.1,
+        storytellingFit: 'weak' as const,
+        storytellingRationale: '',
+      },
+      {
+        name: 'Steak',
+        popularity: 0.4,
+        storytellingFit: 'weak' as const,
+        storytellingRationale: '',
+      },
+      {
+        name: 'Pasta',
+        popularity: 0.4,
+        storytellingFit: 'weak' as const,
+        storytellingRationale: '',
+      },
+    ]
+    const sorted = sortPromotionCandidateItemsByPopularity(items)
+    expect(sorted.map((row) => row.name)).toEqual(['Pasta', 'Steak', 'Soup'])
+  })
+
+  it('places items without popularity after scored items', () => {
+    const items = [
+      { name: 'Legacy', storytellingFit: 'weak' as const, storytellingRationale: '' },
+      {
+        name: 'Star',
+        popularity: 0.2,
+        storytellingFit: 'weak' as const,
+        storytellingRationale: '',
+      },
+    ]
+    const sorted = sortPromotionCandidateItemsByPopularity(items)
+    expect(sorted.map((row) => row.name)).toEqual(['Star', 'Legacy'])
   })
 })
