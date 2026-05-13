@@ -5,9 +5,6 @@ import { Banknote } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { Badge } from '@workspace/ui/components/badge'
-import { Button } from '@workspace/ui/components/button'
-import { Field, FieldLabel } from '@workspace/ui/components/field'
-import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 import { cn } from '@workspace/ui/lib/utils'
 
 import type {
@@ -29,6 +26,12 @@ import {
 
 import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
+import {
+  FilteredEmptyState,
+  PRICE_LEVEL_TONE,
+  PriceLevelBars,
+  PromotionCandidatesPreviewFiltersPanel,
+} from './promotion-candidates-preview-filters'
 
 export type MilestonePromotionCandidatesDataPreviewProps = {
   data: PromotionCandidatesMilestoneData
@@ -63,7 +66,9 @@ type PromotionCandidatesPreviewLabels = {
   helpPriceLevel: string
   placeholderEmDash: string
   emptyFiltered: string
+  emptyFilteredAction: string
   filtersTitle: string
+  filtersDescription: string
   filtersStorytellingLabel: string
   filtersStorytellingAria: string
   filtersPriceLevelLabel: string
@@ -99,29 +104,6 @@ function priceLevelLabel(
   return labels.priceLevelMid
 }
 
-const PRICE_LEVEL_BAR_HEIGHTS = ['h-1.5', 'h-2.5', 'h-3.5'] as const
-
-const PRICE_LEVEL_TONE: Record<1 | 2 | 3, { icon: string; bar: string; badge: string }> = {
-  1: {
-    icon: 'text-sky-600 dark:text-sky-400',
-    bar: 'bg-sky-500 dark:bg-sky-400',
-    badge:
-      'border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-100',
-  },
-  2: {
-    icon: 'text-amber-600 dark:text-amber-400',
-    bar: 'bg-amber-500 dark:bg-amber-400',
-    badge:
-      'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100',
-  },
-  3: {
-    icon: 'text-violet-600 dark:text-violet-400',
-    bar: 'bg-violet-500 dark:bg-violet-400',
-    badge:
-      'border-violet-200 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-100',
-  },
-}
-
 function PriceLevelIndicator({
   level,
   label,
@@ -141,18 +123,7 @@ function PriceLevelIndicator({
       title={`${sectionLabel}: ${label}`}
     >
       <Banknote className={cn('size-3.5 shrink-0', tone.icon)} aria-hidden />
-      <span className="inline-flex items-end gap-0.5" aria-hidden>
-        {([1, 2, 3] as const).map((tier, index) => (
-          <span
-            key={tier}
-            className={cn(
-              'w-1 rounded-sm',
-              PRICE_LEVEL_BAR_HEIGHTS[index],
-              tier <= level ? tone.bar : 'bg-current/20',
-            )}
-          />
-        ))}
-      </span>
+      <PriceLevelBars level={level} />
     </Badge>
   )
 }
@@ -198,6 +169,7 @@ function renderMenuItems(
   items: PromotionCandidateMenuItem[],
   labels: PromotionCandidatesPreviewLabels,
   filters: PromotionCandidatesPreviewFilters,
+  onClearFilters: () => void,
 ) {
   if (items.length === 0) {
     return <p className={mp.body}>{labels.placeholderEmDash}</p>
@@ -205,7 +177,13 @@ function renderMenuItems(
 
   const filteredItems = filterPromotionCandidateItems(items, filters)
   if (filteredItems.length === 0) {
-    return <p className={mp.body}>{labels.emptyFiltered}</p>
+    return (
+      <FilteredEmptyState
+        message={labels.emptyFiltered}
+        actionLabel={labels.emptyFilteredAction}
+        onClearFilters={onClearFilters}
+      />
+    )
   }
 
   const sortedItems = sortPromotionCandidateItemsByPopularity(filteredItems)
@@ -325,7 +303,9 @@ export function MilestonePromotionCandidatesDataPreview({
       helpPriceLevel: t('milestonePromotionCandidatesPreviewHelpPriceLevel'),
       placeholderEmDash: t('milestonePreviewPlaceholderEmDash'),
       emptyFiltered: t('milestonePromotionCandidatesPreviewEmptyFiltered'),
+      emptyFilteredAction: t('milestonePromotionCandidatesPreviewEmptyFilteredAction'),
       filtersTitle: t('milestonePromotionCandidatesPreviewFiltersTitle'),
+      filtersDescription: t('milestonePromotionCandidatesPreviewFiltersDescription'),
       filtersStorytellingLabel: t('milestonePromotionCandidatesPreviewFiltersStorytellingLabel'),
       filtersStorytellingAria: t('milestonePromotionCandidatesPreviewFiltersStorytellingAria'),
       filtersPriceLevelLabel: t('milestonePromotionCandidatesPreviewFiltersPriceLevelLabel'),
@@ -354,6 +334,8 @@ export function MilestonePromotionCandidatesDataPreview({
     [sortedCategories, filters],
   )
 
+  const clearFilters = () => setFilters(DEFAULT_PROMOTION_CANDIDATES_PREVIEW_FILTERS)
+
   return (
     <div className={mp.root}>
       <div className="space-y-2">
@@ -368,66 +350,15 @@ export function MilestonePromotionCandidatesDataPreview({
         </p>
       </div>
 
-      <div className={`${mp.insetCard} space-y-4`}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-            <p className={mp.sectionTitle}>{labels.filtersTitle}</p>
-            <ItemCountLabel visible={visibleItemCount} total={totalItemCount} labels={labels} />
-          </div>
-          {filtersActive ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-auto px-2 py-1 text-sm"
-              onClick={() => setFilters(DEFAULT_PROMOTION_CANDIDATES_PREVIEW_FILTERS)}
-            >
-              {labels.filtersClear}
-            </Button>
-          ) : null}
-        </div>
-
-        <Field className="gap-2">
-          <FieldLabel>{labels.filtersStorytellingLabel}</FieldLabel>
-          <ToggleGroup
-            type="multiple"
-            value={filters.storytellingFit}
-            onValueChange={(value) => {
-              setFilters((current) => ({
-                ...current,
-                storytellingFit: value.filter(
-                  (entry): entry is 'strong' | 'weak' => entry === 'strong' || entry === 'weak',
-                ),
-              }))
-            }}
-            aria-label={labels.filtersStorytellingAria}
-          >
-            <ToggleGroupItem value="strong">{labels.storytellingStrong}</ToggleGroupItem>
-            <ToggleGroupItem value="weak">{labels.storytellingWeak}</ToggleGroupItem>
-          </ToggleGroup>
-        </Field>
-
-        <Field className="gap-2">
-          <FieldLabel>{labels.filtersPriceLevelLabel}</FieldLabel>
-          <ToggleGroup
-            type="multiple"
-            value={filters.priceLevel.map(String)}
-            onValueChange={(value) => {
-              setFilters((current) => ({
-                ...current,
-                priceLevel: value
-                  .map((entry) => Number(entry))
-                  .filter((entry): entry is 1 | 2 | 3 => entry === 1 || entry === 2 || entry === 3),
-              }))
-            }}
-            aria-label={labels.filtersPriceLevelAria}
-          >
-            <ToggleGroupItem value="1">{labels.priceLevelLow}</ToggleGroupItem>
-            <ToggleGroupItem value="2">{labels.priceLevelMid}</ToggleGroupItem>
-            <ToggleGroupItem value="3">{labels.priceLevelHigh}</ToggleGroupItem>
-          </ToggleGroup>
-        </Field>
-      </div>
+      <PromotionCandidatesPreviewFiltersPanel
+        filters={filters}
+        onFiltersChange={setFilters}
+        onClearFilters={clearFilters}
+        visibleCount={visibleItemCount}
+        totalCount={totalItemCount}
+        filtersActive={filtersActive}
+        labels={labels}
+      />
 
       <div className="space-y-4">
         {sortedCategories.map((bucket) => {
@@ -457,7 +388,7 @@ export function MilestonePromotionCandidatesDataPreview({
                         helpText={labels.helpStarItems}
                       />
                     </div>
-                    {renderMenuItems(bucket.starItems, labels, filters)}
+                    {renderMenuItems(bucket.starItems, labels, filters, clearFilters)}
                   </div>
                   <div className="space-y-2">
                     <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
@@ -472,7 +403,7 @@ export function MilestonePromotionCandidatesDataPreview({
                         helpText={labels.helpPuzzleItems}
                       />
                     </div>
-                    {renderMenuItems(bucket.puzzleItems, labels, filters)}
+                    {renderMenuItems(bucket.puzzleItems, labels, filters, clearFilters)}
                   </div>
                 </div>
               )}
