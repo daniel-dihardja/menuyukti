@@ -189,7 +189,7 @@ function renderMenuItems(
   const sortedItems = sortPromotionCandidateItemsByPopularity(filteredItems)
 
   return (
-    <ul className="list-none space-y-3 pl-0">
+    <ul className={`${mp.listDecimal} space-y-2`}>
       {sortedItems.map((item, index) => {
         const isStrong = item.storytellingFit === 'strong'
         const fitLabel = isStrong ? labels.storytellingStrong : labels.storytellingWeak
@@ -201,18 +201,16 @@ function renderMenuItems(
         const hasQuantity = 'quantity' in item && typeof item.quantity === 'number'
         const hasPriceLevel = 'priceLevel' in item && typeof item.priceLevel === 'number'
         return (
-          <li key={`${item.name}-${index}`} className="border-l-2 border-muted pl-3">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className={mp.bodyStrong}>{item.name}</span>
-              <div className="flex items-center gap-0.5">
-                <Badge variant="outline" className={storytellingBadgeClassName}>
-                  {fitLabel}
-                </Badge>
-                <MilestonePreviewHelpTrigger
-                  ariaLabel={labels.formatHelpAriaLabel(labels.storytellingFitSection)}
-                  helpText={labels.helpStorytellingFit}
-                />
-              </div>
+          <li key={`${item.name}-${index}`} className={mp.insetCard}>
+            <p className={`${mp.body} font-medium text-foreground`}>{item.name}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <Badge variant="outline" className={storytellingBadgeClassName}>
+                {fitLabel}
+              </Badge>
+              <MilestonePreviewHelpTrigger
+                ariaLabel={labels.formatHelpAriaLabel(labels.storytellingFitSection)}
+                helpText={labels.helpStorytellingFit}
+              />
             </div>
             {rationale ? (
               <p className={`mt-2 ${mp.bodySmall} leading-relaxed`}>
