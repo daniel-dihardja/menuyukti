@@ -18,8 +18,14 @@ import {
 import { Label } from '@workspace/ui/components/label'
 import { Separator } from '@workspace/ui/components/separator'
 import { Skeleton } from '@workspace/ui/components/skeleton'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@workspace/ui/components/select'
 import { Textarea } from '@workspace/ui/components/textarea'
-import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 import { cn } from '@workspace/ui/lib/utils'
 
 import {
@@ -83,25 +89,27 @@ type ItemLimitRowProps = {
 
 function ItemLimitRow({ ariaLabel, disabled, label, onChange, t, value }: ItemLimitRowProps) {
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
       <FieldLegend className="text-sm font-medium">{label}</FieldLegend>
-      <ToggleGroup
-        aria-label={ariaLabel}
+      <Select
         disabled={disabled}
         onValueChange={(next) => {
-          if (!next) return
           const parsed = parseItemLimit(next)
           if (parsed) onChange(parsed)
         }}
-        type="single"
         value={String(value)}
       >
-        {ITEM_LIMIT_OPTIONS.map((option) => (
-          <ToggleGroupItem key={option} value={String(option)}>
-            {limitLabel(t, option)}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
+        <SelectTrigger aria-label={ariaLabel} className="w-full sm:w-[min(100%,10rem)]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent position="popper">
+          {ITEM_LIMIT_OPTIONS.map((option) => (
+            <SelectItem key={option} value={String(option)}>
+              {limitLabel(t, option)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   )
 }
