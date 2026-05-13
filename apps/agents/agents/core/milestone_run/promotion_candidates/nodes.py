@@ -57,23 +57,34 @@ def _parse_engineering_items(raw: Any) -> list[dict[str, Any]]:
         name = ""
         quantity: int | None = None
         popularity: float | None = None
+        price_level: int | None = None
         if isinstance(item, str):
             name = item.strip()
         elif isinstance(item, dict):
             name = str(item.get("menu") or item.get("name") or "").strip()
             quantity_raw = item.get("quantity")
             popularity_raw = item.get("popularity")
+            price_level_raw = item.get("price_level", item.get("priceLevel"))
             if quantity_raw is not None and quantity_raw != "":
                 quantity = int(quantity_raw)
             if popularity_raw is not None and popularity_raw != "":
                 popularity = float(popularity_raw)
+            if price_level_raw in (1, 2, 3):
+                price_level = int(price_level_raw)
         if not name:
             continue
         key = name.casefold()
         if key in seen:
             continue
         seen.add(key)
-        out.append(_placeholder_item(name, quantity=quantity, popularity=popularity))
+        out.append(
+            _placeholder_item(
+                name,
+                quantity=quantity,
+                popularity=popularity,
+                price_level=price_level,
+            )
+        )
     return out
 
 
@@ -82,6 +93,7 @@ def _placeholder_item(
     *,
     quantity: int | None = None,
     popularity: float | None = None,
+    price_level: int | None = None,
 ) -> dict[str, Any]:
     item: dict[str, Any] = {
         "name": name,
@@ -92,6 +104,8 @@ def _placeholder_item(
         item["quantity"] = quantity
     if popularity is not None:
         item["popularity"] = popularity
+    if price_level in (1, 2, 3):
+        item["priceLevel"] = price_level
     return item
 
 
@@ -380,16 +394,20 @@ def _apply_verdicts_to_formatted(
                 name = ""
                 quantity: int | None = None
                 popularity: float | None = None
+                price_level: int | None = None
                 if isinstance(raw, str):
                     name = raw.strip()
                 elif isinstance(raw, dict):
                     name = str(raw.get("name") or "").strip()
                     quantity_raw = raw.get("quantity")
                     popularity_raw = raw.get("popularity")
+                    price_level_raw = raw.get("priceLevel", raw.get("price_level"))
                     if quantity_raw is not None and quantity_raw != "":
                         quantity = int(quantity_raw)
                     if popularity_raw is not None and popularity_raw != "":
                         popularity = float(popularity_raw)
+                    if price_level_raw in (1, 2, 3):
+                        price_level = int(price_level_raw)
                 if not name:
                     continue
                 fit, rationale = by_cf.get(name.casefold(), _DEFAULT_MISSING_VERDICT)
@@ -402,6 +420,8 @@ def _apply_verdicts_to_formatted(
                     item["quantity"] = quantity
                 if popularity is not None:
                     item["popularity"] = popularity
+                if price_level in (1, 2, 3):
+                    item["priceLevel"] = price_level
                 new_items.append(item)
             block[key] = new_items
     return merged

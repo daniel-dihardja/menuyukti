@@ -1,9 +1,11 @@
 'use client'
 
 import { useMemo } from 'react'
+import { Banknote } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { Badge } from '@workspace/ui/components/badge'
+import { cn } from '@workspace/ui/lib/utils'
 
 import type {
   PromotionCandidateMenuItem,
@@ -37,12 +39,17 @@ type PromotionCandidatesPreviewLabels = {
   metricsLine: (popularity: string, quantity: number) => string
   popularityOnlyLine: (popularity: string) => string
   quantityOnlyLine: (count: number) => string
+  priceLevelSection: string
+  priceLevelLow: string
+  priceLevelMid: string
+  priceLevelHigh: string
   summary: string
   helpHeading: string
   helpStarItems: string
   helpPuzzleItems: string
   helpStorytellingFit: string
   helpPopularity: string
+  helpPriceLevel: string
   placeholderEmDash: string
   formatHelpAriaLabel: (sectionTitle: string) => string
 }
@@ -54,6 +61,80 @@ const popularityPercentFormatter = new Intl.NumberFormat(undefined, {
 
 function formatPopularityLabel(popularity: number): string {
   return popularityPercentFormatter.format(popularity)
+}
+
+function priceLevelLabel(
+  level: 1 | 2 | 3,
+  labels: Pick<
+    PromotionCandidatesPreviewLabels,
+    'priceLevelLow' | 'priceLevelMid' | 'priceLevelHigh'
+  >,
+): string {
+  if (level === 1) {
+    return labels.priceLevelLow
+  }
+  if (level === 3) {
+    return labels.priceLevelHigh
+  }
+  return labels.priceLevelMid
+}
+
+const PRICE_LEVEL_BAR_HEIGHTS = ['h-1.5', 'h-2.5', 'h-3.5'] as const
+
+const PRICE_LEVEL_TONE: Record<1 | 2 | 3, { icon: string; bar: string; badge: string }> = {
+  1: {
+    icon: 'text-sky-600 dark:text-sky-400',
+    bar: 'bg-sky-500 dark:bg-sky-400',
+    badge:
+      'border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-100',
+  },
+  2: {
+    icon: 'text-amber-600 dark:text-amber-400',
+    bar: 'bg-amber-500 dark:bg-amber-400',
+    badge:
+      'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100',
+  },
+  3: {
+    icon: 'text-violet-600 dark:text-violet-400',
+    bar: 'bg-violet-500 dark:bg-violet-400',
+    badge:
+      'border-violet-200 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-100',
+  },
+}
+
+function PriceLevelIndicator({
+  level,
+  label,
+  sectionLabel,
+}: {
+  level: 1 | 2 | 3
+  label: string
+  sectionLabel: string
+}) {
+  const tone = PRICE_LEVEL_TONE[level]
+
+  return (
+    <Badge
+      variant="outline"
+      className={cn('gap-1 px-1.5 py-0.5 font-normal', tone.badge)}
+      aria-label={`${sectionLabel}: ${label}`}
+      title={`${sectionLabel}: ${label}`}
+    >
+      <Banknote className={cn('size-3.5 shrink-0', tone.icon)} aria-hidden />
+      <span className="inline-flex items-end gap-0.5" aria-hidden>
+        {([1, 2, 3] as const).map((tier, index) => (
+          <span
+            key={tier}
+            className={cn(
+              'w-1 rounded-sm',
+              PRICE_LEVEL_BAR_HEIGHTS[index],
+              tier <= level ? tone.bar : 'bg-current/20',
+            )}
+          />
+        ))}
+      </span>
+    </Badge>
+  )
 }
 
 function SectionHeader({
@@ -94,6 +175,7 @@ function renderMenuItems(
           : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100'
         const hasPopularity = 'popularity' in item && typeof item.popularity === 'number'
         const hasQuantity = 'quantity' in item && typeof item.quantity === 'number'
+        const hasPriceLevel = 'priceLevel' in item && typeof item.priceLevel === 'number'
         return (
           <li key={`${item.name}-${index}`} className="border-l-2 border-muted pl-3">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -132,6 +214,21 @@ function renderMenuItems(
                 ) : null}
               </p>
             ) : null}
+            {hasPriceLevel ? (
+              <div
+                className={`mt-1 flex flex-wrap items-center gap-x-1 ${mp.bodySmall} text-muted-foreground`}
+              >
+                <PriceLevelIndicator
+                  level={item.priceLevel as 1 | 2 | 3}
+                  label={priceLevelLabel(item.priceLevel as 1 | 2 | 3, labels)}
+                  sectionLabel={labels.priceLevelSection}
+                />
+                <MilestonePreviewHelpTrigger
+                  ariaLabel={labels.formatHelpAriaLabel(labels.priceLevelSection)}
+                  helpText={labels.helpPriceLevel}
+                />
+              </div>
+            ) : null}
           </li>
         )
       })}
@@ -166,12 +263,17 @@ export function MilestonePromotionCandidatesDataPreview({
         t('milestonePromotionCandidatesPreviewPopularityValue', { value: popularity }),
       quantityOnlyLine: (count: number) =>
         t('milestonePromotionCandidatesPreviewQuantityValue', { count }),
+      priceLevelSection: t('milestonePromotionCandidatesPreviewPriceLevelSection'),
+      priceLevelLow: t('milestonePromotionCandidatesPreviewPriceLevelLow'),
+      priceLevelMid: t('milestonePromotionCandidatesPreviewPriceLevelMid'),
+      priceLevelHigh: t('milestonePromotionCandidatesPreviewPriceLevelHigh'),
       summary: t('milestonePromotionCandidatesPreviewSummary'),
       helpHeading: t('milestonePromotionCandidatesPreviewHelpHeading'),
       helpStarItems: t('milestonePromotionCandidatesPreviewHelpStarItems'),
       helpPuzzleItems: t('milestonePromotionCandidatesPreviewHelpPuzzleItems'),
       helpStorytellingFit: t('milestonePromotionCandidatesPreviewHelpStorytellingFit'),
       helpPopularity: t('milestonePromotionCandidatesPreviewHelpPopularity'),
+      helpPriceLevel: t('milestonePromotionCandidatesPreviewHelpPriceLevel'),
       placeholderEmDash: t('milestonePreviewPlaceholderEmDash'),
       formatHelpAriaLabel: (sectionTitle: string) =>
         t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle }),

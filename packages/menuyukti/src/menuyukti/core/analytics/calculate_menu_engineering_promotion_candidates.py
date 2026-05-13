@@ -19,6 +19,55 @@ class PromotionEngineeringCandidateItem(TypedDict):
     menu: str
     quantity: int
     popularity: float
+    price_level: Literal[1, 2, 3]
+
+
+def _unit_price_from_matrix_item(item: MenuEngineeringMatrixItem) -> float | None:
+    quantity = int(item.get("quantity") or 0)
+    if quantity <= 0:
+        return None
+    total_revenue = float(item.get("total_revenue") or 0.0)
+    return total_revenue / quantity
+
+
+def _price_level_for_unit_price(
+    unit_price: float,
+    *,
+    min_price: float,
+    max_price: float,
+) -> Literal[1, 2, 3]:
+    if max_price == min_price:
+        return 2
+    normalized = (unit_price - min_price) / (max_price - min_price)
+    if normalized < 1 / 3:
+        return 1
+    if normalized < 2 / 3:
+        return 2
+    return 3
+
+
+def _price_level_by_menu(matrix: MenuEngineeringMatrixResult) -> dict[str, Literal[1, 2, 3]]:
+    unit_prices: dict[str, float] = {}
+    for item in matrix["items"]:
+        menu = str(item.get("menu") or "").strip()
+        if not menu:
+            continue
+        unit_price = _unit_price_from_matrix_item(item)
+        if unit_price is None:
+            continue
+        unit_prices[menu] = unit_price
+    if not unit_prices:
+        return {}
+    min_price = min(unit_prices.values())
+    max_price = max(unit_prices.values())
+    return {
+        menu: _price_level_for_unit_price(
+            unit_price,
+            min_price=min_price,
+            max_price=max_price,
+        )
+        for menu, unit_price in unit_prices.items()
+    }
 
 
 def _normalized_menu_category(row: OrderRowForMatrix) -> str | None:
@@ -63,6 +112,7 @@ def _popularity_by_menu(rows: list[OrderRowForMatrix]) -> dict[str, float]:
 def _enrich_quadrant_items(
     items: list[MenuEngineeringMatrixItem],
     popularity_by_menu: dict[str, float],
+    price_level_by_menu: dict[str, Literal[1, 2, 3]],
 ) -> list[PromotionEngineeringCandidateItem]:
     enriched: list[PromotionEngineeringCandidateItem] = []
     for item in items:
@@ -71,11 +121,13 @@ def _enrich_quadrant_items(
             continue
         quantity = int(item.get("quantity") or 0)
         popularity = popularity_by_menu.get(menu, 0.0)
+        price_level = price_level_by_menu.get(menu, 2)
         enriched.append(
             {
                 "menu": menu,
                 "quantity": quantity,
                 "popularity": popularity,
+                "price_level": price_level,
             }
         )
     return enriched
@@ -105,15 +157,18 @@ def _bucket_payload(
             "reason": str(exc) or "matrix unavailable",
         }
     popularity_by_menu = _popularity_by_menu(rows)
+    price_level_by_menu = _price_level_by_menu(matrix)
     return {
         "matrix": matrix,
         "topStars": _enrich_quadrant_items(
             _top_quadrant_items(matrix, "star", max_star_items),
             popularity_by_menu,
+            price_level_by_menu,
         ),
         "topPuzzles": _enrich_quadrant_items(
             _top_quadrant_items(matrix, "puzzle", max_puzzle_items),
             popularity_by_menu,
+            price_level_by_menu,
         ),
     }
 

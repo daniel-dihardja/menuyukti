@@ -41,6 +41,8 @@ def _assert_engineering_item(item: object) -> None:
     quantity = int(item["quantity"])
     assert 0.0 <= popularity <= 1.0
     assert quantity > 0
+    assert "price_level" in item
+    assert item["price_level"] in (1, 2, 3)
 
 
 def test_promotion_engineering_candidates_with_qa_data(analytics_run_with_qa_data: int) -> None:

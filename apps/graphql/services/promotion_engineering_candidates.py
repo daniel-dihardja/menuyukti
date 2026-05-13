@@ -30,13 +30,17 @@ def _passthrough_engineering_item(item: Any) -> dict[str, Any] | None:
         return None
     quantity_raw = item.get("quantity")
     popularity_raw = item.get("popularity")
+    price_level_raw = item.get("price_level")
     quantity = int(quantity_raw) if quantity_raw is not None else 0
     popularity = float(popularity_raw) if popularity_raw is not None else 0.0
-    return {
+    out: dict[str, Any] = {
         "menu": menu,
         "quantity": quantity,
         "popularity": popularity,
     }
+    if price_level_raw in (1, 2, 3):
+        out["price_level"] = int(price_level_raw)
+    return out
 
 
 def _passthrough_engineering_items(raw_items: Any) -> list[dict[str, Any]]:

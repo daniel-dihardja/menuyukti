@@ -280,6 +280,7 @@ class PromotionCandidateMenuItem(BaseModel):
     storytellingRationale: str = ""
     quantity: int | None = None
     popularity: float | None = None
+    priceLevel: Literal[1, 2, 3] | None = None
 
     @field_validator("name", mode="before")
     @classmethod
@@ -325,6 +326,16 @@ class PromotionCandidateMenuItem(BaseModel):
         if score < 0.0 or score > 1.0:
             raise ValueError("popularity must be between 0 and 1")
         return score
+
+    @field_validator("priceLevel", mode="before")
+    @classmethod
+    def _normalize_price_level(cls, value: Any) -> int | None:
+        if value is None or value == "":
+            return None
+        level = int(value)
+        if level not in (1, 2, 3):
+            raise ValueError("priceLevel must be 1, 2, or 3")
+        return level
 
 
 class PromotionCandidatesCategory(BaseModel):

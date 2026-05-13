@@ -61,10 +61,22 @@ async def test_fetch_and_prepare_builds_pos_category_sections() -> None:
                         "categories": {
                             "Mains": {
                                 "starItems": [
-                                    {"menu": "Steak", "quantity": 10, "popularity": 0.4},
+                                    {
+                                        "menu": "Steak",
+                                        "quantity": 10,
+                                        "popularity": 0.4,
+                                        "price_level": 3,
+                                    },
                                     "Pasta",
                                 ],
-                                "puzzleItems": [{"menu": "Soup", "quantity": 5, "popularity": 0.2}],
+                                "puzzleItems": [
+                                    {
+                                        "menu": "Soup",
+                                        "quantity": 5,
+                                        "popularity": 0.2,
+                                        "price_level": 1,
+                                    }
+                                ],
                             },
                             "Drinks": {
                                 "starItems": [{"menu": "Latte", "quantity": 8, "popularity": 0.5}],
@@ -88,6 +100,9 @@ async def test_fetch_and_prepare_builds_pos_category_sections() -> None:
     assert categories[0]["starItems"][0]["storytellingFit"] == "weak"
     assert categories[0]["starItems"][0]["quantity"] == 8
     assert categories[0]["starItems"][0]["popularity"] == 0.5
+    mains = next(row for row in categories if row["category"] == "Mains")
+    assert mains["starItems"][0]["priceLevel"] == 3
+    assert mains["puzzleItems"][0]["priceLevel"] == 1
     assert out["formatted_output"]["sourceAnalyticsRunId"] == "42"
 
 

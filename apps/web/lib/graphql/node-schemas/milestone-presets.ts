@@ -229,6 +229,7 @@ export const promotionCandidateMenuItemSchema = z.union([
     storytellingRationale: z.string().default(''),
     quantity: z.number().int().nonnegative().optional(),
     popularity: z.number().min(0).max(1).optional(),
+    priceLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
   }),
 ])
 

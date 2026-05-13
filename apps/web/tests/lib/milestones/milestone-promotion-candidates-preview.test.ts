@@ -40,6 +40,7 @@ describe('promotion candidates milestone schema', () => {
               storytellingRationale: 'Too generic for the Ramadan family angle.',
               quantity: 42,
               popularity: 0.123456,
+              priceLevel: 3,
             },
           ],
           puzzleItems: [
@@ -57,7 +58,22 @@ describe('promotion candidates milestone schema', () => {
     expect(parsed.data.categories[0]?.starItems[0]).toMatchObject({
       quantity: 42,
       popularity: 0.123456,
+      priceLevel: 3,
     })
+  })
+
+  it('rejects invalid priceLevel values', () => {
+    const parsed = promotionCandidatesMilestoneDataSchema.safeParse({
+      mainCategory: 'Mains',
+      categories: [
+        {
+          category: 'Mains',
+          starItems: [{ name: 'Steak', priceLevel: 4 }],
+          puzzleItems: [],
+        },
+      ],
+    })
+    expect(parsed.success).toBe(false)
   })
 
   it('requires at least one category block', () => {
