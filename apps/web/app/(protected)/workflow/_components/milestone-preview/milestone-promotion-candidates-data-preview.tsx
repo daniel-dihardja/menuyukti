@@ -1,10 +1,13 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Banknote } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { Badge } from '@workspace/ui/components/badge'
+import { Button } from '@workspace/ui/components/button'
+import { Field, FieldLabel } from '@workspace/ui/components/field'
+import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 import { cn } from '@workspace/ui/lib/utils'
 
 import type {
@@ -15,6 +18,14 @@ import {
   sortPromotionCandidateCategories,
   sortPromotionCandidateItemsByPopularity,
 } from '@/lib/milestones/promotion-candidates-category-order'
+import {
+  DEFAULT_PROMOTION_CANDIDATES_PREVIEW_FILTERS,
+  countFilteredPromotionCandidateItemsInCategories,
+  countPromotionCandidateItemsInCategories,
+  filterPromotionCandidateItems,
+  hasActivePromotionCandidatesPreviewFilters,
+  type PromotionCandidatesPreviewFilters,
+} from '@/lib/milestones/promotion-candidates-filters'
 
 import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
@@ -51,6 +62,15 @@ type PromotionCandidatesPreviewLabels = {
   helpPopularity: string
   helpPriceLevel: string
   placeholderEmDash: string
+  emptyFiltered: string
+  filtersTitle: string
+  filtersStorytellingLabel: string
+  filtersStorytellingAria: string
+  filtersPriceLevelLabel: string
+  filtersPriceLevelAria: string
+  filtersClear: string
+  itemCount: (count: number) => string
+  filteredShowing: (visible: number, total: number) => string
   formatHelpAriaLabel: (sectionTitle: string) => string
 }
 
@@ -137,6 +157,26 @@ function PriceLevelIndicator({
   )
 }
 
+function ItemCountLabel({
+  visible,
+  total,
+  labels,
+}: {
+  visible: number
+  total: number
+  labels: Pick<PromotionCandidatesPreviewLabels, 'itemCount' | 'filteredShowing'>
+}) {
+  if (total === 0) {
+    return null
+  }
+
+  return (
+    <span className={`${mp.bodySmall} text-muted-foreground`}>
+      {visible !== total ? labels.filteredShowing(visible, total) : labels.itemCount(total)}
+    </span>
+  )
+}
+
 function SectionHeader({
   title,
   helpText,
@@ -157,12 +197,18 @@ function SectionHeader({
 function renderMenuItems(
   items: PromotionCandidateMenuItem[],
   labels: PromotionCandidatesPreviewLabels,
+  filters: PromotionCandidatesPreviewFilters,
 ) {
   if (items.length === 0) {
     return <p className={mp.body}>{labels.placeholderEmDash}</p>
   }
 
-  const sortedItems = sortPromotionCandidateItemsByPopularity(items)
+  const filteredItems = filterPromotionCandidateItems(items, filters)
+  if (filteredItems.length === 0) {
+    return <p className={mp.body}>{labels.emptyFiltered}</p>
+  }
+
+  const sortedItems = sortPromotionCandidateItemsByPopularity(filteredItems)
 
   return (
     <ul className="list-none space-y-3 pl-0">
@@ -240,6 +286,9 @@ export function MilestonePromotionCandidatesDataPreview({
   data,
 }: MilestonePromotionCandidatesDataPreviewProps) {
   const t = useTranslations('analytics.workflows.chat')
+  const [filters, setFilters] = useState<PromotionCandidatesPreviewFilters>(
+    DEFAULT_PROMOTION_CANDIDATES_PREVIEW_FILTERS,
+  )
   const labels = useMemo<PromotionCandidatesPreviewLabels>(
     () => ({
       heading: t('milestonePromotionCandidatesPreviewHeading'),
@@ -275,6 +324,16 @@ export function MilestonePromotionCandidatesDataPreview({
       helpPopularity: t('milestonePromotionCandidatesPreviewHelpPopularity'),
       helpPriceLevel: t('milestonePromotionCandidatesPreviewHelpPriceLevel'),
       placeholderEmDash: t('milestonePreviewPlaceholderEmDash'),
+      emptyFiltered: t('milestonePromotionCandidatesPreviewEmptyFiltered'),
+      filtersTitle: t('milestonePromotionCandidatesPreviewFiltersTitle'),
+      filtersStorytellingLabel: t('milestonePromotionCandidatesPreviewFiltersStorytellingLabel'),
+      filtersStorytellingAria: t('milestonePromotionCandidatesPreviewFiltersStorytellingAria'),
+      filtersPriceLevelLabel: t('milestonePromotionCandidatesPreviewFiltersPriceLevelLabel'),
+      filtersPriceLevelAria: t('milestonePromotionCandidatesPreviewFiltersPriceLevelAria'),
+      filtersClear: t('milestonePromotionCandidatesPreviewFiltersClear'),
+      itemCount: (count: number) => t('milestonePromotionCandidatesPreviewItemCount', { count }),
+      filteredShowing: (visible: number, total: number) =>
+        t('milestonePromotionCandidatesPreviewFilteredShowing', { visible, total }),
       formatHelpAriaLabel: (sectionTitle: string) =>
         t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle }),
     }),
@@ -284,6 +343,15 @@ export function MilestonePromotionCandidatesDataPreview({
   const sortedCategories = useMemo(
     () => sortPromotionCandidateCategories(data.categories, data.mainCategory),
     [data.categories, data.mainCategory],
+  )
+  const filtersActive = hasActivePromotionCandidatesPreviewFilters(filters)
+  const totalItemCount = useMemo(
+    () => countPromotionCandidateItemsInCategories(sortedCategories),
+    [sortedCategories],
+  )
+  const visibleItemCount = useMemo(
+    () => countFilteredPromotionCandidateItemsInCategories(sortedCategories, filters),
+    [sortedCategories, filters],
   )
 
   return (
@@ -300,9 +368,75 @@ export function MilestonePromotionCandidatesDataPreview({
         </p>
       </div>
 
+      <div className={`${mp.insetCard} space-y-4`}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+            <p className={mp.sectionTitle}>{labels.filtersTitle}</p>
+            <ItemCountLabel visible={visibleItemCount} total={totalItemCount} labels={labels} />
+          </div>
+          {filtersActive ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-auto px-2 py-1 text-sm"
+              onClick={() => setFilters(DEFAULT_PROMOTION_CANDIDATES_PREVIEW_FILTERS)}
+            >
+              {labels.filtersClear}
+            </Button>
+          ) : null}
+        </div>
+
+        <Field className="gap-2">
+          <FieldLabel>{labels.filtersStorytellingLabel}</FieldLabel>
+          <ToggleGroup
+            type="multiple"
+            value={filters.storytellingFit}
+            onValueChange={(value) => {
+              setFilters((current) => ({
+                ...current,
+                storytellingFit: value.filter(
+                  (entry): entry is 'strong' | 'weak' => entry === 'strong' || entry === 'weak',
+                ),
+              }))
+            }}
+            aria-label={labels.filtersStorytellingAria}
+          >
+            <ToggleGroupItem value="strong">{labels.storytellingStrong}</ToggleGroupItem>
+            <ToggleGroupItem value="weak">{labels.storytellingWeak}</ToggleGroupItem>
+          </ToggleGroup>
+        </Field>
+
+        <Field className="gap-2">
+          <FieldLabel>{labels.filtersPriceLevelLabel}</FieldLabel>
+          <ToggleGroup
+            type="multiple"
+            value={filters.priceLevel.map(String)}
+            onValueChange={(value) => {
+              setFilters((current) => ({
+                ...current,
+                priceLevel: value
+                  .map((entry) => Number(entry))
+                  .filter((entry): entry is 1 | 2 | 3 => entry === 1 || entry === 2 || entry === 3),
+              }))
+            }}
+            aria-label={labels.filtersPriceLevelAria}
+          >
+            <ToggleGroupItem value="1">{labels.priceLevelLow}</ToggleGroupItem>
+            <ToggleGroupItem value="2">{labels.priceLevelMid}</ToggleGroupItem>
+            <ToggleGroupItem value="3">{labels.priceLevelHigh}</ToggleGroupItem>
+          </ToggleGroup>
+        </Field>
+      </div>
+
       <div className="space-y-4">
         {sortedCategories.map((bucket) => {
           const hasItems = bucket.starItems.length > 0 || bucket.puzzleItems.length > 0
+          const visibleStarCount = filterPromotionCandidateItems(bucket.starItems, filters).length
+          const visiblePuzzleCount = filterPromotionCandidateItems(
+            bucket.puzzleItems,
+            filters,
+          ).length
           return (
             <div key={bucket.category} className="space-y-3">
               <p className={mp.sectionTitle}>{bucket.category}</p>
@@ -311,24 +445,34 @@ export function MilestonePromotionCandidatesDataPreview({
               ) : (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <div className="flex min-w-0 items-center gap-0.5">
-                      <p className={`min-w-0 flex-1 ${mp.rowKey}`}>{labels.starItemsLabel}</p>
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      <p className={`min-w-0 ${mp.rowKey}`}>{labels.starItemsLabel}</p>
+                      <ItemCountLabel
+                        visible={visibleStarCount}
+                        total={bucket.starItems.length}
+                        labels={labels}
+                      />
                       <MilestonePreviewHelpTrigger
                         ariaLabel={a(labels.starItemsLabel)}
                         helpText={labels.helpStarItems}
                       />
                     </div>
-                    {renderMenuItems(bucket.starItems, labels)}
+                    {renderMenuItems(bucket.starItems, labels, filters)}
                   </div>
                   <div className="space-y-2">
-                    <div className="flex min-w-0 items-center gap-0.5">
-                      <p className={`min-w-0 flex-1 ${mp.rowKey}`}>{labels.puzzleItemsLabel}</p>
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      <p className={`min-w-0 ${mp.rowKey}`}>{labels.puzzleItemsLabel}</p>
+                      <ItemCountLabel
+                        visible={visiblePuzzleCount}
+                        total={bucket.puzzleItems.length}
+                        labels={labels}
+                      />
                       <MilestonePreviewHelpTrigger
                         ariaLabel={a(labels.puzzleItemsLabel)}
                         helpText={labels.helpPuzzleItems}
                       />
                     </div>
-                    {renderMenuItems(bucket.puzzleItems, labels)}
+                    {renderMenuItems(bucket.puzzleItems, labels, filters)}
                   </div>
                 </div>
               )}
