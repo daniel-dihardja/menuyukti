@@ -38,6 +38,13 @@ def test_flat_when_all_menu_category_blank() -> None:
     assert out["matrix"] is not None
     assert len(out["topStars"]) <= 5
     assert len(out["topPuzzles"]) <= 10
+    for item in out["topStars"] + out["topPuzzles"]:
+        assert set(item.keys()) == {"menu", "quantity", "popularity"}
+        assert 0.0 <= item["popularity"] <= 1.0
+    total_qty = 15
+    for item in out["topStars"] + out["topPuzzles"]:
+        expected = round(item["quantity"] / total_qty, 6)
+        assert item["popularity"] == expected
 
 
 def test_grouped_by_distinct_menu_category() -> None:
@@ -57,6 +64,16 @@ def test_grouped_by_distinct_menu_category() -> None:
         assert "topStars" in payload
         assert "topPuzzles" in payload
         assert payload["matrix"] is not None
+        for item in payload["topStars"] + payload["topPuzzles"]:
+            assert set(item.keys()) == {"menu", "quantity", "popularity"}
+    plates_total = 35
+    drinks_total = 30
+    plates_items = {i["menu"]: i for i in cats["Plates"]["topStars"] + cats["Plates"]["topPuzzles"]}
+    drinks_items = {i["menu"]: i for i in cats["Drinks"]["topStars"] + cats["Drinks"]["topPuzzles"]}
+    if "P1" in plates_items:
+        assert plates_items["P1"]["popularity"] == round(20 / plates_total, 6)
+    if "D1" in drinks_items:
+        assert drinks_items["D1"]["popularity"] == round(30 / drinks_total, 6)
 
 
 def test_grouped_excludes_blank_category_rows() -> None:

@@ -38,6 +38,8 @@ describe('promotion candidates milestone schema', () => {
               name: 'Steak',
               storytellingFit: 'weak',
               storytellingRationale: 'Too generic for the Ramadan family angle.',
+              quantity: 42,
+              popularity: 0.123456,
             },
           ],
           puzzleItems: [
@@ -45,10 +47,17 @@ describe('promotion candidates milestone schema', () => {
           ],
         },
       ],
-      sourceAnalyticsRunId: null,
+      sourceAnalyticsRunId: '99',
       notes: '',
     })
     expect(parsed.success).toBe(true)
+    if (!parsed.success) {
+      return
+    }
+    expect(parsed.data.categories[0]?.starItems[0]).toMatchObject({
+      quantity: 42,
+      popularity: 0.123456,
+    })
   })
 
   it('requires at least one category block', () => {

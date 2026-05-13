@@ -220,11 +220,15 @@ export const promotionCandidateMenuItemSchema = z.union([
       name,
       storytellingFit: 'strong' as const,
       storytellingRationale: '',
+      quantity: undefined,
+      popularity: undefined,
     })),
   z.object({
     name: z.string().trim().min(1),
     storytellingFit: z.enum(['strong', 'weak']).default('weak'),
     storytellingRationale: z.string().default(''),
+    quantity: z.number().int().nonnegative().optional(),
+    popularity: z.number().min(0).max(1).optional(),
   }),
 ])
 

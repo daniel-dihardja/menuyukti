@@ -22,6 +22,34 @@ def _resolve_limit(value: int | None, default: int) -> int | None:
     return value
 
 
+def _passthrough_engineering_item(item: Any) -> dict[str, Any] | None:
+    if not isinstance(item, dict):
+        return None
+    menu = str(item.get("menu") or "").strip()
+    if not menu:
+        return None
+    quantity_raw = item.get("quantity")
+    popularity_raw = item.get("popularity")
+    quantity = int(quantity_raw) if quantity_raw is not None else 0
+    popularity = float(popularity_raw) if popularity_raw is not None else 0.0
+    return {
+        "menu": menu,
+        "quantity": quantity,
+        "popularity": popularity,
+    }
+
+
+def _passthrough_engineering_items(raw_items: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw_items, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for item in raw_items:
+        parsed = _passthrough_engineering_item(item)
+        if parsed is not None:
+            out.append(parsed)
+    return out
+
+
 def build_promotion_engineering_candidates(
     session: Session,
     run: AnalyticsRun,
@@ -29,7 +57,7 @@ def build_promotion_engineering_candidates(
     max_star_items: int | None = None,
     max_puzzle_items: int | None = None,
 ) -> dict[str, Any] | None:
-    """Load order facts and COGS; return only star/puzzle menu names by category."""
+    """Load order facts and COGS; return star/puzzle items with menu metrics by category."""
     rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
     if not rows:
         return None
@@ -61,42 +89,22 @@ def build_promotion_engineering_candidates(
 
     if grouping == "by_menu_category":
         categories_raw = raw.get("categories")
-        out_categories: dict[str, dict[str, list[str]]] = {}
+        out_categories: dict[str, dict[str, list[dict[str, Any]]]] = {}
         if isinstance(categories_raw, dict):
             for key, bucket in categories_raw.items():
                 if not isinstance(bucket, dict):
                     continue
-                star_items = [
-                    str(item.get("menu")).strip()
-                    for item in (bucket.get("topStars") or [])
-                    if isinstance(item, dict) and str(item.get("menu") or "").strip()
-                ]
-                puzzle_items = [
-                    str(item.get("menu")).strip()
-                    for item in (bucket.get("topPuzzles") or [])
-                    if isinstance(item, dict) and str(item.get("menu") or "").strip()
-                ]
                 out_categories[str(key)] = {
-                    "starItems": star_items,
-                    "puzzleItems": puzzle_items,
+                    "starItems": _passthrough_engineering_items(bucket.get("topStars")),
+                    "puzzleItems": _passthrough_engineering_items(bucket.get("topPuzzles")),
                 }
         return {
             "grouping": "by_menu_category",
             "categories": out_categories,
         }
 
-    star_items = [
-        str(item.get("menu")).strip()
-        for item in (raw.get("topStars") or [])
-        if isinstance(item, dict) and str(item.get("menu") or "").strip()
-    ]
-    puzzle_items = [
-        str(item.get("menu")).strip()
-        for item in (raw.get("topPuzzles") or [])
-        if isinstance(item, dict) and str(item.get("menu") or "").strip()
-    ]
     return {
         "grouping": "flat",
-        "starItems": star_items,
-        "puzzleItems": puzzle_items,
+        "starItems": _passthrough_engineering_items(raw.get("topStars")),
+        "puzzleItems": _passthrough_engineering_items(raw.get("topPuzzles")),
     }

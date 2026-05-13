@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any, Literal, TypedDict
+
+import pandas as pd
 
 from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
     MenuEngineeringMatrixItem,
@@ -10,6 +12,13 @@ from menuyukti.core.analytics.calculate_menu_engineering_matrix import (
     OrderRowForMatrix,
     compute_menu_engineering_from_orders,
 )
+from menuyukti.core.analytics.calculate_popularity_index import calculate_popularity_index
+
+
+class PromotionEngineeringCandidateItem(TypedDict):
+    menu: str
+    quantity: int
+    popularity: float
 
 
 def _normalized_menu_category(row: OrderRowForMatrix) -> str | None:
@@ -38,6 +47,40 @@ def _top_quadrant_items(
     return items[:limit]
 
 
+def _popularity_by_menu(rows: list[OrderRowForMatrix]) -> dict[str, float]:
+    if not rows:
+        return {}
+    df = pd.DataFrame(rows)
+    if df.empty or "menu" not in df.columns or "qty" not in df.columns:
+        return {}
+    try:
+        index_rows = calculate_popularity_index(df)
+    except ValueError:
+        return {}
+    return {str(row["menu"]): float(row["popularity"]) for row in index_rows}
+
+
+def _enrich_quadrant_items(
+    items: list[MenuEngineeringMatrixItem],
+    popularity_by_menu: dict[str, float],
+) -> list[PromotionEngineeringCandidateItem]:
+    enriched: list[PromotionEngineeringCandidateItem] = []
+    for item in items:
+        menu = str(item.get("menu") or "").strip()
+        if not menu:
+            continue
+        quantity = int(item.get("quantity") or 0)
+        popularity = popularity_by_menu.get(menu, 0.0)
+        enriched.append(
+            {
+                "menu": menu,
+                "quantity": quantity,
+                "popularity": popularity,
+            }
+        )
+    return enriched
+
+
 def _bucket_payload(
     rows: list[OrderRowForMatrix],
     cogs_by_menu: dict[str, float],
@@ -61,10 +104,17 @@ def _bucket_payload(
             "topPuzzles": [],
             "reason": str(exc) or "matrix unavailable",
         }
+    popularity_by_menu = _popularity_by_menu(rows)
     return {
         "matrix": matrix,
-        "topStars": _top_quadrant_items(matrix, "star", max_star_items),
-        "topPuzzles": _top_quadrant_items(matrix, "puzzle", max_puzzle_items),
+        "topStars": _enrich_quadrant_items(
+            _top_quadrant_items(matrix, "star", max_star_items),
+            popularity_by_menu,
+        ),
+        "topPuzzles": _enrich_quadrant_items(
+            _top_quadrant_items(matrix, "puzzle", max_puzzle_items),
+            popularity_by_menu,
+        ),
     }
 
 

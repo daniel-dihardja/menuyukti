@@ -20,6 +20,10 @@ _MINIMAL_BRIEF_INJECTION = (
 )
 
 
+def _fetch_result(candidates: dict[str, object]) -> dict[str, object]:
+    return {"candidates": candidates, "analyticsRunId": "42"}
+
+
 @pytest.mark.asyncio
 async def test_fetch_and_prepare_requires_injected_campaign_brief() -> None:
     state = {
@@ -51,19 +55,24 @@ async def test_fetch_and_prepare_builds_pos_category_sections() -> None:
         patch(
             "agents_app.agents.core.milestone_run.promotion_candidates.nodes.fetch_promotion_engineering_candidates",
             new=AsyncMock(
-                return_value={
-                    "grouping": "by_menu_category",
-                    "categories": {
-                        "Mains": {
-                            "starItems": ["Steak", "Pasta"],
-                            "puzzleItems": ["Soup"],
+                return_value=_fetch_result(
+                    {
+                        "grouping": "by_menu_category",
+                        "categories": {
+                            "Mains": {
+                                "starItems": [
+                                    {"menu": "Steak", "quantity": 10, "popularity": 0.4},
+                                    "Pasta",
+                                ],
+                                "puzzleItems": [{"menu": "Soup", "quantity": 5, "popularity": 0.2}],
+                            },
+                            "Drinks": {
+                                "starItems": [{"menu": "Latte", "quantity": 8, "popularity": 0.5}],
+                                "puzzleItems": [{"menu": "Matcha", "quantity": 2, "popularity": 0.1}],
+                            },
                         },
-                        "Drinks": {
-                            "starItems": ["Latte"],
-                            "puzzleItems": ["Matcha"],
-                        },
-                    },
-                }
+                    }
+                )
             ),
         ),
         patch(
@@ -77,6 +86,9 @@ async def test_fetch_and_prepare_builds_pos_category_sections() -> None:
     assert [row["category"] for row in categories] == ["Drinks", "Mains"]
     assert categories[0]["starItems"][0]["name"] == "Latte"
     assert categories[0]["starItems"][0]["storytellingFit"] == "weak"
+    assert categories[0]["starItems"][0]["quantity"] == 8
+    assert categories[0]["starItems"][0]["popularity"] == 0.5
+    assert out["formatted_output"]["sourceAnalyticsRunId"] == "42"
 
 
 @pytest.mark.asyncio
@@ -96,14 +108,16 @@ async def test_fetch_and_prepare_orders_main_category_before_alphabetical() -> N
         patch(
             "agents_app.agents.core.milestone_run.promotion_candidates.nodes.fetch_promotion_engineering_candidates",
             new=AsyncMock(
-                return_value={
-                    "grouping": "by_menu_category",
-                    "categories": {
-                        "Appetizers": {"starItems": ["Bruschetta"], "puzzleItems": []},
-                        "Cocktails": {"starItems": ["Negroni"], "puzzleItems": []},
-                        "Mains": {"starItems": ["Steak"], "puzzleItems": []},
-                    },
-                }
+                return_value=_fetch_result(
+                    {
+                        "grouping": "by_menu_category",
+                        "categories": {
+                            "Appetizers": {"starItems": ["Bruschetta"], "puzzleItems": []},
+                            "Cocktails": {"starItems": ["Negroni"], "puzzleItems": []},
+                            "Mains": {"starItems": ["Steak"], "puzzleItems": []},
+                        },
+                    }
+                )
             ),
         ),
         patch(
@@ -141,13 +155,15 @@ async def test_fetch_and_prepare_filters_selected_menu_categories() -> None:
         patch(
             "agents_app.agents.core.milestone_run.promotion_candidates.nodes.fetch_promotion_engineering_candidates",
             new=AsyncMock(
-                return_value={
-                    "grouping": "by_menu_category",
-                    "categories": {
-                        "Mains": {"starItems": ["Steak"], "puzzleItems": []},
-                        "Desserts": {"starItems": ["Cake"], "puzzleItems": []},
-                    },
-                }
+                return_value=_fetch_result(
+                    {
+                        "grouping": "by_menu_category",
+                        "categories": {
+                            "Mains": {"starItems": ["Steak"], "puzzleItems": []},
+                            "Desserts": {"starItems": ["Cake"], "puzzleItems": []},
+                        },
+                    }
+                )
             ),
         ),
         patch(
@@ -185,11 +201,13 @@ async def test_fetch_and_prepare_passes_item_limits_to_graphql() -> None:
         },
     }
     fetch_mock = AsyncMock(
-        return_value={
-            "grouping": "flat",
-            "starItems": ["A"],
-            "puzzleItems": ["B"],
-        }
+        return_value=_fetch_result(
+            {
+                "grouping": "flat",
+                "starItems": ["A"],
+                "puzzleItems": ["B"],
+            }
+        )
     )
     with (
         patch(
@@ -221,7 +239,13 @@ async def test_enrich_storytelling_applies_llm_verdicts() -> None:
                 {
                     "category": "Mains",
                     "starItems": [
-                        {"name": "Steak", "storytellingFit": "weak", "storytellingRationale": ""}
+                        {
+                            "name": "Steak",
+                            "storytellingFit": "weak",
+                            "storytellingRationale": "",
+                            "quantity": 12,
+                            "popularity": 0.33,
+                        }
                     ],
                     "puzzleItems": [],
                 },
@@ -260,6 +284,8 @@ async def test_enrich_storytelling_applies_llm_verdicts() -> None:
     assert star["name"] == "Steak"
     assert star["storytellingFit"] == "strong"
     assert "hero" in star["storytellingRationale"].lower()
+    assert star["quantity"] == 12
+    assert star["popularity"] == 0.33
 
 
 @pytest.mark.asyncio
@@ -312,6 +338,8 @@ async def test_persist_result_accepts_object_shaped_items() -> None:
                             "name": "Steak",
                             "storytellingFit": "weak",
                             "storytellingRationale": "Generic for this brief.",
+                            "quantity": 7,
+                            "popularity": 0.21,
                         }
                     ],
                     "puzzleItems": [],
@@ -329,6 +357,8 @@ async def test_persist_result_accepts_object_shaped_items() -> None:
         await persist_result(state, client=MagicMock(spec=AsyncMock))
     saved = mock_upsert.await_args.args[2]
     assert saved["categories"][0]["starItems"][0]["storytellingRationale"] == "Generic for this brief."
+    assert saved["categories"][0]["starItems"][0]["quantity"] == 7
+    assert saved["categories"][0]["starItems"][0]["popularity"] == 0.21
 
 
 def test_validate_skill_output_accepts_large_star_item_lists() -> None:

@@ -278,6 +278,8 @@ class PromotionCandidateMenuItem(BaseModel):
     name: str
     storytellingFit: Literal["strong", "weak"] = "weak"
     storytellingRationale: str = ""
+    quantity: int | None = None
+    popularity: float | None = None
 
     @field_validator("name", mode="before")
     @classmethod
@@ -303,6 +305,26 @@ class PromotionCandidateMenuItem(BaseModel):
     @classmethod
     def _normalize_rationale(cls, value: Any) -> str:
         return str(value or "").strip()
+
+    @field_validator("quantity", mode="before")
+    @classmethod
+    def _normalize_quantity(cls, value: Any) -> int | None:
+        if value is None or value == "":
+            return None
+        qty = int(value)
+        if qty < 0:
+            raise ValueError("quantity must be non-negative")
+        return qty
+
+    @field_validator("popularity", mode="before")
+    @classmethod
+    def _normalize_popularity(cls, value: Any) -> float | None:
+        if value is None or value == "":
+            return None
+        score = float(value)
+        if score < 0.0 or score > 1.0:
+            raise ValueError("popularity must be between 0 and 1")
+        return score
 
 
 class PromotionCandidatesCategory(BaseModel):

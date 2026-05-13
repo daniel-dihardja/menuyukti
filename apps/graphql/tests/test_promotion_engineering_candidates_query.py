@@ -30,6 +30,19 @@ def _location_id(run_id: int) -> int:
         session.close()
 
 
+def _assert_engineering_item(item: object) -> None:
+    assert isinstance(item, dict)
+    assert "menu" in item
+    assert isinstance(item["menu"], str)
+    assert item["menu"].strip()
+    assert "popularity" in item
+    assert "quantity" in item
+    popularity = float(item["popularity"])
+    quantity = int(item["quantity"])
+    assert 0.0 <= popularity <= 1.0
+    assert quantity > 0
+
+
 def test_promotion_engineering_candidates_with_qa_data(analytics_run_with_qa_data: int) -> None:
     run_id = analytics_run_with_qa_data
     location_id = _location_id(run_id)
@@ -55,11 +68,19 @@ def test_promotion_engineering_candidates_with_qa_data(analytics_run_with_qa_dat
         assert isinstance(mains["puzzleItems"], list)
         assert len(mains["starItems"]) <= 5
         assert len(mains["puzzleItems"]) <= 10
+        if mains["starItems"]:
+            _assert_engineering_item(mains["starItems"][0])
+        if mains["puzzleItems"]:
+            _assert_engineering_item(mains["puzzleItems"][0])
     else:
         assert isinstance(payload["starItems"], list)
         assert isinstance(payload["puzzleItems"], list)
         assert len(payload["starItems"]) <= 5
         assert len(payload["puzzleItems"]) <= 10
+        if payload["starItems"]:
+            _assert_engineering_item(payload["starItems"][0])
+        if payload["puzzleItems"]:
+            _assert_engineering_item(payload["puzzleItems"][0])
 
 
 def test_promotion_engineering_candidates_wrong_location_returns_none(

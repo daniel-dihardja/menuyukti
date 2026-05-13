@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from copy import deepcopy
-from typing import Any
+from typing import Any, TypedDict
 
 import httpx
 from agents_app.agents.core.milestone_data.graphql_client import upsert_milestonedata
@@ -192,6 +192,11 @@ async def fetch_campaign_schedule_plan(
     return raw if isinstance(raw, dict) else None
 
 
+class PromotionEngineeringCandidatesFetchResult(TypedDict):
+    candidates: dict[str, Any] | None
+    analyticsRunId: str | None
+
+
 async def fetch_promotion_engineering_candidates(
     location_id: int,
     user_id: str,
@@ -199,8 +204,8 @@ async def fetch_promotion_engineering_candidates(
     client: httpx.AsyncClient,
     max_star_items: int | None = None,
     max_puzzle_items: int | None = None,
-) -> dict[str, Any] | None:
-    """Return simplified promotion candidates for latest analytics run."""
+) -> PromotionEngineeringCandidatesFetchResult:
+    """Return promotion candidates and analytics run id for latest run."""
     runs_data = await graphql_post(
         client,
         ANALYTICS_RUNS_QUERY,
@@ -209,11 +214,11 @@ async def fetch_promotion_engineering_candidates(
     )
     runs = runs_data.get("analyticsRuns")
     if not isinstance(runs, list) or not runs:
-        return None
+        return {"candidates": None, "analyticsRunId": None}
     run = runs[0]
     run_id = str(run.get("id") or "").strip()
     if not run_id:
-        return None
+        return {"candidates": None, "analyticsRunId": None}
     variables: dict[str, Any] = {
         "locationId": str(location_id),
         "analyticsRunId": run_id,
@@ -229,7 +234,8 @@ async def fetch_promotion_engineering_candidates(
         user_id,
     )
     raw = data.get("promotionEngineeringCandidates")
-    return raw if isinstance(raw, dict) else None
+    candidates = raw if isinstance(raw, dict) else None
+    return {"candidates": candidates, "analyticsRunId": run_id}
 
 
 async def upsert_milestonedata_node(

@@ -16,7 +16,10 @@ from graphql.services.promotion_engineering_candidates import (
 class PromotionEngineeringCandidatesQuery:
     @strawberry.field(
         description=(
-            "Top star and puzzle menu-item names derived from menu engineering. "
+            "Top star and puzzle menu items derived from menu engineering. "
+            "Each element in `starItems` / `puzzleItems` is an object with "
+            "`menu`, `quantity` (units sold in the bucket), and `popularity` "
+            "(share of bucket quantity, 0–1). "
             "When POS menu categories exist, returns `grouping=by_menu_category` with "
             "`categories.<menu_category>.starItems` and `puzzleItems`. "
             "Optional `maxStarItems` / `maxPuzzleItems` default to 5 and 10; "

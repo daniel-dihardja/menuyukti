@@ -30,13 +30,27 @@ type PromotionCandidatesPreviewLabels = {
   storytellingWeak: string
   storytellingWhy: string
   storytellingFitSection: string
+  popularitySection: string
+  metricsLine: (popularity: string, quantity: number) => string
+  popularityOnlyLine: (popularity: string) => string
+  quantityOnlyLine: (count: number) => string
   summary: string
   helpHeading: string
   helpStarItems: string
   helpPuzzleItems: string
   helpStorytellingFit: string
+  helpPopularity: string
   placeholderEmDash: string
   formatHelpAriaLabel: (sectionTitle: string) => string
+}
+
+const popularityPercentFormatter = new Intl.NumberFormat(undefined, {
+  style: 'percent',
+  maximumFractionDigits: 1,
+})
+
+function formatPopularityLabel(popularity: number): string {
+  return popularityPercentFormatter.format(popularity)
 }
 
 function SectionHeader({
@@ -73,6 +87,8 @@ function renderMenuItems(
         const storytellingBadgeClassName = isStrong
           ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-100'
           : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100'
+        const hasPopularity = 'popularity' in item && typeof item.popularity === 'number'
+        const hasQuantity = 'quantity' in item && typeof item.quantity === 'number'
         return (
           <li key={`${item.name}-${index}`} className="border-l-2 border-muted pl-3">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -90,6 +106,25 @@ function renderMenuItems(
             {rationale ? (
               <p className={`mt-2 ${mp.bodySmall} leading-relaxed`}>
                 <span className={mp.rowKey}>{labels.storytellingWhy}:</span> {rationale}
+              </p>
+            ) : null}
+            {hasPopularity || hasQuantity ? (
+              <p
+                className={`mt-2 flex flex-wrap items-center gap-x-1 ${mp.bodySmall} text-muted-foreground`}
+              >
+                <span>
+                  {hasPopularity && hasQuantity
+                    ? labels.metricsLine(formatPopularityLabel(item.popularity!), item.quantity!)
+                    : hasPopularity
+                      ? labels.popularityOnlyLine(formatPopularityLabel(item.popularity!))
+                      : labels.quantityOnlyLine(item.quantity!)}
+                </span>
+                {hasPopularity ? (
+                  <MilestonePreviewHelpTrigger
+                    ariaLabel={labels.formatHelpAriaLabel(labels.popularitySection)}
+                    helpText={labels.helpPopularity}
+                  />
+                ) : null}
               </p>
             ) : null}
           </li>
@@ -116,11 +151,22 @@ export function MilestonePromotionCandidatesDataPreview({
       storytellingWeak: t('milestonePromotionCandidatesPreviewStorytellingWeak'),
       storytellingWhy: t('milestonePromotionCandidatesPreviewStorytellingWhy'),
       storytellingFitSection: t('milestonePromotionCandidatesPreviewStorytellingFitSection'),
+      popularitySection: t('milestonePromotionCandidatesPreviewPopularitySection'),
+      metricsLine: (popularity: string, quantity: number) =>
+        t('milestonePromotionCandidatesPreviewMetricsLine', {
+          popularity,
+          quantity: t('milestonePromotionCandidatesPreviewQuantityValue', { count: quantity }),
+        }),
+      popularityOnlyLine: (popularity: string) =>
+        t('milestonePromotionCandidatesPreviewPopularityValue', { value: popularity }),
+      quantityOnlyLine: (count: number) =>
+        t('milestonePromotionCandidatesPreviewQuantityValue', { count }),
       summary: t('milestonePromotionCandidatesPreviewSummary'),
       helpHeading: t('milestonePromotionCandidatesPreviewHelpHeading'),
       helpStarItems: t('milestonePromotionCandidatesPreviewHelpStarItems'),
       helpPuzzleItems: t('milestonePromotionCandidatesPreviewHelpPuzzleItems'),
       helpStorytellingFit: t('milestonePromotionCandidatesPreviewHelpStorytellingFit'),
+      helpPopularity: t('milestonePromotionCandidatesPreviewHelpPopularity'),
       placeholderEmDash: t('milestonePreviewPlaceholderEmDash'),
       formatHelpAriaLabel: (sectionTitle: string) =>
         t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle }),
