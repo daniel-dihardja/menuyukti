@@ -5,7 +5,10 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from agents_app.agents.core.milestone_run.campaign_brief.nodes import fetch_and_prepare
+from agents_app.agents.core.milestone_run.campaign_brief.nodes import (
+    _extract_top_revenue_category,
+    fetch_and_prepare,
+)
 from agents_app.agents.core.milestone_run.graph import build_milestone_run_graph
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 
@@ -57,7 +60,7 @@ def _valid_campaign_brief_payload() -> dict:
         ],
         "toneGuardrails": ["Be specific", "Keep copy concise", "Use operational language"],
         "campaignObjective": "Increase reservations in conversion stage this month",
-        "mainCategory": "FOOD",
+        "mainCategory": "Mains",
         "targetSegments": ["Weekday lunch workers", "Weekend family groups", "Evening social diners"],
         "messageHierarchy": [
             "Hero promise tied to signature dishes",
@@ -115,7 +118,7 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
                     "proofOrientedAngles": ["A", "B", "C"],
                     "toneGuardrails": ["A", "B", "C"],
                     "campaignObjective": "Increase reservations in conversion stage this month",
-                    "mainCategory": "FOOD",
+                    "mainCategory": "Mains",
                     "targetSegments": [
                         "weekday lunch workers",
                         "weekend families",
@@ -180,6 +183,22 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
 
     mock_build_brand.assert_called_once()
     assert out.get("milestonedata_written") is True
+
+
+def test_extract_top_revenue_category_reads_instagram_signals() -> None:
+    assert (
+        _extract_top_revenue_category(
+            {
+                "instagram_signals": {
+                    "fundamentalSignals": {
+                        "categoryFocus": {"category": "Mains"},
+                    }
+                }
+            }
+        )
+        == "Mains"
+    )
+    assert _extract_top_revenue_category({}) == "(uncategorized)"
 
 
 def test_output_schema_required_keys_and_types() -> None:

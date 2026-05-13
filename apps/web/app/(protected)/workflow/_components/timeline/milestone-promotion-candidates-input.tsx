@@ -33,6 +33,7 @@ import {
   type MenuCategorySummary,
 } from '@/lib/analytics/menu-categories'
 import type { PromotionCandidatesItemLimit } from '@/lib/graphql/node-schemas'
+import { sortMenuCategorySummaries } from '@/lib/milestones/promotion-candidates-category-order'
 
 export type PromotionCandidatesInputDraft = {
   notes: string
@@ -50,6 +51,7 @@ type LoadState =
 export type MilestonePromotionCandidatesInputProps = {
   locationId: number
   analyticsRunId: number | null
+  mainCategory?: string | null
   draft: PromotionCandidatesInputDraft
   onDraftChange: (next: PromotionCandidatesInputDraft) => void
   onNotesBlur: () => void
@@ -117,6 +119,7 @@ function ItemLimitRow({ ariaLabel, disabled, label, onChange, t, value }: ItemLi
 export function MilestonePromotionCandidatesInput({
   locationId,
   analyticsRunId,
+  mainCategory = null,
   draft,
   onDraftChange,
   onNotesBlur,
@@ -158,6 +161,15 @@ export function MilestonePromotionCandidatesInput({
     if (loadState.status !== 'ready') return [] as string[]
     return loadState.categories.map((c) => c.name)
   }, [loadState])
+
+  const displayCategories = useMemo(() => {
+    if (loadState.status !== 'ready') return [] as MenuCategorySummary[]
+    const categories = loadState.categories
+    if (!mainCategory?.trim()) {
+      return categories
+    }
+    return sortMenuCategorySummaries(categories, mainCategory)
+  }, [loadState, mainCategory])
 
   const effectiveSelected = useMemo(() => {
     if (draft.selectedMenuCategories.length === 0) {
@@ -303,7 +315,7 @@ export function MilestonePromotionCandidatesInput({
               )}
               role="group"
             >
-              {loadState.categories.map((row) => {
+              {displayCategories.map((row) => {
                 const id = `promotion-category-${row.name}`
                 const checked = effectiveSelected.has(row.name)
                 return (

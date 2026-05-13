@@ -1158,7 +1158,7 @@
             "inputLabel": "Promotion candidate notes",
             "inputDescription": "Optional orientation notes for storytelling emphasis. Checked menu categories above scope which POS sections appear in results; leave all selected to include every category.",
             "inputPlaceholder": "e.g. prioritize family bundles and lunch heroes this month…",
-            "goal": "Fetch promotion-engineering candidates and present star and puzzle menu items by POS menu category. Use Campaign Brief main category as campaign-focus metadata in the preview header.",
+            "goal": "Fetch promotion-engineering candidates and present star and puzzle menu items by POS menu category. Use the Campaign Brief top-revenue POS category as campaign focus and list that category first in the preview.",
             "criterionCategoriesPresent": "Data includes at least one menu category section with **starItems** and/or **puzzleItems** when analytics return candidates for the selected categories.",
             "criterionItemsOnlyFromSignals": "**starItems** and **puzzleItems** only include menu names from promotion-engineering signals (no invented items)."
           },

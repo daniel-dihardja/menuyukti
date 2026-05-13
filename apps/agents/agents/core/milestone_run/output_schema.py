@@ -146,9 +146,9 @@ class CampaignBriefMilestoneOutput(BaseModel):
     @field_validator("mainCategory")
     @classmethod
     def _validate_main_category(cls, value: str) -> str:
-        text = value.strip().upper()
-        if text not in {"FOOD", "DRINK"}:
-            raise ValueError("mainCategory must be FOOD or DRINK")
+        text = value.strip()
+        if not text:
+            raise ValueError("mainCategory must be a non-empty POS menu category name")
         return text
 
 
@@ -342,8 +342,16 @@ class PromotionCandidatesCategory(BaseModel):
 
 
 class PromotionCandidatesMilestoneOutput(BaseModel):
-    mainCategory: Literal["FOOD", "DRINK"]
+    mainCategory: str
     categories: list[PromotionCandidatesCategory]
+
+    @field_validator("mainCategory")
+    @classmethod
+    def _validate_main_category(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("mainCategory must be a non-empty POS menu category name")
+        return text
     sourceAnalyticsRunId: str | None = None
     notes: str | None = None
 

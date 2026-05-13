@@ -43,7 +43,7 @@ async def test_fetch_and_prepare_builds_pos_category_sections() -> None:
         "goal": "",
         "criteria": [],
         "prior_milestones_data": (
-            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"DRINK"}}]'
+            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"Drinks"}}]'
         ),
         "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
     }
@@ -80,6 +80,47 @@ async def test_fetch_and_prepare_builds_pos_category_sections() -> None:
 
 
 @pytest.mark.asyncio
+async def test_fetch_and_prepare_orders_main_category_before_alphabetical() -> None:
+    state = {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "goal": "",
+        "criteria": [],
+        "prior_milestones_data": (
+            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"Cocktails"}}]'
+        ),
+        "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
+    }
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.fetch_promotion_engineering_candidates",
+            new=AsyncMock(
+                return_value={
+                    "grouping": "by_menu_category",
+                    "categories": {
+                        "Appetizers": {"starItems": ["Bruschetta"], "puzzleItems": []},
+                        "Cocktails": {"starItems": ["Negroni"], "puzzleItems": []},
+                        "Mains": {"starItems": ["Steak"], "puzzleItems": []},
+                    },
+                }
+            ),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+    ):
+        out = await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
+
+    assert [row["category"] for row in out["formatted_output"]["categories"]] == [
+        "Cocktails",
+        "Appetizers",
+        "Mains",
+    ]
+
+
+@pytest.mark.asyncio
 async def test_fetch_and_prepare_filters_selected_menu_categories() -> None:
     state = {
         "milestone_id": "m1",
@@ -88,7 +129,7 @@ async def test_fetch_and_prepare_filters_selected_menu_categories() -> None:
         "goal": "",
         "criteria": [],
         "prior_milestones_data": (
-            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"FOOD"}}]'
+            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"Mains"}}]'
         ),
         "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
         "milestone_input": {
@@ -130,7 +171,7 @@ async def test_fetch_and_prepare_passes_item_limits_to_graphql() -> None:
         "goal": "",
         "criteria": [],
         "prior_milestones_data": (
-            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"FOOD"}}]'
+            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"Mains"}}]'
         ),
         "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
         "milestone_input": {
@@ -175,16 +216,16 @@ async def test_enrich_storytelling_applies_llm_verdicts() -> None:
         "run_id": "r1",
         "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
         "formatted_output": {
-            "mainCategory": "FOOD",
+            "mainCategory": "Mains",
             "categories": [
                 {
-                    "category": "FOOD",
+                    "category": "Mains",
                     "starItems": [
                         {"name": "Steak", "storytellingFit": "weak", "storytellingRationale": ""}
                     ],
                     "puzzleItems": [],
                 },
-                {"category": "DRINK", "starItems": [], "puzzleItems": []},
+                {"category": "Desserts", "starItems": [], "puzzleItems": []},
             ],
             "sourceAnalyticsRunId": None,
             "notes": "",
@@ -230,10 +271,10 @@ async def test_persist_result_writes_valid_payload() -> None:
         "goal": "",
         "criteria": [],
         "formatted_output": {
-            "mainCategory": "FOOD",
+            "mainCategory": "Mains",
             "categories": [
-                {"category": "FOOD", "starItems": ["Steak"], "puzzleItems": ["Soup"]},
-                {"category": "DRINK", "starItems": ["Latte"], "puzzleItems": ["Matcha"]},
+                {"category": "Mains", "starItems": ["Steak"], "puzzleItems": ["Soup"]},
+                {"category": "Drinks", "starItems": ["Latte"], "puzzleItems": ["Matcha"]},
             ],
             "sourceAnalyticsRunId": None,
             "notes": "",
@@ -262,10 +303,10 @@ async def test_persist_result_accepts_object_shaped_items() -> None:
         "goal": "",
         "criteria": [],
         "formatted_output": {
-            "mainCategory": "FOOD",
+            "mainCategory": "Mains",
             "categories": [
                 {
-                    "category": "FOOD",
+                    "category": "Mains",
                     "starItems": [
                         {
                             "name": "Steak",
@@ -275,7 +316,7 @@ async def test_persist_result_accepts_object_shaped_items() -> None:
                     ],
                     "puzzleItems": [],
                 },
-                {"category": "DRINK", "starItems": [], "puzzleItems": []},
+                {"category": "Drinks", "starItems": [], "puzzleItems": []},
             ],
             "sourceAnalyticsRunId": None,
             "notes": "",
@@ -295,7 +336,7 @@ def test_validate_skill_output_accepts_large_star_item_lists() -> None:
     normalized, error = validate_skill_output(
         "promotion_candidates",
         {
-            "mainCategory": "FOOD",
+            "mainCategory": "Mains",
             "categories": [{"category": "Mains", "starItems": stars, "puzzleItems": []}],
             "sourceAnalyticsRunId": None,
             "notes": "",

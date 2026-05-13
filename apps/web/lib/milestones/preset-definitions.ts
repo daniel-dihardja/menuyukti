@@ -77,7 +77,7 @@ const EMPTY_CAMPAIGN_BRIEF_DATA: MilestonedataValue = {
   proofOrientedAngles: [],
   toneGuardrails: [],
   campaignObjective: '',
-  mainCategory: 'FOOD',
+  mainCategory: '(uncategorized)',
   targetSegments: [],
   messageHierarchy: [],
   offerAndCtaPlan: [],
@@ -103,11 +103,8 @@ const EMPTY_POST_SCHEDULER_DATA: MilestonedataValue = {
 }
 
 const EMPTY_PROMOTION_CANDIDATES_DATA: MilestonedataValue = {
-  mainCategory: 'FOOD',
-  categories: [
-    { category: 'FOOD', starItems: [], puzzleItems: [] },
-    { category: 'DRINK', starItems: [], puzzleItems: [] },
-  ],
+  mainCategory: '(uncategorized)',
+  categories: [{ category: '(uncategorized)', starItems: [], puzzleItems: [] }],
   sourceAnalyticsRunId: null,
   notes: '',
 }

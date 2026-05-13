@@ -23,7 +23,7 @@ HOW TO EXTRACT CONTEXT FROM THE CAMPAIGN BRIEF
 
 3. Constraints — respect:
    - riskGuardrails: avoid claims or tone that conflict with guardrails.
-   - mainCategory: FOOD vs DRINK may shift emphasis (dining vs bar/cocktails).
+   - mainCategory: the top-revenue POS menu category from analytics; let the bio emphasize that menu section when relevant.
 
 ────────────────────────────────────────────────────────────────────────
 OUTPUT FORMAT — return exactly one JSON object, no markdown, no prose outside JSON

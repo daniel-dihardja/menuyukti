@@ -44,7 +44,7 @@ export type CampaignBriefMilestoneData = {
   proofOrientedAngles: string[]
   toneGuardrails: string[]
   campaignObjective: string
-  mainCategory: 'FOOD' | 'DRINK'
+  mainCategory: string
   targetSegments: string[]
   messageHierarchy: string[]
   offerAndCtaPlan: string[]
@@ -109,7 +109,7 @@ export type PromotionCandidatesCategoryBlock = {
 }
 
 export type PromotionCandidatesMilestoneData = {
-  mainCategory: 'FOOD' | 'DRINK'
+  mainCategory: string
   categories: PromotionCandidatesCategoryBlock[]
   sourceAnalyticsRunId?: string | null
   notes?: string

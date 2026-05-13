@@ -24,7 +24,7 @@ def _minimal_brief_data() -> dict:
         "proofOrientedAngles": [],
         "toneGuardrails": [],
         "campaignObjective": "Grow lunch traffic",
-        "mainCategory": "FOOD",
+        "mainCategory": "Mains",
         "targetSegments": [],
         "messageHierarchy": [],
         "offerAndCtaPlan": [],

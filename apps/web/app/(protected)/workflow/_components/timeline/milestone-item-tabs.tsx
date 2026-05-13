@@ -51,6 +51,7 @@ export type MilestoneInputModel =
       onNotesFocus: () => void
       locationId: number
       analyticsRunId: number | null
+      mainCategory: string | null
       saveStatus: FieldSaveStatusVariant
       saving: boolean
     }
@@ -211,6 +212,7 @@ function MilestoneInputTabContent({
             disabled={isMilestoneRunning}
             draft={inputModel.draft}
             locationId={inputModel.locationId}
+            mainCategory={inputModel.mainCategory}
             onDraftChange={inputModel.onChange}
             onNotesBlur={inputModel.onNotesBlur}
             onNotesFocus={inputModel.onNotesFocus}

@@ -139,7 +139,7 @@ export const campaignBriefMilestoneDataSchema = z.object({
   proofOrientedAngles: z.array(z.string()),
   toneGuardrails: z.array(z.string()),
   campaignObjective: z.string(),
-  mainCategory: z.enum(['FOOD', 'DRINK']),
+  mainCategory: z.string().trim().min(1),
   targetSegments: z.array(z.string()),
   messageHierarchy: z.array(z.string()),
   offerAndCtaPlan: z.array(z.string()),
@@ -237,7 +237,7 @@ export const promotionCandidatesCategorySchema = z.object({
 })
 
 export const promotionCandidatesMilestoneDataSchema = z.object({
-  mainCategory: z.enum(['FOOD', 'DRINK']),
+  mainCategory: z.string().trim().min(1),
   categories: z.array(promotionCandidatesCategorySchema).min(1),
   sourceAnalyticsRunId: z.string().nullable().optional(),
   notes: z.string().optional(),

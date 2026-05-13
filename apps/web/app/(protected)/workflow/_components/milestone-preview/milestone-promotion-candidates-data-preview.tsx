@@ -9,6 +9,7 @@ import type {
   PromotionCandidateMenuItem,
   PromotionCandidatesMilestoneData,
 } from '@/lib/graphql/node-schemas'
+import { sortPromotionCandidateCategories } from '@/lib/milestones/promotion-candidates-category-order'
 
 import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
@@ -127,6 +128,10 @@ export function MilestonePromotionCandidatesDataPreview({
     [t],
   )
   const a = labels.formatHelpAriaLabel
+  const sortedCategories = useMemo(
+    () => sortPromotionCandidateCategories(data.categories, data.mainCategory),
+    [data.categories, data.mainCategory],
+  )
 
   return (
     <div className={mp.root}>
@@ -143,7 +148,7 @@ export function MilestonePromotionCandidatesDataPreview({
       </div>
 
       <div className="space-y-4">
-        {data.categories.map((bucket) => {
+        {sortedCategories.map((bucket) => {
           const hasItems = bucket.starItems.length > 0 || bucket.puzzleItems.length > 0
           return (
             <div key={bucket.category} className="space-y-3">

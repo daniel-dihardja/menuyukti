@@ -29,6 +29,7 @@ import {
   optionalNotesFromMilestoneInput,
   promotionCandidatesInputFromMilestoneInput,
 } from '@/lib/milestones/milestone-input-tab'
+import { extractCampaignBriefMainCategory } from '@/lib/milestones/campaign-brief-main-category'
 import { milestonePresetInputType } from '@/lib/milestones/preset-definitions'
 import { useTimelineWorkspaceState } from '../timeline-context'
 import type { PromotionCandidatesInputDraft } from './milestone-promotion-candidates-input'
@@ -105,7 +106,11 @@ function TimelineItemInner({
   isMobile = false,
 }: TimelineItemProps) {
   const t = useTranslations('analytics.workflows.chat')
-  const { locationId, analyticsRunId } = useTimelineWorkspaceState()
+  const { locationId, analyticsRunId, milestoneState } = useTimelineWorkspaceState()
+  const campaignBriefMainCategory = useMemo(
+    () => extractCampaignBriefMainCategory(milestoneState.milestones),
+    [milestoneState.milestones],
+  )
 
   const {
     onDeleteMilestone,
@@ -525,6 +530,7 @@ function TimelineItemInner({
         onNotesFocus: handlePromotionCandidatesNotesFocus,
         locationId,
         analyticsRunId,
+        mainCategory: campaignBriefMainCategory,
         saveStatus: inputSaveStatus,
         saving: savingInput,
       }
@@ -550,6 +556,7 @@ function TimelineItemInner({
     return { type: 'none' }
   }, [
     analyticsRunId,
+    campaignBriefMainCategory,
     handleOptionalNotesBlur,
     handleOptionalNotesFocus,
     handlePromotionCandidatesDraftChange,

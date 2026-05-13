@@ -76,15 +76,14 @@ def _placeholder_item(name: str) -> dict[str, Any]:
 def _extract_main_category(prior_milestones_data: str) -> str:
     text = prior_milestones_data.strip()
     if not text:
-        return "FOOD"
+        return "(uncategorized)"
     try:
         payload = json.loads(text)
     except json.JSONDecodeError:
-        return "FOOD"
+        return "(uncategorized)"
     if not isinstance(payload, list):
-        return "FOOD"
+        return "(uncategorized)"
 
-    _VALID_MAIN_CATEGORIES = ("FOOD", "DRINK")
     for row in payload:
         if not isinstance(row, dict):
             continue
@@ -94,10 +93,30 @@ def _extract_main_category(prior_milestones_data: str) -> str:
         data = row.get("data")
         if not isinstance(data, dict):
             continue
-        value = str(data.get("mainCategory") or "").strip().upper()
-        if value in _VALID_MAIN_CATEGORIES:
+        value = str(data.get("mainCategory") or "").strip()
+        if value:
             return value
-    return "FOOD"
+    return "(uncategorized)"
+
+
+def _category_matches_main_focus(category: str, main_category: str) -> bool:
+    focus = main_category.strip()
+    if not focus:
+        return False
+    return category.strip().casefold() == focus.casefold()
+
+
+def _sort_category_blocks(
+    blocks: list[dict[str, Any]],
+    main_category: str,
+) -> list[dict[str, Any]]:
+    return sorted(
+        blocks,
+        key=lambda block: (
+            0 if _category_matches_main_focus(str(block.get("category") or ""), main_category) else 1,
+            str(block.get("category") or "").casefold(),
+        ),
+    )
 
 
 def _read_milestone_input_value(milestone_input: dict[str, Any] | None) -> dict[str, Any]:
@@ -227,6 +246,8 @@ def _build_output(
 
     if not categories_out:
         categories_out = [{"category": "All items", "starItems": [], "puzzleItems": []}]
+
+    categories_out = _sort_category_blocks(categories_out, main_category)
 
     if not any(
         block.get("starItems") or block.get("puzzleItems") for block in categories_out
