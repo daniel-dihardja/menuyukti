@@ -13,6 +13,7 @@ import {
   parsePresetIdFromSelectionKey,
 } from '@/lib/workflows/presets'
 import { routes } from '@/lib/routes'
+import { apiFetch, fetchAnalyticsList, importWorkflowPayload } from '@/lib/api/client-fetch'
 import { CreateWorkflowPanel } from './create-workflow-panel'
 import { WorkflowsTable, WorkflowsTableSkeleton } from './workflows-table'
 
@@ -95,24 +96,7 @@ export function WorkflowsClient({
     }
     setRunsError(null)
 
-    void fetch(`/api/analytics/list?locationId=${locationId}`, {
-      cache: 'no-store',
-      signal: controller.signal,
-    })
-      .then(async (res) => {
-        const body = (await res.json().catch(() => null)) as
-          | AnalyticsRunItem[]
-          | { error?: string }
-          | null
-        if (!res.ok) {
-          const msg =
-            body && typeof body === 'object' && 'error' in body && typeof body.error === 'string'
-              ? body.error
-              : t('listFailed')
-          throw new Error(msg)
-        }
-        return Array.isArray(body) ? body : []
-      })
+    void fetchAnalyticsList(locationId, { signal: controller.signal })
       .then((list) => {
         setAnalyticsRuns(list)
         if (list.length > 0) {
@@ -223,17 +207,19 @@ export function WorkflowsClient({
 
     let workflowId: string
     try {
-      const res = await fetch('/api/workflows/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (!res.ok) {
-        const errBody = (await res.json().catch(() => null)) as { message?: string } | null
-        throw new Error(errBody?.message ?? tNew('createFailed'))
+      const createResult = await apiFetch<{ id: string }>(
+        '/api/workflows/create',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        },
+        tNew('createFailed'),
+      )
+      if (!createResult.ok) {
+        throw new Error(createResult.error)
       }
-      const data = (await res.json()) as { id: string }
-      workflowId = data.id
+      workflowId = createResult.data.id
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : tNew('createFailed'))
       setCreating(false)
@@ -256,22 +242,7 @@ export function WorkflowsClient({
     }
 
     try {
-      const importRes = await fetch(`/api/workflows/${workflowId}/import`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload }),
-      })
-      const importBody = (await importRes.json().catch(() => null)) as {
-        workflow?: { id: string }
-        message?: string
-      } | null
-      if (!importRes.ok) {
-        throw new Error(importBody?.message ?? tChat('importError'))
-      }
-      const newId = importBody?.workflow?.id
-      if (!newId) {
-        throw new Error(tChat('importError'))
-      }
+      const newId = await importWorkflowPayload(workflowId, payload, tChat('importError'))
       router.push(routes.workflows.detail(newId))
     } catch (err) {
       setImportError(err instanceof Error ? err.message : tChat('importError'))

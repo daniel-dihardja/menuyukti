@@ -48,29 +48,65 @@ def _trace_agent_event(state: PromotionCandidatesState, kind: str, **extra: Any)
     get_stream_writer()(payload)
 
 
-def _norm_items(raw: Any) -> list[str]:
+def _parse_engineering_items(raw: Any) -> list[dict[str, Any]]:
     if not isinstance(raw, list):
         return []
-    out: list[str] = []
+    out: list[dict[str, Any]] = []
     seen: set[str] = set()
     for item in raw:
-        text = str(item or "").strip()
-        if not text:
+        name = ""
+        quantity: int | None = None
+        popularity: float | None = None
+        price_level: int | None = None
+        if isinstance(item, str):
+            name = item.strip()
+        elif isinstance(item, dict):
+            name = str(item.get("menu") or item.get("name") or "").strip()
+            quantity_raw = item.get("quantity")
+            popularity_raw = item.get("popularity")
+            price_level_raw = item.get("price_level", item.get("priceLevel"))
+            if quantity_raw is not None and quantity_raw != "":
+                quantity = int(quantity_raw)
+            if popularity_raw is not None and popularity_raw != "":
+                popularity = float(popularity_raw)
+            if price_level_raw in (1, 2, 3):
+                price_level = int(price_level_raw)
+        if not name:
             continue
-        key = text.casefold()
+        key = name.casefold()
         if key in seen:
             continue
         seen.add(key)
-        out.append(text)
+        out.append(
+            _placeholder_item(
+                name,
+                quantity=quantity,
+                popularity=popularity,
+                price_level=price_level,
+            )
+        )
     return out
 
 
-def _placeholder_item(name: str) -> dict[str, Any]:
-    return {
+def _placeholder_item(
+    name: str,
+    *,
+    quantity: int | None = None,
+    popularity: float | None = None,
+    price_level: int | None = None,
+) -> dict[str, Any]:
+    item: dict[str, Any] = {
         "name": name,
         "storytellingFit": "weak",
         "storytellingRationale": "",
     }
+    if quantity is not None:
+        item["quantity"] = quantity
+    if popularity is not None:
+        item["popularity"] = popularity
+    if price_level in (1, 2, 3):
+        item["priceLevel"] = price_level
+    return item
 
 
 def _extract_main_category(prior_milestones_data: str) -> str:
@@ -193,6 +229,7 @@ def _build_output(
     promotion_candidates: dict[str, Any] | None,
     owner_notes: str = "",
     selected_categories: set[str] | None = None,
+    source_analytics_run_id: str | None = None,
 ) -> PromotionCandidatesOutput:
     categories_out: list[dict[str, Any]] = []
     notes_parts: list[str] = []
@@ -214,28 +251,18 @@ def _build_output(
                     categories_out.append(
                         {
                             "category": key,
-                            "starItems": [
-                                _placeholder_item(n)
-                                for n in _norm_items(raw_bucket.get("starItems"))
-                            ],
-                            "puzzleItems": [
-                                _placeholder_item(n)
-                                for n in _norm_items(raw_bucket.get("puzzleItems"))
-                            ],
+                            "starItems": _parse_engineering_items(raw_bucket.get("starItems")),
+                            "puzzleItems": _parse_engineering_items(raw_bucket.get("puzzleItems")),
                         }
                     )
         else:
             categories_out.append(
                 {
                     "category": "All items",
-                    "starItems": [
-                        _placeholder_item(n)
-                        for n in _norm_items(promotion_candidates.get("starItems"))
-                    ],
-                    "puzzleItems": [
-                        _placeholder_item(n)
-                        for n in _norm_items(promotion_candidates.get("puzzleItems"))
-                    ],
+                    "starItems": _parse_engineering_items(promotion_candidates.get("starItems")),
+                    "puzzleItems": _parse_engineering_items(
+                        promotion_candidates.get("puzzleItems")
+                    ),
                 }
             )
             if selected_categories is not None:
@@ -257,7 +284,7 @@ def _build_output(
     return {
         "mainCategory": main_category,
         "categories": categories_out,
-        "sourceAnalyticsRunId": None,
+        "sourceAnalyticsRunId": source_analytics_run_id,
         "notes": "\n\n".join(notes_parts),
     }
 
@@ -365,20 +392,37 @@ def _apply_verdicts_to_formatted(
             new_items: list[dict[str, Any]] = []
             for raw in raw_items:
                 name = ""
+                quantity: int | None = None
+                popularity: float | None = None
+                price_level: int | None = None
                 if isinstance(raw, str):
                     name = raw.strip()
                 elif isinstance(raw, dict):
                     name = str(raw.get("name") or "").strip()
+                    quantity_raw = raw.get("quantity")
+                    popularity_raw = raw.get("popularity")
+                    price_level_raw = raw.get("priceLevel", raw.get("price_level"))
+                    if quantity_raw is not None and quantity_raw != "":
+                        quantity = int(quantity_raw)
+                    if popularity_raw is not None and popularity_raw != "":
+                        popularity = float(popularity_raw)
+                    if price_level_raw in (1, 2, 3):
+                        price_level = int(price_level_raw)
                 if not name:
                     continue
                 fit, rationale = by_cf.get(name.casefold(), _DEFAULT_MISSING_VERDICT)
-                new_items.append(
-                    {
-                        "name": name,
-                        "storytellingFit": fit,
-                        "storytellingRationale": rationale,
-                    }
-                )
+                item: dict[str, Any] = {
+                    "name": name,
+                    "storytellingFit": fit,
+                    "storytellingRationale": rationale,
+                }
+                if quantity is not None:
+                    item["quantity"] = quantity
+                if popularity is not None:
+                    item["popularity"] = popularity
+                if price_level in (1, 2, 3):
+                    item["priceLevel"] = price_level
+                new_items.append(item)
             block[key] = new_items
     return merged
 
@@ -400,13 +444,15 @@ async def fetch_and_prepare(
     selected = _read_selected_menu_categories(milestone_input_dict)
     max_star_items = _read_item_limit(milestone_input_dict, "starItemLimit", 5)
     max_puzzle_items = _read_item_limit(milestone_input_dict, "puzzleItemLimit", 10)
-    promotion_candidates = await fetch_promotion_engineering_candidates(
+    fetch_result = await fetch_promotion_engineering_candidates(
         int(state["location_id"]),
         str(state["user_id"]),
         client=client,
         max_star_items=max_star_items,
         max_puzzle_items=max_puzzle_items,
     )
+    promotion_candidates = fetch_result["candidates"]
+    analytics_run_id = fetch_result["analyticsRunId"]
     filtered = _filter_promotion_candidates(promotion_candidates, selected)
     owner_notes = _read_milestone_input_notes(milestone_input_dict)
     main_category = _extract_main_category(str(state.get("prior_milestones_data") or ""))
@@ -415,6 +461,7 @@ async def fetch_and_prepare(
         promotion_candidates=filtered,
         owner_notes=owner_notes,
         selected_categories=selected,
+        source_analytics_run_id=analytics_run_id,
     )
     return {
         "promotion_candidates": filtered,

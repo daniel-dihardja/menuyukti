@@ -76,6 +76,31 @@ def extract_restaurant_campaign_brief_data(prior_milestones_json: str) -> dict[s
     return None
 
 
+def is_promotion_candidates_milestone_data(data: object) -> bool:
+    if not isinstance(data, dict):
+        return False
+    categories = data.get("categories")
+    return isinstance(categories, list)
+
+
+def extract_promotion_candidates_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the first matched prior promotion_candidates row, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"promotion_candidates"}))
+    return matched[0] if matched else None
+
+
+def extract_promotion_candidates_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return promotion_candidates ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_promotion_candidates_row(prior_milestones_json)
+    if row is None:
+        return None
+    data = row.get("data")
+    if isinstance(data, dict) and is_promotion_candidates_milestone_data(data):
+        return data
+    return None
+
+
 def build_injected_prior_context_markdown(
     prior_milestones_json: str,
     inject_prior_presets: tuple[str, ...],

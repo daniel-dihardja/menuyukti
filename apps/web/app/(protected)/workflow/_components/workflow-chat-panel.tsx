@@ -52,7 +52,8 @@ import { parseAsString, useQueryState } from 'nuqs'
 import type { TimelineMilestone } from './timeline-workspace'
 import { TimelineWorkspace } from './timeline-workspace'
 import { WorkflowChatLayout } from './workflow-chat-layout'
-import { ChatMessageParts } from '@/components/chat-message-parts'
+import { WorkflowChatMessageParts } from './workflow-chat-message-parts'
+import { WorkflowChatMentionProvider } from './workflow-chat-mention-context'
 
 import {
   workflowMilestoneReducer,
@@ -326,11 +327,6 @@ export function WorkflowChatPanel({
     [sendMessage, status],
   )
 
-  const milestoneMentionItems = useMemo(
-    () => milestoneUi.milestones.map((m) => ({ id: m.id, title: m.title })),
-    [milestoneUi.milestones],
-  )
-
   const handleSelectMention = useCallback(
     (milestoneId: string) => {
       if (status === 'streaming' || status === 'submitted') {
@@ -457,11 +453,7 @@ export function WorkflowChatPanel({
                           <span>{t('thinking')}</span>
                         </div>
                       ) : (
-                        <ChatMessageParts
-                          mentionTitles={milestoneUi.milestones.map((m) => m.title)}
-                          message={msg}
-                          role={msg.role}
-                        />
+                        <WorkflowChatMessageParts message={msg} role={msg.role} />
                       )}
                     </MessageContent>
                   </Message>
@@ -490,12 +482,9 @@ export function WorkflowChatPanel({
             commands={slashCommands}
             mentionAriaLabel={tMention('ariaLabel')}
             mentionEmptyLabel={tMention('empty')}
-            mentionMenusDisabled={isChatBusy}
-            milestones={milestoneMentionItems}
             onSelectMention={handleSelectMention}
             onSelectSlashCommand={(cmd) => void handleSelectSlashCommand(cmd)}
             onValueChange={setText}
-            selectedMilestoneId={selectedMilestoneId}
             slashAriaLabel={tSlash('ariaLabel')}
             value={text}
           >
@@ -539,17 +528,19 @@ export function WorkflowChatPanel({
       chat={timelineSlices.chat}
       workspace={timelineSlices.workspace}
     >
-      <WorkflowChatLayout
-        chatPane={chatPane}
-        isDesktop={isDesktop}
-        previewPane={<WorkflowPreviewPanelBodyLazy />}
-        previewPanelRef={previewPanelRef}
-        timelinePane={
-          <TimelineWorkspace
-            timelineTrailing={isDesktop ? <WorkflowPreviewToggleButton /> : null}
-          />
-        }
-      />
+      <WorkflowChatMentionProvider>
+        <WorkflowChatLayout
+          chatPane={chatPane}
+          isDesktop={isDesktop}
+          previewPane={<WorkflowPreviewPanelBodyLazy />}
+          previewPanelRef={previewPanelRef}
+          timelinePane={
+            <TimelineWorkspace
+              timelineTrailing={isDesktop ? <WorkflowPreviewToggleButton /> : null}
+            />
+          }
+        />
+      </WorkflowChatMentionProvider>
     </TimelineProvider>
   )
 }

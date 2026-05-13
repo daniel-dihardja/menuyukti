@@ -36,7 +36,7 @@ def test_format_optional_input_post_scheduler() -> None:
 
 
 def test_format_optional_input_promotion_or_culture_generic() -> None:
-    for pid in ("promotion_candidates", "culture_hooks"):
+    for pid in ("promotion_candidates", "culture_hooks", "menu_tagger"):
         section = format_optional_input_section(pid)
         assert section is not None
         assert "## Optional input" in section

@@ -6,6 +6,7 @@ import {
   ListChecks,
   Milestone,
   PieChart,
+  Tags,
   type LucideIcon,
 } from 'lucide-react'
 import type { z } from 'zod'
@@ -13,11 +14,16 @@ import type { z } from 'zod'
 import type { PassCriteriaRow } from '@/app/(protected)/workflow/_components/timeline/types'
 import { buildCampaignBriefPassCriteriaSeed } from '@/lib/milestones/campaign-brief-pass-criteria'
 import {
+  MENU_TAGGER_TAXONOMY_VERSION,
+  emptyMenuTaggerUsedTags,
+} from '@/lib/milestones/menu-tagger-taxonomy'
+import {
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   datesMilestoneDataSchema,
   formatMixMilestoneDataSchema,
   igProfileMilestoneDataSchema,
+  menuTaggerMilestoneDataSchema,
   type MilestoneInput,
   type MilestonePresetId,
   MILESTONE_PRESET_IDS,
@@ -125,6 +131,12 @@ const EMPTY_IG_PROFILE_DATA: MilestonedataValue = {
   bios: [],
 }
 
+const EMPTY_MENU_TAGGER_DATA: MilestonedataValue = {
+  taxonomyVersion: MENU_TAGGER_TAXONOMY_VERSION,
+  items: [],
+  usedTags: emptyMenuTaggerUsedTags(),
+}
+
 export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePresetDefinition> = {
   dates: {
     id: 'dates',
@@ -229,6 +241,36 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.promotion_candidates.criterionItemsOnlyFromSignals'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  menu_tagger: {
+    id: 'menu_tagger',
+    icon: Tags,
+    inputType: 'optional_notes',
+    dataSchema: menuTaggerMilestoneDataSchema,
+    emptyData: EMPTY_MENU_TAGGER_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.menu_tagger.title'),
+      milestoneInput: {
+        type: 'menu_tagger',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_MENU_TAGGER_DATA,
+      goal: t('milestonePreset.menu_tagger.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.menu_tagger.criterionPriorPromotionCandidates'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.menu_tagger.criterionAllItemsTagged'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.menu_tagger.criterionTaxonomyOnly'),
           status: 'open',
         },
       ],

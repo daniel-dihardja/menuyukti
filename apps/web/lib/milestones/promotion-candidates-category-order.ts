@@ -6,6 +6,23 @@ export type MenuCategoryNameBlock = {
   name: string
 }
 
+export type PromotionCandidateItemWithPopularity = {
+  name: string
+  popularity?: number
+}
+
+/** Higher popularity first; items without a score follow, then name ascending. */
+export function sortPromotionCandidateItemsByPopularity<
+  T extends PromotionCandidateItemWithPopularity,
+>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    const aPop = typeof a.popularity === 'number' ? a.popularity : -1
+    const bPop = typeof b.popularity === 'number' ? b.popularity : -1
+    if (bPop !== aPop) return bPop - aPop
+    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+  })
+}
+
 function categoryMatchesMainFocus(category: string, mainCategory: string): boolean {
   const focus = mainCategory.trim()
   if (!focus) return false

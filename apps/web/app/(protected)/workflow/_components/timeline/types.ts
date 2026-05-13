@@ -1,4 +1,8 @@
-import type { PromotionCandidateMenuItem, MilestonePresetId } from '@/lib/graphql/node-schemas'
+import type {
+  PromotionCandidateMenuItem,
+  MilestonePresetId,
+  MenuTaggerMilestoneData,
+} from '@/lib/graphql/node-schemas'
 import type { ReactNode } from 'react'
 
 export type { MilestonePresetId }
@@ -154,11 +158,14 @@ export type IgProfileMilestoneData = {
   bios: IgProfileBio[]
 }
 
+export type { MenuTaggerMilestoneData }
+
 export type MilestoneDataValue =
   | DatesMilestoneData
   | CampaignBriefMilestoneData
   | PostSchedulerMilestoneData
   | PromotionCandidatesMilestoneData
+  | MenuTaggerMilestoneData
   | CultureHooksMilestoneData
   | FormatMixMilestoneData
   | IgProfileMilestoneData
@@ -186,9 +193,4 @@ export type TimelineWorkspaceProps = {
   loadError?: string | null
   /** Placed after the create milestone control in the toolbar and beside create in the empty state. */
   timelineTrailing?: ReactNode
-}
-
-export type TimelineBodyProps = {
-  selectedId: string | null
-  onSelectMilestone: (id: string) => void
 }

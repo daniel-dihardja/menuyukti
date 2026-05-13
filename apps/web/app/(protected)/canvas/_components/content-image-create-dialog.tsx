@@ -30,23 +30,16 @@ import { Spinner } from '@workspace/ui/components/spinner'
 import { cn } from '@workspace/ui/lib/utils'
 
 import type { BackgroundItem } from '@/lib/assets/backgrounds'
-
-type AssetItem = {
-  name: string
-  url: string
-  size: number
-  createdAt: string
-}
-
-type FlowOption = {
-  slug: string
-  displayName: string
-}
+import {
+  loadDesignCreateCatalog,
+  type AssetCatalogItem,
+  type AssetFlowOption,
+} from '@/lib/assets/client-api'
 
 type ContentImageCreateDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onDesignCreated?: (item: AssetItem) => void
+  onDesignCreated?: (item: AssetCatalogItem) => void
   onGeneratingChange?: (generating: boolean) => void
 }
 
@@ -68,9 +61,9 @@ export function ContentImageCreateDialog({
 }: ContentImageCreateDialogProps) {
   const t = useTranslations('analytics.workflows.chat.contentImageDialog')
 
-  const [products, setProducts] = useState<AssetItem[]>([])
+  const [products, setProducts] = useState<AssetCatalogItem[]>([])
   const [backgrounds, setBackgrounds] = useState<BackgroundItem[]>([])
-  const [flows, setFlows] = useState<FlowOption[]>([])
+  const [flows, setFlows] = useState<AssetFlowOption[]>([])
   const [selectedProductNames, setSelectedProductNames] = useState<string[]>([])
   const [selectedBackgroundName, setSelectedBackgroundName] = useState<string | null>(null)
   const [selectedFlowSlug, setSelectedFlowSlug] = useState<string>('')
@@ -103,24 +96,13 @@ export function ContentImageCreateDialog({
     setLoadingFlows(true)
     setError(null)
 
-    void Promise.all([
-      fetch('/api/assets/list', { cache: 'no-store' }),
-      fetch('/api/assets/backgrounds/list', { cache: 'no-store' }),
-      fetch('/api/assets/flows?context=design-create', { cache: 'no-store' }),
-    ])
-      .then(async ([productsRes, backgroundsRes, flowsRes]) => {
-        if (!productsRes.ok || !backgroundsRes.ok || !flowsRes.ok) {
-          throw new Error('load_error')
-        }
-        const productsBody = (await productsRes.json()) as { items?: AssetItem[] }
-        const backgroundsBody = (await backgroundsRes.json()) as { items?: BackgroundItem[] }
-        const flowsBody = (await flowsRes.json()) as { flows?: FlowOption[] }
+    void loadDesignCreateCatalog()
+      .then((catalog) => {
         if (cancelled) return
-        const nextFlows = flowsBody.flows ?? []
-        setProducts(productsBody.items ?? [])
-        setBackgrounds(backgroundsBody.items ?? [])
-        setFlows(nextFlows)
-        setSelectedFlowSlug(nextFlows[0]?.slug ?? '')
+        setProducts(catalog.products)
+        setBackgrounds(catalog.backgrounds)
+        setFlows(catalog.flows)
+        setSelectedFlowSlug(catalog.flows[0]?.slug ?? '')
       })
       .catch(() => {
         if (cancelled) return
@@ -167,7 +149,7 @@ export function ContentImageCreateDialog({
       if (!res.ok) {
         throw new Error('generate')
       }
-      const created = (await res.json()) as AssetItem
+      const created = (await res.json()) as AssetCatalogItem
       onDesignCreated?.(created)
       onOpenChange(false)
     } catch {

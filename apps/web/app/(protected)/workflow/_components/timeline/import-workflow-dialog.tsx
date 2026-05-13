@@ -27,6 +27,7 @@ import {
   presetSelectionKey,
 } from '@/lib/workflows/presets'
 import { routes } from '@/lib/routes'
+import { importWorkflowPayload } from '@/lib/api/client-fetch'
 
 const EXPORT_KEY_PREFIX = 'export:' as const
 
@@ -150,25 +151,9 @@ export function ImportWorkflowDialog({
     setImporting(true)
     setImportError(null)
     try {
-      const res = await fetch(`/api/workflows/${workflowId}/import`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload }),
-      })
-      const body = (await res.json().catch(() => null)) as {
-        workflow?: { id: string }
-        message?: string
-      } | null
-      if (!res.ok) {
-        throw new Error(body?.message ?? t('importError'))
-      }
-      const newId = body?.workflow?.id
-      if (newId) {
-        onOpenChange(false)
-        router.push(routes.workflows.detail(newId))
-      } else {
-        throw new Error(t('importError'))
-      }
+      const newId = await importWorkflowPayload(workflowId, payload, t('importError'))
+      onOpenChange(false)
+      router.push(routes.workflows.detail(newId))
     } catch (err) {
       setImportError(err instanceof Error ? err.message : t('importError'))
     } finally {

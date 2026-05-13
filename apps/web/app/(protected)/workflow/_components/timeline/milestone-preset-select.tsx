@@ -103,6 +103,8 @@ function presetOptionLabel(id: MilestonePresetId, t: (key: string) => string): s
       return t('milestonePreset.post_scheduler.label')
     case 'promotion_candidates':
       return t('milestonePreset.promotion_candidates.label')
+    case 'menu_tagger':
+      return t('milestonePreset.menu_tagger.label')
     case 'culture_hooks':
       return t('milestonePreset.culture_hooks.label')
     case 'format_mix':

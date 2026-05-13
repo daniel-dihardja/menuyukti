@@ -5,11 +5,11 @@ import { useMemo } from 'react'
 import type { WorkflowMilestoneUiState } from './workflow-milestone-reducer'
 import {
   splitMilestoneUiState,
-  type TimelineActions,
   type TimelineChatState,
   type TimelineWorkspaceStateValue,
 } from './timeline-context'
 import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
+import { toTimelineActions } from './to-timeline-actions'
 
 import type { MilestoneDataValue, MilestoneInput, PassCriteriaRow } from './timeline/types'
 import type { ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
@@ -29,7 +29,7 @@ export type WorkflowTimelineOpsHandles = {
 }
 
 export type WorkflowTimelineProviderSlices = {
-  actions: TimelineActions
+  actions: ReturnType<typeof toTimelineActions>
   chat: TimelineChatState
   workspace: TimelineWorkspaceStateValue
 }
@@ -49,22 +49,7 @@ export function useWorkflowTimelineProviderSlices(
     [milestoneUi],
   )
 
-  const actions = useMemo<TimelineActions>(
-    () => ({
-      onCreateMilestone: ops.handleCreateMilestone,
-      onCreateMilestoneFromPreset: ops.handleCreateMilestoneFromPreset,
-      onDeleteMilestone: ops.handleDeleteMilestone,
-      onMoveMilestone: ops.handleMoveMilestone,
-      onUpdatePassCriteria: ops.handleUpdatePassCriteria,
-      onUpdateMilestoneGoal: ops.handleUpdateMilestoneGoal,
-      onUpdateMilestoneData: ops.handleUpdateMilestoneData,
-      onUpdateMilestoneInput: ops.handleUpdateMilestoneInput,
-      onHydrateMilestoneData: ops.handleHydrateMilestoneData,
-      onRunMilestone: ops.handleRunMilestone,
-      onExport: ops.handleExportWorkflow,
-    }),
-    [ops],
-  )
+  const actions = useMemo(() => toTimelineActions(ops), [ops])
 
   const chat = useMemo<TimelineChatState>(() => ({ isBusy: isChatBusy }), [isChatBusy])
 

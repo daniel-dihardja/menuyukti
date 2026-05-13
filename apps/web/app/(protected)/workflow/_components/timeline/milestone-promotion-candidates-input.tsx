@@ -34,6 +34,7 @@ import {
 } from '@/lib/analytics/menu-categories'
 import type { PromotionCandidatesItemLimit } from '@/lib/graphql/node-schemas'
 import { sortMenuCategorySummaries } from '@/lib/milestones/promotion-candidates-category-order'
+import { useTimelineWorkspaceState } from '../timeline-context'
 
 export type PromotionCandidatesInputDraft = {
   notes: string
@@ -49,8 +50,6 @@ type LoadState =
   | { status: 'error' }
 
 export type MilestonePromotionCandidatesInputProps = {
-  locationId: number
-  analyticsRunId: number | null
   mainCategory?: string | null
   draft: PromotionCandidatesInputDraft
   onDraftChange: (next: PromotionCandidatesInputDraft) => void
@@ -117,8 +116,6 @@ function ItemLimitRow({ ariaLabel, disabled, label, onChange, t, value }: ItemLi
 }
 
 export function MilestonePromotionCandidatesInput({
-  locationId,
-  analyticsRunId,
   mainCategory = null,
   draft,
   onDraftChange,
@@ -127,6 +124,7 @@ export function MilestonePromotionCandidatesInput({
   disabled = false,
 }: MilestonePromotionCandidatesInputProps) {
   const t = useTranslations('analytics.workflows.chat')
+  const { locationId, analyticsRunId } = useTimelineWorkspaceState()
   const [loadState, setLoadState] = useState<LoadState>({ status: 'idle' })
   const [reloadToken, setReloadToken] = useState(0)
 
