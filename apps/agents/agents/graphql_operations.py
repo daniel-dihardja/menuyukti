@@ -176,8 +176,18 @@ query AnalyticsRunsForLocation($locationId: Int!, $first: Int) {
 """
 
 PROMOTION_ENGINEERING_CANDIDATES_QUERY = """
-query PromotionEngineeringCandidates($locationId: ID!, $analyticsRunId: ID!) {
-  promotionEngineeringCandidates(locationId: $locationId, analyticsRunId: $analyticsRunId)
+query PromotionEngineeringCandidates(
+  $locationId: ID!
+  $analyticsRunId: ID!
+  $maxStarItems: Int
+  $maxPuzzleItems: Int
+) {
+  promotionEngineeringCandidates(
+    locationId: $locationId
+    analyticsRunId: $analyticsRunId
+    maxStarItems: $maxStarItems
+    maxPuzzleItems: $maxPuzzleItems
+  )
 }
 """
 

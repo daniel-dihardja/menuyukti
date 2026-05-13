@@ -124,6 +124,22 @@ def _read_selected_menu_categories(milestone_input: dict[str, Any] | None) -> se
     return out if out else None
 
 
+def _read_item_limit(
+    milestone_input: dict[str, Any] | None,
+    key: str,
+    default: int,
+) -> int:
+    """Map milestone input limit to GraphQL max count; 0 means unlimited."""
+    raw = _read_milestone_input_value(milestone_input).get(key)
+    if raw == "all":
+        return 0
+    if raw in (5, 10):
+        return int(raw)
+    if isinstance(raw, int) and raw in (5, 10):
+        return raw
+    return default
+
+
 def _category_in_selected(category: str, selected: set[str]) -> bool:
     key = category.strip()
     if not key:
@@ -358,14 +374,18 @@ async def fetch_and_prepare(
         )
 
     _trace(state, "execute_skill", skill_id="promotion_candidates")
+    milestone_input = state.get("milestone_input")
+    milestone_input_dict = milestone_input if isinstance(milestone_input, dict) else None
+    selected = _read_selected_menu_categories(milestone_input_dict)
+    max_star_items = _read_item_limit(milestone_input_dict, "starItemLimit", 5)
+    max_puzzle_items = _read_item_limit(milestone_input_dict, "puzzleItemLimit", 10)
     promotion_candidates = await fetch_promotion_engineering_candidates(
         int(state["location_id"]),
         str(state["user_id"]),
         client=client,
+        max_star_items=max_star_items,
+        max_puzzle_items=max_puzzle_items,
     )
-    milestone_input = state.get("milestone_input")
-    milestone_input_dict = milestone_input if isinstance(milestone_input, dict) else None
-    selected = _read_selected_menu_categories(milestone_input_dict)
     filtered = _filter_promotion_candidates(promotion_candidates, selected)
     owner_notes = _read_milestone_input_notes(milestone_input_dict)
     main_category = _extract_main_category(str(state.get("prior_milestones_data") or ""))
@@ -418,6 +438,28 @@ async def enrich_storytelling(state: PromotionCandidatesState) -> dict[str, Any]
             + json.dumps({"selectedMenuCategories": sorted(selected)}, ensure_ascii=False, indent=2)
             + "\n```"
         )
+    star_limit = _read_item_limit(
+        milestone_input if isinstance(milestone_input, dict) else None,
+        "starItemLimit",
+        5,
+    )
+    puzzle_limit = _read_item_limit(
+        milestone_input if isinstance(milestone_input, dict) else None,
+        "puzzleItemLimit",
+        10,
+    )
+    human_sections.append(
+        "## Item limits per category (milestone input)\n```json\n"
+        + json.dumps(
+            {
+                "starItemLimit": "all" if star_limit == 0 else star_limit,
+                "puzzleItemLimit": "all" if puzzle_limit == 0 else puzzle_limit,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n```"
+    )
     human_sections.extend(
         [
             "## Menu candidate names (distinct)\n```json\n"

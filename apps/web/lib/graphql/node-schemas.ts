@@ -63,10 +63,20 @@ export const formatMixMilestoneInputValueSchema = z.object({
 
 export type FormatMixMilestoneInputValue = z.infer<typeof formatMixMilestoneInputValueSchema>
 
+export const promotionCandidatesItemLimitSchema = z.union([
+  z.literal(5),
+  z.literal(10),
+  z.literal('all'),
+])
+
+export type PromotionCandidatesItemLimit = z.infer<typeof promotionCandidatesItemLimitSchema>
+
 /** Promotion candidates Input tab: optional notes plus POS menu category filter (empty = all). */
 export const promotionCandidatesMilestoneInputValueSchema = z.object({
   notes: z.string(),
   selectedMenuCategories: z.array(z.string().trim().min(1)),
+  starItemLimit: promotionCandidatesItemLimitSchema.default(5),
+  puzzleItemLimit: promotionCandidatesItemLimitSchema.default(10),
 })
 
 export type PromotionCandidatesMilestoneInputValue = z.infer<
@@ -212,8 +222,8 @@ export const promotionCandidateMenuItemSchema = z.union([
 
 export const promotionCandidatesCategorySchema = z.object({
   category: z.string().trim().min(1),
-  starItems: z.array(promotionCandidateMenuItemSchema).max(5),
-  puzzleItems: z.array(promotionCandidateMenuItemSchema).max(10),
+  starItems: z.array(promotionCandidateMenuItemSchema),
+  puzzleItems: z.array(promotionCandidateMenuItemSchema),
 })
 
 export const promotionCandidatesMilestoneDataSchema = z.object({

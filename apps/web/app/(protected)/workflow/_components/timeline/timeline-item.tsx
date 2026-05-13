@@ -43,6 +43,8 @@ function promotionCandidatesInputEqual(
   const na = normalizePromotionCandidatesInput(a)
   const nb = normalizePromotionCandidatesInput(b)
   if (na.notes !== nb.notes) return false
+  if (na.starItemLimit !== nb.starItemLimit) return false
+  if (na.puzzleItemLimit !== nb.puzzleItemLimit) return false
   if (na.selectedMenuCategories.length !== nb.selectedMenuCategories.length) return false
   return na.selectedMenuCategories.every((v, i) => v === nb.selectedMenuCategories[i])
 }

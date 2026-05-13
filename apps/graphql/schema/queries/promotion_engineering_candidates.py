@@ -18,7 +18,9 @@ class PromotionEngineeringCandidatesQuery:
         description=(
             "Top star and puzzle menu-item names derived from menu engineering. "
             "When POS menu categories exist, returns `grouping=by_menu_category` with "
-            "`categories.<menu_category>.starItems` (up to 5) and `puzzleItems` (up to 10). "
+            "`categories.<menu_category>.starItems` and `puzzleItems`. "
+            "Optional `maxStarItems` / `maxPuzzleItems` default to 5 and 10; "
+            "pass 0 or a negative value for unlimited. "
             "Otherwise returns `grouping=flat` with root `starItems` and `puzzleItems`."
         )
     )
@@ -27,6 +29,8 @@ class PromotionEngineeringCandidatesQuery:
         info: strawberry.Info,
         analytics_run_id: strawberry.ID,
         location_id: strawberry.ID | None = None,
+        max_star_items: int | None = None,
+        max_puzzle_items: int | None = None,
     ) -> JSON | None:
         user_id = user_id_from_info(info)
         with SessionLocal() as session:
@@ -35,4 +39,9 @@ class PromotionEngineeringCandidatesQuery:
                 return None
             if location_id is not None and run.location_id != int(location_id):
                 return None
-            return build_promotion_engineering_candidates(session, run)
+            return build_promotion_engineering_candidates(
+                session,
+                run,
+                max_star_items=max_star_items,
+                max_puzzle_items=max_puzzle_items,
+            )

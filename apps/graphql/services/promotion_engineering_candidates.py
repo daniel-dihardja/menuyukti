@@ -9,10 +9,25 @@ from sqlalchemy.orm import Session
 
 from graphql.data_sources import AnalyticsRun, MenuItemCogs, OrderFact
 
+_DEFAULT_MAX_STAR_ITEMS = 5
+_DEFAULT_MAX_PUZZLE_ITEMS = 10
+
+
+def _resolve_limit(value: int | None, default: int) -> int | None:
+    """Return None for unlimited (0 or negative), else clamp to positive int or default."""
+    if value is None:
+        return default
+    if value <= 0:
+        return None
+    return value
+
 
 def build_promotion_engineering_candidates(
     session: Session,
     run: AnalyticsRun,
+    *,
+    max_star_items: int | None = None,
+    max_puzzle_items: int | None = None,
 ) -> dict[str, Any] | None:
     """Load order facts and COGS; return only star/puzzle menu names by category."""
     rows = session.query(OrderFact).where(OrderFact.analytics_run_id == run.id).all()
@@ -33,7 +48,15 @@ def build_promotion_engineering_candidates(
     cogs_rows = session.query(MenuItemCogs).where(MenuItemCogs.analytics_run_id == run.id).all()
     cogs_by_menu = {r.menu: float(r.cogs) for r in cogs_rows}
 
-    raw = compute_menu_engineering_promotion_candidates(order_rows, cogs_by_menu)
+    star_limit = _resolve_limit(max_star_items, _DEFAULT_MAX_STAR_ITEMS)
+    puzzle_limit = _resolve_limit(max_puzzle_items, _DEFAULT_MAX_PUZZLE_ITEMS)
+
+    raw = compute_menu_engineering_promotion_candidates(
+        order_rows,
+        cogs_by_menu,
+        max_star_items=star_limit,
+        max_puzzle_items=puzzle_limit,
+    )
     grouping = str(raw.get("grouping") or "flat")
 
     if grouping == "by_menu_category":
@@ -47,12 +70,12 @@ def build_promotion_engineering_candidates(
                     str(item.get("menu")).strip()
                     for item in (bucket.get("topStars") or [])
                     if isinstance(item, dict) and str(item.get("menu") or "").strip()
-                ][:5]
+                ]
                 puzzle_items = [
                     str(item.get("menu")).strip()
                     for item in (bucket.get("topPuzzles") or [])
                     if isinstance(item, dict) and str(item.get("menu") or "").strip()
-                ][:10]
+                ]
                 out_categories[str(key)] = {
                     "starItems": star_items,
                     "puzzleItems": puzzle_items,
@@ -66,12 +89,12 @@ def build_promotion_engineering_candidates(
         str(item.get("menu")).strip()
         for item in (raw.get("topStars") or [])
         if isinstance(item, dict) and str(item.get("menu") or "").strip()
-    ][:5]
+    ]
     puzzle_items = [
         str(item.get("menu")).strip()
         for item in (raw.get("topPuzzles") or [])
         if isinstance(item, dict) and str(item.get("menu") or "").strip()
-    ][:10]
+    ]
     return {
         "grouping": "flat",
         "starItems": star_items,

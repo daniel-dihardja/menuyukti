@@ -307,8 +307,8 @@ class PromotionCandidateMenuItem(BaseModel):
 
 class PromotionCandidatesCategory(BaseModel):
     category: str
-    starItems: list[PromotionCandidateMenuItem] = Field(..., max_length=5)
-    puzzleItems: list[PromotionCandidateMenuItem] = Field(..., max_length=10)
+    starItems: list[PromotionCandidateMenuItem] = Field(default_factory=list)
+    puzzleItems: list[PromotionCandidateMenuItem] = Field(default_factory=list)
 
     @field_validator("category")
     @classmethod

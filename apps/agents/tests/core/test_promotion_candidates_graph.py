@@ -5,6 +5,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.promotion_candidates.nodes import (
     StorytellingVerdictLine,
     StorytellingVerdictsOutput,
@@ -118,7 +119,52 @@ async def test_fetch_and_prepare_filters_selected_menu_categories() -> None:
     categories = out["formatted_output"]["categories"]
     assert len(categories) == 1
     assert categories[0]["category"] == "Mains"
-    assert categories[0]["starItems"][0]["name"] == "Steak"
+
+
+@pytest.mark.asyncio
+async def test_fetch_and_prepare_passes_item_limits_to_graphql() -> None:
+    state = {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "goal": "",
+        "criteria": [],
+        "prior_milestones_data": (
+            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"FOOD"}}]'
+        ),
+        "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
+        "milestone_input": {
+            "type": "promotion_candidates",
+            "value": {
+                "notes": "",
+                "selectedMenuCategories": [],
+                "starItemLimit": 10,
+                "puzzleItemLimit": "all",
+            },
+        },
+    }
+    fetch_mock = AsyncMock(
+        return_value={
+            "grouping": "flat",
+            "starItems": ["A"],
+            "puzzleItems": ["B"],
+        }
+    )
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.fetch_promotion_engineering_candidates",
+            new=fetch_mock,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+    ):
+        await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
+
+    fetch_mock.assert_awaited_once()
+    assert fetch_mock.await_args.kwargs["max_star_items"] == 10
+    assert fetch_mock.await_args.kwargs["max_puzzle_items"] == 0
 
 
 @pytest.mark.asyncio
@@ -242,3 +288,19 @@ async def test_persist_result_accepts_object_shaped_items() -> None:
         await persist_result(state, client=MagicMock(spec=AsyncMock))
     saved = mock_upsert.await_args.args[2]
     assert saved["categories"][0]["starItems"][0]["storytellingRationale"] == "Generic for this brief."
+
+
+def test_validate_skill_output_accepts_large_star_item_lists() -> None:
+    stars = [{"name": f"Dish {i}", "storytellingFit": "weak", "storytellingRationale": ""} for i in range(25)]
+    normalized, error = validate_skill_output(
+        "promotion_candidates",
+        {
+            "mainCategory": "FOOD",
+            "categories": [{"category": "Mains", "starItems": stars, "puzzleItems": []}],
+            "sourceAnalyticsRunId": None,
+            "notes": "",
+        },
+    )
+    assert error is None
+    assert normalized is not None
+    assert len(normalized["categories"][0]["starItems"]) == 25

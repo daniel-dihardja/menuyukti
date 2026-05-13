@@ -104,6 +104,14 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
                             "milestoneInput.value.selectedMenuCategories must contain "
                             "only strings when provided."
                         )
+            for limit_key in ("starItemLimit", "puzzleItemLimit"):
+                limit_val = value.get(limit_key)
+                if limit_val is None:
+                    continue
+                if limit_val not in (5, 10, "all"):
+                    return (
+                        f"milestoneInput.value.{limit_key} must be 5, 10, or 'all' when provided."
+                    )
 
     return None
 

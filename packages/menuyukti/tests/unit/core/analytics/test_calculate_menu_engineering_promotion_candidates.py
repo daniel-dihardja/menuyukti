@@ -84,3 +84,14 @@ def test_empty_bucket_reason() -> None:
 def test_order_rows_empty_raises() -> None:
     with pytest.raises(ValueError, match="order_rows"):
         compute_menu_engineering_promotion_candidates([], {})
+
+
+def test_unlimited_star_items_when_max_is_none() -> None:
+    cogs = {f"I{i}": 1.0 for i in range(12)}
+    rows = [_row(f"I{i}", 10 + i, 100.0 + i, menu_category="Mains") for i in range(12)]
+    capped = compute_menu_engineering_promotion_candidates(rows, cogs, max_star_items=5)
+    unlimited = compute_menu_engineering_promotion_candidates(rows, cogs, max_star_items=None)
+    assert len(capped["categories"]["Mains"]["topStars"]) <= 5
+    assert len(unlimited["categories"]["Mains"]["topStars"]) >= len(
+        capped["categories"]["Mains"]["topStars"]
+    )

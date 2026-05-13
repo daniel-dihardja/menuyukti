@@ -38,15 +38,21 @@ describe('milestone optional notes', () => {
     ).toEqual({
       notes: 'focus lunch',
       selectedMenuCategories: ['Mains', 'Mains'],
+      starItemLimit: 5,
+      puzzleItemLimit: 10,
     })
     expect(
       normalizePromotionCandidatesInput({
         notes: '  focus  ',
         selectedMenuCategories: ['Mains', 'mains', 'Desserts'],
+        starItemLimit: 10,
+        puzzleItemLimit: 'all',
       }),
     ).toEqual({
       notes: 'focus',
       selectedMenuCategories: ['Mains', 'Desserts'],
+      starItemLimit: 10,
+      puzzleItemLimit: 'all',
     })
   })
 
@@ -54,14 +60,24 @@ describe('milestone optional notes', () => {
     const parsed = patchMilestoneSchema.safeParse({
       milestoneInput: {
         type: 'promotion_candidates',
-        value: { notes: 'seasonal', selectedMenuCategories: ['Mains'] },
+        value: {
+          notes: 'seasonal',
+          selectedMenuCategories: ['Mains'],
+          starItemLimit: 10,
+          puzzleItemLimit: 'all',
+        },
       },
     })
     expect(parsed.success).toBe(true)
     if (parsed.success) {
       expect(parsed.data.milestoneInput).toEqual({
         type: 'promotion_candidates',
-        value: { notes: 'seasonal', selectedMenuCategories: ['Mains'] },
+        value: {
+          notes: 'seasonal',
+          selectedMenuCategories: ['Mains'],
+          starItemLimit: 10,
+          puzzleItemLimit: 'all',
+        },
       })
     }
   })
@@ -70,7 +86,12 @@ describe('milestone optional notes', () => {
     const fields = getMilestonePresetCreateFields('promotion_candidates', (k) => k)
     expect(fields.milestoneInput).toEqual({
       type: 'promotion_candidates',
-      value: { notes: '', selectedMenuCategories: [] },
+      value: {
+        notes: '',
+        selectedMenuCategories: [],
+        starItemLimit: 5,
+        puzzleItemLimit: 10,
+      },
     })
   })
 

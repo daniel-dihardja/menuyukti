@@ -7,20 +7,32 @@ import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
 import { Checkbox } from '@workspace/ui/components/checkbox'
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from '@workspace/ui/components/field'
 import { Label } from '@workspace/ui/components/label'
+import { Separator } from '@workspace/ui/components/separator'
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Textarea } from '@workspace/ui/components/textarea'
+import { ToggleGroup, ToggleGroupItem } from '@workspace/ui/components/toggle-group'
 import { cn } from '@workspace/ui/lib/utils'
 
 import {
   UNCATEGORIZED_MENU_CATEGORY_KEY,
   type MenuCategorySummary,
 } from '@/lib/analytics/menu-categories'
+import type { PromotionCandidatesItemLimit } from '@/lib/graphql/node-schemas'
 
 export type PromotionCandidatesInputDraft = {
   notes: string
   selectedMenuCategories: string[]
+  starItemLimit: PromotionCandidatesItemLimit
+  puzzleItemLimit: PromotionCandidatesItemLimit
 }
 
 type LoadState =
@@ -39,8 +51,59 @@ export type MilestonePromotionCandidatesInputProps = {
   disabled?: boolean
 }
 
+const ITEM_LIMIT_OPTIONS: PromotionCandidatesItemLimit[] = [5, 10, 'all']
+
 function categoryLabel(name: string, uncategorizedLabel: string): string {
   return name === UNCATEGORIZED_MENU_CATEGORY_KEY ? uncategorizedLabel : name
+}
+
+function parseItemLimit(value: string): PromotionCandidatesItemLimit | null {
+  if (value === 'all') return 'all'
+  if (value === '5') return 5
+  if (value === '10') return 10
+  return null
+}
+
+function limitLabel(
+  t: ReturnType<typeof useTranslations<'analytics.workflows.chat'>>,
+  limit: PromotionCandidatesItemLimit,
+): string {
+  if (limit === 'all') return t('milestonePromotionCandidatesInputLimitAll')
+  return t('milestonePromotionCandidatesInputLimitTopN', { count: limit })
+}
+
+type ItemLimitRowProps = {
+  ariaLabel: string
+  disabled: boolean
+  label: string
+  onChange: (value: PromotionCandidatesItemLimit) => void
+  t: ReturnType<typeof useTranslations<'analytics.workflows.chat'>>
+  value: PromotionCandidatesItemLimit
+}
+
+function ItemLimitRow({ ariaLabel, disabled, label, onChange, t, value }: ItemLimitRowProps) {
+  return (
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <FieldLegend className="text-sm font-medium">{label}</FieldLegend>
+      <ToggleGroup
+        aria-label={ariaLabel}
+        disabled={disabled}
+        onValueChange={(next) => {
+          if (!next) return
+          const parsed = parseItemLimit(next)
+          if (parsed) onChange(parsed)
+        }}
+        type="single"
+        value={String(value)}
+      >
+        {ITEM_LIMIT_OPTIONS.map((option) => (
+          <ToggleGroupItem key={option} value={String(option)}>
+            {limitLabel(t, option)}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+    </div>
+  )
 }
 
 export function MilestonePromotionCandidatesInput({
@@ -100,6 +163,11 @@ export function MilestonePromotionCandidatesInput({
       ? availableNames.length
       : draft.selectedMenuCategories.filter((name) => availableNames.includes(name)).length
 
+  const shortlistBadge = t('milestonePromotionCandidatesInputCategoryShortlistBadge', {
+    starLimit: limitLabel(t, draft.starItemLimit),
+    puzzleLimit: limitLabel(t, draft.puzzleItemLimit),
+  })
+
   const setSelectedExplicit = useCallback(
     (names: string[]) => {
       onDraftChange({
@@ -126,10 +194,43 @@ export function MilestonePromotionCandidatesInput({
   }
 
   const handleSelectAll = () => setSelectedExplicit([])
+
   const uncategorizedLabel = t('milestonePromotionCandidatesInputUncategorized')
 
   return (
     <FieldGroup className="gap-4">
+      <Field>
+        <FieldLabel>{t('milestonePromotionCandidatesInputShortlistLabel')}</FieldLabel>
+        <FieldDescription>
+          {t('milestonePromotionCandidatesInputShortlistDescription')}
+        </FieldDescription>
+        <FieldSet
+          className={cn(
+            'flex flex-col gap-4 rounded-lg border bg-muted/15 p-3',
+            disabled && 'pointer-events-none opacity-60',
+          )}
+        >
+          <ItemLimitRow
+            ariaLabel={t('milestonePromotionCandidatesInputStarLimitAria')}
+            disabled={disabled}
+            label={t('milestonePromotionCandidatesInputStarLimitLabel')}
+            onChange={(value) => onDraftChange({ ...draft, starItemLimit: value })}
+            t={t}
+            value={draft.starItemLimit}
+          />
+          <ItemLimitRow
+            ariaLabel={t('milestonePromotionCandidatesInputPuzzleLimitAria')}
+            disabled={disabled}
+            label={t('milestonePromotionCandidatesInputPuzzleLimitLabel')}
+            onChange={(value) => onDraftChange({ ...draft, puzzleItemLimit: value })}
+            t={t}
+            value={draft.puzzleItemLimit}
+          />
+        </FieldSet>
+      </Field>
+
+      <Separator />
+
       <Field>
         <FieldLabel>{t('milestonePromotionCandidatesInputCategoriesLabel')}</FieldLabel>
         <FieldDescription>
@@ -137,7 +238,7 @@ export function MilestonePromotionCandidatesInput({
         </FieldDescription>
 
         {loadState.status === 'loading' || loadState.status === 'idle' ? (
-          <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+          <div className="flex flex-col gap-2 rounded-lg border bg-muted/20 p-3">
             <Skeleton className="h-9 w-full" />
             <Skeleton className="h-9 w-full" />
             <Skeleton className="h-9 w-5/6" />
@@ -168,7 +269,7 @@ export function MilestonePromotionCandidatesInput({
         ) : null}
 
         {loadState.status === 'ready' && loadState.categories.length > 0 ? (
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-muted-foreground text-xs tabular-nums">
                 {t('milestonePromotionCandidatesInputSelectionSummary', {
@@ -189,7 +290,7 @@ export function MilestonePromotionCandidatesInput({
             <div
               aria-label={t('milestonePromotionCandidatesInputCategoriesLabel')}
               className={cn(
-                'max-h-64 space-y-1 overflow-y-auto rounded-lg border bg-muted/15 p-2',
+                'max-h-64 flex flex-col gap-1 overflow-y-auto rounded-lg border bg-muted/15 p-2',
                 disabled && 'pointer-events-none opacity-60',
               )}
               role="group"
@@ -198,28 +299,17 @@ export function MilestonePromotionCandidatesInput({
                 const id = `promotion-category-${row.name}`
                 const checked = effectiveSelected.has(row.name)
                 return (
-                  <div
-                    className="flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted/40"
+                  <CategoryRow
+                    checked={checked}
+                    disabled={disabled}
+                    id={id}
                     key={row.name}
-                  >
-                    <Checkbox
-                      checked={checked}
-                      disabled={disabled}
-                      id={id}
-                      onCheckedChange={(value) => toggleCategory(row.name, value === true)}
-                    />
-                    <Label
-                      className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-2 font-normal"
-                      htmlFor={id}
-                    >
-                      <span className="truncate">
-                        {categoryLabel(row.name, uncategorizedLabel)}
-                      </span>
-                      <Badge className="shrink-0 tabular-nums" variant="secondary">
-                        {t('milestonePromotionCandidatesInputItemCount', { count: row.itemCount })}
-                      </Badge>
-                    </Label>
-                  </div>
+                    onToggle={(value) => toggleCategory(row.name, value)}
+                    row={row}
+                    shortlistBadge={shortlistBadge}
+                    t={t}
+                    uncategorizedLabel={uncategorizedLabel}
+                  />
                 )
               })}
             </div>
@@ -227,7 +317,9 @@ export function MilestonePromotionCandidatesInput({
         ) : null}
       </Field>
 
-      <Field className="border-t pt-4">
+      <Separator />
+
+      <Field>
         <FieldLabel>{t('milestonePreset.promotion_candidates.inputLabel')}</FieldLabel>
         <FieldDescription>
           {t('milestonePreset.promotion_candidates.inputDescription')}
@@ -245,5 +337,54 @@ export function MilestonePromotionCandidatesInput({
         />
       </Field>
     </FieldGroup>
+  )
+}
+
+type CategoryRowProps = {
+  checked: boolean
+  disabled: boolean
+  id: string
+  onToggle: (checked: boolean) => void
+  row: MenuCategorySummary
+  shortlistBadge: string
+  t: ReturnType<typeof useTranslations<'analytics.workflows.chat'>>
+  uncategorizedLabel: string
+}
+
+function CategoryRow({
+  checked,
+  disabled,
+  id,
+  onToggle,
+  row,
+  shortlistBadge,
+  t,
+  uncategorizedLabel,
+}: CategoryRowProps) {
+  return (
+    <div className="flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted/40">
+      <Checkbox
+        checked={checked}
+        disabled={disabled}
+        id={id}
+        onCheckedChange={(value) => onToggle(value === true)}
+      />
+      <Label
+        className="flex min-w-0 flex-1 cursor-pointer flex-col gap-1 font-normal sm:flex-row sm:items-center sm:justify-between"
+        htmlFor={id}
+      >
+        <span className="truncate">{categoryLabel(row.name, uncategorizedLabel)}</span>
+        <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+          {checked ? (
+            <Badge className="hidden tabular-nums sm:inline-flex" variant="outline">
+              {shortlistBadge}
+            </Badge>
+          ) : null}
+          <Badge className="tabular-nums" variant="secondary">
+            {t('milestonePromotionCandidatesInputItemCount', { count: row.itemCount })}
+          </Badge>
+        </span>
+      </Label>
+    </div>
   )
 }
