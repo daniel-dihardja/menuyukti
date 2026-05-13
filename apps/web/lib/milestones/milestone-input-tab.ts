@@ -14,7 +14,8 @@ export function milestonePresetHasDefaultOptionalNotesInput(
   | 'culture_hooks'
   | 'format_mix'
   | 'ig_profile'
-  | 'menu_tagger' {
+  | 'menu_tagger'
+  | 'reel_lineup' {
   return milestonePresetInputType(presetId) === 'optional_notes'
 }
 
@@ -26,7 +27,8 @@ export function optionalNotesFromMilestoneInput(
     | 'culture_hooks'
     | 'format_mix'
     | 'ig_profile'
-    | 'menu_tagger',
+    | 'menu_tagger'
+    | 'reel_lineup',
 ): string {
   if (raw?.type !== presetId || raw.value == null || typeof raw.value !== 'object') {
     return ''

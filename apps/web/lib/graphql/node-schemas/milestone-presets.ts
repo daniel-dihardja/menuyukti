@@ -29,6 +29,7 @@ export const milestonePresetIdSchema = z.enum([
   'post_scheduler',
   'promotion_candidates',
   'menu_tagger',
+  'reel_lineup',
   'culture_hooks',
   'format_mix',
   'ig_profile',
@@ -88,6 +89,12 @@ export const menuTaggerMilestoneInputValueSchema = z.object({
 })
 
 export type MenuTaggerMilestoneInputValue = z.infer<typeof menuTaggerMilestoneInputValueSchema>
+
+export const reelLineupMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type ReelLineupMilestoneInputValue = z.infer<typeof reelLineupMilestoneInputValueSchema>
 
 export const promotionCandidatesItemLimitSchema = z.union([
   z.literal(5),
@@ -352,6 +359,53 @@ export const menuTaggerMilestoneDataSchema = z.object({
 })
 
 export type MenuTaggerMilestoneData = z.infer<typeof menuTaggerMilestoneDataSchema>
+
+export const reelLineupProfileIdSchema = z.literal('hook_reel')
+
+export const reelLineupAnchorSchema = z.object({
+  dimension: z.literal('reel_moment'),
+  value: z.string().trim().min(1),
+})
+
+export const reelLineupGroupMixSchema = z.object({
+  priceLevels: z.array(z.union([z.literal(1), z.literal(2), z.literal(3)])),
+  storytellingStrongCount: z.number().int().nonnegative(),
+  starCount: z.number().int().nonnegative(),
+  puzzleCount: z.number().int().nonnegative(),
+})
+
+export const reelLineupGroupItemSchema = z.object({
+  name: z.string().trim().min(1),
+  role: menuTaggerItemRoleSchema,
+  category: z.string().trim().min(1),
+  position: z.number().int().min(1).max(5),
+  popularity: z.number().min(0).max(1).optional(),
+  priceLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  storytellingFit: z.enum(['strong', 'weak']).optional(),
+  reelMoment: z.string().trim().min(1).optional(),
+})
+
+export type ReelLineupGroupItem = z.infer<typeof reelLineupGroupItemSchema>
+
+export const reelLineupGroupSchema = z.object({
+  id: z.string().trim().min(1),
+  leadName: z.string().trim().min(1),
+  profileId: reelLineupProfileIdSchema,
+  anchor: reelLineupAnchorSchema,
+  items: z.array(reelLineupGroupItemSchema).min(3).max(5),
+  mix: reelLineupGroupMixSchema,
+})
+
+export type ReelLineupGroup = z.infer<typeof reelLineupGroupSchema>
+
+export const reelLineupMilestoneDataSchema = z.object({
+  groups: z.array(reelLineupGroupSchema),
+  unassignedItemNames: z.array(z.string().trim().min(1)),
+  sourceMenuTaggerTitle: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+export type ReelLineupMilestoneData = z.infer<typeof reelLineupMilestoneDataSchema>
 
 export {
   MENU_TAGGER_TAXONOMY_VERSION,

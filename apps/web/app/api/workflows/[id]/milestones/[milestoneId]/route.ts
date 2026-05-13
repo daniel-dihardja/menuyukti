@@ -12,8 +12,10 @@ import {
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
+  reelLineupMilestoneDataSchema,
   type PassCriteriaData,
 } from '@/lib/graphql/node-schemas'
+import { EMPTY_REEL_LINEUP_DATA } from '@/lib/milestones/reel-lineup'
 import type { MilestoneNode } from '@/lib/graphql/node-schemas'
 import {
   DELETE_NODE_MUTATION,
@@ -223,6 +225,15 @@ export async function GET(_req: Request, context: RouteContext) {
           items: [],
           usedTags: emptyMenuTaggerUsedTags(),
         }
+      }
+    }
+    if (
+      parsedMilestoneNodeData?.success &&
+      parsedMilestoneNodeData.data.presetId === 'reel_lineup'
+    ) {
+      const rlParsed = reelLineupMilestoneDataSchema.safeParse(milestoneData)
+      if (!rlParsed.success) {
+        milestoneData = EMPTY_REEL_LINEUP_DATA
       }
     }
 

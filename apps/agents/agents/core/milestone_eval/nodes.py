@@ -23,6 +23,10 @@ from agents_app.agents.core.milestone_eval.menu_tagger_eval import (
     enrich_menu_tagger_eval_payload,
     try_menu_tagger_deterministic_verdict,
 )
+from agents_app.agents.core.milestone_eval.reel_lineup_eval import (
+    enrich_reel_lineup_eval_payload,
+    try_reel_lineup_deterministic_verdict,
+)
 from agents_app.agents.core.milestone_eval.prompts import (
     EVAL_SYSTEM,
     SYNTHESIS_SYSTEM,
@@ -40,7 +44,9 @@ _logger = logging.getLogger(__name__)
 
 
 def _enrich_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
-    return enrich_menu_tagger_eval_payload(enrich_ig_profile_eval_payload(data))
+    return enrich_reel_lineup_eval_payload(
+        enrich_menu_tagger_eval_payload(enrich_ig_profile_eval_payload(data))
+    )
 
 
 def _milestonedata_eval_score(data: dict[str, Any]) -> int:
@@ -73,6 +79,7 @@ _OWNER_NOTES_INPUT_TYPES = frozenset(
         "format_mix",
         "culture_hooks",
         "menu_tagger",
+        "reel_lineup",
         "ig_profile",
     },
 )
@@ -214,6 +221,8 @@ async def evaluate_criterion(
         deterministic = try_ig_profile_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
             deterministic = try_menu_tagger_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_reel_lineup_deterministic_verdict(requirement, milestone_data)
         if deterministic is not None:
             status, reasoning = deterministic
             verdict = CriterionVerdict(status=status, reasoning=reasoning)

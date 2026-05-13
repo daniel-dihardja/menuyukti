@@ -7,6 +7,7 @@ import {
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
+  reelLineupMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
 import type {
@@ -45,6 +46,10 @@ export function parseDataPreviewForPreset(
   }
   if (presetId === 'menu_tagger') {
     const parsed = menuTaggerMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'reel_lineup') {
+    const parsed = reelLineupMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   if (presetId === 'culture_hooks') {

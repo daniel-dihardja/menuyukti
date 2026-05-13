@@ -1,5 +1,6 @@
 import {
   CalendarRange,
+  Clapperboard,
   ClipboardList,
   Instagram,
   Lightbulb,
@@ -17,6 +18,7 @@ import {
   MENU_TAGGER_TAXONOMY_VERSION,
   emptyMenuTaggerUsedTags,
 } from '@/lib/milestones/menu-tagger-taxonomy'
+import { EMPTY_REEL_LINEUP_DATA } from '@/lib/milestones/reel-lineup'
 import {
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
@@ -24,6 +26,7 @@ import {
   formatMixMilestoneDataSchema,
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
+  reelLineupMilestoneDataSchema,
   type MilestoneInput,
   type MilestonePresetId,
   MILESTONE_PRESET_IDS,
@@ -271,6 +274,40 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.menu_tagger.criterionTaxonomyOnly'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  reel_lineup: {
+    id: 'reel_lineup',
+    icon: Clapperboard,
+    inputType: 'optional_notes',
+    dataSchema: reelLineupMilestoneDataSchema,
+    emptyData: EMPTY_REEL_LINEUP_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.reel_lineup.title'),
+      milestoneInput: {
+        type: 'reel_lineup',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_REEL_LINEUP_DATA,
+      goal: t('milestonePreset.reel_lineup.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionPriorMenuTagger'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionGroupSize'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionStarLead'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionSharedReelMoment'),
           status: 'open',
         },
       ],

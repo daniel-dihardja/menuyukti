@@ -590,6 +590,69 @@ class MenuTaggerMilestoneOutput(BaseModel):
         return values
 
 
+class ReelLineupGroupItemOutput(BaseModel):
+    name: str
+    role: Literal["star", "puzzle"]
+    category: str
+    position: int = Field(ge=1, le=5)
+    popularity: float | None = Field(default=None, ge=0.0, le=1.0)
+    priceLevel: Literal[1, 2, 3] | None = None
+    storytellingFit: Literal["strong", "weak"] | None = None
+    reelMoment: str | None = None
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def _normalize_name(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("name")
+    @classmethod
+    def _require_name(cls, value: str) -> str:
+        if not value:
+            raise ValueError("name must be non-empty")
+        return value
+
+
+class ReelLineupGroupMixOutput(BaseModel):
+    priceLevels: list[Literal[1, 2, 3]]
+    storytellingStrongCount: int = Field(ge=0)
+    starCount: int = Field(ge=0)
+    puzzleCount: int = Field(ge=0)
+
+
+class ReelLineupAnchorOutput(BaseModel):
+    dimension: Literal["reel_moment"]
+    value: str
+
+
+class ReelLineupGroupOutput(BaseModel):
+    id: str
+    leadName: str
+    profileId: Literal["hook_reel"]
+    anchor: ReelLineupAnchorOutput
+    items: list[ReelLineupGroupItemOutput]
+    mix: ReelLineupGroupMixOutput
+
+    @field_validator("items")
+    @classmethod
+    def _validate_items(
+        cls, values: list[ReelLineupGroupItemOutput]
+    ) -> list[ReelLineupGroupItemOutput]:
+        if not (3 <= len(values) <= 5):
+            raise ValueError("each group must contain between 3 and 5 items")
+        positions = [item.position for item in values]
+        if positions != list(range(1, len(values) + 1)):
+            raise ValueError("item positions must be sequential starting at 1")
+        return values
+
+
+class ReelLineupMilestoneOutput(BaseModel):
+    groups: list[ReelLineupGroupOutput]
+    unassignedItemNames: list[str] = Field(default_factory=list)
+    sourceMenuTaggerTitle: str | None = None
+    notes: str | None = None
+
+
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
@@ -597,6 +660,7 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "post_scheduler": PostSchedulerMilestoneOutput,
     "promotion_candidates": PromotionCandidatesMilestoneOutput,
     "menu_tagger": MenuTaggerMilestoneOutput,
+    "reel_lineup": ReelLineupMilestoneOutput,
     "culture_hooks": CultureHooksMilestoneOutput,
     "format_mix": FormatMixMilestoneOutput,
     "ig_profile": IgProfileMilestoneOutput,

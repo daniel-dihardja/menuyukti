@@ -11,6 +11,7 @@ import {
   formatMixMilestoneDataSchema,
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
+  reelLineupMilestoneDataSchema,
   milestoneInputSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
@@ -42,6 +43,7 @@ const runBodySchema = z.object({
       formatMixMilestoneDataSchema,
       igProfileMilestoneDataSchema,
       menuTaggerMilestoneDataSchema,
+      reelLineupMilestoneDataSchema,
     ])
     .optional(),
 })

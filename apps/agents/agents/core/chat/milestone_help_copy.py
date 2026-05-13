@@ -30,6 +30,11 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "assigns fixed taxonomy tags (kind, ingredient, taste, course) to each menu item for "
         "downstream content grouping."
     ),
+    "reel_lineup": (
+        "Requires prior Menu Tagger and Promotion Candidates milestones. Groups tagged menu "
+        "items into 3–5 item Reel lineups led by top stars, using shared reel_moment anchors "
+        "plus storytelling fit and price-level mix rules."
+    ),
     "culture_hooks": (
         "Use Campaign Brief data to identify the location concept and target audience, then "
         "generate intersection topics between the concept and the audience's likely interests "
@@ -105,7 +110,7 @@ def format_optional_input_section(preset_id: str | None) -> str | None:
                 b,
             ],
         )
-    if preset_id in ("promotion_candidates", "culture_hooks", "ig_profile", "menu_tagger"):
+    if preset_id in ("promotion_candidates", "culture_hooks", "ig_profile", "menu_tagger", "reel_lineup"):
         return "\n".join(
             [
                 "",

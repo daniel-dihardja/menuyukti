@@ -13,6 +13,8 @@ import {
   igProfileMilestoneInputValueSchema,
   menuTaggerMilestoneDataSchema,
   menuTaggerMilestoneInputValueSchema,
+  reelLineupMilestoneDataSchema,
+  reelLineupMilestoneInputValueSchema,
   milestonePresetIdSchema,
   milestoneInputSchema,
   passCriteriaSchema,
@@ -48,6 +50,7 @@ export const patchMilestoneSchema = z
         formatMixMilestoneDataSchema,
         igProfileMilestoneDataSchema,
         menuTaggerMilestoneDataSchema,
+        reelLineupMilestoneDataSchema,
       ])
       .nullable()
       .optional(),
@@ -81,6 +84,10 @@ export const patchMilestoneSchema = z
         z.object({
           type: z.literal('menu_tagger'),
           value: menuTaggerMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('reel_lineup'),
+          value: reelLineupMilestoneInputValueSchema,
         }),
         milestoneInputSchema,
       ])
