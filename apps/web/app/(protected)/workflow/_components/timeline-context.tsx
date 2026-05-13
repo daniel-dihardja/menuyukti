@@ -55,6 +55,8 @@ export type TimelineActions = {
 /** Workflow + milestone list state + errors (excludes chat streaming and action refs). */
 export type TimelineWorkspaceStateValue = {
   workflowId: string
+  locationId: number
+  analyticsRunId: number | null
   selectedMilestoneId: string | null
   onSelectMilestone: (id: string | null) => void | Promise<void>
   milestoneState: TimelineMilestoneState

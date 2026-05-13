@@ -1,35 +1,42 @@
+'use client'
+
+import { useMemo } from 'react'
+import { useTranslations } from 'next-intl'
+
 import { Badge } from '@workspace/ui/components/badge'
 
 import type {
   PromotionCandidateMenuItem,
   PromotionCandidatesMilestoneData,
 } from '@/lib/graphql/node-schemas'
+import { sortPromotionCandidateCategories } from '@/lib/milestones/promotion-candidates-category-order'
 
 import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
 
 export type MilestonePromotionCandidatesDataPreviewProps = {
   data: PromotionCandidatesMilestoneData
-  labels: {
-    heading: string
-    mainCategoryLabel: string
-    emptyCategory: string
-    starItemsLabel: string
-    puzzleItemsLabel: string
-    notesLabel: string
-    noNotes: string
-    storytellingStrong: string
-    storytellingWeak: string
-    storytellingWhy: string
-    storytellingFitSection: string
-    summary: string
-    helpHeading: string
-    helpStarItems: string
-    helpPuzzleItems: string
-    helpStorytellingFit: string
-    placeholderEmDash: string
-    formatHelpAriaLabel: (sectionTitle: string) => string
-  }
+}
+
+type PromotionCandidatesPreviewLabels = {
+  heading: string
+  mainCategoryLabel: string
+  emptyCategory: string
+  starItemsLabel: string
+  puzzleItemsLabel: string
+  notesLabel: string
+  noNotes: string
+  storytellingStrong: string
+  storytellingWeak: string
+  storytellingWhy: string
+  storytellingFitSection: string
+  summary: string
+  helpHeading: string
+  helpStarItems: string
+  helpPuzzleItems: string
+  helpStorytellingFit: string
+  placeholderEmDash: string
+  formatHelpAriaLabel: (sectionTitle: string) => string
 }
 
 function SectionHeader({
@@ -51,7 +58,7 @@ function SectionHeader({
 
 function renderMenuItems(
   items: PromotionCandidateMenuItem[],
-  labels: MilestonePromotionCandidatesDataPreviewProps['labels'],
+  labels: PromotionCandidatesPreviewLabels,
 ) {
   if (items.length === 0) {
     return <p className={mp.body}>{labels.placeholderEmDash}</p>
@@ -94,9 +101,37 @@ function renderMenuItems(
 
 export function MilestonePromotionCandidatesDataPreview({
   data,
-  labels,
 }: MilestonePromotionCandidatesDataPreviewProps) {
+  const t = useTranslations('analytics.workflows.chat')
+  const labels = useMemo<PromotionCandidatesPreviewLabels>(
+    () => ({
+      heading: t('milestonePromotionCandidatesPreviewHeading'),
+      mainCategoryLabel: t('milestonePromotionCandidatesPreviewMainCategoryLabel'),
+      emptyCategory: t('milestonePromotionCandidatesPreviewEmptyCategory'),
+      starItemsLabel: t('milestonePromotionCandidatesPreviewStarItemsLabel'),
+      puzzleItemsLabel: t('milestonePromotionCandidatesPreviewPuzzleItemsLabel'),
+      notesLabel: t('milestonePromotionCandidatesPreviewNotesLabel'),
+      noNotes: t('milestonePromotionCandidatesPreviewNoNotes'),
+      storytellingStrong: t('milestonePromotionCandidatesPreviewStorytellingStrong'),
+      storytellingWeak: t('milestonePromotionCandidatesPreviewStorytellingWeak'),
+      storytellingWhy: t('milestonePromotionCandidatesPreviewStorytellingWhy'),
+      storytellingFitSection: t('milestonePromotionCandidatesPreviewStorytellingFitSection'),
+      summary: t('milestonePromotionCandidatesPreviewSummary'),
+      helpHeading: t('milestonePromotionCandidatesPreviewHelpHeading'),
+      helpStarItems: t('milestonePromotionCandidatesPreviewHelpStarItems'),
+      helpPuzzleItems: t('milestonePromotionCandidatesPreviewHelpPuzzleItems'),
+      helpStorytellingFit: t('milestonePromotionCandidatesPreviewHelpStorytellingFit'),
+      placeholderEmDash: t('milestonePreviewPlaceholderEmDash'),
+      formatHelpAriaLabel: (sectionTitle: string) =>
+        t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle }),
+    }),
+    [t],
+  )
   const a = labels.formatHelpAriaLabel
+  const sortedCategories = useMemo(
+    () => sortPromotionCandidateCategories(data.categories, data.mainCategory),
+    [data.categories, data.mainCategory],
+  )
 
   return (
     <div className={mp.root}>
@@ -113,7 +148,7 @@ export function MilestonePromotionCandidatesDataPreview({
       </div>
 
       <div className="space-y-4">
-        {data.categories.map((bucket) => {
+        {sortedCategories.map((bucket) => {
           const hasItems = bucket.starItems.length > 0 || bucket.puzzleItems.length > 0
           return (
             <div key={bucket.category} className="space-y-3">

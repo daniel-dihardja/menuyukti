@@ -24,7 +24,7 @@ HOW TO EXTRACT CONTEXT FROM THE CAMPAIGN BRIEF
    - messageHierarchy: the lead message in the hierarchy is often the strongest single signal of what makes the venue culturally distinct; use it to anchor locationConcept.
    - toneGuardrails: extract personality adjectives from these rules (e.g. "nostalgic and warm", "edgy and urban", "minimal and refined") and ask which cultural movements share the same aesthetic or value system.
    - proofOrientedAngles: distinctive proof points (heritage, craftsmanship, local roots, story) that hint at the cultural origin story.
-   - mainCategory: if DRINK (rather than FOOD), include bar culture, craft spirits, cocktail craftsmanship, and nightlife subcultures as candidate topic domains.
+   - mainCategory: the top-revenue POS menu category from analytics; use it to anchor which menu section the campaign leads with.
 
 2. Target audience — read these fields together and map them to non-food cultural interests:
    - targetSegments: translate psychographic labels into cultural communities. Examples: "young creative professionals" → art, music, or design scenes; "design-conscious millennials" → aesthetic or interior design culture; "families" → nostalgia, children's entertainment, or community traditions; "business professionals" → premium lifestyle, productivity, or travel culture.

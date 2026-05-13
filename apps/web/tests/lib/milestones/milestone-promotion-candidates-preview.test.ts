@@ -9,8 +9,8 @@ import {
 describe('promotion candidates milestone schema', () => {
   it('accepts at least one valid category block', () => {
     const parsed = promotionCandidatesMilestoneDataSchema.safeParse({
-      mainCategory: 'FOOD',
-      categories: [{ category: 'FOOD', starItems: ['Steak'], puzzleItems: ['Soup'] }],
+      mainCategory: 'Mains',
+      categories: [{ category: 'Mains', starItems: ['Steak'], puzzleItems: ['Soup'] }],
       sourceAnalyticsRunId: null,
       notes: '',
     })
@@ -29,10 +29,10 @@ describe('promotion candidates milestone schema', () => {
 
   it('accepts star and puzzle items with storytelling fields', () => {
     const parsed = promotionCandidatesMilestoneDataSchema.safeParse({
-      mainCategory: 'FOOD',
+      mainCategory: 'Mains',
       categories: [
         {
-          category: 'FOOD',
+          category: 'Mains',
           starItems: [
             {
               name: 'Steak',
@@ -53,7 +53,7 @@ describe('promotion candidates milestone schema', () => {
 
   it('requires at least one category block', () => {
     const parsed = promotionCandidatesMilestoneDataSchema.safeParse({
-      mainCategory: 'FOOD',
+      mainCategory: 'Mains',
       categories: [],
     })
     expect(parsed.success).toBe(false)
@@ -61,10 +61,20 @@ describe('promotion candidates milestone schema', () => {
 
   it('rejects unknown category labels', () => {
     const parsed = promotionCandidatesMilestoneDataSchema.safeParse({
-      mainCategory: 'FOOD',
-      categories: [{ category: 'DESSERT', starItems: [], puzzleItems: [] }],
+      mainCategory: 'Mains',
+      categories: [{ category: '', starItems: [], puzzleItems: [] }],
     })
     expect(parsed.success).toBe(false)
+  })
+
+  it('accepts POS menu category labels', () => {
+    const parsed = promotionCandidatesMilestoneDataSchema.safeParse({
+      mainCategory: 'Mains',
+      categories: [{ category: 'Mains', starItems: ['Steak'], puzzleItems: [] }],
+      sourceAnalyticsRunId: null,
+      notes: '',
+    })
+    expect(parsed.success).toBe(true)
   })
 })
 
@@ -82,7 +92,7 @@ describe('campaign brief schema', () => {
       proofOrientedAngles: ['A', 'B', 'C'],
       toneGuardrails: ['A', 'B', 'C'],
       campaignObjective: 'Increase reservations',
-      mainCategory: 'DRINK',
+      mainCategory: 'Mains',
       targetSegments: ['A', 'B', 'C'],
       messageHierarchy: ['A', 'B', 'C'],
       offerAndCtaPlan: ['A', 'B', 'C'],

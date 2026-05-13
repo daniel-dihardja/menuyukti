@@ -40,6 +40,7 @@ _PRESET_TO_SKILL_ID: dict[str, str] = {
     "promotion_candidates": "promotion_candidates",
     "culture_hooks": "culture_hooks",
     "format_mix": "format_mix",
+    "ig_profile": "ig_profile",
     "dates": "dates",
     "public_holidays": "public_holidays",
 }
@@ -76,6 +77,7 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
             "culture_hooks": "culture_hooks",
             "promotion_candidates": "promotion_candidates",
             "format_mix": "format_mix",
+            "ig_profile": "ig_profile",
             "dates": "dates",
             "public_holidays": "public_holidays",
         }
@@ -94,6 +96,24 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
             notes = value.get("notes")
             if notes is not None and not isinstance(notes, str):
                 return "milestoneInput.value.notes must be a string when provided."
+            selected = value.get("selectedMenuCategories")
+            if selected is not None:
+                if not isinstance(selected, list):
+                    return "milestoneInput.value.selectedMenuCategories must be an array when provided."
+                for item in selected:
+                    if not isinstance(item, str):
+                        return (
+                            "milestoneInput.value.selectedMenuCategories must contain "
+                            "only strings when provided."
+                        )
+            for limit_key in ("starItemLimit", "puzzleItemLimit"):
+                limit_val = value.get(limit_key)
+                if limit_val is None:
+                    continue
+                if limit_val not in (5, 10, "all"):
+                    return (
+                        f"milestoneInput.value.{limit_key} must be 5, 10, or 'all' when provided."
+                    )
 
     return None
 

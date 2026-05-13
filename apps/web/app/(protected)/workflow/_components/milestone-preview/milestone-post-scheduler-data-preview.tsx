@@ -1,3 +1,8 @@
+'use client'
+
+import { useMemo } from 'react'
+import { useTranslations } from 'next-intl'
+
 import { MilestonePreviewHelpTrigger } from './milestone-preview-help-trigger'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
 
@@ -5,35 +10,36 @@ import type { PostSchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 
 export type MilestonePostSchedulerDataPreviewProps = {
   data: PostSchedulerMilestoneData
-  labels: {
-    monthlyArcHeading: string
-    contentRatioHeading: string
-    formatMixHeading: string
-    weeklySlotPlanHeading: string
-    emptyWeeklySlotPlan: string
-    guardrailCheckHeading: string
-    weekLabel: string
-    rationaleLabel: string
-    pillarLabel: string
-    reasonLabel: string
-    countLabel: string
-    dayLabel: string
-    formatLabel: string
-    hookLabel: string
-    captionStructureLabel: string
-    ctaTypeLabel: string
-    funnelStageLabel: string
-    visualDirectionLabel: string
-    notesLabel: string
-    placeholderDash: string
-    notesPlaceholder: string
-    helpMonthlyArc: string
-    helpContentRatio: string
-    helpFormatMix: string
-    helpWeeklySlotPlan: string
-    helpGuardrailCheck: string
-    formatHelpAriaLabel: (sectionTitle: string) => string
-  }
+}
+
+type PostSchedulerPreviewLabels = {
+  monthlyArcHeading: string
+  contentRatioHeading: string
+  formatMixHeading: string
+  weeklySlotPlanHeading: string
+  emptyWeeklySlotPlan: string
+  guardrailCheckHeading: string
+  weekLabel: string
+  rationaleLabel: string
+  pillarLabel: string
+  reasonLabel: string
+  countLabel: string
+  dayLabel: string
+  formatLabel: string
+  hookLabel: string
+  captionStructureLabel: string
+  ctaTypeLabel: string
+  funnelStageLabel: string
+  visualDirectionLabel: string
+  notesLabel: string
+  placeholderDash: string
+  notesPlaceholder: string
+  helpMonthlyArc: string
+  helpContentRatio: string
+  helpFormatMix: string
+  helpWeeklySlotPlan: string
+  helpGuardrailCheck: string
+  formatHelpAriaLabel: (sectionTitle: string) => string
 }
 
 function SectionHeader({
@@ -76,8 +82,41 @@ function RatioBar({ percent }: { percent: number }) {
 
 export function MilestonePostSchedulerDataPreview({
   data,
-  labels,
 }: MilestonePostSchedulerDataPreviewProps) {
+  const t = useTranslations('analytics.workflows.chat')
+  const labels = useMemo<PostSchedulerPreviewLabels>(
+    () => ({
+      monthlyArcHeading: t('milestonePostSchedulerPreviewMonthlyArcHeading'),
+      contentRatioHeading: t('milestonePostSchedulerPreviewContentRatioHeading'),
+      formatMixHeading: t('milestonePostSchedulerPreviewFormatMixHeading'),
+      weeklySlotPlanHeading: t('milestonePostSchedulerPreviewWeeklySlotPlanHeading'),
+      emptyWeeklySlotPlan: t('milestonePostSchedulerPreviewEmptyWeeklySlotPlan'),
+      guardrailCheckHeading: t('milestonePostSchedulerPreviewGuardrailCheckHeading'),
+      weekLabel: t('milestonePostSchedulerPreviewWeekLabel'),
+      rationaleLabel: t('milestonePostSchedulerPreviewRationaleLabel'),
+      pillarLabel: t('milestonePostSchedulerPreviewPillarLabel'),
+      reasonLabel: t('milestonePostSchedulerPreviewReasonLabel'),
+      countLabel: t('milestonePostSchedulerPreviewCountLabel'),
+      dayLabel: t('milestonePostSchedulerPreviewDayLabel'),
+      formatLabel: t('milestonePostSchedulerPreviewFormatLabel'),
+      hookLabel: t('milestonePostSchedulerPreviewHookLabel'),
+      captionStructureLabel: t('milestonePostSchedulerPreviewCaptionStructureLabel'),
+      ctaTypeLabel: t('milestonePostSchedulerPreviewCtaTypeLabel'),
+      funnelStageLabel: t('milestonePostSchedulerPreviewFunnelStageLabel'),
+      visualDirectionLabel: t('milestonePostSchedulerPreviewVisualDirectionLabel'),
+      notesLabel: t('milestonePostSchedulerPreviewNotesLabel'),
+      placeholderDash: t('milestonePostSchedulerPreviewPlaceholderDash'),
+      notesPlaceholder: t('milestonePostSchedulerPreviewNotesPlaceholder'),
+      helpMonthlyArc: t('milestonePostSchedulerPreviewHelpMonthlyArc'),
+      helpContentRatio: t('milestonePostSchedulerPreviewHelpContentRatio'),
+      helpFormatMix: t('milestonePostSchedulerPreviewHelpFormatMix'),
+      helpWeeklySlotPlan: t('milestonePostSchedulerPreviewHelpWeeklySlotPlan'),
+      helpGuardrailCheck: t('milestonePostSchedulerPreviewHelpGuardrailCheck'),
+      formatHelpAriaLabel: (sectionTitle: string) =>
+        t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle }),
+    }),
+    [t],
+  )
   const a = labels.formatHelpAriaLabel
   const formatNotesValue = (notes: string): string => {
     const trimmed = notes.trim()

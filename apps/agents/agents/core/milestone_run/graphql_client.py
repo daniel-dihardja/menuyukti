@@ -197,6 +197,8 @@ async def fetch_promotion_engineering_candidates(
     user_id: str,
     *,
     client: httpx.AsyncClient,
+    max_star_items: int | None = None,
+    max_puzzle_items: int | None = None,
 ) -> dict[str, Any] | None:
     """Return simplified promotion candidates for latest analytics run."""
     runs_data = await graphql_post(
@@ -212,10 +214,18 @@ async def fetch_promotion_engineering_candidates(
     run_id = str(run.get("id") or "").strip()
     if not run_id:
         return None
+    variables: dict[str, Any] = {
+        "locationId": str(location_id),
+        "analyticsRunId": run_id,
+    }
+    if max_star_items is not None:
+        variables["maxStarItems"] = max_star_items
+    if max_puzzle_items is not None:
+        variables["maxPuzzleItems"] = max_puzzle_items
     data = await graphql_post(
         client,
         PROMOTION_ENGINEERING_CANDIDATES_QUERY,
-        {"locationId": str(location_id), "analyticsRunId": run_id},
+        variables,
         user_id,
     )
     raw = data.get("promotionEngineeringCandidates")

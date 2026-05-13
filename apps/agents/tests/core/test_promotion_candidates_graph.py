@@ -5,6 +5,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.promotion_candidates.nodes import (
     StorytellingVerdictLine,
     StorytellingVerdictsOutput,
@@ -34,7 +35,7 @@ async def test_fetch_and_prepare_requires_injected_campaign_brief() -> None:
 
 
 @pytest.mark.asyncio
-async def test_fetch_and_prepare_orders_categories_by_campaign_brief_main_category() -> None:
+async def test_fetch_and_prepare_builds_pos_category_sections() -> None:
     state = {
         "milestone_id": "m1",
         "location_id": 1,
@@ -42,7 +43,7 @@ async def test_fetch_and_prepare_orders_categories_by_campaign_brief_main_catego
         "goal": "",
         "criteria": [],
         "prior_milestones_data": (
-            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"DRINK"}}]'
+            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"Drinks"}}]'
         ),
         "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
     }
@@ -53,11 +54,11 @@ async def test_fetch_and_prepare_orders_categories_by_campaign_brief_main_catego
                 return_value={
                     "grouping": "by_menu_category",
                     "categories": {
-                        "FOOD": {
+                        "Mains": {
                             "starItems": ["Steak", "Pasta"],
                             "puzzleItems": ["Soup"],
                         },
-                        "DRINK": {
+                        "Drinks": {
                             "starItems": ["Latte"],
                             "puzzleItems": ["Matcha"],
                         },
@@ -73,10 +74,138 @@ async def test_fetch_and_prepare_orders_categories_by_campaign_brief_main_catego
         out = await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
 
     categories = out["formatted_output"]["categories"]
-    assert categories[0]["category"] == "DRINK"
-    assert categories[1]["category"] == "FOOD"
+    assert [row["category"] for row in categories] == ["Drinks", "Mains"]
     assert categories[0]["starItems"][0]["name"] == "Latte"
     assert categories[0]["starItems"][0]["storytellingFit"] == "weak"
+
+
+@pytest.mark.asyncio
+async def test_fetch_and_prepare_orders_main_category_before_alphabetical() -> None:
+    state = {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "goal": "",
+        "criteria": [],
+        "prior_milestones_data": (
+            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"Cocktails"}}]'
+        ),
+        "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
+    }
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.fetch_promotion_engineering_candidates",
+            new=AsyncMock(
+                return_value={
+                    "grouping": "by_menu_category",
+                    "categories": {
+                        "Appetizers": {"starItems": ["Bruschetta"], "puzzleItems": []},
+                        "Cocktails": {"starItems": ["Negroni"], "puzzleItems": []},
+                        "Mains": {"starItems": ["Steak"], "puzzleItems": []},
+                    },
+                }
+            ),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+    ):
+        out = await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
+
+    assert [row["category"] for row in out["formatted_output"]["categories"]] == [
+        "Cocktails",
+        "Appetizers",
+        "Mains",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_fetch_and_prepare_filters_selected_menu_categories() -> None:
+    state = {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "goal": "",
+        "criteria": [],
+        "prior_milestones_data": (
+            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"Mains"}}]'
+        ),
+        "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
+        "milestone_input": {
+            "type": "promotion_candidates",
+            "value": {"notes": "", "selectedMenuCategories": ["Mains"]},
+        },
+    }
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.fetch_promotion_engineering_candidates",
+            new=AsyncMock(
+                return_value={
+                    "grouping": "by_menu_category",
+                    "categories": {
+                        "Mains": {"starItems": ["Steak"], "puzzleItems": []},
+                        "Desserts": {"starItems": ["Cake"], "puzzleItems": []},
+                    },
+                }
+            ),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+    ):
+        out = await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
+
+    categories = out["formatted_output"]["categories"]
+    assert len(categories) == 1
+    assert categories[0]["category"] == "Mains"
+
+
+@pytest.mark.asyncio
+async def test_fetch_and_prepare_passes_item_limits_to_graphql() -> None:
+    state = {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "goal": "",
+        "criteria": [],
+        "prior_milestones_data": (
+            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"Mains"}}]'
+        ),
+        "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
+        "milestone_input": {
+            "type": "promotion_candidates",
+            "value": {
+                "notes": "",
+                "selectedMenuCategories": [],
+                "starItemLimit": 10,
+                "puzzleItemLimit": "all",
+            },
+        },
+    }
+    fetch_mock = AsyncMock(
+        return_value={
+            "grouping": "flat",
+            "starItems": ["A"],
+            "puzzleItems": ["B"],
+        }
+    )
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.fetch_promotion_engineering_candidates",
+            new=fetch_mock,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+    ):
+        await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
+
+    fetch_mock.assert_awaited_once()
+    assert fetch_mock.await_args.kwargs["max_star_items"] == 10
+    assert fetch_mock.await_args.kwargs["max_puzzle_items"] == 0
 
 
 @pytest.mark.asyncio
@@ -87,16 +216,16 @@ async def test_enrich_storytelling_applies_llm_verdicts() -> None:
         "run_id": "r1",
         "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
         "formatted_output": {
-            "mainCategory": "FOOD",
+            "mainCategory": "Mains",
             "categories": [
                 {
-                    "category": "FOOD",
+                    "category": "Mains",
                     "starItems": [
                         {"name": "Steak", "storytellingFit": "weak", "storytellingRationale": ""}
                     ],
                     "puzzleItems": [],
                 },
-                {"category": "DRINK", "starItems": [], "puzzleItems": []},
+                {"category": "Desserts", "starItems": [], "puzzleItems": []},
             ],
             "sourceAnalyticsRunId": None,
             "notes": "",
@@ -142,10 +271,10 @@ async def test_persist_result_writes_valid_payload() -> None:
         "goal": "",
         "criteria": [],
         "formatted_output": {
-            "mainCategory": "FOOD",
+            "mainCategory": "Mains",
             "categories": [
-                {"category": "FOOD", "starItems": ["Steak"], "puzzleItems": ["Soup"]},
-                {"category": "DRINK", "starItems": ["Latte"], "puzzleItems": ["Matcha"]},
+                {"category": "Mains", "starItems": ["Steak"], "puzzleItems": ["Soup"]},
+                {"category": "Drinks", "starItems": ["Latte"], "puzzleItems": ["Matcha"]},
             ],
             "sourceAnalyticsRunId": None,
             "notes": "",
@@ -174,10 +303,10 @@ async def test_persist_result_accepts_object_shaped_items() -> None:
         "goal": "",
         "criteria": [],
         "formatted_output": {
-            "mainCategory": "FOOD",
+            "mainCategory": "Mains",
             "categories": [
                 {
-                    "category": "FOOD",
+                    "category": "Mains",
                     "starItems": [
                         {
                             "name": "Steak",
@@ -187,7 +316,7 @@ async def test_persist_result_accepts_object_shaped_items() -> None:
                     ],
                     "puzzleItems": [],
                 },
-                {"category": "DRINK", "starItems": [], "puzzleItems": []},
+                {"category": "Drinks", "starItems": [], "puzzleItems": []},
             ],
             "sourceAnalyticsRunId": None,
             "notes": "",
@@ -200,3 +329,19 @@ async def test_persist_result_accepts_object_shaped_items() -> None:
         await persist_result(state, client=MagicMock(spec=AsyncMock))
     saved = mock_upsert.await_args.args[2]
     assert saved["categories"][0]["starItems"][0]["storytellingRationale"] == "Generic for this brief."
+
+
+def test_validate_skill_output_accepts_large_star_item_lists() -> None:
+    stars = [{"name": f"Dish {i}", "storytellingFit": "weak", "storytellingRationale": ""} for i in range(25)]
+    normalized, error = validate_skill_output(
+        "promotion_candidates",
+        {
+            "mainCategory": "Mains",
+            "categories": [{"category": "Mains", "starItems": stars, "puzzleItems": []}],
+            "sourceAnalyticsRunId": None,
+            "notes": "",
+        },
+    )
+    assert error is None
+    assert normalized is not None
+    assert len(normalized["categories"][0]["starItems"]) == 25

@@ -44,7 +44,6 @@ class CampaignBriefDraftOutput(BaseModel):
     proofOrientedAngles: list[str]
     toneGuardrails: list[str]
     campaignObjective: str
-    mainCategory: str
     targetSegments: list[str]
     messageHierarchy: list[str]
     offerAndCtaPlan: list[str]
@@ -67,6 +66,26 @@ _CAMPAIGN_BRIEF_LIST_FIELDS: tuple[str, ...] = (
     "testingPlan",
     "riskGuardrails",
 )
+
+_UNCATEGORIZED_MAIN_CATEGORY = "(uncategorized)"
+
+
+def _extract_top_revenue_category(signals_raw: dict[str, Any] | None) -> str:
+    """Top POS menu category from category-mix analytics (deterministic, not LLM)."""
+    if not isinstance(signals_raw, dict):
+        return _UNCATEGORIZED_MAIN_CATEGORY
+    instagram = signals_raw.get("instagram_signals")
+    if not isinstance(instagram, dict):
+        return _UNCATEGORIZED_MAIN_CATEGORY
+    fundamental = instagram.get("fundamentalSignals")
+    if not isinstance(fundamental, dict):
+        return _UNCATEGORIZED_MAIN_CATEGORY
+    category_focus = fundamental.get("categoryFocus")
+    if not isinstance(category_focus, dict):
+        return _UNCATEGORIZED_MAIN_CATEGORY
+    category = str(category_focus.get("category") or "").strip()
+    return category if category else _UNCATEGORIZED_MAIN_CATEGORY
+
 
 _CAMPAIGN_BRIEF_FALLBACK_ITEMS: dict[str, tuple[str, str, str]] = {
     "contentPillars": (
@@ -356,7 +375,6 @@ async def persist_result(state: CampaignBriefState, *, client: httpx.AsyncClient
         payload.setdefault("proofOrientedAngles", [])
         payload.setdefault("toneGuardrails", [])
         payload.setdefault("campaignObjective", "")
-        payload.setdefault("mainCategory", "FOOD")
         payload.setdefault("targetSegments", [])
         payload.setdefault("messageHierarchy", [])
         payload.setdefault("offerAndCtaPlan", [])
@@ -369,8 +387,10 @@ async def persist_result(state: CampaignBriefState, *, client: httpx.AsyncClient
             payload["campaignObjective"] = (
                 "Increase reservations with a conversion-focused campaign objective."
             )
-        main_category = str(payload.get("mainCategory") or "").strip().upper()
-        payload["mainCategory"] = main_category if main_category in {"FOOD", "DRINK"} else "FOOD"
+        signals_raw = state.get("signals_raw")
+        payload["mainCategory"] = _extract_top_revenue_category(
+            signals_raw if isinstance(signals_raw, dict) else None
+        )
         for list_key in _CAMPAIGN_BRIEF_LIST_FIELDS:
             _normalize_campaign_list(payload, list_key)
 

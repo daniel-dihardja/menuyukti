@@ -1,6 +1,7 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { type ReactNode, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 
 import {
   Accordion,
@@ -15,12 +16,9 @@ import { milestonePreviewTypography as mp } from './milestone-preview-typography
 
 export type MilestoneCampaignBriefDataPreviewProps = {
   data: CampaignBriefMilestoneData
-  labels: CampaignBriefPreviewLabels
-  /** Accessible name for each help control, e.g. “Learn more: Start date”. */
-  formatHelpAriaLabel: (sectionTitle: string) => string
 }
 
-export type CampaignBriefPreviewLabels = {
+type CampaignBriefPreviewLabels = {
   venueSnapshot: string
   venueName: string
   city: string
@@ -136,9 +134,47 @@ const defaultOpenBriefSections = [
 
 export function MilestoneCampaignBriefDataPreview({
   data,
-  labels,
-  formatHelpAriaLabel,
 }: MilestoneCampaignBriefDataPreviewProps) {
+  const t = useTranslations('analytics.workflows.chat')
+  const formatHelpAriaLabel = (sectionTitle: string) =>
+    t('milestoneCampaignBriefPreviewHelpLearnMoreAria', { section: sectionTitle })
+  const labels = useMemo<CampaignBriefPreviewLabels>(
+    () => ({
+      venueSnapshot: t('milestoneCampaignBriefPreviewVenueSnapshot'),
+      venueName: t('milestoneCampaignBriefPreviewVenueName'),
+      city: t('milestoneCampaignBriefPreviewCity'),
+      country: t('milestoneCampaignBriefPreviewCountry'),
+      currency: t('milestoneCampaignBriefPreviewCurrency'),
+      contentPillars: t('milestoneCampaignBriefPreviewContentPillars'),
+      audienceHypotheses: t('milestoneCampaignBriefPreviewAudienceHypotheses'),
+      proofOrientedAngles: t('milestoneCampaignBriefPreviewProofOrientedAngles'),
+      toneGuardrails: t('milestoneCampaignBriefPreviewToneGuardrails'),
+      campaignObjective: t('milestoneCampaignBriefPreviewCampaignObjective'),
+      targetSegments: t('milestoneCampaignBriefPreviewTargetSegments'),
+      messageHierarchy: t('milestoneCampaignBriefPreviewMessageHierarchy'),
+      offerAndCtaPlan: t('milestoneCampaignBriefPreviewOfferAndCtaPlan'),
+      contentPillarPlan: t('milestoneCampaignBriefPreviewContentPillarPlan'),
+      measurementPlan: t('milestoneCampaignBriefPreviewMeasurementPlan'),
+      testingPlan: t('milestoneCampaignBriefPreviewTestingPlan'),
+      riskGuardrails: t('milestoneCampaignBriefPreviewRiskGuardrails'),
+      emptyList: t('milestoneCampaignBriefPreviewEmptyList'),
+      emptyValue: t('milestoneCampaignBriefPreviewEmptyValue'),
+      helpVenueSnapshot: t('milestoneCampaignBriefPreviewHelpVenueSnapshot'),
+      helpContentPillars: t('milestoneCampaignBriefPreviewHelpContentPillars'),
+      helpAudienceHypotheses: t('milestoneCampaignBriefPreviewHelpAudienceHypotheses'),
+      helpProofOrientedAngles: t('milestoneCampaignBriefPreviewHelpProofOrientedAngles'),
+      helpToneGuardrails: t('milestoneCampaignBriefPreviewHelpToneGuardrails'),
+      helpCampaignObjective: t('milestoneCampaignBriefPreviewHelpCampaignObjective'),
+      helpTargetSegments: t('milestoneCampaignBriefPreviewHelpTargetSegments'),
+      helpMessageHierarchy: t('milestoneCampaignBriefPreviewHelpMessageHierarchy'),
+      helpOfferAndCtaPlan: t('milestoneCampaignBriefPreviewHelpOfferAndCtaPlan'),
+      helpContentPillarPlan: t('milestoneCampaignBriefPreviewHelpContentPillarPlan'),
+      helpMeasurementPlan: t('milestoneCampaignBriefPreviewHelpMeasurementPlan'),
+      helpTestingPlan: t('milestoneCampaignBriefPreviewHelpTestingPlan'),
+      helpRiskGuardrails: t('milestoneCampaignBriefPreviewHelpRiskGuardrails'),
+    }),
+    [t],
+  )
   const a = formatHelpAriaLabel
 
   return (

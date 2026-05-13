@@ -1,5 +1,7 @@
-import type { PromotionCandidateMenuItem } from '@/lib/graphql/node-schemas'
+import type { PromotionCandidateMenuItem, MilestonePresetId } from '@/lib/graphql/node-schemas'
 import type { ReactNode } from 'react'
+
+export type { MilestonePresetId }
 
 export type TimelineMilestoneStatus = 'complete' | 'failed' | 'pending' | 'empty'
 
@@ -10,14 +12,6 @@ export type PassCriteriaRow = {
   requirement: string
   status: PassCriteriaStatus
 }
-
-export type MilestonePresetId =
-  | 'dates'
-  | 'restaurant_campaign_brief'
-  | 'post_scheduler'
-  | 'promotion_candidates'
-  | 'culture_hooks'
-  | 'format_mix'
 
 export type MilestoneInput = {
   type: string
@@ -50,7 +44,7 @@ export type CampaignBriefMilestoneData = {
   proofOrientedAngles: string[]
   toneGuardrails: string[]
   campaignObjective: string
-  mainCategory: 'FOOD' | 'DRINK'
+  mainCategory: string
   targetSegments: string[]
   messageHierarchy: string[]
   offerAndCtaPlan: string[]
@@ -109,13 +103,13 @@ export type PostSchedulerMilestoneData = {
 export type PostSchedulerPostItem = PostSchedulerMilestoneData['weeklySlotPlan'][number]
 
 export type PromotionCandidatesCategoryBlock = {
-  category: 'FOOD' | 'DRINK'
+  category: string
   starItems: PromotionCandidateMenuItem[]
   puzzleItems: PromotionCandidateMenuItem[]
 }
 
 export type PromotionCandidatesMilestoneData = {
-  mainCategory: 'FOOD' | 'DRINK'
+  mainCategory: string
   categories: PromotionCandidatesCategoryBlock[]
   sourceAnalyticsRunId?: string | null
   notes?: string
@@ -142,6 +136,24 @@ export type FormatMixMilestoneData = {
   }>
 }
 
+export type IgProfileUsernameSuggestion = {
+  username: string
+  rationale: string
+}
+
+export type IgProfileBio = {
+  text: string
+  hook: string
+  valueProp: string
+  cta: string
+  tone: string
+}
+
+export type IgProfileMilestoneData = {
+  usernames: IgProfileUsernameSuggestion[]
+  bios: IgProfileBio[]
+}
+
 export type MilestoneDataValue =
   | DatesMilestoneData
   | CampaignBriefMilestoneData
@@ -149,6 +161,7 @@ export type MilestoneDataValue =
   | PromotionCandidatesMilestoneData
   | CultureHooksMilestoneData
   | FormatMixMilestoneData
+  | IgProfileMilestoneData
 
 export type TimelineMilestone = {
   id: string

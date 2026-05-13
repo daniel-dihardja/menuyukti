@@ -21,9 +21,13 @@ export const milestonePresetIdSchema = z.enum([
   'promotion_candidates',
   'culture_hooks',
   'format_mix',
+  'ig_profile',
 ])
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
+
+/** Ordered preset ids — single source for UI lists and guards. */
+export const MILESTONE_PRESET_IDS = milestonePresetIdSchema.options
 
 /**
  * Optional owner notes on the milestone Input tab (`value.notes`).
@@ -62,6 +66,32 @@ export const formatMixMilestoneInputValueSchema = z.object({
 })
 
 export type FormatMixMilestoneInputValue = z.infer<typeof formatMixMilestoneInputValueSchema>
+
+export const igProfileMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type IgProfileMilestoneInputValue = z.infer<typeof igProfileMilestoneInputValueSchema>
+
+export const promotionCandidatesItemLimitSchema = z.union([
+  z.literal(5),
+  z.literal(10),
+  z.literal('all'),
+])
+
+export type PromotionCandidatesItemLimit = z.infer<typeof promotionCandidatesItemLimitSchema>
+
+/** Promotion candidates Input tab: optional notes plus POS menu category filter (empty = all). */
+export const promotionCandidatesMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+  selectedMenuCategories: z.array(z.string().trim().min(1)),
+  starItemLimit: promotionCandidatesItemLimitSchema.default(5),
+  puzzleItemLimit: promotionCandidatesItemLimitSchema.default(10),
+})
+
+export type PromotionCandidatesMilestoneInputValue = z.infer<
+  typeof promotionCandidatesMilestoneInputValueSchema
+>
 
 export const datesMilestoneInputValueSchema = z.object({
   startDate: z.string(),
@@ -109,7 +139,7 @@ export const campaignBriefMilestoneDataSchema = z.object({
   proofOrientedAngles: z.array(z.string()),
   toneGuardrails: z.array(z.string()),
   campaignObjective: z.string(),
-  mainCategory: z.enum(['FOOD', 'DRINK']),
+  mainCategory: z.string().trim().min(1),
   targetSegments: z.array(z.string()),
   messageHierarchy: z.array(z.string()),
   offerAndCtaPlan: z.array(z.string()),
@@ -201,13 +231,13 @@ export const promotionCandidateMenuItemSchema = z.union([
 ])
 
 export const promotionCandidatesCategorySchema = z.object({
-  category: z.enum(['FOOD', 'DRINK']),
-  starItems: z.array(promotionCandidateMenuItemSchema).max(5),
-  puzzleItems: z.array(promotionCandidateMenuItemSchema).max(10),
+  category: z.string().trim().min(1),
+  starItems: z.array(promotionCandidateMenuItemSchema),
+  puzzleItems: z.array(promotionCandidateMenuItemSchema),
 })
 
 export const promotionCandidatesMilestoneDataSchema = z.object({
-  mainCategory: z.enum(['FOOD', 'DRINK']),
+  mainCategory: z.string().trim().min(1),
   categories: z.array(promotionCandidatesCategorySchema).min(1),
   sourceAnalyticsRunId: z.string().nullable().optional(),
   notes: z.string().optional(),
@@ -253,6 +283,34 @@ export const formatMixMilestoneDataSchema = z.object({
 
 export type FormatMixMilestoneData = z.infer<typeof formatMixMilestoneDataSchema>
 
+/** Permissive storage schema (empty seed on create). Run output is validated strictly in agents. */
+export const igProfileUsernameSuggestionSchema = z.object({
+  username: z.string(),
+  rationale: z.string(),
+})
+
+export const igProfileBioSchema = z.object({
+  text: z.string(),
+  hook: z.string(),
+  valueProp: z.string(),
+  cta: z.string(),
+  tone: z.string(),
+})
+
+export const igProfileMilestoneDataSchema = z
+  .object({
+    usernames: z.array(igProfileUsernameSuggestionSchema),
+    bios: z.array(igProfileBioSchema).optional(),
+    /** @deprecated Legacy single-bio shape — normalized to `bios` on parse. */
+    bio: igProfileBioSchema.optional(),
+  })
+  .transform(({ usernames, bios, bio }) => ({
+    usernames,
+    bios: bios ?? (bio ? [bio] : []),
+  }))
+
+export type IgProfileMilestoneData = z.infer<typeof igProfileMilestoneDataSchema>
+
 export const milestoneDataSchema = z
   .object({
     order: z.number().int().optional(),
@@ -274,6 +332,7 @@ export const milestonedataValueSchema = z.union([
   promotionCandidatesMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   formatMixMilestoneDataSchema,
+  igProfileMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>

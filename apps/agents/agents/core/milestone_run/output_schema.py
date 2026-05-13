@@ -146,9 +146,9 @@ class CampaignBriefMilestoneOutput(BaseModel):
     @field_validator("mainCategory")
     @classmethod
     def _validate_main_category(cls, value: str) -> str:
-        text = value.strip().upper()
-        if text not in {"FOOD", "DRINK"}:
-            raise ValueError("mainCategory must be FOOD or DRINK")
+        text = value.strip()
+        if not text:
+            raise ValueError("mainCategory must be a non-empty POS menu category name")
         return text
 
 
@@ -307,15 +307,15 @@ class PromotionCandidateMenuItem(BaseModel):
 
 class PromotionCandidatesCategory(BaseModel):
     category: str
-    starItems: list[PromotionCandidateMenuItem] = Field(..., max_length=5)
-    puzzleItems: list[PromotionCandidateMenuItem] = Field(..., max_length=10)
+    starItems: list[PromotionCandidateMenuItem] = Field(default_factory=list)
+    puzzleItems: list[PromotionCandidateMenuItem] = Field(default_factory=list)
 
     @field_validator("category")
     @classmethod
     def _validate_category(cls, value: str) -> str:
-        text = value.strip().upper()
-        if text not in {"FOOD", "DRINK"}:
-            raise ValueError("category must be FOOD or DRINK")
+        text = value.strip()
+        if not text:
+            raise ValueError("category must be non-empty")
         return text
 
     @field_validator("starItems", "puzzleItems", mode="before")
@@ -342,8 +342,16 @@ class PromotionCandidatesCategory(BaseModel):
 
 
 class PromotionCandidatesMilestoneOutput(BaseModel):
-    mainCategory: Literal["FOOD", "DRINK"]
+    mainCategory: str
     categories: list[PromotionCandidatesCategory]
+
+    @field_validator("mainCategory")
+    @classmethod
+    def _validate_main_category(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("mainCategory must be a non-empty POS menu category name")
+        return text
     sourceAnalyticsRunId: str | None = None
     notes: str | None = None
 
@@ -408,6 +416,89 @@ class FormatMixMilestoneOutput(BaseModel):
     formats: list[FormatMixFormatItem] = Field(default_factory=list)
 
 
+_IG_USERNAME_RE = re.compile(r"^[a-zA-Z0-9._]+$")
+
+
+class IgProfileUsernameSuggestion(BaseModel):
+    username: str
+    rationale: str
+
+    @field_validator("username")
+    @classmethod
+    def _validate_username(cls, value: str) -> str:
+        cleaned = value.strip().lstrip("@")
+        if not cleaned:
+            raise ValueError("username must be non-empty")
+        if len(cleaned) > 30:
+            raise ValueError("username must be at most 30 characters")
+        if not _IG_USERNAME_RE.fullmatch(cleaned):
+            raise ValueError(
+                "username may only contain letters, numbers, periods, and underscores"
+            )
+        return cleaned
+
+    @field_validator("rationale")
+    @classmethod
+    def _validate_rationale(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("rationale must be non-empty")
+        return text
+
+
+class IgProfileBio(BaseModel):
+    text: str
+    hook: str
+    valueProp: str
+    cta: str
+    tone: str
+
+    @field_validator("text")
+    @classmethod
+    def _validate_bio_text(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("bio text must be non-empty")
+        if len(text) > 150:
+            raise ValueError("bio text must be at most 150 characters")
+        return text
+
+    @field_validator("hook", "valueProp", "cta", "tone")
+    @classmethod
+    def _validate_breakdown_fields(cls, value: str) -> str:
+        text = value.strip()
+        if not text:
+            raise ValueError("must be non-empty")
+        return text
+
+
+class IgProfileMilestoneOutput(BaseModel):
+    usernames: list[IgProfileUsernameSuggestion]
+    bios: list[IgProfileBio]
+
+    @field_validator("bios")
+    @classmethod
+    def _validate_bios(cls, values: list[IgProfileBio]) -> list[IgProfileBio]:
+        if len(values) != 3:
+            raise ValueError("must contain exactly 3 bio variations")
+        return values
+
+    @field_validator("usernames")
+    @classmethod
+    def _validate_usernames(
+        cls, values: list[IgProfileUsernameSuggestion]
+    ) -> list[IgProfileUsernameSuggestion]:
+        if not (3 <= len(values) <= 5):
+            raise ValueError("must contain between 3 and 5 username suggestions")
+        seen: set[str] = set()
+        for item in values:
+            key = item.username.casefold()
+            if key in seen:
+                raise ValueError("usernames must not contain duplicates")
+            seen.add(key)
+        return values
+
+
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
@@ -416,6 +507,7 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "promotion_candidates": PromotionCandidatesMilestoneOutput,
     "culture_hooks": CultureHooksMilestoneOutput,
     "format_mix": FormatMixMilestoneOutput,
+    "ig_profile": IgProfileMilestoneOutput,
 }
 
 def validate_skill_output(skill_id: str | None, payload: Any) -> tuple[Any | None, str | None]:

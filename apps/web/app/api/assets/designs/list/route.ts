@@ -61,10 +61,10 @@ export async function GET() {
     return NextResponse.json({ message: 'Failed to list designs' }, { status: 502 })
   }
 
-  rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  const sortedRows = rows.toSorted((a, b) => b.createdAt.localeCompare(a.createdAt))
 
   return NextResponse.json(
-    { items: rows },
+    { items: sortedRows },
     {
       headers: {
         'Cache-Control': 'private, max-age=30, stale-while-revalidate=120',

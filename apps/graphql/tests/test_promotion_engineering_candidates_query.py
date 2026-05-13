@@ -9,8 +9,13 @@ from graphql.schema import schema
 from graphql.tests.auth_context import graphql_auth_context
 
 _QUERY = """
-query Pec($locationId: ID!, $analyticsRunId: ID!) {
-  promotionEngineeringCandidates(locationId: $locationId, analyticsRunId: $analyticsRunId)
+query Pec($locationId: ID!, $analyticsRunId: ID!, $maxStarItems: Int, $maxPuzzleItems: Int) {
+  promotionEngineeringCandidates(
+    locationId: $locationId
+    analyticsRunId: $analyticsRunId
+    maxStarItems: $maxStarItems
+    maxPuzzleItems: $maxPuzzleItems
+  )
 }
 """
 
@@ -73,3 +78,32 @@ def test_promotion_engineering_candidates_wrong_location_returns_none(
     )
     assert not result.errors
     assert result.data["promotionEngineeringCandidates"] is None
+
+
+def test_promotion_engineering_candidates_respects_max_args(
+    analytics_run_with_qa_data: int,
+) -> None:
+    run_id = analytics_run_with_qa_data
+    location_id = _location_id(run_id)
+    result = asyncio.run(
+        schema.execute(
+            _QUERY,
+            variable_values={
+                "locationId": str(location_id),
+                "analyticsRunId": str(run_id),
+                "maxStarItems": 2,
+                "maxPuzzleItems": 1,
+            },
+            context_value=graphql_auth_context(),
+        )
+    )
+    assert not result.errors
+    payload = result.data["promotionEngineeringCandidates"]
+    assert payload is not None
+    if payload["grouping"] == "by_menu_category":
+        for bucket in payload["categories"].values():
+            assert len(bucket["starItems"]) <= 2
+            assert len(bucket["puzzleItems"]) <= 1
+    else:
+        assert len(payload["starItems"]) <= 2
+        assert len(payload["puzzleItems"]) <= 1

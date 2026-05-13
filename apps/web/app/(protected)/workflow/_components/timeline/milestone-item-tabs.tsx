@@ -23,14 +23,53 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/componen
 import { Textarea } from '@workspace/ui/components/textarea'
 
 import { getMilestoneHelpDescription } from '@/lib/milestones/milestone-help-description'
-import { milestonePresetHasDefaultOptionalNotesInput } from '@/lib/milestones/milestone-input-tab'
 
+import {
+  MilestonePromotionCandidatesInput,
+  type PromotionCandidatesInputDraft,
+} from './milestone-promotion-candidates-input'
 import type { PassCriteriaRow, TimelineMilestone } from './types'
 
-type CampaignWindowInput = {
+export type CampaignWindowInput = {
   startDate: string
   endDate: string
 }
+
+export type MilestoneInputModel =
+  | {
+      type: 'dates'
+      draft: CampaignWindowInput
+      setDraft: (next: CampaignWindowInput) => void
+      saveStatus: FieldSaveStatusVariant
+      saving: boolean
+    }
+  | {
+      type: 'promotion_candidates'
+      draft: PromotionCandidatesInputDraft
+      onChange: (next: PromotionCandidatesInputDraft) => void
+      onNotesBlur: () => void
+      onNotesFocus: () => void
+      locationId: number
+      analyticsRunId: number | null
+      mainCategory: string | null
+      saveStatus: FieldSaveStatusVariant
+      saving: boolean
+    }
+  | {
+      type: 'optional_notes'
+      draft: string
+      setDraft: (v: string) => void
+      onBlur: () => void
+      onFocus: () => void
+      copy: {
+        label: string
+        description: string
+        placeholder: string
+      }
+      saveStatus: FieldSaveStatusVariant
+      saving: boolean
+    }
+  | { type: 'none' }
 
 /** Tab panel state and handlers for one milestone (built in `timeline-item`). */
 export type MilestoneItemTabsModel = {
@@ -48,15 +87,7 @@ export type MilestoneItemTabsModel = {
   handleGoalSave: () => void
   handleAddPassCriterion: () => Promise<void>
   handleRemovePassCriterion: (index: number) => Promise<void>
-  isDatesPreset: boolean
-  optionalNotesDraft: string
-  setOptionalNotesDraft: (v: string) => void
-  handleOptionalNotesBlur: () => void
-  handleOptionalNotesFocus: () => void
-  inputDraft: CampaignWindowInput
-  setInputDraft: (next: CampaignWindowInput) => void
-  inputSaveStatus: FieldSaveStatusVariant
-  savingInput: boolean
+  inputModel: MilestoneInputModel
 }
 
 export type MilestoneItemTabsProps = {
@@ -83,26 +114,143 @@ function formatDateButtonLabel(value: string): string {
   return parsed ? parsed.toLocaleDateString() : value
 }
 
-type OptionalNotesPresetId =
-  | 'restaurant_campaign_brief'
-  | 'post_scheduler'
-  | 'promotion_candidates'
-  | 'culture_hooks'
-  | 'format_mix'
-
-function optionalNotesFieldCopy(
-  t: (key: string) => string,
-  presetId: OptionalNotesPresetId,
-): {
-  label: string
-  description: string
-  placeholder: string
-} {
-  const base = `milestonePreset.${presetId}` as const
+function fieldSaveMessages(t: (key: string) => string) {
   return {
-    label: t(`${base}.inputLabel`),
-    description: t(`${base}.inputDescription`),
-    placeholder: t(`${base}.inputPlaceholder`),
+    saving: t('fieldSaveStatusSaving'),
+    saved: t('fieldSaveStatusSaved'),
+    unsaved: t('fieldSaveStatusUnsaved'),
+  }
+}
+
+function MilestoneInputTabContent({
+  inputModel,
+  isMilestoneRunning,
+  t,
+}: {
+  inputModel: MilestoneInputModel
+  isMilestoneRunning: boolean
+  t: (key: string) => string
+}) {
+  switch (inputModel.type) {
+    case 'dates':
+      return (
+        <FieldGroup className="gap-4">
+          <Field>
+            <FieldLabel>{t('milestoneDatesInputStartDateLabel')}</FieldLabel>
+            <FieldDescription>{t('milestoneDatesInputStartDateDescription')}</FieldDescription>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  className={cn('w-full justify-start text-left font-normal')}
+                  disabled={inputModel.saving || isMilestoneRunning}
+                  type="button"
+                  variant="outline"
+                >
+                  <CalendarDays aria-hidden data-icon="inline-start" />
+                  {inputModel.draft.startDate
+                    ? formatDateButtonLabel(inputModel.draft.startDate)
+                    : t('milestoneDatesInputPickDate')}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  onSelect={(date) => {
+                    inputModel.setDraft({
+                      ...inputModel.draft,
+                      startDate: date ? formatDateForInput(date) : '',
+                    })
+                  }}
+                  selected={parseDateInputValue(inputModel.draft.startDate)}
+                />
+              </PopoverContent>
+            </Popover>
+          </Field>
+          <Field>
+            <FieldLabel>{t('milestoneDatesInputEndDateLabel')}</FieldLabel>
+            <FieldDescription>{t('milestoneDatesInputEndDateDescription')}</FieldDescription>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  className={cn('w-full justify-start text-left font-normal')}
+                  disabled={inputModel.saving || isMilestoneRunning}
+                  type="button"
+                  variant="outline"
+                >
+                  <CalendarDays aria-hidden data-icon="inline-start" />
+                  {inputModel.draft.endDate
+                    ? formatDateButtonLabel(inputModel.draft.endDate)
+                    : t('milestoneDatesInputPickDate')}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  onSelect={(date) => {
+                    inputModel.setDraft({
+                      ...inputModel.draft,
+                      endDate: date ? formatDateForInput(date) : '',
+                    })
+                  }}
+                  selected={parseDateInputValue(inputModel.draft.endDate)}
+                />
+              </PopoverContent>
+            </Popover>
+          </Field>
+          <FieldSaveStatus
+            className="text-muted-foreground"
+            messages={fieldSaveMessages(t)}
+            status={inputModel.saveStatus}
+          />
+        </FieldGroup>
+      )
+    case 'promotion_candidates':
+      return (
+        <>
+          <MilestonePromotionCandidatesInput
+            analyticsRunId={inputModel.analyticsRunId}
+            disabled={isMilestoneRunning}
+            draft={inputModel.draft}
+            locationId={inputModel.locationId}
+            mainCategory={inputModel.mainCategory}
+            onDraftChange={inputModel.onChange}
+            onNotesBlur={inputModel.onNotesBlur}
+            onNotesFocus={inputModel.onNotesFocus}
+          />
+          <FieldSaveStatus
+            className="text-muted-foreground"
+            messages={fieldSaveMessages(t)}
+            status={inputModel.saveStatus}
+          />
+        </>
+      )
+    case 'optional_notes':
+      return (
+        <FieldGroup className="gap-4">
+          <Field>
+            <FieldLabel>{inputModel.copy.label}</FieldLabel>
+            <FieldDescription>{inputModel.copy.description}</FieldDescription>
+            <Textarea
+              className="min-h-[120px] resize-y whitespace-pre-wrap"
+              disabled={isMilestoneRunning}
+              onBlur={() => inputModel.onBlur()}
+              onFocus={() => inputModel.onFocus()}
+              onChange={(e) => inputModel.setDraft(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+              placeholder={inputModel.copy.placeholder}
+              value={inputModel.draft}
+            />
+          </Field>
+          <FieldSaveStatus
+            className="text-muted-foreground"
+            messages={fieldSaveMessages(t)}
+            status={inputModel.saveStatus}
+          />
+        </FieldGroup>
+      )
+    case 'none':
+      return <p className="text-muted-foreground text-sm">{t('milestoneInputUnsupported')}</p>
   }
 }
 
@@ -122,26 +270,11 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
     handleGoalSave,
     handleAddPassCriterion,
     handleRemovePassCriterion,
-    isDatesPreset,
-    optionalNotesDraft,
-    setOptionalNotesDraft,
-    handleOptionalNotesBlur,
-    handleOptionalNotesFocus,
-    inputDraft,
-    setInputDraft,
-    inputSaveStatus,
-    savingInput,
+    inputModel,
   } = model
   const t = useTranslations('analytics.workflows.chat')
   const helpDescription = useMemo(() => getMilestoneHelpDescription(milestone, t), [milestone, t])
-
-  const optionalNotesCopy = useMemo(() => {
-    const pid = milestone.presetId
-    if (!milestonePresetHasDefaultOptionalNotesInput(pid)) {
-      return null
-    }
-    return optionalNotesFieldCopy(t, pid)
-  }, [milestone.presetId, t])
+  const optionalNotesCopy = inputModel.type === 'optional_notes' ? inputModel.copy : null
 
   return (
     <CardContent className="min-w-0 border-border/60 border-t px-3 pt-4 pb-0 md:px-6">
@@ -184,110 +317,11 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           </FieldGroup>
         </TabsContent>
         <TabsContent value="input">
-          {isDatesPreset ? (
-            <FieldGroup className="gap-4">
-              <Field>
-                <FieldLabel>{t('milestoneDatesInputStartDateLabel')}</FieldLabel>
-                <FieldDescription>{t('milestoneDatesInputStartDateDescription')}</FieldDescription>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      className={cn('w-full justify-start text-left font-normal')}
-                      disabled={savingInput || isMilestoneRunning}
-                      type="button"
-                      variant="outline"
-                    >
-                      <CalendarDays aria-hidden data-icon="inline-start" />
-                      {inputDraft.startDate
-                        ? formatDateButtonLabel(inputDraft.startDate)
-                        : t('milestoneDatesInputPickDate')}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      onSelect={(date) => {
-                        setInputDraft({
-                          ...inputDraft,
-                          startDate: date ? formatDateForInput(date) : '',
-                        })
-                      }}
-                      selected={parseDateInputValue(inputDraft.startDate)}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </Field>
-              <Field>
-                <FieldLabel>{t('milestoneDatesInputEndDateLabel')}</FieldLabel>
-                <FieldDescription>{t('milestoneDatesInputEndDateDescription')}</FieldDescription>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      className={cn('w-full justify-start text-left font-normal')}
-                      disabled={savingInput || isMilestoneRunning}
-                      type="button"
-                      variant="outline"
-                    >
-                      <CalendarDays aria-hidden data-icon="inline-start" />
-                      {inputDraft.endDate
-                        ? formatDateButtonLabel(inputDraft.endDate)
-                        : t('milestoneDatesInputPickDate')}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      onSelect={(date) => {
-                        setInputDraft({
-                          ...inputDraft,
-                          endDate: date ? formatDateForInput(date) : '',
-                        })
-                      }}
-                      selected={parseDateInputValue(inputDraft.endDate)}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </Field>
-              <FieldSaveStatus
-                className="text-muted-foreground"
-                messages={{
-                  saving: t('fieldSaveStatusSaving'),
-                  saved: t('fieldSaveStatusSaved'),
-                  unsaved: t('fieldSaveStatusUnsaved'),
-                }}
-                status={inputSaveStatus}
-              />
-            </FieldGroup>
-          ) : optionalNotesCopy ? (
-            <FieldGroup className="gap-4">
-              <Field>
-                <FieldLabel>{optionalNotesCopy.label}</FieldLabel>
-                <FieldDescription>{optionalNotesCopy.description}</FieldDescription>
-                <Textarea
-                  className="min-h-[120px] resize-y whitespace-pre-wrap"
-                  disabled={isMilestoneRunning}
-                  onBlur={() => handleOptionalNotesBlur()}
-                  onFocus={() => handleOptionalNotesFocus()}
-                  onChange={(e) => setOptionalNotesDraft(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  placeholder={optionalNotesCopy.placeholder}
-                  value={optionalNotesDraft}
-                />
-              </Field>
-              <FieldSaveStatus
-                className="text-muted-foreground"
-                messages={{
-                  saving: t('fieldSaveStatusSaving'),
-                  saved: t('fieldSaveStatusSaved'),
-                  unsaved: t('fieldSaveStatusUnsaved'),
-                }}
-                status={inputSaveStatus}
-              />
-            </FieldGroup>
-          ) : (
-            <p className="text-muted-foreground text-sm">{t('milestoneInputUnsupported')}</p>
-          )}
+          <MilestoneInputTabContent
+            inputModel={inputModel}
+            isMilestoneRunning={isMilestoneRunning}
+            t={t}
+          />
         </TabsContent>
         <TabsContent className="flex flex-col gap-4" value="pass">
           {criteriaRows.length > 0 ? (

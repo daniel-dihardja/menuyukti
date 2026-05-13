@@ -23,7 +23,7 @@ def _normalized_menu_category(row: OrderRowForMatrix) -> str | None:
 def _top_quadrant_items(
     matrix: MenuEngineeringMatrixResult,
     quadrant: Literal["star", "puzzle"],
-    limit: int,
+    limit: int | None,
 ) -> list[MenuEngineeringMatrixItem]:
     items = [it for it in matrix["items"] if str(it.get("category", "")) == quadrant]
     items.sort(
@@ -33,6 +33,8 @@ def _top_quadrant_items(
             str(it.get("menu") or ""),
         ),
     )
+    if limit is None:
+        return items
     return items[:limit]
 
 
@@ -40,8 +42,8 @@ def _bucket_payload(
     rows: list[OrderRowForMatrix],
     cogs_by_menu: dict[str, float],
     *,
-    max_star_items: int,
-    max_puzzle_items: int,
+    max_star_items: int | None,
+    max_puzzle_items: int | None,
 ) -> dict[str, Any]:
     if not rows:
         return {
@@ -70,8 +72,8 @@ def compute_menu_engineering_promotion_candidates(
     order_rows: list[OrderRowForMatrix],
     cogs_by_menu: dict[str, float],
     *,
-    max_star_items: int = 5,
-    max_puzzle_items: int = 10,
+    max_star_items: int | None = 5,
+    max_puzzle_items: int | None = 10,
 ) -> dict[str, Any]:
     """
     Run menu engineering per distinct ``menu_category`` when any row has a non-empty

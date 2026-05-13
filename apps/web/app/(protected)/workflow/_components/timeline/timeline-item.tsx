@@ -17,7 +17,7 @@ import type { TimelineActions, TimelineMilestoneState } from '../timeline-contex
 import { MilestoneItemHeader } from './milestone-item-header'
 import { MilestoneItemMobileRunModel } from './milestone-item-mobile-run-model'
 import { TimelineItemHeaderProvider } from './timeline-item-header-context'
-import { MilestoneItemTabs } from './milestone-item-tabs'
+import { MilestoneItemTabs, type MilestoneInputModel } from './milestone-item-tabs'
 import { MilestoneRunProgressStrip } from './milestone-run-progress'
 import { isKeyboardEventFromNestedInteractive, TimelineRailMarker } from './timeline-rail'
 import type { PassCriteriaRow, TimelineMilestone, TimelineMilestoneStatus } from './types'
@@ -25,12 +25,45 @@ import type { PassCriteriaRow, TimelineMilestone, TimelineMilestoneStatus } from
 import type { FieldSaveStatusVariant } from '@/components/field-save-status'
 import {
   milestonePresetHasDefaultOptionalNotesInput,
+  normalizePromotionCandidatesInput,
   optionalNotesFromMilestoneInput,
+  promotionCandidatesInputFromMilestoneInput,
 } from '@/lib/milestones/milestone-input-tab'
+import { extractCampaignBriefMainCategory } from '@/lib/milestones/campaign-brief-main-category'
+import { milestonePresetInputType } from '@/lib/milestones/preset-definitions'
+import { useTimelineWorkspaceState } from '../timeline-context'
+import type { PromotionCandidatesInputDraft } from './milestone-promotion-candidates-input'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
 /** Input autosave debounce; optional notes updates avoid draft rewrites to preserve caret. */
 const MILESTONE_INPUT_AUTOSAVE_DEBOUNCE_MS = 1200
+
+function datesInputFromMilestone(raw: TimelineMilestone['milestoneInput']): {
+  startDate: string
+  endDate: string
+} {
+  if (raw?.type === 'dates' && raw.value != null && typeof raw.value === 'object') {
+    const value = raw.value as Partial<{ startDate: string; endDate: string }>
+    return {
+      startDate: typeof value.startDate === 'string' ? value.startDate : '',
+      endDate: typeof value.endDate === 'string' ? value.endDate : '',
+    }
+  }
+  return { startDate: '', endDate: '' }
+}
+
+function promotionCandidatesInputEqual(
+  a: PromotionCandidatesInputDraft,
+  b: PromotionCandidatesInputDraft,
+): boolean {
+  const na = normalizePromotionCandidatesInput(a)
+  const nb = normalizePromotionCandidatesInput(b)
+  if (na.notes !== nb.notes) return false
+  if (na.starItemLimit !== nb.starItemLimit) return false
+  if (na.puzzleItemLimit !== nb.puzzleItemLimit) return false
+  if (na.selectedMenuCategories.length !== nb.selectedMenuCategories.length) return false
+  return na.selectedMenuCategories.every((v, i) => v === nb.selectedMenuCategories[i])
+}
 
 export type TimelineItemProps = {
   milestone: TimelineMilestone
@@ -73,18 +106,11 @@ function TimelineItemInner({
   isMobile = false,
 }: TimelineItemProps) {
   const t = useTranslations('analytics.workflows.chat')
-  const datesInputFromMilestone = (
-    raw: TimelineMilestone['milestoneInput'],
-  ): { startDate: string; endDate: string } => {
-    if (raw?.type === 'dates' && raw.value != null && typeof raw.value === 'object') {
-      const value = raw.value as Partial<{ startDate: string; endDate: string }>
-      return {
-        startDate: typeof value.startDate === 'string' ? value.startDate : '',
-        endDate: typeof value.endDate === 'string' ? value.endDate : '',
-      }
-    }
-    return { startDate: '', endDate: '' }
-  }
+  const { locationId, analyticsRunId, milestoneState } = useTimelineWorkspaceState()
+  const campaignBriefMainCategory = useMemo(
+    () => extractCampaignBriefMainCategory(milestoneState.milestones),
+    [milestoneState.milestones],
+  )
 
   const {
     onDeleteMilestone,
@@ -136,12 +162,19 @@ function TimelineItemInner({
   const savingPassCriteria = savingPassCriteriaMilestoneId === milestone.id
   const savingGoal = savingGoalMilestoneId === milestone.id
   const savingInput = savingDataMilestoneId === milestone.id
-  const isDatesPreset = milestone.presetId === 'dates'
-  const usesOptionalNotesInput = milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)
+  const inputType = milestonePresetInputType(milestone.presetId)
+  const usesOptionalNotesInput = inputType === 'optional_notes'
+  const isDatesPreset = inputType === 'dates'
+  const isPromotionCandidatesPreset = inputType === 'promotion_candidates'
 
   const [inputDraft, setInputDraft] = useState<{ startDate: string; endDate: string }>(() =>
     datesInputFromMilestone(milestone.milestoneInput),
   )
+
+  const [promotionCandidatesDraft, setPromotionCandidatesDraft] =
+    useState<PromotionCandidatesInputDraft>(() =>
+      promotionCandidatesInputFromMilestoneInput(milestone.milestoneInput),
+    )
 
   const [optionalNotesDraft, setOptionalNotesDraft] = useState(() =>
     milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)
@@ -151,9 +184,36 @@ function TimelineItemInner({
 
   useEffect(() => {
     setInputDraft(datesInputFromMilestone(milestone.milestoneInput))
-  }, [milestone.id, milestone.milestoneInput])
+    if (milestone.presetId === 'promotion_candidates') {
+      setPromotionCandidatesDraft(
+        promotionCandidatesInputFromMilestoneInput(milestone.milestoneInput),
+      )
+    }
+  }, [milestone.id, milestone.milestoneInput, milestone.presetId])
 
   const previousMilestoneIdRef = useRef(milestone.id)
+  const promotionCandidatesFocusedRef = useRef(false)
+
+  useEffect(() => {
+    if (milestone.presetId !== 'promotion_candidates') {
+      previousMilestoneIdRef.current = milestone.id
+      return
+    }
+    const server = promotionCandidatesInputFromMilestoneInput(milestone.milestoneInput)
+    setPromotionCandidatesDraft((prev) => {
+      if (previousMilestoneIdRef.current !== milestone.id) {
+        previousMilestoneIdRef.current = milestone.id
+        return server
+      }
+      if (!promotionCandidatesInputEqual(prev, server)) {
+        if (!promotionCandidatesFocusedRef.current) {
+          return server
+        }
+        return prev
+      }
+      return prev
+    })
+  }, [milestone.presetId, milestone.id, milestone.milestoneInput])
 
   useEffect(() => {
     if (!milestonePresetHasDefaultOptionalNotesInput(milestone.presetId)) {
@@ -185,6 +245,9 @@ function TimelineItemInner({
   const optionalNotesDraftRef = useRef(optionalNotesDraft)
   optionalNotesDraftRef.current = optionalNotesDraft
   const optionalNotesFocusedRef = useRef(false)
+
+  const promotionCandidatesDraftRef = useRef(promotionCandidatesDraft)
+  promotionCandidatesDraftRef.current = promotionCandidatesDraft
 
   const onUpdateMilestoneInputRef = useRef(onUpdateMilestoneInput)
   onUpdateMilestoneInputRef.current = onUpdateMilestoneInput
@@ -241,6 +304,14 @@ function TimelineItemInner({
     return optionalNotesDraft.trim() !== server
   }, [milestone.milestoneInput, milestone.presetId, optionalNotesDraft])
 
+  const promotionCandidatesDirty = useMemo(() => {
+    if (!isPromotionCandidatesPreset) {
+      return false
+    }
+    const server = promotionCandidatesInputFromMilestoneInput(milestone.milestoneInput)
+    return !promotionCandidatesInputEqual(promotionCandidatesDraft, server)
+  }, [isPromotionCandidatesPreset, milestone.milestoneInput, promotionCandidatesDraft])
+
   const performMilestoneInputFlush = useCallback(
     async ({
       normalizeOptionalNotesDraft,
@@ -270,6 +341,31 @@ function TimelineItemInner({
         }
         return ok
       }
+      if (m.presetId === 'promotion_candidates') {
+        const server = promotionCandidatesInputFromMilestoneInput(m.milestoneInput)
+        const normalizedDraft = normalizePromotionCandidatesInput(
+          promotionCandidatesDraftRef.current,
+        )
+        if (promotionCandidatesInputEqual(normalizedDraft, server)) {
+          if (
+            normalizeOptionalNotesDraft &&
+            !promotionCandidatesInputEqual(promotionCandidatesDraftRef.current, normalizedDraft)
+          ) {
+            setPromotionCandidatesDraft(normalizedDraft)
+          }
+          return true
+        }
+        const ok = await onUpdate(m.id, {
+          type: 'promotion_candidates',
+          value: normalizedDraft,
+        })
+        if (!ok) {
+          setPromotionCandidatesDraft(server)
+        } else if (normalizeOptionalNotesDraft) {
+          setPromotionCandidatesDraft(normalizedDraft)
+        }
+        return ok
+      }
       if (milestonePresetHasDefaultOptionalNotesInput(m.presetId)) {
         const server = optionalNotesFromMilestoneInput(m.milestoneInput, m.presetId)
         const trimmedDraft = optionalNotesDraftRef.current.trim()
@@ -293,7 +389,7 @@ function TimelineItemInner({
       }
       return true
     },
-    [setInputDraft, setOptionalNotesDraft],
+    [setInputDraft, setOptionalNotesDraft, setPromotionCandidatesDraft],
   )
 
   const flushMilestoneInputSave = useCallback(
@@ -321,7 +417,11 @@ function TimelineItemInner({
     }
     const dirty =
       (isDatesPreset && inputDirty) ||
-      (!isDatesPreset && usesOptionalNotesInput && optionalNotesDirty)
+      (isPromotionCandidatesPreset && promotionCandidatesDirty) ||
+      (!isDatesPreset &&
+        !isPromotionCandidatesPreset &&
+        usesOptionalNotesInput &&
+        optionalNotesDirty)
     if (!dirty) {
       return
     }
@@ -339,9 +439,12 @@ function TimelineItemInner({
   }, [
     optionalNotesDirty,
     optionalNotesDraft,
+    promotionCandidatesDirty,
+    promotionCandidatesDraft,
     flushMilestoneInputSave,
     inputDirty,
     inputDraft,
+    isPromotionCandidatesPreset,
     usesOptionalNotesInput,
     isDatesPreset,
     isMilestoneRunning,
@@ -364,7 +467,8 @@ function TimelineItemInner({
   const inputSaveStatus: FieldSaveStatusVariant = savingInput
     ? 'saving'
     : (isDatesPreset && inputDirty) ||
-        (!isDatesPreset && usesOptionalNotesInput && optionalNotesDirty)
+        (isPromotionCandidatesPreset && promotionCandidatesDirty) ||
+        (usesOptionalNotesInput && optionalNotesDirty)
       ? 'unsaved'
       : 'saved'
 
@@ -384,14 +488,95 @@ function TimelineItemInner({
     })()
   }
 
-  const handleOptionalNotesBlur = () => {
+  const handleOptionalNotesBlur = useCallback(() => {
     optionalNotesFocusedRef.current = false
     void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
-  }
+  }, [flushMilestoneInputSave])
 
-  const handleOptionalNotesFocus = () => {
+  const handleOptionalNotesFocus = useCallback(() => {
     optionalNotesFocusedRef.current = true
-  }
+  }, [])
+
+  const handlePromotionCandidatesNotesBlur = useCallback(() => {
+    promotionCandidatesFocusedRef.current = false
+    void flushMilestoneInputSave({ normalizeOptionalNotesDraft: true })
+  }, [flushMilestoneInputSave])
+
+  const handlePromotionCandidatesNotesFocus = useCallback(() => {
+    promotionCandidatesFocusedRef.current = true
+  }, [])
+
+  const handlePromotionCandidatesDraftChange = useCallback(
+    (next: PromotionCandidatesInputDraft) => {
+      promotionCandidatesFocusedRef.current = true
+      setPromotionCandidatesDraft(next)
+    },
+    [setPromotionCandidatesDraft],
+  )
+
+  const inputModel = useMemo((): MilestoneInputModel => {
+    if (isDatesPreset) {
+      return {
+        type: 'dates',
+        draft: inputDraft,
+        setDraft: setInputDraft,
+        saveStatus: inputSaveStatus,
+        saving: savingInput,
+      }
+    }
+    if (isPromotionCandidatesPreset) {
+      return {
+        type: 'promotion_candidates',
+        draft: promotionCandidatesDraft,
+        onChange: handlePromotionCandidatesDraftChange,
+        onNotesBlur: handlePromotionCandidatesNotesBlur,
+        onNotesFocus: handlePromotionCandidatesNotesFocus,
+        locationId,
+        analyticsRunId,
+        mainCategory: campaignBriefMainCategory,
+        saveStatus: inputSaveStatus,
+        saving: savingInput,
+      }
+    }
+    if (usesOptionalNotesInput && milestone.presetId) {
+      const presetId = milestone.presetId
+      const base = `milestonePreset.${presetId}` as const
+      return {
+        type: 'optional_notes',
+        draft: optionalNotesDraft,
+        setDraft: setOptionalNotesDraft,
+        onBlur: handleOptionalNotesBlur,
+        onFocus: handleOptionalNotesFocus,
+        copy: {
+          label: t(`${base}.inputLabel`),
+          description: t(`${base}.inputDescription`),
+          placeholder: t(`${base}.inputPlaceholder`),
+        },
+        saveStatus: inputSaveStatus,
+        saving: savingInput,
+      }
+    }
+    return { type: 'none' }
+  }, [
+    analyticsRunId,
+    campaignBriefMainCategory,
+    handleOptionalNotesBlur,
+    handleOptionalNotesFocus,
+    handlePromotionCandidatesDraftChange,
+    handlePromotionCandidatesNotesBlur,
+    handlePromotionCandidatesNotesFocus,
+    inputDraft,
+    inputSaveStatus,
+    isDatesPreset,
+    isPromotionCandidatesPreset,
+    locationId,
+    milestone.presetId,
+    optionalNotesDraft,
+    promotionCandidatesDraft,
+    savingInput,
+    t,
+    usesOptionalNotesInput,
+  ])
 
   const isDeleting = deletingMilestoneId === milestone.id
   const isMoving = movingMilestoneId === milestone.id
@@ -507,22 +692,14 @@ function TimelineItemInner({
                     goalFieldId,
                     handleAddPassCriterion,
                     handleGoalSave,
-                    handleOptionalNotesBlur,
-                    handleOptionalNotesFocus,
                     handleRemovePassCriterion,
                     hasResult,
-                    inputDraft,
-                    inputSaveStatus,
-                    isDatesPreset,
+                    inputModel,
                     isMilestoneRunning,
                     milestone,
-                    optionalNotesDraft,
                     savingGoal,
-                    savingInput,
                     savingPassCriteria,
                     setGoalDraft,
-                    setInputDraft,
-                    setOptionalNotesDraft,
                   }}
                 />
               </CollapsibleContent>

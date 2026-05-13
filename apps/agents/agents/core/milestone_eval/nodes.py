@@ -14,6 +14,11 @@ from agents_app.agents.core.milestone_eval.graphql_client import (
     update_milestone_passcriteria_status,
     upsert_result_node,
 )
+from agents_app.agents.core.milestone_eval.ig_profile_eval import (
+    enrich_ig_profile_eval_payload,
+    parse_milestone_data_from_eval_raw,
+    try_ig_profile_deterministic_verdict,
+)
 from agents_app.agents.core.milestone_eval.prompts import (
     EVAL_SYSTEM,
     SYNTHESIS_SYSTEM,
@@ -54,7 +59,13 @@ class CriterionVerdict(BaseModel):
 
 
 _OWNER_NOTES_INPUT_TYPES = frozenset(
-    {"restaurant_campaign_brief", "post_scheduler", "format_mix"},
+    {
+        "restaurant_campaign_brief",
+        "post_scheduler",
+        "format_mix",
+        "culture_hooks",
+        "ig_profile",
+    },
 )
 
 
@@ -152,7 +163,11 @@ async def fetch_context(
             if isinstance(cid, str) and cid and isinstance(req, str):
                 criteria.append({"id": cid, "requirement": req})
     raw_data = (
-        json.dumps(best_md, ensure_ascii=False, indent=2)
+        json.dumps(
+            enrich_ig_profile_eval_payload(best_md),
+            ensure_ascii=False,
+            indent=2,
+        )
         if best_md is not None
         else ""
     )
@@ -184,12 +199,27 @@ async def evaluate_criterion(
     raw_data = str(state.get("raw_data", ""))
     criterion_id = str(state.get("criterion_id", ""))
     requirement = str(state.get("requirement", ""))
-    verdict = await structured_llm.ainvoke(
-        [
-            SystemMessage(content=EVAL_SYSTEM),
-            HumanMessage(content=eval_human_message(goal, raw_data, requirement)),
-        ]
-    )
+
+    milestone_data = parse_milestone_data_from_eval_raw(raw_data)
+    if milestone_data is not None:
+        deterministic = try_ig_profile_deterministic_verdict(requirement, milestone_data)
+        if deterministic is not None:
+            status, reasoning = deterministic
+            verdict = CriterionVerdict(status=status, reasoning=reasoning)
+        else:
+            verdict = await structured_llm.ainvoke(
+                [
+                    SystemMessage(content=EVAL_SYSTEM),
+                    HumanMessage(content=eval_human_message(goal, raw_data, requirement)),
+                ]
+            )
+    else:
+        verdict = await structured_llm.ainvoke(
+            [
+                SystemMessage(content=EVAL_SYSTEM),
+                HumanMessage(content=eval_human_message(goal, raw_data, requirement)),
+            ]
+        )
     writer = get_stream_writer()
     writer(
         {

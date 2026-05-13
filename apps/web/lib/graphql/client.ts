@@ -2,6 +2,8 @@
  * Shared GraphQL client for the web app. All data is fetched via the GraphQL service.
  */
 
+import { cache } from 'react'
+
 const getEndpoint = (): string => {
   const endpoint = process.env.GRAPHQL_ENDPOINT
   if (!endpoint) {
@@ -67,7 +69,7 @@ function buildHeaders(userId?: string): Record<string, string> {
   return headers
 }
 
-export async function graphqlQuery<T>(
+export const graphqlQuery = cache(async function graphqlQuery<T>(
   query: string,
   variables?: Record<string, unknown>,
   userId?: string,
@@ -107,4 +109,4 @@ export async function graphqlQuery<T>(
   }
 
   return json.data
-}
+})

@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest'
 import { patchMilestoneSchema } from '@/app/api/workflows/[id]/milestones/schema'
 import {
   milestonePresetHasDefaultOptionalNotesInput,
+  normalizePromotionCandidatesInput,
   optionalNotesFromMilestoneInput,
+  promotionCandidatesInputFromMilestoneInput,
 } from '@/lib/milestones/milestone-input-tab'
 import { getMilestonePresetCreateFields } from '@/lib/milestones/preset-definitions'
 
@@ -11,9 +13,10 @@ describe('milestone optional notes', () => {
   it('milestonePresetHasDefaultOptionalNotesInput includes supported presets', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('restaurant_campaign_brief')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('post_scheduler')).toBe(true)
-    expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput('culture_hooks')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('format_mix')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('ig_profile')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('dates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput(undefined)).toBe(false)
   })
@@ -25,6 +28,72 @@ describe('milestone optional notes', () => {
         'post_scheduler',
       ),
     ).toBe('  weekdays only  ')
+  })
+
+  it('promotionCandidatesInputFromMilestoneInput reads notes and categories', () => {
+    expect(
+      promotionCandidatesInputFromMilestoneInput({
+        type: 'promotion_candidates',
+        value: { notes: 'focus lunch', selectedMenuCategories: ['Mains', 'Mains'] },
+      }),
+    ).toEqual({
+      notes: 'focus lunch',
+      selectedMenuCategories: ['Mains', 'Mains'],
+      starItemLimit: 5,
+      puzzleItemLimit: 10,
+    })
+    expect(
+      normalizePromotionCandidatesInput({
+        notes: '  focus  ',
+        selectedMenuCategories: ['Mains', 'mains', 'Desserts'],
+        starItemLimit: 10,
+        puzzleItemLimit: 'all',
+      }),
+    ).toEqual({
+      notes: 'focus',
+      selectedMenuCategories: ['Mains', 'Desserts'],
+      starItemLimit: 10,
+      puzzleItemLimit: 'all',
+    })
+  })
+
+  it('patchMilestoneSchema accepts promotion_candidates milestoneInput', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      milestoneInput: {
+        type: 'promotion_candidates',
+        value: {
+          notes: 'seasonal',
+          selectedMenuCategories: ['Mains'],
+          starItemLimit: 10,
+          puzzleItemLimit: 'all',
+        },
+      },
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.milestoneInput).toEqual({
+        type: 'promotion_candidates',
+        value: {
+          notes: 'seasonal',
+          selectedMenuCategories: ['Mains'],
+          starItemLimit: 10,
+          puzzleItemLimit: 'all',
+        },
+      })
+    }
+  })
+
+  it('getMilestonePresetCreateFields seeds promotion_candidates milestoneInput', () => {
+    const fields = getMilestonePresetCreateFields('promotion_candidates', (k) => k)
+    expect(fields.milestoneInput).toEqual({
+      type: 'promotion_candidates',
+      value: {
+        notes: '',
+        selectedMenuCategories: [],
+        starItemLimit: 5,
+        puzzleItemLimit: 10,
+      },
+    })
   })
 
   it('patchMilestoneSchema accepts post_scheduler milestoneInput', () => {
@@ -64,6 +133,30 @@ describe('milestone optional notes', () => {
         value: { notes: 'prefer Reels' },
       })
     }
+  })
+
+  it('patchMilestoneSchema accepts ig_profile milestoneInput', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      milestoneInput: { type: 'ig_profile', value: { notes: 'short handles only' } },
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.milestoneInput).toEqual({
+        type: 'ig_profile',
+        value: { notes: 'short handles only' },
+      })
+    }
+  })
+
+  it('patchMilestoneSchema accepts ig_profile empty milestoneData seed', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      presetId: 'ig_profile',
+      milestoneData: {
+        usernames: [],
+        bios: [],
+      },
+    })
+    expect(parsed.success).toBe(true)
   })
 
   it('patchMilestoneSchema accepts dates milestoneInput and milestoneData', () => {
@@ -163,6 +256,18 @@ describe('milestone optional notes', () => {
     })
     expect(fields.milestoneData).toEqual({
       formats: [],
+    })
+  })
+
+  it('getMilestonePresetCreateFields seeds ig_profile milestoneInput', () => {
+    const fields = getMilestonePresetCreateFields('ig_profile', (k) => k)
+    expect(fields.milestoneInput).toEqual({
+      type: 'ig_profile',
+      value: { notes: '' },
+    })
+    expect(fields.milestoneData).toEqual({
+      usernames: [],
+      bios: [],
     })
   })
 })

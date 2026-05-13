@@ -9,6 +9,7 @@ import {
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   formatMixMilestoneDataSchema,
+  igProfileMilestoneDataSchema,
   milestoneInputSchema,
   postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
@@ -38,6 +39,7 @@ const runBodySchema = z.object({
       promotionCandidatesMilestoneDataSchema,
       cultureHooksMilestoneDataSchema,
       formatMixMilestoneDataSchema,
+      igProfileMilestoneDataSchema,
     ])
     .optional(),
 })

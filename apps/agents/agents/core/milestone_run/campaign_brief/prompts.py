@@ -12,7 +12,6 @@ Generate exactly one JSON object with this shape:
   "proofOrientedAngles": [],
   "toneGuardrails": [],
   "campaignObjective": "",
-  "mainCategory": "",
   "targetSegments": [],
   "messageHierarchy": [],
   "offerAndCtaPlan": [],
@@ -30,6 +29,5 @@ Rules:
 - Keep wording concise, operational, and reusable for downstream content planning.
 - Arrays must contain 3-5 unique, non-empty items each.
 - `campaignObjective` must be a single line combining one business outcome and one funnel stage.
-- `mainCategory` must be exactly one of: `FOOD`, `DRINK`.
 - `measurementPlan` and `testingPlan` must include explicit decision-threshold language (for example "if X stays below Y for 2 weeks, do Z").
 """

@@ -88,6 +88,5 @@ export async function listBuiltinBackgrounds(): Promise<BackgroundItem[]> {
     return []
   }
 
-  rows.sort((a, b) => a.name.localeCompare(b.name))
-  return rows
+  return rows.toSorted((a, b) => a.name.localeCompare(b.name))
 }

@@ -108,7 +108,7 @@ export function AgentChat() {
               <Alert aria-live="polite" className="items-start" variant="destructive">
                 <AlertTitle>{t('errorTitle')}</AlertTitle>
                 <AlertDescription className="flex flex-col gap-3">
-                  <p>{error.message}</p>
+                  <p>{t('errorDescription')}</p>
                   <Button
                     className="w-fit"
                     onClick={() => void handleRetry()}

@@ -123,12 +123,14 @@ export type WorkflowChatPanelProps = {
   workflowId: string
   initialMilestones: TimelineMilestone[]
   locationId: number
+  analyticsRunId: number | null
 }
 
 export function WorkflowChatPanel({
   workflowId,
   initialMilestones,
   locationId,
+  analyticsRunId,
 }: WorkflowChatPanelProps) {
   const t = useTranslations('analytics.workflows.chat')
   const tSlash = useTranslations('analytics.workflows.chat.slashCommands')
@@ -367,6 +369,8 @@ export function WorkflowChatPanel({
   const timelineSlices = useWorkflowTimelineProviderSlices(
     milestoneUi,
     workflowId,
+    locationId,
+    analyticsRunId,
     isChatBusy,
     selectedMilestoneId,
     handleSelectMilestone,
@@ -420,7 +424,7 @@ export function WorkflowChatPanel({
             <Alert aria-live="polite" className="items-start" variant="destructive">
               <AlertTitle>{t('errorTitle')}</AlertTitle>
               <AlertDescription className="flex flex-col gap-3">
-                <p>{error.message}</p>
+                <p>{t('errorDescription')}</p>
                 <Button
                   className="w-fit"
                   onClick={() => void handleRetry()}

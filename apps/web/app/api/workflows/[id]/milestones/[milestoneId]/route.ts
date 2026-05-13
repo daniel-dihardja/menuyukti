@@ -160,7 +160,7 @@ export async function GET(_req: Request, context: RouteContext) {
           proofOrientedAngles: [],
           toneGuardrails: [],
           campaignObjective: '',
-          mainCategory: 'FOOD',
+          mainCategory: '(uncategorized)',
           targetSegments: [],
           messageHierarchy: [],
           offerAndCtaPlan: [],
@@ -200,11 +200,8 @@ export async function GET(_req: Request, context: RouteContext) {
       const pcParsed = promotionCandidatesMilestoneDataSchema.safeParse(milestoneData)
       if (!pcParsed.success) {
         milestoneData = {
-          mainCategory: 'FOOD',
-          categories: [
-            { category: 'FOOD', starItems: [], puzzleItems: [] },
-            { category: 'DRINK', starItems: [], puzzleItems: [] },
-          ],
+          mainCategory: '(uncategorized)',
+          categories: [{ category: '(uncategorized)', starItems: [], puzzleItems: [] }],
           sourceAnalyticsRunId: null,
           notes: '',
         }

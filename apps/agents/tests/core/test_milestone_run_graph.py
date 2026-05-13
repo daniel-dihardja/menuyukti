@@ -53,6 +53,7 @@ def test_build_milestone_run_graph_compiles() -> None:
         ("post_scheduler", "build_post_scheduler_graph"),
         ("promotion_candidates", "build_promotion_candidates_graph"),
         ("culture_hooks", "build_culture_hooks_graph"),
+        ("ig_profile", "build_ig_profile_graph"),
     ],
 )
 async def test_graph_dispatches_to_dedicated_preset_graph(
