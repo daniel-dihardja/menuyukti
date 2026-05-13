@@ -1,5 +1,7 @@
-import type { PromotionCandidateMenuItem } from '@/lib/graphql/node-schemas'
+import type { PromotionCandidateMenuItem, MilestonePresetId } from '@/lib/graphql/node-schemas'
 import type { ReactNode } from 'react'
+
+export type { MilestonePresetId }
 
 export type TimelineMilestoneStatus = 'complete' | 'failed' | 'pending' | 'empty'
 
@@ -10,14 +12,6 @@ export type PassCriteriaRow = {
   requirement: string
   status: PassCriteriaStatus
 }
-
-export type MilestonePresetId =
-  | 'dates'
-  | 'restaurant_campaign_brief'
-  | 'post_scheduler'
-  | 'promotion_candidates'
-  | 'culture_hooks'
-  | 'format_mix'
 
 export type MilestoneInput = {
   type: string

@@ -25,6 +25,9 @@ export const milestonePresetIdSchema = z.enum([
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
 
+/** Ordered preset ids — single source for UI lists and guards. */
+export const MILESTONE_PRESET_IDS = milestonePresetIdSchema.options
+
 /**
  * Optional owner notes on the milestone Input tab (`value.notes`).
  * Used by the campaign_brief preset.

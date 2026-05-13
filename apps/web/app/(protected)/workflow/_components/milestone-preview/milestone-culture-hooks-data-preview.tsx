@@ -1,60 +1,59 @@
+'use client'
+
+import { useTranslations } from 'next-intl'
+
 import type { CultureHooksMilestoneData } from '@/lib/graphql/node-schemas'
 
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
 
 export type MilestoneCultureHooksDataPreviewProps = {
   data: CultureHooksMilestoneData
-  labels: {
-    locationConcept: string
-    targetAudience: string
-    intersections: string
-    emptyIntersections: string
-    topic: string
-    conceptLink: string
-    audienceRelevance: string
-    contentExample: string
-    guardrailCheck: string
-    emptyValue: string
-  }
 }
 
-export function MilestoneCultureHooksDataPreview({
-  data,
-  labels,
-}: MilestoneCultureHooksDataPreviewProps) {
+export function MilestoneCultureHooksDataPreview({ data }: MilestoneCultureHooksDataPreviewProps) {
+  const t = useTranslations('analytics.workflows.chat')
   return (
     <div className={mp.root}>
       <div className="space-y-2">
-        <p className={mp.sectionTitle}>{labels.locationConcept}</p>
-        <p className={mp.body}>{data.locationConcept?.trim() || labels.emptyValue}</p>
+        <p className={mp.sectionTitle}>{t('milestoneCultureHooksPreviewLocationConcept')}</p>
+        <p className={mp.body}>{data.locationConcept?.trim() || t('milestonePreviewEmptyValue')}</p>
       </div>
 
       <div className="space-y-2">
-        <p className={mp.sectionTitle}>{labels.targetAudience}</p>
-        <p className={mp.body}>{data.targetAudience?.trim() || labels.emptyValue}</p>
+        <p className={mp.sectionTitle}>{t('milestoneCultureHooksPreviewTargetAudience')}</p>
+        <p className={mp.body}>{data.targetAudience?.trim() || t('milestonePreviewEmptyValue')}</p>
       </div>
 
       <div className="space-y-3">
-        <p className={mp.sectionTitle}>{labels.intersections}</p>
+        <p className={mp.sectionTitle}>{t('milestoneCultureHooksPreviewIntersections')}</p>
         {data.intersections.length === 0 ? (
-          <p className={mp.body}>{labels.emptyIntersections}</p>
+          <p className={mp.body}>{t('milestoneCultureHooksPreviewEmptyIntersections')}</p>
         ) : (
           <ol className={`${mp.listDecimal} space-y-4`}>
             {data.intersections.map((row, index) => (
               <li key={`${row.topic}-${index}`} className={mp.insetCard}>
                 <div className="space-y-2">
                   <p className={mp.body}>
-                    <span className={mp.rowKey}>{labels.topic}:</span> {row.topic}
+                    <span className={mp.rowKey}>{t('milestoneCultureHooksPreviewTopic')}:</span>{' '}
+                    {row.topic}
                   </p>
                   <p className={mp.body}>
-                    <span className={mp.rowKey}>{labels.conceptLink}:</span> {row.conceptLink}
+                    <span className={mp.rowKey}>
+                      {t('milestoneCultureHooksPreviewConceptLink')}:
+                    </span>{' '}
+                    {row.conceptLink}
                   </p>
                   <p className={mp.body}>
-                    <span className={mp.rowKey}>{labels.audienceRelevance}:</span>{' '}
+                    <span className={mp.rowKey}>
+                      {t('milestoneCultureHooksPreviewAudienceRelevance')}:
+                    </span>{' '}
                     {row.audienceRelevance}
                   </p>
                   <p className={mp.body}>
-                    <span className={mp.rowKey}>{labels.contentExample}:</span> {row.contentExample}
+                    <span className={mp.rowKey}>
+                      {t('milestoneCultureHooksPreviewContentExample')}:
+                    </span>{' '}
+                    {row.contentExample}
                   </p>
                 </div>
               </li>
@@ -64,8 +63,8 @@ export function MilestoneCultureHooksDataPreview({
       </div>
 
       <div className="space-y-2">
-        <p className={mp.sectionTitle}>{labels.guardrailCheck}</p>
-        <p className={mp.body}>{data.guardrailCheck?.trim() || labels.emptyValue}</p>
+        <p className={mp.sectionTitle}>{t('milestoneCultureHooksPreviewGuardrailCheck')}</p>
+        <p className={mp.body}>{data.guardrailCheck?.trim() || t('milestonePreviewEmptyValue')}</p>
       </div>
     </div>
   )

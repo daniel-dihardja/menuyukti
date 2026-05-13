@@ -1,16 +1,15 @@
-import type { MilestoneInput, MilestonePresetId } from '@/lib/graphql/node-schemas'
+import type { MilestoneInput } from '@/lib/graphql/node-schemas'
 import { promotionCandidatesMilestoneInputValueSchema } from '@/lib/graphql/node-schemas'
+import {
+  milestonePresetInputType,
+  type MilestonePresetId,
+} from '@/lib/milestones/preset-definitions'
 
 /** Presets whose Input tab uses the default optional owner-notes textarea (not custom widgets like dates). */
 export function milestonePresetHasDefaultOptionalNotesInput(
   presetId: MilestonePresetId | undefined,
 ): presetId is 'restaurant_campaign_brief' | 'post_scheduler' | 'culture_hooks' | 'format_mix' {
-  return (
-    presetId === 'restaurant_campaign_brief' ||
-    presetId === 'post_scheduler' ||
-    presetId === 'culture_hooks' ||
-    presetId === 'format_mix'
-  )
+  return milestonePresetInputType(presetId) === 'optional_notes'
 }
 
 export function optionalNotesFromMilestoneInput(

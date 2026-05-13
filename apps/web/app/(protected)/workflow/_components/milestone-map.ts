@@ -1,16 +1,11 @@
 import {
-  datesMilestoneDataSchema,
-  campaignBriefMilestoneDataSchema,
-  cultureHooksMilestoneDataSchema,
-  formatMixMilestoneDataSchema,
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataValueSchema,
-  postSchedulerMilestoneDataSchema,
-  promotionCandidatesMilestoneDataSchema,
   resultDataSchema,
 } from '@/lib/graphql/node-schemas'
 import type { MilestoneNode } from '@/lib/graphql/node-schemas'
+import { normalizeMilestonePresetData } from '@/lib/milestones/preset-definitions'
 
 import type {
   MilestoneInput,
@@ -133,108 +128,7 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
   }
 
   const rm = resultMarkdownFromMilestoneResult(node)
-
-  let normalizedData = data
-  if (presetId === 'restaurant_campaign_brief') {
-    const parsedCampaignBriefData = campaignBriefMilestoneDataSchema.safeParse(data)
-    if (parsedCampaignBriefData.success) {
-      normalizedData = parsedCampaignBriefData.data
-    } else {
-      normalizedData = {
-        venueSnapshot: {
-          venueName: '',
-          city: '',
-          country: '',
-          currency: '',
-        },
-        contentPillars: [],
-        audienceHypotheses: [],
-        proofOrientedAngles: [],
-        toneGuardrails: [],
-        campaignObjective: '',
-        mainCategory: 'FOOD',
-        targetSegments: [],
-        messageHierarchy: [],
-        offerAndCtaPlan: [],
-        contentPillarPlan: [],
-        measurementPlan: [],
-        testingPlan: [],
-        riskGuardrails: [],
-      }
-    }
-  }
-  if (presetId === 'dates') {
-    const parsedDatesData = datesMilestoneDataSchema.safeParse(data)
-    if (parsedDatesData.success) {
-      normalizedData = parsedDatesData.data
-    } else {
-      normalizedData = {
-        startDate: '',
-        endDate: '',
-        publicHolidays: [],
-      }
-    }
-  }
-  if (presetId === 'promotion_candidates') {
-    const parsedPromotionCandidates = promotionCandidatesMilestoneDataSchema.safeParse(data)
-    if (parsedPromotionCandidates.success) {
-      normalizedData = parsedPromotionCandidates.data
-    } else {
-      normalizedData = {
-        mainCategory: 'FOOD',
-        categories: [
-          { category: 'FOOD', starItems: [], puzzleItems: [] },
-          { category: 'DRINK', starItems: [], puzzleItems: [] },
-        ],
-        sourceAnalyticsRunId: null,
-        notes: '',
-      }
-    }
-  }
-  if (presetId === 'post_scheduler') {
-    const parsedPs = postSchedulerMilestoneDataSchema.safeParse(data)
-    if (parsedPs.success) {
-      normalizedData = parsedPs.data
-    } else {
-      normalizedData = {
-        monthlyArc: {
-          weeks: [
-            { week: 1, objective: '', rationale: '' },
-            { week: 2, objective: '', rationale: '' },
-            { week: 3, objective: '', rationale: '' },
-            { week: 4, objective: '', rationale: '' },
-          ],
-        },
-        contentRatio: { pillars: [] },
-        formatMix: { formats: [] },
-        weeklySlotPlan: [],
-        guardrailCheck: '',
-      }
-    }
-  }
-  if (presetId === 'culture_hooks') {
-    const parsedCultureHooks = cultureHooksMilestoneDataSchema.safeParse(data)
-    if (parsedCultureHooks.success) {
-      normalizedData = parsedCultureHooks.data
-    } else {
-      normalizedData = {
-        locationConcept: '',
-        targetAudience: '',
-        intersections: [],
-        guardrailCheck: '',
-      }
-    }
-  }
-  if (presetId === 'format_mix') {
-    const parsedFormatMix = formatMixMilestoneDataSchema.safeParse(data)
-    if (parsedFormatMix.success) {
-      normalizedData = parsedFormatMix.data
-    } else {
-      normalizedData = {
-        formats: [],
-      }
-    }
-  }
+  const normalizedData = normalizeMilestonePresetData(presetId, data)
 
   return {
     id: node.id,

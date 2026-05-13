@@ -7,9 +7,9 @@ import { Plus } from 'lucide-react'
 import {
   MILESTONE_PRESET_IDS,
   isMilestonePresetId,
+  milestonePresetIconFor,
   type MilestonePresetId,
 } from '@/lib/milestones/preset-definitions'
-import { milestonePresetIconFor } from '@/lib/milestones/milestone-icons'
 import { Button } from '@workspace/ui/components/button'
 import {
   Select,

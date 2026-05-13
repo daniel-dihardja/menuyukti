@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl'
 import { ArrowDown, ArrowUp, ChevronDown, Play, Trash2 } from 'lucide-react'
 
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
-import { milestonePresetIconFor } from '@/lib/milestones/milestone-icons'
+import { milestonePresetIconFor } from '@/lib/milestones/preset-definitions'
 import {
   AlertDialog,
   AlertDialogAction,
