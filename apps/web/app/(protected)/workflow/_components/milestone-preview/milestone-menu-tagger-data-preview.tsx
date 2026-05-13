@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { Badge } from '@workspace/ui/components/badge'
 
 import type { MenuTaggerItem, MenuTaggerMilestoneData } from '@/lib/graphql/node-schemas'
+import { groupMenuTaggerItemsByCategory } from '@/lib/milestones/menu-tagger-items'
 import {
   MENU_TAGGER_DIMENSIONS,
   computeMenuTaggerUsedTags,
@@ -72,20 +73,10 @@ export function MilestoneMenuTaggerDataPreview({ data }: MilestoneMenuTaggerData
     return computeMenuTaggerUsedTags(data.items)
   }, [data.items, data.usedTags])
 
-  const grouped = useMemo(() => {
-    const byCategory = new Map<string, { star: MenuTaggerItem[]; puzzle: MenuTaggerItem[] }>()
-    for (const item of data.items) {
-      const key = item.category.trim() || t('milestoneMenuTaggerPreviewUncategorized')
-      const bucket = byCategory.get(key) ?? { star: [], puzzle: [] }
-      if (item.role === 'star') {
-        bucket.star.push(item)
-      } else {
-        bucket.puzzle.push(item)
-      }
-      byCategory.set(key, bucket)
-    }
-    return [...byCategory.entries()].sort(([a], [b]) => a.localeCompare(b))
-  }, [data.items, t])
+  const grouped = useMemo(
+    () => groupMenuTaggerItemsByCategory(data.items, t('milestoneMenuTaggerPreviewUncategorized')),
+    [data.items, t],
+  )
 
   return (
     <div className={mp.root}>
