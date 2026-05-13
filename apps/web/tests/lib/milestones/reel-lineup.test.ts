@@ -155,6 +155,49 @@ describe('buildReelLineup', () => {
     expect(ribeyeGroup?.items[0]?.name).toBe('Ribeye')
   })
 
+  it('ranks all star items before puzzle items within a group', () => {
+    const menuTaggerItems: MenuTaggerItem[] = [
+      item('Ribeye', 'star', sharedMoment),
+      item('Burger', 'star', { ...sharedMoment, ingredient: ['bread'] }),
+      item('Wings', 'puzzle', { ...sharedMoment, ingredient: ['poultry'] }),
+      item('Salad', 'puzzle', {
+        ...sharedMoment,
+        ingredient: ['vegetable'],
+        content_angle: ['hidden_gem'],
+      }),
+    ]
+    const result = buildReelLineup({
+      menuTaggerItems,
+      promotionCandidates: promotionData([
+        { name: 'Ribeye', role: 'star', popularity: 0.9, storytellingFit: 'strong', priceLevel: 3 },
+        { name: 'Burger', role: 'star', popularity: 0.7, priceLevel: 2 },
+        {
+          name: 'Wings',
+          role: 'puzzle',
+          popularity: 0.9,
+          priceLevel: 2,
+          storytellingFit: 'strong',
+        },
+        {
+          name: 'Salad',
+          role: 'puzzle',
+          popularity: 0.8,
+          priceLevel: 1,
+          storytellingFit: 'strong',
+        },
+      ]),
+    })
+
+    for (const group of result.groups) {
+      const firstPuzzleIndex = group.items.findIndex((row) => row.role === 'puzzle')
+      if (firstPuzzleIndex === -1) continue
+      const starsAfterPuzzle = group.items
+        .slice(firstPuzzleIndex + 1)
+        .some((row) => row.role === 'star')
+      expect(starsAfterPuzzle).toBe(false)
+    }
+  })
+
   it('leaves undersized clusters unassigned', () => {
     const menuTaggerItems: MenuTaggerItem[] = [
       item('Solo Star', 'star', tag({ reel_moment: 'static_hero' })),

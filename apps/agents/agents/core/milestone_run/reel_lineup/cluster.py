@@ -217,6 +217,8 @@ def _support_score(group: list[dict[str, Any]], candidate: dict[str, Any]) -> fl
     lead_tags = _tags(lead)
     candidate_tags = _tags(candidate)
     score = 0.0
+    if candidate.get("role") == "star":
+        score += 1.0
     lead_prep = lead_tags.get("prep_style")
     candidate_prep = candidate_tags.get("prep_style")
     if _prep_style_overlap(
@@ -226,8 +228,6 @@ def _support_score(group: list[dict[str, Any]], candidate: dict[str, Any]) -> fl
         score += 0.25
     if candidate.get("storytellingFit") == "strong":
         score += 0.2
-    if candidate.get("role") == "puzzle":
-        score += 0.15
     content_angle = candidate_tags.get("content_angle")
     if isinstance(content_angle, list) and "hidden_gem" in content_angle:
         score += 0.1
@@ -235,6 +235,26 @@ def _support_score(group: list[dict[str, Any]], candidate: dict[str, Any]) -> fl
         score += 0.1
     score += float(candidate.get("popularity") or 0.0) * 0.2
     return score
+
+
+def _order_group_items(group: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    lead = group[0]
+    rest = group[1:]
+    other_stars = sorted(
+        (item for item in rest if item.get("role") == "star"),
+        key=lambda item: (
+            -float(item.get("leadScore") or 0.0),
+            str(item.get("name") or "").casefold(),
+        ),
+    )
+    puzzles = sorted(
+        (item for item in rest if item.get("role") == "puzzle"),
+        key=lambda item: (
+            -float(item.get("popularity") or 0.0),
+            str(item.get("name") or "").casefold(),
+        ),
+    )
+    return [lead, *other_stars, *puzzles]
 
 
 def _to_group_item(item: dict[str, Any], position: int) -> dict[str, Any]:
@@ -262,7 +282,8 @@ def _build_group_mix(items: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _finalize_group(group: list[dict[str, Any]], index: int) -> dict[str, Any]:
-    lead = group[0]
+    ordered = _order_group_items(group)
+    lead = ordered[0]
     lead_tags = _tags(lead)
     return {
         "id": f"group-{index + 1}",
@@ -272,8 +293,8 @@ def _finalize_group(group: list[dict[str, Any]], index: int) -> dict[str, Any]:
             "dimension": "reel_moment",
             "value": str(lead_tags.get("reel_moment") or ""),
         },
-        "items": [_to_group_item(item, position + 1) for position, item in enumerate(group)],
-        "mix": _build_group_mix(group),
+        "items": [_to_group_item(item, position + 1) for position, item in enumerate(ordered)],
+        "mix": _build_group_mix(ordered),
     }
 
 
@@ -326,7 +347,13 @@ def build_reel_lineup(
                     and _can_add_to_group(group, item)
                 )
             ]
-            candidates.sort(key=lambda item: _support_score(group, item), reverse=True)
+            candidates.sort(
+                key=lambda item: (
+                    -_support_score(group, item),
+                    0 if item.get("role") == "star" else 1,
+                    str(item.get("name") or "").casefold(),
+                )
+            )
             if not candidates:
                 break
             next_item = candidates[0]

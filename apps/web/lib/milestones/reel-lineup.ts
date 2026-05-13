@@ -161,15 +161,33 @@ function supportScore(group: EnrichedItem[], candidate: EnrichedItem): number {
   const lead = group[0]!
   let score = 0
 
+  if (candidate.role === 'star') score += 1
   if (prepStyleOverlap(lead.tags.prep_style, candidate.tags.prep_style)) {
     score += 0.25
   }
   if (candidate.storytellingFit === 'strong') score += 0.2
-  if (candidate.role === 'puzzle') score += 0.15
   if (candidate.tags.content_angle.includes('hidden_gem')) score += 0.1
   if (candidate.priceLevel !== lead.priceLevel) score += 0.1
   score += candidate.popularity * 0.2
   return score
+}
+
+function orderGroupItems(group: EnrichedItem[]): EnrichedItem[] {
+  const lead = group[0]!
+  const rest = group.slice(1)
+  const otherStars = rest
+    .filter((item) => item.role === 'star')
+    .sort((a, b) => {
+      if (b.leadScore !== a.leadScore) return b.leadScore - a.leadScore
+      return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+    })
+  const puzzles = rest
+    .filter((item) => item.role === 'puzzle')
+    .sort((a, b) => {
+      if (b.popularity !== a.popularity) return b.popularity - a.popularity
+      return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+    })
+  return [lead, ...otherStars, ...puzzles]
 }
 
 function toGroupItem(item: EnrichedItem, position: number): ReelLineupGroupItem {
@@ -195,7 +213,8 @@ function buildGroupMix(items: EnrichedItem[]): ReelLineupGroup['mix'] {
 }
 
 function finalizeGroup(group: EnrichedItem[], index: number): ReelLineupGroup {
-  const lead = group[0]!
+  const ordered = orderGroupItems(group)
+  const lead = ordered[0]!
   return {
     id: `group-${index + 1}`,
     leadName: lead.name,
@@ -204,8 +223,8 @@ function finalizeGroup(group: EnrichedItem[], index: number): ReelLineupGroup {
       dimension: 'reel_moment',
       value: lead.tags.reel_moment,
     },
-    items: group.map((item, position) => toGroupItem(item, position + 1)),
-    mix: buildGroupMix(group),
+    items: ordered.map((item, position) => toGroupItem(item, position + 1)),
+    mix: buildGroupMix(ordered),
   }
 }
 
@@ -252,7 +271,12 @@ export function buildReelLineup(input: BuildReelLineupInput): ReelLineupMileston
           )
           return !assigned.has(key) && canAddToGroup(group, item)
         })
-        .sort((a, b) => supportScore(group, b) - supportScore(group, a))
+        .sort((a, b) => {
+          const scoreDiff = supportScore(group, b) - supportScore(group, a)
+          if (scoreDiff !== 0) return scoreDiff
+          if (a.role !== b.role) return a.role === 'star' ? -1 : 1
+          return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+        })
 
       const next = candidates[0]
       if (!next) break
