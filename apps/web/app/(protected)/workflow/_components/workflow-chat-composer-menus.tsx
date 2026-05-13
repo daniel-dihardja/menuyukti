@@ -15,6 +15,7 @@ import {
   PopoverTitle,
 } from '@workspace/ui/components/popover'
 import { cn } from '@workspace/ui/lib/utils'
+import { useWorkflowChatMentionItems } from './workflow-chat-mention-context'
 import {
   useCallback,
   useEffect,
@@ -41,13 +42,9 @@ export type WorkflowChatComposerMenusProps = {
   commands: SlashCommandDefinition[]
   onSelectSlashCommand: (command: string) => void
   slashAriaLabel: string
-  milestones: MilestoneMentionItem[]
-  selectedMilestoneId: string | null
   onSelectMention: (milestoneId: string) => void
   mentionAriaLabel: string
   mentionEmptyLabel: string
-  /** When true, @ menu does not open (e.g. while chat is streaming). */
-  mentionMenusDisabled?: boolean
   children: ReactNode
 }
 
@@ -57,14 +54,12 @@ export function WorkflowChatComposerMenus({
   commands,
   onSelectSlashCommand,
   slashAriaLabel,
-  milestones,
-  selectedMilestoneId,
   onSelectMention,
   mentionAriaLabel,
   mentionEmptyLabel,
-  mentionMenusDisabled = false,
   children,
 }: WorkflowChatComposerMenusProps) {
+  const { milestones, selectedMilestoneId, mentionMenusDisabled } = useWorkflowChatMentionItems()
   const otherMilestones = useMemo(
     () =>
       milestones.filter((m) =>

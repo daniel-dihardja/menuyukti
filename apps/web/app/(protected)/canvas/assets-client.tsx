@@ -22,6 +22,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/componen
 import { cn } from '@workspace/ui/lib/utils'
 
 import type { BackgroundItem } from '@/lib/assets/backgrounds'
+import {
+  loadAssetFlows,
+  loadBackgroundAssets,
+  loadDesignAssets,
+  loadProductAssets,
+} from '@/lib/assets/client-api'
 
 import {
   assetBackgroundDownloadHref,
@@ -34,7 +40,7 @@ import {
 import { AssetsImageGrid } from './_components/assets-image-grid'
 import { AssetsUploadZone } from './_components/assets-upload-zone'
 import { BackgroundsImageGrid } from './_components/backgrounds-image-grid'
-import { ContentImageCreateDialog } from '../workflow/_components/milestone-preview/content-image-create-dialog'
+import { ContentImageCreateDialog } from './_components/content-image-create-dialog'
 
 type ToastState = { kind: 'success' | 'error'; message: string } | null
 
@@ -100,15 +106,8 @@ export function AssetsClient() {
     async (silent = false, signal?: AbortSignal) => {
       if (!silent) setLoading(true)
       try {
-        const res = await fetch('/api/assets/list', {
-          signal,
-          // List GET is Cache-Control max-age=30; without this, post-upload refetches
-          // can return a stale list (especially on mobile) while generate uses POST JSON.
-          cache: 'no-store',
-        })
-        if (!res.ok) throw new Error('list failed')
-        const data = (await res.json()) as { items: AssetItem[] }
-        setItems(data.items ?? [])
+        const list = await loadProductAssets({ signal })
+        setItems(list)
       } catch (e) {
         if (e instanceof Error && e.name === 'AbortError') {
           return
@@ -136,13 +135,9 @@ export function AssetsClient() {
     void (async () => {
       setBackgroundsLoading(true)
       try {
-        const res = await fetch('/api/assets/backgrounds/list', {
-          cache: 'no-store',
-        })
-        if (!res.ok) throw new Error('list failed')
-        const data = (await res.json()) as { items: BackgroundItem[] }
+        const list = await loadBackgroundAssets({ cache: 'no-store' })
         if (!cancelled) {
-          setBackgroundItems(data.items ?? [])
+          setBackgroundItems(list)
           backgroundsLoadedRef.current = true
         }
       } catch (e) {
@@ -171,13 +166,9 @@ export function AssetsClient() {
     void (async () => {
       setDesignsLoading(true)
       try {
-        const res = await fetch('/api/assets/designs/list', {
-          cache: 'no-store',
-        })
-        if (!res.ok) throw new Error('list failed')
-        const data = (await res.json()) as { items: AssetItem[] }
+        const list = await loadDesignAssets({ cache: 'no-store' })
         if (!cancelled) {
-          setDesignItems(data.items ?? [])
+          setDesignItems(list)
           designsLoadedRef.current = true
         }
       } catch (e) {
@@ -203,19 +194,12 @@ export function AssetsClient() {
     void (async () => {
       setFlowsLoading(true)
       try {
-        const [uploadRes, productCardRes] = await Promise.all([
-          fetch('/api/assets/flows?context=upload', { signal: controller.signal }),
-          fetch('/api/assets/flows?context=product-card', { signal: controller.signal }),
+        const [uploadFlows, productCardFlows] = await Promise.all([
+          loadAssetFlows('upload', { signal: controller.signal }),
+          loadAssetFlows('product-card', { signal: controller.signal }),
         ])
-        if (!uploadRes.ok || !productCardRes.ok) throw new Error('flows')
-        const uploadData = (await uploadRes.json()) as {
-          flows?: Array<{ slug: string; displayName: string }>
-        }
-        const productCardData = (await productCardRes.json()) as {
-          flows?: Array<{ slug: string; displayName: string }>
-        }
-        setUploadAiFlows(uploadData.flows ?? [])
-        setProductCardAiFlows(productCardData.flows ?? [])
+        setUploadAiFlows(uploadFlows)
+        setProductCardAiFlows(productCardFlows)
       } catch (e) {
         if (e instanceof Error && e.name === 'AbortError') {
           return

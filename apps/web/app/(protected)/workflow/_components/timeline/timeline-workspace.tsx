@@ -114,10 +114,7 @@ export function TimelineWorkspace({
           timelineTrailing={timelineTrailing}
         />
       ) : (
-        <TimelineWorkspaceMilestoneList
-          onSelectMilestone={onSelectMilestone}
-          selectedMilestoneId={selectedMilestoneId}
-        />
+        <TimelineWorkspaceMilestoneList />
       )}
     </PanelFullscreenProvider>
   )

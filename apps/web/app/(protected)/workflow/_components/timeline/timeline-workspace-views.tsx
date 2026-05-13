@@ -1,7 +1,6 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 
@@ -84,18 +83,6 @@ export function TimelineWorkspaceEmpty({
   )
 }
 
-export function TimelineWorkspaceMilestoneList({
-  selectedMilestoneId,
-  onSelectMilestone,
-}: {
-  selectedMilestoneId: string | null
-  onSelectMilestone: (id: string | null) => void | Promise<void>
-}) {
-  const onSelectRow = useCallback(
-    (id: string) => {
-      void onSelectMilestone(id)
-    },
-    [onSelectMilestone],
-  )
-  return <TimelineBody onSelectMilestone={onSelectRow} selectedId={selectedMilestoneId} />
+export function TimelineWorkspaceMilestoneList() {
+  return <TimelineBody />
 }

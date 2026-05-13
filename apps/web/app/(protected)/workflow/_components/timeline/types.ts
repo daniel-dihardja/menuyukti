@@ -187,8 +187,3 @@ export type TimelineWorkspaceProps = {
   /** Placed after the create milestone control in the toolbar and beside create in the empty state. */
   timelineTrailing?: ReactNode
 }
-
-export type TimelineBodyProps = {
-  selectedId: string | null
-  onSelectMilestone: (id: string) => void
-}

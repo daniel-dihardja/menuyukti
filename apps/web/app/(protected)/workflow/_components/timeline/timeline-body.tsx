@@ -6,18 +6,14 @@ import { useMediaQuery } from '@/hooks/use-media-query'
 import { ScrollArea } from '@workspace/ui/components/scroll-area'
 import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
-import { useTimelineActions, useTimelineChat, useTimelineWorkspaceState } from '../timeline-context'
+import { useTimelineWorkspaceState } from '../timeline-context'
 import { TimelineItem } from './timeline-item'
-import type { TimelineBodyProps } from './types'
 
-export function TimelineBody({ selectedId, onSelectMilestone }: TimelineBodyProps) {
+export function TimelineBody() {
   const t = useTranslations('analytics.workflows.chat')
   const isDesktop = useMediaQuery('(min-width: 768px)')
   const { milestoneState } = useTimelineWorkspaceState()
-  const actions = useTimelineActions()
-  const { isBusy: isChatBusy } = useTimelineChat()
   const { milestones } = milestoneState
-  const showDelete = Boolean(actions.onDeleteMilestone)
 
   return (
     <TooltipProvider>
@@ -36,20 +32,8 @@ export function TimelineBody({ selectedId, onSelectMilestone }: TimelineBodyProp
                   isFirst={index === 0}
                   isLast={isLast}
                   isMobile={!isDesktop}
-                  isSelected={milestone.id === selectedId}
                   milestone={milestone}
-                  onSelect={onSelectMilestone}
                   positionIndex={index + 1}
-                  showDelete={showDelete}
-                  actions={actions}
-                  isChatBusy={isChatBusy}
-                  deletingMilestoneId={milestoneState.deletingMilestoneId}
-                  movingMilestoneId={milestoneState.movingMilestoneId}
-                  savingPassCriteriaMilestoneId={milestoneState.savingPassCriteriaMilestoneId}
-                  savingGoalMilestoneId={milestoneState.savingGoalMilestoneId}
-                  savingDataMilestoneId={milestoneState.savingDataMilestoneId}
-                  runningMilestoneId={milestoneState.runningMilestoneId}
-                  runningStep={milestoneState.runningStep}
                 />
               )
             })}
