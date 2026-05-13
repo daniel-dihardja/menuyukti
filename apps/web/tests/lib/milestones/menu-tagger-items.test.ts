@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest'
 
-import { groupMenuTaggerItemsByCategory } from '@/lib/milestones/menu-tagger-items'
+import {
+  formatMenuTaggerTagLabel,
+  groupMenuTaggerItemsByCategory,
+} from '@/lib/milestones/menu-tagger-items'
+
+describe('formatMenuTaggerTagLabel', () => {
+  it('title-cases snake_case taxonomy tokens', () => {
+    expect(formatMenuTaggerTagLabel('stretch_pull')).toBe('Stretch Pull')
+    expect(formatMenuTaggerTagLabel('tofu_plant')).toBe('Tofu Plant')
+    expect(formatMenuTaggerTagLabel('sizzle')).toBe('Sizzle')
+  })
+})
 
 describe('groupMenuTaggerItemsByCategory', () => {
   it('preserves first-seen category order instead of sorting alphabetically', () => {

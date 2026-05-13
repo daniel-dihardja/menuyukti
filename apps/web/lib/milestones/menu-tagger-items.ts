@@ -8,6 +8,11 @@ export type MenuTaggerCategoryBucket<T extends MenuTaggerItemLike> = {
   puzzle: T[]
 }
 
+/** Turn taxonomy enum tokens into marketer-readable labels (e.g. stretch_pull → Stretch Pull). */
+export function formatMenuTaggerTagLabel(value: string): string {
+  return value.replaceAll('_', ' ').replace(/\b\w/g, (character) => character.toUpperCase())
+}
+
 /** Group items by category, preserving first-seen category order from the source list. */
 export function groupMenuTaggerItemsByCategory<T extends MenuTaggerItemLike>(
   items: T[],
