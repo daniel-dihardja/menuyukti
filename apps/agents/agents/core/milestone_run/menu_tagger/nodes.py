@@ -46,6 +46,7 @@ from agents_app.agents.core.milestone_run.output_schema import validate_skill_ou
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_promotion_candidates_data,
     extract_promotion_candidates_row,
+    promotion_candidates_prior_error_message,
 )
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
@@ -98,24 +99,68 @@ def _item_name(raw: Any) -> str:
     return ""
 
 
+def _item_popularity(raw: Any) -> float:
+    if not isinstance(raw, dict):
+        return -1.0
+    popularity_raw = raw.get("popularity")
+    if popularity_raw is None or popularity_raw == "":
+        return -1.0
+    try:
+        return float(popularity_raw)
+    except (TypeError, ValueError):
+        return -1.0
+
+
+def _sort_items_by_popularity(raw_items: list[Any]) -> list[Any]:
+    """Match web sortPromotionCandidateItemsByPopularity: popularity desc, then name asc."""
+    return sorted(
+        raw_items,
+        key=lambda raw: (-_item_popularity(raw), _item_name(raw).casefold()),
+    )
+
+
+def _category_matches_main_focus(category: str, main_category: str) -> bool:
+    focus = main_category.strip()
+    if not focus:
+        return False
+    return category.strip().casefold() == focus.casefold()
+
+
+def _sort_category_blocks(
+    blocks: list[dict[str, Any]],
+    main_category: str,
+) -> list[dict[str, Any]]:
+    return sorted(
+        blocks,
+        key=lambda block: (
+            0
+            if _category_matches_main_focus(str(block.get("category") or ""), main_category)
+            else 1,
+            str(block.get("category") or "").casefold(),
+        ),
+    )
+
+
 def flatten_promotion_candidates_items(data: dict[str, Any]) -> list[MenuTaggerItem]:
     """Flatten star/puzzle items from saved promotion_candidates milestonedata."""
     categories = data.get("categories")
     if not isinstance(categories, list):
         return []
 
+    main_category = str(data.get("mainCategory") or "").strip()
+    category_blocks = [block for block in categories if isinstance(block, dict)]
+    sorted_blocks = _sort_category_blocks(category_blocks, main_category)
+
     out: list[MenuTaggerItem] = []
     seen: set[tuple[str, str, str]] = set()
 
-    for block in categories:
-        if not isinstance(block, dict):
-            continue
+    for block in sorted_blocks:
         category = str(block.get("category") or "").strip() or "(uncategorized)"
         for role in ("star", "puzzle"):
             raw_items = block.get("starItems" if role == "star" else "puzzleItems")
             if not isinstance(raw_items, list):
                 continue
-            for raw in raw_items:
+            for raw in _sort_items_by_popularity(raw_items):
                 name = _item_name(raw)
                 if not name:
                     continue
@@ -362,9 +407,7 @@ async def fetch_and_prepare(state: MenuTaggerState, *, client: httpx.AsyncClient
     promotion_row = extract_promotion_candidates_row(prior_json)
     promotion_data = extract_promotion_candidates_data(prior_json)
     if promotion_data is None:
-        raise ValueError(
-            "menu_tagger requires a prior promotion_candidates milestone with saved data"
-        )
+        raise ValueError(promotion_candidates_prior_error_message(prior_json))
 
     input_items = flatten_promotion_candidates_items(promotion_data)
     if not input_items:

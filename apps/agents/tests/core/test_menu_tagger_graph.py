@@ -107,6 +107,47 @@ def test_flatten_promotion_candidates_items() -> None:
     assert items[1]["role"] == "puzzle"
 
 
+def test_flatten_promotion_candidates_items_sorts_categories_and_by_popularity() -> None:
+    data = {
+        "mainCategory": "Mains",
+        "categories": [
+            {
+                "category": "Drinks",
+                "starItems": [
+                    {"name": "Cola", "popularity": 0.05},
+                    {"name": "Lemonade", "popularity": 0.2},
+                ],
+                "puzzleItems": [
+                    {"name": "Iced Tea", "popularity": 0.15},
+                    {"name": "Sparkling Water", "popularity": 0.15},
+                ],
+            },
+            {
+                "category": "Mains",
+                "starItems": [
+                    {"name": "Soup", "popularity": 0.1},
+                    {"name": "Steak", "popularity": 0.4},
+                    {"name": "Pasta", "popularity": 0.4},
+                ],
+                "puzzleItems": [
+                    {"name": "Salad", "popularity": 0.25},
+                ],
+            },
+        ],
+    }
+    items = flatten_promotion_candidates_items(data)
+    assert [(item["category"], item["role"], item["name"]) for item in items] == [
+        ("Mains", "star", "Pasta"),
+        ("Mains", "star", "Steak"),
+        ("Mains", "star", "Soup"),
+        ("Mains", "puzzle", "Salad"),
+        ("Drinks", "star", "Lemonade"),
+        ("Drinks", "star", "Cola"),
+        ("Drinks", "puzzle", "Iced Tea"),
+        ("Drinks", "puzzle", "Sparkling Water"),
+    ]
+
+
 def test_sanitize_menu_tagger_payload_filters_invalid_enums() -> None:
     payload = {
         "taxonomyVersion": "v2",

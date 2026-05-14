@@ -6,6 +6,9 @@ import json
 
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     build_injected_prior_context_markdown,
+    extract_promotion_candidates_data,
+    extract_promotion_candidates_row,
+    promotion_candidates_prior_error_message,
 )
 
 
@@ -68,3 +71,66 @@ def test_build_injected_prior_no_match() -> None:
     )
     assert md == ""
     assert matched == []
+
+
+def test_build_injected_prior_promotion_candidates_shape_fallback() -> None:
+    rows = [
+        {
+            "title": "Promotion picks",
+            "presetId": None,
+            "data": {
+                "mainCategory": "Mains",
+                "categories": [
+                    {
+                        "category": "Mains",
+                        "starItems": [{"name": "Steak", "popularity": 0.4}],
+                        "puzzleItems": [],
+                    }
+                ],
+            },
+        }
+    ]
+    md, matched = build_injected_prior_context_markdown(
+        json.dumps(rows),
+        ("promotion_candidates",),
+    )
+    assert "Promotion picks" in md
+    assert matched == ["promotion_candidates"]
+
+
+def test_extract_promotion_candidates_data_prefers_last_populated_row() -> None:
+    rows = [
+        {
+            "title": "Old picks",
+            "presetId": "promotion_candidates",
+            "data": {
+                "mainCategory": "Mains",
+                "categories": [{"category": "Mains", "starItems": [], "puzzleItems": []}],
+            },
+        },
+        {
+            "title": "Fresh picks",
+            "presetId": "promotion_candidates",
+            "data": {
+                "mainCategory": "Mains",
+                "categories": [
+                    {
+                        "category": "Mains",
+                        "starItems": [{"name": "Pasta", "popularity": 0.3}],
+                        "puzzleItems": [],
+                    }
+                ],
+            },
+        },
+    ]
+    data = extract_promotion_candidates_data(json.dumps(rows))
+    assert data is not None
+    assert data["categories"][0]["starItems"][0]["name"] == "Pasta"
+    row = extract_promotion_candidates_row(json.dumps(rows))
+    assert row is not None
+    assert row["title"] == "Fresh picks"
+
+
+def test_promotion_candidates_prior_error_message_when_no_prior_rows() -> None:
+    message = promotion_candidates_prior_error_message("[]")
+    assert "No earlier milestones" in message
