@@ -45,6 +45,56 @@ def _prior_json() -> str:
     )
 
 
+def _post_lineup_data() -> dict[str, object]:
+    return {
+        "posts": [
+            {
+                "id": "pinned-monthly-menu",
+                "format": "carousel",
+                "intent": "pinned_monthly_menu",
+                "title": "Monthly top menu",
+                "slides": [
+                    {
+                        "dishName": "Burger",
+                        "imageBrief": "Hero shot of a burger.",
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def _prior_json_with_post_lineup(
+    *,
+    start_date: str = "2026-06-01",
+    end_date: str = "2026-06-30",
+) -> str:
+    return json.dumps(
+        [
+            {
+                "title": "Campaign dates",
+                "presetId": "dates",
+                "data": {
+                    "startDate": start_date,
+                    "endDate": end_date,
+                    "publicHolidays": [
+                        {
+                            "name": "Easter Sunday",
+                            "description": "Desc",
+                            "date": "2026-06-15",
+                        }
+                    ],
+                },
+            },
+            {
+                "title": "Post lineup",
+                "presetId": "post_lineup",
+                "data": _post_lineup_data(),
+            },
+        ]
+    )
+
+
 def _base_state(**overrides: object) -> dict[str, object]:
     state: dict[str, object] = {
         "milestone_id": "1",
@@ -304,3 +354,122 @@ async def test_persist_result_upserts_scheduler_payload() -> None:
         upsert.assert_awaited_once()
         assert result["milestonedata_written"] is True
         assert result["milestone_data"]["startDate"] == "2026-06-01"
+
+
+@pytest.mark.asyncio
+async def test_fetch_and_prepare_reads_prior_post_lineup() -> None:
+    with patch(
+        "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
+        return_value=lambda _x: None,
+    ):
+        result = await fetch_and_prepare(
+            _base_state(prior_milestones_data=_prior_json_with_post_lineup()),
+            client=AsyncMock(),
+        )
+        assert result["source_post_lineup_title"] == "Post lineup"
+        assert isinstance(result["post_lineup_data"], dict)
+        assert result["post_lineup_data"]["posts"][0]["intent"] == "pinned_monthly_menu"
+
+
+@pytest.mark.asyncio
+async def test_build_snapshot_adds_monthly_post_slots_for_two_month_window() -> None:
+    result = await build_snapshot(
+        _base_state(
+            dates_data={
+                "startDate": "2026-06-01",
+                "endDate": "2026-07-31",
+                "publicHolidays": [],
+            },
+            post_lineup_data=_post_lineup_data(),
+            source_post_lineup_title="Post lineup",
+        )
+    )
+    normalized, error = validate_skill_output("scheduler", result["generated_output"])
+    assert error is None
+    assert isinstance(normalized, dict)
+    assert normalized["sourcePostLineupTitle"] == "Post lineup"
+    assert normalized["slots"] == [
+        {
+            "date": "2026-06-01",
+            "time": "10:00",
+            "title": "Post: monthly top menu",
+        },
+        {
+            "date": "2026-07-01",
+            "time": "10:00",
+            "title": "Post: monthly top menu",
+        },
+    ]
+
+
+@pytest.mark.asyncio
+async def test_build_snapshot_omits_post_slots_without_post_lineup() -> None:
+    result = await build_snapshot(
+        _base_state(
+            dates_data={
+                "startDate": "2026-06-01",
+                "endDate": "2026-07-31",
+                "publicHolidays": [],
+            },
+        )
+    )
+    normalized, error = validate_skill_output("scheduler", result["generated_output"])
+    assert error is None
+    assert isinstance(normalized, dict)
+    assert normalized["slots"] == []
+
+
+@pytest.mark.asyncio
+async def test_build_snapshot_omits_post_slots_when_window_starts_after_first() -> None:
+    result = await build_snapshot(
+        _base_state(
+            dates_data={
+                "startDate": "2026-06-15",
+                "endDate": "2026-06-30",
+                "publicHolidays": [],
+            },
+            post_lineup_data=_post_lineup_data(),
+        )
+    )
+    normalized, error = validate_skill_output("scheduler", result["generated_output"])
+    assert error is None
+    assert isinstance(normalized, dict)
+    assert normalized["slots"] == []
+
+
+@pytest.mark.asyncio
+async def test_build_snapshot_includes_story_and_post_slots() -> None:
+    result = await build_snapshot(
+        _base_state(
+            dates_data={
+                "startDate": "2026-06-01",
+                "endDate": "2026-06-30",
+                "publicHolidays": [
+                    {
+                        "name": "Easter Sunday",
+                        "description": "Desc",
+                        "date": "2026-06-15",
+                    }
+                ],
+            },
+            holiday_greeting_picks=[
+                {"date": "2026-06-15", "holidayName": "Easter Sunday"},
+            ],
+            post_lineup_data=_post_lineup_data(),
+        )
+    )
+    normalized, error = validate_skill_output("scheduler", result["generated_output"])
+    assert error is None
+    assert isinstance(normalized, dict)
+    assert normalized["slots"] == [
+        {
+            "date": "2026-06-01",
+            "time": "10:00",
+            "title": "Post: monthly top menu",
+        },
+        {
+            "date": "2026-06-15",
+            "time": "10:00",
+            "title": "Story: sending happy Easter Sunday",
+        },
+    ]

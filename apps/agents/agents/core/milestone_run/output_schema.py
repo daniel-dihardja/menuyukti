@@ -609,6 +609,7 @@ class SchedulerMilestoneOutput(BaseModel):
     endDate: str
     publicHolidays: list[CampaignWindowPublicHoliday] = Field(default_factory=list)
     sourceDatesTitle: str | None = None
+    sourcePostLineupTitle: str | None = None
     slots: list[SchedulerSlotOutput] = Field(default_factory=list)
 
 

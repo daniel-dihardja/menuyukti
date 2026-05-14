@@ -17,6 +17,7 @@ class SchedulerOutput(TypedDict):
     publicHolidays: list[dict[str, str]]
     slots: list[SchedulerSlot]
     sourceDatesTitle: NotRequired[str]
+    sourcePostLineupTitle: NotRequired[str]
 
 
 class SchedulerState(TypedDict):
@@ -32,6 +33,8 @@ class SchedulerState(TypedDict):
     prior_milestones_data: NotRequired[str]
     dates_data: NotRequired[dict[str, Any] | None]
     source_dates_title: NotRequired[str]
+    post_lineup_data: NotRequired[dict[str, Any] | None]
+    source_post_lineup_title: NotRequired[str]
     holiday_greeting_picks: NotRequired[list[dict[str, str]]]
     generated_output: NotRequired[SchedulerOutput | None]
     result_data: str

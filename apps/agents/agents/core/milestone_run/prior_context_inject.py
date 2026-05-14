@@ -260,6 +260,31 @@ def extract_reel_lineup_data(prior_milestones_json: str) -> dict[str, Any] | Non
     return None
 
 
+def is_post_lineup_milestone_data(data: object) -> bool:
+    if not isinstance(data, dict):
+        return False
+    posts = data.get("posts")
+    return isinstance(posts, list) and len(posts) > 0
+
+
+def extract_post_lineup_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the first matched prior post_lineup row, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"post_lineup"}))
+    return matched[0] if matched else None
+
+
+def extract_post_lineup_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return post_lineup ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_post_lineup_row(prior_milestones_json)
+    if row is None:
+        return None
+    data = row.get("data")
+    if isinstance(data, dict) and is_post_lineup_milestone_data(data):
+        return data
+    return None
+
+
 def is_dates_milestone_data(data: object) -> bool:
     if not isinstance(data, dict):
         return False

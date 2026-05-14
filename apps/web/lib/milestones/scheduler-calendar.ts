@@ -8,6 +8,21 @@ export const SCHEDULER_HAPPY_HOLIDAY_STORY_TIME = '10:00'
 
 export type SchedulerSlot = SchedulerMilestoneData['slots'][number]
 
+export type SchedulerSlotKind = 'story' | 'post'
+
+const SCHEDULER_SLOT_CLASS = {
+  story: 'border-sky-300/80 bg-sky-50/90 text-foreground dark:border-sky-500/50 dark:bg-sky-950/40',
+  post: 'border-violet-200 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-100',
+} as const
+
+export function schedulerSlotKind(slot: SchedulerSlot): SchedulerSlotKind {
+  return slot.title.trimStart().startsWith('Post:') ? 'post' : 'story'
+}
+
+export function schedulerSlotClassName(kind: SchedulerSlotKind): string {
+  return SCHEDULER_SLOT_CLASS[kind]
+}
+
 export type SchedulerWeekDay = {
   isoDate: string
   inWindow: boolean

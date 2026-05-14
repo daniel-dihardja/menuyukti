@@ -14,6 +14,8 @@ import {
   formatSchedulerWeekRange,
   schedulerHourIndexFromTime,
   schedulerHourLabels,
+  schedulerSlotClassName,
+  schedulerSlotKind,
   schedulerSlotsByDate,
 } from '@/lib/milestones/scheduler-calendar'
 
@@ -179,7 +181,10 @@ function SchedulerHourRow({
               <div
                 key={`${slot.date}-${slot.time}-${slot.title}`}
                 aria-label={slotAriaLabel(slot.title, slot.time)}
-                className="rounded-md border border-sky-300/80 bg-sky-50/90 px-1.5 py-1 text-xs leading-snug text-foreground dark:border-sky-500/50 dark:bg-sky-950/40"
+                className={cn(
+                  'rounded-md border px-1.5 py-1 text-xs leading-snug',
+                  schedulerSlotClassName(schedulerSlotKind(slot)),
+                )}
               >
                 <span className="line-clamp-2 font-medium">{slot.title}</span>
               </div>

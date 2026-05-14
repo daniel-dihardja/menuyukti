@@ -13,6 +13,8 @@ import {
   isoDateOnlyFromDate,
   schedulerHourIndexFromTime,
   schedulerHourLabels,
+  schedulerSlotClassName,
+  schedulerSlotKind,
   schedulerSlotsByDate,
   schedulerSlotsForDate,
   SCHEDULER_HAPPY_HOLIDAY_STORY_TIME,
@@ -33,6 +35,38 @@ describe('schedulerHourIndexFromTime', () => {
   it('returns undefined for times outside the visible grid', () => {
     expect(schedulerHourIndexFromTime('07:00')).toBeUndefined()
     expect(schedulerHourIndexFromTime('22:00')).toBeUndefined()
+  })
+})
+
+describe('schedulerSlotKind', () => {
+  it('classifies Post-prefixed titles as post slots', () => {
+    expect(
+      schedulerSlotKind({
+        date: '2026-06-01',
+        time: '10:00',
+        title: 'Post: monthly top menu',
+      }),
+    ).toBe('post')
+  })
+
+  it('classifies Story-prefixed titles as story slots', () => {
+    expect(
+      schedulerSlotKind({
+        date: '2026-06-15',
+        time: '10:00',
+        title: 'Story: sending happy Easter Sunday',
+      }),
+    ).toBe('story')
+  })
+})
+
+describe('schedulerSlotClassName', () => {
+  it('returns distinct classes for post and story slots', () => {
+    const storyClass = schedulerSlotClassName('story')
+    const postClass = schedulerSlotClassName('post')
+    expect(storyClass).toContain('sky')
+    expect(postClass).toContain('violet')
+    expect(storyClass).not.toEqual(postClass)
   })
 })
 

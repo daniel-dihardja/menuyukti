@@ -15,6 +15,8 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
     dates_prior_error_message,
     extract_dates_data,
     extract_dates_row,
+    extract_post_lineup_data,
+    extract_post_lineup_row,
 )
 from agents_app.agents.core.milestone_run.scheduler.prompts import (
     SCHEDULER_HOLIDAY_GREETINGS_SYSTEM,
@@ -25,6 +27,7 @@ from langgraph.config import get_stream_writer
 from pydantic import BaseModel
 
 HAPPY_HOLIDAY_STORY_TIME = "10:00"
+PINNED_MONTHLY_MENU_SLOT_TITLE = "Post: monthly top menu"
 
 
 def _trace(state: SchedulerState, step: str, **extra: Any) -> None:
@@ -148,6 +151,54 @@ def _build_holiday_greeting_slots(
     return slots
 
 
+def _has_pinned_monthly_menu_post(post_lineup_data: dict[str, Any] | None) -> bool:
+    if not isinstance(post_lineup_data, dict):
+        return False
+    posts = post_lineup_data.get("posts")
+    if not isinstance(posts, list):
+        return False
+    for post in posts:
+        if not isinstance(post, dict):
+            continue
+        if str(post.get("intent") or "").strip() == "pinned_monthly_menu":
+            return True
+    return False
+
+
+def _month_starts_in_window(start_date: str, end_date: str) -> list[str]:
+    if not start_date or not end_date or start_date > end_date:
+        return []
+
+    start_year = int(start_date[:4])
+    start_month = int(start_date[5:7])
+    end_year = int(end_date[:4])
+    end_month = int(end_date[5:7])
+
+    dates: list[str] = []
+    year, month = start_year, start_month
+    while (year, month) <= (end_year, end_month):
+        month_start = f"{year:04d}-{month:02d}-01"
+        if start_date <= month_start <= end_date:
+            dates.append(month_start)
+        if month == 12:
+            year += 1
+            month = 1
+        else:
+            month += 1
+    return dates
+
+
+def _build_pinned_monthly_menu_slots(start_date: str, end_date: str) -> list[dict[str, str]]:
+    return [
+        {
+            "date": date,
+            "time": HAPPY_HOLIDAY_STORY_TIME,
+            "title": PINNED_MONTHLY_MENU_SLOT_TITLE,
+        }
+        for date in _month_starts_in_window(start_date, end_date)
+    ]
+
+
 async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient) -> dict[str, Any]:
     del client
     _trace(state, "execute_skill", skill_id="scheduler")
@@ -164,9 +215,19 @@ async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient)
         if isinstance(title, str) and title.strip():
             source_title = title.strip()
 
+    post_lineup_data = extract_post_lineup_data(prior_json)
+    post_lineup_row = extract_post_lineup_row(prior_json)
+    source_post_lineup_title = ""
+    if isinstance(post_lineup_row, dict):
+        post_title = post_lineup_row.get("title")
+        if isinstance(post_title, str) and post_title.strip():
+            source_post_lineup_title = post_title.strip()
+
     return {
         "dates_data": dates_data,
         "source_dates_title": source_title,
+        "post_lineup_data": post_lineup_data,
+        "source_post_lineup_title": source_post_lineup_title,
     }
 
 
@@ -240,6 +301,14 @@ async def build_snapshot(state: SchedulerState) -> dict[str, Any]:
         end_date=end_date,
     )
 
+    post_lineup_data = state.get("post_lineup_data")
+    if _has_pinned_monthly_menu_post(
+        post_lineup_data if isinstance(post_lineup_data, dict) else None
+    ):
+        slots.extend(_build_pinned_monthly_menu_slots(start_date, end_date))
+
+    slots.sort(key=lambda slot: (slot["date"], slot["time"], slot["title"]))
+
     payload: dict[str, Any] = {
         "startDate": start_date,
         "endDate": end_date,
@@ -249,6 +318,9 @@ async def build_snapshot(state: SchedulerState) -> dict[str, Any]:
     source_title = str(state.get("source_dates_title") or "").strip()
     if source_title:
         payload["sourceDatesTitle"] = source_title
+    source_post_lineup_title = str(state.get("source_post_lineup_title") or "").strip()
+    if source_post_lineup_title:
+        payload["sourcePostLineupTitle"] = source_post_lineup_title
 
     normalized = _normalize_generated_output(payload)
     return {"generated_output": normalized}

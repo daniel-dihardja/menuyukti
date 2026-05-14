@@ -9,6 +9,8 @@ import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 import {
   buildSchedulerMonth,
   formatSchedulerMonthLabel,
+  schedulerSlotClassName,
+  schedulerSlotKind,
   schedulerSlotsForDate,
   schedulerWeekdayLabels,
 } from '@/lib/milestones/scheduler-calendar'
@@ -120,7 +122,10 @@ export function SchedulerCalendarMonthGrid({
                   {daySlots.slice(0, 1).map((slot) => (
                     <p
                       key={`${slot.date}-${slot.time}-${slot.title}`}
-                      className="truncate rounded-md border border-sky-300/80 bg-sky-50/90 px-1 py-0.5 text-xs font-medium leading-snug text-foreground dark:border-sky-500/50 dark:bg-sky-950/40"
+                      className={cn(
+                        'truncate rounded-md border px-1 py-0.5 text-xs font-medium leading-snug',
+                        schedulerSlotClassName(schedulerSlotKind(slot)),
+                      )}
                     >
                       {slot.title}
                     </p>
