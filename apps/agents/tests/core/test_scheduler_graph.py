@@ -10,6 +10,7 @@ from agents_app.agents.core.milestone_run.output_schema import validate_skill_ou
 from agents_app.agents.core.milestone_run.scheduler.nodes import (
     HolidayGreetingPick,
     SchedulerHolidayGreetingsDraft,
+    _fmt_owner_holiday_notes,
     build_snapshot,
     fetch_and_prepare,
     persist_result,
@@ -103,6 +104,75 @@ async def test_select_holiday_greetings_skips_llm_when_no_holidays() -> None:
             )
         )
         assert result["holiday_greeting_picks"] == []
+
+
+def test_fmt_owner_holiday_notes_returns_empty_for_missing_or_wrong_type() -> None:
+    assert _fmt_owner_holiday_notes(_base_state()) == ""
+    assert (
+        _fmt_owner_holiday_notes(
+            _base_state(milestone_input={"type": "menu_tagger", "value": {"notes": "x"}})
+        )
+        == ""
+    )
+    assert (
+        _fmt_owner_holiday_notes(
+            _base_state(milestone_input={"type": "scheduler", "value": {"notes": "   "}})
+        )
+        == ""
+    )
+
+
+def test_fmt_owner_holiday_notes_formats_scheduler_notes() -> None:
+    text = _fmt_owner_holiday_notes(
+        _base_state(
+            milestone_input={
+                "type": "scheduler",
+                "value": {"notes": "Mark Easter Sunday; skip Memorial Day"},
+            }
+        )
+    )
+    assert "Milestone input (owner holiday guidance)" in text
+    assert "Mark Easter Sunday; skip Memorial Day" in text
+
+
+@pytest.mark.asyncio
+async def test_select_holiday_greetings_includes_owner_notes_in_human_message() -> None:
+    draft = SchedulerHolidayGreetingsDraft(holidayGreetings=[])
+    mock_llm = MagicMock()
+    mock_llm.ainvoke = AsyncMock(return_value=draft)
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.scheduler.nodes.structured_llm_from_milestone_run_config",
+            return_value=MagicMock(with_structured_output=MagicMock(return_value=mock_llm)),
+        ),
+    ):
+        await select_holiday_greetings(
+            _base_state(
+                dates_data={
+                    "startDate": "2026-06-01",
+                    "endDate": "2026-06-30",
+                    "publicHolidays": [
+                        {
+                            "name": "Easter Sunday",
+                            "description": "Desc",
+                            "date": "2026-06-15",
+                        }
+                    ],
+                },
+                milestone_input={
+                    "type": "scheduler",
+                    "value": {"notes": "Mark Easter Sunday"},
+                },
+            )
+        )
+        messages = mock_llm.ainvoke.await_args.args[0]
+        human_content = messages[1].content
+        assert "Mark Easter Sunday" in human_content
+        assert "Milestone input (owner holiday guidance)" in human_content
 
 
 @pytest.mark.asyncio

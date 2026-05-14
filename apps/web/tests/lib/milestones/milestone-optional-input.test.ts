@@ -17,6 +17,7 @@ describe('milestone optional notes', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('ig_profile')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('menu_tagger')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('reel_lineup')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('scheduler')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('dates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput(undefined)).toBe(false)
   })
@@ -222,6 +223,43 @@ describe('milestone optional notes', () => {
     expect(fields.milestoneData).toEqual({
       usernames: [],
       bios: [],
+    })
+  })
+
+  it('optionalNotesFromMilestoneInput reads scheduler notes', () => {
+    expect(
+      optionalNotesFromMilestoneInput(
+        { type: 'scheduler', value: { notes: 'Mark Christmas Day' } },
+        'scheduler',
+      ),
+    ).toBe('Mark Christmas Day')
+    expect(optionalNotesFromMilestoneInput(undefined, 'scheduler')).toBe('')
+  })
+
+  it('patchMilestoneSchema accepts scheduler milestoneInput', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      milestoneInput: { type: 'scheduler', value: { notes: 'Mark Easter Sunday' } },
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.milestoneInput).toEqual({
+        type: 'scheduler',
+        value: { notes: 'Mark Easter Sunday' },
+      })
+    }
+  })
+
+  it('getMilestonePresetCreateFields seeds scheduler milestoneInput', () => {
+    const fields = getMilestonePresetCreateFields('scheduler', (k) => k)
+    expect(fields.milestoneInput).toEqual({
+      type: 'scheduler',
+      value: { notes: '' },
+    })
+    expect(fields.milestoneData).toEqual({
+      startDate: '',
+      endDate: '',
+      publicHolidays: [],
+      slots: [],
     })
   })
 })

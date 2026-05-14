@@ -19,4 +19,10 @@ Your task: from a list of public holidays in a campaign date window, select only
 - For each selected holiday, copy `date` (YYYY-MM-DD) exactly from the input and set `holidayName` to the holiday's `name` field (or `localName` if `name` is empty).
 - When in doubt, exclude rather than include a borderline holiday.
 - Output JSON only matching the required schema.
+
+## Owner guidance
+When the human message includes a "Milestone input (owner holiday guidance)" section:
+- If the owner names holidays to **include**, select them when they appear in the input list, unless a cheerful Story greeting would still be tone-deaf per the EXCLUDE rules above.
+- If the owner names holidays to **exclude** or **skip**, do not select them.
+- Owner notes are hints only; still return only holidays from the provided list with exact `date` and `holidayName` values.
 """

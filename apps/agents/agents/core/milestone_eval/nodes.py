@@ -84,6 +84,7 @@ _OWNER_NOTES_INPUT_TYPES = frozenset(
         "culture_hooks",
         "menu_tagger",
         "reel_lineup",
+        "scheduler",
         "ig_profile",
     },
 )

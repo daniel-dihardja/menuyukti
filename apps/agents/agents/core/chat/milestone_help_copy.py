@@ -88,7 +88,14 @@ def format_optional_input_section(preset_id: str | None) -> str | None:
                 b,
             ],
         )
-    if preset_id in ("promotion_candidates", "culture_hooks", "ig_profile", "menu_tagger", "reel_lineup"):
+    if preset_id in (
+        "promotion_candidates",
+        "culture_hooks",
+        "ig_profile",
+        "menu_tagger",
+        "reel_lineup",
+        "scheduler",
+    ):
         return "\n".join(
             [
                 "",

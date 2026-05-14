@@ -77,6 +77,12 @@ export const reelLineupMilestoneInputValueSchema = z.object({
 
 export type ReelLineupMilestoneInputValue = z.infer<typeof reelLineupMilestoneInputValueSchema>
 
+export const schedulerMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type SchedulerMilestoneInputValue = z.infer<typeof schedulerMilestoneInputValueSchema>
+
 export const promotionCandidatesItemLimitSchema = z.union([
   z.literal(5),
   z.literal(10),

@@ -342,12 +342,16 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
   scheduler: {
     id: 'scheduler',
     icon: CalendarDays,
-    inputType: 'none',
+    inputType: 'optional_notes',
     dataSchema: schedulerMilestoneDataSchema,
     emptyData: EMPTY_SCHEDULER_DATA,
     getCreateFields: (t) => ({
       name: t('milestonePreset.scheduler.title'),
       milestoneData: EMPTY_SCHEDULER_DATA,
+      milestoneInput: {
+        type: 'scheduler',
+        value: { notes: '' },
+      },
       goal: t('milestonePreset.scheduler.goal'),
       passCriteria: [
         {

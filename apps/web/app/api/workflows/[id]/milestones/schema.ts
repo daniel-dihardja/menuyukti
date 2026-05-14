@@ -14,6 +14,7 @@ import {
   reelLineupMilestoneDataSchema,
   reelLineupMilestoneInputValueSchema,
   schedulerMilestoneDataSchema,
+  schedulerMilestoneInputValueSchema,
   milestonePresetIdSchema,
   milestoneInputSchema,
   passCriteriaSchema,
@@ -76,6 +77,10 @@ export const patchMilestoneSchema = z
         z.object({
           type: z.literal('reel_lineup'),
           value: reelLineupMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('scheduler'),
+          value: schedulerMilestoneInputValueSchema,
         }),
         milestoneInputSchema,
       ])

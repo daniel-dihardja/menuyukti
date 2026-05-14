@@ -61,6 +61,29 @@ class SchedulerHolidayGreetingsDraft(BaseModel):
     holidayGreetings: list[HolidayGreetingPick]
 
 
+def _fmt_owner_holiday_notes(state: SchedulerState) -> str:
+    raw = state.get("milestone_input")
+    if not isinstance(raw, dict):
+        return ""
+    if raw.get("type") != "scheduler":
+        return ""
+    value = raw.get("value")
+    if not isinstance(value, dict):
+        return ""
+    notes = value.get("notes")
+    if not isinstance(notes, str):
+        return ""
+    text = notes.strip()
+    if not text:
+        return ""
+    return (
+        "## Milestone input (owner holiday guidance)\n\n"
+        "_Optional owner guidance for which public holidays should get Story greeting slots. "
+        "Treat as hints, not verified facts._\n\n"
+        f"{text}"
+    )
+
+
 def _holiday_dates_by_name(public_holidays: list[Any]) -> dict[str, set[str]]:
     by_name: dict[str, set[str]] = {}
     for holiday in public_holidays:
@@ -168,6 +191,9 @@ async def select_holiday_greetings(state: SchedulerState) -> dict[str, Any]:
         ensure_ascii=False,
         indent=2,
     )
+    owner_notes = _fmt_owner_holiday_notes(state)
+    if owner_notes:
+        human_content = f"{human_content}\n\n{owner_notes}"
 
     llm = structured_llm_from_milestone_run_config().with_structured_output(
         SchedulerHolidayGreetingsDraft

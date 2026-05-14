@@ -78,6 +78,7 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
             "promotion_candidates": "promotion_candidates",
             "menu_tagger": "menu_tagger",
             "reel_lineup": "reel_lineup",
+            "scheduler": "scheduler",
             "ig_profile": "ig_profile",
             "dates": "dates",
             "public_holidays": "public_holidays",
