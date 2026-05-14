@@ -344,7 +344,7 @@ function TimelineItemInner({
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="px-3 py-3">
+                <div className="min-w-0 overflow-x-hidden px-3 py-3">
                   <MilestoneDataPreview milestone={milestone} />
                 </div>
               </CollapsibleContent>

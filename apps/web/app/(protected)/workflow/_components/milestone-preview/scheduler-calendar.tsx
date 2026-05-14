@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight, Columns3 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
@@ -13,6 +13,7 @@ import {
 } from '@workspace/ui/components/tooltip'
 import { cn } from '@workspace/ui/lib/utils'
 
+import { useMediaQuery } from '@/hooks/use-media-query'
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
 import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 import {
@@ -36,6 +37,7 @@ import {
 } from '@/lib/milestones/scheduler-calendar'
 
 import { SchedulerCalendarMonthGrid } from './scheduler-calendar-month-grid'
+import { SchedulerCalendarMonthList } from './scheduler-calendar-month-list'
 import { SchedulerCalendarWeekGrid } from './scheduler-calendar-week-grid'
 
 export type SchedulerCalendarViewMode = 'week' | 'month'
@@ -56,6 +58,7 @@ export function SchedulerCalendar({
   className,
 }: SchedulerCalendarProps) {
   const t = useTranslations('analytics.workflows.chat')
+  const isDesktop = useMediaQuery('(min-width: 768px)')
 
   const initialWeekStart = useMemo(() => {
     const anchor = parseIsoDateOnly(windowStart)
@@ -76,6 +79,12 @@ export function SchedulerCalendar({
   const [viewMode, setViewMode] = useState<SchedulerCalendarViewMode>('month')
   const [weekStartIso, setWeekStartIso] = useState(initialWeekStart)
   const [monthStartIso, setMonthStartIso] = useState(initialMonthStart)
+
+  useEffect(() => {
+    if (!isDesktop && viewMode === 'week') {
+      setViewMode('month')
+    }
+  }, [isDesktop, viewMode])
 
   const weekRange = useMemo(
     () => formatSchedulerWeekRange(weekStartIso, locale),
@@ -199,31 +208,33 @@ export function SchedulerCalendar({
             <ChevronRight aria-hidden className="size-4" />
           </Button>
 
-          <TooltipProvider delayDuration={300}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="size-8 shrink-0"
-                  aria-label={viewToggleLabel}
-                  onClick={handleViewToggle}
-                >
-                  {viewMode === 'week' ? (
-                    <CalendarDays aria-hidden className="size-4" />
-                  ) : (
-                    <Columns3 aria-hidden className="size-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">{viewToggleLabel}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {isDesktop ? (
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="size-8 shrink-0"
+                    aria-label={viewToggleLabel}
+                    onClick={handleViewToggle}
+                  >
+                    {viewMode === 'week' ? (
+                      <CalendarDays aria-hidden className="size-4" />
+                    ) : (
+                      <Columns3 aria-hidden className="size-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{viewToggleLabel}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : null}
         </div>
       </div>
 
-      {viewMode === 'week' ? (
+      {isDesktop && viewMode === 'week' ? (
         <SchedulerCalendarWeekGrid
           weekStartIso={weekStartIso}
           windowStart={windowStart}
@@ -231,7 +242,7 @@ export function SchedulerCalendar({
           locale={locale}
           slots={slots}
         />
-      ) : (
+      ) : isDesktop ? (
         <SchedulerCalendarMonthGrid
           monthStartIso={monthStartIso}
           windowStart={windowStart}
@@ -242,6 +253,14 @@ export function SchedulerCalendar({
             setWeekStartIso(weekStartIsoForDay(isoDate, windowStart, windowEnd))
             setViewMode('week')
           }}
+        />
+      ) : (
+        <SchedulerCalendarMonthList
+          monthStartIso={monthStartIso}
+          windowStart={windowStart}
+          windowEnd={windowEnd}
+          locale={locale}
+          slots={slots}
         />
       )}
     </div>
