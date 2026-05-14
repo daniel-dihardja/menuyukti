@@ -326,7 +326,7 @@ function TimelineItemInner({
               <CollapsibleTrigger asChild>
                 <button
                   className={cn(
-                    'flex w-full min-h-10 items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium text-foreground',
+                    'flex w-full min-h-10 items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium text-muted-foreground',
                     'hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
                   )}
                   type="button"
