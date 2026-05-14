@@ -1,23 +1,18 @@
-"""Create a workflow root and milestone tree from an export payload (new DB ids)."""
+"""Create a workflow root and milestone tree from a template payload."""
 
 from __future__ import annotations
 
 import secrets
 from typing import Any
 
-import strawberry
 from sqlalchemy.orm import Session
-from strawberry.scalars import JSON
 
-from graphql.data_sources import Node, SessionLocal
-from graphql.schema.auth import require_location_owner, user_id_from_info
+from graphql.data_sources import Node
 from graphql.schema.milestone_payload_validation import (
     validate_pass_criteria_list,
     validate_result_payload,
 )
-from graphql.schema.node_gql import node_to_gql
 from graphql.schema.node_handlers import get_handler
-from graphql.schema.types import NodeType
 
 _PASS_STATUSES = frozenset({"pass", "fail", "open"})
 
@@ -122,7 +117,13 @@ def _create_milestone_node(
             milestone.milestone_result = rd
 
 
-def _import_from_payload(session: Session, location_id: int, payload: object) -> Node:
+def seed_workflow_from_payload(
+    session: Session,
+    location_id: int,
+    payload: object,
+    *,
+    analytics_run_id: int | None = None,
+) -> Node:
     if not isinstance(payload, dict):
         raise ValueError("payload must be a JSON object")
 
@@ -136,6 +137,8 @@ def _import_from_payload(session: Session, location_id: int, payload: object) ->
 
     handler = get_handler("workflow")
     resolved_root = handler.validate_create(None, None, session)
+    if analytics_run_id is not None:
+        resolved_root = {**resolved_root, "analyticsRunId": analytics_run_id}
 
     root_node = Node(
         parent_id=None,
@@ -157,22 +160,3 @@ def _import_from_payload(session: Session, location_id: int, payload: object) ->
     session.commit()
     session.refresh(root_node)
     return root_node
-
-
-@strawberry.type
-class ImportWorkflowMutation:
-    @strawberry.mutation
-    def import_workflow(
-        self,
-        info: strawberry.Info,
-        location_id: int,
-        payload: JSON,
-    ) -> NodeType:
-        user_id = user_id_from_info(info)
-        if not user_id:
-            raise ValueError("Missing authenticated user for importWorkflow")
-
-        with SessionLocal() as session:
-            require_location_owner(session, location_id, user_id)
-            root_node = _import_from_payload(session, location_id, payload)
-            return node_to_gql(root_node)

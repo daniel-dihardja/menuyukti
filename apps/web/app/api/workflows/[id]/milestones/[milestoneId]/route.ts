@@ -356,8 +356,6 @@ export async function PATCH(req: Request, context: RouteContext) {
       if (j < 0 || j >= milestones.length) {
         return NextResponse.json({ message: 'Cannot move milestone' }, { status: 400 })
       }
-      // Swap positions in the sorted list, then assign sequential orders 1..n so stored
-      // `order` always matches display order (avoids duplicate order values that made swaps a no-op).
       const reordered = [...milestones]
       const a = reordered[idx]
       const b = reordered[j]

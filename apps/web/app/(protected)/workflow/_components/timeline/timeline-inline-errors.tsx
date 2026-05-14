@@ -11,7 +11,6 @@ export const TIMELINE_ERROR_KEYS = [
   'milestoneData',
   'milestoneRun',
   'milestoneSettings',
-  'export',
   'milestoneRunCriteriaHint',
 ] as const
 

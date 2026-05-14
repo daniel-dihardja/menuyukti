@@ -2,7 +2,6 @@
 
 import {
   BarChart3,
-  Bot,
   ChevronRight,
   FileUp,
   LayoutDashboard,
@@ -59,12 +58,6 @@ const NAV_WORKSPACE: NavItem[] = [
     href: routes.canvas,
     icon: <Sparkles className="w-4 h-4" />,
     separatorBefore: true,
-  },
-  {
-    key: 'agent',
-    labelKey: 'agents',
-    href: routes.agent,
-    icon: <Bot className="w-4 h-4" />,
   },
   {
     key: 'workflows',

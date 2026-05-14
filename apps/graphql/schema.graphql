@@ -337,9 +337,8 @@ type Mutation {
   """
   uploadSalesReport(file: Upload!, locationId: ID!, includeLineItems: Boolean! = false): ExcelUploadResult!
   createNode(locationId: Int!, nodeType: String!, name: String = null, parentId: ID = null, description: String = null, data: JSON = null): NodeType!
+  createWorkflowFromPayload(locationId: Int!, payload: JSON!, analyticsRunId: Int = null): NodeType!
   deleteNode(id: ID!): Boolean!
-  exportWorkflow(workflowId: ID!, locationId: Int!): WorkflowExportType!
-  importWorkflow(locationId: Int!, payload: JSON!): NodeType!
   updateNode(id: ID!, name: String = null, data: JSON = null): NodeType!
   replacePassCriteria(milestoneId: ID!, locationId: Int!, requirements: [String!]!): Boolean!
   setPassCriterionStatus(milestoneId: ID!, locationId: Int!, criterionId: String!, status: String!): Boolean!
@@ -511,8 +510,6 @@ type PublicHolidayType {
 Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership.
 """
 type Query {
-  workflowExports(locationId: Int!, first: Int = null): [WorkflowExportType!]!
-
   """
   Load a workflow node, its milestones (ordered like `nodes`). Returns null if the id is missing, not a workflow, or not owned by the caller.
   """
@@ -677,16 +674,6 @@ Workflow campaign tree for SSR: workflow root, ordered milestones (single round-
 type WorkflowCampaignTreeType {
   workflow: NodeType!
   milestones: [MilestoneCampaignBundleType!]!
-}
-
-type WorkflowExportType {
-  id: ID!
-  workflowId: ID!
-  locationId: Int!
-  payload: JSON!
-  schemaVersion: String!
-  createdAt: DateTime
-  updatedAt: DateTime
 }
 
 type WorkspaceMembershipType {

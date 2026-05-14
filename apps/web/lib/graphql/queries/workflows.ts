@@ -35,69 +35,17 @@ export type UpdateNodeData = {
   updateNode: AnyNode
 }
 
-export const EXPORT_WORKFLOW_MUTATION = `
-  mutation ExportWorkflow($workflowId: ID!, $locationId: Int!) {
-    exportWorkflow(workflowId: $workflowId, locationId: $locationId) {
-      id
-      workflowId
-      locationId
-      payload
-      schemaVersion
-      createdAt
-      updatedAt
-    }
-  }
-`
-
-export type ExportWorkflowDataRaw = {
-  exportWorkflow: {
-    id: string
-    workflowId: string
-    locationId: number
-    payload: unknown
-    schemaVersion: string
-    createdAt: string | null
-    updatedAt: string | null
-  }
-}
-
-export const WORKFLOW_EXPORTS_QUERY = `
-  query WorkflowExports($locationId: Int!, $first: Int) {
-    workflowExports(locationId: $locationId, first: $first) {
-      id
-      workflowId
-      locationId
-      payload
-      schemaVersion
-      createdAt
-      updatedAt
-    }
-  }
-`
-
-export type WorkflowExportsDataRaw = {
-  workflowExports: Array<{
-    id: string
-    workflowId: string
-    locationId: number
-    payload: unknown
-    schemaVersion: string
-    createdAt: string | null
-    updatedAt: string | null
-  }>
-}
-
-export const IMPORT_WORKFLOW_MUTATION = `
-  mutation ImportWorkflow($locationId: Int!, $payload: JSON!) {
-    importWorkflow(locationId: $locationId, payload: $payload) {
+export const CREATE_WORKFLOW_FROM_PAYLOAD_MUTATION = `
+  mutation CreateWorkflowFromPayload($locationId: Int!, $payload: JSON!, $analyticsRunId: Int) {
+    createWorkflowFromPayload(
+      locationId: $locationId
+      payload: $payload
+      analyticsRunId: $analyticsRunId
+    ) {
 ${NODE_SELECTION_FIELDS}
     }
   }
 `
-
-export type ImportWorkflowDataRaw = {
-  importWorkflow: AnyNode
-}
 
 export const NODES_QUERY = `
   query Nodes($locationId: Int!, $nodeType: String, $parentId: ID, $first: Int, $afterId: ID) {

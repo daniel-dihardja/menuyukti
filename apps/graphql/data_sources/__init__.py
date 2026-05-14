@@ -3,7 +3,6 @@
 __all__ = [
     "Base",
     "MilestoneAgentRun",
-    "WorkflowExport",
     "Workspace",
     "WorkspaceMembership",
     "Location",

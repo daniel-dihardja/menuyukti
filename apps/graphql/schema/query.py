@@ -19,7 +19,6 @@ from graphql.schema.queries import (
     RevenueTrendsQuery,
     WeeklyDemandPatternQuery,
     WorkflowCampaignTreeQuery,
-    WorkflowExportsQuery,
     WorkspaceQuery,
 )
 
@@ -31,7 +30,6 @@ from graphql.schema.queries import (
     )
 )
 class Query(
-    WorkflowExportsQuery,
     WorkflowCampaignTreeQuery,
     LocationsQuery,
     LocationManualBriefInputQuery,

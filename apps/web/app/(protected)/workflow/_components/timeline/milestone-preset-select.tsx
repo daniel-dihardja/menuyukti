@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Plus } from 'lucide-react'
 
 import {
   MILESTONE_PRESET_IDS,
@@ -10,7 +9,6 @@ import {
   milestonePresetIconFor,
   type MilestonePresetId,
 } from '@/lib/milestones/preset-definitions'
-import { Button } from '@workspace/ui/components/button'
 import {
   Select,
   SelectContent,
@@ -19,7 +17,6 @@ import {
   SelectValue,
 } from '@workspace/ui/components/select'
 import { Spinner } from '@workspace/ui/components/spinner'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@workspace/ui/components/tooltip'
 
 const MILESTONE_PRESET_NONE = '__none__' as const
 
@@ -37,27 +34,30 @@ export function MilestoneCreateControls({
   onCreateMilestoneFromPreset,
 }: MilestoneCreateControlsProps) {
   const t = useTranslations('analytics.workflows.chat')
-  const [presetChoice, setPresetChoice] = useState<string>(MILESTONE_PRESET_NONE)
+  const [presetChoice, setPresetChoice] = useState<string | undefined>(undefined)
 
-  const handleCreateClick = async () => {
-    let ok = false
-    if (presetChoice === MILESTONE_PRESET_NONE) {
-      ok = await onCreateMilestone()
-    } else if (isMilestonePresetId(presetChoice)) {
-      ok = await onCreateMilestoneFromPreset(presetChoice)
+  const handleValueChange = async (value: string) => {
+    if (value === MILESTONE_PRESET_NONE) {
+      await onCreateMilestone()
+    } else if (isMilestonePresetId(value)) {
+      await onCreateMilestoneFromPreset(value)
     }
-    if (ok) {
-      setPresetChoice(MILESTONE_PRESET_NONE)
-    }
+    setPresetChoice(undefined)
   }
 
   return (
-    <div className="flex shrink-0 items-center gap-2">
-      <Select disabled={disabled} onValueChange={setPresetChoice} value={presetChoice}>
+    <div className="flex shrink-0 items-center">
+      <Select
+        disabled={disabled || creating}
+        onValueChange={(v) => void handleValueChange(v)}
+        value={presetChoice}
+      >
         <SelectTrigger
-          aria-label={t('milestonePreset.selectAriaLabel')}
+          aria-busy={creating}
+          aria-label={creating ? t('creatingMilestone') : t('milestonePreset.selectAriaLabel')}
           className="w-[min(100%,11rem)]"
         >
+          {creating ? <Spinner className="shrink-0" /> : null}
           <SelectValue placeholder={t('milestonePreset.selectPlaceholder')} />
         </SelectTrigger>
         <SelectContent position="popper">
@@ -69,26 +69,6 @@ export function MilestoneCreateControls({
           ))}
         </SelectContent>
       </Select>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">
-            <Button
-              aria-busy={creating}
-              aria-label={creating ? t('creatingMilestone') : t('createMilestone')}
-              disabled={disabled}
-              onClick={() => void handleCreateClick()}
-              size="icon"
-              type="button"
-              variant="default"
-            >
-              {creating ? <Spinner /> : <Plus aria-hidden />}
-            </Button>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">
-          <p>{creating ? t('creatingMilestone') : t('createMilestone')}</p>
-        </TooltipContent>
-      </Tooltip>
     </div>
   )
 }

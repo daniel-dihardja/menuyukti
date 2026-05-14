@@ -13,6 +13,7 @@ import {
 import { cn } from '@workspace/ui/lib/utils'
 
 import { MilestoneDataPreview } from '../milestone-preview/milestone-data-preview'
+import { useTimelineCollapse } from './timeline-collapse-context'
 import { useTimelineActions, useTimelineChat, useTimelineWorkspaceState } from '../timeline-context'
 import { MilestoneItemHeader } from './milestone-item-header'
 import { MilestoneItemMobileRunModel } from './milestone-item-mobile-run-model'
@@ -75,7 +76,9 @@ function TimelineItemInner({
   const [milestoneRunChatModel, setMilestoneRunChatModel] = useState<ChatGatewayModelId>(
     () => DEFAULT_CHAT_GATEWAY_MODEL,
   )
+  const { collapseAllEpoch } = useTimelineCollapse()
   const [userOpen, setUserOpen] = useState(true)
+  const lastCollapseEpochRef = useRef(collapseAllEpoch)
   const lastMilestoneIdRef = useRef(milestone.id)
   const hadMilestoneDataRef = useRef(milestone.data != null)
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(() => milestone.data != null)
@@ -91,6 +94,17 @@ function TimelineItemInner({
   useEffect(() => {
     setCriteriaRows(milestone.passCriteria)
   }, [milestone.id, milestone.passCriteria])
+
+  useEffect(() => {
+    if (collapseAllEpoch === lastCollapseEpochRef.current) {
+      return
+    }
+    lastCollapseEpochRef.current = collapseAllEpoch
+    setUserOpen(false)
+    if (isMobile) {
+      setMobilePreviewOpen(false)
+    }
+  }, [collapseAllEpoch, isMobile])
 
   useEffect(() => {
     if (!isMobile) {

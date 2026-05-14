@@ -21,8 +21,6 @@ export type WorkflowMilestoneUiState = {
   milestoneRunCriteriaHint: string | null
   savingMilestoneSettingsMilestoneId: string | null
   milestoneSettingsError: string | null
-  exporting: boolean
-  exportError: string | null
 }
 
 export function createInitialWorkflowMilestoneUiState(
@@ -48,8 +46,6 @@ export function createInitialWorkflowMilestoneUiState(
     milestoneRunCriteriaHint: null,
     savingMilestoneSettingsMilestoneId: null,
     milestoneSettingsError: null,
-    exporting: false,
-    exportError: null,
   }
 }
 

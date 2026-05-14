@@ -354,19 +354,18 @@ export type MilestoneCampaignBundleType = {
   milestone: NodeType
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type Mutation = {
   __typename?: 'Mutation'
   completeMilestoneAgentRun: Scalars['Boolean']['output']
   createImageAiFlow: ImageAiFlowType
   createLocation: LocationType
   createNode: NodeType
+  createWorkflowFromPayload: NodeType
   createWorkspace: WorkspaceType
   deleteAnalyticsRun: Scalars['Boolean']['output']
   deleteImageAiFlow: Scalars['Boolean']['output']
   deleteNode: Scalars['Boolean']['output']
-  exportWorkflow: WorkflowExportType
-  importWorkflow: NodeType
   inviteWorkspaceMember: WorkspaceMembershipType
   removeWorkspaceMember: Scalars['Boolean']['output']
   replacePassCriteria: Scalars['Boolean']['output']
@@ -442,24 +441,19 @@ export type MutationDeleteImageAiFlowArgs = {
   slug: Scalars['String']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
-export type MutationDeleteNodeArgs = {
-  id: Scalars['ID']['input']
-}
-
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
-export type MutationExportWorkflowArgs = {
-  locationId: Scalars['Int']['input']
-  workflowId: Scalars['ID']['input']
-}
-
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
-export type MutationImportWorkflowArgs = {
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
+export type MutationCreateWorkflowFromPayloadArgs = {
+  analyticsRunId?: InputMaybe<Scalars['Int']['input']>
   locationId: Scalars['Int']['input']
   payload: Scalars['JSON']['input']
 }
 
-/** Root mutation: sales uploads, node CRUD, workflow import/export, workspace invites, and image AI flow configuration. */
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
+export type MutationDeleteNodeArgs = {
+  id: Scalars['ID']['input']
+}
+
+/** Root mutation: sales uploads, node CRUD, workflow templates, workspace invites, and image AI flow configuration. */
 export type MutationInviteWorkspaceMemberArgs = {
   clerkUserId: Scalars['String']['input']
   workspaceId: Scalars['ID']['input']
@@ -741,7 +735,6 @@ export type Query = {
   weeklyDemandPattern?: Maybe<WeeklyDemandPatternPayloadType>
   /** Load a workflow node, its milestones (ordered like `nodes`). Returns null if the id is missing, not a workflow, or not owned by the caller. */
   workflowCampaignTree?: Maybe<WorkflowCampaignTreeType>
-  workflowExports: Array<WorkflowExportType>
   workspaceMembers: Array<WorkspaceMembershipType>
 }
 
@@ -887,12 +880,6 @@ export type QueryWorkflowCampaignTreeArgs = {
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
-export type QueryWorkflowExportsArgs = {
-  first?: InputMaybe<Scalars['Int']['input']>
-  locationId: Scalars['Int']['input']
-}
-
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
 export type QueryWorkspaceMembersArgs = {
   first?: InputMaybe<Scalars['Int']['input']>
   workspaceId: Scalars['ID']['input']
@@ -964,17 +951,6 @@ export type WorkflowCampaignTreeType = {
   __typename?: 'WorkflowCampaignTreeType'
   milestones: Array<MilestoneCampaignBundleType>
   workflow: NodeType
-}
-
-export type WorkflowExportType = {
-  __typename?: 'WorkflowExportType'
-  createdAt?: Maybe<Scalars['DateTime']['output']>
-  id: Scalars['ID']['output']
-  locationId: Scalars['Int']['output']
-  payload: Scalars['JSON']['output']
-  schemaVersion: Scalars['String']['output']
-  updatedAt?: Maybe<Scalars['DateTime']['output']>
-  workflowId: Scalars['ID']['output']
 }
 
 export type WorkspaceMembershipType = {

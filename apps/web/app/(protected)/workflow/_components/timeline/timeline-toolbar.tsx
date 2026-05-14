@@ -2,7 +2,10 @@
 
 import type { ReactNode } from 'react'
 
-import { Download, Plus, Upload } from 'lucide-react'
+import { ListCollapse, Plus } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+
+import { useTimelineCollapse } from './timeline-collapse-context'
 
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
@@ -44,72 +47,27 @@ export function TimelineToolbar({ title, count, actions, trailingSlot }: Timelin
   )
 }
 
-export function TimelineToolbarExportButton({
-  exportLabel,
-  exportingLabel,
-  onExport,
-  exporting,
-  creating,
-}: {
-  exportLabel: string
-  exportingLabel: string
-  onExport: () => void | Promise<void>
-  exporting: boolean
-  creating: boolean
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex">
-          <Button
-            aria-busy={exporting}
-            aria-label={exporting ? exportingLabel : exportLabel}
-            disabled={exporting || creating}
-            onClick={() => void onExport()}
-            size="icon"
-            type="button"
-            variant="outline"
-          >
-            {exporting ? <Spinner /> : <Download aria-hidden />}
-          </Button>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">
-        <p>{exporting ? exportingLabel : exportLabel}</p>
-      </TooltipContent>
-    </Tooltip>
-  )
-}
+export function TimelineToolbarCollapseAllButton() {
+  const t = useTranslations('analytics.workflows.chat')
+  const { collapseAllMilestones } = useTimelineCollapse()
 
-export function TimelineToolbarImportButton({
-  importLabel,
-  onImport,
-  creating,
-  exporting,
-}: {
-  importLabel: string
-  onImport: () => void | Promise<void>
-  creating: boolean
-  exporting: boolean
-}) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <span className="inline-flex">
           <Button
-            aria-label={importLabel}
-            disabled={creating || exporting}
-            onClick={() => void onImport()}
+            aria-label={t('collapseAllMilestonesAriaLabel')}
+            onClick={collapseAllMilestones}
             size="icon"
             type="button"
-            variant="outline"
+            variant="ghost"
           >
-            <Upload aria-hidden />
+            <ListCollapse aria-hidden />
           </Button>
         </span>
       </TooltipTrigger>
       <TooltipContent side="bottom">
-        <p>{importLabel}</p>
+        <p>{t('collapseAllMilestones')}</p>
       </TooltipContent>
     </Tooltip>
   )
@@ -120,13 +78,11 @@ export function TimelineToolbarCreateButton({
   creatingLabel,
   onCreateMilestone,
   creating,
-  exporting,
 }: {
   createLabel: string
   creatingLabel: string
   onCreateMilestone: () => boolean | Promise<boolean>
   creating: boolean
-  exporting: boolean
 }) {
   return (
     <Tooltip>
@@ -135,7 +91,7 @@ export function TimelineToolbarCreateButton({
           <Button
             aria-busy={creating}
             aria-label={creating ? creatingLabel : createLabel}
-            disabled={creating || exporting}
+            disabled={creating}
             onClick={() => void onCreateMilestone()}
             size="icon"
             type="button"

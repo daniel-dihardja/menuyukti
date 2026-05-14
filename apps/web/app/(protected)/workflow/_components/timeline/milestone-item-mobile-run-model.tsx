@@ -14,7 +14,7 @@ export function MilestoneItemMobileRunModel() {
 
   return (
     <div
-      className="flex min-w-0 items-center border-border/60 border-b px-3 py-3 md:px-6"
+      className="flex min-w-0 items-center justify-end border-border/60 border-b px-3 py-3 md:px-6"
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
     >
