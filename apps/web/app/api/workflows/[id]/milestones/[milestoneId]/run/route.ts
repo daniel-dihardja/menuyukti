@@ -12,6 +12,7 @@ import {
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
+  postLineupMilestoneDataSchema,
   milestoneInputSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
@@ -41,6 +42,7 @@ const runBodySchema = z.object({
       igProfileMilestoneDataSchema,
       menuTaggerMilestoneDataSchema,
       reelLineupMilestoneDataSchema,
+      postLineupMilestoneDataSchema,
     ])
     .optional(),
 })

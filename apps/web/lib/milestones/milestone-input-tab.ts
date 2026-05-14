@@ -14,6 +14,7 @@ export function milestonePresetHasDefaultOptionalNotesInput(
   | 'ig_profile'
   | 'menu_tagger'
   | 'reel_lineup'
+  | 'post_lineup'
   | 'scheduler' {
   return milestonePresetInputType(presetId) === 'optional_notes'
 }
@@ -26,6 +27,7 @@ export function optionalNotesFromMilestoneInput(
     | 'ig_profile'
     | 'menu_tagger'
     | 'reel_lineup'
+    | 'post_lineup'
     | 'scheduler',
 ): string {
   if (raw?.type !== presetId || raw.value == null || typeof raw.value !== 'object') {

@@ -222,6 +222,44 @@ def extract_menu_tagger_data(prior_milestones_json: str) -> dict[str, Any] | Non
     return None
 
 
+def is_reel_lineup_milestone_data(data: object) -> bool:
+    if not isinstance(data, dict):
+        return False
+    food_leads = data.get("foodLeads")
+    groups = data.get("groups")
+    return isinstance(food_leads, list) and isinstance(groups, list)
+
+
+def reel_lineup_has_food_leads(data: dict[str, Any]) -> bool:
+    food_leads = data.get("foodLeads")
+    if not isinstance(food_leads, list):
+        return False
+    for raw in food_leads:
+        if not isinstance(raw, dict):
+            continue
+        if str(raw.get("name") or "").strip():
+            return True
+    return False
+
+
+def extract_reel_lineup_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the first matched prior reel_lineup row, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"reel_lineup"}))
+    return matched[0] if matched else None
+
+
+def extract_reel_lineup_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return reel_lineup ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_reel_lineup_row(prior_milestones_json)
+    if row is None:
+        return None
+    data = row.get("data")
+    if isinstance(data, dict) and is_reel_lineup_milestone_data(data):
+        return data
+    return None
+
+
 def is_dates_milestone_data(data: object) -> bool:
     if not isinstance(data, dict):
         return False

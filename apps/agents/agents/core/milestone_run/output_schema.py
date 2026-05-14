@@ -542,6 +542,62 @@ class ReelLineupMilestoneOutput(BaseModel):
         return self
 
 
+class PostLineupSlideOutput(BaseModel):
+    dishName: str
+    role: Literal["star", "puzzle"] | None = None
+    category: str | None = None
+    imageBrief: str
+
+    @field_validator("dishName", "imageBrief", mode="before")
+    @classmethod
+    def _normalize_required_text(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("dishName", "imageBrief")
+    @classmethod
+    def _validate_non_empty(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must be non-empty")
+        return value
+
+
+class PostLineupPostOutput(BaseModel):
+    id: str
+    format: Literal["carousel"]
+    intent: Literal["pinned_monthly_menu"]
+    title: str
+    slides: list[PostLineupSlideOutput]
+
+    @field_validator("id", "title", mode="before")
+    @classmethod
+    def _normalize_text(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("slides")
+    @classmethod
+    def _validate_slides(
+        cls, values: list[PostLineupSlideOutput]
+    ) -> list[PostLineupSlideOutput]:
+        if not values:
+            raise ValueError("must contain at least one slide")
+        if len(values) > 5:
+            raise ValueError("must contain at most 5 slides")
+        return values
+
+
+class PostLineupMilestoneOutput(BaseModel):
+    posts: list[PostLineupPostOutput]
+    sourceReelLineupTitle: str | None = None
+    notes: str | None = None
+
+    @field_validator("posts")
+    @classmethod
+    def _validate_posts(cls, values: list[PostLineupPostOutput]) -> list[PostLineupPostOutput]:
+        if not values:
+            raise ValueError("must contain at least one post")
+        return values
+
+
 class SchedulerSlotOutput(BaseModel):
     date: str
     time: str
@@ -563,6 +619,7 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "promotion_candidates": PromotionCandidatesMilestoneOutput,
     "menu_tagger": MenuTaggerMilestoneOutput,
     "reel_lineup": ReelLineupMilestoneOutput,
+    "post_lineup": PostLineupMilestoneOutput,
     "scheduler": SchedulerMilestoneOutput,
     "culture_hooks": CultureHooksMilestoneOutput,
     "ig_profile": IgProfileMilestoneOutput,

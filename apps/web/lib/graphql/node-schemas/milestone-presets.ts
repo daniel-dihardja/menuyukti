@@ -29,6 +29,7 @@ export const milestonePresetIdSchema = z.enum([
   'promotion_candidates',
   'menu_tagger',
   'reel_lineup',
+  'post_lineup',
   'culture_hooks',
   'ig_profile',
   'scheduler',
@@ -76,6 +77,12 @@ export const reelLineupMilestoneInputValueSchema = z.object({
 })
 
 export type ReelLineupMilestoneInputValue = z.infer<typeof reelLineupMilestoneInputValueSchema>
+
+export const postLineupMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type PostLineupMilestoneInputValue = z.infer<typeof postLineupMilestoneInputValueSchema>
 
 export const schedulerMilestoneInputValueSchema = z.object({
   notes: z.string(),
@@ -322,6 +329,37 @@ export const reelLineupMilestoneDataSchema = z.object({
 })
 
 export type ReelLineupMilestoneData = z.infer<typeof reelLineupMilestoneDataSchema>
+
+export const postLineupPostFormatSchema = z.literal('carousel')
+
+export const postLineupPostIntentSchema = z.literal('pinned_monthly_menu')
+
+export const postLineupSlideSchema = z.object({
+  dishName: z.string().trim().min(1),
+  role: menuTaggerItemRoleSchema.optional(),
+  category: z.string().trim().min(1).optional(),
+  imageBrief: z.string().trim().min(1),
+})
+
+export type PostLineupSlide = z.infer<typeof postLineupSlideSchema>
+
+export const postLineupPostSchema = z.object({
+  id: z.string().trim().min(1),
+  format: postLineupPostFormatSchema,
+  intent: postLineupPostIntentSchema,
+  title: z.string().trim().min(1),
+  slides: z.array(postLineupSlideSchema).min(1).max(5),
+})
+
+export type PostLineupPost = z.infer<typeof postLineupPostSchema>
+
+export const postLineupMilestoneDataSchema = z.object({
+  posts: z.array(postLineupPostSchema),
+  sourceReelLineupTitle: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+export type PostLineupMilestoneData = z.infer<typeof postLineupMilestoneDataSchema>
 
 export const schedulerSlotSchema = z.object({
   date: z.string(),

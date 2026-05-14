@@ -5,6 +5,7 @@ import {
   igProfileMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
+  postLineupMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
   schedulerMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
@@ -45,6 +46,10 @@ export function parseDataPreviewForPreset(
   }
   if (presetId === 'reel_lineup') {
     const parsed = reelLineupMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'post_lineup') {
+    const parsed = postLineupMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   if (presetId === 'culture_hooks') {

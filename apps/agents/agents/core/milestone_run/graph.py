@@ -22,6 +22,7 @@ from agents_app.agents.core.milestone_run.prior_context_inject import (
 from agents_app.agents.core.milestone_run.promotion_candidates.graph import (
     build_promotion_candidates_graph,
 )
+from agents_app.agents.core.milestone_run.post_lineup.graph import build_post_lineup_graph
 from agents_app.agents.core.milestone_run.reel_lineup.graph import build_reel_lineup_graph
 from agents_app.agents.core.milestone_run.scheduler.graph import build_scheduler_graph
 from agents_app.agents.core.milestone_run.state import MilestoneRunState
@@ -159,6 +160,27 @@ async def _run_reel_lineup(state: MilestoneRunState, *, client: httpx.AsyncClien
     initial["milestonedata_written"] = False
     final_sub = await _stream_subgraph(
         build_reel_lineup_graph(client),
+        initial,
+        state=state,
+    )
+    return {
+        "result_data": str(final_sub.get("result_data", "")),
+        "raw_data": str(final_sub.get("result_data", "") or state.get("raw_data", "")),
+        "milestone_data": final_sub.get("milestone_data"),
+        "milestonedata_written": bool(final_sub.get("milestonedata_written")),
+        "result_summary": str(state.get("result_summary", "")),
+        "result_node_id": state.get("result_node_id"),
+        "last_criteria_verdicts": list(state.get("last_criteria_verdicts") or []),
+    }
+
+
+async def _run_post_lineup(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+    initial = _base_initial(state)
+    initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
+    initial["result_data"] = ""
+    initial["milestonedata_written"] = False
+    final_sub = await _stream_subgraph(
+        build_post_lineup_graph(client),
         initial,
         state=state,
     )
@@ -322,6 +344,8 @@ async def _execute_preset(state: MilestoneRunState, *, client: httpx.AsyncClient
         return await _run_menu_tagger(state, client=client)
     if preset_id == "reel_lineup":
         return await _run_reel_lineup(state, client=client)
+    if preset_id == "post_lineup":
+        return await _run_post_lineup(state, client=client)
     if preset_id == "scheduler":
         return await _run_scheduler(state, client=client)
     if preset_id == "culture_hooks":

@@ -30,6 +30,11 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "position-1 Reel hook in its own food group. Also picks up to three tagged beverage "
         "drinks (storytelling fit not required) as position-1 drink Reel hook groups."
     ),
+    "post_lineup": (
+        "Requires a prior Reel Lineup milestone. Reads saved foodLeads and drafts Instagram "
+        "feed post concepts. Builds a pinned monthly menu carousel with one slide per food "
+        "lead, each slide naming the dish and including a high-quality photo brief."
+    ),
     "culture_hooks": (
         "Use Campaign Brief data to identify the location concept and target audience, then "
         "generate intersection topics between the concept and the audience's likely interests "
@@ -94,6 +99,7 @@ def format_optional_input_section(preset_id: str | None) -> str | None:
         "ig_profile",
         "menu_tagger",
         "reel_lineup",
+        "post_lineup",
         "scheduler",
     ):
         return "\n".join(

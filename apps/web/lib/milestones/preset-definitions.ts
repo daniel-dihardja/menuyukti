@@ -3,6 +3,7 @@ import {
   CalendarRange,
   Clapperboard,
   ClipboardList,
+  Images,
   Instagram,
   Lightbulb,
   ListChecks,
@@ -18,6 +19,7 @@ import {
   MENU_TAGGER_TAXONOMY_VERSION,
   emptyMenuTaggerUsedTags,
 } from '@/lib/milestones/menu-tagger-taxonomy'
+import { EMPTY_POST_LINEUP_DATA } from '@/lib/milestones/post-lineup'
 import { EMPTY_REEL_LINEUP_DATA } from '@/lib/milestones/reel-lineup'
 import {
   campaignBriefMilestoneDataSchema,
@@ -25,6 +27,7 @@ import {
   datesMilestoneDataSchema,
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
+  postLineupMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
   schedulerMilestoneDataSchema,
   type MilestoneInput,
@@ -270,6 +273,40 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.reel_lineup.criterionDrinkHook'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  post_lineup: {
+    id: 'post_lineup',
+    icon: Images,
+    inputType: 'optional_notes',
+    dataSchema: postLineupMilestoneDataSchema,
+    emptyData: EMPTY_POST_LINEUP_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.post_lineup.title'),
+      milestoneInput: {
+        type: 'post_lineup',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_POST_LINEUP_DATA,
+      goal: t('milestonePreset.post_lineup.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.post_lineup.criterionPriorReelLineup'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.post_lineup.criterionCarouselPost'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.post_lineup.criterionSlideCount'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.post_lineup.criterionSlideFields'),
           status: 'open',
         },
       ],
