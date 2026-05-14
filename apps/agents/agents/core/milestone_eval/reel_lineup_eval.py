@@ -38,6 +38,27 @@ def _groups(data: dict[str, Any]) -> list[dict[str, Any]]:
     return [row for row in raw if isinstance(row, dict)]
 
 
+def _is_drink_category(category: str) -> bool:
+    normalized = category.strip().upper()
+    return normalized == "DRINK" or normalized == "DRINKS" or normalized.startswith("DRINK")
+
+
+def _is_drink_group_item(item: dict[str, Any]) -> bool:
+    return _is_drink_category(str(item.get("category") or ""))
+
+
+def _drink_items_in_groups(groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    drinks: list[dict[str, Any]] = []
+    for group in groups:
+        items = group.get("items")
+        if not isinstance(items, list):
+            continue
+        for item in items:
+            if isinstance(item, dict) and _is_drink_group_item(item):
+                drinks.append(item)
+    return drinks
+
+
 def _group_item_names(data: dict[str, Any]) -> set[str]:
     names: set[str] = set()
     for group in _groups(data):
@@ -113,7 +134,9 @@ def try_reel_lineup_deterministic_verdict(
             moments = {
                 str(item.get("reelMoment") or "").strip()
                 for item in items
-                if isinstance(item, dict) and str(item.get("reelMoment") or "").strip()
+                if isinstance(item, dict)
+                and not _is_drink_group_item(item)
+                and str(item.get("reelMoment") or "").strip()
             }
             if anchor_value and moments and (moments != {anchor_value}):
                 issues.append(f"{group.get('id') or 'group'} has mixed reel_moment values")
@@ -121,7 +144,40 @@ def try_reel_lineup_deterministic_verdict(
             return ("fail", "; ".join(issues[:4]))
         if not groups:
             return ("fail", "no reel lineup groups to validate.")
-        return ("pass", "items within each group share the same reel_moment anchor.")
+        return ("pass", "food items within each group share the same reel_moment anchor.")
+
+    if "drink" in norm and ("end" in norm or "last" in norm):
+        drinks_in_groups = _drink_items_in_groups(groups)
+        if not drinks_in_groups:
+            return ("pass", "no drink items in lineup data.")
+        issues: list[str] = []
+        for group in groups:
+            items = group.get("items")
+            if not isinstance(items, list) or not items:
+                continue
+            drink_positions = [
+                index
+                for index, item in enumerate(items)
+                if isinstance(item, dict) and _is_drink_group_item(item)
+            ]
+            if len(drink_positions) > 1:
+                issues.append(f"{group.get('id') or 'group'} has multiple drinks")
+                continue
+            if drink_positions and drink_positions[0] != len(items) - 1:
+                issues.append(f"{group.get('id') or 'group'} drink is not last")
+                continue
+            if not drink_positions:
+                issues.append(f"{group.get('id') or 'group'} has no drink")
+        if issues:
+            if len(drinks_in_groups) < len(groups):
+                return (
+                    "pass",
+                    "drink pool exhausted; remaining groups use food-only fallback.",
+                )
+            return ("fail", "; ".join(issues[:4]))
+        if not groups:
+            return ("fail", "no reel lineup groups to validate.")
+        return ("pass", "each group ends with a drink item.")
 
     if "menu_tagger" in norm and "subset" in norm:
         tagged_names = {

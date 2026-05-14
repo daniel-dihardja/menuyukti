@@ -1,7 +1,26 @@
+import type { MenuTaggerItem } from '@/lib/graphql/node-schemas'
+
 export const REEL_LINEUP_PROFILE_ID = 'hook_reel' as const
 
 export const REEL_LINEUP_GROUP_MIN_SIZE = 3
 export const REEL_LINEUP_GROUP_MAX_SIZE = 5
+export const REEL_LINEUP_DRINK_SLOT_SIZE = 1
+
+type MenuTaggerItemLike = Pick<MenuTaggerItem, 'category' | 'tags'>
+
+function isDrinkCategory(category: string): boolean {
+  const normalized = category.trim().toUpperCase()
+  return normalized === 'DRINK' || normalized === 'DRINKS' || normalized.startsWith('DRINK')
+}
+
+export function isDrinkMenuTaggerItem(item: MenuTaggerItemLike): boolean {
+  if (item.tags.kind === 'drink') return true
+  return isDrinkCategory(item.category)
+}
+
+export function isFoodMenuTaggerItem(item: MenuTaggerItemLike): boolean {
+  return !isDrinkMenuTaggerItem(item)
+}
 
 /** Primary on-camera hooks — strong Reel openers. */
 export const REEL_HOOK_MOMENTS_HIGH = new Set([

@@ -310,6 +310,10 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
           requirement: t('milestonePreset.reel_lineup.criterionSharedReelMoment'),
           status: 'open',
         },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionDrinkEnd'),
+          status: 'open',
+        },
       ],
     }),
   },

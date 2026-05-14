@@ -8,10 +8,13 @@ import type {
 } from '@/lib/graphql/node-schemas'
 
 import {
+  REEL_LINEUP_DRINK_SLOT_SIZE,
   REEL_LINEUP_GROUP_MAX_SIZE,
   REEL_LINEUP_GROUP_MIN_SIZE,
   REEL_LINEUP_PROFILE_ID,
   contentAngleLeadBoost,
+  isDrinkMenuTaggerItem,
+  isFoodMenuTaggerItem,
   reelHookStrength,
 } from '@/lib/milestones/reel-lineup-rules'
 
@@ -115,8 +118,16 @@ function countRole(items: EnrichedItem[], role: 'star' | 'puzzle'): number {
   return items.filter((item) => item.role === role).length
 }
 
-function canAddToGroup(group: EnrichedItem[], candidate: EnrichedItem): boolean {
-  if (group.length >= REEL_LINEUP_GROUP_MAX_SIZE) return false
+function itemKey(item: EnrichedItem): PromotionCandidateItemKey {
+  return promotionCandidateItemKey(item.name, item.role, item.category.trim() || '(uncategorized)')
+}
+
+function canAddToGroup(
+  group: EnrichedItem[],
+  candidate: EnrichedItem,
+  foodMaxSize: number,
+): boolean {
+  if (group.length >= foodMaxSize) return false
 
   const lead = group[0]!
   if (candidate.tags.reel_moment !== lead.tags.reel_moment) return false
@@ -172,9 +183,35 @@ function supportScore(group: EnrichedItem[], candidate: EnrichedItem): number {
   return score
 }
 
+function drinkPairingScore(item: EnrichedItem): number {
+  let score = 0
+  if (item.role === 'star') score += 1
+  score += item.popularity * 0.5
+  score += reelHookStrength(item.tags.reel_moment) * 0.3
+  return score
+}
+
+function selectDrinkForGroup(drinks: EnrichedItem[]): EnrichedItem | undefined {
+  if (drinks.length === 0) return undefined
+  return [...drinks].sort((a, b) => {
+    const scoreDiff = drinkPairingScore(b) - drinkPairingScore(a)
+    if (scoreDiff !== 0) return scoreDiff
+    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+  })[0]
+}
+
+function getUnassignedDrinks(
+  enriched: EnrichedItem[],
+  assigned: Set<PromotionCandidateItemKey>,
+): EnrichedItem[] {
+  return enriched.filter((item) => isDrinkMenuTaggerItem(item) && !assigned.has(itemKey(item)))
+}
+
 function orderGroupItems(group: EnrichedItem[]): EnrichedItem[] {
-  const lead = group[0]!
-  const rest = group.slice(1)
+  const food = group.filter((item) => isFoodMenuTaggerItem(item))
+  const drinks = group.filter((item) => isDrinkMenuTaggerItem(item))
+  const lead = food[0]!
+  const rest = food.slice(1)
   const otherStars = rest
     .filter((item) => item.role === 'star')
     .sort((a, b) => {
@@ -187,7 +224,12 @@ function orderGroupItems(group: EnrichedItem[]): EnrichedItem[] {
       if (b.popularity !== a.popularity) return b.popularity - a.popularity
       return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
     })
-  return [lead, ...otherStars, ...puzzles]
+  const orderedDrinks = drinks.sort((a, b) => {
+    const scoreDiff = drinkPairingScore(b) - drinkPairingScore(a)
+    if (scoreDiff !== 0) return scoreDiff
+    return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+  })
+  return [lead, ...otherStars, ...puzzles, ...orderedDrinks]
 }
 
 function toGroupItem(item: EnrichedItem, position: number): ReelLineupGroupItem {
@@ -242,34 +284,31 @@ export function buildReelLineup(input: BuildReelLineupInput): ReelLineupMileston
   const assigned = new Set<PromotionCandidateItemKey>()
   const groups: ReelLineupGroup[] = []
 
-  const stars = enriched
-    .filter((item) => item.role === 'star')
+  const foodStars = enriched
+    .filter((item) => item.role === 'star' && isFoodMenuTaggerItem(item))
     .sort((a, b) => {
       if (b.leadScore !== a.leadScore) return b.leadScore - a.leadScore
       return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
     })
 
   let groupIndex = 0
-  for (const lead of stars) {
-    const leadKey = promotionCandidateItemKey(
-      lead.name,
-      lead.role,
-      lead.category.trim() || '(uncategorized)',
-    )
+  for (const lead of foodStars) {
+    const leadKey = itemKey(lead)
     if (assigned.has(leadKey)) continue
+
+    const unassignedDrinks = getUnassignedDrinks(enriched, assigned)
+    const reserveDrinkSlot = unassignedDrinks.length > 0
+    const foodMaxSize =
+      REEL_LINEUP_GROUP_MAX_SIZE - (reserveDrinkSlot ? REEL_LINEUP_DRINK_SLOT_SIZE : 0)
 
     const group: EnrichedItem[] = [lead]
     assigned.add(leadKey)
 
-    while (group.length < REEL_LINEUP_GROUP_MAX_SIZE) {
+    while (group.length < foodMaxSize) {
       const candidates = enriched
         .filter((item) => {
-          const key = promotionCandidateItemKey(
-            item.name,
-            item.role,
-            item.category.trim() || '(uncategorized)',
-          )
-          return !assigned.has(key) && canAddToGroup(group, item)
+          if (!isFoodMenuTaggerItem(item)) return false
+          return !assigned.has(itemKey(item)) && canAddToGroup(group, item, foodMaxSize)
         })
         .sort((a, b) => {
           const scoreDiff = supportScore(group, b) - supportScore(group, a)
@@ -281,40 +320,36 @@ export function buildReelLineup(input: BuildReelLineupInput): ReelLineupMileston
       const next = candidates[0]
       if (!next) break
 
-      const key = promotionCandidateItemKey(
-        next.name,
-        next.role,
-        next.category.trim() || '(uncategorized)',
-      )
       group.push(next)
-      assigned.add(key)
+      assigned.add(itemKey(next))
     }
 
-    if (group.length >= REEL_LINEUP_GROUP_MIN_SIZE) {
+    let drinkAppended = false
+    const drinksForGroup = getUnassignedDrinks(enriched, assigned)
+    const drink = selectDrinkForGroup(drinksForGroup)
+    if (drink) {
+      group.push(drink)
+      assigned.add(itemKey(drink))
+      drinkAppended = true
+    }
+
+    const foodCount = group.filter((item) => isFoodMenuTaggerItem(item)).length
+    const isValid = drinkAppended
+      ? foodCount >= REEL_LINEUP_GROUP_MIN_SIZE - REEL_LINEUP_DRINK_SLOT_SIZE
+      : group.length >= REEL_LINEUP_GROUP_MIN_SIZE
+
+    if (isValid) {
       groups.push(finalizeGroup(group, groupIndex))
       groupIndex += 1
     } else {
       for (const item of group) {
-        assigned.delete(
-          promotionCandidateItemKey(
-            item.name,
-            item.role,
-            item.category.trim() || '(uncategorized)',
-          ),
-        )
+        assigned.delete(itemKey(item))
       }
     }
   }
 
   const unassignedItemNames = enriched
-    .filter((item) => {
-      const key = promotionCandidateItemKey(
-        item.name,
-        item.role,
-        item.category.trim() || '(uncategorized)',
-      )
-      return !assigned.has(key)
-    })
+    .filter((item) => !assigned.has(itemKey(item)))
     .map((item) => item.name)
 
   const payload: ReelLineupMilestoneData = {

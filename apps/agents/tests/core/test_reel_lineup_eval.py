@@ -74,9 +74,47 @@ def test_star_lead_verdict_passes() -> None:
     assert verdict[0] == "pass"
 
 
-def test_shared_reel_moment_verdict_passes() -> None:
+def test_shared_reel_moment_verdict_passes_with_drink_last() -> None:
+    payload = _sample_payload()
+    payload["groups"][0]["items"].append(
+        {
+            "name": "Cola",
+            "role": "star",
+            "category": "DRINK",
+            "position": 4,
+            "reelMoment": "pour",
+        }
+    )
     verdict = try_reel_lineup_deterministic_verdict(
-        "Items within each group share the same reel_moment anchor tag.",
+        "Food items within each group share the same reel_moment anchor tag.",
+        payload,
+    )
+    assert verdict is not None
+    assert verdict[0] == "pass"
+
+
+def test_drink_end_verdict_passes() -> None:
+    payload = _sample_payload()
+    payload["groups"][0]["items"].append(
+        {
+            "name": "Cola",
+            "role": "star",
+            "category": "DRINK",
+            "position": 4,
+            "reelMoment": "pour",
+        }
+    )
+    verdict = try_reel_lineup_deterministic_verdict(
+        "Each group ends with a drink menu item when drinks are present in Menu Tagger data.",
+        payload,
+    )
+    assert verdict is not None
+    assert verdict[0] == "pass"
+
+
+def test_drink_end_verdict_passes_when_no_drinks() -> None:
+    verdict = try_reel_lineup_deterministic_verdict(
+        "Each group ends with a drink menu item when drinks are present in Menu Tagger data.",
         _sample_payload(),
     )
     assert verdict is not None

@@ -1177,13 +1177,14 @@
             "label": "Reel lineup",
             "title": "Reel lineup",
             "inputLabel": "Reel lineup notes",
-            "inputDescription": "Optional guidance for grouping emphasis. The run reads prior Menu Tagger and Promotion Candidates milestone data and builds 3–5 item Reel groups led by top stars.",
+            "inputDescription": "Optional guidance for grouping emphasis. The run reads prior Menu Tagger and Promotion Candidates milestone data and builds 3–5 item Reel groups led by top food stars, with a drink in the last slot when drinks are tagged.",
             "inputPlaceholder": "e.g. prioritize sizzle hooks; keep premium leads in separate groups…",
-            "goal": "Group tagged menu items from Menu Tagger into Instagram Reel lineups of 3–5 dishes. Each group starts with a top star as the Reel hook, shares a **reel_moment** anchor tag, and balances storytelling fit and price level using Promotion Candidates enrichment.",
+            "goal": "Group tagged menu items from Menu Tagger into Instagram Reel lineups of 3–5 items. Each group starts with a top food star as the Reel hook, clusters food items on a shared **reel_moment** anchor, and ends with a **drink** menu item when drinks are present in Menu Tagger data.",
             "criterionPriorMenuTagger": "Run used a prior **menu_tagger** milestone with tagged items.",
             "criterionGroupSize": "Each group contains **3–5** menu items.",
             "criterionStarLead": "Each group **starts with a star** item as the Reel hook (lead).",
-            "criterionSharedReelMoment": "Items within each group share the same **reel_moment** anchor tag."
+            "criterionSharedReelMoment": "Food items within each group share the same **reel_moment** anchor tag.",
+            "criterionDrinkEnd": "Each group **ends with a drink** menu item when drinks are present in Menu Tagger data."
           },
           "culture_hooks": {
             "label": "Culture hooks",

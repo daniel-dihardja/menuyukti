@@ -102,6 +102,54 @@ def _promotion_candidates() -> dict:
     }
 
 
+def _drink_tags() -> dict:
+    return {
+        "kind": "drink",
+        "ingredient": ["coffee"],
+        "taste": ["bitter"],
+        "course": ["beverage"],
+        "reel_moment": "pour",
+        "texture": ["silky"],
+        "prep_style": ["blended"],
+        "occasion": ["dinner"],
+        "serve_temp": "cold",
+        "content_angle": [],
+    }
+
+
+def _menu_tagger_items_with_drink() -> list[dict]:
+    items = _menu_tagger_items()
+    items.append(
+        {
+            "name": "Cola",
+            "role": "star",
+            "category": "DRINK",
+            "tags": _drink_tags(),
+        }
+    )
+    return items
+
+
+def _promotion_candidates_with_drink() -> dict:
+    payload = _promotion_candidates()
+    payload["categories"].append(
+        {
+            "category": "DRINK",
+            "starItems": [
+                {
+                    "name": "Cola",
+                    "storytellingFit": "weak",
+                    "storytellingRationale": "",
+                    "popularity": 0.8,
+                    "priceLevel": 1,
+                }
+            ],
+            "puzzleItems": [],
+        }
+    )
+    return payload
+
+
 def test_build_reel_lineup_creates_valid_groups() -> None:
     payload = build_reel_lineup(
         menu_tagger_items=_menu_tagger_items(),
@@ -114,6 +162,20 @@ def test_build_reel_lineup_creates_valid_groups() -> None:
     first = normalized["groups"][0]
     assert first["items"][0]["role"] == "star"
     assert first["leadName"] == first["items"][0]["name"]
+
+
+def test_build_reel_lineup_appends_drink_last() -> None:
+    payload = build_reel_lineup(
+        menu_tagger_items=_menu_tagger_items_with_drink(),
+        promotion_candidates=_promotion_candidates_with_drink(),
+    )
+    normalized, error = validate_skill_output("reel_lineup", payload)
+    assert error is None
+    assert isinstance(normalized, dict)
+    assert normalized["groups"]
+    first = normalized["groups"][0]
+    assert first["items"][-1]["category"] == "DRINK"
+    assert first["items"][-1]["reelMoment"] == "pour"
 
 
 @pytest.mark.asyncio

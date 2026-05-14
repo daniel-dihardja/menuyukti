@@ -7,6 +7,7 @@ from typing import Any, Literal
 REEL_LINEUP_PROFILE_ID = "hook_reel"
 REEL_LINEUP_GROUP_MIN_SIZE = 3
 REEL_LINEUP_GROUP_MAX_SIZE = 5
+REEL_LINEUP_DRINK_SLOT_SIZE = 1
 
 REEL_HOOK_MOMENTS_HIGH = frozenset(
     {
@@ -91,6 +92,30 @@ def _tags(item: dict[str, Any]) -> dict[str, Any]:
     return tags if isinstance(tags, dict) else {}
 
 
+def _is_drink_category(category: str) -> bool:
+    normalized = category.strip().upper()
+    return normalized == "DRINK" or normalized == "DRINKS" or normalized.startswith("DRINK")
+
+
+def _is_drink_menu_tagger_item(item: dict[str, Any]) -> bool:
+    tags = _tags(item)
+    if tags.get("kind") == "drink":
+        return True
+    return _is_drink_category(str(item.get("category") or ""))
+
+
+def _is_food_menu_tagger_item(item: dict[str, Any]) -> bool:
+    return not _is_drink_menu_tagger_item(item)
+
+
+def _item_key(item: dict[str, Any]) -> str:
+    return _promotion_candidate_item_key(
+        str(item.get("name") or ""),
+        str(item.get("role") or ""),
+        str(item.get("category") or "").strip() or "(uncategorized)",
+    )
+
+
 def _enrich_item(item: dict[str, Any], promotion_index: dict[str, dict[str, Any]]) -> dict[str, Any]:
     category = str(item.get("category") or "").strip() or "(uncategorized)"
     role = str(item.get("role") or "")
@@ -158,8 +183,12 @@ def _count_role(items: list[dict[str, Any]], role: str) -> int:
     return sum(1 for item in items if item.get("role") == role)
 
 
-def _can_add_to_group(group: list[dict[str, Any]], candidate: dict[str, Any]) -> bool:
-    if len(group) >= REEL_LINEUP_GROUP_MAX_SIZE:
+def _can_add_to_group(
+    group: list[dict[str, Any]],
+    candidate: dict[str, Any],
+    food_max_size: int,
+) -> bool:
+    if len(group) >= food_max_size:
         return False
     lead = group[0]
     lead_tags = _tags(lead)
@@ -237,9 +266,43 @@ def _support_score(group: list[dict[str, Any]], candidate: dict[str, Any]) -> fl
     return score
 
 
+def _drink_pairing_score(item: dict[str, Any]) -> float:
+    score = 0.0
+    if item.get("role") == "star":
+        score += 1.0
+    score += float(item.get("popularity") or 0.0) * 0.5
+    score += _reel_hook_strength(str(_tags(item).get("reel_moment") or "")) * 0.3
+    return score
+
+
+def _select_drink_for_group(drinks: list[dict[str, Any]]) -> dict[str, Any] | None:
+    if not drinks:
+        return None
+    return sorted(
+        drinks,
+        key=lambda item: (
+            -_drink_pairing_score(item),
+            str(item.get("name") or "").casefold(),
+        ),
+    )[0]
+
+
+def _get_unassigned_drinks(
+    enriched: list[dict[str, Any]],
+    assigned: set[str],
+) -> list[dict[str, Any]]:
+    return [
+        item
+        for item in enriched
+        if _is_drink_menu_tagger_item(item) and _item_key(item) not in assigned
+    ]
+
+
 def _order_group_items(group: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    lead = group[0]
-    rest = group[1:]
+    food = [item for item in group if _is_food_menu_tagger_item(item)]
+    drinks = [item for item in group if _is_drink_menu_tagger_item(item)]
+    lead = food[0]
+    rest = food[1:]
     other_stars = sorted(
         (item for item in rest if item.get("role") == "star"),
         key=lambda item: (
@@ -254,7 +317,14 @@ def _order_group_items(group: list[dict[str, Any]]) -> list[dict[str, Any]]:
             str(item.get("name") or "").casefold(),
         ),
     )
-    return [lead, *other_stars, *puzzles]
+    ordered_drinks = sorted(
+        drinks,
+        key=lambda item: (
+            -_drink_pairing_score(item),
+            str(item.get("name") or "").casefold(),
+        ),
+    )
+    return [lead, *other_stars, *puzzles, *ordered_drinks]
 
 
 def _to_group_item(item: dict[str, Any], position: int) -> dict[str, Any]:
@@ -311,8 +381,12 @@ def build_reel_lineup(
     assigned: set[str] = set()
     groups: list[dict[str, Any]] = []
 
-    stars = sorted(
-        (item for item in enriched if item.get("role") == "star"),
+    food_stars = sorted(
+        (
+            item
+            for item in enriched
+            if item.get("role") == "star" and _is_food_menu_tagger_item(item)
+        ),
         key=lambda item: (
             -float(item.get("leadScore") or 0.0),
             str(item.get("name") or "").casefold(),
@@ -320,32 +394,27 @@ def build_reel_lineup(
     )
 
     group_index = 0
-    for lead in stars:
-        category = str(lead.get("category") or "").strip() or "(uncategorized)"
-        lead_key = _promotion_candidate_item_key(
-            str(lead.get("name") or ""),
-            "star",
-            category,
-        )
+    for lead in food_stars:
+        lead_key = _item_key(lead)
         if lead_key in assigned:
             continue
+
+        unassigned_drinks = _get_unassigned_drinks(enriched, assigned)
+        reserve_drink_slot = len(unassigned_drinks) > 0
+        food_max_size = REEL_LINEUP_GROUP_MAX_SIZE - (
+            REEL_LINEUP_DRINK_SLOT_SIZE if reserve_drink_slot else 0
+        )
 
         group = [lead]
         assigned.add(lead_key)
 
-        while len(group) < REEL_LINEUP_GROUP_MAX_SIZE:
+        while len(group) < food_max_size:
             candidates = [
                 item
                 for item in enriched
-                if (
-                    (key := _promotion_candidate_item_key(
-                        str(item.get("name") or ""),
-                        str(item.get("role") or ""),
-                        str(item.get("category") or "").strip() or "(uncategorized)",
-                    ))
-                    not in assigned
-                    and _can_add_to_group(group, item)
-                )
+                if _is_food_menu_tagger_item(item)
+                and _item_key(item) not in assigned
+                and _can_add_to_group(group, item, food_max_size)
             ]
             candidates.sort(
                 key=lambda item: (
@@ -357,36 +426,35 @@ def build_reel_lineup(
             if not candidates:
                 break
             next_item = candidates[0]
-            next_key = _promotion_candidate_item_key(
-                str(next_item.get("name") or ""),
-                str(next_item.get("role") or ""),
-                str(next_item.get("category") or "").strip() or "(uncategorized)",
-            )
             group.append(next_item)
-            assigned.add(next_key)
+            assigned.add(_item_key(next_item))
 
-        if len(group) >= REEL_LINEUP_GROUP_MIN_SIZE:
+        drink_appended = False
+        drinks_for_group = _get_unassigned_drinks(enriched, assigned)
+        drink = _select_drink_for_group(drinks_for_group)
+        if drink is not None:
+            group.append(drink)
+            assigned.add(_item_key(drink))
+            drink_appended = True
+
+        food_count = sum(1 for item in group if _is_food_menu_tagger_item(item))
+        is_valid = (
+            food_count >= REEL_LINEUP_GROUP_MIN_SIZE - REEL_LINEUP_DRINK_SLOT_SIZE
+            if drink_appended
+            else len(group) >= REEL_LINEUP_GROUP_MIN_SIZE
+        )
+
+        if is_valid:
             groups.append(_finalize_group(group, group_index))
             group_index += 1
         else:
             for item in group:
-                assigned.discard(
-                    _promotion_candidate_item_key(
-                        str(item.get("name") or ""),
-                        str(item.get("role") or ""),
-                        str(item.get("category") or "").strip() or "(uncategorized)",
-                    )
-                )
+                assigned.discard(_item_key(item))
 
     unassigned_item_names = [
         str(item.get("name") or "")
         for item in enriched
-        if _promotion_candidate_item_key(
-            str(item.get("name") or ""),
-            str(item.get("role") or ""),
-            str(item.get("category") or "").strip() or "(uncategorized)",
-        )
-        not in assigned
+        if _item_key(item) not in assigned
     ]
 
     payload: dict[str, Any] = {

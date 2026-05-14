@@ -48,9 +48,19 @@ function promotionData(
     storytellingFit?: 'strong' | 'weak'
   }>,
 ): PromotionCandidatesMilestoneData {
-  const starItems: PromotionCandidatesMilestoneData['categories'][0]['starItems'] = []
-  const puzzleItems: PromotionCandidatesMilestoneData['categories'][0]['puzzleItems'] = []
+  const byCategory = new Map<
+    string,
+    {
+      starItems: PromotionCandidatesMilestoneData['categories'][0]['starItems']
+      puzzleItems: PromotionCandidatesMilestoneData['categories'][0]['puzzleItems']
+    }
+  >()
+
   for (const entry of entries) {
+    const category = entry.category ?? 'MAINS'
+    if (!byCategory.has(category)) {
+      byCategory.set(category, { starItems: [], puzzleItems: [] })
+    }
     const row = {
       name: entry.name,
       storytellingFit: entry.storytellingFit ?? 'weak',
@@ -58,15 +68,38 @@ function promotionData(
       popularity: entry.popularity,
       priceLevel: entry.priceLevel,
     }
+    const bucket = byCategory.get(category)!
     if (entry.role === 'star') {
-      starItems.push(row)
+      bucket.starItems.push(row)
     } else {
-      puzzleItems.push(row)
+      bucket.puzzleItems.push(row)
     }
   }
+
   return {
     mainCategory: 'MAINS',
-    categories: [{ category: 'MAINS', starItems, puzzleItems }],
+    categories: [...byCategory.entries()].map(([category, items]) => ({
+      category,
+      starItems: items.starItems,
+      puzzleItems: items.puzzleItems,
+    })),
+  }
+}
+
+function drinkTag(
+  overrides: Partial<MenuTaggerItem['tags']> & Pick<MenuTaggerItem['tags'], 'reel_moment'>,
+): MenuTaggerItem['tags'] {
+  return {
+    kind: 'drink',
+    ingredient: ['coffee'],
+    taste: ['bitter'],
+    course: ['beverage'],
+    texture: ['silky'],
+    prep_style: ['blended'],
+    occasion: ['dinner'],
+    serve_temp: 'cold',
+    content_angle: [],
+    ...overrides,
   }
 }
 
@@ -116,8 +149,13 @@ describe('buildReelLineup', () => {
       expect(group.items.length).toBeLessThanOrEqual(REEL_LINEUP_GROUP_MAX_SIZE)
       expect(group.items[0]?.role).toBe('star')
       expect(group.leadName).toBe(group.items[0]?.name)
-      const moments = new Set(group.items.map((row) => row.reelMoment))
-      expect(moments.size).toBe(1)
+      const foodMoments = new Set(
+        group.items
+          .filter((row) => row.category !== 'DRINK')
+          .map((row) => row.reelMoment)
+          .filter(Boolean),
+      )
+      expect(foodMoments.size).toBe(1)
       expect(group.anchor.value).toBe('sizzle')
     }
     expect(reelLineupMilestoneDataSchema.safeParse(result).success).toBe(true)
@@ -189,12 +227,74 @@ describe('buildReelLineup', () => {
     })
 
     for (const group of result.groups) {
-      const firstPuzzleIndex = group.items.findIndex((row) => row.role === 'puzzle')
+      const foodItems = group.items.filter((row) => row.category !== 'DRINK')
+      const firstPuzzleIndex = foodItems.findIndex((row) => row.role === 'puzzle')
       if (firstPuzzleIndex === -1) continue
-      const starsAfterPuzzle = group.items
+      const starsAfterPuzzle = foodItems
         .slice(firstPuzzleIndex + 1)
         .some((row) => row.role === 'star')
       expect(starsAfterPuzzle).toBe(false)
+    }
+  })
+
+  it('appends a drink as the last item when drinks are present', () => {
+    const menuTaggerItems: MenuTaggerItem[] = [
+      item('Ribeye', 'star', sharedMoment, 'FOOD'),
+      item('Burger', 'star', { ...sharedMoment, ingredient: ['bread'] }, 'FOOD'),
+      item('Wings', 'puzzle', { ...sharedMoment, ingredient: ['poultry'] }, 'FOOD'),
+      item('Cola', 'star', drinkTag({ reel_moment: 'pour' }), 'DRINK'),
+    ]
+    const result = buildReelLineup({
+      menuTaggerItems,
+      promotionCandidates: promotionData([
+        { name: 'Ribeye', role: 'star', category: 'FOOD', popularity: 0.9, priceLevel: 3 },
+        { name: 'Burger', role: 'star', category: 'FOOD', popularity: 0.7, priceLevel: 2 },
+        { name: 'Wings', role: 'puzzle', category: 'FOOD', popularity: 0.4, priceLevel: 2 },
+        { name: 'Cola', role: 'star', category: 'DRINK', popularity: 0.8, priceLevel: 1 },
+      ]),
+    })
+
+    expect(result.groups.length).toBeGreaterThanOrEqual(1)
+    for (const group of result.groups) {
+      expect(group.items.length).toBeLessThanOrEqual(REEL_LINEUP_GROUP_MAX_SIZE)
+      const last = group.items[group.items.length - 1]
+      expect(last?.category).toBe('DRINK')
+      expect(last?.reelMoment).toBe('pour')
+      expect(group.items[0]?.category).not.toBe('DRINK')
+    }
+    expect(reelLineupMilestoneDataSchema.safeParse(result).success).toBe(true)
+  })
+
+  it('keeps food-only groups when no drinks are tagged', () => {
+    const menuTaggerItems: MenuTaggerItem[] = [
+      item('Ribeye', 'star', sharedMoment),
+      item('Burger', 'star', { ...sharedMoment, ingredient: ['bread'] }),
+      item('Wings', 'puzzle', { ...sharedMoment, ingredient: ['poultry'] }),
+      item('Salad', 'puzzle', {
+        ...sharedMoment,
+        ingredient: ['vegetable'],
+        content_angle: ['hidden_gem'],
+      }),
+    ]
+    const result = buildReelLineup({
+      menuTaggerItems,
+      promotionCandidates: promotionData([
+        { name: 'Ribeye', role: 'star', popularity: 0.9, priceLevel: 3 },
+        { name: 'Burger', role: 'star', popularity: 0.7, priceLevel: 2 },
+        { name: 'Wings', role: 'puzzle', popularity: 0.4, priceLevel: 2 },
+        {
+          name: 'Salad',
+          role: 'puzzle',
+          popularity: 0.3,
+          priceLevel: 1,
+          storytellingFit: 'strong',
+        },
+      ]),
+    })
+
+    expect(result.groups.length).toBeGreaterThanOrEqual(1)
+    for (const group of result.groups) {
+      expect(group.items.every((row) => row.category !== 'DRINK')).toBe(true)
     }
   })
 
