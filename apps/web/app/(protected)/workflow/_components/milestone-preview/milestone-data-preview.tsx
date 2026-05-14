@@ -4,10 +4,7 @@ import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 
 import type { MilestonePresetId } from '@/lib/graphql/node-schemas'
-import {
-  MILESTONE_PRESET_REGISTRY,
-  milestonePresetIconFor,
-} from '@/lib/milestones/preset-definitions'
+import { MILESTONE_PRESET_REGISTRY } from '@/lib/milestones/preset-definitions'
 
 import type { TimelineMilestone } from '../timeline/types'
 
@@ -24,39 +21,11 @@ export type MilestoneDataPreviewProps = {
   milestone: TimelineMilestone
 }
 
-function MilestonePreviewPresetRow({ presetId }: { presetId: MilestonePresetId }) {
-  const t = useTranslations('analytics.workflows.chat')
-  const Icon = milestonePresetIconFor(presetId)
-  const label = t(`milestonePreviewPresetBadge_${presetId}` as 'milestonePreviewPresetBadge_dates')
-
-  return (
-    <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2">
-      <Icon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
-      <span className="text-sm font-semibold text-foreground">{label}</span>
-    </div>
-  )
-}
-
 function PreviewStateMessage({ title, body }: { title: string; body: string }) {
   return (
     <div className="space-y-1.5 rounded-lg border border-dashed border-border/80 bg-muted/20 px-3 py-4">
       <p className="text-base font-semibold text-foreground">{title}</p>
       <p className="text-sm leading-relaxed text-muted-foreground">{body}</p>
-    </div>
-  )
-}
-
-function PresetRowWrapper({
-  presetId,
-  children,
-}: {
-  presetId: MilestonePresetId | undefined
-  children: ReactNode
-}) {
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      {presetId ? <MilestonePreviewPresetRow presetId={presetId} /> : null}
-      {children}
     </div>
   )
 }
@@ -130,23 +99,19 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
 
   if (data == null) {
     return (
-      <PresetRowWrapper presetId={pid}>
-        <PreviewStateMessage
-          title={t('milestonePreviewDataEmptyTitle')}
-          body={t('milestonePreviewDataEmptyBody')}
-        />
-      </PresetRowWrapper>
+      <PreviewStateMessage
+        title={t('milestonePreviewDataEmptyTitle')}
+        body={t('milestonePreviewDataEmptyBody')}
+      />
     )
   }
 
   if (pid == null || typeof data !== 'object') {
     return (
-      <PresetRowWrapper presetId={pid}>
-        <PreviewStateMessage
-          title={t('milestonePreviewUnsupportedTitle')}
-          body={t('milestonePreviewUnsupportedBody')}
-        />
-      </PresetRowWrapper>
+      <PreviewStateMessage
+        title={t('milestonePreviewUnsupportedTitle')}
+        body={t('milestonePreviewUnsupportedBody')}
+      />
     )
   }
 
@@ -154,18 +119,12 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
   const parsed = def.dataSchema.safeParse(data)
   if (!parsed.success) {
     return (
-      <PresetRowWrapper presetId={pid}>
-        <PreviewStateMessage
-          title={t('milestonePreviewDataInvalidTitle')}
-          body={t('milestonePreviewDataInvalidBody')}
-        />
-      </PresetRowWrapper>
+      <PreviewStateMessage
+        title={t('milestonePreviewDataInvalidTitle')}
+        body={t('milestonePreviewDataInvalidBody')}
+      />
     )
   }
 
-  return (
-    <PresetRowWrapper presetId={pid}>
-      {renderParsedPreview(pid, parsed.data, milestone)}
-    </PresetRowWrapper>
-  )
+  return renderParsedPreview(pid, parsed.data, milestone)
 }

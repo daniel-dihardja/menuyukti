@@ -1,21 +1,14 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { parseAsString, useQueryState } from 'nuqs'
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@workspace/ui/components/card'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@workspace/ui/components/tooltip'
+import { Card, CardContent, CardHeader, CardTitle } from '@workspace/ui/components/card'
+
+import { MarkdownMessage } from '@/components/markdown-message'
+import { getMilestoneHelpDescription } from '@/lib/milestones/milestone-help-description'
+import { milestonePresetIconFor } from '@/lib/milestones/preset-definitions'
 
 import { MilestoneDataPreview } from './milestone-preview/milestone-data-preview'
 import { useTimelineWorkspaceState } from './timeline-context'
@@ -24,6 +17,7 @@ const PREVIEW_TITLE_ID = 'workflow-preview-panel-title'
 
 export function WorkflowPreviewPanelBody() {
   const tWorkspace = useTranslations('analytics.workflows.workspace')
+  const tChat = useTranslations('analytics.workflows.chat')
   const {
     milestoneState: { milestones },
   } = useTimelineWorkspaceState()
@@ -32,47 +26,42 @@ export function WorkflowPreviewPanelBody() {
   const selectedMilestone =
     selectedId !== null ? milestones.find((m) => m.id === selectedId) : undefined
   const showMilestonePreview = selectedMilestone !== undefined
-  const selectedTitle = selectedMilestone?.title ?? ''
+  const milestoneDescription = useMemo(
+    () => (selectedMilestone ? getMilestoneHelpDescription(selectedMilestone, tChat) : ''),
+    [selectedMilestone, tChat],
+  )
+  const MilestoneIcon = selectedMilestone
+    ? milestonePresetIconFor(selectedMilestone.presetId)
+    : null
 
   return (
-    <TooltipProvider delayDuration={400}>
-      <Card className="flex h-full min-h-0 flex-col overflow-hidden border-dashed">
+    <Card className="flex h-full min-h-0 flex-col overflow-hidden border-dashed">
+      {showMilestonePreview ? (
         <CardHeader className="shrink-0">
-          <CardTitle className="text-base" id={PREVIEW_TITLE_ID}>
-            {tWorkspace('previewTitle')}
+          <CardTitle
+            className="flex items-center gap-2 text-balance font-semibold text-xl tracking-tight"
+            id={PREVIEW_TITLE_ID}
+          >
+            {MilestoneIcon ? (
+              <MilestoneIcon aria-hidden className="size-5 shrink-0 text-muted-foreground" />
+            ) : null}
+            <span>{selectedMilestone.title}</span>
           </CardTitle>
-          <CardDescription className="text-pretty">
-            {tWorkspace('previewDescription')}
-          </CardDescription>
-          {showMilestonePreview ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <p
-                  className="line-clamp-2 cursor-default text-left font-medium text-foreground text-sm"
-                  title={selectedTitle}
-                >
-                  {selectedTitle}
-                </p>
-              </TooltipTrigger>
-              <TooltipContent
-                side="top"
-                className="max-w-sm text-balance bg-foreground px-3 py-2 text-sm leading-snug text-background"
-              >
-                {selectedTitle}
-              </TooltipContent>
-            </Tooltip>
-          ) : null}
+          <MarkdownMessage
+            className="prose-base prose-p:my-1 prose-p:text-muted-foreground prose-strong:font-medium prose-strong:text-foreground"
+            content={milestoneDescription}
+          />
         </CardHeader>
-        <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden pt-0">
-          {showMilestonePreview ? (
-            <MilestoneDataPreview milestone={selectedMilestone} />
-          ) : (
-            <p className="text-muted-foreground text-sm">
-              {tWorkspace('previewNoMilestoneSelected')}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-    </TooltipProvider>
+      ) : null}
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden pt-0">
+        {showMilestonePreview ? (
+          <MilestoneDataPreview milestone={selectedMilestone} />
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            {tWorkspace('previewNoMilestoneSelected')}
+          </p>
+        )}
+      </CardContent>
+    </Card>
   )
 }
