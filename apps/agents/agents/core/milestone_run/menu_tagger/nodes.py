@@ -129,16 +129,16 @@ def _metrics_from_item(item: dict[str, Any]) -> tuple[int | None, float | None]:
     popularity: float | None = None
     if quantity_raw is not None and quantity_raw != "":
         try:
-            parsed = int(quantity_raw)
-            if parsed >= 0:
-                quantity = parsed
+            parsed_quantity = int(quantity_raw)
+            if parsed_quantity >= 0:
+                quantity = parsed_quantity
         except (TypeError, ValueError):
             pass
     if popularity_raw is not None and popularity_raw != "":
         try:
-            parsed = float(popularity_raw)
-            if parsed >= 0:
-                popularity = parsed
+            parsed_popularity = float(popularity_raw)
+            if parsed_popularity >= 0:
+                popularity = parsed_popularity
         except (TypeError, ValueError):
             pass
     return quantity, popularity
@@ -422,7 +422,7 @@ def merge_tagged_items(
         tags_raw = llm_row.get("tags") if isinstance(llm_row, dict) else None
         storytelling_fit, storytelling_rationale = _storytelling_from_item(dict(item))
         quantity, popularity = _metrics_from_item(dict(item))
-        row: MenuTaggerItem = {
+        merged_row: MenuTaggerItem = {
             "name": item["name"],
             "role": item["role"],
             "category": item["category"],
@@ -430,7 +430,7 @@ def merge_tagged_items(
             "storytellingFit": storytelling_fit,
             "storytellingRationale": storytelling_rationale,
         }
-        merged.append(_append_item_metrics(row, quantity=quantity, popularity=popularity))
+        merged.append(_append_item_metrics(merged_row, quantity=quantity, popularity=popularity))
     return merged
 
 

@@ -17,7 +17,8 @@ def _join_tag_values(values: Any, fallback: str) -> str:
 
 def _build_image_brief(item: dict[str, Any]) -> str:
     name = str(item.get("name") or "").strip()
-    tags = item.get("tags") if isinstance(item.get("tags"), dict) else {}
+    raw_tags = item.get("tags")
+    tags: dict[str, Any] = raw_tags if isinstance(raw_tags, dict) else {}
     texture = _join_tag_values(tags.get("texture"), "appetizing")
     prep_style = _join_tag_values(tags.get("prep_style"), "chef-prepared")
     reel_moment = str(tags.get("reel_moment") or "").strip() or "hero"

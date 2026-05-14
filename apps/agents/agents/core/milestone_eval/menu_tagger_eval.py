@@ -136,7 +136,7 @@ def try_menu_tagger_deterministic_verdict(
     ):
         if not items:
             return ("fail", "no menu items to validate.")
-        issues: list[str] = []
+        issues = []
         for item in items:
             name = str(item.get("name") or "item").strip() or "item"
             tags = item.get("tags")

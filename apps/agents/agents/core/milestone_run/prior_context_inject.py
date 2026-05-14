@@ -187,8 +187,8 @@ def promotion_candidates_prior_error_message(prior_milestones_json: str) -> str:
 
     titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
     has_pc_preset = any(
-        isinstance(row.get("presetId"), str)
-        and row.get("presetId").strip() == "promotion_candidates"
+        isinstance((preset_id := row.get("presetId")), str)
+        and preset_id.strip() == "promotion_candidates"
         for row in rows
     )
     if not has_pc_preset:
@@ -331,7 +331,8 @@ def dates_prior_error_message(prior_milestones_json: str) -> str:
 
     titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
     has_dates_preset = any(
-        isinstance(row.get("presetId"), str) and row.get("presetId").strip() == "dates"
+        isinstance((preset_id := row.get("presetId")), str)
+        and preset_id.strip() == "dates"
         for row in rows
     )
     if not has_dates_preset:

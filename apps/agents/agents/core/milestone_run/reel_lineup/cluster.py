@@ -37,7 +37,8 @@ def _is_beverage_drink(item: dict[str, Any]) -> bool:
 
 
 def _finalize_lead_group(item: dict[str, Any], index: int, *, id_prefix: str) -> dict[str, Any]:
-    tags = item.get("tags") if isinstance(item.get("tags"), dict) else {}
+    raw_tags = item.get("tags")
+    tags: dict[str, Any] = raw_tags if isinstance(raw_tags, dict) else {}
     reel_moment = str(tags.get("reel_moment") or "").strip() or "static_hero"
     role = str(item.get("role") or "star").strip()
     storytelling_fit = str(item.get("storytellingFit") or "weak").strip().lower()
