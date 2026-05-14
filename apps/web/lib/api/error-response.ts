@@ -7,6 +7,7 @@ export type ApiErrorCode =
   | 'BAD_REQUEST'
   | 'FORBIDDEN'
   | 'NOT_FOUND'
+  | 'INVITE_UNAVAILABLE'
   | 'GRAPHQL_BAD_USER_INPUT'
   | 'GRAPHQL_FORBIDDEN'
   | 'INTERNAL_ERROR'
