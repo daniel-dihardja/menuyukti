@@ -10,6 +10,15 @@ export type SchedulerWeekDay = {
   isToday: boolean
 }
 
+export type SchedulerMonthDay = {
+  isoDate: string
+  inWindow: boolean
+  inMonth: boolean
+  isToday: boolean
+}
+
+export const SCHEDULER_MONTH_GRID_DAYS = 42
+
 export function isoDateOnlyFromDate(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -31,6 +40,12 @@ export function eachIsoDateInWindow(windowStart: string, windowEnd: string): str
     cursor.setDate(cursor.getDate() + 1)
   }
   return dates
+}
+
+export function startOfMonth(date: Date): Date {
+  const result = new Date(date.getFullYear(), date.getMonth(), 1)
+  result.setHours(0, 0, 0, 0)
+  return result
 }
 
 export function startOfWeekMonday(date: Date): Date {
@@ -165,6 +180,178 @@ export function nextWeekStartIso(weekStartIso: string): string {
     return weekStartIso
   }
   return isoDateOnlyFromDate(addDays(weekStart, 7))
+}
+
+function monthBounds(
+  windowStart: string,
+  windowEnd: string,
+): { minMonth: Date; maxMonth: Date } | null {
+  const windowStartDate = parseIsoDateOnly(windowStart)
+  const windowEndDate = parseIsoDateOnly(windowEnd)
+  if (!windowStartDate || !windowEndDate) {
+    return null
+  }
+
+  return {
+    minMonth: startOfMonth(windowStartDate),
+    maxMonth: startOfMonth(windowEndDate),
+  }
+}
+
+export function clampMonthStart(monthStart: Date, windowStart: string, windowEnd: string): string {
+  const bounds = monthBounds(windowStart, windowEnd)
+  if (!bounds) {
+    return isoDateOnlyFromDate(startOfMonth(monthStart))
+  }
+
+  let cursor = startOfMonth(monthStart)
+  if (cursor < bounds.minMonth) {
+    cursor = bounds.minMonth
+  }
+  if (cursor > bounds.maxMonth) {
+    cursor = bounds.maxMonth
+  }
+
+  return isoDateOnlyFromDate(cursor)
+}
+
+export function buildSchedulerMonth(
+  monthAnchorIso: string,
+  windowStart: string,
+  windowEnd: string,
+): SchedulerMonthDay[] {
+  const monthAnchor = parseIsoDateOnly(monthAnchorIso)
+  if (!monthAnchor) {
+    return []
+  }
+
+  const monthStart = startOfMonth(monthAnchor)
+  const gridStart = startOfWeekMonday(monthStart)
+  const todayIso = isoDateOnlyFromDate(new Date())
+  const windowDates = new Set(eachIsoDateInWindow(windowStart, windowEnd))
+  const anchorMonth = monthStart.getMonth()
+  const anchorYear = monthStart.getFullYear()
+
+  return Array.from({ length: SCHEDULER_MONTH_GRID_DAYS }, (_, index) => {
+    const date = addDays(gridStart, index)
+    const isoDate = isoDateOnlyFromDate(date)
+    return {
+      isoDate,
+      inWindow: windowDates.has(isoDate),
+      inMonth: date.getMonth() === anchorMonth && date.getFullYear() === anchorYear,
+      isToday: isoDate === todayIso,
+    }
+  })
+}
+
+export function canGoToPreviousMonth(
+  monthStartIso: string,
+  windowStart: string,
+  windowEnd: string,
+): boolean {
+  const monthStart = parseIsoDateOnly(monthStartIso)
+  const bounds = monthBounds(windowStart, windowEnd)
+  if (!monthStart || !bounds) {
+    return false
+  }
+  return startOfMonth(monthStart) > bounds.minMonth
+}
+
+export function canGoToNextMonth(
+  monthStartIso: string,
+  windowStart: string,
+  windowEnd: string,
+): boolean {
+  const monthStart = parseIsoDateOnly(monthStartIso)
+  const bounds = monthBounds(windowStart, windowEnd)
+  if (!monthStart || !bounds) {
+    return false
+  }
+  return startOfMonth(monthStart) < bounds.maxMonth
+}
+
+export function previousMonthStartIso(monthStartIso: string): string {
+  const monthStart = parseIsoDateOnly(monthStartIso)
+  if (!monthStart) {
+    return monthStartIso
+  }
+  return isoDateOnlyFromDate(new Date(monthStart.getFullYear(), monthStart.getMonth() - 1, 1))
+}
+
+export function nextMonthStartIso(monthStartIso: string): string {
+  const monthStart = parseIsoDateOnly(monthStartIso)
+  if (!monthStart) {
+    return monthStartIso
+  }
+  return isoDateOnlyFromDate(new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1))
+}
+
+export function formatSchedulerMonthLabel(monthStartIso: string, locale: string): string {
+  const monthStart = parseIsoDateOnly(monthStartIso)
+  if (!monthStart) {
+    return monthStartIso
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    month: 'long',
+    year: 'numeric',
+  }).format(monthStart)
+}
+
+export function weekStartIsoForDay(dayIso: string, windowStart: string, windowEnd: string): string {
+  const day = parseIsoDateOnly(dayIso)
+  if (!day) {
+    return dayIso
+  }
+  return clampWeekStart(startOfWeekMonday(day), windowStart, windowEnd)
+}
+
+export function monthStartIsoForWeek(weekStartIso: string): string {
+  const weekStart = parseIsoDateOnly(weekStartIso)
+  if (!weekStart) {
+    return weekStartIso
+  }
+  return isoDateOnlyFromDate(startOfMonth(weekStart))
+}
+
+export function weekStartIsoForMonth(
+  monthStartIso: string,
+  currentWeekStartIso: string,
+  windowStart: string,
+  windowEnd: string,
+): string {
+  const monthStart = parseIsoDateOnly(monthStartIso)
+  const currentWeekStart = parseIsoDateOnly(currentWeekStartIso)
+  if (monthStart && currentWeekStart) {
+    const inSameMonth =
+      currentWeekStart.getFullYear() === monthStart.getFullYear() &&
+      currentWeekStart.getMonth() === monthStart.getMonth()
+    if (inSameMonth) {
+      return clampWeekStart(startOfWeekMonday(currentWeekStart), windowStart, windowEnd)
+    }
+  }
+
+  const firstInWindowDay = buildSchedulerMonth(monthStartIso, windowStart, windowEnd).find(
+    (day) => day.inWindow && day.inMonth,
+  )
+  if (firstInWindowDay) {
+    return weekStartIsoForDay(firstInWindowDay.isoDate, windowStart, windowEnd)
+  }
+
+  if (!monthStart) {
+    return currentWeekStartIso
+  }
+  return clampWeekStart(startOfWeekMonday(monthStart), windowStart, windowEnd)
+}
+
+export function schedulerWeekdayLabels(locale: string): string[] {
+  const monday = new Date(2026, 0, 5)
+  return Array.from({ length: 7 }, (_, index) =>
+    new Intl.DateTimeFormat(locale, { weekday: 'short' })
+      .format(addDays(monday, index))
+      .replace(/\.+$/, '')
+      .trim(),
+  )
 }
 
 export function formatSchedulerWeekRange(

@@ -9,7 +9,7 @@ import { parseIsoDateOnly, resolveSchedulerWindow } from '@/lib/milestones/sched
 import { useTimelineWorkspaceState } from '../timeline-context'
 import type { TimelineMilestone } from '../timeline/types'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
-import { SchedulerCalendarGrid } from './scheduler-calendar-grid'
+import { SchedulerCalendar } from './scheduler-calendar'
 
 export type MilestoneSchedulerDataPreviewProps = {
   milestone: TimelineMilestone
@@ -70,7 +70,7 @@ export function MilestoneSchedulerDataPreview({ milestone }: MilestoneSchedulerD
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col gap-3">
       <p className={`shrink-0 ${mp.sectionTitle}`}>{t('milestoneSchedulerPreviewHeading')}</p>
-      <SchedulerCalendarGrid
+      <SchedulerCalendar
         className="min-h-0 flex-1"
         locale={locale}
         windowEnd={window.endDate}
