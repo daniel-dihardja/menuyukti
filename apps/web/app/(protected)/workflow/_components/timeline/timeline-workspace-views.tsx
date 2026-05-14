@@ -2,12 +2,10 @@
 
 import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
-import type { MilestonePresetId } from '@/lib/milestones/preset-definitions'
 
 import { Skeleton } from '@workspace/ui/components/skeleton'
 import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
-import { MilestoneCreateControls } from './milestone-preset-select'
 import { TimelineBody } from './timeline-body'
 
 export function TimelineWorkspaceLoading() {
@@ -36,16 +34,10 @@ export function TimelineWorkspaceLoadError({ message }: { message: string }) {
 }
 
 export function TimelineWorkspaceEmpty({
-  creating,
   createError,
-  onCreateMilestone,
-  onCreateMilestoneFromPreset,
   timelineTrailing,
 }: {
-  creating: boolean
   createError: string | null
-  onCreateMilestone: () => boolean | Promise<boolean>
-  onCreateMilestoneFromPreset: (presetId: MilestonePresetId) => boolean | Promise<boolean>
   timelineTrailing: ReactNode
 }) {
   const t = useTranslations('analytics.workflows.chat')
@@ -61,17 +53,13 @@ export function TimelineWorkspaceEmpty({
         </h3>
         <p className="text-muted-foreground text-sm">{t('timelineEmptyDescription')}</p>
       </div>
-      <TooltipProvider delayDuration={300}>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <MilestoneCreateControls
-            creating={creating}
-            disabled={creating}
-            onCreateMilestone={onCreateMilestone}
-            onCreateMilestoneFromPreset={onCreateMilestoneFromPreset}
-          />
-          {timelineTrailing}
-        </div>
-      </TooltipProvider>
+      {timelineTrailing ? (
+        <TooltipProvider delayDuration={300}>
+          <div className="flex w-full max-w-md items-center justify-end gap-2">
+            {timelineTrailing}
+          </div>
+        </TooltipProvider>
+      ) : null}
       {createError ? (
         <p className="max-w-md text-destructive text-sm" role="alert">
           {createError}

@@ -55,7 +55,7 @@ export function MilestoneCreateControls({
         <SelectTrigger
           aria-busy={creating}
           aria-label={creating ? t('creatingMilestone') : t('milestonePreset.selectAriaLabel')}
-          className="w-[min(100%,11rem)]"
+          className="w-44"
         >
           {creating ? <Spinner className="shrink-0" /> : null}
           <SelectValue placeholder={t('milestonePreset.selectPlaceholder')} />
