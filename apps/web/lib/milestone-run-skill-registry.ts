@@ -24,12 +24,6 @@ export const MILESTONE_RUN_SKILL_REGISTRY: readonly MilestoneRunSkillMeta[] = [
       'Use for the campaign brief milestone: campaign window and holidays plus profile and operating signals—venue snapshot, pillars, audience hypotheses, proof-oriented angles, and tone guardrails.',
   },
   {
-    id: 'post_scheduler',
-    name: 'Scheduler',
-    description:
-      'Use for the scheduler milestone: builds an Instagram content schedule from Campaign Brief (campaign window and public holidays), scheduler plan signals, and prefetched promotion candidates (star/puzzle menu items by category).',
-  },
-  {
     id: 'culture_hooks',
     name: 'Culture hooks',
     description:

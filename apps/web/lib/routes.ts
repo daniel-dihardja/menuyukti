@@ -62,6 +62,8 @@ export const routes = {
   usage: '/usage',
   /** Custom profile overview (name, email, avatar). */
   profile: '/profile',
+  /** Workspace team management (invite existing users). */
+  profileTeam: '/profile/team',
   /** Clerk `<UserProfile />` host path (security, sessions, etc.); catch-all under `/profile/account/...`. */
   profileAccount: '/profile/account',
 

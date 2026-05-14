@@ -1,4 +1,4 @@
-"""Build simplified promotion candidate payload for post-scheduler prefetch."""
+"""Build simplified promotion candidate payload for promotion_candidates milestone prefetch."""
 
 from __future__ import annotations
 

@@ -7,17 +7,19 @@ import {
   campaignBriefMilestoneInputValueSchema,
   cultureHooksMilestoneDataSchema,
   cultureHooksMilestoneInputValueSchema,
-  formatMixMilestoneDataSchema,
-  formatMixMilestoneInputValueSchema,
   igProfileMilestoneDataSchema,
   igProfileMilestoneInputValueSchema,
   menuTaggerMilestoneDataSchema,
   menuTaggerMilestoneInputValueSchema,
+  reelLineupMilestoneDataSchema,
+  reelLineupMilestoneInputValueSchema,
+  postLineupMilestoneDataSchema,
+  postLineupMilestoneInputValueSchema,
+  schedulerMilestoneDataSchema,
+  schedulerMilestoneInputValueSchema,
   milestonePresetIdSchema,
   milestoneInputSchema,
   passCriteriaSchema,
-  postSchedulerMilestoneDataSchema,
-  postSchedulerMilestoneInputValueSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
@@ -42,12 +44,13 @@ export const patchMilestoneSchema = z
       .union([
         datesMilestoneDataSchema,
         campaignBriefMilestoneDataSchema,
-        postSchedulerMilestoneDataSchema,
         promotionCandidatesMilestoneDataSchema,
         cultureHooksMilestoneDataSchema,
-        formatMixMilestoneDataSchema,
         igProfileMilestoneDataSchema,
         menuTaggerMilestoneDataSchema,
+        reelLineupMilestoneDataSchema,
+        postLineupMilestoneDataSchema,
+        schedulerMilestoneDataSchema,
       ])
       .nullable()
       .optional(),
@@ -63,16 +66,8 @@ export const patchMilestoneSchema = z
           value: campaignBriefMilestoneInputValueSchema,
         }),
         z.object({
-          type: z.literal('post_scheduler'),
-          value: postSchedulerMilestoneInputValueSchema,
-        }),
-        z.object({
           type: z.literal('culture_hooks'),
           value: cultureHooksMilestoneInputValueSchema,
-        }),
-        z.object({
-          type: z.literal('format_mix'),
-          value: formatMixMilestoneInputValueSchema,
         }),
         z.object({
           type: z.literal('ig_profile'),
@@ -81,6 +76,18 @@ export const patchMilestoneSchema = z
         z.object({
           type: z.literal('menu_tagger'),
           value: menuTaggerMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('reel_lineup'),
+          value: reelLineupMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('post_lineup'),
+          value: postLineupMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('scheduler'),
+          value: schedulerMilestoneInputValueSchema,
         }),
         milestoneInputSchema,
       ])

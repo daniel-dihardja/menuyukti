@@ -28,7 +28,6 @@ import {
   CalendarRange,
   ScrollText,
   Tags,
-  CalendarClock,
   PenLine,
   Activity,
   ChartNoAxesCombined,
@@ -97,11 +96,6 @@ export default async function LandingPage() {
       Icon: Tags,
       title: t('pipeline.nodes.promotionCandidatesTitle'),
       description: t('pipeline.nodes.promotionCandidatesDescription'),
-    },
-    {
-      Icon: CalendarClock,
-      title: t('pipeline.nodes.postSchedulerTitle'),
-      description: t('pipeline.nodes.postSchedulerDescription'),
     },
     {
       Icon: PenLine,

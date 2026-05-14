@@ -5,7 +5,7 @@ const repoRoot = path.resolve(process.cwd(), '..', '..')
 const schemaPath = path.join(repoRoot, 'apps', 'graphql', 'schema.graphql')
 
 const operationFiles = [
-  path.join(repoRoot, 'apps', 'web', 'lib', 'graphql', 'queries.ts'),
+  path.join(repoRoot, 'apps', 'web', 'lib', 'graphql', 'queries', 'workspace.ts'),
   path.join(repoRoot, 'apps', 'web', 'app', 'api', 'analytics', 'create', 'route.ts'),
   path.join(
     repoRoot,

@@ -8,7 +8,9 @@ import { extractCampaignBriefMainCategory } from '@/lib/milestones/campaign-brie
 import {
   milestonePresetHasDefaultOptionalNotesInput,
   normalizePromotionCandidatesInput,
+  normalizedPromotionCandidatesInputsEqual,
   optionalNotesFromMilestoneInput,
+  promotionCandidatesDraftFromNormalized,
   promotionCandidatesInputFromMilestoneInput,
 } from '@/lib/milestones/milestone-input-tab'
 import { milestonePresetInputType } from '@/lib/milestones/preset-definitions'
@@ -41,13 +43,10 @@ function promotionCandidatesInputEqual(
   a: PromotionCandidatesInputDraft,
   b: PromotionCandidatesInputDraft,
 ): boolean {
-  const na = normalizePromotionCandidatesInput(a)
-  const nb = normalizePromotionCandidatesInput(b)
-  if (na.notes !== nb.notes) return false
-  if (na.starItemLimit !== nb.starItemLimit) return false
-  if (na.puzzleItemLimit !== nb.puzzleItemLimit) return false
-  if (na.selectedMenuCategories.length !== nb.selectedMenuCategories.length) return false
-  return na.selectedMenuCategories.every((v, i) => v === nb.selectedMenuCategories[i])
+  return normalizedPromotionCandidatesInputsEqual(
+    normalizePromotionCandidatesInput(a),
+    normalizePromotionCandidatesInput(b),
+  )
 }
 
 export function useMilestoneItemDrafts(
@@ -215,12 +214,16 @@ export function useMilestoneItemDrafts(
         const normalizedDraft = normalizePromotionCandidatesInput(
           promotionCandidatesDraftRef.current,
         )
-        if (promotionCandidatesInputEqual(normalizedDraft, server)) {
+        const normalizedServer = normalizePromotionCandidatesInput(server)
+        if (normalizedPromotionCandidatesInputsEqual(normalizedDraft, normalizedServer)) {
           if (
             normalizeOptionalNotesDraft &&
-            !promotionCandidatesInputEqual(promotionCandidatesDraftRef.current, normalizedDraft)
+            !promotionCandidatesInputEqual(
+              promotionCandidatesDraftRef.current,
+              promotionCandidatesDraftFromNormalized(normalizedDraft),
+            )
           ) {
-            setPromotionCandidatesDraft(normalizedDraft)
+            setPromotionCandidatesDraft(promotionCandidatesDraftFromNormalized(normalizedDraft))
           }
           return true
         }
@@ -231,7 +234,7 @@ export function useMilestoneItemDrafts(
         if (!ok) {
           setPromotionCandidatesDraft(server)
         } else if (normalizeOptionalNotesDraft) {
-          setPromotionCandidatesDraft(normalizedDraft)
+          setPromotionCandidatesDraft(promotionCandidatesDraftFromNormalized(normalizedDraft))
         }
         return ok
       }

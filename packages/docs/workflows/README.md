@@ -132,4 +132,3 @@ This shows how a single **Instagram campaign** for a restaurant can be modeled a
 ## See also
 
 - Root [`README.md`](../../../README.md) — product and architecture overview.
-- [`post-schedule.md`](../post-schedule.md) — deeper agentic layering ideas for scheduling and content (complementary to the milestone model).

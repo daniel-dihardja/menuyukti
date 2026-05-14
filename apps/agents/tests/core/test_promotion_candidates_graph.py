@@ -194,6 +194,58 @@ async def test_fetch_and_prepare_filters_selected_menu_categories() -> None:
 
 
 @pytest.mark.asyncio
+async def test_fetch_and_prepare_filters_ignored_menu_items() -> None:
+    state = {
+        "milestone_id": "m1",
+        "location_id": 1,
+        "user_id": "u1",
+        "goal": "",
+        "criteria": [],
+        "prior_milestones_data": (
+            '[{"presetId":"restaurant_campaign_brief","data":{"mainCategory":"Mains"}}]'
+        ),
+        "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
+        "milestone_input": {
+            "type": "promotion_candidates",
+            "value": {
+                "notes": "",
+                "selectedMenuCategories": [],
+                "ignoredMenuItems": ["TEH", "air mineral"],
+            },
+        },
+    }
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.fetch_promotion_engineering_candidates",
+            new=AsyncMock(
+                return_value=_fetch_result(
+                    {
+                        "grouping": "by_menu_category",
+                        "categories": {
+                            "Mains": {
+                                "starItems": ["Steak", "TEH"],
+                                "puzzleItems": [{"menu": "AIR MINERAL"}],
+                            },
+                        },
+                    }
+                )
+            ),
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+    ):
+        out = await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
+
+    categories = out["formatted_output"]["categories"]
+    assert len(categories) == 1
+    assert categories[0]["category"] == "Mains"
+    assert [item["name"] for item in categories[0]["starItems"]] == ["Steak"]
+    assert categories[0]["puzzleItems"] == []
+
+
+@pytest.mark.asyncio
 async def test_fetch_and_prepare_passes_item_limits_to_graphql() -> None:
     state = {
         "milestone_id": "m1",

@@ -36,11 +36,12 @@ _DATA_KEYS_STRIPPED_FOR_RESIDUAL = frozenset(
 
 _PRESET_TO_SKILL_ID: dict[str, str] = {
     "restaurant_campaign_brief": "campaign_brief",
-    "post_scheduler": "post_scheduler",
     "promotion_candidates": "promotion_candidates",
     "menu_tagger": "menu_tagger",
+    "reel_lineup": "reel_lineup",
+    "post_lineup": "post_lineup",
+    "scheduler": "scheduler",
     "culture_hooks": "culture_hooks",
-    "format_mix": "format_mix",
     "ig_profile": "ig_profile",
     "dates": "dates",
     "public_holidays": "public_holidays",
@@ -74,11 +75,12 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
 
         expected_types: dict[str, str] = {
             "campaign_brief": "campaign_brief",
-            "post_scheduler": "post_scheduler",
             "culture_hooks": "culture_hooks",
             "promotion_candidates": "promotion_candidates",
             "menu_tagger": "menu_tagger",
-            "format_mix": "format_mix",
+            "reel_lineup": "reel_lineup",
+            "post_lineup": "post_lineup",
+            "scheduler": "scheduler",
             "ig_profile": "ig_profile",
             "dates": "dates",
             "public_holidays": "public_holidays",
@@ -116,6 +118,16 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
                     return (
                         f"milestoneInput.value.{limit_key} must be 5, 10, or 'all' when provided."
                     )
+            ignored = value.get("ignoredMenuItems")
+            if ignored is not None:
+                if not isinstance(ignored, list):
+                    return "milestoneInput.value.ignoredMenuItems must be an array when provided."
+                for item in ignored:
+                    if not isinstance(item, str):
+                        return (
+                            "milestoneInput.value.ignoredMenuItems must contain "
+                            "only strings when provided."
+                        )
 
     return None
 

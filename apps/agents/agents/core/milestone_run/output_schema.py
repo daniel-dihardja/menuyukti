@@ -152,126 +152,6 @@ class CampaignBriefMilestoneOutput(BaseModel):
         return text
 
 
-class PostSchedulerMonthlyArcWeek(BaseModel):
-    week: Literal[1, 2, 3, 4]
-    objective: str
-    rationale: str
-
-
-class PostSchedulerMonthlyArc(BaseModel):
-    weeks: list[PostSchedulerMonthlyArcWeek]
-
-    @field_validator("weeks")
-    @classmethod
-    def _validate_week_coverage(cls, values: list[PostSchedulerMonthlyArcWeek]) -> list[PostSchedulerMonthlyArcWeek]:
-        if len(values) != 4:
-            raise ValueError("must include exactly 4 week objectives")
-        weeks = sorted(item.week for item in values)
-        if weeks != [1, 2, 3, 4]:
-            raise ValueError("weeks must include 1,2,3,4 exactly once")
-        return values
-
-
-class PostSchedulerContentRatioItem(BaseModel):
-    pillar: str
-    percent: int
-    reason: str
-
-
-class PostSchedulerContentRatio(BaseModel):
-    pillars: list[PostSchedulerContentRatioItem]
-
-    @field_validator("pillars")
-    @classmethod
-    def _validate_ratio_sum(cls, values: list[PostSchedulerContentRatioItem]) -> list[PostSchedulerContentRatioItem]:
-        if sum(item.percent for item in values) != 100:
-            raise ValueError("contentRatio percent total must equal 100")
-        return values
-
-
-class PostSchedulerFormatMixItem(BaseModel):
-    format: Literal[
-        "Reels",
-        "Carousels",
-        "Single posts",
-        "Stories",
-        "Highlights updates",
-        "Lives",
-        "Collaborator posts",
-    ]
-    count: int
-    reason: str
-
-
-class PostSchedulerFormatMix(BaseModel):
-    formats: list[PostSchedulerFormatMixItem]
-
-    @field_validator("formats")
-    @classmethod
-    def _validate_formats(cls, values: list[PostSchedulerFormatMixItem]) -> list[PostSchedulerFormatMixItem]:
-        required = {
-            "Reels",
-            "Carousels",
-            "Single posts",
-            "Stories",
-            "Highlights updates",
-            "Lives",
-            "Collaborator posts",
-        }
-        present = {item.format for item in values}
-        if present != required:
-            raise ValueError("formatMix must include each required format exactly once")
-        return values
-
-
-class PostSchedulerWeeklySlot(BaseModel):
-    week: Literal[1, 2, 3, 4]
-    day: str
-    format: Literal["Reel", "Carousel", "Single post"]
-    pillar: str
-    hook: str
-    captionStructure: str
-    ctaType: Literal["Reserve", "Order", "DM", "Walk in", "Save"]
-    funnelStage: Literal["Awareness", "Consideration", "Conversion", "Loyalty"]
-    visualDirection: str
-    notes: str
-
-
-class PostSchedulerMilestoneOutput(BaseModel):
-    monthlyArc: PostSchedulerMonthlyArc
-    contentRatio: PostSchedulerContentRatio
-    formatMix: PostSchedulerFormatMix
-    weeklySlotPlan: list[PostSchedulerWeeklySlot]
-    guardrailCheck: str
-
-    @model_validator(mode="after")
-    def _validate_guardrails(self) -> PostSchedulerMilestoneOutput:
-        promo_counts: dict[int, int] = {1: 0, 2: 0, 3: 0, 4: 0}
-        save_per_week: dict[int, bool] = {1: False, 2: False, 3: False, 4: False}
-        cta_set: set[str] = set()
-        has_week4_loyalty = False
-
-        for slot in self.weeklySlotPlan:
-            if slot.format == "Single post":
-                promo_counts[slot.week] += 1
-            if slot.format == "Carousel" or slot.ctaType == "Save":
-                save_per_week[slot.week] = True
-            cta_set.add(slot.ctaType)
-            if slot.week == 4 and slot.funnelStage == "Loyalty":
-                has_week4_loyalty = True
-
-        if any(count > 2 for count in promo_counts.values()):
-            raise ValueError("no more than 2 promotional posts are allowed per week")
-        if not all(save_per_week.values()):
-            raise ValueError("at least one save-optimized post is required per week")
-        if len(cta_set) < 2:
-            raise ValueError("CTA types must vary across the month")
-        if not has_week4_loyalty:
-            raise ValueError("week 4 must include at least one loyalty/community post")
-
-        return self
-
-
 class PromotionCandidateMenuItem(BaseModel):
     """Star or puzzle menu line with optional storytelling judgment vs campaign brief."""
 
@@ -437,18 +317,6 @@ class CultureHooksMilestoneOutput(BaseModel):
         return values
 
 
-FormatMixFormatKey = Literal["single_post", "carousel", "single_video_reel", "multi_video_reel"]
-
-
-class FormatMixFormatItem(BaseModel):
-    format: FormatMixFormatKey
-    percent: int = Field(ge=0, le=100)
-
-
-class FormatMixMilestoneOutput(BaseModel):
-    formats: list[FormatMixFormatItem] = Field(default_factory=list)
-
-
 _IG_USERNAME_RE = re.compile(r"^[a-zA-Z0-9._]+$")
 
 
@@ -537,6 +405,12 @@ class MenuTaggerTagsOutput(BaseModel):
     ingredient: list[str] = Field(default_factory=list)
     taste: list[str] = Field(default_factory=list)
     course: list[str] = Field(default_factory=list)
+    reel_moment: str
+    texture: list[str] = Field(default_factory=list)
+    prep_style: list[str] = Field(default_factory=list)
+    occasion: list[str] = Field(default_factory=list)
+    serve_temp: str
+    content_angle: list[str] = Field(default_factory=list)
 
 
 class MenuTaggerItemOutput(BaseModel):
@@ -544,6 +418,10 @@ class MenuTaggerItemOutput(BaseModel):
     role: Literal["star", "puzzle"]
     category: str
     tags: MenuTaggerTagsOutput
+    storytellingFit: Literal["strong", "weak"] = "weak"
+    storytellingRationale: str = ""
+    quantity: int | None = Field(default=None, ge=0)
+    popularity: float | None = Field(default=None, ge=0, le=1)
 
 
 class MenuTaggerUsedTagsOutput(BaseModel):
@@ -551,10 +429,16 @@ class MenuTaggerUsedTagsOutput(BaseModel):
     ingredient: list[str] = Field(default_factory=list)
     taste: list[str] = Field(default_factory=list)
     course: list[str] = Field(default_factory=list)
+    reel_moment: list[str] = Field(default_factory=list)
+    texture: list[str] = Field(default_factory=list)
+    prep_style: list[str] = Field(default_factory=list)
+    occasion: list[str] = Field(default_factory=list)
+    serve_temp: list[str] = Field(default_factory=list)
+    content_angle: list[str] = Field(default_factory=list)
 
 
 class MenuTaggerMilestoneOutput(BaseModel):
-    taxonomyVersion: Literal["v1"]
+    taxonomyVersion: Literal["v2"]
     sourcePromotionCandidatesTitle: str | None = None
     items: list[MenuTaggerItemOutput]
     usedTags: MenuTaggerUsedTagsOutput
@@ -578,15 +462,167 @@ class MenuTaggerMilestoneOutput(BaseModel):
         return values
 
 
+class ReelLineupGroupItemOutput(BaseModel):
+    name: str
+    role: Literal["star", "puzzle"]
+    category: str
+    position: int = Field(ge=1, le=5)
+    popularity: float | None = Field(default=None, ge=0.0, le=1.0)
+    priceLevel: Literal[1, 2, 3] | None = None
+    storytellingFit: Literal["strong", "weak"] | None = None
+    reelMoment: str | None = None
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def _normalize_name(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("name")
+    @classmethod
+    def _require_name(cls, value: str) -> str:
+        if not value:
+            raise ValueError("name must be non-empty")
+        return value
+
+
+class ReelLineupGroupMixOutput(BaseModel):
+    priceLevels: list[Literal[1, 2, 3]]
+    storytellingStrongCount: int = Field(ge=0)
+    starCount: int = Field(ge=0)
+    puzzleCount: int = Field(ge=0)
+
+
+class ReelLineupAnchorOutput(BaseModel):
+    dimension: Literal["reel_moment"]
+    value: str
+
+
+class ReelLineupGroupOutput(BaseModel):
+    id: str
+    leadName: str
+    profileId: Literal["hook_reel"]
+    anchor: ReelLineupAnchorOutput
+    items: list[ReelLineupGroupItemOutput]
+    mix: ReelLineupGroupMixOutput
+
+    @field_validator("items")
+    @classmethod
+    def _validate_items(
+        cls, values: list[ReelLineupGroupItemOutput]
+    ) -> list[ReelLineupGroupItemOutput]:
+        if not (1 <= len(values) <= 5):
+            raise ValueError("each group must contain between 1 and 5 items")
+        positions = [item.position for item in values]
+        if positions != list(range(1, len(values) + 1)):
+            raise ValueError("item positions must be sequential starting at 1")
+        return values
+
+
+class ReelLineupMilestoneOutput(BaseModel):
+    foodLeads: list[MenuTaggerItemOutput] = Field(default_factory=list)
+    drinkLeads: list[MenuTaggerItemOutput] = Field(default_factory=list)
+    groups: list[ReelLineupGroupOutput]
+    drinkGroups: list[ReelLineupGroupOutput] = Field(default_factory=list)
+    unassignedItemNames: list[str] = Field(default_factory=list)
+    sourceMenuTaggerTitle: str | None = None
+    notes: str | None = None
+
+    @model_validator(mode="after")
+    def _validate_lead_group_alignment(self) -> ReelLineupMilestoneOutput:
+        if len(self.foodLeads) != len(self.groups):
+            raise ValueError("foodLeads length must match groups length")
+        if len(self.drinkLeads) != len(self.drinkGroups):
+            raise ValueError("drinkLeads length must match drinkGroups length")
+        for lead, group in zip(self.foodLeads, self.groups, strict=True):
+            if lead.name.strip() != group.leadName.strip():
+                raise ValueError("foodLeads[i].name must match groups[i].leadName")
+        for lead, group in zip(self.drinkLeads, self.drinkGroups, strict=True):
+            if lead.name.strip() != group.leadName.strip():
+                raise ValueError("drinkLeads[i].name must match drinkGroups[i].leadName")
+        return self
+
+
+class PostLineupSlideOutput(BaseModel):
+    dishName: str
+    role: Literal["star", "puzzle"] | None = None
+    category: str | None = None
+    imageBrief: str
+
+    @field_validator("dishName", "imageBrief", mode="before")
+    @classmethod
+    def _normalize_required_text(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("dishName", "imageBrief")
+    @classmethod
+    def _validate_non_empty(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must be non-empty")
+        return value
+
+
+class PostLineupPostOutput(BaseModel):
+    id: str
+    format: Literal["carousel"]
+    intent: Literal["pinned_monthly_menu"]
+    title: str
+    slides: list[PostLineupSlideOutput]
+
+    @field_validator("id", "title", mode="before")
+    @classmethod
+    def _normalize_text(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("slides")
+    @classmethod
+    def _validate_slides(
+        cls, values: list[PostLineupSlideOutput]
+    ) -> list[PostLineupSlideOutput]:
+        if not values:
+            raise ValueError("must contain at least one slide")
+        if len(values) > 5:
+            raise ValueError("must contain at most 5 slides")
+        return values
+
+
+class PostLineupMilestoneOutput(BaseModel):
+    posts: list[PostLineupPostOutput]
+    sourceReelLineupTitle: str | None = None
+    notes: str | None = None
+
+    @field_validator("posts")
+    @classmethod
+    def _validate_posts(cls, values: list[PostLineupPostOutput]) -> list[PostLineupPostOutput]:
+        if not values:
+            raise ValueError("must contain at least one post")
+        return values
+
+
+class SchedulerSlotOutput(BaseModel):
+    date: str
+    time: str
+    title: str
+
+
+class SchedulerMilestoneOutput(BaseModel):
+    startDate: str
+    endDate: str
+    publicHolidays: list[CampaignWindowPublicHoliday] = Field(default_factory=list)
+    sourceDatesTitle: str | None = None
+    sourcePostLineupTitle: str | None = None
+    slots: list[SchedulerSlotOutput] = Field(default_factory=list)
+
+
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
     "campaign_brief": CampaignBriefMilestoneOutput,
-    "post_scheduler": PostSchedulerMilestoneOutput,
     "promotion_candidates": PromotionCandidatesMilestoneOutput,
     "menu_tagger": MenuTaggerMilestoneOutput,
+    "reel_lineup": ReelLineupMilestoneOutput,
+    "post_lineup": PostLineupMilestoneOutput,
+    "scheduler": SchedulerMilestoneOutput,
     "culture_hooks": CultureHooksMilestoneOutput,
-    "format_mix": FormatMixMilestoneOutput,
     "ig_profile": IgProfileMilestoneOutput,
 }
 

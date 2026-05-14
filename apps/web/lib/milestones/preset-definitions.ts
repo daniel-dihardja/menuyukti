@@ -1,11 +1,13 @@
 import {
+  CalendarDays,
   CalendarRange,
+  Clapperboard,
   ClipboardList,
+  Images,
   Instagram,
   Lightbulb,
   ListChecks,
   Milestone,
-  PieChart,
   Tags,
   type LucideIcon,
 } from 'lucide-react'
@@ -17,18 +19,21 @@ import {
   MENU_TAGGER_TAXONOMY_VERSION,
   emptyMenuTaggerUsedTags,
 } from '@/lib/milestones/menu-tagger-taxonomy'
+import { EMPTY_POST_LINEUP_DATA } from '@/lib/milestones/post-lineup'
+import { EMPTY_REEL_LINEUP_DATA } from '@/lib/milestones/reel-lineup'
 import {
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   datesMilestoneDataSchema,
-  formatMixMilestoneDataSchema,
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
+  postLineupMilestoneDataSchema,
+  reelLineupMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
   type MilestoneInput,
   type MilestonePresetId,
   MILESTONE_PRESET_IDS,
   type MilestonedataValue,
-  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
@@ -93,21 +98,6 @@ const EMPTY_CAMPAIGN_BRIEF_DATA: MilestonedataValue = {
   riskGuardrails: [],
 }
 
-const EMPTY_POST_SCHEDULER_DATA: MilestonedataValue = {
-  monthlyArc: {
-    weeks: [
-      { week: 1, objective: '', rationale: '' },
-      { week: 2, objective: '', rationale: '' },
-      { week: 3, objective: '', rationale: '' },
-      { week: 4, objective: '', rationale: '' },
-    ],
-  },
-  contentRatio: { pillars: [] },
-  formatMix: { formats: [] },
-  weeklySlotPlan: [],
-  guardrailCheck: '',
-}
-
 const EMPTY_PROMOTION_CANDIDATES_DATA: MilestonedataValue = {
   mainCategory: '(uncategorized)',
   categories: [{ category: '(uncategorized)', starItems: [], puzzleItems: [] }],
@@ -122,10 +112,6 @@ const EMPTY_CULTURE_HOOKS_DATA: MilestonedataValue = {
   guardrailCheck: '',
 }
 
-const EMPTY_FORMAT_MIX_DATA: MilestonedataValue = {
-  formats: [],
-}
-
 const EMPTY_IG_PROFILE_DATA: MilestonedataValue = {
   usernames: [],
   bios: [],
@@ -135,6 +121,13 @@ const EMPTY_MENU_TAGGER_DATA: MilestonedataValue = {
   taxonomyVersion: MENU_TAGGER_TAXONOMY_VERSION,
   items: [],
   usedTags: emptyMenuTaggerUsedTags(),
+}
+
+const EMPTY_SCHEDULER_DATA: MilestonedataValue = {
+  startDate: '',
+  endDate: '',
+  publicHolidays: [],
+  slots: [],
 }
 
 export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePresetDefinition> = {
@@ -185,36 +178,6 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       passCriteria: buildCampaignBriefPassCriteriaSeed(t),
     }),
   },
-  post_scheduler: {
-    id: 'post_scheduler',
-    icon: Milestone,
-    inputType: 'optional_notes',
-    dataSchema: postSchedulerMilestoneDataSchema,
-    emptyData: EMPTY_POST_SCHEDULER_DATA,
-    getCreateFields: (t) => ({
-      name: t('milestonePreset.post_scheduler.title'),
-      milestoneInput: {
-        type: 'post_scheduler',
-        value: { notes: '' },
-      },
-      milestoneData: EMPTY_POST_SCHEDULER_DATA,
-      goal: t('milestonePreset.post_scheduler.goal'),
-      passCriteria: [
-        {
-          requirement: t('milestonePreset.post_scheduler.criterionPostsGenerated'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.post_scheduler.criterionPostFields'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.post_scheduler.criterionMenuItems'),
-          status: 'open',
-        },
-      ],
-    }),
-  },
   promotion_candidates: {
     id: 'promotion_candidates',
     icon: ListChecks,
@@ -228,6 +191,7 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         value: {
           notes: '',
           selectedMenuCategories: [],
+          ignoredMenuItems: [],
           starItemLimit: 5,
           puzzleItemLimit: 10,
         },
@@ -276,6 +240,78 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       ],
     }),
   },
+  reel_lineup: {
+    id: 'reel_lineup',
+    icon: Clapperboard,
+    inputType: 'optional_notes',
+    dataSchema: reelLineupMilestoneDataSchema,
+    emptyData: EMPTY_REEL_LINEUP_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.reel_lineup.title'),
+      milestoneInput: {
+        type: 'reel_lineup',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_REEL_LINEUP_DATA,
+      goal: t('milestonePreset.reel_lineup.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionPriorMenuTagger'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionHookGroupCount'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionMainCourseHook'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionDrinkHookGroupCount'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionDrinkHook'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  post_lineup: {
+    id: 'post_lineup',
+    icon: Images,
+    inputType: 'optional_notes',
+    dataSchema: postLineupMilestoneDataSchema,
+    emptyData: EMPTY_POST_LINEUP_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.post_lineup.title'),
+      milestoneInput: {
+        type: 'post_lineup',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_POST_LINEUP_DATA,
+      goal: t('milestonePreset.post_lineup.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.post_lineup.criterionPriorReelLineup'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.post_lineup.criterionCarouselPost'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.post_lineup.criterionSlideCount'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.post_lineup.criterionSlideFields'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
   culture_hooks: {
     id: 'culture_hooks',
     icon: Lightbulb,
@@ -301,32 +337,6 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.culture_hooks.criterionAudienceConceptInferred'),
-          status: 'open',
-        },
-      ],
-    }),
-  },
-  format_mix: {
-    id: 'format_mix',
-    icon: PieChart,
-    inputType: 'optional_notes',
-    dataSchema: formatMixMilestoneDataSchema,
-    emptyData: EMPTY_FORMAT_MIX_DATA,
-    getCreateFields: (t) => ({
-      name: t('milestonePreset.format_mix.title'),
-      milestoneInput: {
-        type: 'format_mix',
-        value: { notes: '' },
-      },
-      milestoneData: EMPTY_FORMAT_MIX_DATA,
-      goal: t('milestonePreset.format_mix.goal'),
-      passCriteria: [
-        {
-          requirement: t('milestonePreset.format_mix.criterionBriefGrounded'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.format_mix.criterionMixDefined'),
           status: 'open',
         },
       ],
@@ -361,6 +371,32 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.ig_profile.criterionBioVariations'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  scheduler: {
+    id: 'scheduler',
+    icon: CalendarDays,
+    inputType: 'optional_notes',
+    dataSchema: schedulerMilestoneDataSchema,
+    emptyData: EMPTY_SCHEDULER_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.scheduler.title'),
+      milestoneData: EMPTY_SCHEDULER_DATA,
+      milestoneInput: {
+        type: 'scheduler',
+        value: { notes: '' },
+      },
+      goal: t('milestonePreset.scheduler.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.scheduler.criterionPriorDates'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.scheduler.criterionWindowPresent'),
           status: 'open',
         },
       ],

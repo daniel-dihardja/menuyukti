@@ -9,11 +9,15 @@ import {
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataValueSchema,
-  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
+  reelLineupMilestoneDataSchema,
+  postLineupMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
   type PassCriteriaData,
 } from '@/lib/graphql/node-schemas'
+import { EMPTY_REEL_LINEUP_DATA } from '@/lib/milestones/reel-lineup'
+import { EMPTY_POST_LINEUP_DATA } from '@/lib/milestones/post-lineup'
 import type { MilestoneNode } from '@/lib/graphql/node-schemas'
 import {
   DELETE_NODE_MUTATION,
@@ -118,17 +122,29 @@ export async function GET(_req: Request, context: RouteContext) {
     }
     const ms = mn as MilestoneNode
 
+    const parsedMilestoneNodeData =
+      ms.data != null && typeof ms.data === 'object' ? milestoneDataSchema.safeParse(ms.data) : null
+    const presetId =
+      parsedMilestoneNodeData?.success && parsedMilestoneNodeData.data.presetId != null
+        ? parsedMilestoneNodeData.data.presetId
+        : undefined
+
     let milestoneData: z.infer<typeof milestonedataValueSchema> | null = null
     const mpd = ms.milestonePresetData
     if (mpd != null && typeof mpd === 'object') {
-      const pp = milestonedataValueSchema.safeParse(mpd)
-      if (pp.success) {
-        milestoneData = pp.data
+      if (presetId === 'scheduler') {
+        const schedulerParsed = schedulerMilestoneDataSchema.safeParse(mpd)
+        if (schedulerParsed.success) {
+          milestoneData = schedulerParsed.data
+        }
+      } else {
+        const pp = milestonedataValueSchema.safeParse(mpd)
+        if (pp.success) {
+          milestoneData = pp.data
+        }
       }
     }
 
-    const parsedMilestoneNodeData =
-      ms.data != null && typeof ms.data === 'object' ? milestoneDataSchema.safeParse(ms.data) : null
     let passCriterias: PassCriteriaData[] = []
     if (Array.isArray(ms.passCriterias) && ms.passCriterias.length > 0) {
       passCriterias = ms.passCriterias as PassCriteriaData[]
@@ -178,28 +194,6 @@ export async function GET(_req: Request, context: RouteContext) {
     }
     if (
       parsedMilestoneNodeData?.success &&
-      parsedMilestoneNodeData.data.presetId === 'post_scheduler'
-    ) {
-      const psParsed = postSchedulerMilestoneDataSchema.safeParse(milestoneData)
-      if (!psParsed.success) {
-        milestoneData = {
-          monthlyArc: {
-            weeks: [
-              { week: 1, objective: '', rationale: '' },
-              { week: 2, objective: '', rationale: '' },
-              { week: 3, objective: '', rationale: '' },
-              { week: 4, objective: '', rationale: '' },
-            ],
-          },
-          contentRatio: { pillars: [] },
-          formatMix: { formats: [] },
-          weeklySlotPlan: [],
-          guardrailCheck: '',
-        }
-      }
-    }
-    if (
-      parsedMilestoneNodeData?.success &&
       parsedMilestoneNodeData.data.presetId === 'promotion_candidates'
     ) {
       const pcParsed = promotionCandidatesMilestoneDataSchema.safeParse(milestoneData)
@@ -222,6 +216,32 @@ export async function GET(_req: Request, context: RouteContext) {
           taxonomyVersion: MENU_TAGGER_TAXONOMY_VERSION,
           items: [],
           usedTags: emptyMenuTaggerUsedTags(),
+        }
+      }
+    }
+    if (presetId === 'reel_lineup') {
+      const rlParsed = reelLineupMilestoneDataSchema.safeParse(milestoneData)
+      if (!rlParsed.success) {
+        milestoneData = EMPTY_REEL_LINEUP_DATA
+      }
+    }
+    if (presetId === 'post_lineup') {
+      const plParsed = postLineupMilestoneDataSchema.safeParse(milestoneData)
+      if (!plParsed.success) {
+        milestoneData = EMPTY_POST_LINEUP_DATA
+      }
+    }
+
+    if (presetId === 'scheduler') {
+      const schedulerParsed = schedulerMilestoneDataSchema.safeParse(milestoneData ?? mpd)
+      if (schedulerParsed.success) {
+        milestoneData = schedulerParsed.data
+      } else {
+        milestoneData = {
+          startDate: '',
+          endDate: '',
+          publicHolidays: [],
+          slots: [],
         }
       }
     }

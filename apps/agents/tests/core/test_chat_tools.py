@@ -459,7 +459,7 @@ async def test_update_milestone_input_validation_failure(monkeypatch: pytest.Mon
     monkeypatch.setattr(chat_tools, "persist_milestone_input", persist_mock)
 
     out = await chat_tools.update_milestone_input.ainvoke(
-        {"operations": [{"op": "replace", "path": "/type", "value": "post_scheduler"}]},
+        {"operations": [{"op": "replace", "path": "/type", "value": "dates"}]},
         config={"configurable": {"milestone_id": "42", "location_id": 7, "user_id": "u1"}},
     )
     assert "Patched milestoneInput is invalid" in out

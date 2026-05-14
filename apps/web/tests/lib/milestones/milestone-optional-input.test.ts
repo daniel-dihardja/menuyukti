@@ -12,23 +12,15 @@ import { getMilestonePresetCreateFields } from '@/lib/milestones/preset-definiti
 describe('milestone optional notes', () => {
   it('milestonePresetHasDefaultOptionalNotesInput includes supported presets', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('restaurant_campaign_brief')).toBe(true)
-    expect(milestonePresetHasDefaultOptionalNotesInput('post_scheduler')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput('culture_hooks')).toBe(true)
-    expect(milestonePresetHasDefaultOptionalNotesInput('format_mix')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('ig_profile')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('menu_tagger')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('reel_lineup')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('post_lineup')).toBe(true)
+    expect(milestonePresetHasDefaultOptionalNotesInput('scheduler')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('dates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput(undefined)).toBe(false)
-  })
-
-  it('optionalNotesFromMilestoneInput reads notes for post_scheduler', () => {
-    expect(
-      optionalNotesFromMilestoneInput(
-        { type: 'post_scheduler', value: { notes: '  weekdays only  ' } },
-        'post_scheduler',
-      ),
-    ).toBe('  weekdays only  ')
   })
 
   it('promotionCandidatesInputFromMilestoneInput reads notes and categories', () => {
@@ -40,6 +32,23 @@ describe('milestone optional notes', () => {
     ).toEqual({
       notes: 'focus lunch',
       selectedMenuCategories: ['Mains', 'Mains'],
+      ignoredMenuItemsText: '',
+      starItemLimit: 5,
+      puzzleItemLimit: 10,
+    })
+    expect(
+      promotionCandidatesInputFromMilestoneInput({
+        type: 'promotion_candidates',
+        value: {
+          notes: '',
+          selectedMenuCategories: [],
+          ignoredMenuItems: ['TEH', 'AIR MINERAL'],
+        },
+      }),
+    ).toEqual({
+      notes: '',
+      selectedMenuCategories: [],
+      ignoredMenuItemsText: 'TEH\nAIR MINERAL',
       starItemLimit: 5,
       puzzleItemLimit: 10,
     })
@@ -47,12 +56,14 @@ describe('milestone optional notes', () => {
       normalizePromotionCandidatesInput({
         notes: '  focus  ',
         selectedMenuCategories: ['Mains', 'mains', 'Desserts'],
+        ignoredMenuItemsText: 'TEH\n  teh \nAIR MINERAL\n',
         starItemLimit: 10,
         puzzleItemLimit: 'all',
       }),
     ).toEqual({
       notes: 'focus',
       selectedMenuCategories: ['Mains', 'Desserts'],
+      ignoredMenuItems: ['TEH', 'AIR MINERAL'],
       starItemLimit: 10,
       puzzleItemLimit: 'all',
     })
@@ -65,6 +76,7 @@ describe('milestone optional notes', () => {
         value: {
           notes: 'seasonal',
           selectedMenuCategories: ['Mains'],
+          ignoredMenuItems: ['TEH', 'AIR MINERAL'],
           starItemLimit: 10,
           puzzleItemLimit: 'all',
         },
@@ -77,6 +89,7 @@ describe('milestone optional notes', () => {
         value: {
           notes: 'seasonal',
           selectedMenuCategories: ['Mains'],
+          ignoredMenuItems: ['TEH', 'AIR MINERAL'],
           starItemLimit: 10,
           puzzleItemLimit: 'all',
         },
@@ -91,23 +104,11 @@ describe('milestone optional notes', () => {
       value: {
         notes: '',
         selectedMenuCategories: [],
+        ignoredMenuItems: [],
         starItemLimit: 5,
         puzzleItemLimit: 10,
       },
     })
-  })
-
-  it('patchMilestoneSchema accepts post_scheduler milestoneInput', () => {
-    const parsed = patchMilestoneSchema.safeParse({
-      milestoneInput: { type: 'post_scheduler', value: { notes: 'no weekends' } },
-    })
-    expect(parsed.success).toBe(true)
-    if (parsed.success) {
-      expect(parsed.data.milestoneInput).toEqual({
-        type: 'post_scheduler',
-        value: { notes: 'no weekends' },
-      })
-    }
   })
 
   it('patchMilestoneSchema accepts culture_hooks milestoneInput', () => {
@@ -119,19 +120,6 @@ describe('milestone optional notes', () => {
       expect(parsed.data.milestoneInput).toEqual({
         type: 'culture_hooks',
         value: { notes: 'focus on heritage values' },
-      })
-    }
-  })
-
-  it('patchMilestoneSchema accepts format_mix milestoneInput', () => {
-    const parsed = patchMilestoneSchema.safeParse({
-      milestoneInput: { type: 'format_mix', value: { notes: 'prefer Reels' } },
-    })
-    expect(parsed.success).toBe(true)
-    if (parsed.success) {
-      expect(parsed.data.milestoneInput).toEqual({
-        type: 'format_mix',
-        value: { notes: 'prefer Reels' },
       })
     }
   })
@@ -200,28 +188,6 @@ describe('milestone optional notes', () => {
     }
   })
 
-  it('getMilestonePresetCreateFields seeds post_scheduler milestoneInput', () => {
-    const fields = getMilestonePresetCreateFields('post_scheduler', (k) => k)
-    expect(fields.milestoneInput).toEqual({
-      type: 'post_scheduler',
-      value: { notes: '' },
-    })
-    expect(fields.milestoneData).toEqual({
-      monthlyArc: {
-        weeks: [
-          { week: 1, objective: '', rationale: '' },
-          { week: 2, objective: '', rationale: '' },
-          { week: 3, objective: '', rationale: '' },
-          { week: 4, objective: '', rationale: '' },
-        ],
-      },
-      contentRatio: { pillars: [] },
-      formatMix: { formats: [] },
-      weeklySlotPlan: [],
-      guardrailCheck: '',
-    })
-  })
-
   it('getMilestonePresetCreateFields seeds dates milestoneInput', () => {
     const fields = getMilestonePresetCreateFields('dates', (k) => k)
     expect(fields.milestoneInput).toEqual({
@@ -249,17 +215,6 @@ describe('milestone optional notes', () => {
     })
   })
 
-  it('getMilestonePresetCreateFields seeds format_mix milestoneInput', () => {
-    const fields = getMilestonePresetCreateFields('format_mix', (k) => k)
-    expect(fields.milestoneInput).toEqual({
-      type: 'format_mix',
-      value: { notes: '' },
-    })
-    expect(fields.milestoneData).toEqual({
-      formats: [],
-    })
-  })
-
   it('getMilestonePresetCreateFields seeds ig_profile milestoneInput', () => {
     const fields = getMilestonePresetCreateFields('ig_profile', (k) => k)
     expect(fields.milestoneInput).toEqual({
@@ -269,6 +224,43 @@ describe('milestone optional notes', () => {
     expect(fields.milestoneData).toEqual({
       usernames: [],
       bios: [],
+    })
+  })
+
+  it('optionalNotesFromMilestoneInput reads scheduler notes', () => {
+    expect(
+      optionalNotesFromMilestoneInput(
+        { type: 'scheduler', value: { notes: 'Mark Christmas Day' } },
+        'scheduler',
+      ),
+    ).toBe('Mark Christmas Day')
+    expect(optionalNotesFromMilestoneInput(undefined, 'scheduler')).toBe('')
+  })
+
+  it('patchMilestoneSchema accepts scheduler milestoneInput', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      milestoneInput: { type: 'scheduler', value: { notes: 'Mark Easter Sunday' } },
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.milestoneInput).toEqual({
+        type: 'scheduler',
+        value: { notes: 'Mark Easter Sunday' },
+      })
+    }
+  })
+
+  it('getMilestonePresetCreateFields seeds scheduler milestoneInput', () => {
+    const fields = getMilestonePresetCreateFields('scheduler', (k) => k)
+    expect(fields.milestoneInput).toEqual({
+      type: 'scheduler',
+      value: { notes: '' },
+    })
+    expect(fields.milestoneData).toEqual({
+      startDate: '',
+      endDate: '',
+      publicHolidays: [],
+      slots: [],
     })
   })
 })

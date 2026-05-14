@@ -2,11 +2,12 @@ import {
   datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
-  formatMixMilestoneDataSchema,
   igProfileMilestoneDataSchema,
-  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
+  postLineupMilestoneDataSchema,
+  reelLineupMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
 import type {
@@ -35,10 +36,6 @@ export function parseDataPreviewForPreset(
     const parsed = campaignBriefMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
-  if (presetId === 'post_scheduler') {
-    const parsed = postSchedulerMilestoneDataSchema.safeParse(dataPreview)
-    return parsed.success ? parsed.data : undefined
-  }
   if (presetId === 'promotion_candidates') {
     const parsed = promotionCandidatesMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
@@ -47,16 +44,24 @@ export function parseDataPreviewForPreset(
     const parsed = menuTaggerMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
+  if (presetId === 'reel_lineup') {
+    const parsed = reelLineupMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'post_lineup') {
+    const parsed = postLineupMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
   if (presetId === 'culture_hooks') {
     const parsed = cultureHooksMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
-  if (presetId === 'format_mix') {
-    const parsed = formatMixMilestoneDataSchema.safeParse(dataPreview)
-    return parsed.success ? parsed.data : undefined
-  }
   if (presetId === 'ig_profile') {
     const parsed = igProfileMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'scheduler') {
+    const parsed = schedulerMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   return undefined

@@ -7,13 +7,14 @@ import {
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   datesMilestoneDataSchema,
-  formatMixMilestoneDataSchema,
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
+  postLineupMilestoneDataSchema,
+  reelLineupMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
   milestoneInputSchema,
   milestonePresetIdSchema,
   passCriteriaSchema,
-  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from './milestone-presets'
 
@@ -32,14 +33,15 @@ export type MilestoneData = z.infer<typeof milestoneDataSchema>
 
 /** Child `milestonedata` node JSON — structured preset data only (breaking change: no markdown string). */
 export const milestonedataValueSchema = z.union([
+  schedulerMilestoneDataSchema,
   datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
-  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
-  formatMixMilestoneDataSchema,
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
+  reelLineupMilestoneDataSchema,
+  postLineupMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>

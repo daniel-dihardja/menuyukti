@@ -26,12 +26,13 @@ export type PassCriteriaData = z.infer<typeof passCriteriaSchema>
 export const milestonePresetIdSchema = z.enum([
   'dates',
   'restaurant_campaign_brief',
-  'post_scheduler',
   'promotion_candidates',
   'menu_tagger',
+  'reel_lineup',
+  'post_lineup',
   'culture_hooks',
-  'format_mix',
   'ig_profile',
+  'scheduler',
 ])
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
@@ -53,29 +54,11 @@ export type CampaignBriefMilestoneInputValue = z.infer<
   typeof campaignBriefMilestoneInputValueSchema
 >
 
-/**
- * Optional owner notes on the milestone Input tab (`value.notes`).
- * Used by the scheduler preset.
- */
-export const postSchedulerMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
-
-export type PostSchedulerMilestoneInputValue = z.infer<
-  typeof postSchedulerMilestoneInputValueSchema
->
-
 export const cultureHooksMilestoneInputValueSchema = z.object({
   notes: z.string(),
 })
 
 export type CultureHooksMilestoneInputValue = z.infer<typeof cultureHooksMilestoneInputValueSchema>
-
-export const formatMixMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
-
-export type FormatMixMilestoneInputValue = z.infer<typeof formatMixMilestoneInputValueSchema>
 
 export const igProfileMilestoneInputValueSchema = z.object({
   notes: z.string(),
@@ -89,6 +72,24 @@ export const menuTaggerMilestoneInputValueSchema = z.object({
 
 export type MenuTaggerMilestoneInputValue = z.infer<typeof menuTaggerMilestoneInputValueSchema>
 
+export const reelLineupMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type ReelLineupMilestoneInputValue = z.infer<typeof reelLineupMilestoneInputValueSchema>
+
+export const postLineupMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type PostLineupMilestoneInputValue = z.infer<typeof postLineupMilestoneInputValueSchema>
+
+export const schedulerMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type SchedulerMilestoneInputValue = z.infer<typeof schedulerMilestoneInputValueSchema>
+
 export const promotionCandidatesItemLimitSchema = z.union([
   z.literal(5),
   z.literal(10),
@@ -101,6 +102,7 @@ export type PromotionCandidatesItemLimit = z.infer<typeof promotionCandidatesIte
 export const promotionCandidatesMilestoneInputValueSchema = z.object({
   notes: z.string(),
   selectedMenuCategories: z.array(z.string().trim().min(1)),
+  ignoredMenuItems: z.array(z.string().trim().min(1)).default([]),
   starItemLimit: promotionCandidatesItemLimitSchema.default(5),
   puzzleItemLimit: promotionCandidatesItemLimitSchema.default(10),
 })
@@ -167,67 +169,6 @@ export const campaignBriefMilestoneDataSchema = z.object({
 
 export type CampaignBriefMilestoneData = z.infer<typeof campaignBriefMilestoneDataSchema>
 
-export const postSchedulerMonthlyArcWeekSchema = z.object({
-  week: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
-  objective: z.string(),
-  rationale: z.string(),
-})
-
-export const postSchedulerMonthlyArcSchema = z.object({
-  weeks: z.array(postSchedulerMonthlyArcWeekSchema),
-})
-
-export const postSchedulerContentRatioItemSchema = z.object({
-  pillar: z.string(),
-  percent: z.number().int().nonnegative(),
-  reason: z.string(),
-})
-
-export const postSchedulerContentRatioSchema = z.object({
-  pillars: z.array(postSchedulerContentRatioItemSchema),
-})
-
-export const postSchedulerFormatMixItemSchema = z.object({
-  format: z.enum([
-    'Reels',
-    'Carousels',
-    'Single posts',
-    'Stories',
-    'Highlights updates',
-    'Lives',
-    'Collaborator posts',
-  ]),
-  count: z.number().int().nonnegative(),
-  reason: z.string(),
-})
-
-export const postSchedulerFormatMixSchema = z.object({
-  formats: z.array(postSchedulerFormatMixItemSchema),
-})
-
-export const postSchedulerWeeklySlotSchema = z.object({
-  week: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
-  day: z.string(),
-  format: z.enum(['Reel', 'Carousel', 'Single post']),
-  pillar: z.string(),
-  hook: z.string(),
-  captionStructure: z.string(),
-  ctaType: z.enum(['Reserve', 'Order', 'DM', 'Walk in', 'Save']),
-  funnelStage: z.enum(['Awareness', 'Consideration', 'Conversion', 'Loyalty']),
-  visualDirection: z.string(),
-  notes: z.string(),
-})
-
-export const postSchedulerMilestoneDataSchema = z.object({
-  monthlyArc: postSchedulerMonthlyArcSchema,
-  contentRatio: postSchedulerContentRatioSchema,
-  formatMix: postSchedulerFormatMixSchema,
-  weeklySlotPlan: z.array(postSchedulerWeeklySlotSchema),
-  guardrailCheck: z.string(),
-})
-
-export type PostSchedulerMilestoneData = z.infer<typeof postSchedulerMilestoneDataSchema>
-
 /** Legacy milestonedata stored star/puzzle lines as plain strings; new runs use objects with storytelling fields. */
 export const promotionCandidateMenuItemSchema = z.union([
   z
@@ -286,24 +227,6 @@ export const cultureHooksMilestoneDataSchema = z.object({
 
 export type CultureHooksMilestoneData = z.infer<typeof cultureHooksMilestoneDataSchema>
 
-export const formatMixFormatKeySchema = z.enum([
-  'single_post',
-  'carousel',
-  'single_video_reel',
-  'multi_video_reel',
-])
-
-export const formatMixMilestoneDataSchema = z.object({
-  formats: z.array(
-    z.object({
-      format: formatMixFormatKeySchema,
-      percent: z.number().int().min(0).max(100),
-    }),
-  ),
-})
-
-export type FormatMixMilestoneData = z.infer<typeof formatMixMilestoneDataSchema>
-
 /** Permissive storage schema (empty seed on create). Run output is validated strictly in agents. */
 export const igProfileUsernameSuggestionSchema = z.object({
   username: z.string(),
@@ -339,6 +262,10 @@ export const menuTaggerItemSchema = z.object({
   role: menuTaggerItemRoleSchema,
   category: z.string().trim().min(1),
   tags: menuTaggerTagsSchema,
+  storytellingFit: z.enum(['strong', 'weak']).default('weak'),
+  storytellingRationale: z.string().default(''),
+  quantity: z.number().int().nonnegative().optional(),
+  popularity: z.number().min(0).max(1).optional(),
 })
 
 export type MenuTaggerItem = z.infer<typeof menuTaggerItemSchema>
@@ -352,6 +279,104 @@ export const menuTaggerMilestoneDataSchema = z.object({
 })
 
 export type MenuTaggerMilestoneData = z.infer<typeof menuTaggerMilestoneDataSchema>
+
+export const reelLineupProfileIdSchema = z.literal('hook_reel')
+
+export const reelLineupAnchorSchema = z.object({
+  dimension: z.literal('reel_moment'),
+  value: z.string().trim().min(1),
+})
+
+export const reelLineupGroupMixSchema = z.object({
+  priceLevels: z.array(z.union([z.literal(1), z.literal(2), z.literal(3)])),
+  storytellingStrongCount: z.number().int().nonnegative(),
+  starCount: z.number().int().nonnegative(),
+  puzzleCount: z.number().int().nonnegative(),
+})
+
+export const reelLineupGroupItemSchema = z.object({
+  name: z.string().trim().min(1),
+  role: menuTaggerItemRoleSchema,
+  category: z.string().trim().min(1),
+  position: z.number().int().min(1).max(5),
+  popularity: z.number().min(0).max(1).optional(),
+  priceLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  storytellingFit: z.enum(['strong', 'weak']).optional(),
+  reelMoment: z.string().trim().min(1).optional(),
+})
+
+export type ReelLineupGroupItem = z.infer<typeof reelLineupGroupItemSchema>
+
+export const reelLineupGroupSchema = z.object({
+  id: z.string().trim().min(1),
+  leadName: z.string().trim().min(1),
+  profileId: reelLineupProfileIdSchema,
+  anchor: reelLineupAnchorSchema,
+  items: z.array(reelLineupGroupItemSchema).min(1).max(5),
+  mix: reelLineupGroupMixSchema,
+})
+
+export type ReelLineupGroup = z.infer<typeof reelLineupGroupSchema>
+
+export const reelLineupMilestoneDataSchema = z.object({
+  foodLeads: z.array(menuTaggerItemSchema).default([]),
+  drinkLeads: z.array(menuTaggerItemSchema).default([]),
+  groups: z.array(reelLineupGroupSchema),
+  drinkGroups: z.array(reelLineupGroupSchema).default([]),
+  unassignedItemNames: z.array(z.string().trim().min(1)),
+  sourceMenuTaggerTitle: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+export type ReelLineupMilestoneData = z.infer<typeof reelLineupMilestoneDataSchema>
+
+export const postLineupPostFormatSchema = z.literal('carousel')
+
+export const postLineupPostIntentSchema = z.literal('pinned_monthly_menu')
+
+export const postLineupSlideSchema = z.object({
+  dishName: z.string().trim().min(1),
+  role: menuTaggerItemRoleSchema.optional(),
+  category: z.string().trim().min(1).optional(),
+  imageBrief: z.string().trim().min(1),
+})
+
+export type PostLineupSlide = z.infer<typeof postLineupSlideSchema>
+
+export const postLineupPostSchema = z.object({
+  id: z.string().trim().min(1),
+  format: postLineupPostFormatSchema,
+  intent: postLineupPostIntentSchema,
+  title: z.string().trim().min(1),
+  slides: z.array(postLineupSlideSchema).min(1).max(5),
+})
+
+export type PostLineupPost = z.infer<typeof postLineupPostSchema>
+
+export const postLineupMilestoneDataSchema = z.object({
+  posts: z.array(postLineupPostSchema),
+  sourceReelLineupTitle: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+export type PostLineupMilestoneData = z.infer<typeof postLineupMilestoneDataSchema>
+
+export const schedulerSlotSchema = z.object({
+  date: z.string(),
+  time: z.string(),
+  title: z.string(),
+})
+
+export const schedulerMilestoneDataSchema = z.object({
+  startDate: z.string(),
+  endDate: z.string(),
+  publicHolidays: z.array(campaignWindowPublicHolidaySchema).default([]),
+  sourceDatesTitle: z.string().optional(),
+  sourcePostLineupTitle: z.string().optional(),
+  slots: z.array(schedulerSlotSchema).default([]),
+})
+
+export type SchedulerMilestoneData = z.infer<typeof schedulerMilestoneDataSchema>
 
 export {
   MENU_TAGGER_TAXONOMY_VERSION,

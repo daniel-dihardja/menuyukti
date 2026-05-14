@@ -1,4 +1,4 @@
-"""GraphQL query: simplified promotion candidates for post scheduler."""
+"""GraphQL query: simplified promotion candidates for promotion_candidates milestone."""
 
 from __future__ import annotations
 

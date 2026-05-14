@@ -280,14 +280,23 @@ export function WorkflowChatPanel({
     [tSlash],
   )
 
+  const handleHydrateMilestoneData = ops.handleHydrateMilestoneData
+
+  useEffect(() => {
+    if (selectedMilestoneId === null) {
+      return
+    }
+    void handleHydrateMilestoneData(selectedMilestoneId)
+  }, [selectedMilestoneId, workflowId, handleHydrateMilestoneData])
+
   const chatWasBusy = useRef(false)
   useEffect(() => {
     const busy = status === 'streaming' || status === 'submitted'
     if (chatWasBusy.current && !busy && error == null && selectedMilestoneId !== null) {
-      void ops.handleHydrateMilestoneData(selectedMilestoneId)
+      void handleHydrateMilestoneData(selectedMilestoneId)
     }
     chatWasBusy.current = busy
-  }, [status, error, selectedMilestoneId, ops])
+  }, [status, error, selectedMilestoneId, handleHydrateMilestoneData])
 
   const handleTextChange = useCallback((event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const next = event.target.value

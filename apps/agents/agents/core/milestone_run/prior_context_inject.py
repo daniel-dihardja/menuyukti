@@ -62,6 +62,20 @@ def collect_matched_prior_rows(
                 matched_ids.append("restaurant_campaign_brief")
                 break
 
+    if "promotion_candidates" in wanted and "promotion_candidates" not in matched_ids:
+        for row in rows:
+            data = row.get("data")
+            if isinstance(data, dict) and is_promotion_candidates_milestone_data(data):
+                matched.append(
+                    {
+                        "title": row.get("title"),
+                        "presetId": row.get("presetId"),
+                        "data": data,
+                    }
+                )
+                matched_ids.append("promotion_candidates")
+                break
+
     return matched, matched_ids
 
 
@@ -83,22 +97,255 @@ def is_promotion_candidates_milestone_data(data: object) -> bool:
     return isinstance(categories, list)
 
 
+def promotion_candidates_has_items(data: dict[str, Any]) -> bool:
+    categories = data.get("categories")
+    if not isinstance(categories, list):
+        return False
+    for block in categories:
+        if not isinstance(block, dict):
+            continue
+        for key in ("starItems", "puzzleItems"):
+            raw_items = block.get(key)
+            if not isinstance(raw_items, list):
+                continue
+            for raw in raw_items:
+                name = ""
+                if isinstance(raw, str):
+                    name = raw.strip()
+                elif isinstance(raw, dict):
+                    name = str(raw.get("name") or "").strip()
+                if name:
+                    return True
+    return False
+
+
+def _collect_promotion_candidates_data_candidates(
+    rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"promotion_candidates"}))
+    candidates: list[dict[str, Any]] = []
+    seen_ids: set[int] = set()
+    for row in matched:
+        data = row.get("data")
+        if isinstance(data, dict) and is_promotion_candidates_milestone_data(data):
+            candidates.append(data)
+            seen_ids.add(id(data))
+
+    if candidates:
+        return candidates
+
+    for row in rows:
+        data = row.get("data")
+        if not isinstance(data, dict) or not is_promotion_candidates_milestone_data(data):
+            continue
+        if id(data) in seen_ids:
+            continue
+        candidates.append(data)
+    return candidates
+
+
+def is_menu_tagger_milestone_data(data: object) -> bool:
+    if not isinstance(data, dict):
+        return False
+    return data.get("taxonomyVersion") == "v2" and isinstance(data.get("items"), list)
+
+
 def extract_promotion_candidates_row(prior_milestones_json: str) -> dict[str, Any] | None:
-    """Return the first matched prior promotion_candidates row, or ``None``."""
+    """Return the best matched prior promotion_candidates row, or ``None``."""
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     matched, _ = collect_matched_prior_rows(rows, frozenset({"promotion_candidates"}))
-    return matched[0] if matched else None
+    if not matched:
+        return None
+    for row in reversed(matched):
+        data = row.get("data")
+        if isinstance(data, dict) and promotion_candidates_has_items(data):
+            return row
+    return matched[-1]
 
 
 def extract_promotion_candidates_data(prior_milestones_json: str) -> dict[str, Any] | None:
     """Return promotion_candidates ``data`` dict from prior milestones JSON, or ``None``."""
-    row = extract_promotion_candidates_row(prior_milestones_json)
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    candidates = _collect_promotion_candidates_data_candidates(rows)
+    if not candidates:
+        return None
+    for data in reversed(candidates):
+        if promotion_candidates_has_items(data):
+            return data
+    return candidates[-1]
+
+
+def promotion_candidates_prior_error_message(prior_milestones_json: str) -> str:
+    """Actionable error when menu_tagger (or similar) cannot read prior promotion_candidates data."""
+    base = "menu_tagger requires a prior promotion_candidates milestone with saved data"
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    if not rows:
+        return (
+            f"{base}. No earlier milestones were returned for this workflow step — "
+            "place promotion_candidates before menu_tagger in the timeline."
+        )
+
+    titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
+    has_pc_preset = any(
+        isinstance((preset_id := row.get("presetId")), str)
+        and preset_id.strip() == "promotion_candidates"
+        for row in rows
+    )
+    if not has_pc_preset:
+        return (
+            f"{base}. Earlier milestones are: {', '.join(titles)}. "
+            "Add a promotion_candidates step before menu_tagger, run it successfully, "
+            "then run menu_tagger again."
+        )
+    return (
+        f"{base}. A promotion_candidates milestone appears earlier in the workflow "
+        "but its saved preset data is missing or invalid — open that step, "
+        "confirm the Data tab shows star/puzzle items, and re-run promotion_candidates."
+    )
+
+
+def extract_menu_tagger_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the first matched prior menu_tagger row, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"menu_tagger"}))
+    return matched[0] if matched else None
+
+
+def extract_menu_tagger_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return menu_tagger ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_menu_tagger_row(prior_milestones_json)
     if row is None:
         return None
     data = row.get("data")
-    if isinstance(data, dict) and is_promotion_candidates_milestone_data(data):
+    if isinstance(data, dict) and is_menu_tagger_milestone_data(data):
         return data
     return None
+
+
+def is_reel_lineup_milestone_data(data: object) -> bool:
+    if not isinstance(data, dict):
+        return False
+    food_leads = data.get("foodLeads")
+    groups = data.get("groups")
+    return isinstance(food_leads, list) and isinstance(groups, list)
+
+
+def reel_lineup_has_food_leads(data: dict[str, Any]) -> bool:
+    food_leads = data.get("foodLeads")
+    if not isinstance(food_leads, list):
+        return False
+    for raw in food_leads:
+        if not isinstance(raw, dict):
+            continue
+        if str(raw.get("name") or "").strip():
+            return True
+    return False
+
+
+def extract_reel_lineup_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the first matched prior reel_lineup row, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"reel_lineup"}))
+    return matched[0] if matched else None
+
+
+def extract_reel_lineup_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return reel_lineup ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_reel_lineup_row(prior_milestones_json)
+    if row is None:
+        return None
+    data = row.get("data")
+    if isinstance(data, dict) and is_reel_lineup_milestone_data(data):
+        return data
+    return None
+
+
+def is_post_lineup_milestone_data(data: object) -> bool:
+    if not isinstance(data, dict):
+        return False
+    posts = data.get("posts")
+    return isinstance(posts, list) and len(posts) > 0
+
+
+def extract_post_lineup_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the first matched prior post_lineup row, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"post_lineup"}))
+    return matched[0] if matched else None
+
+
+def extract_post_lineup_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return post_lineup ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_post_lineup_row(prior_milestones_json)
+    if row is None:
+        return None
+    data = row.get("data")
+    if isinstance(data, dict) and is_post_lineup_milestone_data(data):
+        return data
+    return None
+
+
+def is_dates_milestone_data(data: object) -> bool:
+    if not isinstance(data, dict):
+        return False
+    start_date = str(data.get("startDate") or "").strip()
+    end_date = str(data.get("endDate") or "").strip()
+    public_holidays = data.get("publicHolidays")
+    return bool(start_date and end_date and isinstance(public_holidays, list))
+
+
+def extract_dates_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the best matched prior dates row, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"dates"}))
+    if matched:
+        return matched[-1]
+
+    for row in reversed(rows):
+        data = row.get("data")
+        if isinstance(data, dict) and is_dates_milestone_data(data):
+            return row
+    return None
+
+
+def extract_dates_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return dates ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_dates_row(prior_milestones_json)
+    if row is None:
+        return None
+    data = row.get("data")
+    if isinstance(data, dict) and is_dates_milestone_data(data):
+        return data
+    return None
+
+
+def dates_prior_error_message(prior_milestones_json: str) -> str:
+    """Actionable error when scheduler cannot read prior dates data."""
+    base = "scheduler requires a prior dates milestone with saved start and end dates"
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    if not rows:
+        return (
+            f"{base}. No earlier milestones were returned for this workflow step — "
+            "place dates before scheduler in the timeline."
+        )
+
+    titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
+    has_dates_preset = any(
+        isinstance((preset_id := row.get("presetId")), str)
+        and preset_id.strip() == "dates"
+        for row in rows
+    )
+    if not has_dates_preset:
+        return (
+            f"{base}. Earlier milestones are: {', '.join(titles)}. "
+            "Add a dates step before scheduler, set start and end dates, run it, "
+            "then run scheduler again."
+        )
+    return (
+        f"{base}. A dates milestone appears earlier in the workflow "
+        "but its saved preset data is missing or invalid — open that step, "
+        "confirm the Data tab shows start and end dates, and re-run dates."
+    )
 
 
 def build_injected_prior_context_markdown(

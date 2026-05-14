@@ -223,6 +223,62 @@ def _filter_promotion_candidates(
     return {**promotion_candidates, "categories": filtered}
 
 
+def _read_ignored_menu_items(milestone_input: dict[str, Any] | None) -> set[str]:
+    raw = _read_milestone_input_value(milestone_input).get("ignoredMenuItems")
+    if not isinstance(raw, list) or not raw:
+        return set()
+    out: set[str] = set()
+    for item in raw:
+        text = str(item or "").strip()
+        if text:
+            out.add(text.casefold())
+    return out
+
+
+def _engineering_item_name(item: Any) -> str:
+    if isinstance(item, str):
+        return item.strip()
+    if isinstance(item, dict):
+        return str(item.get("menu") or item.get("name") or "").strip()
+    return ""
+
+
+def _filter_bucket_items(items: Any, ignored: set[str]) -> list[Any]:
+    if not isinstance(items, list) or not ignored:
+        return items if isinstance(items, list) else []
+    return [item for item in items if _engineering_item_name(item).casefold() not in ignored]
+
+
+def _filter_ignored_menu_items(
+    promotion_candidates: dict[str, Any] | None,
+    ignored: set[str],
+) -> dict[str, Any] | None:
+    if promotion_candidates is None or not ignored:
+        return promotion_candidates
+    grouping = str(promotion_candidates.get("grouping") or "").strip()
+    if grouping == "by_menu_category":
+        raw_categories = promotion_candidates.get("categories")
+        if not isinstance(raw_categories, dict):
+            return promotion_candidates
+        filtered_categories: dict[str, Any] = {}
+        for key, bucket in raw_categories.items():
+            if not isinstance(bucket, dict):
+                continue
+            filtered_bucket = {
+                "starItems": _filter_bucket_items(bucket.get("starItems"), ignored),
+                "puzzleItems": _filter_bucket_items(bucket.get("puzzleItems"), ignored),
+            }
+            if filtered_bucket["starItems"] or filtered_bucket["puzzleItems"]:
+                filtered_categories[str(key)] = filtered_bucket
+        return {**promotion_candidates, "categories": filtered_categories}
+
+    return {
+        **promotion_candidates,
+        "starItems": _filter_bucket_items(promotion_candidates.get("starItems"), ignored),
+        "puzzleItems": _filter_bucket_items(promotion_candidates.get("puzzleItems"), ignored),
+    }
+
+
 def _build_output(
     *,
     main_category: str,
@@ -442,6 +498,7 @@ async def fetch_and_prepare(
     milestone_input = state.get("milestone_input")
     milestone_input_dict = milestone_input if isinstance(milestone_input, dict) else None
     selected = _read_selected_menu_categories(milestone_input_dict)
+    ignored = _read_ignored_menu_items(milestone_input_dict)
     max_star_items = _read_item_limit(milestone_input_dict, "starItemLimit", 5)
     max_puzzle_items = _read_item_limit(milestone_input_dict, "puzzleItemLimit", 10)
     fetch_result = await fetch_promotion_engineering_candidates(
@@ -454,6 +511,7 @@ async def fetch_and_prepare(
     promotion_candidates = fetch_result["candidates"]
     analytics_run_id = fetch_result["analyticsRunId"]
     filtered = _filter_promotion_candidates(promotion_candidates, selected)
+    filtered = _filter_ignored_menu_items(filtered, ignored)
     owner_notes = _read_milestone_input_notes(milestone_input_dict)
     main_category = _extract_main_category(str(state.get("prior_milestones_data") or ""))
     formatted = _build_output(
@@ -492,6 +550,9 @@ async def enrich_storytelling(state: PromotionCandidatesState) -> dict[str, Any]
     selected = _read_selected_menu_categories(
         milestone_input if isinstance(milestone_input, dict) else None
     )
+    ignored = _read_ignored_menu_items(
+        milestone_input if isinstance(milestone_input, dict) else None
+    )
 
     human_sections = [
         f"## Milestone goal\n{goal}",
@@ -504,6 +565,22 @@ async def enrich_storytelling(state: PromotionCandidatesState) -> dict[str, Any]
         human_sections.append(
             "## Selected menu categories (milestone input)\n```json\n"
             + json.dumps({"selectedMenuCategories": sorted(selected)}, ensure_ascii=False, indent=2)
+            + "\n```"
+        )
+    if ignored:
+        ignored_display = sorted(
+            str(item or "").strip()
+            for item in (
+                _read_milestone_input_value(
+                    milestone_input if isinstance(milestone_input, dict) else None
+                ).get("ignoredMenuItems")
+                or []
+            )
+            if str(item or "").strip()
+        )
+        human_sections.append(
+            "## Ignored menu items (milestone input)\n```json\n"
+            + json.dumps({"ignoredMenuItems": ignored_display}, ensure_ascii=False, indent=2)
             + "\n```"
         )
     star_limit = _read_item_limit(

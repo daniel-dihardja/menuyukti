@@ -2,6 +2,9 @@ import type {
   PromotionCandidateMenuItem,
   MilestonePresetId,
   MenuTaggerMilestoneData,
+  PostLineupMilestoneData,
+  ReelLineupMilestoneData,
+  SchedulerMilestoneData,
 } from '@/lib/graphql/node-schemas'
 import type { ReactNode } from 'react'
 
@@ -58,54 +61,6 @@ export type CampaignBriefMilestoneData = {
   riskGuardrails: string[]
 }
 
-export type PostSchedulerMonthlyArcWeek = {
-  week: 1 | 2 | 3 | 4
-  objective: string
-  rationale: string
-}
-
-export type PostSchedulerMilestoneData = {
-  monthlyArc: {
-    weeks: PostSchedulerMonthlyArcWeek[]
-  }
-  contentRatio: {
-    pillars: Array<{
-      pillar: string
-      percent: number
-      reason: string
-    }>
-  }
-  formatMix: {
-    formats: Array<{
-      format:
-        | 'Reels'
-        | 'Carousels'
-        | 'Single posts'
-        | 'Stories'
-        | 'Highlights updates'
-        | 'Lives'
-        | 'Collaborator posts'
-      count: number
-      reason: string
-    }>
-  }
-  weeklySlotPlan: Array<{
-    week: 1 | 2 | 3 | 4
-    day: string
-    format: 'Reel' | 'Carousel' | 'Single post'
-    pillar: string
-    hook: string
-    captionStructure: string
-    ctaType: 'Reserve' | 'Order' | 'DM' | 'Walk in' | 'Save'
-    funnelStage: 'Awareness' | 'Consideration' | 'Conversion' | 'Loyalty'
-    visualDirection: string
-    notes: string
-  }>
-  guardrailCheck: string
-}
-
-export type PostSchedulerPostItem = PostSchedulerMilestoneData['weeklySlotPlan'][number]
-
 export type PromotionCandidatesCategoryBlock = {
   category: string
   starItems: PromotionCandidateMenuItem[]
@@ -133,13 +88,6 @@ export type CultureHooksMilestoneData = {
   guardrailCheck: string
 }
 
-export type FormatMixMilestoneData = {
-  formats: Array<{
-    format: 'single_post' | 'carousel' | 'single_video_reel' | 'multi_video_reel'
-    percent: number
-  }>
-}
-
 export type IgProfileUsernameSuggestion = {
   username: string
   rationale: string
@@ -158,17 +106,18 @@ export type IgProfileMilestoneData = {
   bios: IgProfileBio[]
 }
 
-export type { MenuTaggerMilestoneData }
+export type { MenuTaggerMilestoneData, PostLineupMilestoneData, ReelLineupMilestoneData }
 
 export type MilestoneDataValue =
   | DatesMilestoneData
   | CampaignBriefMilestoneData
-  | PostSchedulerMilestoneData
   | PromotionCandidatesMilestoneData
   | MenuTaggerMilestoneData
+  | ReelLineupMilestoneData
+  | PostLineupMilestoneData
   | CultureHooksMilestoneData
-  | FormatMixMilestoneData
   | IgProfileMilestoneData
+  | SchedulerMilestoneData
 
 export type TimelineMilestone = {
   id: string

@@ -3,8 +3,11 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
 
+import Link from 'next/link'
+
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { routes } from '@/lib/routes'
+import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
 
 import { ProfileChangePasswordCard } from './_components/profile-change-password-card'
 import { ProfileOverviewCard } from './_components/profile-overview-card'
@@ -67,6 +70,14 @@ export default async function ProfilePage() {
             avatarAlt={t('avatarAlt', { name })}
           />
           <ProfileChangePasswordCard passwordEnabledFromServer={passwordEnabledFromServer} />
+          <Link href={routes.profileTeam} className="block max-w-md">
+            <Card className="transition-colors hover:bg-muted/40">
+              <CardHeader>
+                <CardTitle className="text-base">{t('teamLinkTitle')}</CardTitle>
+                <CardDescription>{t('teamLinkDescription')}</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
         </div>
       </div>
     </AnalyticsPageShell>

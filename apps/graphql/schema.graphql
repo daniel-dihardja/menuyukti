@@ -59,24 +59,6 @@ type CampaignPlanningSignalsType {
   primaryCtaChannel: String!
 }
 
-type CampaignSchedulePlanType {
-  analyticsRunId: ID!
-  campaignStart: String!
-  campaignEnd: String!
-  timezone: String!
-  postsPerWeek: Int!
-  slots: [CampaignScheduleSlotType!]!
-  sourceSignalsSummary: String!
-}
-
-type CampaignScheduleSlotType {
-  dateTime: String!
-  postType: String!
-  promotedMenuItems: [String!]!
-  visualIdea: String!
-  captionIdea: String!
-}
-
 """Top revenue category from category mix."""
 type CategoryFocusType {
   category: String
@@ -529,10 +511,6 @@ type PublicHolidayType {
 Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership.
 """
 type Query {
-  """
-  Schedule plan for a Scheduler milestone. Requires a prior campaign brief milestone with structured campaign window data in the same workflow.
-  """
-  campaignSchedulePlan(workflowId: ID!, milestoneId: ID!, locationId: Int!, analyticsRunId: ID = null): CampaignSchedulePlanType
   workflowExports(locationId: Int!, first: Int = null): [WorkflowExportType!]!
 
   """

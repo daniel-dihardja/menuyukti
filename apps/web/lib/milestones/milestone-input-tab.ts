@@ -10,11 +10,12 @@ export function milestonePresetHasDefaultOptionalNotesInput(
   presetId: MilestonePresetId | undefined,
 ): presetId is
   | 'restaurant_campaign_brief'
-  | 'post_scheduler'
   | 'culture_hooks'
-  | 'format_mix'
   | 'ig_profile'
-  | 'menu_tagger' {
+  | 'menu_tagger'
+  | 'reel_lineup'
+  | 'post_lineup'
+  | 'scheduler' {
   return milestonePresetInputType(presetId) === 'optional_notes'
 }
 
@@ -22,11 +23,12 @@ export function optionalNotesFromMilestoneInput(
   raw: MilestoneInput | undefined,
   presetId:
     | 'restaurant_campaign_brief'
-    | 'post_scheduler'
     | 'culture_hooks'
-    | 'format_mix'
     | 'ig_profile'
-    | 'menu_tagger',
+    | 'menu_tagger'
+    | 'reel_lineup'
+    | 'post_lineup'
+    | 'scheduler',
 ): string {
   if (raw?.type !== presetId || raw.value == null || typeof raw.value !== 'object') {
     return ''
@@ -38,6 +40,7 @@ export function optionalNotesFromMilestoneInput(
 const DEFAULT_PROMOTION_CANDIDATES_INPUT = {
   notes: '',
   selectedMenuCategories: [] as string[],
+  ignoredMenuItemsText: '',
   starItemLimit: 5 as const,
   puzzleItemLimit: 10 as const,
 }
@@ -45,6 +48,7 @@ const DEFAULT_PROMOTION_CANDIDATES_INPUT = {
 export function promotionCandidatesInputFromMilestoneInput(raw: MilestoneInput | undefined): {
   notes: string
   selectedMenuCategories: string[]
+  ignoredMenuItemsText: string
   starItemLimit: 5 | 10 | 'all'
   puzzleItemLimit: 5 | 10 | 'all'
 } {
@@ -57,11 +61,18 @@ export function promotionCandidatesInputFromMilestoneInput(raw: MilestoneInput |
     return {
       notes: typeof legacyNotes === 'string' ? legacyNotes : '',
       selectedMenuCategories: [],
+      ignoredMenuItemsText: '',
       starItemLimit: 5,
       puzzleItemLimit: 10,
     }
   }
-  return parsed.data
+  return {
+    notes: parsed.data.notes,
+    selectedMenuCategories: parsed.data.selectedMenuCategories,
+    ignoredMenuItemsText: parsed.data.ignoredMenuItems.join('\n'),
+    starItemLimit: parsed.data.starItemLimit,
+    puzzleItemLimit: parsed.data.puzzleItemLimit,
+  }
 }
 
 function normalizeItemLimit(value: unknown, fallback: 5 | 10 | 'all'): 5 | 10 | 'all' {
@@ -69,14 +80,79 @@ function normalizeItemLimit(value: unknown, fallback: 5 | 10 | 'all'): 5 | 10 | 
   return fallback
 }
 
+function normalizeIgnoredMenuItemsFromText(text: string): string[] {
+  const seen = new Set<string>()
+  const ignoredMenuItems: string[] = []
+  for (const raw of text.split('\n')) {
+    const name = raw.trim()
+    if (!name) continue
+    const key = name.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    ignoredMenuItems.push(name)
+  }
+  return ignoredMenuItems
+}
+
+export function normalizedPromotionCandidatesInputsEqual(
+  a: {
+    notes: string
+    selectedMenuCategories: string[]
+    ignoredMenuItems: string[]
+    starItemLimit: 5 | 10 | 'all'
+    puzzleItemLimit: 5 | 10 | 'all'
+  },
+  b: {
+    notes: string
+    selectedMenuCategories: string[]
+    ignoredMenuItems: string[]
+    starItemLimit: 5 | 10 | 'all'
+    puzzleItemLimit: 5 | 10 | 'all'
+  },
+): boolean {
+  if (a.notes !== b.notes) return false
+  if (a.starItemLimit !== b.starItemLimit) return false
+  if (a.puzzleItemLimit !== b.puzzleItemLimit) return false
+  if (a.selectedMenuCategories.length !== b.selectedMenuCategories.length) return false
+  if (!a.selectedMenuCategories.every((v, i) => v === b.selectedMenuCategories[i])) {
+    return false
+  }
+  if (a.ignoredMenuItems.length !== b.ignoredMenuItems.length) return false
+  return a.ignoredMenuItems.every((v, i) => v === b.ignoredMenuItems[i])
+}
+
+export function promotionCandidatesDraftFromNormalized(value: {
+  notes: string
+  selectedMenuCategories: string[]
+  ignoredMenuItems: string[]
+  starItemLimit: 5 | 10 | 'all'
+  puzzleItemLimit: 5 | 10 | 'all'
+}): {
+  notes: string
+  selectedMenuCategories: string[]
+  ignoredMenuItemsText: string
+  starItemLimit: 5 | 10 | 'all'
+  puzzleItemLimit: 5 | 10 | 'all'
+} {
+  return {
+    notes: value.notes,
+    selectedMenuCategories: value.selectedMenuCategories,
+    ignoredMenuItemsText: value.ignoredMenuItems.join('\n'),
+    starItemLimit: value.starItemLimit,
+    puzzleItemLimit: value.puzzleItemLimit,
+  }
+}
+
 export function normalizePromotionCandidatesInput(value: {
   notes: string
   selectedMenuCategories: string[]
+  ignoredMenuItemsText: string
   starItemLimit?: 5 | 10 | 'all'
   puzzleItemLimit?: 5 | 10 | 'all'
 }): {
   notes: string
   selectedMenuCategories: string[]
+  ignoredMenuItems: string[]
   starItemLimit: 5 | 10 | 'all'
   puzzleItemLimit: 5 | 10 | 'all'
 } {
@@ -93,6 +169,7 @@ export function normalizePromotionCandidatesInput(value: {
   return {
     notes: value.notes.trim(),
     selectedMenuCategories,
+    ignoredMenuItems: normalizeIgnoredMenuItemsFromText(value.ignoredMenuItemsText),
     starItemLimit: normalizeItemLimit(value.starItemLimit, 5),
     puzzleItemLimit: normalizeItemLimit(value.puzzleItemLimit, 10),
   }

@@ -19,11 +19,27 @@ from agents_app.agents.core.milestone_eval.ig_profile_eval import (
     parse_milestone_data_from_eval_raw,
     try_ig_profile_deterministic_verdict,
 )
+from agents_app.agents.core.milestone_eval.menu_tagger_eval import (
+    enrich_menu_tagger_eval_payload,
+    try_menu_tagger_deterministic_verdict,
+)
+from agents_app.agents.core.milestone_eval.post_lineup_eval import (
+    enrich_post_lineup_eval_payload,
+    try_post_lineup_deterministic_verdict,
+)
 from agents_app.agents.core.milestone_eval.prompts import (
     EVAL_SYSTEM,
     SYNTHESIS_SYSTEM,
     eval_human_message,
     synthesis_human_message,
+)
+from agents_app.agents.core.milestone_eval.reel_lineup_eval import (
+    enrich_reel_lineup_eval_payload,
+    try_reel_lineup_deterministic_verdict,
+)
+from agents_app.agents.core.milestone_eval.scheduler_eval import (
+    enrich_scheduler_eval_payload,
+    try_scheduler_deterministic_verdict,
 )
 from agents_app.agents.core.milestone_eval.state import CriterionEval, MilestoneEvalState
 from langchain_core.language_models.chat_models import BaseChatModel
@@ -33,6 +49,16 @@ from langgraph.types import Send
 from pydantic import BaseModel, Field
 
 _logger = logging.getLogger(__name__)
+
+
+def _enrich_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
+    return enrich_scheduler_eval_payload(
+        enrich_post_lineup_eval_payload(
+            enrich_reel_lineup_eval_payload(
+                enrich_menu_tagger_eval_payload(enrich_ig_profile_eval_payload(data))
+            )
+        )
+    )
 
 
 def _milestonedata_eval_score(data: dict[str, Any]) -> int:
@@ -61,10 +87,11 @@ class CriterionVerdict(BaseModel):
 _OWNER_NOTES_INPUT_TYPES = frozenset(
     {
         "restaurant_campaign_brief",
-        "post_scheduler",
-        "format_mix",
         "culture_hooks",
         "menu_tagger",
+        "reel_lineup",
+        "post_lineup",
+        "scheduler",
         "ig_profile",
     },
 )
@@ -165,7 +192,7 @@ async def fetch_context(
                 criteria.append({"id": cid, "requirement": req})
     raw_data = (
         json.dumps(
-            enrich_ig_profile_eval_payload(best_md),
+            _enrich_eval_payload(best_md),
             ensure_ascii=False,
             indent=2,
         )
@@ -204,6 +231,14 @@ async def evaluate_criterion(
     milestone_data = parse_milestone_data_from_eval_raw(raw_data)
     if milestone_data is not None:
         deterministic = try_ig_profile_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_menu_tagger_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_reel_lineup_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_post_lineup_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_scheduler_deterministic_verdict(requirement, milestone_data)
         if deterministic is not None:
             status, reasoning = deterministic
             verdict = CriterionVerdict(status=status, reasoning=reasoning)

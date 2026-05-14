@@ -5,7 +5,10 @@ import {
   resultDataSchema,
 } from '@/lib/graphql/node-schemas'
 import type { MilestoneNode } from '@/lib/graphql/node-schemas'
-import { normalizeMilestonePresetData } from '@/lib/milestones/preset-definitions'
+import {
+  normalizeMilestonePresetData,
+  MILESTONE_PRESET_REGISTRY,
+} from '@/lib/milestones/preset-definitions'
 
 import type {
   MilestoneInput,
@@ -55,13 +58,23 @@ export function passCriteriasFromMilestoneData(data: unknown): PassCriteriaRow[]
 }
 
 /** Parse preset payload from typed column or legacy `data` JSON. */
-export function milestonePresetFrom(dto: MilestoneNodeDto): MilestoneDataValue | undefined {
+export function milestonePresetFrom(
+  dto: MilestoneNodeDto,
+  presetId?: MilestonePresetId,
+): MilestoneDataValue | undefined {
   const raw = dto.milestonePresetData
-  if (raw != null && typeof raw === 'object') {
-    const parsed = milestonedataValueSchema.safeParse(raw)
-    if (parsed.success) {
-      return parsed.data
+  if (raw == null || typeof raw !== 'object') {
+    return undefined
+  }
+  if (presetId) {
+    const presetParsed = MILESTONE_PRESET_REGISTRY[presetId].dataSchema.safeParse(raw)
+    if (presetParsed.success) {
+      return presetParsed.data as MilestoneDataValue
     }
+  }
+  const parsed = milestonedataValueSchema.safeParse(raw)
+  if (parsed.success) {
+    return parsed.data
   }
   return undefined
 }
@@ -118,7 +131,7 @@ export function milestoneNodeToTimelineMilestone(node: MilestoneNodeDto): Timeli
     }
   }
 
-  const data = milestonePresetFrom(node)
+  const data = milestonePresetFrom(node, presetId)
 
   let passCriteria: PassCriteriaRow[] = []
   if (Array.isArray(node.passCriterias) && node.passCriterias.length > 0) {

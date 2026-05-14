@@ -39,6 +39,7 @@ import { useTimelineWorkspaceState } from '../timeline-context'
 export type PromotionCandidatesInputDraft = {
   notes: string
   selectedMenuCategories: string[]
+  ignoredMenuItemsText: string
   starItemLimit: PromotionCandidatesItemLimit
   puzzleItemLimit: PromotionCandidatesItemLimit
 }
@@ -333,6 +334,26 @@ export function MilestonePromotionCandidatesInput({
             </div>
           </div>
         ) : null}
+      </Field>
+
+      <Separator />
+
+      <Field>
+        <FieldLabel>{t('milestonePromotionCandidatesInputIgnoredItemsLabel')}</FieldLabel>
+        <FieldDescription>
+          {t('milestonePromotionCandidatesInputIgnoredItemsDescription')}
+        </FieldDescription>
+        <Textarea
+          className="min-h-[100px] resize-y whitespace-pre-wrap font-mono text-sm"
+          disabled={disabled}
+          onBlur={onNotesBlur}
+          onChange={(e) => onDraftChange({ ...draft, ignoredMenuItemsText: e.target.value })}
+          onClick={(e) => e.stopPropagation()}
+          onFocus={onNotesFocus}
+          onPointerDown={(e) => e.stopPropagation()}
+          placeholder={t('milestonePromotionCandidatesInputIgnoredItemsPlaceholder')}
+          value={draft.ignoredMenuItemsText}
+        />
       </Field>
 
       <Separator />
