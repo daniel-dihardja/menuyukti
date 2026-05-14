@@ -32,6 +32,7 @@ export type MilestoneData = z.infer<typeof milestoneDataSchema>
 
 /** Child `milestonedata` node JSON — structured preset data only (breaking change: no markdown string). */
 export const milestonedataValueSchema = z.union([
+  schedulerMilestoneDataSchema,
   datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
@@ -39,7 +40,6 @@ export const milestonedataValueSchema = z.union([
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
-  schedulerMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>

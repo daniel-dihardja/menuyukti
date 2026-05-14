@@ -120,17 +120,29 @@ export async function GET(_req: Request, context: RouteContext) {
     }
     const ms = mn as MilestoneNode
 
+    const parsedMilestoneNodeData =
+      ms.data != null && typeof ms.data === 'object' ? milestoneDataSchema.safeParse(ms.data) : null
+    const presetId =
+      parsedMilestoneNodeData?.success && parsedMilestoneNodeData.data.presetId != null
+        ? parsedMilestoneNodeData.data.presetId
+        : undefined
+
     let milestoneData: z.infer<typeof milestonedataValueSchema> | null = null
     const mpd = ms.milestonePresetData
     if (mpd != null && typeof mpd === 'object') {
-      const pp = milestonedataValueSchema.safeParse(mpd)
-      if (pp.success) {
-        milestoneData = pp.data
+      if (presetId === 'scheduler') {
+        const schedulerParsed = schedulerMilestoneDataSchema.safeParse(mpd)
+        if (schedulerParsed.success) {
+          milestoneData = schedulerParsed.data
+        }
+      } else {
+        const pp = milestonedataValueSchema.safeParse(mpd)
+        if (pp.success) {
+          milestoneData = pp.data
+        }
       }
     }
 
-    const parsedMilestoneNodeData =
-      ms.data != null && typeof ms.data === 'object' ? milestoneDataSchema.safeParse(ms.data) : null
     let passCriterias: PassCriteriaData[] = []
     if (Array.isArray(ms.passCriterias) && ms.passCriterias.length > 0) {
       passCriterias = ms.passCriterias as PassCriteriaData[]
@@ -205,19 +217,18 @@ export async function GET(_req: Request, context: RouteContext) {
         }
       }
     }
-    if (
-      parsedMilestoneNodeData?.success &&
-      parsedMilestoneNodeData.data.presetId === 'reel_lineup'
-    ) {
+    if (presetId === 'reel_lineup') {
       const rlParsed = reelLineupMilestoneDataSchema.safeParse(milestoneData)
       if (!rlParsed.success) {
         milestoneData = EMPTY_REEL_LINEUP_DATA
       }
     }
 
-    if (parsedMilestoneNodeData?.success && parsedMilestoneNodeData.data.presetId === 'scheduler') {
-      const schedulerParsed = schedulerMilestoneDataSchema.safeParse(milestoneData)
-      if (!schedulerParsed.success) {
+    if (presetId === 'scheduler') {
+      const schedulerParsed = schedulerMilestoneDataSchema.safeParse(milestoneData ?? mpd)
+      if (schedulerParsed.success) {
+        milestoneData = schedulerParsed.data
+      } else {
         milestoneData = {
           startDate: '',
           endDate: '',

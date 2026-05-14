@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import { getPythonAgentsUrl } from '@/lib/config'
 import { graphqlQuery } from '@/lib/graphql/client'
+import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
 import {
   datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
@@ -46,6 +47,65 @@ const runBodySchema = z.object({
 
 type RouteContext = {
   params: Promise<{ id: string; milestoneId: string }>
+}
+
+function shouldRevalidateWorkflowTreeFromSseBlock(block: string): boolean {
+  const match = block.match(/^data: (.+)$/m)
+  const raw = match?.[1]?.trim()
+  if (!raw) {
+    return false
+  }
+  try {
+    const payload = JSON.parse(raw) as { done?: unknown; dataPreview?: unknown }
+    return payload.done === true && payload.dataPreview != null
+  } catch {
+    return false
+  }
+}
+
+function milestoneRunResponseWithWorkflowTreeRevalidation(
+  agentBody: ReadableStream<Uint8Array>,
+  userId: string,
+  workflowId: string,
+): ReadableStream<Uint8Array> {
+  const reader = agentBody.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let shouldRevalidate = false
+
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      const { done, value } = await reader.read()
+      if (done) {
+        if (buffer.trim()) {
+          for (const block of buffer.split('\n\n')) {
+            if (shouldRevalidateWorkflowTreeFromSseBlock(block)) {
+              shouldRevalidate = true
+            }
+          }
+        }
+        if (shouldRevalidate) {
+          revalidateWorkflowCampaignTreeCache(userId, workflowId)
+        }
+        controller.close()
+        return
+      }
+
+      buffer += decoder.decode(value, { stream: true })
+      const blocks = buffer.split('\n\n')
+      buffer = blocks.pop() ?? ''
+      for (const block of blocks) {
+        if (shouldRevalidateWorkflowTreeFromSseBlock(block)) {
+          shouldRevalidate = true
+        }
+      }
+
+      controller.enqueue(value)
+    },
+    cancel(reason) {
+      void reader.cancel(reason)
+    },
+  })
 }
 
 export async function POST(req: Request, context: RouteContext) {
@@ -154,12 +214,15 @@ export async function POST(req: Request, context: RouteContext) {
     return NextResponse.json({ error: 'Empty response from agents' }, { status: 502 })
   }
 
-  return new NextResponse(agentRes.body, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-store',
-      Connection: 'keep-alive',
-      'X-Accel-Buffering': 'no',
+  return new NextResponse(
+    milestoneRunResponseWithWorkflowTreeRevalidation(agentRes.body, userId, workflowId),
+    {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-store',
+        Connection: 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      },
     },
-  })
+  )
 }
