@@ -1,4 +1,4 @@
-import { NextResponse, connection } from 'next/server'
+import { NextResponse, after, connection } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 
@@ -67,8 +67,7 @@ function shouldRevalidateWorkflowTreeFromSseBlock(block: string): boolean {
 
 function milestoneRunResponseWithWorkflowTreeRevalidation(
   agentBody: ReadableStream<Uint8Array>,
-  userId: string,
-  workflowId: string,
+  onRunPersisted: () => void,
 ): ReadableStream<Uint8Array> {
   const reader = agentBody.getReader()
   const decoder = new TextDecoder()
@@ -87,7 +86,7 @@ function milestoneRunResponseWithWorkflowTreeRevalidation(
           }
         }
         if (shouldRevalidate) {
-          revalidateWorkflowCampaignTreeCache(userId, workflowId)
+          onRunPersisted()
         }
         controller.close()
         return
@@ -216,8 +215,17 @@ export async function POST(req: Request, context: RouteContext) {
     return NextResponse.json({ error: 'Empty response from agents' }, { status: 502 })
   }
 
+  let shouldRevalidateWorkflowTree = false
+  after(() => {
+    if (shouldRevalidateWorkflowTree) {
+      revalidateWorkflowCampaignTreeCache(userId, workflowId)
+    }
+  })
+
   return new NextResponse(
-    milestoneRunResponseWithWorkflowTreeRevalidation(agentRes.body, userId, workflowId),
+    milestoneRunResponseWithWorkflowTreeRevalidation(agentRes.body, () => {
+      shouldRevalidateWorkflowTree = true
+    }),
     {
       headers: {
         'Content-Type': 'text/event-stream',
