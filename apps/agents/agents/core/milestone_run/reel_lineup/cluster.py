@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any, Literal
 
 REEL_LINEUP_PROFILE_ID: Literal["hook_reel"] = "hook_reel"
@@ -50,10 +51,8 @@ def _finalize_lead_group(item: dict[str, Any], index: int, *, id_prefix: str) ->
     }
     popularity_raw = item.get("popularity")
     if popularity_raw is not None and popularity_raw != "":
-        try:
+        with contextlib.suppress(TypeError, ValueError):
             group_item["popularity"] = float(popularity_raw)
-        except (TypeError, ValueError):
-            pass
 
     strong_story_count = 1 if storytelling_fit == "strong" else 0
 

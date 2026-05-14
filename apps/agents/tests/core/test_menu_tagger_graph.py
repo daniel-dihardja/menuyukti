@@ -7,13 +7,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.menu_tagger.nodes import (
+    _sanitize_menu_tagger_payload,
     compute_used_tags,
     fetch_and_prepare,
     flatten_promotion_candidates_items,
     merge_tagged_items,
     normalize_menu_tagger_tags,
     persist_result,
-    _sanitize_menu_tagger_payload,
 )
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 
