@@ -16,6 +16,7 @@ export type {
 export type NodeDataRaw = { node: unknown | null }
 export type NodesDataRaw = { nodes: unknown[] }
 export type CreateNodeDataRaw = { createNode: unknown }
+export type CreateWorkflowFromPayloadDataRaw = { createWorkflowFromPayload: unknown }
 export type UpdateNodeDataRaw = { updateNode: unknown }
 
 export function parseNodeData(data: NodeDataRaw): { node: AnyNode | null } {
@@ -28,6 +29,12 @@ export function parseNodesData(data: NodesDataRaw): { nodes: AnyNode[] } {
 
 export function parseCreateNodeData(data: CreateNodeDataRaw): { createNode: AnyNode } {
   return { createNode: parseNode(data.createNode) }
+}
+
+export function parseCreateWorkflowFromPayloadData(data: CreateWorkflowFromPayloadDataRaw): {
+  createWorkflowFromPayload: AnyNode
+} {
+  return { createWorkflowFromPayload: parseNode(data.createWorkflowFromPayload) }
 }
 
 export function parseUpdateNodeData(data: UpdateNodeDataRaw): { updateNode: AnyNode } {

@@ -4,8 +4,11 @@ import { ZodError } from 'zod'
 import { graphqlQuery } from '@/lib/graphql/client'
 import {
   CREATE_NODE_MUTATION,
+  CREATE_WORKFLOW_FROM_PAYLOAD_MUTATION,
   parseCreateNodeData,
+  parseCreateWorkflowFromPayloadData,
   type CreateNodeDataRaw,
+  type CreateWorkflowFromPayloadDataRaw,
 } from '@/lib/graphql/queries'
 import { revalidateLocationScopedLists } from '@/lib/graphql/revalidate-location-lists'
 import { createCampaignSchema } from './schema'
@@ -19,7 +22,27 @@ export async function POST(req: Request) {
     }
 
     const json = await req.json()
-    const { locationId, analyticsRunId } = createCampaignSchema.parse(json)
+    const { locationId, analyticsRunId, templatePayload } = createCampaignSchema.parse(json)
+
+    if (templatePayload !== undefined) {
+      const data = parseCreateWorkflowFromPayloadData(
+        await graphqlQuery<CreateWorkflowFromPayloadDataRaw>(
+          CREATE_WORKFLOW_FROM_PAYLOAD_MUTATION,
+          {
+            locationId,
+            payload: templatePayload,
+            analyticsRunId: analyticsRunId ?? null,
+          },
+          userId,
+        ),
+      )
+      const node = data.createWorkflowFromPayload
+      if (!node) {
+        return NextResponse.json({ message: 'Failed to create workflow' }, { status: 500 })
+      }
+      revalidateLocationScopedLists(userId, locationId)
+      return NextResponse.json(node, { status: 201 })
+    }
 
     const data = parseCreateNodeData(
       await graphqlQuery<CreateNodeDataRaw>(

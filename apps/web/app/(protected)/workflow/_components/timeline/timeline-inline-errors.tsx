@@ -5,13 +5,11 @@ import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 export const TIMELINE_ERROR_KEYS = [
   'create',
   'delete',
-  'move',
   'passCriteria',
   'goal',
   'milestoneData',
   'milestoneRun',
   'milestoneSettings',
-  'export',
   'milestoneRunCriteriaHint',
 ] as const
 

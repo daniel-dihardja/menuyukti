@@ -68,31 +68,3 @@ export async function fetchAnalyticsList(
   }
   return Array.isArray(result.data) ? result.data : []
 }
-
-export type WorkflowImportResult = {
-  workflow?: { id: string }
-}
-
-export async function importWorkflowPayload(
-  workflowId: string,
-  payload: unknown,
-  fallbackError = 'Import failed',
-): Promise<string> {
-  const result = await apiFetch<WorkflowImportResult>(
-    `/api/workflows/${workflowId}/import`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ payload }),
-    },
-    fallbackError,
-  )
-  if (!result.ok) {
-    throw new Error(result.error)
-  }
-  const newId = result.data.workflow?.id
-  if (!newId) {
-    throw new Error(fallbackError)
-  }
-  return newId
-}

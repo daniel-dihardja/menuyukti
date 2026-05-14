@@ -1,4 +1,4 @@
-"""Goal text is stored on ``milestone_goal`` (import/export round-trip)."""
+"""Goal text is stored on ``milestone_goal`` when seeding from a template payload."""
 
 from __future__ import annotations
 
@@ -8,9 +8,9 @@ from graphql.data_sources import Location, Node, SessionLocal
 from graphql.schema import schema
 from graphql.tests.auth_context import GRAPHQL_TEST_USER_ID, graphql_auth_context
 
-IMPORT_WORKFLOW = """
-mutation ImportWorkflow($locationId: Int!, $payload: JSON!) {
-  importWorkflow(locationId: $locationId, payload: $payload) {
+CREATE_WORKFLOW_FROM_PAYLOAD = """
+mutation CreateWorkflowFromPayload($locationId: Int!, $payload: JSON!) {
+  createWorkflowFromPayload(locationId: $locationId, payload: $payload) {
     id
     nodeType
   }
@@ -37,24 +37,15 @@ query N($locationId: Int!, $parentId: ID!) {
 }
 """
 
-EXPORT_WORKFLOW = """
-mutation ExportWorkflow($workflowId: ID!, $locationId: Int!) {
-  exportWorkflow(workflowId: $workflowId, locationId: $locationId) {
-    payload
-    schemaVersion
-  }
-}
-"""
 
-
-def test_import_workflow_stores_goal_on_milestone_row_not_child():
+def test_create_workflow_from_payload_stores_goal_on_milestone_row_not_child():
     session = SessionLocal()
     try:
         session.query(Node).delete()
         session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
         session.commit()
 
-        location = Location(name="Import Goal Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
+        location = Location(name="Seed Goal Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
         session.add(location)
         session.commit()
         session.refresh(location)
@@ -63,7 +54,7 @@ def test_import_workflow_stores_goal_on_milestone_row_not_child():
         session.close()
 
     payload = {
-        "workflowName": "Imported WF",
+        "workflowName": "Seeded WF",
         "milestones": [
             {
                 "title": "M1",
@@ -76,13 +67,13 @@ def test_import_workflow_stores_goal_on_milestone_row_not_child():
 
     imp = asyncio.run(
         schema.execute(
-            IMPORT_WORKFLOW,
+            CREATE_WORKFLOW_FROM_PAYLOAD,
             variable_values={"locationId": location_id, "payload": payload},
             context_value=graphql_auth_context(),
         )
     )
     assert not imp.errors, imp.errors
-    root_id = imp.data["importWorkflow"]["id"]
+    root_id = imp.data["createWorkflowFromPayload"]["id"]
 
     listed = asyncio.run(
         schema.execute(
@@ -108,57 +99,3 @@ def test_import_workflow_stores_goal_on_milestone_row_not_child():
     assert loaded.data["node"]["milestoneGoal"] == "Grow brunch bookings"
     goal_children = [n for n in children if n.get("nodeType") == "goal"]
     assert goal_children == []
-
-
-def test_export_workflow_includes_goal_from_milestone_data():
-    session = SessionLocal()
-    try:
-        session.query(Node).delete()
-        session.query(Location).filter(Location.clerk_user_id == GRAPHQL_TEST_USER_ID).delete()
-        session.commit()
-
-        location = Location(name="Export Goal Location", clerk_user_id=GRAPHQL_TEST_USER_ID)
-        session.add(location)
-        session.commit()
-        session.refresh(location)
-        location_id = location.id
-    finally:
-        session.close()
-
-    payload = {
-        "workflowName": "Round trip",
-        "milestones": [
-            {
-                "title": "Alpha",
-                "order": 0,
-                "goal": "Ship v1",
-                "passCriteria": [],
-            }
-        ],
-    }
-
-    imp = asyncio.run(
-        schema.execute(
-            IMPORT_WORKFLOW,
-            variable_values={"locationId": location_id, "payload": payload},
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not imp.errors, imp.errors
-    workflow_id = imp.data["importWorkflow"]["id"]
-
-    out = asyncio.run(
-        schema.execute(
-            EXPORT_WORKFLOW,
-            variable_values={"workflowId": workflow_id, "locationId": location_id},
-            context_value=graphql_auth_context(),
-        )
-    )
-    assert not out.errors, out.errors
-    row = out.data["exportWorkflow"]
-    assert row["schemaVersion"] == "3.0"
-    exported = row["payload"]
-    assert isinstance(exported, dict)
-    ms = exported.get("milestones")
-    assert isinstance(ms, list) and len(ms) == 1
-    assert ms[0].get("goal") == "Ship v1"

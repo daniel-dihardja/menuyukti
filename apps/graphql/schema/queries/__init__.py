@@ -16,13 +16,11 @@ from .public_holidays import PublicHolidaysQuery
 from .revenue_trends import RevenueTrendsQuery
 from .weekly_demand_pattern import WeeklyDemandPatternQuery
 from .workflow_campaign_tree import WorkflowCampaignTreeQuery
-from .workflow_exports import WorkflowExportsQuery
 from .workspace import WorkspaceQuery
 
 __all__ = [
     "AnalyticsRunQuery",
     "WorkflowCampaignTreeQuery",
-    "WorkflowExportsQuery",
     "CategoryMixQuery",
     "ImageAiFlowsQuery",
     "InstagramSignalsQuery",

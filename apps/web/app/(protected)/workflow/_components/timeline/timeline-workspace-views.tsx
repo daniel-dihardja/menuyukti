@@ -38,14 +38,12 @@ export function TimelineWorkspaceLoadError({ message }: { message: string }) {
 export function TimelineWorkspaceEmpty({
   creating,
   createError,
-  exporting,
   onCreateMilestone,
   onCreateMilestoneFromPreset,
   timelineTrailing,
 }: {
   creating: boolean
   createError: string | null
-  exporting: boolean
   onCreateMilestone: () => boolean | Promise<boolean>
   onCreateMilestoneFromPreset: (presetId: MilestonePresetId) => boolean | Promise<boolean>
   timelineTrailing: ReactNode
@@ -67,7 +65,7 @@ export function TimelineWorkspaceEmpty({
         <div className="flex flex-wrap items-center justify-center gap-2">
           <MilestoneCreateControls
             creating={creating}
-            disabled={creating || exporting}
+            disabled={creating}
             onCreateMilestone={onCreateMilestone}
             onCreateMilestoneFromPreset={onCreateMilestoneFromPreset}
           />

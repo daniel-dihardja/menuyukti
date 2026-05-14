@@ -192,64 +192,9 @@ export function useMilestoneCrud(
     [workflowId, dispatch, t],
   )
 
-  const handleMoveMilestone = useCallback(
-    async (milestoneId: string, direction: 'up' | 'down') => {
-      dispatch({ type: 'PATCH', patch: { moveError: null } })
-      let snapshot: TimelineMilestone[] | null = null
-      dispatch({
-        type: 'UPDATE_MILESTONES',
-        updater: (prev) => {
-          snapshot = prev
-          const idx = prev.findIndex((m) => m.id === milestoneId)
-          if (idx === -1) {
-            return prev
-          }
-          const j = direction === 'up' ? idx - 1 : idx + 1
-          if (j < 0 || j >= prev.length) {
-            return prev
-          }
-          const next = [...prev]
-          const a = next[idx]
-          const b = next[j]
-          if (a && b) {
-            next[idx] = b
-            next[j] = a
-          }
-          return next
-        },
-      })
-      dispatch({ type: 'PATCH', patch: { movingMilestoneId: milestoneId } })
-      try {
-        const res = await fetch(`/api/workflows/${workflowId}/milestones/${milestoneId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ move: direction }),
-        })
-        if (!res.ok) {
-          const body = (await res.json().catch(() => null)) as { message?: string } | null
-          throw new Error(body?.message ?? t('milestonesMoveError'))
-        }
-      } catch (err) {
-        if (snapshot) {
-          dispatch({ type: 'PATCH', patch: { milestones: snapshot } })
-        }
-        dispatch({
-          type: 'PATCH',
-          patch: {
-            moveError: err instanceof Error ? err.message : t('milestonesMoveError'),
-          },
-        })
-      } finally {
-        dispatch({ type: 'PATCH', patch: { movingMilestoneId: null } })
-      }
-    },
-    [workflowId, dispatch, t],
-  )
-
   return {
     handleCreateMilestone,
     handleCreateMilestoneFromPreset,
     handleDeleteMilestone,
-    handleMoveMilestone,
   }
 }

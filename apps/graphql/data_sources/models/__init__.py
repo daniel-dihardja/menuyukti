@@ -8,12 +8,10 @@ from graphql.data_sources.models.location_manual_brief_input import LocationManu
 from graphql.data_sources.models.location_opening_hour import LocationOpeningHour
 from graphql.data_sources.models.milestone_agent_run import MilestoneAgentRun
 from graphql.data_sources.models.node import Node
-from graphql.data_sources.models.workflow_export import WorkflowExport
 from graphql.data_sources.models.workspace import Workspace, WorkspaceMembership
 
 __all__ = [
     "AnalyticsRun",
-    "WorkflowExport",
     "ImageAiFlow",
     "InstagramPost",
     "Location",

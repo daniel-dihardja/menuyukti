@@ -13,7 +13,7 @@ import {
   parsePresetIdFromSelectionKey,
 } from '@/lib/workflows/presets'
 import { routes } from '@/lib/routes'
-import { apiFetch, fetchAnalyticsList, importWorkflowPayload } from '@/lib/api/client-fetch'
+import { apiFetch, fetchAnalyticsList } from '@/lib/api/client-fetch'
 import { CreateWorkflowPanel } from './create-workflow-panel'
 import { WorkflowsTable, WorkflowsTableSkeleton } from './workflows-table'
 
@@ -49,7 +49,6 @@ export function WorkflowsClient({
 }: Props) {
   const t = useTranslations('analytics.workflows')
   const tNew = useTranslations('analytics.workflows.newWorkflowDialog')
-  const tChat = useTranslations('analytics.workflows.chat')
   const router = useRouter()
   const { locationId, setLocationId } = useAnalytics()
   const [presetKey, setPresetKey] = useState<string>(BLANK_PRESET_SELECTION_KEY)
@@ -200,12 +199,23 @@ export function WorkflowsClient({
     setCreateError(null)
     setImportError(null)
 
-    const body: { locationId: number; analyticsRunId?: number } = { locationId }
+    const body: {
+      locationId: number
+      analyticsRunId?: number
+      templatePayload?: unknown
+    } = { locationId }
     if (analyticsRunId !== null) {
       body.analyticsRunId = analyticsRunId
     }
 
-    let workflowId: string
+    const presetId = parsePresetIdFromSelectionKey(presetKey)
+    if (presetId !== null) {
+      const preset = WORKFLOW_IMPORT_PRESETS.find((p) => p.id === presetId)
+      if (preset?.payload != null) {
+        body.templatePayload = preset.payload
+      }
+    }
+
     try {
       const createResult = await apiFetch<{ id: string }>(
         '/api/workflows/create',
@@ -219,37 +229,18 @@ export function WorkflowsClient({
       if (!createResult.ok) {
         throw new Error(createResult.error)
       }
-      workflowId = createResult.data.id
+      router.push(routes.workflows.detail(createResult.data.id))
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : tNew('createFailed'))
-      setCreating(false)
-      return
-    }
-
-    const presetId = parsePresetIdFromSelectionKey(presetKey)
-    if (presetId === null) {
-      router.push(routes.workflows.detail(workflowId))
-      setCreating(false)
-      return
-    }
-
-    const preset = WORKFLOW_IMPORT_PRESETS.find((p) => p.id === presetId)
-    const payload = preset?.payload
-    if (payload == null) {
-      router.push(routes.workflows.detail(workflowId))
-      setCreating(false)
-      return
-    }
-
-    try {
-      const newId = await importWorkflowPayload(workflowId, payload, tChat('importError'))
-      router.push(routes.workflows.detail(newId))
-    } catch (err) {
-      setImportError(err instanceof Error ? err.message : tChat('importError'))
+      const message = err instanceof Error ? err.message : tNew('createFailed')
+      if (presetId !== null) {
+        setImportError(message)
+      } else {
+        setCreateError(message)
+      }
     } finally {
       setCreating(false)
     }
-  }, [analyticsRunId, locationId, presetKey, router, tChat, tNew])
+  }, [analyticsRunId, locationId, presetKey, router, tNew])
 
   return (
     <div className="flex flex-col gap-8">
