@@ -652,6 +652,7 @@ class ReelLineupGroupOutput(BaseModel):
 
 class ReelLineupMilestoneOutput(BaseModel):
     groups: list[ReelLineupGroupOutput]
+    drinkGroups: list[ReelLineupGroupOutput] = Field(default_factory=list)
     unassignedItemNames: list[str] = Field(default_factory=list)
     sourceMenuTaggerTitle: str | None = None
     notes: str | None = None

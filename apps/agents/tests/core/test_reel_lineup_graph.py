@@ -61,11 +61,43 @@ def test_build_reel_lineup_creates_valid_hook_groups() -> None:
     assert error is None
     assert isinstance(normalized, dict)
     assert len(normalized["groups"]) == 2
+    assert normalized["drinkGroups"] == []
     first = normalized["groups"][0]
     assert first["items"][0]["name"] == "Ribeye"
     assert first["items"][0]["position"] == 1
     assert first["leadName"] == "Ribeye"
     assert "Wings" in normalized["unassignedItemNames"]
+
+
+def test_build_reel_lineup_creates_drink_groups() -> None:
+    drink_tags = {
+        "kind": "drink",
+        "ingredient": ["coffee"],
+        "taste": ["sweet"],
+        "course": ["beverage"],
+        "reel_moment": "pour",
+        "texture": ["silky"],
+        "prep_style": ["blended"],
+        "occasion": ["dinner"],
+        "serve_temp": "cold",
+        "content_angle": [],
+    }
+    items = _menu_tagger_items() + [
+        {
+            "name": "Latte",
+            "role": "star",
+            "category": "DRINKS",
+            "storytellingFit": "weak",
+            "tags": drink_tags,
+        },
+    ]
+    payload = build_reel_lineup(menu_tagger_items=items)
+    normalized, error = validate_skill_output("reel_lineup", payload)
+    assert error is None
+    assert len(normalized["drinkGroups"]) == 1
+    assert normalized["drinkGroups"][0]["id"] == "drink-group-1"
+    assert normalized["drinkGroups"][0]["leadName"] == "Latte"
+    assert "Latte" not in normalized["unassignedItemNames"]
 
 
 @pytest.mark.asyncio

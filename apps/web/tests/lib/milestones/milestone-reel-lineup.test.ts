@@ -21,6 +21,6 @@ describe('reel_lineup preset', () => {
       type: 'reel_lineup',
       value: { notes: '' },
     })
-    expect(fields.passCriteria?.length).toBe(3)
+    expect(fields.passCriteria?.length).toBe(5)
   })
 })

@@ -6,6 +6,7 @@ from typing import Any, Literal
 
 REEL_LINEUP_PROFILE_ID: Literal["hook_reel"] = "hook_reel"
 REEL_LINEUP_MAX_LEADS = 5
+REEL_LINEUP_MAX_DRINK_LEADS = 3
 
 
 def _is_main_course_strong_story(item: dict[str, Any]) -> bool:
@@ -22,7 +23,19 @@ def _is_main_course_strong_story(item: dict[str, Any]) -> bool:
     return "main" in [str(value).strip() for value in course]
 
 
-def _finalize_lead_group(item: dict[str, Any], index: int) -> dict[str, Any]:
+def _is_beverage_drink(item: dict[str, Any]) -> bool:
+    tags = item.get("tags")
+    if not isinstance(tags, dict):
+        return False
+    if str(tags.get("kind") or "").strip() != "drink":
+        return False
+    course = tags.get("course")
+    if not isinstance(course, list):
+        return False
+    return "beverage" in [str(value).strip() for value in course]
+
+
+def _finalize_lead_group(item: dict[str, Any], index: int, *, id_prefix: str) -> dict[str, Any]:
     tags = item.get("tags") if isinstance(item.get("tags"), dict) else {}
     reel_moment = str(tags.get("reel_moment") or "").strip() or "static_hero"
     role = str(item.get("role") or "star").strip()
@@ -42,15 +55,17 @@ def _finalize_lead_group(item: dict[str, Any], index: int) -> dict[str, Any]:
         except (TypeError, ValueError):
             pass
 
+    strong_story_count = 1 if storytelling_fit == "strong" else 0
+
     return {
-        "id": f"group-{index + 1}",
+        "id": f"{id_prefix}-{index + 1}",
         "leadName": group_item["name"],
         "profileId": REEL_LINEUP_PROFILE_ID,
         "anchor": {"dimension": "reel_moment", "value": reel_moment},
         "items": [group_item],
         "mix": {
             "priceLevels": [],
-            "storytellingStrongCount": 1,
+            "storytellingStrongCount": strong_story_count,
             "starCount": 1 if group_item["role"] == "star" else 0,
             "puzzleCount": 1 if group_item["role"] == "puzzle" else 0,
         },
@@ -63,19 +78,33 @@ def build_reel_lineup(
     source_menu_tagger_title: str = "",
     notes: str = "",
 ) -> dict[str, Any]:
-    leads = [
+    food_leads = [
         item for item in menu_tagger_items if _is_main_course_strong_story(item)
     ][:REEL_LINEUP_MAX_LEADS]
 
-    lead_names = {str(item.get("name") or "").strip() for item in leads}
+    drink_leads = [
+        item for item in menu_tagger_items if _is_beverage_drink(item)
+    ][:REEL_LINEUP_MAX_DRINK_LEADS]
+
+    assigned_names = {
+        str(item.get("name") or "").strip()
+        for item in [*food_leads, *drink_leads]
+        if str(item.get("name") or "").strip()
+    }
     unassigned_item_names = [
         str(item.get("name") or "").strip()
         for item in menu_tagger_items
-        if str(item.get("name") or "").strip() and str(item.get("name") or "").strip() not in lead_names
+        if str(item.get("name") or "").strip() and str(item.get("name") or "").strip() not in assigned_names
     ]
 
     payload: dict[str, Any] = {
-        "groups": [_finalize_lead_group(item, index) for index, item in enumerate(leads)],
+        "groups": [
+            _finalize_lead_group(item, index, id_prefix="group") for index, item in enumerate(food_leads)
+        ],
+        "drinkGroups": [
+            _finalize_lead_group(item, index, id_prefix="drink-group")
+            for index, item in enumerate(drink_leads)
+        ],
         "unassignedItemNames": unassigned_item_names,
     }
     title = source_menu_tagger_title.strip()

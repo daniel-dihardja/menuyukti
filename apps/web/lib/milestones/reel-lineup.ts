@@ -5,17 +5,24 @@ import type {
 } from '@/lib/graphql/node-schemas'
 
 import {
+  REEL_LINEUP_MAX_DRINK_LEADS,
   REEL_LINEUP_MAX_LEADS,
   REEL_LINEUP_PROFILE_ID,
+  isBeverageDrinkItem,
   isMainCourseStrongStoryItem,
 } from '@/lib/milestones/reel-lineup-rules'
 
 export const EMPTY_REEL_LINEUP_DATA: ReelLineupMilestoneData = {
   groups: [],
+  drinkGroups: [],
   unassignedItemNames: [],
 }
 
-function finalizeLeadGroup(item: MenuTaggerItem, index: number): ReelLineupGroup {
+function finalizeLeadGroup(
+  item: MenuTaggerItem,
+  index: number,
+  idPrefix: 'group' | 'drink-group',
+): ReelLineupGroup {
   const groupItem = {
     name: item.name,
     role: item.role,
@@ -27,21 +34,21 @@ function finalizeLeadGroup(item: MenuTaggerItem, index: number): ReelLineupGroup
   }
 
   return {
-    id: `group-${index + 1}`,
+    id: `${idPrefix}-${index + 1}`,
     leadName: item.name,
     profileId: REEL_LINEUP_PROFILE_ID,
     anchor: { dimension: 'reel_moment', value: item.tags.reel_moment },
     items: [groupItem],
     mix: {
       priceLevels: [],
-      storytellingStrongCount: 1,
+      storytellingStrongCount: item.storytellingFit === 'strong' ? 1 : 0,
       starCount: item.role === 'star' ? 1 : 0,
       puzzleCount: item.role === 'puzzle' ? 1 : 0,
     },
   }
 }
 
-/** Pick up to five main-course food items with strong storytelling as Reel hook leads (menu tagger order). */
+/** Pick food and drink Reel hook leads from menu tagger items (menu tagger order preserved). */
 export function buildReelLineup(
   menuTaggerItems: MenuTaggerItem[],
   options?: {
@@ -49,20 +56,28 @@ export function buildReelLineup(
     notes?: string
   },
 ): ReelLineupMilestoneData {
-  const leads = menuTaggerItems.filter(isMainCourseStrongStoryItem).slice(0, REEL_LINEUP_MAX_LEADS)
+  const foodLeads = menuTaggerItems
+    .filter(isMainCourseStrongStoryItem)
+    .slice(0, REEL_LINEUP_MAX_LEADS)
 
-  const leadNames = new Set(leads.map((item) => item.name))
+  const drinkLeads = menuTaggerItems
+    .filter(isBeverageDrinkItem)
+    .slice(0, REEL_LINEUP_MAX_DRINK_LEADS)
+
+  const assignedNames = new Set([...foodLeads, ...drinkLeads].map((item) => item.name))
   const unassignedItemNames = menuTaggerItems
     .map((item) => item.name)
-    .filter((name) => !leadNames.has(name))
+    .filter((name) => !assignedNames.has(name))
 
-  const groups = leads.map((item, index) => finalizeLeadGroup(item, index))
+  const groups = foodLeads.map((item, index) => finalizeLeadGroup(item, index, 'group'))
+  const drinkGroups = drinkLeads.map((item, index) => finalizeLeadGroup(item, index, 'drink-group'))
 
   const sourceMenuTaggerTitle = options?.sourceMenuTaggerTitle?.trim()
   const notes = options?.notes?.trim()
 
   return {
     groups,
+    drinkGroups,
     unassignedItemNames,
     ...(sourceMenuTaggerTitle ? { sourceMenuTaggerTitle } : {}),
     ...(notes ? { notes } : {}),

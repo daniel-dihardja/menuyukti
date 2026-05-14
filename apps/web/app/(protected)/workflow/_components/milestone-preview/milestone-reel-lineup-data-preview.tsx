@@ -61,16 +61,7 @@ function ReelLineupGroupCard({
 }) {
   return (
     <div className={`${mp.insetCard} flex flex-col gap-3`}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className={mp.sectionTitle}>{labels.groupTitle}</p>
-        <Badge variant="outline" className="gap-1 font-normal">
-          <Clapperboard className="size-3 opacity-70" aria-hidden />
-          {formatMenuTaggerTagLabel(group.anchor.value)}
-        </Badge>
-      </div>
-      <p className={`${mp.bodySmall} text-muted-foreground`}>
-        {labels.leadLabel}: {group.leadName}
-      </p>
+      <ReelLineupGroupCardHeader group={group} labels={labels} />
       <ul className={`${mp.listDecimal} flex flex-col gap-2`}>
         {group.items.map((item) => {
           const isLead = item.position === 1
@@ -131,18 +122,94 @@ function ReelLineupGroupCard({
   )
 }
 
+function ReelLineupGroupCardHeader({
+  group,
+  labels,
+}: {
+  group: ReelLineupGroup
+  labels: GroupCardLabels
+}) {
+  return (
+    <>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className={mp.sectionTitle}>{labels.groupTitle}</p>
+        <Badge variant="outline" className="gap-1 font-normal">
+          <Clapperboard className="size-3 opacity-70" aria-hidden />
+          {formatMenuTaggerTagLabel(group.anchor.value)}
+        </Badge>
+      </div>
+      <p className={`${mp.bodySmall} text-muted-foreground`}>
+        {labels.leadLabel}: {group.leadName}
+      </p>
+    </>
+  )
+}
+
+function ReelLineupGroupsSection({
+  title,
+  emptyTitle,
+  emptyBody,
+  groups,
+  labels,
+  leadLabel,
+  groupTitleForId,
+}: {
+  title: string
+  emptyTitle: string
+  emptyBody: string
+  groups: ReelLineupGroup[]
+  labels: Omit<GroupCardLabels, 'groupTitle' | 'leadLabel'>
+  leadLabel: string
+  groupTitleForId: (id: string) => string
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <p className={mp.sectionTitle}>{title}</p>
+      {groups.length === 0 ? (
+        <ReelLineupEmptyState title={emptyTitle} body={emptyBody} />
+      ) : (
+        <div className="flex flex-col gap-4">
+          {groups.map((group) => (
+            <ReelLineupGroupCard
+              key={group.id}
+              group={group}
+              labels={{
+                ...labels,
+                groupTitle: groupTitleForId(group.id),
+                leadLabel,
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ReelLineupEmptyState({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-lg border border-dashed border-border/80 bg-muted/20 px-3 py-4">
+      <p className="text-base font-semibold text-foreground">{title}</p>
+      <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{body}</p>
+    </div>
+  )
+}
+
 export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupDataPreviewProps) {
   const t = useTranslations('analytics.workflows.chat')
 
+  const drinkGroups = data.drinkGroups ?? []
+
   const assignedCount = useMemo(
-    () => data.groups.reduce((sum, group) => sum + group.items.length, 0),
-    [data.groups],
+    () =>
+      data.groups.reduce((sum, group) => sum + group.items.length, 0) +
+      drinkGroups.reduce((sum, group) => sum + group.items.length, 0),
+    [data.groups, drinkGroups],
   )
 
   const labels = useMemo(
     () => ({
       hookBadgeLabel: t('milestoneReelLineupPreviewHookBadge'),
-      leadLabel: t('milestoneReelLineupPreviewLeadLabel'),
       roleStarLabel: t('milestoneMenuTaggerPreviewRoleStar'),
       rolePuzzleLabel: t('milestoneMenuTaggerPreviewRolePuzzle'),
       storytellingStrongLabel: t('milestonePromotionCandidatesPreviewStorytellingStrong'),
@@ -167,7 +234,8 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
       <div className={`${mp.insetCard} flex flex-col gap-2`}>
         <p className={`${mp.bodySmall} text-pretty text-foreground`}>
           {t('milestoneReelLineupPreviewSummary', {
-            groupCount: data.groups.length,
+            foodGroupCount: data.groups.length,
+            drinkGroupCount: drinkGroups.length,
             assignedCount,
             unassignedCount: data.unassignedItemNames.length,
           })}
@@ -180,29 +248,25 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
         ) : null}
       </div>
 
-      {data.groups.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border/80 bg-muted/20 px-3 py-4">
-          <p className="text-base font-semibold text-foreground">
-            {t('milestoneReelLineupPreviewEmptyTitle')}
-          </p>
-          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-            {t('milestoneReelLineupPreviewEmptyBody')}
-          </p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {data.groups.map((group) => (
-            <ReelLineupGroupCard
-              key={group.id}
-              group={group}
-              labels={{
-                ...labels,
-                groupTitle: t('milestoneReelLineupPreviewGroupTitle', { id: group.id }),
-              }}
-            />
-          ))}
-        </div>
-      )}
+      <ReelLineupGroupsSection
+        title={t('milestoneReelLineupPreviewFoodSectionTitle')}
+        emptyTitle={t('milestoneReelLineupPreviewFoodEmptyTitle')}
+        emptyBody={t('milestoneReelLineupPreviewFoodEmptyBody')}
+        groups={data.groups}
+        labels={labels}
+        leadLabel={t('milestoneReelLineupPreviewLeadDishLabel')}
+        groupTitleForId={(id) => t('milestoneReelLineupPreviewGroupTitle', { id })}
+      />
+
+      <ReelLineupGroupsSection
+        title={t('milestoneReelLineupPreviewDrinkSectionTitle')}
+        emptyTitle={t('milestoneReelLineupPreviewDrinkEmptyTitle')}
+        emptyBody={t('milestoneReelLineupPreviewDrinkEmptyBody')}
+        groups={drinkGroups}
+        labels={labels}
+        leadLabel={t('milestoneReelLineupPreviewLeadDrinkLabel')}
+        groupTitleForId={(id) => t('milestoneReelLineupPreviewGroupTitle', { id })}
+      />
 
       {data.unassignedItemNames.length > 0 ? (
         <>

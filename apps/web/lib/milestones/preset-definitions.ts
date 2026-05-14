@@ -307,6 +307,14 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
           requirement: t('milestonePreset.reel_lineup.criterionMainCourseHook'),
           status: 'open',
         },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionDrinkHookGroupCount'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.reel_lineup.criterionDrinkHook'),
+          status: 'open',
+        },
       ],
     }),
   },
