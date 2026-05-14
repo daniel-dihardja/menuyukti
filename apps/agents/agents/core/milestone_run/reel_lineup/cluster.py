@@ -98,6 +98,8 @@ def build_reel_lineup(
     ]
 
     payload: dict[str, Any] = {
+        "foodLeads": food_leads,
+        "drinkLeads": drink_leads,
         "groups": [
             _finalize_lead_group(item, index, id_prefix="group") for index, item in enumerate(food_leads)
         ],

@@ -312,6 +312,8 @@ export const reelLineupGroupSchema = z.object({
 export type ReelLineupGroup = z.infer<typeof reelLineupGroupSchema>
 
 export const reelLineupMilestoneDataSchema = z.object({
+  foodLeads: z.array(menuTaggerItemSchema).default([]),
+  drinkLeads: z.array(menuTaggerItemSchema).default([]),
   groups: z.array(reelLineupGroupSchema),
   drinkGroups: z.array(reelLineupGroupSchema).default([]),
   unassignedItemNames: z.array(z.string().trim().min(1)),

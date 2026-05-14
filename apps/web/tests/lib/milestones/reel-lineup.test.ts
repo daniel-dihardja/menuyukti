@@ -78,6 +78,9 @@ describe('buildReelLineup', () => {
 
     const result = buildReelLineup(menuTaggerItems)
 
+    expect(result.foodLeads).toHaveLength(2)
+    expect(result.foodLeads[0]?.name).toBe('Ribeye')
+    expect(result.foodLeads[1]?.name).toBe('Burger')
     expect(result.groups).toHaveLength(2)
     expect(result.groups[0]?.leadName).toBe('Ribeye')
     expect(result.groups[1]?.leadName).toBe('Burger')
@@ -113,6 +116,14 @@ describe('buildReelLineup', () => {
 
     const result = buildReelLineup(menuTaggerItems)
 
+    expect(result.foodLeads).toHaveLength(REEL_LINEUP_MAX_LEADS)
+    expect(result.foodLeads.map((lead) => lead.name)).toEqual([
+      'Nasi Nona',
+      'Nasi Goreng Rumahan',
+      'Laksa Nona',
+      'Extra 1',
+      'Extra 2',
+    ])
     expect(result.groups).toHaveLength(REEL_LINEUP_MAX_LEADS)
     expect(result.groups.map((group) => group.leadName)).toEqual([
       'Nasi Nona',
@@ -139,8 +150,12 @@ describe('buildReelLineup', () => {
 
     const result = buildReelLineup(menuTaggerItems)
 
+    expect(result.foodLeads).toHaveLength(1)
+    expect(result.foodLeads[0]?.name).toBe('Ribeye')
     expect(result.groups).toHaveLength(1)
     expect(result.groups[0]?.leadName).toBe('Ribeye')
+    expect(result.drinkLeads).toHaveLength(1)
+    expect(result.drinkLeads[0]?.name).toBe('Cola')
     expect(result.drinkGroups).toHaveLength(1)
     expect(result.drinkGroups[0]?.leadName).toBe('Cola')
     expect(result.drinkGroups[0]?.id).toBe('drink-group-1')
@@ -154,7 +169,9 @@ describe('buildReelLineup', () => {
 
     const result = buildReelLineup(menuTaggerItems)
 
+    expect(result.foodLeads).toHaveLength(0)
     expect(result.groups).toHaveLength(0)
+    expect(result.drinkLeads).toHaveLength(0)
     expect(result.drinkGroups).toHaveLength(0)
     expect(result.unassignedItemNames).toEqual(['Ribeye'])
   })
@@ -213,6 +230,8 @@ describe('buildReelLineup', () => {
 
     const result = buildReelLineup(menuTaggerItems)
 
+    expect(result.drinkLeads).toHaveLength(REEL_LINEUP_MAX_DRINK_LEADS)
+    expect(result.drinkLeads.map((lead) => lead.name)).toEqual(['Latte', 'Espresso', 'Cola'])
     expect(result.drinkGroups).toHaveLength(REEL_LINEUP_MAX_DRINK_LEADS)
     expect(result.drinkGroups.map((group) => group.leadName)).toEqual(['Latte', 'Espresso', 'Cola'])
     expect(result.unassignedItemNames).toEqual(['Juice', 'Water'])

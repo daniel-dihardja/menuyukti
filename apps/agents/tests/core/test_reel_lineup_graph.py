@@ -60,7 +60,10 @@ def test_build_reel_lineup_creates_valid_hook_groups() -> None:
     normalized, error = validate_skill_output("reel_lineup", payload)
     assert error is None
     assert isinstance(normalized, dict)
+    assert len(normalized["foodLeads"]) == 2
+    assert normalized["foodLeads"][0]["name"] == "Ribeye"
     assert len(normalized["groups"]) == 2
+    assert normalized["drinkLeads"] == []
     assert normalized["drinkGroups"] == []
     first = normalized["groups"][0]
     assert first["items"][0]["name"] == "Ribeye"
@@ -94,6 +97,8 @@ def test_build_reel_lineup_creates_drink_groups() -> None:
     payload = build_reel_lineup(menu_tagger_items=items)
     normalized, error = validate_skill_output("reel_lineup", payload)
     assert error is None
+    assert len(normalized["drinkLeads"]) == 1
+    assert normalized["drinkLeads"][0]["name"] == "Latte"
     assert len(normalized["drinkGroups"]) == 1
     assert normalized["drinkGroups"][0]["id"] == "drink-group-1"
     assert normalized["drinkGroups"][0]["leadName"] == "Latte"

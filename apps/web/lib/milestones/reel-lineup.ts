@@ -13,6 +13,8 @@ import {
 } from '@/lib/milestones/reel-lineup-rules'
 
 export const EMPTY_REEL_LINEUP_DATA: ReelLineupMilestoneData = {
+  foodLeads: [],
+  drinkLeads: [],
   groups: [],
   drinkGroups: [],
   unassignedItemNames: [],
@@ -76,6 +78,8 @@ export function buildReelLineup(
   const notes = options?.notes?.trim()
 
   return {
+    foodLeads,
+    drinkLeads,
     groups,
     drinkGroups,
     unassignedItemNames,

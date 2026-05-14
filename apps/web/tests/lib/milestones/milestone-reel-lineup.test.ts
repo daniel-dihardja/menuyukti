@@ -21,6 +21,10 @@ describe('reel_lineup preset', () => {
       type: 'reel_lineup',
       value: { notes: '' },
     })
+    expect(fields.milestoneData).toMatchObject({
+      foodLeads: [],
+      drinkLeads: [],
+    })
     expect(fields.passCriteria?.length).toBe(5)
   })
 })
