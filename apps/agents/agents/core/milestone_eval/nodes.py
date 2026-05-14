@@ -75,7 +75,6 @@ class CriterionVerdict(BaseModel):
 _OWNER_NOTES_INPUT_TYPES = frozenset(
     {
         "restaurant_campaign_brief",
-        "format_mix",
         "culture_hooks",
         "menu_tagger",
         "reel_lineup",

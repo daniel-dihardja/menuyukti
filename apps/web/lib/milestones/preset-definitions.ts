@@ -6,7 +6,6 @@ import {
   Lightbulb,
   ListChecks,
   Milestone,
-  PieChart,
   Tags,
   type LucideIcon,
 } from 'lucide-react'
@@ -23,7 +22,6 @@ import {
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   datesMilestoneDataSchema,
-  formatMixMilestoneDataSchema,
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
@@ -107,10 +105,6 @@ const EMPTY_CULTURE_HOOKS_DATA: MilestonedataValue = {
   targetAudience: '',
   intersections: [],
   guardrailCheck: '',
-}
-
-const EMPTY_FORMAT_MIX_DATA: MilestonedataValue = {
-  formats: [],
 }
 
 const EMPTY_IG_PROFILE_DATA: MilestonedataValue = {
@@ -297,32 +291,6 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.culture_hooks.criterionAudienceConceptInferred'),
-          status: 'open',
-        },
-      ],
-    }),
-  },
-  format_mix: {
-    id: 'format_mix',
-    icon: PieChart,
-    inputType: 'optional_notes',
-    dataSchema: formatMixMilestoneDataSchema,
-    emptyData: EMPTY_FORMAT_MIX_DATA,
-    getCreateFields: (t) => ({
-      name: t('milestonePreset.format_mix.title'),
-      milestoneInput: {
-        type: 'format_mix',
-        value: { notes: '' },
-      },
-      milestoneData: EMPTY_FORMAT_MIX_DATA,
-      goal: t('milestonePreset.format_mix.goal'),
-      passCriteria: [
-        {
-          requirement: t('milestonePreset.format_mix.criterionBriefGrounded'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.format_mix.criterionMixDefined'),
           status: 'open',
         },
       ],

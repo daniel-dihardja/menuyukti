@@ -7,7 +7,6 @@ export const PRESET_GOAL_TRANSLATION_KEYS = {
   menu_tagger: 'milestonePreset.menu_tagger.goal',
   reel_lineup: 'milestonePreset.reel_lineup.goal',
   culture_hooks: 'milestonePreset.culture_hooks.goal',
-  format_mix: 'milestonePreset.format_mix.goal',
   ig_profile: 'milestonePreset.ig_profile.goal',
 } as const
 

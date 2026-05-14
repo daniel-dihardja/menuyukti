@@ -98,8 +98,6 @@ function renderParsedPreview(presetId: MilestonePresetId, data: unknown): ReactN
           data={data as Parameters<typeof MilestoneCultureHooksDataPreview>[0]['data']}
         />
       )
-    case 'format_mix':
-      return <FormatMixPlaceholderPreview />
     case 'ig_profile':
       return (
         <MilestoneIgProfileDataPreview
@@ -111,16 +109,6 @@ function renderParsedPreview(presetId: MilestonePresetId, data: unknown): ReactN
       return _exhaustive
     }
   }
-}
-
-function FormatMixPlaceholderPreview() {
-  const t = useTranslations('analytics.workflows.chat')
-  return (
-    <PreviewStateMessage
-      title={t('milestoneFormatMixPreviewTitle')}
-      body={t('milestoneFormatMixPreviewBody')}
-    />
-  )
 }
 
 export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {

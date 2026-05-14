@@ -30,7 +30,6 @@ export const milestonePresetIdSchema = z.enum([
   'menu_tagger',
   'reel_lineup',
   'culture_hooks',
-  'format_mix',
   'ig_profile',
 ])
 
@@ -58,12 +57,6 @@ export const cultureHooksMilestoneInputValueSchema = z.object({
 })
 
 export type CultureHooksMilestoneInputValue = z.infer<typeof cultureHooksMilestoneInputValueSchema>
-
-export const formatMixMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
-
-export type FormatMixMilestoneInputValue = z.infer<typeof formatMixMilestoneInputValueSchema>
 
 export const igProfileMilestoneInputValueSchema = z.object({
   notes: z.string(),
@@ -219,24 +212,6 @@ export const cultureHooksMilestoneDataSchema = z.object({
 })
 
 export type CultureHooksMilestoneData = z.infer<typeof cultureHooksMilestoneDataSchema>
-
-export const formatMixFormatKeySchema = z.enum([
-  'single_post',
-  'carousel',
-  'single_video_reel',
-  'multi_video_reel',
-])
-
-export const formatMixMilestoneDataSchema = z.object({
-  formats: z.array(
-    z.object({
-      format: formatMixFormatKeySchema,
-      percent: z.number().int().min(0).max(100),
-    }),
-  ),
-})
-
-export type FormatMixMilestoneData = z.infer<typeof formatMixMilestoneDataSchema>
 
 /** Permissive storage schema (empty seed on create). Run output is validated strictly in agents. */
 export const igProfileUsernameSuggestionSchema = z.object({

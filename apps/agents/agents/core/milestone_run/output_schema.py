@@ -317,18 +317,6 @@ class CultureHooksMilestoneOutput(BaseModel):
         return values
 
 
-FormatMixFormatKey = Literal["single_post", "carousel", "single_video_reel", "multi_video_reel"]
-
-
-class FormatMixFormatItem(BaseModel):
-    format: FormatMixFormatKey
-    percent: int = Field(ge=0, le=100)
-
-
-class FormatMixMilestoneOutput(BaseModel):
-    formats: list[FormatMixFormatItem] = Field(default_factory=list)
-
-
 _IG_USERNAME_RE = re.compile(r"^[a-zA-Z0-9._]+$")
 
 
@@ -546,7 +534,6 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "menu_tagger": MenuTaggerMilestoneOutput,
     "reel_lineup": ReelLineupMilestoneOutput,
     "culture_hooks": CultureHooksMilestoneOutput,
-    "format_mix": FormatMixMilestoneOutput,
     "ig_profile": IgProfileMilestoneOutput,
 }
 

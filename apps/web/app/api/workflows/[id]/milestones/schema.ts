@@ -7,8 +7,6 @@ import {
   campaignBriefMilestoneInputValueSchema,
   cultureHooksMilestoneDataSchema,
   cultureHooksMilestoneInputValueSchema,
-  formatMixMilestoneDataSchema,
-  formatMixMilestoneInputValueSchema,
   igProfileMilestoneDataSchema,
   igProfileMilestoneInputValueSchema,
   menuTaggerMilestoneDataSchema,
@@ -44,7 +42,6 @@ export const patchMilestoneSchema = z
         campaignBriefMilestoneDataSchema,
         promotionCandidatesMilestoneDataSchema,
         cultureHooksMilestoneDataSchema,
-        formatMixMilestoneDataSchema,
         igProfileMilestoneDataSchema,
         menuTaggerMilestoneDataSchema,
         reelLineupMilestoneDataSchema,
@@ -65,10 +62,6 @@ export const patchMilestoneSchema = z
         z.object({
           type: z.literal('culture_hooks'),
           value: cultureHooksMilestoneInputValueSchema,
-        }),
-        z.object({
-          type: z.literal('format_mix'),
-          value: formatMixMilestoneInputValueSchema,
         }),
         z.object({
           type: z.literal('ig_profile'),

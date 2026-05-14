@@ -14,7 +14,6 @@ describe('milestone optional notes', () => {
     expect(milestonePresetHasDefaultOptionalNotesInput('restaurant_campaign_brief')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('promotion_candidates')).toBe(false)
     expect(milestonePresetHasDefaultOptionalNotesInput('culture_hooks')).toBe(true)
-    expect(milestonePresetHasDefaultOptionalNotesInput('format_mix')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('ig_profile')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('menu_tagger')).toBe(true)
     expect(milestonePresetHasDefaultOptionalNotesInput('reel_lineup')).toBe(true)
@@ -123,19 +122,6 @@ describe('milestone optional notes', () => {
     }
   })
 
-  it('patchMilestoneSchema accepts format_mix milestoneInput', () => {
-    const parsed = patchMilestoneSchema.safeParse({
-      milestoneInput: { type: 'format_mix', value: { notes: 'prefer Reels' } },
-    })
-    expect(parsed.success).toBe(true)
-    if (parsed.success) {
-      expect(parsed.data.milestoneInput).toEqual({
-        type: 'format_mix',
-        value: { notes: 'prefer Reels' },
-      })
-    }
-  })
-
   it('patchMilestoneSchema accepts ig_profile milestoneInput', () => {
     const parsed = patchMilestoneSchema.safeParse({
       milestoneInput: { type: 'ig_profile', value: { notes: 'short handles only' } },
@@ -224,17 +210,6 @@ describe('milestone optional notes', () => {
       targetAudience: '',
       intersections: [],
       guardrailCheck: '',
-    })
-  })
-
-  it('getMilestonePresetCreateFields seeds format_mix milestoneInput', () => {
-    const fields = getMilestonePresetCreateFields('format_mix', (k) => k)
-    expect(fields.milestoneInput).toEqual({
-      type: 'format_mix',
-      value: { notes: '' },
-    })
-    expect(fields.milestoneData).toEqual({
-      formats: [],
     })
   })
 

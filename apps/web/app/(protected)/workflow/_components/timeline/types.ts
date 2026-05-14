@@ -86,13 +86,6 @@ export type CultureHooksMilestoneData = {
   guardrailCheck: string
 }
 
-export type FormatMixMilestoneData = {
-  formats: Array<{
-    format: 'single_post' | 'carousel' | 'single_video_reel' | 'multi_video_reel'
-    percent: number
-  }>
-}
-
 export type IgProfileUsernameSuggestion = {
   username: string
   rationale: string
@@ -120,7 +113,6 @@ export type MilestoneDataValue =
   | MenuTaggerMilestoneData
   | ReelLineupMilestoneData
   | CultureHooksMilestoneData
-  | FormatMixMilestoneData
   | IgProfileMilestoneData
 
 export type TimelineMilestone = {
