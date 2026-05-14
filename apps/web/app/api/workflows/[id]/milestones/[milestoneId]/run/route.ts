@@ -13,7 +13,6 @@ import {
   menuTaggerMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
   milestoneInputSchema,
-  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
@@ -37,7 +36,6 @@ const runBodySchema = z.object({
     .union([
       datesMilestoneDataSchema,
       campaignBriefMilestoneDataSchema,
-      postSchedulerMilestoneDataSchema,
       promotionCandidatesMilestoneDataSchema,
       cultureHooksMilestoneDataSchema,
       formatMixMilestoneDataSchema,

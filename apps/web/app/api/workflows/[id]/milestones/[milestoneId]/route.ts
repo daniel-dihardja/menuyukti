@@ -9,7 +9,6 @@ import {
   milestoneDataSchema,
   milestoneInputSchema,
   milestonedataValueSchema,
-  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
@@ -175,28 +174,6 @@ export async function GET(_req: Request, context: RouteContext) {
           measurementPlan: [],
           testingPlan: [],
           riskGuardrails: [],
-        }
-      }
-    }
-    if (
-      parsedMilestoneNodeData?.success &&
-      parsedMilestoneNodeData.data.presetId === 'post_scheduler'
-    ) {
-      const psParsed = postSchedulerMilestoneDataSchema.safeParse(milestoneData)
-      if (!psParsed.success) {
-        milestoneData = {
-          monthlyArc: {
-            weeks: [
-              { week: 1, objective: '', rationale: '' },
-              { week: 2, objective: '', rationale: '' },
-              { week: 3, objective: '', rationale: '' },
-              { week: 4, objective: '', rationale: '' },
-            ],
-          },
-          contentRatio: { pillars: [] },
-          formatMix: { formats: [] },
-          weeklySlotPlan: [],
-          guardrailCheck: '',
         }
       }
     }

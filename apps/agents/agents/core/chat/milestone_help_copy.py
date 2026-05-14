@@ -14,12 +14,6 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "segments, message hierarchy, CTA/offer plan, content and proof strategy, plus "
         "measurement/testing/risk guardrails grounded in available analytics."
     ),
-    "post_scheduler": (
-        "Generate a schedule of Instagram content for the campaign window: each entry has "
-        "weekday, date, time, format details (Reel/Post and Carousel/Single), promoted menu "
-        "items grounded in prefetched promotion candidates, and a caption idea aligned with the "
-        "campaign brief."
-    ),
     "promotion_candidates": (
         "Requires a prior Campaign Brief. Fetches promotion-engineering candidates, orders "
         "categories using the brief's main category, and enriches each star and puzzle menu name "
@@ -59,15 +53,6 @@ _CAMPAIGN_BRIEF_OPTIONAL = (
     "empty when standard analytics and profile data are enough.",
 )
 
-_POST_SCHEDULER_OPTIONAL = (
-    "Optional input (Scheduler notes)",
-    "If you fill the optional Input field, it guides posting cadence, format mix (Reels vs "
-    "feed), timing, and whether to skip weekends or holidays via the available-dates tool. "
-    "Prior workflow milestones still supply dates, holidays, brand tone, and promotion items.",
-    "Use it when you have scheduling constraints (e.g. weekdays only, more Reels, lunch-focused "
-    "times). Leave it empty when the default spread across the campaign window is fine.",
-)
-
 _OPTIONAL_INPUT_GENERIC_TITLE = "Optional input"
 _OPTIONAL_INPUT_GENERIC_SUMMARY = (
     "Notes from the Input tab are free-form guidance for the run; they are not verified as "
@@ -89,18 +74,6 @@ def format_optional_input_section(preset_id: str | None) -> str | None:
     """Match milestone-item-tabs Help tab optional-input blocks."""
     if preset_id == "restaurant_campaign_brief":
         title, a, b = _CAMPAIGN_BRIEF_OPTIONAL
-        return "\n".join(
-            [
-                "",
-                f"## {title}",
-                "",
-                a,
-                "",
-                b,
-            ],
-        )
-    if preset_id == "post_scheduler":
-        title, a, b = _POST_SCHEDULER_OPTIONAL
         return "\n".join(
             [
                 "",

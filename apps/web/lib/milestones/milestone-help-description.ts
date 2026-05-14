@@ -3,7 +3,6 @@ import type { TimelineMilestone } from '@/app/(protected)/workflow/_components/t
 /** Translation keys under `analytics.workflows.chat` for preset default goal / Help-tab body. */
 export const PRESET_GOAL_TRANSLATION_KEYS = {
   restaurant_campaign_brief: 'milestonePreset.restaurant_campaign_brief.goal',
-  post_scheduler: 'milestonePreset.post_scheduler.goal',
   promotion_candidates: 'milestonePreset.promotion_candidates.goal',
   menu_tagger: 'milestonePreset.menu_tagger.goal',
   reel_lineup: 'milestonePreset.reel_lineup.goal',

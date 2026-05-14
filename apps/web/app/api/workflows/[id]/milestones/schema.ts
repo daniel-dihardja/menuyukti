@@ -18,8 +18,6 @@ import {
   milestonePresetIdSchema,
   milestoneInputSchema,
   passCriteriaSchema,
-  postSchedulerMilestoneDataSchema,
-  postSchedulerMilestoneInputValueSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
@@ -44,7 +42,6 @@ export const patchMilestoneSchema = z
       .union([
         datesMilestoneDataSchema,
         campaignBriefMilestoneDataSchema,
-        postSchedulerMilestoneDataSchema,
         promotionCandidatesMilestoneDataSchema,
         cultureHooksMilestoneDataSchema,
         formatMixMilestoneDataSchema,
@@ -64,10 +61,6 @@ export const patchMilestoneSchema = z
         z.object({
           type: z.literal('restaurant_campaign_brief'),
           value: campaignBriefMilestoneInputValueSchema,
-        }),
-        z.object({
-          type: z.literal('post_scheduler'),
-          value: postSchedulerMilestoneInputValueSchema,
         }),
         z.object({
           type: z.literal('culture_hooks'),

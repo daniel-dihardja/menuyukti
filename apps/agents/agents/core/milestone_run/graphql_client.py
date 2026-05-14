@@ -17,7 +17,6 @@ from agents_app.agents.core.milestone_eval.graphql_client import (
 from agents_app.agents.graphql_base import graphql_post
 from agents_app.agents.graphql_operations import (
     ANALYTICS_RUNS_QUERY,
-    CAMPAIGN_SCHEDULE_PLAN_QUERY,
     LOCATION_OPERATING_SIGNALS_QUERY,
     LOCATION_QUERY,
     PRIOR_MILESTONES_MILESTONE_DATA_QUERY,
@@ -169,29 +168,6 @@ async def fetch_location_operating_signals(
     }
 
 
-async def fetch_campaign_schedule_plan(
-    workflow_id: str,
-    milestone_id: str,
-    location_id: int,
-    user_id: str,
-    *,
-    client: httpx.AsyncClient,
-) -> dict[str, Any] | None:
-    """Return campaignSchedulePlan payload for milestone tools."""
-    data = await graphql_post(
-        client,
-        CAMPAIGN_SCHEDULE_PLAN_QUERY,
-        {
-            "workflowId": workflow_id,
-            "milestoneId": milestone_id,
-            "locationId": location_id,
-        },
-        user_id,
-    )
-    raw = data.get("campaignSchedulePlan")
-    return raw if isinstance(raw, dict) else None
-
-
 class PromotionEngineeringCandidatesFetchResult(TypedDict):
     candidates: dict[str, Any] | None
     analyticsRunId: str | None
@@ -262,7 +238,6 @@ async def upsert_milestonedata_node(
 
 __all__ = [
     "delete_node",
-    "fetch_campaign_schedule_plan",
     "fetch_promotion_engineering_candidates",
     "fetch_location_operating_signals",
     "fetch_milestone_children",

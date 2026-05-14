@@ -89,26 +89,6 @@ export type CampaignPlanningSignalsType = {
   recommendedPostingDays: Array<Scalars['String']['output']>
 }
 
-export type CampaignSchedulePlanType = {
-  __typename?: 'CampaignSchedulePlanType'
-  analyticsRunId: Scalars['ID']['output']
-  campaignEnd: Scalars['String']['output']
-  campaignStart: Scalars['String']['output']
-  postsPerWeek: Scalars['Int']['output']
-  slots: Array<CampaignScheduleSlotType>
-  sourceSignalsSummary: Scalars['String']['output']
-  timezone: Scalars['String']['output']
-}
-
-export type CampaignScheduleSlotType = {
-  __typename?: 'CampaignScheduleSlotType'
-  captionIdea: Scalars['String']['output']
-  dateTime: Scalars['String']['output']
-  postType: Scalars['String']['output']
-  promotedMenuItems: Array<Scalars['String']['output']>
-  visualIdea: Scalars['String']['output']
-}
-
 /** Top revenue category from category mix. */
 export type CategoryFocusType = {
   __typename?: 'CategoryFocusType'
@@ -720,8 +700,6 @@ export type Query = {
   analyticsRun?: Maybe<AnalyticsRunType>
   /** List analytics runs for a location, newest first. Use `first` to cap rows (default 100, max 300). */
   analyticsRuns: Array<AnalyticsRunListItemType>
-  /** Schedule plan for a Scheduler milestone. Requires a prior campaign brief milestone with structured campaign window data in the same workflow. */
-  campaignSchedulePlan?: Maybe<CampaignSchedulePlanType>
   /** Revenue and quantity share per menu category for an analytics run. Returns null when the run has no order lines. */
   categoryMix?: Maybe<CategoryMixPayloadType>
   imageAiFlow?: Maybe<ImageAiFlowType>
@@ -776,14 +754,6 @@ export type QueryAnalyticsRunArgs = {
 export type QueryAnalyticsRunsArgs = {
   first?: InputMaybe<Scalars['Int']['input']>
   locationId: Scalars['Int']['input']
-}
-
-/** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
-export type QueryCampaignSchedulePlanArgs = {
-  analyticsRunId?: InputMaybe<Scalars['ID']['input']>
-  locationId: Scalars['Int']['input']
-  milestoneId: Scalars['ID']['input']
-  workflowId: Scalars['ID']['input']
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */
@@ -882,6 +852,8 @@ export type QueryPriorMilestonesMilestoneDataArgs = {
 export type QueryPromotionEngineeringCandidatesArgs = {
   analyticsRunId: Scalars['ID']['input']
   locationId?: InputMaybe<Scalars['ID']['input']>
+  maxPuzzleItems?: InputMaybe<Scalars['Int']['input']>
+  maxStarItems?: InputMaybe<Scalars['Int']['input']>
 }
 
 /** Root query: locations, workflow nodes, sales analytics runs, menu engineering, heatmaps, and workspace membership. */

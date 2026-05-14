@@ -59,54 +59,6 @@ export type CampaignBriefMilestoneData = {
   riskGuardrails: string[]
 }
 
-export type PostSchedulerMonthlyArcWeek = {
-  week: 1 | 2 | 3 | 4
-  objective: string
-  rationale: string
-}
-
-export type PostSchedulerMilestoneData = {
-  monthlyArc: {
-    weeks: PostSchedulerMonthlyArcWeek[]
-  }
-  contentRatio: {
-    pillars: Array<{
-      pillar: string
-      percent: number
-      reason: string
-    }>
-  }
-  formatMix: {
-    formats: Array<{
-      format:
-        | 'Reels'
-        | 'Carousels'
-        | 'Single posts'
-        | 'Stories'
-        | 'Highlights updates'
-        | 'Lives'
-        | 'Collaborator posts'
-      count: number
-      reason: string
-    }>
-  }
-  weeklySlotPlan: Array<{
-    week: 1 | 2 | 3 | 4
-    day: string
-    format: 'Reel' | 'Carousel' | 'Single post'
-    pillar: string
-    hook: string
-    captionStructure: string
-    ctaType: 'Reserve' | 'Order' | 'DM' | 'Walk in' | 'Save'
-    funnelStage: 'Awareness' | 'Consideration' | 'Conversion' | 'Loyalty'
-    visualDirection: string
-    notes: string
-  }>
-  guardrailCheck: string
-}
-
-export type PostSchedulerPostItem = PostSchedulerMilestoneData['weeklySlotPlan'][number]
-
 export type PromotionCandidatesCategoryBlock = {
   category: string
   starItems: PromotionCandidateMenuItem[]
@@ -164,7 +116,6 @@ export type { MenuTaggerMilestoneData, ReelLineupMilestoneData }
 export type MilestoneDataValue =
   | DatesMilestoneData
   | CampaignBriefMilestoneData
-  | PostSchedulerMilestoneData
   | PromotionCandidatesMilestoneData
   | MenuTaggerMilestoneData
   | ReelLineupMilestoneData

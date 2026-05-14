@@ -10,7 +10,6 @@ export function milestonePresetHasDefaultOptionalNotesInput(
   presetId: MilestonePresetId | undefined,
 ): presetId is
   | 'restaurant_campaign_brief'
-  | 'post_scheduler'
   | 'culture_hooks'
   | 'format_mix'
   | 'ig_profile'
@@ -23,7 +22,6 @@ export function optionalNotesFromMilestoneInput(
   raw: MilestoneInput | undefined,
   presetId:
     | 'restaurant_campaign_brief'
-    | 'post_scheduler'
     | 'culture_hooks'
     | 'format_mix'
     | 'ig_profile'

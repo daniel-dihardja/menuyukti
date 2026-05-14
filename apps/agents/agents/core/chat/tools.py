@@ -36,7 +36,6 @@ _DATA_KEYS_STRIPPED_FOR_RESIDUAL = frozenset(
 
 _PRESET_TO_SKILL_ID: dict[str, str] = {
     "restaurant_campaign_brief": "campaign_brief",
-    "post_scheduler": "post_scheduler",
     "promotion_candidates": "promotion_candidates",
     "menu_tagger": "menu_tagger",
     "reel_lineup": "reel_lineup",
@@ -75,7 +74,6 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
 
         expected_types: dict[str, str] = {
             "campaign_brief": "campaign_brief",
-            "post_scheduler": "post_scheduler",
             "culture_hooks": "culture_hooks",
             "promotion_candidates": "promotion_candidates",
             "menu_tagger": "menu_tagger",

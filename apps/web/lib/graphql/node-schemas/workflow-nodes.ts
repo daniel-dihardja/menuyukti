@@ -14,7 +14,6 @@ import {
   milestoneInputSchema,
   milestonePresetIdSchema,
   passCriteriaSchema,
-  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from './milestone-presets'
 
@@ -35,7 +34,6 @@ export type MilestoneData = z.infer<typeof milestoneDataSchema>
 export const milestonedataValueSchema = z.union([
   datesMilestoneDataSchema,
   campaignBriefMilestoneDataSchema,
-  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
   formatMixMilestoneDataSchema,

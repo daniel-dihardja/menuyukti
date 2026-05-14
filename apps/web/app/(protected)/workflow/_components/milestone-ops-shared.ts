@@ -4,7 +4,6 @@ import {
   cultureHooksMilestoneDataSchema,
   formatMixMilestoneDataSchema,
   igProfileMilestoneDataSchema,
-  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
@@ -34,10 +33,6 @@ export function parseDataPreviewForPreset(
   }
   if (presetId === 'restaurant_campaign_brief') {
     const parsed = campaignBriefMilestoneDataSchema.safeParse(dataPreview)
-    return parsed.success ? parsed.data : undefined
-  }
-  if (presetId === 'post_scheduler') {
-    const parsed = postSchedulerMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   if (presetId === 'promotion_candidates') {

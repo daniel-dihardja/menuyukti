@@ -8,8 +8,6 @@ export type {
   MilestonePresetId,
   PassCriteriaRow,
   PassCriteriaStatus,
-  PostSchedulerMilestoneData,
-  PostSchedulerPostItem,
   PromotionCandidatesCategoryBlock,
   PromotionCandidatesMilestoneData,
   TimelineMilestone,

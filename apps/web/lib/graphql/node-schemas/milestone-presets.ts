@@ -26,7 +26,6 @@ export type PassCriteriaData = z.infer<typeof passCriteriaSchema>
 export const milestonePresetIdSchema = z.enum([
   'dates',
   'restaurant_campaign_brief',
-  'post_scheduler',
   'promotion_candidates',
   'menu_tagger',
   'reel_lineup',
@@ -52,18 +51,6 @@ export const campaignBriefMilestoneInputValueSchema = z.object({
 
 export type CampaignBriefMilestoneInputValue = z.infer<
   typeof campaignBriefMilestoneInputValueSchema
->
-
-/**
- * Optional owner notes on the milestone Input tab (`value.notes`).
- * Used by the scheduler preset.
- */
-export const postSchedulerMilestoneInputValueSchema = z.object({
-  notes: z.string(),
-})
-
-export type PostSchedulerMilestoneInputValue = z.infer<
-  typeof postSchedulerMilestoneInputValueSchema
 >
 
 export const cultureHooksMilestoneInputValueSchema = z.object({
@@ -174,67 +161,6 @@ export const campaignBriefMilestoneDataSchema = z.object({
 })
 
 export type CampaignBriefMilestoneData = z.infer<typeof campaignBriefMilestoneDataSchema>
-
-export const postSchedulerMonthlyArcWeekSchema = z.object({
-  week: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
-  objective: z.string(),
-  rationale: z.string(),
-})
-
-export const postSchedulerMonthlyArcSchema = z.object({
-  weeks: z.array(postSchedulerMonthlyArcWeekSchema),
-})
-
-export const postSchedulerContentRatioItemSchema = z.object({
-  pillar: z.string(),
-  percent: z.number().int().nonnegative(),
-  reason: z.string(),
-})
-
-export const postSchedulerContentRatioSchema = z.object({
-  pillars: z.array(postSchedulerContentRatioItemSchema),
-})
-
-export const postSchedulerFormatMixItemSchema = z.object({
-  format: z.enum([
-    'Reels',
-    'Carousels',
-    'Single posts',
-    'Stories',
-    'Highlights updates',
-    'Lives',
-    'Collaborator posts',
-  ]),
-  count: z.number().int().nonnegative(),
-  reason: z.string(),
-})
-
-export const postSchedulerFormatMixSchema = z.object({
-  formats: z.array(postSchedulerFormatMixItemSchema),
-})
-
-export const postSchedulerWeeklySlotSchema = z.object({
-  week: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
-  day: z.string(),
-  format: z.enum(['Reel', 'Carousel', 'Single post']),
-  pillar: z.string(),
-  hook: z.string(),
-  captionStructure: z.string(),
-  ctaType: z.enum(['Reserve', 'Order', 'DM', 'Walk in', 'Save']),
-  funnelStage: z.enum(['Awareness', 'Consideration', 'Conversion', 'Loyalty']),
-  visualDirection: z.string(),
-  notes: z.string(),
-})
-
-export const postSchedulerMilestoneDataSchema = z.object({
-  monthlyArc: postSchedulerMonthlyArcSchema,
-  contentRatio: postSchedulerContentRatioSchema,
-  formatMix: postSchedulerFormatMixSchema,
-  weeklySlotPlan: z.array(postSchedulerWeeklySlotSchema),
-  guardrailCheck: z.string(),
-})
-
-export type PostSchedulerMilestoneData = z.infer<typeof postSchedulerMilestoneDataSchema>
 
 /** Legacy milestonedata stored star/puzzle lines as plain strings; new runs use objects with storytelling fields. */
 export const promotionCandidateMenuItemSchema = z.union([

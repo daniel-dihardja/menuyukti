@@ -31,7 +31,6 @@ import {
   type MilestonePresetId,
   MILESTONE_PRESET_IDS,
   type MilestonedataValue,
-  postSchedulerMilestoneDataSchema,
   promotionCandidatesMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
@@ -94,21 +93,6 @@ const EMPTY_CAMPAIGN_BRIEF_DATA: MilestonedataValue = {
   measurementPlan: [],
   testingPlan: [],
   riskGuardrails: [],
-}
-
-const EMPTY_POST_SCHEDULER_DATA: MilestonedataValue = {
-  monthlyArc: {
-    weeks: [
-      { week: 1, objective: '', rationale: '' },
-      { week: 2, objective: '', rationale: '' },
-      { week: 3, objective: '', rationale: '' },
-      { week: 4, objective: '', rationale: '' },
-    ],
-  },
-  contentRatio: { pillars: [] },
-  formatMix: { formats: [] },
-  weeklySlotPlan: [],
-  guardrailCheck: '',
 }
 
 const EMPTY_PROMOTION_CANDIDATES_DATA: MilestonedataValue = {
@@ -186,36 +170,6 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       milestoneData: EMPTY_CAMPAIGN_BRIEF_DATA,
       goal: t('milestonePreset.restaurant_campaign_brief.goal'),
       passCriteria: buildCampaignBriefPassCriteriaSeed(t),
-    }),
-  },
-  post_scheduler: {
-    id: 'post_scheduler',
-    icon: Milestone,
-    inputType: 'optional_notes',
-    dataSchema: postSchedulerMilestoneDataSchema,
-    emptyData: EMPTY_POST_SCHEDULER_DATA,
-    getCreateFields: (t) => ({
-      name: t('milestonePreset.post_scheduler.title'),
-      milestoneInput: {
-        type: 'post_scheduler',
-        value: { notes: '' },
-      },
-      milestoneData: EMPTY_POST_SCHEDULER_DATA,
-      goal: t('milestonePreset.post_scheduler.goal'),
-      passCriteria: [
-        {
-          requirement: t('milestonePreset.post_scheduler.criterionPostsGenerated'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.post_scheduler.criterionPostFields'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.post_scheduler.criterionMenuItems'),
-          status: 'open',
-        },
-      ],
     }),
   },
   promotion_candidates: {

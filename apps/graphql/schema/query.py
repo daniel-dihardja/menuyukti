@@ -2,7 +2,6 @@ import strawberry
 
 from graphql.schema.queries import (
     AnalyticsRunQuery,
-    CampaignSchedulePlanQuery,
     CategoryMixQuery,
     ImageAiFlowsQuery,
     InstagramSignalsQuery,
@@ -32,7 +31,6 @@ from graphql.schema.queries import (
     )
 )
 class Query(
-    CampaignSchedulePlanQuery,
     WorkflowExportsQuery,
     WorkflowCampaignTreeQuery,
     LocationsQuery,

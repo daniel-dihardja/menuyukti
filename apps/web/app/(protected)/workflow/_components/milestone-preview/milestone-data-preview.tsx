@@ -18,7 +18,6 @@ import { MilestoneIgProfileDataPreview } from './milestone-ig-profile-data-previ
 import { MilestoneMenuTaggerDataPreview } from './milestone-menu-tagger-data-preview'
 import { MilestoneReelLineupDataPreview } from './milestone-reel-lineup-data-preview'
 import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
-import { MilestonePostSchedulerDataPreview } from './milestone-post-scheduler-data-preview'
 
 export type MilestoneDataPreviewProps = {
   milestone: TimelineMilestone
@@ -73,12 +72,6 @@ function renderParsedPreview(presetId: MilestonePresetId, data: unknown): ReactN
       return (
         <MilestoneCampaignBriefDataPreview
           data={data as Parameters<typeof MilestoneCampaignBriefDataPreview>[0]['data']}
-        />
-      )
-    case 'post_scheduler':
-      return (
-        <MilestonePostSchedulerDataPreview
-          data={data as Parameters<typeof MilestonePostSchedulerDataPreview>[0]['data']}
         />
       )
     case 'promotion_candidates':

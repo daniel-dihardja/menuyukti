@@ -436,14 +436,6 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                 <p>{t('milestoneHelpCampaignBriefOptionalInputHowUsed')}</p>
                 <p>{t('milestoneHelpCampaignBriefOptionalInputWhenToUse')}</p>
               </div>
-            ) : milestone.presetId === 'post_scheduler' ? (
-              <div className="space-y-2 text-muted-foreground text-sm">
-                <p className="font-medium text-foreground">
-                  {t('milestoneHelpPostSchedulerOptionalInputTitle')}
-                </p>
-                <p>{t('milestoneHelpPostSchedulerOptionalInputHowUsed')}</p>
-                <p>{t('milestoneHelpPostSchedulerOptionalInputWhenToUse')}</p>
-              </div>
             ) : optionalNotesCopy ? (
               <div className="space-y-2 text-muted-foreground text-sm">
                 <p className="font-medium text-foreground">

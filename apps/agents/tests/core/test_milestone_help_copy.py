@@ -29,12 +29,6 @@ def test_format_optional_input_campaign_brief() -> None:
     assert "soccer World Cup" in section
 
 
-def test_format_optional_input_post_scheduler() -> None:
-    section = format_optional_input_section("post_scheduler")
-    assert section is not None
-    assert "Scheduler notes" in section
-
-
 def test_format_optional_input_promotion_or_culture_generic() -> None:
     for pid in ("promotion_candidates", "culture_hooks", "menu_tagger"):
         section = format_optional_input_section(pid)
@@ -50,10 +44,10 @@ def test_format_optional_input_dates_none() -> None:
 def test_format_milestone_help_markdown_full() -> None:
     out = format_milestone_help_markdown(
         name="Test milestone",
-        preset_id="post_scheduler",
+        preset_id="promotion_candidates",
         milestone_goal=None,
     )
     assert "## Test milestone" in out
     assert "## What this milestone does" in out
-    assert "Instagram content" in out
-    assert "## Optional input (Scheduler notes)" in out
+    assert "promotion-engineering candidates" in out
+    assert "## Optional input" in out
