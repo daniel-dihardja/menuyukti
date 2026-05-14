@@ -198,7 +198,7 @@ function ReelLineupEmptyState({ title, body }: { title: string; body: string }) 
 export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupDataPreviewProps) {
   const t = useTranslations('analytics.workflows.chat')
 
-  const drinkGroups = data.drinkGroups ?? []
+  const drinkGroups = useMemo(() => data.drinkGroups ?? [], [data.drinkGroups])
 
   const assignedCount = useMemo(
     () =>
