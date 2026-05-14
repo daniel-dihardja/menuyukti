@@ -23,6 +23,8 @@ class MenuTaggerItem(TypedDict):
     role: Literal["star", "puzzle"]
     category: str
     tags: MenuTaggerTags
+    storytellingFit: NotRequired[Literal["strong", "weak"]]
+    storytellingRationale: NotRequired[str]
 
 
 class MenuTaggerUsedTags(TypedDict):

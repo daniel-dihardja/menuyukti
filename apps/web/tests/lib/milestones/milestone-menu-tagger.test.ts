@@ -89,6 +89,8 @@ describe('menu tagger taxonomy', () => {
           role: 'star',
           category: 'Mains',
           tags: sampleV2Tags,
+          storytellingFit: 'strong',
+          storytellingRationale: 'Bold name for the campaign.',
         },
       ],
       usedTags: {
@@ -105,6 +107,41 @@ describe('menu tagger taxonomy', () => {
       },
     })
     expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.items[0]?.storytellingFit).toBe('strong')
+      expect(parsed.data.items[0]?.storytellingRationale).toBe('Bold name for the campaign.')
+    }
+  })
+
+  it('menuTaggerMilestoneDataSchema defaults storytelling fields when omitted', () => {
+    const parsed = menuTaggerMilestoneDataSchema.safeParse({
+      taxonomyVersion: 'v2',
+      items: [
+        {
+          name: 'Nasi Goreng',
+          role: 'star',
+          category: 'Mains',
+          tags: sampleV2Tags,
+        },
+      ],
+      usedTags: {
+        kind: ['food'],
+        ingredient: ['rice'],
+        taste: ['spicy', 'savory'],
+        course: ['main'],
+        reel_moment: ['sizzle'],
+        texture: ['juicy'],
+        prep_style: ['grilled'],
+        occasion: ['dinner'],
+        serve_temp: ['hot'],
+        content_angle: ['signature'],
+      },
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.items[0]?.storytellingFit).toBe('weak')
+      expect(parsed.data.items[0]?.storytellingRationale).toBe('')
+    }
   })
 
   it('rejects v1 taxonomyVersion payloads', () => {

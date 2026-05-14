@@ -111,6 +111,25 @@ def _item_popularity(raw: Any) -> float:
         return -1.0
 
 
+def _storytelling_from_raw(raw: Any) -> tuple[Literal["strong", "weak"], str]:
+    """Match web promotionCandidateMenuItemSchema legacy string → strong default."""
+    if isinstance(raw, str):
+        return "strong", ""
+    if isinstance(raw, dict):
+        fit_raw = str(raw.get("storytellingFit") or "weak").strip().lower()
+        fit: Literal["strong", "weak"] = "strong" if fit_raw == "strong" else "weak"
+        rationale = str(raw.get("storytellingRationale") or "").strip()
+        return fit, rationale
+    return "weak", ""
+
+
+def _storytelling_from_item(item: dict[str, Any]) -> tuple[Literal["strong", "weak"], str]:
+    fit_raw = str(item.get("storytellingFit") or "weak").strip().lower()
+    fit: Literal["strong", "weak"] = "strong" if fit_raw == "strong" else "weak"
+    rationale = str(item.get("storytellingRationale") or "").strip()
+    return fit, rationale
+
+
 def _sort_items_by_popularity(raw_items: list[Any]) -> list[Any]:
     """Match web sortPromotionCandidateItemsByPopularity: popularity desc, then name asc."""
     return sorted(
@@ -168,12 +187,15 @@ def flatten_promotion_candidates_items(data: dict[str, Any]) -> list[MenuTaggerI
                 if key in seen:
                     continue
                 seen.add(key)
+                storytelling_fit, storytelling_rationale = _storytelling_from_raw(raw)
                 out.append(
                     {
                         "name": name,
                         "role": role,  # type: ignore[typeddict-item]
                         "category": category,
                         "tags": normalize_menu_tagger_tags(None),
+                        "storytellingFit": storytelling_fit,
+                        "storytellingRationale": storytelling_rationale,
                     }
                 )
     return out
@@ -340,12 +362,15 @@ def merge_tagged_items(
         key = (item["name"].casefold(), item["role"], item["category"].casefold())
         llm_row = by_key.get(key)
         tags_raw = llm_row.get("tags") if isinstance(llm_row, dict) else None
+        storytelling_fit, storytelling_rationale = _storytelling_from_item(dict(item))
         merged.append(
             {
                 "name": item["name"],
                 "role": item["role"],
                 "category": item["category"],
                 "tags": normalize_menu_tagger_tags(tags_raw if isinstance(tags_raw, dict) else None),
+                "storytellingFit": storytelling_fit,
+                "storytellingRationale": storytelling_rationale,
             }
         )
     return merged
@@ -471,12 +496,15 @@ def _sanitize_menu_tagger_payload(payload: dict[str, Any]) -> dict[str, Any]:
         if not name or role not in ("star", "puzzle"):
             continue
         tags_raw = item.get("tags")
+        storytelling_fit, storytelling_rationale = _storytelling_from_item(item)
         sanitized_items.append(
             {
                 "name": name,
                 "role": role,  # type: ignore[typeddict-item]
                 "category": category,
                 "tags": normalize_menu_tagger_tags(tags_raw if isinstance(tags_raw, dict) else None),
+                "storytellingFit": storytelling_fit,
+                "storytellingRationale": storytelling_rationale,
             }
         )
 

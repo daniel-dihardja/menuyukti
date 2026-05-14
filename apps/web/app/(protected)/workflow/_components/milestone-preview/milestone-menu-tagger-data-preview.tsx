@@ -204,7 +204,15 @@ type ItemTagsRowProps = {
 }
 
 function ItemTagsRow({ item, dimensionLabels, roleStarLabel, rolePuzzleLabel }: ItemTagsRowProps) {
+  const t = useTranslations('analytics.workflows.chat')
   const roleLabel = item.role === 'star' ? roleStarLabel : rolePuzzleLabel
+  const isStrong = item.storytellingFit === 'strong'
+  const fitLabel = isStrong
+    ? t('milestonePromotionCandidatesPreviewStorytellingStrong')
+    : t('milestonePromotionCandidatesPreviewStorytellingWeak')
+  const storytellingBadgeClassName = isStrong
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-100'
+    : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100'
 
   return (
     <li className={mp.insetCard}>
@@ -212,6 +220,11 @@ function ItemTagsRow({ item, dimensionLabels, roleStarLabel, rolePuzzleLabel }: 
         <p className={`min-w-0 flex-1 ${mp.body} font-medium text-foreground`}>{item.name}</p>
         <Badge variant="outline" className={cn('shrink-0', ROLE_BADGE_CLASS[item.role])}>
           {roleLabel}
+        </Badge>
+      </div>
+      <div className="mt-2">
+        <Badge variant="outline" className={storytellingBadgeClassName}>
+          {fitLabel}
         </Badge>
       </div>
       <div className="mt-3 flex flex-col gap-1.5">

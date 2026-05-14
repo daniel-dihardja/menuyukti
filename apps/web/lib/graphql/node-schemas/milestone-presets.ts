@@ -347,6 +347,8 @@ export const menuTaggerItemSchema = z.object({
   role: menuTaggerItemRoleSchema,
   category: z.string().trim().min(1),
   tags: menuTaggerTagsSchema,
+  storytellingFit: z.enum(['strong', 'weak']).default('weak'),
+  storytellingRationale: z.string().default(''),
 })
 
 export type MenuTaggerItem = z.infer<typeof menuTaggerItemSchema>

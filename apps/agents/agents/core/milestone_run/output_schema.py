@@ -550,6 +550,8 @@ class MenuTaggerItemOutput(BaseModel):
     role: Literal["star", "puzzle"]
     category: str
     tags: MenuTaggerTagsOutput
+    storytellingFit: Literal["strong", "weak"] = "weak"
+    storytellingRationale: str = ""
 
 
 class MenuTaggerUsedTagsOutput(BaseModel):

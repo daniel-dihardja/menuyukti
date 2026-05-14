@@ -52,6 +52,8 @@ def _valid_menu_tagger_payload() -> dict:
                 "name": "Nasi Goreng",
                 "role": "star",
                 "category": "Mains",
+                "storytellingFit": "strong",
+                "storytellingRationale": "Signature dish name.",
                 "tags": {
                     "kind": "food",
                     "ingredient": ["rice"],
@@ -103,8 +105,44 @@ def test_flatten_promotion_candidates_items() -> None:
     assert len(items) == 2
     assert items[0]["name"] == "Nasi Goreng"
     assert items[0]["role"] == "star"
+    assert items[0]["storytellingFit"] == "weak"
     assert items[1]["name"] == "Iced Tea"
     assert items[1]["role"] == "puzzle"
+
+
+def test_flatten_promotion_candidates_items_copies_storytelling() -> None:
+    data = {
+        "mainCategory": "Mains",
+        "categories": [
+            {
+                "category": "Mains",
+                "starItems": [
+                    {
+                        "name": "Ribeye",
+                        "storytellingFit": "strong",
+                        "storytellingRationale": "Bold hero name fits the campaign.",
+                    },
+                    "Soup",
+                ],
+                "puzzleItems": [
+                    {
+                        "name": "Side Salad",
+                        "storytellingFit": "weak",
+                        "storytellingRationale": "Generic for this brief.",
+                    }
+                ],
+            }
+        ],
+    }
+    items = flatten_promotion_candidates_items(data)
+    assert items[0]["name"] == "Ribeye"
+    assert items[0]["storytellingFit"] == "strong"
+    assert items[0]["storytellingRationale"] == "Bold hero name fits the campaign."
+    assert items[1]["name"] == "Soup"
+    assert items[1]["storytellingFit"] == "strong"
+    assert items[2]["name"] == "Side Salad"
+    assert items[2]["storytellingFit"] == "weak"
+    assert items[2]["storytellingRationale"] == "Generic for this brief."
 
 
 def test_flatten_promotion_candidates_items_sorts_categories_and_by_popularity() -> None:
@@ -176,6 +214,28 @@ def test_sanitize_menu_tagger_payload_filters_invalid_enums() -> None:
     tags = sanitized["items"][0]["tags"]
     assert tags["reel_moment"] == "static_hero"
     assert tags["ingredient"] == ["rice"]
+    assert sanitized["items"][0]["storytellingFit"] == "weak"
+    assert sanitized["items"][0]["storytellingRationale"] == ""
+
+
+def test_sanitize_menu_tagger_payload_preserves_storytelling() -> None:
+    payload = {
+        "taxonomyVersion": "v2",
+        "items": [
+            {
+                "name": "Ribeye",
+                "role": "star",
+                "category": "Mains",
+                "storytellingFit": "strong",
+                "storytellingRationale": "Hero narrative.",
+                "tags": normalize_menu_tagger_tags(None),
+            }
+        ],
+        "usedTags": {},
+    }
+    sanitized = _sanitize_menu_tagger_payload(payload)
+    assert sanitized["items"][0]["storytellingFit"] == "strong"
+    assert sanitized["items"][0]["storytellingRationale"] == "Hero narrative."
 
 
 def test_normalize_menu_tagger_tags_filters_unknown_enums() -> None:
@@ -258,6 +318,43 @@ def test_merge_tagged_items_preserves_input_order() -> None:
     assert merged[0]["name"] == "Nasi Goreng"
     assert merged[0]["tags"]["kind"] == "food"
     assert merged[1]["tags"]["kind"] == "drink"
+
+
+def test_merge_tagged_items_preserves_storytelling() -> None:
+    input_items = [
+        {
+            "name": "Ribeye",
+            "role": "star",
+            "category": "Mains",
+            "tags": normalize_menu_tagger_tags(None),
+            "storytellingFit": "strong",
+            "storytellingRationale": "Hero narrative.",
+        }
+    ]
+    merged = merge_tagged_items(
+        input_items,  # type: ignore[arg-type]
+        [
+            {
+                "name": "Ribeye",
+                "role": "star",
+                "category": "Mains",
+                "tags": {
+                    "kind": "food",
+                    "ingredient": ["beef"],
+                    "taste": ["savory"],
+                    "course": ["main"],
+                    "reel_moment": "sizzle",
+                    "texture": [],
+                    "prep_style": [],
+                    "occasion": [],
+                    "serve_temp": "hot",
+                    "content_angle": [],
+                },
+            }
+        ],
+    )
+    assert merged[0]["storytellingFit"] == "strong"
+    assert merged[0]["storytellingRationale"] == "Hero narrative."
 
 
 def test_compute_used_tags_rollup() -> None:
