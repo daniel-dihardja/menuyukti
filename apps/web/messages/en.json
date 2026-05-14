@@ -1199,7 +1199,7 @@
           "scheduler": {
             "label": "Scheduler",
             "title": "Scheduler",
-            "goal": "Read the campaign window from a prior **dates** milestone and prepare a scheduler calendar between the start and end dates. Place this milestone after **dates** in the timeline.",
+            "goal": "Read the campaign window from a prior **dates** milestone, schedule Instagram Story greetings for suitable public holidays at 10:00, and prepare a scheduler calendar between the start and end dates. Place this milestone after **dates** in the timeline.",
             "criterionPriorDates": "Run used a prior **dates** milestone with saved start and end dates.",
             "criterionWindowPresent": "Scheduler data includes **startDate** and **endDate** for the campaign window."
           },
@@ -1460,6 +1460,7 @@
         "milestoneSchedulerPreviewMonthNext": "Next month",
         "milestoneSchedulerPreviewWeekRange": "{start} – {end}",
         "milestoneSchedulerPreviewTimeColumnLabel": "Time",
+        "milestoneSchedulerPreviewSlotAria": "{title} at {time}",
         "milestoneSchedulerPreviewNoPriorDatesTitle": "No dates milestone found",
         "milestoneSchedulerPreviewNoPriorDatesBody": "Add a **dates** milestone before this one in the timeline and set a start and end date.",
         "milestoneSchedulerPreviewIncompleteWindowTitle": "Campaign window incomplete",

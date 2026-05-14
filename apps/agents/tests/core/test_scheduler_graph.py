@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.scheduler.nodes import (
+    HolidayGreetingPick,
+    SchedulerHolidayGreetingsDraft,
     build_snapshot,
     fetch_and_prepare,
     persist_result,
+    select_holiday_greetings,
 )
 
 
@@ -25,15 +28,34 @@ def _prior_json() -> str:
                     "endDate": "2026-06-30",
                     "publicHolidays": [
                         {
-                            "name": "Holiday",
+                            "name": "Easter Sunday",
                             "description": "Desc",
                             "date": "2026-06-15",
-                        }
+                        },
+                        {
+                            "name": "Memorial Day",
+                            "description": "Solemn",
+                            "date": "2026-06-20",
+                        },
                     ],
                 },
             }
         ]
     )
+
+
+def _base_state(**overrides: object) -> dict[str, object]:
+    state: dict[str, object] = {
+        "milestone_id": "1",
+        "location_id": 1,
+        "user_id": "user",
+        "goal": "",
+        "criteria": [],
+        "result_data": "",
+        "milestonedata_written": False,
+    }
+    state.update(overrides)
+    return state
 
 
 @pytest.mark.asyncio
@@ -43,16 +65,7 @@ async def test_fetch_and_prepare_reads_prior_dates() -> None:
         return_value=lambda _x: None,
     ):
         result = await fetch_and_prepare(
-            {
-                "milestone_id": "1",
-                "location_id": 1,
-                "user_id": "user",
-                "goal": "",
-                "criteria": [],
-                "prior_milestones_data": _prior_json(),
-                "result_data": "",
-                "milestonedata_written": False,
-            },
+            _base_state(prior_milestones_data=_prior_json()),
             client=AsyncMock(),
         )
         assert result["source_dates_title"] == "Campaign dates"
@@ -69,38 +82,89 @@ async def test_fetch_and_prepare_raises_without_prior_dates() -> None:
         pytest.raises(ValueError, match="scheduler requires a prior dates milestone"),
     ):
         await fetch_and_prepare(
-            {
-                "milestone_id": "1",
-                "location_id": 1,
-                "user_id": "user",
-                "goal": "",
-                "criteria": [],
-                "prior_milestones_data": "[]",
-                "result_data": "",
-                "milestonedata_written": False,
-            },
+            _base_state(prior_milestones_data="[]"),
             client=AsyncMock(),
         )
 
 
 @pytest.mark.asyncio
-async def test_build_snapshot_creates_valid_payload() -> None:
+async def test_select_holiday_greetings_skips_llm_when_no_holidays() -> None:
+    with patch(
+        "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
+        return_value=lambda _x: None,
+    ):
+        result = await select_holiday_greetings(
+            _base_state(
+                dates_data={
+                    "startDate": "2026-06-01",
+                    "endDate": "2026-06-30",
+                    "publicHolidays": [],
+                }
+            )
+        )
+        assert result["holiday_greeting_picks"] == []
+
+
+@pytest.mark.asyncio
+async def test_select_holiday_greetings_calls_llm() -> None:
+    draft = SchedulerHolidayGreetingsDraft(
+        holidayGreetings=[
+            HolidayGreetingPick(date="2026-06-15", holidayName="Easter Sunday"),
+        ]
+    )
+    mock_llm = MagicMock()
+    mock_llm.ainvoke = AsyncMock(return_value=draft)
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.scheduler.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.scheduler.nodes.structured_llm_from_milestone_run_config",
+            return_value=MagicMock(with_structured_output=MagicMock(return_value=mock_llm)),
+        ),
+    ):
+        result = await select_holiday_greetings(
+            _base_state(
+                dates_data={
+                    "startDate": "2026-06-01",
+                    "endDate": "2026-06-30",
+                    "publicHolidays": [
+                        {
+                            "name": "Easter Sunday",
+                            "description": "Desc",
+                            "date": "2026-06-15",
+                        }
+                    ],
+                }
+            )
+        )
+        assert result["holiday_greeting_picks"] == [
+            {"date": "2026-06-15", "holidayName": "Easter Sunday"}
+        ]
+        mock_llm.ainvoke.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_build_snapshot_creates_holiday_greeting_slots() -> None:
     result = await build_snapshot(
-        {
-            "milestone_id": "1",
-            "location_id": 1,
-            "user_id": "user",
-            "goal": "",
-            "criteria": [],
-            "dates_data": {
+        _base_state(
+            dates_data={
                 "startDate": "2026-06-01",
                 "endDate": "2026-06-30",
-                "publicHolidays": [],
+                "publicHolidays": [
+                    {
+                        "name": "Easter Sunday",
+                        "description": "Desc",
+                        "date": "2026-06-15",
+                    }
+                ],
             },
-            "source_dates_title": "Campaign dates",
-            "result_data": "",
-            "milestonedata_written": False,
-        }
+            holiday_greeting_picks=[
+                {"date": "2026-06-15", "holidayName": "Easter Sunday"},
+            ],
+            source_dates_title="Campaign dates",
+        )
     )
     normalized, error = validate_skill_output("scheduler", result["generated_output"])
     assert error is None
@@ -108,6 +172,39 @@ async def test_build_snapshot_creates_valid_payload() -> None:
     assert normalized["startDate"] == "2026-06-01"
     assert normalized["endDate"] == "2026-06-30"
     assert normalized["sourceDatesTitle"] == "Campaign dates"
+    assert normalized["slots"] == [
+        {
+            "date": "2026-06-15",
+            "time": "10:00",
+            "title": "Story: sending happy Easter Sunday",
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_build_snapshot_drops_invalid_llm_picks() -> None:
+    result = await build_snapshot(
+        _base_state(
+            dates_data={
+                "startDate": "2026-06-01",
+                "endDate": "2026-06-30",
+                "publicHolidays": [
+                    {
+                        "name": "Easter Sunday",
+                        "description": "Desc",
+                        "date": "2026-06-15",
+                    }
+                ],
+            },
+            holiday_greeting_picks=[
+                {"date": "2026-07-01", "holidayName": "Easter Sunday"},
+                {"date": "2026-06-15", "holidayName": "Wrong Name"},
+            ],
+        )
+    )
+    normalized, error = validate_skill_output("scheduler", result["generated_output"])
+    assert error is None
+    assert isinstance(normalized, dict)
     assert normalized["slots"] == []
 
 
@@ -118,23 +215,20 @@ async def test_persist_result_upserts_scheduler_payload() -> None:
         "startDate": "2026-06-01",
         "endDate": "2026-06-30",
         "publicHolidays": [],
-        "slots": [],
+        "slots": [
+            {
+                "date": "2026-06-15",
+                "time": "10:00",
+                "title": "Story: sending happy Easter Sunday",
+            }
+        ],
     }
     with patch(
         "agents_app.agents.core.milestone_run.scheduler.nodes.upsert_milestonedata_node",
         new=AsyncMock(),
     ) as upsert:
         result = await persist_result(
-            {
-                "milestone_id": "9",
-                "location_id": 2,
-                "user_id": "user",
-                "goal": "",
-                "criteria": [],
-                "generated_output": payload,
-                "result_data": "",
-                "milestonedata_written": False,
-            },
+            _base_state(generated_output=payload),
             client=client,
         )
         upsert.assert_awaited_once()

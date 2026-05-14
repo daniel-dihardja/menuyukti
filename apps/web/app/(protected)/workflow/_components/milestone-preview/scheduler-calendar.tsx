@@ -14,6 +14,7 @@ import {
 import { cn } from '@workspace/ui/lib/utils'
 
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
+import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 import {
   canGoToNextMonth,
   canGoToNextWeek,
@@ -43,6 +44,7 @@ export type SchedulerCalendarProps = {
   windowStart: string
   windowEnd: string
   locale: string
+  slots?: SchedulerMilestoneData['slots']
   className?: string
 }
 
@@ -50,6 +52,7 @@ export function SchedulerCalendar({
   windowStart,
   windowEnd,
   locale,
+  slots = [],
   className,
 }: SchedulerCalendarProps) {
   const t = useTranslations('analytics.workflows.chat')
@@ -70,7 +73,7 @@ export function SchedulerCalendar({
     return clampMonthStart(startOfMonth(anchor), windowStart, windowEnd)
   }, [windowEnd, windowStart])
 
-  const [viewMode, setViewMode] = useState<SchedulerCalendarViewMode>('week')
+  const [viewMode, setViewMode] = useState<SchedulerCalendarViewMode>('month')
   const [weekStartIso, setWeekStartIso] = useState(initialWeekStart)
   const [monthStartIso, setMonthStartIso] = useState(initialMonthStart)
 
@@ -226,6 +229,7 @@ export function SchedulerCalendar({
           windowStart={windowStart}
           windowEnd={windowEnd}
           locale={locale}
+          slots={slots}
         />
       ) : (
         <SchedulerCalendarMonthGrid
@@ -233,6 +237,7 @@ export function SchedulerCalendar({
           windowStart={windowStart}
           windowEnd={windowEnd}
           locale={locale}
+          slots={slots}
           onDayClick={(isoDate) => {
             setWeekStartIso(weekStartIsoForDay(isoDate, windowStart, windowEnd))
             setViewMode('week')

@@ -7,18 +7,36 @@ from typing import Any
 
 import httpx
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
+from agents_app.agents.core.milestone_run.llm_from_run_config import (
+    structured_llm_from_milestone_run_config,
+)
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     dates_prior_error_message,
     extract_dates_data,
     extract_dates_row,
 )
+from agents_app.agents.core.milestone_run.scheduler.prompts import (
+    SCHEDULER_HOLIDAY_GREETINGS_SYSTEM,
+)
 from agents_app.agents.core.milestone_run.scheduler.state import SchedulerOutput, SchedulerState
+from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
+from pydantic import BaseModel
+
+HAPPY_HOLIDAY_STORY_TIME = "10:00"
 
 
 def _trace(state: SchedulerState, step: str, **extra: Any) -> None:
     payload: dict[str, Any] = {"step": step, **extra}
+    run_id = state.get("run_id")
+    if isinstance(run_id, str) and run_id:
+        payload["run_id"] = run_id
+    get_stream_writer()(payload)
+
+
+def _trace_agent_event(state: SchedulerState, kind: str, **extra: Any) -> None:
+    payload: dict[str, Any] = {"agent_event": {"kind": kind, **extra}}
     run_id = state.get("run_id")
     if isinstance(run_id, str) and run_id:
         payload["run_id"] = run_id
@@ -32,6 +50,79 @@ def _normalize_generated_output(payload: Any) -> SchedulerOutput:
     if error is not None or not isinstance(normalized, dict):
         raise ValueError(error or "scheduler output validation failed")
     return normalized  # type: ignore[return-value]
+
+
+class HolidayGreetingPick(BaseModel):
+    date: str
+    holidayName: str
+
+
+class SchedulerHolidayGreetingsDraft(BaseModel):
+    holidayGreetings: list[HolidayGreetingPick]
+
+
+def _holiday_dates_by_name(public_holidays: list[Any]) -> dict[str, set[str]]:
+    by_name: dict[str, set[str]] = {}
+    for holiday in public_holidays:
+        if not isinstance(holiday, dict):
+            continue
+        date = str(holiday.get("date") or "").strip()
+        if not date:
+            continue
+        name = str(holiday.get("name") or holiday.get("localName") or "").strip()
+        if not name:
+            continue
+        by_name.setdefault(name, set()).add(date)
+    return by_name
+
+
+def _valid_holiday_dates(public_holidays: list[Any]) -> set[str]:
+    dates: set[str] = set()
+    for holiday in public_holidays:
+        if not isinstance(holiday, dict):
+            continue
+        date = str(holiday.get("date") or "").strip()
+        if date:
+            dates.add(date)
+    return dates
+
+
+def _build_holiday_greeting_slots(
+    picks: list[dict[str, str]],
+    *,
+    public_holidays: list[Any],
+    start_date: str,
+    end_date: str,
+) -> list[dict[str, str]]:
+    valid_dates = _valid_holiday_dates(public_holidays)
+    dates_by_name = _holiday_dates_by_name(public_holidays)
+    slots: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+
+    for pick in picks:
+        date = str(pick.get("date") or "").strip()
+        holiday_name = str(pick.get("holidayName") or "").strip()
+        if not date or not holiday_name:
+            continue
+        if date < start_date or date > end_date:
+            continue
+        if date not in valid_dates:
+            continue
+        if date not in dates_by_name.get(holiday_name, set()):
+            continue
+        key = (date, holiday_name)
+        if key in seen:
+            continue
+        seen.add(key)
+        slots.append(
+            {
+                "date": date,
+                "time": HAPPY_HOLIDAY_STORY_TIME,
+                "title": f"Story: sending happy {holiday_name}",
+            }
+        )
+
+    return slots
 
 
 async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient) -> dict[str, Any]:
@@ -56,6 +147,48 @@ async def fetch_and_prepare(state: SchedulerState, *, client: httpx.AsyncClient)
     }
 
 
+async def select_holiday_greetings(state: SchedulerState) -> dict[str, Any]:
+    """Use LLM to pick public holidays suited for a cheerful Story greeting."""
+    dates_data = state.get("dates_data")
+    if not isinstance(dates_data, dict):
+        raise ValueError("scheduler requires prior dates milestone data")
+
+    public_holidays = dates_data.get("publicHolidays")
+    if not isinstance(public_holidays, list) or not public_holidays:
+        return {"holiday_greeting_picks": []}
+
+    start_date = str(dates_data.get("startDate") or "").strip()
+    end_date = str(dates_data.get("endDate") or "").strip()
+    human_content = json.dumps(
+        {
+            "startDate": start_date,
+            "endDate": end_date,
+            "publicHolidays": public_holidays,
+        },
+        ensure_ascii=False,
+        indent=2,
+    )
+
+    llm = structured_llm_from_milestone_run_config().with_structured_output(
+        SchedulerHolidayGreetingsDraft
+    )
+    _trace_agent_event(state, "chat_model_start")
+    generated = await llm.ainvoke(
+        [
+            SystemMessage(content=SCHEDULER_HOLIDAY_GREETINGS_SYSTEM),
+            HumanMessage(content=human_content),
+        ]
+    )
+    _trace_agent_event(state, "chat_model_end")
+
+    picks = [
+        {"date": pick.date.strip(), "holidayName": pick.holidayName.strip()}
+        for pick in generated.holidayGreetings
+        if pick.date.strip() and pick.holidayName.strip()
+    ]
+    return {"holiday_greeting_picks": picks}
+
+
 async def build_snapshot(state: SchedulerState) -> dict[str, Any]:
     dates_data = state.get("dates_data")
     if not isinstance(dates_data, dict):
@@ -70,11 +203,22 @@ async def build_snapshot(state: SchedulerState) -> dict[str, Any]:
     if not isinstance(public_holidays, list):
         public_holidays = []
 
+    picks = state.get("holiday_greeting_picks")
+    if not isinstance(picks, list):
+        picks = []
+
+    slots = _build_holiday_greeting_slots(
+        picks,
+        public_holidays=public_holidays,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
     payload: dict[str, Any] = {
         "startDate": start_date,
         "endDate": end_date,
         "publicHolidays": public_holidays,
-        "slots": [],
+        "slots": slots,
     }
     source_title = str(state.get("source_dates_title") or "").strip()
     if source_title:

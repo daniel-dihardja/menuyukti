@@ -11,7 +11,11 @@ import {
   clampWeekStart,
   eachIsoDateInWindow,
   isoDateOnlyFromDate,
+  schedulerHourIndexFromTime,
   schedulerHourLabels,
+  schedulerSlotsByDate,
+  schedulerSlotsForDate,
+  SCHEDULER_HAPPY_HOLIDAY_STORY_TIME,
   SCHEDULER_MONTH_GRID_DAYS,
   startOfMonth,
   startOfWeekMonday,
@@ -20,6 +24,42 @@ import {
   monthStartIsoForWeek,
 } from '@/lib/milestones/scheduler-calendar'
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
+
+describe('schedulerHourIndexFromTime', () => {
+  it('maps 10:00 to index 2 when the grid starts at 8', () => {
+    expect(schedulerHourIndexFromTime(SCHEDULER_HAPPY_HOLIDAY_STORY_TIME)).toBe(2)
+  })
+
+  it('returns undefined for times outside the visible grid', () => {
+    expect(schedulerHourIndexFromTime('07:00')).toBeUndefined()
+    expect(schedulerHourIndexFromTime('22:00')).toBeUndefined()
+  })
+})
+
+describe('schedulerSlotsForDate', () => {
+  const slots = [
+    {
+      date: '2026-06-15',
+      time: '10:00',
+      title: 'Story: sending happy Easter Sunday',
+    },
+    {
+      date: '2026-06-20',
+      time: '10:00',
+      title: 'Story: sending happy Memorial Day',
+    },
+  ]
+
+  it('filters slots for a single day', () => {
+    expect(schedulerSlotsForDate(slots, '2026-06-15')).toEqual([slots[0]])
+  })
+
+  it('groups slots by date', () => {
+    const grouped = schedulerSlotsByDate(slots)
+    expect(grouped.get('2026-06-15')).toEqual([slots[0]])
+    expect(grouped.get('2026-06-20')).toEqual([slots[1]])
+  })
+})
 
 describe('isoDateOnlyFromDate', () => {
   it('formats local dates as YYYY-MM-DD', () => {

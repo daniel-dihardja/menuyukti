@@ -25,7 +25,10 @@ function PreviewStateMessage({ title, body }: { title: string; body: string }) {
   )
 }
 
-export function MilestoneSchedulerDataPreview({ milestone }: MilestoneSchedulerDataPreviewProps) {
+export function MilestoneSchedulerDataPreview({
+  milestone,
+  data,
+}: MilestoneSchedulerDataPreviewProps) {
   const t = useTranslations('analytics.workflows.chat')
   const locale = useLocale()
   const {
@@ -73,6 +76,7 @@ export function MilestoneSchedulerDataPreview({ milestone }: MilestoneSchedulerD
       <SchedulerCalendar
         className="min-h-0 flex-1"
         locale={locale}
+        slots={data.slots ?? []}
         windowEnd={window.endDate}
         windowStart={window.startDate}
       />

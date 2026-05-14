@@ -5,9 +5,11 @@ import { useMemo } from 'react'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
+import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 import {
   buildSchedulerMonth,
   formatSchedulerMonthLabel,
+  schedulerSlotsForDate,
   schedulerWeekdayLabels,
 } from '@/lib/milestones/scheduler-calendar'
 
@@ -16,6 +18,7 @@ export type SchedulerCalendarMonthGridProps = {
   windowStart: string
   windowEnd: string
   locale: string
+  slots?: SchedulerMilestoneData['slots']
   className?: string
   onDayClick?: (isoDate: string) => void
 }
@@ -33,6 +36,7 @@ export function SchedulerCalendarMonthGrid({
   windowStart,
   windowEnd,
   locale,
+  slots = [],
   className,
   onDayClick,
 }: SchedulerCalendarMonthGridProps) {
@@ -75,6 +79,7 @@ export function SchedulerCalendarMonthGrid({
         {monthDays.map((day) => {
           const dayNumber = formatDayNumber(day.isoDate, locale)
           const clickable = day.inWindow && onDayClick
+          const daySlots = schedulerSlotsForDate(slots, day.isoDate)
 
           return (
             <div
@@ -83,7 +88,7 @@ export function SchedulerCalendarMonthGrid({
               aria-disabled={!day.inWindow}
               aria-label={dayNumber}
               className={cn(
-                'border-b border-r border-border/60 p-1.5 last:border-r-0',
+                'flex min-h-0 flex-col border-b border-r border-border/60 p-1.5 last:border-r-0',
                 !day.inMonth && 'text-muted-foreground/70',
                 !day.inWindow && 'bg-muted/30 text-muted-foreground',
                 day.isToday && day.inWindow && 'bg-primary/10 text-primary',
@@ -110,6 +115,21 @@ export function SchedulerCalendarMonthGrid({
               }
             >
               <span className="text-sm font-semibold">{dayNumber}</span>
+              {daySlots.length > 0 ? (
+                <div className="mt-1 space-y-0.5">
+                  {daySlots.slice(0, 1).map((slot) => (
+                    <p
+                      key={`${slot.date}-${slot.time}-${slot.title}`}
+                      className="truncate rounded-md border border-sky-300/80 bg-sky-50/90 px-1 py-0.5 text-xs font-medium leading-snug text-foreground dark:border-sky-500/50 dark:bg-sky-950/40"
+                    >
+                      {slot.title}
+                    </p>
+                  ))}
+                  {daySlots.length > 1 ? (
+                    <span className="block size-1.5 rounded-full bg-primary" aria-hidden />
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           )
         })}

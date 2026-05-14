@@ -1,8 +1,12 @@
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
+import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 
 export const SCHEDULER_GRID_HOUR_START = 8
 export const SCHEDULER_GRID_HOUR_END = 22
 export const SCHEDULER_GRID_SLOT_MINUTES = 60
+export const SCHEDULER_HAPPY_HOLIDAY_STORY_TIME = '10:00'
+
+export type SchedulerSlot = SchedulerMilestoneData['slots'][number]
 
 export type SchedulerWeekDay = {
   isoDate: string
@@ -18,6 +22,50 @@ export type SchedulerMonthDay = {
 }
 
 export const SCHEDULER_MONTH_GRID_DAYS = 42
+
+export function schedulerHourIndexFromTime(
+  time: string,
+  startHour = SCHEDULER_GRID_HOUR_START,
+  endHour = SCHEDULER_GRID_HOUR_END,
+): number | undefined {
+  const trimmed = time.trim()
+  const match = /^(\d{1,2}):(\d{2})$/.exec(trimmed)
+  if (!match) {
+    return undefined
+  }
+
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    minute < 0 ||
+    minute > 59 ||
+    hour < startHour ||
+    hour >= endHour
+  ) {
+    return undefined
+  }
+
+  return hour - startHour
+}
+
+export function schedulerSlotsForDate(slots: SchedulerSlot[], isoDate: string): SchedulerSlot[] {
+  return slots.filter((slot) => slot.date === isoDate)
+}
+
+export function schedulerSlotsByDate(slots: SchedulerSlot[]): Map<string, SchedulerSlot[]> {
+  const grouped = new Map<string, SchedulerSlot[]>()
+  for (const slot of slots) {
+    const existing = grouped.get(slot.date)
+    if (existing) {
+      existing.push(slot)
+    } else {
+      grouped.set(slot.date, [slot])
+    }
+  }
+  return grouped
+}
 
 export function isoDateOnlyFromDate(date: Date): string {
   const year = date.getFullYear()

@@ -5,13 +5,16 @@ import { useTranslations } from 'next-intl'
 
 import { cn } from '@workspace/ui/lib/utils'
 
+import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
 import {
   SCHEDULER_GRID_HOUR_END,
   SCHEDULER_GRID_HOUR_START,
   buildSchedulerWeek,
   formatSchedulerWeekRange,
+  schedulerHourIndexFromTime,
   schedulerHourLabels,
+  schedulerSlotsByDate,
 } from '@/lib/milestones/scheduler-calendar'
 
 const TIME_GUTTER_WIDTH_PX = 52
@@ -21,6 +24,7 @@ export type SchedulerCalendarWeekGridProps = {
   windowStart: string
   windowEnd: string
   locale: string
+  slots?: SchedulerMilestoneData['slots']
   className?: string
 }
 
@@ -44,6 +48,7 @@ export function SchedulerCalendarWeekGrid({
   windowStart,
   windowEnd,
   locale,
+  slots = [],
   className,
 }: SchedulerCalendarWeekGridProps) {
   const t = useTranslations('analytics.workflows.chat')
@@ -52,6 +57,7 @@ export function SchedulerCalendarWeekGrid({
     () => buildSchedulerWeek(weekStartIso, windowStart, windowEnd),
     [weekStartIso, windowEnd, windowStart],
   )
+  const slotsByDate = useMemo(() => schedulerSlotsByDate(slots), [slots])
   const hourLabels = useMemo(
     () => schedulerHourLabels(locale, SCHEDULER_GRID_HOUR_START, SCHEDULER_GRID_HOUR_END),
     [locale],
@@ -112,7 +118,9 @@ export function SchedulerCalendarWeekGrid({
             hourIndex={hourIndex}
             hourLabel={label}
             weekDays={weekDays}
+            slotsByDate={slotsByDate}
             timeColumnLabel={t('milestoneSchedulerPreviewTimeColumnLabel')}
+            slotAriaLabel={(title, time) => t('milestoneSchedulerPreviewSlotAria', { title, time })}
           />
         ))}
       </div>
@@ -124,14 +132,18 @@ type SchedulerHourRowProps = {
   hourIndex: number
   hourLabel: string
   weekDays: ReturnType<typeof buildSchedulerWeek>
+  slotsByDate: ReturnType<typeof schedulerSlotsByDate>
   timeColumnLabel: string
+  slotAriaLabel: (title: string, time: string) => string
 }
 
 function SchedulerHourRow({
   hourIndex,
   hourLabel,
   weekDays,
+  slotsByDate,
   timeColumnLabel,
+  slotAriaLabel,
 }: SchedulerHourRowProps) {
   const rowIndex = hourIndex + 2
 
@@ -146,18 +158,35 @@ function SchedulerHourRow({
         <span className="relative -top-2 block pr-1">{hourLabel}</span>
       </div>
 
-      {weekDays.map((day, dayIndex) => (
-        <div
-          key={`${day.isoDate}-${hourIndex}`}
-          role="gridcell"
-          aria-disabled={!day.inWindow}
-          className={cn(
-            'pointer-events-none border-b border-r border-border/60 last:border-r-0',
-            !day.inWindow && 'bg-muted/30',
-          )}
-          style={{ gridRow: rowIndex, gridColumn: dayIndex + 2 }}
-        />
-      ))}
+      {weekDays.map((day, dayIndex) => {
+        const daySlots = slotsByDate.get(day.isoDate) ?? []
+        const slotsInHour = daySlots.filter(
+          (slot) => schedulerHourIndexFromTime(slot.time) === hourIndex,
+        )
+
+        return (
+          <div
+            key={`${day.isoDate}-${hourIndex}`}
+            role="gridcell"
+            aria-disabled={!day.inWindow}
+            className={cn(
+              'pointer-events-none relative border-b border-r border-border/60 p-0.5 last:border-r-0',
+              !day.inWindow && 'bg-muted/30',
+            )}
+            style={{ gridRow: rowIndex, gridColumn: dayIndex + 2 }}
+          >
+            {slotsInHour.map((slot) => (
+              <div
+                key={`${slot.date}-${slot.time}-${slot.title}`}
+                aria-label={slotAriaLabel(slot.title, slot.time)}
+                className="rounded-md border border-sky-300/80 bg-sky-50/90 px-1.5 py-1 text-xs leading-snug text-foreground dark:border-sky-500/50 dark:bg-sky-950/40"
+              >
+                <span className="line-clamp-2 font-medium">{slot.title}</span>
+              </div>
+            ))}
+          </div>
+        )
+      })}
     </>
   )
 }

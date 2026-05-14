@@ -528,6 +528,8 @@ class ReelLineupMilestoneOutput(BaseModel):
 
 class SchedulerSlotOutput(BaseModel):
     date: str
+    time: str
+    title: str
 
 
 class SchedulerMilestoneOutput(BaseModel):

@@ -317,6 +317,8 @@ export type ReelLineupMilestoneData = z.infer<typeof reelLineupMilestoneDataSche
 
 export const schedulerSlotSchema = z.object({
   date: z.string(),
+  time: z.string(),
+  title: z.string(),
 })
 
 export const schedulerMilestoneDataSchema = z.object({
