@@ -231,6 +231,7 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         value: {
           notes: '',
           selectedMenuCategories: [],
+          ignoredMenuItems: [],
           starItemLimit: 5,
           puzzleItemLimit: 10,
         },

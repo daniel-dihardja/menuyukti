@@ -118,6 +118,16 @@ def _validate_milestone_input_payload(preset_id: str, payload: Any) -> str | Non
                     return (
                         f"milestoneInput.value.{limit_key} must be 5, 10, or 'all' when provided."
                     )
+            ignored = value.get("ignoredMenuItems")
+            if ignored is not None:
+                if not isinstance(ignored, list):
+                    return "milestoneInput.value.ignoredMenuItems must be an array when provided."
+                for item in ignored:
+                    if not isinstance(item, str):
+                        return (
+                            "milestoneInput.value.ignoredMenuItems must contain "
+                            "only strings when provided."
+                        )
 
     return None
 

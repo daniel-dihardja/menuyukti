@@ -108,6 +108,7 @@ export type PromotionCandidatesItemLimit = z.infer<typeof promotionCandidatesIte
 export const promotionCandidatesMilestoneInputValueSchema = z.object({
   notes: z.string(),
   selectedMenuCategories: z.array(z.string().trim().min(1)),
+  ignoredMenuItems: z.array(z.string().trim().min(1)).default([]),
   starItemLimit: promotionCandidatesItemLimitSchema.default(5),
   puzzleItemLimit: promotionCandidatesItemLimitSchema.default(10),
 })

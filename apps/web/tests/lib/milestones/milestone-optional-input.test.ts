@@ -41,6 +41,23 @@ describe('milestone optional notes', () => {
     ).toEqual({
       notes: 'focus lunch',
       selectedMenuCategories: ['Mains', 'Mains'],
+      ignoredMenuItemsText: '',
+      starItemLimit: 5,
+      puzzleItemLimit: 10,
+    })
+    expect(
+      promotionCandidatesInputFromMilestoneInput({
+        type: 'promotion_candidates',
+        value: {
+          notes: '',
+          selectedMenuCategories: [],
+          ignoredMenuItems: ['TEH', 'AIR MINERAL'],
+        },
+      }),
+    ).toEqual({
+      notes: '',
+      selectedMenuCategories: [],
+      ignoredMenuItemsText: 'TEH\nAIR MINERAL',
       starItemLimit: 5,
       puzzleItemLimit: 10,
     })
@@ -48,12 +65,14 @@ describe('milestone optional notes', () => {
       normalizePromotionCandidatesInput({
         notes: '  focus  ',
         selectedMenuCategories: ['Mains', 'mains', 'Desserts'],
+        ignoredMenuItemsText: 'TEH\n  teh \nAIR MINERAL\n',
         starItemLimit: 10,
         puzzleItemLimit: 'all',
       }),
     ).toEqual({
       notes: 'focus',
       selectedMenuCategories: ['Mains', 'Desserts'],
+      ignoredMenuItems: ['TEH', 'AIR MINERAL'],
       starItemLimit: 10,
       puzzleItemLimit: 'all',
     })
@@ -66,6 +85,7 @@ describe('milestone optional notes', () => {
         value: {
           notes: 'seasonal',
           selectedMenuCategories: ['Mains'],
+          ignoredMenuItems: ['TEH', 'AIR MINERAL'],
           starItemLimit: 10,
           puzzleItemLimit: 'all',
         },
@@ -78,6 +98,7 @@ describe('milestone optional notes', () => {
         value: {
           notes: 'seasonal',
           selectedMenuCategories: ['Mains'],
+          ignoredMenuItems: ['TEH', 'AIR MINERAL'],
           starItemLimit: 10,
           puzzleItemLimit: 'all',
         },
@@ -92,6 +113,7 @@ describe('milestone optional notes', () => {
       value: {
         notes: '',
         selectedMenuCategories: [],
+        ignoredMenuItems: [],
         starItemLimit: 5,
         puzzleItemLimit: 10,
       },
