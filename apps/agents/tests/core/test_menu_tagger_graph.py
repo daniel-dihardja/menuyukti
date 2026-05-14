@@ -145,6 +145,29 @@ def test_flatten_promotion_candidates_items_copies_storytelling() -> None:
     assert items[2]["storytellingRationale"] == "Generic for this brief."
 
 
+def test_flatten_promotion_candidates_items_copies_popularity_and_quantity() -> None:
+    data = {
+        "mainCategory": "Mains",
+        "categories": [
+            {
+                "category": "Mains",
+                "starItems": [
+                    {
+                        "name": "Ribeye",
+                        "storytellingFit": "strong",
+                        "popularity": 0.82,
+                        "quantity": 120,
+                    }
+                ],
+                "puzzleItems": [],
+            }
+        ],
+    }
+    items = flatten_promotion_candidates_items(data)
+    assert items[0]["popularity"] == 0.82
+    assert items[0]["quantity"] == 120
+
+
 def test_flatten_promotion_candidates_items_sorts_categories_and_by_popularity() -> None:
     data = {
         "mainCategory": "Mains",

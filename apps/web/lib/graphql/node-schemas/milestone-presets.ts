@@ -349,6 +349,8 @@ export const menuTaggerItemSchema = z.object({
   tags: menuTaggerTagsSchema,
   storytellingFit: z.enum(['strong', 'weak']).default('weak'),
   storytellingRationale: z.string().default(''),
+  quantity: z.number().int().nonnegative().optional(),
+  popularity: z.number().min(0).max(1).optional(),
 })
 
 export type MenuTaggerItem = z.infer<typeof menuTaggerItemSchema>
@@ -395,7 +397,7 @@ export const reelLineupGroupSchema = z.object({
   leadName: z.string().trim().min(1),
   profileId: reelLineupProfileIdSchema,
   anchor: reelLineupAnchorSchema,
-  items: z.array(reelLineupGroupItemSchema).min(3).max(5),
+  items: z.array(reelLineupGroupItemSchema).min(1).max(5),
   mix: reelLineupGroupMixSchema,
 })
 

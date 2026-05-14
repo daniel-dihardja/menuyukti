@@ -300,19 +300,11 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.reel_lineup.criterionGroupSize'),
+          requirement: t('milestonePreset.reel_lineup.criterionHookGroupCount'),
           status: 'open',
         },
         {
-          requirement: t('milestonePreset.reel_lineup.criterionStarLead'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.reel_lineup.criterionSharedReelMoment'),
-          status: 'open',
-        },
-        {
-          requirement: t('milestonePreset.reel_lineup.criterionDrinkEnd'),
+          requirement: t('milestonePreset.reel_lineup.criterionMainCourseHook'),
           status: 'open',
         },
       ],

@@ -48,6 +48,7 @@ type GroupCardLabels = {
   rolePuzzleLabel: string
   storytellingStrongLabel: string
   storytellingWeakLabel: string
+  popularityLabel: (value: number) => string
   priceLabels: { low: string; mid: string; high: string }
 }
 
@@ -108,6 +109,11 @@ function ReelLineupGroupCard({
                       : labels.storytellingWeakLabel}
                   </Badge>
                 ) : null}
+                {typeof item.popularity === 'number' ? (
+                  <Badge variant="outline" className="font-normal text-muted-foreground">
+                    {labels.popularityLabel(item.popularity)}
+                  </Badge>
+                ) : null}
                 {item.priceLevel ? (
                   <Badge
                     variant="outline"
@@ -141,6 +147,7 @@ export function MilestoneReelLineupDataPreview({ data }: MilestoneReelLineupData
       rolePuzzleLabel: t('milestoneMenuTaggerPreviewRolePuzzle'),
       storytellingStrongLabel: t('milestonePromotionCandidatesPreviewStorytellingStrong'),
       storytellingWeakLabel: t('milestonePromotionCandidatesPreviewStorytellingWeak'),
+      popularityLabel: (value: number) => t('milestoneReelLineupPreviewPopularityLabel', { value }),
       priceLabels: {
         low: t('milestonePromotionCandidatesPreviewPriceLevelLow'),
         mid: t('milestonePromotionCandidatesPreviewPriceLevelMid'),

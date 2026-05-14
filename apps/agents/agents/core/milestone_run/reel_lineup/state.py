@@ -57,7 +57,6 @@ class ReelLineupState(TypedDict):
     prior_milestones_data: NotRequired[str]
     owner_notes_markdown: NotRequired[str]
     menu_tagger_items: NotRequired[list[dict[str, Any]]]
-    promotion_candidates_data: NotRequired[dict[str, Any]]
     source_menu_tagger_title: NotRequired[str]
     generated_output: NotRequired[ReelLineupOutput | None]
     result_data: str

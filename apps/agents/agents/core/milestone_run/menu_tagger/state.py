@@ -25,6 +25,8 @@ class MenuTaggerItem(TypedDict):
     tags: MenuTaggerTags
     storytellingFit: NotRequired[Literal["strong", "weak"]]
     storytellingRationale: NotRequired[str]
+    quantity: NotRequired[int]
+    popularity: NotRequired[float]
 
 
 class MenuTaggerUsedTags(TypedDict):

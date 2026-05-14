@@ -99,6 +99,64 @@ def _item_name(raw: Any) -> str:
     return ""
 
 
+def _item_quantity(raw: Any) -> int:
+    if not isinstance(raw, dict):
+        return -1
+    quantity_raw = raw.get("quantity")
+    if quantity_raw is None or quantity_raw == "":
+        return -1
+    try:
+        return int(quantity_raw)
+    except (TypeError, ValueError):
+        return -1
+
+
+def _metrics_from_raw(raw: Any) -> tuple[int | None, float | None]:
+    if not isinstance(raw, dict):
+        return None, None
+    quantity = _item_quantity(raw)
+    popularity = _item_popularity(raw)
+    return (
+        quantity if quantity >= 0 else None,
+        popularity if popularity >= 0 else None,
+    )
+
+
+def _metrics_from_item(item: dict[str, Any]) -> tuple[int | None, float | None]:
+    quantity_raw = item.get("quantity")
+    popularity_raw = item.get("popularity")
+    quantity: int | None = None
+    popularity: float | None = None
+    if quantity_raw is not None and quantity_raw != "":
+        try:
+            parsed = int(quantity_raw)
+            if parsed >= 0:
+                quantity = parsed
+        except (TypeError, ValueError):
+            pass
+    if popularity_raw is not None and popularity_raw != "":
+        try:
+            parsed = float(popularity_raw)
+            if parsed >= 0:
+                popularity = parsed
+        except (TypeError, ValueError):
+            pass
+    return quantity, popularity
+
+
+def _append_item_metrics(
+    row: MenuTaggerItem,
+    *,
+    quantity: int | None,
+    popularity: float | None,
+) -> MenuTaggerItem:
+    if quantity is not None:
+        row["quantity"] = quantity
+    if popularity is not None:
+        row["popularity"] = popularity
+    return row
+
+
 def _item_popularity(raw: Any) -> float:
     if not isinstance(raw, dict):
         return -1.0
@@ -188,16 +246,16 @@ def flatten_promotion_candidates_items(data: dict[str, Any]) -> list[MenuTaggerI
                     continue
                 seen.add(key)
                 storytelling_fit, storytelling_rationale = _storytelling_from_raw(raw)
-                out.append(
-                    {
-                        "name": name,
-                        "role": role,  # type: ignore[typeddict-item]
-                        "category": category,
-                        "tags": normalize_menu_tagger_tags(None),
-                        "storytellingFit": storytelling_fit,
-                        "storytellingRationale": storytelling_rationale,
-                    }
-                )
+                quantity, popularity = _metrics_from_raw(raw)
+                row: MenuTaggerItem = {
+                    "name": name,
+                    "role": role,  # type: ignore[typeddict-item]
+                    "category": category,
+                    "tags": normalize_menu_tagger_tags(None),
+                    "storytellingFit": storytelling_fit,
+                    "storytellingRationale": storytelling_rationale,
+                }
+                out.append(_append_item_metrics(row, quantity=quantity, popularity=popularity))
     return out
 
 
@@ -363,16 +421,16 @@ def merge_tagged_items(
         llm_row = by_key.get(key)
         tags_raw = llm_row.get("tags") if isinstance(llm_row, dict) else None
         storytelling_fit, storytelling_rationale = _storytelling_from_item(dict(item))
-        merged.append(
-            {
-                "name": item["name"],
-                "role": item["role"],
-                "category": item["category"],
-                "tags": normalize_menu_tagger_tags(tags_raw if isinstance(tags_raw, dict) else None),
-                "storytellingFit": storytelling_fit,
-                "storytellingRationale": storytelling_rationale,
-            }
-        )
+        quantity, popularity = _metrics_from_item(dict(item))
+        row: MenuTaggerItem = {
+            "name": item["name"],
+            "role": item["role"],
+            "category": item["category"],
+            "tags": normalize_menu_tagger_tags(tags_raw if isinstance(tags_raw, dict) else None),
+            "storytellingFit": storytelling_fit,
+            "storytellingRationale": storytelling_rationale,
+        }
+        merged.append(_append_item_metrics(row, quantity=quantity, popularity=popularity))
     return merged
 
 
@@ -497,16 +555,16 @@ def _sanitize_menu_tagger_payload(payload: dict[str, Any]) -> dict[str, Any]:
             continue
         tags_raw = item.get("tags")
         storytelling_fit, storytelling_rationale = _storytelling_from_item(item)
-        sanitized_items.append(
-            {
-                "name": name,
-                "role": role,  # type: ignore[typeddict-item]
-                "category": category,
-                "tags": normalize_menu_tagger_tags(tags_raw if isinstance(tags_raw, dict) else None),
-                "storytellingFit": storytelling_fit,
-                "storytellingRationale": storytelling_rationale,
-            }
-        )
+        quantity, popularity = _metrics_from_item(item)
+        row: MenuTaggerItem = {
+            "name": name,
+            "role": role,  # type: ignore[typeddict-item]
+            "category": category,
+            "tags": normalize_menu_tagger_tags(tags_raw if isinstance(tags_raw, dict) else None),
+            "storytellingFit": storytelling_fit,
+            "storytellingRationale": storytelling_rationale,
+        }
+        sanitized_items.append(_append_item_metrics(row, quantity=quantity, popularity=popularity))
 
     sanitized: dict[str, Any] = {
         **payload,

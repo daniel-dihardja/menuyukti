@@ -31,10 +31,9 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "downstream content grouping."
     ),
     "reel_lineup": (
-        "Requires prior Menu Tagger and Promotion Candidates milestones. Groups tagged food "
-        "items into 3–5 item Reel lineups led by top stars, using shared reel_moment anchors "
-        "plus storytelling fit and price-level mix rules, and ends each group with a drink when "
-        "drinks are present in Menu Tagger data."
+        "Requires a prior Menu Tagger milestone. Picks up to five main-course food items with "
+        "strong storytelling from tagged items in menu tagger order and places each "
+        "as the position-1 Reel hook in its own group."
     ),
     "culture_hooks": (
         "Use Campaign Brief data to identify the location concept and target audience, then "

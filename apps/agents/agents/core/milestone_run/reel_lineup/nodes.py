@@ -11,7 +11,6 @@ from agents_app.agents.core.milestone_run.output_schema import validate_skill_ou
 from agents_app.agents.core.milestone_run.prior_context_inject import (
     extract_menu_tagger_data,
     extract_menu_tagger_row,
-    extract_promotion_candidates_data,
 )
 from agents_app.agents.core.milestone_run.reel_lineup.cluster import build_reel_lineup
 from agents_app.agents.core.milestone_run.reel_lineup.state import ReelLineupOutput, ReelLineupState
@@ -75,12 +74,6 @@ async def fetch_and_prepare(state: ReelLineupState, *, client: httpx.AsyncClient
             "reel_lineup requires a prior menu_tagger milestone with saved tagged items"
         )
 
-    promotion_data = extract_promotion_candidates_data(prior_json)
-    if promotion_data is None:
-        raise ValueError(
-            "reel_lineup requires a prior promotion_candidates milestone with saved data"
-        )
-
     menu_tagger_items = _menu_tagger_items(menu_tagger_data)
     if not menu_tagger_items:
         raise ValueError("reel_lineup requires at least one tagged item in prior menu_tagger data")
@@ -95,16 +88,12 @@ async def fetch_and_prepare(state: ReelLineupState, *, client: httpx.AsyncClient
     return {
         "owner_notes_markdown": _fmt_owner_notes(state),
         "menu_tagger_items": menu_tagger_items,
-        "promotion_candidates_data": promotion_data,
         "source_menu_tagger_title": source_title,
     }
 
 
 async def build_lineup(state: ReelLineupState) -> dict[str, Any]:
     menu_tagger_items = state.get("menu_tagger_items") or []
-    promotion_data = state.get("promotion_candidates_data")
-    if not isinstance(promotion_data, dict):
-        raise ValueError("reel_lineup missing promotion_candidates_data")
 
     owner_notes = ""
     owner_md = str(state.get("owner_notes_markdown") or "").strip()
@@ -113,7 +102,6 @@ async def build_lineup(state: ReelLineupState) -> dict[str, Any]:
 
     generated_output = build_reel_lineup(
         menu_tagger_items=menu_tagger_items,
-        promotion_candidates=promotion_data,
         source_menu_tagger_title=str(state.get("source_menu_tagger_title") or ""),
         notes=owner_notes,
     )

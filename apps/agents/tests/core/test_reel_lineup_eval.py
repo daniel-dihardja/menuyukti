@@ -22,100 +22,69 @@ def _sample_payload() -> dict:
                         "role": "star",
                         "category": "MAINS",
                         "position": 1,
-                        "reelMoment": "sizzle",
-                    },
-                    {
-                        "name": "Burger",
-                        "role": "star",
-                        "category": "MAINS",
-                        "position": 2,
-                        "reelMoment": "sizzle",
-                    },
-                    {
-                        "name": "Wings",
-                        "role": "puzzle",
-                        "category": "MAINS",
-                        "position": 3,
+                        "storytellingFit": "strong",
                         "reelMoment": "sizzle",
                     },
                 ],
                 "mix": {
-                    "priceLevels": [3, 2, 2],
+                    "priceLevels": [],
                     "storytellingStrongCount": 1,
-                    "starCount": 2,
-                    "puzzleCount": 1,
+                    "starCount": 1,
+                    "puzzleCount": 0,
                 },
             }
         ],
-        "unassignedItemNames": [],
+        "unassignedItemNames": ["Burger"],
     }
 
 
 def test_enrich_reel_lineup_eval_payload_adds_hints() -> None:
     enriched = enrich_reel_lineup_eval_payload(_sample_payload())
-    assert enriched["_evalHints"]["sharedAnchorDimension"] == "reel_moment"
+    assert enriched["_evalHints"]["maxLeadGroups"] == 5
 
 
-def test_group_size_verdict_passes() -> None:
+def test_prior_menu_tagger_verdict_passes() -> None:
     verdict = try_reel_lineup_deterministic_verdict(
-        "Each group contains 3–5 menu items.",
+        "Run used a prior menu_tagger milestone with tagged items.",
         _sample_payload(),
     )
     assert verdict is not None
     assert verdict[0] == "pass"
 
 
-def test_star_lead_verdict_passes() -> None:
+def test_hook_group_count_verdict_passes() -> None:
     verdict = try_reel_lineup_deterministic_verdict(
-        "Each group starts with a star item as the Reel hook.",
+        "Data includes up to 5 Reel hook groups.",
         _sample_payload(),
     )
     assert verdict is not None
     assert verdict[0] == "pass"
 
 
-def test_shared_reel_moment_verdict_passes_with_drink_last() -> None:
+def test_main_course_hook_verdict_passes() -> None:
+    verdict = try_reel_lineup_deterministic_verdict(
+        "Each group's position-1 item is a main-course food item with strong storytelling.",
+        _sample_payload(),
+    )
+    assert verdict is not None
+    assert verdict[0] == "pass"
+
+
+def test_main_course_hook_verdict_fails_when_multiple_items() -> None:
     payload = _sample_payload()
     payload["groups"][0]["items"].append(
         {
-            "name": "Cola",
+            "name": "Burger",
             "role": "star",
-            "category": "DRINK",
-            "position": 4,
-            "reelMoment": "pour",
+            "category": "MAINS",
+            "position": 2,
+            "storytellingFit": "strong",
+            "reelMoment": "sizzle",
         }
     )
     verdict = try_reel_lineup_deterministic_verdict(
-        "Food items within each group share the same reel_moment anchor tag.",
+        "Each group's position-1 item is a main-course food item with strong storytelling.",
         payload,
     )
     assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_drink_end_verdict_passes() -> None:
-    payload = _sample_payload()
-    payload["groups"][0]["items"].append(
-        {
-            "name": "Cola",
-            "role": "star",
-            "category": "DRINK",
-            "position": 4,
-            "reelMoment": "pour",
-        }
-    )
-    verdict = try_reel_lineup_deterministic_verdict(
-        "Each group ends with a drink menu item when drinks are present in Menu Tagger data.",
-        payload,
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
-
-
-def test_drink_end_verdict_passes_when_no_drinks() -> None:
-    verdict = try_reel_lineup_deterministic_verdict(
-        "Each group ends with a drink menu item when drinks are present in Menu Tagger data.",
-        _sample_payload(),
-    )
-    assert verdict is not None
-    assert verdict[0] == "pass"
+    assert verdict[0] == "fail"

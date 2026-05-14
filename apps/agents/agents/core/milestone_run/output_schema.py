@@ -552,6 +552,8 @@ class MenuTaggerItemOutput(BaseModel):
     tags: MenuTaggerTagsOutput
     storytellingFit: Literal["strong", "weak"] = "weak"
     storytellingRationale: str = ""
+    quantity: int | None = Field(default=None, ge=0)
+    popularity: float | None = Field(default=None, ge=0, le=1)
 
 
 class MenuTaggerUsedTagsOutput(BaseModel):
@@ -640,8 +642,8 @@ class ReelLineupGroupOutput(BaseModel):
     def _validate_items(
         cls, values: list[ReelLineupGroupItemOutput]
     ) -> list[ReelLineupGroupItemOutput]:
-        if not (3 <= len(values) <= 5):
-            raise ValueError("each group must contain between 3 and 5 items")
+        if not (1 <= len(values) <= 5):
+            raise ValueError("each group must contain between 1 and 5 items")
         positions = [item.position for item in values]
         if positions != list(range(1, len(values) + 1)):
             raise ValueError("item positions must be sequential starting at 1")

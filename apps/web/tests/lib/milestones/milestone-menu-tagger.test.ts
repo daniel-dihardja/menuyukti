@@ -80,6 +80,40 @@ describe('menu tagger taxonomy', () => {
     })
   })
 
+  it('menuTaggerMilestoneDataSchema accepts optional popularity and quantity on items', () => {
+    const parsed = menuTaggerMilestoneDataSchema.safeParse({
+      taxonomyVersion: 'v2',
+      items: [
+        {
+          name: 'Nasi Goreng',
+          role: 'star',
+          category: 'Mains',
+          tags: sampleV2Tags,
+          storytellingFit: 'strong',
+          popularity: 0.82,
+          quantity: 120,
+        },
+      ],
+      usedTags: {
+        kind: ['food'],
+        ingredient: ['rice'],
+        taste: ['spicy', 'savory'],
+        course: ['main'],
+        reel_moment: ['sizzle'],
+        texture: ['juicy'],
+        prep_style: ['grilled'],
+        occasion: ['dinner'],
+        serve_temp: ['hot'],
+        content_angle: ['signature'],
+      },
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.items[0]?.popularity).toBe(0.82)
+      expect(parsed.data.items[0]?.quantity).toBe(120)
+    }
+  })
+
   it('menuTaggerMilestoneDataSchema validates full v2 payload', () => {
     const parsed = menuTaggerMilestoneDataSchema.safeParse({
       taxonomyVersion: 'v2',
