@@ -47,6 +47,7 @@ function TimelineItemInner({
   const { milestoneState, selectedMilestoneId, onSelectMilestone } = useTimelineWorkspaceState()
   const {
     deletingMilestoneId,
+    movingMilestoneId,
     savingPassCriteriaMilestoneId,
     savingGoalMilestoneId,
     savingDataMilestoneId,
@@ -67,6 +68,7 @@ function TimelineItemInner({
     onUpdatePassCriteria,
     onUpdateMilestoneGoal,
     onUpdateMilestoneInput,
+    onMoveMilestone,
     onRunMilestone,
   } = actions
 
@@ -169,6 +171,8 @@ function TimelineItemInner({
   }
 
   const isDeleting = deletingMilestoneId === milestone.id
+  const isMoving = movingMilestoneId === milestone.id
+  const position = isFirst ? 'first' : isLast ? 'last' : 'middle'
   const runState = isMilestoneRunning
     ? ('running' as const)
     : runningMilestoneId !== null
@@ -249,8 +253,13 @@ function TimelineItemInner({
               value={{
                 milestone,
                 isMobile,
+                position,
                 runState,
                 deleteState,
+                movement: {
+                  moving: isMoving,
+                  move: onMoveMilestone,
+                },
                 milestoneRunChatModel,
                 onMilestoneRunChatModelChange: setMilestoneRunChatModel,
                 actions: {

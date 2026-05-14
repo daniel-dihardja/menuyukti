@@ -24,6 +24,7 @@ function toErrorMap(errors: TimelineErrors): TimelineErrorMap {
   return {
     create: errors.createError,
     delete: errors.deleteError,
+    move: errors.moveError,
     passCriteria: errors.passCriteriaError,
     goal: errors.goalError,
     milestoneData: errors.milestoneDataError,

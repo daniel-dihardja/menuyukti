@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { ChevronDown, Play, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, Play, Trash2 } from 'lucide-react'
 
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
 import { milestonePresetIconFor } from '@/lib/milestones/preset-definitions'
@@ -35,8 +35,10 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
   const {
     milestone,
     isMobile,
+    position,
     runState,
     deleteState,
+    movement,
     milestoneRunChatModel,
     onMilestoneRunChatModelChange,
     actions,
@@ -101,6 +103,40 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
               <TooltipContent side="bottom">{t('milestonePlayTooltip')}</TooltipContent>
             </Tooltip>
           </span>
+        ) : null}
+        {movement.move ? (
+          <>
+            <Button
+              aria-label={t('moveMilestoneUp')}
+              className="size-9 shrink-0 text-muted-foreground"
+              disabled={position === 'first' || movement.moving}
+              onClick={(e) => {
+                e.stopPropagation()
+                void movement.move?.(milestone.id, 'up')
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <ArrowUp aria-hidden data-icon="inline-start" />
+            </Button>
+            <Button
+              aria-label={t('moveMilestoneDown')}
+              className="size-9 shrink-0 text-muted-foreground"
+              disabled={position === 'last' || movement.moving}
+              onClick={(e) => {
+                e.stopPropagation()
+                void movement.move?.(milestone.id, 'down')
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <ArrowDown aria-hidden data-icon="inline-start" />
+            </Button>
+          </>
         ) : null}
         {deleteState !== 'hidden' && actions.deleteMilestone ? (
           <AlertDialog>

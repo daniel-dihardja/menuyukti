@@ -22,11 +22,14 @@ import type { MilestoneNode } from '@/lib/graphql/node-schemas'
 import {
   DELETE_NODE_MUTATION,
   NODE_QUERY,
+  NODES_QUERY,
   UPDATE_NODE_MUTATION,
   parseNodeData,
+  parseNodesData,
   parseUpdateNodeData,
   type DeleteNodeData,
   type NodeDataRaw,
+  type NodesDataRaw,
   type UpdateNodeDataRaw,
 } from '@/lib/graphql/queries'
 import {
@@ -331,6 +334,54 @@ export async function PATCH(req: Request, context: RouteContext) {
     }
 
     const body = parsed.data
+
+    if (body.move !== undefined) {
+      const list = parseNodesData(
+        await graphqlQuery<NodesDataRaw>(
+          NODES_QUERY,
+          {
+            locationId: workflowRoot.locationId,
+            nodeType: 'milestone',
+            parentId: workflowId,
+          },
+          userId,
+        ),
+      )
+      const milestones = list.nodes.filter((n) => n.nodeType === 'milestone')
+      const idx = milestones.findIndex((n) => n.id === milestoneId)
+      if (idx === -1) {
+        return NextResponse.json({ message: 'Milestone not found in workflow' }, { status: 404 })
+      }
+      const j = body.move === 'up' ? idx - 1 : idx + 1
+      if (j < 0 || j >= milestones.length) {
+        return NextResponse.json({ message: 'Cannot move milestone' }, { status: 400 })
+      }
+      const reordered = [...milestones]
+      const a = reordered[idx]
+      const b = reordered[j]
+      if (!a || !b) {
+        return NextResponse.json({ message: 'Milestone not found' }, { status: 404 })
+      }
+      reordered[idx] = b
+      reordered[j] = a
+
+      await Promise.all(
+        reordered.map((node, i) => {
+          if (!node) {
+            return Promise.resolve()
+          }
+          return graphqlQuery<UpdateNodeDataRaw>(
+            UPDATE_NODE_MUTATION,
+            { id: node.id, data: { order: i + 1 } },
+            userId,
+          ).then((res) => parseUpdateNodeData(res))
+        }),
+      )
+
+      revalidateWorkflowCampaignTreeCache(userId, workflowId)
+
+      return NextResponse.json({ ok: true }, { status: 200 })
+    }
 
     if (
       body.presetId !== undefined ||

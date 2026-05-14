@@ -12,6 +12,8 @@ export type WorkflowMilestoneUiState = {
   goalError: string | null
   savingDataMilestoneId: string | null
   milestoneDataError: string | null
+  moveError: string | null
+  movingMilestoneId: string | null
   runningMilestoneId: string | null
   runningStep: string | null
   milestoneRunError: string | null
@@ -36,6 +38,8 @@ export function createInitialWorkflowMilestoneUiState(
     goalError: null,
     savingDataMilestoneId: null,
     milestoneDataError: null,
+    moveError: null,
+    movingMilestoneId: null,
     runningMilestoneId: null,
     runningStep: null,
     milestoneRunError: null,

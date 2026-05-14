@@ -94,6 +94,7 @@ export const patchMilestoneSchema = z
       .optional(),
     presetId: milestonePresetIdSchema.optional(),
     passCriterias: z.array(passCriteriaRowSchema).optional(),
+    move: z.enum(['up', 'down']).optional(),
   })
   .refine(
     (v) =>
@@ -102,9 +103,10 @@ export const patchMilestoneSchema = z
       v.milestoneData !== undefined ||
       v.milestoneInput !== undefined ||
       v.presetId !== undefined ||
-      v.passCriterias !== undefined,
+      v.passCriterias !== undefined ||
+      v.move !== undefined,
     {
       message:
-        'Provide at least one of name, goal, milestoneData, milestoneInput, presetId, or passCriterias',
+        'Provide at least one of name, goal, milestoneData, milestoneInput, presetId, passCriterias, or move',
     },
   )

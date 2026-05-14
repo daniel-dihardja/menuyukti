@@ -18,6 +18,7 @@ export type WorkflowTimelineOpsHandles = {
   handleCreateMilestone: () => boolean | Promise<boolean>
   handleCreateMilestoneFromPreset: (presetId: MilestonePresetId) => boolean | Promise<boolean>
   handleDeleteMilestone: (id: string) => void | Promise<void>
+  handleMoveMilestone: (id: string, direction: 'up' | 'down') => void | Promise<void>
   handleUpdatePassCriteria: (id: string, rows: PassCriteriaRow[]) => Promise<boolean>
   handleUpdateMilestoneGoal: (id: string, goal: string) => Promise<boolean>
   handleUpdateMilestoneData: (id: string, milestoneData: MilestoneDataValue) => Promise<boolean>

@@ -1168,7 +1168,7 @@
         "creatingMilestone": "Creating…",
         "milestonePreset": {
           "noneLabel": "Empty milestone",
-          "selectPlaceholder": "Template",
+          "selectPlaceholder": "Milestones",
           "selectAriaLabel": "Milestone template",
           "dates": {
             "label": "Dates",
@@ -1295,6 +1295,9 @@
         "milestonesPassCriteriaError": "Could not save pass criteria. Please try again.",
         "milestonesGoalError": "Could not save goal. Please try again.",
         "milestonesMilestoneDataError": "Could not save milestone data. Please try again.",
+        "moveMilestoneUp": "Move milestone up",
+        "moveMilestoneDown": "Move milestone down",
+        "milestonesMoveError": "Could not reorder milestones. Please try again.",
         "timelineListLabel": "Milestone timeline",
         "milestoneExpandDetails": "Expand details",
         "milestoneCollapseDetails": "Collapse details",
