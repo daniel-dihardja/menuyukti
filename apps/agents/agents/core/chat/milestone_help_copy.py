@@ -40,6 +40,10 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "Read Campaign Brief data and generate Instagram profile suggestions — username options "
         "and three bio variations — aligned with brand, audience, and campaign objective."
     ),
+    "scheduler": (
+        "Read the campaign window from a prior dates milestone and prepare a scheduler calendar "
+        "between the start and end dates. Place this milestone after dates in the timeline."
+    ),
 }
 
 _WHAT_IT_DOES_FALLBACK = "Add goal text to describe what this milestone does."

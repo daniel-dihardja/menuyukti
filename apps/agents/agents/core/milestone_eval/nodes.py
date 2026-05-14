@@ -27,6 +27,10 @@ from agents_app.agents.core.milestone_eval.reel_lineup_eval import (
     enrich_reel_lineup_eval_payload,
     try_reel_lineup_deterministic_verdict,
 )
+from agents_app.agents.core.milestone_eval.scheduler_eval import (
+    enrich_scheduler_eval_payload,
+    try_scheduler_deterministic_verdict,
+)
 from agents_app.agents.core.milestone_eval.prompts import (
     EVAL_SYSTEM,
     SYNTHESIS_SYSTEM,
@@ -44,8 +48,10 @@ _logger = logging.getLogger(__name__)
 
 
 def _enrich_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
-    return enrich_reel_lineup_eval_payload(
-        enrich_menu_tagger_eval_payload(enrich_ig_profile_eval_payload(data))
+    return enrich_scheduler_eval_payload(
+        enrich_reel_lineup_eval_payload(
+            enrich_menu_tagger_eval_payload(enrich_ig_profile_eval_payload(data))
+        )
     )
 
 
@@ -221,6 +227,8 @@ async def evaluate_criterion(
             deterministic = try_menu_tagger_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
             deterministic = try_reel_lineup_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_scheduler_deterministic_verdict(requirement, milestone_data)
         if deterministic is not None:
             status, reasoning = deterministic
             verdict = CriterionVerdict(status=status, reasoning=reasoning)

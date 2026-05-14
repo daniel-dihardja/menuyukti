@@ -526,6 +526,18 @@ class ReelLineupMilestoneOutput(BaseModel):
     notes: str | None = None
 
 
+class SchedulerSlotOutput(BaseModel):
+    date: str
+
+
+class SchedulerMilestoneOutput(BaseModel):
+    startDate: str
+    endDate: str
+    publicHolidays: list[CampaignWindowPublicHoliday] = Field(default_factory=list)
+    sourceDatesTitle: str | None = None
+    slots: list[SchedulerSlotOutput] = Field(default_factory=list)
+
+
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "public_holidays": DatesMilestoneOutput,
     "dates": DatesMilestoneOutput,
@@ -533,6 +545,7 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "promotion_candidates": PromotionCandidatesMilestoneOutput,
     "menu_tagger": MenuTaggerMilestoneOutput,
     "reel_lineup": ReelLineupMilestoneOutput,
+    "scheduler": SchedulerMilestoneOutput,
     "culture_hooks": CultureHooksMilestoneOutput,
     "ig_profile": IgProfileMilestoneOutput,
 }

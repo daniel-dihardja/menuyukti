@@ -31,6 +31,7 @@ export const milestonePresetIdSchema = z.enum([
   'reel_lineup',
   'culture_hooks',
   'ig_profile',
+  'scheduler',
 ])
 
 export type MilestonePresetId = z.infer<typeof milestonePresetIdSchema>
@@ -313,6 +314,20 @@ export const reelLineupMilestoneDataSchema = z.object({
 })
 
 export type ReelLineupMilestoneData = z.infer<typeof reelLineupMilestoneDataSchema>
+
+export const schedulerSlotSchema = z.object({
+  date: z.string(),
+})
+
+export const schedulerMilestoneDataSchema = z.object({
+  startDate: z.string(),
+  endDate: z.string(),
+  publicHolidays: z.array(campaignWindowPublicHolidaySchema).default([]),
+  sourceDatesTitle: z.string().optional(),
+  slots: z.array(schedulerSlotSchema).default([]),
+})
+
+export type SchedulerMilestoneData = z.infer<typeof schedulerMilestoneDataSchema>
 
 export {
   MENU_TAGGER_TAXONOMY_VERSION,

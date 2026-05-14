@@ -13,6 +13,7 @@ import {
   menuTaggerMilestoneInputValueSchema,
   reelLineupMilestoneDataSchema,
   reelLineupMilestoneInputValueSchema,
+  schedulerMilestoneDataSchema,
   milestonePresetIdSchema,
   milestoneInputSchema,
   passCriteriaSchema,
@@ -45,6 +46,7 @@ export const patchMilestoneSchema = z
         igProfileMilestoneDataSchema,
         menuTaggerMilestoneDataSchema,
         reelLineupMilestoneDataSchema,
+        schedulerMilestoneDataSchema,
       ])
       .nullable()
       .optional(),

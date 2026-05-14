@@ -10,6 +10,7 @@ import {
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
   milestoneInputSchema,
   milestonePresetIdSchema,
   passCriteriaSchema,
@@ -38,6 +39,7 @@ export const milestonedataValueSchema = z.union([
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>

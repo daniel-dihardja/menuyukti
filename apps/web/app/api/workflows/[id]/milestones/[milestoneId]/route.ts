@@ -12,6 +12,7 @@ import {
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
   type PassCriteriaData,
 } from '@/lib/graphql/node-schemas'
 import { EMPTY_REEL_LINEUP_DATA } from '@/lib/milestones/reel-lineup'
@@ -211,6 +212,18 @@ export async function GET(_req: Request, context: RouteContext) {
       const rlParsed = reelLineupMilestoneDataSchema.safeParse(milestoneData)
       if (!rlParsed.success) {
         milestoneData = EMPTY_REEL_LINEUP_DATA
+      }
+    }
+
+    if (parsedMilestoneNodeData?.success && parsedMilestoneNodeData.data.presetId === 'scheduler') {
+      const schedulerParsed = schedulerMilestoneDataSchema.safeParse(milestoneData)
+      if (!schedulerParsed.success) {
+        milestoneData = {
+          startDate: '',
+          endDate: '',
+          publicHolidays: [],
+          slots: [],
+        }
       }
     }
 

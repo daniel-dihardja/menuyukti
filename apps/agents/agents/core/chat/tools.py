@@ -39,6 +39,7 @@ _PRESET_TO_SKILL_ID: dict[str, str] = {
     "promotion_candidates": "promotion_candidates",
     "menu_tagger": "menu_tagger",
     "reel_lineup": "reel_lineup",
+    "scheduler": "scheduler",
     "culture_hooks": "culture_hooks",
     "ig_profile": "ig_profile",
     "dates": "dates",

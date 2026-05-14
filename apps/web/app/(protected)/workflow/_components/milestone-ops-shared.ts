@@ -6,6 +6,7 @@ import {
   promotionCandidatesMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
 } from '@/lib/graphql/node-schemas'
 
 import type {
@@ -52,6 +53,10 @@ export function parseDataPreviewForPreset(
   }
   if (presetId === 'ig_profile') {
     const parsed = igProfileMilestoneDataSchema.safeParse(dataPreview)
+    return parsed.success ? parsed.data : undefined
+  }
+  if (presetId === 'scheduler') {
+    const parsed = schedulerMilestoneDataSchema.safeParse(dataPreview)
     return parsed.success ? parsed.data : undefined
   }
   return undefined

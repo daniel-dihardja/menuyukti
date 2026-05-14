@@ -17,6 +17,7 @@ import { MilestoneDatesDataPreview } from './milestone-dates-data-preview'
 import { MilestoneIgProfileDataPreview } from './milestone-ig-profile-data-preview'
 import { MilestoneMenuTaggerDataPreview } from './milestone-menu-tagger-data-preview'
 import { MilestoneReelLineupDataPreview } from './milestone-reel-lineup-data-preview'
+import { MilestoneSchedulerDataPreview } from './milestone-scheduler-data-preview'
 import { MilestonePromotionCandidatesDataPreview } from './milestone-promotion-candidates-data-preview'
 
 export type MilestoneDataPreviewProps = {
@@ -60,7 +61,11 @@ function PresetRowWrapper({
   )
 }
 
-function renderParsedPreview(presetId: MilestonePresetId, data: unknown): ReactNode {
+function renderParsedPreview(
+  presetId: MilestonePresetId,
+  data: unknown,
+  milestone: TimelineMilestone,
+): ReactNode {
   switch (presetId) {
     case 'dates':
       return (
@@ -102,6 +107,13 @@ function renderParsedPreview(presetId: MilestonePresetId, data: unknown): ReactN
       return (
         <MilestoneIgProfileDataPreview
           data={data as Parameters<typeof MilestoneIgProfileDataPreview>[0]['data']}
+        />
+      )
+    case 'scheduler':
+      return (
+        <MilestoneSchedulerDataPreview
+          milestone={milestone}
+          data={data as Parameters<typeof MilestoneSchedulerDataPreview>[0]['data']}
         />
       )
     default: {
@@ -151,5 +163,9 @@ export function MilestoneDataPreview({ milestone }: MilestoneDataPreviewProps) {
     )
   }
 
-  return <PresetRowWrapper presetId={pid}>{renderParsedPreview(pid, parsed.data)}</PresetRowWrapper>
+  return (
+    <PresetRowWrapper presetId={pid}>
+      {renderParsedPreview(pid, parsed.data, milestone)}
+    </PresetRowWrapper>
+  )
 }

@@ -3,6 +3,7 @@ import type {
   MilestonePresetId,
   MenuTaggerMilestoneData,
   ReelLineupMilestoneData,
+  SchedulerMilestoneData,
 } from '@/lib/graphql/node-schemas'
 import type { ReactNode } from 'react'
 
@@ -114,6 +115,7 @@ export type MilestoneDataValue =
   | ReelLineupMilestoneData
   | CultureHooksMilestoneData
   | IgProfileMilestoneData
+  | SchedulerMilestoneData
 
 export type TimelineMilestone = {
   id: string

@@ -222,6 +222,68 @@ def extract_menu_tagger_data(prior_milestones_json: str) -> dict[str, Any] | Non
     return None
 
 
+def is_dates_milestone_data(data: object) -> bool:
+    if not isinstance(data, dict):
+        return False
+    start_date = str(data.get("startDate") or "").strip()
+    end_date = str(data.get("endDate") or "").strip()
+    public_holidays = data.get("publicHolidays")
+    return bool(start_date and end_date and isinstance(public_holidays, list))
+
+
+def extract_dates_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the best matched prior dates row, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"dates"}))
+    if matched:
+        return matched[-1]
+
+    for row in reversed(rows):
+        data = row.get("data")
+        if isinstance(data, dict) and is_dates_milestone_data(data):
+            return row
+    return None
+
+
+def extract_dates_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return dates ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_dates_row(prior_milestones_json)
+    if row is None:
+        return None
+    data = row.get("data")
+    if isinstance(data, dict) and is_dates_milestone_data(data):
+        return data
+    return None
+
+
+def dates_prior_error_message(prior_milestones_json: str) -> str:
+    """Actionable error when scheduler cannot read prior dates data."""
+    base = "scheduler requires a prior dates milestone with saved start and end dates"
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    if not rows:
+        return (
+            f"{base}. No earlier milestones were returned for this workflow step — "
+            "place dates before scheduler in the timeline."
+        )
+
+    titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
+    has_dates_preset = any(
+        isinstance(row.get("presetId"), str) and row.get("presetId").strip() == "dates"
+        for row in rows
+    )
+    if not has_dates_preset:
+        return (
+            f"{base}. Earlier milestones are: {', '.join(titles)}. "
+            "Add a dates step before scheduler, set start and end dates, run it, "
+            "then run scheduler again."
+        )
+    return (
+        f"{base}. A dates milestone appears earlier in the workflow "
+        "but its saved preset data is missing or invalid — open that step, "
+        "confirm the Data tab shows start and end dates, and re-run dates."
+    )
+
+
 def build_injected_prior_context_markdown(
     prior_milestones_json: str,
     inject_prior_presets: tuple[str, ...],

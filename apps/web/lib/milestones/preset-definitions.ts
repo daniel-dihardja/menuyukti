@@ -1,4 +1,5 @@
 import {
+  CalendarDays,
   CalendarRange,
   Clapperboard,
   ClipboardList,
@@ -25,6 +26,7 @@ import {
   igProfileMilestoneDataSchema,
   menuTaggerMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
+  schedulerMilestoneDataSchema,
   type MilestoneInput,
   type MilestonePresetId,
   MILESTONE_PRESET_IDS,
@@ -116,6 +118,13 @@ const EMPTY_MENU_TAGGER_DATA: MilestonedataValue = {
   taxonomyVersion: MENU_TAGGER_TAXONOMY_VERSION,
   items: [],
   usedTags: emptyMenuTaggerUsedTags(),
+}
+
+const EMPTY_SCHEDULER_DATA: MilestonedataValue = {
+  startDate: '',
+  endDate: '',
+  publicHolidays: [],
+  slots: [],
 }
 
 export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePresetDefinition> = {
@@ -325,6 +334,28 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
         },
         {
           requirement: t('milestonePreset.ig_profile.criterionBioVariations'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
+  scheduler: {
+    id: 'scheduler',
+    icon: CalendarDays,
+    inputType: 'none',
+    dataSchema: schedulerMilestoneDataSchema,
+    emptyData: EMPTY_SCHEDULER_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.scheduler.title'),
+      milestoneData: EMPTY_SCHEDULER_DATA,
+      goal: t('milestonePreset.scheduler.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.scheduler.criterionPriorDates'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.scheduler.criterionWindowPresent'),
           status: 'open',
         },
       ],
