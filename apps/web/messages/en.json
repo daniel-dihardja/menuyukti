@@ -1301,6 +1301,8 @@
         "timelineListLabel": "Milestone timeline",
         "milestoneExpandDetails": "Expand details",
         "milestoneCollapseDetails": "Collapse details",
+        "collapseAllMilestones": "Collapse all milestones",
+        "collapseAllMilestonesAriaLabel": "Collapse all milestones",
         "milestoneStatusComplete": "Complete",
         "milestoneStatusFailed": "Not all criteria passed",
         "milestoneStatusPending": "In progress",

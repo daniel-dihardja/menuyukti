@@ -2,7 +2,10 @@
 
 import type { ReactNode } from 'react'
 
-import { Plus } from 'lucide-react'
+import { ListCollapse, Plus } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+
+import { useTimelineCollapse } from './timeline-collapse-context'
 
 import { Badge } from '@workspace/ui/components/badge'
 import { Button } from '@workspace/ui/components/button'
@@ -41,6 +44,32 @@ export function TimelineToolbar({ title, count, actions, trailingSlot }: Timelin
         </TooltipProvider>
       ) : null}
     </header>
+  )
+}
+
+export function TimelineToolbarCollapseAllButton() {
+  const t = useTranslations('analytics.workflows.chat')
+  const { collapseAllMilestones } = useTimelineCollapse()
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">
+          <Button
+            aria-label={t('collapseAllMilestonesAriaLabel')}
+            onClick={collapseAllMilestones}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <ListCollapse aria-hidden />
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">
+        <p>{t('collapseAllMilestones')}</p>
+      </TooltipContent>
+    </Tooltip>
   )
 }
 

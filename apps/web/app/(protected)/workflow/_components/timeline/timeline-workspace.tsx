@@ -11,7 +11,8 @@ import {
 } from '../timeline-context'
 import { TimelineInlineErrors, type TimelineErrorMap } from './timeline-inline-errors'
 import { MilestoneCreateControls } from './milestone-preset-select'
-import { TimelineToolbar } from './timeline-toolbar'
+import { TimelineCollapseProvider } from './timeline-collapse-context'
+import { TimelineToolbar, TimelineToolbarCollapseAllButton } from './timeline-toolbar'
 import type { TimelineWorkspaceProps } from './types'
 import {
   TimelineWorkspaceEmpty,
@@ -48,38 +49,43 @@ export function TimelineWorkspace({
   const showTimeline = showReady && milestones.length > 0
 
   const toolbarActions = showTimeline ? (
-    <MilestoneCreateControls
-      creating={creating}
-      disabled={creating}
-      onCreateMilestone={onCreateMilestone}
-      onCreateMilestoneFromPreset={onCreateMilestoneFromPreset}
-    />
+    <>
+      <TimelineToolbarCollapseAllButton />
+      <MilestoneCreateControls
+        creating={creating}
+        disabled={creating}
+        onCreateMilestone={onCreateMilestone}
+        onCreateMilestoneFromPreset={onCreateMilestoneFromPreset}
+      />
+    </>
   ) : null
 
   return (
-    <PanelFullscreenProvider className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
-      <TimelineToolbar
-        actions={toolbarActions}
-        count={milestones.length}
-        title={t('timelineToolbarTitle')}
-        trailingSlot={timelineTrailing}
-      />
-      <TimelineInlineErrors errors={toErrorMap(errors)} show={showTimeline} />
-      {isLoading ? (
-        <TimelineWorkspaceLoading />
-      ) : loadError ? (
-        <TimelineWorkspaceLoadError message={loadError} />
-      ) : milestones.length === 0 ? (
-        <TimelineWorkspaceEmpty
-          createError={errors.createError}
-          creating={creating}
-          onCreateMilestone={onCreateMilestone}
-          onCreateMilestoneFromPreset={onCreateMilestoneFromPreset}
-          timelineTrailing={timelineTrailing}
+    <TimelineCollapseProvider>
+      <PanelFullscreenProvider className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-background">
+        <TimelineToolbar
+          actions={toolbarActions}
+          count={milestones.length}
+          title={t('timelineToolbarTitle')}
+          trailingSlot={timelineTrailing}
         />
-      ) : (
-        <TimelineWorkspaceMilestoneList />
-      )}
-    </PanelFullscreenProvider>
+        <TimelineInlineErrors errors={toErrorMap(errors)} show={showTimeline} />
+        {isLoading ? (
+          <TimelineWorkspaceLoading />
+        ) : loadError ? (
+          <TimelineWorkspaceLoadError message={loadError} />
+        ) : milestones.length === 0 ? (
+          <TimelineWorkspaceEmpty
+            createError={errors.createError}
+            creating={creating}
+            onCreateMilestone={onCreateMilestone}
+            onCreateMilestoneFromPreset={onCreateMilestoneFromPreset}
+            timelineTrailing={timelineTrailing}
+          />
+        ) : (
+          <TimelineWorkspaceMilestoneList />
+        )}
+      </PanelFullscreenProvider>
+    </TimelineCollapseProvider>
   )
 }
