@@ -8,7 +8,7 @@ import { routes } from '@/lib/routes'
 import { cn } from '@workspace/ui/lib/utils'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 type Step = 'password' | 'second_factor' | 'client_trust'
 
@@ -35,7 +35,6 @@ export function CustomLoginForm({ className }: { className?: string }) {
   const { signIn, errors, fetchStatus } = useSignIn()
   const [step, setStep] = useState<Step>('password')
   const [busy, setBusy] = useState(false)
-  const [mfaLoading, setMfaLoading] = useState(false)
   const [primarySecondFactor, setPrimarySecondFactor] = useState<string | null>(null)
   const lastPreparedSignInId = useRef<string | null>(null)
 
@@ -58,6 +57,13 @@ export function CustomLoginForm({ className }: { className?: string }) {
 
   const prepareSecondFactor = useCallback(async () => {
     if (!signIn) return
+    const signInId = signIn.id ?? null
+    if (signInId && lastPreparedSignInId.current === signInId) {
+      return
+    }
+    if (signInId) {
+      lastPreparedSignInId.current = signInId
+    }
     const primary = getPrimarySecondFactor(signIn)
     setPrimarySecondFactor(primary)
     if (primary === 'phone_code') {
@@ -66,29 +72,6 @@ export function CustomLoginForm({ className }: { className?: string }) {
       await signIn.mfa.sendEmailCode()
     }
   }, [signIn])
-
-  useEffect(() => {
-    if (!signIn || signIn.status !== 'needs_second_factor') {
-      return
-    }
-    if (step !== 'password') {
-      return
-    }
-    if (lastPreparedSignInId.current === signIn.id) {
-      return
-    }
-
-    setMfaLoading(true)
-    void (async () => {
-      try {
-        await prepareSecondFactor()
-        lastPreparedSignInId.current = signIn.id ?? null
-        setStep('second_factor')
-      } finally {
-        setMfaLoading(false)
-      }
-    })()
-  }, [signIn, signIn?.id, signIn?.status, step, prepareSecondFactor])
 
   const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -112,7 +95,6 @@ export function CustomLoginForm({ className }: { className?: string }) {
 
       if (signIn.status === 'needs_second_factor') {
         await prepareSecondFactor()
-        lastPreparedSignInId.current = signIn.id ?? null
         setStep('second_factor')
         return
       }
@@ -137,12 +119,11 @@ export function CustomLoginForm({ className }: { className?: string }) {
     if (!signIn || busy) return
 
     const form = e.currentTarget
-    const code = (form.elements.namedItem('mfa-code') as HTMLInputElement).value.trim()
-    const useBackup = (form.elements.namedItem('useBackup') as HTMLInputElement | null)?.checked
+    const code = (form.elements.namedItem('verification-code') as HTMLInputElement).value.trim()
 
     setBusy(true)
     try {
-      if (useBackup || primarySecondFactor === 'backup_code') {
+      if (primarySecondFactor === 'backup_code') {
         await signIn.mfa.verifyBackupCode({ code })
       } else if (primarySecondFactor === 'phone_code') {
         await signIn.mfa.verifyPhoneCode({ code })
@@ -165,7 +146,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
     if (!signIn || busy) return
 
     const form = e.currentTarget
-    const code = (form.elements.namedItem('code') as HTMLInputElement).value.trim()
+    const code = (form.elements.namedItem('verification-code') as HTMLInputElement).value.trim()
 
     setBusy(true)
     try {
@@ -194,24 +175,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
   const loading = busy || fetchStatus === 'fetching'
   const isSigningIn = loading
 
-  const mfaHint =
-    primarySecondFactor === 'phone_code'
-      ? t('mfaHintSms')
-      : primarySecondFactor === 'email_code'
-        ? t('mfaHintEmail')
-        : primarySecondFactor === 'backup_code'
-          ? t('useBackupCode')
-          : t('mfaHintTotp')
-
   if (!signIn) {
-    return (
-      <div className={cn('text-sm text-muted-foreground', className)} aria-live="polite">
-        {t('signingIn')}
-      </div>
-    )
-  }
-
-  if (mfaLoading) {
     return (
       <div className={cn('text-sm text-muted-foreground', className)} aria-live="polite">
         {t('signingIn')}
@@ -222,36 +186,24 @@ export function CustomLoginForm({ className }: { className?: string }) {
   if (step === 'second_factor') {
     return (
       <div className={cn('space-y-6', className)}>
-        <p className="text-sm text-muted-foreground" role="status">
-          {mfaHint}
-        </p>
-        <form onSubmit={handleSecondFactorSubmit} className="space-y-4">
+        <form onSubmit={handleSecondFactorSubmit} className="space-y-4" autoComplete="off">
           <FieldGroup>
-            {primarySecondFactor !== 'backup_code' ? (
-              <Field className="flex flex-row items-center gap-2">
-                <input
-                  id="use-backup"
-                  name="useBackup"
-                  type="checkbox"
-                  aria-label={t('useBackupCode')}
-                  className="size-4 rounded border"
-                />
-                <label htmlFor="use-backup" className="text-sm text-foreground">
-                  {t('useBackupCode')}
-                </label>
-              </Field>
-            ) : null}
             <Field>
-              <FieldLabel htmlFor="mfa-code">{t('verificationCodeLabel')}</FieldLabel>
+              <FieldLabel htmlFor="verification-code">{t('verificationCodeLabel')}</FieldLabel>
               <Input
-                id="mfa-code"
-                name="mfa-code"
+                key="second-factor-code"
+                id="verification-code"
+                name="verification-code"
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 spellCheck={false}
                 placeholder={t('verificationCodePlaceholder')}
                 required
+                readOnly
+                onFocus={(e) => {
+                  e.currentTarget.readOnly = false
+                }}
                 disabled={!signIn || isSigningIn}
                 className="text-base py-2"
               />
@@ -312,19 +264,24 @@ export function CustomLoginForm({ className }: { className?: string }) {
   if (step === 'client_trust') {
     return (
       <div className={cn('space-y-6', className)}>
-        <form onSubmit={handleVerifyTrust} className="space-y-4">
+        <form onSubmit={handleVerifyTrust} className="space-y-4" autoComplete="off">
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="verify-code">{t('verificationCodeLabel')}</FieldLabel>
+              <FieldLabel htmlFor="verification-code">{t('verificationCodeLabel')}</FieldLabel>
               <Input
-                id="verify-code"
-                name="code"
+                key="client-trust-code"
+                id="verification-code"
+                name="verification-code"
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 spellCheck={false}
                 placeholder={t('verificationCodePlaceholder')}
                 required
+                readOnly
+                onFocus={(e) => {
+                  e.currentTarget.readOnly = false
+                }}
                 disabled={!signIn || isSigningIn}
                 className="text-base py-2"
               />
