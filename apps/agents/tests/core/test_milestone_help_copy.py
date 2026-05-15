@@ -18,8 +18,12 @@ def test_resolve_what_it_does_custom_when_no_catalog() -> None:
 
 
 def test_resolve_what_it_does_fallback() -> None:
-    assert resolve_what_it_does("dates", None) == "Add goal text to describe what this milestone does."
-    assert resolve_what_it_does(None, "   ") == "Add goal text to describe what this milestone does."
+    assert (
+        resolve_what_it_does("dates", None) == "Add goal text to describe what this milestone does."
+    )
+    assert (
+        resolve_what_it_does(None, "   ") == "Add goal text to describe what this milestone does."
+    )
 
 
 def test_format_optional_input_campaign_brief() -> None:

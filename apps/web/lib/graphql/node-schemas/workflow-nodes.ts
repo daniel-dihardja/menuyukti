@@ -11,6 +11,7 @@ import {
   menuTaggerMilestoneDataSchema,
   postLineupMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
+  storyLineupMilestoneDataSchema,
   schedulerMilestoneDataSchema,
   milestoneInputSchema,
   milestonePresetIdSchema,
@@ -42,6 +43,7 @@ export const milestonedataValueSchema = z.union([
   menuTaggerMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
   postLineupMilestoneDataSchema,
+  storyLineupMilestoneDataSchema,
 ])
 
 export type MilestonedataValue = z.infer<typeof milestonedataValueSchema>

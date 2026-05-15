@@ -78,15 +78,26 @@ async def test_routing_dates_uses_dedicated_graph_path() -> None:
                 return_value={
                     "data": {
                         "goal": "G1",
-                        "passCriterias": [{"id": "c1", "requirement": "Must have dates", "status": "open"}],
+                        "passCriterias": [
+                            {"id": "c1", "requirement": "Must have dates", "status": "open"}
+                        ],
                     }
                 }
             ),
         ),
-        patch("agents_app.agents.core.milestone_eval.nodes.get_stream_writer", return_value=lambda _x: None),
-        patch("agents_app.agents.core.milestone_run.graph.get_stream_writer", return_value=lambda _x: None),
+        patch(
+            "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
         patch("agents_app.agents.core.milestone_run.graph.get_config", return_value={}),
-        patch("agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph", return_value=mock_eval),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph",
+            return_value=mock_eval,
+        ),
         patch("agents_app.agents.core.milestone_run.graph.build_dates_graph") as mock_build_dates,
     ):
         mock_dates_graph = MagicMock()
@@ -122,9 +133,17 @@ async def test_fetch_dates_context_happy_path() -> None:
     with (
         patch(
             "agents_app.agents.core.milestone_run.dates.nodes.fetch_public_holidays_for_milestone",
-            new=AsyncMock(return_value=([{"name": "Holiday A", "description": "X", "date": "2026-06-05"}], None)),
+            new=AsyncMock(
+                return_value=(
+                    [{"name": "Holiday A", "description": "X", "date": "2026-06-05"}],
+                    None,
+                )
+            ),
         ),
-        patch("agents_app.agents.core.milestone_run.dates.nodes.get_stream_writer", return_value=lambda _x: None),
+        patch(
+            "agents_app.agents.core.milestone_run.dates.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
     ):
         out = await fetch_dates_context(state, client=MagicMock(spec=AsyncMock))
     assert out["start_date"] == "2026-06-01"
@@ -143,7 +162,10 @@ async def test_fetch_dates_context_rejects_missing_window() -> None:
         "milestone_input": {"type": "dates", "value": {"startDate": ""}},
     }
     with (
-        patch("agents_app.agents.core.milestone_run.dates.nodes.get_stream_writer", return_value=lambda _x: None),
+        patch(
+            "agents_app.agents.core.milestone_run.dates.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
         pytest.raises(ValueError, match="dates requires startDate and endDate"),
     ):
         await fetch_dates_context(state, client=MagicMock(spec=AsyncMock))
@@ -167,7 +189,10 @@ async def test_fetch_dates_context_surfaces_holiday_fetch_error() -> None:
             "agents_app.agents.core.milestone_run.dates.nodes.fetch_public_holidays_for_milestone",
             new=AsyncMock(return_value=([], "Invalid date range")),
         ),
-        patch("agents_app.agents.core.milestone_run.dates.nodes.get_stream_writer", return_value=lambda _x: None),
+        patch(
+            "agents_app.agents.core.milestone_run.dates.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
         pytest.raises(ValueError, match="Invalid date range"),
     ):
         await fetch_dates_context(state, client=MagicMock(spec=AsyncMock))
@@ -181,7 +206,9 @@ async def test_persist_result_writes_dates_payload() -> None:
         "user_id": "u1",
         "start_date": "2026-06-01",
         "end_date": "2026-06-30",
-        "public_holidays": [{"name": "Holiday A", "description": "Regional holiday", "date": "2026-06-05"}],
+        "public_holidays": [
+            {"name": "Holiday A", "description": "Regional holiday", "date": "2026-06-05"}
+        ],
     }
     with patch(
         "agents_app.agents.core.milestone_run.dates.nodes.upsert_milestonedata_node",

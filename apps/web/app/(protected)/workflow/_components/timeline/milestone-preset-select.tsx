@@ -87,6 +87,8 @@ function presetOptionLabel(id: MilestonePresetId, t: (key: string) => string): s
       return t('milestonePreset.reel_lineup.label')
     case 'post_lineup':
       return t('milestonePreset.post_lineup.label')
+    case 'story_lineup':
+      return t('milestonePreset.story_lineup.label')
     case 'culture_hooks':
       return t('milestonePreset.culture_hooks.label')
     case 'ig_profile':

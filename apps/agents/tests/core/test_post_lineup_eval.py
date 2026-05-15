@@ -42,7 +42,10 @@ def test_try_post_lineup_deterministic_verdict_prior_reel_lineup() -> None:
         "Run used a prior reel_lineup milestone with foodLeads.",
         _sample_data(),
     )
-    assert verdict == ("pass", "post lineup produced 1 post concept(s) from reel lineup food leads.")
+    assert verdict == (
+        "pass",
+        "post lineup produced 1 post concept(s) from reel lineup food leads.",
+    )
 
 
 def test_try_post_lineup_deterministic_verdict_carousel() -> None:

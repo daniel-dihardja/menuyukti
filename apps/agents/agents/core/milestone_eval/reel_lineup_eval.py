@@ -110,17 +110,29 @@ def try_reel_lineup_deterministic_verdict(
         total = len(groups) + len(drink_groups)
         return ("pass", f"reel lineup produced {total} group(s) from tagged items.")
 
-    if ("up to" in norm or "at most" in norm) and "5" in norm and (
-        "group" in norm or "hook" in norm or "reel" in norm
-    ) and "drink" not in norm and "beverage" not in norm:
+    if (
+        ("up to" in norm or "at most" in norm)
+        and "5" in norm
+        and ("group" in norm or "hook" in norm or "reel" in norm)
+        and "drink" not in norm
+        and "beverage" not in norm
+    ):
         if len(groups) > REEL_LINEUP_MAX_LEADS:
-            return ("fail", f"reel lineup has {len(groups)} food groups; maximum is {REEL_LINEUP_MAX_LEADS}.")
+            return (
+                "fail",
+                f"reel lineup has {len(groups)} food groups; maximum is {REEL_LINEUP_MAX_LEADS}.",
+            )
         if not groups:
             return ("fail", "no reel lineup food hook groups to validate.")
-        return ("pass", f"reel lineup produced {len(groups)} food hook group(s) (at most {REEL_LINEUP_MAX_LEADS}).")
+        return (
+            "pass",
+            f"reel lineup produced {len(groups)} food hook group(s) (at most {REEL_LINEUP_MAX_LEADS}).",
+        )
 
-    if ("up to" in norm or "at most" in norm) and "3" in norm and (
-        "drink" in norm or "beverage" in norm
+    if (
+        ("up to" in norm or "at most" in norm)
+        and "3" in norm
+        and ("drink" in norm or "beverage" in norm)
     ):
         if len(drink_groups) > REEL_LINEUP_MAX_DRINK_LEADS:
             return (
@@ -132,7 +144,11 @@ def try_reel_lineup_deterministic_verdict(
             f"reel lineup produced {len(drink_groups)} drink hook group(s) (at most {REEL_LINEUP_MAX_DRINK_LEADS}).",
         )
 
-    if "main" in norm and "storytelling" in norm and ("position" in norm or "lead" in norm or "hook" in norm):
+    if (
+        "main" in norm
+        and "storytelling" in norm
+        and ("position" in norm or "lead" in norm or "hook" in norm)
+    ):
         issues = _validate_hook_groups(
             groups,
             validate_lead=_is_main_course_strong_story_lead,
@@ -141,9 +157,14 @@ def try_reel_lineup_deterministic_verdict(
         )
         if issues:
             return ("fail", "; ".join(issues[:4]))
-        return ("pass", "each food hook group lead is a main-course item with strong storytelling at position 1.")
+        return (
+            "pass",
+            "each food hook group lead is a main-course item with strong storytelling at position 1.",
+        )
 
-    if ("drink" in norm or "beverage" in norm) and ("position" in norm or "hook" in norm or "group" in norm):
+    if ("drink" in norm or "beverage" in norm) and (
+        "position" in norm or "hook" in norm or "group" in norm
+    ):
         issues = _validate_hook_groups(
             drink_groups,
             validate_lead=_is_drink_hook_lead,

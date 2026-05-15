@@ -300,7 +300,9 @@ def _normalize_milestone_input_path(path: str, payload: Any) -> str:
     return _stringify_json_pointer(["value", *tokens])
 
 
-def _list_index_from_token(token: str, *, allow_end: bool, length: int) -> tuple[int | None, str | None]:
+def _list_index_from_token(
+    token: str, *, allow_end: bool, length: int
+) -> tuple[int | None, str | None]:
     if token == "-" and allow_end:
         return length, None
     if not token.isdigit():
@@ -608,7 +610,9 @@ async def update_milestone_input(
         str(user_id),
         client=client,
     )
-    return f"Saved milestoneInput for milestone id={milestone_id} with {len(operations)} operation(s)."
+    return (
+        f"Saved milestoneInput for milestone id={milestone_id} with {len(operations)} operation(s)."
+    )
 
 
 @tool

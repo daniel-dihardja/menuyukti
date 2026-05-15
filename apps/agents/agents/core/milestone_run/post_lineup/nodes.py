@@ -70,9 +70,7 @@ async def fetch_and_prepare(state: PostLineupState, *, client: httpx.AsyncClient
     prior_json = str(state.get("prior_milestones_data") or "")
     reel_lineup_data = extract_reel_lineup_data(prior_json)
     if reel_lineup_data is None:
-        raise ValueError(
-            "post_lineup requires a prior reel_lineup milestone with saved food leads"
-        )
+        raise ValueError("post_lineup requires a prior reel_lineup milestone with saved food leads")
 
     food_leads = _food_leads(reel_lineup_data)
     if not food_leads:

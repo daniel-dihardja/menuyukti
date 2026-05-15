@@ -26,6 +26,7 @@ from agents_app.agents.core.milestone_run.promotion_candidates.graph import (
 from agents_app.agents.core.milestone_run.reel_lineup.graph import build_reel_lineup_graph
 from agents_app.agents.core.milestone_run.scheduler.graph import build_scheduler_graph
 from agents_app.agents.core.milestone_run.state import MilestoneRunState
+from agents_app.agents.core.milestone_run.story_lineup.graph import build_story_lineup_graph
 from langgraph.config import get_config, get_stream_writer
 from langgraph.graph import END, START, StateGraph
 
@@ -90,7 +91,9 @@ def _base_initial(state: MilestoneRunState) -> dict[str, Any]:
     return initial
 
 
-async def _run_campaign_brief(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+async def _run_campaign_brief(
+    state: MilestoneRunState, *, client: httpx.AsyncClient
+) -> dict[str, Any]:
     final_sub = await _stream_subgraph(
         build_campaign_brief_graph(client),
         _base_initial(state),
@@ -132,7 +135,9 @@ async def _run_promotion_candidates(
     }
 
 
-async def _run_menu_tagger(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+async def _run_menu_tagger(
+    state: MilestoneRunState, *, client: httpx.AsyncClient
+) -> dict[str, Any]:
     initial = _base_initial(state)
     initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
     initial["result_data"] = ""
@@ -153,7 +158,9 @@ async def _run_menu_tagger(state: MilestoneRunState, *, client: httpx.AsyncClien
     }
 
 
-async def _run_reel_lineup(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+async def _run_reel_lineup(
+    state: MilestoneRunState, *, client: httpx.AsyncClient
+) -> dict[str, Any]:
     initial = _base_initial(state)
     initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
     initial["result_data"] = ""
@@ -174,13 +181,38 @@ async def _run_reel_lineup(state: MilestoneRunState, *, client: httpx.AsyncClien
     }
 
 
-async def _run_post_lineup(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+async def _run_post_lineup(
+    state: MilestoneRunState, *, client: httpx.AsyncClient
+) -> dict[str, Any]:
     initial = _base_initial(state)
     initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
     initial["result_data"] = ""
     initial["milestonedata_written"] = False
     final_sub = await _stream_subgraph(
         build_post_lineup_graph(client),
+        initial,
+        state=state,
+    )
+    return {
+        "result_data": str(final_sub.get("result_data", "")),
+        "raw_data": str(final_sub.get("result_data", "") or state.get("raw_data", "")),
+        "milestone_data": final_sub.get("milestone_data"),
+        "milestonedata_written": bool(final_sub.get("milestonedata_written")),
+        "result_summary": str(state.get("result_summary", "")),
+        "result_node_id": state.get("result_node_id"),
+        "last_criteria_verdicts": list(state.get("last_criteria_verdicts") or []),
+    }
+
+
+async def _run_story_lineup(
+    state: MilestoneRunState, *, client: httpx.AsyncClient
+) -> dict[str, Any]:
+    initial = _base_initial(state)
+    initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
+    initial["result_data"] = ""
+    initial["milestonedata_written"] = False
+    final_sub = await _stream_subgraph(
+        build_story_lineup_graph(client),
         initial,
         state=state,
     )
@@ -216,7 +248,9 @@ async def _run_scheduler(state: MilestoneRunState, *, client: httpx.AsyncClient)
     }
 
 
-async def _run_culture_hooks(state: MilestoneRunState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+async def _run_culture_hooks(
+    state: MilestoneRunState, *, client: httpx.AsyncClient
+) -> dict[str, Any]:
     initial = _base_initial(state)
     initial["prior_milestones_data"] = str(state.get("prior_milestones_data") or "")
     initial["injected_prior_context_markdown"] = build_injected_prior_context_markdown(
@@ -346,6 +380,8 @@ async def _execute_preset(state: MilestoneRunState, *, client: httpx.AsyncClient
         return await _run_reel_lineup(state, client=client)
     if preset_id == "post_lineup":
         return await _run_post_lineup(state, client=client)
+    if preset_id == "story_lineup":
+        return await _run_story_lineup(state, client=client)
     if preset_id == "scheduler":
         return await _run_scheduler(state, client=client)
     if preset_id == "culture_hooks":

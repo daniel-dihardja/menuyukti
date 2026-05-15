@@ -78,13 +78,13 @@ def build_reel_lineup(
     source_menu_tagger_title: str = "",
     notes: str = "",
 ) -> dict[str, Any]:
-    food_leads = [
-        item for item in menu_tagger_items if _is_main_course_strong_story(item)
-    ][:REEL_LINEUP_MAX_LEADS]
+    food_leads = [item for item in menu_tagger_items if _is_main_course_strong_story(item)][
+        :REEL_LINEUP_MAX_LEADS
+    ]
 
-    drink_leads = [
-        item for item in menu_tagger_items if _is_beverage_drink(item)
-    ][:REEL_LINEUP_MAX_DRINK_LEADS]
+    drink_leads = [item for item in menu_tagger_items if _is_beverage_drink(item)][
+        :REEL_LINEUP_MAX_DRINK_LEADS
+    ]
 
     assigned_names = {
         str(item.get("name") or "").strip()
@@ -94,14 +94,16 @@ def build_reel_lineup(
     unassigned_item_names = [
         str(item.get("name") or "").strip()
         for item in menu_tagger_items
-        if str(item.get("name") or "").strip() and str(item.get("name") or "").strip() not in assigned_names
+        if str(item.get("name") or "").strip()
+        and str(item.get("name") or "").strip() not in assigned_names
     ]
 
     payload: dict[str, Any] = {
         "foodLeads": food_leads,
         "drinkLeads": drink_leads,
         "groups": [
-            _finalize_lead_group(item, index, id_prefix="group") for index, item in enumerate(food_leads)
+            _finalize_lead_group(item, index, id_prefix="group")
+            for index, item in enumerate(food_leads)
         ],
         "drinkGroups": [
             _finalize_lead_group(item, index, id_prefix="drink-group")

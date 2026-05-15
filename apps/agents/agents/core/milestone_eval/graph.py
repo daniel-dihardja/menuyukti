@@ -17,9 +17,9 @@ def build_milestone_eval_graph(
     gateway_model_id: str | None = None,
 ):
     """Compile graph; pass a shared async HTTP client for GraphQL calls."""
-    structured_llm = chat_llm_for_gateway_model(gateway_model_id, streaming=False).with_structured_output(
-        nodes.CriterionVerdict
-    )
+    structured_llm = chat_llm_for_gateway_model(
+        gateway_model_id, streaming=False
+    ).with_structured_output(nodes.CriterionVerdict)
     llm = chat_llm_for_gateway_model(gateway_model_id, streaming=True)
 
     builder = StateGraph(MilestoneEvalState)

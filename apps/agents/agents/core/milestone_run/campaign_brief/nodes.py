@@ -216,12 +216,16 @@ def _build_signal_markdown(
     run = signals.get("analytics_run")
     instagram = signals.get("instagram_signals")
     if run is None:
-        sections.append("_No analytics run found for this location - operating signals unavailable._")
+        sections.append(
+            "_No analytics run found for this location - operating signals unavailable._"
+        )
         ai_md = _fmt_ai_social_settings(location_data)
         if ai_md:
             sections.append(ai_md)
         if milestone_input:
-            notes_md = _fmt_milestone_campaign_brief_owner_notes({"milestone_input": milestone_input})
+            notes_md = _fmt_milestone_campaign_brief_owner_notes(
+                {"milestone_input": milestone_input}
+            )
             if notes_md:
                 sections.append(notes_md)
         return "\n\n".join(sections)
@@ -312,7 +316,9 @@ def _build_signal_markdown(
     return "\n\n".join(sections)
 
 
-async def fetch_and_prepare(state: CampaignBriefState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+async def fetch_and_prepare(
+    state: CampaignBriefState, *, client: httpx.AsyncClient
+) -> dict[str, Any]:
     """Fetch location + signals and normalize them into deterministic markdown context."""
     _trace(state, "execute_skill", skill_id="campaign_brief")
     location_data = await graphql_post(
@@ -345,7 +351,9 @@ async def generate_draft(state: CampaignBriefState) -> dict[str, Any]:
     """Generate strictly structured campaign-brief JSON from deterministic signal context."""
     _trace_agent_event(state, "chat_model_start")
     # Generate only creative brief fields here; campaign window + holidays are merged deterministically later.
-    llm = structured_llm_from_milestone_run_config().with_structured_output(CampaignBriefDraftOutput)
+    llm = structured_llm_from_milestone_run_config().with_structured_output(
+        CampaignBriefDraftOutput
+    )
     generated = await llm.ainvoke(
         [
             SystemMessage(content=CAMPAIGN_BRIEF_SYSTEM),

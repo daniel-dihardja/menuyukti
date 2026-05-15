@@ -4,6 +4,7 @@ import type {
   MenuTaggerMilestoneData,
   PostLineupMilestoneData,
   ReelLineupMilestoneData,
+  StoryLineupMilestoneData,
   SchedulerMilestoneData,
 } from '@/lib/graphql/node-schemas'
 import type { ReactNode } from 'react'
@@ -106,7 +107,12 @@ export type IgProfileMilestoneData = {
   bios: IgProfileBio[]
 }
 
-export type { MenuTaggerMilestoneData, PostLineupMilestoneData, ReelLineupMilestoneData }
+export type {
+  MenuTaggerMilestoneData,
+  PostLineupMilestoneData,
+  ReelLineupMilestoneData,
+  StoryLineupMilestoneData,
+}
 
 export type MilestoneDataValue =
   | DatesMilestoneData
@@ -115,6 +121,7 @@ export type MilestoneDataValue =
   | MenuTaggerMilestoneData
   | ReelLineupMilestoneData
   | PostLineupMilestoneData
+  | StoryLineupMilestoneData
   | CultureHooksMilestoneData
   | IgProfileMilestoneData
   | SchedulerMilestoneData

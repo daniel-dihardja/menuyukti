@@ -293,7 +293,9 @@ def normalize_menu_tagger_tags(raw: dict[str, Any] | None) -> MenuTaggerTags:
     return {
         "kind": kind,  # type: ignore[typeddict-item]
         "ingredient": _filter_enum_values(
-            (raw or {}).get("ingredient") if isinstance((raw or {}).get("ingredient"), list) else [],
+            (raw or {}).get("ingredient")
+            if isinstance((raw or {}).get("ingredient"), list)
+            else [],
             INGREDIENT_VALUES,
             max_count=MAX_INGREDIENT_TAGS,
         ),
@@ -314,7 +316,9 @@ def normalize_menu_tagger_tags(raw: dict[str, Any] | None) -> MenuTaggerTags:
             max_count=MAX_TEXTURE_TAGS,
         ),
         "prep_style": _filter_enum_values(
-            (raw or {}).get("prep_style") if isinstance((raw or {}).get("prep_style"), list) else [],
+            (raw or {}).get("prep_style")
+            if isinstance((raw or {}).get("prep_style"), list)
+            else [],
             PREP_STYLE_VALUES,
             max_count=MAX_PREP_STYLE_TAGS,
         ),
@@ -446,8 +450,7 @@ def _build_generation_context(
     sections: list[str] = [
         f"## Milestone goal\n{goal}",
         f"## Milestone criteria\n```json\n{json.dumps(criteria, ensure_ascii=False, indent=2)}\n```",
-        "## Items to tag\n```json\n"
-        f"{json.dumps(input_items, ensure_ascii=False, indent=2)}\n```",
+        f"## Items to tag\n```json\n{json.dumps(input_items, ensure_ascii=False, indent=2)}\n```",
         "## Prior promotion_candidates data\n```json\n"
         f"{json.dumps(promotion_candidates_data, ensure_ascii=False, indent=2)}\n```",
         "## Allowed taxonomy enums\n```json\n"

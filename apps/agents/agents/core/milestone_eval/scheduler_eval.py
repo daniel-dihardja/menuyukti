@@ -62,4 +62,25 @@ def try_scheduler_deterministic_verdict(
             "Scheduler data is missing startDate or endDate from the prior dates milestone.",
         )
 
+    if "prior" in normalized and "story" in normalized and "lineup" in normalized:
+        source_title = str(data.get("sourceStoryLineupTitle") or "").strip()
+        if source_title:
+            return (
+                "pass",
+                "Scheduler data references a prior story_lineup milestone via sourceStoryLineupTitle.",
+            )
+        slots = data.get("slots")
+        if isinstance(slots, list) and any(
+            isinstance(slot, dict) and str(slot.get("title") or "").startswith("Story:")
+            for slot in slots
+        ):
+            return (
+                "pass",
+                "Scheduler slots include Story greeting entries from story_lineup.",
+            )
+        return (
+            "fail",
+            "Scheduler data is missing story_lineup reference or Story slots.",
+        )
+
     return None

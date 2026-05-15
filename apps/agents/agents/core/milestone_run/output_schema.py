@@ -265,12 +265,15 @@ class PromotionCandidatesMilestoneOutput(BaseModel):
         if not text:
             raise ValueError("mainCategory must be a non-empty POS menu category name")
         return text
+
     sourceAnalyticsRunId: str | None = None
     notes: str | None = None
 
     @field_validator("categories")
     @classmethod
-    def _validate_categories(cls, values: list[PromotionCandidatesCategory]) -> list[PromotionCandidatesCategory]:
+    def _validate_categories(
+        cls, values: list[PromotionCandidatesCategory]
+    ) -> list[PromotionCandidatesCategory]:
         if not values:
             raise ValueError("categories must contain at least one category")
         seen = {row.category for row in values}
@@ -302,7 +305,9 @@ class CultureHooksMilestoneOutput(BaseModel):
 
     @field_validator("intersections")
     @classmethod
-    def _validate_intersections(cls, values: list[CultureHookIntersection]) -> list[CultureHookIntersection]:
+    def _validate_intersections(
+        cls, values: list[CultureHookIntersection]
+    ) -> list[CultureHookIntersection]:
         if not (3 <= len(values) <= 5):
             raise ValueError("must contain between 3 and 5 intersections")
         seen_topics: set[str] = set()
@@ -333,9 +338,7 @@ class IgProfileUsernameSuggestion(BaseModel):
         if len(cleaned) > 30:
             raise ValueError("username must be at most 30 characters")
         if not _IG_USERNAME_RE.fullmatch(cleaned):
-            raise ValueError(
-                "username may only contain letters, numbers, periods, and underscores"
-            )
+            raise ValueError("username may only contain letters, numbers, periods, and underscores")
         return cleaned
 
     @field_validator("rationale")
@@ -575,9 +578,7 @@ class PostLineupPostOutput(BaseModel):
 
     @field_validator("slides")
     @classmethod
-    def _validate_slides(
-        cls, values: list[PostLineupSlideOutput]
-    ) -> list[PostLineupSlideOutput]:
+    def _validate_slides(cls, values: list[PostLineupSlideOutput]) -> list[PostLineupSlideOutput]:
         if not values:
             raise ValueError("must contain at least one slide")
         if len(values) > 5:
@@ -610,7 +611,41 @@ class SchedulerMilestoneOutput(BaseModel):
     publicHolidays: list[CampaignWindowPublicHoliday] = Field(default_factory=list)
     sourceDatesTitle: str | None = None
     sourcePostLineupTitle: str | None = None
+    sourceStoryLineupTitle: str | None = None
     slots: list[SchedulerSlotOutput] = Field(default_factory=list)
+
+
+class StoryLineupStoryOutput(BaseModel):
+    id: str
+    title: str
+    date: str | None = None
+    fixdate: bool = False
+    reason: Literal["public_holiday"] | None = None
+    holidayName: str | None = None
+    time: str | None = None
+
+    @field_validator("id", "title", mode="before")
+    @classmethod
+    def _normalize_text(cls, value: Any) -> str:
+        return str(value or "").strip()
+
+    @field_validator("id", "title")
+    @classmethod
+    def _validate_non_empty(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must be non-empty")
+        return value
+
+    @model_validator(mode="after")
+    def _validate_fixdate_date(self) -> StoryLineupStoryOutput:
+        if self.fixdate and not str(self.date or "").strip():
+            raise ValueError("date is required when fixdate is true")
+        return self
+
+
+class StoryLineupMilestoneOutput(BaseModel):
+    stories: list[StoryLineupStoryOutput] = Field(default_factory=list)
+    sourceDatesTitle: str | None = None
 
 
 _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
@@ -621,10 +656,12 @@ _SKILL_SCHEMA_REGISTRY: dict[str, type[BaseModel]] = {
     "menu_tagger": MenuTaggerMilestoneOutput,
     "reel_lineup": ReelLineupMilestoneOutput,
     "post_lineup": PostLineupMilestoneOutput,
+    "story_lineup": StoryLineupMilestoneOutput,
     "scheduler": SchedulerMilestoneOutput,
     "culture_hooks": CultureHooksMilestoneOutput,
     "ig_profile": IgProfileMilestoneOutput,
 }
+
 
 def validate_skill_output(skill_id: str | None, payload: Any) -> tuple[Any | None, str | None]:
     """Validate output for registered skills; pass through for unknown skills."""

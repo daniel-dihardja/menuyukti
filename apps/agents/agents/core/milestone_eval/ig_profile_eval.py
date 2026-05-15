@@ -136,9 +136,7 @@ def try_ig_profile_deterministic_verdict(
             f"{len(usernames)} username suggestions with valid format and rationales.",
         )
 
-    if "bio breakdown" in norm or (
-        "hook" in norm and "value prop" in norm and "tone" in norm
-    ):
+    if "bio breakdown" in norm or ("hook" in norm and "value prop" in norm and "tone" in norm):
         if len(bios) != _BIO_VARIATION_COUNT:
             return (
                 "fail",
@@ -162,9 +160,7 @@ def try_ig_profile_deterministic_verdict(
             f"all {_BIO_VARIATION_COUNT} bio variations include hook, value prop, CTA, and tone.",
         )
 
-    if "bio variation" in norm or (
-        "three" in norm and "bio" in norm
-    ):
+    if "bio variation" in norm or ("three" in norm and "bio" in norm):
         if len(bios) == _BIO_VARIATION_COUNT:
             return ("pass", f"data includes {_BIO_VARIATION_COUNT} bio variations.")
         return ("fail", f"expected {_BIO_VARIATION_COUNT} bio variations, found {len(bios)}.")

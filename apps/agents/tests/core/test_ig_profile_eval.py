@@ -8,7 +8,9 @@ from agents_app.agents.core.milestone_eval.ig_profile_eval import (
     try_ig_profile_deterministic_verdict,
 )
 
-_BIO_LENGTH_REQ = "Each **bio variation** text is at most **150 characters** (Instagram hard limit)."
+_BIO_LENGTH_REQ = (
+    "Each **bio variation** text is at most **150 characters** (Instagram hard limit)."
+)
 _USERNAMES_REQ = (
     "Data includes **3–5 username suggestions** in valid Instagram format, "
     "each with a one-line rationale."

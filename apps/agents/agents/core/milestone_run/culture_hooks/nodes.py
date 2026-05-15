@@ -91,7 +91,9 @@ class CultureHooksDraftOutput(BaseModel):
     guardrailCheck: str
 
 
-async def fetch_and_prepare(state: CultureHooksState, *, client: httpx.AsyncClient) -> dict[str, Any]:
+async def fetch_and_prepare(
+    state: CultureHooksState, *, client: httpx.AsyncClient
+) -> dict[str, Any]:
     """Build generation markdown from prior campaign-brief context only."""
     del client
     _trace(state, "execute_skill", skill_id="culture_hooks")

@@ -30,6 +30,7 @@ export const milestonePresetIdSchema = z.enum([
   'menu_tagger',
   'reel_lineup',
   'post_lineup',
+  'story_lineup',
   'culture_hooks',
   'ig_profile',
   'scheduler',
@@ -83,6 +84,12 @@ export const postLineupMilestoneInputValueSchema = z.object({
 })
 
 export type PostLineupMilestoneInputValue = z.infer<typeof postLineupMilestoneInputValueSchema>
+
+export const storyLineupMilestoneInputValueSchema = z.object({
+  notes: z.string(),
+})
+
+export type StoryLineupMilestoneInputValue = z.infer<typeof storyLineupMilestoneInputValueSchema>
 
 export const schedulerMilestoneInputValueSchema = z.object({
   notes: z.string(),
@@ -361,6 +368,39 @@ export const postLineupMilestoneDataSchema = z.object({
 
 export type PostLineupMilestoneData = z.infer<typeof postLineupMilestoneDataSchema>
 
+export const storyLineupStoryReasonSchema = z.literal('public_holiday')
+
+export const storyLineupStorySchema = z.object({
+  id: z.string().trim().min(1),
+  title: z.string().trim().min(1),
+  date: z.string().optional(),
+  fixdate: z.boolean().optional(),
+  reason: storyLineupStoryReasonSchema.optional(),
+  holidayName: z.string().optional(),
+  time: z.string().optional(),
+})
+
+export type StoryLineupStory = z.infer<typeof storyLineupStorySchema>
+
+export const storyLineupMilestoneDataSchema = z
+  .object({
+    stories: z.array(storyLineupStorySchema),
+    sourceDatesTitle: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    for (const [index, story] of data.stories.entries()) {
+      if (story.fixdate && !story.date?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'date is required when fixdate is true',
+          path: ['stories', index, 'date'],
+        })
+      }
+    }
+  })
+
+export type StoryLineupMilestoneData = z.infer<typeof storyLineupMilestoneDataSchema>
+
 export const schedulerSlotSchema = z.object({
   date: z.string(),
   time: z.string(),
@@ -373,6 +413,7 @@ export const schedulerMilestoneDataSchema = z.object({
   publicHolidays: z.array(campaignWindowPublicHolidaySchema).default([]),
   sourceDatesTitle: z.string().optional(),
   sourcePostLineupTitle: z.string().optional(),
+  sourceStoryLineupTitle: z.string().optional(),
   slots: z.array(schedulerSlotSchema).default([]),
 })
 

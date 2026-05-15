@@ -181,8 +181,13 @@ async def test_get_milestone_preset_data_json_requires_context() -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_milestone_preset_data_for_milestone_success(monkeypatch: pytest.MonkeyPatch) -> None:
-    node = {**_milestone_node(milestone_preset_data=_culture_hooks_payload()), "name": "Culture step"}
+async def test_get_milestone_preset_data_for_milestone_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    node = {
+        **_milestone_node(milestone_preset_data=_culture_hooks_payload()),
+        "name": "Culture step",
+    }
     fetch_mock = AsyncMock(return_value=node)
     monkeypatch.setattr(chat_tools, "get_chat_http_client", lambda: object())
     monkeypatch.setattr(chat_tools, "fetch_milestone_node", fetch_mock)
@@ -501,7 +506,9 @@ async def test_update_milestone_input_missing_operations_returns_guidance(
 
 
 @pytest.mark.asyncio
-async def test_update_milestone_preset_data_replace_success(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_update_milestone_preset_data_replace_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     node = {
         "id": "42",
         "nodeType": "milestone",
@@ -534,7 +541,9 @@ async def test_update_milestone_preset_data_replace_success(monkeypatch: pytest.
 
 
 @pytest.mark.asyncio
-async def test_update_milestone_preset_data_rejects_invalid_path(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_update_milestone_preset_data_rejects_invalid_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     node = {
         "id": "42",
         "nodeType": "milestone",
@@ -565,7 +574,9 @@ async def test_update_milestone_preset_data_rejects_invalid_path(monkeypatch: py
 
 
 @pytest.mark.asyncio
-async def test_update_milestone_preset_data_validation_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_update_milestone_preset_data_validation_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     node = {
         "id": "42",
         "nodeType": "milestone",

@@ -34,9 +34,7 @@ async def upsert_milestone_goal(
 ) -> None:
     """Set ``milestone_goal`` via ``updateNode`` (column-backed)."""
     patch: dict[str, str | None] = (
-        {"milestoneGoal": goal_text.strip()}
-        if goal_text.strip()
-        else {"milestoneGoal": None}
+        {"milestoneGoal": goal_text.strip()} if goal_text.strip() else {"milestoneGoal": None}
     )
     upd = await graphql_post(
         client,

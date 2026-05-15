@@ -80,7 +80,9 @@ async def test_fetch_and_prepare_builds_pos_category_sections() -> None:
                             },
                             "Drinks": {
                                 "starItems": [{"menu": "Latte", "quantity": 8, "popularity": 0.5}],
-                                "puzzleItems": [{"menu": "Matcha", "quantity": 2, "popularity": 0.1}],
+                                "puzzleItems": [
+                                    {"menu": "Matcha", "quantity": 2, "popularity": 0.1}
+                                ],
                             },
                         },
                     }
@@ -423,13 +425,18 @@ async def test_persist_result_accepts_object_shaped_items() -> None:
     ) as mock_upsert:
         await persist_result(state, client=MagicMock(spec=AsyncMock))
     saved = mock_upsert.await_args.args[2]
-    assert saved["categories"][0]["starItems"][0]["storytellingRationale"] == "Generic for this brief."
+    assert (
+        saved["categories"][0]["starItems"][0]["storytellingRationale"] == "Generic for this brief."
+    )
     assert saved["categories"][0]["starItems"][0]["quantity"] == 7
     assert saved["categories"][0]["starItems"][0]["popularity"] == 0.21
 
 
 def test_validate_skill_output_accepts_large_star_item_lists() -> None:
-    stars = [{"name": f"Dish {i}", "storytellingFit": "weak", "storytellingRationale": ""} for i in range(25)]
+    stars = [
+        {"name": f"Dish {i}", "storytellingFit": "weak", "storytellingRationale": ""}
+        for i in range(25)
+    ]
     normalized, error = validate_skill_output(
         "promotion_candidates",
         {

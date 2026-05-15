@@ -115,10 +115,19 @@ async def test_routing_culture_hooks_uses_dedicated_graph_path() -> None:
                 }
             ),
         ),
-        patch("agents_app.agents.core.milestone_eval.nodes.get_stream_writer", return_value=lambda _x: None),
-        patch("agents_app.agents.core.milestone_run.graph.get_stream_writer", return_value=lambda _x: None),
+        patch(
+            "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
         patch("agents_app.agents.core.milestone_run.graph.get_config", return_value={}),
-        patch("agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph", return_value=mock_eval),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph",
+            return_value=mock_eval,
+        ),
         patch("agents_app.agents.core.milestone_run.graph.build_culture_hooks_graph") as mock_build,
     ):
         mock_graph = MagicMock()
@@ -153,16 +162,21 @@ async def test_generate_intersections_returns_new_shape() -> None:
         "criteria": [],
         "generation_context_markdown": "Context from campaign brief",
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.culture_hooks.nodes.structured_llm_from_milestone_run_config",
-    ) as mock_get_llm, patch(
-        "agents_app.agents.core.milestone_run.culture_hooks.nodes.get_stream_writer",
-        return_value=lambda _x: None,
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.culture_hooks.nodes.structured_llm_from_milestone_run_config",
+        ) as mock_get_llm,
+        patch(
+            "agents_app.agents.core.milestone_run.culture_hooks.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
     ):
         mock_llm = MagicMock()
         mock_structured = MagicMock()
         mock_structured.ainvoke = AsyncMock(
-            return_value=MagicMock(model_dump=MagicMock(return_value=_valid_culture_hooks_payload()))
+            return_value=MagicMock(
+                model_dump=MagicMock(return_value=_valid_culture_hooks_payload())
+            )
         )
         mock_llm.with_structured_output.return_value = mock_structured
         mock_get_llm.return_value = mock_llm
@@ -182,10 +196,13 @@ async def test_fetch_and_prepare_requires_prior_campaign_brief() -> None:
         "injected_prior_context_markdown": "",
         "milestone_input": {"type": "culture_hooks", "value": {"notes": ""}},
     }
-    with patch(
-        "agents_app.agents.core.milestone_run.culture_hooks.nodes.get_stream_writer",
-        return_value=lambda _x: None,
-    ), pytest.raises(
-        ValueError, match="culture_hooks requires a prior restaurant_campaign_brief milestone"
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.culture_hooks.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+        pytest.raises(
+            ValueError, match="culture_hooks requires a prior restaurant_campaign_brief milestone"
+        ),
     ):
         await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
