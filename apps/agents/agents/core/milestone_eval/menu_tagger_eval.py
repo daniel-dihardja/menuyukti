@@ -123,7 +123,9 @@ def try_menu_tagger_deterministic_verdict(
             "all tag values use fixed v2 taxonomy enums; empty optional tag arrays are allowed.",
         )
 
-    if "promotion_candidates" in norm and ("prior" in norm or "earlier" in norm or "run used" in norm):
+    if "promotion_candidates" in norm and (
+        "prior" in norm or "earlier" in norm or "run used" in norm
+    ):
         if not items:
             return ("fail", "menu tagger data has no tagged items from promotion candidates.")
         return ("pass", f"menu tagger data tags {len(items)} promotion candidate item(s).")

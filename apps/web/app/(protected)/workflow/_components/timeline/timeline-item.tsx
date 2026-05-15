@@ -77,11 +77,11 @@ function TimelineItemInner({
     () => DEFAULT_CHAT_GATEWAY_MODEL,
   )
   const { collapseAllEpoch } = useTimelineCollapse()
-  const [userOpen, setUserOpen] = useState(true)
+  const [userOpen, setUserOpen] = useState(false)
   const lastCollapseEpochRef = useRef(collapseAllEpoch)
   const lastMilestoneIdRef = useRef(milestone.id)
   const hadMilestoneDataRef = useRef(milestone.data != null)
-  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(() => milestone.data != null)
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false)
   const [goalDraft, setGoalDraft] = useState(() => milestone.goal ?? '')
   const addCriteriaInputRef = useRef<HTMLInputElement>(null)
   const isMilestoneRunning = runningMilestoneId === milestone.id
@@ -114,7 +114,7 @@ function TimelineItemInner({
     if (idChanged) {
       lastMilestoneIdRef.current = milestone.id
       hadMilestoneDataRef.current = milestone.data != null
-      setMobilePreviewOpen(milestone.data != null)
+      setMobilePreviewOpen(false)
       return
     }
     const nowHasData = milestone.data != null
@@ -259,8 +259,10 @@ function TimelineItemInner({
         <Collapsible className="min-w-0 w-full" onOpenChange={setUserOpen} open={open}>
           <Card
             className={cn(
-              'min-w-0 w-full gap-0 border py-4 shadow-none transition-[background-color,box-shadow,border-color]',
-              isSelected ? 'border-primary bg-accent/50 ring-2 ring-ring/50' : 'hover:bg-accent/30',
+              'min-w-0 w-full gap-0 border py-4 shadow-none ring-2 transition-[background-color,box-shadow,border-color]',
+              isSelected
+                ? 'border-primary bg-accent/50 ring-ring/50'
+                : 'ring-transparent hover:bg-accent/30',
             )}
           >
             <TimelineItemHeaderProvider
@@ -319,15 +321,15 @@ function TimelineItemInner({
             onPointerDown={(e) => e.stopPropagation()}
           >
             <Collapsible
-              className="mt-2 min-w-0 overflow-hidden rounded-lg border bg-muted/20 shadow-sm"
+              className="mt-2 min-w-0 overflow-hidden rounded-lg bg-muted/50 shadow-sm"
               onOpenChange={setMobilePreviewOpen}
               open={mobilePreviewOpen}
             >
               <CollapsibleTrigger asChild>
                 <button
                   className={cn(
-                    'flex w-full min-h-10 items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium text-foreground',
-                    'hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
+                    'flex w-full min-h-10 items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium text-muted-foreground',
+                    'hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
                   )}
                   type="button"
                 >
@@ -342,7 +344,7 @@ function TimelineItemInner({
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="border-border border-t px-3 py-3">
+                <div className="min-w-0 overflow-x-hidden px-3 py-3">
                   <MilestoneDataPreview milestone={milestone} />
                 </div>
               </CollapsibleContent>

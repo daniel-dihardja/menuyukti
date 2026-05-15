@@ -37,7 +37,7 @@ export function WorkflowChatLayout({
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border">
         <ResizablePanelGroup className="h-full min-h-0 flex-1 overflow-hidden">
-          <ResizablePanel defaultSize={40} minSize={28}>
+          <ResizablePanel defaultSize={38} minSize={28}>
             <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden pr-2">
               {timelinePane}
             </div>
@@ -49,9 +49,9 @@ export function WorkflowChatLayout({
             className="bg-muted/20 p-3"
             collapsedSize={0}
             collapsible
-            defaultSize={22}
+            defaultSize={34}
             id="workflow-preview"
-            minSize={16}
+            minSize={20}
             panelRef={previewPanelRef}
           >
             <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
@@ -61,7 +61,7 @@ export function WorkflowChatLayout({
 
           <ResizableHandle withHandle />
 
-          <ResizablePanel defaultSize={38} minSize={22}>
+          <ResizablePanel defaultSize={28} minSize={20}>
             <div className="relative flex h-full min-h-0 min-w-0 flex-col divide-y overflow-hidden">
               {chatPane}
             </div>

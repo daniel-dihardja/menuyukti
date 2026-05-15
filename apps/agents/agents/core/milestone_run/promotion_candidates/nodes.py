@@ -149,7 +149,9 @@ def _sort_category_blocks(
     return sorted(
         blocks,
         key=lambda block: (
-            0 if _category_matches_main_focus(str(block.get("category") or ""), main_category) else 1,
+            0
+            if _category_matches_main_focus(str(block.get("category") or ""), main_category)
+            else 1,
             str(block.get("category") or "").casefold(),
         ),
     )
@@ -332,9 +334,7 @@ def _build_output(
 
     categories_out = _sort_category_blocks(categories_out, main_category)
 
-    if not any(
-        block.get("starItems") or block.get("puzzleItems") for block in categories_out
-    ):
+    if not any(block.get("starItems") or block.get("puzzleItems") for block in categories_out):
         notes_parts.append("No promotion candidates were returned from analytics.")
 
     return {
@@ -619,7 +619,9 @@ async def enrich_storytelling(state: PromotionCandidatesState) -> dict[str, Any]
     )
     human_message = "\n\n".join(human_sections)
 
-    llm = structured_llm_from_milestone_run_config().with_structured_output(StorytellingVerdictsOutput)
+    llm = structured_llm_from_milestone_run_config().with_structured_output(
+        StorytellingVerdictsOutput
+    )
     _trace_agent_event(state, "chat_model_start")
     generated = await llm.ainvoke(
         [

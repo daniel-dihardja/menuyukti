@@ -319,27 +319,81 @@ def extract_dates_data(prior_milestones_json: str) -> dict[str, Any] | None:
     return None
 
 
-def dates_prior_error_message(prior_milestones_json: str) -> str:
-    """Actionable error when scheduler cannot read prior dates data."""
-    base = "scheduler requires a prior dates milestone with saved start and end dates"
+def is_story_lineup_milestone_data(data: object) -> bool:
+    if not isinstance(data, dict):
+        return False
+    stories = data.get("stories")
+    return isinstance(stories, list)
+
+
+def extract_story_lineup_row(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return the first matched prior story_lineup row, or ``None``."""
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    matched, _ = collect_matched_prior_rows(rows, frozenset({"story_lineup"}))
+    return matched[0] if matched else None
+
+
+def extract_story_lineup_data(prior_milestones_json: str) -> dict[str, Any] | None:
+    """Return story_lineup ``data`` dict from prior milestones JSON, or ``None``."""
+    row = extract_story_lineup_row(prior_milestones_json)
+    if row is None:
+        return None
+    data = row.get("data")
+    if isinstance(data, dict) and is_story_lineup_milestone_data(data):
+        return data
+    return None
+
+
+def story_lineup_prior_error_message(prior_milestones_json: str) -> str:
+    """Actionable error when scheduler cannot read prior story_lineup data."""
+    base = "scheduler requires a prior story_lineup milestone with saved stories"
     rows = _parse_prior_milestone_rows(prior_milestones_json)
     if not rows:
         return (
             f"{base}. No earlier milestones were returned for this workflow step — "
-            "place dates before scheduler in the timeline."
+            "place story_lineup before scheduler in the timeline."
+        )
+
+    titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
+    has_story_lineup_preset = any(
+        isinstance((preset_id := row.get("presetId")), str) and preset_id.strip() == "story_lineup"
+        for row in rows
+    )
+    if not has_story_lineup_preset:
+        return (
+            f"{base}. Earlier milestones are: {', '.join(titles)}. "
+            "Add a story_lineup step before scheduler, run it successfully, "
+            "then run scheduler again."
+        )
+    return (
+        f"{base}. A story_lineup milestone appears earlier in the workflow "
+        "but its saved preset data is missing or invalid — open that step, "
+        "confirm the Data tab shows stories, and re-run story_lineup."
+    )
+
+
+def dates_prior_error_message(
+    prior_milestones_json: str, *, milestone_id: str = "milestone"
+) -> str:
+    """Actionable error when a milestone cannot read prior dates data."""
+    base = f"{milestone_id} requires a prior dates milestone with saved start and end dates"
+    rows = _parse_prior_milestone_rows(prior_milestones_json)
+    if not rows:
+        return (
+            f"{base}. No earlier milestones were returned for this workflow step — "
+            "place dates before this milestone in the timeline."
         )
 
     titles = [str(row.get("title") or "Milestone").strip() or "Milestone" for row in rows]
     has_dates_preset = any(
-        isinstance((preset_id := row.get("presetId")), str)
-        and preset_id.strip() == "dates"
+        isinstance((preset_id := row.get("presetId")), str) and preset_id.strip() == "dates"
         for row in rows
     )
     if not has_dates_preset:
         return (
             f"{base}. Earlier milestones are: {', '.join(titles)}. "
-            "Add a dates step before scheduler, set start and end dates, run it, "
-            "then run scheduler again."
+            "Add a dates step before this milestone, set start and end dates, run it, "
+            "then run this milestone again."
         )
     return (
         f"{base}. A dates milestone appears earlier in the workflow "

@@ -603,23 +603,43 @@
   "platform": {
     "dashboard": {
       "title": "Dashboard",
-      "description": "Workflows, brand assets, and quick links across your workspace.",
-      "workflowsHeading": "Workflow",
-      "workflowsViewAll": "View all workflows",
-      "viewWorkflow": "Open workflow",
-      "noWorkflows": "No workflows yet",
-      "createWorkflow": "Create workflow",
-      "assetsHeading": "Canvas",
-      "assetsDescription": "Recent images from your brand library.",
-      "assetsOpenStudio": "Open Canvas",
-      "assetsEmpty": "No images in your library yet.",
-      "printHeading": "Fulfillment",
-      "printDescription": "Admin queue for print-on-demand status—not the public print shop catalog.",
-      "printViewOrders": "Open fulfillment",
-      "insightsHeading": "Insights",
-      "insightsDescription": "Upload sales data and open analytics to see what to promote next.",
-      "insightsCta": "Go to reports",
-      "branchLabel": "Location"
+      "description": "AI-powered restaurant marketing on the go.",
+      "headline": "Run campaigns from anywhere",
+      "lead": "AI turns your sales data into Instagram campaigns—built for busy floors, not just desks.",
+      "pwa": {
+        "sectionTitle": "Add to home screen",
+        "sectionHint": "Pick your device, then follow the steps.",
+        "installHint": "Opens full screen—like a native app. Sign in once.",
+        "platforms": {
+          "ios": {
+            "label": "iPhone",
+            "browser": "Use Safari",
+            "steps": {
+              "step1": "Open in Safari and sign in.",
+              "step2": "Share → Add to Home Screen.",
+              "step3": "Tap Add."
+            }
+          },
+          "android": {
+            "label": "Android",
+            "browser": "Use Chrome",
+            "steps": {
+              "step1": "Open in Chrome and sign in.",
+              "step2": "Menu (⋮) → Install app.",
+              "step3": "Confirm Install."
+            }
+          },
+          "desktop": {
+            "label": "Desktop",
+            "browser": "Chrome or Edge",
+            "steps": {
+              "step1": "Open in Chrome or Edge.",
+              "step2": "Click the install icon in the address bar.",
+              "step3": "Confirm Install."
+            }
+          }
+        }
+      }
     },
     "printOrders": {
       "title": "Print fulfillment",
@@ -1212,6 +1232,17 @@
             "criterionDrinkHookGroupCount": "Data includes **up to 3** drink Reel hook groups.",
             "criterionDrinkHook": "Each drink group's position-1 item is a tagged **beverage drink** with a reel moment (storytelling fit not required)."
           },
+          "story_lineup": {
+            "label": "Story lineup",
+            "title": "Story lineup",
+            "inputLabel": "Holiday story notes",
+            "inputDescription": "Optional guidance for which public holidays from the prior **dates** milestone should get an Instagram Story greeting. Name holidays to include or skip; leave empty to let the run decide from the holiday list alone.",
+            "inputPlaceholder": "e.g. Mark Easter Sunday and Christmas Day; skip Memorial Day and remembrance days…",
+            "goal": "Read the campaign window and public holidays from a prior **dates** milestone, then decide which holidays deserve a cheerful Instagram Story greeting. Save each selected story in **stories** with **fixdate** set so the scheduler can place it on the holiday date. Place this milestone after **dates** and before **scheduler** in the timeline.",
+            "criterionPriorDates": "Run used a prior **dates** milestone with saved start, end, and public holidays.",
+            "criterionStoriesPresent": "**stories** lists every selected public-holiday Story with a non-empty **title**.",
+            "criterionPublicHolidayFixdate": "Each public-holiday story has **fixdate** true and a **date** matching the holiday in the dates milestone."
+          },
           "post_lineup": {
             "label": "Post lineup",
             "title": "Post lineup",
@@ -1250,11 +1281,12 @@
           "scheduler": {
             "label": "Scheduler",
             "title": "Scheduler",
-            "inputLabel": "Holiday marking notes",
-            "inputDescription": "Optional guidance for which public holidays from the prior **dates** milestone should get a 10:00 Instagram Story greeting slot on the scheduler calendar. Name holidays to include or skip; leave empty to let the run decide from the holiday list alone.",
-            "inputPlaceholder": "e.g. Mark Easter Sunday and Christmas Day; skip Memorial Day and remembrance days…",
-            "goal": "Read the campaign window from a prior **dates** milestone, schedule Instagram Story greetings for suitable public holidays at 10:00, and prepare a scheduler calendar between the start and end dates. Place this milestone after **dates** in the timeline.",
+            "inputLabel": "Scheduler notes",
+            "inputDescription": "Optional guidance for scheduling emphasis. Story greeting slots come from the prior **story_lineup** milestone; this step places fixed-date stories and monthly post slots on the calendar.",
+            "inputPlaceholder": "e.g. keep Story greetings at 10:00; prioritize month-start post slots…",
+            "goal": "Read the campaign window from a prior **dates** milestone and place **story_lineup** stories with **fixdate** on the scheduler calendar, plus monthly pinned-menu post slots when **post_lineup** is present. Place **story_lineup** before scheduler in the timeline.",
             "criterionPriorDates": "Run used a prior **dates** milestone with saved start and end dates.",
+            "criterionPriorStoryLineup": "Run used a prior **story_lineup** milestone with saved **stories**.",
             "criterionWindowPresent": "Scheduler data includes **startDate** and **endDate** for the campaign window."
           },
           "restaurant_campaign_brief": {
@@ -1537,6 +1569,11 @@
         "milestoneReelLineupPreviewPopularityLabel": "Popularity {value, number, percent}",
         "milestoneReelLineupPreviewNotes": "Notes",
         "milestoneReelLineupPreviewNoNotes": "No notes added.",
+        "milestoneStoryLineupPreviewHeading": "Instagram Stories lineup",
+        "milestoneStoryLineupPreviewEmpty": "No stories selected yet. Run Story lineup after Dates to pick public-holiday Story greetings.",
+        "milestoneStoryLineupPreviewSourceDates": "Source dates milestone",
+        "milestoneStoryLineupPreviewFixdateBadge": "Fixed date",
+        "milestoneStoryLineupPreviewPublicHolidayBadge": "Public holiday",
         "milestonePostLineupPreviewSummary": "{postCount, plural, =0 {No posts} one {# post concept} other {# post concepts}} · {slideCount, plural, =0 {no slides} one {# slide} other {# slides}}",
         "milestonePostLineupPreviewSourceTitle": "Source reel lineup",
         "milestonePostLineupPreviewEmptyTitle": "No post concepts yet",

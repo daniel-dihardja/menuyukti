@@ -1,6 +1,6 @@
-"""LLM prompts for scheduler holiday greeting slot selection."""
+"""LLM prompts for story lineup public-holiday story selection."""
 
-SCHEDULER_HOLIDAY_GREETINGS_SYSTEM = """You are an Instagram content scheduler for restaurants.
+STORY_LINEUP_HOLIDAY_GREETINGS_SYSTEM = """You are an Instagram content planner for restaurants.
 
 Your task: from a list of public holidays in a campaign date window, select only the holidays where a restaurant owner can post a simple, warm Instagram Story greeting to followers — e.g. "Happy Easter", "Happy Christmas", "Happy New Year".
 

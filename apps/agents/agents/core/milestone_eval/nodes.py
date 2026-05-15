@@ -42,6 +42,10 @@ from agents_app.agents.core.milestone_eval.scheduler_eval import (
     try_scheduler_deterministic_verdict,
 )
 from agents_app.agents.core.milestone_eval.state import CriterionEval, MilestoneEvalState
+from agents_app.agents.core.milestone_eval.story_lineup_eval import (
+    enrich_story_lineup_eval_payload,
+    try_story_lineup_deterministic_verdict,
+)
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.config import get_stream_writer
@@ -53,9 +57,11 @@ _logger = logging.getLogger(__name__)
 
 def _enrich_eval_payload(data: dict[str, Any]) -> dict[str, Any]:
     return enrich_scheduler_eval_payload(
-        enrich_post_lineup_eval_payload(
-            enrich_reel_lineup_eval_payload(
-                enrich_menu_tagger_eval_payload(enrich_ig_profile_eval_payload(data))
+        enrich_story_lineup_eval_payload(
+            enrich_post_lineup_eval_payload(
+                enrich_reel_lineup_eval_payload(
+                    enrich_menu_tagger_eval_payload(enrich_ig_profile_eval_payload(data))
+                )
             )
         )
     )
@@ -91,6 +97,7 @@ _OWNER_NOTES_INPUT_TYPES = frozenset(
         "menu_tagger",
         "reel_lineup",
         "post_lineup",
+        "story_lineup",
         "scheduler",
         "ig_profile",
     },
@@ -237,6 +244,8 @@ async def evaluate_criterion(
             deterministic = try_reel_lineup_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
             deterministic = try_post_lineup_deterministic_verdict(requirement, milestone_data)
+        if deterministic is None:
+            deterministic = try_story_lineup_deterministic_verdict(requirement, milestone_data)
         if deterministic is None:
             deterministic = try_scheduler_deterministic_verdict(requirement, milestone_data)
         if deterministic is not None:

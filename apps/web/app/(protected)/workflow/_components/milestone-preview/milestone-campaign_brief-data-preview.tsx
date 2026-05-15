@@ -123,15 +123,6 @@ function VenueFields({
   )
 }
 
-const defaultOpenBriefSections = [
-  'venue',
-  'objective',
-  'pillars',
-  'audience',
-  'proof',
-  'tone',
-] as const
-
 export function MilestoneCampaignBriefDataPreview({
   data,
 }: MilestoneCampaignBriefDataPreviewProps) {
@@ -179,11 +170,7 @@ export function MilestoneCampaignBriefDataPreview({
 
   return (
     <div className={mp.root}>
-      <Accordion
-        type="multiple"
-        defaultValue={[...defaultOpenBriefSections]}
-        className="w-full min-w-0"
-      >
+      <Accordion type="multiple" defaultValue={[]} className="w-full min-w-0">
         <BriefAccordionSection
           value="venue"
           title={labels.venueSnapshot}

@@ -78,7 +78,9 @@ def main() -> None:
             continue
         root_fields = query_fields if op_type == "Query" else mutation_fields
         if field not in root_fields:
-            errors.append(f"Missing {op_type}.{field} for operation:\n{doc.strip().splitlines()[0]}")
+            errors.append(
+                f"Missing {op_type}.{field} for operation:\n{doc.strip().splitlines()[0]}"
+            )
 
     if errors:
         for err in errors:

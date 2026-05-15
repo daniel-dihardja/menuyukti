@@ -55,7 +55,7 @@ export function MilestoneCreateControls({
         <SelectTrigger
           aria-busy={creating}
           aria-label={creating ? t('creatingMilestone') : t('milestonePreset.selectAriaLabel')}
-          className="w-[min(100%,11rem)]"
+          className="w-44"
         >
           {creating ? <Spinner className="shrink-0" /> : null}
           <SelectValue placeholder={t('milestonePreset.selectPlaceholder')} />
@@ -87,6 +87,8 @@ function presetOptionLabel(id: MilestonePresetId, t: (key: string) => string): s
       return t('milestonePreset.reel_lineup.label')
     case 'post_lineup':
       return t('milestonePreset.post_lineup.label')
+    case 'story_lineup':
+      return t('milestonePreset.story_lineup.label')
     case 'culture_hooks':
       return t('milestonePreset.culture_hooks.label')
     case 'ig_profile':

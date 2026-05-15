@@ -83,7 +83,9 @@ async def test_graph_dispatches_to_dedicated_preset_graph(
                     "data": {
                         "goal": "G1",
                         "presetId": preset_id,
-                        "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}],
+                        "passCriterias": [
+                            {"id": "c1", "requirement": "Must have data", "status": "open"}
+                        ],
                     }
                 }
             ),
@@ -94,18 +96,27 @@ async def test_graph_dispatches_to_dedicated_preset_graph(
                 return_value={
                     "data": {
                         "goal": "G1",
-                        "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}],
+                        "passCriterias": [
+                            {"id": "c1", "requirement": "Must have data", "status": "open"}
+                        ],
                     }
                 }
             ),
         ),
-        patch("agents_app.agents.core.milestone_eval.nodes.get_stream_writer", return_value=lambda _x: None),
-        patch("agents_app.agents.core.milestone_run.graph.get_stream_writer", return_value=lambda _x: None),
-        patch("agents_app.agents.core.milestone_run.graph.get_config", return_value={}),
-        patch("agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph", return_value=mock_eval),
         patch(
-            f"agents_app.agents.core.milestone_run.graph.{build_symbol}"
-        ) as mock_build_graph,
+            "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+        patch("agents_app.agents.core.milestone_run.graph.get_config", return_value={}),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph",
+            return_value=mock_eval,
+        ),
+        patch(f"agents_app.agents.core.milestone_run.graph.{build_symbol}") as mock_build_graph,
     ):
         mock_graph = MagicMock()
         mock_graph.astream = _fake_subgraph_astream
@@ -130,7 +141,9 @@ async def test_graph_raises_for_unknown_preset() -> None:
                     "data": {
                         "goal": "G1",
                         "presetId": "unknown_preset",
-                        "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}],
+                        "passCriterias": [
+                            {"id": "c1", "requirement": "Must have data", "status": "open"}
+                        ],
                     }
                 }
             ),
@@ -141,12 +154,17 @@ async def test_graph_raises_for_unknown_preset() -> None:
                 return_value={
                     "data": {
                         "goal": "G1",
-                        "passCriterias": [{"id": "c1", "requirement": "Must have data", "status": "open"}],
+                        "passCriterias": [
+                            {"id": "c1", "requirement": "Must have data", "status": "open"}
+                        ],
                     }
                 }
             ),
         ),
-        patch("agents_app.agents.core.milestone_run.graph.get_stream_writer", return_value=lambda _x: None),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
     ):
         graph = build_milestone_run_graph(client)
         with pytest.raises(RuntimeError, match="Unsupported milestone preset"):

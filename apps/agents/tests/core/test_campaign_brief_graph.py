@@ -52,7 +52,11 @@ def _valid_campaign_brief_payload() -> dict:
             "currency": "EUR",
         },
         "contentPillars": ["Hero signatures", "Category variety", "Behind-the-scenes craft"],
-        "audienceHypotheses": ["Lunch nearby workers", "Weekend family groups", "Evening social dining"],
+        "audienceHypotheses": [
+            "Lunch nearby workers",
+            "Weekend family groups",
+            "Evening social dining",
+        ],
         "proofOrientedAngles": [
             "Top sellers lead conversions",
             "Weekend mix supports bundles",
@@ -61,7 +65,11 @@ def _valid_campaign_brief_payload() -> dict:
         "toneGuardrails": ["Be specific", "Keep copy concise", "Use operational language"],
         "campaignObjective": "Increase reservations in conversion stage this month",
         "mainCategory": "Mains",
-        "targetSegments": ["Weekday lunch workers", "Weekend family groups", "Evening social diners"],
+        "targetSegments": [
+            "Weekday lunch workers",
+            "Weekend family groups",
+            "Evening social diners",
+        ],
         "messageHierarchy": [
             "Hero promise tied to signature dishes",
             "Proof from top menu and category signals",
@@ -125,7 +133,11 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
                         "evening social groups",
                     ],
                     "messageHierarchy": ["hero promise", "proof point", "cta"],
-                    "offerAndCtaPlan": ["margin-safe weekday menu", "reserve via link", "dm fallback"],
+                    "offerAndCtaPlan": [
+                        "margin-safe weekday menu",
+                        "reserve via link",
+                        "dm fallback",
+                    ],
                     "contentPillarPlan": [
                         "signature dishes -> Reel -> reserve CTA",
                         "social proof -> Carousel -> DM CTA",
@@ -164,16 +176,29 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
                 return_value={
                     "data": {
                         "goal": "G1",
-                        "passCriterias": [{"id": "c1", "requirement": "Must pass", "status": "open"}],
+                        "passCriterias": [
+                            {"id": "c1", "requirement": "Must pass", "status": "open"}
+                        ],
                     }
                 }
             ),
         ),
-        patch("agents_app.agents.core.milestone_eval.nodes.get_stream_writer", return_value=lambda _x: None),
-        patch("agents_app.agents.core.milestone_run.graph.get_stream_writer", return_value=lambda _x: None),
+        patch(
+            "agents_app.agents.core.milestone_eval.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
         patch("agents_app.agents.core.milestone_run.graph.get_config", return_value={}),
-        patch("agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph", return_value=mock_eval),
-        patch("agents_app.agents.core.milestone_run.graph.build_campaign_brief_graph") as mock_build_brand,
+        patch(
+            "agents_app.agents.core.milestone_run.graph.build_milestone_eval_graph",
+            return_value=mock_eval,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.graph.build_campaign_brief_graph"
+        ) as mock_build_brand,
     ):
         mock_brand_graph = MagicMock()
         mock_brand_graph.astream = _fake_campaign_brief_astream
@@ -262,10 +287,11 @@ async def test_fallback_when_analytics_missing_still_builds_context() -> None:
             "agents_app.agents.core.milestone_run.campaign_brief.nodes.fetch_location_operating_signals",
             new=AsyncMock(return_value={"analytics_run": None, "instagram_signals": None}),
         ),
-        patch("agents_app.agents.core.milestone_run.campaign_brief.nodes.get_stream_writer", return_value=lambda _x: None),
+        patch(
+            "agents_app.agents.core.milestone_run.campaign_brief.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
     ):
         out = await fetch_and_prepare(state, client=MagicMock(spec=AsyncMock))
     assert "signal_markdown" in out
     assert "operating signals unavailable" in out["signal_markdown"].lower()
-
-

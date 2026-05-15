@@ -36,4 +36,3 @@ async def fetch_nodes_page(
     if not isinstance(raw, list):
         return []
     return [item for item in raw if isinstance(item, dict)]
-

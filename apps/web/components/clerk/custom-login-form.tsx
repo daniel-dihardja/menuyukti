@@ -45,7 +45,7 @@ export function CustomLoginForm({ className }: { className?: string }) {
         if (session?.currentTask) {
           return
         }
-        const url = decorateUrl(routes.workflows.list)
+        const url = decorateUrl(routes.dashboard)
         if (url.startsWith('http')) {
           window.location.href = url
         } else {

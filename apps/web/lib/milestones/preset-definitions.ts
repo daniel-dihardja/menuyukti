@@ -3,6 +3,7 @@ import {
   CalendarRange,
   Clapperboard,
   ClipboardList,
+  GalleryVerticalEnd,
   Images,
   Instagram,
   Lightbulb,
@@ -21,6 +22,7 @@ import {
 } from '@/lib/milestones/menu-tagger-taxonomy'
 import { EMPTY_POST_LINEUP_DATA } from '@/lib/milestones/post-lineup'
 import { EMPTY_REEL_LINEUP_DATA } from '@/lib/milestones/reel-lineup'
+import { EMPTY_STORY_LINEUP_DATA } from '@/lib/milestones/story-lineup'
 import {
   campaignBriefMilestoneDataSchema,
   cultureHooksMilestoneDataSchema,
@@ -29,6 +31,7 @@ import {
   menuTaggerMilestoneDataSchema,
   postLineupMilestoneDataSchema,
   reelLineupMilestoneDataSchema,
+  storyLineupMilestoneDataSchema,
   schedulerMilestoneDataSchema,
   type MilestoneInput,
   type MilestonePresetId,
@@ -312,6 +315,36 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       ],
     }),
   },
+  story_lineup: {
+    id: 'story_lineup',
+    icon: GalleryVerticalEnd,
+    inputType: 'optional_notes',
+    dataSchema: storyLineupMilestoneDataSchema,
+    emptyData: EMPTY_STORY_LINEUP_DATA,
+    getCreateFields: (t) => ({
+      name: t('milestonePreset.story_lineup.title'),
+      milestoneInput: {
+        type: 'story_lineup',
+        value: { notes: '' },
+      },
+      milestoneData: EMPTY_STORY_LINEUP_DATA,
+      goal: t('milestonePreset.story_lineup.goal'),
+      passCriteria: [
+        {
+          requirement: t('milestonePreset.story_lineup.criterionPriorDates'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.story_lineup.criterionStoriesPresent'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.story_lineup.criterionPublicHolidayFixdate'),
+          status: 'open',
+        },
+      ],
+    }),
+  },
   culture_hooks: {
     id: 'culture_hooks',
     icon: Lightbulb,
@@ -393,6 +426,10 @@ export const MILESTONE_PRESET_REGISTRY: Record<MilestonePresetId, MilestonePrese
       passCriteria: [
         {
           requirement: t('milestonePreset.scheduler.criterionPriorDates'),
+          status: 'open',
+        },
+        {
+          requirement: t('milestonePreset.scheduler.criterionPriorStoryLineup'),
           status: 'open',
         },
         {

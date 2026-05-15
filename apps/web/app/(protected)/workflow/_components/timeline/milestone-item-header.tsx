@@ -53,15 +53,14 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
       <CardTitle className="flex min-w-0 items-center gap-1 text-base leading-snug">
         <div className="flex min-w-0 flex-1 items-center">
           <div className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden">
-            {isMobile && railStatus !== 'empty' ? (
-              <span className="shrink-0">
-                <TimelineRailMarker compact status={railStatus} />
-              </span>
-            ) : null}
             <span className="inline-flex min-w-0 items-center gap-1.5">
-              {!isMobile || railStatus === 'empty' ? (
-                <MilestoneIcon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
-              ) : null}
+              <span className="flex size-5 shrink-0 items-center justify-center">
+                {isMobile && railStatus !== 'empty' ? (
+                  <TimelineRailMarker compact status={railStatus} />
+                ) : (
+                  <MilestoneIcon aria-hidden className="size-4 text-muted-foreground" />
+                )}
+              </span>
               <span className="min-w-0 truncate">{milestone.title}</span>
             </span>
           </div>

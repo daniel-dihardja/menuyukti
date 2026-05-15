@@ -75,12 +75,17 @@ def try_post_lineup_deterministic_verdict(
     if "reel_lineup" in norm and ("prior" in norm or "earlier" in norm or "run used" in norm):
         if not posts:
             return ("fail", "post lineup data has no posts from prior reel_lineup food leads.")
-        return ("pass", f"post lineup produced {len(posts)} post concept(s) from reel lineup food leads.")
+        return (
+            "pass",
+            f"post lineup produced {len(posts)} post concept(s) from reel lineup food leads.",
+        )
 
     if "carousel" in norm and ("post" in norm or "posts" in norm):
         if not posts:
             return ("fail", "post lineup has no posts.")
-        carousel_posts = [post for post in posts if str(post.get("format") or "").strip() == "carousel"]
+        carousel_posts = [
+            post for post in posts if str(post.get("format") or "").strip() == "carousel"
+        ]
         if not carousel_posts:
             return ("fail", "post lineup has no carousel post.")
         return ("pass", f"post lineup includes {len(carousel_posts)} carousel post(s).")
@@ -89,7 +94,10 @@ def try_post_lineup_deterministic_verdict(
         if not slides:
             return ("fail", "carousel has no slides to compare with foodLeads.")
         if len(slides) > POST_LINEUP_MAX_SLIDES:
-            return ("fail", f"carousel has {len(slides)} slides; maximum is {POST_LINEUP_MAX_SLIDES}.")
+            return (
+                "fail",
+                f"carousel has {len(slides)} slides; maximum is {POST_LINEUP_MAX_SLIDES}.",
+            )
         return ("pass", f"carousel slide count is {len(slides)}, matching foodLeads length.")
 
     if "dishname" in norm and "imagebrief" in norm:

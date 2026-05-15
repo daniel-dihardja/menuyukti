@@ -14,17 +14,20 @@ import {
   type ChatGatewayModelId,
   gatewayModelToMessageKey,
 } from '@/lib/chat/gateway-chat-models'
+import { cn } from '@workspace/ui/lib/utils'
 
 type ChatGatewayModelSelectProps = {
   value: ChatGatewayModelId
   onValueChange: (id: ChatGatewayModelId) => void
   disabled?: boolean
+  className?: string
 }
 
 export function ChatGatewayModelSelect({
   value,
   onValueChange,
   disabled,
+  className,
 }: ChatGatewayModelSelectProps) {
   const t = useTranslations('chatGatewayModels')
 
@@ -40,7 +43,7 @@ export function ChatGatewayModelSelect({
     >
       <PromptInputSelectTrigger
         aria-label={t('ariaLabel')}
-        className="max-w-[min(100%,11rem)] min-w-0"
+        className={cn('max-w-[min(100%,11rem)] min-w-0', className)}
       >
         <PromptInputSelectValue placeholder={t('ariaLabel')} />
       </PromptInputSelectTrigger>

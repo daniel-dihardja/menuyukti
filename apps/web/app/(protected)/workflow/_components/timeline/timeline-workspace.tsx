@@ -48,9 +48,9 @@ export function TimelineWorkspace({
   const showReady = !isLoading && !loadError
   const showTimeline = showReady && milestones.length > 0
 
-  const toolbarActions = showTimeline ? (
+  const toolbarActions = (
     <>
-      <TimelineToolbarCollapseAllButton />
+      {showTimeline ? <TimelineToolbarCollapseAllButton /> : null}
       <MilestoneCreateControls
         creating={creating}
         disabled={creating}
@@ -58,7 +58,7 @@ export function TimelineWorkspace({
         onCreateMilestoneFromPreset={onCreateMilestoneFromPreset}
       />
     </>
-  ) : null
+  )
 
   return (
     <TimelineCollapseProvider>
@@ -77,9 +77,6 @@ export function TimelineWorkspace({
         ) : milestones.length === 0 ? (
           <TimelineWorkspaceEmpty
             createError={errors.createError}
-            creating={creating}
-            onCreateMilestone={onCreateMilestone}
-            onCreateMilestoneFromPreset={onCreateMilestoneFromPreset}
             timelineTrailing={timelineTrailing}
           />
         ) : (

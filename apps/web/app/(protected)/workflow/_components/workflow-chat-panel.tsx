@@ -22,7 +22,6 @@ import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
 import { Alert, AlertDescription, AlertTitle } from '@workspace/ui/components/alert'
 import { Button } from '@workspace/ui/components/button'
 import { usePanelRef } from '@workspace/ui/components/resizable'
-import { Skeleton } from '@workspace/ui/components/skeleton'
 import { Spinner } from '@workspace/ui/components/spinner'
 import {
   Tooltip,
@@ -64,6 +63,7 @@ import { useWorkflowPreviewVisibility } from './use-workflow-preview-visibility'
 import { useWorkflowTimelineProviderSlices } from './use-workflow-timeline-provider-value'
 import { useMilestoneOperations } from './use-milestone-operations'
 import { WorkflowChatComposerMenus } from './workflow-chat-composer-menus'
+import { WorkflowPreviewPanelSkeleton } from './workflow-workspace-skeleton'
 import { DEFAULT_CHAT_GATEWAY_MODEL, type ChatGatewayModelId } from '@/lib/chat/gateway-chat-models'
 
 const WORKFLOW_CHAT_SESSION_STORAGE_PREFIX = 'menuyukti.wfChatSession.v1:'
@@ -79,7 +79,7 @@ const WorkflowPreviewPanelBodyLazy = dynamic(
   () => import('./workflow-preview-panel-body').then((m) => m.WorkflowPreviewPanelBody),
   {
     ssr: false,
-    loading: () => <Skeleton className="h-28 w-full rounded-lg" />,
+    loading: () => <WorkflowPreviewPanelSkeleton className="h-full w-full" />,
   },
 )
 

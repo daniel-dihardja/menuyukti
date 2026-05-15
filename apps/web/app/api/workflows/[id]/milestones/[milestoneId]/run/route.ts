@@ -5,17 +5,7 @@ import { z } from 'zod'
 import { getPythonAgentsUrl } from '@/lib/config'
 import { graphqlQuery } from '@/lib/graphql/client'
 import { revalidateWorkflowCampaignTreeCache } from '@/lib/graphql/revalidate-workflow-tree'
-import {
-  datesMilestoneDataSchema,
-  campaignBriefMilestoneDataSchema,
-  cultureHooksMilestoneDataSchema,
-  igProfileMilestoneDataSchema,
-  menuTaggerMilestoneDataSchema,
-  reelLineupMilestoneDataSchema,
-  postLineupMilestoneDataSchema,
-  milestoneInputSchema,
-  promotionCandidatesMilestoneDataSchema,
-} from '@/lib/graphql/node-schemas'
+import { milestonedataValueSchema, milestoneInputSchema } from '@/lib/graphql/node-schemas'
 import { NODE_QUERY, parseNodeData, type NodeDataRaw } from '@/lib/graphql/queries'
 import { milestoneIdParamSchema, workflowIdParamSchema } from '../../schema'
 import { isAllowedChatGatewayModel } from '@/lib/chat/gateway-chat-models'
@@ -33,18 +23,7 @@ const runBodySchema = z.object({
       message: 'Unsupported chat model',
     }),
   milestoneInput: milestoneInputSchema.optional(),
-  milestoneData: z
-    .union([
-      datesMilestoneDataSchema,
-      campaignBriefMilestoneDataSchema,
-      promotionCandidatesMilestoneDataSchema,
-      cultureHooksMilestoneDataSchema,
-      igProfileMilestoneDataSchema,
-      menuTaggerMilestoneDataSchema,
-      reelLineupMilestoneDataSchema,
-      postLineupMilestoneDataSchema,
-    ])
-    .optional(),
+  milestoneData: milestonedataValueSchema.optional(),
 })
 
 type RouteContext = {
