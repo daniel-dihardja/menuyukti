@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
+import { shouldRedirectPendingSession } from '@/lib/middleware-pending-session'
 import { routes } from '@/lib/routes'
 
 /** Keep route prefixes aligned with `PROTECTED_APP_SHELL_PREFIXES` in `lib/routes.ts` (MainHeader visibility). */
@@ -24,8 +25,8 @@ const isProtectedRoute = createRouteMatcher([
 // https://clerk.com/docs/references/nextjs/clerk-middleware#dynamic-keys
 export default clerkMiddleware(async (auth, req) => {
   const { sessionStatus, userId } = await auth()
-  // Session tasks (e.g. MFA setup): send pending sessions to sign-in URL configured in ClerkProvider.
-  if (sessionStatus === 'pending') {
+  // Session tasks (e.g. MFA): keep pending users on auth routes; block protected app until complete.
+  if (shouldRedirectPendingSession(req.nextUrl.pathname, sessionStatus)) {
     return NextResponse.redirect(new URL(routes.login, req.url))
   }
 

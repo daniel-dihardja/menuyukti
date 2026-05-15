@@ -9,8 +9,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
 export default async function SignUpPage() {
-  const { isAuthenticated } = await auth()
-  if (isAuthenticated) {
+  const { isAuthenticated, sessionStatus } = await auth()
+  if (isAuthenticated && sessionStatus !== 'pending') {
     redirect(routes.workflows.list)
   }
 
