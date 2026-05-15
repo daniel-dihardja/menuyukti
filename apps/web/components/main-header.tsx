@@ -42,10 +42,10 @@ export function MainHeader() {
   return (
     <header
       className={cn(
-        'sticky top-0 z-50 w-full border-b border-border bg-background/95 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur supports-[backdrop-filter]:bg-background/80',
+        'sticky top-0 z-50 w-full shrink-0 border-b border-border bg-background/95 pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] backdrop-blur supports-[backdrop-filter]:bg-background/80',
       )}
     >
-      <div className="flex h-14 w-full min-w-0 items-center justify-between gap-3 sm:gap-4">
+      <div className="box-border flex h-14 w-full min-w-0 items-center justify-between gap-3 sm:gap-4">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
           <Link
             href="/"
