@@ -15,6 +15,8 @@ import {
   reelLineupMilestoneInputValueSchema,
   postLineupMilestoneDataSchema,
   postLineupMilestoneInputValueSchema,
+  storyLineupMilestoneDataSchema,
+  storyLineupMilestoneInputValueSchema,
   schedulerMilestoneDataSchema,
   schedulerMilestoneInputValueSchema,
   milestonePresetIdSchema,
@@ -50,6 +52,7 @@ export const patchMilestoneSchema = z
         menuTaggerMilestoneDataSchema,
         reelLineupMilestoneDataSchema,
         postLineupMilestoneDataSchema,
+        storyLineupMilestoneDataSchema,
         schedulerMilestoneDataSchema,
       ])
       .nullable()
@@ -84,6 +87,10 @@ export const patchMilestoneSchema = z
         z.object({
           type: z.literal('post_lineup'),
           value: postLineupMilestoneInputValueSchema,
+        }),
+        z.object({
+          type: z.literal('story_lineup'),
+          value: storyLineupMilestoneInputValueSchema,
         }),
         z.object({
           type: z.literal('scheduler'),
