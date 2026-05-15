@@ -603,23 +603,43 @@
   "platform": {
     "dashboard": {
       "title": "Dashboard",
-      "description": "Workflows, brand assets, and quick links across your workspace.",
-      "workflowsHeading": "Workflow",
-      "workflowsViewAll": "View all workflows",
-      "viewWorkflow": "Open workflow",
-      "noWorkflows": "No workflows yet",
-      "createWorkflow": "Create workflow",
-      "assetsHeading": "Canvas",
-      "assetsDescription": "Recent images from your brand library.",
-      "assetsOpenStudio": "Open Canvas",
-      "assetsEmpty": "No images in your library yet.",
-      "printHeading": "Fulfillment",
-      "printDescription": "Admin queue for print-on-demand status—not the public print shop catalog.",
-      "printViewOrders": "Open fulfillment",
-      "insightsHeading": "Insights",
-      "insightsDescription": "Upload sales data and open analytics to see what to promote next.",
-      "insightsCta": "Go to reports",
-      "branchLabel": "Location"
+      "description": "AI-powered restaurant marketing on the go.",
+      "headline": "Run campaigns from anywhere",
+      "lead": "AI turns your sales data into Instagram campaigns—built for busy floors, not just desks.",
+      "pwa": {
+        "sectionTitle": "Add to home screen",
+        "sectionHint": "Pick your device, then follow the steps.",
+        "installHint": "Opens full screen—like a native app. Sign in once.",
+        "platforms": {
+          "ios": {
+            "label": "iPhone",
+            "browser": "Use Safari",
+            "steps": {
+              "step1": "Open in Safari and sign in.",
+              "step2": "Share → Add to Home Screen.",
+              "step3": "Tap Add."
+            }
+          },
+          "android": {
+            "label": "Android",
+            "browser": "Use Chrome",
+            "steps": {
+              "step1": "Open in Chrome and sign in.",
+              "step2": "Menu (⋮) → Install app.",
+              "step3": "Confirm Install."
+            }
+          },
+          "desktop": {
+            "label": "Desktop",
+            "browser": "Chrome or Edge",
+            "steps": {
+              "step1": "Open in Chrome or Edge.",
+              "step2": "Click the install icon in the address bar.",
+              "step3": "Confirm Install."
+            }
+          }
+        }
+      }
     },
     "printOrders": {
       "title": "Print fulfillment",

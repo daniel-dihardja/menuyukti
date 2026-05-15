@@ -11,7 +11,7 @@ import { redirect } from 'next/navigation'
 export default async function SignUpPage() {
   const { isAuthenticated, sessionStatus } = await auth()
   if (isAuthenticated && sessionStatus !== 'pending') {
-    redirect(routes.workflows.list)
+    redirect(routes.dashboard)
   }
 
   const t = await getTranslations('login')
