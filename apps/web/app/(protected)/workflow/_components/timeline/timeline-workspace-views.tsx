@@ -3,23 +3,13 @@
 import type { ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 
-import { Skeleton } from '@workspace/ui/components/skeleton'
 import { TooltipProvider } from '@workspace/ui/components/tooltip'
 
+import { WorkflowTimelineSkeleton } from '../workflow-workspace-skeleton'
 import { TimelineBody } from './timeline-body'
 
 export function TimelineWorkspaceLoading() {
-  return (
-    <div
-      aria-busy="true"
-      aria-live="polite"
-      className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-8"
-    >
-      <Skeleton className="h-8 w-full max-w-lg" />
-      <Skeleton className="h-28 w-full max-w-lg" />
-      <Skeleton className="h-28 w-full max-w-lg" />
-    </div>
-  )
+  return <WorkflowTimelineSkeleton className="min-h-0 flex-1" />
 }
 
 export function TimelineWorkspaceLoadError({ message }: { message: string }) {

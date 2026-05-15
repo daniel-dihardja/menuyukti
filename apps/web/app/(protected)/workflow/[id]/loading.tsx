@@ -1,7 +1,8 @@
 import { getTranslations } from 'next-intl/server'
 import { AnalyticsPageShell } from '@/components/analytics-page-shell'
 import { routes } from '@/lib/routes'
-import { Skeleton } from '@workspace/ui/components/skeleton'
+
+import { WorkflowWorkspaceSkeleton } from '../_components/workflow-workspace-skeleton'
 
 export default async function WorkflowDetailLoading() {
   const tWorkflows = await getTranslations('analytics.workflows')
@@ -15,13 +16,7 @@ export default async function WorkflowDetailLoading() {
       contentWidth="full"
       mainClassName="flex min-h-0 min-h-[24rem] w-full flex-1 flex-col"
     >
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4">
-        <Skeleton className="h-8 w-48 max-w-full" />
-        <div className="grid min-h-0 min-w-0 flex-1 grid-cols-3 gap-4">
-          <Skeleton className="col-span-1 h-full min-h-[12rem] rounded-lg" />
-          <Skeleton className="col-span-2 h-full min-h-[12rem] rounded-lg" />
-        </div>
-      </div>
+      <WorkflowWorkspaceSkeleton className="min-h-0 flex-1" />
     </AnalyticsPageShell>
   )
 }

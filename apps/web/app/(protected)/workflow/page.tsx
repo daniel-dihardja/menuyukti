@@ -40,19 +40,23 @@ function WorkflowsListSkeleton() {
         <CardHeader>
           <Skeleton className="h-5 w-56" />
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <div className="flex gap-4 border-b pb-2">
-            <Skeleton className="h-4 w-8 shrink-0" />
-            <Skeleton className="h-4 min-w-0 flex-1" />
-            <Skeleton className="h-4 w-10 shrink-0" />
-          </div>
-          {Array.from({ length: 4 }, (_, i) => (
-            <div className="flex gap-4" key={`workflows-skel-${i}`}>
-              <Skeleton className="h-4 w-8 shrink-0" />
-              <Skeleton className="h-4 min-w-0 flex-1" />
-              <Skeleton className="h-4 w-10 shrink-0" />
+        <CardContent className="px-0">
+          <div className="w-full overflow-x-auto">
+            <div className="flex flex-col gap-3 px-6">
+              <div className="flex gap-4 border-b pb-2">
+                <Skeleton className="h-4 w-8 shrink-0" />
+                <Skeleton className="h-4 min-w-0 flex-1" />
+                <Skeleton className="h-4 w-10 shrink-0" />
+              </div>
+              {Array.from({ length: 5 }, (_, i) => (
+                <div className="flex gap-4" key={`workflows-skel-${i}`}>
+                  <Skeleton className="h-4 w-8 shrink-0" />
+                  <Skeleton className="h-4 min-w-0 flex-1" />
+                  <Skeleton className="h-4 w-10 shrink-0" />
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -2,19 +2,14 @@
 
 import dynamic from 'next/dynamic'
 
-import { Skeleton } from '@workspace/ui/components/skeleton'
-
 import type { TimelineMilestone } from './timeline-workspace'
+import { WorkflowWorkspaceSkeleton } from './workflow-workspace-skeleton'
 
 const WorkflowChatPanel = dynamic(
   () => import('./workflow-chat-panel').then((m) => m.WorkflowChatPanel),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex min-h-[min(420px,50vh)] min-w-0 flex-1 items-center justify-center rounded-lg border border-dashed">
-        <Skeleton className="h-10 w-56" />
-      </div>
-    ),
+    loading: () => <WorkflowWorkspaceSkeleton className="min-h-[min(420px,50vh)] flex-1" />,
   },
 )
 
