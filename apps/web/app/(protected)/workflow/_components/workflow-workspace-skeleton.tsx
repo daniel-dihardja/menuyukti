@@ -28,7 +28,25 @@ function MilestoneCardSkeleton({ showRail }: { showRail: boolean }) {
         </div>
       ) : null}
       <div className="min-w-0 flex-1 pb-8">
-        <Skeleton className="h-[4.5rem] w-full rounded-md border" />
+        <div className="flex flex-col overflow-hidden rounded-md border py-4">
+          <div className="flex items-center justify-between gap-2 px-3 md:px-6">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <Skeleton className="size-5 shrink-0 rounded-sm" />
+              <Skeleton className="h-5 w-36 max-w-[70%]" />
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <Skeleton className="size-9 rounded-full" />
+              <Skeleton className="size-9 rounded-md" />
+              <Skeleton className="size-9 rounded-md" />
+              <Skeleton className="size-9 rounded-md" />
+            </div>
+          </div>
+          <div className="mt-4 flex gap-2 border-t px-3 pt-4 md:px-6">
+            {Array.from({ length: 5 }, (_, i) => (
+              <Skeleton className="h-8 w-16 shrink-0 rounded-md" key={`milestone-tab-${i}`} />
+            ))}
+          </div>
+        </div>
         {!showRail ? <Skeleton className="mt-2 h-10 w-full rounded-lg" /> : null}
       </div>
     </div>
@@ -71,7 +89,7 @@ export function WorkflowPreviewPanelSkeleton({ className }: { className?: string
         className,
       )}
     >
-      <div className="shrink-0 space-y-2 border-b px-4 py-4">
+      <div className="flex shrink-0 flex-col gap-2 border-b px-4 py-4">
         <div className="flex items-center gap-2">
           <Skeleton className="size-5 shrink-0 rounded-sm" />
           <Skeleton className="h-6 w-3/4 max-w-[12rem]" />
@@ -99,7 +117,7 @@ function WorkflowChatPanelSkeleton({ className }: { className?: string }) {
         <Skeleton className="ml-auto h-12 w-3/5 max-w-xs rounded-lg" />
         <Skeleton className="h-16 w-4/5 max-w-sm rounded-lg" />
       </div>
-      <div className="shrink-0 space-y-3 p-4">
+      <div className="flex shrink-0 flex-col gap-3 p-4">
         <Skeleton className="h-20 w-full rounded-lg" />
         <div className="flex items-center justify-between gap-2">
           <Skeleton className="h-9 w-32" />

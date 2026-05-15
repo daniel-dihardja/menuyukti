@@ -1,6 +1,6 @@
 'use client'
 
-import { type RefObject, useMemo } from 'react'
+import { type ReactNode, type RefObject, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { CalendarDays, Check, Circle, Trash2, X } from 'lucide-react'
 
@@ -8,8 +8,9 @@ import { FieldSaveStatus, type FieldSaveStatusVariant } from '@/components/field
 import { MarkdownMessage } from '@/components/markdown-message'
 import { Button } from '@workspace/ui/components/button'
 import { Calendar } from '@workspace/ui/components/calendar'
-import { cn } from '@workspace/ui/lib/utils'
 import { CardContent } from '@workspace/ui/components/card'
+import { Empty, EmptyDescription, EmptyHeader } from '@workspace/ui/components/empty'
+import { cn } from '@workspace/ui/lib/utils'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@workspace/ui/components/field'
 import {
   InputGroup,
@@ -118,6 +119,16 @@ function fieldSaveMessages(t: (key: string) => string) {
     saved: t('fieldSaveStatusSaved'),
     unsaved: t('fieldSaveStatusUnsaved'),
   }
+}
+
+function MilestoneTabEmpty({ children }: { children: ReactNode }) {
+  return (
+    <Empty className="gap-2 rounded-md border-0 p-0 text-left md:p-0">
+      <EmptyHeader className="max-w-none items-start gap-0 text-left">
+        <EmptyDescription className="text-sm">{children}</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  )
 }
 
 function MilestoneInputTabContent({
@@ -246,7 +257,7 @@ function MilestoneInputTabContent({
         </FieldGroup>
       )
     case 'none':
-      return <p className="text-muted-foreground text-sm">{t('milestoneInputUnsupported')}</p>
+      return <MilestoneTabEmpty>{t('milestoneInputUnsupported')}</MilestoneTabEmpty>
   }
 }
 
@@ -273,7 +284,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
   const optionalNotesCopy = inputModel.type === 'optional_notes' ? inputModel.copy : null
 
   return (
-    <CardContent className="min-w-0 border-border/60 border-t px-3 pt-4 pb-0 md:px-6">
+    <CardContent className="min-w-0 px-3 pt-4 pb-0 md:px-6">
       <Tabs className="min-w-0 gap-4" defaultValue="input">
         <TabsList
           className="w-full min-w-0 max-w-full justify-start overflow-x-auto overflow-y-hidden overscroll-x-contain [-webkit-overflow-scrolling:touch]"
@@ -298,6 +309,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
         <TabsContent value="goal">
           <FieldGroup className="gap-4">
             <Field>
+              <FieldLabel htmlFor={goalFieldId}>{t('milestoneTabGoal')}</FieldLabel>
               <Textarea
                 className="min-h-[120px] resize-y whitespace-pre-wrap"
                 disabled={savingGoal}
@@ -377,13 +389,13 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                     type="button"
                     variant="ghost"
                   >
-                    <Trash2 aria-hidden />
+                    <Trash2 aria-hidden data-icon="inline-start" />
                   </Button>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-muted-foreground text-sm">{t('milestonePassCriteriaEmpty')}</p>
+            <MilestoneTabEmpty>{t('milestonePassCriteriaEmpty')}</MilestoneTabEmpty>
           )}
           <InputGroup className="h-auto min-h-9 w-full flex-col items-stretch gap-2 sm:h-9 sm:flex-row sm:items-center sm:gap-0">
             <InputGroupInput
@@ -421,7 +433,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
           {hasResult ? (
             <MarkdownMessage content={milestone.resultMarkdown ?? ''} />
           ) : (
-            <p className="text-muted-foreground text-sm">{t('milestoneResultEmpty')}</p>
+            <MilestoneTabEmpty>{t('milestoneResultEmpty')}</MilestoneTabEmpty>
           )}
         </TabsContent>
         <TabsContent value="help">
@@ -429,7 +441,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
             <p className="font-semibold text-lg leading-tight">{milestone.title}</p>
             <MarkdownMessage content={helpDescription} />
             {milestone.presetId === 'restaurant_campaign_brief' ? (
-              <div className="space-y-2 text-muted-foreground text-sm">
+              <div className="flex flex-col gap-2 text-muted-foreground text-sm">
                 <p className="font-medium text-foreground">
                   {t('milestoneHelpCampaignBriefOptionalInputTitle')}
                 </p>
@@ -437,7 +449,7 @@ export function MilestoneItemTabs({ model }: MilestoneItemTabsProps) {
                 <p>{t('milestoneHelpCampaignBriefOptionalInputWhenToUse')}</p>
               </div>
             ) : optionalNotesCopy ? (
-              <div className="space-y-2 text-muted-foreground text-sm">
+              <div className="flex flex-col gap-2 text-muted-foreground text-sm">
                 <p className="font-medium text-foreground">
                   {t('milestoneHelpOptionalInputTitle')}
                 </p>

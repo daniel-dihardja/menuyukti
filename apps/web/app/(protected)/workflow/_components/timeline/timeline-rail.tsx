@@ -52,7 +52,7 @@ export function TimelineRailMarker({
     return (
       <span
         aria-label={labels.complete}
-        className={cn(box, 'rounded-full bg-green-600 text-white dark:bg-green-600')}
+        className={cn(box, 'rounded-full bg-success text-success-foreground')}
         role="img"
       >
         <Check aria-hidden className={iconCheck} />
@@ -64,7 +64,7 @@ export function TimelineRailMarker({
     return (
       <span
         aria-label={labels.failed}
-        className={cn(box, 'rounded-full bg-amber-600 text-white dark:bg-amber-600')}
+        className={cn(box, 'rounded-full bg-warning text-warning-foreground')}
         role="img"
       >
         <X aria-hidden className={iconCheck} />

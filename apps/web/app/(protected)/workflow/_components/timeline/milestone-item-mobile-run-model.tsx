@@ -1,6 +1,8 @@
 'use client'
 
 import { ChatGatewayModelSelect } from '@/components/chat-gateway-model-select'
+import { Separator } from '@workspace/ui/components/separator'
+
 import { useTimelineItemHeader } from './timeline-item-header-context'
 
 export function MilestoneItemMobileRunModel() {
@@ -13,17 +15,20 @@ export function MilestoneItemMobileRunModel() {
   }
 
   return (
-    <div
-      className="flex w-full min-w-0 border-border/60 border-b px-3 py-3 md:px-6"
-      onClick={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
-    >
-      <ChatGatewayModelSelect
-        className="w-full max-w-none"
-        disabled={isRunning || runState === 'blocked'}
-        onValueChange={onMilestoneRunChatModelChange}
-        value={milestoneRunChatModel}
-      />
-    </div>
+    <>
+      <Separator />
+      <div
+        className="flex w-full min-w-0 px-3 py-3 md:px-6"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <ChatGatewayModelSelect
+          className="w-full max-w-none"
+          disabled={isRunning || runState === 'blocked'}
+          onValueChange={onMilestoneRunChatModelChange}
+          value={milestoneRunChatModel}
+        />
+      </div>
+    </>
   )
 }

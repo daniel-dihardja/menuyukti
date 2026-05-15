@@ -4,12 +4,14 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { ChevronDown } from 'lucide-react'
 
+import { Button } from '@workspace/ui/components/button'
 import { Card } from '@workspace/ui/components/card'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@workspace/ui/components/collapsible'
+import { Separator } from '@workspace/ui/components/separator'
 import { cn } from '@workspace/ui/lib/utils'
 
 import { MilestoneDataPreview } from '../milestone-preview/milestone-data-preview'
@@ -235,10 +237,7 @@ function TimelineItemInner({
             </div>
           ) : (
             <div className="flex w-full shrink-0 flex-col items-center">
-              <div
-                aria-hidden
-                className="h-4 w-px shrink-0 border-l border-dashed border-border dark:border-muted-foreground/45"
-              />
+              <div aria-hidden className="h-4 w-px shrink-0 border-l border-dashed border-border" />
               <div className="mt-0.5 flex min-h-9 w-full items-center justify-center">
                 <TimelineRailMarker status={status} />
               </div>
@@ -248,10 +247,7 @@ function TimelineItemInner({
             </div>
           )}
           {isLast ? null : (
-            <div
-              aria-hidden
-              className="min-h-0 w-px flex-1 border-l border-dashed border-border dark:border-muted-foreground/45"
-            />
+            <div aria-hidden className="min-h-0 w-px flex-1 border-l border-dashed border-border" />
           )}
         </div>
       ) : null}
@@ -285,12 +281,18 @@ function TimelineItemInner({
               }}
             >
               <MilestoneItemHeader open={open} />
-              {isMilestoneRunning ? <MilestoneRunProgressStrip runningStep={runningStep} /> : null}
+              {isMilestoneRunning ? (
+                <>
+                  <Separator />
+                  <MilestoneRunProgressStrip runningStep={runningStep} />
+                </>
+              ) : null}
               <CollapsibleContent
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
               >
                 <MilestoneItemMobileRunModel />
+                <Separator />
                 <MilestoneItemTabs
                   model={{
                     addCriteriaInputId,
@@ -326,22 +328,21 @@ function TimelineItemInner({
               open={mobilePreviewOpen}
             >
               <CollapsibleTrigger asChild>
-                <button
-                  className={cn(
-                    'flex w-full min-h-10 items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium text-muted-foreground',
-                    'hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
-                  )}
+                <Button
+                  className="h-auto min-h-10 w-full justify-between gap-2 px-3 py-2.5 font-medium text-muted-foreground"
                   type="button"
+                  variant="ghost"
                 >
                   <span className="min-w-0 truncate">{t('milestonePreviewToggle')}</span>
                   <ChevronDown
                     aria-hidden
                     className={cn(
-                      'size-4 shrink-0 text-muted-foreground transition-transform',
+                      'text-muted-foreground transition-transform',
                       mobilePreviewOpen && 'rotate-180',
                     )}
+                    data-icon="inline-end"
                   />
-                </button>
+                </Button>
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="min-w-0 overflow-x-hidden px-3 py-3">
