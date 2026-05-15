@@ -77,11 +77,11 @@ function TimelineItemInner({
     () => DEFAULT_CHAT_GATEWAY_MODEL,
   )
   const { collapseAllEpoch } = useTimelineCollapse()
-  const [userOpen, setUserOpen] = useState(true)
+  const [userOpen, setUserOpen] = useState(false)
   const lastCollapseEpochRef = useRef(collapseAllEpoch)
   const lastMilestoneIdRef = useRef(milestone.id)
   const hadMilestoneDataRef = useRef(milestone.data != null)
-  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(() => milestone.data != null)
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false)
   const [goalDraft, setGoalDraft] = useState(() => milestone.goal ?? '')
   const addCriteriaInputRef = useRef<HTMLInputElement>(null)
   const isMilestoneRunning = runningMilestoneId === milestone.id
@@ -114,7 +114,7 @@ function TimelineItemInner({
     if (idChanged) {
       lastMilestoneIdRef.current = milestone.id
       hadMilestoneDataRef.current = milestone.data != null
-      setMobilePreviewOpen(milestone.data != null)
+      setMobilePreviewOpen(false)
       return
     }
     const nowHasData = milestone.data != null
