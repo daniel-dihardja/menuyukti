@@ -36,6 +36,8 @@ import {
   type AssetFlowOption,
 } from '@/lib/assets/client-api'
 
+import { AiFlowSelectOption } from './ai-flow-select-option'
+
 type ContentImageCreateDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -288,13 +290,10 @@ export function ContentImageCreateDialog({
                     >
                       {flows.map((flow) => (
                         <SelectItem key={flow.slug} value={flow.slug} className="cursor-pointer">
-                          <span className="flex w-full items-center gap-2">
-                            <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
-                            <span className="flex-1">{flow.displayName}</span>
-                            <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-primary">
-                              AI
-                            </span>
-                          </span>
+                          <AiFlowSelectOption
+                            displayName={flow.displayName}
+                            category={flow.category}
+                          />
                         </SelectItem>
                       ))}
                     </SelectContent>

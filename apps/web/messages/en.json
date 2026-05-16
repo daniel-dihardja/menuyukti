@@ -681,6 +681,11 @@
       },
       "loadError": "Couldn’t load designs. Try again."
     },
+    "flow": {
+      "category": {
+        "ai": "AI"
+      }
+    },
     "upload": {
       "title": "Upload images",
       "hint": "Drag and drop or browse — PNG, JPEG, WebP, GIF, AVIF",

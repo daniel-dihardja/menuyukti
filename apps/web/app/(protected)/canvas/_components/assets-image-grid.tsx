@@ -16,6 +16,7 @@ import {
 } from '@workspace/ui/components/select'
 import { Textarea } from '@workspace/ui/components/textarea'
 
+import { AiFlowSelectOption } from './ai-flow-select-option'
 import type { AiFlowOption } from './assets-upload-zone'
 import {
   ASSETS_GRID_SKELETON_COUNT,
@@ -234,7 +235,10 @@ export function AssetsImageGrid({
                         <SelectItem value="custom">{t('grid.generate.customOption')}</SelectItem>
                         {aiFlows.map((flow) => (
                           <SelectItem key={`${item.name}-${flow.slug}`} value={flow.slug}>
-                            {flow.displayName}
+                            <AiFlowSelectOption
+                              displayName={flow.displayName}
+                              category={flow.category}
+                            />
                           </SelectItem>
                         ))}
                       </SelectContent>

@@ -11,6 +11,7 @@ export type AssetCatalogItem = {
 export type AssetFlowOption = {
   slug: string
   displayName: string
+  category: string
 }
 
 export type AssetFlowContext = 'upload' | 'product-card' | 'design-create'
