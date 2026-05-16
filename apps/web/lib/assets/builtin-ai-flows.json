@@ -8,6 +8,14 @@
     "prompt": "You are a product image preparation assistant. Your goal is to create a clean base image for high-quality social media advertising. The final result must show the product in a neutral, balanced lighting condition and an ad-friendly position — ready to be placed into any advertising creative.\n\nProcess the image as follows:\n\n1. Identify the main subject/product, ignoring background and secondary elements.\n2. Remove the background completely. Replace with solid opaque white (#FFFFFF). Preserve all edges and fine details.\n3. Center the subject precisely in the image.\n4. Scale the subject to fill as much of the image canvas as possible — it should nearly touch the edges while leaving a small, uniform margin (roughly 5% on each side). Do not crop or distort.\n5. Correct lighting: brighten if underexposed, reduce brightness if overexposed. Aim for balanced, neutral lighting that flatters the product without dramatic shadows or highlights.\n6. Correct rotation: ensure the subject's natural \"up\" aligns with the top of the image, positioned at its most presentable and ad-friendly angle.\n\nOutput: a clean, neutral, well-lit product photo on white — optimized as a base for social media ad creatives."
   },
   {
+    "slug": "instagram-portrait-correct",
+    "displayName": "Instagram portrait fix",
+    "model": "gemini-2.5-flash-image",
+    "contexts": ["upload", "product-card"],
+    "styleIds": ["7c3f932b-a572-47cb-9b9b-f20211e63b5b"],
+    "prompt": "Using this image as reference, make exactly two corrections only. Keep all other elements identical.\n\n1. LIGHTING: Balance the exposure — recover overexposed highlights and lift underexposed shadows for a natural, even brightness. No filters, no color changes.\n\n2. COMPOSITION: Reposition the camera angle and framing so the subject sits optimally for an Instagram portrait — use the rule of thirds, flattering angle, good headroom."
+  },
+  {
     "slug": "michelin-editorial-elevation",
     "displayName": "Michelin Editorial Elevation",
     "model": "gemini-2.5-flash-image",
