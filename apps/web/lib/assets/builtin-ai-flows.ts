@@ -2,24 +2,39 @@ import builtinFlowsJson from './builtin-ai-flows.json'
 
 import type { NanoBananaFlowConfig } from '@/lib/leonardo'
 
+const DEFAULT_FLOW_CATEGORY = 'AI'
+
 type BuiltinAiFlowRecord = {
   slug: string
   displayName: string
+  category?: string
   model: string
   prompt: string
   styleIds?: string[]
   contexts?: BuiltinAiFlowContext[]
 }
 
-export type BuiltinAiFlowOption = Pick<BuiltinAiFlowRecord, 'slug' | 'displayName'>
+export type BuiltinAiFlowOption = {
+  slug: string
+  displayName: string
+  category: string
+}
 export type BuiltinAiFlowContext = 'upload' | 'product-card' | 'design-create'
 
 const builtinFlows = builtinFlowsJson as BuiltinAiFlowRecord[]
 
 const builtinFlowsBySlug = new Map(builtinFlows.map((flow) => [flow.slug, flow] as const))
 
+function toFlowOption(flow: BuiltinAiFlowRecord): BuiltinAiFlowOption {
+  return {
+    slug: flow.slug,
+    displayName: flow.displayName,
+    category: flow.category ?? DEFAULT_FLOW_CATEGORY,
+  }
+}
+
 export function listBuiltinAiFlowOptions(): BuiltinAiFlowOption[] {
-  return builtinFlows.map(({ slug, displayName }) => ({ slug, displayName }))
+  return builtinFlows.map(toFlowOption)
 }
 
 export function listBuiltinAiFlowOptionsForContext(
@@ -27,7 +42,7 @@ export function listBuiltinAiFlowOptionsForContext(
 ): BuiltinAiFlowOption[] {
   return builtinFlows
     .filter((flow) => !flow.contexts || flow.contexts.includes(context))
-    .map(({ slug, displayName }) => ({ slug, displayName }))
+    .map(toFlowOption)
 }
 
 export function getBuiltinAiFlowConfig(slug: string): NanoBananaFlowConfig | null {

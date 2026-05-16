@@ -1,7 +1,7 @@
 'use client'
 
 import type { ChangeEvent, DragEvent, RefObject } from 'react'
-import { ImageIcon, Loader2, Sparkles, Upload } from 'lucide-react'
+import { ImageIcon, Loader2, Upload } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { Button } from '@workspace/ui/components/button'
@@ -16,7 +16,11 @@ import {
 } from '@workspace/ui/components/select'
 import { cn } from '@workspace/ui/lib/utils'
 
-export type AiFlowOption = { slug: string; displayName: string }
+import type { AssetFlowOption } from '@/lib/assets/client-api'
+
+import { AiFlowSelectOption } from './ai-flow-select-option'
+
+export type AiFlowOption = AssetFlowOption
 
 export type AssetsUploadZoneProps = {
   inputRef: RefObject<HTMLInputElement | null>
@@ -135,13 +139,7 @@ export function AssetsUploadZone({
                   <SelectItem value="none">{t('upload.flow.none')}</SelectItem>
                   {aiFlows.map((flow) => (
                     <SelectItem key={flow.slug} value={flow.slug} className="cursor-pointer">
-                      <span className="flex w-full items-center gap-2">
-                        <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
-                        <span className="flex-1">{flow.displayName}</span>
-                        <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-primary">
-                          AI
-                        </span>
-                      </span>
+                      <AiFlowSelectOption displayName={flow.displayName} category={flow.category} />
                     </SelectItem>
                   ))}
                 </SelectContent>

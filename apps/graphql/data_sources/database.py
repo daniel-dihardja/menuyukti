@@ -60,7 +60,7 @@ def seed_db(target_engine=None) -> None:
             session.add(
                 ImageAiFlow(
                     slug="remove-background",
-                    display_name="Remove background",
+                    display_name="Prepare product for ads",
                     prompt=(
                         "Remove the background completely. Keep only the main subject "
                         "centered on a solid white background (opaque, not transparent). "

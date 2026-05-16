@@ -27,6 +27,7 @@ import {
   loadBackgroundAssets,
   loadDesignAssets,
   loadProductAssets,
+  type AssetFlowOption,
 } from '@/lib/assets/client-api'
 
 import {
@@ -74,12 +75,8 @@ export function AssetsClient() {
   const [imageDimensionsByName, setImageDimensionsByName] = useState<
     Record<string, { width: number; height: number }>
   >({})
-  const [uploadAiFlows, setUploadAiFlows] = useState<Array<{ slug: string; displayName: string }>>(
-    [],
-  )
-  const [productCardAiFlows, setProductCardAiFlows] = useState<
-    Array<{ slug: string; displayName: string }>
-  >([])
+  const [uploadAiFlows, setUploadAiFlows] = useState<AssetFlowOption[]>([])
+  const [productCardAiFlows, setProductCardAiFlows] = useState<AssetFlowOption[]>([])
   const [flowsLoading, setFlowsLoading] = useState(true)
   const [preview, setPreview] = useState<PreviewState>(null)
   const [previewImgLoaded, setPreviewImgLoaded] = useState(false)
