@@ -13,7 +13,7 @@
     "model": "gemini-2.5-flash-image",
     "contexts": ["upload", "product-card"],
     "styleIds": ["7c3f932b-a572-47cb-9b9b-f20211e63b5b"],
-    "prompt": "Using this image as reference, make exactly two corrections only. Keep all other elements identical.\n\n1. LIGHTING: Balance the exposure — recover overexposed highlights and lift underexposed shadows for a natural, even brightness. No filters, no color changes.\n\n2. COMPOSITION: Reposition the camera angle and framing so the subject sits optimally for an Instagram portrait — use the rule of thirds, flattering angle, good headroom."
+    "prompt": "Using this image as reference, make exactly two corrections only. Keep all other elements identical.\n\n1. LIGHTING: Lift underexposed shadows and brighten midtones for a natural, even exposure.\n\n2. COMPOSITION: Reposition the camera angle and framing so the subject sits optimally for an Instagram portrait — use the rule of thirds, flattering angle, good headroom."
   },
   {
     "slug": "michelin-editorial-elevation",
