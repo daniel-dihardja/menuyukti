@@ -35,11 +35,7 @@ export function MilestoneRunProgressStrip({ runningStep }: { runningStep: string
   const currentIdx = milestoneRunStepIndex(runningStep)
 
   return (
-    <div
-      aria-live="polite"
-      className="border-border/60 border-b bg-muted/30 px-3 py-3 md:px-6"
-      role="status"
-    >
+    <div aria-live="polite" className="bg-muted/30 px-3 py-3 md:px-6" role="status">
       <p className="mb-2 font-medium text-foreground text-xs">{t('runningLabel')}</p>
       <ol className="flex flex-wrap items-center gap-x-1 gap-y-2 text-muted-foreground text-xs">
         {labels.map((label, j) => {

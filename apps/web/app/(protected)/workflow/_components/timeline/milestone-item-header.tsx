@@ -147,7 +147,6 @@ export function MilestoneItemHeader({ open }: MilestoneItemHeaderProps) {
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 size="icon"
-                title={t('deleteMilestone')}
                 type="button"
                 variant="ghost"
               >

@@ -1,57 +1,94 @@
 'use client'
 
 import { useMemo } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { Badge } from '@workspace/ui/components/badge'
+import { Card, CardContent, CardHeader } from '@workspace/ui/components/card'
+import { cn } from '@workspace/ui/lib/utils'
 
 import type { StoryLineupMilestoneData, StoryLineupStory } from '@/lib/graphql/node-schemas'
+import { formatPreviewDateString } from '@/lib/format-preview-date'
 
+import {
+  MilestonePreviewListDetailShell,
+  MilestonePreviewListRow,
+  useMilestonePreviewSelection,
+} from './milestone-preview-list-detail'
 import { milestonePreviewTypography as mp } from './milestone-preview-typography'
 
 export type MilestoneStoryLineupDataPreviewProps = {
   data: StoryLineupMilestoneData
 }
 
-function StoryRow({
+function formatStorySchedule(
+  story: StoryLineupStory,
+  formatDate: (value: string) => string,
+): string | undefined {
+  if (!story.date?.trim()) {
+    return undefined
+  }
+  const datePart = formatDate(story.date)
+  return story.time?.trim() ? `${datePart} · ${story.time}` : datePart
+}
+
+function StoryDetail({
   story,
-  index,
-  fixdateLabel,
-  publicHolidayLabel,
+  labels,
+  formatDate,
 }: {
   story: StoryLineupStory
-  index: number
-  fixdateLabel: string
-  publicHolidayLabel: string
+  labels: {
+    fixdate: string
+    publicHoliday: string
+    dateLabel: string
+    timeLabel: string
+    holidayLabel: string
+  }
+  formatDate: (value: string) => string
 }) {
+  const schedule = formatStorySchedule(story, formatDate)
+
+  const hasBadges = story.fixdate || story.reason === 'public_holiday'
+
   return (
-    <div className="space-y-1 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className={mp.bodyStrong}>
-          {index + 1}. {story.title}
-        </p>
-        {story.fixdate ? <Badge variant="secondary">{fixdateLabel}</Badge> : null}
-        {story.reason === 'public_holiday' ? (
-          <Badge variant="outline">{publicHolidayLabel}</Badge>
+    <Card className="gap-3 py-4 shadow-none">
+      {hasBadges ? (
+        <CardHeader className="px-4 pb-0">
+          <div className="flex flex-wrap items-center gap-2">
+            {story.fixdate ? <Badge variant="secondary">{labels.fixdate}</Badge> : null}
+            {story.reason === 'public_holiday' ? (
+              <Badge variant="outline">{labels.publicHoliday}</Badge>
+            ) : null}
+          </div>
+        </CardHeader>
+      ) : null}
+      <CardContent className={cn('flex flex-col gap-2 px-4', hasBadges ? 'pt-0' : 'pt-4')}>
+        {schedule ? (
+          <p className={mp.bodySmall}>
+            <span className={mp.rowKey}>{labels.dateLabel}:</span> {schedule}
+          </p>
         ) : null}
-      </div>
-      {story.date ? (
-        <p className={mp.bodySmall}>
-          <span className={mp.rowKey}>Date:</span> {story.date}
-          {story.time ? ` · ${story.time}` : ''}
-        </p>
-      ) : null}
-      {story.holidayName ? (
-        <p className={mp.bodySmall}>
-          <span className={mp.rowKey}>Holiday:</span> {story.holidayName}
-        </p>
-      ) : null}
-    </div>
+        {story.time?.trim() && !story.date?.trim() ? (
+          <p className={mp.bodySmall}>
+            <span className={mp.rowKey}>{labels.timeLabel}:</span> {story.time}
+          </p>
+        ) : null}
+        {story.holidayName ? (
+          <p className={mp.bodySmall}>
+            <span className={mp.rowKey}>{labels.holidayLabel}:</span> {story.holidayName}
+          </p>
+        ) : null}
+      </CardContent>
+    </Card>
   )
 }
 
 export function MilestoneStoryLineupDataPreview({ data }: MilestoneStoryLineupDataPreviewProps) {
   const t = useTranslations('analytics.workflows.chat')
+  const locale = useLocale()
+  const formatDate = (value: string) => formatPreviewDateString(value, locale)
+
   const labels = useMemo(
     () => ({
       heading: t('milestoneStoryLineupPreviewHeading'),
@@ -59,14 +96,27 @@ export function MilestoneStoryLineupDataPreview({ data }: MilestoneStoryLineupDa
       sourceDates: t('milestoneStoryLineupPreviewSourceDates'),
       fixdate: t('milestoneStoryLineupPreviewFixdateBadge'),
       publicHoliday: t('milestoneStoryLineupPreviewPublicHolidayBadge'),
+      dateLabel: t('milestoneStoryLineupPreviewDateLabel'),
+      timeLabel: t('milestoneStoryLineupPreviewTimeLabel'),
+      holidayLabel: t('milestoneStoryLineupPreviewHolidayLabel'),
     }),
     [t],
   )
 
-  const stories = data.stories ?? []
+  const listItems = useMemo(
+    () => (data.stories ?? []).map((story) => ({ id: story.id, story })),
+    [data.stories],
+  )
+  const stories = listItems.map((item) => item.story)
+  const { selectedId, select, clear } = useMilestonePreviewSelection(listItems)
+
+  const selectedStory = listItems.find((item) => item.id === selectedId)?.story
+
+  const viewDetailsLabel = t('milestoneLineupPreviewViewDetails')
+  const backLabel = t('milestoneLineupPreviewBackToList')
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <p className={mp.sectionTitle}>{labels.heading}</p>
       {data.sourceDatesTitle ? (
         <p className={mp.bodySmall}>
@@ -76,17 +126,42 @@ export function MilestoneStoryLineupDataPreview({ data }: MilestoneStoryLineupDa
       {stories.length === 0 ? (
         <p className={mp.body}>{labels.empty}</p>
       ) : (
-        <div className="space-y-2">
-          {stories.map((story, index) => (
-            <StoryRow
-              key={story.id}
-              story={story}
-              index={index}
-              fixdateLabel={labels.fixdate}
-              publicHolidayLabel={labels.publicHoliday}
-            />
-          ))}
-        </div>
+        <MilestonePreviewListDetailShell
+          selectedId={selectedId}
+          backLabel={backLabel}
+          detailTitleId="story-lineup-detail-title"
+          detailTitle={selectedStory?.title ?? labels.heading}
+          onBack={clear}
+          list={
+            <div className="flex flex-col gap-2">
+              {listItems.map(({ id, story }) => {
+                const schedule = formatStorySchedule(story, formatDate)
+                return (
+                  <MilestonePreviewListRow
+                    key={id}
+                    title={story.title}
+                    description={schedule}
+                    meta={
+                      <>
+                        {story.fixdate ? <Badge variant="secondary">{labels.fixdate}</Badge> : null}
+                        {story.reason === 'public_holiday' ? (
+                          <Badge variant="outline">{labels.publicHoliday}</Badge>
+                        ) : null}
+                      </>
+                    }
+                    viewDetailsLabel={viewDetailsLabel}
+                    onSelect={() => select(id)}
+                  />
+                )
+              })}
+            </div>
+          }
+          detail={
+            selectedStory ? (
+              <StoryDetail story={selectedStory} labels={labels} formatDate={formatDate} />
+            ) : null
+          }
+        />
       )}
     </div>
   )
