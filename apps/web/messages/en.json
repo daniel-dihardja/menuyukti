@@ -750,7 +750,7 @@
     "emptyTitle": "No flows yet",
     "emptyDescription": "Add a flow to configure how images are processed when your team uploads assets.",
     "displayName": "Display name",
-    "displayNamePlaceholder": "e.g. Remove background",
+    "displayNamePlaceholder": "e.g. Prepare product for ads",
     "slug": "Slug",
     "slugPlaceholder": "e.g. remove-background",
     "slugHint": "Lowercase letters, numbers, and hyphens only. Used as the stable key in the app.",

@@ -1,7 +1,7 @@
 [
   {
     "slug": "remove-background",
-    "displayName": "Remove Background",
+    "displayName": "Prepare Product for Ads",
     "category": "AI",
     "model": "gemini-2.5-flash-image",
     "contexts": ["upload", "product-card"],
