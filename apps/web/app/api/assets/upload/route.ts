@@ -2,9 +2,9 @@ import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { NextResponse } from 'next/server'
 import { requireMenuyuktiAdminApi } from '@/lib/menuyukti-admin-api'
 import { randomUUID } from 'crypto'
-import sharp from 'sharp'
 
 import { getBuiltinAiFlowConfig } from '@/lib/assets/builtin-ai-flows'
+import { prepareUploadImage } from '@/lib/assets/prepare-upload-image'
 import { getPresignedGetUrl, getS3Bucket, getS3Client, userObjectKey } from '@/lib/assets/storage'
 import { runRemoveBackground } from '@/lib/leonardo'
 
@@ -87,25 +87,26 @@ export async function POST(req: Request) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer())
-  const image = sharp(buffer)
-  const metadata = await image.metadata()
-  const { width, height } = metadata
-
-  if (!width || !height) {
-    return NextResponse.json({ message: 'Could not read image dimensions' }, { status: 400 })
+  let resizedWebp: Buffer
+  let rw: number
+  let rh: number
+  try {
+    const prepared = await prepareUploadImage(buffer)
+    resizedWebp = prepared.webpBuffer
+    rw = prepared.width
+    rh = prepared.height
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Could not read image dimensions'
+    if (message === 'Could not read image dimensions') {
+      return NextResponse.json({ message }, { status: 400 })
+    }
+    console.error('[assets/upload] image preprocessing failed', {
+      userIdPrefix: userId.slice(0, 8),
+      message,
+    })
+    return NextResponse.json({ message: 'Failed to process image' }, { status: 500 })
   }
 
-  const isLandscapeOrSquare = width >= height
-  const resized = sharp(buffer).resize(
-    isLandscapeOrSquare
-      ? { height: 1024, withoutEnlargement: false }
-      : { width: 1024, withoutEnlargement: false },
-  )
-
-  const resizedWebp = await resized.webp({ quality: 85 }).toBuffer()
-  const resizedMeta = await sharp(resizedWebp).metadata()
-  const rw = resizedMeta.width ?? width
-  const rh = resizedMeta.height ?? height
   const flow = normalizeFlow(formData.get('flow'))
 
   let webpBuffer: Buffer
