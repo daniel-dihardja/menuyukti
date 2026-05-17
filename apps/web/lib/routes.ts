@@ -49,7 +49,7 @@ export const routes = {
     menuItems: (analyticsId: string | number) => `/analytics/${analyticsId}/menu-items`,
   },
 
-  /** AI canvas (brand library + generation). */
+  /** AI studio (brand library + generation). */
   canvas: '/canvas',
   canvasSession: (id: string | number) => `/canvas/${id}`,
   /** Standalone assistant chat (same `/api/chat` stack as workflows). */

@@ -13,7 +13,7 @@
     "navShop": "Print Shop",
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
-    "mobileMenuDescription": "Canvas, Workflow, Advisor chat, and the print shop catalog.",
+    "mobileMenuDescription": "Studio, Workflow, Advisor chat, and the print shop catalog.",
     "mobileMenuSignIn": "Sign in"
   },
   "accountMenu": {
@@ -50,7 +50,7 @@
   },
   "metadata": {
     "title": "Menuyukti - AI-first restaurant social media marketing platform",
-    "description": "AI-first platform for restaurant social media marketing: Canvas for creatives, Advisor for strategy, and Pro Campaigns agentic automation that turns sales data into Instagram schedules, promotion ideas, and publish-ready captions.",
+    "description": "AI-first Instagram marketing for restaurants: plan campaigns from sales data, create on-brand visuals, and draft promotion-ready copy—in one platform built for restaurant marketers.",
     "ogLocale": "en_US"
   },
   "login": {
@@ -58,7 +58,7 @@
     "slogan": "AI-first restaurant marketing",
     "backToHome": "Back to home",
     "signUpTitle": "Join Menuyukti",
-    "signUpDescription": "Create an account for Canvas, Advisor chat, Pro Campaigns, and analytics-driven workflows, plus the print shop when you want ready-made artwork.",
+    "signUpDescription": "Create an account for Studio, Advisor chat, Pro Campaigns, and analytics-driven workflows, plus the print shop when you want ready-made artwork.",
     "emailLabel": "Email",
     "emailPlaceholder": "m@example.com",
     "passwordLabel": "Password",
@@ -146,19 +146,19 @@
     "skipToContent": "Skip to content",
     "hero": {
       "headline": "AI-first restaurant social media marketing platform",
-      "subtitle": "Menuyukti is built for restaurant marketers: Canvas creates scroll-stopping visuals, Advisor sharpens campaign strategy, and Pro Campaigns automates planning from sales data to posting schedule-so you always know what to post and why.",
-      "badge": "AI-first · Canvas · Advisor · Pro Campaigns",
+      "subtitle": "Built AI-first for restaurant marketers: turn menu photos and sales data into what to post, when to post it, and scroll-stopping Instagram creatives—with agentic workflows you can review, not a black box.",
+      "badge": "AI-first · Studio · Advisor · Pro Campaigns",
       "ctaSecondary": "Sign in",
       "previewAlt": "Screenshot of the Menuyukti Pro workflow UI focused on the Campaign Brief milestone, showing a generated campaign brief informed by restaurant sales data.",
       "previewCaption": "Pro Campaigns in action: from sales signals to campaign brief, promotion strategy, posting schedule, and ready-to-review social copy."
     },
     "pillars": {
       "title": "AI-first tools for your restaurant's social media growth",
-      "subtitle": "Use purpose-built intelligence for each marketing job-creative generation, strategic guidance, and campaign automation-grounded in what your restaurant actually sells.",
+      "subtitle": "Purpose-built tools for each job—creative generation in Studio, strategic guidance in Advisor, and campaign automation in Pro Campaigns—grounded in what your restaurant actually sells.",
       "proBadge": "Pro",
       "items": {
         "studio": {
-          "title": "Canvas: create social content that stops the scroll",
+          "title": "Studio: create social content that stops the scroll",
           "description": "Turn menu photos and briefs into on-brand Reels covers, carousel visuals, and promo creatives without starting from scratch or juggling multiple design tools."
         },
         "strategyChat": {
@@ -175,13 +175,13 @@
         }
       }
     },
-    "problem": "If you are running social for a restaurant on your own, you are often juggling generic chat tools and disconnected apps. Even when content looks good, it is hard to connect social posts to what sells-and easy to miss the strategy layer that drives results.",
+    "problem": "If you are running social for a restaurant on your own, you are often juggling generic chat tools and disconnected apps. Even when content looks good, it is hard to connect social posts to what sells—and easy to miss the strategy layer that drives results.",
     "problemImageAlt": "Abstract analytics dashboard showing sales performance bars and insight summary.",
-    "solution": "Menuyukti fixes that with an AI-first stack: Canvas for visuals, Advisor for strategy, and Pro Campaigns for orchestrated execution from sales signals to scheduled posts and captions.",
+    "solution": "Menuyukti fixes that with an AI-first stack: Studio for visuals, Advisor for strategy, and Pro Campaigns for orchestrated execution from sales signals to scheduled posts and captions.",
     "solutionImageAlt": "Workflow diagram from POS data through AI milestones to stored workflow outputs and artifacts.",
     "trust": {
       "title": "AI-first by design, not as an add-on",
-      "stat1Value": "Canvas",
+      "stat1Value": "Studio",
       "stat1Label": "Create on-brand visuals for Reels, carousels, and promos in minutes.",
       "stat2Value": "Advisor",
       "stat2Label": "Get campaign guidance for hooks, timing, and offers while staying aligned to your brand and goals.",
@@ -226,7 +226,7 @@
     },
     "featureHighlights": {
       "title": "See the platform in action",
-      "subtitle": "From creative workflows in Canvas to strategy guidance in Advisor and orchestration in Pro Campaigns, each layer is built for restaurant social media marketing.",
+      "subtitle": "From creative workflows in Studio to strategy guidance in Advisor and orchestration in Pro Campaigns, each layer is built for restaurant social media marketing.",
       "cards": {
         "assetsTitle": "Workflow assets and AI image flows",
         "assetsDescription": "Upload raw smartphone photos and chain AI image flows from background removal through preset-based product photography.",
@@ -259,7 +259,7 @@
       "title": "How it works",
       "steps": {
         "studio": {
-          "title": "1. Canvas: build your visual content",
+          "title": "1. Studio: build your visual content",
           "description": "Generate social-ready creatives from your existing photos and briefs, then prepare assets for Reels and feed posts."
         },
         "strategyChat": {
@@ -278,7 +278,7 @@
     },
     "why": {
       "title": "Why AI-first restaurant marketers choose Menuyukti",
-      "subtitle": "Unlike generic tools, Menuyukti combines creative generation, strategy guidance, and agentic automation in one platform for restaurant social media marketing.",
+      "subtitle": "Unlike generic tools, Menuyukti combines Studio for creatives, Advisor for strategy, and Pro Campaigns for agentic automation in one platform built for restaurant social media marketing.",
       "cards": {
         "insights": "Translate sales patterns into campaign decisions",
         "waste": "Ship more content with less manual back-and-forth",
@@ -288,7 +288,7 @@
     },
     "cta": {
       "title": "Ready to run AI-first restaurant social media campaigns?",
-      "description": "Start with Canvas for creatives, use Advisor for strategy, and launch Pro Campaigns to execute data-backed plans at scale.",
+      "description": "Start with Studio for creatives, use Advisor for strategy, and launch Pro Campaigns to execute data-backed plans at scale.",
       "secondary": "Sign in"
     },
     "footer": {
@@ -329,12 +329,12 @@
       "signedInNavAria": "Workspace navigation",
       "backDashboard": "Dashboard",
       "backWorkflows": "Workflow",
-      "backStudio": "Canvas",
+      "backStudio": "Studio",
       "navigationMenuTriggerAria": "Open navigation menu",
       "shopMenuTitle": "Navigation",
       "shopMenuDescription": "Site areas and workspace shortcuts from the print shop.",
       "workspaceSectionHeading": "Workspace",
-      "workspaceMenuDescription": "Go to your dashboard, workflow, or canvas."
+      "workspaceMenuDescription": "Go to your dashboard, workflow, or studio."
     },
     "skipToContent": "Skip to products",
     "filterAria": "Filter by collection",
@@ -540,7 +540,7 @@
     "reports": "Reports",
     "workflows": "Workflow",
     "skills": "Skills & tools",
-    "studio": "Canvas",
+    "studio": "Studio",
     "printShop": "Print shop",
     "agents": "Advisor",
     "cogs": "COGS",
@@ -1673,7 +1673,7 @@
           "loadError": "Couldn't load images. Try again.",
           "productsLabel": "Product image",
           "productsSelectedCount": "{count, plural, =0 {None selected} one {# selected} other {# selected}}",
-          "productsEmpty": "No product images yet. Upload one in Canvas.",
+          "productsEmpty": "No product images yet. Upload one in Studio.",
           "backgroundLabel": "Background",
           "backgroundSelected": "Selected",
           "backgroundNotSelected": "None",
