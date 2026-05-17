@@ -77,6 +77,36 @@ const FINISHES_DIGITAL: ShopFinishVariant[] = [
 
 export const SHOP_PRODUCTS: ShopProduct[] = [
   {
+    slug: 'p-21',
+    title: 'Illustration — digital download',
+    subtitle: 'High-resolution JPG · Complimentary',
+    displayPrice: 'Free',
+    description:
+      'A high-resolution illustration you download as a JPEG and send to your print shop or lab—ideal for a large wall poster (for example 18×24 inches vertical at well over 300 DPI). The file is 6656×9984 pixels (portrait), so detail stays sharp at poster sizes and you still have room to crop or scale slightly. You can also use the same asset on in-venue screens, menus, or your website. The shop preview is a lighter web-friendly image, not the print file.',
+    imageHints: [
+      {
+        alt: 'Illustration — preview',
+        label: 'Preview',
+      },
+    ],
+    s3PreviewObjectKeys: [shopDeliverableObjectKey('p-21', 'lores_832x1248.jpg')],
+    sizes: [],
+    finishes: [],
+    digitalDeliverable: {
+      objectKey: shopDeliverableObjectKey('p-21', 'hires_6656x9984.jpg'),
+      downloadFilename: 'menuyukti-p-21-hires.jpg',
+    },
+    collectionId: 'digital-downloads',
+    newestOrder: -9,
+    popularityOrder: 3,
+    grid: {
+      colClass: 'col-span-12 md:col-span-4 mt-12',
+      imageAspect: 'aspect-[832/1248]',
+      titleClass: 'text-lg leading-tight',
+      addToCartClass: 'text-xs',
+    },
+  },
+  {
     slug: 'p-20',
     title: 'Illustration — digital download',
     subtitle: 'High-resolution JPG · Complimentary',

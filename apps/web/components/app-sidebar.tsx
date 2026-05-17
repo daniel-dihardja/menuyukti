@@ -17,12 +17,15 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import * as React from 'react'
 
+import { useCloseMobileSidebarOnNavigate } from '@/hooks/use-close-mobile-sidebar-on-navigate'
+
 import { NavMain } from './nav-main'
 import { SidebarThemeToggle } from './sidebar-theme-toggle'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const t = useTranslations('sidebar')
   const { state } = useSidebar()
+  useCloseMobileSidebarOnNavigate()
 
   const brandLabel = t('groupLabel')
 
