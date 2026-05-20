@@ -18,6 +18,60 @@
     "prompt": "Using this image as reference, make exactly two corrections only. Keep all other elements identical.\n\n1. LIGHTING: Lift underexposed shadows and brighten midtones for a natural, even exposure.\n\n2. COMPOSITION: Reposition the camera angle and framing so the subject sits optimally for an Instagram portrait — use the rule of thirds, flattering angle, good headroom."
   },
   {
+    "slug": "instagram-portrait-correct-02",
+    "displayName": "Instagram food photo fix",
+    "category": "AI",
+    "model": "gemini-2.5-flash-image",
+    "contexts": ["upload", "product-card"],
+    "styleIds": ["7c3f932b-a572-47cb-9b9b-f20211e63b5b"],
+    "prompt": "Using this image as reference, apply exactly two enhancements only. Keep all other elements identical.\n\n1. LIGHTING: Optimize the lighting specifically for food presentation — boost brightness to Instagram-ideal levels, lift shadows to reveal texture and detail in the food, enhance midtone contrast to make colors pop and the dish look appetizing. The light should feel natural and soft, as if coming from a window. Avoid harsh shadows or blown-out highlights on the food surface.\n\n2. COMPOSITION: Reframe and reposition the shot for a high-performing Instagram food photo — choose the most flattering angle for this specific dish (overhead/flat lay, 45°, or eye-level), apply the rule of thirds, ensure the hero element of the dish is the clear focal point, and leave intentional negative space for visual breathing room."
+  },
+  {
+    "slug": "instagram-portrait-correct-03",
+    "displayName": "Instagram food golden hour fix",
+    "category": "AI",
+    "model": "gemini-2.5-flash-image",
+    "contexts": ["upload", "product-card"],
+    "styleIds": ["7c3f932b-a572-47cb-9b9b-f20211e63b5b"],
+    "prompt": "Using this image as reference, apply exactly two enhancements only. Keep all other elements identical.\n\n1. LIGHTING: Warm the light source to golden-hour tones (soft ambers, honey, and warm whites — around 3200–4000K color temperature). Boost brightness to Instagram-ideal levels, lift shadows to reveal texture and detail in the food, and enhance midtone contrast to make colors pop and the dish look rich and inviting. The light should feel like late-afternoon sun through a window — warm, soft, and directional. Avoid cool or blue tones, harsh shadows, or blown-out highlights on the food surface.\n\n2. COMPOSITION: Reframe and reposition the shot for a high-performing Instagram food photo — choose the most flattering angle for this specific dish (overhead/flat lay, 45°, or eye-level), apply the rule of thirds, ensure the hero element of the dish is the clear focal point, and leave intentional negative space for visual breathing room."
+  },
+  {
+    "slug": "instagram-food-editorial-portrait",
+    "displayName": "Instagram editorial food photo",
+    "category": "AI",
+    "model": "gemini-2.5-flash-image",
+    "contexts": ["upload", "product-card"],
+    "styleIds": ["7c3f932b-a572-47cb-9b9b-f20211e63b5b"],
+    "prompt": "Use the provided image as creative inspiration only — not as a strict template.\n\nGenerate a completely new, high-quality food photograph that:\n\nSUBJECT: Recreates the same dish and key ingredients visible in the reference image. The food itself is the non-negotiable anchor — everything else can be reimagined.\n\nLIGHTING: Bathe the scene in warm, golden-hour light (3200–4000K) — soft ambers, honey tones, and warm whites. Light should feel like late-afternoon sun streaming through a window: directional, warm, and flattering to the food. Shadows are soft and gentle. No cool tones. Brightness and contrast are tuned to Instagram-ideal levels — vibrant but never blown out.\n\nCOMPOSITION: Design the shot from scratch for maximum Instagram performance — select the most flattering angle for this dish (overhead/flat lay, 45°, or eye-level), apply the rule of thirds, make the hero element of the dish the undisputed focal point, and use intentional negative space for a clean, editorial feel.\n\nSTYLING: Elevate the presentation — choose a complementary surface, background, and minimal props that enhance the dish without distracting from it. Think editorial food magazine meets Instagram aesthetic.\n\nQUALITY: Sharp focus on the food, bokeh background where appropriate, rich and appetizing colors, photorealistic detail in textures (steam, glaze, crunch, freshness).\n\nOUTPUT: A single, portrait-oriented image (4:5 ratio) ready to post on Instagram with zero editing needed."
+  },
+  {
+    "slug": "instagram-food-kopitiam-portrait",
+    "displayName": "Malaysian kopitiam food photo",
+    "category": "AI",
+    "model": "gemini-2.5-flash-image",
+    "contexts": ["upload", "product-card"],
+    "styleIds": ["7c3f932b-a572-47cb-9b9b-f20211e63b5b"],
+    "prompt": "Use the reference image as inspiration. Generate a new high-quality Instagram food photo with these rules:\n\nSUBJECT (LOCKED): Keep the exact plate, dish presentation, and food arrangement from the reference. Do not alter the plate or food in any way.\n\nSETTING: Authentic Malaysian kopitiam — worn marble tabletop, vintage wooden furniture, weathered shophouse walls. Soft props: kopi cup, condensed milk tin, or old ceramic saucers in the background.\n\nLIGHTING: Warm diffused shophouse light, 3000–3800K. Soft shadows, no harsh flash, no cool tones. Instagram-ideal brightness and contrast.\n\nCOMPOSITION: Rule of thirds, most flattering angle for the dish (overhead, 45°, or eye-level), hero dish as focal point, soft bokeh background.\n\nMOOD: Nostalgic, heritage, warm — authentic kopitiam culture, not a modern café.\n\nOUTPUT: Portrait 4:5, photorealistic, Instagram-ready, zero editing needed."
+  },
+  {
+    "slug": "kopitiam-marketing-food-portrait",
+    "displayName": "Premium kopitiam marketing photo",
+    "category": "AI",
+    "model": "gemini-2.5-flash-image",
+    "contexts": ["upload", "product-card"],
+    "styleIds": ["7c3f932b-a572-47cb-9b9b-f20211e63b5b"],
+    "prompt": "Use the reference image as inspiration. Generate a professional restaurant marketing food photo with these rules:\n\nSUBJECT (LOCKED): Keep the exact plate, dish presentation, and food arrangement from the reference. Do not alter the plate or food in any way.\n\nSETTING: Upscale Malaysian kopitiam — polished marble tabletop, curated vintage wooden furniture, clean and photogenic shophouse backdrop. Props are intentional and minimal: a sleek kopi cup, condensed milk tin, or ceramic saucer. Everything in frame is deliberate and brand-ready.\n\nLIGHTING: Warm, professional studio-quality light with kopitiam character — 3000–3800K, soft and directional. Food textures are crisp and appetizing. No harsh shadows, no cool tones. Exposure tuned for commercial print and digital use.\n\nCOMPOSITION: Rule of thirds, optimal angle for the dish (overhead, 45°, or eye-level), dish as undisputed hero, clean negative space suitable for text overlay or logo placement.\n\nMOOD: Premium heritage — elevated kopitiam aesthetic that feels authentic yet polished enough for menus, social ads, and brand campaigns.\n\nOUTPUT: Portrait 4:5, photorealistic, commercial-grade, print and Instagram-ready."
+  },
+  {
+    "slug": "restaurant-marketing-hero-wood-portrait",
+    "displayName": "Restaurant marketing hero shot",
+    "category": "AI",
+    "model": "gemini-2.5-flash-image",
+    "contexts": ["upload", "product-card"],
+    "styleIds": ["7c3f932b-a572-47cb-9b9b-f20211e63b5b"],
+    "prompt": "Use the reference image as inspiration. Generate a professional restaurant marketing hero shot with these rules:\n\nSUBJECT (LOCKED): Keep the exact plate, dish presentation, and food arrangement from the reference. Do not alter the plate or food in any way. No steam, no smoke, no vapor effects.\n\nCAMERA ANGLE (NON-NEGOTIABLE): The camera is physically positioned at a 45–60 degree angle above the table — not top-down, not eye-level. The table surface is clearly visible as the background. The far edge of the plate must be visible. The side and depth of the food must be visible, showing height and layers. Shot as if a photographer is standing over the table leaning slightly forward.\n\nPLACEMENT: The plate is perfectly centered in the frame, both horizontally and vertically. Equal space on all sides.\n\nSURFACE: Warm, natural wooden tabletop — clean, smooth grain with subtle texture. No marble, no tiles. The wood tone should complement the food warmth without competing with the dish.\n\nLIGHTING: Soft, directional natural light from the upper-left or upper-right. Warm tones (3000–3800K). Highlights texture, glaze, and freshness of the food. Shadows are gentle, never obscure the food. No flash, no cool tones. Commercial-grade exposure.\n\nMOOD: Premium, appetizing, and brand-ready. The food should look irresistible.\n\nOUTPUT: Portrait 4:5, photorealistic, commercial-grade, Instagram and menu-ready."
+  },
+  {
     "slug": "compose-on-background",
     "displayName": "Place Products on Background",
     "category": "AI",

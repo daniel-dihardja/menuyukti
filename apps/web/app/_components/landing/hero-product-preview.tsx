@@ -5,7 +5,7 @@ type HeroProductPreviewProps = {
   caption: string
 }
 
-const HERO_IMAGE = '/images/landing-workflow.webp'
+const HERO_IMAGE = '/images/landing/workflow-campaign-brief.webp'
 
 /** Above-the-fold product screenshot (LCP). */
 export function HeroProductPreview({ alt, caption }: HeroProductPreviewProps) {

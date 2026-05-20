@@ -25,10 +25,10 @@ export function MainHeader() {
   const pathname = usePathname()
   const t = useTranslations('mainHeader')
 
-  const shopActive = pathname === routes.shop || pathname?.startsWith(`${routes.shop}/`)
-  /** Keep product nav visible for guests on shop pages. */
-  const hideGuestShopProductNav = false
-  const showMobileMainMenu = !hideGuestShopProductNav
+  const workflowsActive =
+    pathname === routes.workflows.list || pathname?.startsWith(`${routes.workflows.list}/`)
+  const studioActive = pathname === routes.canvas || pathname?.startsWith(`${routes.canvas}/`)
+  const showMobileMainMenu = true
 
   const navLinkClass = (active: boolean) =>
     cn(
@@ -58,19 +58,17 @@ export function MainHeader() {
             <span className="text-sm font-semibold tracking-tight md:text-base">{t('brand')}</span>
           </Link>
 
-          {!hideGuestShopProductNav ? (
-            <nav
-              className="hidden min-w-0 flex-1 items-center justify-start gap-1 sm:flex sm:gap-2"
-              aria-label={t('navAria')}
-            >
-              <Link href={routes.canvas} className={navLinkClass(false)}>
-                {t('navWorkflows')}
-              </Link>
-              <Link href={routes.shop} className={navLinkClass(!!shopActive)}>
-                {t('navShop')}
-              </Link>
-            </nav>
-          ) : null}
+          <nav
+            className="hidden min-w-0 flex-1 items-center justify-start gap-1 sm:flex sm:gap-2"
+            aria-label={t('navAria')}
+          >
+            <Link href={routes.workflows.list} className={navLinkClass(workflowsActive)}>
+              {t('navWorkflows')}
+            </Link>
+            <Link href={routes.canvas} className={navLinkClass(studioActive)}>
+              {t('navStudio')}
+            </Link>
+          </nav>
         </div>
 
         <div className="flex shrink-0 items-center gap-2 pe-3 sm:pe-4">
@@ -103,10 +101,17 @@ export function MainHeader() {
                         variant="ghost"
                         className={cn(
                           'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
-                          'text-muted-foreground hover:text-foreground',
+                          workflowsActive
+                            ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
+                            : 'text-muted-foreground hover:text-foreground',
                         )}
                       >
-                        <Link href={routes.canvas}>{t('navWorkflows')}</Link>
+                        <Link
+                          href={routes.workflows.list}
+                          aria-current={workflowsActive ? 'page' : undefined}
+                        >
+                          {t('navWorkflows')}
+                        </Link>
                       </Button>
                     </SheetClose>
                     <SheetClose asChild>
@@ -115,13 +120,13 @@ export function MainHeader() {
                         variant="ghost"
                         className={cn(
                           'h-auto min-h-11 w-full justify-start px-3 py-3 text-sm font-medium',
-                          shopActive
+                          studioActive
                             ? 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground'
                             : 'text-muted-foreground hover:text-foreground',
                         )}
                       >
-                        <Link href={routes.shop} aria-current={shopActive ? 'page' : undefined}>
-                          {t('navShop')}
+                        <Link href={routes.canvas} aria-current={studioActive ? 'page' : undefined}>
+                          {t('navStudio')}
                         </Link>
                       </Button>
                     </SheetClose>

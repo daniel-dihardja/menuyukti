@@ -1,36 +1,26 @@
-import { Badge } from '@workspace/ui/components/badge'
 import { Card, CardDescription, CardHeader, CardTitle } from '@workspace/ui/components/card'
-import { GitBranch, MessageSquare, Sparkles, Store } from 'lucide-react'
+import { GitBranch, Sparkles } from 'lucide-react'
 
-export type LandingProductPillarId = 'printShop' | 'studio' | 'strategyChat' | 'workflowsPro'
+export type LandingProductPillarId = 'studio' | 'workflows'
 
 export type LandingProductPillarItem = {
   id: LandingProductPillarId
   title: string
   description: string
-  badge?: 'pro'
 }
 
 type LandingProductPillarsProps = {
   title: string
   subtitle: string
   items: readonly LandingProductPillarItem[]
-  proBadgeLabel: string
 }
 
 const pillarIcons = {
-  printShop: Store,
   studio: Sparkles,
-  strategyChat: MessageSquare,
-  workflowsPro: GitBranch,
-} as const satisfies Record<LandingProductPillarId, typeof Store>
+  workflows: GitBranch,
+} as const satisfies Record<LandingProductPillarId, typeof Sparkles>
 
-export function LandingProductPillars({
-  title,
-  subtitle,
-  items,
-  proBadgeLabel,
-}: LandingProductPillarsProps) {
+export function LandingProductPillars({ title, subtitle, items }: LandingProductPillarsProps) {
   return (
     <section
       id="product-pillars"
@@ -48,24 +38,14 @@ export function LandingProductPillars({
           {subtitle}
         </p>
 
-        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
           {items.map((item) => {
             const Icon = pillarIcons[item.id]
             return (
               <Card key={item.id} className="shadow-md">
                 <CardHeader className="gap-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10">
-                      <Icon className="size-5 text-primary" aria-hidden />
-                    </div>
-                    {item.badge === 'pro' ? (
-                      <Badge
-                        variant="secondary"
-                        className="shrink-0 text-xs font-semibold uppercase tracking-wide"
-                      >
-                        {proBadgeLabel}
-                      </Badge>
-                    ) : null}
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                    <Icon className="size-5 text-primary" aria-hidden />
                   </div>
                   <CardTitle className="text-lg leading-snug">{item.title}</CardTitle>
                   <CardDescription className="text-pretty text-base leading-relaxed">
