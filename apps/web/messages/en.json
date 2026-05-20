@@ -9,11 +9,12 @@
     "brand": "Menuyukti",
     "brandAria": "Menuyukti home",
     "navAria": "Main navigation",
-    "navWorkflows": "Studio",
+    "navStudio": "Studio",
+    "navWorkflows": "Workflows",
     "navShop": "Print Shop",
     "mobileMenuTriggerAria": "Open main navigation menu",
     "mobileMenuTitle": "Navigation",
-    "mobileMenuDescription": "Studio, Workflow, Advisor chat, and the print shop catalog.",
+    "mobileMenuDescription": "Workflows for agentic campaign planning and Studio for AI brand visuals.",
     "mobileMenuSignIn": "Sign in"
   },
   "accountMenu": {
@@ -49,8 +50,8 @@
     "mistral_mistral_large_3": "Mistral Large 3"
   },
   "metadata": {
-    "title": "Menuyukti - AI-first restaurant social media marketing platform",
-    "description": "AI-first Instagram marketing for restaurants: plan campaigns from sales data, create on-brand visuals, and draft promotion-ready copy—in one platform built for restaurant marketers.",
+    "title": "Menuyukti — Workflows & Studio for restaurant Instagram marketing",
+    "description": "Plan data-backed Instagram campaigns in Workflows and create on-brand Reels and feed visuals in Studio—from sales signals and menu photos in one AI-first platform.",
     "ogLocale": "en_US"
   },
   "login": {
@@ -145,33 +146,103 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "AI-first restaurant social media marketing platform",
-      "subtitle": "Built AI-first for restaurant marketers: turn menu photos and sales data into what to post, when to post it, and scroll-stopping Instagram creatives—with agentic workflows you can review, not a black box.",
-      "badge": "AI-first · Studio · Advisor · Pro Campaigns",
+      "headline": "From sales data to Instagram campaigns you can trust",
+      "subtitle": "Plan promotions and posting schedules in structured Workflows grounded in what you sell. Create on-brand Reels and feed visuals in Studio—from the same menu photos.",
+      "badge": "AI-first · Workflows · Studio",
       "ctaSecondary": "Sign in",
-      "previewAlt": "Screenshot of the Menuyukti Pro workflow UI focused on the Campaign Brief milestone, showing a generated campaign brief informed by restaurant sales data.",
-      "previewCaption": "Pro Campaigns in action: from sales signals to campaign brief, promotion strategy, posting schedule, and ready-to-review social copy."
+      "previewAlt": "Screenshot of the Menuyukti Workflows UI showing the full milestone timeline with the Campaign Brief step selected and its generated brief preview.",
+      "previewCaption": "Workflows in action: your full campaign timeline—from dates and brief through promotion ideas, schedules, and copy."
     },
     "pillars": {
-      "title": "AI-first tools for your restaurant's social media growth",
-      "subtitle": "Purpose-built tools for each job—creative generation in Studio, strategic guidance in Advisor, and campaign automation in Pro Campaigns—grounded in what your restaurant actually sells.",
-      "proBadge": "Pro",
+      "title": "Two tools, one Instagram workflow",
+      "subtitle": "Studio builds the visuals. Workflows runs the agentic plan—from sales signals to briefs, promotion ideas, schedules, and copy you can review.",
       "items": {
+        "workflows": {
+          "title": "Workflows: agentic campaigns, step by step",
+          "description": "Link sales analytics to a location, run milestones for dates, briefs, promotion ideas, schedules, and copy—each step saves structured output you can review, rerun, and share."
+        },
         "studio": {
-          "title": "Studio: create social content that stops the scroll",
-          "description": "Turn menu photos and briefs into on-brand Reels covers, carousel visuals, and promo creatives without starting from scratch or juggling multiple design tools."
+          "title": "Studio: scroll-stopping visuals from your photos",
+          "description": "Upload product shots, run preset flows like hero shots and golden-hour fixes, and compose designs for Reels, carousels, and promos—no separate design stack."
+        }
+      }
+    },
+    "workflows": {
+      "title": "Workflows: your campaign lives in a timeline, not a chat thread",
+      "subtitle": "Each milestone has a goal, optional pass criteria, and saved artifacts—the AI runs the step; you stay in control.",
+      "imageAlt": "Screenshot of the Menuyukti Workflows UI showing the full milestone timeline with the Campaign Brief step selected and its generated brief preview.",
+      "imageCaption": "Your full campaign timeline—from dates and brief through promotion ideas, schedules, and copy.",
+      "bullets": {
+        "templates": {
+          "title": "Workflow templates",
+          "description": "Start from built-in templates that seed your milestone timeline with goals, criteria, and starter data—then customize steps as your campaign evolves."
         },
-        "strategyChat": {
-          "title": "Advisor: your restaurant marketing strategist",
-          "description": "Ask for hooks, caption angles, campaign themes, and posting timing while you work; your advisor keeps recommendations grounded in your restaurant context."
+        "salesData": {
+          "title": "Sales-grounded data",
+          "description": "Attach a location's analytics run so briefs and promotion ideas reference real menu performance—not generic restaurant advice."
         },
-        "workflowsPro": {
-          "title": "Pro Campaigns: agentic planning, end to end",
-          "description": "Run a multi-step flow that builds the brief, surfaces promotion ideas, maps posting dates, and drafts captions, so you can review and publish faster."
+        "presets": {
+          "title": "Milestone presets",
+          "description": "Add steps like key dates, campaign brief, promotion candidates, scheduler, and content lineups with prefilled goals and pass criteria."
         },
-        "printShop": {
-          "title": "Print shop: ready-made artwork when you need it",
-          "description": "Add polished restaurant visuals for menus and in-venue screens as a quick complement to your digital campaign workflow."
+        "transparent": {
+          "title": "Transparent runs",
+          "description": "Chat beside the timeline, inspect skills and tools, and rerun milestones when fresh sales data arrives."
+        }
+      }
+    },
+    "studio": {
+      "title": "Studio: brand library and AI image flows",
+      "subtitle": "One smartphone photo can become a classic hero shot—warm light, better framing, then a commercial finish.",
+      "transformation": {
+        "title": "One phone shot → light fix → hero shot",
+        "intro": "Warm light is what makes food photography work on Instagram—soft ambers and honey tones (around 3200–4000K) feel appetizing; cool or flat phone flash often kills texture and color. Studio first corrects exposure and crops your source image with a golden-hour light fix, then runs the Restaurant marketing hero shot flow so the same dish becomes a classic 45–60° hero on warm wood—without a reshoot.",
+        "steps": {
+          "source": {
+            "label": "1 · Source",
+            "alt": "Original smartphone photo of a restaurant dish with uneven lighting.",
+            "caption": "Your everyday phone capture—real dish, imperfect light."
+          },
+          "lightFix": {
+            "label": "2 · Light fix",
+            "alt": "Same dish after Instagram golden-hour light fix and reframing.",
+            "caption": "Golden-hour light fix lifts shadows and warms the scene before the hero pass."
+          },
+          "heroShot": {
+            "label": "3 · Hero shot",
+            "alt": "Restaurant marketing hero shot generated from the source dish on warm wood.",
+            "caption": "Restaurant marketing hero shot—commercial angle and brand-ready finish."
+          }
+        }
+      },
+      "imageAlt": "Screenshot of the Menuyukti Studio workspace with the product image library, AI image flow presets, and design tools.",
+      "imageCaption": "Studio: upload product photos, run AI image flows, and compose designs for Reels, carousels, and promos.",
+      "featuredFlows": {
+        "heroShot": {
+          "title": "Restaurant marketing hero shot",
+          "description": "Commercial 45–60° angle on warm wood—your plate stays exactly as photographed while lighting and presentation become menu- and Instagram-ready."
+        },
+        "goldenHour": {
+          "title": "Instagram food golden hour fix",
+          "description": "Step 2 in the pipeline: warm late-afternoon light (3200–4000K), lifted shadows, and reframing on your source photo—before the hero shot pass."
+        },
+        "prepareForAds": {
+          "title": "Prepare Product for Ads",
+          "description": "Remove the background to clean white, center and scale the dish, and balance exposure—a neutral cutout ready for compositing, carousels, and ad layouts."
+        }
+      },
+      "bullets": {
+        "library": {
+          "title": "Product library",
+          "description": "Upload, normalize, and manage images for your brand—drag and drop, preview, download, and reuse across campaigns."
+        },
+        "designs": {
+          "title": "Designs",
+          "description": "Combine product shots, backgrounds, aspect ratios, and flows in a guided new-design wizard for Reels, carousels, and promos."
+        },
+        "feedsWorkflows": {
+          "title": "Feeds Workflows",
+          "description": "Use the same assets when workflow milestones need product imagery—one visual library for planning and execution."
         }
       }
     },
@@ -245,34 +316,29 @@
     "faq": {
       "title": "Common questions",
       "q1": "What data do I need to upload?",
-      "a1": "For Pro workflows and sales-grounded AI analytics, upload your POS sales report (where your POS format is supported) so we can normalize columns and build demand, mix, and timing signals. Studio AI generation and strategy chat do not require sales data to be useful; the print shop never requires uploads.",
-      "q2": "Do I need sales data to use Studio or the print shop?",
-      "a2": "No. Studio and strategy chat do not require sales uploads. Connecting reports unlocks smarter, evidence-backed Pro automation. The print shop is standalone artwork you can browse anytime as an add-on.",
-      "q3": "What is an agentic AI system?",
-      "a3": "An agentic AI system goes beyond a single chat reply: it can plan steps, call tools, and run multi-milestone workflows toward a goal—like a teammate following a brief. In Menuyukti, that shows up strongest in Pro campaign pipelines that turn sales signals into schedules, promotion ideas, and copy. You stay in control with inspectable runs and workspace data, while the system handles repetitive orchestration.",
-      "q4": "Who is Menuyukti built for?",
-      "a4": "Restaurant owners, operators, and solo marketers who run social media for small to mid-sized restaurants and want faster Instagram execution with stronger data-backed decisions.",
-      "q5": "Can we collaborate across locations?",
-      "a5": "Yes. You can share workflows, milestones, and brand assets when you bring in collaborators."
+      "a1": "For Workflows with sales-grounded milestones, upload your POS sales report (where your POS format is supported) so we can build demand, mix, and timing signals. Studio does not require sales data—you can create visuals from menu photos alone.",
+      "q2": "Do I need sales data to use Studio?",
+      "a2": "No. Studio works with your product photos and briefs without any sales upload. Connecting analytics to a workflow unlocks evidence-backed briefs, promotion ideas, and schedules.",
+      "q3": "What is a workflow milestone?",
+      "a3": "A milestone is one step in your campaign timeline with a goal, optional pass criteria, and saved output. The AI runs the step using tools and context from prior milestones—like a teammate following a brief—not a single chat reply you might lose. You review artifacts, edit, and rerun as needed.",
+      "q4": "Can I edit AI outputs?",
+      "a4": "Yes. Milestone data, previews, and pass criteria are all editable. Rerun a milestone when you want a fresh draft or when new sales data arrives.",
+      "q5": "Who is Menuyukti built for?",
+      "a5": "Restaurant owners, operators, and solo marketers who run Instagram for small to mid-sized restaurants and want faster execution with stronger data-backed decisions.",
+      "q6": "Can we collaborate across locations?",
+      "a6": "Yes. You can share workflows, milestones, and brand assets when you bring in collaborators."
     },
     "how": {
       "title": "How it works",
+      "subtitle": "Start with visuals, then run the agentic campaign plan—both in one platform.",
       "steps": {
         "studio": {
           "title": "1. Studio: build your visual content",
-          "description": "Generate social-ready creatives from your existing photos and briefs, then prepare assets for Reels and feed posts."
+          "description": "Generate social-ready creatives from menu photos and briefs—Reels covers, carousels, and promo assets in one brand library."
         },
-        "strategyChat": {
-          "title": "2. Advisor: shape your campaign strategy",
-          "description": "Refine themes, hooks, and timing with AI guidance tuned to restaurant marketing and your campaign context."
-        },
-        "workflowsPro": {
-          "title": "3. Pro Campaigns: automate the execution plan",
-          "description": "Run milestones that produce promotion candidates, content schedules, and draft captions from your sales signals."
-        },
-        "printShop": {
-          "title": "4. Print shop: add offline brand support",
-          "description": "Grab ready-made visuals for in-store touchpoints whenever you want to extend campaign consistency beyond Instagram."
+        "workflows": {
+          "title": "2. Workflows: automate the execution plan",
+          "description": "Run milestones that produce promotion candidates, content schedules, and draft captions from your sales signals—structured outputs you can trust."
         }
       }
     },
@@ -287,8 +353,8 @@
       }
     },
     "cta": {
-      "title": "Ready to run AI-first restaurant social media campaigns?",
-      "description": "Start with Studio for creatives, use Advisor for strategy, and launch Pro Campaigns to execute data-backed plans at scale.",
+      "title": "Ready to run AI-first restaurant Instagram campaigns?",
+      "description": "Create on-brand visuals in Studio and plan data-backed campaigns in Workflows—from menu photos and sales signals in one platform.",
       "secondary": "Sign in"
     },
     "footer": {
@@ -296,7 +362,8 @@
       "about": "How it works",
       "contact": "Get started",
       "faq": "FAQ",
-      "printShop": "Print shop",
+      "workflows": "Workflows",
+      "studio": "Studio",
       "privacyPolicy": "Privacy Policy",
       "terms": "Terms of Service",
       "copyrightName": "Menuyukti"

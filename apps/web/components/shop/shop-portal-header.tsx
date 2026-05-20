@@ -35,7 +35,8 @@ export function ShopPortalHeader() {
   ] as const
 
   const productLinks = [
-    { href: routes.canvas, label: tMain('navWorkflows'), active: false },
+    { href: routes.workflows.list, label: tMain('navWorkflows'), active: false },
+    { href: routes.canvas, label: tMain('navStudio'), active: false },
     { href: routes.shop, label: tMain('navShop'), active: shopActive },
   ] as const
 
