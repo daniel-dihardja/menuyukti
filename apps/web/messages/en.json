@@ -50,8 +50,8 @@
     "mistral_mistral_large_3": "Mistral Large 3"
   },
   "metadata": {
-    "title": "Menuyukti — Workflows & Studio for restaurant Instagram marketing",
-    "description": "Plan data-backed Instagram campaigns in Workflows and create on-brand Reels and feed visuals in Studio—from sales signals and menu photos in one AI-first platform.",
+    "title": "Menuyukti — AI-first platform for restaurant Instagram marketing",
+    "description": "The AI-first platform for restaurant Instagram marketing: agentic Workflows from sales data to briefs and schedules, Studio for on-brand Reels and feed visuals from your menu photos.",
     "ogLocale": "en_US"
   },
   "login": {
@@ -146,16 +146,16 @@
   "landing": {
     "skipToContent": "Skip to content",
     "hero": {
-      "headline": "From sales data to Instagram campaigns you can trust",
-      "subtitle": "Plan promotions and posting schedules in structured Workflows grounded in what you sell. Create on-brand Reels and feed visuals in Studio—from the same menu photos.",
-      "badge": "AI-first · Workflows · Studio",
+      "headline": "The AI-first platform for restaurant Instagram marketing",
+      "subtitle": "Agentic Workflows turn your sales data into briefs, promotion ideas, schedules, and copy. Studio turns your menu photos into scroll-stopping Reels and feed posts—built for restaurants, not generic chat.",
+      "badge": "AI-first · Restaurant Instagram marketing",
       "ctaSecondary": "Sign in",
       "previewAlt": "Screenshot of the Menuyukti Workflows UI showing the full milestone timeline with the Campaign Brief step selected and its generated brief preview.",
       "previewCaption": "Workflows in action: your full campaign timeline—from dates and brief through promotion ideas, schedules, and copy."
     },
     "pillars": {
-      "title": "Two tools, one Instagram workflow",
-      "subtitle": "Studio builds the visuals. Workflows runs the agentic plan—from sales signals to briefs, promotion ideas, schedules, and copy you can review.",
+      "title": "Two AI tools, one Instagram workflow",
+      "subtitle": "An AI-first stack for restaurants: Studio builds the visuals; Workflows runs the agentic plan—from sales signals to briefs, promotion ideas, schedules, and copy you can review.",
       "items": {
         "workflows": {
           "title": "Workflows: agentic campaigns, step by step",

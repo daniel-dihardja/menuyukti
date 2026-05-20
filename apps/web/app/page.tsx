@@ -121,9 +121,10 @@ export default async function LandingPage() {
             <Badge
               variant="secondary"
               className={cn(
-                'mb-4 min-w-0 max-w-full whitespace-normal px-3 py-1.5 text-center text-balance leading-snug',
+                'mb-4 inline-flex min-w-0 max-w-full items-center justify-center gap-1.5 whitespace-normal px-3 py-1.5 text-center text-balance leading-snug',
               )}
             >
+              <Sparkles className="size-3.5 shrink-0 text-primary" aria-hidden />
               {t('hero.badge')}
             </Badge>
             <h1 className="w-full min-w-0 text-balance text-4xl font-bold leading-[1.1] sm:text-5xl md:text-6xl md:leading-[1.08]">
