@@ -38,6 +38,12 @@ export type HeroProductPreviewProps = {
 const IMAGE_SIZES =
   '(max-width: 640px) 100vw, (max-width: 1152px) min(100vw - 3rem, 1024px), 1024px'
 
+const carouselNavButtonClassName = cn(
+  'flex size-10 shrink-0 touch-manipulation items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm transition',
+  'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+  'disabled:pointer-events-none disabled:opacity-40',
+)
+
 /** Above-the-fold product screenshots (LCP on first slide). */
 export function HeroProductPreview({
   slides,
@@ -89,48 +95,58 @@ export function HeroProductPreview({
           className="w-full"
           aria-label={carouselLabel}
         >
-          <div className="overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-lg ring-1 ring-border/40">
-            <div className="relative aspect-video w-full min-w-0 bg-muted/30">
-              <CarouselContent className="ml-0">
-                {slides.map((slide, index) => (
-                  <CarouselItem key={slide.id} className="basis-full pl-0">
-                    <button
-                      type="button"
-                      onClick={openModal}
-                      className="group relative block h-full w-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                      aria-label={`${viewLargerLabel}: ${slide.alt}`}
-                    >
-                      <div className="relative aspect-video w-full min-w-0">
-                        <Image
-                          src={slide.imageSrc}
-                          alt={slide.alt}
-                          fill
-                          className="object-contain object-center"
-                          priority={index === 0}
-                          loading={index === 0 ? undefined : 'lazy'}
-                          sizes={IMAGE_SIZES}
-                        />
-                      </div>
-                      <span className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition group-hover:bg-background">
-                        <ZoomIn className="size-3.5 shrink-0" aria-hidden />
-                        {viewLargerLabel}
-                      </span>
-                    </button>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
+          <div className="flex w-full items-center gap-2 sm:gap-3 md:gap-4">
+            {showNav ? (
+              <button
+                type="button"
+                onClick={() => api?.scrollPrev()}
+                disabled={!canScrollPrev}
+                className={cn(carouselNavButtonClassName, 'hidden md:flex')}
+                aria-label={carouselPrevLabel}
+              >
+                <ChevronLeft className="size-5" aria-hidden />
+              </button>
+            ) : null}
+
+            <div className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-lg ring-1 ring-border/40">
+              <div className="relative aspect-video w-full min-w-0 bg-muted/30">
+                <CarouselContent className="ml-0">
+                  {slides.map((slide, index) => (
+                    <CarouselItem key={slide.id} className="basis-full pl-0">
+                      <button
+                        type="button"
+                        onClick={openModal}
+                        className="group relative block h-full w-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        aria-label={`${viewLargerLabel}: ${slide.alt}`}
+                      >
+                        <div className="relative aspect-video w-full min-w-0">
+                          <Image
+                            src={slide.imageSrc}
+                            alt={slide.alt}
+                            fill
+                            className="object-contain object-center"
+                            priority={index === 0}
+                            loading={index === 0 ? undefined : 'lazy'}
+                            sizes={IMAGE_SIZES}
+                          />
+                        </div>
+                        <span className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition group-hover:bg-background">
+                          <ZoomIn className="size-3.5 shrink-0" aria-hidden />
+                          {viewLargerLabel}
+                        </span>
+                      </button>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+              </div>
 
               {showNav ? (
-                <>
+                <div className="flex items-center justify-center gap-4 border-t border-border/40 bg-muted/10 px-4 py-2.5 md:hidden">
                   <button
                     type="button"
                     onClick={() => api?.scrollPrev()}
                     disabled={!canScrollPrev}
-                    className={cn(
-                      'absolute left-3 top-1/2 z-10 flex size-10 -translate-y-1/2 touch-manipulation items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm transition',
-                      'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                      'disabled:pointer-events-none disabled:opacity-40',
-                    )}
+                    className={carouselNavButtonClassName}
                     aria-label={carouselPrevLabel}
                   >
                     <ChevronLeft className="size-5" aria-hidden />
@@ -139,43 +155,51 @@ export function HeroProductPreview({
                     type="button"
                     onClick={() => api?.scrollNext()}
                     disabled={!canScrollNext}
-                    className={cn(
-                      'absolute right-3 top-1/2 z-10 flex size-10 -translate-y-1/2 touch-manipulation items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm transition',
-                      'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                      'disabled:pointer-events-none disabled:opacity-40',
-                    )}
+                    className={carouselNavButtonClassName}
                     aria-label={carouselNextLabel}
                   >
                     <ChevronRight className="size-5" aria-hidden />
                   </button>
-                </>
+                </div>
+              ) : null}
+
+              {showNav ? (
+                <div
+                  className="flex justify-center gap-2 border-t border-border/40 bg-muted/10 px-4 py-3"
+                  role="tablist"
+                  aria-label={carouselLabel}
+                >
+                  {slides.map((slide, index) => (
+                    <button
+                      key={slide.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={index === activeIndex}
+                      aria-current={index === activeIndex ? 'true' : undefined}
+                      aria-label={carouselDotLabels[index]}
+                      onClick={() => api?.scrollTo(index)}
+                      className={cn(
+                        'size-2.5 rounded-full transition',
+                        index === activeIndex
+                          ? 'scale-110 bg-primary'
+                          : 'bg-muted-foreground/35 hover:bg-muted-foreground/55',
+                      )}
+                    />
+                  ))}
+                </div>
               ) : null}
             </div>
 
             {showNav ? (
-              <div
-                className="flex justify-center gap-2 border-t border-border/40 bg-muted/10 px-4 py-3"
-                role="tablist"
-                aria-label={carouselLabel}
+              <button
+                type="button"
+                onClick={() => api?.scrollNext()}
+                disabled={!canScrollNext}
+                className={cn(carouselNavButtonClassName, 'hidden md:flex')}
+                aria-label={carouselNextLabel}
               >
-                {slides.map((slide, index) => (
-                  <button
-                    key={slide.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={index === activeIndex}
-                    aria-current={index === activeIndex ? 'true' : undefined}
-                    aria-label={carouselDotLabels[index]}
-                    onClick={() => api?.scrollTo(index)}
-                    className={cn(
-                      'size-2.5 rounded-full transition',
-                      index === activeIndex
-                        ? 'bg-primary scale-110'
-                        : 'bg-muted-foreground/35 hover:bg-muted-foreground/55',
-                    )}
-                  />
-                ))}
-              </div>
+                <ChevronRight className="size-5" aria-hidden />
+              </button>
             ) : null}
           </div>
         </Carousel>
