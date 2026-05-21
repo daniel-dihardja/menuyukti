@@ -162,24 +162,24 @@
           "caption": "Workflows in action: your full campaign timeline—from dates and brief through promotion ideas, schedules, and copy."
         },
         "workflows02": {
-          "alt": "Screenshot of the Menuyukti Workflows UI with the Campaign Brief milestone open, showing the generated brief preview and milestone controls.",
-          "caption": "Review generated briefs in context—edit milestone data, rerun agents, and keep every step on the same timeline."
+          "alt": "Screenshot of the Menuyukti Workflows UI showing the full milestone timeline with the Campaign Brief step selected.",
+          "caption": "Workflows in action: your full campaign timeline—from dates and brief through promotion ideas, schedules, and copy."
         },
         "promoCandidates01": {
           "alt": "Screenshot of the Menuyukti Workflows UI with the Promotion Candidates milestone selected on the campaign timeline.",
           "caption": "Promotion candidates: turn menu-engineering signals into ranked star and puzzle dishes aligned with your campaign brief."
         },
         "promoCandidates02": {
-          "alt": "Screenshot of the Promotion Candidates milestone preview showing star and puzzle menu items grouped by POS category.",
-          "caption": "See which dishes to promote—stars and puzzles ranked by category, filtered by your analytics-backed campaign focus."
+          "alt": "Screenshot of the Menuyukti Workflows UI with the Promotion Candidates milestone selected on the campaign timeline.",
+          "caption": "Promotion candidates: turn menu-engineering signals into ranked star and puzzle dishes aligned with your campaign brief."
         },
         "menuTagger01": {
           "alt": "Screenshot of the Menuyukti Workflows UI with the Menu Tagger milestone selected on the campaign timeline.",
-          "caption": "Menu tagger: attach fixed taxonomy tags to every promotion candidate—culinary dimensions plus reel-ready content angles."
+          "caption": "Menu tagger: an AI agent tags each promotion candidate with extra context—fixed taxonomy for culinary dimensions and reel-ready content angles."
         },
         "menuTagger02": {
-          "alt": "Screenshot of the Menu Tagger milestone preview showing tagged star and puzzle items with taxonomy dimensions.",
-          "caption": "Tagged items ready for content planning—kind, reel moment, serve temp, and optional multi-value dimensions on each dish."
+          "alt": "Screenshot of the Menuyukti Workflows UI with the Menu Tagger milestone selected on the campaign timeline.",
+          "caption": "Menu tagger: an AI agent tags each promotion candidate with extra context—fixed taxonomy for culinary dimensions and reel-ready content angles."
         }
       }
     },
