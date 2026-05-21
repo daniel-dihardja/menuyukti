@@ -163,7 +163,7 @@
         },
         "studio": {
           "title": "Studio: scroll-stopping visuals from your photos",
-          "description": "Upload product shots, run preset flows like hero shots and golden-hour fixes, and compose designs for Reels, carousels, and promos—no separate design stack."
+          "description": "Upload product shots, run preset flows like hero shots and golden-hour fixes—with advanced cropping that can add space around your dish when the photo is tight—and compose designs for Reels, carousels, and promos."
         }
       }
     },
@@ -193,20 +193,30 @@
     },
     "studio": {
       "title": "Studio: brand library and AI image flows",
-      "subtitle": "One smartphone photo can become a classic hero shot—warm light, better framing, then a commercial finish.",
+      "subtitle": "One smartphone photo can become a classic hero shot—prepare with warmer food light and smarter composition, then a commercial finish.",
       "transformation": {
-        "title": "One phone shot → light fix → hero shot",
-        "intro": "Warm light is what makes food photography work on Instagram—soft ambers and honey tones (around 3200–4000K) feel appetizing; cool or flat phone flash often kills texture and color. Studio first corrects exposure and crops your source image with a golden-hour light fix, then runs the Restaurant marketing hero shot flow so the same dish becomes a classic 45–60° hero on warm wood—without a reshoot.",
+        "title": "One phone shot → prepare → hero shot",
+        "intro": "Step 2 prepares your photo in two ways before the hero pass: warmer, food-optimized light, then composition—advanced cropping that reframes the dish and can add breathing room even when the source has none. Step 3 turns the same plate into a classic 45–60° restaurant marketing hero on warm wood—without a reshoot.",
         "steps": {
           "source": {
             "label": "1 · Source",
-            "alt": "Original smartphone photo of a restaurant dish with uneven lighting.",
-            "caption": "Your everyday phone capture—real dish, imperfect light."
+            "alt": "Original smartphone photo of a restaurant dish with uneven lighting and tight framing.",
+            "caption": "Your everyday phone capture—real dish, imperfect light, maybe cropped tight to the plate."
           },
           "lightFix": {
-            "label": "2 · Light fix",
-            "alt": "Same dish after Instagram golden-hour light fix and reframing.",
-            "caption": "Golden-hour light fix lifts shadows and warms the scene before the hero pass."
+            "label": "2 · Prepare",
+            "alt": "Same dish after preparing light and composition—warmer food lighting and reframed with more space around the subject.",
+            "captionLead": "The golden-hour fix prepares your image in two steps:",
+            "points": {
+              "light": {
+                "title": "Light",
+                "description": "Warm golden-hour tones (around 3200–4000K), lift shadows, and tune exposure so the food looks appetizing—optimized for Instagram food photography, not flat phone flash."
+              },
+              "composition": {
+                "title": "Composition",
+                "description": "Advanced cropping and reframing—not a simple tight crop. Reposition for rule of thirds and flattering angle, and add intentional space around the dish when your source photo has none, so the frame has headroom and breathing room."
+              }
+            }
           },
           "heroShot": {
             "label": "3 · Hero shot",
@@ -215,8 +225,6 @@
           }
         }
       },
-      "imageAlt": "Screenshot of the Menuyukti Studio workspace with the product image library, AI image flow presets, and design tools.",
-      "imageCaption": "Studio: upload product photos, run AI image flows, and compose designs for Reels, carousels, and promos.",
       "featuredFlows": {
         "heroShot": {
           "title": "Restaurant marketing hero shot",
@@ -224,7 +232,7 @@
         },
         "goldenHour": {
           "title": "Instagram food golden hour fix",
-          "description": "Step 2 in the pipeline: warm late-afternoon light (3200–4000K), lifted shadows, and reframing on your source photo—before the hero shot pass."
+          "description": "Step 2 prepares your photo: (1) Light—warm golden-hour tones and food-optimized exposure; (2) Composition—advanced cropping that reframes and can add space around the dish when the source is tight—before the hero shot pass."
         },
         "prepareForAds": {
           "title": "Prepare Product for Ads",

@@ -1,3 +1,5 @@
+import { LandingFaqAccordion } from '@/app/_components/landing/landing-faq-accordion'
+
 type FaqItem = {
   question: string
   answer: string
@@ -22,28 +24,8 @@ export function LandingFaq({ title, items }: LandingFaqProps) {
         >
           {title}
         </h2>
-        <div className="mt-10 flex flex-col gap-3">
-          {items.map((item) => (
-            <details
-              key={item.question}
-              className="group rounded-lg border border-border bg-card px-4 py-3 shadow-sm"
-            >
-              <summary className="cursor-pointer list-none rounded-sm text-base font-medium leading-snug text-foreground transition-colors marker:content-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-lg md:leading-snug [&::-webkit-details-marker]:hidden">
-                <span className="flex items-center justify-between gap-2">
-                  {item.question}
-                  <span
-                    className="text-muted-foreground transition-transform group-open:rotate-180"
-                    aria-hidden
-                  >
-                    ▾
-                  </span>
-                </span>
-              </summary>
-              <p className="mt-3 text-pretty text-base leading-relaxed text-muted-foreground">
-                {item.answer}
-              </p>
-            </details>
-          ))}
+        <div className="mt-10">
+          <LandingFaqAccordion items={items} />
         </div>
       </div>
     </section>

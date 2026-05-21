@@ -1,12 +1,21 @@
 import Image from 'next/image'
-import { ArrowDown } from 'lucide-react'
+import { ArrowDown, ArrowRight } from 'lucide-react'
 import { Fragment } from 'react'
+
+export type StudioTransformationPreparePoint = {
+  title: string
+  description: string
+}
 
 export type StudioTransformationStep = {
   label: string
   alt: string
-  caption: string
   imageSrc: string
+  /** Single paragraph when the step has no structured prepare points. */
+  caption?: string
+  /** Step 2-style lead-in plus light + composition bullets. */
+  captionLead?: string
+  preparePoints?: readonly StudioTransformationPreparePoint[]
 }
 
 type LandingStudioTransformationProps = {
@@ -29,32 +38,55 @@ export function LandingStudioTransformation({
         {intro}
       </p>
 
-      <div role="list" className="flex w-full flex-col gap-6">
+      <div role="list" className="flex w-full flex-col gap-6 md:flex-row md:items-stretch md:gap-3">
         {steps.map((step, index) => (
           <Fragment key={step.imageSrc}>
-            <div role="listitem" className="flex w-full min-w-0 flex-col gap-3">
+            <div role="listitem" className="flex w-full min-w-0 flex-col gap-3 md:flex-1">
               <span className="text-sm font-semibold uppercase tracking-wide text-primary">
                 {step.label}
               </span>
               <div className="overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-lg ring-1 ring-border/40">
-                <div className="relative aspect-[4/5] w-full max-h-[min(70vh,720px)] min-h-[280px] sm:min-h-[360px]">
+                <div className="relative aspect-[4/5] w-full min-h-[280px] sm:min-h-[360px] md:aspect-[3/4] md:min-h-0">
                   <Image
                     src={step.imageSrc}
                     alt={step.alt}
                     fill
                     className="object-contain object-center"
-                    sizes="(max-width: 1152px) min(100vw - 3rem, 1088px), 1088px"
+                    sizes="(max-width: 767px) 100vw, 33vw"
                     loading="lazy"
                   />
                 </div>
               </div>
-              <p className="text-pretty text-sm leading-relaxed text-muted-foreground md:text-base">
-                {step.caption}
-              </p>
+              {step.preparePoints != null && step.preparePoints.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {step.captionLead != null ? (
+                    <p className="text-pretty text-sm leading-relaxed text-muted-foreground md:text-base">
+                      {step.captionLead}
+                    </p>
+                  ) : null}
+                  <ul className="flex flex-col gap-2 text-sm leading-relaxed text-muted-foreground md:text-base">
+                    {step.preparePoints.map((point) => (
+                      <li key={point.title} className="min-w-0 text-pretty">
+                        <span className="font-medium text-foreground">{point.title}</span>
+                        {' — '}
+                        {point.description}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className="text-pretty text-sm leading-relaxed text-muted-foreground md:text-base">
+                  {step.caption}
+                </p>
+              )}
             </div>
             {index < steps.length - 1 ? (
-              <div className="flex justify-center py-1" aria-hidden>
-                <ArrowDown className="size-6 text-muted-foreground" />
+              <div
+                className="flex shrink-0 justify-center py-1 md:items-center md:self-center md:py-0"
+                aria-hidden
+              >
+                <ArrowDown className="size-6 text-muted-foreground md:hidden" />
+                <ArrowRight className="hidden size-6 text-muted-foreground md:block" />
               </div>
             ) : null}
           </Fragment>
