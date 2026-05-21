@@ -1,33 +1,222 @@
-import Image from 'next/image'
+'use client'
 
-type HeroProductPreviewProps = {
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from '@workspace/ui/components/carousel'
+import { Dialog, DialogContent, DialogTitle } from '@workspace/ui/components/dialog'
+import { cn } from '@workspace/ui/lib/utils'
+import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react'
+import Image from 'next/image'
+import { useCallback, useEffect, useState } from 'react'
+
+export type HeroPreviewSlide = {
+  id:
+    | 'workflows01'
+    | 'workflows02'
+    | 'promoCandidates01'
+    | 'promoCandidates02'
+    | 'menuTagger01'
+    | 'menuTagger02'
+  imageSrc: string
   alt: string
   caption: string
 }
 
-const HERO_IMAGE = '/images/landing/workflow-campaign-brief.webp'
+export type HeroProductPreviewProps = {
+  slides: readonly HeroPreviewSlide[]
+  viewLargerLabel: string
+  carouselLabel: string
+  carouselPrevLabel: string
+  carouselNextLabel: string
+  carouselDotLabels: readonly string[]
+  modalTitle: string
+}
 
-/** Above-the-fold product screenshot (LCP). */
-export function HeroProductPreview({ alt, caption }: HeroProductPreviewProps) {
+const IMAGE_SIZES =
+  '(max-width: 640px) 100vw, (max-width: 1152px) min(100vw - 3rem, 1024px), 1024px'
+
+/** Above-the-fold product screenshots (LCP on first slide). */
+export function HeroProductPreview({
+  slides,
+  viewLargerLabel,
+  carouselLabel,
+  carouselPrevLabel,
+  carouselNextLabel,
+  carouselDotLabels,
+  modalTitle,
+}: HeroProductPreviewProps) {
+  const [api, setApi] = useState<CarouselApi>()
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [canScrollPrev, setCanScrollPrev] = useState(false)
+  const [canScrollNext, setCanScrollNext] = useState(false)
+
+  const activeSlide = slides[activeIndex] ?? slides[0]
+  const showNav = slides.length > 1
+
+  const syncCarouselState = useCallback((carouselApi: CarouselApi | undefined) => {
+    if (!carouselApi) return
+    setActiveIndex(carouselApi.selectedScrollSnap())
+    setCanScrollPrev(carouselApi.canScrollPrev())
+    setCanScrollNext(carouselApi.canScrollNext())
+  }, [])
+
+  useEffect(() => {
+    if (!api) return
+
+    syncCarouselState(api)
+    const onSelect = () => syncCarouselState(api)
+    api.on('reInit', onSelect)
+    api.on('select', onSelect)
+
+    return () => {
+      api.off('select', onSelect)
+      api.off('reInit', onSelect)
+    }
+  }, [api, syncCarouselState])
+
+  const openModal = () => setModalOpen(true)
+
   return (
     <figure className="mx-auto mt-10 w-full min-w-0 max-w-5xl md:mt-12">
       <div className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-500 motion-reduce:animate-none">
-        <div className="overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-lg ring-1 ring-border/40">
-          <div className="relative aspect-video w-full min-w-0">
-            <Image
-              src={HERO_IMAGE}
-              alt={alt}
-              fill
-              className="object-cover object-center"
-              priority
-              sizes="(max-width: 640px) 100vw, (max-width: 1152px) min(100vw - 3rem, 1024px), 1024px"
-            />
+        <Carousel
+          setApi={setApi}
+          opts={{ loop: true }}
+          className="w-full"
+          aria-label={carouselLabel}
+        >
+          <div className="overflow-hidden rounded-2xl border border-border bg-muted/20 shadow-lg ring-1 ring-border/40">
+            <div className="relative aspect-video w-full min-w-0 bg-muted/30">
+              <CarouselContent className="ml-0">
+                {slides.map((slide, index) => (
+                  <CarouselItem key={slide.id} className="basis-full pl-0">
+                    <button
+                      type="button"
+                      onClick={openModal}
+                      className="group relative block h-full w-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      aria-label={`${viewLargerLabel}: ${slide.alt}`}
+                    >
+                      <div className="relative aspect-video w-full min-w-0">
+                        <Image
+                          src={slide.imageSrc}
+                          alt={slide.alt}
+                          fill
+                          className="object-contain object-center"
+                          priority={index === 0}
+                          loading={index === 0 ? undefined : 'lazy'}
+                          sizes={IMAGE_SIZES}
+                        />
+                      </div>
+                      <span className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition group-hover:bg-background">
+                        <ZoomIn className="size-3.5 shrink-0" aria-hidden />
+                        {viewLargerLabel}
+                      </span>
+                    </button>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+
+              {showNav ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => api?.scrollPrev()}
+                    disabled={!canScrollPrev}
+                    className={cn(
+                      'absolute left-3 top-1/2 z-10 flex size-10 -translate-y-1/2 touch-manipulation items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm transition',
+                      'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                      'disabled:pointer-events-none disabled:opacity-40',
+                    )}
+                    aria-label={carouselPrevLabel}
+                  >
+                    <ChevronLeft className="size-5" aria-hidden />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => api?.scrollNext()}
+                    disabled={!canScrollNext}
+                    className={cn(
+                      'absolute right-3 top-1/2 z-10 flex size-10 -translate-y-1/2 touch-manipulation items-center justify-center rounded-full border border-border/60 bg-background/90 text-foreground shadow-sm transition',
+                      'hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                      'disabled:pointer-events-none disabled:opacity-40',
+                    )}
+                    aria-label={carouselNextLabel}
+                  >
+                    <ChevronRight className="size-5" aria-hidden />
+                  </button>
+                </>
+              ) : null}
+            </div>
+
+            {showNav ? (
+              <div
+                className="flex justify-center gap-2 border-t border-border/40 bg-muted/10 px-4 py-3"
+                role="tablist"
+                aria-label={carouselLabel}
+              >
+                {slides.map((slide, index) => (
+                  <button
+                    key={slide.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={index === activeIndex}
+                    aria-current={index === activeIndex ? 'true' : undefined}
+                    aria-label={carouselDotLabels[index]}
+                    onClick={() => api?.scrollTo(index)}
+                    className={cn(
+                      'size-2.5 rounded-full transition',
+                      index === activeIndex
+                        ? 'bg-primary scale-110'
+                        : 'bg-muted-foreground/35 hover:bg-muted-foreground/55',
+                    )}
+                  />
+                ))}
+              </div>
+            ) : null}
           </div>
-        </div>
+        </Carousel>
       </div>
-      <figcaption className="mt-4 text-pretty text-center text-sm leading-relaxed text-foreground/70">
-        {caption}
-      </figcaption>
+
+      {activeSlide ? (
+        <figcaption className="mt-4 text-pretty text-center text-sm leading-relaxed text-foreground/70">
+          {activeSlide.caption}
+        </figcaption>
+      ) : null}
+
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        {activeSlide ? (
+          <DialogContent
+            key={activeSlide.id}
+            overlayClassName="bg-black/80 backdrop-blur-sm"
+            showCloseButton
+            className={cn(
+              'inset-0 top-0 left-0 flex h-[100dvh] max-h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 bg-background p-0 shadow-2xl',
+              'sm:inset-auto sm:top-[50%] sm:left-[50%] sm:h-[96dvh] sm:max-h-[96dvh] sm:w-[min(98vw,1600px)] sm:max-w-[min(98vw,1600px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg',
+            )}
+          >
+            <DialogTitle className="sr-only">{modalTitle}</DialogTitle>
+            <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-gradient-to-b from-muted/20 via-muted/10 to-muted/5 px-3 py-4 sm:px-6 sm:py-6">
+              <Image
+                src={activeSlide.imageSrc}
+                alt={activeSlide.alt}
+                width={3840}
+                height={2160}
+                className="h-auto max-h-[calc(100dvh-5.5rem)] w-auto max-w-full object-contain shadow-lg sm:max-h-[calc(96dvh-5.5rem)]"
+                sizes="100vw"
+                quality={90}
+                priority
+              />
+            </div>
+            <p className="shrink-0 border-t border-border/60 px-4 py-3 pr-14 text-center text-sm leading-relaxed text-muted-foreground">
+              {activeSlide.caption}
+            </p>
+          </DialogContent>
+        ) : null}
+      </Dialog>
     </figure>
   )
 }

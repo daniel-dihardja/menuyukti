@@ -150,8 +150,38 @@
       "subtitle": "Agentic Workflows turn your sales data into briefs, promotion ideas, schedules, and copy. Studio turns your menu photos into scroll-stopping Reels and feed posts—built for restaurant marketers.",
       "badge": "AI-first · Restaurant Instagram marketing",
       "ctaSecondary": "Sign in",
-      "previewAlt": "Screenshot of the Menuyukti Workflows UI showing the full milestone timeline with the Campaign Brief step selected and its generated brief preview.",
-      "previewCaption": "Workflows in action: your full campaign timeline—from dates and brief through promotion ideas, schedules, and copy."
+      "viewLarger": "View larger",
+      "carouselLabel": "Product screenshots",
+      "carouselPrev": "Previous screenshot",
+      "carouselNext": "Next screenshot",
+      "carouselDot": "Slide {n} of {total}",
+      "modalTitle": "Product screenshot",
+      "previewSlides": {
+        "workflows01": {
+          "alt": "Screenshot of the Menuyukti Workflows UI showing the full milestone timeline with the Campaign Brief step selected.",
+          "caption": "Workflows in action: your full campaign timeline—from dates and brief through promotion ideas, schedules, and copy."
+        },
+        "workflows02": {
+          "alt": "Screenshot of the Menuyukti Workflows UI with the Campaign Brief milestone open, showing the generated brief preview and milestone controls.",
+          "caption": "Review generated briefs in context—edit milestone data, rerun agents, and keep every step on the same timeline."
+        },
+        "promoCandidates01": {
+          "alt": "Screenshot of the Menuyukti Workflows UI with the Promotion Candidates milestone selected on the campaign timeline.",
+          "caption": "Promotion candidates: turn menu-engineering signals into ranked star and puzzle dishes aligned with your campaign brief."
+        },
+        "promoCandidates02": {
+          "alt": "Screenshot of the Promotion Candidates milestone preview showing star and puzzle menu items grouped by POS category.",
+          "caption": "See which dishes to promote—stars and puzzles ranked by category, filtered by your analytics-backed campaign focus."
+        },
+        "menuTagger01": {
+          "alt": "Screenshot of the Menuyukti Workflows UI with the Menu Tagger milestone selected on the campaign timeline.",
+          "caption": "Menu tagger: attach fixed taxonomy tags to every promotion candidate—culinary dimensions plus reel-ready content angles."
+        },
+        "menuTagger02": {
+          "alt": "Screenshot of the Menu Tagger milestone preview showing tagged star and puzzle items with taxonomy dimensions.",
+          "caption": "Tagged items ready for content planning—kind, reel moment, serve temp, and optional multi-value dimensions on each dish."
+        }
+      }
     },
     "pillars": {
       "title": "Two AI tools, one Instagram workflow",

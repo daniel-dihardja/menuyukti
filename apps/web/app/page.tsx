@@ -134,7 +134,59 @@ export default async function LandingPage() {
               {t('hero.subtitle')}
             </p>
 
-            <HeroProductPreview alt={t('hero.previewAlt')} caption={t('hero.previewCaption')} />
+            <HeroProductPreview
+              slides={[
+                {
+                  id: 'workflows01',
+                  imageSrc: '/images/landing/workflow-campaign-brief-01.webp',
+                  alt: t('hero.previewSlides.workflows01.alt'),
+                  caption: t('hero.previewSlides.workflows01.caption'),
+                },
+                {
+                  id: 'workflows02',
+                  imageSrc: '/images/landing/workflow-campaign-brief-02.webp',
+                  alt: t('hero.previewSlides.workflows02.alt'),
+                  caption: t('hero.previewSlides.workflows02.caption'),
+                },
+                {
+                  id: 'promoCandidates01',
+                  imageSrc: '/images/landing/promo-candidates-01.webp',
+                  alt: t('hero.previewSlides.promoCandidates01.alt'),
+                  caption: t('hero.previewSlides.promoCandidates01.caption'),
+                },
+                {
+                  id: 'promoCandidates02',
+                  imageSrc: '/images/landing/promo-candidates-02.webp',
+                  alt: t('hero.previewSlides.promoCandidates02.alt'),
+                  caption: t('hero.previewSlides.promoCandidates02.caption'),
+                },
+                {
+                  id: 'menuTagger01',
+                  imageSrc: '/images/landing/menu-tagger-01.webp',
+                  alt: t('hero.previewSlides.menuTagger01.alt'),
+                  caption: t('hero.previewSlides.menuTagger01.caption'),
+                },
+                {
+                  id: 'menuTagger02',
+                  imageSrc: '/images/landing/menu-tagger-02.webp',
+                  alt: t('hero.previewSlides.menuTagger02.alt'),
+                  caption: t('hero.previewSlides.menuTagger02.caption'),
+                },
+              ]}
+              viewLargerLabel={t('hero.viewLarger')}
+              carouselLabel={t('hero.carouselLabel')}
+              carouselPrevLabel={t('hero.carouselPrev')}
+              carouselNextLabel={t('hero.carouselNext')}
+              carouselDotLabels={[
+                t('hero.carouselDot', { n: '1', total: '6' }),
+                t('hero.carouselDot', { n: '2', total: '6' }),
+                t('hero.carouselDot', { n: '3', total: '6' }),
+                t('hero.carouselDot', { n: '4', total: '6' }),
+                t('hero.carouselDot', { n: '5', total: '6' }),
+                t('hero.carouselDot', { n: '6', total: '6' }),
+              ]}
+              modalTitle={t('hero.modalTitle')}
+            />
 
             <div className="mt-8 hidden justify-center md:flex">
               <Button size="lg" variant="default" asChild>
