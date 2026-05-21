@@ -9,7 +9,6 @@ import { getTranslations } from 'next-intl/server'
 import { HeroProductPreview } from '@/app/_components/landing/hero-product-preview'
 import { LandingFaq } from '@/app/_components/landing/landing-faq'
 import { LandingFeatureSpotlight } from '@/app/_components/landing/landing-feature-spotlight'
-import { LandingStudioScreenshot } from '@/app/_components/landing/landing-studio-screenshot'
 import { LandingStudioTransformation } from '@/app/_components/landing/landing-studio-transformation'
 import { LandingFooter } from '@/app/_components/landing/landing-footer'
 import { LandingHowTwoSteps } from '@/app/_components/landing/landing-how-two-steps'
@@ -135,7 +134,59 @@ export default async function LandingPage() {
               {t('hero.subtitle')}
             </p>
 
-            <HeroProductPreview alt={t('hero.previewAlt')} caption={t('hero.previewCaption')} />
+            <HeroProductPreview
+              slides={[
+                {
+                  id: 'workflows01',
+                  imageSrc: '/images/landing/workflow-campaign-brief-01.webp',
+                  alt: t('hero.previewSlides.workflows01.alt'),
+                  caption: t('hero.previewSlides.workflows01.caption'),
+                },
+                {
+                  id: 'workflows02',
+                  imageSrc: '/images/landing/workflow-campaign-brief-02.webp',
+                  alt: t('hero.previewSlides.workflows02.alt'),
+                  caption: t('hero.previewSlides.workflows02.caption'),
+                },
+                {
+                  id: 'promoCandidates01',
+                  imageSrc: '/images/landing/promo-candidates-01.webp',
+                  alt: t('hero.previewSlides.promoCandidates01.alt'),
+                  caption: t('hero.previewSlides.promoCandidates01.caption'),
+                },
+                {
+                  id: 'promoCandidates02',
+                  imageSrc: '/images/landing/promo-candidates-02.webp',
+                  alt: t('hero.previewSlides.promoCandidates02.alt'),
+                  caption: t('hero.previewSlides.promoCandidates02.caption'),
+                },
+                {
+                  id: 'menuTagger01',
+                  imageSrc: '/images/landing/menu-tagger-01.webp',
+                  alt: t('hero.previewSlides.menuTagger01.alt'),
+                  caption: t('hero.previewSlides.menuTagger01.caption'),
+                },
+                {
+                  id: 'menuTagger02',
+                  imageSrc: '/images/landing/menu-tagger-02.webp',
+                  alt: t('hero.previewSlides.menuTagger02.alt'),
+                  caption: t('hero.previewSlides.menuTagger02.caption'),
+                },
+              ]}
+              viewLargerLabel={t('hero.viewLarger')}
+              carouselLabel={t('hero.carouselLabel')}
+              carouselPrevLabel={t('hero.carouselPrev')}
+              carouselNextLabel={t('hero.carouselNext')}
+              carouselDotLabels={[
+                t('hero.carouselDot', { n: '1', total: '6' }),
+                t('hero.carouselDot', { n: '2', total: '6' }),
+                t('hero.carouselDot', { n: '3', total: '6' }),
+                t('hero.carouselDot', { n: '4', total: '6' }),
+                t('hero.carouselDot', { n: '5', total: '6' }),
+                t('hero.carouselDot', { n: '6', total: '6' }),
+              ]}
+              modalTitle={t('hero.modalTitle')}
+            />
 
             <div className="mt-8 hidden justify-center md:flex">
               <Button size="lg" variant="default" asChild>
@@ -172,36 +223,44 @@ export default async function LandingPage() {
           subtitle={t('studio.subtitle')}
           bullets={studioBullets}
           media={
-            <div className="flex w-full min-w-0 flex-col gap-14">
-              <LandingStudioScreenshot
-                alt={t('studio.imageAlt')}
-                caption={t('studio.imageCaption')}
-              />
-              <LandingStudioTransformation
-                title={t('studio.transformation.title')}
-                intro={t('studio.transformation.intro')}
-                steps={[
-                  {
-                    label: t('studio.transformation.steps.source.label'),
-                    alt: t('studio.transformation.steps.source.alt'),
-                    caption: t('studio.transformation.steps.source.caption'),
-                    imageSrc: '/images/landing/studio-transformation-source.webp',
-                  },
-                  {
-                    label: t('studio.transformation.steps.lightFix.label'),
-                    alt: t('studio.transformation.steps.lightFix.alt'),
-                    caption: t('studio.transformation.steps.lightFix.caption'),
-                    imageSrc: '/images/landing/studio-transformation-cropped-light-fix.webp',
-                  },
-                  {
-                    label: t('studio.transformation.steps.heroShot.label'),
-                    alt: t('studio.transformation.steps.heroShot.alt'),
-                    caption: t('studio.transformation.steps.heroShot.caption'),
-                    imageSrc: '/images/landing/studio-transformation-hero-shot.webp',
-                  },
-                ]}
-              />
-            </div>
+            <LandingStudioTransformation
+              title={t('studio.transformation.title')}
+              intro={t('studio.transformation.intro')}
+              steps={[
+                {
+                  label: t('studio.transformation.steps.source.label'),
+                  alt: t('studio.transformation.steps.source.alt'),
+                  caption: t('studio.transformation.steps.source.caption'),
+                  imageSrc: '/images/landing/studio-transformation-source.webp',
+                },
+                {
+                  label: t('studio.transformation.steps.lightFix.label'),
+                  alt: t('studio.transformation.steps.lightFix.alt'),
+                  captionLead: t('studio.transformation.steps.lightFix.captionLead'),
+                  preparePoints: [
+                    {
+                      title: t('studio.transformation.steps.lightFix.points.light.title'),
+                      description: t(
+                        'studio.transformation.steps.lightFix.points.light.description',
+                      ),
+                    },
+                    {
+                      title: t('studio.transformation.steps.lightFix.points.composition.title'),
+                      description: t(
+                        'studio.transformation.steps.lightFix.points.composition.description',
+                      ),
+                    },
+                  ],
+                  imageSrc: '/images/landing/studio-transformation-cropped-light-fix.webp',
+                },
+                {
+                  label: t('studio.transformation.steps.heroShot.label'),
+                  alt: t('studio.transformation.steps.heroShot.alt'),
+                  caption: t('studio.transformation.steps.heroShot.caption'),
+                  imageSrc: '/images/landing/studio-transformation-hero-shot.webp',
+                },
+              ]}
+            />
           }
           Icon={Sparkles}
           stacked
