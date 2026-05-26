@@ -61,8 +61,8 @@ def _valid_campaign_brief_payload() -> dict:
             "coreMessage": "Promote a repeatable weekday lunch offer for nearby workers and small groups.",
             "offerWindow": "11:00-14:00",
             "cadenceGuidance": [
-                "Publish lunch-offer reels twice per week.",
-                "Prioritize weekday morning posting before the lunch window.",
+                "Publish lunch-offer reels once per week on Tuesday.",
+                "Prioritize Tuesday morning posting before the lunch window.",
                 "Keep the core lunch CTA consistent while rotating visuals and hero dishes.",
             ],
         },
@@ -107,7 +107,7 @@ def _valid_campaign_brief_payload() -> dict:
         ],
         "testingPlan": [
             "Test lunch vs dinner daypart windows",
-            "Test Tue vs Thu posting days",
+            "Test Tuesday morning posting times",
             "Replace weak hooks after 2 weeks of flat save rate",
         ],
         "riskGuardrails": [
@@ -128,7 +128,7 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
         yield (
             "values",
             {
-                "result_data": '{"venueSnapshot":{"venueName":"Cafe Alto","city":"Berlin","country":"Germany","currency":"EUR"},"overallStrategy":{"strategyFocus":"weekday_lunch","audiencePriority":["weekday lunch workers","evening social groups","weekend families"],"coreMessage":"Promote a repeatable weekday lunch offer for nearby workers and small groups.","offerWindow":"11:00-14:00","cadenceGuidance":["Publish lunch-offer reels twice per week.","Prioritize weekday morning posting before the lunch window.","Keep the core lunch CTA consistent while rotating visuals and hero dishes."]},"contentPillars":["A","B","C"],"audienceHypotheses":["A","B","C"],"proofOrientedAngles":["A","B","C"],"toneGuardrails":["A","B","C"],"campaignObjective":"Increase reservations in conversion stage this month","targetSegments":["weekday lunch workers","weekend families","evening social groups"],"messageHierarchy":["hero promise","proof point","cta"],"offerAndCtaPlan":["margin-safe weekday menu","reserve via link","dm fallback"],"contentPillarPlan":["signature dishes -> Reel -> reserve CTA","social proof -> Carousel -> DM CTA","BTS prep -> Story -> walk-in CTA"],"measurementPlan":["track saves and shares weekly","track profile visits and DM starts weekly","if DM starts below threshold for 2 weeks then adjust CTA"],"testingPlan":["test lunch vs dinner windows","test Tue vs Thu posting","refresh hooks after weak 2-week performance"],"riskGuardrails":["avoid unverified claims","respect allergen and local promo rules","avoid discount-first copy"]}',
+                "result_data": '{"venueSnapshot":{"venueName":"Cafe Alto","city":"Berlin","country":"Germany","currency":"EUR"},"overallStrategy":{"strategyFocus":"weekday_lunch","audiencePriority":["weekday lunch workers","evening social groups","weekend families"],"coreMessage":"Promote a repeatable weekday lunch offer for nearby workers and small groups.","offerWindow":"11:00-14:00","cadenceGuidance":["Publish lunch-offer reels once per week on Tuesday.","Prioritize Tuesday morning posting before the lunch window.","Keep the core lunch CTA consistent while rotating visuals and hero dishes."]},"contentPillars":["A","B","C"],"audienceHypotheses":["A","B","C"],"proofOrientedAngles":["A","B","C"],"toneGuardrails":["A","B","C"],"campaignObjective":"Increase reservations in conversion stage this month","targetSegments":["weekday lunch workers","weekend families","evening social groups"],"messageHierarchy":["hero promise","proof point","cta"],"offerAndCtaPlan":["margin-safe weekday menu","reserve via link","dm fallback"],"contentPillarPlan":["signature dishes -> Reel -> reserve CTA","social proof -> Carousel -> DM CTA","BTS prep -> Story -> walk-in CTA"],"measurementPlan":["track saves and shares weekly","track profile visits and DM starts weekly","if DM starts below threshold for 2 weeks then adjust CTA"],"testingPlan":["test lunch vs dinner windows","test Tuesday morning posting times","refresh hooks after weak 2-week performance"],"riskGuardrails":["avoid unverified claims","respect allergen and local promo rules","avoid discount-first copy"]}',
                 "milestone_data": {
                     "venueSnapshot": {
                         "venueName": "Cafe Alto",
@@ -149,8 +149,8 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
                         ),
                         "offerWindow": "11:00-14:00",
                         "cadenceGuidance": [
-                            "Publish lunch-offer reels twice per week.",
-                            "Prioritize weekday morning posting before the lunch window.",
+                            "Publish lunch-offer reels once per week on Tuesday.",
+                            "Prioritize Tuesday morning posting before the lunch window.",
                             (
                                 "Keep the core lunch CTA consistent while rotating visuals "
                                 "and hero dishes."
@@ -186,7 +186,7 @@ async def test_routing_campaign_brief_uses_dedicated_graph_path() -> None:
                     ],
                     "testingPlan": [
                         "test lunch vs dinner windows",
-                        "test Tue vs Thu posting",
+                        "test Tuesday morning posting times",
                         "refresh hooks after weak 2-week performance",
                     ],
                     "riskGuardrails": [

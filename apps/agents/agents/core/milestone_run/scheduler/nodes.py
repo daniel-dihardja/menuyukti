@@ -28,7 +28,7 @@ from agents_app.agents.core.milestone_run.scheduler.state import SchedulerOutput
 from langgraph.config import get_stream_writer
 
 DEFAULT_REEL_SLOT_TIME = "11:00"
-DEFAULT_REEL_WEEKDAYS = ("tuesday", "thursday")
+DEFAULT_REEL_WEEKDAYS = ("tuesday",)
 DEFAULT_POST_SLOT_TIME = "10:00"
 DEFAULT_STORY_SLOT_TIME = "10:00"
 _WEEKDAY_INDEX = {
@@ -91,7 +91,18 @@ def _overall_strategy(campaign_brief_data: dict[str, Any] | None) -> dict[str, A
 
 def _strategy_focus(campaign_brief_data: dict[str, Any] | None) -> str:
     overall = _overall_strategy(campaign_brief_data)
-    return str(overall.get("strategyFocus") or "").strip() or "weekday_lunch"
+    raw = str(overall.get("strategyFocus") or "").strip().lower()
+    if not raw:
+        return "weekday_lunch"
+
+    normalized = "_".join(raw.replace("-", " ").split())
+    if "weekend" in normalized:
+        return "weekend_family"
+    if "evening" in normalized or "dinner" in normalized:
+        return "evening_dinner"
+    if "lunch" in normalized or normalized == "weekday":
+        return "weekday_lunch"
+    return "weekday_lunch"
 
 
 def _offer_window(campaign_brief_data: dict[str, Any] | None) -> str:
@@ -104,30 +115,52 @@ def _preferred_weekdays(
     campaign_brief_data: dict[str, Any] | None,
 ) -> list[str]:
     focus = _strategy_focus(campaign_brief_data)
+    chosen: list[str]
+    source = "default"
     if focus == "weekday_lunch":
-        return list(DEFAULT_REEL_WEEKDAYS)
-    groups = reel_lineup_data.get("groups") if isinstance(reel_lineup_data, dict) else None
-    if isinstance(groups, list):
-        for group in groups:
-            if not isinstance(group, dict):
-                continue
-            hints = group.get("scheduleHints")
-            if not isinstance(hints, dict):
-                continue
-            raw = hints.get("preferredWeekdays")
-            if isinstance(raw, list):
-                cleaned = [
-                    str(value).strip().lower()
-                    for value in raw
-                    if str(value).strip().lower() in _WEEKDAY_INDEX
-                ]
-                if cleaned:
-                    return cleaned
-    if focus == "weekend_family":
-        return ["friday", "sunday"]
-    if focus == "evening_dinner":
-        return ["wednesday", "friday"]
-    return list(DEFAULT_REEL_WEEKDAYS)
+        chosen = list(DEFAULT_REEL_WEEKDAYS)
+        source = "weekday_lunch_default"
+    else:
+        groups = reel_lineup_data.get("groups") if isinstance(reel_lineup_data, dict) else None
+        if isinstance(groups, list):
+            for group in groups:
+                if not isinstance(group, dict):
+                    continue
+                hints = group.get("scheduleHints")
+                if not isinstance(hints, dict):
+                    continue
+                raw = hints.get("preferredWeekdays")
+                if isinstance(raw, list):
+                    cleaned = [
+                        str(value).strip().lower()
+                        for value in raw
+                        if str(value).strip().lower() in _WEEKDAY_INDEX
+                    ]
+                    if cleaned:
+                        chosen = cleaned
+                        source = "reel_lineup_hints"
+                        break
+            else:
+                if focus == "weekend_family":
+                    chosen = ["friday", "sunday"]
+                    source = "weekend_family_default"
+                elif focus == "evening_dinner":
+                    chosen = ["wednesday", "friday"]
+                    source = "evening_dinner_default"
+                else:
+                    chosen = list(DEFAULT_REEL_WEEKDAYS)
+                    source = "fallback_default"
+        else:
+            if focus == "weekend_family":
+                chosen = ["friday", "sunday"]
+                source = "weekend_family_default"
+            elif focus == "evening_dinner":
+                chosen = ["wednesday", "friday"]
+                source = "evening_dinner_default"
+            else:
+                chosen = list(DEFAULT_REEL_WEEKDAYS)
+                source = "fallback_default"
+    return chosen
 
 
 def _preferred_time(
