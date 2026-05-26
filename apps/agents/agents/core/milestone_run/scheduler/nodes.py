@@ -116,10 +116,8 @@ def _preferred_weekdays(
 ) -> list[str]:
     focus = _strategy_focus(campaign_brief_data)
     chosen: list[str]
-    source = "default"
     if focus == "weekday_lunch":
         chosen = list(DEFAULT_REEL_WEEKDAYS)
-        source = "weekday_lunch_default"
     else:
         groups = reel_lineup_data.get("groups") if isinstance(reel_lineup_data, dict) else None
         if isinstance(groups, list):
@@ -138,28 +136,21 @@ def _preferred_weekdays(
                     ]
                     if cleaned:
                         chosen = cleaned
-                        source = "reel_lineup_hints"
                         break
             else:
                 if focus == "weekend_family":
                     chosen = ["friday", "sunday"]
-                    source = "weekend_family_default"
                 elif focus == "evening_dinner":
                     chosen = ["wednesday", "friday"]
-                    source = "evening_dinner_default"
                 else:
                     chosen = list(DEFAULT_REEL_WEEKDAYS)
-                    source = "fallback_default"
         else:
             if focus == "weekend_family":
                 chosen = ["friday", "sunday"]
-                source = "weekend_family_default"
             elif focus == "evening_dinner":
                 chosen = ["wednesday", "friday"]
-                source = "evening_dinner_default"
             else:
                 chosen = list(DEFAULT_REEL_WEEKDAYS)
-                source = "fallback_default"
     return chosen
 
 
