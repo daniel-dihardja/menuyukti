@@ -24,6 +24,10 @@ describe('milestonedataValueSchema', () => {
     if (!parsed.success) {
       return
     }
+    expect('slots' in parsed.data).toBe(true)
+    if (!('slots' in parsed.data)) {
+      return
+    }
     expect(parsed.data).toMatchObject({
       startDate: '2026-06-01',
       endDate: '2026-06-30',
