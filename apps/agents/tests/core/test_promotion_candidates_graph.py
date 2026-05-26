@@ -358,6 +358,75 @@ async def test_enrich_storytelling_applies_llm_verdicts() -> None:
 
 
 @pytest.mark.asyncio
+async def test_enrich_storytelling_aligns_missing_verdict_names_by_order() -> None:
+    state: dict = {
+        "goal": "Promote signature dishes",
+        "criteria": [],
+        "run_id": "r1",
+        "injected_prior_context_markdown": _MINIMAL_BRIEF_INJECTION,
+        "formatted_output": {
+            "mainCategory": "Mains",
+            "categories": [
+                {
+                    "category": "Mains",
+                    "starItems": [
+                        {
+                            "name": "Steak",
+                            "storytellingFit": "weak",
+                            "storytellingRationale": "",
+                        }
+                    ],
+                    "puzzleItems": [
+                        {
+                            "name": "Soup",
+                            "storytellingFit": "weak",
+                            "storytellingRationale": "",
+                        }
+                    ],
+                }
+            ],
+            "sourceAnalyticsRunId": None,
+            "notes": "",
+        },
+    }
+    verdict = StorytellingVerdictsOutput.model_validate(
+        {
+            "verdicts": [
+                {
+                    "storytellingFit": "strong",
+                    "storytellingRationale": "Hero-worthy and memorable.",
+                },
+                {
+                    "storytellingFit": "weak",
+                    "storytellingRationale": "Too generic for the current brief.",
+                },
+            ]
+        }
+    )
+    structured = MagicMock()
+    structured.ainvoke = AsyncMock(return_value=verdict)
+    base_llm = MagicMock()
+    base_llm.with_structured_output.return_value = structured
+    with (
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.structured_llm_from_milestone_run_config",
+            return_value=base_llm,
+        ),
+        patch(
+            "agents_app.agents.core.milestone_run.promotion_candidates.nodes.get_stream_writer",
+            return_value=lambda _x: None,
+        ),
+    ):
+        out = await enrich_storytelling(state)
+
+    mains = out["formatted_output"]["categories"][0]
+    assert mains["starItems"][0]["name"] == "Steak"
+    assert mains["starItems"][0]["storytellingFit"] == "strong"
+    assert mains["puzzleItems"][0]["name"] == "Soup"
+    assert mains["puzzleItems"][0]["storytellingFit"] == "weak"
+
+
+@pytest.mark.asyncio
 async def test_persist_result_writes_valid_payload() -> None:
     state = {
         "milestone_id": "m1",

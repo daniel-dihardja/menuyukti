@@ -13,8 +13,17 @@ def _sample_payload() -> dict:
         "startDate": "2026-06-01",
         "endDate": "2026-06-30",
         "publicHolidays": [],
-        "slots": [],
+        "slots": [
+            {
+                "kind": "reel",
+                "date": "2026-06-02",
+                "time": "11:00",
+                "title": "Reel: Ribeye lunch offer (11:00-14:00) [hero]",
+            }
+        ],
         "sourceDatesTitle": "Campaign dates",
+        "sourceCampaignBriefTitle": "Campaign brief",
+        "sourceReelLineupTitle": "Lunch Reel Lineup",
     }
 
 
@@ -49,3 +58,30 @@ def test_window_present_verdict_fails_when_missing_dates() -> None:
     )
     assert verdict is not None
     assert verdict[0] == "fail"
+
+
+def test_prior_campaign_brief_verdict_passes() -> None:
+    verdict = try_scheduler_deterministic_verdict(
+        "Run used a prior campaign brief milestone.",
+        _sample_payload(),
+    )
+    assert verdict is not None
+    assert verdict[0] == "pass"
+
+
+def test_prior_reel_lineup_verdict_passes() -> None:
+    verdict = try_scheduler_deterministic_verdict(
+        "Run used a prior reel lineup milestone.",
+        _sample_payload(),
+    )
+    assert verdict is not None
+    assert verdict[0] == "pass"
+
+
+def test_explicit_reel_slot_verdict_passes() -> None:
+    verdict = try_scheduler_deterministic_verdict(
+        "Scheduler outputs explicit typed reel slots.",
+        _sample_payload(),
+    )
+    assert verdict is not None
+    assert verdict[0] == "pass"

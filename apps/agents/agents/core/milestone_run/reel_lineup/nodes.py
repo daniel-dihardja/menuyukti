@@ -9,8 +9,11 @@ import httpx
 from agents_app.agents.core.milestone_run.graphql_client import upsert_milestonedata_node
 from agents_app.agents.core.milestone_run.output_schema import validate_skill_output
 from agents_app.agents.core.milestone_run.prior_context_inject import (
+    campaign_brief_prior_error_message,
     extract_menu_tagger_data,
     extract_menu_tagger_row,
+    extract_restaurant_campaign_brief_data,
+    extract_restaurant_campaign_brief_row,
 )
 from agents_app.agents.core.milestone_run.reel_lineup.cluster import build_reel_lineup
 from agents_app.agents.core.milestone_run.reel_lineup.state import ReelLineupOutput, ReelLineupState
@@ -68,6 +71,12 @@ async def fetch_and_prepare(state: ReelLineupState, *, client: httpx.AsyncClient
     _trace(state, "execute_skill", skill_id="reel_lineup")
 
     prior_json = str(state.get("prior_milestones_data") or "")
+    campaign_brief_data = extract_restaurant_campaign_brief_data(prior_json)
+    if campaign_brief_data is None:
+        raise ValueError(
+            campaign_brief_prior_error_message(prior_json, milestone_id="reel_lineup")
+        )
+
     menu_tagger_data = extract_menu_tagger_data(prior_json)
     if menu_tagger_data is None:
         raise ValueError(
@@ -78,6 +87,13 @@ async def fetch_and_prepare(state: ReelLineupState, *, client: httpx.AsyncClient
     if not menu_tagger_items:
         raise ValueError("reel_lineup requires at least one tagged item in prior menu_tagger data")
 
+    campaign_brief_row = extract_restaurant_campaign_brief_row(prior_json)
+    source_campaign_brief_title = ""
+    if isinstance(campaign_brief_row, dict):
+        brief_title = campaign_brief_row.get("title")
+        if isinstance(brief_title, str) and brief_title.strip():
+            source_campaign_brief_title = brief_title.strip()
+
     menu_tagger_row = extract_menu_tagger_row(prior_json)
     source_title = ""
     if isinstance(menu_tagger_row, dict):
@@ -87,6 +103,8 @@ async def fetch_and_prepare(state: ReelLineupState, *, client: httpx.AsyncClient
 
     return {
         "owner_notes_markdown": _fmt_owner_notes(state),
+        "campaign_brief_data": campaign_brief_data,
+        "source_campaign_brief_title": source_campaign_brief_title,
         "menu_tagger_items": menu_tagger_items,
         "source_menu_tagger_title": source_title,
     }
@@ -102,7 +120,13 @@ async def build_lineup(state: ReelLineupState) -> dict[str, Any]:
 
     generated_output = build_reel_lineup(
         menu_tagger_items=menu_tagger_items,
+        campaign_brief_data=(
+            state.get("campaign_brief_data")
+            if isinstance(state.get("campaign_brief_data"), dict)
+            else None
+        ),
         source_menu_tagger_title=str(state.get("source_menu_tagger_title") or ""),
+        source_campaign_brief_title=str(state.get("source_campaign_brief_title") or ""),
         notes=owner_notes,
     )
     normalized = _normalize_generated_output(generated_output)

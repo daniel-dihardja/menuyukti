@@ -51,5 +51,6 @@ signature, bestseller, chef_pick, hidden_gem, new, seasonal, value_hero, premium
 - **reel_moment** and **serve_temp** are required on every item; choose the best primary value even if ambiguous.
 - Prefer empty arrays over guessing when ingredient, taste, course, texture, prep_style, occasion, or content_angle are unclear.
 - Never invent tags outside the allowed enums.
+- `tags` must be a JSON object, not a stringified JSON blob.
 - Output JSON only matching the required schema.
 """

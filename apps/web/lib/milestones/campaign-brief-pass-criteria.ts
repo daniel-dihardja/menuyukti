@@ -5,6 +5,7 @@
 
 export const CAMPAIGN_BRIEF_PASS_CRITERION_SLUGS = [
   'venueSnapshot',
+  'overallStrategy',
   'contentPillars',
   'audienceHypotheses',
   'proofOrientedAngles',
@@ -23,6 +24,7 @@ export type CampaignBriefPassCriterionSlug = (typeof CAMPAIGN_BRIEF_PASS_CRITERI
 
 const SLUG_TO_CRITERION_KEY = {
   venueSnapshot: 'milestonePreset.restaurant_campaign_brief.criterionVenueSnapshot',
+  overallStrategy: 'milestonePreset.restaurant_campaign_brief.criterionOverallStrategy',
   contentPillars: 'milestonePreset.restaurant_campaign_brief.criterionContentPillars',
   audienceHypotheses: 'milestonePreset.restaurant_campaign_brief.criterionAudienceHypotheses',
   proofOrientedAngles: 'milestonePreset.restaurant_campaign_brief.criterionProofAngles',

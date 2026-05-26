@@ -9,10 +9,11 @@ from __future__ import annotations
 # Same keys as apps/web/lib/milestones/milestone-help-description.ts PRESET_GOAL_TRANSLATION_KEYS
 _PRESET_CATALOG_GOAL: dict[str, str] = {
     "restaurant_campaign_brief": (
-        "The data holds a factual campaign brief foundation: campaign window (`startDate`, "
-        "`endDate`) with public holidays, venue snapshot, objective and funnel stage, target "
-        "segments, message hierarchy, CTA/offer plan, content and proof strategy, plus "
-        "measurement/testing/risk guardrails grounded in available analytics."
+        "The data holds a factual campaign brief foundation: venue snapshot, an explicit "
+        "overall business strategy (`overallStrategy`) for audience ordering and lunch-first "
+        "focus, objective and funnel stage, target segments, message hierarchy, CTA/offer "
+        "plan, content and proof strategy, plus measurement/testing/risk guardrails grounded "
+        "in available analytics."
     ),
     "promotion_candidates": (
         "Requires a prior Campaign Brief. Fetches promotion-engineering candidates, orders "
@@ -25,10 +26,12 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "downstream content grouping."
     ),
     "reel_lineup": (
-        "Requires a prior Menu Tagger milestone. Picks up to five main-course food items with "
-        "strong storytelling from tagged items in menu tagger order and places each as the "
-        "position-1 Reel hook in its own food group. Also picks up to three tagged beverage "
-        "drinks (storytelling fit not required) as position-1 drink Reel hook groups."
+        "Requires prior Campaign Brief and Menu Tagger milestones. Picks up to five main-course "
+        "food items with strong storytelling from tagged items in menu tagger order and places "
+        "each as the position-1 Reel hook in its own food group. Food groups also store the "
+        "same core weekday lunch-offer message, creative rotation role, and scheduler-facing "
+        "preferred weekday/time hints. Also picks up to three tagged beverage drinks "
+        "(storytelling fit not required) as position-1 drink Reel hook groups."
     ),
     "post_lineup": (
         "Requires a prior Reel Lineup milestone. Reads saved foodLeads and drafts Instagram "
@@ -46,8 +49,10 @@ _PRESET_CATALOG_GOAL: dict[str, str] = {
         "and three bio variations — aligned with brand, audience, and campaign objective."
     ),
     "scheduler": (
-        "Read the campaign window from a prior dates milestone and prepare a scheduler calendar "
-        "between the start and end dates. Place this milestone after dates in the timeline."
+        "Reads the campaign window from dates plus business strategy from Campaign Brief and "
+        "food-group rotation hints from Reel Lineup. It schedules food reels as a recurring "
+        "twice-weekly lunch cadence with explicit `reel` slot kinds between the start and end "
+        "dates."
     ),
 }
 

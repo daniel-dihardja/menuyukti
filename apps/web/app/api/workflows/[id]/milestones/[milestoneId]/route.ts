@@ -178,6 +178,13 @@ export async function GET(_req: Request, context: RouteContext) {
             country: '',
             currency: '',
           },
+          overallStrategy: {
+            strategyFocus: '',
+            audiencePriority: [],
+            coreMessage: '',
+            offerWindow: '',
+            cadenceGuidance: [],
+          },
           contentPillars: [],
           audienceHypotheses: [],
           proofOrientedAngles: [],

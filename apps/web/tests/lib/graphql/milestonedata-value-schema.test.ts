@@ -9,6 +9,7 @@ const schedulerPayload = {
   publicHolidays: [{ name: 'Easter Sunday', description: 'Desc', date: '2026-06-15' }],
   slots: [
     {
+      kind: 'story',
       date: '2026-06-15',
       time: '10:00',
       title: 'Story: sending happy Easter Sunday',
@@ -23,11 +24,16 @@ describe('milestonedataValueSchema', () => {
     if (!parsed.success) {
       return
     }
+    expect('slots' in parsed.data).toBe(true)
+    if (!('slots' in parsed.data)) {
+      return
+    }
     expect(parsed.data).toMatchObject({
       startDate: '2026-06-01',
       endDate: '2026-06-30',
       slots: schedulerPayload.slots,
     })
+    expect(parsed.data.slots[0]?.kind).toBe('story')
   })
 })
 

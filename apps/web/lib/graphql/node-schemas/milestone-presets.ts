@@ -43,12 +43,10 @@ export const MILESTONE_PRESET_IDS = milestonePresetIdSchema.options
 
 /**
  * Optional owner notes on the milestone Input tab (`value.notes`).
- * Used by the campaign_brief preset.
+ * Campaign dates live on the separate `dates` milestone, not here.
  */
 export const campaignBriefMilestoneInputValueSchema = z.object({
   notes: z.string(),
-  startDate: z.string(),
-  endDate: z.string(),
 })
 
 export type CampaignBriefMilestoneInputValue = z.infer<
@@ -157,8 +155,19 @@ export const campaignBriefVenueSnapshotSchema = z.object({
 
 export type CampaignBriefVenueSnapshot = z.infer<typeof campaignBriefVenueSnapshotSchema>
 
+export const campaignBriefOverallStrategySchema = z.object({
+  strategyFocus: z.string().trim().min(1),
+  audiencePriority: z.array(z.string().trim().min(1)),
+  coreMessage: z.string().trim().min(1),
+  offerWindow: z.string().trim().min(1),
+  cadenceGuidance: z.array(z.string().trim().min(1)),
+})
+
+export type CampaignBriefOverallStrategy = z.infer<typeof campaignBriefOverallStrategySchema>
+
 export const campaignBriefMilestoneDataSchema = z.object({
   venueSnapshot: campaignBriefVenueSnapshotSchema,
+  overallStrategy: campaignBriefOverallStrategySchema.optional(),
   contentPillars: z.array(z.string()),
   audienceHypotheses: z.array(z.string()),
   proofOrientedAngles: z.array(z.string()),
@@ -314,6 +323,24 @@ export const reelLineupGroupItemSchema = z.object({
 
 export type ReelLineupGroupItem = z.infer<typeof reelLineupGroupItemSchema>
 
+export const reelLineupWeekdaySchema = z.enum([
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+])
+
+export const reelLineupScheduleHintsSchema = z.object({
+  preferredWeekdays: z.array(reelLineupWeekdaySchema),
+  preferredTime: z.string().trim().min(1),
+  cadenceEligible: z.boolean().default(true),
+})
+
+export type ReelLineupScheduleHints = z.infer<typeof reelLineupScheduleHintsSchema>
+
 export const reelLineupGroupSchema = z.object({
   id: z.string().trim().min(1),
   leadName: z.string().trim().min(1),
@@ -321,6 +348,11 @@ export const reelLineupGroupSchema = z.object({
   anchor: reelLineupAnchorSchema,
   items: z.array(reelLineupGroupItemSchema).min(1).max(5),
   mix: reelLineupGroupMixSchema,
+  strategyFocus: z.string().trim().min(1).optional(),
+  coreMessage: z.string().trim().min(1).optional(),
+  creativeRole: z.string().trim().min(1).optional(),
+  assetHint: z.string().trim().min(1).optional(),
+  scheduleHints: reelLineupScheduleHintsSchema.optional(),
 })
 
 export type ReelLineupGroup = z.infer<typeof reelLineupGroupSchema>
@@ -332,6 +364,7 @@ export const reelLineupMilestoneDataSchema = z.object({
   drinkGroups: z.array(reelLineupGroupSchema).default([]),
   unassignedItemNames: z.array(z.string().trim().min(1)),
   sourceMenuTaggerTitle: z.string().optional(),
+  sourceCampaignBriefTitle: z.string().optional(),
   notes: z.string().optional(),
 })
 
@@ -401,17 +434,38 @@ export const storyLineupMilestoneDataSchema = z
 
 export type StoryLineupMilestoneData = z.infer<typeof storyLineupMilestoneDataSchema>
 
-export const schedulerSlotSchema = z.object({
-  date: z.string(),
-  time: z.string(),
-  title: z.string(),
-})
+export const schedulerSlotKindSchema = z.enum(['story', 'post', 'reel'])
+
+function inferSchedulerSlotKindFromTitle(title: string): z.infer<typeof schedulerSlotKindSchema> {
+  const trimmed = title.trimStart()
+  if (trimmed.startsWith('Post:')) {
+    return 'post'
+  }
+  if (trimmed.startsWith('Reel:')) {
+    return 'reel'
+  }
+  return 'story'
+}
+
+export const schedulerSlotSchema = z
+  .object({
+    kind: schedulerSlotKindSchema.optional(),
+    date: z.string(),
+    time: z.string(),
+    title: z.string(),
+  })
+  .transform((slot) => ({
+    ...slot,
+    kind: slot.kind ?? inferSchedulerSlotKindFromTitle(slot.title),
+  }))
 
 export const schedulerMilestoneDataSchema = z.object({
   startDate: z.string(),
   endDate: z.string(),
   publicHolidays: z.array(campaignWindowPublicHolidaySchema).default([]),
   sourceDatesTitle: z.string().optional(),
+  sourceCampaignBriefTitle: z.string().optional(),
+  sourceReelLineupTitle: z.string().optional(),
   sourcePostLineupTitle: z.string().optional(),
   sourceStoryLineupTitle: z.string().optional(),
   slots: z.array(schedulerSlotSchema).default([]),

@@ -20,10 +20,16 @@ export type MilestoneCampaignBriefDataPreviewProps = {
 
 type CampaignBriefPreviewLabels = {
   venueSnapshot: string
+  overallStrategy: string
   venueName: string
   city: string
   country: string
   currency: string
+  strategyFocus: string
+  audiencePriority: string
+  coreMessage: string
+  offerWindow: string
+  cadenceGuidance: string
   contentPillars: string
   audienceHypotheses: string
   proofOrientedAngles: string
@@ -39,6 +45,7 @@ type CampaignBriefPreviewLabels = {
   emptyList: string
   emptyValue: string
   helpVenueSnapshot: string
+  helpOverallStrategy: string
   helpContentPillars: string
   helpAudienceHypotheses: string
   helpProofOrientedAngles: string
@@ -123,6 +130,48 @@ function VenueFields({
   )
 }
 
+function OverallStrategyFields({
+  data,
+  labels,
+}: {
+  data: CampaignBriefMilestoneData
+  labels: CampaignBriefPreviewLabels
+}) {
+  const strategy = data.overallStrategy
+  if (!strategy) {
+    return <p className={`mt-2 ${mp.body}`}>{labels.emptyValue}</p>
+  }
+
+  const rows: [string, string][] = [
+    [labels.strategyFocus, strategy.strategyFocus || labels.emptyValue],
+    [labels.coreMessage, strategy.coreMessage || labels.emptyValue],
+    [labels.offerWindow, strategy.offerWindow || labels.emptyValue],
+  ]
+
+  return (
+    <div className="mt-2 space-y-4">
+      <dl className="space-y-3">
+        {rows.map(([term, def]) => (
+          <div key={term} className="grid gap-1 sm:grid-cols-[minmax(0,auto)_1fr] sm:gap-x-4">
+            <dt className={mp.fieldLabel}>{term}</dt>
+            <dd className={mp.body}>{def}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div>
+        <p className={mp.fieldLabel}>{labels.audiencePriority}</p>
+        <div className="mt-2">{renderList(strategy.audiencePriority ?? [], labels.emptyList)}</div>
+      </div>
+
+      <div>
+        <p className={mp.fieldLabel}>{labels.cadenceGuidance}</p>
+        <div className="mt-2">{renderList(strategy.cadenceGuidance ?? [], labels.emptyList)}</div>
+      </div>
+    </div>
+  )
+}
+
 export function MilestoneCampaignBriefDataPreview({
   data,
 }: MilestoneCampaignBriefDataPreviewProps) {
@@ -132,10 +181,16 @@ export function MilestoneCampaignBriefDataPreview({
   const labels = useMemo<CampaignBriefPreviewLabels>(
     () => ({
       venueSnapshot: t('milestoneCampaignBriefPreviewVenueSnapshot'),
+      overallStrategy: t('milestoneCampaignBriefPreviewOverallStrategy'),
       venueName: t('milestoneCampaignBriefPreviewVenueName'),
       city: t('milestoneCampaignBriefPreviewCity'),
       country: t('milestoneCampaignBriefPreviewCountry'),
       currency: t('milestoneCampaignBriefPreviewCurrency'),
+      strategyFocus: t('milestoneCampaignBriefPreviewStrategyFocus'),
+      audiencePriority: t('milestoneCampaignBriefPreviewAudiencePriority'),
+      coreMessage: t('milestoneCampaignBriefPreviewCoreMessage'),
+      offerWindow: t('milestoneCampaignBriefPreviewOfferWindow'),
+      cadenceGuidance: t('milestoneCampaignBriefPreviewCadenceGuidance'),
       contentPillars: t('milestoneCampaignBriefPreviewContentPillars'),
       audienceHypotheses: t('milestoneCampaignBriefPreviewAudienceHypotheses'),
       proofOrientedAngles: t('milestoneCampaignBriefPreviewProofOrientedAngles'),
@@ -151,6 +206,7 @@ export function MilestoneCampaignBriefDataPreview({
       emptyList: t('milestoneCampaignBriefPreviewEmptyList'),
       emptyValue: t('milestoneCampaignBriefPreviewEmptyValue'),
       helpVenueSnapshot: t('milestoneCampaignBriefPreviewHelpVenueSnapshot'),
+      helpOverallStrategy: t('milestoneCampaignBriefPreviewHelpOverallStrategy'),
       helpContentPillars: t('milestoneCampaignBriefPreviewHelpContentPillars'),
       helpAudienceHypotheses: t('milestoneCampaignBriefPreviewHelpAudienceHypotheses'),
       helpProofOrientedAngles: t('milestoneCampaignBriefPreviewHelpProofOrientedAngles'),
@@ -178,6 +234,15 @@ export function MilestoneCampaignBriefDataPreview({
           helpText={labels.helpVenueSnapshot}
         >
           <VenueFields data={data} labels={labels} />
+        </BriefAccordionSection>
+
+        <BriefAccordionSection
+          value="overall-strategy"
+          title={labels.overallStrategy}
+          helpAria={a(labels.overallStrategy)}
+          helpText={labels.helpOverallStrategy}
+        >
+          <OverallStrategyFields data={data} labels={labels} />
         </BriefAccordionSection>
 
         <BriefAccordionSection

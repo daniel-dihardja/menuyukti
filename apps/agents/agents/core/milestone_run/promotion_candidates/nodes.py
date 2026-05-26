@@ -401,7 +401,10 @@ def _collect_menu_refs(formatted: dict[str, Any]) -> list[dict[str, str]]:
 
 
 class StorytellingVerdictLine(BaseModel):
-    name: str = Field(description="Menu display name matching the input list.")
+    name: str = Field(
+        default="",
+        description="Menu display name matching the input list. If omitted, it will be aligned by order.",
+    )
     storytellingFit: Literal["strong", "weak"] = Field(
         description='Whether the name supports Instagram storytelling for this campaign ("strong" or "weak").'
     )
@@ -416,10 +419,16 @@ class StorytellingVerdictsOutput(BaseModel):
     )
 
 
-def _verdict_map_from_llm(lines: list[StorytellingVerdictLine]) -> dict[str, tuple[str, str]]:
+def _verdict_map_from_llm(
+    lines: list[StorytellingVerdictLine],
+    *,
+    unique_names: list[str],
+) -> dict[str, tuple[str, str]]:
     out: dict[str, tuple[str, str]] = {}
-    for line in lines:
+    for index, line in enumerate(lines):
         name = str(line.name or "").strip()
+        if not name and index < len(unique_names):
+            name = unique_names[index]
         if not name:
             continue
         fit = line.storytellingFit if line.storytellingFit in ("strong", "weak") else "weak"
@@ -631,7 +640,7 @@ async def enrich_storytelling(state: PromotionCandidatesState) -> dict[str, Any]
     )
     _trace_agent_event(state, "chat_model_end")
 
-    by_cf = _verdict_map_from_llm(generated.verdicts)
+    by_cf = _verdict_map_from_llm(generated.verdicts, unique_names=unique_names)
     merged = _apply_verdicts_to_formatted(formatted, by_cf)
     return {"formatted_output": merged}
 

@@ -32,10 +32,17 @@ def _sample_payload() -> dict:
                     "starCount": 1,
                     "puzzleCount": 0,
                 },
+                "strategyFocus": "weekday_lunch",
+                "scheduleHints": {
+                    "preferredWeekdays": ["tuesday", "thursday"],
+                    "preferredTime": "11:00",
+                    "cadenceEligible": True,
+                },
             }
         ],
         "drinkGroups": [],
         "unassignedItemNames": ["Burger"],
+        "sourceCampaignBriefTitle": "Campaign brief",
     }
 
 
@@ -91,6 +98,24 @@ def test_prior_menu_tagger_verdict_passes_with_drink_only() -> None:
 def test_food_hook_group_count_verdict_passes() -> None:
     verdict = try_reel_lineup_deterministic_verdict(
         "Data includes up to 5 food Reel hook groups.",
+        _sample_payload(),
+    )
+    assert verdict is not None
+    assert verdict[0] == "pass"
+
+
+def test_campaign_brief_strategy_verdict_passes() -> None:
+    verdict = try_reel_lineup_deterministic_verdict(
+        "Data references a prior campaign brief and carries campaign-aware scheduling hints.",
+        _sample_payload(),
+    )
+    assert verdict is not None
+    assert verdict[0] == "pass"
+
+
+def test_schedule_hints_verdict_passes() -> None:
+    verdict = try_reel_lineup_deterministic_verdict(
+        "Each food group includes strategy focus plus preferred weekday and time schedule hints.",
         _sample_payload(),
     )
     assert verdict is not None

@@ -97,6 +97,22 @@ describe('milestone optional notes', () => {
     }
   })
 
+  it('patchMilestoneSchema accepts campaign brief notes-only milestoneInput', () => {
+    const parsed = patchMilestoneSchema.safeParse({
+      milestoneInput: {
+        type: 'restaurant_campaign_brief',
+        value: { notes: 'focus weekday lunch' },
+      },
+    })
+    expect(parsed.success).toBe(true)
+    if (parsed.success) {
+      expect(parsed.data.milestoneInput).toEqual({
+        type: 'restaurant_campaign_brief',
+        value: { notes: 'focus weekday lunch' },
+      })
+    }
+  })
+
   it('getMilestonePresetCreateFields seeds promotion_candidates milestoneInput', () => {
     const fields = getMilestonePresetCreateFields('promotion_candidates', (k) => k)
     expect(fields.milestoneInput).toEqual({
@@ -213,6 +229,30 @@ describe('milestone optional notes', () => {
       intersections: [],
       guardrailCheck: '',
     })
+  })
+
+  it('getMilestonePresetCreateFields seeds campaign brief notes-only milestoneInput', () => {
+    const fields = getMilestonePresetCreateFields('restaurant_campaign_brief', (k) => k)
+    expect(fields.milestoneInput).toEqual({
+      type: 'restaurant_campaign_brief',
+      value: { notes: '' },
+    })
+  })
+
+  it('patchMilestoneSchema accepts the full campaign brief preset-create payload', () => {
+    const fields = getMilestonePresetCreateFields('restaurant_campaign_brief', (k) => k)
+    const parsed = patchMilestoneSchema.safeParse({
+      name: fields.name,
+      presetId: 'restaurant_campaign_brief',
+      milestoneData: fields.milestoneData,
+      milestoneInput: fields.milestoneInput,
+      goal: fields.goal,
+      passCriterias: (fields.passCriteria ?? []).map((row, index) => ({
+        id: `pc-${index}`,
+        ...row,
+      })),
+    })
+    expect(parsed.success).toBe(true)
   })
 
   it('getMilestonePresetCreateFields seeds ig_profile milestoneInput', () => {
