@@ -74,8 +74,8 @@ def _campaign_brief_data() -> dict:
             "coreMessage": "Promote a repeatable weekday lunch offer for nearby workers and small groups.",
             "offerWindow": "11:00-14:00",
             "cadenceGuidance": [
-                "Publish lunch-offer reels twice per week.",
-                "Prioritize weekday morning posting before the lunch window.",
+                "Publish lunch-offer reels once per week on Tuesday.",
+                "Prioritize Tuesday morning posting before the lunch window.",
                 "Keep the core lunch CTA consistent while rotating visuals and hero dishes.",
             ],
         },
@@ -108,7 +108,7 @@ def _campaign_brief_data() -> dict:
         ],
         "testingPlan": [
             "Test lunch vs dinner daypart windows",
-            "Test Tue vs Thu posting days",
+            "Test Tuesday morning posting times",
             "Replace weak hooks after 2 weeks of flat save rate",
         ],
         "riskGuardrails": [
@@ -155,7 +155,7 @@ def test_build_reel_lineup_creates_valid_hook_groups() -> None:
     assert first["items"][0]["position"] == 1
     assert first["leadName"] == "Ribeye"
     assert first["strategyFocus"] == "weekday_lunch"
-    assert first["scheduleHints"]["preferredWeekdays"] == ["tuesday", "thursday"]
+    assert first["scheduleHints"]["preferredWeekdays"] == ["tuesday"]
     assert normalized["sourceCampaignBriefTitle"] == "Campaign brief"
     assert "Wings" in normalized["unassignedItemNames"]
 

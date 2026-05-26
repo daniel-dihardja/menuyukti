@@ -34,7 +34,7 @@ def _sample_payload() -> dict:
                 },
                 "strategyFocus": "weekday_lunch",
                 "scheduleHints": {
-                    "preferredWeekdays": ["tuesday", "thursday"],
+                    "preferredWeekdays": ["tuesday"],
                     "preferredTime": "11:00",
                     "cadenceEligible": True,
                 },

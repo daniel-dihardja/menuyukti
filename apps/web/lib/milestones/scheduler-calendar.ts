@@ -4,6 +4,8 @@ import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 export const SCHEDULER_GRID_HOUR_START = 8
 export const SCHEDULER_GRID_HOUR_END = 22
 export const SCHEDULER_GRID_SLOT_MINUTES = 60
+export const SCHEDULER_MONTHLY_PIN_POST_TIME = '10:00'
+export const SCHEDULER_REEL_LUNCH_OFFER_TIME = '11:00'
 export const SCHEDULER_HAPPY_HOLIDAY_STORY_TIME = '10:00'
 
 export type SchedulerSlot = SchedulerMilestoneData['slots'][number]
@@ -11,10 +13,18 @@ export type SchedulerSlot = SchedulerMilestoneData['slots'][number]
 export type SchedulerSlotKind = 'story' | 'post' | 'reel'
 
 const SCHEDULER_SLOT_CLASS = {
-  story: 'border-sky-300/80 bg-sky-50/90 text-foreground dark:border-sky-500/50 dark:bg-sky-950/40',
-  post: 'border-violet-200 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-100',
-  reel: 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-100',
+  story:
+    'border-violet-200 bg-violet-50 text-violet-900 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-100',
+  post: 'border-sky-300/80 bg-sky-50/90 text-foreground dark:border-sky-500/50 dark:bg-sky-950/40',
+  reel: 'border-orange-200 bg-orange-50 text-orange-900 dark:border-orange-800 dark:bg-orange-950/60 dark:text-orange-100',
 } as const
+
+const SCHEDULER_SLOT_TITLE_PREFIX = /^(post|reel|story):\s*/i
+const SCHEDULER_SLOT_FALLBACK_TIME: Record<SchedulerSlotKind, string> = {
+  story: SCHEDULER_HAPPY_HOLIDAY_STORY_TIME,
+  post: SCHEDULER_MONTHLY_PIN_POST_TIME,
+  reel: SCHEDULER_REEL_LUNCH_OFFER_TIME,
+}
 
 export function schedulerSlotKind(slot: SchedulerSlot): SchedulerSlotKind {
   return slot.kind
@@ -22,6 +32,57 @@ export function schedulerSlotKind(slot: SchedulerSlot): SchedulerSlotKind {
 
 export function schedulerSlotClassName(kind: SchedulerSlotKind): string {
   return SCHEDULER_SLOT_CLASS[kind]
+}
+
+export function schedulerSlotTypeLabel(kind: SchedulerSlotKind): string {
+  switch (kind) {
+    case 'post':
+      return 'Post'
+    case 'reel':
+      return 'Reel'
+    case 'story':
+      return 'Story'
+  }
+}
+
+function schedulerSlotName(title: string): string {
+  const trimmed = title.trim()
+  const normalized = trimmed.replace(SCHEDULER_SLOT_TITLE_PREFIX, '').trim()
+  return normalized || trimmed
+}
+
+export function schedulerSlotDisplayTitle(slot: SchedulerSlot): string {
+  const typeLabel = schedulerSlotTypeLabel(schedulerSlotKind(slot))
+  const name = schedulerSlotName(slot.title)
+  return name ? `${typeLabel}: ${name}` : typeLabel
+}
+
+export function schedulerSlotDisplayTime(slot: SchedulerSlot): string {
+  const trimmed = slot.time.trim()
+  if (trimmed) {
+    return trimmed
+  }
+  return SCHEDULER_SLOT_FALLBACK_TIME[schedulerSlotKind(slot)]
+}
+
+function schedulerTimeSortValue(time: string): number {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(time.trim())
+  if (!match) {
+    return Number.POSITIVE_INFINITY
+  }
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return Number.POSITIVE_INFINITY
+  }
+  return hour * 60 + minute
 }
 
 export type SchedulerWeekDay = {
@@ -68,6 +129,21 @@ export function schedulerHourIndexFromTime(
 
 export function schedulerSlotsForDate(slots: SchedulerSlot[], isoDate: string): SchedulerSlot[] {
   return slots.filter((slot) => slot.date === isoDate)
+}
+
+export function schedulerSlotsForDateDetail(
+  slots: SchedulerSlot[],
+  isoDate: string,
+): SchedulerSlot[] {
+  return schedulerSlotsForDate(slots, isoDate).toSorted(
+    (left, right) =>
+      schedulerTimeSortValue(schedulerSlotDisplayTime(left)) -
+        schedulerTimeSortValue(schedulerSlotDisplayTime(right)) ||
+      schedulerSlotTypeLabel(schedulerSlotKind(left)).localeCompare(
+        schedulerSlotTypeLabel(schedulerSlotKind(right)),
+      ) ||
+      schedulerSlotDisplayTitle(left).localeCompare(schedulerSlotDisplayTitle(right)),
+  )
 }
 
 export function schedulerSlotsByDate(slots: SchedulerSlot[]): Map<string, SchedulerSlot[]> {

@@ -10,6 +10,8 @@ import {
   buildSchedulerMonth,
   formatSchedulerMonthLabel,
   schedulerSlotClassName,
+  schedulerSlotDisplayTime,
+  schedulerSlotDisplayTitle,
   schedulerSlotKind,
   schedulerSlotsForDate,
   schedulerWeekdayLabels,
@@ -23,6 +25,7 @@ export type SchedulerCalendarMonthGridProps = {
   slots?: SchedulerMilestoneData['slots']
   className?: string
   onDayClick?: (isoDate: string) => void
+  onSlotClick?: (slot: SchedulerMilestoneData['slots'][number]) => void
 }
 
 function formatDayNumber(isoDate: string, locale: string): string {
@@ -41,6 +44,7 @@ export function SchedulerCalendarMonthGrid({
   slots = [],
   className,
   onDayClick,
+  onSlotClick,
 }: SchedulerCalendarMonthGridProps) {
   const monthDays = useMemo(
     () => buildSchedulerMonth(monthStartIso, windowStart, windowEnd),
@@ -120,15 +124,33 @@ export function SchedulerCalendarMonthGrid({
               {daySlots.length > 0 ? (
                 <div className="mt-1 space-y-0.5">
                   {daySlots.slice(0, 1).map((slot) => (
-                    <p
+                    <button
                       key={`${slot.date}-${slot.time}-${slot.title}`}
+                      type="button"
+                      title={schedulerSlotDisplayTitle(slot)}
                       className={cn(
-                        'truncate rounded-md border px-1 py-0.5 text-xs font-medium leading-snug',
+                        'flex w-full flex-col items-start rounded-md border px-1 py-0.5 text-left text-xs font-medium leading-snug',
                         schedulerSlotClassName(schedulerSlotKind(slot)),
+                        onSlotClick &&
+                          'cursor-pointer hover:brightness-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                       )}
+                      onClick={
+                        onSlotClick
+                          ? (event) => {
+                              event.stopPropagation()
+                              onSlotClick(slot)
+                            }
+                          : undefined
+                      }
+                      onKeyDown={(event) => {
+                        event.stopPropagation()
+                      }}
                     >
-                      {slot.title}
-                    </p>
+                      <span className="mb-0.5 text-[10px] font-semibold opacity-80">
+                        {schedulerSlotDisplayTime(slot)}
+                      </span>
+                      <span className="w-full truncate">{schedulerSlotDisplayTitle(slot)}</span>
+                    </button>
                   ))}
                   {daySlots.length > 1 ? (
                     <span className="block size-1.5 rounded-full bg-primary" aria-hidden />

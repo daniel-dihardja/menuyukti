@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { CalendarDays, ChevronLeft, ChevronRight, Columns3 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
@@ -14,6 +14,7 @@ import {
 import { cn } from '@workspace/ui/lib/utils'
 
 import { useMediaQuery } from '@/hooks/use-media-query'
+import { MilestonePreviewListDetailShell } from '@/app/(protected)/workflow/_components/milestone-preview/milestone-preview-list-detail'
 import { parseIsoDateOnly } from '@/lib/milestones/scheduler-dates'
 import type { SchedulerMilestoneData } from '@/lib/graphql/node-schemas'
 import {
@@ -30,6 +31,12 @@ import {
   nextWeekStartIso,
   previousMonthStartIso,
   previousWeekStartIso,
+  schedulerSlotClassName,
+  schedulerSlotDisplayTime,
+  schedulerSlotDisplayTitle,
+  schedulerSlotKind,
+  schedulerSlotsForDate,
+  schedulerSlotsForDateDetail,
   startOfMonth,
   startOfWeekMonday,
   weekStartIsoForDay,
@@ -48,6 +55,65 @@ export type SchedulerCalendarProps = {
   locale: string
   slots?: SchedulerMilestoneData['slots']
   className?: string
+}
+
+function formatSchedulerDateDetailLabel(isoDate: string, locale: string): string {
+  const date = parseIsoDateOnly(isoDate)
+  if (!date) {
+    return isoDate
+  }
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date)
+}
+
+type SchedulerCalendarDateDetailProps = {
+  selectedDateIso: string
+  slots: SchedulerMilestoneData['slots']
+}
+
+function SchedulerCalendarDateDetail({ selectedDateIso, slots }: SchedulerCalendarDateDetailProps) {
+  const t = useTranslations('analytics.workflows.chat')
+  const selectedDaySlots = useMemo(
+    () => schedulerSlotsForDateDetail(slots, selectedDateIso),
+    [selectedDateIso, slots],
+  )
+
+  if (selectedDaySlots.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed border-border/80 bg-muted/20 px-3 py-4 text-sm text-muted-foreground">
+        {t('milestoneSchedulerPreviewDateEmpty')}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {selectedDaySlots.map((slot) => (
+        <article
+          key={`${slot.date}-${slot.time}-${slot.title}`}
+          className="rounded-lg border border-border/80 bg-background px-3 py-3 shadow-xs"
+        >
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span className="rounded-md border border-border/80 bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
+              {schedulerSlotDisplayTime(slot)}
+            </span>
+          </div>
+          <p
+            className={cn(
+              'rounded-md border px-2 py-1 text-sm font-medium leading-relaxed',
+              schedulerSlotClassName(schedulerSlotKind(slot)),
+            )}
+          >
+            {schedulerSlotDisplayTitle(slot)}
+          </p>
+        </article>
+      ))}
+    </div>
+  )
 }
 
 export function SchedulerCalendar({
@@ -79,12 +145,20 @@ export function SchedulerCalendar({
   const [viewMode, setViewMode] = useState<SchedulerCalendarViewMode>('month')
   const [weekStartIso, setWeekStartIso] = useState(initialWeekStart)
   const [monthStartIso, setMonthStartIso] = useState(initialMonthStart)
+  const [selectedDateIso, setSelectedDateIso] = useState<string | null>(null)
+  const detailTitleId = useId()
 
   useEffect(() => {
     if (!isDesktop && viewMode === 'week') {
       setViewMode('month')
     }
   }, [isDesktop, viewMode])
+
+  useEffect(() => {
+    if (selectedDateIso && schedulerSlotsForDate(slots, selectedDateIso).length === 0) {
+      setSelectedDateIso(null)
+    }
+  }, [selectedDateIso, slots])
 
   const weekRange = useMemo(
     () => formatSchedulerWeekRange(weekStartIso, locale),
@@ -115,6 +189,10 @@ export function SchedulerCalendar({
   const switchToMonthLabel = t('milestoneSchedulerPreviewViewMonth')
   const switchToWeekLabel = t('milestoneSchedulerPreviewViewWeek')
   const viewToggleLabel = viewMode === 'week' ? switchToMonthLabel : switchToWeekLabel
+  const selectedDateLabel = useMemo(
+    () => (selectedDateIso ? formatSchedulerDateDetailLabel(selectedDateIso, locale) : ''),
+    [locale, selectedDateIso],
+  )
 
   const handleViewToggle = () => {
     if (viewMode === 'week') {
@@ -133,8 +211,8 @@ export function SchedulerCalendar({
     setViewMode('week')
   }
 
-  return (
-    <div className={cn('flex min-h-0 w-full min-w-0 flex-1 flex-col', className)}>
+  const calendarContent = (
+    <>
       <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
         <Button
           type="button"
@@ -241,6 +319,9 @@ export function SchedulerCalendar({
           windowEnd={windowEnd}
           locale={locale}
           slots={slots}
+          onSlotClick={(slot) => {
+            setSelectedDateIso(slot.date)
+          }}
         />
       ) : isDesktop ? (
         <SchedulerCalendarMonthGrid
@@ -253,6 +334,9 @@ export function SchedulerCalendar({
             setWeekStartIso(weekStartIsoForDay(isoDate, windowStart, windowEnd))
             setViewMode('week')
           }}
+          onSlotClick={(slot) => {
+            setSelectedDateIso(slot.date)
+          }}
         />
       ) : (
         <SchedulerCalendarMonthList
@@ -261,8 +345,31 @@ export function SchedulerCalendar({
           windowEnd={windowEnd}
           locale={locale}
           slots={slots}
+          onSlotClick={(slot) => {
+            setSelectedDateIso(slot.date)
+          }}
         />
       )}
+    </>
+  )
+
+  return (
+    <div className={cn('flex min-h-0 w-full min-w-0 flex-1 flex-col', className)}>
+      <MilestonePreviewListDetailShell
+        selectedId={selectedDateIso}
+        backLabel={t('milestoneSchedulerPreviewBackToCalendar')}
+        detailTitleId={detailTitleId}
+        detailTitle={selectedDateLabel}
+        onBack={() => {
+          setSelectedDateIso(null)
+        }}
+        list={calendarContent}
+        detail={
+          selectedDateIso ? (
+            <SchedulerCalendarDateDetail selectedDateIso={selectedDateIso} slots={slots} />
+          ) : null
+        }
+      />
     </div>
   )
 }

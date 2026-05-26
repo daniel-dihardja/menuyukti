@@ -14,10 +14,15 @@ import {
   schedulerHourIndexFromTime,
   schedulerHourLabels,
   schedulerSlotClassName,
+  schedulerSlotDisplayTime,
+  schedulerSlotDisplayTitle,
   schedulerSlotKind,
   schedulerSlotsByDate,
   schedulerSlotsForDate,
+  schedulerSlotsForDateDetail,
   SCHEDULER_HAPPY_HOLIDAY_STORY_TIME,
+  SCHEDULER_MONTHLY_PIN_POST_TIME,
+  SCHEDULER_REEL_LUNCH_OFFER_TIME,
   SCHEDULER_MONTH_GRID_DAYS,
   startOfMonth,
   startOfWeekMonday,
@@ -78,11 +83,88 @@ describe('schedulerSlotClassName', () => {
     const storyClass = schedulerSlotClassName('story')
     const postClass = schedulerSlotClassName('post')
     const reelClass = schedulerSlotClassName('reel')
-    expect(storyClass).toContain('sky')
-    expect(postClass).toContain('violet')
-    expect(reelClass).toContain('emerald')
+    expect(storyClass).toContain('violet')
+    expect(postClass).toContain('sky')
+    expect(reelClass).toContain('orange')
     expect(storyClass).not.toEqual(postClass)
     expect(reelClass).not.toEqual(postClass)
+  })
+})
+
+describe('schedulerSlotDisplayTitle', () => {
+  it('formats post entries as "Post: <name>"', () => {
+    expect(
+      schedulerSlotDisplayTitle({
+        kind: 'post',
+        date: '2026-06-01',
+        time: '10:00',
+        title: 'Monthly top menu',
+      }),
+    ).toBe('Post: Monthly top menu')
+  })
+
+  it('rebuilds prefixed titles without double-prefixing', () => {
+    expect(
+      schedulerSlotDisplayTitle({
+        kind: 'reel',
+        date: '2026-06-02',
+        time: '11:00',
+        title: 'Reel: Lunch Offer',
+      }),
+    ).toBe('Reel: Lunch Offer')
+  })
+
+  it('uses the explicit slot kind when the raw title does not include one', () => {
+    expect(
+      schedulerSlotDisplayTitle({
+        kind: 'story',
+        date: '2026-06-15',
+        time: '10:00',
+        title: 'Public holiday greetings',
+      }),
+    ).toBe('Story: Public holiday greetings')
+  })
+})
+
+describe('schedulerSlotDisplayTime', () => {
+  it('keeps explicit times from scheduler slots', () => {
+    expect(
+      schedulerSlotDisplayTime({
+        kind: 'reel',
+        date: '2026-06-03',
+        time: '09:30',
+        title: 'Breakfast offer',
+      }),
+    ).toBe('09:30')
+  })
+
+  it('falls back to the requested preview defaults when time is blank', () => {
+    expect(
+      schedulerSlotDisplayTime({
+        kind: 'post',
+        date: '2026-06-01',
+        time: '',
+        title: 'Monthly top menu',
+      }),
+    ).toBe(SCHEDULER_MONTHLY_PIN_POST_TIME)
+
+    expect(
+      schedulerSlotDisplayTime({
+        kind: 'reel',
+        date: '2026-06-02',
+        time: '',
+        title: 'Lunch offer',
+      }),
+    ).toBe(SCHEDULER_REEL_LUNCH_OFFER_TIME)
+
+    expect(
+      schedulerSlotDisplayTime({
+        kind: 'story',
+        date: '2026-06-15',
+        time: '',
+        title: 'Public holiday greetings',
+      }),
+    ).toBe(SCHEDULER_HAPPY_HOLIDAY_STORY_TIME)
   })
 })
 
@@ -110,6 +192,37 @@ describe('schedulerSlotsForDate', () => {
     const grouped = schedulerSlotsByDate(slots)
     expect(grouped.get('2026-06-15')).toEqual([slots[0]])
     expect(grouped.get('2026-06-20')).toEqual([slots[1]])
+  })
+})
+
+describe('schedulerSlotsForDateDetail', () => {
+  it('sorts selected-day slots by time and then title', () => {
+    const slots = [
+      {
+        kind: 'story' as const,
+        date: '2026-06-15',
+        time: '',
+        title: 'Public holiday greetings',
+      },
+      {
+        kind: 'reel' as const,
+        date: '2026-06-15',
+        time: '',
+        title: 'Lunch offer',
+      },
+      {
+        kind: 'post' as const,
+        date: '2026-06-15',
+        time: '10:00',
+        title: 'Monthly top menu',
+      },
+    ]
+
+    expect(schedulerSlotsForDateDetail(slots, '2026-06-15').map((slot) => slot.kind)).toEqual([
+      'post',
+      'story',
+      'reel',
+    ])
   })
 })
 

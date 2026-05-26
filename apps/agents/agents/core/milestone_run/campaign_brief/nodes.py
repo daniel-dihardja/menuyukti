@@ -81,8 +81,8 @@ _DEFAULT_CAMPAIGN_STRATEGY = {
     "coreMessage": "Promote a repeatable weekday lunch offer for nearby workers and small groups.",
     "offerWindow": "11:00-14:00",
     "cadenceGuidance": [
-        "Publish lunch-offer reels twice per week.",
-        "Prioritize weekday morning posting before the lunch window.",
+        "Publish lunch-offer reels once per week on Tuesday.",
+        "Prioritize Tuesday morning posting before the lunch window.",
         "Keep the core lunch CTA consistent while rotating visuals and hero dishes.",
     ],
 }

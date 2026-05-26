@@ -55,8 +55,8 @@ def _prior_json() -> str:
                         ),
                         "offerWindow": "11:00-14:00",
                         "cadenceGuidance": [
-                            "Publish lunch-offer reels twice per week.",
-                            "Prioritize weekday morning posting before the lunch window.",
+                            "Publish lunch-offer reels once per week on Tuesday.",
+                            "Prioritize Tuesday morning posting before the lunch window.",
                             (
                                 "Keep the core lunch CTA consistent while rotating visuals "
                                 "and hero dishes."
@@ -104,7 +104,7 @@ def _prior_json() -> str:
                     ],
                     "testingPlan": [
                         "Test lunch vs dinner daypart windows",
-                        "Test Tue vs Thu posting days",
+                        "Test Tuesday morning posting times",
                         "Replace weak hooks after 2 weeks of flat save rate",
                     ],
                     "riskGuardrails": [
@@ -187,7 +187,7 @@ def _prior_json() -> str:
                             "creativeRole": "hero",
                             "assetHint": "Keep the lunch CTA consistent for 11:00-14:00.",
                             "scheduleHints": {
-                                "preferredWeekdays": ["tuesday", "thursday"],
+                                "preferredWeekdays": ["tuesday"],
                                 "preferredTime": "11:00",
                                 "cadenceEligible": True,
                             },
@@ -221,7 +221,7 @@ def _prior_json() -> str:
                             "creativeRole": "proof",
                             "assetHint": "Keep the lunch CTA consistent for 11:00-14:00.",
                             "scheduleHints": {
-                                "preferredWeekdays": ["tuesday", "thursday"],
+                                "preferredWeekdays": ["tuesday"],
                                 "preferredTime": "11:00",
                                 "cadenceEligible": True,
                             },
@@ -391,15 +391,15 @@ async def test_build_snapshot_creates_reel_slots_from_reel_lineup() -> None:
         },
         {
             "kind": "reel",
-            "date": "2026-06-04",
+            "date": "2026-06-09",
             "time": "11:00",
             "title": "Reel: Burger lunch offer (11:00-14:00) [proof]",
         },
         {
-            "kind": "reel",
-            "date": "2026-06-09",
-            "time": "11:00",
-            "title": "Reel: Ribeye lunch offer (11:00-14:00) [hero]",
+            "kind": "story",
+            "date": "2026-06-15",
+            "time": "10:00",
+            "title": "Story: sending happy Easter Sunday",
         },
     ]
     assert {
@@ -485,6 +485,27 @@ async def test_build_snapshot_rotates_groups_across_two_month_window() -> None:
     normalized, error = validate_skill_output("scheduler", result["generated_output"])
     assert error is None
     assert isinstance(normalized, dict)
-    assert len(normalized["slots"]) == 18
+    assert len(normalized["slots"]) == 9
     assert normalized["slots"][0]["title"] == "Reel: Ribeye lunch offer (11:00-14:00) [hero]"
     assert normalized["slots"][1]["title"] == "Reel: Burger lunch offer (11:00-14:00) [proof]"
+
+
+@pytest.mark.asyncio
+async def test_build_snapshot_treats_human_readable_weekday_lunch_focus_as_tuesday_only() -> None:
+    prior = json.loads(_prior_json())
+    prior[1]["data"]["overallStrategy"]["strategyFocus"] = "Weekday Lunch"
+
+    result = await build_snapshot(
+        _base_state(
+            dates_data=prior[0]["data"],
+            campaign_brief_data=prior[1]["data"],
+            reel_lineup_data=prior[2]["data"],
+        )
+    )
+
+    normalized, error = validate_skill_output("scheduler", result["generated_output"])
+    assert error is None
+    assert isinstance(normalized, dict)
+
+    reel_dates = [slot["date"] for slot in normalized["slots"] if slot["kind"] == "reel"]
+    assert reel_dates == ["2026-06-02", "2026-06-09", "2026-06-16", "2026-06-23", "2026-06-30"]
